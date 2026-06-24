@@ -12,9 +12,7 @@
 	<meta name="robots" content="noindex, nofollow">
 	{% endif %}
 	<script>window.process=window.process||{env:{NODE_ENV:"production"}};</script>
-	{%- if needs_reactivity -%}
 	<script src="/assets/builder/js/reactivity.js"></script>
-	{%- endif -%}
 	{% if canonical_url %}
 	<link rel="canonical" href="{{ canonical_url }}" />
 	{% endif %}

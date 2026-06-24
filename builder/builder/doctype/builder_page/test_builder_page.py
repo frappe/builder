@@ -495,11 +495,6 @@ component.update({
 						},
 					},
 				},
-				"component_vars": {
-					"count": {"type": "number", "initialValue": 42},
-					"label": {"type": "string", "initialValue": "builder"},
-					"tags": {"type": "array", "initialValue": ["a", "b"]},
-				},
 				"component_js": 'this.dataset.received = "ok";',
 			}
 		).insert()
@@ -537,20 +532,16 @@ component.update({
 
 		try:
 			content = get_response_content("/component-client-script-args-test")
-			self.assertIn("component_data, props, variables", content)
+			self.assertIn("component_data, props", content)
 			self.assertIn('"greeting": "hello from component data"', content)
 			self.assertIn('"title": "Overridden Title"', content)
-			self.assertIn("count: ref(42)", content)
-			self.assertIn('label: ref("builder")', content)
-			self.assertIn('tags: reactive(["a", "b"])', content)
 			self.assertIn("/assets/builder/js/reactivity.js", content)
 			self.assertRegex(
 				content,
 				r"client_script_[a-z0-9_]+\)\.call\("
 				r"document\.querySelector\('\[data-block-uid=\"[^\"]+\"\]'\), "
 				r'\{[^}]*"greeting": "hello from component data"[^}]*\}, '
-				r'\{[^}]*"title": "Overridden Title"[^}]*\}, '
-				r"variables\)",
+				r'\{[^}]*"title": "Overridden Title"[^}]*\}\)',
 			)
 		finally:
 			page.delete()
@@ -1067,7 +1058,7 @@ component.update({
 				],
 			}
 		]
-		_, _, font_map, _, _ = get_block_html(blocks)
+		_, _, font_map, _ = get_block_html(blocks)
 		self.assertIn("Newsreader", font_map)
 		self.assertIn(700, font_map["Newsreader"]["weights"])
 
@@ -1083,7 +1074,7 @@ component.update({
 				"children": [],
 			}
 		]
-		_, _, font_map, _, _ = get_block_html(blocks)
+		_, _, font_map, _ = get_block_html(blocks)
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
 
@@ -1148,8 +1139,8 @@ component.update({
 		def normalize(text):
 			return re.sub(r"[0-9a-f]{8,}", "H", text)
 
-		html_full, css_full, _, _, _ = get_block_html(full)
-		html_stripped, css_stripped, _, _, _ = get_block_html(stripped)
+		html_full, css_full, _, _ = get_block_html(full)
+		html_stripped, css_stripped, _, _ = get_block_html(stripped)
 
 		self.assertIn("Hello World!", html_stripped)
 		self.assertEqual(normalize(html_full), normalize(html_stripped))
@@ -1174,7 +1165,7 @@ component.update({
 				],
 			}
 		]
-		html_dynamic, _, _, _, _ = get_block_html(dynamic)
+		html_dynamic, _, _, _ = get_block_html(dynamic)
 		self.assertIn("logo", html_dynamic)
 
 		with_unset_style = [
@@ -1186,7 +1177,7 @@ component.update({
 				"children": [],
 			}
 		]
-		_, css_unset, _, _, _ = get_block_html(with_unset_style)
+		_, css_unset, _, _ = get_block_html(with_unset_style)
 		self.assertIn("color: red", css_unset)
 		self.assertNotIn("display:", css_unset)
 		self.assertNotIn("None", css_unset)

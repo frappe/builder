@@ -12,8 +12,8 @@ A version is captured whenever a component is saved, and when a component is
 first used in a page (drag-drop / save-as-component) the latest version is
 pinned to the block. Snapshots store the blocks as-is, pins included.
 
-Each version snapshot stores the full component state -- block, scripts, props,
-vars -- so a pinned instance renders with the exact component it was added with,
+Each version snapshot stores the full component state (block, scripts, props)
+so a pinned instance renders with the exact component it was added with,
 not just the block layout.
 """
 
@@ -37,7 +37,6 @@ COMPONENT_VERSION_FIELDS = [
 	"component_css",
 	"component_js",
 	"component_props",
-	"component_vars",
 	"component_data_script",
 ]
 
@@ -126,7 +125,6 @@ def ensure_component_version(
 			"component_css": values.component_css,
 			"component_js": values.component_js,
 			"component_props": values.component_props,
-			"component_vars": values.component_vars,
 			"component_data_script": values.component_data_script,
 		}
 		data_json = compact_json(data)
@@ -205,7 +203,6 @@ def resolve_component(component_id: str, pinned_version: str | None = None) -> d
 		"component_css": values.component_css,
 		"component_js": values.component_js,
 		"component_props": values.component_props,
-		"component_vars": values.component_vars,
 		"component_data_script": values.component_data_script,
 	}
 

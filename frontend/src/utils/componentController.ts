@@ -10,14 +10,13 @@ const { run: runLatestRequest } = useLatestRequest();
 
 type ComponentDocDraft = Pick<
 	BuilderComponent,
-	"component_props" | "component_vars" | "component_data_script" | "component_js" | "component_css"
+	"component_props" | "component_data_script" | "component_js" | "component_css"
 > & {
 	component_data_preview: Record<string, any>;
 };
 
 const EMPTY_DRAFT: ComponentDocDraft = {
 	component_props: {},
-	component_vars: {},
 	component_data_script: "",
 	component_js: "",
 	component_css: "",
@@ -40,7 +39,6 @@ function cloneComponentDocFields(
 ): ComponentDocDraft {
 	return {
 		component_props: parseJSONWithFallback(doc.component_props, {}),
-		component_vars: parseJSONWithFallback(doc.component_vars, {}),
 		component_data_script: doc.component_data_script ?? "",
 		component_js: doc.component_js ?? "",
 		component_css: doc.component_css ?? "",
@@ -73,7 +71,6 @@ function applyDraftToOriginal() {
 
 	const cloned = cloneComponentDocFields(componentDocDraft);
 	original.component_props = cloned.component_props;
-	original.component_vars = cloned.component_vars;
 	original.component_data_script = cloned.component_data_script;
 	original.component_js = cloned.component_js;
 	original.component_css = cloned.component_css;
@@ -87,11 +84,6 @@ const componentDataPreview = computed(() => {
 const componentProps = computed(() => {
 	if (!currentComponentId.value) return {};
 	return componentDocDraft.component_props ?? {};
-});
-
-const componentVars = computed(() => {
-	if (!currentComponentId.value) return {};
-	return componentDocDraft.component_vars ?? {};
 });
 
 const componentDataScript = computed(() => {
@@ -113,7 +105,6 @@ const componentController = {
 	currentComponentId,
 	componentDataPreview,
 	componentProps,
-	componentVars,
 	componentDataScript,
 	componentJavaScript,
 	componentCSS,
@@ -124,14 +115,6 @@ const componentController = {
 		if (!currentComponentId.value) return;
 		componentDocDraft.component_props = props;
 		canvasStore.fragmentData.block?.setBlockProps(props);
-		markCanvasDirty(true);
-	},
-
-	getComponentVars: () => componentVars.value,
-
-	setComponentVars: (vars: BlockVars) => {
-		if (!currentComponentId.value) return;
-		componentDocDraft.component_vars = vars;
 		markCanvasDirty(true);
 	},
 

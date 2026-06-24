@@ -127,8 +127,6 @@ export interface BuilderPage extends DocType {
   page_title?: string;
   /** Page Data Script: Code */
   page_data_script?: string;
-  /** Page Variables: JSON */
-  page_vars?: any;
   /** Dynamic Route: Check */
   dynamic_route: 0 | 1;
   /** Draft Blocks: Long Text */
@@ -189,8 +187,6 @@ export interface BuilderComponent extends DocType {
   block?: any;
   /** Component Props: JSON */
   component_props?: any;
-  /** Component Variables: JSON */
-  component_vars?: any;
   /** For Web Page: Link (Builder Page) */
   for_web_page?: string;
   /** Component ID: Data */

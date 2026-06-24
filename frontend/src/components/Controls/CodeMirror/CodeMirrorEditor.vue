@@ -8,9 +8,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
-import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
-import componentController from "@/utils/componentController";
 import { createStartingState } from "@/utils/createCodeMirrorState";
 import { getDefaultPropsList, getParentProps } from "@/utils/helpers";
 import { openSearchPanel } from "@codemirror/search";
@@ -69,7 +67,6 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 						mode: props.mode,
 						blockProps: allBlockProps.value,
-						blockVars: allBlockVars.value,
 					})
 				).startState,
 			);
@@ -125,16 +122,6 @@ const allBlockProps = computed(() => {
 	};
 });
 
-const allBlockVars = computed(() => {
-	if (props.mode === "component") {
-		return componentController.getComponentVars();
-	}
-	if (props.mode === "page") {
-		return usePageStore().activePage?.page_vars ?? {};
-	}
-	return {};
-});
-
 onMounted(async () => {
 	if (!editorContainer.value) {
 		console.warn("CodeMirror: editor container not found, skipping mount");
@@ -151,7 +138,6 @@ onMounted(async () => {
 		extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
 		mode: props.mode,
 		blockProps: allBlockProps.value,
-		blockVars: allBlockVars.value,
 	});
 
 	editor = new EditorView({

@@ -34,11 +34,9 @@ const dontCompleteIn = [
 export default function jsCompletionsFromGlobalScope(
 	context: any,
 	blockProps: Record<string, any> = {},
-	blockVars: Record<string, any> = {},
 ) {
 	let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
 	const hasProps = Object.keys(blockProps).length > 0;
-	const hasVars = Object.keys(blockVars).length > 0;
 
 	if (completePropertyAfter.includes(nodeBefore.name) && nodeBefore.parent?.name == "MemberExpression") {
 		let object = nodeBefore.parent.getChild("Expression");
@@ -67,37 +65,16 @@ export default function jsCompletionsFromGlobalScope(
 					}),
 				};
 			}
-			if (variableName === "vars") {
-				if (!hasVars) return null;
-
-				let isBracket = nodeBefore.name === "[";
-				return {
-					from: context.pos,
-					options: Object.keys(blockVars).map((key) => {
-						if (isBracket) {
-							return {
-								label: key,
-								displayLabel: `${key}`,
-								apply: `"${key}"`,
-								type: "property",
-							};
-						}
-						return { label: key, type: "property" };
-					}),
-				};
-			}
 			if (typeof window[variableName] == "object") return completeProperties(from, window[variableName]);
 		}
 	} else if (nodeBefore.name == "VariableName") {
 		const extraKeys = [
 			...(hasProps ? ["props"] : []),
-			...(hasVars ? ["vars"] : []),
 		];
 		return completeProperties(nodeBefore.from, window, extraKeys);
 	} else if (context.explicit && !dontCompleteIn.includes(nodeBefore.name)) {
 		const extraKeys = [
 			...(hasProps ? ["props"] : []),
-			...(hasVars ? ["vars"] : []),
 		];
 		return completeProperties(context.pos, window, extraKeys);
 	}

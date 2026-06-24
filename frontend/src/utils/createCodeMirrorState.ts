@@ -45,7 +45,6 @@ interface CreateStateParams {
 	initialValue?: string;
 	mode?: "block" | "page" | "component";
 	blockProps?: Record<string, any>;
-	blockVars?: Record<string, any>;
 }
 
 export const createStartingState = async ({
@@ -58,7 +57,6 @@ export const createStartingState = async ({
 	initialValue = "", // to override initial value without recreating state (eg: when resetting)
 	mode,
 	blockProps,
-	blockVars,
 }: CreateStateParams) => {
 	const updateEmitter = EditorView.updateListener.of((update: ViewUpdate) => {
 		if (update.docChanged) onChangeCallback();
@@ -175,9 +173,6 @@ export const createStartingState = async ({
 						jsCompletionsFromGlobalScope(
 							context,
 							{ ...(mode == "block" ? { ...blockProps } : {}) },
-							{
-								...(mode == "component" || mode == "page" ? { ...blockVars } : {}),
-							},
 						),
 				}),
 			);

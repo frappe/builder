@@ -15,10 +15,6 @@
 					label="Page Data Preview"
 					:autofocus="false"
 					:readonly="true" />
-				<div class="my-6">
-					<div class="mb-3 text-sm text-ink-gray-8">Page Variables</div>
-					<VarsEditor :obj="pageVars" @update:obj="savePageVars" />
-				</div>
 			</div>
 			<div class="h-fit" v-if="mode == 'component'">
 				<CodeEditor
@@ -35,12 +31,6 @@
 						<PropsEditor
 							:obj="componentProps"
 							@update:obj="(obj: BlockProps) => componentController.setComponentProps(obj)" />
-					</div>
-					<div>
-						<div class="mb-3 text-sm text-ink-gray-8">Component Variables</div>
-						<VarsEditor
-							:obj="componentVars"
-							@update:obj="(obj: BlockVars) => componentController.setComponentVars(obj)" />
 					</div>
 				</div>
 			</div>
@@ -154,7 +144,7 @@
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
 								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
-								Props are accessible via the <b>props</b> object. Component Variables are accessible via the <b>vars</b> object.'
+								Props are accessible via the <b>props</b> object.'
 								:readonly="true"></CodeEditor>
 						</div>
 					</div>
@@ -178,7 +168,6 @@ import { computed, defineComponent, nextTick, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PropsEditor from "./PropsEditor.vue";
-import VarsEditor from "./VarsEditor.vue";
 import useCanvasStore from "@/stores/canvasStore.js";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 
@@ -192,7 +181,6 @@ const {
 	currentComponentId,
 	componentDataPreview,
 	componentProps,
-	componentVars,
 	componentDataScript,
 	componentJavaScript,
 	componentCSS,
@@ -264,15 +252,6 @@ const dialogTitle = computed(() => {
 const showComponentClientScriptToggle = computed(() => {
 	return mode.value === "component" && currentScriptEditor.value === "client";
 });
-
-const pageVars = computed(() => {
-	return JSON.parse(props.page.page_vars ?? "{}");
-});
-
-const savePageVars = (vars: BlockVars) => {
-	pageStore.updateActivePage("page_vars", JSON.stringify(vars));
-	props.page.page_vars = JSON.stringify(vars);
-};
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue

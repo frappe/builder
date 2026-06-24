@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import copy
-import json
 import re
 from typing import Any
 
@@ -129,7 +128,6 @@ class BuilderPage(WebsiteGenerator):
 		meta_description: DF.SmallText | None
 		meta_image: DF.AttachImage | None
 		page_data_script: DF.Code | None
-		page_vars: DF.JSON | None
 		page_name: DF.Data | None
 		page_title: DF.Data | None
 		preview: DF.Data | None
@@ -369,7 +367,7 @@ class BuilderPage(WebsiteGenerator):
 		if context.preview and self.draft_blocks:
 			blocks = self.draft_blocks
 
-		content, style, fonts, has_dual_mode_image, has_component_vars = get_block_html(blocks)
+		content, style, fonts, has_dual_mode_image = get_block_html(blocks)
 
 		if self.dynamic_route or page_data or self.page_data_script:
 			context.no_cache = 1
@@ -399,7 +397,6 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 
 		self.set_style_and_script(context)
-		context.needs_reactivity = has_component_vars or bool(context.get("page_vars_script"))
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
@@ -444,10 +441,6 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
-
-		page_vars = frappe.parse_json(self.page_vars) if self.page_vars else {}
-		if page_vars_script := render_variables_script(page_vars):
-			context.page_vars_script = page_vars_script
 
 		client_scripts = self.get("client_scripts") or []
 		for script in client_scripts:
@@ -604,7 +597,7 @@ def get_block_data(
 	return block_data
 
 
-def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
+def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 	"""
 	Main entry point for converting blocks to HTML.
 
@@ -612,7 +605,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 		blocks: JSON string or list of block dictionaries
 
 	#### Returns:
-		Tuple of (`html_content`, `css_styles`, `font_map`, `has_dual_mode_image`, `has_component_vars`)
+		Tuple of (`html_content`, `css_styles`, `font_map`, `has_dual_mode_image`)
 	"""
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
@@ -628,7 +621,6 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_dual_mode_image": False,
-		"has_component_vars": False,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -656,7 +648,6 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool, bool]:
 		str(style_tag),
 		font_map,
 		shared_state["has_dual_mode_image"],
-		shared_state["has_component_vars"],
 	)
 
 
@@ -1062,47 +1053,12 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		return key
 
 
-def render_variables_script(vars: dict | None = None, *, invocation: str | None = None) -> str:
-	"""Build Vue ref/reactive declarations for page or block vars, optionally wrapping a script invocation."""
-	REACTIVE_VAR_TYPES = {"object", "array"}
-	DEFAULT_VAR_VALUES = {
-		"number": 0,
-		"string": "",
-		"boolean": False,
-		"object": {},
-		"array": [],
-	}
-	vars = vars or {}
-	if not vars:
-		return invocation or ""
-
-	entries = []
-	for name, var_def in vars.items():
-		var_type = var_def.get("type", "string")
-		if "initialValue" in var_def and var_def["initialValue"] is not None:
-			initial_value = var_def["initialValue"]
-		else:
-			initial_value = DEFAULT_VAR_VALUES.get(var_type, "")
-		wrapper = "reactive" if var_type in REACTIVE_VAR_TYPES else "ref"
-		entries.append(f"{name}: {wrapper}({json.dumps(initial_value)})")
-
-	vars_body = ", ".join(entries)
-	declaration = f"const variables = {{ {vars_body} }};"
-
-	if invocation is None:
-		return declaration
-
-	return "\n".join(["{", f"  {declaration}", f"  {invocation}", "}"])
-
-
-def create_client_script_tag(
-	state: dict, script_id: str, script: dict, block_vars: dict | None = None
-) -> bs.Tag:
+def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
 	"""Register a client script globally (once) and return its per-block tag."""
 	if script["type"] == "JavaScript":
 		if script_id not in state["used_block_scripts"]:
 			state["global_script_tag"].append(
-				f"function client_script_{script_id}(component_data, props, variables) {{{script['script']}}}\n"
+				f"function client_script_{script_id}(component_data, props) {{{script['script']}}}\n"
 			)
 			state["used_block_scripts"].add(script_id)
 
@@ -1111,14 +1067,10 @@ def create_client_script_tag(
 			f"(client_script_{script_id}).call("
 			f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
 			f"{{{{ component.component_data | to_safe_json }}}}, "
-			f"{{{{ props | to_safe_json }}}}, "
-			f"variables"
+			f"{{{{ props | to_safe_json }}}}"
 			f");"
 		)
-		if script.get("from") == "component":
-			script_tag.string = render_variables_script(block_vars, invocation=invocation)
-		else:
-			script_tag.string = invocation
+		script_tag.string = invocation
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
@@ -1133,7 +1085,6 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 		str(component_script["name"]): {
 			"script": component_script["script"],
 			"type": component_script["type"],
-			"from": "component",
 		}
 		for component_script in component_scripts
 	}
@@ -1141,14 +1092,10 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	if not scripts:
 		return
 
-	block_vars = block.get("vars") or {}
-	if block_vars and any(script.get("type") == "JavaScript" for script in component_scripts):
-		state["has_component_vars"] = True
-
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
 	for script_id, script in reversed(list(scripts.items())):
-		tag.append(create_client_script_tag(state, script_id, script, block_vars))
+		tag.append(create_client_script_tag(state, script_id, script))
 
 
 def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
@@ -1302,9 +1249,6 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 					"type": "JavaScript",
 				}
 			)
-
-		if component.get("component_vars"):
-			component_block["vars"] = frappe.parse_json(component["component_vars"]) or {}
 
 		if component_scripts:
 			component_block["componentClientScripts"] = component_scripts

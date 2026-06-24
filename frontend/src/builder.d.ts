@@ -27,16 +27,6 @@ declare type BlockProps = Record<
 	}
 >;
 
-declare type BlockVarType = "number" | "string" | "boolean" | "object" | "array";
-
-declare type BlockVars = Record<
-	string,
-	{
-		type: BlockVarType;
-		initialValue?: string | number | boolean | Record<string, unknown> | unknown[] | null;
-	}
->;
-
 declare type BlockVisibilityCondition = {
 	key: string | undefined;
 	comesFrom: "props" | "dataScript" | "componentData" | undefined;

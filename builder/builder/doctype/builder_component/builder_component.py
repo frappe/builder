@@ -25,7 +25,6 @@ class BuilderComponent(Document):
 
 		block: DF.JSON | None
 		component_props: DF.JSON | None
-		component_vars: DF.JSON | None
 		component_css: DF.Code | None
 		component_data_script: DF.Code | None
 		component_id: DF.Data | None

@@ -26,7 +26,6 @@
   "draft_blocks",
   "scripting_tab",
   "page_data_script",
-  "page_vars",
   "head_html",
   "body_html",
   "client_scripts",
@@ -101,11 +100,6 @@
    "fieldtype": "Code",
    "label": "Page Data Script",
    "options": "Python"
-  },
-  {
-   "fieldname": "page_vars",
-   "fieldtype": "JSON",
-   "label": "Page Variables"
   },
   {
    "fieldname": "content_tab",

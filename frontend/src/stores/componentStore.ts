@@ -99,7 +99,6 @@ const useComponentStore = defineStore("componentStore", {
 					name: componentName,
 					block: getBlockObject(block),
 					component_props: doc?.component_props || {},
-					component_vars: doc?.component_vars || {},
 					component_data_script: doc?.component_data_script || "",
 					component_js: doc?.component_js || "",
 					component_css: doc?.component_css || "",
@@ -188,7 +187,6 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		setComponentMap(componentDoc: BuilderComponent) {
 			componentDoc.component_props = parseJSONWithFallback(componentDoc.component_props, {});
-			componentDoc.component_vars = parseJSONWithFallback(componentDoc.component_vars, {});
 			this.componentDocMap.set(componentDoc.name, componentDoc);
 			this.componentMap.set(componentDoc.name, markRaw(getBlockInstance(componentDoc.block)));
 		},
@@ -223,7 +221,6 @@ const useComponentStore = defineStore("componentStore", {
 				if (doc?.block) {
 					const versionedDoc = { ...doc } as BuilderComponent;
 					versionedDoc.component_props = parseJSONWithFallback(versionedDoc.component_props, {});
-					versionedDoc.component_vars = parseJSONWithFallback(versionedDoc.component_vars, {});
 					this.componentVersionMap.set(versionName, versionedDoc);
 				} else {
 					// pruned/missing version — show the live component instead
