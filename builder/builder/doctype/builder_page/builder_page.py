@@ -23,6 +23,7 @@ from builder.builder.component_versions import (
 	collect_restore_warnings,
 	ensure_component_version,
 	is_pin_outdated,
+	pin_components_in_page_data,
 	resolve_component,
 )
 from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
@@ -273,6 +274,7 @@ class BuilderPage(WebsiteGenerator):
 				self.name,
 				fields=["draft_blocks", "page_data_script"],
 				snapshot_type="Publish",
+				transform=pin_components_in_page_data,
 			)
 			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
 			self.blocks = self.draft_blocks
@@ -307,6 +309,7 @@ class BuilderPage(WebsiteGenerator):
 			fields=[field, "page_data_script"],
 			snapshot_type="Manual",
 			label=label,
+			transform=pin_components_in_page_data,
 		)
 
 	@frappe.whitelist()

@@ -17,6 +17,8 @@ vars -- so a pinned instance renders with the exact component it was added with,
 not just the block layout.
 """
 
+import copy
+
 import frappe
 
 from builder.builder.doctype.builder_snapshot.builder_snapshot import (
@@ -51,6 +53,24 @@ def walk_blocks(node, visitor):
 			walk_blocks(item, visitor)
 
 
+def pin_components_in_page_data(data: dict) -> dict:
+	"""`take_snapshot` transform: pin component versions inside captured blocks.
+
+	Returns a copy of `data` where any `draft_blocks` / `blocks` JSON has
+	`componentVersion` set on every component instance block. Other fields pass through untouched.
+	"""
+	out = dict(data)
+	cache: dict[str, str | None] = {}
+	for key in ("draft_blocks", "blocks"):
+		value = out.get(key)
+		if not value:
+			continue
+		blocks = copy.deepcopy(frappe.parse_json(value))
+		walk_blocks(blocks, lambda block: pin_block(block, set(), cache))
+		out[key] = compact_json(blocks)
+	return out
+
+
 def canonical(block_json, strip_pins=False):
 	"""Stable serialization for comparing two block JSON strings."""
 	parsed = frappe.parse_json(block_json or "{}")
@@ -61,7 +81,7 @@ def canonical(block_json, strip_pins=False):
 
 def pin_block(block: dict, visited: set[str], cache: dict) -> None:
 	"""Set `componentVersion` on a block that references a component."""
-	component_id = block.get("extendedFromComponent") or block.get("isChildOfComponent")
+	component_id = block.get("extendedFromComponent")
 	if not component_id:
 		return
 	version = ensure_component_version(component_id, visited, cache)
