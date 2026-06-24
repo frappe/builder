@@ -373,9 +373,9 @@ def setup_clicks_table(table_name=CLICKS_TABLE):
 		)
 		db.register("df", df)
 		db.execute(
-			f"CREATE OR REPLACE TABLE {table_name} AS SELECT TRY_CAST(creation AS TIMESTAMP) as creation, CAST(CASE WHEN is_unique = '' OR is_unique IS NULL THEN '0' ELSE CAST(is_unique AS VARCHAR) END AS INTEGER) as is_unique, CAST(path AS VARCHAR) as path, CAST(element AS VARCHAR) as element, CAST(tag AS VARCHAR) as tag, CAST(text AS VARCHAR) as text, CAST(href AS VARCHAR) as href, CAST(visitor_id AS VARCHAR) as visitor_id FROM df"
+			f"CREATE OR REPLACE TABLE {table_name} AS SELECT TRY_CAST(creation AS TIMESTAMP) as creation, CAST(COALESCE(is_unique, 0) AS INTEGER) as is_unique, CAST(path AS VARCHAR) as path, CAST(element AS VARCHAR) as element, CAST(tag AS VARCHAR) as tag, CAST(text AS VARCHAR) as text, CAST(href AS VARCHAR) as href, CAST(visitor_id AS VARCHAR) as visitor_id FROM df"
 		)
-		print(f"Successfully ingested {len(df)} click records into DuckDB")
+		frappe.logger().info(f"Successfully ingested {len(df)} click records into DuckDB")
 
 
 def ingest_clicks_to_duckdb(table_name=CLICKS_TABLE):
@@ -391,7 +391,9 @@ def ingest_clicks_to_duckdb(table_name=CLICKS_TABLE):
 			f"SELECT data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND column_name = 'creation'"
 		).fetchone()
 		if col_type and col_type[0].upper() != "TIMESTAMP":
-			print(f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP")
+			frappe.logger().info(
+				f"Recreating {table_name}: creation column type is {col_type[0]}, expected TIMESTAMP"
+			)
 			setup_clicks_table(table_name)
 			return
 
@@ -417,7 +419,7 @@ def ingest_clicks_to_duckdb(table_name=CLICKS_TABLE):
 
 			db.executemany(
 				f"INSERT INTO {table_name} (creation, is_unique, path, element, tag, text, href, visitor_id) "
-				f"VALUES (TRY_CAST(? AS TIMESTAMP), CAST(COALESCE(NULLIF(?, ''), '0') AS INTEGER), ?, ?, ?, ?, ?, ?)",
+				f"VALUES (TRY_CAST(? AS TIMESTAMP), CAST(COALESCE(?, 0) AS INTEGER), ?, ?, ?, ?, ?, ?)",
 				records,
 			)
 

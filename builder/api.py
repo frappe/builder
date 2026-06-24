@@ -478,10 +478,8 @@ def make_click_log(
 	if path.startswith(("api/", "app/", "assets/", "private/files/")):
 		return
 
-	is_unique = visitor_id and not bool(
-		frappe.db.exists(
-			"Builder Page Click", {"visitor_id": visitor_id, "path": path, "element": element or ""}
-		)
+	is_unique = bool(visitor_id) and not frappe.db.exists(
+		"Builder Page Click", {"visitor_id": visitor_id, "path": path, "element": element or ""}
 	)
 
 	click = frappe.new_doc("Builder Page Click")
@@ -496,7 +494,7 @@ def make_click_log(
 	try:
 		click.deferred_insert()
 	except Exception:
-		frappe.clear_last_message()
+		frappe.log_error("Failed to log builder page click")
 
 
 def get_keys_for_autocomplete(

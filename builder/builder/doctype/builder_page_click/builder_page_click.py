@@ -16,7 +16,7 @@ class BuilderPageClick(Document):
 
 		element: DF.Data | None
 		href: DF.Data | None
-		is_unique: DF.Data | None
+		is_unique: DF.Check
 		path: DF.Data | None
 		tag: DF.Data | None
 		text: DF.SmallText | None

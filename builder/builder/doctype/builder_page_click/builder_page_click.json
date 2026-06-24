@@ -46,7 +46,7 @@
   },
   {
    "fieldname": "is_unique",
-   "fieldtype": "Data",
+   "fieldtype": "Check",
    "label": "Is Unique"
   },
   {
