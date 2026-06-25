@@ -1214,6 +1214,9 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 	passed_down_literal = to_jinja_literal(context["passed_down_props"])
 
 	# Set props contexts
+	if context.get("component_id"):
+		component_id_literal = to_jinja_literal(context["component_id"])
+		html = f"{{% with component = get_component_data({component_id_literal}, props) %}}{html}{{% endwith %}}"
 	html = f"{{% with props = {all_props_literal} %}}{html}{{% endwith %}}"
 	html = f"{{% with passed_down_props = {passed_down_literal} %}}{html}{{% endwith %}}"
 
