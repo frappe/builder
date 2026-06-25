@@ -853,7 +853,11 @@ function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T
 		return fallback;
 	}
 	if (typeof value === "string") {
-		return JSON.parse(value || JSON.stringify(fallback)) as T;
+		try {
+			return JSON.parse(value) as T;
+		} catch {
+			return fallback;
+		}
 	}
 	return value as T;
 }
