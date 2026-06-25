@@ -195,7 +195,9 @@ def resolve_component(component_id: str, pinned_version: str | None = None) -> d
 		)
 		if data:
 			return frappe.parse_json(data)
-	values = frappe.db.get_value("Builder Component", component_id, COMPONENT_VERSION_FIELDS, as_dict=True)
+	values = frappe.get_cached_value(
+		"Builder Component", component_id, COMPONENT_VERSION_FIELDS, as_dict=True
+	)
 	if values is None:
 		return None
 	return {
