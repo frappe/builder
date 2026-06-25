@@ -1,6 +1,5 @@
 import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
-import useComponentStore, { COMPONENT_DATA_FRAGMENT_KEY } from "@/stores/componentStore";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";

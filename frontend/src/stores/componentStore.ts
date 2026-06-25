@@ -12,8 +12,6 @@ import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
 
-export const COMPONENT_DATA_FRAGMENT_KEY = "__fragment__";
-
 export type ComponentDataStore = Record<string, Record<string, Record<string, any>>>;
 
 const { run: runLatestRequest } = useLatestRequest();
@@ -446,17 +444,17 @@ const useComponentStore = defineStore("componentStore", {
 				}
 			}
 		},
-		getComponentInstanceData(componentId: string, blockId: string | null = null) {
-			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+		getComponentInstanceData(componentId: string, blockId: string) {
+			const instanceKey = blockId;
 			return this.componentData[componentId]?.[instanceKey] ?? {};
 		},
 		async setComponentData(
 			componentId: string,
 			props: Record<string, any> = {},
-			blockId: string | null = null,
+			blockId: string,
 			componentVersion?: string,
 		) {
-			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+			const instanceKey = blockId;
 			const requestKey = `${componentId}::${instanceKey}`;
 			// use the data script from the pinned version when available, else live component
 			const versionedDoc = componentVersion ? this.getComponentVersionDoc(componentVersion) : this.getComponent(componentId);
@@ -487,8 +485,8 @@ const useComponentStore = defineStore("componentStore", {
 			}
 			this.componentData[componentId][instanceKey] = result.value;
 		},
-		async deleteComponentData(componentId: string, blockId: string | null = null) {
-			const instanceKey = blockId ?? COMPONENT_DATA_FRAGMENT_KEY;
+		async deleteComponentData(componentId: string, blockId: string) {
+			const instanceKey = blockId;
 			if (!this.componentData[componentId]) return;
 			this.componentData[componentId][instanceKey] = {};
 		},
