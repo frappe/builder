@@ -164,10 +164,10 @@ const componentController = {
 		const result = await runLatestRequest(requestKey, () =>
 			createResource({
 				url: "builder.api.get_component_data",
-				method: "GET",
+				method: "POST",
 				auto: false,
 			})
-				.fetch({
+				.submit({
 					component_name: componentId,
 					props: JSON.stringify(props),
 					script,

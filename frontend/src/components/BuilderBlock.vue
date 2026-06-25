@@ -162,12 +162,14 @@ const hasBlockProps = computed(() => {
 	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
 });
 
+const hasComponentData = computed(() => Object.keys(resolvedComponentData.value || {}).length > 0);
+
 const getDataScriptValue = (path: string): any => {
 	return getDataForKey(props.data || {}, path);
 };
 
 const getComponentDataValue = (path: string): any => {
-	return getDataForKey(props.componentData || {}, path);
+	return getDataForKey(resolvedComponentData.value || {}, path);
 };
 
 const attributes = computed(() => {
@@ -214,15 +216,11 @@ const attributes = computed(() => {
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
-		attribs.componentData = props.componentData;
+		attribs.componentData = resolvedComponentData.value;
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (
-		props.data ||
-		hasBlockProps.value ||
-		(props.componentData && Object.keys(props.componentData).length > 0)
-	) {
+	if (props.data || hasBlockProps.value || hasComponentData.value) {
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -233,6 +231,8 @@ const attributes = computed(() => {
 					props.defaultProps,
 					getComponentDataValue,
 				);
+			} else if (props.block.getDataKey("comesFrom") === "componentData") {
+				value = getComponentDataValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key") as string);
 			}
@@ -284,11 +284,7 @@ const target = computed(() => {
 
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
-	if (
-		props.data ||
-		hasBlockProps.value ||
-		(props.componentData && Object.keys(props.componentData).length > 0)
-	) {
+	if (props.data || hasBlockProps.value || hasComponentData.value) {
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -299,6 +295,8 @@ const styles = computed(() => {
 					props.defaultProps,
 					getComponentDataValue,
 				);
+			} else if (props.block.getDataKey("comesFrom") === "componentData") {
+				value = getComponentDataValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
 			}
