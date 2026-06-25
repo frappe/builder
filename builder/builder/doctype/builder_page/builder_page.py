@@ -1225,7 +1225,8 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 		return block, None
 
 	component_id = block.get("extendedFromComponent")
-	component = resolve_component(component_id, block.get("componentVersion"))
+	component_version = block.get("componentVersion")
+	component = resolve_component(component_id, component_version)
 	if not component:
 		return block, None
 
@@ -1237,10 +1238,11 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 		extend_block(component_block, block)
 
 		component_scripts = []
+		component_script_base = get_component_script_base(component_id, component_version)
 		if component.get("component_css"):
 			component_scripts.append(
 				{
-					"name": f"{frappe.scrub(component_id)}_css",
+					"name": f"{component_script_base}_css",
 					"script": component["component_css"],
 					"type": "CSS",
 				}
@@ -1248,7 +1250,7 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 		if component.get("component_js"):
 			component_scripts.append(
 				{
-					"name": f"{frappe.scrub(component_id)}_js",
+					"name": f"{component_script_base}_js",
 					"script": component["component_js"],
 					"type": "JavaScript",
 				}
@@ -1260,6 +1262,13 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 		return component_block, component_id
 
 	return block, None
+
+
+def get_component_script_base(component_id: str, component_version: str | None) -> str:
+	parts = [frappe.scrub(component_id)]
+	if component_version:
+		parts.append(frappe.scrub(component_version))
+	return "_".join(parts)
 
 
 def wrap_with_media_query(style_string, device):
