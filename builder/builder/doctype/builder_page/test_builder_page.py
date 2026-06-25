@@ -547,6 +547,24 @@ component.update({
 			page.delete()
 			component.delete()
 
+	def test_reactivity_library_can_be_disabled_per_page(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "No Reactivity Library Test",
+				"published": 1,
+				"route": "/no-reactivity-library-test",
+				"enable_reactivity_library": 0,
+				"blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/no-reactivity-library-test")
+			self.assertNotIn("/assets/builder/js/reactivity.js", content)
+		finally:
+			page.delete()
+
 	def test_component_props(self):
 		component_root = Block(element="div", blockId="wrapper-block")
 		content_static_prop = Block(

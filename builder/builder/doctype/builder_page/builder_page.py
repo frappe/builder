@@ -120,6 +120,7 @@ class BuilderPage(WebsiteGenerator):
 		disable_indexing: DF.Check
 		draft_blocks: DF.LongText | None
 		dynamic_route: DF.Check
+		enable_reactivity_library: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		is_standard: DF.Check
@@ -206,6 +207,7 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("published")
 			or self.has_value_changed("published_at")
 			or self.has_value_changed("disable_indexing")
+			or self.has_value_changed("enable_reactivity_library")
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
@@ -397,6 +399,7 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 
 		self.set_style_and_script(context)
+		context.enable_reactivity_library = self.enable_reactivity_library != 0
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
