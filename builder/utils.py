@@ -307,9 +307,7 @@ def sync_page_templates():
 
 
 def sync_block_templates():
-	print("Syncing Builder Block Templates")
-	builder_block_template_path = frappe.get_module_path("builder", "builder_block_template")
-	make_records(builder_block_template_path)
+	print("Skipping deprecated Builder Block Templates")
 
 
 def sync_builder_variables():

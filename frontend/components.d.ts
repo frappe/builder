@@ -52,6 +52,7 @@ declare module 'vue' {
     ColorPickerContent: typeof import('./src/components/Controls/ColorPickerContent.vue')['default']
     CommandPalette: typeof import('./src/components/CommandPalette.vue')['default']
     CommandPaletteItem: typeof import('./src/components/CommandPaletteItem.vue')['default']
+    ComponentPreviewSettings: typeof import('./src/components/ComponentPreviewSettings.vue')['default']
     ComponentUpdates: typeof import('./src/components/ComponentUpdates.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']

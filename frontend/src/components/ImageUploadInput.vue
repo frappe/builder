@@ -15,23 +15,19 @@
 						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
-								:class="{
-									'[&>input]:pl-8': labelPosition === 'left',
-								}"
+								class="[&>input]:pl-8"
 								type="text"
-								:label="labelPosition === 'top' ? label : null"
 								:placeholder="placeholder"
 								:description="description"
-								:hideClearButton="labelPosition === 'top'"
 								@update:modelValue="setImageURL"
 								:modelValue="currentImageURL">
-								<template v-if="labelPosition === 'top'" #suffix>
+								<!-- <template v-if="labelPosition === 'top'" #suffix>
 									<ImageUploader
 										@upload="setImageURL"
 										@remove="setImageURL('')"
 										:image_url="currentImageURL"
 										:file_types="['image/*']" />
-								</template>
+								</template> -->
 							</BuilderInput>
 							<img
 								v-if="labelPosition === 'left'"
@@ -42,6 +38,15 @@
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
+							<Button
+								v-else
+								class="absolute bottom-0 left-0"
+								variant="ghost"
+								theme="gray"
+								size="sm"
+								label=""
+								icon="lucide-image-plus"
+								@click="openFileSelector" />
 						</div>
 					</div>
 				</template>
@@ -87,7 +92,7 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { FileUploader, Popover } from "frappe-ui";
+import { Button, FileUploader, Popover } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = withDefaults(

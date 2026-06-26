@@ -1,0 +1,15 @@
+{
+ "doctype": "Builder Component",
+ "name": "builder_template_heading",
+ "component_id": "builder_template_heading",
+ "component_name": "Heading",
+ "is_standard": 1,
+ "preview": "/builder_assets/Heading/heading.png",
+ "category": "Typography",
+ "sort_order": 10,
+ "block": "{\"attributes\": {},\"baseStyles\": {\"fontSize\": \"2rem\",\"fontWeight\": \"bold\",\"height\": \"fit-content\",\"lineHeight\": \"1.4\",\"minWidth\": \"10px\",\"position\": \"static\",\"width\": \"fit-content\"},\"blockId\": \"sszefcous\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"h1\",\"innerHTML\": \"Heading\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "component_props": "{}",
+ "component_data_script": "",
+ "component_js": "",
+ "component_css": ""
+}

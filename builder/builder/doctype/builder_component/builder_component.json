@@ -9,6 +9,12 @@
  "engine": "InnoDB",
  "field_order": [
   "component_name",
+  "is_standard",
+  "preview",
+  "preview_width",
+  "preview_height",
+  "category",
+  "sort_order",
   "block",
   "component_props",
   "for_web_page",
@@ -22,6 +28,44 @@
    "fieldname": "component_name",
    "fieldtype": "Data",
    "label": "Component Name"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Standard"
+  },
+  {
+   "fieldname": "preview",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Preview"
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_width",
+   "fieldtype": "Int",
+   "label": "Preview Width"
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_height",
+   "fieldtype": "Int",
+   "label": "Preview Height"
+  },
+  {
+   "default": "Basic",
+   "fieldname": "category",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Category",
+   "search_index": 1
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
   },
   {
    "fieldname": "block",

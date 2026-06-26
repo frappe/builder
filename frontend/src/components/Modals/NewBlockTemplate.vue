@@ -1,18 +1,13 @@
 <template>
 	<Dialog
-		title="Save as Block Template"
+		title="Save as Template"
 		size="sm"
 		:actions="[
 			{
 				label: 'Save',
 				variant: 'solid',
-				onClick: (close: () => void) => {
-					blockTemplateStore.saveBlockTemplate(
-						block,
-						blockTemplateProperties.templateName,
-						blockTemplateProperties.category,
-						blockTemplateProperties.previewImage,
-					);
+				onClick: async (close: () => void) => {
+					await saveTemplateComponent(block);
 					close();
 				},
 			},
@@ -27,10 +22,9 @@
 					required
 					:hideClearButton="true" />
 				<BuilderInput
-					type="select"
+					type="text"
 					v-model="blockTemplateProperties.category"
 					label="Category"
-					:options="blockTemplateStore.blockTemplateCategoryOptions"
 					:hideClearButton="true" />
 				<div class="relative">
 					<BuilderInput
@@ -52,6 +46,22 @@
 						</template>
 					</FileUploader>
 				</div>
+				<div class="grid grid-cols-2 gap-3">
+					<BuilderInput
+						type="number"
+						v-model="blockTemplateProperties.previewWidth"
+						label="Preview Width"
+						min="1"
+						max="2"
+						:hideClearButton="true" />
+					<BuilderInput
+						type="number"
+						v-model="blockTemplateProperties.previewHeight"
+						label="Preview Height"
+						min="1"
+						max="2"
+						:hideClearButton="true" />
+				</div>
 			</div>
 		</template>
 	</Dialog>
@@ -59,8 +69,9 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
-import useBlockTemplateStore from "@/stores/blockTemplateStore";
-import { FileUploader } from "frappe-ui";
+import webComponent, { builderComponentCategories, standardComponent } from "@/data/webComponent";
+import { getBlockString } from "@/utils/helpers";
+import { FileUploader, toast } from "frappe-ui";
 import { ref } from "vue";
 
 const showBlockTemplateDialog = ref(false);
@@ -68,10 +79,58 @@ defineProps<{
 	block: Block;
 }>();
 
-const blockTemplateStore = useBlockTemplateStore();
 const blockTemplateProperties = ref({
 	templateName: "",
-	category: "" as (typeof blockTemplateStore.blockTemplateCategoryOptions)[number],
+	category: "Basic",
 	previewImage: "",
+	previewWidth: 1,
+	previewHeight: 1,
 });
+
+const getTemplateComponentId = (templateName: string) => {
+	const slug = templateName
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "_")
+		.replace(/^_+|_+$/g, "");
+	if (!slug) {
+		throw new Error("Template name is required");
+	}
+	return `builder_template_${slug}`;
+};
+
+const getPreviewSize = (value: string | number) => {
+	const size = Number(value) || 1;
+	return Math.min(Math.max(size, 1), 2);
+};
+
+const saveTemplateComponent = async (block: Block) => {
+	const componentId = getTemplateComponentId(blockTemplateProperties.value.templateName);
+	const args = {
+		name: componentId,
+		component_id: componentId,
+		component_name: blockTemplateProperties.value.templateName,
+		is_standard: 1,
+		category: blockTemplateProperties.value.category,
+		preview: blockTemplateProperties.value.previewImage,
+		preview_width: getPreviewSize(blockTemplateProperties.value.previewWidth),
+		preview_height: getPreviewSize(blockTemplateProperties.value.previewHeight),
+		block: getBlockString(block),
+	};
+
+	if (standardComponent.getRow(componentId)) {
+		await standardComponent.setValue.submit(args);
+	} else {
+		await standardComponent.insert.submit(args).catch(async (e: { response?: { status?: number } }) => {
+			if (e?.response?.status !== 409) {
+				throw e;
+			}
+			await standardComponent.setValue.submit(args);
+		});
+	}
+	await standardComponent.reload();
+	await builderComponentCategories.reload();
+	await webComponent.reload();
+	toast.success("Template saved!");
+};
 </script>

@@ -39,7 +39,7 @@
 import type { Component } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 
-defineProps<{
+const props = defineProps<{
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
 	events?: Record<string, unknown>;
@@ -56,4 +56,6 @@ defineEmits<{
 	(e: "openDynamicModal"): void;
 	(e: "clearDynamic"): void;
 }>();
+
+console.log(99, props.controlAttrs);
 </script>

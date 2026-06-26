@@ -1,5 +1,4 @@
 import type Block from "@/block";
-import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -20,7 +19,6 @@ const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
-const blockTemplateStore = useBlockTemplateStore();
 
 type LayoutDirection = "row" | "column";
 
@@ -212,7 +210,6 @@ export function useCanvasDropZone(
 	const handleBlockDrop = async (ev: DragEvent) => {
 		let { parentBlock, index } = canvasStore.dropTarget;
 		const componentName = ev.dataTransfer?.getData("componentName");
-		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
 
 		if (componentName) {
 			await componentStore.loadComponent(componentName);
@@ -232,22 +229,6 @@ export function useCanvasDropZone(
 			}
 			ev.stopPropagation();
 			capture("builder_component_used");
-		} else if (blockTemplate) {
-			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
-			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
-			// if shift key is pressed, replace parent block with new block
-			if (ev.shiftKey) {
-				parentBlock = getBlockToReplace(ev);
-				if (!parentBlock) return;
-				const parentParentBlock = parentBlock.getParentBlock();
-				if (!parentParentBlock) return;
-				const index = parentParentBlock.children.indexOf(parentBlock);
-				parentParentBlock.children.splice(index, 1, newBlock);
-			} else {
-				if (!parentBlock) return;
-				parentBlock.addChild(newBlock, index);
-			}
-			capture("builder_block_template_used", { template: blockTemplate });
 		}
 	};
 

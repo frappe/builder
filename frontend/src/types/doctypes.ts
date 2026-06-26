@@ -85,8 +85,8 @@ export interface BlockTemplate extends DocType {
   block: any;
   /** Preview: Data */
   preview: string;
-  /** Category: Select */
-  category?: 'Structure' | 'Basic' | 'Typography' | 'Basic Forms' | 'Form parts' | 'Media' | 'Advanced';
+  /** Category: Data */
+  category?: string;
   /** Preview Width: Int */
   preview_width?: number;
   /** Preview Height: Int */
@@ -185,6 +185,18 @@ export interface BuilderSnapshot extends DocType {
 export interface BuilderComponent extends DocType {
   /** Component Name: Data */
   component_name?: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
+  /** Preview: Data */
+  preview?: string;
+  /** Preview Width: Int */
+  preview_width?: number;
+  /** Preview Height: Int */
+  preview_height?: number;
+  /** Category: Data */
+  category?: string;
+  /** Sort Order: Int */
+  sort_order?: number;
   /** Block: JSON */
   block?: any;
   /** Component Props: JSON */
@@ -200,5 +212,4 @@ export interface BuilderComponent extends DocType {
   /** Component CSS: Code */
   component_css?: string;
   /** Persona Survey Done: Check */
-  persona_survey_done: 0 | 1;
 }

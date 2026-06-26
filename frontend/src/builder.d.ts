@@ -62,6 +62,12 @@ declare interface BlockComponent {
 	name: string;
 	component_name: string;
 	component_id: string;
+	is_standard?: 0 | 1;
+	preview?: string;
+	preview_width?: number;
+	preview_height?: number;
+	category?: string;
+	sort_order?: number;
 	icon: string;
 	is_dynamic: boolean;
 	block: BlockOptions;

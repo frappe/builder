@@ -62,6 +62,13 @@ const duplicateBlock = () => {
 	block.value.duplicateBlock();
 };
 
+const canEditComponent = () => {
+	if (!block.value.isExtendedFromComponent()) return false;
+	if (window.is_developer_mode) return true;
+	const componentId = block.value.extendedFromComponent || block.value.isChildOfComponent;
+	return !componentStore.getComponent(componentId as string)?.is_standard;
+};
+
 const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit with AI",
@@ -255,11 +262,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 		action: () => {
 			componentStore.editComponent(block.value);
 		},
-		condition: () => block.value.isExtendedFromComponent(),
+		condition: () => canEditComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
-		label: "Save as Block Template",
+		label: "Save as Template",
 		action: () => {
 			showBlockTemplateDialog.value = true;
 		},
