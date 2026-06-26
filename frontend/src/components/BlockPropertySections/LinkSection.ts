@@ -74,8 +74,8 @@ const linkSectionProperties = [
 		getProps: () => {
 			return {
 				label: "Track Clicks",
-				description: "Show clicks on this element in analytics",
 				size: "sm",
+				class: "[&_label]:text-xs [&_label]:text-ink-gray-6 [&_label]:font-normal",
 				modelValue: blockController.isClickTrackingEnabled(),
 			};
 		},
