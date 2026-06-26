@@ -1,4 +1,5 @@
 import os
+import time
 
 import duckdb
 import frappe
@@ -9,13 +10,27 @@ CLICKS_TABLE = "web_page_clicks"
 
 
 class DuckDBConnection:
-	def __init__(self):
+	# DuckDB takes a single cross-process file lock: concurrent read-only connections
+	# coexist, but a read-write one is exclusive. Reads pass read_only=True so dashboard
+	# requests don't lock each other out; both kinds retry briefly to ride out the lock
+	# held by the periodic ingestion (or another worker mid-connect).
+	def __init__(self, read_only=False, retries=8, retry_delay=0.25):
 		self.db = None
+		self.read_only = read_only
+		self.retries = retries
+		self.retry_delay = retry_delay
 
 	def __enter__(self):
 		duckdb_path = os.path.join(frappe.get_site_path(), "builder_analytics.duckdb")
-		self.db = duckdb.connect(duckdb_path)
-		return self.db
+		for attempt in range(self.retries):
+			try:
+				self.db = duckdb.connect(duckdb_path, read_only=self.read_only)
+				return self.db
+			except duckdb.IOException as e:
+				# Only the lock conflict is transient; a missing file etc. should surface
+				if "lock" not in str(e).lower() or attempt == self.retries - 1:
+					raise
+				time.sleep(self.retry_delay)
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		if self.db:
@@ -260,7 +275,7 @@ def get_page_analytics(
 		# Use provided interval or default to daily
 		interval = interval or "daily"
 
-		with DuckDBConnection() as db:
+		with DuckDBConnection(read_only=True) as db:
 			# Get interval-based data
 			interval_query = get_interval_views_query(where_clause, interval, table_name)
 			rows = db.execute(interval_query, params).fetchall()
@@ -295,7 +310,7 @@ def get_top_pages(
 		inner_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
 		where_clause = "" if inner_clause == "1=1" else f"WHERE {inner_clause}"
 
-		with DuckDBConnection() as db:
+		with DuckDBConnection(read_only=True) as db:
 			q = f"""
 				SELECT path as route, COUNT(*) as view_count, SUM(is_unique) as unique_view_count
 				FROM {table_name}
@@ -322,7 +337,7 @@ def get_top_referrers(
 	try:
 		where_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
 
-		with DuckDBConnection() as db:
+		with DuckDBConnection(read_only=True) as db:
 			referrer_query = get_referrer_domain_query(where_clause, 20, table_name)
 			rows = db.execute(referrer_query, params).fetchall()
 			return [{"domain": r[0], "count": r[1], "unique_count": r[2]} for r in rows]
