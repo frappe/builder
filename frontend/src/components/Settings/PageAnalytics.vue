@@ -18,8 +18,8 @@
 				</template>
 			</AnalyticsOverview>
 			<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-				<TopClicksList :elements="ctrData.elements" :loading="ctr?.loading" />
 				<TopReferrersList :rows="processedAnalyticsData.top_referrers" :loading="analytics.loading" />
+				<TopClicksList :elements="ctrData.elements" :loading="ctr?.loading" />
 			</div>
 		</template>
 	</div>
