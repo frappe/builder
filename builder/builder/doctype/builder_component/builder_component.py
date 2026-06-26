@@ -7,7 +7,7 @@ import os
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.modules.export_file import export_to_files
+from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
@@ -85,6 +85,8 @@ class BuilderComponent(Document):
 					"Standard components cannot be deleted. Please enable developer mode to delete standard components."
 				)
 			)
+		if getattr(self, "is_standard", 0) and frappe.conf.developer_mode:
+			delete_folder("builder", "builder_component", self.name)
 
 	def sync_component(self):
 		# Only load pages whose blocks/draft_blocks mention this component; the

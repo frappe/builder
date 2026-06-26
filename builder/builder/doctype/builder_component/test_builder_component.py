@@ -116,3 +116,23 @@ class TestBuilderComponent(FrappeTestCase):
 			component.update_exported_component()
 
 		export_to_files.assert_not_called()
+
+	def test_standard_component_deletion_removes_exported_files(self):
+		old_developer_mode = frappe.conf.developer_mode
+		frappe.conf.developer_mode = 1
+		self.addCleanup(setattr, frappe.conf, "developer_mode", old_developer_mode)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"name": "test_standard_component",
+				"component_id": "test_standard_component",
+				"is_standard": 1,
+			}
+		)
+
+		with patch(
+			"builder.builder.doctype.builder_component.builder_component.delete_folder"
+		) as delete_folder:
+			component.on_trash()
+
+		delete_folder.assert_called_once_with("builder", "builder_component", component.name)
