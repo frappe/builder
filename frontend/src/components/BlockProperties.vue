@@ -33,6 +33,7 @@
 </template>
 <script setup lang="ts">
 import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
+import clickTrackingSection from "@/components/BlockPropertySections/ClickTrackingSection";
 import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
@@ -125,6 +126,7 @@ const sections = [
 	positionSection,
 	dataKeySection,
 	accessibilitySection,
+	clickTrackingSection,
 	customAttributesSection,
 	editorConfigSection,
 	rawStyleSection,

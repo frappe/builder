@@ -15,10 +15,8 @@ class BuilderPageClick(Document):
 		from frappe.types import DF
 
 		element: DF.Data | None
-		href: DF.Data | None
 		is_unique: DF.Check
 		path: DF.Data | None
-		tag: DF.Data | None
 		text: DF.Data | None
 		visitor_id: DF.Data | None
 	# end: auto-generated types

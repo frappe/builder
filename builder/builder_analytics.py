@@ -95,7 +95,7 @@ def build_where_clause(
 
 
 VIEW_FIELDS = ["creation", "is_unique", "path", "referrer", "time_zone", "user_agent"]
-CLICK_FIELDS = ["creation", "is_unique", "path", "element", "tag", "text", "href", "visitor_id"]
+CLICK_FIELDS = ["creation", "is_unique", "path", "element", "text", "visitor_id"]
 
 
 def duckdb_column_cast(field: str) -> str:
@@ -420,26 +420,24 @@ def get_page_ctr(
 				or 0
 			)
 
-			# element label falls back element-name -> visible text -> href -> tag
+			# Group by the block id (element); label falls back to the element's visible text.
 			element_rows = db.execute(
 				f"""
 				WITH clicks AS (
 					SELECT
 						path,
-						COALESCE(NULLIF(element, ''), NULLIF(text, ''), NULLIF(href, ''), tag) AS label,
-						ANY_VALUE(tag) AS tag,
-						ANY_VALUE(text) AS text,
-						ANY_VALUE(href) AS href,
+						element,
+						COALESCE(NULLIF(ANY_VALUE(text), ''), element) AS label,
 						COUNT(*) AS clicks,
 						SUM(is_unique) AS unique_clicks
 					FROM {CLICKS_TABLE}
 					WHERE {where_clause}
-					GROUP BY path, label
+					GROUP BY path, element
 				),
 				views AS (
 					SELECT path, COUNT(*) AS views FROM {DUCKDB_TABLE} WHERE {where_clause} GROUP BY path
 				)
-				SELECT clicks.label, clicks.tag, clicks.text, clicks.href, clicks.path,
+				SELECT clicks.label, clicks.element, clicks.path,
 					clicks.clicks, clicks.unique_clicks, COALESCE(views.views, 0) AS views
 				FROM clicks
 				LEFT JOIN views ON clicks.path = views.path
@@ -456,14 +454,12 @@ def get_page_ctr(
 			"elements": [
 				{
 					"label": r[0],
-					"tag": r[1],
-					"text": r[2],
-					"href": r[3],
-					"route": r[4],
-					"clicks": r[5],
-					"unique_clicks": r[6],
-					"views": r[7],
-					"ctr": round(r[5] / r[7] * 100, 2) if r[7] else 0,
+					"blockId": r[1],
+					"route": r[2],
+					"clicks": r[3],
+					"unique_clicks": r[4],
+					"views": r[5],
+					"ctr": round(r[3] / r[5] * 100, 2) if r[5] else 0,
 				}
 				for r in element_rows
 			],

@@ -12,23 +12,39 @@
 				{ label: 'Clicks', key: 'clicks', align: 'right' },
 				{ label: 'CTR', key: 'ctr_label', align: 'right' },
 			]"
-			:options="{ selectable: false, emptyState: {}, showTooltip: false }"
+			:options="{ selectable: false, emptyState: {}, showTooltip: false, onRowClick: highlightBlock }"
 			:rows="rows"
-			row-key="label" />
+			row-key="blockId" />
 		<AnalyticsEmptyState
 			v-else
 			title="No clicks tracked yet"
-			hint="Clicks on links and buttons will appear here." />
+			hint="Enable click tracking on a block, then clicks on it will appear here." />
 	</div>
 </template>
 
 <script setup lang="ts">
+import { findBlockInTree } from "@/block";
 import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { CTRElement } from "@/composables/useAnalytics";
+import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import { ListView } from "frappe-ui";
 import { computed } from "vue";
 
 const props = defineProps<{ elements: CTRElement[]; loading?: boolean }>();
 
-const rows = computed(() => props.elements.map((el) => ({ ...el, ctr_label: `${el.ctr}%` })));
+const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
+
+const rows = computed(() => props.elements.slice(0, 10).map((el) => ({ ...el, ctr_label: `${el.ctr}%` })));
+
+const highlightBlock = (row: CTRElement) => {
+	const rootBlock = canvasStore.getRootBlock();
+	if (!rootBlock || !row.blockId) return;
+	const block = findBlockInTree(row.blockId, [rootBlock]);
+	if (!block) return;
+	// The analytics dialog covers the canvas, so close it before revealing the block.
+	builderStore.showSettingsDialog = false;
+	canvasStore.selectBlock(block, null, false, true);
+};
 </script>
