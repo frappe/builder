@@ -38,6 +38,7 @@ data.update({
 	"color": "red",
 	"padding": "20px",
 	"link": "https://example.com",
+	"role": "admin",
 })
 """
 
@@ -216,7 +217,9 @@ class TestBuilderPage(FrappeTestCase):
 		sub_header.set_dynamic_value("padding", "style", "padding")
 
 		link.set_dynamic_value("link", "attribute", "href")
-		body.attach_children(header, sub_header, link)
+		custom_attr_block = Block(element="div", customAttributes={"data-role": "guest"})
+		custom_attr_block.set_dynamic_value("role", "attribute", "data-role")
+		body.attach_children(header, sub_header, link, custom_attr_block)
 
 		page = frappe.get_doc(
 			{
@@ -234,6 +237,7 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertTrue("John Doe" in get_html_for(content, "tag", "h1"))
 			self.assertTrue("color: red;padding: 20px;" in get_html_for(content, "tag", "h2"))
 			self.assertTrue('href="https://example.com"' in get_html_for(content, "tag", "a"))
+			self.assertEqual("admin", get_html_for(content, "attribute", "data-role"))
 		finally:
 			page.delete()
 

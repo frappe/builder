@@ -1166,8 +1166,15 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 
 		if value_type == "attribute":
 			attributes = block.setdefault("attributes", {})
-			current_value = attributes.get(property_name, "")
-			attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			custom_attributes = block.setdefault("customAttributes", {})
+			if property_name in custom_attributes:
+				current_value = custom_attributes.get(property_name, "") or ""
+				custom_attributes[property_name] = (
+					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(str(current_value))}' }}}}"
+				)
+			else:
+				current_value = attributes.get(property_name, "")
+				attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
 
 		elif value_type == "style":
 			attributes = block.setdefault("attributes", {})

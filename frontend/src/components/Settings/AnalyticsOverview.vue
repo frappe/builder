@@ -15,6 +15,10 @@
 				<span class="text-5xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
 				<span class="text-sm text-ink-gray-7">Total Pageviews</span>
 			</div>
+			<div v-if="ctr !== undefined" class="flex flex-col gap-2">
+				<span class="text-5xl">{{ loading ? "-" : `${ctr}%` }}</span>
+				<span class="text-sm text-ink-gray-7">Click-through Rate</span>
+			</div>
 		</div>
 	</div>
 	<div class="mx-[-16px] [&>div]:h-[250px] [&>div]:!min-h-[200px]">
@@ -22,10 +26,15 @@
 			Loading...
 		</div>
 		<AxisChart v-else-if="data.data && data.data.length" :config="chartConfigData" :events="chartEvents" />
+		<AnalyticsEmptyState
+			v-else
+			title="No views in this period"
+			hint="Pick a wider date range, or share your page to start collecting data." />
 	</div>
 </template>
 
 <script setup lang="ts">
+import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";
 import { AxisChart } from "frappe-ui";
@@ -35,6 +44,7 @@ const props = defineProps<{
 	data: AnalyticsResponse;
 	chartConfig: any;
 	loading: boolean;
+	ctr?: number;
 }>();
 
 const chartConfigData = computed(() => {
