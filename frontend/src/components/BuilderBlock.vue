@@ -50,8 +50,10 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
 import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
+import type { ComponentClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
+	type ComputedRef,
 	computed,
 	inject,
 	nextTick,
@@ -104,8 +106,13 @@ const props = withDefaults(
 	},
 );
 
+const editedComponentId = inject<ComputedRef<string | null>>(
+	"editedComponentId",
+	computed(() => null),
+);
+
 const resolvedComponentData = computed(() => {
-	if (canvasStore.editingMode == "fragment" && !props.block.getParentBlock()) {
+	if (editedComponentId.value && !props.block.getParentBlock()) {
 		return componentController.getComponentDataPreview();
 	}
 	const componentId = extractComponentId(props.block);
@@ -272,6 +279,10 @@ const attributes = computed(() => {
 });
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+const emulateComponentClientScript = inject<ComponentClientScriptEmulator>(
+	"emulateComponentClientScript",
+	() => () => {},
+);
 
 const target = computed(() => {
 	if (!component.value) return null;
@@ -478,6 +489,7 @@ const fetchingComponentDetails = computed(() => {
 		componentStore.fetchingComponent.has(props.block.extendedFromComponent || "")
 	);
 });
+const componentDataReady = ref(false);
 
 watch(
 	[
@@ -490,6 +502,7 @@ watch(
 		allResolvedProps,
 	],
 	([componentId, , , , , fetchingComponentDetails, allResolvedProps]) => {
+		componentDataReady.value = false;
 		// can use extractComponentId but below code is more efficient
 		if (!componentId) {
 			return;
@@ -498,6 +511,50 @@ watch(
 			return;
 		}
 		componentStore.setComponentData(componentId, allResolvedProps, uidToUse, props.block.componentVersion);
+	},
+	{ immediate: true },
+);
+
+watch(resolvedComponentData, () => {
+	componentDataReady.value = true;
+});
+
+const componentClientScriptDoc = computed(() => {
+	if (editedComponentId.value && !props.block.getParentBlock()) {
+		return {
+			component_js: componentController.componentJavaScript.value,
+			component_css: componentController.componentCSS.value,
+		};
+	}
+	if (!props.block.extendedFromComponent) return null;
+	return props.block.componentVersion
+		? componentStore.getComponentVersionDoc(props.block.componentVersion)
+		: componentStore.getComponent(props.block.extendedFromComponent);
+});
+
+watch(
+	[
+		target,
+		componentClientScriptDoc,
+		resolvedComponentData,
+		allResolvedProps,
+		() => builderSettings.doc?.execute_block_scripts_in_editor,
+		() => pageStore.settingPage,
+		componentDataReady,
+	],
+	([element, componentDoc, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+		if (!element || !componentDoc) return;
+		const cleanup = emulateComponentClientScript({
+			key: uidToUse,
+			element,
+			breakpoint: props.breakpoint,
+			css: componentDoc.component_css ?? "",
+			javascript:
+				settingPage || (!editedComponentId.value && !dataReady) ? "" : (componentDoc.component_js ?? ""),
+			componentData: componentData ?? {},
+			props: resolvedProps,
+		});
+		onCleanup(cleanup);
 	},
 	{ immediate: true },
 );

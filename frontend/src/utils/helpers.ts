@@ -15,7 +15,6 @@ import {
 	setBoxSpacing,
 	shortenNumber,
 } from "./cssUtils";
-import { executeBlockClientScriptRestricted, executeBlockClientScriptUnrestricted } from "./scriptSandbox";
 
 function toTitleCase(str: string): string {
 	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -869,8 +868,6 @@ export {
 	cssUrl,
 	dataURLtoFile,
 	detachBlockFromComponent,
-	executeBlockClientScriptRestricted,
-	executeBlockClientScriptUnrestricted,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
