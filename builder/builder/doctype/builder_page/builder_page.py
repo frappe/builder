@@ -837,6 +837,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	for key, value in block.get("customAttributes", {}).items():
 		tag[key] = value
 
+	# Stamp the live blockId so duplicated blocks each get their own tracking id.
+	if tag.get("data-track") and block.get("blockId"):
+		tag["data-track"] = block.get("blockId")
+
 	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
 	tag.attrs["class"] = " ".join(classes)
 
