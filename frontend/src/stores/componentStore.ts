@@ -11,6 +11,7 @@ import { alert, confirm, getBlockInstance, getBlockObject, parseJSONWithFallback
 import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
+import { ComponentDocDraft } from "@/utils/componentController";
 
 export type ComponentDataStore = Record<string, Record<string, Record<string, any>>>;
 
@@ -49,6 +50,7 @@ const useComponentStore = defineStore("componentStore", {
 		components: <BlockComponent[]>[],
 		componentMap: <Map<string, Block>>new Map(),
 		componentDocMap: <Map<string, BuilderComponent>>new Map(),
+		componentDraftMap: <Map<string, ComponentDocDraft>>new Map(),
 		fetchingComponent: new Set(),
 		selectedComponent: null as string | null,
 		// frozen component versions, keyed by the version snapshot name (the pin)
@@ -91,7 +93,8 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		saveComponent(block: Block, componentName: string) {
 			const pageStore = usePageStore();
-			const doc = this.getComponent(componentName);
+			const doc = this.getComponentDraft(componentName);
+			if (!doc) return;
 			return webComponent.setValue
 				.submit({
 					name: componentName,
@@ -129,6 +132,9 @@ const useComponentStore = defineStore("componentStore", {
 							},
 						},
 					});
+				})
+				.catch((error: any) => {
+					toast.error("Failed to save component");
 				});
 		},
 		isComponentUsed(componentName: string) {
@@ -187,6 +193,9 @@ const useComponentStore = defineStore("componentStore", {
 			componentDoc.component_props = parseJSONWithFallback(componentDoc.component_props, {});
 			this.componentDocMap.set(componentDoc.name, componentDoc);
 			this.componentMap.set(componentDoc.name, markRaw(getBlockInstance(componentDoc.block)));
+		},
+		setComponentDraft(name: string, componentDoc: ComponentDocDraft) {
+			this.componentDraftMap.set(name, componentDoc);
 		},
 		async fetchComponent(componentName: string) {
 			const webComponentDoc = await createDocumentResource({
@@ -304,12 +313,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		// re-pin an instance to the latest version and rebuild its subtree from the new version,
 		// preserving user overrides on matched children via three-way diff against the old version
-		async rebuildInstance(
-			block: Block,
-			componentId: string,
-			newVersion: string,
-			newComponentBlock: Block,
-		) {
+		async rebuildInstance(block: Block, componentId: string, newVersion: string, newComponentBlock: Block) {
 			const oldVersion = block.componentVersion;
 			let oldComponentBlock: Block | null = null;
 			if (oldVersion) {
@@ -320,11 +324,7 @@ const useComponentStore = defineStore("componentStore", {
 				oldComponentBlock = this.getComponentBlock(componentId);
 			}
 			block.componentVersion = newVersion;
-			block.rebuildWithComponent(
-				componentId,
-				newComponentBlock.children,
-				oldComponentBlock?.children || [],
-			);
+			block.rebuildWithComponent(componentId, newComponentBlock.children, oldComponentBlock?.children || []);
 		},
 		// re-pin a single instance (and its materialized children) to the latest version
 		updatePinnedComponent(block: Block) {
@@ -389,6 +389,9 @@ const useComponentStore = defineStore("componentStore", {
 		getComponent(componentName: string) {
 			return this.componentDocMap.get(componentName) as BuilderComponent;
 		},
+		getComponentDraft(componentName: string) {
+			return this.componentDraftMap.get(componentName);
+		},
 		createComponent(obj: BuilderComponent, updateExisting = false) {
 			const component = this.getComponent(obj.name);
 			if (component) {
@@ -430,7 +433,7 @@ const useComponentStore = defineStore("componentStore", {
 			}
 			return componentObj.component_name;
 		},
-		async deleteComponent(component: BlockComponent) {
+		async deleteComponent(component: Pick<BuilderComponent, "name" | "component_name">) {
 			if (this.isComponentUsed(component.name)) {
 				alert("Component is used in current page. You cannot delete it.");
 			} else {
@@ -443,6 +446,9 @@ const useComponentStore = defineStore("componentStore", {
 					});
 				}
 			}
+		},
+		deleteComponentDraft(componentName: string) {
+			this.componentDraftMap.delete(componentName);
 		},
 		getComponentInstanceData(componentId: string, blockId: string) {
 			const instanceKey = blockId;
@@ -457,7 +463,9 @@ const useComponentStore = defineStore("componentStore", {
 			const instanceKey = blockId;
 			const requestKey = `${componentId}::${instanceKey}`;
 			// use the data script from the pinned version when available, else live component
-			const versionedDoc = componentVersion ? this.getComponentVersionDoc(componentVersion) : this.getComponent(componentId);
+			const versionedDoc = componentVersion
+				? this.getComponentVersionDoc(componentVersion)
+				: this.getComponent(componentId);
 			const script = versionedDoc?.component_data_script ?? undefined;
 			const result = await runLatestRequest(requestKey, () =>
 				createResource({

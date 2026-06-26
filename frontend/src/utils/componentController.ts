@@ -8,14 +8,15 @@ import { parseJSONWithFallback } from "./helpers";
 
 const { run: runLatestRequest } = useLatestRequest();
 
-type ComponentDocDraft = Pick<
+export type ComponentDocDraft = Omit<
 	BuilderComponent,
-	"component_props" | "component_data_script" | "component_js" | "component_css"
+	"name" | "creation" | "modified" | "owner" | "modified_by"
 > & {
 	component_data_preview: Record<string, any>;
 };
 
 const EMPTY_DRAFT: ComponentDocDraft = {
+	component_name: "",
 	component_props: {},
 	component_data_script: "",
 	component_js: "",
@@ -34,7 +35,7 @@ function markCanvasDirty(dirty: boolean = true) {
 }
 
 function cloneComponentDocFields(
-	doc: ComponentDocDraft,
+	doc: BuilderComponent,
 	preview: Record<string, any> = {},
 ): ComponentDocDraft {
 	return {
@@ -63,17 +64,6 @@ function loadDraftFromOriginal() {
 	const preview =
 		componentStore.componentData[componentId]?.[canvasStore.fragmentData.block?.blockId ?? ""] ?? {};
 	Object.assign(componentDocDraft, cloneComponentDocFields(original, preview));
-}
-
-function applyDraftToOriginal() {
-	const original = getOriginalDoc();
-	if (!original) return;
-
-	const cloned = cloneComponentDocFields(componentDocDraft);
-	original.component_props = cloned.component_props;
-	original.component_data_script = cloned.component_data_script;
-	original.component_js = cloned.component_js;
-	original.component_css = cloned.component_css;
 }
 
 const componentDataPreview = computed(() => {
@@ -144,7 +134,7 @@ const componentController = {
 	},
 
 	applyComponentDoc: () => {
-		applyDraftToOriginal();
+		componentStore.setComponentDraft(currentComponentId.value, componentDocDraft);
 	},
 
 	setComponentDataPreview: async () => {
@@ -186,11 +176,14 @@ const componentController = {
 
 watch(
 	currentComponentId,
-	(componentId) => {
+	(componentId, oldComponentId) => {
 		if (componentId) {
 			loadDraftFromOriginal();
 		} else {
 			Object.assign(componentDocDraft, EMPTY_DRAFT);
+		}
+		if (oldComponentId) {
+			componentStore.deleteComponentDraft(oldComponentId);
 		}
 	},
 	{ immediate: true },

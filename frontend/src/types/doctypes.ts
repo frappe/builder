@@ -199,6 +199,4 @@ export interface BuilderComponent extends DocType {
   component_js?: string;
   /** Component CSS: Code */
   component_css?: string;
-  /** Persona Survey Done: Check */
-  persona_survey_done: 0 | 1;
 }
