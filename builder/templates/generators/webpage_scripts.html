@@ -1,7 +1,4 @@
 {% block script %}
-<script>
-window.events={dispatch(name,data,target=document){target.dispatchEvent(new CustomEvent(name,{detail:data}))},listen(name,callback,target=document){const handler=event=>callback(event.detail,event);target.addEventListener(name,handler);return()=>target.removeEventListener(name,handler)}}
-</script>
 {%- if scripts -%}
 {% for script_path in scripts %}
 <script src="{{ script_path }}"></script>

@@ -11,7 +11,10 @@
 	{% if disable_indexing %}
 	<meta name="robots" content="noindex, nofollow">
 	{% endif %}
-	<script>window.process=window.process||{env:{NODE_ENV:"production"}};</script>
+	<script>
+	window.process=window.process||{env:{NODE_ENV:"production"}};
+	window.events={dispatch(name,data,target=document){target.dispatchEvent(new CustomEvent(name,{detail:data}))},listen(name,callback,target=document){const handler=event=>callback(event.detail,event);target.addEventListener(name,handler);return()=>target.removeEventListener(name,handler)}}
+	</script>
 	{%- if enable_reactivity_library -%}
 	<script src="/assets/builder/js/reactivity.js"></script>
 	{%- endif -%}
