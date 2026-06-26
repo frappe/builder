@@ -420,7 +420,6 @@ def get_page_ctr(
 				or 0
 			)
 
-			# Group by the block id (element); label falls back to the element's visible text.
 			element_rows = db.execute(
 				f"""
 				WITH clicks AS (
