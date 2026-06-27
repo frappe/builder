@@ -1259,6 +1259,11 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 			style_tag.append(wrap_with_media_query(style_string, device))
 
 
+def get_font_family(font: str) -> str:
+	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter')."""
+	return font.split(",")[0].strip().strip("'\"")
+
+
 def set_fonts(styles, font_map, inherited_font=None):
 	weight_map = {
 		"thin": "100",
@@ -1302,8 +1307,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
 			font = inherited_font
 		if font:
-			# Remove quotes if present
-			font = font.strip("'\"")
+			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
+			font = get_font_family(font)
 
 			# Skip if it is a system font
 			if font.lower() in system_fonts:
@@ -1353,7 +1358,7 @@ def set_fonts_from_html(soup, font_map):
 		styles = tag.attrs.get("style").split(";")
 		for style in styles:
 			if "font-family" in style:
-				font = style.split(":")[1].strip().strip("'\"")
+				font = get_font_family(style.split(":")[1])
 				if font:
 					font_map[font] = {"weights": [400]}
 

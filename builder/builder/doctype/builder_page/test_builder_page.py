@@ -901,6 +901,16 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
 
+	def test_set_fonts_uses_primary_family_from_fallback_list(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		set_fonts([{"fontFamily": "Inter, sans-serif", "fontWeight": "500"}], font_map)
+
+		# Only the first family is requested, not the whole CSS stack
+		self.assertIn("Inter", font_map)
+		self.assertNotIn("Inter, sans-serif", font_map)
+
 	def test_get_google_font_urls(self):
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
