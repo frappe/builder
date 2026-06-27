@@ -15,6 +15,7 @@
 			<OptionToggle
 				class="!w-fit [&>div]:min-w-0 [&>div>div]:w-fit [&>div>div>button]:px-2"
 				:options="viewOptions"
+				v-if="components.length"
 				v-model="viewMode" />
 		</div>
 		<div
@@ -22,7 +23,7 @@
 			:class="{
 				'pt-2': !showSearchInput,
 			}">
-			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
+			<div v-show="!components.length" class="text-base italic text-gray-600">No components {{ componentFilter ? "found" : "saved" }}</div>
 			<CollapsibleSection
 				v-for="section in sections"
 				:key="section.sectionName"
@@ -133,7 +134,7 @@ const viewOptions = [
 ];
 
 const showSearchInput = computed(() => {
-	return components.value.length > 1 || componentFilter.value;
+	return components.value.length || componentFilter.value;
 });
 
 onMounted(() => {

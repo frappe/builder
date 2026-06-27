@@ -43,10 +43,6 @@ export function promptCreateComponent(block: Block) {
 				defaultValue: block.blockName || "",
 			},
 			{ name: "isGlobalComponent", type: "checkbox", label: "Global Component" },
-			{ name: "componentCategory", label: "Category" },
-			{ name: "componentPreview", label: "Preview Image" },
-			{ name: "componentPreviewWidth", type: "number", label: "Preview Width", defaultValue: 1 },
-			{ name: "componentPreviewHeight", type: "number", label: "Preview Height", defaultValue: 1 },
 		],
 		onConfirm: async ({ values }) => {
 			const blockCopy = getBlockCopy(block, true);
@@ -57,10 +53,10 @@ export function promptCreateComponent(block: Block) {
 				block: getBlockString(blockCopy),
 				component_name: values.componentName,
 				for_web_page: values.isGlobalComponent ? null : pageStore.selectedPage,
-				category: values.componentCategory,
-				preview: values.componentPreview,
-				preview_width: getPreviewSize(values.componentPreviewWidth),
-				preview_height: getPreviewSize(values.componentPreviewHeight),
+				category: "Uncategorized",
+				preview: null,
+				preview_width: 1,
+				preview_height: 1,
 			})) as BuilderComponent;
 			componentStore.setComponentMap(componentData);
 			const updatedBlock = canvasStore.activeCanvas?.findBlock(block.blockId);
@@ -71,11 +67,6 @@ export function promptCreateComponent(block: Block) {
 			}
 		},
 	});
-}
-
-function getPreviewSize(value: string | number) {
-	const size = Number(value) || 1;
-	return Math.min(Math.max(size, 1), 2);
 }
 
 export function promptSelectFolder() {
