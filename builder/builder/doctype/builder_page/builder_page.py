@@ -383,7 +383,7 @@ class BuilderPage(WebsiteGenerator):
 		context.has_dual_mode_image = has_dual_mode_image
 
 		self.set_custom_font(context, fonts)
-		context.fonts = fonts
+		context.font_urls = get_google_font_urls(fonts)
 		context.__content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
@@ -1323,6 +1323,27 @@ def set_fonts(styles, font_map, inherited_font=None):
 					font_map[font]["weights"].sort()
 			else:
 				font_map[font] = {"weights": [weight]}
+
+
+def normalize_font_weights(font_map: dict) -> None:
+	"""Make each font's weights render-ready for the Google Fonts request: numeric,
+	deduped, sorted, and always including 400 so the regular face is loaded."""
+	for options in font_map.values():
+		weights = {int(weight) for weight in options.get("weights", [])}
+		weights.add(400)
+		options["weights"] = sorted(weights)
+
+
+def get_google_font_urls(font_map: dict) -> list[str]:
+	"""Build one combined Google Fonts stylesheet URL per font family."""
+	normalize_font_weights(font_map)
+	return [
+		"https://fonts.googleapis.com/css2"
+		f"?family={font.replace(' ', '+')}"
+		f":wght@{';'.join(str(weight) for weight in options['weights'])}"
+		"&display=swap"
+		for font, options in font_map.items()
+	]
 
 
 def set_fonts_from_html(soup, font_map):

@@ -20,12 +20,9 @@
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
 	<link rel="stylesheet" href="/assets/builder/reset.css?v=4" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
-	{% for (font, options) in fonts.items() %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font | replace(' ', '+') }}&display=swap" media="screen">
-	{% set other_weights = options.weights | reject('equalto', '400') | reject('equalto', 400) | list %}
-	{% if other_weights %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font | replace(' ', '+') }}:wght@{{ other_weights | join(';') }}&display=swap" media="screen">
-	{% endif %}
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	{% for font_url in font_urls %}
+	<link rel="stylesheet" href="{{ font_url }}" media="screen">
 	{% endfor %}
 	{{ style }}
 	{%- if preview -%}

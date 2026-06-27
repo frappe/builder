@@ -901,6 +901,24 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
 
+	def test_get_google_font_urls(self):
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			"Newsreader": {"weights": [500]},
+			"Open Sans": {"weights": [700, 400]},
+		}
+		urls = get_google_font_urls(font_map)
+
+		# One combined request per family: 400 always included, spaces become +, weights sorted
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap",
+			],
+		)
+
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
 		from builder.builder.doctype.builder_page.builder_page import set_fonts
