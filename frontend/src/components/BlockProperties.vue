@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
 import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
+import componentSlotSection from "@/components/BlockPropertySections/ComponentSlotSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
@@ -109,6 +110,7 @@ const getFilteredProperties = (section: PropertySection) => {
 
 const sections = [
 	standardPropsInputSection,
+	componentSlotSection,
 	collectionOptionsSection,
 	linkSection,
 	layoutSection,

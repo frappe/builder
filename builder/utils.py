@@ -102,6 +102,8 @@ class Block:
 	originalElement: str | None = None
 	isChildOfComponent: str | None = None
 	referenceBlockId: str | None = None
+	slotName: str | None = None
+	slotFilled: bool = False
 	isRepeaterBlock: bool = False
 	visibilityCondition: str | VisibilityCondition | None = None
 	elementBeforeConversion: str | None = None
@@ -167,6 +169,8 @@ class Block:
 			"originalElement": self.originalElement,
 			"isChildOfComponent": self.isChildOfComponent,
 			"referenceBlockId": self.referenceBlockId,
+			"slotName": self.slotName,
+			"slotFilled": self.slotFilled,
 			"isRepeaterBlock": self.isRepeaterBlock,
 			"visibilityCondition": self.visibilityCondition,
 			"elementBeforeConversion": self.elementBeforeConversion,

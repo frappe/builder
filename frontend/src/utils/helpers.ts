@@ -237,6 +237,8 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	delete blockCopy.componentVersion;
 	delete blockCopy.isChildOfComponent;
 	delete blockCopy.referenceBlockId;
+	delete blockCopy.slotName;
+	delete blockCopy.slotFilled;
 	blockCopy.children = blockCopy.children.map((block) => detachBlockFromComponent(block, componentId));
 	return getBlockInstance(blockCopy);
 };
@@ -919,5 +921,5 @@ export {
 	uploadUserFont,
 	parseJSONWithFallback,
 	deepEqual,
-	diffArray
+	diffArray,
 };

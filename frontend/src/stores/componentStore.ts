@@ -27,6 +27,12 @@ const walkBlocks = (block: Block | null | undefined, visitor: (block: Block) => 
 	(block.children || []).forEach((child) => walkBlocks(child, visitor));
 };
 
+const confirmComponentUpdate = () =>
+	confirm(
+		"Updating components may remove or rename slots. Detached content in those slots may be discarded.",
+		"Update component?",
+	);
+
 // set the component version on every block belonging to `componentId` (instance root + materialized
 // children) in a subtree. When `onlyPinned` is true, only blocks that already have a componentVersion
 // are touched (used for re-pin); otherwise all matching blocks are pinned (used for fresh instances).
@@ -111,15 +117,14 @@ const useComponentStore = defineStore("componentStore", {
 						action: {
 							label: "Sync in all pages",
 							onClick: async () => {
+								if (!(await confirmComponentUpdate())) return;
 								const componentResource = createResource({
 									url: "builder.api.sync_component",
 									method: "POST",
-									params: {
-										component_id: data.name,
-									},
-									auto: true,
+									params: { component_id: data.name },
+									auto: false,
 								});
-								await toast.promise(componentResource.promise, {
+								await toast.promise(componentResource.submit(), {
 									loading: "Syncing component in all the pages...",
 									success: () => {
 										pageStore.fetchActivePage().then(() => {
@@ -291,7 +296,7 @@ const useComponentStore = defineStore("componentStore", {
 		// mint the component's latest version, apply the given re-pin, and persist
 		async repinToLatest(
 			componentId: string,
-			repin: (newVersion: string, newComponentBlock: Block) => Promise<void> | void,
+			repin: (newVersion: string, newComponentBlock: Block) => Promise<boolean | void> | boolean | void,
 			refresh = true,
 		) {
 			const pageStore = usePageStore();
@@ -305,7 +310,8 @@ const useComponentStore = defineStore("componentStore", {
 			await this.loadComponentVersion(newVersion, componentId);
 			const newComponentBlock = this.getComponentVersionBlock(newVersion);
 			if (!newComponentBlock) return;
-			await repin(newVersion, newComponentBlock);
+			const updated = await repin(newVersion, newComponentBlock);
+			if (updated === false) return false;
 			this.versionBump++;
 			useCanvasStore().activeCanvas?.toggleDirty(true);
 			pageStore.savePage();
@@ -324,18 +330,19 @@ const useComponentStore = defineStore("componentStore", {
 				oldComponentBlock = this.getComponentBlock(componentId);
 			}
 			block.componentVersion = newVersion;
-			block.rebuildWithComponent(componentId, newComponentBlock.children, oldComponentBlock?.children || []);
+			block.rebuildWithComponent(componentId, newComponentBlock, oldComponentBlock);
 		},
 		// re-pin a single instance (and its materialized children) to the latest version
 		updatePinnedComponent(block: Block) {
 			const componentId = block.extendedFromComponent;
 			if (!componentId) return;
-			return this.repinToLatest(componentId, (newVersion, newComponentBlock) =>
-				this.rebuildInstance(block, componentId, newVersion, newComponentBlock),
-			);
+			return this.repinToLatest(componentId, async (newVersion, newComponentBlock) => {
+				if (!(await confirmComponentUpdate())) return false;
+				await this.rebuildInstance(block, componentId, newVersion, newComponentBlock);
+			});
 		},
 		// re-pin every instance of a component on the page to the latest version
-		updateComponentInstances(componentId: string, refresh = true) {
+		updateComponentInstances(componentId: string, refresh = true, confirmUpdate = true) {
 			return this.repinToLatest(
 				componentId,
 				async (newVersion, newComponentBlock) => {
@@ -345,6 +352,9 @@ const useComponentStore = defineStore("componentStore", {
 							roots.push(b);
 						}
 					});
+					if (confirmUpdate && !(await confirmComponentUpdate())) {
+						return false;
+					}
 					for (const root of roots) {
 						await this.rebuildInstance(root, componentId, newVersion, newComponentBlock);
 					}
@@ -381,8 +391,9 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async updateAllOutdatedComponents() {
 			const items = this.getOutdatedComponentList();
+			if (!(await confirmComponentUpdate())) return;
 			for (const item of items) {
-				await this.updateComponentInstances(item.component_id, false);
+				await this.updateComponentInstances(item.component_id, false, false);
 			}
 			await this.refreshComponentUpdates();
 		},

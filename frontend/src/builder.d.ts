@@ -55,6 +55,8 @@ declare interface BlockOptions {
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
 	componentVersion?: string;
+	slotName?: string;
+	slotFilled?: boolean;
 	[key: string]: any;
 }
 

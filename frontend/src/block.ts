@@ -66,6 +66,8 @@ class Block implements BlockOptions {
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
+	slotName?: string;
+	slotFilled?: boolean;
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: BlockVisibilityCondition;
 	elementBeforeConversion?: string;
@@ -86,6 +88,8 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
+		this.slotName = options.slotName;
+		this.slotFilled = options.slotFilled;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			if (this.componentVersion) {
@@ -123,7 +127,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -309,6 +313,9 @@ class Block implements BlockOptions {
 		return visibilityCondition;
 	}
 	getBlockDescription() {
+		if (this.slotName) {
+			return this.slotName;
+		}
 		if (this.extendedFromComponent) {
 			return this.getComponentBlockDescription() || "";
 		}
@@ -557,6 +564,9 @@ class Block implements BlockOptions {
 		}
 	}
 	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
+		if (select) {
+			this.prepareSlotForContent();
+		}
 		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
@@ -583,6 +593,7 @@ class Block implements BlockOptions {
 	removeChild(child: Block) {
 		const index = this.getChildIndex(child);
 		if (index > -1) {
+			this.markSlotContentChanged();
 			this.children.splice(index, 1);
 		}
 	}
@@ -676,7 +687,7 @@ class Block implements BlockOptions {
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isHTML() ||
-			this.isExtendedFromComponent()
+			(this.isExtendedFromComponent() && !this.isInstanceSlot())
 		);
 	}
 	updateStyles(styles: BlockStyleObjects) {
@@ -779,6 +790,7 @@ class Block implements BlockOptions {
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);
 		if (childIndex > -1) {
+			this.markSlotContentChanged();
 			this.children.splice(childIndex, 1);
 			this.children.splice(index, 0, child);
 		}
@@ -849,6 +861,41 @@ class Block implements BlockOptions {
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
 	}
+	isSlot() {
+		return Boolean(this.slotName?.trim());
+	}
+	isInstanceSlot() {
+		return this.isSlot() && this.isExtendedFromComponent() && useCanvasStore().editingMode === "page";
+	}
+	prepareSlotForContent() {
+		if (!this.isInstanceSlot() || this.slotFilled) return;
+		this.children.splice(0, this.children.length);
+		this.slotFilled = true;
+	}
+	markSlotContentChanged() {
+		if (this.isInstanceSlot()) {
+			this.slotFilled = true;
+		}
+	}
+	isDetachedSlotContent() {
+		if (this.isChildOfComponentBlock()) return false;
+		let parent = this.getParentBlock();
+		while (parent) {
+			if (parent.isInstanceSlot()) return true;
+			if (parent.extendedFromComponent) return false;
+			parent = parent.getParentBlock();
+		}
+		return false;
+	}
+	resetSlotContent() {
+		if (!this.isInstanceSlot()) return;
+		const componentId = this.extendedFromComponent || this.isChildOfComponent;
+		const componentSlot = this.referenceComponent;
+		if (!componentId || !componentSlot) return;
+		this.children.splice(0, this.children.length);
+		this.slotFilled = false;
+		populateSlotFallback(this, componentSlot.children);
+	}
 	resetWithComponent() {
 		const component = this.referenceComponent;
 		if (component) {
@@ -864,19 +911,33 @@ class Block implements BlockOptions {
 			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
 		}
 	}
-	rebuildWithComponent(
-		componentId: string,
-		newComponentChildren: Block[],
-		oldComponentChildren: Block[],
-	) {
+	rebuildWithComponent(componentId: string, newComponent: Block, oldComponent: Block) {
 		const oldChildrenByRefId = indexChildrenByRefId(this.children);
-		const oldComponentChildrenByBlockId = indexChildrenByBlockId(oldComponentChildren);
+		const oldComponentChildrenByBlockId = indexChildrenByBlockId(oldComponent.children);
+		const filledSlots = indexFilledSlots(this);
+		this.slotName = newComponent.slotName;
+		const filledRootSlot = newComponent.slotName ? filledSlots.get(newComponent.slotName) : null;
+		if (filledRootSlot) {
+			this.slotFilled = true;
+			this.children.splice(0, this.children.length);
+			filledRootSlot.children.forEach((child) => this.addChild(getBlockCopy(child, true), null, false));
+			return;
+		}
+		this.slotFilled = false;
+		if (newComponent.slotName) {
+			this.children.splice(0, this.children.length);
+			newComponent.children.forEach((child) => this.addChild(getBlockCopy(child), null, false));
+			detachSlotChildren(this);
+			this.slotFilled = this.children.length > 0;
+			return;
+		}
 		rebuildWithComponent(
 			this,
 			componentId,
-			newComponentChildren,
+			newComponent.children,
 			oldChildrenByRefId,
 			oldComponentChildrenByBlockId,
+			filledSlots,
 		);
 	}
 	resetChanges(resetChildren: boolean = false) {
@@ -960,13 +1021,14 @@ class Block implements BlockOptions {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
 	}
 	duplicateBlock() {
-		if (this.isRoot()) {
+		if (this.isRoot() || this.isChildOfComponentBlock()) {
 			return;
 		}
 		const canvasStore = useCanvasStore();
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
+		parentBlock?.markSlotContentChanged();
 
 		if (blockCopy.getStyle("position") === "absolute") {
 			// shift the block a bit
@@ -1090,6 +1152,11 @@ function extendWithComponent(
 	resetOverrides: boolean = true,
 ) {
 	resetBlock(block, false, resetOverrides);
+	if (block.slotName) {
+		detachSlotChildren(block);
+		block.slotFilled = Boolean(block.children?.length);
+		return;
+	}
 	block.children?.forEach((child, index) => {
 		child.isChildOfComponent = extendedFromComponent;
 		let componentChild = componentChildren[index];
@@ -1112,7 +1179,16 @@ function resetWithComponent(
 ) {
 	block = toRaw(block);
 	resetBlock(block, true, resetOverrides);
+	if (block.slotName) {
+		block.slotFilled = false;
+	}
 	block.children?.splice(0, block.children.length);
+	if (block.slotName) {
+		componentChildren.forEach((componentChild) => block.addChild(getBlockCopy(componentChild), null, false));
+		detachSlotChildren(block);
+		block.slotFilled = Boolean(block.children?.length);
+		return;
+	}
 	componentChildren.forEach((componentChild) => {
 		const blockComponent = getBlockCopy(componentChild);
 		blockComponent.isChildOfComponent = extendedWithComponent;
@@ -1130,12 +1206,30 @@ function resetWithComponent(
 	});
 }
 
+function populateSlotFallback(block: Block, componentChildren: Block[]) {
+	componentChildren.forEach((componentChild) => block.addChild(getBlockCopy(componentChild), null, false));
+	detachSlotChildren(block);
+	block.slotFilled = block.children.length > 0;
+}
+
+function detachSlotChildren(slot: Block | BlockOptions) {
+	const detach = (block: Block | BlockOptions) => {
+		delete block.isChildOfComponent;
+		delete block.referenceBlockId;
+		if (block.extendedFromComponent) return;
+		delete block.componentVersion;
+		block.children?.forEach(detach);
+	};
+	slot.children?.forEach(detach);
+}
+
 function syncBlockWithComponent(
 	parentBlock: Block,
 	block: Block,
 	componentName: string,
 	componentChildren: Block[],
 ) {
+	if (block.slotName && block.slotFilled) return;
 	componentChildren.forEach((componentChild, index) => {
 		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
 		if (!blockExists) {
@@ -1235,6 +1329,20 @@ const indexChildrenByBlockId = (children: Block[] | undefined): Map<string, Bloc
 	return map;
 };
 
+const indexFilledSlots = (root: Block): Map<string, Block> => {
+	const slots = new Map<string, Block>();
+	const walk = (block: Block, isRoot = false) => {
+		if (!isRoot && block.extendedFromComponent) return;
+		if (block.slotName && block.slotFilled) {
+			slots.set(block.slotName, block);
+			return;
+		}
+		block.children.forEach((child) => walk(child));
+	};
+	walk(root, true);
+	return slots;
+};
+
 // Rebuild a component instance's children from the new version's structure, preserving user
 // overrides on matched children (matched by referenceBlockId via three-way diff against the old
 // version). Children with no counterpart in the new version are dropped — component subtrees
@@ -1245,6 +1353,7 @@ function rebuildWithComponent(
 	componentChildren: Block[],
 	oldChildrenByRefId: Map<string, Block>,
 	oldComponentChildrenByBlockId: Map<string, Block>,
+	filledSlots: Map<string, Block>,
 ) {
 	block = toRaw(block);
 	block.children.splice(0, block.children.length);
@@ -1261,7 +1370,15 @@ function rebuildWithComponent(
 			copyUserOverrides(matched, fresh, oldComponentChild);
 		}
 		const childBlock = block.addChild(fresh, null, false);
-		if (componentChild.extendedFromComponent) {
+		const filledSlot = componentChild.slotName ? filledSlots.get(componentChild.slotName) : null;
+		if (filledSlot) {
+			childBlock.slotFilled = true;
+			childBlock.children.splice(0, childBlock.children.length);
+			filledSlot.children.forEach((child) => childBlock.addChild(getBlockCopy(child, true), null, false));
+		} else if (componentChild.slotName) {
+			detachSlotChildren(childBlock);
+			childBlock.slotFilled = childBlock.children.length > 0;
+		} else if (componentChild.extendedFromComponent) {
 			const nestedComponent = childBlock.referenceComponent;
 			if (nestedComponent) {
 				resetWithComponent(childBlock, componentChild.extendedFromComponent, nestedComponent.children, false);
@@ -1269,7 +1386,14 @@ function rebuildWithComponent(
 		} else {
 			const nestedOld = indexChildrenByRefId(matched?.children);
 			const nestedOldComp = indexChildrenByBlockId(oldComponentChild?.children);
-			rebuildWithComponent(childBlock, componentId, componentChild.children, nestedOld, nestedOldComp);
+			rebuildWithComponent(
+				childBlock,
+				componentId,
+				componentChild.children,
+				nestedOld,
+				nestedOldComp,
+				filledSlots,
+			);
 		}
 	});
 }
@@ -1308,6 +1432,9 @@ function resetBlock(
 		block.dataKey = null;
 		block.dynamicValues = [];
 		block.props = {};
+	}
+	if (block.slotName) {
+		block.slotFilled = false;
 	}
 
 	if (resetChildren) {

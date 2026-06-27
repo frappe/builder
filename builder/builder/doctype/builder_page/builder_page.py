@@ -1438,6 +1438,10 @@ def extend_block(block, overridden_block):
 		block["innerHTML"] = overridden_block["innerHTML"]
 	component_children = block.get("children", []) or []
 	overridden_children = overridden_block.get("children", []) or []
+	if block.get("slotName") and overridden_block.get("slotFilled"):
+		block["children"] = copy.deepcopy(overridden_children)
+		block["slotFilled"] = True
+		return block
 	extended_children = []
 	for overridden_child in overridden_children:
 		component_child = next(
@@ -1502,6 +1506,10 @@ def resolve_path(path):
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
 	block["children"] = []
+	if block.get("slotName"):
+		block["children"] = create_detached_slot_content(component_children)
+		block["slotFilled"] = bool(block["children"])
+		return
 	for component_child in component_children:
 		component_child_id = component_child.get("blockId")
 		child_block = reset_block(component_child)
@@ -1523,6 +1531,27 @@ def reset_with_component(block, extended_with_component, component_children):
 			reset_with_component(child_block, extended_with_component, child_block.get("children"))
 
 
+def create_detached_slot_content(component_children):
+	children = copy.deepcopy(component_children or [])
+
+	def detach(block, inside_nested_component=False):
+		block["blockId"] = frappe.generate_hash(length=8)
+		if not inside_nested_component:
+			block.pop("isChildOfComponent", None)
+			block.pop("referenceBlockId", None)
+			if not block.get("extendedFromComponent"):
+				block.pop("componentVersion", None)
+		inside_nested_component = inside_nested_component or bool(
+			block.get("extendedFromComponent")
+		)
+		for child in block.get("children") or []:
+			detach(child, inside_nested_component)
+
+	for child in children:
+		detach(child)
+	return children
+
+
 def reset_block(block):
 	block["blockId"] = frappe.generate_hash(length=8)
 	block["innerHTML"] = None
@@ -1537,6 +1566,8 @@ def reset_block(block):
 	block["dataKey"] = {}
 	block["props"] = {}
 	block["dynamicValues"] = []
+	if block.get("slotName"):
+		block["slotFilled"] = False
 	return block
 
 
