@@ -123,7 +123,6 @@ import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
-import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
@@ -147,7 +146,6 @@ import BuilderBlock from "./BuilderBlock.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
-const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 const canvasId = `builder-canvas-${useId()}`;
 
@@ -179,9 +177,6 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
-const editedComponentId = computed(() =>
-	props.blockData === canvasStore.fragmentData.block ? canvasStore.fragmentData.fragmentId : null,
-);
 const componentClientStyles = computed(() => Array.from(componentStyles.values()).join("\n"));
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
@@ -382,7 +377,6 @@ watch(
 );
 
 provide("canvasProps", canvasProps);
-provide("editedComponentId", editedComponentId);
 provide("emulateComponentClientScript", emulateComponentClientScript);
 
 defineExpose({
