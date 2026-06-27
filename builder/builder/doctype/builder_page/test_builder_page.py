@@ -907,15 +907,18 @@ class TestBuilderPage(FrappeTestCase):
 		font_map = {
 			"Newsreader": {"weights": [500]},
 			"Open Sans": {"weights": [700, 400]},
+			"Foo & Bar": {"weights": [400]},
 		}
 		urls = get_google_font_urls(font_map)
 
-		# One combined request per family: 400 always included, spaces become +, weights sorted
+		# One combined request per family: 400 always included, weights sorted, family
+		# name URL-encoded (spaces -> +, reserved chars escaped so the URL can't break)
 		self.assertEqual(
 			urls,
 			[
 				"https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap",
+				"https://fonts.googleapis.com/css2?family=Foo+%26+Bar:wght@400&display=swap",
 			],
 		)
 

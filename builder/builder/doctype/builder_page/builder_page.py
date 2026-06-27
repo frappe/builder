@@ -4,6 +4,7 @@
 import copy
 import re
 from typing import Any
+from urllib.parse import quote_plus
 
 import bs4 as bs
 import frappe
@@ -1339,7 +1340,7 @@ def get_google_font_urls(font_map: dict) -> list[str]:
 	normalize_font_weights(font_map)
 	return [
 		"https://fonts.googleapis.com/css2"
-		f"?family={font.replace(' ', '+')}"
+		f"?family={quote_plus(font)}"
 		f":wght@{';'.join(str(weight) for weight in options['weights'])}"
 		"&display=swap"
 		for font, options in font_map.items()
