@@ -128,10 +128,12 @@ class TestBuilderPage(FrappeTestCase):
 
 	def test_publish_unpublish(self):
 		self.page.unpublish()
-		from frappe.utils import get_html_for_route
-
-		content = get_html_for_route("/test-page")
-		self.assertTrue("window.is_404 = true;" in content)
+		# An unpublished route is "not found". The rendered body varies (a site may
+		# define a custom Builder 404 page via www/404.py), so assert the 404 status
+		# and that the page's own content is no longer served.
+		response = get_response("/test-page")
+		self.assertEqual(response.status_code, 404)
+		self.assertNotIn("Hello World!", frappe.safe_decode(response.get_data()))
 
 		self.page.publish()
 		content = get_response_content("/test-page")
