@@ -195,6 +195,20 @@ const blockController = {
 			Object.assign(block.customAttributes, customAttributes);
 		});
 	},
+	isClickTrackingEnabled: () => {
+		return Boolean(blockController.getCustomAttributes()?.["data-track"]);
+	},
+	toggleClickTracking: (enabled: boolean) => {
+		// Store a marker only; the live blockId is stamped onto data-track at render time.
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (enabled) {
+				block.customAttributes["data-track"] = "true";
+			} else {
+				delete block.customAttributes["data-track"];
+				block.removeDynamicValue("data-track", "attribute");
+			}
+		});
+	},
 	getParentBlock: () => {
 		return canvasStore.activeCanvas?.selectedBlocks[0]?.getParentBlock();
 	},

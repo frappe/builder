@@ -456,9 +456,7 @@ def get_page_ctr(
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def make_click_log(
 	element: str | None = None,
-	tag: str | None = None,
 	text: str | None = None,
-	href: str | None = None,
 	visitor_id: str | None = None,
 ):
 	"""Autocapture a click on a published Builder page. Mirrors Frappe's make_view_log so
@@ -485,9 +483,7 @@ def make_click_log(
 	click = frappe.new_doc("Builder Page Click")
 	click.path = path
 	click.element = element
-	click.tag = tag
 	click.text = text[:140] if text else text  # cap server-side; deferred_insert skips controller validation
-	click.href = href
 	click.is_unique = is_unique
 	click.visitor_id = visitor_id
 

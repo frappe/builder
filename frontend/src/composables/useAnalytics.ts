@@ -20,9 +20,7 @@ export interface AnalyticsResponse {
 
 export interface CTRElement {
 	label: string;
-	tag: string;
-	text: string;
-	href: string;
+	blockId: string;
 	route: string;
 	clicks: number;
 	unique_clicks: number;

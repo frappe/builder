@@ -1,0 +1,31 @@
+{# Mirrors frappe's default www/404.html. Builder must override it (not just add a
+   handler) because frappe's NotFoundPage hardcodes the `404` template; 404.py swaps
+   in a published Builder Page with route `404` when one exists, else this renders. #}
+{% extends "templates/web.html" %}
+
+{%- block title -%}{{ _("Not Found") }}{%- endblock -%}
+
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+	body {
+		background-color: var(--subtle-accent);
+		font-size: var(--text-base);
+	}
+</style>
+
+<script>
+	window.is_404 = true;
+</script>
+
+<div class="error-page">
+	<div>
+		<h4>{{ _("Page not found") }}</h4>
+		<div class="details">
+			<a href='/' class="text-muted">{{ _("Back to Home") }}</a>
+		</div>
+	</div>
+</div>
+{% endblock %}

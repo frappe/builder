@@ -6,9 +6,7 @@
  "field_order": [
   "path",
   "element",
-  "tag",
   "text",
-  "href",
   "is_unique",
   "visitor_id"
  ],
@@ -27,21 +25,9 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "tag",
-   "fieldtype": "Data",
-   "label": "Tag",
-   "set_only_once": 1
-  },
-  {
    "fieldname": "text",
    "fieldtype": "Data",
    "label": "Text",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "href",
-   "fieldtype": "Data",
-   "label": "Href",
    "set_only_once": 1
   },
   {
