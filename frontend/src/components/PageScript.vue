@@ -25,7 +25,7 @@
 			<div v-else class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit script</div>
 		</div>
 		<div
-			class="absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t bg-surface-base p-4 py-2">
+			class="bg-surface-base absolute bottom-0 left-0 box-border flex w-full items-center justify-between border-t p-4 py-2">
 			<h2 class="text-base text-ink-gray-6">Mode</h2>
 			<TabButtons
 				class="w-fit"
@@ -65,13 +65,14 @@
 								:autofocus="true"
 								@save="savePageDataScript"
 								:showSaveButton="true"
-								:show-line-numbers="true"></CodeEditor>
+								:show-line-numbers="true"
+								:external-editor-context="getPageEditorContext('page_data_script')"></CodeEditor>
 							<CodeEditor
 								v-model="pageStore.pageData"
 								type="JSON"
 								label="Data Preview"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
+								class="[&>div>div]:bg-surface-base -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
@@ -117,6 +118,7 @@ import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
+import { createEditorContext } from "@/composables/useExternalEditor";
 import useCanvasStore from "@/stores/canvasStore.js";
 
 const { capture } = useTelemetry();
@@ -150,6 +152,15 @@ const blockClientScript = computed(() => {
 	}
 	return "";
 });
+
+const getPageEditorContext = (field: string) => {
+	return createEditorContext("Builder Page", props.page?.name, field);
+};
+
+const getBlockEditorContext = (blockField: "blockClientScript" | "blockDataScript") => {
+	const block = blockController.getFirstSelectedBlock();
+	return createEditorContext("Builder Page", props.page?.name, undefined, block?.blockId, blockField);
+};
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue

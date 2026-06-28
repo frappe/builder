@@ -1,9 +1,26 @@
 <template>
-	<div class="code-editor relative flex flex-col gap-1">
-		<span class="text-p-sm-medium text-ink-gray-8" v-show="label">
-			{{ label }}
-			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
-		</span>
+	<div
+		class="code-editor relative flex flex-col gap-1"
+		:class="{
+			'-mt-6': isExternalEditorActive && !label,
+		}">
+		<div class="flex items-center justify-between">
+			<div>
+				<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
+					{{ label }}
+					<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
+				</span>
+			</div>
+			<Button
+				v-if="isExternalEditorActive && externalEditorContext"
+				@click="handleOpenInExternalEditor"
+				variant="ghost"
+				size="sm"
+				class="!gap-1 text-p-xs"
+				icon-right="arrow-up-right">
+				{{ `Open in ${editorName}` }}
+			</Button>
+		</div>
 		<div
 			:style="{
 				'min-height': height,
@@ -25,7 +42,7 @@
 			<Button
 				@click="actionButton?.handler"
 				variant="subtle"
-				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-base [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				class="bg-surface-base !h-6 !w-6 border !border-outline-gray-2 [&>svg]:!h-3.5 [&>svg]:!w-3.5"
 				:icon="actionButton.icon"
 				:title="actionButton.label"
 				:disabled="readonly"></Button>
@@ -44,6 +61,8 @@
 <script setup lang="ts">
 import { ref, VNodeRef, watch } from "vue";
 import CodeMirrorEditor from "./CodeMirror/CodeMirrorEditor.vue";
+import { useExternalEditor, type OpenScriptRequest } from "@/composables/useExternalEditor";
+import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{
@@ -62,6 +81,7 @@ const props = withDefaults(
 			icon: string;
 			handler: () => void;
 		};
+		externalEditorContext?: OpenScriptRequest;
 	}>(),
 	{
 		type: "JSON",
@@ -74,6 +94,18 @@ const props = withDefaults(
 		description: "",
 	},
 );
+
+const { isExternalEditorActive, openInExternalEditor, editorName } = useExternalEditor();
+
+const handleOpenInExternalEditor = async () => {
+	if (!props.externalEditorContext) return;
+	const result = await openInExternalEditor(props.externalEditorContext);
+	if (!result.success) {
+		toast.error(result.error || `Failed to open in ${editorName.value}`);
+	} else {
+		toast.success(`Code opened in ${editorName.value}`);
+	}
+};
 
 const emit = defineEmits(["save", "update:modelValue"]);
 const editor = ref<VNodeRef | null>(null);

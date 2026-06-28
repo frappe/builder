@@ -12,15 +12,19 @@ import { promptCreateComponent } from "@/utils/dialogs";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import usePageStore from "@/stores/pageStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
-import { Ref, inject, nextTick, ref } from "vue";
+import { Ref, inject, nextTick, ref, computed } from "vue";
+import { useExternalEditor, createEditorContext } from "@/composables/useExternalEditor";
 import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
+const pageStore = usePageStore();
+const { isExternalEditorActive, openInExternalEditor, editorName } = useExternalEditor();
 
 const contextMenu = ref(null) as unknown as Ref<InstanceType<typeof ContextMenu>>;
 const triggeredFromLayersPanel = ref(false);
@@ -58,11 +62,33 @@ const pasteStyle = () => {
 	block.value.updateStyles(copiedStyle.value?.style as BlockStyleObjects);
 };
 
+const openScriptInExternalEditor = async (scriptType: "blockClientScript" | "blockDataScript") => {
+	if (!block.value.blockId) return;
+
+	const context = createEditorContext(
+		"Builder Page",
+		pageStore.selectedPage || pageStore.pageName,
+		undefined,
+		block.value.blockId,
+		scriptType,
+	);
+
+	if (!context) return;
+
+	const result = await openInExternalEditor(context);
+	const scriptName = scriptType === "blockClientScript" ? "Client Script" : "Data Script";
+	if (!result.success) {
+		toast.error(result.error || `Failed to open ${scriptName.toLowerCase()} in ${editorName.value}`);
+	} else {
+		toast.success(`${scriptName} opened in ${editorName.value}`);
+	}
+};
+
 const duplicateBlock = () => {
 	block.value.duplicateBlock();
 };
 
-const contextMenuOptions: ContextMenuOption[] = [
+const contextMenuOptions = computed((): ContextMenuOption[] => [
 	{
 		label: "Edit with AI",
 		action: () => {
@@ -259,6 +285,16 @@ const contextMenuOptions: ContextMenuOption[] = [
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		label: `Open Client Script in ${editorName.value}`,
+		action: () => openScriptInExternalEditor("blockClientScript"),
+		condition: () => isExternalEditorActive.value && !block.value.isRoot(),
+	},
+	{
+		label: `Open Data Script in ${editorName.value}`,
+		action: () => openScriptInExternalEditor("blockDataScript"),
+		condition: () => isExternalEditorActive.value && !block.value.isRoot(),
+	},
+	{
 		label: "Save as Block Template",
 		action: () => {
 			showBlockTemplateDialog.value = true;
@@ -324,7 +360,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		},
 		disabled: () => builderStore.readOnlyMode,
 	},
-];
+]);
 
 defineExpose({
 	showContextMenu,
