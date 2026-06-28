@@ -1343,13 +1343,12 @@ def normalize_font_weights(font_map: dict) -> None:
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family."""
 	normalize_font_weights(font_map)
-	return [
-		"https://fonts.googleapis.com/css2"
-		f"?family={quote_plus(font)}"
-		f":wght@{';'.join(str(weight) for weight in options['weights'])}"
-		"&display=swap"
-		for font, options in font_map.items()
-	]
+	urls = []
+	for font, options in font_map.items():
+		family = quote_plus(font)
+		weights = ";".join(str(weight) for weight in options["weights"])
+		urls.append(f"https://fonts.googleapis.com/css2?family={family}:wght@{weights}&display=swap")
+	return urls
 
 
 def set_fonts_from_html(soup, font_map):
