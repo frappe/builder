@@ -1076,7 +1076,7 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
-	style_tag.string = f'[data-block-uid="{{{{ unique_hash }}}}"] {{ {script["script"]} }}'
+	style_tag.string = f'@scope {{ {script["script"]} }}'
 	return style_tag
 
 
