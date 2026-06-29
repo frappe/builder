@@ -22,7 +22,6 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
-			:parent-block-uid="uidToUse"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport
@@ -90,7 +89,6 @@ const props = withDefaults(
 		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		repeaterIndex?: string | number | null;
-		parentBlockUid?: string | null;
 	}>(),
 	{
 		isChildOfComponent: false,
@@ -101,7 +99,6 @@ const props = withDefaults(
 		componentData: null,
 		defaultProps: null,
 		repeaterIndex: null,
-		parentBlockUid: null,
 	},
 );
 
