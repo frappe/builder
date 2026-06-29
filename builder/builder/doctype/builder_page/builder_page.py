@@ -1055,12 +1055,18 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		return key
 
 
+def escape_raw_text_end_tag(content: str, tag: str) -> str:
+	pattern = rf"</{re.escape(tag)}(?=[\t\n\f\r />])"
+	return re.sub(pattern, lambda match: match.group().replace("/", r"\/", 1), content, flags=re.IGNORECASE)
+
+
 def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
 	"""Register a client script globally (once) and return its per-block tag."""
 	if script["type"] == "JavaScript":
 		if script_id not in state["used_block_scripts"]:
+			component_script = escape_raw_text_end_tag(script["script"], "script")
 			state["global_script_tag"].append(
-				f"function client_script_{script_id}(component_data, props) {{{script['script']}}}\n"
+				f"function client_script_{script_id}(component_data, props) {{{component_script}}}\n"
 			)
 			state["used_block_scripts"].add(script_id)
 
@@ -1076,7 +1082,8 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
-	style_tag.string = f'@scope {{ {script["script"]} }}'
+	component_style = escape_raw_text_end_tag(script["script"], "style")
+	style_tag.string = f"@scope {{ {component_style} }}"
 	return style_tag
 
 
