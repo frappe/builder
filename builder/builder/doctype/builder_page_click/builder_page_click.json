@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "creation": "2026-06-23 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "path",
+  "element",
+  "text",
+  "is_unique",
+  "visitor_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "path",
+   "fieldtype": "Data",
+   "label": "Path",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "element",
+   "fieldtype": "Data",
+   "label": "Element",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "text",
+   "fieldtype": "Data",
+   "label": "Text",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "is_unique",
+   "fieldtype": "Check",
+   "label": "Is Unique"
+  },
+  {
+   "fieldname": "visitor_id",
+   "fieldtype": "Data",
+   "label": "Visitor ID",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-06-23 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Page Click",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Website Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "read_only": 1,
+ "row_format": "Compressed",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "path",
+ "track_changes": 0
+}

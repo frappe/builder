@@ -1,77 +1,54 @@
 <template>
 	<div class="no-scrollbar h-full overflow-y-auto overflow-x-hidden pr-1">
-		<AnalyticsOverview
-			:data="analyticsData"
-			:chartConfig="chartConfigWithEvents"
-			:loading="analytics.loading">
-			<template #filters>
-				<AnalyticsFilters
-					:range="range"
-					:route="route"
-					:customDateRange="customDateRange"
-					@update:range="(val) => (range = val)"
-					@update:route="(val) => (route = val)"
-					@update:customDateRange="(val) => (customDateRange = val)" />
-			</template>
-		</AnalyticsOverview>
-		<div class="mt-8">
-			<h3 class="text-xl-medium mb-4 text-ink-gray-7">Top Referrers</h3>
-			<div
-				v-if="analytics.loading"
-				class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-				Loading...
+		<TrackingDisabledNotice v-if="trackingEnabled === false" />
+		<template v-else>
+			<AnalyticsOverview
+				:data="analyticsData"
+				:chartConfig="chartConfigWithEvents"
+				:loading="analytics.loading"
+				:ctr="ctrData.ctr">
+				<template #filters>
+					<AnalyticsFilters
+						:range="range"
+						:route="route"
+						:customDateRange="customDateRange"
+						@update:range="(val) => (range = val)"
+						@update:route="(val) => (route = val)"
+						@update:customDateRange="(val) => (customDateRange = val)" />
+				</template>
+			</AnalyticsOverview>
+			<div class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+				<TopReferrersList :rows="processedAnalyticsData.top_referrers" :loading="analytics.loading" />
+				<TopClicksList :elements="ctrData.elements" :loading="ctr?.loading" />
 			</div>
-			<ListView
-				v-else
-				class="!w-auto"
-				:columns="[
-					{
-						label: 'Domain',
-						key: 'domain',
-						width: '60%',
-						prefix: ({ row }: { row: any }) => {
-							return h('img', {
-								src: `https://${row.domain}/favicon.ico`,
-								alt: row.domain,
-								class: 'inline-block mr-2 w-5 h-5 align-middle rounded',
-								onError: (e: Event) => {
-									const img = e.target as HTMLImageElement | null;
-									if (img) {
-										img.src = '/assets/builder/images/fallback-favicon.ico';
-									}
-								},
-							});
-						},
-					},
-					{ label: 'Count', key: 'count', align: 'right' },
-				]"
-				:options="{ selectable: false, emptyState: {} }"
-				:rows="processedAnalyticsData.top_referrers"
-				row-key="domain" />
-		</div>
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
 import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
+import TopClicksList from "@/components/Settings/TopClicksList.vue";
+import TopReferrersList from "@/components/Settings/TopReferrersList.vue";
+import TrackingDisabledNotice from "@/components/Settings/TrackingDisabledNotice.vue";
 import { useAnalytics } from "@/composables/useAnalytics";
 import usePageStore from "@/stores/pageStore";
-import { ListView } from "frappe-ui";
-import { h } from "vue";
 
 const pageStore = usePageStore();
 const {
 	range,
-	interval,
 	route,
 	customDateRange,
+	trackingEnabled,
 	analyticsData,
 	chartConfigWithEvents,
 	processedAnalyticsData,
 	analytics,
+	ctr,
+	ctrData,
 } = useAnalytics({
 	apiUrl: "builder.api.get_page_analytics",
+	ctrApiUrl: "builder.api.get_page_ctr",
 	initialRange: "last_30_days",
 	initialRouteFilterType: "exact",
 	initialRoute: pageStore.getResolvedPageURL(false),

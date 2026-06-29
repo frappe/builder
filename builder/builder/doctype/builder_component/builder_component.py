@@ -232,7 +232,8 @@ def get_component_data(
 	except frappe.DoesNotExistError:
 		return {}
 
-	script = script or component_doc.component_data_script
+	if script is None:
+		script = component_doc.component_data_script
 	props = props or component_doc.component_props
 
 	if isinstance(props, str):

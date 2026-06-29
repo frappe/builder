@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Made with Frappe Builder -->
-<html lang="{{ language or default_language or 'en' }}"{% if disable_auto_dark_mode %} data-prefers-color-scheme="light"{% endif %}>
+<html lang="{{ language or default_language or 'en' }}"{% if disable_auto_dark_mode %} data-prefers-color-scheme="light"{% elif prefers_color_scheme %} data-prefers-color-scheme="{{ prefers_color_scheme }}"{% endif %}>
 <head>
 	{% if base_url %}
 	<base href="{{ base_url }}">
@@ -15,9 +15,6 @@
 	window.process=window.process||{env:{NODE_ENV:"production"}};
 	window.events={dispatch(name,data,target=document){target.dispatchEvent(new CustomEvent(name,{detail:data}))},listen(name,callback,target=document){const handler=event=>callback(event.detail,event);target.addEventListener(name,handler);return()=>target.removeEventListener(name,handler)}}
 	</script>
-	{%- if enable_reactivity_library -%}
-	<script src="/assets/builder/js/reactivity.js"></script>
-	{%- endif -%}
 	{% if canonical_url %}
 	<link rel="canonical" href="{{ canonical_url }}" />
 	{% endif %}
@@ -25,17 +22,18 @@
 	<link rel="icon" href="{{ favicon_light or favicon or '/assets/builder/images/frappe_black.png' }}"  media="(prefers-color-scheme: light)"/>
 	<link rel="icon" href="{{ favicon_dark or favicon or '/assets/builder/images/frappe_white.png' }}"  media="(prefers-color-scheme: dark)"/>
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
-	<link rel="stylesheet" href="/assets/builder/reset.css?v=3" media="screen">
+	<link rel="stylesheet" href="/assets/builder/reset.css?v=4" media="screen">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
-	{% for (font, options) in fonts.items() %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font | replace(' ', '+') }}&display=swap" media="screen">
-	{% set other_weights = options.weights | reject('equalto', '400') | reject('equalto', 400) | list %}
-	{% if other_weights %}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ font | replace(' ', '+') }}:wght@{{ other_weights | join(';') }}&display=swap" media="screen">
-	{% endif %}
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	{% for font_url in font_urls %}
+	<link rel="stylesheet" href="{{ font_url }}" media="screen">
 	{% endfor %}
 	{{ style }}
+	{%- if preview -%}
+	<style>{{ inline_variables_css }}</style>
+	{%- else -%}
 	<link rel="stylesheet" href="/builder_assets/variables.css" media="screen">
+	{%- endif -%}
 	{%- if custom_fonts -%}
 	<style>{% for font in custom_fonts %}@font-face {font-family: "{{ font.font_name }}";src: url("{{ font.font_file }}");}{% endfor %}</style>
 	{%- endif -%}

@@ -695,7 +695,7 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data or {})
+	return frappe.as_json(data or {}).replace("</", r"<\/")
 
 
 class CompactDumper(yaml.Dumper):

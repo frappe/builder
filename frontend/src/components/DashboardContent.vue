@@ -12,7 +12,7 @@
 					<p class="px-3 text-base text-gray-500">No matching pages found.</p>
 				</div>
 				<!-- grid -->
-				<div class="grid-col grid gap-3 auto-fill-[220px]" v-if="displayType === 'grid'">
+				<div class="grid-col grid gap-3 auto-fill-[210px]" v-if="displayType === 'grid'">
 					<PageCard
 						v-for="page in webPages.data"
 						:selected="selectedPages.has(page.name)"

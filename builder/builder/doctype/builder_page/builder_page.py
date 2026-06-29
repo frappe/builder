@@ -4,6 +4,7 @@
 import copy
 import re
 from typing import Any
+from urllib.parse import quote_plus
 
 import bs4 as bs
 import frappe
@@ -120,7 +121,6 @@ class BuilderPage(WebsiteGenerator):
 		disable_indexing: DF.Check
 		draft_blocks: DF.LongText | None
 		dynamic_route: DF.Check
-		enable_reactivity_library: DF.Check
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		is_standard: DF.Check
@@ -207,7 +207,6 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("published")
 			or self.has_value_changed("published_at")
 			or self.has_value_changed("disable_indexing")
-			or self.has_value_changed("enable_reactivity_library")
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
@@ -355,6 +354,16 @@ class BuilderPage(WebsiteGenerator):
 
 		if context.preview:
 			context.disable_auto_dark_mode = 0
+			# /builder_assets/variables.css is a rendered route, not a real file, so
+			# the preview/PDF generator can't fetch it. Inline the variables instead.
+			from builder.builder.doctype.builder_variable.builder_variable import get_variables_css
+
+			context.inline_variables_css = get_variables_css()
+			# Honour the dark/light mode the editor previews in (canvasDarkMode), so the
+			# initial server render matches it instead of falling back to the OS scheme.
+			scheme = frappe.form_dict.get("prefers_color_scheme")
+			if scheme in ("dark", "light"):
+				context.prefers_color_scheme = scheme
 		else:
 			context.disable_auto_dark_mode = frappe.get_cached_value(
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
@@ -376,7 +385,7 @@ class BuilderPage(WebsiteGenerator):
 		context.has_dual_mode_image = has_dual_mode_image
 
 		self.set_custom_font(context, fonts)
-		context.fonts = fonts
+		context.font_urls = get_google_font_urls(fonts)
 		context.__content = content
 		context.style = render_template(style, page_data)
 		context.editor_link = f"/{builder_path}/page/{self.name}"
@@ -399,7 +408,6 @@ class BuilderPage(WebsiteGenerator):
 		context.update(page_data)
 
 		self.set_style_and_script(context)
-		context.enable_reactivity_library = self.enable_reactivity_library != 0
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
@@ -835,6 +843,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	for key, value in block.get("customAttributes", {}).items():
 		tag[key] = value
 
+	# Stamp the live blockId so duplicated blocks each get their own tracking id.
+	if tag.get("data-track") and block.get("blockId"):
+		tag["data-track"] = block.get("blockId")
+
 	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
 	tag.attrs["class"] = " ".join(classes)
 
@@ -1055,12 +1067,18 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 		return key
 
 
+def escape_raw_text_end_tag(content: str, tag: str) -> str:
+	pattern = rf"</{re.escape(tag)}(?=[\t\n\f\r />])"
+	return re.sub(pattern, lambda match: match.group().replace("/", r"\/", 1), content, flags=re.IGNORECASE)
+
+
 def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Tag:
 	"""Register a client script globally (once) and return its per-block tag."""
 	if script["type"] == "JavaScript":
 		if script_id not in state["used_block_scripts"]:
+			component_script = escape_raw_text_end_tag(script["script"], "script")
 			state["global_script_tag"].append(
-				f"function client_script_{script_id}(component_data, props) {{{script['script']}}}\n"
+				f"async function client_script_{script_id}(component_data, props) {{{component_script}}}\n"
 			)
 			state["used_block_scripts"].add(script_id)
 
@@ -1076,7 +1094,8 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
-	style_tag.string = f'[data-block-uid="{{{{ unique_hash }}}}"] {{ {script["script"]} }}'
+	component_style = escape_raw_text_end_tag(script["script"], "style")
+	style_tag.string = f"@scope {{ {component_style} }}"
 	return style_tag
 
 
@@ -1165,8 +1184,15 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 
 		if value_type == "attribute":
 			attributes = block.setdefault("attributes", {})
-			current_value = attributes.get(property_name, "")
-			attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+			custom_attributes = block.setdefault("customAttributes", {})
+			if property_name in custom_attributes:
+				current_value = custom_attributes.get(property_name, "") or ""
+				custom_attributes[property_name] = (
+					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(str(current_value))}' }}}}"
+				)
+			else:
+				current_value = attributes.get(property_name, "")
+				attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
 
 		elif value_type == "style":
 			attributes = block.setdefault("attributes", {})
@@ -1317,6 +1343,11 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 			style_tag.append(wrap_with_media_query(style_string, device))
 
 
+def get_font_family(font: str) -> str:
+	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter')."""
+	return font.split(",")[0].strip().strip("'\"")
+
+
 def set_fonts(styles, font_map, inherited_font=None):
 	weight_map = {
 		"thin": "100",
@@ -1360,8 +1391,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
 			font = inherited_font
 		if font:
-			# Remove quotes if present
-			font = font.strip("'\"")
+			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
+			font = get_font_family(font)
 
 			# Skip if it is a system font
 			if font.lower() in system_fonts:
@@ -1384,13 +1415,33 @@ def set_fonts(styles, font_map, inherited_font=None):
 				font_map[font] = {"weights": [weight]}
 
 
+def normalize_font_weights(font_map: dict) -> None:
+	"""Make each font's weights render-ready for the Google Fonts request: numeric,
+	deduped, sorted, and always including 400 so the regular face is loaded."""
+	for options in font_map.values():
+		weights = {int(weight) for weight in options.get("weights", [])}
+		weights.add(400)
+		options["weights"] = sorted(weights)
+
+
+def get_google_font_urls(font_map: dict) -> list[str]:
+	"""Build one combined Google Fonts stylesheet URL per font family."""
+	normalize_font_weights(font_map)
+	urls = []
+	for font, options in font_map.items():
+		family = quote_plus(font)
+		weights = ";".join(str(weight) for weight in options["weights"])
+		urls.append(f"https://fonts.googleapis.com/css2?family={family}:wght@{weights}&display=swap")
+	return urls
+
+
 def set_fonts_from_html(soup, font_map):
 	# get font-family from inline styles
 	for tag in soup.find_all(style=True):
 		styles = tag.attrs.get("style").split(";")
 		for style in styles:
 			if "font-family" in style:
-				font = style.split(":")[1].strip().strip("'\"")
+				font = get_font_family(style.split(":")[1])
 				if font:
 					font_map[font] = {"weights": [400]}
 

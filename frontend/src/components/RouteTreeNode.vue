@@ -63,7 +63,7 @@
 						<Button
 							icon="lucide-more-horizontal"
 							size="sm"
-							variant="subtle"
+							variant="ghost"
 							class="bg-surface-base !text-ink-gray-5 hover:!text-ink-gray-9"
 							@click.stop></Button>
 					</template>
