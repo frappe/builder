@@ -17,6 +17,19 @@ type ScriptContext = {
 	props?: Record<string, any>;
 };
 
+function createEvents(defaultTarget: EventTarget) {
+	return {
+		dispatch(name: string, data: any, target: EventTarget = defaultTarget) {
+			target.dispatchEvent(new CustomEvent(name, { detail: data }));
+		},
+		listen(name: string, callback: (data: any, event: Event) => void, target: EventTarget = defaultTarget) {
+			const handler = (event: Event) => callback((event as CustomEvent).detail, event);
+			target.addEventListener(name, handler);
+			return () => target.removeEventListener(name, handler);
+		},
+	};
+}
+
 function createScriptFunction(userScript: string) {
 	return new Function(
 		"context",
@@ -39,6 +52,7 @@ function executeClientScriptUnrestricted(
 		const cleanup = fn({
 			component_data: componentData,
 			document,
+			events: createEvents(document),
 			props,
 			thisRef: thisElement,
 		});
@@ -179,6 +193,7 @@ function executeClientScriptRestricted(
 
 	const context = {
 		document: proxiedRoot,
+		events: createEvents(proxiedRoot),
 		thisRef: proxiedThis,
 		props,
 		component_data: componentData,
