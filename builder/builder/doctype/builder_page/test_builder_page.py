@@ -38,6 +38,7 @@ data.update({
 	"color": "red",
 	"padding": "20px",
 	"link": "https://example.com",
+	"role": "admin",
 })
 """
 
@@ -132,10 +133,12 @@ class TestBuilderPage(FrappeTestCase):
 
 	def test_publish_unpublish(self):
 		self.page.unpublish()
-		from frappe.utils import get_html_for_route
-
-		content = get_html_for_route("/test-page")
-		self.assertTrue("window.is_404 = true;" in content)
+		# An unpublished route is "not found". The rendered body varies (a site may
+		# define a custom Builder 404 page via www/404.py), so assert the 404 status
+		# and that the page's own content is no longer served.
+		response = get_response("/test-page")
+		self.assertEqual(response.status_code, 404)
+		self.assertNotIn("Hello World!", frappe.safe_decode(response.get_data()))
 
 		self.page.publish()
 		content = get_response_content("/test-page")
@@ -221,7 +224,9 @@ class TestBuilderPage(FrappeTestCase):
 		sub_header.set_dynamic_value("padding", "style", "padding")
 
 		link.set_dynamic_value("link", "attribute", "href")
-		body.attach_children(header, sub_header, link)
+		custom_attr_block = Block(element="div", customAttributes={"data-role": "guest"})
+		custom_attr_block.set_dynamic_value("role", "attribute", "data-role")
+		body.attach_children(header, sub_header, link, custom_attr_block)
 
 		page = frappe.get_doc(
 			{
@@ -239,6 +244,7 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertTrue("John Doe" in get_html_for(content, "tag", "h1"))
 			self.assertTrue("color: red;padding: 20px;" in get_html_for(content, "tag", "h2"))
 			self.assertTrue('href="https://example.com"' in get_html_for(content, "tag", "a"))
+			self.assertEqual("admin", get_html_for(content, "attribute", "data-role"))
 		finally:
 			page.delete()
 
@@ -1026,6 +1032,37 @@ component.update({
 		# Weights should be normalized to integers and deduplicated
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
+
+	def test_set_fonts_uses_primary_family_from_fallback_list(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		set_fonts([{"fontFamily": "Inter, sans-serif", "fontWeight": "500"}], font_map)
+
+		# Only the first family is requested, not the whole CSS stack
+		self.assertIn("Inter", font_map)
+		self.assertNotIn("Inter, sans-serif", font_map)
+
+	def test_get_google_font_urls(self):
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			"Newsreader": {"weights": [500]},
+			"Open Sans": {"weights": [700, 400]},
+			"Foo & Bar": {"weights": [400]},
+		}
+		urls = get_google_font_urls(font_map)
+
+		# One combined request per family: 400 always included, weights sorted, family
+		# name URL-encoded (spaces -> +, reserved chars escaped so the URL can't break)
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap",
+				"https://fonts.googleapis.com/css2?family=Foo+%26+Bar:wght@400&display=swap",
+			],
+		)
 
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""

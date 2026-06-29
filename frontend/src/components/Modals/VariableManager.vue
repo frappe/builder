@@ -353,7 +353,6 @@ const isCreating = ref(false);
 // shared column template so the header and every row stay aligned
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1";
 
-// shared cell metrics so swapping text <-> input causes zero layout shift
 const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
 const editableInputClass =

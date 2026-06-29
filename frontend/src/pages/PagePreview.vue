@@ -77,8 +77,8 @@
 import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { useDark, useToggle } from "@vueuse/core";
 import { Tooltip, useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
@@ -93,6 +93,7 @@ let previewRoute = ref("");
 const width = ref(maxWidth);
 const loading = ref(false);
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 
 const deviceBreakpoints = [
 	{
@@ -130,11 +131,13 @@ const activeBreakpoint = computed(() => {
 });
 
 const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
-const isDark = useDark({
-	attribute: "data-theme",
-});
+// Toggle the previewed PAGE's dark mode (shared with the canvas via
+// canvasDarkMode), not the Builder editor's UI theme.
+const isDark = computed(() => builderStore.canvasDarkMode);
 
-const toggleDark = useToggle(isDark);
+const toggleDark = () => {
+	builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
+};
 
 const transitionTheme = (toggle: () => void) => {
 	const doc: any = document;

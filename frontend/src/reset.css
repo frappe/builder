@@ -34,6 +34,10 @@ p:empty:before {
 	display: inline-block;
 }
 
+p:not(:where(.prose,.ProseMirror) *) {
+	line-height: revert;
+}
+
 .__text_block__ {
 	overflow-wrap: break-word;
 }

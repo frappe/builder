@@ -2,7 +2,7 @@
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
 			<span class="text-xl-semibold px-2 text-ink-gray-9">Settings</span>
-			<div class="flex flex-col" v-for="(item, index) in settingsSidebarItems" :key="index">
+			<div class="flex flex-col gap-1" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
 				</span>
@@ -41,7 +41,7 @@ import PageRobots from "@/components/Settings/PageRobots.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import usePageStore from "@/stores/pageStore";
-import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import GlobalAI from "./Settings/GlobalAI.vue";
 import GlobalAnalytics from "./Settings/GlobalAnalytics.vue";
@@ -108,7 +108,7 @@ const pageSettings = {
 			label: "Analytics",
 			value: "page_analytics",
 			component: PageAnalytics,
-			title: "Page Views",
+			title: "Page Analytics",
 			icon: "lucide-chart-bar",
 		},
 	],
@@ -155,7 +155,7 @@ const globalSettings = {
 			label: "Analytics",
 			value: "global_analytics",
 			component: GlobalAnalytics,
-			title: "Site Views",
+			title: "Site Analytics",
 			icon: "lucide-chart-bar",
 		},
 		{
@@ -181,6 +181,8 @@ if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 const selectItem = (value: string) => {
 	selectedItem.value = value;
 };
+
+provide("selectSettingsTab", selectItem);
 
 watch(
 	() => props.initialTab,

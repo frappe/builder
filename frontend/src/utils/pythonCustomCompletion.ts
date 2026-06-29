@@ -60,7 +60,6 @@ export default function customPythonCompletions(
 			if (variableName === "props") {
 				let isBracket = nodeBefore.name === "[";
 				if (!hasProps || !isBracket) return null;
-				console.log(variableName, blockProps, isBracket);
 				return propCompletions;
 			}
 
