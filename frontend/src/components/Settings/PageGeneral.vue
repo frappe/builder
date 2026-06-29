@@ -125,15 +125,6 @@
 						description="Prevent search engines from indexing this page"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
-					<hr class="w-full border-outline-gray-2" />
-					<Switch
-						size="sm"
-						label="Include Reactivity Library"
-						description="Load the Builder reactivity runtime on this page"
-						:modelValue="pageStore.activePage?.enable_reactivity_library !== 0"
-						@update:modelValue="
-							(val: Boolean) => pageStore.updateActivePage('enable_reactivity_library', val)
-						" />
 					<template v-if="isDeveloperMode || pageStore.activePage?.is_standard">
 						<hr class="w-full border-outline-gray-2" />
 						<Switch

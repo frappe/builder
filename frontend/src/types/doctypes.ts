@@ -151,8 +151,6 @@ export interface BuilderPage extends DocType {
   authenticated_access: 0 | 1;
   /** Disable Indexing: Check */
   disable_indexing: 0 | 1;
-  /** Include Reactivity Library: Check */
-  enable_reactivity_library: 0 | 1;
   /** Project Folder: Link (Builder Project Folder) */
   project_folder?: string;
   /** Head HTML: Code */

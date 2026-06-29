@@ -430,12 +430,14 @@ class TestBuilderPage(FrappeTestCase):
 		component_root = Block(element="div", blockId="comp-root")
 		component_content = Block(element="h4", blockId="comp-content", innerHTML="Component Content")
 		component_root.attach_children(component_content)
+		component_js = 'this.innerHTML = "</script><p>Component Script</p>";'
+		component_css = 'h4::after { content: "</style><p>Component Style</p>"; }'
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
 				"block": component_root.as_json(),
-				"component_js": 'console.log("Component Client Script Executed");\n',
-				"component_css": "h4 { color: green; }",
+				"component_js": component_js,
+				"component_css": component_css,
 			}
 		).insert()
 
@@ -463,8 +465,10 @@ class TestBuilderPage(FrappeTestCase):
 
 		try:
 			content = get_response_content("/component-client-script-test")
-			self.assertIn('console.log("Component Client Script Executed");', content)
-			self.assertIn("h4 { color: green; }", content)
+			self.assertNotIn(component_js, content)
+			self.assertNotIn(component_css, content)
+			self.assertIn(r"<\/script><p>Component Script</p>", content)
+			self.assertIn(r"<\/style><p>Component Style</p>", content)
 		finally:
 			page.delete()
 			component.delete()
@@ -535,7 +539,7 @@ component.update({
 			self.assertIn("component_data, props", content)
 			self.assertIn('"greeting": "hello from component data"', content)
 			self.assertIn('"title": "Overridden Title"', content)
-			self.assertIn("/assets/builder/js/reactivity.js", content)
+			self.assertNotIn("/assets/builder/js/reactivity.js", content)
 			self.assertRegex(
 				content,
 				r"client_script_[a-z0-9_]+\)\.call\("
@@ -546,24 +550,6 @@ component.update({
 		finally:
 			page.delete()
 			component.delete()
-
-	def test_reactivity_library_can_be_disabled_per_page(self):
-		page = frappe.get_doc(
-			{
-				"doctype": "Builder Page",
-				"page_title": "No Reactivity Library Test",
-				"published": 1,
-				"route": "/no-reactivity-library-test",
-				"enable_reactivity_library": 0,
-				"blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
-			}
-		).insert()
-
-		try:
-			content = get_response_content("/no-reactivity-library-test")
-			self.assertNotIn("/assets/builder/js/reactivity.js", content)
-		finally:
-			page.delete()
 
 	def test_component_props(self):
 		component_root = Block(element="div", blockId="wrapper-block")
