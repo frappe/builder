@@ -60,7 +60,6 @@ const props = withDefaults(
 		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
-		parentBlockUid?: string | null;
 	}>(),
 	{
 		preview: false,
@@ -68,7 +67,6 @@ const props = withDefaults(
 		componentData: null,
 		defaultProps: null,
 		breakpoint: "desktop",
-		parentBlockUid: null,
 	},
 );
 

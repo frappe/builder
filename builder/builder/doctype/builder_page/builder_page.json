@@ -44,7 +44,6 @@
   "options_tab",
   "authenticated_access",
   "disable_indexing",
-  "enable_reactivity_library",
   "project_folder"
  ],
  "fields": [
@@ -219,13 +218,6 @@
    "fieldname": "disable_indexing",
    "fieldtype": "Check",
    "label": "Disable Indexing"
-  },
-  {
-   "default": "1",
-   "description": "Load the Builder reactivity runtime on this page.",
-   "fieldname": "enable_reactivity_library",
-   "fieldtype": "Check",
-   "label": "Include Reactivity Library"
   },
   {
    "fieldname": "project_folder",

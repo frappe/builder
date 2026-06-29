@@ -34,7 +34,6 @@ type BuilderPageSettings = Pick<
 	| "canonical_url"
 	| "authenticated_access"
 	| "disable_indexing"
-	| "enable_reactivity_library"
 	| "favicon"
 	| "blocks"
 > & {
@@ -126,7 +125,6 @@ export function copyBuilderBlocks(
 			meta_image: currentPage.meta_image,
 			authenticated_access: currentPage.authenticated_access,
 			disable_indexing: currentPage.disable_indexing,
-			enable_reactivity_library: currentPage.enable_reactivity_library,
 			favicon: currentPage.favicon,
 			client_scripts:
 				currentPage.client_scripts?.map((script) => {

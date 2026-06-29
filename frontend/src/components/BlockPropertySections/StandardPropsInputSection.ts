@@ -73,7 +73,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			});
 		},
 		setModelValue: (value: any) => {
-			if (value == "") value = null;
+			if (value === "") value = null;
 			blockController.setBlockProp(propName, { value });
 		},
 		getModelValue: () => {

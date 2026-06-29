@@ -22,7 +22,6 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
-			:parent-block-uid="uidToUse"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport
@@ -53,7 +52,6 @@ import { extractComponentId, getDataForKey, getParentProps, getPropValue } from 
 import type { ComponentClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
-	type ComputedRef,
 	computed,
 	inject,
 	nextTick,
@@ -91,7 +89,6 @@ const props = withDefaults(
 		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		repeaterIndex?: string | number | null;
-		parentBlockUid?: string | null;
 	}>(),
 	{
 		isChildOfComponent: false,
@@ -102,17 +99,17 @@ const props = withDefaults(
 		componentData: null,
 		defaultProps: null,
 		repeaterIndex: null,
-		parentBlockUid: null,
 	},
 );
 
-const editedComponentId = inject<ComputedRef<string | null>>(
-	"editedComponentId",
-	computed(() => null),
+const editingComponentId = computed(() =>
+	!props.block.getParentBlock() && props.block === canvasStore.fragmentData.block
+		? canvasStore.fragmentData.fragmentId
+		: null,
 );
 
 const resolvedComponentData = computed(() => {
-	if (editedComponentId.value && !props.block.getParentBlock()) {
+	if (editingComponentId.value && !props.block.getParentBlock()) {
 		return componentController.getComponentDataPreview();
 	}
 	const componentId = extractComponentId(props.block);
@@ -520,7 +517,7 @@ watch(resolvedComponentData, () => {
 });
 
 const componentClientScriptDoc = computed(() => {
-	if (editedComponentId.value && !props.block.getParentBlock()) {
+	if (editingComponentId.value && !props.block.getParentBlock()) {
 		return {
 			component_js: componentController.componentJavaScript.value,
 			component_css: componentController.componentCSS.value,
@@ -550,7 +547,7 @@ watch(
 			breakpoint: props.breakpoint,
 			css: componentDoc.component_css ?? "",
 			javascript:
-				settingPage || (!editedComponentId.value && !dataReady) ? "" : (componentDoc.component_js ?? ""),
+				settingPage || (!editingComponentId.value && !dataReady) ? "" : (componentDoc.component_js ?? ""),
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});

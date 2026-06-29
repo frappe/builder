@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIPageGeneratorModal: typeof import('./src/components/AIPageGeneratorModal.vue')['default']
+    AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
     AnglePicker: typeof import('./src/components/Controls/AnglePicker.vue')['default']
@@ -64,6 +65,7 @@ declare module 'vue' {
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
     DimensionInput: typeof import('./src/components/DimensionInput.vue')['default']
     DraggablePopup: typeof import('./src/components/Controls/DraggablePopup.vue')['default']
+    DynamicValueDropdown: typeof import('./src/components/DynamicValueDropdown.vue')['default']
     DynamicValueHandler: typeof import('./src/components/Controls/DynamicValueHandler.vue')['default']
     EditableSpan: typeof import('./src/components/EditableSpan.vue')['default']
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
@@ -137,6 +139,9 @@ declare module 'vue' {
     TemplatesDialog: typeof import('./src/components/Templates/TemplatesDialog.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
     TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
+    TopClicksList: typeof import('./src/components/Settings/TopClicksList.vue')['default']
+    TopReferrersList: typeof import('./src/components/Settings/TopReferrersList.vue')['default']
+    TrackingDisabledNotice: typeof import('./src/components/Settings/TrackingDisabledNotice.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VersionHistory: typeof import('./src/components/VersionHistory.vue')['default']

@@ -195,7 +195,6 @@ const styleSectionProperties = [
 				type: "select",
 				options: overflowOptions,
 				setModelValue: (val: StyleValue) => {
-					console.log("Setting overflowY to", val);
 					if (val === "unset") {
 						val = null;
 					}
