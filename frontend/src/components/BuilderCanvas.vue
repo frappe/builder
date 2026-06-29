@@ -1,5 +1,10 @@
 <template>
-	<div ref="canvasContainer" @click="handleClick" @mousedown="handleMarqueeStart">
+	<div
+		ref="canvasContainer"
+		:data-builder-canvas="canvasId"
+		@click="handleClick"
+		@mousedown="handleMarqueeStart">
+		<component :is="'style'" v-if="componentClientStyles" v-text="componentClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -116,10 +121,16 @@ import type Block from "@/block";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
+import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import {
+	type ComponentClientScript,
+	executeClientScriptRestricted,
+	executeClientScriptUnrestricted,
+} from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
@@ -128,7 +139,7 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
+import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -136,6 +147,7 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const canvasId = `builder-canvas-${useId()}`;
 
 const { cssVariables, darkCssVariables } = useBuilderVariable();
 
@@ -151,6 +163,7 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
+const componentStyles = reactive(new Map<string, string>());
 
 const props = withDefaults(
 	defineProps<{
@@ -164,6 +177,7 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
+const componentClientStyles = computed(() => Array.from(componentStyles.values()).join("\n"));
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -363,6 +377,7 @@ watch(
 );
 
 provide("canvasProps", canvasProps);
+provide("emulateComponentClientScript", emulateComponentClientScript);
 
 defineExpose({
 	setScaleAndTranslate,
@@ -427,6 +442,39 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 			hoveredBreakpoint.value = lastVisible.device;
 		}
 	}
+}
+
+function escapeAttributeValue(value: string) {
+	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
+function emulateComponentClientScript(script: ComponentClientScript) {
+	const registrationKey = `${script.key}:${script.breakpoint}`;
+	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
+		script.key,
+	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
+	componentStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	let cleanup = () => {};
+	if (mode !== "Don't Execute" && script.javascript.trim()) {
+		const context = {
+			componentData: script.componentData,
+			props: script.props,
+		};
+		cleanup =
+			mode === "Unrestricted"
+				? executeClientScriptUnrestricted(script.element, script.javascript, context)
+				: executeClientScriptRestricted(script.element, canvasContainer.value, script.javascript, context);
+	}
+
+	return () => {
+		try {
+			cleanup();
+		} finally {
+			componentStyles.delete(registrationKey);
+		}
+	};
 }
 
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));

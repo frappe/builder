@@ -13,6 +13,7 @@
 		ref="component">
 		<BuilderBlock
 			:data="data"
+			:componentData="resolvedComponentData"
 			:defaultProps="defaultProps"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -44,24 +45,33 @@ import type Block from "@/block";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
-import {
-	executeBlockClientScriptRestricted,
-	executeBlockClientScriptUnrestricted,
-	getDataForKey,
-	getParentProps,
-	getPropValue,
-} from "@/utils/helpers";
+import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
+import type { ComponentClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
-import { computed, inject, nextTick, onMounted, reactive, ref, useAttrs, watch, watchEffect } from "vue";
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useAttrs,
+	watch,
+	watchEffect,
+} from "vue";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
+import componentController from "@/utils/componentController.js";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
+const componentStore = useComponentStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const isMounted = ref(false);
@@ -76,6 +86,7 @@ const props = withDefaults(
 		preview?: boolean;
 		readonly?: boolean;
 		data?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		repeaterIndex?: string | number | null;
 	}>(),
@@ -85,10 +96,29 @@ const props = withDefaults(
 		preview: false,
 		readonly: false,
 		data: null,
+		componentData: null,
 		defaultProps: null,
 		repeaterIndex: null,
 	},
 );
+
+const editingComponentId = computed(() =>
+	!props.block.getParentBlock() && props.block === canvasStore.fragmentData.block
+		? canvasStore.fragmentData.fragmentId
+		: null,
+);
+
+const resolvedComponentData = computed(() => {
+	if (editingComponentId.value && !props.block.getParentBlock()) {
+		return componentController.getComponentDataPreview();
+	}
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		return componentStore.getComponentInstanceData(componentId, uidToUse);
+	} else {
+		return props.componentData;
+	}
+});
 
 defineOptions({
 	inheritAttrs: false,
@@ -136,8 +166,14 @@ const hasBlockProps = computed(() => {
 	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
 });
 
+const hasComponentData = computed(() => Object.keys(resolvedComponentData.value || {}).length > 0);
+
 const getDataScriptValue = (path: string): any => {
 	return getDataForKey(props.data || {}, path);
+};
+
+const getComponentDataValue = (path: string): any => {
+	return getDataForKey(resolvedComponentData.value || {}, path);
 };
 
 const attributes = computed(() => {
@@ -184,10 +220,11 @@ const attributes = computed(() => {
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
+		attribs.componentData = resolvedComponentData.value;
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (props.data || hasBlockProps.value) {
+	if (props.data || hasBlockProps.value || hasComponentData.value) {
 		if (props.block.getDataKey("type") === "attribute") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -196,7 +233,10 @@ const attributes = computed(() => {
 					props.block,
 					getDataScriptValue,
 					props.defaultProps,
+					getComponentDataValue,
 				);
+			} else if (props.block.getDataKey("comesFrom") === "componentData") {
+				value = getComponentDataValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataScriptValue(props.block.getDataKey("key") as string);
 			}
@@ -212,7 +252,15 @@ const attributes = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						props.defaultProps,
+						getComponentDataValue,
+					);
+				} else if (dataKeyObj.comesFrom === "componentData") {
+					value = getComponentDataValue(dataKeyObj.key as string);
 				} else {
 					value = getDataScriptValue(dataKeyObj.key as string);
 				}
@@ -228,6 +276,10 @@ const attributes = computed(() => {
 });
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+const emulateComponentClientScript = inject<ComponentClientScriptEmulator>(
+	"emulateComponentClientScript",
+	() => () => {},
+);
 
 const target = computed(() => {
 	if (!component.value) return null;
@@ -240,7 +292,7 @@ const target = computed(() => {
 
 const styles = computed(() => {
 	let dynamicStyles = {} as { [key: string]: string };
-	if (props.data || hasBlockProps.value) {
+	if (props.data || hasBlockProps.value || hasComponentData.value) {
 		if (props.block.getDataKey("type") === "style") {
 			let value;
 			if (props.block.getDataKey("comesFrom") === "props") {
@@ -249,7 +301,10 @@ const styles = computed(() => {
 					props.block,
 					getDataScriptValue,
 					props.defaultProps,
+					getComponentDataValue,
 				);
+			} else if (props.block.getDataKey("comesFrom") === "componentData") {
+				value = getComponentDataValue(props.block.getDataKey("key") as string);
 			} else {
 				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
 			}
@@ -266,7 +321,15 @@ const styles = computed(() => {
 				const property = dataKeyObj.property as string;
 				let value;
 				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, getDataScriptValue, props.defaultProps);
+					value = getPropValue(
+						dataKeyObj.key as string,
+						props.block,
+						getDataScriptValue,
+						props.defaultProps,
+						getComponentDataValue,
+					);
+				} else if (dataKeyObj.comesFrom === "componentData") {
+					value = getComponentDataValue(dataKeyObj.key as string);
 				} else {
 					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
 				}
@@ -364,10 +427,14 @@ onMounted(async () => {
 	isMounted.value = true;
 });
 
-const allResolvedProps = computed(() => {
-	if (!isMounted.value) {
-		return {};
+onUnmounted(() => {
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		componentStore.deleteComponentData(componentId, uidToUse);
 	}
+});
+
+const allResolvedProps = computed(() => {
 	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
 		(acc, [key, value]) => {
 			acc[key] = value.value;
@@ -380,7 +447,13 @@ const allResolvedProps = computed(() => {
 		...props.block.getBlockProps(),
 	}).reduce(
 		(acc, [key]) => {
-			acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps);
+			acc[key] = getPropValue(
+				key,
+				props.block,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
 			return acc;
 		},
 		{} as Record<string, any>,
@@ -388,7 +461,13 @@ const allResolvedProps = computed(() => {
 
 	const parentProps = Object.entries(getParentProps(props.block)).reduce(
 		(acc, [key, value]) => {
-			acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps);
+			acc[key] = getPropValue(
+				key,
+				value.block!,
+				getDataScriptValue,
+				props.defaultProps,
+				getComponentDataValue,
+			);
 			return acc;
 		},
 		{} as Record<string, any>,
@@ -401,28 +480,78 @@ const allResolvedProps = computed(() => {
 	};
 });
 
-// Execute client script
+const fetchingComponentDetails = computed(() => {
+	return (
+		componentStore.fetchingComponentVersion.has(props.block.componentVersion || "") ||
+		componentStore.fetchingComponent.has(props.block.extendedFromComponent || "")
+	);
+});
+const componentDataReady = ref(false);
+
 watch(
 	[
-		component,
+		() => props.block.extendedFromComponent,
+		() => props.block.componentVersion,
+		() => canvasStore.editingMode,
+		() => props.componentData,
+		() => uidToUse,
+		fetchingComponentDetails,
 		allResolvedProps,
-		() => props.block.getBlockClientScript(),
+	],
+	([componentId, , , , , fetchingComponentDetails, allResolvedProps]) => {
+		componentDataReady.value = false;
+		// can use extractComponentId but below code is more efficient
+		if (!componentId) {
+			return;
+		}
+		if (fetchingComponentDetails) {
+			return;
+		}
+		componentStore.setComponentData(componentId, allResolvedProps, uidToUse, props.block.componentVersion);
+	},
+	{ immediate: true },
+);
+
+watch(resolvedComponentData, () => {
+	componentDataReady.value = true;
+});
+
+const componentClientScriptDoc = computed(() => {
+	if (editingComponentId.value && !props.block.getParentBlock()) {
+		return {
+			component_js: componentController.componentJavaScript.value,
+			component_css: componentController.componentCSS.value,
+		};
+	}
+	if (!props.block.extendedFromComponent) return null;
+	return props.block.componentVersion
+		? componentStore.getComponentVersionDoc(props.block.componentVersion)
+		: componentStore.getComponent(props.block.extendedFromComponent);
+});
+
+watch(
+	[
+		target,
+		componentClientScriptDoc,
+		resolvedComponentData,
+		allResolvedProps,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
+		componentDataReady,
 	],
-	() => {
-		if (!isMounted.value) return;
-		if (pageStore.settingPage) return;
-
-		const script = props.block.getBlockClientScript().trim();
-		if (!script) return;
-
-		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
-		if (mode === "Don't Execute") return;
-
-		if (mode === "Restricted")
-			executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
-		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+	([element, componentDoc, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+		if (!element || !componentDoc) return;
+		const cleanup = emulateComponentClientScript({
+			key: uidToUse,
+			element,
+			breakpoint: props.breakpoint,
+			css: componentDoc.component_css ?? "",
+			javascript:
+				settingPage || (!editingComponentId.value && !dataReady) ? "" : (componentDoc.component_js ?? ""),
+			componentData: componentData ?? {},
+			props: resolvedProps,
+		});
+		onCleanup(cleanup);
 	},
 	{ immediate: true },
 );
@@ -443,8 +572,17 @@ const hiddenDueToVisibilityCondition = computed(() => {
 	if (comesFrom == "dataScript") {
 		const value = getDataScriptValue(key as string);
 		return !Boolean(value);
+	} else if (comesFrom == "componentData") {
+		const value = getComponentDataValue(key as string);
+		return !Boolean(value);
 	} else {
-		const value = getPropValue(key as string, props.block, getDataScriptValue, props.defaultProps);
+		const value = getPropValue(
+			key as string,
+			props.block,
+			getDataScriptValue,
+			props.defaultProps,
+			getComponentDataValue,
+		);
 		return !Boolean(value);
 	}
 });

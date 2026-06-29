@@ -548,3 +548,15 @@ def get_codemirror_completions():
 def reorder_client_scripts(script_order: list[str]):
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to evaluate component scripts")
+def get_component_data(
+	component_name: str, props: dict | str | None = None, script: str | None = None
+) -> dict:
+	from builder.builder.doctype.builder_component.builder_component import (
+		get_component_data as _get_component_data,
+	)
+
+	return _get_component_data(component_name, props, script)

@@ -10,8 +10,12 @@
  "field_order": [
   "component_name",
   "block",
+  "component_props",
   "for_web_page",
-  "component_id"
+  "component_id",
+  "component_data_script",
+  "component_js",
+  "component_css"
  ],
  "fields": [
   {
@@ -26,21 +30,45 @@
    "read_only": 1
   },
   {
+   "fieldname": "component_props",
+   "fieldtype": "JSON",
+   "label": "Component Props"
+  },
+  {
    "fieldname": "for_web_page",
    "fieldtype": "Link",
    "label": "For Web Page",
    "options": "Builder Page",
    "read_only": 1
   },
+   {
+    "fieldname": "component_id",
+    "fieldtype": "Data",
+    "label": "Component ID",
+    "no_copy": 1,
+    "read_only": 1,
+    "unique": 1
+   },
+   {
+    "fieldname": "component_data_script",
+    "fieldtype": "Code",
+    "label": "Component Data Script",
+    "options": "Python",
+    "description": "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
+   },
+   {
+   "fieldname": "component_js",
+   "fieldtype": "Code",
+   "label": "Component JavaScript",
+   "options": "JavaScript"
+  },
   {
-   "fieldname": "component_id",
-   "fieldtype": "Data",
-   "label": "Component ID",
-   "no_copy": 1,
-   "read_only": 1,
-   "unique": 1
-  }
- ],
+   "fieldname": "component_css",
+   "fieldtype": "Code",
+   "label": "Component CSS",
+   "options": "CSS"
+   }
+  ],
  "index_web_pages_for_search": 1,
  "links": [],
  "modified": "2025-01-29 09:30:34.896956",

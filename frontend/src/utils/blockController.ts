@@ -1,6 +1,7 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import componentController from "./componentController";
 
 const canvasStore = useCanvasStore();
 
@@ -128,7 +129,7 @@ const blockController = {
 		} else {
 			// TODO: handle it better
 			let key: string | undefined = "__initial__";
-			let comesFrom: "props" | "dataScript" | undefined = undefined;
+			let comesFrom: "props" | "dataScript" | "componentData" | undefined = undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
 				if (key === "__initial__") {
@@ -343,29 +344,6 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block): Block => {
-		if (!block) {
-			block = blockController.getFirstSelectedBlock();
-		}
-		const editingMode = canvasStore.editingMode;
-
-		while (block && block.isExtendedFromComponent()) {
-			if (block.extendedFromComponent) break;
-			block = block.getParentBlock()!;
-		}
-		if (editingMode == "fragment") {
-			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
-				block = block.getParentBlock()!;
-			}
-		}
-		return block;
-	},
-	getBlockClientScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
-	},
-	setBlockClientScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
@@ -383,15 +361,8 @@ const blockController = {
 	},
 	setBlockProps: (props: BlockProps) => {
 		const block = blockController.getFirstSelectedBlock();
-		if (!block.props) {
-			block.props = {};
-		}
-		Object.keys(block.props).forEach((key) => {
-			if (!props[key]) {
-				delete block.props?.[key];
-			}
-		});
-		Object.assign(block.props, props);
+		if (!block) return;
+		block.setBlockProps(props);
 	},
 };
 

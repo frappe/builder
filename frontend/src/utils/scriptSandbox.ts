@@ -1,58 +1,95 @@
-// Execution of user-provided block client scripts.
-// Extracted from helpers.ts; re-exported there for backwards compatibility.
-
 import { builderSettings } from "@/data/builderSettings";
 
-function executeBlockClientScriptUnrestricted(
-	blockUid: string,
-	breakpoint: string,
-	userScript: string,
-	props: Record<string, any> = {},
-) {
-	const thisElement = document.querySelector(
-		`[data-block-uid='${blockUid}'][data-breakpoint=${breakpoint}]`,
-	) as HTMLElement;
+export type ScriptCleanup = () => void;
+export type ComponentClientScript = {
+	key: string;
+	element: HTMLElement;
+	breakpoint: string;
+	css: string;
+	javascript: string;
+	componentData: Record<string, any>;
+	props: Record<string, any>;
+};
+export type ComponentClientScriptEmulator = (script: ComponentClientScript) => ScriptCleanup;
 
-	const context = {
-		thisRef: thisElement,
-		props,
+type ScriptContext = {
+	componentData?: Record<string, any>;
+	props?: Record<string, any>;
+};
+
+function createEvents(defaultTarget: EventTarget) {
+	return {
+		dispatch(name: string, data: any, target: EventTarget = defaultTarget) {
+			target.dispatchEvent(new CustomEvent(name, { detail: data }));
+		},
+		listen(name: string, callback: (data: any, event: Event) => void, target: EventTarget = defaultTarget) {
+			const handler = (event: Event) => callback((event as CustomEvent).detail, event);
+			target.addEventListener(name, handler);
+			return () => target.removeEventListener(name, handler);
+		},
 	};
+}
 
-	const fn = new Function(
+function createScriptFunction(userScript: string) {
+	return new Function(
 		"context",
 		`with (context) {
-			return (function() { ${userScript} }).call(thisRef);
+			return (async function(component_data, props) { ${userScript} })
+				.call(thisRef, component_data, props);
 		}`,
 	);
+}
+
+function executeClientScriptUnrestricted(
+	thisElement: HTMLElement | null,
+	userScript: string,
+	{ componentData = {}, props = {} }: ScriptContext = {},
+): ScriptCleanup {
+	if (!thisElement || !userScript.trim()) return () => {};
 
 	try {
-		document.querySelectorAll(`[data-created-by='${blockUid}']`).forEach((el) => el.remove());
-		fn.call(thisElement, context);
-	} catch (e) {
-		console.error("Error in user script (unrestricted):", e);
-		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+		const fn = createScriptFunction(userScript);
+		const cleanup = fn({
+			component_data: componentData,
+			document,
+			events: createEvents(document),
+			props,
+			thisRef: thisElement,
+		});
+		if (typeof cleanup !== "function") return () => {};
+		return () => {
+			try {
+				cleanup.call(thisElement);
+			} catch (error) {
+				console.error("Error cleaning up user script (unrestricted):", error);
+			}
+		};
+	} catch (error) {
+		console.error("Error in user script (unrestricted):", error);
+		return () => {};
 	}
 }
 
 /**
- * Tries to execute user-provided script in a safer environment, (but not guarantee) restricting access to certain DOM properties and methods.
- * It makes the editor canvas as the root (document), and thus limits the script's ability to manipulate the broader document.
- * It tries to restrict escape hatches which could be used to access the global window or document objects.
- * It tries to `wrap` all returned DOM nodes and collections to ensure they are also proxied.
- * The `wrap` function creates proxies for DOM elements to intercept property access and method calls.
- *
- * @param blockId - The ID of the block element to which the script is associated.
- * @param userScript - The user-provided JavaScript code to execute.
- * @param props - An optional object containing properties to be made available in the script's context.
+ * Executes a user script with the canvas exposed as document and proxies DOM values
+ * to restrict common escape hatches into the broader editor document.
  */
-
-function executeBlockClientScriptRestricted(
-	blockUid: string,
-	breakpoint: string,
+function executeClientScriptRestricted(
+	thisElement: HTMLElement | null,
+	sandboxRoot: HTMLElement | null,
 	userScript: string,
-	props: Record<string, any> = {},
-) {
-	const cache = new WeakMap();
+	{ componentData = {}, props = {} }: ScriptContext = {},
+): ScriptCleanup {
+	if (!thisElement || !sandboxRoot || !userScript.trim()) return () => {};
+
+	const cache = new WeakMap<object, any>();
+	const rawValues = new WeakMap<object, object>();
+	const eventListeners: Array<{
+		target: Element;
+		type: string;
+		listener: EventListenerOrEventListenerObject;
+		options?: boolean | AddEventListenerOptions;
+	}> = [];
 
 	const BLOCKED_GET = new Set([
 		"ownerDocument",
@@ -68,23 +105,28 @@ function executeBlockClientScriptRestricted(
 
 	const BLOCKED_SET = new Set(["innerHTML", "outerHTML"]);
 
-	function wrap(value: Element | Node) {
+	function wrap(value: any): any {
 		if (value === null || typeof value !== "object") return value;
 		if (cache.has(value)) return cache.get(value);
 
 		const proxy = new Proxy(value, handler);
 		cache.set(value, proxy);
+		rawValues.set(proxy, value);
 		return proxy;
 	}
 
+	function unwrap(value: any) {
+		return value !== null && typeof value === "object" ? rawValues.get(value) || value : value;
+	}
+
 	const handler = {
-		get(target: Element, prop: string, receiver: any) {
-			if (BLOCKED_GET.has(prop)) return undefined;
+		get(target: Element, prop: string | symbol) {
+			if (typeof prop === "string" && BLOCKED_GET.has(prop)) return undefined;
 
 			// Always pass `target` (not the proxy) as the receiver so that native DOM
 			// getters (e.g. tagName, nodeType, children) run with the correct `this`.
 			// Passing the Proxy as receiver causes "Illegal invocation" in those cases.
-			let val = Reflect.get(target, prop, target);
+			const val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
 			if (val instanceof Node) return wrap(val);
@@ -97,21 +139,25 @@ function executeBlockClientScriptRestricted(
 
 			// Wrap functions (methods)
 			if (typeof val === "function") {
-				// disallow eventListeners
 				if (prop === "addEventListener" || prop === "removeEventListener") {
-					// disallow clicks
-					return (...args: any[]) => {
-						const eventType = args[0];
-						const disallowClicks = Boolean(builderSettings.doc?.block_click_handlers);
-						if (disallowClicks && (eventType === "click" || eventType === "dblclick")) {
-							throw new Error(`Blocked: cannot add/remove ${eventType} event listeners`);
+					return (
+						type: string,
+						listener: EventListenerOrEventListenerObject,
+						options?: boolean | AddEventListenerOptions,
+					) => {
+						if (builderSettings.doc?.restrict_click_handlers && (type === "click" || type === "dblclick")) {
+							throw new Error(`Blocked: cannot add/remove ${type} event listeners`);
 						}
-						const realArgs = args.map((a) => cache.get(a) || a);
-						return val.apply(target, realArgs);
+						const realListener = unwrap(listener);
+						const result = val.call(target, type, realListener, options);
+						if (prop === "addEventListener") {
+							eventListeners.push({ target, type, listener: realListener, options });
+						}
+						return result;
 					};
 				}
-				return (...args) => {
-					const realArgs = args.map((a) => cache.get(a) || a);
+				return (...args: any[]) => {
+					const realArgs = args.map(unwrap);
 
 					// Do not allow inserting nodes outside the sandbox
 					for (const a of realArgs) {
@@ -128,32 +174,29 @@ function executeBlockClientScriptRestricted(
 			return val; // primitive allowed
 		},
 
-		set(target: Element, prop: string, value: any) {
-			if (BLOCKED_SET.has(prop)) {
-				throw new Error(`Blocked: cannot set ${prop}`);
+		set(target: Element, prop: string | symbol, value: any) {
+			if (typeof prop === "string" && BLOCKED_SET.has(prop)) {
+				throw new Error(`Blocked: cannot set ${String(prop)}`);
 			}
 
 			// Allow normal DOM props like src, value, className, id, etc.
 			try {
-				return Reflect.set(target as any, prop as any, value);
+				return Reflect.set(target, prop, unwrap(value), target);
 			} catch {
 				return false;
 			}
 		},
 	};
 
-	const sandboxRoot = document.querySelector("[data-block-id='root']") as HTMLElement;
-	const thisElement = document.querySelector(
-		`[data-block-uid='${blockUid}'][data-breakpoint='${breakpoint}']`,
-	) as HTMLElement;
-
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);
 
 	const context = {
 		document: proxiedRoot,
+		events: createEvents(proxiedRoot),
 		thisRef: proxiedThis,
 		props,
+		component_data: componentData,
 		// Escape hatches blocked
 		window: undefined,
 		globalThis: undefined,
@@ -163,19 +206,32 @@ function executeBlockClientScriptRestricted(
 		setInterval: undefined,
 	};
 
-	const fn = new Function(
-		"context",
-		`with (context) {
-			return (function() { ${userScript} }).call(thisRef);
-		}`,
-	);
-
 	try {
-		fn.call(proxiedThis, context);
-	} catch (e) {
-		console.error("Error in user script:", e);
-		// toast.warning("An error occurred while executing block script: " + (e instanceof Error ? e.message : ""));
+		const fn = createScriptFunction(userScript);
+		const userCleanup = fn(context);
+		return () => {
+			eventListeners.forEach(({ target, type, listener, options }) => {
+				target.removeEventListener(type, listener, options);
+			});
+			if (typeof userCleanup === "function") {
+				try {
+					userCleanup.call(proxiedThis);
+				} catch (error) {
+					console.error("Error cleaning up user script (restricted):", error);
+				}
+			}
+		};
+	} catch (error) {
+		console.error("Error in user script (restricted):", error);
+		return () => {
+			eventListeners.forEach(({ target, type, listener, options }) => {
+				target.removeEventListener(type, listener, options);
+			});
+		};
 	}
 }
 
-export { executeBlockClientScriptUnrestricted, executeBlockClientScriptRestricted };
+export {
+	executeClientScriptRestricted,
+	executeClientScriptUnrestricted,
+};

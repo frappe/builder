@@ -107,7 +107,6 @@ class Block:
 	elementBeforeConversion: str | None = None
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
-	blockClientScript: str = ""
 	props: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
@@ -173,7 +172,6 @@ class Block:
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
-			"blockClientScript": self.blockClientScript,
 			"props": self.props,
 		}
 
@@ -699,7 +697,7 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data or {})
+	return frappe.as_json(data or {}).replace("</", r"<\/")
 
 
 class CompactDumper(yaml.Dumper):

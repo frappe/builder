@@ -11,6 +11,10 @@
 	{% if disable_indexing %}
 	<meta name="robots" content="noindex, nofollow">
 	{% endif %}
+	<script>
+	window.process=window.process||{env:{NODE_ENV:"production"}};
+	window.events={dispatch(name,data,target=document){target.dispatchEvent(new CustomEvent(name,{detail:data}))},listen(name,callback,target=document){const handler=event=>callback(event.detail,event);target.addEventListener(name,handler);return()=>target.removeEventListener(name,handler)}}
+	</script>
 	{% if canonical_url %}
 	<link rel="canonical" href="{{ canonical_url }}" />
 	{% endif %}
