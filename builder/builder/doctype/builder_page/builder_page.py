@@ -1063,7 +1063,7 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 		if script_id not in state["used_block_scripts"]:
 			component_script = escape_raw_text_end_tag(script["script"], "script")
 			state["global_script_tag"].append(
-				f"function client_script_{script_id}(component_data, props) {{{component_script}}}\n"
+				f"async function client_script_{script_id}(component_data, props) {{{component_script}}}\n"
 			)
 			state["used_block_scripts"].add(script_id)
 
