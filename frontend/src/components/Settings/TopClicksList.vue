@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { findBlockInTree } from "@/block";
+import { findBlockInTree } from "@/utils/block/tree";
 import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { CTRElement } from "@/composables/useAnalytics";
 import useBuilderStore from "@/stores/builderStore";
