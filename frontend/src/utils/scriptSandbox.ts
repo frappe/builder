@@ -34,7 +34,7 @@ function createScriptFunction(userScript: string) {
 	return new Function(
 		"context",
 		`with (context) {
-			return (function(component_data, props) { ${userScript} })
+			return (async function(component_data, props) { ${userScript} })
 				.call(thisRef, component_data, props);
 		}`,
 	);
