@@ -82,9 +82,7 @@ const useComponentStore = defineStore("componentStore", {
 			const canvasStore = useCanvasStore();
 			canvasStore.editOnCanvas(
 				componentBlock,
-				(block: Block) => {
-					this.saveComponent(block, componentName);
-				},
+				(block: Block) => this.saveComponent(block, componentName),
 				"Save Component",
 				component.component_name,
 				component.name,
@@ -94,7 +92,12 @@ const useComponentStore = defineStore("componentStore", {
 		saveComponent(block: Block, componentName: string) {
 			const pageStore = usePageStore();
 			const doc = this.getComponentDraft(componentName);
-			if (!doc) return;
+			if (!doc) {
+				toast.error("Failed to save component", {
+					description: "Component draft is unavailable.",
+				});
+				throw new Error(`Missing draft for component ${componentName}`);
+			}
 			return webComponent.setValue
 				.submit({
 					name: componentName,
@@ -135,6 +138,7 @@ const useComponentStore = defineStore("componentStore", {
 				})
 				.catch((error: any) => {
 					toast.error("Failed to save component");
+					throw error;
 				});
 		},
 		isComponentUsed(componentName: string) {
