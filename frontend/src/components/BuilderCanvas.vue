@@ -4,7 +4,7 @@
 		:data-builder-canvas="canvasId"
 		@click="handleClick"
 		@mousedown="handleMarqueeStart">
-		<component :is="'style'" v-if="componentClientStyles" v-text="componentClientStyles" />
+		<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -127,7 +127,7 @@ import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import {
-	type ComponentClientScript,
+	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
 	executeClientScriptUnrestricted,
 } from "@/utils/scriptSandbox";
@@ -163,7 +163,7 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-const componentStyles = reactive(new Map<string, string>());
+const blockStyles = reactive(new Map<string, string>());
 
 const props = withDefaults(
 	defineProps<{
@@ -177,7 +177,7 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
-const componentClientStyles = computed(() => Array.from(componentStyles.values()).join("\n"));
+const blockClientStyles = computed(() => Array.from(blockStyles.values()).join("\n"));
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -377,7 +377,7 @@ watch(
 );
 
 provide("canvasProps", canvasProps);
-provide("emulateComponentClientScript", emulateComponentClientScript);
+provide("emulateBlockClientScript", emulateBlockClientScript);
 
 defineExpose({
 	setScaleAndTranslate,
@@ -448,12 +448,12 @@ function escapeAttributeValue(value: string) {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
-function emulateComponentClientScript(script: ComponentClientScript) {
+function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const registrationKey = `${script.key}:${script.breakpoint}`;
 	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	componentStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	let cleanup = () => {};
@@ -472,7 +472,7 @@ function emulateComponentClientScript(script: ComponentClientScript) {
 		try {
 			cleanup();
 		} finally {
-			componentStyles.delete(registrationKey);
+			blockStyles.delete(registrationKey);
 		}
 	};
 }

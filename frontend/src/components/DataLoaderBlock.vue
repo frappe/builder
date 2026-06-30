@@ -71,8 +71,8 @@ const blockRepeaterData = computed(() => {
 		return compData || [];
 	} else if (repeatingFrom.value == "props" && key) {
 		const defaultProps: BlockProps[] = [];
-		const componentRoot = props.block.getComponentRoot();
-		const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+		const propsRoot = props.block.getPropsRoot();
+		const parsedValue = propsRoot ? getStandardPropValue(key, propsRoot)?.value : null;
 		if (Array.isArray(parsedValue)) {
 			parsedValue.slice(0, 100).forEach((item: any) =>
 				defaultProps.push({

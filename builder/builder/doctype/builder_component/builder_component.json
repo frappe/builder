@@ -10,12 +10,9 @@
  "field_order": [
   "component_name",
   "block",
-  "component_props",
   "for_web_page",
   "component_id",
-  "component_data_script",
-  "component_js",
-  "component_css"
+  "component_data_script"
  ],
  "fields": [
   {
@@ -28,11 +25,6 @@
    "fieldtype": "JSON",
    "label": "Block",
    "read_only": 1
-  },
-  {
-   "fieldname": "component_props",
-   "fieldtype": "JSON",
-   "label": "Component Props"
   },
   {
    "fieldname": "for_web_page",
@@ -55,18 +47,6 @@
     "label": "Component Data Script",
     "options": "Python",
     "description": "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-   },
-   {
-   "fieldname": "component_js",
-   "fieldtype": "Code",
-   "label": "Component JavaScript",
-   "options": "JavaScript"
-  },
-  {
-   "fieldname": "component_css",
-   "fieldtype": "Code",
-   "label": "Component CSS",
-   "options": "CSS"
    }
   ],
  "index_web_pages_for_search": 1,

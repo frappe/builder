@@ -354,7 +354,9 @@ useEventListener(document, "keyup", (e) => {
 });
 
 async function saveAndExitFragmentMode(e: Event) {
-	componentController.applyComponentDoc();
+	if (canvasStore.fragmentData.fragmentKind === "component") {
+		componentController.applyComponentDoc();
+	}
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);

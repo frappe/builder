@@ -24,11 +24,8 @@ class BuilderComponent(Document):
 		from frappe.types import DF
 
 		block: DF.JSON | None
-		component_props: DF.JSON | None
-		component_css: DF.Code | None
 		component_data_script: DF.Code | None
 		component_id: DF.Data | None
-		component_js: DF.Code | None
 		component_name: DF.Data | None
 		for_web_page: DF.Link | None
 	# end: auto-generated types
@@ -199,7 +196,7 @@ def get_component_data(
 
 	if script is None:
 		script = component_doc.component_data_script
-	props = props or component_doc.component_props
+	props = props or get_component_prop_values(component_doc.block)
 
 	if isinstance(props, str):
 		props = frappe.parse_json(props)
@@ -215,3 +212,13 @@ def get_component_data(
 	execute_script(script, _locals, component_name)
 
 	return _locals["component"]
+
+
+def get_component_prop_values(block: dict | str | None) -> dict:
+	block = frappe.parse_json(block or "{}")
+	return {
+		name: config.get("value")
+		if config.get("value") is not None
+		else config.get("propOptions", {}).get("options", {}).get("defaultValue")
+		for name, config in (block.get("props") or {}).items()
+	}
