@@ -38,7 +38,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		showEditorDialog: false,
 		fragmentData: {
 			block: <Block | null>null,
-			fragmentKind: <"component" | "blockTemplate" | null>null,
+			fragmentType: <"component" | "blockTemplate" | null>null,
 			saveAction: <Function | null>null,
 			saveActionLabel: <string | null>null,
 			fragmentName: <string | null>null,
@@ -149,7 +149,7 @@ const useCanvasStore = defineStore("canvasStore", {
 
 		editOnCanvas(
 			block: Block,
-			fragmentKind: "component" | "blockTemplate",
+			fragmentType: "component" | "blockTemplate",
 			saveAction: (block: Block) => void,
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
@@ -159,7 +159,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			const blockCopy = getBlockCopy(block, true);
 			this.fragmentData = {
 				block: blockCopy,
-				fragmentKind,
+				fragmentType,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
@@ -189,7 +189,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			// reset fragmentData
 			this.fragmentData = {
 				block: null,
-				fragmentKind: null,
+				fragmentType: null,
 				saveAction: null,
 				saveActionLabel: null,
 				fragmentName: null,

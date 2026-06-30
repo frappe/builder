@@ -47,6 +47,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
 import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
@@ -67,7 +68,6 @@ import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
-import componentController from "@/utils/componentController.js";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -103,7 +103,7 @@ const props = withDefaults(
 );
 
 const editingComponentId = computed(() =>
-	canvasStore.fragmentData.fragmentKind === "component" &&
+	canvasStore.fragmentData.fragmentType === "component" &&
 	!props.block.getParentBlock() &&
 	props.block === canvasStore.fragmentData.block
 		? canvasStore.fragmentData.fragmentId

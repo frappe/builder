@@ -1,6 +1,6 @@
+import { useLatestRequest } from "@/composables/useLatestRequest";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import { useLatestRequest } from "@/composables/useLatestRequest";
 import { BuilderComponent } from "@/types/doctypes";
 import { createResource } from "frappe-ui";
 import { computed, reactive, watch } from "vue";
@@ -25,7 +25,7 @@ const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
 
 const currentComponentId = computed(() =>
-	canvasStore.fragmentData.fragmentKind === "component" ? (canvasStore.fragmentData.fragmentId ?? "") : "",
+	canvasStore.fragmentData.fragmentType === "component" ? canvasStore.fragmentData.fragmentId ?? "" : "",
 );
 const componentDocDraft = reactive<ComponentDocDraft>({ ...EMPTY_DRAFT });
 
