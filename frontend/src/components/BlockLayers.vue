@@ -64,18 +64,14 @@
 								},
 							]"
 							aria-hidden="true"
-							v-if="!Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
+							v-if="!Boolean(element.extendedFromComponent)" />
 						<span
-							class="lucide-blocks mr-1 h-3 w-3"
+							class="lucide-layout-dashboard mr-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
 							}"
-							v-if="Boolean(element.extendedFromComponent) && !showCodeIcon(element)" />
-						<span
-							class="lucide-terminal h-3 w-3 text-orange-500"
-							aria-hidden="true"
-							v-if="showCodeIcon(element)" />
+							v-if="Boolean(element.extendedFromComponent)" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
@@ -136,7 +132,6 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
@@ -145,7 +140,6 @@ import BlockLayers from "./BlockLayers.vue";
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
 const canvasStore = useCanvasStore();
-const builderStore = useBuilderStore();
 
 const rootContainer = ref<HTMLElement | null>(null);
 const childLayers = ref<LayerInstance[]>([]);
@@ -194,10 +188,6 @@ const expandedLayers = ref(new Set(["root"]));
 
 const isExpanded = (block: Block) => {
 	return expandedLayers.value.has(block.blockId);
-};
-
-const showCodeIcon = (block: Block) => {
-	return builderStore.highlightBlocksWithClientScripts && block.getBlockClientScript();
 };
 
 // TODO: Refactor this!

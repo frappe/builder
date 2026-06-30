@@ -15,7 +15,6 @@ import {
 	setBoxSpacing,
 	shortenNumber,
 } from "./cssUtils";
-import { executeBlockClientScriptRestricted, executeBlockClientScriptUnrestricted } from "./scriptSandbox";
 
 function toTitleCase(str: string): string {
 	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -255,6 +254,9 @@ function getCopyWithoutParent(block: BlockOptions | Block): BlockOptions {
 	blockCopy.children = blockCopy.children?.map((child) => getCopyWithoutParent(child));
 	delete blockCopy.parentBlock;
 	delete blockCopy.referenceComponent;
+	if (!blockCopy.extendedFromComponent) {
+		delete blockCopy.componentVersion;
+	}
 	return removeEmptyBlockValues(blockCopy);
 }
 
@@ -271,7 +273,22 @@ function isEmptyValue(value: unknown): boolean {
 	return false;
 }
 
+const diffArray = <T>(src: T[] | undefined, oldComp: T[] | undefined): T[] => {
+	const oldJson = new Set((oldComp || []).map((item) => JSON.stringify(item)));
+	return (src || []).filter((item) => !oldJson.has(JSON.stringify(item)));
+};
+
+const deepEqual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
 function removeEmptyBlockValues(block: BlockOptions): BlockOptions {
+	if (block.clientScript) {
+		block.clientScript = { ...block.clientScript };
+		for (const key of Object.keys(block.clientScript) as Array<keyof BlockClientScript>) {
+			if (isEmptyValue(block.clientScript[key])) {
+				delete block.clientScript[key];
+			}
+		}
+	}
 	for (const key of Object.keys(block)) {
 		if (isEmptyValue(block[key])) {
 			delete block[key];
@@ -599,11 +616,15 @@ function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataSc
 	return keys;
 }
 
-// Drill into page data for blocks inside repeaters (uses the first item of each collection)
-function getRepeaterScopedData(block: Block | null, pageData: Record<string, any>): Record<string, any> {
-	let collectionObject = pageData || {};
+// Drill into data for blocks inside repeaters (uses the first item of each collection)
+function getRepeaterScopedData(
+	block: Block | null,
+	data: Record<string, any>,
+	type: BlockDataKey["comesFrom"] = "dataScript",
+): Record<string, any> {
+	let collectionObject = data || {};
 	if (block?.isInsideRepeater()) {
-		const keys = getCollectionKeys(block);
+		const keys = getCollectionKeys(block, type);
 		collectionObject = keys.reduce((acc: any, key: string) => {
 			const data = getDataForKey(acc, key);
 			return Array.isArray(data) && data.length > 0 ? data[0] : data;
@@ -642,16 +663,16 @@ const getParentProps = (
 	}
 };
 
-const getDefaultPropsList = (block: Block, blockController: any): BlockProps => {
-	// we need to pass blockController because during initialization phase, blockController can't use canvasStore
+const getDefaultPropsList = (block: Block): BlockProps => {
 	const isCurrentBlockInRepeater = block?.isInsideRepeater();
 	const repeaterRoot = isCurrentBlockInRepeater ? block?.getRepeaterParent() : null;
 	if (repeaterRoot) {
 		const key = repeaterRoot.getDataKey("key");
 		const comesFrom = repeaterRoot.getDataKey("comesFrom");
 		if (key && comesFrom === "props") {
-			const componentRoot = blockController.getComponentRootBlock(repeaterRoot);
-			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			const propsRoot = repeaterRoot.getPropsRoot();
+			if (!propsRoot) return {};
+			const parsedValue = getStandardPropValue(key, propsRoot)?.value;
 			if (!parsedValue) return {};
 			if (Array.isArray(parsedValue)) {
 				return {
@@ -688,11 +709,13 @@ const getDefaultPropsList = (block: Block, blockController: any): BlockProps => 
 
 const PARSEABLE_STANDARD_TYPES = ["number", "boolean", "object", "array"];
 
+// TODO: re-visit all props related functions as block props are now replaced with component props
 const getPropValue = (
 	propName: string,
 	block: Block,
 	getDataScriptValue: (path: string) => any = () => undefined,
 	defaultProps?: BlockProps | null,
+	getComponentScopedDataValue: (path: string) => any = () => undefined,
 ): any => {
 	// Check default props first
 	if (defaultProps?.[propName] !== undefined) {
@@ -713,15 +736,27 @@ const getPropValue = (
 	// Handle dynamic props
 	if (matchingProp.isDynamic) {
 		if (matchingProp.comesFrom === "props" && matchingProp.value) {
+			if (defaultProps?.[matchingProp.value] !== undefined) {
+				return defaultProps[matchingProp.value].value;
+			}
 			if (parentProps === null) {
 				parentProps = getParentProps(block);
 			}
 			const newMatchingProp = parentProps[matchingProp.value];
 			if (!newMatchingProp?.block) return undefined;
-			return getPropValue(matchingProp.value, newMatchingProp.block, getDataScriptValue, defaultProps);
+			return getPropValue(
+				matchingProp.value,
+				newMatchingProp.block,
+				getDataScriptValue,
+				defaultProps,
+				getComponentScopedDataValue,
+			);
 		}
 		if (matchingProp.comesFrom === "dataScript" && matchingProp.value) {
 			return getDataScriptValue(matchingProp.value);
+		}
+		if (matchingProp.comesFrom === "componentData" && matchingProp.value) {
+			return getComponentScopedDataValue(matchingProp.value);
 		}
 
 		// Fallback to default props
@@ -783,6 +818,16 @@ const getStandardPropValue = (
 	}
 };
 
+const extractComponentId = (block: Block): string | null => {
+	const { editingMode, fragmentData } = useCanvasStore();
+	let componentId = block.extendedFromComponent || null;
+	if (!componentId) {
+		// in fragment mode the component root does not have extendedFromComponent
+		if (editingMode == "fragment" && !block.getParentBlock()) componentId = fragmentData.fragmentId!;
+	}
+	return componentId;
+};
+
 const getDataArray = (collectionObject: Record<string, any>) => {
 	const result: string[] = [];
 	let collectionObjectCopy = { ...collectionObject };
@@ -809,6 +854,20 @@ function isDialogOpen() {
 	return !!document.querySelector("[role='dialog']");
 }
 
+function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
+	if (value === undefined || value === null || value === "") {
+		return fallback;
+	}
+	if (typeof value === "string") {
+		try {
+			return JSON.parse(value) as T;
+		} catch {
+			return fallback;
+		}
+	}
+	return value as T;
+}
+
 export {
 	addPxToNumber,
 	alert,
@@ -817,8 +876,6 @@ export {
 	cssUrl,
 	dataURLtoFile,
 	detachBlockFromComponent,
-	executeBlockClientScriptRestricted,
-	executeBlockClientScriptUnrestricted,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
@@ -842,6 +899,7 @@ export {
 	getRootBlockTemplate,
 	getRouteVariables,
 	getStandardPropValue,
+	extractComponentId,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,
@@ -867,4 +925,7 @@ export {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 	uploadUserFont,
+	parseJSONWithFallback,
+	deepEqual,
+	diffArray,
 };

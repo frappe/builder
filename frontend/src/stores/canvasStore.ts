@@ -32,12 +32,13 @@ const useCanvasStore = defineStore("canvasStore", {
 			index: <number | null>null,
 		},
 		editableBlock: <Block | null>null,
-		editingContentType: <"html" | "css" | "js">"html",
+		editingContentType: <"html" | "css" | "js">"html", // TODO: Remove js and css
 		editingMode: <EditingMode>"page",
 		settingPage: false,
 		showEditorDialog: false,
 		fragmentData: {
 			block: <Block | null>null,
+			fragmentType: <"component" | "blockTemplate" | null>null,
 			saveAction: <Function | null>null,
 			saveActionLabel: <string | null>null,
 			fragmentName: <string | null>null,
@@ -146,16 +147,9 @@ const useCanvasStore = defineStore("canvasStore", {
 			});
 		},
 
-		editBlockClientScript(block: Block) {
-			this.editableBlock = block;
-			this.editingContentType = "js";
-			nextTick(() => {
-				this.showEditorDialog = true;
-			});
-		},
-
 		editOnCanvas(
 			block: Block,
+			fragmentType: "component" | "blockTemplate",
 			saveAction: (block: Block) => void,
 			saveActionLabel: string = "Save",
 			fragmentName?: string,
@@ -165,6 +159,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			const blockCopy = getBlockCopy(block, true);
 			this.fragmentData = {
 				block: blockCopy,
+				fragmentType,
 				saveAction,
 				saveActionLabel,
 				fragmentName: fragmentName || block.getBlockDescription(),
@@ -194,6 +189,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			// reset fragmentData
 			this.fragmentData = {
 				block: null,
+				fragmentType: null,
 				saveAction: null,
 				saveActionLabel: null,
 				fragmentName: null,

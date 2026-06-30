@@ -43,7 +43,7 @@ interface CreateStateParams {
 	onChangeCallback: any;
 	onBlurCallback?: any;
 	initialValue?: string;
-	mode?: "block" | "page";
+	mode?: "block" | "page" | "component";
 	blockProps?: Record<string, any>;
 }
 
@@ -170,7 +170,10 @@ export const createStartingState = async ({
 				javascript(),
 				javascriptLanguage.data.of({
 					autocomplete: (context: any) =>
-						jsCompletionsFromGlobalScope(context, { ...(mode == "block" ? { ...blockProps } : {}) }),
+						jsCompletionsFromGlobalScope(
+							context,
+							{ ...(mode == "block" ? { ...blockProps } : {}) },
+						),
 				}),
 			);
 			break;

@@ -40,6 +40,7 @@ import PageCode from "@/components/Settings/PageCode.vue";
 import PageRobots from "@/components/Settings/PageRobots.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -60,8 +61,13 @@ const props = defineProps<{
 
 const route = useRoute();
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
-const selectedItem = ref<string>(props.initialTab || (props.onlyGlobal ? "global_general" : "page_general"));
+const selectedItem = ref<string>(
+	props.initialTab ||
+		builderStore.settingsActiveTab ||
+		(props.onlyGlobal ? "global_general" : "page_general"),
+);
 const settingsLoaded = ref(false);
 
 onMounted(async () => {
@@ -180,7 +186,14 @@ if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 
 const selectItem = (value: string) => {
 	selectedItem.value = value;
+	builderStore.settingsActiveTab = value;
 };
+
+// the remembered tab may not exist here (e.g. page tabs are hidden in onlyGlobal mode); fall back
+// locally without persisting so the editor keeps its last page-level selection
+if (!selectedItemDoc.value) {
+	selectedItem.value = props.onlyGlobal ? "global_general" : "page_general";
+}
 
 provide("selectSettingsTab", selectItem);
 

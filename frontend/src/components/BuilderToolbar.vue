@@ -6,7 +6,6 @@
 			<MainMenu
 				@showSettings="
 					() => {
-						builderStore.settingsActiveTab = 'page_general';
 						builderStore.showSettingsDialog = true;
 					}
 				"
@@ -193,7 +192,6 @@ const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	builderStore.settingsActiveTab = "page_general";
 	builderStore.showSettingsDialog = true;
 };
 

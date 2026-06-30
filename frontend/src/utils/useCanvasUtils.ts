@@ -1,5 +1,5 @@
 import type Block from "@/block";
-import { findBlockInTree } from "@/block";
+import { findBlockInTree } from "@/utils/block/tree";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { getRootBlockTemplate } from "@/utils/helpers";
