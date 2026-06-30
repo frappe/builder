@@ -119,7 +119,7 @@ const blockController = {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-				let blockKey = block[key] || block.referenceComponent?.[key];
+				let blockKey = block[key] ?? block.referenceComponent?.[key];
 				if (keyValue === "__initial__") {
 					keyValue = blockKey;
 				} else if (keyValue !== blockKey) {
