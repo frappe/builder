@@ -1,0 +1,15 @@
+{
+ "doctype": "Builder Component",
+ "name": "builder_template_quick_grid",
+ "component_id": "builder_template_quick_grid",
+ "component_name": "Quick Grid",
+ "is_standard": 1,
+ "preview": "/builder_assets/Quick Grid/quick-grid.png",
+ "category": "Structure",
+ "sort_order": 9,
+ "block": "{\"attributes\": {},\"baseStyles\": {\"display\": \"grid\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"gap\": \"20px\",\"gridTemplateColumns\": \"repeat(2, minmax(200px, 1fr))\",\"height\": \"800px\",\"overflow\": \"hidden\",\"padding\": \"20px\",\"position\": \"static\",\"width\": \"100%\"},\"blockId\": \"9jln72b1t\",\"blockName\": \"grid\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"vwf92j0d4\",\"blockName\": \"cell-1\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"2nsk5x26t\",\"blockName\": \"cell-2\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"z19h14huq\",\"blockName\": \"cell-3\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}},{\"attributes\": {},\"baseStyles\": {\"background\": \"#e2e2e2\",\"borderRadius\": \"10px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"flexShrink\": 0,\"height\": \"100%\",\"overflow\": \"hidden\",\"position\": \"static\",\"width\": \"auto\"},\"blockId\": \"7ya6tzprf\",\"blockName\": \"cell-4\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"div\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "component_props": "{}",
+ "component_data_script": "",
+ "component_js": "",
+ "component_css": ""
+}

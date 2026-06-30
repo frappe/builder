@@ -5,8 +5,9 @@ import copy
 import os
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
-from frappe.modules.export_file import export_to_files
+from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
@@ -24,6 +25,7 @@ class BuilderComponent(Document):
 		from frappe.types import DF
 
 		block: DF.JSON | None
+		category: DF.Data | None
 		component_props: DF.JSON | None
 		component_css: DF.Code | None
 		component_data_script: DF.Code | None
@@ -31,7 +33,20 @@ class BuilderComponent(Document):
 		component_js: DF.Code | None
 		component_name: DF.Data | None
 		for_web_page: DF.Link | None
+		is_standard: DF.Check
+		preview: DF.Data | None
+		preview_height: DF.Int
+		preview_width: DF.Int
+		sort_order: DF.Int
 	# end: auto-generated types
+
+	def validate(self):
+		if getattr(self, "is_standard", 0) and not can_modify_standard_component():
+			frappe.throw(
+				_(
+					"Standard components cannot be modified. Please enable developer mode to edit standard components."
+				)
+			)
 
 	def before_insert(self):
 		if not self.component_id:
@@ -63,6 +78,16 @@ class BuilderComponent(Document):
 			if page_doc.is_component_used(self.component_id):
 				clear_website_cache(page_doc.route)
 
+	def on_trash(self):
+		if getattr(self, "is_standard", 0) and not can_modify_standard_component():
+			frappe.throw(
+				_(
+					"Standard components cannot be deleted. Please enable developer mode to delete standard components."
+				)
+			)
+		if getattr(self, "is_standard", 0) and frappe.conf.developer_mode:
+			delete_folder("builder", "builder_component", self.name)
+
 	def sync_component(self):
 		# Only load pages whose blocks/draft_blocks mention this component; the
 		# precise is_component_used() check still runs below. Mirrors the filter
@@ -86,7 +111,7 @@ class BuilderComponent(Document):
 		component_path = os.path.join(
 			frappe.get_app_path("builder"), "builder", "builder_component", self.name
 		)
-		if os.path.exists(component_path):
+		if self.is_standard or os.path.exists(component_path):
 			export_to_files(
 				record_list=[["Builder Component", self.name, "builder_component"]],
 				record_module="builder",
@@ -176,6 +201,16 @@ def reset_block_styles(block: Block) -> None:
 	block.customAttributes = dict()
 	block.classes = []
 	block.children = block.children or []
+
+
+def can_modify_standard_component() -> bool:
+	return bool(
+		frappe.conf.developer_mode
+		or frappe.flags.in_import
+		or frappe.flags.in_install
+		or frappe.flags.in_migrate
+		or frappe.flags.in_patch
+	)
 
 
 def get_component_data(

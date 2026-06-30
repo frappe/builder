@@ -53,6 +53,10 @@ export function promptCreateComponent(block: Block) {
 				block: getBlockString(blockCopy),
 				component_name: values.componentName,
 				for_web_page: values.isGlobalComponent ? null : pageStore.selectedPage,
+				category: "Uncategorized",
+				preview: null,
+				preview_width: 1,
+				preview_height: 1,
 			})) as BuilderComponent;
 			componentStore.setComponentMap(componentData);
 			const updatedBlock = canvasStore.activeCanvas?.findBlock(block.blockId);

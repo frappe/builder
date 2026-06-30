@@ -29,6 +29,20 @@ def get_versioned_doc(snapshot: str) -> dict:
 
 
 @frappe.whitelist()
+def get_builder_component_categories() -> list[str]:
+	rows = frappe.db.sql(
+		"""
+		select distinct category
+		from `tabBuilder Component`
+		where coalesce(category, '') != ''
+		order by category
+		""",
+		as_dict=True,
+	)
+	return [row.category for row in rows]
+
+
+@frappe.whitelist()
 def get_page_preview_html(page: str, **kwarg) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw("No permission to preview this page")

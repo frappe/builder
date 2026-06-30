@@ -2,7 +2,7 @@ import type Block from "@/block";
 import { useLatestRequest } from "@/composables/useLatestRequest";
 import { getVersionedDoc } from "@/data/snapshot";
 import { webPages } from "@/data/webPage";
-import webComponent from "@/data/webComponent";
+import webComponent, { builderComponentCategories, standardComponent } from "@/data/webComponent";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
@@ -89,7 +89,7 @@ const useComponentStore = defineStore("componentStore", {
 				true,
 			);
 		},
-		saveComponent(block: Block, componentName: string) {
+		async saveComponent(block: Block, componentName: string) {
 			const pageStore = usePageStore();
 			const doc = this.getComponentDraft(componentName);
 			if (!doc) {
@@ -101,11 +101,16 @@ const useComponentStore = defineStore("componentStore", {
 			return webComponent.setValue
 				.submit({
 					name: componentName,
+					component_name: doc.component_name || "",
 					block: getBlockObject(block),
 					component_props: doc?.component_props || {},
 					component_data_script: doc?.component_data_script || "",
 					component_js: doc?.component_js || "",
 					component_css: doc?.component_css || "",
+					preview: doc?.preview || "",
+					preview_width: doc?.preview_width || 1,
+					preview_height: doc?.preview_height || 1,
+					category: doc?.category || "",
 				})
 				.then(async (data: BuilderComponent) => {
 					this.setComponentMap(data);

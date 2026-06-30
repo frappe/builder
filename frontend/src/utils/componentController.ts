@@ -22,6 +22,7 @@ const EMPTY_DRAFT: ComponentDocDraft = {
 	component_js: "",
 	component_css: "",
 	component_data_preview: {},
+	is_standard: 0,
 };
 
 const canvasStore = useCanvasStore();
@@ -39,11 +40,17 @@ function cloneComponentDocFields(
 	preview: Record<string, any> = {},
 ): ComponentDocDraft {
 	return {
+		component_name: doc.component_name ?? "",
 		component_props: parseJSONWithFallback(doc.component_props, {}),
 		component_data_script: doc.component_data_script ?? "",
 		component_js: doc.component_js ?? "",
 		component_css: doc.component_css ?? "",
+		preview: doc.preview ?? "",
+		preview_width: doc.preview_width || 1,
+		preview_height: doc.preview_height || 1,
+		category: doc.category ?? "",
 		component_data_preview: parseJSONWithFallback(preview, {}),
+		is_standard: doc.is_standard || 0,
 	};
 }
 
@@ -91,6 +98,36 @@ const componentCSS = computed(() => {
 	return componentDocDraft.component_css ?? "";
 });
 
+const componentPreview = computed(() => {
+	if (!currentComponentId.value) return "";
+	return componentDocDraft.preview ?? "";
+});
+
+const componentPreviewWidth = computed(() => {
+	if (!currentComponentId.value) return 1;
+	return componentDocDraft.preview_width || 1;
+});
+
+const componentPreviewHeight = computed(() => {
+	if (!currentComponentId.value) return 1;
+	return componentDocDraft.preview_height || 1;
+});
+
+const componentCategory = computed(() => {
+	if (!currentComponentId.value) return "";
+	return componentDocDraft.category ?? "";
+});
+
+const componentName = computed(() => {
+	if (!currentComponentId.value) return "";
+	return componentDocDraft.component_name ?? "";
+});
+
+function getPreviewSize(value: string | number) {
+	const size = Number(value) || 1;
+	return Math.min(Math.max(size, 1), 2);
+}
+
 const componentController = {
 	currentComponentId,
 	componentDataPreview,
@@ -98,6 +135,11 @@ const componentController = {
 	componentDataScript,
 	componentJavaScript,
 	componentCSS,
+	componentPreview,
+	componentPreviewWidth,
+	componentPreviewHeight,
+	componentCategory,
+	componentName,
 
 	getComponentProps: () => componentProps.value,
 
@@ -123,6 +165,36 @@ const componentController = {
 	setComponentClientScript: (script: string, type: "js" | "css" = "js") => {
 		if (!currentComponentId.value) return;
 		componentDocDraft[type === "js" ? "component_js" : "component_css"] = script;
+		markCanvasDirty(true);
+	},
+
+	setComponentPreview: (preview: string) => {
+		if (!currentComponentId.value) return;
+		componentDocDraft.preview = preview;
+		markCanvasDirty(true);
+	},
+
+	setComponentPreviewWidth: (width: string | number) => {
+		if (!currentComponentId.value) return;
+		componentDocDraft.preview_width = getPreviewSize(width);
+		markCanvasDirty(true);
+	},
+
+	setComponentPreviewHeight: (height: string | number) => {
+		if (!currentComponentId.value) return;
+		componentDocDraft.preview_height = getPreviewSize(height);
+		markCanvasDirty(true);
+	},
+
+	setComponentCategory: (category: string) => {
+		if (!currentComponentId.value) return;
+		componentDocDraft.category = category;
+		markCanvasDirty(true);
+	},
+
+	setComponentName: (name: string) => {
+		if (!currentComponentId.value) return;
+		componentDocDraft.component_name = name;
 		markCanvasDirty(true);
 	},
 

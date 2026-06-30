@@ -1,0 +1,15 @@
+{
+ "doctype": "Builder Component",
+ "name": "builder_template_paragraph",
+ "component_id": "builder_template_paragraph",
+ "component_name": "Paragraph",
+ "is_standard": 1,
+ "preview": "/builder_assets/Paragraph/paragraph.png",
+ "category": "Typography",
+ "sort_order": 11,
+ "block": "{\"attributes\": {},\"baseStyles\": {\"fontSize\": \"16px\",\"height\": \"fit-content\",\"lineHeight\": \"1.4\",\"minWidth\": \"10px\",\"position\": \"static\",\"width\": \"fit-content\"},\"blockId\": \"z5hw6riip\",\"children\": [],\"classes\": [],\"customAttributes\": {},\"dataKey\": null,\"element\": \"p\",\"innerHTML\": \"<p>\\\"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\\\"</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}",
+ "component_props": "{}",
+ "component_data_script": "",
+ "component_js": "",
+ "component_css": ""
+}

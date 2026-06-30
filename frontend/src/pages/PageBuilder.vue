@@ -42,9 +42,23 @@
 							</a>
 						</span>
 					</div>
-					<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
-						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
-					</Button>
+					<div class="flex items-center gap-2">
+						<Popover v-if="showComponentPreviewSettings" placement="bottom-end">
+							<template #target="{ togglePopover }">
+								<Button
+									variant="ghost"
+									class="text-xs"
+									icon="lucide-view"
+									@click="togglePopover" />
+							</template>
+							<template #body>
+								<ComponentPreviewSettings />
+							</template>
+						</Popover>
+						<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
+							{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
+						</Button>
+					</div>
 				</div>
 			</template>
 		</BuilderCanvas>
@@ -125,6 +139,7 @@ import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import ComponentPreviewSettings from "@/components/ComponentPreviewSettings.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
@@ -139,7 +154,7 @@ import blockController from "@/utils/blockController";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
+import { createResource, KeyboardShortcutsModal, Popover, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -165,6 +180,9 @@ const aiMode = ref<"generate" | "modify">("generate");
 const modifyBlockContext = ref<Record<string, any> | null>(null);
 const modifyBlockId = ref<string | null>(null);
 const isAIGenerating = ref(false);
+const showComponentPreviewSettings = computed(() => {
+	return canvasStore.fragmentData.saveActionLabel === "Save Component";
+});
 
 provide("showAIGenerator", () => {
 	aiMode.value = "generate";

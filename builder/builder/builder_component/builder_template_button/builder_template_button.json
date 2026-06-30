@@ -1,0 +1,15 @@
+{
+ "doctype": "Builder Component",
+ "name": "builder_template_button",
+ "component_id": "builder_template_button",
+ "component_name": "Button",
+ "is_standard": 1,
+ "preview": "/builder_assets/Button/button.png",
+ "category": "Basic",
+ "sort_order": 1,
+ "block": "{\"attributes\": {\"href\": \"#\"},\"baseStyles\": {\"alignItems\": \"center\",\"background\": \"#171717\",\"borderRadius\": \"4px\",\"display\": \"flex\",\"flexDirection\": \"column\",\"height\": \"fit-content\",\"justifyContent\": \"center\",\"padding\": \"6px 8px\",\"width\": \"fit-content\"},\"blockId\": \"4ur2l2mc6\",\"blockName\": \"button-link\",\"children\": [{\"attributes\": {},\"baseStyles\": {\"color\": \"var(--neutral-white, #FFF)\",\"fontSize\": \"14px\",\"fontWeight\": \"420\",\"height\": \"fit-content\",\"left\": \"auto\",\"letterSpacing\": \"0.28px\",\"lineHeight\": \"115%\",\"minWidth\": \"30px\",\"position\": \"static\",\"top\": \"auto\",\"width\": \"fit-content\"},\"blockId\": \"3z5gwjl2f\",\"children\": [],\"classes\": [\"__text_block__\"],\"customAttributes\": {},\"dataKey\": null,\"element\": \"p\",\"innerHTML\": \"<p>Button</p>\",\"mobileStyles\": {},\"rawStyles\": {},\"tabletStyles\": {}}],\"classes\": [\"__text_block__\"],\"customAttributes\": {},\"dataKey\": null,\"editable\": false,\"element\": \"a\",\"mobileStyles\": {},\"rawStyles\": {\"flex-shrink\": \"0\",\"hover:background\": \"#383838\",\"transition\": \"all 0.1s ease-out\"},\"tabletStyles\": {}}",
+ "component_props": "{}",
+ "component_data_script": "",
+ "component_js": "",
+ "component_css": ""
+}
