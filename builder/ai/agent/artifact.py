@@ -103,7 +103,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			yaml_content += delta
 			ctx.emit("stream", chunk=delta, kind="page_yaml")
 
-	yaml_text = BlockCodec.strip_fences(yaml_content).strip()
+	yaml_text = BlockCodec.strip_fences(yaml_content)
 	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
 	# the model, finish_reason (="length" → ran out of tokens mid-page), the YAML size,
 	# whether it parses, and how many top-level sections (root.c) it actually produced.

@@ -15,7 +15,7 @@ from builder.utils import to_compact_yaml
 
 
 def run_query_blocks(ctx, args: dict) -> str:
-	root = ctx._page_root()
+	root = ctx.page_root()
 	if root is None:
 		return "The page is empty — nothing to select."
 
@@ -98,7 +98,7 @@ query_blocks = Tool(
 
 
 def run_read_block(ctx, args: dict) -> str:
-	root = ctx._page_root()
+	root = ctx.page_root()
 	if root is None:
 		return "The page is empty."
 	ref = args.get("block_id")

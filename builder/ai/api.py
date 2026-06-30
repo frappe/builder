@@ -23,7 +23,7 @@ logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
 
 
-def _resolve_api_key() -> str:
+def resolve_api_key() -> str:
 	api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
 	if not api_key:
 		frappe.throw(_("Please configure an OpenRouter API key in Settings → AI"))
@@ -64,7 +64,7 @@ def run(
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
-	api_key = _resolve_api_key()
+	api_key = resolve_api_key()
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
 	# Capture the pre-turn page state now (synchronously, before the worker or any

@@ -87,13 +87,19 @@ class AISession:
 	# --- message read -----------------------------------------------------
 
 	@staticmethod
-	def _row_to_message(row: dict) -> dict:
+	def load_metadata(metadata_json: str | None) -> dict:
+		"""Parse a metadata_json column into a dict, tolerating null/blank/malformed input."""
+		try:
+			meta = json.loads(metadata_json) if metadata_json else {}
+		except (json.JSONDecodeError, TypeError):
+			meta = {}
+		return meta if isinstance(meta, dict) else {}
+
+	@staticmethod
+	def row_to_message(row: dict) -> dict:
 		"""Reshape a Builder AI Message DB row into the ChatMessage dict shape
 		the frontend renders."""
-		try:
-			metadata = json.loads(row.get("metadata_json") or "{}") or {}
-		except (json.JSONDecodeError, TypeError):
-			metadata = {}
+		metadata = AISession.load_metadata(row.get("metadata_json"))
 		# `status` lives in its own column for queryability; surface it in the
 		# returned metadata dict so callers see the same shape as before.
 		if row.get("status"):
@@ -131,7 +137,7 @@ class AISession:
 			order_by="creation asc",
 			limit_page_length=0,
 		)
-		return [self._row_to_message(r) for r in rows]
+		return [self.row_to_message(r) for r in rows]
 
 	def build_context_messages(self) -> list[dict]:
 		"""Return the last N prior turns as proper role-tagged messages.
@@ -165,20 +171,15 @@ class AISession:
 			# building. Restore the full plan so both the model and the downstream
 			# generator see what was proposed and approved.
 			if role == "assistant" and r.get("status") == "plan_summary":
-				content = self._plan_context_content(content, r.get("metadata_json"))
+				content = self.plan_context_content(content, r.get("metadata_json"))
 			out.append({"role": role, "content": content})
 		return out
 
 	@staticmethod
-	def _plan_context_content(headline: str, metadata_json: str | None) -> str:
+	def plan_context_content(headline: str, metadata_json: str | None) -> str:
 		"""Reconstruct a proposed plan's full text (headline + sections + palette)
 		from its stored metadata, for replay into the model's context."""
-		try:
-			meta = json.loads(metadata_json) if metadata_json else {}
-		except (json.JSONDecodeError, TypeError):
-			meta = {}
-		if not isinstance(meta, dict):
-			return headline
+		meta = AISession.load_metadata(metadata_json)
 		sections = [str(s).strip() for s in (meta.get("sections") or []) if str(s).strip()]
 		palette = (meta.get("palette") or "").strip()
 		lines = [headline]
@@ -242,12 +243,7 @@ class AISession:
 		)
 		if not row:
 			return
-		try:
-			meta = json.loads(row.metadata_json) if row.metadata_json else {}
-		except (json.JSONDecodeError, TypeError):
-			meta = {}
-		if not isinstance(meta, dict):
-			meta = {}
+		meta = self.load_metadata(row.metadata_json)
 		meta.update(extra_metadata or {})
 		frappe.db.set_value(
 			self.MESSAGE_DOCTYPE,

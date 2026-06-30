@@ -74,7 +74,7 @@ class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
 
 
-def _looks_like_page_yaml(text: str) -> bool:
+def looks_like_page_yaml(text: str) -> bool:
 	"""Heuristic: did the model emit page YAML as plain content?"""
 	if not text:
 		return False
@@ -181,18 +181,18 @@ class AgentRunner:
 
 	# --- cancellation -----------------------------------------------------
 
-	def _cancel_key(self) -> str | None:
+	def cancel_key(self) -> str | None:
 		return f"builder_ai_cancel:{self.session_id}" if self.session_id else None
 
 	def is_cancelled(self) -> bool:
-		key = self._cancel_key()
+		key = self.cancel_key()
 		# use_local_cache=False is critical: the cancel is set by a DIFFERENT
 		# web worker, and Frappe's per-request local cache would otherwise
 		# pin the first (miss) result and never re-read Redis.
 		return bool(frappe.cache.get_value(key, use_local_cache=False)) if key else False
 
 	def clear_cancel_flag(self) -> None:
-		if key := self._cancel_key():
+		if key := self.cancel_key():
 			frappe.cache.delete_value(key)
 
 	def interruptible_sleep(self, seconds: float) -> None:
@@ -273,7 +273,7 @@ class AgentRunner:
 	# --- message construction --------------------------------------------
 
 	def build_page_context(self) -> str:
-		root = self._page_root()
+		root = self.page_root()
 		if root is None:
 			return ""
 		full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
@@ -448,6 +448,7 @@ class AgentRunner:
 				continue
 			raw_arguments = entry["args"] or ""
 			parsed, repaired = llm.loads_tolerant(raw_arguments)
+			truncated_args = BlockCodec.truncate_for_log(raw_arguments, 2000)
 			if parsed is None:
 				# Even tolerant parsing failed — don't silently drop to {} with no trace
 				# (that surfaces as an empty plan/edit). Log it loudly.
@@ -455,7 +456,7 @@ class AgentRunner:
 				logger.warning(
 					"AI tool args UNPARSEABLE (tool=%s): %s",
 					entry["name"],
-					BlockCodec.truncate_for_log(raw_arguments, 2000),
+					truncated_args,
 				)
 			else:
 				args = parsed if isinstance(parsed, dict) else {}
@@ -464,13 +465,13 @@ class AgentRunner:
 					logger.warning(
 						"AI tool args recovered via json_repair (tool=%s): %s",
 						entry["name"],
-						BlockCodec.truncate_for_log(raw_arguments, 2000),
+						truncated_args,
 					)
 			logger.info(
 				"AI tool response: tool=%s, repaired=%s, raw_arguments=%s",
 				entry["name"],
 				repaired,
-				BlockCodec.truncate_for_log(raw_arguments, 2000),
+				truncated_args,
 			)
 			tool_operations.append({"tool_name": entry["name"], "args": args})
 			raw_tool_calls.append(
@@ -495,7 +496,7 @@ class AgentRunner:
 		)
 		return tool_operations, content, raw_tool_calls
 
-	def _page_root(self) -> dict | None:
+	def page_root(self) -> dict | None:
 		"""Parse page_context_json into the root block dict, or None if empty/invalid."""
 		try:
 			data = json.loads(self.page_context_json)
@@ -548,7 +549,7 @@ class AgentRunner:
 
 	# --- orchestration ----------------------------------------------------
 
-	def _emit_cancelled(self) -> None:
+	def emit_cancelled(self) -> None:
 		msg = "Cancelled."
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
@@ -566,7 +567,7 @@ class AgentRunner:
 		# the lightweight new-page conversation (clarify/plan on an empty page) drops
 		# to the cheap model; full-page generation always uses the heavy model inside
 		# the artifact generator regardless.
-		has_content = self._page_root() is not None
+		has_content = self.page_root() is not None
 		self.loop_model = self.model if has_content else ModelRegistry.get_simple(self.model)
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, loop_model={self.loop_model}, "
@@ -591,7 +592,7 @@ class AgentRunner:
 		messages = self.build_messages()
 		# Mirror of the page tree this turn. Client ops are validated against it so the
 		# tool result fed back is the truth, not a blanket "Applied." (see WorkingTree).
-		self.tree = WorkingTree(self._page_root())
+		self.tree = WorkingTree(self.page_root())
 		client_operations: list[dict] = []
 		summary_text = ""
 
@@ -701,7 +702,7 @@ class AgentRunner:
 				self.stop_reason = "max_rounds"
 
 		except CancelledError:
-			self._emit_cancelled()
+			self.emit_cancelled()
 			return
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
@@ -725,7 +726,7 @@ class AgentRunner:
 
 		# Defensive: a weaker model may emit page YAML as content instead of
 		# calling generate_page. Treat that as a synthetic generate_page op.
-		if not client_operations and _looks_like_page_yaml(summary_text):
+		if not client_operations and looks_like_page_yaml(summary_text):
 			logger.info("Recovering YAML-as-content into a synthetic generate_page op")
 			yaml_text = BlockCodec.strip_fences(summary_text)
 			op = {"tool_name": "generate_page", "args": {"yaml": yaml_text}}

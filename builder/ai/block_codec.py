@@ -1,5 +1,6 @@
 import json
 import re
+from typing import ClassVar
 
 import frappe
 import yaml
@@ -11,14 +12,39 @@ STANDARD_ATTRS = {"src", "alt", "href", "title", "value", "type", "placeholder"}
 
 
 class BlockCodec:
+	# The generation prompt's block vocabulary, in display order: (codec key, gloss).
+	# Single source for the field list shown in the prompt (via fields_doc), which
+	# used to be a hand-typed sentence. This is the GENERATION vocabulary, so it
+	# intentionally omits keys compress() emits only when showing an existing page
+	# — ref (the editor handle, documented separately) and component/child_of (the
+	# model never authors those). Keep it in sync with compress()/expand() by hand.
+	# A gloss of None means the key is self-explanatory.
+	FIELD_DOCS = (
+		("el", "semantic HTML tag"),
+		("name", None),
+		("style", "CSS-in-JS"),
+		("m_style", "mobile overrides"),
+		("t_style", "tablet overrides"),
+		("attrs", "HTML attrs; HTML id goes in attrs.id"),
+		("text", None),
+		("c", "children"),
+		("classes", None),
+		("icon", "a Lucide icon name — see Icons"),
+	)
+
 	# Defaults the client injects on an icon svg — noise for the model, stripped on re-collapse.
-	ICON_STYLE_DEFAULTS = {
+	ICON_STYLE_DEFAULTS: ClassVar[dict[str, str | int]] = {
 		"display": "inline-flex",
 		"alignItems": "center",
 		"justifyContent": "center",
 		"lineHeight": "0",
 		"flexShrink": 0,
 	}
+
+	@classmethod
+	def fields_doc(cls) -> str:
+		"""Comma-joined field list for the prompt, e.g. `el (semantic HTML tag), name, ...`."""
+		return ", ".join(f"{key} ({gloss})" if gloss else key for key, gloss in cls.FIELD_DOCS)
 
 	@staticmethod
 	def compress(block: dict, depth: int = 0, task_tier: str = "complex") -> dict:

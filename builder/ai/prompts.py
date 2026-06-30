@@ -1,3 +1,6 @@
+from builder.ai.block_codec import BlockCodec
+
+
 class Prompts:
 	"""System prompt for the unified Builder AI agent. Covers full-page
 	generation (generate_page), targeted editing (block/script tools), and the
@@ -52,7 +55,7 @@ The current page is given to you up front. For a small page that's the full stru
 - Single root block: el: div, name: body, with style display: flex, flexDirection: column, alignItems: center. (The first block is detected as the page root automatically.)
 - root.c is an array of 5–7 section blocks; every top-level section MUST have width: 100%.
 - Never emit a block id of any kind — the editor assigns block ids and detects the root for you.
-- Block fields: el (semantic HTML tag), name, style (CSS-in-JS), m_style (mobile overrides), t_style (tablet overrides), attrs (HTML attrs; HTML id goes in attrs.id), text, c (children), classes, icon (a Lucide icon name — see Icons).
+- Block fields: {BLOCK_FIELDS}.
 - camelCase every CSS property NAME; put units on every value (padding: '40px', never 40). Keyword VALUES keep literal CSS form — never camelCase them: justifyContent: 'space-between' (NEVER 'spaceBetween'), alignItems: 'flex-start', flexDirection: 'row-reverse', whiteSpace: 'pre-wrap'. Gradients use backgroundImage (NOT background), value quoted: backgroundImage: 'linear-gradient(135deg, #0F0F0F, #1A1A1A)'. fontFamily is the bare name only (Playfair Display) — no quotes, no fallback stack; Google Fonts load automatically.
 - Wrap every piece of text in a semantic element (h1–h3, p, span, button, a) — never put text directly in a div or section.
 
@@ -207,4 +210,4 @@ Write specific, brand-true copy from the conversation — real headlines and val
 - Styles cascade: style applies to all breakpoints; override per-breakpoint with t_style/m_style.
 - Nav: desktop links display 'flex', m_style display 'none'. Hamburger: style display 'none', m_style display 'flex'. Build a real nav — full link row on desktop, icon on mobile.
 
-Build the page now. Output the YAML only."""
+Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCodec.fields_doc())

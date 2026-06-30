@@ -12,10 +12,10 @@ from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
 
 
-def _ask_clarification(ctx, args: dict) -> None:
+def ask_clarification(ctx, args: dict) -> None:
 	question = (args.get("question") or "Could you clarify?").strip()
 	options = [str(o).strip() for o in (args.get("options") or []) if str(o).strip()]
-	previews = _clean_previews(args.get("previews"), len(options))
+	previews = clean_previews(args.get("previews"), len(options))
 	# Persist + commit BEFORE emitting: the realtime event triggers a session
 	# reload on the client, which must see this message already in the DB.
 	AISession.try_append_message(
@@ -48,7 +48,7 @@ def normalize_sections(raw) -> list[str]:
 	return out
 
 
-def _propose_plan(ctx, args: dict) -> None:
+def propose_plan(ctx, args: dict) -> None:
 	headline = (args.get("headline") or "Here's my plan").strip()
 	sections = normalize_sections(args.get("sections"))
 	palette = (args.get("palette") or "").strip()
@@ -72,7 +72,7 @@ def _propose_plan(ctx, args: dict) -> None:
 	)
 
 
-def _clean_previews(raw, n_options: int) -> list[dict] | None:
+def clean_previews(raw, n_options: int) -> list[dict] | None:
 	"""Validate optional colour-swatch previews; must align 1:1 with options."""
 	if not isinstance(raw, list) or len(raw) != n_options:
 		return None
@@ -120,7 +120,7 @@ ask_clarification = Tool(
 		},
 		"required": ["question"],
 	},
-	handler=_ask_clarification,
+	handler=ask_clarification,
 )
 
 propose_plan = Tool(
@@ -159,7 +159,7 @@ propose_plan = Tool(
 		},
 		"required": ["headline", "sections"],
 	},
-	handler=_propose_plan,
+	handler=propose_plan,
 )
 
 TOOLS = [ask_clarification, propose_plan]
