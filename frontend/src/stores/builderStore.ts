@@ -48,7 +48,7 @@ const useBuilderStore = defineStore("builderStore", {
 		canvasDarkMode: useStorage("canvasDarkMode", false),
 		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
-		settingsActiveTab: <string>"page_general",
+		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,
 	}),
 	getters: {

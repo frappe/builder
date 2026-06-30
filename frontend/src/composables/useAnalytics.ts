@@ -1,5 +1,6 @@
 import { websiteSettings } from "@/data/websiteSettings";
 import { shortenNumber } from "@/utils/helpers";
+import { useStorage } from "@vueuse/core";
 import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -51,9 +52,10 @@ export function useAnalytics({
 	apiUrl,
 	ctrApiUrl,
 	initialRange = "last_30_days",
-	initialInterval = "daily",
+	initialInterval = "",
 	initialRoute = "",
 	initialRouteFilterType = "wildcard",
+	routePersistKey,
 	extraParams = {},
 	onSuccess,
 }: {
@@ -63,6 +65,7 @@ export function useAnalytics({
 	initialInterval?: string;
 	initialRoute?: string;
 	initialRouteFilterType?: RouteFilterType;
+	routePersistKey?: string;
 	extraParams?: Record<string, any>;
 	onSuccess?: (res: AnalyticsResponse) => void;
 }) {
@@ -71,11 +74,13 @@ export function useAnalytics({
 		websiteSettings.doc ? Boolean(websiteSettings.doc.enable_view_tracking) : undefined,
 	);
 
-	const range = ref(initialRange);
+	// range/customDateRange are page-independent, so they share one key across page & global analytics.
+	// route is intrinsic to the page in page analytics, so it only persists when a caller (global) opts in.
+	const range = useStorage("builderAnalyticsRange", initialRange);
 	const interval = ref(initialInterval);
-	const route = ref(initialRoute);
+	const route = routePersistKey ? useStorage(routePersistKey, initialRoute) : ref(initialRoute);
 	const routeFilterType = ref<RouteFilterType>(initialRouteFilterType);
-	const customDateRange = ref<string>("");
+	const customDateRange = useStorage("builderAnalyticsCustomDateRange", "");
 	const analyticsData = ref<AnalyticsResponse>({
 		total_unique_views: 0,
 		total_views: 0,

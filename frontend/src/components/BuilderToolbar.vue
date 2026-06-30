@@ -6,7 +6,6 @@
 			<MainMenu
 				@showSettings="
 					() => {
-						builderStore.settingsActiveTab = 'page_general';
 						builderStore.showSettingsDialog = true;
 					}
 				"
@@ -205,7 +204,6 @@ const openAIGenerator = (e: MouseEvent) => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	builderStore.settingsActiveTab = "page_general";
 	builderStore.showSettingsDialog = true;
 };
 

@@ -69,5 +69,6 @@ const {
 } = useAnalytics({
 	apiUrl: "builder.api.get_overall_analytics",
 	initialRange: "last_30_days",
+	routePersistKey: "builderGlobalAnalyticsRoute",
 });
 </script>
