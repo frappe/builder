@@ -41,6 +41,11 @@ declare interface BlockEditorConfig {
 	showChildrenInEditor?: boolean;
 }
 
+declare interface BlockClientScript {
+	js?: string;
+	css?: string;
+}
+
 declare interface BlockOptions {
 	blockId?: string | undefined;
 	element?: string;
@@ -55,6 +60,8 @@ declare interface BlockOptions {
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
 	componentVersion?: string;
+	clientScript?: BlockClientScript;
+	blockClientScript?: string;
 	[key: string]: any;
 }
 

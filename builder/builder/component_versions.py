@@ -34,9 +34,6 @@ COMPONENT_VERSION_KEEP = 50
 # Fields captured per component version (the full state needed to render)
 COMPONENT_VERSION_FIELDS = [
 	"block",
-	"component_css",
-	"component_js",
-	"component_props",
 	"component_data_script",
 ]
 
@@ -122,9 +119,6 @@ def ensure_component_version(
 
 		data = {
 			"block": compact_json(block),
-			"component_css": values.component_css,
-			"component_js": values.component_js,
-			"component_props": values.component_props,
 			"component_data_script": values.component_data_script,
 		}
 		data_json = compact_json(data)
@@ -202,9 +196,6 @@ def resolve_component(component_id: str, pinned_version: str | None = None) -> d
 		return None
 	return {
 		"block": values.block,
-		"component_css": values.component_css,
-		"component_js": values.component_js,
-		"component_props": values.component_props,
 		"component_data_script": values.component_data_script,
 	}
 

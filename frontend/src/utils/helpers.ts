@@ -281,6 +281,14 @@ const diffArray = <T>(src: T[] | undefined, oldComp: T[] | undefined): T[] => {
 const deepEqual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 function removeEmptyBlockValues(block: BlockOptions): BlockOptions {
+	if (block.clientScript) {
+		block.clientScript = { ...block.clientScript };
+		for (const key of Object.keys(block.clientScript) as Array<keyof BlockClientScript>) {
+			if (isEmptyValue(block.clientScript[key])) {
+				delete block.clientScript[key];
+			}
+		}
+	}
 	for (const key of Object.keys(block)) {
 		if (isEmptyValue(block[key])) {
 			delete block[key];
@@ -662,9 +670,9 @@ const getDefaultPropsList = (block: Block): BlockProps => {
 		const key = repeaterRoot.getDataKey("key");
 		const comesFrom = repeaterRoot.getDataKey("comesFrom");
 		if (key && comesFrom === "props") {
-			const componentRoot = repeaterRoot.getComponentRoot();
-			if (!componentRoot) return {};
-			const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+			const propsRoot = repeaterRoot.getPropsRoot();
+			if (!propsRoot) return {};
+			const parsedValue = getStandardPropValue(key, propsRoot)?.value;
 			if (!parsedValue) return {};
 			if (Array.isArray(parsedValue)) {
 				return {
@@ -919,5 +927,5 @@ export {
 	uploadUserFont,
 	parseJSONWithFallback,
 	deepEqual,
-	diffArray
+	diffArray,
 };

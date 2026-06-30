@@ -99,6 +99,7 @@ class Block:
 	innerText: str | None = None
 	innerHTML: str | None = None
 	extendedFromComponent: str | None = None
+	componentVersion: str | None = None
 	originalElement: str | None = None
 	isChildOfComponent: str | None = None
 	referenceBlockId: str | None = None
@@ -108,8 +109,13 @@ class Block:
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
 	props: ClassVar[dict] = {}
+	clientScript: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
+		legacy_client_script = kwargs.pop("blockClientScript", None)
+		if "clientScript" not in kwargs and legacy_client_script:
+			kwargs["clientScript"] = {"js": legacy_client_script}
+
 		for key, value in kwargs.items():
 			if key == "children":
 				value = [
@@ -164,6 +170,7 @@ class Block:
 			"innerText": self.innerText,
 			"innerHTML": self.innerHTML,
 			"extendedFromComponent": self.extendedFromComponent,
+			"componentVersion": self.componentVersion,
 			"originalElement": self.originalElement,
 			"isChildOfComponent": self.isChildOfComponent,
 			"referenceBlockId": self.referenceBlockId,
@@ -173,6 +180,7 @@ class Block:
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
 			"props": self.props,
+			"clientScript": self.clientScript,
 		}
 
 	def as_json(self, wrap_in_array=False):

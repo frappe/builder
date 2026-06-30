@@ -136,6 +136,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController.js";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
@@ -143,7 +144,6 @@ import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
-import componentController from "@/utils/componentController.js";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
@@ -354,7 +354,9 @@ useEventListener(document, "keyup", (e) => {
 });
 
 async function saveAndExitFragmentMode(e: Event) {
-	componentController.applyComponentDoc();
+	if (canvasStore.fragmentData.fragmentType === "component") {
+		componentController.applyComponentDoc();
+	}
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);

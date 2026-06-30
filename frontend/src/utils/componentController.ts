@@ -1,6 +1,6 @@
+import { useLatestRequest } from "@/composables/useLatestRequest";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import { useLatestRequest } from "@/composables/useLatestRequest";
 import { BuilderComponent } from "@/types/doctypes";
 import { createResource } from "frappe-ui";
 import { computed, reactive, watch } from "vue";
@@ -17,17 +17,16 @@ export type ComponentDocDraft = Omit<
 
 const EMPTY_DRAFT: ComponentDocDraft = {
 	component_name: "",
-	component_props: {},
 	component_data_script: "",
-	component_js: "",
-	component_css: "",
 	component_data_preview: {},
 };
 
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
 
-const currentComponentId = computed(() => canvasStore.fragmentData?.fragmentId ?? "");
+const currentComponentId = computed(() =>
+	canvasStore.fragmentData.fragmentType === "component" ? canvasStore.fragmentData.fragmentId ?? "" : "",
+);
 const componentDocDraft = reactive<ComponentDocDraft>({ ...EMPTY_DRAFT });
 
 function markCanvasDirty(dirty: boolean = true) {
@@ -39,10 +38,7 @@ function cloneComponentDocFields(
 	preview: Record<string, any> = {},
 ): ComponentDocDraft {
 	return {
-		component_props: parseJSONWithFallback(doc.component_props, {}),
 		component_data_script: doc.component_data_script ?? "",
-		component_js: doc.component_js ?? "",
-		component_css: doc.component_css ?? "",
 		component_data_preview: parseJSONWithFallback(preview, {}),
 	};
 }
@@ -73,7 +69,7 @@ const componentDataPreview = computed(() => {
 
 const componentProps = computed(() => {
 	if (!currentComponentId.value) return {};
-	return componentDocDraft.component_props ?? {};
+	return canvasStore.fragmentData.block?.props ?? {};
 });
 
 const componentDataScript = computed(() => {
@@ -81,48 +77,17 @@ const componentDataScript = computed(() => {
 	return componentDocDraft.component_data_script ?? "";
 });
 
-const componentJavaScript = computed(() => {
-	if (!currentComponentId.value) return "";
-	return componentDocDraft.component_js ?? "";
-});
-
-const componentCSS = computed(() => {
-	if (!currentComponentId.value) return "";
-	return componentDocDraft.component_css ?? "";
-});
-
 const componentController = {
 	currentComponentId,
 	componentDataPreview,
 	componentProps,
 	componentDataScript,
-	componentJavaScript,
-	componentCSS,
-
-	getComponentProps: () => componentProps.value,
-
-	setComponentProps: (props: BlockProps) => {
-		if (!currentComponentId.value) return;
-		componentDocDraft.component_props = props;
-		canvasStore.fragmentData.block?.setBlockProps(props);
-		markCanvasDirty(true);
-	},
 
 	getComponentDataScript: () => componentDataScript.value,
 
 	setComponentDataScript: (script: string) => {
 		if (!currentComponentId.value) return;
 		componentDocDraft.component_data_script = script;
-		markCanvasDirty(true);
-	},
-
-	getComponentClientScript: (type: "js" | "css" = "js") => {
-		return type === "js" ? componentJavaScript.value : componentCSS.value;
-	},
-
-	setComponentClientScript: (script: string, type: "js" | "css" = "js") => {
-		if (!currentComponentId.value) return;
-		componentDocDraft[type === "js" ? "component_js" : "component_css"] = script;
 		markCanvasDirty(true);
 	},
 
@@ -142,7 +107,7 @@ const componentController = {
 		if (!componentId) return;
 
 		// convert props to {propName: propValue} format
-		const props = Object.entries((componentDocDraft.component_props as BlockProps) ?? {}).reduce(
+		const props = Object.entries(componentProps.value).reduce(
 			(acc: Record<string, any>, [key, value]: [string, BlockProps[string]]) => {
 				acc[key] = value.value ?? value.propOptions?.options?.defaultValue;
 				return acc;
@@ -204,8 +169,6 @@ watch(
 	[currentComponentId, () => canvasStore.editingMode],
 	() => {
 		if (canvasStore.editingMode != "fragment") return;
-		const initialProps = componentController.getComponentProps();
-		canvasStore.fragmentData.block?.setBlockProps(initialProps);
 		markCanvasDirty(false);
 	},
 	{ immediate: true },

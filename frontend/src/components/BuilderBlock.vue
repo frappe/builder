@@ -47,9 +47,10 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
 import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
-import type { ComponentClientScriptEmulator } from "@/utils/scriptSandbox";
+import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,
@@ -67,7 +68,6 @@ import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
 import TextBlock from "./TextBlock.vue";
-import componentController from "@/utils/componentController.js";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -103,7 +103,9 @@ const props = withDefaults(
 );
 
 const editingComponentId = computed(() =>
-	!props.block.getParentBlock() && props.block === canvasStore.fragmentData.block
+	canvasStore.fragmentData.fragmentType === "component" &&
+	!props.block.getParentBlock() &&
+	props.block === canvasStore.fragmentData.block
 		? canvasStore.fragmentData.fragmentId
 		: null,
 );
@@ -276,8 +278,8 @@ const attributes = computed(() => {
 });
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
-const emulateComponentClientScript = inject<ComponentClientScriptEmulator>(
-	"emulateComponentClientScript",
+const emulateBlockClientScript = inject<BlockClientScriptEmulator>(
+	"emulateBlockClientScript",
 	() => () => {},
 );
 
@@ -516,38 +518,38 @@ watch(resolvedComponentData, () => {
 	componentDataReady.value = true;
 });
 
-const componentClientScriptDoc = computed(() => {
-	if (editingComponentId.value && !props.block.getParentBlock()) {
-		return {
-			component_js: componentController.componentJavaScript.value,
-			component_css: componentController.componentCSS.value,
-		};
-	}
-	if (!props.block.extendedFromComponent) return null;
-	return props.block.componentVersion
-		? componentStore.getComponentVersionDoc(props.block.componentVersion)
-		: componentStore.getComponent(props.block.extendedFromComponent);
+const blockClientScript = computed(() => {
+	const clientScript = props.block.extendedFromComponent
+		? props.block.referenceComponent?.clientScript
+		: props.block.clientScript;
+	return {
+		javascript: clientScript?.js || "",
+		css: clientScript?.css || "",
+	};
 });
 
 watch(
 	[
 		target,
-		componentClientScriptDoc,
+		blockClientScript,
 		resolvedComponentData,
 		allResolvedProps,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
 		componentDataReady,
 	],
-	([element, componentDoc, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
-		if (!element || !componentDoc) return;
-		const cleanup = emulateComponentClientScript({
+	([element, clientScript, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+		if (!element || !clientScript) return;
+		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
+		const cleanup = emulateBlockClientScript({
 			key: uidToUse,
 			element,
 			breakpoint: props.breakpoint,
-			css: componentDoc.component_css ?? "",
+			css: clientScript.css ?? "",
 			javascript:
-				settingPage || (!editingComponentId.value && !dataReady) ? "" : (componentDoc.component_js ?? ""),
+				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
+					? ""
+					: (clientScript.javascript ?? ""),
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});

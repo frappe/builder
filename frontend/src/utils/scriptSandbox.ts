@@ -1,7 +1,7 @@
 import { builderSettings } from "@/data/builderSettings";
 
 export type ScriptCleanup = () => void;
-export type ComponentClientScript = {
+export type BlockClientScriptRuntime = {
 	key: string;
 	element: HTMLElement;
 	breakpoint: string;
@@ -10,7 +10,7 @@ export type ComponentClientScript = {
 	componentData: Record<string, any>;
 	props: Record<string, any>;
 };
-export type ComponentClientScriptEmulator = (script: ComponentClientScript) => ScriptCleanup;
+export type BlockClientScriptEmulator = (script: BlockClientScriptRuntime) => ScriptCleanup;
 
 type ScriptContext = {
 	componentData?: Record<string, any>;
@@ -231,7 +231,4 @@ function executeClientScriptRestricted(
 	}
 }
 
-export {
-	executeClientScriptRestricted,
-	executeClientScriptUnrestricted,
-};
+export { executeClientScriptRestricted, executeClientScriptUnrestricted };

@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import copy
+import hashlib
 import re
 from typing import Any
 from urllib.parse import quote_plus
@@ -1076,9 +1077,9 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 	"""Register a client script globally (once) and return its per-block tag."""
 	if script["type"] == "JavaScript":
 		if script_id not in state["used_block_scripts"]:
-			component_script = escape_raw_text_end_tag(script["script"], "script")
+			block_script = escape_raw_text_end_tag(script["script"], "script")
 			state["global_script_tag"].append(
-				f"async function client_script_{script_id}(component_data, props) {{{component_script}}}\n"
+				f"async function client_script_{script_id}(component_data, props) {{{block_script}}}\n"
 			)
 			state["used_block_scripts"].add(script_id)
 
@@ -1086,36 +1087,37 @@ def create_client_script_tag(state: dict, script_id: str, script: dict) -> bs.Ta
 		invocation = (
 			f"(client_script_{script_id}).call("
 			f"document.querySelector('[data-block-uid=\"{{{{ unique_hash }}}}\"]'), "
-			f"{{{{ component.component_data | to_safe_json }}}}, "
-			f"{{{{ props | to_safe_json }}}}"
+			f"{{{{ (component.component_data if component is defined else {{}}) | to_safe_json }}}}, "
+			f"{{{{ (props if props is defined else {{}}) | to_safe_json }}}}"
 			f");"
 		)
 		script_tag.string = invocation
 		return script_tag
 
 	style_tag = state["soup"].new_tag("style")
-	component_style = escape_raw_text_end_tag(script["script"], "style")
-	style_tag.string = f"@scope {{ {component_style} }}"
+	block_style = escape_raw_text_end_tag(script["script"], "style")
+	style_tag.string = f"@scope {{ {block_style} }}"
 	return style_tag
 
 
 def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	"""Attach client-side JavaScript/CSS to the block."""
-	component_scripts = block.get("componentClientScripts") or []
-	scripts = {
-		str(component_script["name"]): {
-			"script": component_script["script"],
-			"type": component_script["type"],
-		}
-		for component_script in component_scripts
-	}
+	client_script = block.get("clientScript")
+	if client_script is None:
+		client_script = {"js": block.get("blockClientScript")}
+	scripts = [
+		{"script": client_script.get("js"), "type": "JavaScript"},
+		{"script": client_script.get("css"), "type": "CSS"},
+	]
+	scripts = [script for script in scripts if script["script"]]
 
 	if not scripts:
 		return
 
 	tag.attrs["data-block-uid"] = "{{ unique_hash }}"
 
-	for script_id, script in reversed(list(scripts.items())):
+	for script in scripts:
+		script_id = hashlib.sha256(script["script"].encode()).hexdigest()[:16]
 		tag.append(create_client_script_tag(state, script_id, script))
 
 
@@ -1262,43 +1264,11 @@ def extend_block_with_component(block: dict) -> tuple[dict, str | None]:
 
 	component_block = frappe.parse_json(component.get("block") or "{}")
 	if component_block:
-		if component.get("component_props"):
-			component_block["props"] = frappe.parse_json(component["component_props"]) or {}
-
 		extend_block(component_block, block)
-
-		component_scripts = []
-		component_script_base = get_component_script_base(component_id, component_version)
-		if component.get("component_css"):
-			component_scripts.append(
-				{
-					"name": f"{component_script_base}_css",
-					"script": component["component_css"],
-					"type": "CSS",
-				}
-			)
-		if component.get("component_js"):
-			component_scripts.append(
-				{
-					"name": f"{component_script_base}_js",
-					"script": component["component_js"],
-					"type": "JavaScript",
-				}
-			)
-
-		if component_scripts:
-			component_block["componentClientScripts"] = component_scripts
 
 		return component_block, component_id
 
 	return block, None
-
-
-def get_component_script_base(component_id: str, component_version: str | None) -> str:
-	parts = [frappe.scrub(component_id)]
-	if component_version:
-		parts.append(frappe.scrub(component_version))
-	return "_".join(parts)
 
 
 def wrap_with_media_query(style_string, device):

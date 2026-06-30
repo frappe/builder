@@ -79,6 +79,7 @@ class Block implements BlockOptions {
 	dynamicValues: Array<BlockDataKey>;
 	props?: BlockProps;
 	editorConfig?: BlockEditorConfig;
+	clientScript: BlockClientScript;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -128,7 +129,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -173,6 +174,9 @@ class Block implements BlockOptions {
 		this.dynamicValues = reactive(options.dynamicValues || []);
 		this.props = reactive(options.props || {});
 		this.editorConfig = options.editorConfig;
+		this.clientScript = reactive(
+			options.clientScript ?? (options.blockClientScript ? { js: options.blockClientScript } : {}),
+		);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -771,6 +775,17 @@ class Block implements BlockOptions {
 		}
 		return block;
 	}
+	getPropsRoot(): Block | null {
+		const componentRoot = this.getComponentRoot();
+		if (componentRoot) return componentRoot;
+
+		let block: Block | null = this;
+		while (block) {
+			if (Object.keys(block.props || {}).length > 0) return block;
+			block = block.getParentBlock();
+		}
+		return null;
+	}
 	convertToRepeater() {
 		this.setBaseStyle("display", "flex");
 		this.setBaseStyle("flexDirection", "column");
@@ -1054,25 +1069,14 @@ class Block implements BlockOptions {
 		return Boolean(this.getRepeaterParent());
 	}
 	getBlockProps(): BlockProps {
-		const componentRoot = this.getComponentRoot();
-		if (!componentRoot) return {};
-		if (componentRoot.props && Object.keys(componentRoot.props).length > 0) {
-			return { ...(componentRoot.props || {}) };
-		} else if (componentRoot.componentVersion) {
-			return (
-				useComponentStore().getComponentVersionDoc(componentRoot.componentVersion as string)
-					?.component_props || {}
-			);
-		} else {
-			return (
-				useComponentStore().getComponent(componentRoot.extendedFromComponent as string)?.component_props || {}
-			);
-		}
+		const propsRoot = this.getPropsRoot();
+		if (!propsRoot) return { ...(this.props || {}) };
+		const referenceProps = propsRoot.extendedFromComponent ? propsRoot.referenceComponent?.props || {} : {};
+		return { ...referenceProps, ...(propsRoot.props || {}) };
 	}
 	setBlockProps(props: BlockProps) {
-		const componentRoot = this.getComponentRoot();
-		if (!componentRoot) return;
-		componentRoot.props = props;
+		const propsRoot = this.getPropsRoot() || this;
+		propsRoot.props = props;
 	}
 }
 
