@@ -71,6 +71,8 @@ class Block implements BlockOptions {
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
+	slotName?: string;
+	slotFilled?: boolean;
 	isRepeaterBlock?: boolean;
 	visibilityCondition?: BlockVisibilityCondition;
 	elementBeforeConversion?: string;
@@ -91,6 +93,8 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
+		this.slotName = options.slotName;
+		this.slotFilled = options.slotFilled;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			if (this.componentVersion) {
@@ -128,7 +132,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -314,6 +318,9 @@ class Block implements BlockOptions {
 		return visibilityCondition;
 	}
 	getBlockDescription() {
+		if (this.slotName) {
+			return this.slotName;
+		}
 		if (this.extendedFromComponent) {
 			return this.getComponentBlockDescription() || "";
 		}
@@ -562,6 +569,9 @@ class Block implements BlockOptions {
 		}
 	}
 	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
+		if (select) {
+			this.prepareSlotForContent();
+		}
 		if (index === undefined || index === null) {
 			index = this.children.length;
 		}
@@ -588,6 +598,7 @@ class Block implements BlockOptions {
 	removeChild(child: Block) {
 		const index = this.getChildIndex(child);
 		if (index > -1) {
+			this.markSlotContentChanged();
 			this.children.splice(index, 1);
 		}
 	}
@@ -681,7 +692,7 @@ class Block implements BlockOptions {
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isHTML() ||
-			this.isExtendedFromComponent()
+			(this.isExtendedFromComponent() && !this.isInstanceSlot())
 		);
 	}
 	updateStyles(styles: BlockStyleObjects) {
@@ -784,6 +795,7 @@ class Block implements BlockOptions {
 	moveChild(child: Block, index: number) {
 		const childIndex = this.children.findIndex((block) => block.blockId === child.blockId);
 		if (childIndex > -1) {
+			this.markSlotContentChanged();
 			this.children.splice(childIndex, 1);
 			this.children.splice(index, 0, child);
 		}
@@ -853,6 +865,41 @@ class Block implements BlockOptions {
 	}
 	isChildOfComponentBlock() {
 		return Boolean(this.isChildOfComponent);
+	}
+	isSlot() {
+		return Boolean(this.slotName?.trim());
+	}
+	isInstanceSlot() {
+		return this.isSlot() && this.isExtendedFromComponent() && useCanvasStore().editingMode === "page";
+	}
+	prepareSlotForContent() {
+		if (!this.isInstanceSlot() || this.slotFilled) return;
+		this.children.splice(0, this.children.length);
+		this.slotFilled = true;
+	}
+	markSlotContentChanged() {
+		if (this.isInstanceSlot()) {
+			this.slotFilled = true;
+		}
+	}
+	isDetachedSlotContent() {
+		if (this.isChildOfComponentBlock()) return false;
+		let parent = this.getParentBlock();
+		while (parent) {
+			if (parent.isInstanceSlot()) return true;
+			if (parent.extendedFromComponent) return false;
+			parent = parent.getParentBlock();
+		}
+		return false;
+	}
+	resetSlotContent() {
+		if (!this.isInstanceSlot()) return;
+		const componentId = this.extendedFromComponent || this.isChildOfComponent;
+		const componentSlot = this.referenceComponent;
+		if (!componentId || !componentSlot) return;
+		this.children.splice(0, this.children.length);
+		this.slotFilled = false;
+		populateSlotFallback(this, componentSlot.children);
 	}
 	resetWithComponent() {
 		const component = this.referenceComponent;
@@ -953,13 +1000,14 @@ class Block implements BlockOptions {
 		return this.isFlex() && this.getStyle("flexDirection") === "column";
 	}
 	duplicateBlock() {
-		if (this.isRoot()) {
+		if (this.isRoot() || this.isChildOfComponentBlock()) {
 			return;
 		}
 		const canvasStore = useCanvasStore();
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
+		parentBlock?.markSlotContentChanged();
 
 		if (blockCopy.getStyle("position") === "absolute") {
 			// shift the block a bit

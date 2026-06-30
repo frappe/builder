@@ -109,6 +109,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Duplicate",
 		action: duplicateBlock,
+		condition: () => !block.value.isChildOfComponentBlock(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
@@ -142,6 +143,9 @@ const contextMenuOptions: ContextMenuOption[] = [
 			if (!parentBlock) return;
 
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
+			if (selectedBlocks.every((selectedBlock: Block) => selectedBlock.getParentBlock() === parentBlock)) {
+				parentBlock.markSlotContentChanged();
+			}
 			const blockPosition = Math.min(...selectedBlocks.map(parentBlock.getChildIndex.bind(parentBlock)));
 			const newBlock = parentBlock?.addChild(newBlockObj, blockPosition);
 
@@ -171,13 +175,15 @@ const contextMenuOptions: ContextMenuOption[] = [
 			});
 		},
 		condition: () => {
-			if (block.value.isRoot()) return false;
+			if (block.value.isRoot() || block.value.isChildOfComponentBlock()) return false;
 			if (canvasStore.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
 			const parentBlock = block.value.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
-			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
+			return selectedBlocks.every(
+				(block: Block) => !block.isChildOfComponentBlock() && block.getParentBlock() === parentBlock,
+			);
 		},
 		disabled: () => builderStore.readOnlyMode,
 	},
@@ -237,6 +243,16 @@ const contextMenuOptions: ContextMenuOption[] = [
 				if (confirmed) {
 					block.value.resetWithComponent();
 				}
+			});
+		},
+		disabled: () => builderStore.readOnlyMode,
+	},
+	{
+		label: "Reset Slot to Fallback",
+		condition: () => block.value.isInstanceSlot() && Boolean(block.value.slotFilled),
+		action: () => {
+			confirm("Discard this slot's custom content and restore its fallback?").then((confirmed) => {
+				if (confirmed) block.value.resetSlotContent();
 			});
 		},
 		disabled: () => builderStore.readOnlyMode,

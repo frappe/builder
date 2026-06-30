@@ -56,22 +56,21 @@
 							@click="toggleExpanded(element)" />
 						<span
 							:class="[
-								element.getIcon(),
+								getLayerIcon(element),
 								'h-3 w-3',
 								{
 									'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-										element.isExtendedFromComponent(),
+										element.isExtendedFromComponent() || element.isSlot(),
 								},
 							]"
 							aria-hidden="true"
-							v-if="!Boolean(element.extendedFromComponent)" />
-						<span
-							class="lucide-layout-dashboard mr-1 h-3 w-3"
-							:class="{
-								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
-									element.isExtendedFromComponent(),
-							}"
-							v-if="Boolean(element.extendedFromComponent)" />
+							:title="
+								element.isDetachedSlotContent()
+									? 'Detached slot content'
+									: element.isSlot()
+									? `Slot: ${element.slotName}`
+									: undefined
+							" />
 						<span
 							class="layer-label min-h-[1em] min-w-[2em] max-w-64 truncate"
 							:contenteditable="element.editable && !readonly"
@@ -82,7 +81,7 @@
 							}"
 							@dblclick="
 								(ev) => {
-									if (!readonly) {
+									if (!readonly && !element.slotName) {
 										element.editable = true;
 										// focus
 										const target = ev.target as HTMLElement;
@@ -94,7 +93,6 @@
 							@blur="setBlockName($event, element)">
 							{{ element.getBlockDescription() }}
 						</span>
-
 						<!-- toggle visibility -->
 						<span
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
@@ -233,6 +231,12 @@ const canShowChildLayer = (block: Block) => {
 	);
 };
 
+const getLayerIcon = (block: Block) => {
+	if (block.isSlot()) return "lucide-square-dashed";
+	if (block.extendedFromComponent) return "lucide-layout-dashboard";
+	return block.getIcon();
+};
+
 watch(
 	() => canvasStore.activeCanvas?.selectedBlockIds,
 	() => {
@@ -358,12 +362,20 @@ const removeFromParent = (block: Block) => {
 	const parent = block.getParentBlock();
 	if (parent?.children) {
 		const index = parent.children.indexOf(block);
-		if (index > -1) parent.children.splice(index, 1);
+		if (index > -1) {
+			parent.markSlotContentChanged();
+			parent.children.splice(index, 1);
+		}
 	}
 };
 
+const canEditChildren = (block: Block | null) =>
+	Boolean(block && (!block.isExtendedFromComponent() || block.isInstanceSlot()));
+
 const moveBlockInside = (draggedBlock: Block, targetBlock: Block) => {
+	if (!canEditChildren(targetBlock)) return;
 	removeFromParent(draggedBlock);
+	targetBlock.prepareSlotForContent();
 	if (!targetBlock.children) targetBlock.children = [];
 	targetBlock.children.push(draggedBlock);
 	draggedBlock.parentBlock = targetBlock;
@@ -371,11 +383,12 @@ const moveBlockInside = (draggedBlock: Block, targetBlock: Block) => {
 
 const moveBlockAdjacent = (draggedBlock: Block, targetBlock: Block, position: "before" | "after") => {
 	const targetParent = targetBlock.getParentBlock();
-	if (!targetParent?.children) return;
+	if (!targetParent?.children || !canEditChildren(targetParent)) return;
 
 	removeFromParent(draggedBlock);
+	targetParent.prepareSlotForContent();
 	const targetIndex = targetParent.children.indexOf(targetBlock);
-	const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+	const insertIndex = targetIndex < 0 ? 0 : position === "before" ? targetIndex : targetIndex + 1;
 	targetParent.children.splice(insertIndex, 0, draggedBlock);
 	draggedBlock.parentBlock = targetParent;
 };
@@ -394,7 +407,12 @@ const onDragEnd = () => {
 	const draggedBlock = canvasStore.activeCanvas?.findBlock(draggedElement.dataset.blockLayerId!);
 	const targetBlock = canvasStore.activeCanvas?.findBlock(hoverTarget.dataset.blockLayerId!);
 
-	if (draggedBlock && targetBlock && draggedBlock !== targetBlock) {
+	if (
+		draggedBlock &&
+		targetBlock &&
+		draggedBlock !== targetBlock &&
+		!draggedBlock.isChildOfComponentBlock()
+	) {
 		if (hoverPosition === "inside") {
 			moveBlockInside(draggedBlock, targetBlock);
 		} else {
