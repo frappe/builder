@@ -30,6 +30,29 @@ def resolve_api_key() -> str:
 	return api_key
 
 
+def build_mention_hint(mentioned_pages: list | str | None) -> str:
+	"""Turn inline @page references into a compact resolution hint appended to the turn,
+	so the agent maps each "@Title" to the exact page id + route."""
+	if isinstance(mentioned_pages, str):
+		try:
+			mentioned_pages = json.loads(mentioned_pages)
+		except (json.JSONDecodeError, TypeError):
+			return ""
+	if not isinstance(mentioned_pages, list) or not mentioned_pages:
+		return ""
+	lines = []
+	for p in mentioned_pages:
+		if not isinstance(p, dict) or not p.get("name"):
+			continue
+		route = (p.get("route") or "").lstrip("/")
+		lines.append(f"- @{p.get('title') or p['name']}: page id={p['name']}, route=/{route}")
+	if not lines:
+		return ""
+	return "\n\n[Referenced pages — resolve the @mentions above to these exact ids/routes]\n" + "\n".join(
+		lines
+	)
+
+
 @frappe.whitelist()
 @has_page_write()
 def run(
@@ -41,12 +64,16 @@ def run(
 	selected_block_ids: list | None = None,
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
+	mentioned_pages: list | str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn.
 
 	Two modes, one loop: WITH a page_id it's the in-editor chat (client block ops apply
 	to the canvas); WITHOUT one it's the page-less dashboard chat, which orchestrates via
 	server tools + parallel sub-agents (see run_agent_job / build_orchestrator_registry).
+
+	`mentioned_pages` carries inline @page references from the dashboard chat so the agent
+	can resolve "@My Page" to the exact page id/route.
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
@@ -75,6 +102,10 @@ def run(
 	api_key = resolve_api_key()
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
+	# Resolve inline @page references into a hint the agent can act on (stored session
+	# message keeps the user's original "@Title" text; only the enqueued turn is augmented).
+	agent_prompt = prompt + build_mention_hint(mentioned_pages)
+
 	# Capture the pre-turn page state now (synchronously, before the worker or any
 	# streaming touches the canvas — so it's reliably pre-turn). The snapshot DOC is
 	# created later, by the loop, only if the turn actually changes the page. Page-less
@@ -90,7 +121,7 @@ def run(
 		run_agent_job,
 		queue="default",
 		timeout=1200 if not page_id else 600,
-		prompt=prompt,
+		prompt=agent_prompt,
 		page_context_json=page_context or "[]",
 		model=resolved_model,
 		api_key=api_key,

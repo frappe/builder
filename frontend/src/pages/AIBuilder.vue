@@ -54,57 +54,54 @@
 
 			<!-- composer -->
 			<div class="border-t border-outline-gray-2 px-6 py-3">
-				<div
-					class="ai-composer bg-surface-white mx-auto max-w-2xl rounded-xl border border-outline-gray-2 px-3 py-2.5">
-					<!-- @page picker: frappe-ui Autocomplete owns search + keyboard nav +
-					     positioning. The full-width target is an invisible anchor so the
-					     popover lines up with the composer; typing "@" opens it. -->
-					<Autocomplete
-						ref="pageAC"
-						:options="pageOptions"
-						placeholder="Search pages…"
-						placement="top-start"
-						@change="onPagePicked">
-						<template #target>
-							<div class="h-0 w-full"></div>
-						</template>
-					</Autocomplete>
-
-					<!-- referenced page chip -->
+				<div class="relative mx-auto max-w-2xl">
+					<!-- inline @page mention list (keyboard-navigable). Positioned above the
+					     composer; the "@…" stays inline in the text as a reference. -->
 					<div
-						v-if="targetPage"
-						class="mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-surface-gray-2 px-2 py-1 text-[11px] text-ink-gray-7">
-						<FeatherIcon name="file" class="size-3" />
-						<span class="max-w-[180px] truncate">{{ targetPage.title }}</span>
-						<button class="text-ink-gray-5 hover:text-ink-gray-8" @click="targetPage = null">
-							<FeatherIcon name="x" class="size-3" />
+						v-if="mentionOpen && filteredPages.length"
+						class="bg-surface-white absolute bottom-full left-0 mb-2 max-h-60 w-80 overflow-auto rounded-lg border border-outline-gray-2 py-1 shadow-lg">
+						<button
+							v-for="(p, i) in filteredPages"
+							:key="p.name"
+							class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs"
+							:class="
+								i === mentionIndex
+									? 'bg-surface-gray-3 text-ink-gray-9'
+									: 'text-ink-gray-8 hover:bg-surface-gray-2'
+							"
+							@mousemove="mentionIndex = i"
+							@mousedown.prevent="selectMention(p)">
+							<FeatherIcon name="file" class="size-3.5 shrink-0 text-ink-gray-4" />
+							<span class="min-w-0 flex-1 truncate">{{ p.page_title || p.name }}</span>
+							<span class="shrink-0 font-mono text-[10px] text-ink-gray-4">
+								/{{ (p.route || "").replace(/^\//, "") }}
+							</span>
 						</button>
 					</div>
-					<textarea
-						ref="inputEl"
-						v-model="chat.prompt.value"
-						rows="1"
-						:placeholder="
-							targetPage
-								? `Ask to change ${targetPage.title}…`
-								: 'Ask Builder AI…  (type @ to reference a page)'
-						"
-						class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
-						@input="onInput"
-						@keydown.enter.exact.prevent="onSend" />
-					<div class="mt-1.5 flex items-center gap-2">
-						<Dropdown :options="modelOptions" placement="top-start">
-							<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
-								{{ modelLabel }}
-							</button>
-						</Dropdown>
-						<span class="flex-1"></span>
-						<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
-							<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
-						</Button>
-						<Button v-else variant="solid" :disabled="!canSend" @click="onSend">
-							<template #icon><FeatherIcon name="arrow-up" class="size-4" /></template>
-						</Button>
+
+					<div class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-3 py-2.5">
+						<textarea
+							ref="inputEl"
+							v-model="chat.prompt.value"
+							rows="1"
+							placeholder="Ask Builder AI…  (type @ to reference a page)"
+							class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
+							@input="onInput"
+							@keydown="onKeydown" />
+						<div class="mt-1.5 flex items-center gap-2">
+							<Dropdown :options="modelOptions" placement="top-start">
+								<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
+									{{ modelLabel }}
+								</button>
+							</Dropdown>
+							<span class="flex-1"></span>
+							<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
+								<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
+							</Button>
+							<Button v-else variant="solid" :disabled="!chat.canSubmit.value" @click="onSend">
+								<template #icon><FeatherIcon name="arrow-up" class="size-4" /></template>
+							</Button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -116,7 +113,7 @@
 import AgentMessage from "@/components/ai-builder/AgentMessage.vue";
 import { useAgentChat } from "@/components/ai-builder/useAgentChat";
 import router from "@/router";
-import { Autocomplete, Button, createResource, Dropdown, FeatherIcon } from "frappe-ui";
+import { Button, createResource, Dropdown, FeatherIcon } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -125,17 +122,25 @@ interface PageRef {
 	page_title?: string;
 	route?: string;
 }
+interface Mention {
+	token: string;
+	name: string;
+	title: string;
+	route: string;
+}
 
 const route = useRoute();
 const chat = useAgentChat();
 const inputEl = ref<HTMLTextAreaElement | null>(null);
 const scrollEl = ref<HTMLElement | null>(null);
 
-// @page reference state. The picker itself (search, arrow-key nav, positioning) is a
-// frappe-ui Autocomplete — we only feed it options and react to a pick.
-const pageAC = ref<any>(null);
+// Inline @page references. The "@Title" stays in the prompt text; the resolved pages
+// ride along to the backend as context so the agent knows which page each refers to.
 const allPages = ref<PageRef[]>([]);
-const targetPage = ref<{ name: string; title: string } | null>(null);
+const mentionOpen = ref(false);
+const mentionQuery = ref("");
+const mentionIndex = ref(0);
+const mentions = ref<Mention[]>([]);
 
 const routeSessionId = computed(() => (route.params.sessionId as string) || "");
 const modelLabel = computed(
@@ -144,16 +149,15 @@ const modelLabel = computed(
 const modelOptions = computed(() =>
 	chat.models.value.map((m) => ({ label: m.label, onClick: () => (chat.selectedModel.value = m.name) })),
 );
-const pageOptions = computed(() =>
-	allPages.value.map((p) => ({
-		label: p.page_title || p.name,
-		value: p.name,
-		description: p.route ? `/${p.route.replace(/^\//, "")}` : "",
-	})),
-);
-// A referenced page hands off to the editor, so a bare "@Home" with no instruction
-// is still sendable; otherwise require text + a model.
-const canSend = computed(() => (!!targetPage.value || chat.canSubmit.value) && !!chat.prompt.value.trim());
+const filteredPages = computed(() => {
+	const q = mentionQuery.value.trim().toLowerCase();
+	return allPages.value
+		.filter((p) => {
+			if (!q) return true;
+			return (p.page_title || p.name).toLowerCase().includes(q) || (p.route || "").toLowerCase().includes(q);
+		})
+		.slice(0, 8);
+});
 
 function resize() {
 	const t = inputEl.value;
@@ -164,35 +168,83 @@ function resize() {
 
 function onInput() {
 	resize();
-	// Typing "@" opens the page picker (frappe-ui Autocomplete). Strip the "@" so the
-	// textarea stays clean — the chosen page becomes a chip, not inline text.
+	detectMention();
+}
+
+/** Open the mention list on a fresh "@" (and keep it open while typing the query
+ * right after it). The "@…" is never stripped — it stays inline in the prompt. */
+function detectMention() {
 	const el = inputEl.value;
 	const caret = el?.selectionStart ?? chat.prompt.value.length;
-	if (chat.prompt.value.slice(0, caret).endsWith("@")) {
-		chat.prompt.value = chat.prompt.value.slice(0, caret - 1) + chat.prompt.value.slice(caret);
-		nextTick(() => pageAC.value?.togglePopover?.(true));
+	const m = chat.prompt.value.slice(0, caret).match(/@([^@\n]*)$/);
+	if (m && (m[1] === "" || mentionOpen.value)) {
+		mentionOpen.value = true;
+		mentionQuery.value = m[1];
+		mentionIndex.value = 0;
+	} else {
+		mentionOpen.value = false;
 	}
 }
 
-function onPagePicked(option: { label: string; value: string } | null) {
-	if (!option) return;
-	targetPage.value = { name: option.value, title: option.label };
-	nextTick(() => inputEl.value?.focus());
+function onKeydown(e: KeyboardEvent) {
+	const list = filteredPages.value;
+	if (mentionOpen.value && list.length) {
+		if (e.key === "ArrowDown") {
+			e.preventDefault();
+			mentionIndex.value = (mentionIndex.value + 1) % list.length;
+			return;
+		}
+		if (e.key === "ArrowUp") {
+			e.preventDefault();
+			mentionIndex.value = (mentionIndex.value - 1 + list.length) % list.length;
+			return;
+		}
+		if (e.key === "Enter" || e.key === "Tab") {
+			e.preventDefault();
+			selectMention(list[mentionIndex.value]);
+			return;
+		}
+		if (e.key === "Escape") {
+			e.preventDefault();
+			mentionOpen.value = false;
+			return;
+		}
+	}
+	if (e.key === "Enter" && !e.shiftKey) {
+		e.preventDefault();
+		onSend();
+	}
+}
+
+function selectMention(p: PageRef) {
+	const el = inputEl.value;
+	const caret = el?.selectionStart ?? chat.prompt.value.length;
+	const before = chat.prompt.value.slice(0, caret).replace(/@([^@\n]*)$/, "");
+	const after = chat.prompt.value.slice(caret);
+	const title = p.page_title || p.name;
+	const token = `@${title}`;
+	chat.prompt.value = `${before}${token} ${after}`;
+	if (!mentions.value.some((m) => m.name === p.name)) {
+		mentions.value.push({ token, name: p.name, title, route: p.route || "" });
+	}
+	mentionOpen.value = false;
+	mentionQuery.value = "";
+	nextTick(() => {
+		const pos = (before + token + " ").length;
+		el?.focus();
+		el?.setSelectionRange(pos, pos);
+		resize();
+	});
 }
 
 function onSend() {
-	const text = chat.prompt.value.trim();
-	if (!text) return;
-	// A referenced page hands off to that page's editor, where the fully-capable
-	// in-editor AI applies targeted edits on the canvas.
-	if (targetPage.value) {
-		const pageId = targetPage.value.name;
-		chat.prompt.value = "";
-		targetPage.value = null;
-		router.push({ name: "builder", params: { pageId }, query: { ai_prompt: text } });
-		return;
-	}
-	chat.send();
+	if (!chat.canSubmit.value) return;
+	// Only pass references still present in the text (the user may have deleted one).
+	const refs = mentions.value
+		.filter((m) => chat.prompt.value.includes(m.token))
+		.map((m) => ({ name: m.name, title: m.title, route: m.route }));
+	chat.send(refs);
+	mentions.value = [];
 	nextTick(resize);
 }
 

@@ -253,7 +253,7 @@ async function open(routeSessionId?: string) {
 
 // --- actions ----------------------------------------------------------
 
-async function send() {
+async function send(mentionedPages: Array<{ name: string; title: string; route: string }> = []) {
 	const text = prompt.value.trim();
 	if (!text || sending.value || !selectedModel.value) return;
 	prompt.value = "";
@@ -266,6 +266,7 @@ async function send() {
 			prompt: text,
 			model: selectedModel.value,
 			session_id: sessionId.value || undefined,
+			...(mentionedPages.length ? { mentioned_pages: mentionedPages } : {}),
 		});
 		if (res.session_id && !sessionId.value) {
 			sessionId.value = res.session_id;

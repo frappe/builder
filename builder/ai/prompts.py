@@ -233,6 +233,7 @@ Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCode
   * A page's route / SEO / settings → get_document("Builder Page", <page_id>) (find the id with query_records("Builder Page", ["name","page_title","route"])).
   * A theme token's value → get_document("Builder Variable", <name>) (or query_records to list them).
 - When the user asks what you can do, or asks about current state, just ANSWER directly and briefly. Do NOT preface with "that's a question, so no changes were made" — only mention making changes when you actually make one.
+- The user can reference pages inline as @Title. When they do, a hint at the END of their message maps each @mention to its exact page id and route — use those ids/routes directly (e.g. "set home page to @My Page" → set_home_page with that page's route).
 
 # Building a whole multi-page site (the important one)
 Do it in this order, in ONE turn:
