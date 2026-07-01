@@ -179,6 +179,28 @@ def generate_site(prompt: str, folder_name: str | None = None, model: str | None
 
 
 @frappe.whitelist()
+def list_site_batches(limit: int = 20):
+	"""Recent site builds by the current user — powers the chat sidebar."""
+	ensure_site_permission()
+	return frappe.get_all(
+		"Builder Site Batch",
+		filters={"created_by_user": frappe.session.user},
+		fields=[
+			"batch_id",
+			"prompt",
+			"status",
+			"project_folder",
+			"total_pages",
+			"completed_pages",
+			"failed_pages",
+			"modified",
+		],
+		order_by="modified desc",
+		limit=min(int(limit), 50),
+	)
+
+
+@frappe.whitelist()
 def get_site_batch_status(batch_id: str):
 	"""The durable progress surface for the review screen: batch status + per-page rows."""
 	ensure_site_permission()

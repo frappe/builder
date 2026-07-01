@@ -71,10 +71,16 @@ const routes = [
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
-		path: "/site/:batchId",
-		name: "site-progress",
+		path: "/build",
+		name: "site-build-new",
 		beforeEnter: validateVisit,
-		component: () => import("@/pages/SiteProgress.vue"),
+		component: () => import("@/pages/SiteChat.vue"),
+	},
+	{
+		path: "/build/:batchId",
+		name: "site-build",
+		beforeEnter: validateVisit,
+		component: () => import("@/pages/SiteChat.vue"),
 	},
 	{
 		path: "/page/:pageId",
