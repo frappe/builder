@@ -80,11 +80,16 @@ def shared_design_preamble(spec: SiteSpec, header_id: str | None, footer_id: str
 	"""The design-system text injected into every page/component generation so the
 	whole site stays consistent without cross-worker coordination."""
 	lines = ["# Shared design system — use consistently across the whole site"]
-	if spec.palette:
-		lines.append("Palette: " + ", ".join(f"{k} {v}" for k, v in spec.palette.items()))
 	if spec.variables:
-		names = ", ".join(f"var(--{v.variable_name})" for v in spec.variables)
-		lines.append(f"Prefer these theme variables over raw hex where they fit: {names}")
+		# Push the model to reference tokens, not hardcode hex, so one edit restyles the
+		# whole site. Values are shown only for reference (so it can reason about contrast).
+		tokens = ", ".join(f"var(--{v.variable_name}) [{v.value}]" for v in spec.variables)
+		lines.append(
+			"Brand colours are THEME VARIABLES — in styles use the var(--token) form, NOT the raw "
+			f"hex, so the whole site re-themes from one place. Tokens (value for reference only): {tokens}"
+		)
+	elif spec.palette:
+		lines.append("Palette: " + ", ".join(f"{k} {v}" for k, v in spec.palette.items()))
 	if spec.fonts:
 		lines.append(f"Fonts — headings: {spec.fonts.get('heading', '')}, body: {spec.fonts.get('body', '')}")
 	if header_id:
