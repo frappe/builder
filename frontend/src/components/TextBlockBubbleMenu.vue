@@ -59,36 +59,40 @@
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 				<code>H3</code>
 			</button>
+
+			<!-- Bold Control (Guard Removed) -->
 			<button
-				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleBold().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
+
+			<!-- Italic Control (Guard Removed) -->
 			<button
-				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
+
+			<!-- Strike Control (Guard Removed) -->
 			<button
-				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleStrike().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<span class="lucide-strikethrough size-4" />
 			</button>
 
+			<!-- Underline Control (Guard Removed) -->
 			<button
-				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleUnderline().run()"
 				class="rounded px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
 				<span class="lucide-underline size-4" />
 			</button>
 
+			<!-- Link Control (Domain Guard Retained) -->
 			<button
 				v-show="!block.isHeader() && !block.isLink() && !block.isButton()"
 				@click="
@@ -101,7 +105,9 @@
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
-			<div v-show="!block.isHeader()">
+
+			<!-- ColorPicker Control (Guard Removed) -->
+			<div>
 				<ColorPicker
 					:modelValue="selectedColor"
 					@update:modelValue="setTextColor"
@@ -110,15 +116,11 @@
 					:appendTo="overlayElement"
 					popoverClass="!min-w-fit">
 					<template #target="{ togglePopover, isOpen }">
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+						<button class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
 									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
+									@click="() => togglePopover()"
 									:style="{
 										background:
 											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
@@ -140,6 +142,7 @@
 		</div>
 	</bubble-menu>
 </template>
+
 
 <script setup lang="ts">
 import type Block from "@/block";

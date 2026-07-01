@@ -26,6 +26,7 @@
 </template>
 
 <script setup lang="ts">
+import { Heading } from "@tiptap/extension-heading";
 import type Block from "@/block";
 import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
@@ -253,8 +254,15 @@ if (!props.preview) {
 					content: textContent.value,
 					extensions: [
 						StarterKit.configure({
-							link: { openOnClick: false },
-							underline: false,
+    						link: { openOnClick: false },
+    						underline: false,
+    						heading: false,
+						}),
+						Heading.extend({
+    						content: "inline*",
+    						marks: "bold italic underline textStyle link",
+						}).configure({
+    						levels: [1, 2, 3],
 						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
@@ -278,19 +286,27 @@ if (!props.preview) {
 						FontFamilyPasteRule,
 						Underline,
 					],
-					enablePasteRules: false,
-					onUpdate({ editor }) {
-						let innerHTML = getInnerHTML(editor as Editor);
-						if (props.block.getInnerHTML() === innerHTML) {
-							return;
-						}
-						dataChanged.value = true;
-						if (!getDynamicContent()) {
-							props.block.setInnerHTML(innerHTML);
-						}
-					},
-					autofocus: false,
-					injectCSS: false,
+					                                        enablePasteRules: false,
+                                        onUpdate({ editor }) {
+    const html = editor.getHTML();
+
+    
+
+    if (props.block.getInnerHTML() === html) {
+        return;
+    }
+
+    dataChanged.value = true;
+
+    if (!getDynamicContent()) {
+        props.block.setInnerHTML(html);
+
+        
+    }
+},
+                                        autofocus: false,
+                                        injectCSS: false,
+
 				});
 
 				// @ts-ignore
