@@ -278,15 +278,18 @@ def parse_generation_yaml(yaml_text: str):
 		return None
 
 
-def expand_page_yaml(yaml_text: str) -> tuple[list, str]:
-	"""Return ([root_block_dict], page_data_script). Empty ([], "") if unparseable."""
+def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
+	"""Return ([root_block_dict], page_data_script). Empty ([], "") if unparseable.
+
+	`is_root=True` marks the block as the page <body> (root); pass False when
+	expanding a reusable component's block tree (it is not a page body)."""
 	parsed = parse_generation_yaml(yaml_text)
 	if parsed is None:
 		return [], ""
 	root = parsed[0] if isinstance(parsed, list) and parsed else parsed
 	if not isinstance(root, dict) or not root.get("el"):
 		return [], ""
-	block = convert_yaml_block(root, is_root=True)
+	block = convert_yaml_block(root, is_root=is_root)
 	data_script = build_repeater_data_script(parsed)
 	return [block], data_script
 

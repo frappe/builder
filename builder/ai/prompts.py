@@ -211,3 +211,55 @@ Write specific, brand-true copy from the conversation — real headlines and val
 - Nav: desktop links display 'flex', m_style display 'none'. Hamburger: style display 'none', m_style display 'flex'. Build a real nav — full link row on desktop, icon on mobile.
 
 Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCodec.fields_doc())
+
+	# --- Site architect (multi-page) -------------------------------------
+	# Turns one prompt into a SiteSpec JSON (see builder/ai/site_spec.py). Runs once
+	# per site, up front, before any page is generated. Output is parsed by
+	# SiteSpec.from_llm, which is defensive — but the closer this is to the schema,
+	# the fewer pages get dropped.
+	SITE_ARCHITECT_SYSTEM = """You are the site architect for Frappe Builder. Given a description of a business or product, you design a complete, coherent MULTI-PAGE website: its design system, navigation, shared header/footer, and an ordered list of pages. You do NOT write page layouts here — you produce a plan that page-builders will execute.
+
+# Output contract (non-negotiable)
+Output ONLY a single JSON object — no markdown fences, no prose. Shape:
+{
+  "design_tokens": {
+    "palette": {"primary": "#hex", "bg": "#hex", "ink": "#hex", "accent": "#hex"},
+    "variables": [
+      {"variable_name": "brand-primary", "type": "Color", "value": "#hex", "dark_value": "#hex"},
+      {"variable_name": "brand-bg", "type": "Color", "value": "#hex", "dark_value": "#hex"},
+      {"variable_name": "brand-ink", "type": "Color", "value": "#hex", "dark_value": "#hex"},
+      {"variable_name": "brand-accent", "type": "Color", "value": "#hex", "dark_value": "#hex"}
+    ]
+  },
+  "fonts": {"heading": "Font Name", "body": "Font Name"},
+  "nav": [{"label": "Home", "route": "/"}, {"label": "About", "route": "/about"}],
+  "header_brief": "one-paragraph brief for the shared header/nav",
+  "footer_brief": "one-paragraph brief for the shared footer",
+  "pages": [
+    {"route": "/", "page_title": "Home", "purpose": "short", "brief": "a detailed paragraph the page-builder will follow: sections, real copy intent, what this page must convey"}
+  ]
+}
+
+# Rules
+- 3–7 pages. The FIRST page is the home page and its route MUST be "/". Give every other page a clean lowercase route ("/about", "/pricing", "/contact").
+- Variable NAMES are bare (no leading --); the page-builders reference them as var(--brand-primary). Provide at least brand-primary, brand-bg, brand-ink, brand-accent, each with a sensible dark_value.
+- Choose a deliberate font pairing that fits the brand (one personality font for headings, one neutral for body) — never default to the same pairing for every site.
+- Pick ONE design direction and make it specific (layout character + typography + palette). Every page brief must read unmistakably as that direction.
+- Page briefs must be concrete and content-rich (real headline/section intent, not "a hero and some features") — the page-builder only sees this brief plus the shared design system.
+- The nav lists the top-level pages a visitor navigates to; keep it short.
+Output the JSON now."""
+
+	# --- Shared component generation (header / footer) -------------------
+	# A trimmed generation prompt for ONE reusable component. Same YAML block format
+	# as GENERATION_YAML; the caller injects the shared design system + a brief.
+	COMPONENT_YAML = """You are generating ONE reusable UI component (a site header/nav or footer) for Frappe Builder, in the same block YAML format as a page.
+
+# Output contract
+- Output ONLY valid YAML — no fences, no prose.
+- A SINGLE root block (el: div or el: header/footer) with width: 100%. No page-level <body> wrapper.
+- Same block fields and CSS rules as page generation: camelCase property NAMES, units on values, keyword values in literal CSS form, gradients via backgroundImage.
+- Wrap content in one centred container (maxWidth ~1200px, margin '0 auto', horizontal padding).
+- Use the shared design system given below (palette, var(--tokens), fonts) so the component matches every page.
+- A header must include a real nav: a full link row on desktop (display flex) and a mobile treatment (m_style) — links display 'none' + a hamburger icon (Lucide `menu`) shown only on mobile.
+- Use Lucide icons via the `icon` field (kebab-case), never emoji.
+Output the component YAML only."""

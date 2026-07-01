@@ -95,6 +95,116 @@ def run(
 	return {"status": "accepted", "session_id": session_id}
 
 
+def ensure_site_permission():
+	if not frappe.has_permission("Builder Page", "create"):
+		frappe.throw(_("You do not have permission to build sites"), frappe.PermissionError)
+
+
+def get_or_create_site_folder(folder_name: str | None, prompt: str) -> str:
+	"""Locate or create the Builder Project Folder that will hold the generated site.
+	Marks it as an AI site so the dashboard renders it as one."""
+	if folder_name and frappe.db.exists("Builder Project Folder", folder_name):
+		frappe.db.set_value(
+			"Builder Project Folder",
+			folder_name,
+			{"is_ai_site": 1, "site_brief": prompt},
+			update_modified=False,
+		)
+		return folder_name
+	base = (folder_name or " ".join(prompt.split()[:4]) or "AI Site").strip()[:60]
+	name = base
+	if frappe.db.exists("Builder Project Folder", name):
+		name = f"{base} {frappe.generate_hash(length=4)}"
+	doc = frappe.get_doc(
+		{"doctype": "Builder Project Folder", "folder_name": name, "is_ai_site": 1, "site_brief": prompt}
+	).insert(ignore_permissions=True)
+	return doc.name
+
+
+@frappe.whitelist()
+def generate_site(prompt: str, folder_name: str | None = None, model: str | None = None):
+	"""Kick off an AI multi-page site generation. Creates the site folder + batch, then
+	enqueues the orchestrator (architect → shared assets → per-page fan-out) and returns
+	202 with a batch_id the client polls / subscribes to."""
+	from builder.ai import locks
+	from builder.ai.site import run_site_job
+
+	ensure_site_permission()
+	prompt = (prompt or "").strip()
+	if not prompt:
+		frappe.throw(_("Describe the website you want to build"))
+
+	resolved_model = ModelRegistry.get_default(model or "openrouter")
+	api_key = resolve_api_key()
+	folder = get_or_create_site_folder(folder_name, prompt)
+
+	if not locks.acquire(locks.site_key(folder), locks.SITE_LOCK_TTL):
+		frappe.local.response.http_status_code = 429
+		return {"status": "busy", "message": _("This site is already generating.")}
+
+	batch_id = frappe.generate_hash(length=12)
+	session = AISession.get_or_create_site(folder, model=resolved_model)
+	frappe.get_doc(
+		{
+			"doctype": "Builder Site Batch",
+			"batch_id": batch_id,
+			"project_folder": folder,
+			"prompt": prompt,
+			"status": "architecting",
+			"model": resolved_model,
+			"created_by_user": frappe.session.user,
+			"site_session": session.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value(
+		"Builder Project Folder",
+		folder,
+		{"active_batch_id": batch_id, "generation_status": "Generating"},
+		update_modified=False,
+	)
+	frappe.db.commit()
+
+	frappe.enqueue(
+		run_site_job,
+		queue="default",
+		timeout=900,
+		enqueue_after_commit=True,
+		batch_id=batch_id,
+		model=resolved_model,
+		api_key=api_key,
+		user=frappe.session.user,
+	)
+	frappe.local.response.http_status_code = 202
+	return {"status": "accepted", "batch_id": batch_id, "folder_name": folder}
+
+
+@frappe.whitelist()
+def get_site_batch_status(batch_id: str):
+	"""The durable progress surface for the review screen: batch status + per-page rows."""
+	ensure_site_permission()
+	if not batch_id or not frappe.db.exists("Builder Site Batch", batch_id):
+		frappe.throw(_("Site batch not found"))
+	batch = frappe.get_doc("Builder Site Batch", batch_id)
+	return {
+		"batch_id": batch.batch_id,
+		"status": batch.status,
+		"project_folder": batch.project_folder,
+		"total_pages": batch.total_pages,
+		"completed_pages": batch.completed_pages,
+		"failed_pages": batch.failed_pages,
+		"pages": [
+			{
+				"page": p.page,
+				"route": p.route,
+				"page_title": p.page_title,
+				"status": p.status,
+				"error": p.error,
+			}
+			for p in batch.pages
+		],
+	}
+
+
 @frappe.whitelist()
 @has_page_write()
 def cancel(session_id: str):
