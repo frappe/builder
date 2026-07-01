@@ -111,6 +111,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import { getComputedStyleFor } from "@/utils/canvasFrameDom";
 import { computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
@@ -163,7 +164,7 @@ const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
 	blockStyles.value.paddingBottom;
 	blockStyles.value.paddingLeft;
 	blockStyles.value.padding;
-	return getNumberFromPx(getComputedStyle(props.target)[`padding${side}`]) * canvasProps.scale;
+	return getNumberFromPx(getComputedStyleFor(props.target)[`padding${side}`]) * canvasProps.scale;
 };
 
 const topHandle = computed(() => {

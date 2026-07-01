@@ -1,10 +1,5 @@
 <template>
-	<div
-		ref="canvasContainer"
-		:data-builder-canvas="canvasId"
-		@click="handleClick"
-		@mousedown="handleMarqueeStart">
-		<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
+	<div ref="canvasContainer" :data-builder-canvas="canvasId" @click="handleClick">
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -15,17 +10,47 @@
 		<BlockSnapGuides></BlockSnapGuides>
 		<div
 			class="fixed flex gap-40"
-			:class="{
-				'scheme-dark': builderStore.canvasDarkMode,
-			}"
 			ref="canvas"
 			:style="{
 				transformOrigin: 'top center',
 				transform: `scale(${canvasProps.scale}) translate(${canvasProps.translateX}px, ${canvasProps.translateY}px)`,
 				'--canvas-scale': canvasProps.scale,
-				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
+				<Tooltip
+					:text="scriptsDisabled ? 'Scripts are disabled in Builder Settings' : 'Run scripts in canvas'"
+					:hoverDelay="0.6">
+					<div
+						data-testid="run-canvas-scripts"
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						class="w-auto p-2"
+						:class="scriptsDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'"
+						@click.stop="toggleCanvasScripts">
+						<span
+							:class="[
+								builderStore.runCanvasScripts ? 'lucide-square' : 'lucide-play',
+								'h-8 w-6 text-ink-gray-8',
+							]"
+							aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<Tooltip text="Refresh canvas scripts" :hoverDelay="0.6">
+					<div
+						data-testid="refresh-canvas-scripts"
+						v-show="
+							builderStore.runCanvasScripts &&
+							!scriptsDisabled &&
+							!canvasProps.scaling &&
+							!canvasProps.panning
+						"
+						class="w-auto cursor-pointer p-2"
+						@click.stop="refreshCanvasScripts">
+						<span class="lucide-refresh-cw h-8 w-6 text-ink-gray-8" aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<div
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
 				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
@@ -55,13 +80,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-base shadow-xl contain-layout"
-				:data-breakpoint="breakpoint.device"
-				:style="{
-					...canvasStyles,
-					background: canvasProps.background,
-					width: `${breakpoint.width}px`,
-				}"
+				class="relative bg-surface-base shadow-xl"
 				v-for="breakpoint in renderedBreakpoints"
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
@@ -75,15 +94,31 @@
 					@click="activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
-				<BuilderBlock
-					class="h-full min-h-[inherit]"
-					:block="block"
-					:style="variables"
-					:key="block.blockId"
-					:readonly="builderStore.readOnlyMode"
-					v-if="showBlocks"
+				<BuilderCanvasFrame
+					:key="`${breakpoint.device}:${frameEpoch}`"
 					:breakpoint="breakpoint.device"
-					:data="pageStore.pageData" />
+					:width="breakpoint.width"
+					:background="canvasProps.background"
+					:canvas-id="canvasId"
+					:canvas-styles="{ ...canvasStyles, '--canvas-scale': canvasProps.scale, cursor: cursorStyle }"
+					:dark="builderStore.canvasDarkMode"
+					@ready="registerFrame"
+					@dispose="unregisterFrame">
+					<component
+						:is="'style'"
+						v-if="blockClientStyles"
+						data-builder-client-styles
+						v-text="blockClientStyles" />
+					<BuilderBlock
+						class="h-full min-h-[inherit]"
+						:block="block"
+						:style="variables"
+						:key="block.blockId"
+						:readonly="builderStore.readOnlyMode"
+						v-if="showBlocks"
+						:breakpoint="breakpoint.device"
+						:data="pageStore.pageData" />
+				</BuilderCanvasFrame>
 			</div>
 		</div>
 		<div
@@ -118,20 +153,27 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderCanvasFrame from "@/components/BuilderCanvasFrame.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { BreakpointConfig, CanvasHistory, CanvasProps } from "@/types/Builder/BuilderCanvas";
+import { elementFromEditorPoint } from "@/utils/canvasFrameDom";
+import { getBlockObject, isCtrlOrCmd, isTargetEditable } from "@/utils/helpers";
 import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
 	executeClientScriptUnrestricted,
 } from "@/utils/scriptSandbox";
-import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
+import {
+	handleBlockClick,
+	handleBlockContextMenu,
+	handleBlockDoubleClick,
+	useBlockEventHandlers,
+} from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -139,7 +181,7 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
+import { Ref, computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -164,6 +206,11 @@ const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
 const blockStyles = reactive(new Map<string, string>());
+const frameRoots = reactive(new Map<string, HTMLElement>());
+const frameDocuments = reactive(new Map<string, Document>());
+const frameEpoch = ref(0);
+const frameDropStates = reactive(new Map<string, boolean>());
+const cursorStyle = ref("default");
 
 const props = withDefaults(
 	defineProps<{
@@ -177,7 +224,13 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
-const blockClientStyles = computed(() => Array.from(blockStyles.values()).join("\n"));
+const blockClientStyles = computed(() => {
+	const css = Array.from(blockStyles.values()).filter(Boolean).join("\n");
+	return css ? `@layer builder-authored {\n${css}\n}` : "";
+});
+const scriptsDisabled = computed(
+	() => builderSettings.doc?.execute_block_scripts_in_editor === "Don't Execute",
+);
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -193,7 +246,7 @@ const {
 	selectedBlocks,
 } = useBlockSelection(block);
 
-const canvasProps = reactive({
+const canvasProps = reactive<CanvasProps>({
 	overlayElement: null,
 	background: "#fff",
 	scale: 1,
@@ -202,6 +255,8 @@ const canvasProps = reactive({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
+	frameDocuments,
+	frameRoots,
 	breakpoints: [
 		{
 			icon: "lucide-monitor",
@@ -250,6 +305,7 @@ const {
 const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMarqueeListeners } =
 	useCanvasMarqueeSelection({
 		canvasContainer,
+		frameRoots,
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
@@ -258,11 +314,7 @@ const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMar
 		setHoveredBreakpoint,
 	});
 
-const { isOverDropZone } = useCanvasDropZone(
-	canvasContainer as unknown as Ref<HTMLElement>,
-	block,
-	findBlock,
-);
+const isOverDropZone = computed(() => Array.from(frameDropStates.values()).some(Boolean));
 
 onMounted(() => {
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
@@ -301,13 +353,122 @@ const handleClick = (ev: MouseEvent) => {
 		return;
 	}
 
-	const target = document.elementFromPoint(ev.clientX, ev.clientY);
+	const target = elementFromEditorPoint(ev.clientX, ev.clientY);
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
 	if (target?.classList.contains("canvas-container")) {
 		clearSelection();
 	}
 };
+
+function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, iframe: HTMLIFrameElement) {
+	frameRoots.set(breakpoint, root);
+	frameDocuments.set(breakpoint, doc);
+
+	doc.addEventListener("mousedown", handleMarqueeStart);
+	doc.addEventListener("click", handleBlockClick);
+	doc.addEventListener("dblclick", handleBlockDoubleClick);
+	doc.addEventListener("contextmenu", handleBlockContextMenu);
+	useCanvasEvents(
+		ref(root) as Ref<HTMLElement>,
+		canvasProps,
+		history as CanvasHistory,
+		selectedBlocks,
+		getRootBlock,
+		findBlock,
+		false,
+		doc,
+	);
+	const { isOverDropZone: frameIsOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
+	watch(frameIsOverDropZone, (value) => frameDropStates.set(breakpoint, value), { immediate: true });
+	bridgeFrameEvents(doc, iframe);
+	nextTick(setScaleAndTranslate);
+}
+
+function unregisterFrame(breakpoint: string, doc: Document | null) {
+	doc?.removeEventListener("mousedown", handleMarqueeStart);
+	doc?.removeEventListener("click", handleBlockClick);
+	doc?.removeEventListener("dblclick", handleBlockDoubleClick);
+	doc?.removeEventListener("contextmenu", handleBlockContextMenu);
+	if (!doc || frameDocuments.get(breakpoint) === doc) {
+		frameRoots.delete(breakpoint);
+		frameDocuments.delete(breakpoint);
+		frameDropStates.delete(breakpoint);
+	}
+}
+
+function bridgeFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
+	const forwardWheel = (event: WheelEvent) => {
+		event.preventDefault();
+		const frameRect = iframe.getBoundingClientRect();
+		const scaleX = iframe.clientWidth ? frameRect.width / iframe.clientWidth : 1;
+		const scaleY = iframe.clientHeight ? frameRect.height / iframe.clientHeight : 1;
+		iframe.dispatchEvent(
+			new WheelEvent("wheel", {
+				bubbles: true,
+				cancelable: true,
+				clientX: frameRect.left + event.clientX * scaleX,
+				clientY: frameRect.top + event.clientY * scaleY,
+				deltaX: event.deltaX,
+				deltaY: event.deltaY,
+				deltaZ: event.deltaZ,
+				deltaMode: event.deltaMode,
+				ctrlKey: event.ctrlKey,
+				metaKey: event.metaKey,
+				shiftKey: event.shiftKey,
+				altKey: event.altKey,
+			}),
+		);
+	};
+	doc.addEventListener("wheel", forwardWheel, { passive: false });
+
+	const forwardKeyboard = (event: KeyboardEvent) => {
+		console.log(event);
+		if (isTargetEditable(event)) return;
+		const forwarded = new KeyboardEvent(event.type, {
+			bubbles: true,
+			cancelable: true,
+			key: event.key,
+			code: event.code,
+			repeat: event.repeat,
+			ctrlKey: event.ctrlKey,
+			metaKey: event.metaKey,
+			shiftKey: event.shiftKey,
+			altKey: event.altKey,
+		});
+		if (!document.dispatchEvent(forwarded)) event.preventDefault();
+	};
+	doc.addEventListener("keydown", forwardKeyboard);
+	doc.addEventListener("keyup", forwardKeyboard);
+
+	const forwardClipboard = (event: ClipboardEvent) => {
+		if (isTargetEditable(event)) return;
+		const forwarded = new ClipboardEvent(event.type, {
+			bubbles: true,
+			cancelable: true,
+			clipboardData: event.clipboardData,
+		});
+		if (!document.dispatchEvent(forwarded)) event.preventDefault();
+	};
+	doc.addEventListener("copy", forwardClipboard);
+	doc.addEventListener("cut", forwardClipboard);
+	doc.addEventListener("paste", forwardClipboard);
+}
+
+onMounted(() => {
+	if (!canvasContainer.value) return;
+
+	const observer = new MutationObserver(() => {
+		cursorStyle.value = canvasContainer.value?.style.cursor || "default";
+	});
+
+	observer.observe(canvasContainer.value, {
+		attributes: true,
+		attributeFilter: ["style"],
+	});
+
+	onUnmounted(() => observer.disconnect());
+});
 
 function searchBlock(searchTerm: string, targetBlock: null | Block, limit: number = 5): Block[] {
 	const results: Block[] = [];
@@ -375,6 +536,12 @@ watch(
 		toggleMode(builderStore.mode);
 	},
 );
+
+watch(scriptsDisabled, (disabled) => {
+	if (!disabled || !builderStore.runCanvasScripts) return;
+	builderStore.runCanvasScripts = false;
+	frameEpoch.value++;
+});
 
 provide("canvasProps", canvasProps);
 provide("emulateBlockClientScript", emulateBlockClientScript);
@@ -444,6 +611,17 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 	}
 }
 
+function toggleCanvasScripts() {
+	if (scriptsDisabled.value) return;
+	builderStore.runCanvasScripts = !builderStore.runCanvasScripts;
+	frameEpoch.value++;
+}
+
+function refreshCanvasScripts() {
+	if (!builderStore.runCanvasScripts || scriptsDisabled.value) return;
+	frameEpoch.value++;
+}
+
 function escapeAttributeValue(value: string) {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
@@ -457,7 +635,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	let cleanup = () => {};
-	if (mode !== "Don't Execute" && script.javascript.trim()) {
+	if (builderStore.runCanvasScripts && mode !== "Don't Execute" && script.javascript.trim()) {
 		const context = {
 			componentData: script.componentData,
 			props: script.props,
@@ -465,7 +643,12 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 		cleanup =
 			mode === "Unrestricted"
 				? executeClientScriptUnrestricted(script.element, script.javascript, context)
-				: executeClientScriptRestricted(script.element, canvasContainer.value, script.javascript, context);
+				: executeClientScriptRestricted(
+						script.element,
+						frameRoots.get(script.breakpoint) || null,
+						script.javascript,
+						context,
+				  );
 	}
 
 	return () => {

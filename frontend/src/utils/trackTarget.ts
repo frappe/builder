@@ -1,36 +1,32 @@
-import { useElementBounding } from "@vueuse/core";
 import { nextTick, onScopeDispose, reactive, watch, watchEffect } from "vue";
 import { addPxToNumber } from "./helpers";
+import { getElementRectInEditor } from "./canvasFrameDom";
 
-// All tracked targets share one MutationObserver on the canvas container. It is
-// created when the first target registers and disconnected once the last one is
-// removed, so it survives individual BlockEditor remounts (a component-scoped
-// observer would die with whichever editor happened to create it) without leaking
-// stale updaters across the session.
-const updateList = new Set<() => void>();
-let observer: MutationObserver | null = null;
-
-function startObserver(container: HTMLElement) {
-	observer = new MutationObserver(() => {
-		nextTick(() => updateList.forEach((fn) => fn()));
+function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvasProps: CanvasProps) {
+	const targetBounds = reactive({
+		width: 0,
+		height: 0,
+		top: 0,
+		left: 0,
+		update() {
+			const rect = getElementRectInEditor(target);
+			targetBounds.width = rect.width;
+			targetBounds.height = rect.height;
+			targetBounds.top = rect.top;
+			targetBounds.left = rect.left;
+		},
 	});
-	observer.observe(container, {
+	const observer = new MutationObserver(() => nextTick(targetBounds.update));
+	observer.observe(target.ownerDocument.body, {
 		attributes: true,
 		childList: true,
 		subtree: true,
 		attributeFilter: ["style", "class"],
 		characterData: true,
 	});
-}
-
-function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvasProps: CanvasProps) {
-	const targetBounds = reactive(useElementBounding(target));
-	const container = target.closest(".canvas-container") as HTMLElement | null;
-
-	updateList.add(targetBounds.update);
-	if (container && !observer) {
-		startObserver(container);
-	}
+	const resizeObserver = new ResizeObserver(() => targetBounds.update());
+	resizeObserver.observe(target);
+	targetBounds.update();
 
 	watch(canvasProps, () => nextTick(targetBounds.update), { deep: true });
 
@@ -42,11 +38,8 @@ function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvas
 	});
 
 	onScopeDispose(() => {
-		updateList.delete(targetBounds.update);
-		if (updateList.size === 0 && observer) {
-			observer.disconnect();
-			observer = null;
-		}
+		observer.disconnect();
+		resizeObserver.disconnect();
 	});
 
 	return targetBounds.update;

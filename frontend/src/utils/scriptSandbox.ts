@@ -17,10 +17,11 @@ type ScriptContext = {
 	props?: Record<string, any>;
 };
 
-function createEvents(defaultTarget: EventTarget) {
+function createEvents(defaultTarget: EventTarget, targetWindow: Window) {
+	const CustomEventConstructor = (targetWindow as any).CustomEvent as typeof CustomEvent;
 	return {
 		dispatch(name: string, data: any, target: EventTarget = defaultTarget) {
-			target.dispatchEvent(new CustomEvent(name, { detail: data }));
+			target.dispatchEvent(new CustomEventConstructor(name, { detail: data }));
 		},
 		listen(name: string, callback: (data: any, event: Event) => void, target: EventTarget = defaultTarget) {
 			const handler = (event: Event) => callback((event as CustomEvent).detail, event);
@@ -30,8 +31,9 @@ function createEvents(defaultTarget: EventTarget) {
 	};
 }
 
-function createScriptFunction(userScript: string) {
-	return new Function(
+function createScriptFunction(userScript: string, targetWindow: Window) {
+	const FunctionConstructor = (targetWindow as any).Function as FunctionConstructor;
+	return new FunctionConstructor(
 		"context",
 		`with (context) {
 			return (async function(component_data, props) { ${userScript} })
@@ -48,18 +50,26 @@ function executeClientScriptUnrestricted(
 	if (!thisElement || !userScript.trim()) return () => {};
 
 	try {
-		const fn = createScriptFunction(userScript);
+		const targetDocument = thisElement.ownerDocument;
+		const targetWindow = targetDocument.defaultView || window;
+		const fn = createScriptFunction(userScript, targetWindow);
 		const cleanup = fn({
 			component_data: componentData,
-			document,
-			events: createEvents(document),
+			document: targetDocument,
+			events: createEvents(targetDocument, targetWindow),
 			props,
 			thisRef: thisElement,
 		});
-		if (typeof cleanup !== "function") return () => {};
+		let disposed = false;
+		let resolvedCleanup: unknown;
+		Promise.resolve(cleanup).then((value) => {
+			resolvedCleanup = value;
+			if (disposed && typeof value === "function") value.call(thisElement);
+		});
 		return () => {
+			disposed = true;
 			try {
-				cleanup.call(thisElement);
+				if (typeof resolvedCleanup === "function") resolvedCleanup.call(thisElement);
 			} catch (error) {
 				console.error("Error cleaning up user script (unrestricted):", error);
 			}
@@ -81,6 +91,14 @@ function executeClientScriptRestricted(
 	{ componentData = {}, props = {} }: ScriptContext = {},
 ): ScriptCleanup {
 	if (!thisElement || !sandboxRoot || !userScript.trim()) return () => {};
+	const targetDocument = thisElement.ownerDocument;
+	const targetWindow = targetDocument.defaultView || window;
+	const FrameNode = targetWindow.Node;
+	const FrameNamedNodeMap = targetWindow.NamedNodeMap;
+	const FrameDOMTokenList = targetWindow.DOMTokenList;
+	const FrameCSSStyleDeclaration = targetWindow.CSSStyleDeclaration;
+	const FrameNodeList = targetWindow.NodeList;
+	const FrameHTMLCollection = targetWindow.HTMLCollection;
 
 	const cache = new WeakMap<object, any>();
 	const rawValues = new WeakMap<object, object>();
@@ -129,11 +147,15 @@ function executeClientScriptRestricted(
 			const val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
-			if (val instanceof Node) return wrap(val);
-			if (val instanceof NamedNodeMap || val instanceof DOMTokenList || val instanceof CSSStyleDeclaration)
+			if (val instanceof FrameNode) return wrap(val);
+			if (
+				val instanceof FrameNamedNodeMap ||
+				val instanceof FrameDOMTokenList ||
+				val instanceof FrameCSSStyleDeclaration
+			)
 				return wrap(val as any);
 
-			if (val instanceof NodeList || val instanceof HTMLCollection) {
+			if (val instanceof FrameNodeList || val instanceof FrameHTMLCollection) {
 				return Array.from(val, wrap);
 			}
 
@@ -161,7 +183,7 @@ function executeClientScriptRestricted(
 
 					// Do not allow inserting nodes outside the sandbox
 					for (const a of realArgs) {
-						if (a instanceof Node && !sandboxRoot.contains(a)) {
+						if (a instanceof FrameNode && !sandboxRoot.contains(a)) {
 							throw new Error("Blocked: external node insertion");
 						}
 					}
@@ -193,7 +215,7 @@ function executeClientScriptRestricted(
 
 	const context = {
 		document: proxiedRoot,
-		events: createEvents(proxiedRoot),
+		events: createEvents(proxiedRoot, targetWindow),
 		thisRef: proxiedThis,
 		props,
 		component_data: componentData,
@@ -207,15 +229,22 @@ function executeClientScriptRestricted(
 	};
 
 	try {
-		const fn = createScriptFunction(userScript);
+		const fn = createScriptFunction(userScript, targetWindow);
 		const userCleanup = fn(context);
+		let disposed = false;
+		let resolvedCleanup: unknown;
+		Promise.resolve(userCleanup).then((value) => {
+			resolvedCleanup = value;
+			if (disposed && typeof value === "function") value.call(proxiedThis);
+		});
 		return () => {
+			disposed = true;
 			eventListeners.forEach(({ target, type, listener, options }) => {
 				target.removeEventListener(type, listener, options);
 			});
-			if (typeof userCleanup === "function") {
+			if (typeof resolvedCleanup === "function") {
 				try {
-					userCleanup.call(proxiedThis);
+					resolvedCleanup.call(proxiedThis);
 				} catch (error) {
 					console.error("Error cleaning up user script (restricted):", error);
 				}

@@ -20,6 +20,8 @@ export interface CanvasProps {
 	scaling: boolean;
 	panning: boolean;
 	breakpoints: BreakpointConfig[];
+	frameDocuments?: Map<string, Document>;
+	frameRoots?: Map<string, HTMLElement>;
 }
 
 export type CanvasHistory = Ref<ReturnType<typeof useCanvasHistory>>;

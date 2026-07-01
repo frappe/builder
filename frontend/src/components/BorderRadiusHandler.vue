@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import { getComputedStyleFor, getElementRectInEditor } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
-import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
 
@@ -38,13 +38,21 @@ const handlerLeft = ref(10);
 const MIN_POSITION = { top: 10, left: 10 };
 const MIN_TARGET_SIZE = 25;
 
-const targetBounds = reactive(useElementBounding(props.target));
+const targetBounds = reactive({
+	width: 0,
+	height: 0,
+	update() {
+		const rect = getElementRectInEditor(props.target);
+		targetBounds.width = rect.width;
+		targetBounds.height = rect.height;
+	},
+});
 const maxDistance = computed(() => Math.min(targetBounds.width, targetBounds.height) / 2);
 
 const maxRadius = computed(() => {
 	props.targetBlock.getStyle("width");
 	props.targetBlock.getStyle("height");
-	const targetStyle = window.getComputedStyle(props.target);
+	const targetStyle = getComputedStyleFor(props.target);
 	return Math.min(parseInt(targetStyle.height, 10), parseInt(targetStyle.width, 10)) / 2;
 });
 

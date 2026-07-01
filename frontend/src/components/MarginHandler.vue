@@ -115,6 +115,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import { getComputedStyleFor } from "@/utils/canvasFrameDom";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
@@ -146,7 +147,7 @@ const topMarginHandlerHeight = computed(() => {
 	blockStyles.value.marginTop;
 	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginTop = window.getComputedStyle(props.target).marginTop;
+	let marginTop = getComputedStyleFor(props.target).marginTop;
 	let value = getNumberFromPx(marginTop) * canvasProps.scale;
 	return value;
 });
@@ -154,7 +155,7 @@ const bottomMarginHandlerHeight = computed(() => {
 	blockStyles.value.marginBottom;
 	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginBottom = window.getComputedStyle(props.target).marginBottom;
+	let marginBottom = getComputedStyleFor(props.target).marginBottom;
 	let value = getNumberFromPx(marginBottom) * canvasProps.scale;
 	return value;
 });
@@ -162,7 +163,7 @@ const leftMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginLeft;
 	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginLeft = window.getComputedStyle(props.target).marginLeft;
+	let marginLeft = getComputedStyleFor(props.target).marginLeft;
 	let value = getNumberFromPx(marginLeft) * canvasProps.scale;
 	return value;
 });
@@ -170,7 +171,7 @@ const rightMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginRight;
 	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginRight = window.getComputedStyle(props.target).marginRight;
+	let marginRight = getComputedStyleFor(props.target).marginRight;
 	let value = getNumberFromPx(marginRight) * canvasProps.scale;
 	return value;
 });

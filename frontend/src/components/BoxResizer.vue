@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import { getComputedStyleFor } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -73,17 +74,17 @@ watch(resizing, () => {
 
 const targetWidth = computed(() => {
 	props.targetBlock.getStyle("width"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("width")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
 	props.targetBlock.getStyle("height"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("height")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
 	props.targetBlock.getStyle("fontSize"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("font-size")));
 });
 
 const handleRightResize = (ev: MouseEvent) => {

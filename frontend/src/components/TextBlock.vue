@@ -48,7 +48,6 @@ const canvasStore = useCanvasStore();
 const dataChanged = ref(false);
 const component = ref(null) as Ref<HTMLElement | null>;
 const bubbleMenu = ref(null) as Ref<{ handleKeydown: (e: KeyboardEvent) => void } | null>;
-const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
 
@@ -71,6 +70,9 @@ const props = withDefaults(
 );
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+const overlayElement = computed(
+	() => component.value?.ownerDocument.body || canvasProps?.overlayElement || document.body,
+);
 
 const FontFamilyPasteRule = Extension.create({
 	name: "fontFamilyPasteRule",
@@ -184,7 +186,7 @@ const showEditor = computed(() => {
 
 onBeforeMount(() => {
 	let html = props.block.getInnerHTML() || "";
-	setFontFromHTML(html);
+	setFontFromHTML(html, component.value?.ownerDocument || document);
 });
 
 let pauseId: PauseId | undefined = undefined;
@@ -353,7 +355,7 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	if ((e.target as HTMLElement).closest(".canvas, .canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };

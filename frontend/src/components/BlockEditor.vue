@@ -37,6 +37,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { elementFromEditorPoint } from "@/utils/canvasFrameDom";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -217,14 +218,27 @@ const handleClick = (ev: MouseEvent) => {
 
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
-	let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+	let element = elementFromEditorPoint(ev.x, ev.y) as HTMLElement;
+	if (!element) return;
 	if (element.classList.contains("editor")) {
 		element.classList.remove("pointer-events-auto");
 		element.classList.add("pointer-events-none");
-		element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		element = elementFromEditorPoint(ev.x, ev.y) as HTMLElement;
 	}
 	if (element.classList.contains("__builder_component__")) {
-		element.dispatchEvent(new MouseEvent("click", ev));
+		const EventConstructor = element.ownerDocument.defaultView?.MouseEvent || MouseEvent;
+		element.dispatchEvent(
+			new EventConstructor("click", {
+				bubbles: true,
+				cancelable: true,
+				clientX: ev.clientX,
+				clientY: ev.clientY,
+				ctrlKey: ev.ctrlKey,
+				metaKey: ev.metaKey,
+				shiftKey: ev.shiftKey,
+				altKey: ev.altKey,
+			}),
+		);
 	}
 };
 

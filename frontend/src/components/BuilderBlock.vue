@@ -49,6 +49,7 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
 import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
+import { isElementLike } from "@/utils/canvasFrameDom";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
@@ -285,8 +286,8 @@ const emulateBlockClientScript = inject<BlockClientScriptEmulator>(
 
 const target = computed(() => {
 	if (!component.value) return null;
-	if (component.value instanceof HTMLElement || component.value instanceof SVGElement) {
-		return component.value;
+	if (isElementLike(component.value)) {
+		return component.value as HTMLElement | SVGElement;
 	} else {
 		return component.value.component;
 	}
@@ -412,7 +413,7 @@ watchEffect(() => {
 			parent = parent.getParentBlock();
 		}
 	}
-	setFont(fontFamily, fontWeight);
+	setFont(fontFamily, fontWeight, target.value?.ownerDocument || document);
 });
 
 onMounted(async () => {
@@ -437,43 +438,22 @@ onUnmounted(() => {
 });
 
 const allResolvedProps = computed(() => {
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
-		(acc, [key, value]) => {
-			acc[key] = value.value;
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const defaultProps = Object.entries(props.defaultProps || {}).reduce((acc, [key, value]) => {
+		acc[key] = value.value;
+		return acc;
+	}, {} as Record<string, any>);
 
 	const blockProps = Object.entries({
 		...props.block.getBlockProps(),
-	}).reduce(
-		(acc, [key]) => {
-			acc[key] = getPropValue(
-				key,
-				props.block,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	}).reduce((acc, [key]) => {
+		acc[key] = getPropValue(key, props.block, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
-	const parentProps = Object.entries(getParentProps(props.block)).reduce(
-		(acc, [key, value]) => {
-			acc[key] = getPropValue(
-				key,
-				value.block!,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
+	const parentProps = Object.entries(getParentProps(props.block)).reduce((acc, [key, value]) => {
+		acc[key] = getPropValue(key, value.block!, getDataScriptValue, props.defaultProps, getComponentDataValue);
+		return acc;
+	}, {} as Record<string, any>);
 
 	return {
 		...parentProps,
@@ -534,11 +514,12 @@ watch(
 		blockClientScript,
 		resolvedComponentData,
 		allResolvedProps,
+		() => builderStore.runCanvasScripts,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
 		componentDataReady,
 	],
-	([element, clientScript, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+	([element, clientScript, componentData, resolvedProps, , , settingPage, dataReady], _, onCleanup) => {
 		if (!element || !clientScript) return;
 		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
 		const cleanup = emulateBlockClientScript({
@@ -549,7 +530,7 @@ watch(
 			javascript:
 				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
-					: (clientScript.javascript ?? ""),
+					: clientScript.javascript ?? "",
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});

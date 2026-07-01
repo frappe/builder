@@ -20,13 +20,14 @@ const WEIGHT_LABELS: Record<FontWeight, string> = {
 };
 
 const GF_CSS = "https://fonts.googleapis.com/css2";
-const fontCache = new Map<string, Promise<string>>();
+const fontCache = new WeakMap<Document, Map<string, Promise<string>>>();
 
-function loadCustomFont(font: string, url: string): Promise<string> {
-	return new FontFace(font, `url("${url}")`)
+function loadCustomFont(font: string, url: string, targetDocument: Document): Promise<string> {
+	const FontFaceConstructor = targetDocument.defaultView?.FontFace || FontFace;
+	return new FontFaceConstructor(font, `url("${url}")`)
 		.load()
 		.then((face) => {
-			document.fonts.add(face);
+			targetDocument.fonts.add(face);
 			return font;
 		})
 		.catch(() => {
@@ -35,12 +36,17 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 		});
 }
 
-function loadGoogleFont(font: string, weight?: string): Promise<string> {
+function loadGoogleFont(font: string, weight: string | undefined, targetDocument: Document): Promise<string> {
 	const familyParam = weight ? `${encodeURIComponent(font)}:wght@${weight}` : encodeURIComponent(font);
 
 	return new Promise<string>((resolve) => {
 		const id = `gf-${font.replace(/\s+/g, "-")}${weight ? `-${weight}` : ""}`;
-		const link = document.createElement("link");
+		const existing = targetDocument.getElementById(id);
+		if (existing) {
+			resolve(font);
+			return;
+		}
+		const link = targetDocument.createElement("link");
 		link.id = id;
 		link.rel = "stylesheet";
 		link.crossOrigin = "anonymous";
@@ -54,14 +60,23 @@ function loadGoogleFont(font: string, weight?: string): Promise<string> {
 			},
 			{ once: true },
 		);
-		document.head.appendChild(link);
+		targetDocument.head.appendChild(link);
 	});
 }
 
-export function setFont(font: string | null, weight?: string): Promise<string> {
+export function setFont(
+	font: string | null,
+	weight?: string,
+	targetDocument: Document = document,
+): Promise<string> {
 	if (!font) return Promise.resolve("");
 	const cacheKey = weight ? `${font}:${weight}` : font;
-	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
+	let documentCache = fontCache.get(targetDocument);
+	if (!documentCache) {
+		documentCache = new Map();
+		fontCache.set(targetDocument, documentCache);
+	}
+	if (documentCache.has(cacheKey)) return documentCache.get(cacheKey)!;
 
 	// userFont list resource may not have loaded yet (e.g. a page rendered right
 	// after navigation); fall back to treating it as a Google font until it does.
@@ -69,18 +84,20 @@ export function setFont(font: string | null, weight?: string): Promise<string> {
 		(f: { font_name: string; font_file: string }) => f.font_name === font,
 	);
 
-	const promise = customFont ? loadCustomFont(font, customFont.font_file) : loadGoogleFont(font, weight);
+	const promise = customFont
+		? loadCustomFont(font, customFont.font_file, targetDocument)
+		: loadGoogleFont(font, weight, targetDocument);
 
-	fontCache.set(cacheKey, promise);
+	documentCache.set(cacheKey, promise);
 	return promise;
 }
 
-export function setFontFromHTML(html: string): void {
+export function setFontFromHTML(html: string, targetDocument: Document = document): void {
 	const matches = html.match(/font-family:\s*([^;"]+)[";]/g) ?? [];
 	matches
 		.map((m) => m.replace(/font-family:\s*([^;"]+)[";]/, "$1").trim())
 		.filter(Boolean)
-		.forEach((font) => setFont(font));
+		.forEach((font) => setFont(font, undefined, targetDocument));
 }
 
 export function getFontWeightOptions(font: string): WeightOption[] {

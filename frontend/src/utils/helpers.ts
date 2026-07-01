@@ -4,6 +4,7 @@ import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
+import { isElementLike } from "./canvasFrameDom";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
 import {
 	addPxToNumber,
@@ -504,10 +505,7 @@ function generateId() {
 }
 
 function isBlock(e: MouseEvent) {
-	return (
-		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
-		e.target.closest(".__builder_component__")
-	);
+	return isElementLike(e.target) && e.target.closest(".__builder_component__");
 }
 
 type BlockInfo = {

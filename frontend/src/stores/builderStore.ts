@@ -46,6 +46,7 @@ const useBuilderStore = defineStore("builderStore", {
 			attribute: "data-theme",
 		}),
 		canvasDarkMode: useStorage("canvasDarkMode", false),
+		runCanvasScripts: false,
 		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
 		settingsActiveTab: <string>"page_general",
