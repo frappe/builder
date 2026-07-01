@@ -8,7 +8,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
-import { createResource } from "frappe-ui";
+import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -358,6 +358,7 @@ export class AIChatController {
 		headline?: string;
 		sections?: string[];
 		palette?: string;
+		pending_action?: { kind: string; payload: Record<string, any> };
 	}) => {
 		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
@@ -372,6 +373,12 @@ export class AIChatController {
 				headline: data.headline || "",
 				sections: data.sections || [],
 				palette: data.palette || "",
+			});
+		} else if (data.pending_action) {
+			this.replacePendingAssistant(data.question || "Confirm this change?", {
+				status: "pending_action",
+				kind: data.pending_action.kind,
+				payload: data.pending_action.payload,
 			});
 		} else {
 			this.replacePendingAssistant(data.question || "Could you clarify?", {
@@ -392,6 +399,22 @@ export class AIChatController {
 	selectOption = (option: string) => {
 		this.prompt.value = option;
 		this.submitPrompt();
+	};
+
+	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,
+	 * global settings, publish). The privileged write happens server-side in the endpoint;
+	 * we reload the session so the message's status flips out of "pending_action". */
+	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip") => {
+		try {
+			const res = await createResource({
+				url: "builder.ai.api.confirm_pending_settings",
+				method: "POST",
+			}).submit({ message_id: message.id, decision });
+			await this.loadSession();
+			if (decision === "apply") toast.success(res?.message || "Applied");
+		} catch (e: any) {
+			toast.error(e?.messages?.[0] || "Could not apply the change");
+		}
 	};
 
 	approvePlan = () => {

@@ -132,6 +132,29 @@
 								</button>
 							</template>
 						</div>
+						<!-- Sensitive action — needs the user's OK -->
+						<div
+							v-if="message.metadata?.status === 'pending_action'"
+							class="mt-2 w-full rounded-lg border border-outline-amber-2 bg-surface-amber-1 p-3">
+							<p class="text-p-sm font-medium text-ink-gray-8">Needs your OK</p>
+							<p class="mt-0.5 text-xs leading-snug text-ink-gray-6">
+								{{ pendingPreview(message.metadata) }}
+							</p>
+							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
+								<Button
+									variant="solid"
+									:loading="confirmingAction"
+									@click="confirmPendingAction(message, 'apply')">
+									Apply
+								</Button>
+								<Button
+									variant="subtle"
+									:disabled="confirmingAction"
+									@click="confirmPendingAction(message, 'skip')">
+									Skip
+								</Button>
+							</div>
+						</div>
 						<!-- Clarification options -->
 						<div
 							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
@@ -359,6 +382,35 @@ const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
+
+const confirmingAction = ref(false);
+async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {
+	confirmingAction.value = true;
+	try {
+		await chat.confirmPendingAction(message, decision);
+	} finally {
+		confirmingAction.value = false;
+	}
+}
+
+/** Short human summary of a proposed sensitive action, shown on its confirm card. */
+function pendingPreview(m: Record<string, any>): string {
+	const p = m.payload || {};
+	switch (m.kind) {
+		case "create_doctype":
+			return `Create a new DocType “${p.name}” with ${(p.fields || []).length} field(s).`;
+		case "seed_sample_data":
+			return `Insert ${(p.rows || []).length} sample record(s) into “${p.doctype}”.`;
+		case "global_settings":
+			return `Update site-wide settings (${Object.keys(p).join(", ")}). These load on every page.`;
+		case "home_page":
+			return `Set the site home page to “${p.route}”.`;
+		case "publish_site":
+			return "Publish all pages in this site.";
+		default:
+			return "Confirm this change?";
+	}
+}
 const builderStore = useBuilderStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);

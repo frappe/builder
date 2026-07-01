@@ -218,7 +218,7 @@ def publish_site_batch(batch_id: str):
 
 
 @frappe.whitelist()
-def confirm_pending_settings(session_id: str, message_id: str, decision: str = "apply"):
+def confirm_pending_settings(message_id: str, decision: str = "apply", session_id: str | None = None):
 	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
 	HERE, on this user-triggered call — never inside the model's turn. Reads the stored
 	payload off the pending-action message and dispatches to apply_pending_action."""
