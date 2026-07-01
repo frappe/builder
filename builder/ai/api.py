@@ -206,6 +206,36 @@ def get_site_batch_status(batch_id: str):
 
 
 @frappe.whitelist()
+def confirm_pending_settings(session_id: str, message_id: str, decision: str = "apply"):
+	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
+	HERE, on this user-triggered call — never inside the model's turn. Reads the stored
+	payload off the pending-action message and dispatches to apply_pending_action."""
+	from builder.ai.agent.pending import apply_pending_action
+
+	if not frappe.has_permission("Builder Settings", "write"):
+		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
+	if not message_id or not frappe.db.exists(AISession.MESSAGE_DOCTYPE, message_id):
+		frappe.throw(_("Pending action not found"))
+
+	msg = frappe.get_doc(AISession.MESSAGE_DOCTYPE, message_id)
+	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
+	if owner != frappe.session.user:
+		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
+	if msg.status != "pending_action":
+		frappe.throw(_("No pending action on this message"))
+
+	if decision != "apply":
+		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
+		return {"status": "skipped"}
+
+	meta = AISession.load_metadata(msg.metadata_json)
+	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
+	frappe.db.commit()
+	return {"status": "applied", "message": result}
+
+
+@frappe.whitelist()
 @has_page_write()
 def cancel(session_id: str):
 	"""Request that the currently-running turn for this session abort at its

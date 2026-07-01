@@ -1,0 +1,182 @@
+"""Settings & theme tools.
+
+Page-level settings (SEO/meta/lang/custom HTML) and theme variables are safe and
+reversible, so they are `side="server"` and apply immediately. Site-wide settings
+(global script/style/head/body HTML), the home page, and publishing affect every
+visitor and are hard to undo — those are `side="terminal"` and go through the
+confirm-gate (builder/ai/agent/pending.py); the user approves before they apply.
+"""
+
+import frappe
+
+from builder.ai.agent import pending
+from builder.ai.agent.registry import Tool
+
+PAGE_SETTING_FIELDS = {
+	"page_title",
+	"meta_description",
+	"meta_image",
+	"canonical_url",
+	"language",
+	"head_html",
+	"body_html",
+	"disable_indexing",
+}
+
+
+# --- page + theme (server, auto) ----------------------------------------
+
+
+def set_page_settings(ctx, args: dict) -> str:
+	if not ctx.page_id:
+		return "No page in context."
+	updates = {f: args[f] for f in PAGE_SETTING_FIELDS if f in args and args[f] is not None}
+	if not updates:
+		return "No recognised settings to update."
+	frappe.db.set_value("Builder Page", ctx.page_id, updates)
+	frappe.db.commit()
+	return f"Updated page settings: {', '.join(updates)}."
+
+
+def set_theme_variable(ctx, args: dict) -> str:
+	"""Create or update a site theme token (Builder Variable). Reference it in styles
+	as var(--<variable_name>) so a single change recolours the whole site."""
+	name = (args.get("variable_name") or "").strip().lstrip("-")
+	value = (args.get("value") or "").strip()
+	if not name or not value:
+		return "variable_name and value are required."
+	existing = frappe.db.exists("Builder Variable", {"variable_name": name})
+	fields = {
+		"type": args.get("type") if args.get("type") in ("Color", "Dimension") else "Color",
+		"value": value,
+		"dark_value": (args.get("dark_value") or "").strip(),
+	}
+	if existing:
+		frappe.db.set_value("Builder Variable", existing, fields)
+		frappe.db.commit()
+		return f"Updated theme variable --{name}."
+	frappe.get_doc({"doctype": "Builder Variable", "variable_name": name, "group": "Brand", **fields}).insert(
+		ignore_permissions=True
+	)
+	return f"Created theme variable --{name} (use it as var(--{name}))."
+
+
+# --- sensitive (terminal, confirm-gated) --------------------------------
+
+
+def request_set_home_page(ctx, args: dict) -> None:
+	route = (args.get("route") or "").strip()
+	pending.request_confirmation(ctx, "home_page", f"Set the site home page to '{route}'?", {"route": route})
+
+
+def request_edit_global_settings(ctx, args: dict) -> None:
+	payload = {f: args[f] for f in pending.GLOBAL_SETTING_FIELDS if f in args and args[f] is not None}
+	summary = f"Update site-wide settings ({', '.join(payload) or 'none'})? These load on EVERY page."
+	pending.request_confirmation(ctx, "global_settings", summary, payload)
+
+
+def request_publish_site(ctx, args: dict) -> None:
+	folder = None
+	if ctx.page_id:
+		folder = frappe.db.get_value("Builder Page", ctx.page_id, "project_folder")
+	if not folder:
+		# fall back to a folder passed explicitly (site flow)
+		folder = (args.get("folder") or "").strip()
+	if not folder:
+		ctx.emit(
+			"clarify",
+			question="This page isn't part of a site folder, so there's nothing to publish as a site.",
+			options=[],
+		)
+		return
+	count = frappe.db.count("Builder Page", {"project_folder": folder})
+	pending.request_confirmation(
+		ctx, "publish_site", f"Publish all {count} page(s) in this site?", {"folder": folder}
+	)
+
+
+set_page_settings_tool = Tool(
+	name="set_page_settings",
+	side="server",
+	description="Update the current page's SEO/meta and page-level settings (title, meta description, meta image, canonical URL, language, custom head/body HTML, disable indexing). Applies immediately.",
+	parameters={
+		"type": "object",
+		"properties": {
+			"page_title": {"type": "string"},
+			"meta_description": {"type": "string"},
+			"meta_image": {"type": "string"},
+			"canonical_url": {"type": "string"},
+			"language": {"type": "string"},
+			"head_html": {"type": "string"},
+			"body_html": {"type": "string"},
+			"disable_indexing": {"type": "boolean"},
+		},
+		"required": [],
+	},
+	handler=set_page_settings,
+)
+
+set_theme_variable_tool = Tool(
+	name="set_theme_variable",
+	side="server",
+	description="Create or update a site theme token (Builder Variable) referenced as var(--name). Use for brand colours/dimensions so the whole site restyles from one place. type is Color or Dimension; give a dark_value for colours.",
+	parameters={
+		"type": "object",
+		"properties": {
+			"variable_name": {
+				"type": "string",
+				"description": "Bare name, e.g. brand-primary (no leading --).",
+			},
+			"value": {"type": "string"},
+			"dark_value": {"type": "string"},
+			"type": {"type": "string", "enum": ["Color", "Dimension"]},
+		},
+		"required": ["variable_name", "value"],
+	},
+	handler=set_theme_variable,
+)
+
+set_home_page_tool = Tool(
+	name="set_home_page",
+	side="terminal",
+	description="Propose making a route the site's home page (served at /). SENSITIVE — ends your turn and asks the user to confirm before changing the global setting.",
+	parameters={
+		"type": "object",
+		"properties": {"route": {"type": "string"}},
+		"required": ["route"],
+	},
+	handler=request_set_home_page,
+)
+
+edit_global_settings_tool = Tool(
+	name="edit_global_settings",
+	side="terminal",
+	description="Propose site-wide code that loads on EVERY page: global script (JS), style (CSS), head_html, body_html. SENSITIVE — ends your turn and asks the user to confirm before applying.",
+	parameters={
+		"type": "object",
+		"properties": {
+			"script": {"type": "string"},
+			"style": {"type": "string"},
+			"head_html": {"type": "string"},
+			"body_html": {"type": "string"},
+		},
+		"required": [],
+	},
+	handler=request_edit_global_settings,
+)
+
+publish_site_tool = Tool(
+	name="publish_site",
+	side="terminal",
+	description="Propose publishing every page in this site (makes them live). SENSITIVE — ends your turn and asks the user to confirm.",
+	parameters={"type": "object", "properties": {}, "required": []},
+	handler=request_publish_site,
+)
+
+TOOLS = [
+	set_page_settings_tool,
+	set_theme_variable_tool,
+	set_home_page_tool,
+	edit_global_settings_tool,
+	publish_site_tool,
+]
