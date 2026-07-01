@@ -22,7 +22,7 @@ GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
 def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 	"""Persist + emit a pending sensitive action, then end the turn without mutating."""
-	AISession.try_append_message(
+	message_id = AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
 		summary,
@@ -36,6 +36,7 @@ def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 		question=summary,
 		options=["Apply", "Skip"],
 		pending_action={"kind": kind, "payload": payload},
+		message_id=message_id,
 	)
 
 

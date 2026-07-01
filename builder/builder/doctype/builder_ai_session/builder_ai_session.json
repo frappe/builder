@@ -23,7 +23,7 @@
    "fieldname": "session_kind",
    "fieldtype": "Select",
    "label": "Session Kind",
-   "options": "page\nsite"
+   "options": "page\nsite\ngeneral"
   },
   {
    "depends_on": "eval:doc.session_kind==='page'",

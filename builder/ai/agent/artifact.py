@@ -101,7 +101,10 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		delta = chunk.choices[0].delta.content
 		if delta:
 			yaml_content += delta
-			ctx.emit("stream", chunk=delta, kind="page_yaml")
+			# Headless (sub-agent): no canvas to stream to — skip the per-chunk emit and
+			# apply the finished YAML server-side below.
+			if not ctx.headless:
+				ctx.emit("stream", chunk=delta, kind="page_yaml")
 
 	yaml_text = BlockCodec.strip_fences(yaml_content)
 	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
@@ -111,5 +114,18 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	if not yaml_text:
 		logger.warning("generate_page_yaml: model produced empty YAML (model=%s)", ctx.model)
 		return []
+
+	# Headless: there is no browser to apply the client op — write the page ourselves,
+	# exactly as the old single-shot site sub-agent did. The returned op is informational
+	# (the loop won't emit it as a canvas batch in headless mode; see AgentRunner).
+	if ctx.headless:
+		if not ctx.page_id:
+			logger.warning("generate_page_yaml: headless run with no page to persist to")
+			return []
+		from builder.ai import page_writer
+
+		if not page_writer.persist_page(ctx.page_id, yaml_text):
+			raise ValueError("generation produced no blocks")
+		return [{"tool_name": "generate_page", "args": {}}]
 
 	return [{"tool_name": "generate_page", "args": {"yaml": yaml_text}}]

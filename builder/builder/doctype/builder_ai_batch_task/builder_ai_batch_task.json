@@ -6,27 +6,20 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "route",
-  "page_title",
+  "title",
   "page",
   "status",
   "subagent_session",
+  "instructions",
   "error"
  ],
  "fields": [
   {
-   "columns": 2,
-   "fieldname": "route",
+   "columns": 3,
+   "fieldname": "title",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Route"
-  },
-  {
-   "columns": 2,
-   "fieldname": "page_title",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Page Title"
+   "label": "Title"
   },
   {
    "columns": 2,
@@ -43,13 +36,18 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "queued\nstreaming\ndone\nfailed"
+   "options": "queued\nrunning\ndone\nfailed"
   },
   {
    "fieldname": "subagent_session",
    "fieldtype": "Link",
    "label": "Sub-agent Session",
    "options": "Builder AI Session"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Long Text",
+   "label": "Instructions"
   },
   {
    "columns": 3,
@@ -66,7 +64,7 @@
  "modified": "2026-07-01 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder Site Batch Page",
+ "name": "Builder AI Batch Task",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [],

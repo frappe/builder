@@ -21,6 +21,6 @@ import router from "@/router";
 const { showTemplatesDialog } = useDashboardState();
 
 function goBuild() {
-	router.push({ name: "site-build-new" });
+	router.push({ name: "ai-builder-new" });
 }
 </script>

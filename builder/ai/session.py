@@ -76,6 +76,56 @@ class AISession:
 		return cls(doc)
 
 	@classmethod
+	def get_or_create_general(cls, user: str | None = None, model: str | None = None):
+		"""The page-less dashboard chat session (session_kind='general'). One active
+		general session per user, reused across turns so the conversation continues."""
+		user = user or frappe.session.user
+
+		session_name = frappe.db.get_value(
+			cls.DOCTYPE,
+			{"session_user": user, "session_kind": "general", "status": "Active"},
+			"name",
+		)
+		if session_name:
+			doc = frappe.get_doc(cls.DOCTYPE, str(session_name))
+			if model and not doc.selected_model:
+				doc.selected_model = model
+				doc.save(ignore_permissions=True)
+			return cls(doc)
+
+		doc = frappe.get_doc(
+			{
+				"doctype": cls.DOCTYPE,
+				"session_kind": "general",
+				"session_user": user,
+				"status": "Active",
+				"selected_model": model or "",
+				"last_interaction_on": frappe.utils.now_datetime(),
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		return cls(doc)
+
+	@classmethod
+	def create_subagent_session(cls, user: str | None = None, model: str | None = None):
+		"""A fresh, isolated session for one fan-out sub-agent. Always a NEW row (never
+		reused) and page-less, so a sub-agent's internal turns never pollute the parent
+		chat nor the editor's per-page session — even when it builds a specific page
+		(the page_id is passed to the runner directly, not via the session)."""
+		doc = frappe.get_doc(
+			{
+				"doctype": cls.DOCTYPE,
+				"session_kind": "general",
+				"session_user": user or frappe.session.user,
+				"status": "Active",
+				"selected_model": model or "",
+				"last_interaction_on": frappe.utils.now_datetime(),
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		return cls(doc)
+
+	@classmethod
 	def get(cls, session_id: str, page_id: str | None = None, user: str | None = None):
 		user = user or frappe.session.user
 		if not frappe.db.exists(cls.DOCTYPE, session_id):
@@ -88,9 +138,10 @@ class AISession:
 		return cls(doc)
 
 	@classmethod
-	def try_append_message(cls, session_id: str | None, role: str, content: str, **kwargs):
+	def try_append_message(cls, session_id: str | None, role: str, content: str, **kwargs) -> str | None:
 		if session_id and frappe.db.exists(cls.DOCTYPE, session_id):
-			cls(frappe.get_doc(cls.DOCTYPE, session_id)).append_message(role, content, **kwargs)
+			return cls(frappe.get_doc(cls.DOCTYPE, session_id)).append_message(role, content, **kwargs)
+		return None
 
 	@classmethod
 	def build_context_messages_from_id(cls, session_id: str | None) -> list[dict]:
@@ -247,7 +298,7 @@ class AISession:
 			status = (metadata.get("status") or "").strip()
 			meta_clean = {k: v for k, v in metadata.items() if k != "status"}
 
-		frappe.get_doc(
+		msg = frappe.get_doc(
 			{
 				"doctype": self.MESSAGE_DOCTYPE,
 				"session": self._doc.name,
@@ -266,6 +317,7 @@ class AISession:
 		if task_type:
 			updates["last_task_type"] = task_type
 		frappe.db.set_value(self.DOCTYPE, self._doc.name, updates, update_modified=False)
+		return msg.name
 
 	def update_last_assistant_metadata(self, extra_metadata: dict):
 		"""Merge extra_metadata into the most recent assistant message's

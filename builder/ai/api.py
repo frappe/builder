@@ -34,7 +34,7 @@ def resolve_api_key() -> str:
 @has_page_write()
 def run(
 	prompt: str,
-	page_context: str,
+	page_context: str = "[]",
 	page_id: str | None = None,
 	model: str | None = None,
 	session_id: str | None = None,
@@ -42,15 +42,23 @@ def run(
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
 ):
-	"""Single entry point: run the agent for one user turn."""
+	"""Single entry point: run the agent for one user turn.
+
+	Two modes, one loop: WITH a page_id it's the in-editor chat (client block ops apply
+	to the canvas); WITHOUT one it's the page-less dashboard chat, which orchestrates via
+	server tools + parallel sub-agents (see run_agent_job / build_orchestrator_registry).
+	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	try:
-		json.loads(page_context)
-	except (json.JSONDecodeError, TypeError):
-		frappe.throw(_("Invalid page context JSON"))
+	if page_context:
+		try:
+			json.loads(page_context)
+		except (json.JSONDecodeError, TypeError):
+			frappe.throw(_("Invalid page context JSON"))
 
-	if page_id and session_id:
+	# Append the user turn + guard concurrency for any established session (page or
+	# page-less). AISession.get tolerates page_id=None.
+	if session_id:
 		if AISession.is_session_running(session_id):
 			frappe.local.response.http_status_code = 429
 			return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
@@ -69,19 +77,21 @@ def run(
 
 	# Capture the pre-turn page state now (synchronously, before the worker or any
 	# streaming touches the canvas — so it's reliably pre-turn). The snapshot DOC is
-	# created later, by the loop, only if the turn actually changes the page.
-	pre_turn_state = capture_page_state(page_id)
+	# created later, by the loop, only if the turn actually changes the page. Page-less
+	# dashboard turns have nothing to snapshot.
+	pre_turn_state = capture_page_state(page_id) if page_id else None
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
 	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
-	# of which process runs the job.
+	# of which process runs the job. Page-less turns may fan out sub-agents and block on
+	# the join, so they get a longer timeout (children run on a SEPARATE queue).
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
-		timeout=600,
+		timeout=1200 if not page_id else 600,
 		prompt=prompt,
-		page_context_json=page_context,
+		page_context_json=page_context or "[]",
 		model=resolved_model,
 		api_key=api_key,
 		user=frappe.session.user,
@@ -100,142 +110,106 @@ def ensure_site_permission():
 		frappe.throw(_("You do not have permission to build sites"), frappe.PermissionError)
 
 
-def get_or_create_site_folder(folder_name: str | None, prompt: str) -> str:
-	"""Locate or create the Builder Project Folder that will hold the generated site.
-	Marks it as an AI site so the dashboard renders it as one."""
-	if folder_name and frappe.db.exists("Builder Project Folder", folder_name):
-		frappe.db.set_value(
-			"Builder Project Folder",
-			folder_name,
-			{"is_ai_site": 1, "site_brief": prompt},
-			update_modified=False,
-		)
-		return folder_name
-	base = (folder_name or " ".join(prompt.split()[:4]) or "AI Site").strip()[:60]
-	name = base
-	if frappe.db.exists("Builder Project Folder", name):
-		name = f"{base} {frappe.generate_hash(length=4)}"
-	doc = frappe.get_doc(
-		{"doctype": "Builder Project Folder", "folder_name": name, "is_ai_site": 1, "site_brief": prompt}
-	).insert(ignore_permissions=True)
-	return doc.name
+@frappe.whitelist()
+@has_page_write()
+def get_general_session(model: str | None = None):
+	"""The page-less dashboard chat session — one active session per user, reused so the
+	conversation continues across turns (a new message must NOT start a new session)."""
+	session = AISession.get_or_create_general(model=model)
+	return {
+		"session_id": session.name,
+		"page_id": None,
+		"selected_model": session.selected_model,
+		"last_task_type": session.last_task_type,
+		"messages": session.get_messages(),
+	}
 
 
 @frappe.whitelist()
-def generate_site(prompt: str, folder_name: str | None = None, model: str | None = None):
-	"""Kick off an AI multi-page site generation. Creates the site folder + batch, then
-	enqueues the orchestrator (architect → shared assets → per-page fan-out) and returns
-	202 with a batch_id the client polls / subscribes to."""
-	from builder.ai import locks
-	from builder.ai.site import run_site_job
-
-	ensure_site_permission()
-	prompt = (prompt or "").strip()
-	if not prompt:
-		frappe.throw(_("Describe the website you want to build"))
-
-	resolved_model = ModelRegistry.get_default(model or "openrouter")
-	api_key = resolve_api_key()
-	folder = get_or_create_site_folder(folder_name, prompt)
-
-	if not locks.acquire(locks.site_key(folder), locks.SITE_LOCK_TTL):
-		frappe.local.response.http_status_code = 429
-		return {"status": "busy", "message": _("This site is already generating.")}
-
-	batch_id = frappe.generate_hash(length=12)
-	session = AISession.get_or_create_site(folder, model=resolved_model)
-	frappe.get_doc(
-		{
-			"doctype": "Builder Site Batch",
-			"batch_id": batch_id,
-			"project_folder": folder,
-			"prompt": prompt,
-			"status": "architecting",
-			"model": resolved_model,
-			"created_by_user": frappe.session.user,
-			"site_session": session.name,
-		}
-	).insert(ignore_permissions=True)
-	frappe.db.set_value(
-		"Builder Project Folder",
-		folder,
-		{"active_batch_id": batch_id, "generation_status": "Generating"},
-		update_modified=False,
+@has_page_write()
+def new_general_session(model: str | None = None):
+	"""Start a fresh dashboard chat: retire the current active general session so the next
+	get_general_session mints a new one. (History stays queryable; it's just deactivated.)"""
+	name = frappe.db.get_value(
+		AISession.DOCTYPE,
+		{"session_user": frappe.session.user, "session_kind": "general", "status": "Active"},
+		"name",
 	)
-	frappe.db.commit()
-
-	frappe.enqueue(
-		run_site_job,
-		queue="default",
-		timeout=900,
-		enqueue_after_commit=True,
-		batch_id=batch_id,
-		model=resolved_model,
-		api_key=api_key,
-		user=frappe.session.user,
-	)
-	frappe.local.response.http_status_code = 202
-	return {"status": "accepted", "batch_id": batch_id, "folder_name": folder}
+	if name:
+		frappe.db.set_value(AISession.DOCTYPE, name, "status", "Inactive", update_modified=False)
+	session = AISession.get_or_create_general(model=model)
+	return {"session_id": session.name, "messages": []}
 
 
 @frappe.whitelist()
-def list_site_batches(limit: int = 20):
-	"""Recent site builds by the current user — powers the chat sidebar."""
-	ensure_site_permission()
-	return frappe.get_all(
-		"Builder Site Batch",
-		filters={"created_by_user": frappe.session.user},
-		fields=[
-			"batch_id",
-			"prompt",
-			"status",
-			"project_folder",
-			"total_pages",
-			"completed_pages",
-			"failed_pages",
-			"modified",
-		],
-		order_by="modified desc",
+@has_page_write()
+def get_ai_session_messages(session_id: str):
+	"""Load a specific dashboard chat session's messages (opening a past session)."""
+	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
+		return {"session_id": "", "messages": []}
+	session = AISession.get(session_id)  # asserts ownership
+	return {
+		"session_id": session.name,
+		"selected_model": session.selected_model,
+		"messages": session.get_messages(),
+	}
+
+
+@frappe.whitelist()
+@has_page_write()
+def list_ai_sessions(limit: int = 30):
+	"""Recent dashboard chat sessions for the current user — powers the sidebar."""
+	rows = frappe.get_all(
+		AISession.DOCTYPE,
+		filters={"session_user": frappe.session.user, "session_kind": "general"},
+		fields=["name", "last_task_type", "last_interaction_on", "modified"],
+		order_by="last_interaction_on desc",
 		limit=min(int(limit), 50),
 	)
+	# Use the first user message as the human-readable title (cheap sub-query per row).
+	for r in rows:
+		r["title"] = frappe.db.get_value(
+			AISession.MESSAGE_DOCTYPE,
+			{"session": r["name"], "role": "user"},
+			"content",
+			order_by="creation asc",
+		)
+	return rows
 
 
 @frappe.whitelist()
-def get_site_batch_status(batch_id: str):
-	"""The durable progress surface for the review screen: batch status + per-page rows."""
-	ensure_site_permission()
-	if not batch_id or not frappe.db.exists("Builder Site Batch", batch_id):
-		frappe.throw(_("Site batch not found"))
-	batch = frappe.get_doc("Builder Site Batch", batch_id)
+@has_page_write()
+def get_ai_batch_status(batch_id: str):
+	"""Live progress of a parallel sub-agent fan-out: batch status + per-task rows. The
+	chat's task-group card polls this alongside the realtime nudges."""
+	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
+		frappe.throw(_("Batch not found"))
+	batch = frappe.get_doc("Builder AI Batch", batch_id)
 	return {
 		"batch_id": batch.batch_id,
 		"status": batch.status,
 		"project_folder": batch.project_folder,
-		"total_pages": batch.total_pages,
-		"completed_pages": batch.completed_pages,
-		"failed_pages": batch.failed_pages,
-		"pages": [
-			{
-				"page": p.page,
-				"route": p.route,
-				"page_title": p.page_title,
-				"status": p.status,
-				"error": p.error,
-			}
-			for p in batch.pages
+		"total_tasks": batch.total_tasks,
+		"completed_tasks": batch.completed_tasks,
+		"failed_tasks": batch.failed_tasks,
+		"tasks": [
+			{"row": t.name, "title": t.title, "page": t.page, "status": t.status, "error": t.error}
+			for t in batch.tasks
 		],
 	}
 
 
 @frappe.whitelist()
 def publish_site_batch(batch_id: str):
-	"""Publish every page in a generated site (the review screen's Publish button)."""
+	"""Publish every page in a generated site (a batch's project folder)."""
 	from builder.ai.agent.pending import apply_publish_site
 
 	ensure_site_permission()
-	if not batch_id or not frappe.db.exists("Builder Site Batch", batch_id):
-		frappe.throw(_("Site batch not found"))
-	folder = frappe.db.get_value("Builder Site Batch", batch_id, "project_folder")
+	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
+		frappe.throw(_("Batch not found"))
+	folder = frappe.db.get_value("Builder AI Batch", batch_id, "project_folder")
+	if not folder:
+		frappe.throw(_("This batch has no site to publish"))
 	return {"status": "published", "message": apply_publish_site({"folder": folder})}
 
 

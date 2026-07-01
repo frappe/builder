@@ -72,15 +72,15 @@ const routes = [
 	},
 	{
 		path: "/build",
-		name: "site-build-new",
+		name: "ai-builder-new",
 		beforeEnter: validateVisit,
-		component: () => import("@/pages/SiteChat.vue"),
+		component: () => import("@/pages/AIBuilder.vue"),
 	},
 	{
-		path: "/build/:batchId",
-		name: "site-build",
+		path: "/build/:sessionId",
+		name: "ai-builder",
 		beforeEnter: validateVisit,
-		component: () => import("@/pages/SiteChat.vue"),
+		component: () => import("@/pages/AIBuilder.vue"),
 	},
 	{
 		path: "/page/:pageId",

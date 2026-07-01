@@ -9,18 +9,18 @@
  "engine": "InnoDB",
  "field_order": [
   "batch_id",
+  "session",
   "project_folder",
   "status",
   "created_by_user",
   "model",
-  "site_session",
   "prompt",
   "counts_section",
-  "total_pages",
-  "completed_pages",
-  "failed_pages",
-  "pages_section",
-  "pages"
+  "total_tasks",
+  "completed_tasks",
+  "failed_tasks",
+  "tasks_section",
+  "tasks"
  ],
  "fields": [
   {
@@ -32,20 +32,25 @@
    "unique": 1
   },
   {
-   "fieldname": "project_folder",
+   "fieldname": "session",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Project Folder",
-   "options": "Builder Project Folder",
-   "reqd": 1
+   "label": "Parent Session",
+   "options": "Builder AI Session"
   },
   {
-   "default": "architecting",
+   "fieldname": "project_folder",
+   "fieldtype": "Link",
+   "label": "Project Folder",
+   "options": "Builder Project Folder"
+  },
+  {
+   "default": "running",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "architecting\nassets\ngenerating\ndone\nfailed\ncancelled"
+   "options": "running\ndone\nfailed\ncancelled"
   },
   {
    "fieldname": "created_by_user",
@@ -59,12 +64,6 @@
    "label": "Model"
   },
   {
-   "fieldname": "site_session",
-   "fieldtype": "Link",
-   "label": "Site Session",
-   "options": "Builder AI Session"
-  },
-  {
    "fieldname": "prompt",
    "fieldtype": "Long Text",
    "label": "Prompt"
@@ -76,32 +75,32 @@
   },
   {
    "default": "0",
-   "fieldname": "total_pages",
+   "fieldname": "total_tasks",
    "fieldtype": "Int",
-   "label": "Total Pages"
+   "label": "Total Tasks"
   },
   {
    "default": "0",
-   "fieldname": "completed_pages",
+   "fieldname": "completed_tasks",
    "fieldtype": "Int",
-   "label": "Completed Pages"
+   "label": "Completed Tasks"
   },
   {
    "default": "0",
-   "fieldname": "failed_pages",
+   "fieldname": "failed_tasks",
    "fieldtype": "Int",
-   "label": "Failed Pages"
+   "label": "Failed Tasks"
   },
   {
-   "fieldname": "pages_section",
+   "fieldname": "tasks_section",
    "fieldtype": "Section Break",
-   "label": "Pages"
+   "label": "Tasks"
   },
   {
-   "fieldname": "pages",
+   "fieldname": "tasks",
    "fieldtype": "Table",
-   "label": "Pages",
-   "options": "Builder Site Batch Page"
+   "label": "Tasks",
+   "options": "Builder AI Batch Task"
   }
  ],
  "grid_page_length": 50,
@@ -111,7 +110,7 @@
  "modified": "2026-07-01 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder Site Batch",
+ "name": "Builder AI Batch",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [

@@ -20,6 +20,7 @@ import frappe
 # TTLs sit just above each job's timeout so a dead worker's lock expires on its own.
 SITE_LOCK_TTL = 960  # architect + shared-assets job runs up to ~900s
 PAGE_LOCK_TTL = 660  # a single page sub-agent runs up to ~600s
+TASK_LOCK_TTL = 660  # a single fan-out sub-agent task runs up to ~600s
 
 
 def site_key(folder: str) -> str:
@@ -28,6 +29,11 @@ def site_key(folder: str) -> str:
 
 def page_key(page_id: str) -> str:
 	return f"builder_ai_page_lock:{page_id}"
+
+
+def task_key(task_id: str) -> str:
+	"""Lock for a page-less fan-out task (page-backed tasks use page_key instead)."""
+	return f"builder_ai_task_lock:{task_id}"
 
 
 def acquire(key: str, ttl: int) -> bool:

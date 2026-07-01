@@ -5,7 +5,8 @@ one tool-calling loop until the model stops requesting server/terminal tools.
 Tool *behaviour* lives in the registry; this file only orchestrates.
 
 Realtime event contract (consumed by the frontend). Every event name is
-suffixed with the page id, e.g. `ai_chat_stream_<page_id>`:
+suffixed with the CHANNEL — the page id for the in-editor chat, or the session
+id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`:
 
     ai_chat_progress    {message}
     ai_chat_stream      {chunk, kind?}   kind="page_yaml" → apply to canvas;
@@ -127,6 +128,7 @@ class AgentRunner:
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 		pre_turn_state: dict | None = None,
+		headless: bool = False,
 	):
 		self.prompt = prompt
 		self.page_context_json = page_context_json
@@ -135,6 +137,10 @@ class AgentRunner:
 		self.user = user or frappe.session.user
 		self.page_id = page_id
 		self.session_id = session_id
+		# Headless = no browser/canvas (dashboard chat + fan-out sub-agents). Client
+		# block/script ops can't be applied; work goes through server tools + page
+		# generation persisted server-side (page_writer). Events are session-scoped.
+		self.headless = headless or not page_id
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
@@ -209,10 +215,15 @@ class AgentRunner:
 	# --- realtime ---------------------------------------------------------
 
 	def emit(self, suffix: str, **kwargs):
+		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
+		# chat + sub-agent progress). One central rule generalizes every event's suffix.
 		event = f"{EVENT_PREFIX}_{suffix}"
-		if self.page_id:
-			event = f"{event}_{self.page_id}"
-		frappe.publish_realtime(event, {"page_id": self.page_id, **kwargs}, user=self.user)
+		channel = self.page_id or self.session_id
+		if channel:
+			event = f"{event}_{channel}"
+		frappe.publish_realtime(
+			event, {"page_id": self.page_id, "session_id": self.session_id, **kwargs}, user=self.user
+		)
 
 	def ensure_revert_snapshot(self) -> None:
 		"""Create the pre-turn snapshot the first time the turn changes the block tree.
@@ -632,7 +643,7 @@ class AgentRunner:
 						if tool and tool.generator:
 							ops = tool.generator(self, op["args"])
 							client_operations.extend(ops)
-							if ops:
+							if ops and not self.headless:
 								self.emit("tool_batch", operations=ops)
 					break
 
@@ -648,9 +659,14 @@ class AgentRunner:
 				# multi-round turn shows real progress instead of a frozen "Applying…".
 				# Only for rounds that CONTINUE — the final round's text is the turn summary.
 				if tool_operations:
-					note = (summary_text or "").strip() or (
-						self.describe_operations(client_ops) if client_ops else ""
-					)
+					note = (summary_text or "").strip()
+					if not note and client_ops:
+						note = self.describe_operations(client_ops)
+					# Headless server-tool rounds emit no client batch, so surface the tool
+					# activity itself — otherwise the dashboard chat looks frozen between the
+					# model's narration lines.
+					if not note and server_ops:
+						note = "Working: " + ", ".join(op["tool_name"].replace("_", " ") for op in server_ops)
 					if note:
 						self.emit("progress", message=note)
 
@@ -731,9 +747,17 @@ class AgentRunner:
 			yaml_text = BlockCodec.strip_fences(summary_text)
 			op = {"tool_name": "generate_page", "args": {"yaml": yaml_text}}
 			client_operations.append(op)
-			self.ensure_revert_snapshot()
-			self.emit("stream", chunk=yaml_text, kind="page_yaml")
-			self.emit("tool_batch", operations=[op])
+			if self.headless:
+				# No canvas to stream to — persist the page server-side, as the
+				# artifact generator does on the happy path.
+				if self.page_id:
+					from builder.ai import page_writer
+
+					page_writer.persist_page(self.page_id, yaml_text)
+			else:
+				self.ensure_revert_snapshot()
+				self.emit("stream", chunk=yaml_text, kind="page_yaml")
+				self.emit("tool_batch", operations=[op])
 			summary_text = ""
 
 		if not client_operations and not summary_text:
@@ -845,4 +869,13 @@ class AgentRunner:
 
 
 def run_agent_job(prompt: str, page_context_json: str, model: str, api_key: str, **kwargs):
+	# A page-less turn is the dashboard orchestrator: no canvas, so it uses the
+	# orchestrator registry (server tools + parallel fan-out) and its own system prompt.
+	# The registry is built HERE (in the worker) rather than pickled through enqueue.
+	if not kwargs.get("page_id") and not kwargs.get("registry"):
+		from builder.ai.agent.registry import build_orchestrator_registry
+
+		kwargs["registry"] = build_orchestrator_registry()
+		kwargs.setdefault("system_prompt", Prompts.ORCHESTRATOR_SYSTEM)
+		kwargs["headless"] = True
 	AgentRunner(prompt, page_context_json, model, api_key, **kwargs).run()

@@ -81,6 +81,12 @@ class ToolRegistry:
 		return list(self._tools)
 
 
+def pick(tools: list[Tool], names: set[str]) -> list[Tool]:
+	"""Select tools by name — used to compose the headless registries from the same
+	module TOOLS lists as the interactive one, without duplicating tool definitions."""
+	return [t for t in tools if t.name in names]
+
+
 def build_default_registry() -> ToolRegistry:
 	"""Assemble the registry from the tool modules. Imported lazily to avoid
 	import cycles (tool handlers reference the agent context type)."""
@@ -94,4 +100,44 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(conversation.TOOLS)
 	registry.extend(data.TOOLS)
 	registry.extend(settings.TOOLS)
+	return registry
+
+
+def build_orchestrator_registry() -> ToolRegistry:
+	"""The page-less dashboard chat. It cannot apply client block/script edits (no
+	canvas), so it has NO block tools and does page building via `spawn_parallel_agents`
+	(one headless sub-agent per page) after laying down shared assets (theme variables,
+	header/footer components). Site-wide + data-model changes stay confirm-gated."""
+	from builder.ai.agent.tools import conversation, data, orchestrate, settings
+
+	registry = ToolRegistry()
+	registry.extend(conversation.TOOLS)  # ask_clarification, propose_plan
+	registry.extend(
+		pick(
+			data.TOOLS,
+			{"list_doctypes", "get_doctype_schema", "query_records", "create_doctype", "seed_sample_data"},
+		)
+	)
+	registry.extend(
+		pick(settings.TOOLS, {"set_theme_variable", "set_home_page", "edit_global_settings", "publish_site"})
+	)
+	registry.extend(orchestrate.TOOLS)  # spawn_parallel_agents, create_component
+	return registry
+
+
+def build_subagent_registry() -> ToolRegistry:
+	"""One headless page builder in a fan-out. It generates a page server-side and can
+	populate data / page settings / theme tokens — but has NO `spawn_parallel_agents`
+	(recursion guard), NO confirm-gated terminal tools (no user to confirm in a worker),
+	and NO client block/script tools (nothing to apply them to)."""
+	from builder.ai.agent.tools import data, generate, query, scripts, settings
+
+	registry = ToolRegistry()
+	registry.extend(generate.TOOLS)  # generate_page → persisted server-side (headless)
+	registry.extend(query.TOOLS)  # query_blocks, read_block (on its own page)
+	registry.extend(
+		pick(data.TOOLS, {"list_doctypes", "get_doctype_schema", "query_records", "write_page_data_script"})
+	)
+	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_theme_variable"}))
+	registry.extend(pick(scripts.TOOLS, {"get_page_scripts"}))
 	return registry
