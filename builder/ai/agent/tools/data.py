@@ -72,6 +72,43 @@ def query_records(ctx, args: dict) -> str:
 	return json.dumps([dict(r) for r in rows], default=str)
 
 
+def get_document(ctx, args: dict) -> str:
+	"""Read one document's current field values — including SINGLE settings doctypes
+	(Website Settings, Builder Settings) where no name is needed. The generic reader:
+	answer 'what is X' about any setting/record with this instead of a getter-per-field."""
+	dt = (args.get("doctype") or "").strip()
+	if not dt or not frappe.db.exists("DocType", dt):
+		return json.dumps({"error": f"DocType '{dt}' not found"})
+	if not frappe.has_permission(dt, "read"):
+		return json.dumps({"error": f"You don't have permission to read {dt}"})
+	meta = frappe.get_meta(dt)
+	try:
+		if meta.issingle:
+			doc = frappe.get_cached_doc(dt)
+		else:
+			name = (args.get("name") or "").strip()
+			if not name:
+				return json.dumps(
+					{"error": f"{dt} needs a 'name' — use list_doctypes / query_records to find one"}
+				)
+			if not frappe.db.exists(dt, name):
+				return json.dumps({"error": f"{dt} '{name}' not found"})
+			doc = frappe.get_doc(dt, name)
+	except Exception as e:
+		return json.dumps({"error": str(e)})
+
+	data = doc.as_dict()
+	wanted = args.get("fields")
+	if isinstance(wanted, list) and wanted:
+		data = {f: data.get(f) for f in wanted}
+	else:
+		# Drop internal fields and child tables so the read stays legible + cheap.
+		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
+	# Bound long values (e.g. a page's raw HTML blob) so a read never blows the context.
+	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
+	return frappe.as_json(data)
+
+
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
 	`data.events = frappe.get_list("Event", ...)`). Runs in the frappe safe_exec
@@ -165,6 +202,34 @@ query_records_tool = Tool(
 	handler=query_records,
 )
 
+get_document_tool = Tool(
+	name="get_document",
+	side="server",
+	description=(
+		"Read the CURRENT values of any document or Single settings doctype — the generic way "
+		"to answer 'what is X'. Examples: get_document('Website Settings') for the site home page "
+		"and brand; get_document('Builder Settings') for global head/body/script HTML; "
+		"get_document('Builder Page', <page_id>) for a page's route/SEO/settings; "
+		"get_document('Builder Variable', <name>) for a theme token's value. Omit 'name' for Single "
+		"doctypes. Pass 'fields' to read only some. Discover doctypes/fields with list_doctypes / "
+		"get_doctype_schema."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"doctype": {"type": "string"},
+			"name": {"type": "string", "description": "Document name; omit for Single doctypes."},
+			"fields": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": "Optional subset of fields.",
+			},
+		},
+		"required": ["doctype"],
+	},
+	handler=get_document,
+)
+
 write_page_data_script_tool = Tool(
 	name="write_page_data_script",
 	side="server",
@@ -225,6 +290,7 @@ TOOLS = [
 	list_doctypes_tool,
 	get_doctype_schema_tool,
 	query_records_tool,
+	get_document_tool,
 	write_page_data_script_tool,
 	create_doctype_tool,
 	seed_sample_data_tool,

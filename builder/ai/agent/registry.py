@@ -115,7 +115,14 @@ def build_orchestrator_registry() -> ToolRegistry:
 	registry.extend(
 		pick(
 			data.TOOLS,
-			{"list_doctypes", "get_doctype_schema", "query_records", "create_doctype", "seed_sample_data"},
+			{
+				"list_doctypes",
+				"get_doctype_schema",
+				"query_records",
+				"get_document",
+				"create_doctype",
+				"seed_sample_data",
+			},
 		)
 	)
 	registry.extend(
@@ -136,7 +143,16 @@ def build_subagent_registry() -> ToolRegistry:
 	registry.extend(generate.TOOLS)  # generate_page → persisted server-side (headless)
 	registry.extend(query.TOOLS)  # query_blocks, read_block (on its own page)
 	registry.extend(
-		pick(data.TOOLS, {"list_doctypes", "get_doctype_schema", "query_records", "write_page_data_script"})
+		pick(
+			data.TOOLS,
+			{
+				"list_doctypes",
+				"get_doctype_schema",
+				"query_records",
+				"get_document",
+				"write_page_data_script",
+			},
+		)
 	)
 	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_theme_variable"}))
 	registry.extend(pick(scripts.TOOLS, {"get_page_scripts"}))

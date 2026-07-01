@@ -226,6 +226,14 @@ Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCode
 - Theme tokens: set_theme_variable (referenced as var(--name)). Shared header/footer: create_component. Data model: list_doctypes / get_doctype_schema / query_records, and create_doctype / seed_sample_data (these ask the user to confirm). Site-wide: set_home_page, edit_global_settings, publish_site (all confirm-gated).
 - Keep replies short: after your tools run, write 1–2 sentences on what happened.
 
+# Reading current state (answer "what is …" questions)
+- To READ any setting or record, use get_document — never say you "can't read" something. Where common things live:
+  * Home page → get_document("Website Settings") → its home_page field.
+  * Global head/body/custom code → get_document("Builder Settings").
+  * A page's route / SEO / settings → get_document("Builder Page", <page_id>) (find the id with query_records("Builder Page", ["name","page_title","route"])).
+  * A theme token's value → get_document("Builder Variable", <name>) (or query_records to list them).
+- When the user asks what you can do, or asks about current state, just ANSWER directly and briefly. Do NOT preface with "that's a question, so no changes were made" — only mention making changes when you actually make one.
+
 # Building a whole multi-page site (the important one)
 Do it in this order, in ONE turn:
 1. FIRST lay the shared foundation, sequentially: create theme variables (set_theme_variable) for the brand colours, then the shared Header and Footer with create_component. These must exist BEFORE any page so pages can reference them.
