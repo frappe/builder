@@ -216,13 +216,22 @@ function onKeydown(e: KeyboardEvent) {
 	}
 }
 
+/** A stable, UNIQUE token for the inline reference. Titles can collide (many "My Page"),
+ * so when a title isn't unique we disambiguate with the route — otherwise the backend
+ * couldn't tell which page "@My Page" meant. */
+function tokenFor(p: PageRef): string {
+	const title = p.page_title || p.name;
+	const dup = allPages.value.filter((x) => (x.page_title || x.name) === title).length > 1;
+	return dup && p.route ? `@${title} (/${p.route.replace(/^\//, "")})` : `@${title}`;
+}
+
 function selectMention(p: PageRef) {
 	const el = inputEl.value;
 	const caret = el?.selectionStart ?? chat.prompt.value.length;
 	const before = chat.prompt.value.slice(0, caret).replace(/@([^@\n]*)$/, "");
 	const after = chat.prompt.value.slice(caret);
 	const title = p.page_title || p.name;
-	const token = `@${title}`;
+	const token = tokenFor(p);
 	chat.prompt.value = `${before}${token} ${after}`;
 	if (!mentions.value.some((m) => m.name === p.name)) {
 		mentions.value.push({ token, name: p.name, title, route: p.route || "" });
@@ -242,7 +251,7 @@ function onSend() {
 	// Only pass references still present in the text (the user may have deleted one).
 	const refs = mentions.value
 		.filter((m) => chat.prompt.value.includes(m.token))
-		.map((m) => ({ name: m.name, title: m.title, route: m.route }));
+		.map((m) => ({ name: m.name, title: m.title, route: m.route, token: m.token }));
 	chat.send(refs);
 	mentions.value = [];
 	nextTick(resize);

@@ -45,7 +45,10 @@ def build_mention_hint(mentioned_pages: list | str | None) -> str:
 		if not isinstance(p, dict) or not p.get("name"):
 			continue
 		route = (p.get("route") or "").lstrip("/")
-		lines.append(f"- @{p.get('title') or p['name']}: page id={p['name']}, route=/{route}")
+		# Key on the exact token in the text — titles can collide across pages, so the
+		# token (disambiguated with the route when needed) is what maps to a single id.
+		label = p.get("token") or f"@{p.get('title') or p['name']}"
+		lines.append(f"- {label} → page id={p['name']}, route=/{route}")
 	if not lines:
 		return ""
 	return "\n\n[Referenced pages — resolve the @mentions above to these exact ids/routes]\n" + "\n".join(
