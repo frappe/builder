@@ -71,6 +71,12 @@ const routes = [
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
+		path: "/site/:batchId",
+		name: "site-progress",
+		beforeEnter: validateVisit,
+		component: () => import("@/pages/SiteProgress.vue"),
+	},
+	{
 		path: "/page/:pageId",
 		name: "builder",
 		beforeEnter: validateVisit,

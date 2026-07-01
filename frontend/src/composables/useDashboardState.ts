@@ -6,6 +6,7 @@ const selectionMode = ref(false);
 const selectedPages = ref(new Set<string>());
 const treeExpanded = ref(true);
 const showTemplatesDialog = ref(false);
+const showGenerateSiteDialog = ref(false);
 
 // remembers the template group the picker was last drilled into ("" = gallery)
 const lastTemplateGroup = useStorage("lastTemplateGroup", "") as Ref<string>;
@@ -26,6 +27,7 @@ export function useDashboardState() {
 		selectedPages,
 		treeExpanded,
 		showTemplatesDialog,
+		showGenerateSiteDialog,
 		lastTemplateGroup,
 		displayType,
 		typeFilter,

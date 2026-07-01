@@ -9,6 +9,7 @@
 	</div>
 	<BuilderCommandPalette />
 	<TemplatesDialog />
+	<GenerateSiteDialog />
 </template>
 <script setup lang="ts">
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
@@ -16,6 +17,7 @@ import DashboardContent from "@/components/DashboardContent.vue";
 import DashboardHead from "@/components/DashboardHead.vue";
 import DashboardSidebar from "@/components/DashboardSidebar.vue";
 import DashboardToolbar from "@/components/DashboardToolbar.vue";
+import GenerateSiteDialog from "@/components/Site/GenerateSiteDialog.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";

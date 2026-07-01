@@ -206,6 +206,18 @@ def get_site_batch_status(batch_id: str):
 
 
 @frappe.whitelist()
+def publish_site_batch(batch_id: str):
+	"""Publish every page in a generated site (the review screen's Publish button)."""
+	from builder.ai.agent.pending import apply_publish_site
+
+	ensure_site_permission()
+	if not batch_id or not frappe.db.exists("Builder Site Batch", batch_id):
+		frappe.throw(_("Site batch not found"))
+	folder = frappe.db.get_value("Builder Site Batch", batch_id, "project_folder")
+	return {"status": "published", "message": apply_publish_site({"folder": folder})}
+
+
+@frappe.whitelist()
 def confirm_pending_settings(session_id: str, message_id: str, decision: str = "apply"):
 	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
 	HERE, on this user-triggered call — never inside the model's turn. Reads the stored

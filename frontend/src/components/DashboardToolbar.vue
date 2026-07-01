@@ -2,6 +2,9 @@
 	<div
 		class="toolbar flex h-12 items-center justify-end border-b-[1px] border-outline-gray-1 bg-surface-base p-2 px-3 py-1">
 		<div class="flex gap-2">
+			<Button variant="subtle" iconLeft="lucide-sparkles" @click="showGenerateSiteDialog = true">
+				Build with AI
+			</Button>
 			<Button
 				variant="solid"
 				iconLeft="lucide-plus"
@@ -16,5 +19,5 @@
 <script setup lang="ts">
 import { useDashboardState } from "@/composables/useDashboardState";
 
-const { showTemplatesDialog } = useDashboardState();
+const { showTemplatesDialog, showGenerateSiteDialog } = useDashboardState();
 </script>
