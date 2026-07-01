@@ -10,6 +10,7 @@ import { confirm, getBlockObject } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
+import router from "@/router";
 import { useRoute } from "vue-router";
 
 // Re-exported for components that still import these from here.
@@ -547,6 +548,27 @@ export class AIChatController {
 			},
 		});
 		await this.loadSession();
+		await this.maybeRunInitialPrompt();
+	}
+
+	/** Auto-run a prompt handed off from the dashboard chat (an @page mention:
+	 * "change the hero on @Home" navigates here with ?ai_prompt=…). Opens the chat
+	 * tab, submits once a model is available, and strips the query so a refresh
+	 * doesn't resubmit. */
+	private async maybeRunInitialPrompt() {
+		const initial = this.route.query.ai_prompt as string | undefined;
+		if (!initial || this.isUnsavedPage.value) return;
+		this.builderStore.leftPanelActiveTab = "Chat";
+		const { ai_prompt, ...rest } = this.route.query;
+		router.replace({ query: rest });
+		// Wait briefly for the model list (mount fetches it async); bail if none.
+		for (let i = 0; i < 40 && !this.selectedModel.value; i++) {
+			await new Promise((r) => setTimeout(r, 100));
+		}
+		if (!this.selectedModel.value) return;
+		this.prompt.value = initial;
+		await nextTick();
+		this.submitPrompt();
 	}
 
 	unmount() {
