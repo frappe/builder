@@ -54,62 +54,57 @@
 
 			<!-- composer -->
 			<div class="border-t border-outline-gray-2 px-6 py-3">
-				<div class="relative mx-auto max-w-2xl">
-					<!-- @page mention picker -->
+				<div
+					class="ai-composer bg-surface-white mx-auto max-w-2xl rounded-xl border border-outline-gray-2 px-3 py-2.5">
+					<!-- @page picker: frappe-ui Autocomplete owns search + keyboard nav +
+					     positioning. The full-width target is an invisible anchor so the
+					     popover lines up with the composer; typing "@" opens it. -->
+					<Autocomplete
+						ref="pageAC"
+						:options="pageOptions"
+						placeholder="Search pages…"
+						placement="top-start"
+						@change="onPagePicked">
+						<template #target>
+							<div class="h-0 w-full"></div>
+						</template>
+					</Autocomplete>
+
+					<!-- referenced page chip -->
 					<div
-						v-if="mentionActive && filteredPages.length"
-						class="bg-surface-white absolute bottom-full left-0 mb-2 max-h-56 w-72 overflow-auto rounded-lg border border-outline-gray-2 py-1 shadow-lg">
-						<button
-							v-for="p in filteredPages"
-							:key="p.name"
-							class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink-gray-8 hover:bg-surface-gray-2"
-							@mousedown.prevent="selectPage(p)">
-							<FeatherIcon name="file" class="size-3.5 shrink-0 text-ink-gray-4" />
-							<span class="min-w-0 flex-1 truncate">{{ p.page_title || p.name }}</span>
-							<span class="shrink-0 font-mono text-[10px] text-ink-gray-4">
-								/{{ (p.route || "").replace(/^\//, "") }}
-							</span>
+						v-if="targetPage"
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-surface-gray-2 px-2 py-1 text-[11px] text-ink-gray-7">
+						<FeatherIcon name="file" class="size-3" />
+						<span class="max-w-[180px] truncate">{{ targetPage.title }}</span>
+						<button class="text-ink-gray-5 hover:text-ink-gray-8" @click="targetPage = null">
+							<FeatherIcon name="x" class="size-3" />
 						</button>
 					</div>
-
-					<div class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-3 py-2.5">
-						<!-- referenced page chip -->
-						<div
-							v-if="targetPage"
-							class="mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-surface-gray-2 px-2 py-1 text-[11px] text-ink-gray-7">
-							<FeatherIcon name="file" class="size-3" />
-							<span class="max-w-[180px] truncate">{{ targetPage.title }}</span>
-							<button class="text-ink-gray-5 hover:text-ink-gray-8" @click="targetPage = null">
-								<FeatherIcon name="x" class="size-3" />
+					<textarea
+						ref="inputEl"
+						v-model="chat.prompt.value"
+						rows="1"
+						:placeholder="
+							targetPage
+								? `Ask to change ${targetPage.title}…`
+								: 'Ask Builder AI…  (type @ to reference a page)'
+						"
+						class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
+						@input="onInput"
+						@keydown.enter.exact.prevent="onSend" />
+					<div class="mt-1.5 flex items-center gap-2">
+						<Dropdown :options="modelOptions" placement="top-start">
+							<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
+								{{ modelLabel }}
 							</button>
-						</div>
-						<textarea
-							ref="inputEl"
-							v-model="chat.prompt.value"
-							rows="1"
-							:placeholder="
-								targetPage
-									? `Ask to change ${targetPage.title}…`
-									: 'Ask Builder AI…  (type @ to reference a page)'
-							"
-							class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
-							@input="onInput"
-							@keydown.enter.exact.prevent="onEnter"
-							@keydown.esc="mentionActive = false" />
-						<div class="mt-1.5 flex items-center gap-2">
-							<Dropdown :options="modelOptions" placement="top-start">
-								<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
-									{{ modelLabel }}
-								</button>
-							</Dropdown>
-							<span class="flex-1"></span>
-							<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
-								<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
-							</Button>
-							<Button v-else variant="solid" :disabled="!canSend" @click="onSend">
-								<template #icon><FeatherIcon name="arrow-up" class="size-4" /></template>
-							</Button>
-						</div>
+						</Dropdown>
+						<span class="flex-1"></span>
+						<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
+							<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
+						</Button>
+						<Button v-else variant="solid" :disabled="!canSend" @click="onSend">
+							<template #icon><FeatherIcon name="arrow-up" class="size-4" /></template>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -121,7 +116,7 @@
 import AgentMessage from "@/components/ai-builder/AgentMessage.vue";
 import { useAgentChat } from "@/components/ai-builder/useAgentChat";
 import router from "@/router";
-import { Button, createResource, Dropdown, FeatherIcon } from "frappe-ui";
+import { Autocomplete, Button, createResource, Dropdown, FeatherIcon } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -136,10 +131,10 @@ const chat = useAgentChat();
 const inputEl = ref<HTMLTextAreaElement | null>(null);
 const scrollEl = ref<HTMLElement | null>(null);
 
-// @page mention state
+// @page reference state. The picker itself (search, arrow-key nav, positioning) is a
+// frappe-ui Autocomplete — we only feed it options and react to a pick.
+const pageAC = ref<any>(null);
 const allPages = ref<PageRef[]>([]);
-const mentionActive = ref(false);
-const mentionQuery = ref("");
 const targetPage = ref<{ name: string; title: string } | null>(null);
 
 const routeSessionId = computed(() => (route.params.sessionId as string) || "");
@@ -149,10 +144,13 @@ const modelLabel = computed(
 const modelOptions = computed(() =>
 	chat.models.value.map((m) => ({ label: m.label, onClick: () => (chat.selectedModel.value = m.name) })),
 );
-const filteredPages = computed(() => {
-	const q = mentionQuery.value.toLowerCase();
-	return allPages.value.filter((p) => (p.page_title || p.name).toLowerCase().includes(q)).slice(0, 8);
-});
+const pageOptions = computed(() =>
+	allPages.value.map((p) => ({
+		label: p.page_title || p.name,
+		value: p.name,
+		description: p.route ? `/${p.route.replace(/^\//, "")}` : "",
+	})),
+);
 // A referenced page hands off to the editor, so a bare "@Home" with no instruction
 // is still sendable; otherwise require text + a model.
 const canSend = computed(() => (!!targetPage.value || chat.canSubmit.value) && !!chat.prompt.value.trim());
@@ -166,35 +164,20 @@ function resize() {
 
 function onInput() {
 	resize();
-	detectMention();
-}
-
-/** Show the picker when the caret sits just after an `@token`. */
-function detectMention() {
+	// Typing "@" opens the page picker (frappe-ui Autocomplete). Strip the "@" so the
+	// textarea stays clean — the chosen page becomes a chip, not inline text.
 	const el = inputEl.value;
 	const caret = el?.selectionStart ?? chat.prompt.value.length;
-	const m = chat.prompt.value.slice(0, caret).match(/@([\w-]*)$/);
-	mentionActive.value = !!m;
-	mentionQuery.value = m ? m[1] : "";
-}
-
-function selectPage(p: PageRef) {
-	const el = inputEl.value;
-	const caret = el?.selectionStart ?? chat.prompt.value.length;
-	const head = chat.prompt.value.slice(0, caret).replace(/@([\w-]*)$/, "");
-	chat.prompt.value = head + chat.prompt.value.slice(caret);
-	targetPage.value = { name: p.name, title: p.page_title || p.name };
-	mentionActive.value = false;
-	mentionQuery.value = "";
-	nextTick(() => inputEl.value?.focus());
-}
-
-function onEnter() {
-	if (mentionActive.value && filteredPages.value.length) {
-		selectPage(filteredPages.value[0]);
-		return;
+	if (chat.prompt.value.slice(0, caret).endsWith("@")) {
+		chat.prompt.value = chat.prompt.value.slice(0, caret - 1) + chat.prompt.value.slice(caret);
+		nextTick(() => pageAC.value?.togglePopover?.(true));
 	}
-	onSend();
+}
+
+function onPagePicked(option: { label: string; value: string } | null) {
+	if (!option) return;
+	targetPage.value = { name: option.value, title: option.label };
+	nextTick(() => inputEl.value?.focus());
 }
 
 function onSend() {
