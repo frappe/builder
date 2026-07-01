@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "route",
+  "page_title",
+  "page",
+  "status",
+  "subagent_session",
+  "error"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route"
+  },
+  {
+   "columns": 2,
+   "fieldname": "page_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Page Title"
+  },
+  {
+   "columns": 2,
+   "fieldname": "page",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Page",
+   "options": "Builder Page"
+  },
+  {
+   "columns": 1,
+   "default": "queued",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "queued\nstreaming\ndone\nfailed"
+  },
+  {
+   "fieldname": "subagent_session",
+   "fieldtype": "Link",
+   "label": "Sub-agent Session",
+   "options": "Builder AI Session"
+  },
+  {
+   "columns": 3,
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Error"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Site Batch Page",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

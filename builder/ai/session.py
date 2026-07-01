@@ -44,6 +44,38 @@ class AISession:
 		return cls(doc)
 
 	@classmethod
+	def get_or_create_site(cls, folder: str, model: str | None = None, user: str | None = None):
+		"""The site-level session for the architect conversation (clarify / plan). Keyed on
+		(project_folder, user) rather than a page — sub-agents still use per-page sessions."""
+		user = user or frappe.session.user
+
+		session_name = frappe.db.get_value(
+			cls.DOCTYPE,
+			{"project_folder": folder, "session_user": user, "session_kind": "site", "status": "Active"},
+			"name",
+		)
+		if session_name:
+			doc = frappe.get_doc(cls.DOCTYPE, str(session_name))
+			if model and not doc.selected_model:
+				doc.selected_model = model
+				doc.save(ignore_permissions=True)
+			return cls(doc)
+
+		doc = frappe.get_doc(
+			{
+				"doctype": cls.DOCTYPE,
+				"session_kind": "site",
+				"project_folder": folder,
+				"session_user": user,
+				"status": "Active",
+				"selected_model": model or "",
+				"last_interaction_on": frappe.utils.now_datetime(),
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		return cls(doc)
+
+	@classmethod
 	def get(cls, session_id: str, page_id: str | None = None, user: str | None = None):
 		user = user or frappe.session.user
 		if not frappe.db.exists(cls.DOCTYPE, session_id):
@@ -75,6 +107,10 @@ class AISession:
 	@property
 	def page(self):
 		return self._doc.page
+
+	@property
+	def project_folder(self):
+		return self._doc.project_folder
 
 	@property
 	def selected_model(self):

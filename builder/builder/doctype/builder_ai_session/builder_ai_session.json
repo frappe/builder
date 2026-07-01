@@ -7,21 +7,38 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "session_kind",
   "page",
+  "project_folder",
   "session_user",
   "status",
   "selected_model",
   "last_task_type",
-  "last_interaction_on"
+  "last_interaction_on",
+  "is_running"
  ],
  "fields": [
   {
+   "default": "page",
+   "fieldname": "session_kind",
+   "fieldtype": "Select",
+   "label": "Session Kind",
+   "options": "page\nsite"
+  },
+  {
+   "depends_on": "eval:doc.session_kind==='page'",
    "fieldname": "page",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Page",
-   "options": "Builder Page",
-   "reqd": 1
+   "options": "Builder Page"
+  },
+  {
+   "depends_on": "eval:doc.session_kind==='site'",
+   "fieldname": "project_folder",
+   "fieldtype": "Link",
+   "label": "Project Folder",
+   "options": "Builder Project Folder"
   },
   {
    "fieldname": "session_user",
@@ -68,7 +85,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-06 12:00:00.000000",
+ "modified": "2026-07-01 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Session",
