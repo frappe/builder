@@ -9,7 +9,7 @@
 				class="aspect-video w-full rounded-md bg-surface-gray-1 object-cover object-top" />
 			<div
 				class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-				<Button size="sm" variant="solid" @click.stop="$emit('select', group)">View templates</Button>
+				<Button size="sm" variant="solid" @click.stop="$emit('select', group)">Select Template</Button>
 				<Button v-if="previewPage" size="sm" variant="subtle" @click.stop="openPreview">Preview</Button>
 			</div>
 		</div>
