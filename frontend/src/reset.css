@@ -41,6 +41,14 @@ p:not(:where(.prose,.ProseMirror) *) {
 .__text_block__ {
 	overflow-wrap: break-word;
 }
+/* Clipped/gradient text (background-clip: text) is set on the text block element,
+   but the text lives in a child (<p>/<div>). background-image and background-clip
+   don't inherit, so without this the clipped text renders invisible. */
+.__text_block__ > * {
+	background-image: inherit;
+	-webkit-background-clip: inherit;
+	background-clip: inherit;
+}
 .__text_block__ a {
 	color: var(--link-color);
 	text-decoration: underline;
