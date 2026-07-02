@@ -6,8 +6,7 @@
 		</div>
 		<div class="flex-1 overflow-hidden">
 			<TemplateGallery
-				class="h-full"
-				content-class="max-w-3xl"
+				class="mx-auto h-full w-full max-w-3xl"
 				blank-label="Start from scratch"
 				:max-groups="8"
 				:heading="templateHeading"

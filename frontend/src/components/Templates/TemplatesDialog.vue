@@ -5,8 +5,8 @@
 			<DialogDescription class="sr-only">
 				Start from a blank page or pick a page from a template.
 			</DialogDescription>
-			<div class="relative max-h-[85vh] min-h-[660px] overflow-hidden">
-				<TemplateGallery class="h-full" />
+			<div class="relative flex max-h-[85vh] min-h-[660px] flex-col overflow-hidden">
+				<TemplateGallery class="min-h-0 flex-1" />
 				<Button
 					icon="lucide-x"
 					variant="subtle"
