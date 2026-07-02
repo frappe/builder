@@ -25,8 +25,8 @@
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
 	<teleport
-		:to="canvasOverlayElement"
-		v-if="canvasOverlayElement && !preview && Boolean(canvasProps)">
+		:to="canvasRoot"
+		v-if="canvasRoot && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
 		<BlockEditor
 			ref="editor"
@@ -279,7 +279,7 @@ const attributes = computed(() => {
 });
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
-const canvasOverlayElement = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
+const canvasRoot = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
 const emulateBlockClientScript = inject<BlockClientScriptEmulator>(
 	"emulateBlockClientScript",
 	() => () => {},

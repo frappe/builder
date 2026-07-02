@@ -2,11 +2,11 @@
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<TextBlockBubbleMenu
-			v-if="editor && canvasOverlayElement"
+			v-if="editor && canvasRoot"
 			:block="block"
 			:editor="editor"
 			:canvas-props="canvasProps"
-			:overlay-element="canvasOverlayElement"
+			:overlay-element="canvasRoot"
 			:is-editable="isEditable"
 			ref="bubbleMenu" />
 		<editor-content
@@ -41,7 +41,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import { Ref, computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
 
@@ -70,7 +70,7 @@ const props = withDefaults(
 );
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
-const canvasOverlayElement = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
+const canvasRoot = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
 
 const FontFamilyPasteRule = Extension.create({
 	name: "fontFamilyPasteRule",
@@ -182,7 +182,7 @@ const showEditor = computed(() => {
 	return !((props.block.isLink() || props.block.isButton()) && props.block.hasChildren());
 });
 
-onBeforeMount(() => {
+onMounted(() => {
 	let html = props.block.getInnerHTML() || "";
 	setFontFromHTML(html, component.value?.ownerDocument || document);
 });

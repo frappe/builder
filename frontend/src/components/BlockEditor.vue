@@ -39,9 +39,9 @@ import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import {
 	elementFromEditorPoint,
-	getElementDocument,
 	getEventPointInDocument,
 	getEventPointInEditor,
+	startCanvasDrag,
 } from "@/utils/canvasFrameDom";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
@@ -278,54 +278,41 @@ const handleMove = (ev: MouseEvent) => {
 	ev.stopPropagation();
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
 	const startTop = (props.target as HTMLElement).offsetTop || 0;
 
 	moving.value = true;
 	guides.showX();
-
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = "grabbing";
 	target.style.cursor = "grabbing";
 
-	const mousemove = async (mouseMoveEvent: MouseEvent) => {
-		if (canvasStore.isMarqueeActive) return;
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		const movementX = point.x - startPoint.x;
-		const movementY = point.y - startPoint.y;
-		let finalLeft = startLeft + movementX;
-		let finalTop = startTop + movementY;
-		props.block.setStyle("left", addPxToNumber(finalLeft));
-		props.block.setStyle("top", addPxToNumber(finalTop));
-		await nextTick();
-		const { leftOffset, rightOffset } = guides.getPositionOffset();
-		if (leftOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
-		}
-		if (rightOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + rightOffset));
-		}
+	startCanvasDrag(ev, props.target, {
+		cursor: "grabbing",
+		onMove: async ({ event, movementX, movementY }) => {
+			if (canvasStore.isMarqueeActive) return;
+			const finalLeft = startLeft + movementX;
+			const finalTop = startTop + movementY;
+			props.block.setStyle("left", addPxToNumber(finalLeft));
+			props.block.setStyle("top", addPxToNumber(finalTop));
+			await nextTick();
+			const { leftOffset, rightOffset } = guides.getPositionOffset();
+			if (leftOffset !== 0) {
+				props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+			}
+			if (rightOffset !== 0) {
+				props.block.setStyle("left", addPxToNumber(finalLeft + rightOffset));
+			}
 
-		mouseMoveEvent.preventDefault();
-		preventCLick.value = true;
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
+			event.preventDefault();
+			preventCLick.value = true;
+		},
+		onEnd: (event) => {
 			moving.value = false;
-			ownerDocument.body.style.cursor = docCursor;
 			target.style.cursor = "grab";
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
+			event.preventDefault();
 			guides.hideX();
 			canvasStore.activeCanvas?.history?.resume(pauseId, true);
 		},
-		{ once: true },
-	);
+	});
 };
 
 defineExpose({

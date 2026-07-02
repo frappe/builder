@@ -42,6 +42,40 @@ function createScriptFunction(userScript: string, targetWindow: Window) {
 	);
 }
 
+function createScriptCleanup(
+	result: unknown,
+	thisArg: unknown,
+	mode: "restricted" | "unrestricted",
+	onDispose: () => void = () => {},
+): ScriptCleanup {
+	let disposed = false;
+	let resolvedCleanup: unknown;
+
+	const runCleanup = (cleanup: unknown) => {
+		if (typeof cleanup !== "function") return;
+		try {
+			cleanup.call(thisArg);
+		} catch (error) {
+			console.error(`Error cleaning up user script (${mode}):`, error);
+		}
+	};
+
+	Promise.resolve(result).then(
+		(value) => {
+			resolvedCleanup = value;
+			if (disposed) runCleanup(value);
+		},
+		(error) => console.error(`Error in user script (${mode}):`, error),
+	);
+
+	return () => {
+		if (disposed) return;
+		disposed = true;
+		onDispose();
+		runCleanup(resolvedCleanup);
+	};
+}
+
 function executeClientScriptUnrestricted(
 	thisElement: HTMLElement | null,
 	userScript: string,
@@ -60,20 +94,7 @@ function executeClientScriptUnrestricted(
 			props,
 			thisRef: thisElement,
 		});
-		let disposed = false;
-		let resolvedCleanup: unknown;
-		Promise.resolve(cleanup).then((value) => {
-			resolvedCleanup = value;
-			if (disposed && typeof value === "function") value.call(thisElement);
-		});
-		return () => {
-			disposed = true;
-			try {
-				if (typeof resolvedCleanup === "function") resolvedCleanup.call(thisElement);
-			} catch (error) {
-				console.error("Error cleaning up user script (unrestricted):", error);
-			}
-		};
+		return createScriptCleanup(cleanup, thisElement, "unrestricted");
 	} catch (error) {
 		console.error("Error in user script (unrestricted):", error);
 		return () => {};
@@ -231,25 +252,11 @@ function executeClientScriptRestricted(
 	try {
 		const fn = createScriptFunction(userScript, targetWindow);
 		const userCleanup = fn(context);
-		let disposed = false;
-		let resolvedCleanup: unknown;
-		Promise.resolve(userCleanup).then((value) => {
-			resolvedCleanup = value;
-			if (disposed && typeof value === "function") value.call(proxiedThis);
-		});
-		return () => {
-			disposed = true;
+		return createScriptCleanup(userCleanup, proxiedThis, "restricted", () => {
 			eventListeners.forEach(({ target, type, listener, options }) => {
 				target.removeEventListener(type, listener, options);
 			});
-			if (typeof resolvedCleanup === "function") {
-				try {
-					resolvedCleanup.call(proxiedThis);
-				} catch (error) {
-					console.error("Error cleaning up user script (restricted):", error);
-				}
-			}
-		};
+		});
 	} catch (error) {
 		console.error("Error in user script (restricted):", error);
 		return () => {

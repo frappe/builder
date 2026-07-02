@@ -111,12 +111,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import {
-	getComputedStyleFor,
-	getElementDocument,
-	getElementWindow,
-	getEventPointInDocument,
-} from "@/utils/canvasFrameDom";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
@@ -228,71 +223,60 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	// 	messageShown.value = true;
 	// }
 	updating.value = true;
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const target = ev.target as HTMLElement;
 
-	const startTop = getNumberFromPx(blockStyles.value.paddingTop) || 5;
-	const startBottom = getNumberFromPx(blockStyles.value.paddingBottom) || 5;
-	const startLeft = getNumberFromPx(blockStyles.value.paddingLeft) || 5;
-	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
+	const startTop = getNumberFromPx(String(blockStyles.value.paddingTop || "")) || 5;
+	const startBottom = getNumberFromPx(String(blockStyles.value.paddingBottom || "")) || 5;
+	const startLeft = getNumberFromPx(String(blockStyles.value.paddingLeft || "")) || 5;
+	const startRight = getNumberFromPx(String(blockStyles.value.paddingRight || "")) || 5;
 
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(target).cursor;
+	startCanvasDrag(ev, props.target, {
+		cursor: getComputedStyleFor(target).cursor,
+		onMove: ({ event, point, startPoint }) => {
+			let movement = 0;
+			let affectingAxis = null;
+			props.onUpdate?.();
+			if (position === Position.Top) {
+				movement = Math.max(startTop + point.y - startPoint.y, 0);
+				props.targetBlock.setStyle("paddingTop", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Bottom) {
+				movement = Math.max(startBottom + startPoint.y - point.y, 0);
+				props.targetBlock.setStyle("paddingBottom", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Left) {
+				movement = Math.max(startLeft + point.x - startPoint.x, 0);
+				props.targetBlock.setStyle("paddingLeft", movement + "px");
+				affectingAxis = "x";
+			} else if (position === Position.Right) {
+				movement = Math.max(startRight + startPoint.x - point.x, 0);
+				props.targetBlock.setStyle("paddingRight", movement + "px");
+				affectingAxis = "x";
+			}
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		let movement = 0;
-		let affectingAxis = null;
-		props.onUpdate && props.onUpdate();
-		if (position === Position.Top) {
-			movement = Math.max(startTop + point.y - startPoint.y, 0);
-			props.targetBlock.setStyle("paddingTop", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + startPoint.y - point.y, 0);
-			props.targetBlock.setStyle("paddingBottom", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + point.x - startPoint.x, 0);
-			props.targetBlock.setStyle("paddingLeft", movement + "px");
-			affectingAxis = "x";
-		} else if (position === Position.Right) {
-			movement = Math.max(startRight + startPoint.x - point.x, 0);
-			props.targetBlock.setStyle("paddingRight", movement + "px");
-			affectingAxis = "x";
-		}
-
-		if (mouseMoveEvent.altKey) {
-			if (affectingAxis === "y") {
+			if (event.altKey) {
+				if (affectingAxis === "y") {
+					props.targetBlock.setStyle("paddingTop", movement + "px");
+					props.targetBlock.setStyle("paddingBottom", movement + "px");
+				} else if (affectingAxis === "x") {
+					props.targetBlock.setStyle("paddingLeft", movement + "px");
+					props.targetBlock.setStyle("paddingRight", movement + "px");
+				}
+			} else if (event.shiftKey) {
 				props.targetBlock.setStyle("paddingTop", movement + "px");
 				props.targetBlock.setStyle("paddingBottom", movement + "px");
-			} else if (affectingAxis === "x") {
 				props.targetBlock.setStyle("paddingLeft", movement + "px");
 				props.targetBlock.setStyle("paddingRight", movement + "px");
 			}
-		} else if (mouseMoveEvent.shiftKey) {
-			props.targetBlock.setStyle("paddingTop", movement + "px");
-			props.targetBlock.setStyle("paddingBottom", movement + "px");
-			props.targetBlock.setStyle("paddingLeft", movement + "px");
-			props.targetBlock.setStyle("paddingRight", movement + "px");
-		}
 
-		mouseMoveEvent.preventDefault();
-		mouseMoveEvent.stopPropagation();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			ownerDocument.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			updating.value = false;
-			mouseUpEvent.preventDefault();
+			event.preventDefault();
+			event.stopPropagation();
 		},
-		{ once: true },
-	);
+		onEnd: (event) => {
+			updating.value = false;
+			event.preventDefault();
+		},
+	});
 };
 
 let showToast = () =>

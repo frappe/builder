@@ -238,7 +238,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (builderStore.readOnlyMode) return false;
 		if (canvasStore.isDragging || canvasProps.panning || canvasProps.scaling) return false;
 
-		const target = ev.target as HTMLElement | null;
+		const target = getEventTarget(ev) as HTMLElement | null;
 		if (!target) return false;
 
 		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {

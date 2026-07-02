@@ -7,7 +7,7 @@ import {
 	getComputedStyleFor,
 	getEventDocument,
 	getEventPointInDocument,
-	getEventPointInEditor,
+	startCanvasDrag,
 } from "@/utils/canvasFrameDom";
 import {
 	addPxToNumber,
@@ -62,7 +62,10 @@ export function useCanvasEvents(
 			const parentElement = ownerDocument.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`,
 			) as HTMLElement;
-			if (!parentElement) return;
+			if (!parentElement) {
+				pauseId && canvasHistory.value?.resume(pauseId);
+				return;
+			}
 			const parentOldPosition = parentBlock.getStyle("position");
 			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
 				parentBlock.setBaseStyle("position", "relative");
@@ -83,27 +86,19 @@ export function useCanvasEvents(
 				counter++;
 			}
 
-			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (builderStore.mode === "text") {
-					return;
-				} else {
-					mouseMoveEvent.preventDefault();
-					const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-					let width = point.x - initialPoint.x;
-					let height = point.y - initialPoint.y;
+			startCanvasDrag(ev, parentElement, {
+				onMove: ({ event, movementX, movementY }) => {
+					if (builderStore.mode === "text") return;
+					event.preventDefault();
+					let width = movementX;
+					let height = movementY;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
 					const setFullWidth = width === parentWidth;
 					childBlock.setBaseStyle("width", setFullWidth ? "100%" : addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
-				}
-			};
-			useEventListener(document, "mousemove", mouseMoveHandler);
-			useEventListener(
-				document,
-				"mouseup",
-				() => {
-					document.removeEventListener("mousemove", mouseMoveHandler);
+				},
+				onEnd: () => {
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
@@ -133,35 +128,25 @@ export function useCanvasEvents(
 						builderStore.openImageUpload = true;
 					}
 				},
-				{ once: true },
-			);
+			});
 		}
 	});
 
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
 		if (builderStore.mode === "move") {
 			container.value.style.cursor = "grabbing";
-			const initialPoint = getEventPointInEditor(ev);
 			const initialTranslateX = canvasProps.translateX;
 			const initialTranslateY = canvasProps.translateY;
-			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				mouseMoveEvent.preventDefault();
-				const point = getEventPointInEditor(mouseMoveEvent);
-				const diffX = (point.x - initialPoint.x) / canvasProps.scale;
-				const diffY = (point.y - initialPoint.y) / canvasProps.scale;
-				canvasProps.translateX = initialTranslateX + diffX;
-				canvasProps.translateY = initialTranslateY + diffY;
-			};
-			useEventListener(document, "mousemove", mouseMoveHandler);
-			useEventListener(
-				document,
-				"mouseup",
-				() => {
-					document.removeEventListener("mousemove", mouseMoveHandler);
+			startCanvasDrag(ev, container.value, {
+				onMove: ({ event, movementX, movementY }) => {
+					event.preventDefault();
+					canvasProps.translateX = initialTranslateX + movementX / canvasProps.scale;
+					canvasProps.translateY = initialTranslateY + movementY / canvasProps.scale;
+				},
+				onEnd: () => {
 					container.value.style.cursor = "grab";
 				},
-				{ once: true },
-			);
+			});
 			ev.stopPropagation();
 			ev.preventDefault();
 		}

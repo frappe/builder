@@ -361,7 +361,6 @@ export function useBuilderEvents(
 			description: "Undo",
 			group: "Edit",
 			handler: () => {
-				console.log(canvasStore.activeCanvas?.history?.canUndo())
 				if (canvasStore.activeCanvas?.history?.canUndo) {
 					canvasStore.activeCanvas?.history.undo();
 				}

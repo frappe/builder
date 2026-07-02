@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
-import { getComputedStyleFor, getElementDocument, getEventPointInDocument } from "@/utils/canvasFrameDom";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
@@ -77,47 +77,43 @@ const setHandlerPosition = (radius: number) => {
 };
 
 const handleRounded = (ev: MouseEvent) => {
-	const ownerDocument = getElementDocument(props.target);
-	let lastPoint = getEventPointInDocument(ev, ownerDocument);
+	let lastPoint: { x: number; y: number } | null = null;
 	updating.value = true;
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		const movementX = point.x - lastPoint.x;
-		const movementY = point.y - lastPoint.y;
-		const movement = ((movementX + movementY) / 2) * 2;
+	startCanvasDrag(ev, props.target, {
+		onMove: ({ event, point, startPoint }) => {
+			const previousPoint = lastPoint || startPoint;
+			event.preventDefault();
+			const movementX = point.x - previousPoint.x;
+			const movementY = point.y - previousPoint.y;
+			const movement = ((movementX + movementY) / 2) * 2;
 
-		if (movement < 0) {
-			MIN_POSITION.top = -(handleDimensions.height / 2);
-			MIN_POSITION.left = -(handleDimensions.width / 2);
-		}
+			if (movement < 0) {
+				MIN_POSITION.top = -(handleDimensions.height / 2);
+				MIN_POSITION.left = -(handleDimensions.width / 2);
+			}
 
-		const radius = Math.round(
-			Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
-		);
+			const radius = Math.round(
+				Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
+			);
 
-		borderRadius.value = radius;
-		setHandlerPosition(radius);
-		props.targetBlock.setStyle("borderRadius", `${radius}px`);
+			borderRadius.value = radius;
+			setHandlerPosition(radius);
+			props.targetBlock.setStyle("borderRadius", `${radius}px`);
 
-		lastPoint = point;
-	};
-
-	const mouseup = (mouseUpEvent: MouseEvent) => {
-		mouseUpEvent.preventDefault();
-		if (getNumberFromPx(props.targetBlock.getStyle("borderRadius")) < 10) {
-			handlerTop.value = MIN_POSITION.top;
-			handlerLeft.value = MIN_POSITION.left;
-		}
-		updating.value = false;
-		document.removeEventListener("mousemove", mousemove);
-	};
-
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", mouseup, { once: true });
+			lastPoint = point;
+		},
+		onEnd: (event) => {
+			event.preventDefault();
+			if (getNumberFromPx(String(props.targetBlock.getStyle("borderRadius") || "")) < 10) {
+				handlerTop.value = MIN_POSITION.top;
+				handlerLeft.value = MIN_POSITION.left;
+			}
+			updating.value = false;
+		},
+	});
 };
 
 onMounted(() => {

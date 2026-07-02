@@ -133,11 +133,6 @@
 				<FitScreenIcon />
 			</div>
 		</div>
-		<div
-			class="overlay absolute"
-			:class="{ 'pointer-events-none': isOverDropZone }"
-			id="overlay"
-			ref="overlay" />
 		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
@@ -180,7 +175,20 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
+import {
+	type EffectScope,
+	Ref,
+	computed,
+	effectScope,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	provide,
+	reactive,
+	ref,
+	useId,
+	watch,
+} from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -203,13 +211,13 @@ const resizingBlock = ref(false);
 const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
-const overlay = ref(null);
 const blockStyles = reactive(new Map<string, string>());
 const frameRoots = reactive(new Map<string, HTMLElement>());
-const frameDocuments = reactive(new Map<string, Document>());
 const frameEpoch = ref(0);
-const frameDropStates = reactive(new Map<string, boolean>());
-const frameEventCleanups = new Map<Document, () => void>();
+const frameRegistrations = new Map<
+	string,
+	{ document: Document; scope: EffectScope; stopForwarding: () => void }
+>();
 const cursorStyle = ref("default");
 
 const props = withDefaults(
@@ -247,7 +255,6 @@ const {
 } = useBlockSelection(block);
 
 const canvasProps = reactive<CanvasProps>({
-	overlayElement: null,
 	background: "#fff",
 	scale: 1,
 	translateX: 0,
@@ -255,7 +262,6 @@ const canvasProps = reactive<CanvasProps>({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
-	frameDocuments,
 	frameRoots,
 	breakpoints: [
 		{
@@ -314,12 +320,9 @@ const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMar
 		setHoveredBreakpoint,
 	});
 
-const isOverDropZone = computed(() => Array.from(frameDropStates.values()).some(Boolean));
-
 onMounted(() => {
 	const canvasContainerEl = canvasContainer.value as unknown as HTMLElement;
 	const canvasEl = canvas.value as unknown as HTMLElement;
-	canvasProps.overlayElement = overlay.value;
 	setScaleAndTranslate();
 	showBlocks.value = true;
 	setupHistory();
@@ -345,8 +348,7 @@ onMounted(() => {
 
 onUnmounted(() => {
 	cleanupMarqueeListeners();
-	frameEventCleanups.forEach((cleanup) => cleanup());
-	frameEventCleanups.clear();
+	frameRegistrations.forEach(({ document }, breakpoint) => unregisterFrame(breakpoint, document));
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -364,25 +366,31 @@ const handleClick = (ev: MouseEvent) => {
 };
 
 function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, iframe: HTMLIFrameElement) {
+	unregisterFrame(breakpoint);
 	frameRoots.set(breakpoint, root);
-	frameDocuments.set(breakpoint, doc);
 
-	frameEventCleanups.set(doc, forwardFrameEvents(doc, iframe));
-	const { isOverDropZone: frameIsOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
-	watch(frameIsOverDropZone, (value) => frameDropStates.set(breakpoint, value), { immediate: true });
+	const scope = effectScope();
+	scope.run(() => {
+		const { isOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
+		watch(isOverDropZone, (isOver) => root.toggleAttribute("data-drop-active", isOver), { immediate: true });
+	});
+	frameRegistrations.set(breakpoint, {
+		document: doc,
+		scope,
+		stopForwarding: forwardFrameEvents(doc, iframe),
+	});
 	nextTick(setScaleAndTranslate);
 }
 
-function unregisterFrame(breakpoint: string, doc: Document | null) {
-	if (doc) {
-		frameEventCleanups.get(doc)?.();
-		frameEventCleanups.delete(doc);
-	}
-	if (!doc || frameDocuments.get(breakpoint) === doc) {
-		frameRoots.delete(breakpoint);
-		frameDocuments.delete(breakpoint);
-		frameDropStates.delete(breakpoint);
-	}
+function unregisterFrame(breakpoint: string, doc: Document | null = null) {
+	const registration = frameRegistrations.get(breakpoint);
+	if (doc && registration && registration.document !== doc) return;
+
+	registration?.stopForwarding();
+	registration?.scope.stop();
+	frameRegistrations.delete(breakpoint);
+	frameRoots.get(breakpoint)?.removeAttribute("data-drop-active");
+	frameRoots.delete(breakpoint);
 }
 
 onMounted(() => {
@@ -622,5 +630,9 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 	p:not(:where(.prose, .ProseMirror) *) {
 		line-height: revert;
 	}
+}
+
+.canvas[data-drop-active] > .editor {
+	pointer-events: none;
 }
 </style>

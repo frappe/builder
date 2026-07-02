@@ -54,7 +54,7 @@ const canvasRoot = ref<HTMLElement | null>(null);
 const target = ref<HTMLElement | null>(null);
 const height = ref(1);
 let resizeObserver: ResizeObserver | null = null;
-let headObserver: MutationObserver | null = null;
+let editorObserver: MutationObserver | null = null;
 let currentDocument: Document | null = null;
 
 const rootStyle = computed(() => ({
@@ -98,8 +98,8 @@ function updateHeight() {
 function cleanupFrame() {
 	resizeObserver?.disconnect();
 	resizeObserver = null;
-	headObserver?.disconnect();
-	headObserver = null;
+	editorObserver?.disconnect();
+	editorObserver = null;
 	if (currentDocument) emit("dispose", props.breakpoint, currentDocument);
 	currentDocument = null;
 	target.value = null;
@@ -124,11 +124,21 @@ async function attachFrame() {
 	resizeObserver.observe(doc.body);
 	updateHeight();
 
-	headObserver = new MutationObserver(() => {
+	editorObserver = new MutationObserver((mutations) => {
 		if (!currentDocument) return;
-		cloneEditorStyles(currentDocument);
+		if (mutations.some(({ target }) => document.head.contains(target))) {
+			cloneEditorStyles(currentDocument);
+		}
+		if (mutations.some(({ type }) => type === "attributes")) {
+			syncDocumentChrome(currentDocument);
+		}
 	});
-	headObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+	editorObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+	editorObserver.observe(document.documentElement, {
+		attributes: true,
+		attributeFilter: ["class", "data-theme"],
+	});
+	editorObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
 	emit("ready", props.breakpoint, doc, canvasRoot.value, frame);
 }
@@ -141,11 +151,6 @@ watch(
 		attachFrame();
 	},
 	{ flush: "post" },
-);
-
-watch(
-	() => [props.dark, document.documentElement.dataset.theme],
-	() => currentDocument && syncDocumentChrome(currentDocument),
 );
 
 onBeforeUnmount(() => {

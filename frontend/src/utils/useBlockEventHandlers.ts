@@ -2,7 +2,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
-import { getEventPointInEditor } from "@/utils/canvasFrameDom";
+import { getEventDocument, getEventPointInDocument } from "@/utils/canvasFrameDom";
 import { nextTick } from "vue";
 
 const builderStore = useBuilderStore();
@@ -53,9 +53,11 @@ export function handleBlockDoubleClick(e: MouseEvent) {
 	// dblclick on container adds text block or selects text block if only one child
 	let children = block.getChildren();
 	if (block.isHTML()) {
-		document
+		const eventDocument = getEventDocument(e);
+		const EventConstructor = eventDocument.defaultView?.MouseEvent || MouseEvent;
+		eventDocument
 			.querySelector(`.editor[data-block-id="${block.blockId}"]`)
-			?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+			?.dispatchEvent(new EventConstructor("dblclick", { bubbles: true, cancelable: true }));
 		e.stopPropagation();
 	} else if (block.isContainer()) {
 		if (!children.length) {
@@ -80,10 +82,12 @@ export function handleBlockContextMenu(e: MouseEvent) {
 	e.stopPropagation();
 	e.preventDefault();
 	selectBlock(e);
-	const point = getEventPointInEditor(e);
+	const eventDocument = getEventDocument(e);
+	const point = getEventPointInDocument(e, eventDocument);
+	const EventConstructor = eventDocument.defaultView?.MouseEvent || MouseEvent;
 	nextTick(() => {
-		document.querySelector(`.editor[data-block-id="${blockId}"]`)?.dispatchEvent(
-			new MouseEvent("contextmenu", {
+		eventDocument.querySelector(`.editor[data-block-id="${blockId}"]`)?.dispatchEvent(
+			new EventConstructor("contextmenu", {
 				bubbles: true,
 				cancelable: true,
 				clientX: point.x,

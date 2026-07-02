@@ -115,12 +115,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import {
-	getComputedStyleFor,
-	getElementDocument,
-	getElementWindow,
-	getEventPointInDocument,
-} from "@/utils/canvasFrameDom";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
@@ -232,69 +227,58 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
 	ev.preventDefault();
 	updating.value = true;
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const target = ev.target as HTMLElement;
 
-	const startTop = getNumberFromPx(blockStyles.value.marginTop) || 0;
-	const startBottom = getNumberFromPx(blockStyles.value.marginBottom) || 0;
-	const startLeft = getNumberFromPx(blockStyles.value.marginLeft) || 0;
-	const startRight = getNumberFromPx(blockStyles.value.marginRight) || 0;
+	const startTop = getNumberFromPx(String(blockStyles.value.marginTop || "")) || 0;
+	const startBottom = getNumberFromPx(String(blockStyles.value.marginBottom || "")) || 0;
+	const startLeft = getNumberFromPx(String(blockStyles.value.marginLeft || "")) || 0;
+	const startRight = getNumberFromPx(String(blockStyles.value.marginRight || "")) || 0;
 
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(target).cursor;
+	startCanvasDrag(ev, props.target, {
+		cursor: getComputedStyleFor(target).cursor,
+		onMove: ({ event, point, startPoint }) => {
+			let movement = 0;
+			let affectingAxis = null;
+			props.onUpdate?.();
+			if (position === Position.Top) {
+				movement = Math.max(startTop + point.y - startPoint.y, 0);
+				props.targetBlock.setStyle("marginTop", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Bottom) {
+				movement = Math.max(startBottom + point.y - startPoint.y, 0);
+				props.targetBlock.setStyle("marginBottom", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Left) {
+				movement = Math.max(startLeft + point.x - startPoint.x, 0);
+				props.targetBlock.setStyle("marginLeft", movement + "px");
+				affectingAxis = "x";
+			} else if (position === Position.Right) {
+				movement = Math.max(startRight + point.x - startPoint.x, 0);
+				props.targetBlock.setStyle("marginRight", movement + "px");
+				affectingAxis = "x";
+			}
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		let movement = 0;
-		let affectingAxis = null;
-		props.onUpdate && props.onUpdate();
-		if (position === Position.Top) {
-			movement = Math.max(startTop + point.y - startPoint.y, 0);
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + point.y - startPoint.y, 0);
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + point.x - startPoint.x, 0);
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			affectingAxis = "x";
-		} else if (position === Position.Right) {
-			movement = Math.max(startRight + point.x - startPoint.x, 0);
-			props.targetBlock.setStyle("marginRight", movement + "px");
-			affectingAxis = "x";
-		}
-
-		if (mouseMoveEvent.shiftKey) {
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			props.targetBlock.setStyle("marginRight", movement + "px");
-		} else if (mouseMoveEvent.altKey) {
-			if (affectingAxis === "y") {
+			if (event.shiftKey) {
 				props.targetBlock.setStyle("marginTop", movement + "px");
 				props.targetBlock.setStyle("marginBottom", movement + "px");
-			} else if (affectingAxis === "x") {
 				props.targetBlock.setStyle("marginLeft", movement + "px");
 				props.targetBlock.setStyle("marginRight", movement + "px");
+			} else if (event.altKey) {
+				if (affectingAxis === "y") {
+					props.targetBlock.setStyle("marginTop", movement + "px");
+					props.targetBlock.setStyle("marginBottom", movement + "px");
+				} else if (affectingAxis === "x") {
+					props.targetBlock.setStyle("marginLeft", movement + "px");
+					props.targetBlock.setStyle("marginRight", movement + "px");
+				}
 			}
-		}
 
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			ownerDocument.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			updating.value = false;
-			mouseUpEvent.preventDefault();
+			event.preventDefault();
 		},
-		{ once: true },
-	);
+		onEnd: (event) => {
+			updating.value = false;
+			event.preventDefault();
+		},
+	});
 };
 </script>

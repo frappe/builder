@@ -34,12 +34,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
-import {
-	getComputedStyleFor,
-	getElementDocument,
-	getElementWindow,
-	getEventPointInDocument,
-} from "@/utils/canvasFrameDom";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -92,134 +87,59 @@ const fontSize = computed(() => {
 	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("font-size")));
 });
 
-const handleRightResize = (ev: MouseEvent) => {
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
+type ResizeDirection = "right" | "bottom" | "corner";
+
+const startResize = (ev: MouseEvent, direction: ResizeDirection) => {
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
-		ev.target as HTMLElement,
-	).cursor;
 	resizing.value = true;
-	guides.showX();
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		const movement = point.x - startPoint.x;
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setWidth(movement, startWidth, blockStartWidth);
-		if (mouseMoveEvent.shiftKey) {
-			setHeight(movement, startHeight, blockStartHeight);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			ownerDocument.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-			guides.hideX();
+	if (direction === "right") guides.showX();
+	if (direction === "bottom") guides.showY();
+
+	startCanvasDrag(ev, props.target, {
+		cursor: getComputedStyleFor(ev.target as Element).cursor,
+		onMove: ({ event, movementX, movementY }) => {
+			const primaryMovement = direction === "right" ? movementX : movementY;
+			if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+				setFontSize(primaryMovement, startFontSize);
+				event.preventDefault();
+				return;
+			}
+
+			if (direction !== "bottom") {
+				setWidth(movementX, startWidth, blockStartWidth);
+			}
+			if (direction !== "right") {
+				setHeight(
+					direction === "corner" && event.shiftKey ? movementX : movementY,
+					startHeight,
+					blockStartHeight,
+				);
+			}
+			if (direction === "right" && event.shiftKey) {
+				setHeight(movementX, startHeight, blockStartHeight);
+			}
+			if (direction === "bottom" && event.shiftKey) {
+				setWidth(movementY, startWidth, blockStartWidth);
+			}
+			event.preventDefault();
 		},
-		{ once: true },
-	);
+		onEnd: (event) => {
+			event.preventDefault();
+			resizing.value = false;
+			if (direction === "right") guides.hideX();
+			if (direction === "bottom") guides.hideY();
+		},
+	});
 };
 
-const handleBottomResize = (ev: MouseEvent) => {
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
-		ev.target as HTMLElement,
-	).cursor;
-	resizing.value = true;
-	guides.showY();
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		const movement = point.y - startPoint.y;
-
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setHeight(movement, startHeight, blockStartHeight);
-		if (mouseMoveEvent.shiftKey) {
-			setWidth(movement, startWidth, blockStartWidth);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			ownerDocument.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-			guides.hideY();
-		},
-		{ once: true },
-	);
-};
-
-const handleBottomCornerResize = (ev: MouseEvent) => {
-	const ownerDocument = getElementDocument(props.target);
-	const startPoint = getEventPointInDocument(ev, ownerDocument);
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = ownerDocument.body.style.cursor;
-	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
-		ev.target as HTMLElement,
-	).cursor;
-	resizing.value = true;
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
-		const movementX = point.x - startPoint.x;
-		const movementY = point.y - startPoint.y;
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movementY, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setWidth(movementX, startWidth, blockStartWidth);
-		setHeight(mouseMoveEvent.shiftKey ? movementX : movementY, startHeight, blockStartHeight);
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			ownerDocument.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-		},
-		{ once: true },
-	);
-};
+const handleRightResize = (ev: MouseEvent) => startResize(ev, "right");
+const handleBottomResize = (ev: MouseEvent) => startResize(ev, "bottom");
+const handleBottomCornerResize = (ev: MouseEvent) => startResize(ev, "corner");
 
 const setWidth = (movementX: number, startWidth: number, blockStartWidth: string) => {
 	const finalWidth = Math.round(startWidth + movementX);

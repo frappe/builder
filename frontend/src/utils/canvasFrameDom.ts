@@ -3,6 +3,20 @@ export type CanvasFramePoint = {
 	y: number;
 };
 
+type CanvasDragMove = {
+	event: MouseEvent;
+	point: CanvasFramePoint;
+	startPoint: CanvasFramePoint;
+	movementX: number;
+	movementY: number;
+};
+
+type CanvasDragOptions = {
+	cursor?: string;
+	onMove: (move: CanvasDragMove) => void;
+	onEnd?: (event: MouseEvent) => void;
+};
+
 const forwardedEventSources = new WeakMap<Event, Event>();
 
 export function getElementDocument(element: Element | null): Document {
@@ -90,6 +104,43 @@ export function getEventPointInDocument(event: MouseEvent, doc: Document): Canva
 	return frame ? editorPointToFrame(frame, point) : point;
 }
 
+export function startCanvasDrag(
+	startEvent: MouseEvent,
+	target: Element,
+	{ cursor, onMove, onEnd }: CanvasDragOptions,
+) {
+	const targetDocument = getElementDocument(target);
+	const listenerDocument = getFrameElement(targetDocument)?.ownerDocument || targetDocument;
+	const startPoint = getEventPointInDocument(startEvent, targetDocument);
+	const previousCursor = targetDocument.body.style.cursor;
+
+	if (cursor) targetDocument.body.style.cursor = cursor;
+
+	const stop = () => {
+		listenerDocument.removeEventListener("mousemove", handleMove);
+		listenerDocument.removeEventListener("mouseup", handleEnd);
+		if (cursor) targetDocument.body.style.cursor = previousCursor;
+	};
+	const handleMove = (event: MouseEvent) => {
+		const point = getEventPointInDocument(event, targetDocument);
+		onMove({
+			event,
+			point,
+			startPoint,
+			movementX: point.x - startPoint.x,
+			movementY: point.y - startPoint.y,
+		});
+	};
+	const handleEnd = (event: MouseEvent) => {
+		stop();
+		onEnd?.(event);
+	};
+
+	listenerDocument.addEventListener("mousemove", handleMove);
+	listenerDocument.addEventListener("mouseup", handleEnd);
+	return stop;
+}
+
 export function elementFromEditorPoint(x: number, y: number): Element | null {
 	const outerElement = document.elementFromPoint(x, y);
 	if (!(outerElement instanceof HTMLIFrameElement)) return outerElement;
@@ -161,7 +212,7 @@ export function forwardFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
 	const forward = (source: Event, forwarded: Event) => {
 		forwardedEventSources.set(forwarded, source);
 		if (source.target) {
-			// Keep target-based guards working as if the iframe were part of the editor's DOM tree.
+			// Outer listeners and third-party shortcuts should still see the original editable target.
 			Object.defineProperty(forwarded, "target", {
 				configurable: true,
 				value: source.target,
@@ -171,7 +222,6 @@ export function forwardFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
 	};
 
 	const forwardMouse = (event: MouseEvent) => {
-		console.log(99, event.type)
 		forward(event, new MouseEvent(event.type, getForwardedMouseEventInit(event, doc)));
 	};
 
@@ -230,27 +280,23 @@ export function forwardFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
 		);
 	};
 
-	bubblingMouseEventTypes.forEach((type) =>
-		frameTarget.addEventListener(type, forwardMouse as EventListener),
-	);
-	frameTarget.addEventListener("wheel", forwardWheel as EventListener, { passive: false });
-	dragEventTypes.forEach((type) => frameTarget.addEventListener(type, forwardDrag as EventListener));
-	keyboardEventTypes.forEach((type) => frameTarget.addEventListener(type, forwardKeyboard as EventListener));
-	clipboardEventTypes.forEach((type) =>
-		frameTarget.addEventListener(type, forwardClipboard as EventListener),
-	);
+	const listeners: Array<
+		[types: readonly string[], listener: EventListener, options?: AddEventListenerOptions]
+	> = [
+		[bubblingMouseEventTypes, forwardMouse as EventListener],
+		[["wheel"], forwardWheel as EventListener, { passive: false }],
+		[dragEventTypes, forwardDrag as EventListener],
+		[keyboardEventTypes, forwardKeyboard as EventListener],
+		[clipboardEventTypes, forwardClipboard as EventListener],
+	];
+
+	listeners.forEach(([types, listener, options]) => {
+		types.forEach((type) => frameTarget.addEventListener(type, listener, options));
+	});
 
 	return () => {
-		bubblingMouseEventTypes.forEach((type) =>
-			frameTarget.removeEventListener(type, forwardMouse as EventListener),
-		);
-		frameTarget.removeEventListener("wheel", forwardWheel as EventListener);
-		dragEventTypes.forEach((type) => frameTarget.removeEventListener(type, forwardDrag as EventListener));
-		keyboardEventTypes.forEach((type) =>
-			frameTarget.removeEventListener(type, forwardKeyboard as EventListener),
-		);
-		clipboardEventTypes.forEach((type) =>
-			frameTarget.removeEventListener(type, forwardClipboard as EventListener),
-		);
+		listeners.forEach(([types, listener, options]) => {
+			types.forEach((type) => frameTarget.removeEventListener(type, listener, options));
+		});
 	};
 }

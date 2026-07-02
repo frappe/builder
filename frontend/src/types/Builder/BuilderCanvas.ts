@@ -11,7 +11,6 @@ export interface BreakpointConfig {
 }
 
 export interface CanvasProps {
-	overlayElement: HTMLElement | null;
 	background: string;
 	scale: number;
 	translateX: number;
@@ -20,7 +19,6 @@ export interface CanvasProps {
 	scaling: boolean;
 	panning: boolean;
 	breakpoints: BreakpointConfig[];
-	frameDocuments?: Map<string, Document>;
 	frameRoots?: Map<string, HTMLElement>;
 }
 
