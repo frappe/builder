@@ -232,10 +232,60 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
 
+		if self.has_value_changed("is_standard") and not self.is_standard:
+			self.cleanup_standard_page_exports()
+
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
+
+	def cleanup_standard_page_exports(self) -> None:
+		"""Delete exported standard page files. Used when is_standard is unchecked or on trash."""
+		doc_before = self.get_doc_before_save()
+		app = (doc_before.app if doc_before else self.app) or self.app
+		if not app or not frappe.conf.developer_mode:
+			return
+
+		from builder.export_import_standard_page import (
+			delete_standard_client_script_files,
+			delete_standard_component_files,
+			delete_standard_font_files,
+			delete_standard_page_files,
+			delete_standard_variable_files,
+			extract_components_from_blocks,
+			extract_fonts_from_blocks,
+			extract_variables_from_blocks,
+		)
+
+		def delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files) -> None:
+			"""Delete a dependency's exported files unless another standard page in the app still references it."""
+			referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
+				filters={"is_standard": 1}, fields=["name", "app"]
+			)
+			referencing_apps = [page.app for page in referencing_pages if page.name != self.name]
+			if app not in referencing_apps:
+				delete_files(identifier, app)
+
+		delete_standard_page_files(self.page_name, app)
+
+		client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
+		blocks = frappe.parse_json(self.draft_blocks or self.blocks)
+
+		dependencies = [
+			(
+				"Builder Client Script",
+				[row.builder_script for row in client_scripts],
+				delete_standard_client_script_files,
+			),
+			("Builder Component", extract_components_from_blocks(blocks), delete_standard_component_files),
+			("Builder Variable", extract_variables_from_blocks(blocks), delete_standard_variable_files),
+			("User Font", extract_fonts_from_blocks(blocks), delete_standard_font_files),
+		]
+
+		for doctype, identifiers, delete_files in dependencies:
+			for identifier in identifiers:
+				delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
 
 	def on_trash(self):
 		if self.is_template and self.template_group:
@@ -250,6 +300,16 @@ class BuilderPage(WebsiteGenerator):
 		frappe.db.delete(
 			"Builder Snapshot", {"reference_doctype": "Builder Page", "reference_name": self.name}
 		)
+
+		if self.is_standard and self.app and frappe.conf.developer_mode:
+			self.cleanup_standard_page_exports()
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		if not (self.is_standard and self.app and frappe.conf.developer_mode):
+			return
+		from builder.export_import_standard_page import rename_standard_page_files
+
+		rename_standard_page_files(old, new, self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -984,7 +1044,7 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 	Get loop information (variable name, iterator, data_key).
 
 	Returns:
-	    Dict with keys: loop_var, iterator_key, data_key
+		Dict with keys: loop_var, iterator_key, data_key
 	"""
 	data_key_config = block.get("dataKey", {})
 	iterator_key = data_key_config.get("key")
@@ -1248,7 +1308,7 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 	Wrap HTML with Jinja context variables.
 
 	#### Returns:
-	    HTML string
+		HTML string
 	"""
 	all_props_literal = to_jinja_literal(context["all_props"])
 	passed_down_literal = to_jinja_literal(context["passed_down_props"])

@@ -52,6 +52,24 @@ class BuilderComponent(Document):
 			self.queue_action("clear_page_cache")
 			ensure_component_version(self.name)
 		self.update_exported_component()
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import export_components
+
+			referencing_standard_pages = self.get_referencing_pages(
+				filters={"is_standard": 1}, fields=["app"]
+			)
+			for page in referencing_standard_pages:
+				app_path = frappe.get_app_path(page.app)
+				builder_files_path = os.path.join(app_path, "builder_files")
+				public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
+				components_path = os.path.join(builder_files_path, "components")
+				export_components([self.component_id], components_path, public_builder_files_path, page.app)
+
+	def on_trash(self):
+		self.delete_standard_exported_files()
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		self.delete_standard_exported_files(old)
 
 	def clear_page_cache(self):
 		pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name"])
@@ -76,6 +94,32 @@ class BuilderComponent(Document):
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
 			if page_doc.is_component_used(self.component_id):
 				ComponentSyncer(page_doc).sync_component(self)
+
+	def get_referencing_pages(
+		self, filters: dict | None = None, fields: list[str] | None = None
+	) -> list[dict]:
+		"""Return the pages that use this component."""
+		filters = filters or {}
+		fields = fields or ["name"]
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%{self.component_id}%"],
+				"draft_blocks": ["like", f"%{self.component_id}%"],
+			},
+		)
+		return pages
+
+	def delete_standard_exported_files(self, old_name: str | None = None):
+		if frappe.conf.developer_mode:
+			from builder.export_import_standard_page import delete_standard_component_files
+
+			all_installed_apps = frappe.get_installed_apps()
+			for app in all_installed_apps:
+				delete_standard_component_files(old_name or self.name, app)
 
 	def update_exported_component(self):
 		if not frappe.conf.developer_mode:

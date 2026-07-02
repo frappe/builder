@@ -1604,6 +1604,9 @@ component.update({
 		cls.page_with_dynamic_route.delete()
 
 
+# from builder.builder.doctype.builder_page.test_standard_page_sync import TestStandardPageSync
+
+
 def get_html_for(html, type, value, index=None, only_content=False, list_all=False):
 	from bs4 import BeautifulSoup
 
