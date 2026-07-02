@@ -2,7 +2,7 @@
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
 			<span class="text-xl-semibold px-2 text-ink-gray-9">Settings</span>
-			<div class="flex flex-col gap-1" v-for="(item, index) in settingsSidebarItems" :key="index">
+			<div class="flex flex-col gap-0.5" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
 				</span>
