@@ -67,7 +67,7 @@ const telemetry = useTelemetry();
 // Dev benches have telemetry off; ?persona_survey=test logs the payload instead.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
-type QuestionKey = "use_case" | "role";
+type QuestionKey = "use_case" | "role" | "source";
 
 const questions: {
 	key: QuestionKey;
@@ -98,11 +98,24 @@ const questions: {
 			{ value: "other", label: "Other" },
 		],
 	},
+	{
+		key: "source",
+		heading: "How did you hear about Builder?",
+		options: [
+			{ value: "search", label: "Search (Google)" },
+			{ value: "youtube", label: "YouTube" },
+			{ value: "friend", label: "Friend / colleague" },
+			{ value: "frappe_ecosystem", label: "Frappe / ERPNext" },
+			{ value: "social", label: "Social media" },
+			{ value: "other", label: "Other" },
+		],
+	},
 ];
 
 const answers = reactive<Record<QuestionKey, string | undefined>>({
 	use_case: undefined,
 	role: undefined,
+	source: undefined,
 });
 
 // question steps followed by the full-page template selector
@@ -154,7 +167,7 @@ function finishQuestions() {
 	const props = {
 		role: answers.role || null,
 		use_case: answers.use_case || null,
-		source: null,
+		source: answers.source || null,
 	};
 	if (devForceShow) console.log("[persona-survey] capture", props);
 	telemetry.capture("builder_persona_submitted", props);
