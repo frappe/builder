@@ -410,7 +410,9 @@ def get_page_ctr(
 
 		where_clause, params = build_where_clause(route, from_date, to_date, route_filter_type)
 
-		with DuckDBConnection() as db:
+		# read-only so this SELECT-only query doesn't take the exclusive write lock and
+		# starve the concurrent get_page_analytics read on the same dashboard load
+		with DuckDBConnection(read_only=True) as db:
 			total_views = (
 				db.execute(f"SELECT COUNT(*) FROM {DUCKDB_TABLE} WHERE {where_clause}", params).fetchone()[0]
 				or 0
