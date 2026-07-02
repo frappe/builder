@@ -1073,6 +1073,11 @@ def run_agent_job(prompt: str, page_context_json: str, model: str, api_key: str,
 		from builder.ai.agent.registry import build_orchestrator_registry
 
 		kwargs["registry"] = build_orchestrator_registry()
-		kwargs.setdefault("system_prompt", Prompts.ORCHESTRATOR_SYSTEM)
+		# The editor's URL prefix is site-configurable — resolve it here so the
+		# links the agent writes actually work on this site.
+		builder_path = frappe.conf.builder_path or "builder"
+		kwargs.setdefault(
+			"system_prompt", Prompts.ORCHESTRATOR_SYSTEM.replace("{BUILDER_PATH}", builder_path)
+		)
 		kwargs["headless"] = True
 	AgentRunner(prompt, page_context_json, model, api_key, **kwargs).run()
