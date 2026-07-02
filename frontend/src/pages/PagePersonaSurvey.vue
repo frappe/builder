@@ -40,11 +40,24 @@
 			</div>
 
 			<div class="flex items-center justify-between">
-				<!-- kept mounted (invisible on step 1) so the footer height stays fixed and the block doesn't shift -->
-				<Button variant="ghost" icon-left="lucide-arrow-left" :class="{ invisible: isFirst }" @click="goBack">
-					Back
-				</Button>
 				<span class="text-xs text-ink-gray-4">Step {{ stepIndex + 1 }} of {{ totalSteps }}</span>
+				<div class="flex items-center gap-2">
+					<!-- kept mounted (invisible on step 1) so the footer width/height stays fixed and nothing shifts -->
+					<Button
+						variant="ghost"
+						icon-left="lucide-arrow-left"
+						:class="{ invisible: isFirst }"
+						@click="goBack">
+						Back
+					</Button>
+					<Button
+						variant="solid"
+						icon-right="lucide-arrow-right"
+						:disabled="!answers[activeQuestion.key]"
+						@click="goNext">
+						Next
+					</Button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -138,9 +151,9 @@ const templateHeading = computed(() =>
 );
 
 function select(value: string) {
-	// one click answers the question and moves on — no separate Continue step
+	// only highlight the choice; advancing is a deliberate Next click so a
+	// stray double-click can't skip past the following question
 	answers[activeQuestion.value.key] = value;
-	goNext();
 }
 
 function goBack() {
