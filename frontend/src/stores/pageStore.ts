@@ -81,7 +81,12 @@ const usePageStore = defineStore("pageStore", {
 				});
 
 				await scriptsResource.list.promise;
-				this.activePageScripts = scriptsResource.data as BuilderClientScript[];
+				const scriptsByName = new Map(
+					((scriptsResource.data || []) as BuilderClientScript[]).map((script) => [script.name, script]),
+				);
+				this.activePageScripts = page.client_scripts
+					.map(({ builder_script }) => scriptsByName.get(builder_script))
+					.filter((script): script is BuilderClientScript => Boolean(script));
 			} else {
 				this.activePageScripts = [];
 			}

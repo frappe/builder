@@ -2,7 +2,7 @@
 	<div class="flex flex-col gap-5">
 		<div class="flex justify-between">
 			<label class="text-p-base-medium w-fit shrink-0 text-ink-gray-8">
-				Execute Block Client Scripts in Editor
+				Execute Client Scripts in Editor
 			</label>
 			<Select
 				class="!w-[200px]"
@@ -28,7 +28,7 @@
 			" />
 		<div class="flex flex-col gap-2">
 			<p class="text-p-sm text-ink-gray-7">
-				Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not
+				Note: Client scripts are executed in a sandboxed environment. This may have limitations and might not
 				perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.
 			</p>
 		</div>

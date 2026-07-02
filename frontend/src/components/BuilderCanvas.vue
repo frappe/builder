@@ -110,6 +110,11 @@
 					@dispose="unregisterFrame">
 					<component
 						:is="'style'"
+						v-if="pageClientStyles"
+						data-builder-page-client-styles
+						v-text="pageClientStyles" />
+					<component
+						:is="'style'"
 						v-if="blockClientStyles"
 						data-builder-client-styles
 						v-text="blockClientStyles" />
@@ -166,6 +171,8 @@ import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
 	executeClientScriptUnrestricted,
+	executePageClientScriptRestricted,
+	executePageClientScriptUnrestricted,
 } from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
@@ -236,6 +243,20 @@ const blockClientStyles = computed(() => {
 	const css = Array.from(blockStyles.values()).filter(Boolean).join("\n");
 	return css ? `@layer builder-authored {\n${css}\n}` : "";
 });
+const pageClientStyles = computed(() =>
+	pageStore.activePageScripts
+		.filter((script) => script.script_type === "CSS")
+		.map((script) => script.script)
+		.filter(Boolean)
+		.join("\n"),
+);
+const pageJavaScripts = computed(() =>
+	pageStore.activePageScripts.filter((script) => script.script_type === "JavaScript"),
+);
+const pageJavaScriptSignature = computed(() =>
+	JSON.stringify(pageJavaScripts.value.map(({ name, script }) => [name, script])),
+);
+const pageDataSignature = computed(() => JSON.stringify(pageStore.pageData));
 const scriptsDisabled = computed(
 	() => builderSettings.doc?.execute_block_scripts_in_editor === "Don't Execute",
 );
@@ -370,14 +391,22 @@ function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, ifr
 	frameRoots.set(breakpoint, root);
 
 	const scope = effectScope();
-	scope.run(() => {
-		const { isOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
-		watch(isOverDropZone, (isOver) => root.toggleAttribute("data-drop-active", isOver), { immediate: true });
-	});
 	frameRegistrations.set(breakpoint, {
 		document: doc,
 		scope,
 		stopForwarding: forwardFrameEvents(doc, iframe),
+	});
+	scope.run(() => {
+		const { isOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
+		watch(isOverDropZone, (isOver) => root.toggleAttribute("data-drop-active", isOver), { immediate: true });
+		watch(
+			[() => builderStore.runCanvasScripts, () => pageStore.settingPage],
+			([runScripts, settingPage], _, onCleanup) => {
+				if (!runScripts || settingPage || scriptsDisabled.value) return;
+				onCleanup(executePageClientScripts(root));
+			},
+			{ immediate: true, flush: "post" },
+		);
 	});
 	nextTick(setScaleAndTranslate);
 }
@@ -475,11 +504,42 @@ watch(
 	},
 );
 
-watch(scriptsDisabled, (disabled) => {
-	if (!disabled || !builderStore.runCanvasScripts) return;
-	builderStore.runCanvasScripts = false;
-	frameEpoch.value++;
-});
+watch(
+	() => builderSettings.doc?.execute_block_scripts_in_editor,
+	(mode, previousMode) => {
+		const scriptsWereRunning = builderStore.runCanvasScripts;
+		if (mode === "Don't Execute" && scriptsWereRunning) {
+			builderStore.runCanvasScripts = false;
+		}
+		if (previousMode && mode !== previousMode && scriptsWereRunning) {
+			frameEpoch.value++;
+		}
+	},
+);
+
+watch(
+	[pageJavaScriptSignature, pageDataSignature],
+	([scriptSignature, dataSignature], [previousScriptSignature, previousDataSignature]) => {
+		if (
+			(scriptSignature === previousScriptSignature && dataSignature === previousDataSignature) ||
+			!pageJavaScripts.value.length ||
+			!builderStore.runCanvasScripts ||
+			pageStore.settingPage ||
+			scriptsDisabled.value
+		)
+			return;
+		frameEpoch.value++;
+	},
+);
+
+watch(
+	() => pageStore.settingPage,
+	(settingPage, wasSettingPage) => {
+		if (!settingPage && wasSettingPage && builderStore.runCanvasScripts && !scriptsDisabled.value) {
+			frameEpoch.value++;
+		}
+	},
+);
 
 provide("canvasProps", canvasProps);
 provide("emulateBlockClientScript", emulateBlockClientScript);
@@ -586,7 +646,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 						frameRoots.get(script.breakpoint) || null,
 						script.javascript,
 						context,
-					);
+				  );
 	}
 
 	return () => {
@@ -595,6 +655,19 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 		} finally {
 			blockStyles.delete(registrationKey);
 		}
+	};
+}
+
+function executePageClientScripts(root: HTMLElement) {
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	const cleanups = pageJavaScripts.value.map(({ script }) =>
+		mode === "Unrestricted"
+			? executePageClientScriptUnrestricted(root, script, pageStore.pageData)
+			: executePageClientScriptRestricted(root, script, pageStore.pageData),
+	);
+
+	return () => {
+		cleanups.reverse().forEach((cleanup) => cleanup());
 	};
 }
 
