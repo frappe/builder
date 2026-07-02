@@ -27,7 +27,9 @@
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></Button>
-			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" class="pb-16" />
+			<KeepAlive v-if="settingsLoaded">
+				<component :is="selectedItemDoc?.component" class="pb-16" />
+			</KeepAlive>
 			<div v-else class="flex items-center justify-center">
 				<span class="text-ink-gray-5">Loading...</span>
 			</div>
