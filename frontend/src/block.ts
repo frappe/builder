@@ -1,5 +1,12 @@
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import {
+	extendWithComponent,
+	rebuildWithComponent,
+	resetWithComponent,
+	syncBlockWithComponent,
+} from "@/utils/block/componentInstance";
 import {
 	addPxToNumber,
 	cssUrl,
@@ -18,7 +25,7 @@ import {
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
 import { clamp } from "@vueuse/core";
-import { computed, nextTick, reactive, toRaw } from "vue";
+import { computed, nextTick, reactive } from "vue";
 
 const TEXT_ELEMENTS = new Set([
 	"span",
@@ -60,6 +67,7 @@ class Block implements BlockOptions {
 	innerText?: string;
 	innerHTML?: string;
 	extendedFromComponent?: string;
+	componentVersion?: string;
 	originalElement?: string | undefined;
 	isChildOfComponent?: string;
 	referenceBlockId?: string;
@@ -69,10 +77,9 @@ class Block implements BlockOptions {
 	parentBlock: Block | null;
 	activeState?: string | null = null;
 	dynamicValues: Array<BlockDataKey>;
-	blockClientScript?: string;
-	blockDataScript?: string;
 	props?: BlockProps;
 	editorConfig?: BlockEditorConfig;
+	clientScript: BlockClientScript;
 	// @ts-expect-error
 	referenceComponent: Block | null;
 	customAttributes: BlockAttributeMap;
@@ -81,20 +88,49 @@ class Block implements BlockOptions {
 		this.element = options.element;
 		this.innerHTML = options.innerHTML;
 		this.extendedFromComponent = options.extendedFromComponent;
+		this.componentVersion = options.componentVersion;
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
-			componentStore.loadComponent(this.extendedFromComponent);
+			if (this.componentVersion) {
+				// restored/pinned instance: load the frozen version from its snapshot
+				componentStore.loadComponentVersion(this.componentVersion, this.extendedFromComponent);
+			} else {
+				componentStore.loadComponent(this.extendedFromComponent);
+			}
+		} else if (this.isChildOfComponent && this.componentVersion) {
+			// a pinned instance's child resolves its component from the frozen version too
+			componentStore.loadComponentVersion(this.componentVersion, this.isChildOfComponent);
+		}
+		if (this.isChildOfComponent && !this.componentVersion) {
+			let parentBlock = this.getParentBlock();
+			while (parentBlock && parentBlock?.extendedFromComponent != this.isChildOfComponent) {
+				parentBlock = parentBlock?.getParentBlock();
+			}
+			this.componentVersion = parentBlock?.componentVersion;
 		}
 		// to keep this property out of block reactivity
 		Object.defineProperty(this, "referenceComponent", {
 			value: computed(() => {
 				if (this.extendedFromComponent) {
+					if (this.componentVersion) {
+						// prefer the pinned version; fall back to live if it was pruned
+						return (
+							componentStore.getComponentVersionBlock(this.componentVersion as string) ||
+							componentStore.getComponentBlock(this.extendedFromComponent as string) ||
+							null
+						);
+					}
 					return componentStore.getComponentBlock(this.extendedFromComponent as string) || null;
 				} else if (this.isChildOfComponent) {
-					const componentBlock = componentStore.getComponentBlock(this.isChildOfComponent as string);
+					// honor the pinned version (set on restored instance children) before
+					// falling back to the live component
+					const componentBlock = this.componentVersion
+						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
 				return null;
@@ -136,10 +172,11 @@ class Block implements BlockOptions {
 		this.tabletStyles = reactive(options.tabletStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
-		this.blockClientScript = options.blockClientScript || "";
-		this.blockDataScript = options.blockDataScript || "";
 		this.props = reactive(options.props || {});
 		this.editorConfig = options.editorConfig;
+		this.clientScript = reactive(
+			options.clientScript ?? (options.blockClientScript ? { js: options.blockClientScript } : {}),
+		);
 
 		this.blockName = options.blockName;
 		delete this.attributes.style;
@@ -301,7 +338,7 @@ class Block implements BlockOptions {
 	}
 	getComponentBlockDescription() {
 		const componentStore = useComponentStore();
-		return componentStore.getComponentName(this.extendedFromComponent as string);
+		return componentStore.getComponentName(this.extendedFromComponent as string, this.componentVersion);
 	}
 	getTextContent() {
 		return getTextContent(this.getInnerHTML() || "");
@@ -717,6 +754,38 @@ class Block implements BlockOptions {
 	isExtendedFromComponent() {
 		return Boolean(this.extendedFromComponent) || Boolean(this.isChildOfComponent);
 	}
+	getComponentRoot(): Block | null {
+		let block: Block | null = this;
+		const editingMode = useCanvasStore().editingMode;
+
+		if (editingMode == "page") {
+			if (!block.isExtendedFromComponent()) {
+				return null;
+			}
+		}
+
+		while (block && block.isExtendedFromComponent()) {
+			if (block.extendedFromComponent) return block;
+			block = block.getParentBlock()!;
+		}
+		if (editingMode == "fragment") {
+			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
+				block = block.getParentBlock()!;
+			}
+		}
+		return block;
+	}
+	getPropsRoot(): Block | null {
+		const componentRoot = this.getComponentRoot();
+		if (componentRoot) return componentRoot;
+
+		let block: Block | null = this;
+		while (block) {
+			if (Object.keys(block.props || {}).length > 0) return block;
+			block = block.getParentBlock();
+		}
+		return null;
+	}
 	convertToRepeater() {
 		this.setBaseStyle("display", "flex");
 		this.setBaseStyle("flexDirection", "column");
@@ -814,6 +883,9 @@ class Block implements BlockOptions {
 		if (component) {
 			syncBlockWithComponent(this, this, this.extendedFromComponent as string, component.children);
 		}
+	}
+	rebuildWithComponent(componentId: string, newComponentChildren: Block[], oldComponentChildren: Block[]) {
+		rebuildWithComponent(this, componentId, newComponentChildren, oldComponentChildren);
 	}
 	resetChanges(resetChildren: boolean = false) {
 		resetBlock(this, resetChildren);
@@ -996,172 +1068,16 @@ class Block implements BlockOptions {
 	isInsideRepeater(): boolean {
 		return Boolean(this.getRepeaterParent());
 	}
-	getBlockClientScript(): string {
-		let blockClientScript = "";
-		if (this.isExtendedFromComponent() && !this.blockClientScript) {
-			blockClientScript = this.referenceComponent?.getBlockClientScript() || "";
-		} else {
-			blockClientScript = this.blockClientScript || "";
-		}
-		return blockClientScript;
-	}
-	setBlockClientScript(script: string) {
-		this.blockClientScript = script;
-	}
-	getBlockDataScript(): string {
-		let blockDataScript = "";
-		if (this.isExtendedFromComponent() && !this.blockDataScript) {
-			blockDataScript = this.referenceComponent?.getBlockDataScript() || "";
-		} else {
-			blockDataScript = this.blockDataScript || "";
-		}
-		return blockDataScript;
-	}
-	setBlockDataScript(script: string) {
-		this.blockDataScript = script;
-	}
 	getBlockProps(): BlockProps {
-		let blockProps = {};
-		if (this.isExtendedFromComponent() && !Object.keys(this.props || {}).length) {
-			blockProps = this.referenceComponent?.getBlockProps() || {};
-		} else {
-			blockProps = this.props || {};
-		}
-		return blockProps;
+		const propsRoot = this.getPropsRoot();
+		if (!propsRoot) return { ...(this.props || {}) };
+		const referenceProps = propsRoot.extendedFromComponent ? propsRoot.referenceComponent?.props || {} : {};
+		return { ...referenceProps, ...(propsRoot.props || {}) };
 	}
 	setBlockProps(props: BlockProps) {
-		this.props = props;
+		const propsRoot = this.getPropsRoot() || this;
+		propsRoot.props = props;
 	}
-}
-
-function extendWithComponent(
-	block: Block | BlockOptions,
-	extendedFromComponent: string | undefined,
-	componentChildren: Block[],
-	resetOverrides: boolean = true,
-) {
-	resetBlock(block, false, resetOverrides);
-	block.children?.forEach((child, index) => {
-		child.isChildOfComponent = extendedFromComponent;
-		let componentChild = componentChildren[index];
-		if (child.extendedFromComponent) {
-			const component = child.referenceComponent;
-			child.referenceBlockId = componentChild.blockId;
-			extendWithComponent(child, child.extendedFromComponent, component.children, false);
-		} else if (componentChild) {
-			child.referenceBlockId = componentChild.blockId;
-			extendWithComponent(child, extendedFromComponent, componentChild.children, resetOverrides);
-		}
-	});
-}
-
-function resetWithComponent(
-	block: Block | BlockOptions,
-	extendedWithComponent: string,
-	componentChildren: Block[],
-	resetOverrides: boolean = true,
-) {
-	block = toRaw(block);
-	resetBlock(block, true, resetOverrides);
-	block.children?.splice(0, block.children.length);
-	componentChildren.forEach((componentChild) => {
-		const blockComponent = getBlockCopy(componentChild);
-		blockComponent.isChildOfComponent = extendedWithComponent;
-		blockComponent.referenceBlockId = componentChild.blockId;
-		const childBlock = block.addChild(blockComponent, null, false);
-		if (componentChild.extendedFromComponent) {
-			const component = childBlock.referenceComponent;
-			resetWithComponent(childBlock, componentChild.extendedFromComponent, component.children, false);
-		} else {
-			resetWithComponent(childBlock, extendedWithComponent, componentChild.children, resetOverrides);
-		}
-	});
-}
-
-function syncBlockWithComponent(
-	parentBlock: Block,
-	block: Block,
-	componentName: string,
-	componentChildren: Block[],
-) {
-	componentChildren.forEach((componentChild, index) => {
-		const blockExists = findComponentBlock(componentChild.blockId, parentBlock.children);
-		if (!blockExists) {
-			const blockComponent = getBlockCopy(componentChild);
-			blockComponent.isChildOfComponent = componentName;
-			blockComponent.referenceBlockId = componentChild.blockId;
-			resetBlock(blockComponent);
-			resetWithComponent(blockComponent, componentName, componentChild.children);
-			block.addChild(blockComponent, index, false);
-		}
-	});
-
-	block.children.forEach((child) => {
-		const componentChild = componentChildren.find((c) => c.blockId === child.referenceBlockId);
-		if (componentChild) {
-			syncBlockWithComponent(parentBlock, child, componentName, componentChild.children);
-		}
-	});
-}
-
-function findComponentBlock(blockId: string, blocks: Block[]): Block | null {
-	for (const block of blocks) {
-		if (block.referenceBlockId === blockId) {
-			return block;
-		}
-		if (block.children) {
-			const found = findComponentBlock(blockId, block.children);
-			if (found) {
-				return found;
-			}
-		}
-	}
-	return null;
-}
-
-function resetBlock(
-	block: Block | BlockOptions,
-	resetChildren: boolean = true,
-	resetOverrides: boolean = true,
-) {
-	block.blockId = generateId();
-	if (resetOverrides) {
-		delete block.innerHTML;
-		delete block.element;
-		block.baseStyles = {};
-		block.rawStyles = {};
-		block.mobileStyles = {};
-		block.tabletStyles = {};
-		block.attributes = {};
-		block.customAttributes = {};
-		block.classes = [];
-		block.dataKey = null;
-		block.dynamicValues = [];
-		block.props = {};
-		block.blockClientScript = "";
-		block.blockDataScript = "";
-	}
-
-	if (resetChildren) {
-		block.children?.forEach((child) => {
-			resetBlock(child, resetChildren, !Boolean(child.extendedFromComponent));
-		});
-	}
-}
-
-export function findBlockInTree(blockId: string, blocks: Block[]): Block | null {
-	for (const block of blocks) {
-		if (block.blockId === blockId) {
-			return block;
-		}
-		if (block.children) {
-			const found = findBlockInTree(blockId, block.children);
-			if (found) {
-				return found;
-			}
-		}
-	}
-	return null;
 }
 
 export default Block;

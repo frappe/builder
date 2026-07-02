@@ -1,6 +1,7 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import componentController from "./componentController";
 
 const canvasStore = useCanvasStore();
 
@@ -118,9 +119,10 @@ const blockController = {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				let blockKey = block[key] ?? block.referenceComponent?.[key];
 				if (keyValue === "__initial__") {
-					keyValue = block[key];
-				} else if (keyValue !== block[key]) {
+					keyValue = blockKey;
+				} else if (keyValue !== blockKey) {
 					keyValue = "Mixed";
 				}
 			});
@@ -128,7 +130,7 @@ const blockController = {
 		} else {
 			// TODO: handle it better
 			let key: string | undefined = "__initial__";
-			let comesFrom: "props" | "dataScript" | "blockDataScript" | undefined = undefined;
+			let comesFrom: "props" | "dataScript" | "componentData" | undefined = undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
 				if (key === "__initial__") {
@@ -187,11 +189,26 @@ const blockController = {
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			Object.keys(block.customAttributes).forEach((key) => {
-				if (!customAttributes[key]) {
+				if (!(key in customAttributes)) {
 					delete block.customAttributes[key];
+					block.removeDynamicValue(key, "attribute");
 				}
 			});
 			Object.assign(block.customAttributes, customAttributes);
+		});
+	},
+	isClickTrackingEnabled: () => {
+		return Boolean(blockController.getCustomAttributes()?.["data-track"]);
+	},
+	toggleClickTracking: (enabled: boolean) => {
+		// Store a marker only; the live blockId is stamped onto data-track at render time.
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (enabled) {
+				block.customAttributes["data-track"] = "true";
+			} else {
+				delete block.customAttributes["data-track"];
+				block.removeDynamicValue("data-track", "attribute");
+			}
 		});
 	},
 	getParentBlock: () => {
@@ -328,35 +345,6 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block): Block => {
-		if (!block) {
-			block = blockController.getFirstSelectedBlock();
-		}
-		const editingMode = canvasStore.editingMode;
-
-		while (block && block.isExtendedFromComponent()) {
-			if (block.extendedFromComponent) break;
-			block = block.getParentBlock()!;
-		}
-		if (editingMode == "fragment") {
-			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
-				block = block.getParentBlock()!;
-			}
-		}
-		return block;
-	},
-	getBlockClientScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
-	},
-	setBlockClientScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
-	},
-	getBlockDataScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockDataScript();
-	},
-	setBlockDataScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
@@ -374,15 +362,8 @@ const blockController = {
 	},
 	setBlockProps: (props: BlockProps) => {
 		const block = blockController.getFirstSelectedBlock();
-		if (!block.props) {
-			block.props = {};
-		}
-		Object.keys(block.props).forEach((key) => {
-			if (!props[key]) {
-				delete block.props?.[key];
-			}
-		});
-		Object.assign(block.props, props);
+		if (!block) return;
+		block.setBlockProps(props);
 	},
 };
 

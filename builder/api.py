@@ -19,7 +19,13 @@ from werkzeug.wrappers import Response
 
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
-from builder.utils import has_page_read, has_page_write
+from builder.builder.doctype.builder_snapshot import builder_snapshot
+from builder.utils import compact_json, has_page_read, has_page_write
+
+
+@frappe.whitelist()
+def get_versioned_doc(snapshot: str) -> dict:
+	return builder_snapshot.get_versioned_doc(snapshot).as_dict()
 
 
 @frappe.whitelist()
@@ -298,7 +304,7 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 			"doctype": "Builder Page",
 			"page_title": page.get("page_title") or "My Page",
 			"preview": preview or None,
-			"draft_blocks": frappe.as_json(page.get("blocks") or []),
+			"draft_blocks": compact_json(page.get("blocks") or []),
 			"page_data_script": page.get("page_data_script"),
 			"head_html": page.get("head_html"),
 			"body_html": page.get("body_html"),
@@ -431,6 +437,62 @@ def get_overall_analytics(
 	)
 
 
+@frappe.whitelist()
+@has_page_read("You do not have permission to view analytics.")
+def get_page_ctr(
+	route: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	route_filter_type: str = "wildcard",
+):
+	return builder_analytics.get_page_ctr(
+		route=route,
+		from_date=from_date,
+		to_date=to_date,
+		route_filter_type=route_filter_type,
+	)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def make_click_log(
+	element: str | None = None,
+	text: str | None = None,
+	visitor_id: str | None = None,
+):
+	"""Autocapture a click on a published Builder page. Mirrors Frappe's make_view_log so
+	clicks share the exact same `path` (derived from the Referer) as Web Page View rows."""
+	from frappe.website.doctype.web_page_view.web_page_view import is_tracking_enabled
+
+	if not is_tracking_enabled():
+		return
+
+	path = frappe.request.headers.get("Referer")
+	if not frappe.utils.is_site_link(path):
+		return
+
+	path = urlparse(path).path
+	if path != "/" and path.startswith("/"):
+		path = path[1:]
+	if path.startswith(("api/", "app/", "assets/", "private/files/")):
+		return
+
+	is_unique = bool(visitor_id) and not frappe.db.exists(
+		"Builder Page Click", {"visitor_id": visitor_id, "path": path, "element": element or ""}
+	)
+
+	click = frappe.new_doc("Builder Page Click")
+	click.path = path
+	click.element = element
+	click.text = text[:140] if text else text  # cap server-side; deferred_insert skips controller validation
+	click.is_unique = is_unique
+	click.visitor_id = visitor_id
+
+	try:
+		click.deferred_insert()
+	except Exception:
+		frappe.log_error("Failed to log builder page click")
+
+
 def get_keys_for_autocomplete(
 	key: str,
 	value: Any,
@@ -486,3 +548,15 @@ def get_codemirror_completions():
 def reorder_client_scripts(script_order: list[str]):
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to evaluate component scripts")
+def get_component_data(
+	component_name: str, props: dict | str | None = None, script: str | None = None
+) -> dict:
+	from builder.builder.doctype.builder_component.builder_component import (
+		get_component_data as _get_component_data,
+	)
+
+	return _get_component_data(component_name, props, script)

@@ -34,7 +34,7 @@
 		</template>
 		<template #body>
 			<div
-				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-white p-3 shadow-xl">
+				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
 					:buttons="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
@@ -167,7 +167,7 @@ const BackgroundInput = defineComponent({
 					class: [
 						attrs.class,
 						showsVariableName.value
-							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-1"
+							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-6"
 							: "",
 					],
 				},

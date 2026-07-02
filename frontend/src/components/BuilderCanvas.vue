@@ -1,5 +1,10 @@
 <template>
-	<div ref="canvasContainer" @click="handleClick" @mousedown="handleMarqueeStart">
+	<div
+		ref="canvasContainer"
+		:data-builder-canvas="canvasId"
+		@click="handleClick"
+		@mousedown="handleMarqueeStart">
+		<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -20,7 +25,7 @@
 				'--canvas-scale': canvasProps.scale,
 				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
-			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-white px-3">
+			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
 				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
@@ -31,7 +36,9 @@
 							aria-hidden="true" />
 					</div>
 				</Tooltip>
-				<div v-show="!canvasProps.scaling && !canvasProps.panning" class="bg-outline-gray-2 my-2 w-px"></div>
+				<div
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -48,7 +55,7 @@
 				</div>
 			</div>
 			<div
-				class="canvas relative flex h-full bg-surface-white shadow-2xl contain-layout"
+				class="canvas relative flex h-full bg-surface-base shadow-xl contain-layout"
 				:data-breakpoint="breakpoint.device"
 				:style="{
 					...canvasStyles,
@@ -59,7 +66,7 @@
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-3xl text-ink-gray-7"
+					class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -80,7 +87,7 @@
 			</div>
 		</div>
 		<div
-			class="fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-white px-3 py-2 text-center text-sm font-semibold text-ink-gray-7 shadow-md"
+			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
@@ -114,10 +121,16 @@ import type Block from "@/block";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
+import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import {
+	type BlockClientScriptRuntime,
+	executeClientScriptRestricted,
+	executeClientScriptUnrestricted,
+} from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
@@ -126,7 +139,7 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
+import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -134,6 +147,7 @@ import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const canvasId = `builder-canvas-${useId()}`;
 
 const { cssVariables, darkCssVariables } = useBuilderVariable();
 
@@ -149,6 +163,7 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
+const blockStyles = reactive(new Map<string, string>());
 
 const props = withDefaults(
 	defineProps<{
@@ -162,6 +177,7 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
+const blockClientStyles = computed(() => Array.from(blockStyles.values()).join("\n"));
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -255,6 +271,13 @@ onMounted(() => {
 	setScaleAndTranslate();
 	showBlocks.value = true;
 	setupHistory();
+	// a read-only canvas (version preview / protected page) fully disables history;
+	// editing the canvas re-enables it
+	watch(
+		() => builderStore.readOnlyMode,
+		(readOnly) => (readOnly ? history.value?.disable() : history.value?.enable()),
+		{ immediate: true },
+	);
 	useCanvasEvents(
 		canvasContainer as unknown as Ref<HTMLElement>,
 		canvasProps,
@@ -354,6 +377,7 @@ watch(
 );
 
 provide("canvasProps", canvasProps);
+provide("emulateBlockClientScript", emulateBlockClientScript);
 
 defineExpose({
 	setScaleAndTranslate,
@@ -420,6 +444,39 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 	}
 }
 
+function escapeAttributeValue(value: string) {
+	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
+function emulateBlockClientScript(script: BlockClientScriptRuntime) {
+	const registrationKey = `${script.key}:${script.breakpoint}`;
+	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
+		script.key,
+	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
+	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	let cleanup = () => {};
+	if (mode !== "Don't Execute" && script.javascript.trim()) {
+		const context = {
+			componentData: script.componentData,
+			props: script.props,
+		};
+		cleanup =
+			mode === "Unrestricted"
+				? executeClientScriptUnrestricted(script.element, script.javascript, context)
+				: executeClientScriptRestricted(script.element, canvasContainer.value, script.javascript, context);
+	}
+
+	return () => {
+		try {
+			cleanup();
+		} finally {
+			blockStyles.delete(registrationKey);
+		}
+	};
+}
+
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));
 </script>
 <style>
@@ -446,5 +503,11 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 /* Lightweight marquee-drag highlight — applied via DOM attribute, not Vue reactive state */
 .__builder_component__[data-marquee-selected] {
 	box-shadow: inset 0 0 0 calc(2px / var(--canvas-scale, 1)) theme("colors.blue.400 / 85%");
+}
+
+.canvas-container {
+	p:not(:where(.prose, .ProseMirror) *) {
+		line-height: revert;
+	}
 }
 </style>

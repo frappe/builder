@@ -13,7 +13,6 @@ import yaml
 from frappe.model.document import Document
 from frappe.modules.import_file import import_file_by_path
 from frappe.utils import get_url
-from frappe.utils.html_utils import unescape_html
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -27,6 +26,10 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def compact_json(obj) -> str:
+	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -96,6 +99,7 @@ class Block:
 	innerText: str | None = None
 	innerHTML: str | None = None
 	extendedFromComponent: str | None = None
+	componentVersion: str | None = None
 	originalElement: str | None = None
 	isChildOfComponent: str | None = None
 	referenceBlockId: str | None = None
@@ -104,11 +108,14 @@ class Block:
 	elementBeforeConversion: str | None = None
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
-	blockClientScript: str = ""
-	blockDataScript: str = ""
 	props: ClassVar[dict] = {}
+	clientScript: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
+		legacy_client_script = kwargs.pop("blockClientScript", None)
+		if "clientScript" not in kwargs and legacy_client_script:
+			kwargs["clientScript"] = {"js": legacy_client_script}
+
 		for key, value in kwargs.items():
 			if key == "children":
 				value = [
@@ -163,6 +170,7 @@ class Block:
 			"innerText": self.innerText,
 			"innerHTML": self.innerHTML,
 			"extendedFromComponent": self.extendedFromComponent,
+			"componentVersion": self.componentVersion,
 			"originalElement": self.originalElement,
 			"isChildOfComponent": self.isChildOfComponent,
 			"referenceBlockId": self.referenceBlockId,
@@ -171,9 +179,8 @@ class Block:
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
-			"blockClientScript": self.blockClientScript,
-			"blockDataScript": self.blockDataScript,
 			"props": self.props,
+			"clientScript": self.clientScript,
 		}
 
 	def as_json(self, wrap_in_array=False):
@@ -698,16 +705,7 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data or {})
-
-
-def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
-	props = frappe._dict(frappe.parse_json(props or "{}"))
-	block_data = frappe._dict()
-	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
-	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
-	block_data.update(_locals["block"])
-	return combine(prev_block_data, block_data)
+	return frappe.as_json(data or {}).replace("</", r"<\/")
 
 
 class CompactDumper(yaml.Dumper):

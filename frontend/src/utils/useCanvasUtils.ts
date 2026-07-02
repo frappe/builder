@@ -1,5 +1,5 @@
 import type Block from "@/block";
-import { findBlockInTree } from "@/block";
+import { findBlockInTree } from "@/utils/block/tree";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { getRootBlockTemplate } from "@/utils/helpers";
@@ -158,7 +158,12 @@ export function useCanvasUtils(
 	}
 
 	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
-		rootBlock.value = newBlock;
+		if (!resetHistory && canvasHistory.value?.silentSetSource) {
+			// swap the root without recording it or disposing the stack (version preview)
+			canvasHistory.value.silentSetSource(newBlock);
+		} else {
+			rootBlock.value = newBlock;
+		}
 		if (canvasHistory.value && resetHistory) {
 			canvasHistory.value.dispose();
 			setupHistory();

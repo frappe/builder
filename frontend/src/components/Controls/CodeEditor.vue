@@ -1,6 +1,6 @@
 <template>
 	<div class="code-editor relative flex flex-col gap-1">
-		<span class="text-p-sm font-medium text-ink-gray-8" v-show="label">
+		<span class="text-p-sm-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 		</span>
@@ -25,7 +25,7 @@
 			<Button
 				@click="actionButton?.handler"
 				variant="subtle"
-				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-white [&>svg]:!h-3.5 [&>svg]:!w-3.5"
+				class="!h-6 !w-6 border !border-outline-gray-2 bg-surface-base [&>svg]:!h-3.5 [&>svg]:!w-3.5"
 				:icon="actionButton.icon"
 				:title="actionButton.label"
 				:disabled="readonly"></Button>
@@ -49,7 +49,7 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: Object | String | Array<any>;
 		type?: "JSON" | "HTML" | "Python" | "JavaScript" | "CSS";
-		mode?: "block" | "page";
+		mode?: "block" | "page" | "component";
 		label?: string;
 		readonly?: boolean;
 		height?: string;

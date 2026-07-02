@@ -7,6 +7,7 @@ from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
 from frappe.website.serve import get_response, get_response_content
 
+from builder.builder.component_versions import ensure_component_version
 from builder.utils import Block
 
 repeater_page_data_script = """
@@ -38,18 +39,14 @@ data.update({
 	"color": "red",
 	"padding": "20px",
 	"link": "https://example.com",
+	"role": "admin",
 })
 """
 
-custom_data_script = 'data.update({"name_new": "Jane Doe",})'
-
-block_data_script = """
-block.update({
-	"content": "Custom Block Data",
-	"items": [
-		{"name": "Item 1", "price": "$10"},
-		{"name": "Item 2", "price": "$20"}
-	]
+component_data_script = """
+component.update({
+	"name": "John Doe",
+	"name_new": "Jane Doe",
 })
 """
 
@@ -102,6 +99,29 @@ class TestBuilderPage(FrappeTestCase):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
 
+	def test_get_preview_html_preserves_outer_request(self):
+		"""get_preview_html() fakes a request via set_request(); when it runs
+		synchronously inside a real web request (e.g. run_doc_method) it must not
+		clobber it — doing so dropped the request's after_response and broke
+		sync_database with a 500."""
+		from frappe.utils import CallbackManager
+		from werkzeug.test import EnvironBuilder
+		from werkzeug.wrappers import Request
+
+		previous = getattr(frappe.local, "request", None)
+		try:
+			req = Request(EnvironBuilder(path="/api/method/run_doc_method").get_environ())
+			sentinel = CallbackManager()
+			req.after_response = sentinel
+			frappe.local.request = req
+
+			self.page.get_preview_html()
+
+			self.assertIs(frappe.local.request, req)
+			self.assertIs(frappe.local.request.after_response, sentinel)
+		finally:
+			frappe.local.request = previous
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
@@ -114,10 +134,12 @@ class TestBuilderPage(FrappeTestCase):
 
 	def test_publish_unpublish(self):
 		self.page.unpublish()
-		from frappe.utils import get_html_for_route
-
-		content = get_html_for_route("/test-page")
-		self.assertTrue("window.is_404 = true;" in content)
+		# An unpublished route is "not found". The rendered body varies (a site may
+		# define a custom Builder 404 page via www/404.py), so assert the 404 status
+		# and that the page's own content is no longer served.
+		response = get_response("/test-page")
+		self.assertEqual(response.status_code, 404)
+		self.assertNotIn("Hello World!", frappe.safe_decode(response.get_data()))
 
 		self.page.publish()
 		content = get_response_content("/test-page")
@@ -203,7 +225,9 @@ class TestBuilderPage(FrappeTestCase):
 		sub_header.set_dynamic_value("padding", "style", "padding")
 
 		link.set_dynamic_value("link", "attribute", "href")
-		body.attach_children(header, sub_header, link)
+		custom_attr_block = Block(element="div", customAttributes={"data-role": "guest"})
+		custom_attr_block.set_dynamic_value("role", "attribute", "data-role")
+		body.attach_children(header, sub_header, link, custom_attr_block)
 
 		page = frappe.get_doc(
 			{
@@ -221,6 +245,7 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertTrue("John Doe" in get_html_for(content, "tag", "h1"))
 			self.assertTrue("color: red;padding: 20px;" in get_html_for(content, "tag", "h2"))
 			self.assertTrue('href="https://example.com"' in get_html_for(content, "tag", "a"))
+			self.assertEqual("admin", get_html_for(content, "attribute", "data-role"))
 		finally:
 			page.delete()
 
@@ -263,17 +288,75 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_duplicate_binding_does_not_leak_jinja(self):
+		"""A block recording the same binding in BOTH dataKey and dynamicValues must not
+		wrap the placeholder twice. Double-wrapping nests the expression inside its own
+		fallback (`{{ ... else '{{ ... }}' }}`), which leaks the raw Jinja to the page for
+		values that are None (falsy and not in ['', 0])."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		# same industry -> innerHTML binding recorded in both places (regression trigger)
+		industry.set_dynamic_value("industry", "key", "innerHTML")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Duplicate Binding Test",
+				"published": 1,
+				"route": "/duplicate-binding-test",
+				"page_data_script": 'data.update({"stories": [{"industry": "Real Estate"}, {"industry": None}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/duplicate-binding-test")
+			# the raw expression must never leak to the rendered page
+			self.assertNotIn("{{", content)
+			self.assertNotIn("get('industry'", content)
+			# story with a value renders it; the None story falls back
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_duplicate_binding_deduped_in_placeholders(self):
+		"""set_dynamic_content_placeholders should apply a (property, type) binding once
+		even when it appears in both dataKey and dynamicValues, producing a single
+		placeholder rather than one nested inside its own fallback."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "industry", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		self.assertEqual(block["innerHTML"].count("{{"), 1)
+		self.assertNotIn("else '{{", block["innerHTML"])
+
 	def test_component_dynamic_values(self):
-		"Test if dynamic values in component are overridden correctly by the page using it"
+		"Test dynamic values in component with and without overrides"
 		component_root = Block(element="div", blockId="comp-block-1")
 		component_header = Block(element="h1", blockId="comp-block-1-1", innerHTML="Fallback Content")
 
-		component_header.set_dynamic_value("name", "key", "innerHTML")
+		component_header.set_dynamic_value("name", "key", "innerHTML", "componentData")
 		component_root.attach_children(component_header)
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
 				"block": component_root.as_json(),
+				"component_data_script": component_data_script,
 			}
 		).insert()
 
@@ -294,13 +377,12 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Component Dynamic Values Test",
 				"published": 1,
 				"route": "/component-dynamic-values-test-no-overrides",
-				"page_data_script": page_data_script,
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
 		# Using a component with dynamic values with valid overrides to the dynamic values
-		component_header_copy.set_dynamic_value("name_new", "key", "innerHTML")
+		component_header_copy.set_dynamic_value("name_new", "key", "innerHTML", "componentData")
 
 		page_with_component_having_overrides = frappe.get_doc(
 			{
@@ -308,14 +390,13 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Component Dynamic Values Test",
 				"published": 1,
 				"route": "/component-dynamic-values-test-with-overrides",
-				"page_data_script": custom_data_script,
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
 		# Using a component with dynamic values with invalid overrides to the dynamic values
 		component_header_copy.clear_dynamic_values()
-		component_header_copy.set_dynamic_value("non_existent_key", "key", "innerHTML")
+		component_header_copy.set_dynamic_value("non_existent_key", "key", "innerHTML", "componentData")
 
 		page_with_component_having_bad_overrides = frappe.get_doc(
 			{
@@ -323,7 +404,6 @@ class TestBuilderPage(FrappeTestCase):
 				"page_title": "Component Dynamic Values Test",
 				"published": 1,
 				"route": "/component-dynamic-values-test-with-bad-overrides",
-				"page_data_script": custom_data_script,
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
@@ -410,122 +490,146 @@ class TestBuilderPage(FrappeTestCase):
 			frappe.local.flags.redirect_location = None
 			page.delete()
 
-	def test_visibility_condition_from_block_data(self):
-		body = Block(
-			element="div",
-			originalElement="body",
-			blockDataScript='block.update({"is_header_visible": True,"is_hidden_header_visible": False})',
-		)
-		header = Block(element="h1", innerHTML="Visible Header")
-		hidden_header = Block(element="h2", innerHTML="Hidden Header")
-
-		header.visibilityCondition = {"key": "is_header_visible", "comesFrom": "blockDataScript"}
-		hidden_header.visibilityCondition = {
-			"key": "is_hidden_header_visible",
-			"comesFrom": "blockDataScript",
-		}
-
-		body.attach_children(header, hidden_header)
-
-		page = frappe.get_doc(
+	def test_component_client_script(self):
+		component_root = Block(element="div", blockId="comp-root")
+		component_content = Block(element="h4", blockId="comp-content", innerHTML="Component Content")
+		block_javascript = 'this.innerHTML = "</script><p>Component Script</p>";'
+		block_css = 'h4::after { content: "</style><p>Component Style</p>"; }'
+		component_root.clientScript = {"js": block_javascript, "css": block_css}
+		component_root.attach_children(component_content)
+		component = frappe.get_doc(
 			{
-				"doctype": "Builder Page",
-				"page_title": "Visibility Key Test",
-				"published": 1,
-				"route": "/visibility-key-test-block-data",
-				"blocks": body.as_json(wrap_in_array=True),
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
 			}
 		).insert()
-		try:
-			content = get_response_content("/visibility-key-test-block-data")
-			self.assertTrue("Visible Header" in get_html_for(content, "tag", "h1"))
-			self.assertFalse("Hidden Header" in get_html_for(content, "tag", "h2"))
-		finally:
-			page.delete()
 
-	def test_block_data(self):
 		body = Block(
 			element="div",
 			originalElement="body",
 		)
-		wrapper = Block(element="div", blockDataScript=block_data_script)
-		content_dynamic = Block(element="h4", innerHTML="Block Content")
-		content_fallback = Block(element="h4", innerHTML="Block Content")
-
-		content_dynamic.set_dynamic_value("content", "key", "innerHTML", "blockDataScript")
-		content_fallback.set_dynamic_value("no_key", "key", "innerHTML", "blockDataScript")
-
-		wrapper.attach_children(content_dynamic, content_fallback)
-		body.attach_children(wrapper)
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_content_copy = Block(
+			isChildOfComponent=component.name,
+			referenceBlockId="comp-content",
+		)
+		component_root_copy.attach_children(component_content_copy)
+		body.attach_children(component_root_copy)
 
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
-				"page_title": "Block Data Test",
+				"page_title": "Component Client Script Test",
 				"published": 1,
-				"route": "/block-data-test",
+				"route": "/component-client-script-test",
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
 		try:
-			content = get_response_content("/block-data-test")
-			self.assertEqual("Custom Block Data", get_html_for(content, "tag", "h4", only_content=True))
-			self.assertEqual("Block Content", get_html_for(content, "tag", "h4", index=1, only_content=True))
+			content = get_response_content("/component-client-script-test")
+			self.assertNotIn(block_javascript, content)
+			self.assertNotIn(block_css, content)
+			self.assertIn(r"<\/script><p>Component Script</p>", content)
+			self.assertIn(r"<\/style><p>Component Style</p>", content)
 		finally:
 			page.delete()
+			component.delete()
 
-	def test_repeater_from_block_data(self):
-		body = Block(
+	def test_component_client_script_receives_context(self):
+		component_data_for_script = """
+component.update({
+	"component_data": {"greeting": "hello from component data"},
+})
+"""
+		component_root = Block(
 			element="div",
-			originalElement="body",
+			blockId="script-root",
+			clientScript={"js": 'this.dataset.received = "ok";'},
+			props={
+				"title": {
+					"label": "Title",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": "Default Title",
+					"propOptions": {
+						"isRequired": False,
+						"type": "string",
+						"options": {"defaultValue": "Default Title"},
+					},
+				},
+			},
 		)
-		repeater_block = Block(element="div", isRepeaterBlock=True, blockDataScript=block_data_script)
-		wrapper_div = Block(element="div")
-		item_name = Block(element="h2")
-		item_price = Block(element="span")
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
+				"component_data_script": component_data_for_script,
+			}
+		).insert()
 
-		repeater_block.attach_data_key("items", "dataKey", comesFrom="blockDataScript")
-		item_name.set_dynamic_value("name", "key", "innerHTML", "blockDataScript")
-		item_price.set_dynamic_value("price", "key", "innerHTML", "blockDataScript")
-
-		wrapper_div.attach_children(item_name, item_price)
-		repeater_block.attach_children(wrapper_div)
-		body.attach_children(repeater_block)
+		body = Block(element="div", originalElement="body")
+		component_root_copy = Block(
+			extendedFromComponent=component.name,
+			props={
+				"title": {
+					"label": "Title",
+					"isStandard": True,
+					"isDynamic": False,
+					"isPassedDown": True,
+					"comesFrom": None,
+					"value": "Overridden Title",
+					"propOptions": {
+						"isRequired": False,
+						"type": "string",
+						"options": {"defaultValue": "Default Title"},
+					},
+				},
+			},
+		)
+		body.attach_children(component_root_copy)
 
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
-				"page_title": "Block Data Repeater Test",
+				"page_title": "Component Client Script Args Test",
 				"published": 1,
-				"route": "/block-data-repeater-test",
+				"route": "/component-client-script-args-test",
 				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 
 		try:
-			content = get_response_content("/block-data-repeater-test")
-			self.assertTrue("Item 1" in get_html_for(content, "tag", "h2"))
-			self.assertTrue("$10" in get_html_for(content, "tag", "span"))
-			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
-			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
-
+			content = get_response_content("/component-client-script-args-test")
+			self.assertIn("component_data, props", content)
+			self.assertIn('"greeting": "hello from component data"', content)
+			self.assertIn('"title": "Overridden Title"', content)
+			self.assertNotIn("/assets/builder/js/reactivity.js", content)
+			self.assertRegex(
+				content,
+				r"client_script_[a-z0-9_]+\)\.call\("
+				r"document\.querySelector\('\[data-block-uid=\"[^\"]+\"\]'\), "
+				r'\{[^}]*"greeting": "hello from component data"[^}]*\}, '
+				r'\{[^}]*"title": "Overridden Title"[^}]*\}\)',
+			)
 		finally:
 			page.delete()
+			component.delete()
 
-	def test_block_client_script(self):
-		body = Block(
-			element="div",
-			originalElement="body",
-		)
-		div_wrapper = Block(
-			element="div",
-			blockClientScript='console.log("Block Client Script Executed");\n',
-		)
-		content = Block(element="h4", innerHTML="Block Content")
-
-		div_wrapper.attach_children(content)
-		body.attach_children(div_wrapper)
+	def test_block_client_script_is_registered_once_and_invoked_per_block(self):
+		javascript = 'this.dataset.message = "</script>Block Script";'
+		css = 'span::after { content: "</style>Block Style"; }'
+		body = Block(element="div", originalElement="body")
+		for block_id in ("script-block-one", "script-block-two"):
+			body.attach_children(
+				Block(
+					element="div",
+					blockId=block_id,
+					clientScript={"js": javascript, "css": css},
+				)
+			)
 
 		page = frappe.get_doc(
 			{
@@ -539,85 +643,47 @@ class TestBuilderPage(FrappeTestCase):
 
 		try:
 			content = get_response_content("/block-client-script-test")
-			self.assertTrue(
-				'console.log("Block Client Script Executed");' in get_html_for(content, "tag", "script")
-			)
+			self.assertNotIn(javascript, content)
+			self.assertNotIn(css, content)
+			self.assertIn(r"<\/script>Block Script", content)
+			self.assertIn(r"<\/style>Block Style", content)
+			self.assertEqual(content.count("async function client_script_"), 1)
+			self.assertEqual(content.count(").call(document.querySelector"), 2)
 		finally:
 			page.delete()
 
-	def test_block_props(self):
-		body = Block(
-			element="div",
-			originalElement="body",
-		)
-		div_wrapper = Block(
-			element="div",
-			props={
-				"first_name": {
-					"isDynamic": False,
-					"isPassedDown": True,
-					"value": "John",
-					"isStandard": False,
-				},
-				"last_name": {
-					"isDynamic": False,
-					"isPassedDown": False,
-					"value": "Doe",
-					"isStandard": False,
-				},
-			},
-			blockDataScript=block_data_script,
-		)
-		content_static_prop = Block(element="h4", innerHTML="Block Props Content")
-		content_dynamic_prop = Block(
-			element="h4",
-			innerHTML="Block Props Content",
-			props={
-				"content": {
-					"isDynamic": True,
-					"comesFrom": "blockDataScript",
-					"isPassedDown": True,
-					"value": "content",
-					"isStandard": False,
-				},
-			},
-		)
-		content_fallback = Block(element="h4", innerHTML="Block Props Content")
-
-		content_static_prop.set_dynamic_value("first_name", "key", "innerHTML", "props")
-		content_dynamic_prop.set_dynamic_value("content", "key", "innerHTML", "props")
-		content_fallback.set_dynamic_value("last_name", "key", "innerHTML", "props")
-
-		div_wrapper.attach_children(content_static_prop, content_dynamic_prop, content_fallback)
-		body.attach_children(div_wrapper)
+	def test_legacy_block_client_script_fallback(self):
+		javascript = 'this.dataset.legacy = "supported";'
+		legacy_block = Block(element="div", blockId="legacy-script-block").as_dict()
+		legacy_block.pop("clientScript")
+		legacy_block["blockClientScript"] = javascript
+		body = Block(element="div", originalElement="body").as_dict()
+		body["children"] = [legacy_block]
 
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
-				"page_title": "Block Props Test",
+				"page_title": "Legacy Block Client Script Test",
 				"published": 1,
-				"route": "/block-props-test",
-				"blocks": body.as_json(wrap_in_array=True),
+				"route": "/legacy-block-client-script-test",
+				"blocks": frappe.as_json([body]),
 			}
 		).insert()
 
 		try:
-			content = get_response_content("/block-props-test")
-			self.assertEqual("John", get_html_for(content, "tag", "h4", only_content=True))
-			self.assertEqual(
-				"Custom Block Data", get_html_for(content, "tag", "h4", index=1, only_content=True)
-			)
-			self.assertEqual(
-				"Block Props Content", get_html_for(content, "tag", "h4", index=2, only_content=True)
-			)
+			content = get_response_content("/legacy-block-client-script-test")
+			self.assertIn(javascript, content)
 		finally:
 			page.delete()
 
-	def test_std_props(self):
-		component_root = Block(
-			blockId="header-block",
-			element="header",
-			blockName="header",
+		normalized_block = Block(blockClientScript=javascript).as_dict()
+		self.assertEqual(normalized_block["clientScript"], {"js": javascript})
+		self.assertNotIn("blockClientScript", normalized_block)
+
+	def test_block_template_root_props(self):
+		template_root = Block(
+			element="section",
+			blockId="template-props-root",
 			props={
 				"title": {
 					"label": "Title",
@@ -629,36 +695,232 @@ class TestBuilderPage(FrappeTestCase):
 					"propOptions": {
 						"isRequired": False,
 						"type": "string",
-						"options": {"defaultValue": "Default Header Title"},
+						"options": {"defaultValue": "Template Title"},
 					},
-				},
-				"age": {
-					"label": "Age",
+				}
+			},
+		)
+		title = Block(element="h2", blockId="template-title", innerHTML="Fallback")
+		title.set_dynamic_value("title", "key", "innerHTML", "props")
+		template_root.attach_children(title)
+		body = Block(element="div", originalElement="body")
+		body.attach_children(template_root)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Block Template Props Test",
+				"published": 1,
+				"route": "/block-template-props-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/block-template-props-test")
+			self.assertEqual("Template Title", get_html_for(content, "tag", "h2", only_content=True))
+		finally:
+			page.delete()
+
+	def test_component_data_uses_root_prop_defaults(self):
+		from builder.builder.doctype.builder_component.builder_component import get_component_data
+
+		component_root = Block(
+			element="div",
+			props={
+				"title": {
 					"isStandard": True,
-					"isDynamic": False,
-					"isPassedDown": True,
-					"comesFrom": None,
 					"value": None,
 					"propOptions": {
-						"isRequired": False,
-						"type": "number",
-						"options": {"defaultValue": 25},
+						"type": "string",
+						"options": {"defaultValue": "Default Title"},
 					},
-				},
-				"show_badge": {
-					"label": "Show Badge",
+				}
+			},
+		)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
+				"component_data_script": 'component["title"] = props.title',
+			}
+		).insert()
+
+		try:
+			self.assertEqual(get_component_data(component.name), {"title": "Default Title"})
+		finally:
+			component.delete()
+
+	def test_pinned_component_version_keeps_block_client_script(self):
+		old_script = 'this.dataset.version = "old";'
+		new_script = 'this.dataset.version = "new";'
+		component_root = Block(
+			element="div",
+			blockId="pinned-script-root",
+			clientScript={"js": old_script},
+			props={
+				"title": {
 					"isStandard": True,
-					"isDynamic": False,
 					"isPassedDown": True,
-					"comesFrom": None,
-					"value": None,
-					"propOptions": {
-						"isRequired": False,
-						"type": "boolean",
-						"options": {"defaultValue": False},
-					},
+					"value": "Pinned Prop Old",
+				}
+			},
+		)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
+			}
+		).insert()
+		pinned_version = ensure_component_version(component.name)
+
+		component_root.clientScript = {"js": new_script}
+		component_root.props["title"]["value"] = "Pinned Prop New"
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			component_root.as_json(),
+			update_modified=False,
+		)
+		frappe.clear_document_cache("Builder Component", component.name)
+
+		body = Block(element="div", originalElement="body")
+		body.attach_children(
+			Block(
+				extendedFromComponent=component.name,
+				componentVersion=pinned_version,
+			)
+		)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Pinned Block Client Script Test",
+				"published": 1,
+				"route": "/pinned-block-client-script-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/pinned-block-client-script-test")
+			self.assertIn(old_script, content)
+			self.assertNotIn(new_script, content)
+			self.assertIn("Pinned Prop Old", content)
+			self.assertNotIn("Pinned Prop New", content)
+		finally:
+			page.delete()
+			component.delete()
+			frappe.db.delete(
+				"Builder Snapshot",
+				{"reference_doctype": "Builder Component", "reference_name": component.name},
+			)
+
+	def test_component_props(self):
+		component_root = Block(element="div", blockId="wrapper-block")
+		content_static_prop = Block(
+			blockId="static-content", element="h4", innerHTML="Component Props Content"
+		)
+		content_dynamic_prop = Block(
+			blockId="dynamic-content", element="h4", innerHTML="Component Props Content"
+		)
+		content_last_name = Block(
+			blockId="last-name-content", element="h4", innerHTML="Component Props Content"
+		)
+		content_fallback = Block(
+			blockId="fallback-content", element="h4", innerHTML="Component Props Content"
+		)
+
+		content_static_prop.set_dynamic_value("first_name", "key", "innerHTML", "props")
+		content_dynamic_prop.set_dynamic_value("name", "key", "innerHTML", "componentData")
+		content_last_name.set_dynamic_value("last_name", "key", "innerHTML", "props")
+		content_fallback.set_dynamic_value("middle_name", "key", "innerHTML", "props")
+
+		component_root.attach_children(
+			content_static_prop, content_dynamic_prop, content_last_name, content_fallback
+		)
+		component_root.props = {
+			"first_name": {
+				"label": "First Name",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": "John",
+				"propOptions": {
+					"isRequired": False,
+					"type": "string",
+					"options": {"defaultValue": ""},
 				},
 			},
+			"last_name": {
+				"label": "Last Name",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": "Doe",
+				"propOptions": {
+					"isRequired": False,
+					"type": "string",
+					"options": {"defaultValue": ""},
+				},
+			},
+		}
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"block": component_root.as_json(),
+				"component_data_script": component_data_script,
+			}
+		).insert()
+
+		body = Block(
+			element="div",
+			originalElement="body",
+		)
+		component_root_copy = Block(extendedFromComponent=component.name)
+		content_static_copy = Block(isChildOfComponent=component.name, referenceBlockId="static-content")
+		content_dynamic_copy = Block(isChildOfComponent=component.name, referenceBlockId="dynamic-content")
+		content_last_name_copy = Block(
+			isChildOfComponent=component.name, referenceBlockId="last-name-content"
+		)
+		content_fallback_copy = Block(isChildOfComponent=component.name, referenceBlockId="fallback-content")
+		component_root_copy.attach_children(
+			content_static_copy,
+			content_dynamic_copy,
+			content_last_name_copy,
+			content_fallback_copy,
+		)
+		body.attach_children(component_root_copy)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Props Test",
+				"published": 1,
+				"route": "/component-props-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/component-props-test")
+			self.assertEqual("John", get_html_for(content, "tag", "h4", only_content=True))
+			self.assertEqual("John Doe", get_html_for(content, "tag", "h4", index=1, only_content=True))
+			self.assertEqual("Doe", get_html_for(content, "tag", "h4", index=2, only_content=True))
+			self.assertEqual(
+				"Component Props Content", get_html_for(content, "tag", "h4", index=3, only_content=True)
+			)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_std_props(self):
+		component_root = Block(
+			blockId="header-block",
+			element="header",
+			blockName="header",
 		)
 
 		component_title_block = Block(blockId="title-block", element="h1", innerHTML="Header Title")
@@ -674,6 +936,47 @@ class TestBuilderPage(FrappeTestCase):
 		}
 
 		component_root.attach_children(component_title_block, component_age_block, component_badge_block)
+		component_root.props = {
+			"title": {
+				"label": "Title",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": None,
+				"propOptions": {
+					"isRequired": False,
+					"type": "string",
+					"options": {"defaultValue": "Default Header Title"},
+				},
+			},
+			"age": {
+				"label": "Age",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": None,
+				"propOptions": {
+					"isRequired": False,
+					"type": "number",
+					"options": {"defaultValue": 25},
+				},
+			},
+			"show_badge": {
+				"label": "Show Badge",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": None,
+				"propOptions": {
+					"isRequired": False,
+					"type": "boolean",
+					"options": {"defaultValue": False},
+				},
+			},
+		}
 		component = frappe.get_doc(
 			{
 				"doctype": "Builder Component",
@@ -789,29 +1092,6 @@ class TestBuilderPage(FrappeTestCase):
 			blockId="navbar-wrapper-block",
 			element="header",
 			blockName="navbar",
-			props={
-				"links": {
-					"label": "Links",
-					"isStandard": True,
-					"isDynamic": False,
-					"isPassedDown": True,
-					"comesFrom": None,
-					"value": None,
-					"propOptions": {
-						"isRequired": False,
-						"type": "object",
-						"options": {
-							"minItems": None,
-							"maxItems": None,
-							"defaultValue": {
-								"1. Home": "/",
-								"2. Products": "/products",
-								"3. About Us": "/about",
-							},
-						},
-					},
-				}
-			},
 		)
 		component_repeater_block = Block(
 			blockId="repeater-block",
@@ -828,6 +1108,29 @@ class TestBuilderPage(FrappeTestCase):
 
 		component_repeater_block.attach_children(component_link_block)
 		component_root.attach_children(component_repeater_block)
+		component_root.props = {
+			"links": {
+				"label": "Links",
+				"isStandard": True,
+				"isDynamic": False,
+				"isPassedDown": True,
+				"comesFrom": None,
+				"value": None,
+				"propOptions": {
+					"isRequired": False,
+					"type": "object",
+					"options": {
+						"minItems": None,
+						"maxItems": None,
+						"defaultValue": {
+							"1. Home": "/",
+							"2. Products": "/products",
+							"3. About Us": "/about",
+						},
+					},
+				},
+			}
+		}
 
 		component = frappe.get_doc(
 			{
@@ -989,6 +1292,37 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(font_map["Inter"]["weights"], [400, 700])
 		self.assertEqual(font_map["Open Sans"]["weights"], [600])
 
+	def test_set_fonts_uses_primary_family_from_fallback_list(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		set_fonts([{"fontFamily": "Inter, sans-serif", "fontWeight": "500"}], font_map)
+
+		# Only the first family is requested, not the whole CSS stack
+		self.assertIn("Inter", font_map)
+		self.assertNotIn("Inter, sans-serif", font_map)
+
+	def test_get_google_font_urls(self):
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			"Newsreader": {"weights": [500]},
+			"Open Sans": {"weights": [700, 400]},
+			"Foo & Bar": {"weights": [400]},
+		}
+		urls = get_google_font_urls(font_map)
+
+		# One combined request per family: 400 always included, weights sorted, family
+		# name URL-encoded (spaces -> +, reserved chars escaped so the URL can't break)
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap",
+				"https://fonts.googleapis.com/css2?family=Foo+%26+Bar:wght@400&display=swap",
+			],
+		)
+
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
 		from builder.builder.doctype.builder_page.builder_page import set_fonts
@@ -1024,7 +1358,7 @@ class TestBuilderPage(FrappeTestCase):
 				],
 			}
 		]
-		_, _, font_map, _, _ = get_block_html(blocks)
+		_, _, font_map, _ = get_block_html(blocks)
 		self.assertIn("Newsreader", font_map)
 		self.assertIn(700, font_map["Newsreader"]["weights"])
 
@@ -1040,37 +1374,113 @@ class TestBuilderPage(FrappeTestCase):
 				"children": [],
 			}
 		]
-		_, _, font_map, _, _ = get_block_html(blocks)
+		_, _, font_map, _ = get_block_html(blocks)
 		self.assertNotIn("InterVar", font_map)
 		self.assertNotIn("intervar", font_map)
 
-	def test_block_script_error_traceback(self):
-		body = Block(
-			element="div",
-			originalElement="body",
-		)
-		div = Block(
-			element="div",
-			blockId="test-block",
-			innerHTML="Test Block",
-			blockDataScript="block.data = sample_error",
-		)
-		body.attach_children(div)
-		page = frappe.get_doc(
-			{
-				"doctype": "Builder Page",
-				"page_title": "Block Script Error Test",
-				"published": 1,
-				"route": "/block-script-error-test",
-				"blocks": body.as_json(wrap_in_array=True),
+	def test_renders_blocks_with_stripped_empty_values(self):
+		"""Blocks are saved with empty defaults (attributes={}, classes=[], dataKey=null,
+		empty styles, etc.) stripped out to keep documents small"""
+		import re
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def empties():
+			return {
+				"rawStyles": {},
+				"mobileStyles": {},
+				"tabletStyles": {},
+				"attributes": {},
+				"customAttributes": {},
+				"classes": [],
+				"props": {},
+				"dynamicValues": [],
+				"dataKey": None,
+				"activeState": None,
 			}
-		).insert()
-		try:
-			content = get_response_content("/block-script-error-test")
-			self.assertTrue("block_script_for_test_block" in content)
-			self.assertTrue("NameError: name &#x27;sample_error&#x27; is not defined" in content)
-		finally:
-			page.delete()
+
+		full = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "child1",
+						"element": "h1",
+						"innerHTML": "Hello World!",
+						"baseStyles": {"color": "red"},
+						"children": [],
+						**empties(),
+					}
+				],
+				**empties(),
+			}
+		]
+		stripped = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "child1",
+						"element": "h1",
+						"innerHTML": "Hello World!",
+						"baseStyles": {"color": "red"},
+					}
+				],
+			}
+		]
+
+		# CSS class names are a random hash per render (frappe.generate_hash) — ignore them.
+		def normalize(text):
+			return re.sub(r"[0-9a-f]{8,}", "H", text)
+
+		html_full, css_full, _, _ = get_block_html(full)
+		html_stripped, css_stripped, _, _ = get_block_html(stripped)
+
+		self.assertIn("Hello World!", html_stripped)
+		self.assertEqual(normalize(html_full), normalize(html_stripped))
+		self.assertEqual(normalize(css_full), normalize(css_stripped))
+
+		# A block carrying dynamicValues but with attributes/styles stripped used to
+		# raise KeyError in set_dynamic_content_placeholders — guard against regression.
+		dynamic = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"display": "flex"},
+				"children": [
+					{
+						"blockId": "img1",
+						"element": "img",
+						"dynamicValues": [
+							{"key": "logo", "type": "attribute", "property": "src", "comesFrom": "dataScript"}
+						],
+					}
+				],
+			}
+		]
+		html_dynamic, _, _, _ = get_block_html(dynamic)
+		self.assertIn("logo", html_dynamic)
+
+		with_unset_style = [
+			{
+				"blockId": "root",
+				"element": "div",
+				"originalElement": "body",
+				"baseStyles": {"color": "red", "display": None},
+				"children": [],
+			}
+		]
+		_, css_unset, _, _ = get_block_html(with_unset_style)
+		self.assertIn("color: red", css_unset)
+		self.assertNotIn("display:", css_unset)
+		self.assertNotIn("None", css_unset)
 
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""

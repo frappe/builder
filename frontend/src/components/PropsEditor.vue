@@ -1,11 +1,9 @@
 <template>
 	<div ref="propsEditor" class="flex flex-col gap-2">
 		<div class="flex flex-col gap-2 rounded-lg">
-			<template v-for="(value, name, index) in sortedProps" :key="index">
+			<template v-for="(value, name, index) in props.obj" :key="index">
 				<div
-					:key="index"
-					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6"
-					v-if="value.isStandard !== true || shouldDisplayStandardProps">
+					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
 					<Popover :offset="32" placement="right">
 						<template #target="{ open }">
 							<div
@@ -15,7 +13,6 @@
 										popupMode = 'edit';
 										popoverContentItemsRef[index]?.reset({
 											keepName: false,
-											keepIsStandard: false,
 											keepProps: true,
 											keepType: false,
 										});
@@ -26,17 +23,7 @@
 								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
 									<div class="icon">
 										<component
-											v-if="!value.isStandard"
-											:is="
-												value.isDynamic
-													? value.comesFrom == 'props'
-														? LucideGitCommit
-														: LucideZap
-													: LucideCaseSensitive
-											"
-											class="h-4 w-4 text-ink-gray-4" />
-										<component
-											v-if="value.isStandard && value.propOptions?.type"
+											v-if="value.propOptions?.type"
 											:is="
 												{
 													number: LucideNumber,
@@ -52,12 +39,10 @@
 											class="h-4 w-4 text-ink-gray-4" />
 									</div>
 									<div class="flex max-w-full flex-col gap-1">
-										<p class="text-sm font-medium">
+										<p class="text-sm-medium">
 											{{ value.label || name }}
 										</p>
-										<p
-											v-if="value.isStandard"
-											class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
+										<p class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
 											{{
 												value.propOptions?.options?.defaultValue
 													? ["array", "object"].includes(value.propOptions.options.type)
@@ -65,9 +50,6 @@
 														: value.propOptions?.options?.defaultValue
 													: "No Default Value"
 											}}
-										</p>
-										<p v-else class="max-w-full truncate text-ellipsis text-xs text-ink-gray-4">
-											{{ value.value || "No Value" }}
 										</p>
 									</div>
 								</div>
@@ -107,7 +89,6 @@
 						() => {
 							popoverContentAddRef?.reset({
 								keepName: false,
-								keepIsStandard: false,
 								keepProps: false,
 								keepType: false,
 							});
@@ -139,13 +120,11 @@
 </template>
 <script setup lang="ts">
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
-import { computed, ref, useAttrs, watch } from "vue";
+import { ref, useAttrs, watch } from "vue";
 
 import LucideObject from "~icons/lucide/braces";
 import LucideArray from "~icons/lucide/brackets";
-import LucideCaseSensitive from "~icons/lucide/case-sensitive";
 import LucideSelect from "~icons/lucide/chevrons-up-down";
-import LucideGitCommit from "~icons/lucide/git-commit-horizontal";
 import LucideImage from "~icons/lucide/image";
 import LucideColor from "~icons/lucide/palette";
 import LucideNumber from "~icons/lucide/pi";
@@ -153,8 +132,6 @@ import LucideBoolean from "~icons/lucide/toggle-right";
 import LucideString from "~icons/lucide/type";
 import LucideZap from "~icons/lucide/zap";
 
-import useCanvasStore from "@/stores/canvasStore";
-import blockController from "@/utils/blockController";
 import { Popover } from "frappe-ui";
 import PropsPopoverContent from "./PropsPopoverContent.vue";
 
@@ -175,23 +152,6 @@ const props = defineProps<{
 	description?: string;
 }>();
 
-const sortedProps = computed(() => {
-	// Sort props: standard props at the front, then non-standard props
-	const entries = Object.entries(props.obj || {});
-	entries.sort((a, b) => {
-		const aIsStandard = a[1].isStandard ? 1 : 0;
-		const bIsStandard = b[1].isStandard ? 1 : 0;
-		return bIsStandard - aIsStandard;
-	});
-	return Object.fromEntries(entries);
-});
-
-const shouldDisplayStandardProps = computed(() => {
-	return (
-		useCanvasStore().editingMode == "fragment" && !blockController.getFirstSelectedBlock()?.getParentBlock()
-	);
-});
-
 const emit = defineEmits({
 	"update:obj": (obj: BlockProps) => true,
 });
@@ -204,80 +164,9 @@ const addProp = async ({ name, value }: { name: string; value: BlockProps[string
 	return map;
 };
 
-const updateObjectValue = (
-	map: Map<string, BlockProps[string]>,
-	key: string,
-	{
-		label,
-		value,
-		isDynamic,
-		comesFrom,
-		isPassedDown,
-	}: {
-		label?: string;
-		value: string | null;
-		isDynamic: boolean;
-		comesFrom: BlockProps[string]["comesFrom"];
-		isPassedDown: boolean;
-	},
-) => {
-	if (!value) {
-		value = null;
-		isDynamic = false;
-		comesFrom = null;
-	} else {
-		value = !isDynamic && typeof value !== "string" ? JSON.stringify(value) : value;
-	}
-
-	const oldValue = map.get(key)?.value;
-	const oldLabel = map.get(key)?.label;
-	const wasDynamic = map.get(key)?.isDynamic;
-	const cameFrom = map.get(key)?.comesFrom;
-	const wasPassedDown = map.get(key)?.isPassedDown;
-
-	if (
-		value === oldValue &&
-		label === oldLabel &&
-		isDynamic === wasDynamic &&
-		comesFrom === cameFrom &&
-		isPassedDown === wasPassedDown
-	) {
-		return map;
-	}
-
-	map.set(key, {
-		...map.get(key)!,
-		label,
-		value,
-		isDynamic,
-		comesFrom,
-		isPassedDown,
-	});
-
-	return map;
-};
-
 const replaceKey = (map: Map<string, BlockProps[string]>, oldKey: string, newKey: string) => {
 	keyBeingEdited.value = newKey;
 	return mapToObject(replaceMapKey(map, oldKey, newKey));
-};
-
-const updateIsStandard = (map: Map<string, BlockProps[string]>, key: string, isStandard: boolean) => {
-	const value = map.get(key);
-	map.set(key, {
-		...value!,
-		isStandard,
-	});
-	return map;
-};
-
-const updatePropOptions = (map: Map<string, BlockProps[string]>, key: string, propOptions: any) => {
-	const value = map.get(key);
-	map.set(key, {
-		...value!,
-		propOptions,
-	});
-	return map;
 };
 
 const updateProp = async ({
@@ -295,15 +184,15 @@ const updateProp = async ({
 		map = new Map(Object.entries(replaceKey(map, oldPropName, newName)));
 	}
 
-	map = updateObjectValue(map, newName, {
-		label: newValue.label,
-		value: newValue.value,
-		isDynamic: newValue.isDynamic,
-		comesFrom: newValue.comesFrom,
-		isPassedDown: newValue.isPassedDown || false,
+	map.set(newName, {
+		...map.get(newName)!,
+		...newValue,
+		isStandard: true,
+		isDynamic: false,
+		isPassedDown: true,
+		comesFrom: null,
+		value: null,
 	});
-	map = updateIsStandard(map, newName, newValue.isStandard || false);
-	map = updatePropOptions(map, newName, newValue.propOptions || {});
 	emit("update:obj", mapToObject(map));
 
 	return map;

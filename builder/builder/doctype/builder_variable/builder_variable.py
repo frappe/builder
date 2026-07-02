@@ -67,6 +67,28 @@ def get_css_variables():
 	return css_variables, dark_mode_css_variables
 
 
+def get_variables_css() -> str:
+	"""Render the CSS variables as an inline `:root {...}` rule.
+
+	The /builder_assets/variables.css route is a dynamically rendered page, not a
+	real file, so the preview/PDF generator can't fetch it (it blocks access to
+	non-existent local paths). Preview rendering inlines this string instead of
+	linking the route. Mirrors www/builder_assets/variables.css."""
+	css_variables, dark_mode_css_variables = get_css_variables()
+	if not css_variables:
+		return ""
+
+	declarations = []
+	for key, value in css_variables.items():
+		dark_value = (dark_mode_css_variables or {}).get(key)
+		if dark_value is not None and dark_value != value:
+			declarations.append(f"{key}: light-dark({value}, {dark_value});")
+		else:
+			declarations.append(f"{key}: {value};")
+
+	return ":root {\n" + "\n".join(declarations) + "\n}"
+
+
 def clear_builder_variable_cache(doc=None, method=None):
 	get_css_variables.clear_cache()
 	# bust the rendered page cache for /builder_assets/variables.css

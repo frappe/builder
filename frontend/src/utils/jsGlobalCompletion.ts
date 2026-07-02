@@ -31,7 +31,10 @@ const dontCompleteIn = [
 	"PropertyDefinition",
 ];
 
-export default function jsCompletionsFromGlobalScope(context: any, blockProps: Record<string, any> = {}) {
+export default function jsCompletionsFromGlobalScope(
+	context: any,
+	blockProps: Record<string, any> = {},
+) {
 	let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
 	const hasProps = Object.keys(blockProps).length > 0;
 
@@ -44,7 +47,6 @@ export default function jsCompletionsFromGlobalScope(context: any, blockProps: R
 			let from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
 			let variableName = context.state.sliceDoc(object.from, object.to);
 			if (variableName === "props") {
-				// If props is empty, return null immediately (no suggestions)
 				if (!hasProps) return null;
 
 				let isBracket = nodeBefore.name === "[";
@@ -66,9 +68,15 @@ export default function jsCompletionsFromGlobalScope(context: any, blockProps: R
 			if (typeof window[variableName] == "object") return completeProperties(from, window[variableName]);
 		}
 	} else if (nodeBefore.name == "VariableName") {
-		return completeProperties(nodeBefore.from, window, hasProps ? ["props"] : []);
+		const extraKeys = [
+			...(hasProps ? ["props"] : []),
+		];
+		return completeProperties(nodeBefore.from, window, extraKeys);
 	} else if (context.explicit && !dontCompleteIn.includes(nodeBefore.name)) {
-		return completeProperties(context.pos, window, hasProps ? ["props"] : []);
+		const extraKeys = [
+			...(hasProps ? ["props"] : []),
+		];
+		return completeProperties(context.pos, window, extraKeys);
 	}
 	return null;
 }

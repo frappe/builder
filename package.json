@@ -19,7 +19,7 @@
     "resolutions": {
         "lint-staged": "^15.2.10",
         "baseline-browser-mapping": "^2.10.24",
-        "prosemirror-model": "1.25.4",
+        "prosemirror-model": "1.25.7",
         "prosemirror-view": "1.41.8",
         "prosemirror-state": "1.4.4",
         "prosemirror-transform": "1.12.0",

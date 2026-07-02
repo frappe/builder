@@ -8,7 +8,7 @@
 		<BuilderBlock
 			v-else
 			:data="repeatingFrom == 'dataScript' ? _data : data"
-			:block-data="repeatingFrom == 'blockDataScript' ? _data : blockData"
+			:componentData="repeatingFrom == 'componentData' ? _data : componentData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
 			:preview="Number(index) !== 0 || preview"
@@ -26,27 +26,25 @@ import usePageStore from "@/stores/pageStore";
 import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
-import blockController from "@/utils/blockController";
-import { useBlockDataStore } from "@/stores/blockStore";
 
 const pageStore = usePageStore();
-const blockDataStore = useBlockDataStore();
 
 const props = withDefaults(
 	defineProps<{
 		block: Block;
-		uid?: string;
 		repeaterIndex?: string | number | null;
 		preview?: boolean;
 		breakpoint?: string;
 		data?: Record<string, any> | null;
-		blockData?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		readonly?: boolean;
 	}>(),
 	{
 		preview: false,
 		breakpoint: "desktop",
 		readonly: false,
+		data: null,
+		componentData: null,
 	},
 );
 
@@ -58,7 +56,6 @@ const repeatingFrom = computed(() => {
 
 const blockRepeaterData = computed(() => {
 	const pageData = props.data || pageStore.pageData;
-	const blockData = blockDataStore.getBlockData(props.uid || props.block.blockId) || {};
 	const key = props.block.getDataKey("key");
 	if (pageData && repeatingFrom.value === "dataScript" && key) {
 		const data = getDataForKey(pageData, key);
@@ -66,16 +63,16 @@ const blockRepeaterData = computed(() => {
 			return data.slice(0, 100);
 		}
 		return data;
-	} else if (pageData && repeatingFrom.value === "blockDataScript" && key) {
-		const data = getDataForKey(blockData, key);
-		if (Array.isArray(data)) {
-			return data.slice(0, 100);
+	} else if (repeatingFrom.value === "componentData" && key) {
+		const compData = getDataForKey(props.componentData || {}, key);
+		if (Array.isArray(compData)) {
+			return compData.slice(0, 100);
 		}
-		return data;
+		return compData || [];
 	} else if (repeatingFrom.value == "props" && key) {
 		const defaultProps: BlockProps[] = [];
-		const componentRoot = blockController.getComponentRootBlock(props.block);
-		const parsedValue = getStandardPropValue(key, componentRoot)?.value;
+		const propsRoot = props.block.getPropsRoot();
+		const parsedValue = propsRoot ? getStandardPropValue(key, propsRoot)?.value : null;
 		if (Array.isArray(parsedValue)) {
 			parsedValue.slice(0, 100).forEach((item: any) =>
 				defaultProps.push({

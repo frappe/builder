@@ -20,16 +20,16 @@ declare type BlockProps = Record<
 		label?: string;
 		isDynamic: boolean;
 		isPassedDown: boolean;
-		comesFrom: "props" | "dataScript" | "blockDataScript" | null;
+		comesFrom: "props" | "dataScript" | "componentData" | null;
 		value: string?;
-		isStandard?: boolean;
+		isStandard?: boolean; // always true as used only in components
 		propOptions?: BlockPropOptions;
 	}
 >;
 
 declare type BlockVisibilityCondition = {
 	key: string | undefined;
-	comesFrom: "props" | "dataScript" | "blockDataScript" | undefined;
+	comesFrom: "props" | "dataScript" | "componentData" | undefined;
 };
 
 declare interface BlockAttributeMap {
@@ -39,6 +39,11 @@ declare interface BlockAttributeMap {
 declare interface BlockEditorConfig {
 	icon?: string;
 	showChildrenInEditor?: boolean;
+}
+
+declare interface BlockClientScript {
+	js?: string;
+	css?: string;
 }
 
 declare interface BlockOptions {
@@ -54,6 +59,9 @@ declare interface BlockOptions {
 	dynamicValues?: Array<BlockDataKey>;
 	draggable?: boolean;
 	editorConfig?: BlockEditorConfig;
+	componentVersion?: string;
+	clientScript?: BlockClientScript;
+	blockClientScript?: string;
 	[key: string]: any;
 }
 
@@ -137,7 +145,7 @@ declare type FileDoc = {
 declare interface BlockDataKey {
 	key?: string;
 	type?: BlockDataKeyType;
-	comesFrom?: "props" | "dataScript" | "blockDataScript";
+	comesFrom?: "props" | "dataScript" | "componentData";
 	property?: string;
 }
 

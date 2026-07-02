@@ -57,6 +57,10 @@ export function promptCreateComponent(block: Block) {
 			componentStore.setComponentMap(componentData);
 			const updatedBlock = canvasStore.activeCanvas?.findBlock(block.blockId);
 			updatedBlock?.extendFromComponent(componentData.name);
+			if (updatedBlock) {
+				await componentStore.pinComponentInstance(updatedBlock, componentData.name);
+				pageStore.savePage();
+			}
 		},
 	});
 }

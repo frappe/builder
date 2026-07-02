@@ -20,7 +20,7 @@ import { tomorrow } from "thememirror";
 
 const props = defineProps<{
 	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
-	mode?: "block" | "page";
+	mode?: "block" | "page" | "component";
 	initialValue?: string;
 	readonly: boolean;
 	allowSave: boolean;
@@ -113,7 +113,7 @@ const allBlockProps = computed(() => {
 
 	const ownBlockProps = currentBlock.getBlockProps();
 	const inheritedBlockProps = getParentProps(currentBlock);
-	const defaultProps = getDefaultPropsList(currentBlock, blockController);
+	const defaultProps = getDefaultPropsList(currentBlock);
 
 	return {
 		...defaultProps,

@@ -1,6 +1,6 @@
 <template>
 	<section
-		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-2 border-r border-outline-gray-1 bg-surface-gray-1 p-1 max-lg:hidden dark:bg-surface-white">
+		class="sticky bottom-0 left-0 top-0 flex min-h-fit w-60 flex-col gap-2 border-r border-outline-gray-1 bg-surface-gray-1 p-1 max-lg:hidden dark:bg-surface-base">
 		<div class="flex flex-col">
 			<div class="flex gap-2">
 				<div class="flex w-full items-center">
@@ -59,7 +59,7 @@
 							<button
 								class="mx-0.5 flex w-full items-center justify-between rounded p-1.5 dark:hover:bg-surface-gray-2"
 								:class="{
-									'bg-surface-white shadow-sm': open,
+									'bg-surface-base shadow-sm': open,
 								}">
 								<div class="flex w-full cursor-pointer items-center gap-2">
 									<img src="/builder_logo.png" alt="logo" class="h-7" />
@@ -84,7 +84,8 @@
 				class="flex cursor-pointer gap-2 rounded p-2 text-base text-ink-gray-6"
 				@click="() => setFolderActive('')"
 				:class="{
-					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': !builderStore.activeFolder,
+					'bg-surface-elevation-2 text-ink-gray-8 shadow-sm dark:bg-surface-gray-2':
+						!builderStore.activeFolder,
 				}">
 				<FilesIcon class="size-4"></FilesIcon>
 				<span>All Pages</span>
@@ -110,13 +111,13 @@
 				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 pr-0 text-base text-ink-gray-6"
 				v-for="project in builderProjectFolder.data"
 				:class="{
-					'bg-surface-modal text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
+					'bg-surface-elevation-2 text-ink-gray-8 shadow-sm dark:bg-surface-gray-2': isFolderActive(
 						project.folder_name,
 					),
 				}"
 				@click="setFolderActive(project.folder_name)">
 				<span class="flex flex-1 gap-2 overflow-hidden">
-					<FolderIcon class="size-4"></FolderIcon>
+					<span class="lucide-folder size-4" />
 					<EditableSpan
 						v-model="project.folder_name"
 						:editable="renamingFolder === project.folder_name"
@@ -178,7 +179,6 @@
 <script lang="ts" setup>
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
-import FolderIcon from "@/components/Icons/Folder.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { promptCreateFolder } from "@/utils/dialogs";

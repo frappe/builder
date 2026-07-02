@@ -55,9 +55,11 @@ website_generators = ["Builder Page"]
 
 # add methods and filters to jinja environment
 jinja = {
+	"methods": [
+		"builder.builder.doctype.builder_component.builder_component.get_component_data",
+	],
 	"filters": [
 		"builder.utils.combine",
-		"builder.utils.execute_script_and_combine",
 		"builder.utils.hash",
 		"builder.utils.to_safe_json",
 	],
@@ -122,6 +124,7 @@ scheduler_events = {
 	"cron": {
 		"*/10 * * * *": [
 			"builder.builder_analytics.ingest_web_page_views_to_duckdb",
+			"builder.builder_analytics.ingest_clicks_to_duckdb",
 		],
 	}
 }

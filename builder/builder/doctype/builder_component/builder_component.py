@@ -10,7 +10,8 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.utils import Block
+from builder.builder.component_versions import ensure_component_version
+from builder.utils import Block, compact_json, execute_script
 
 
 class BuilderComponent(Document):
@@ -23,6 +24,7 @@ class BuilderComponent(Document):
 		from frappe.types import DF
 
 		block: DF.JSON | None
+		component_data_script: DF.Code | None
 		component_id: DF.Data | None
 		component_name: DF.Data | None
 		for_web_page: DF.Link | None
@@ -34,10 +36,13 @@ class BuilderComponent(Document):
 		capture("builder_component_created", "builder")
 
 	def on_update(self):
-		# Skip the background cache-clear during bulk imports (install / migrate /
-		# import_doc). queue_action enqueues a job AND locks the doc, which can raise
-		# DocumentLockedError mid-import — e.g. when create_page_from_template
-		# import_doc's a hub template's components. Nothing to clear on a fresh import.
+		# Skip the background cache-clear and version snapshot during bulk imports
+		# (install / migrate / import_doc). queue_action enqueues a job AND locks the
+		# doc, which can raise DocumentLockedError mid-import — e.g. when
+		# create_page_from_template import_doc's a hub template's components.
+		# ensure_component_version also walks nested components and prunes, which is
+		# unsafe when not all components are loaded yet. Versions are minted on the
+		# next real edit, so nothing is lost by skipping a fresh import.
 		if not (
 			frappe.flags.in_import
 			or frappe.flags.in_install
@@ -45,6 +50,7 @@ class BuilderComponent(Document):
 			or frappe.flags.in_patch
 		):
 			self.queue_action("clear_page_cache")
+			ensure_component_version(self.name)
 		self.update_exported_component()
 
 	def clear_page_cache(self):
@@ -112,7 +118,7 @@ class ComponentSyncer:
 			else:
 				self.sync_blocks(block.children or [], component)
 		blocks_dict = [block.as_dict() if isinstance(block, Block) else block for block in blocks_list]
-		return frappe.as_json(blocks_dict)
+		return compact_json(blocks_dict)
 
 	def sync_single_block(self, target_block: Block, component_name: str, component_children: list[Block]):
 		"""Sync a single block with its component template"""
@@ -167,3 +173,52 @@ def reset_block_styles(block: Block) -> None:
 	block.customAttributes = dict()
 	block.classes = []
 	block.children = block.children or []
+
+
+def get_component_data(
+	component_name: str, props: dict | str | None = None, script: str | None = None
+) -> dict:
+	"""Execute a component's data script with the given props and return the data dict.
+
+	Args:
+		component_name: The name/ID of the Builder Component
+		props: Provided props or Component Props to pass to data script
+		script: Provided data script or Component Data Script to execute
+
+	Returns:
+		A dict containing the component's data
+	"""
+
+	try:
+		component_doc = frappe.get_cached_doc("Builder Component", component_name)
+	except frappe.DoesNotExistError:
+		return {}
+
+	if script is None:
+		script = component_doc.component_data_script
+	props = props or get_component_prop_values(component_doc.block)
+
+	if isinstance(props, str):
+		props = frappe.parse_json(props)
+
+	if not script:
+		return {}
+
+	_locals = dict(
+		component=frappe._dict(),
+		props=frappe._dict(props or {}),
+	)
+
+	execute_script(script, _locals, component_name)
+
+	return _locals["component"]
+
+
+def get_component_prop_values(block: dict | str | None) -> dict:
+	block = frappe.parse_json(block or "{}")
+	return {
+		name: config.get("value")
+		if config.get("value") is not None
+		else config.get("propOptions", {}).get("options", {}).get("defaultValue")
+		for name, config in (block.get("props") or {}).items()
+	}

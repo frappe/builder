@@ -46,7 +46,7 @@
 					</div>
 				</template>
 				<template #body>
-					<div class="rounded-lg bg-surface-white p-3 shadow-lg">
+					<div class="rounded-lg bg-surface-base p-3 shadow-lg">
 						<div class="group relative flex items-center justify-center overflow-hidden rounded">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
