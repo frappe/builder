@@ -42,7 +42,8 @@ spawn_parallel_agents_tool = Tool(
 		"(under one shared site folder) that its sub-agent builds; put shared design guidance "
 		"(theme var names, header/footer component ids, palette, fonts) in `shared_context` so "
 		f"every page stays consistent. Max {orchestration.MAX_PARALLEL_TASKS} tasks per call. "
-		"Only for genuinely independent work — for a single page, still use one task."
+		"ONLY for 2+ genuinely independent tasks — for a single page use create_page + "
+		"generate_page directly, never a batch."
 	),
 	parameters={
 		"type": "object",

@@ -14,6 +14,11 @@
 					<span v-else-if="t.status === 'running'" class="bg-ink-gray-6 size-2 animate-pulse rounded-full" />
 					<span v-else class="size-2 rounded-full border border-outline-gray-3" />
 				</span>
+				<img
+					v-if="t.preview && t.status === 'done'"
+					:src="t.preview"
+					class="h-9 w-14 shrink-0 rounded border border-outline-gray-2 object-cover object-top"
+					alt="" />
 				<span class="min-w-0 flex-1 truncate text-xs text-ink-gray-8">{{ t.title }}</span>
 				<button
 					v-if="t.status === 'done' && t.page"

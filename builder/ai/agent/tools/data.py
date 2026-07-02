@@ -104,7 +104,13 @@ def get_document(ctx, args: dict) -> str:
 	else:
 		# Drop internal fields and child tables so the read stays legible + cheap.
 		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
-	# Bound long values (e.g. a page's raw HTML blob) so a read never blows the context.
+	# A page's block JSON would only truncate into an unparseable stub here — point at
+	# the tool that renders it properly instead.
+	if dt == "Builder Page":
+		for key in ("blocks", "draft_blocks"):
+			if data.get(key):
+				data[key] = f"<use read_page('{doc.name}') to see the page structure>"
+	# Bound long values (e.g. a raw HTML blob) so a read never blows the context.
 	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
 	return frappe.as_json(data)
 

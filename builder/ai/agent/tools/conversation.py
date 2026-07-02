@@ -16,6 +16,9 @@ def ask_clarification(ctx, args: dict) -> None:
 	question = (args.get("question") or "Could you clarify?").strip()
 	options = [str(o).strip() for o in (args.get("options") or []) if str(o).strip()]
 	previews = clean_previews(args.get("previews"), len(options))
+	metadata = {"status": "clarification", "options": options, "previews": previews}
+	if ctx.activity:
+		metadata["activity"] = ctx.activity  # research done before asking survives a reload
 	# Persist + commit BEFORE emitting: the realtime event triggers a session
 	# reload on the client, which must see this message already in the DB.
 	AISession.try_append_message(
@@ -24,7 +27,7 @@ def ask_clarification(ctx, args: dict) -> None:
 		question,
 		message_type="clarification",
 		task_type="agent",
-		metadata={"status": "clarification", "options": options, "previews": previews},
+		metadata=metadata,
 	)
 	frappe.db.commit()
 	ctx.emit("clarify", question=question, options=options, previews=previews)
@@ -52,13 +55,16 @@ def propose_plan(ctx, args: dict) -> None:
 	headline = (args.get("headline") or "Here's my plan").strip()
 	sections = normalize_sections(args.get("sections"))
 	palette = (args.get("palette") or "").strip()
+	metadata = {"status": "plan_summary", "headline": headline, "sections": sections, "palette": palette}
+	if ctx.activity:
+		metadata["activity"] = ctx.activity
 	AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
 		headline,
 		message_type="clarification",
 		task_type="agent",
-		metadata={"status": "plan_summary", "headline": headline, "sections": sections, "palette": palette},
+		metadata=metadata,
 	)
 	frappe.db.commit()
 	ctx.emit(
@@ -90,10 +96,11 @@ ask_clarification = Tool(
 	name="ask_clarification",
 	side="terminal",
 	description=(
-		"Ask the user ONE focused question to gather information you need (e.g. brand name, "
-		"positioning, audience, visual style). Ends your turn and waits for their reply. "
-		"Provide 2–5 short options when there are sensible choices; omit options for "
-		"open-ended answers like a name (the user can type their reply)."
+		"Ask the user ONE focused question — ONLY when you are genuinely blocked. Never use "
+		"it when the request references an existing page, image, or brand you can read: study "
+		"the reference (read_page / theme variables) and derive the answer instead. Ends your "
+		"turn and waits for their reply. Provide 2–5 short options when there are sensible "
+		"choices; omit options for open-ended answers like a name (the user can type their reply)."
 	),
 	parameters={
 		"type": "object",
@@ -127,12 +134,13 @@ propose_plan = Tool(
 	name="propose_plan",
 	side="terminal",
 	description=(
-		"Before building a NEW page or doing a major redesign, present a short plan and "
-		"wait for the user to approve or refine it. The plan must EXPRESS the chosen design "
-		"direction — its sections, copy, and layout should read unmistakably as that "
+		"For LARGE builds where a wrong guess is expensive (a multi-page site, a full "
+		"rebrand): present a short plan and wait for the user to approve or refine it. A "
+		"single page needs NO plan — build it directly. The plan must EXPRESS the chosen "
+		"design direction — its sections, copy, and layout should read unmistakably as that "
 		"aesthetic, not a generic structure. Ends your turn. Never call this twice in a row: "
-		"if a plan is already pending and the user approved it, call generate_page instead. "
-		"Only re-propose when the user asked for changes."
+		"if a plan is pending and the user approved it, BUILD — do not re-propose. Only "
+		"re-propose when the user asked for changes."
 	),
 	parameters={
 		"type": "object",

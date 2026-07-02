@@ -8,14 +8,16 @@ Realtime event contract (consumed by the frontend). Every event name is
 suffixed with the CHANNEL — the page id for the in-editor chat, or the session
 id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`:
 
-    ai_chat_progress    {message}
-    ai_chat_stream      {chunk, kind?}   kind="page_yaml" → apply to canvas;
-                                         absent/"summary" → append to chat text
-    ai_chat_tool_batch  {operations: [{tool_name, args}]}
-    ai_chat_clarify     {question, options, previews?,
-                         plan_summary?, headline?, sections?, palette?}
-    ai_chat_complete    {message}
-    ai_chat_error       {message}
+    ai_chat_progress       {message}
+    ai_chat_stream         {chunk, kind?}   kind="page_yaml" → apply to canvas;
+                                            absent/"summary" → append to chat text
+    ai_chat_tool_batch     {operations: [{tool_name, args}]}
+    ai_chat_tool_activity  {id, tool, summary, status: "running"|"done", image_url?}
+                           (same id emitted twice — running then done; upsert by id)
+    ai_chat_clarify        {question, options, previews?,
+                            plan_summary?, headline?, sections?, palette?}
+    ai_chat_complete       {message}
+    ai_chat_error          {message}
 
 All events also carry {page_id}. Clarify messages are persisted+committed
 before the event fires, so a session reload on receipt is race-free.
@@ -28,14 +30,14 @@ import time
 
 import frappe
 
-from builder.ai import llm
+from builder.ai import llm, locks
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
-from builder.ai.snapshots import save_revert_snapshot
+from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.utils import to_compact_yaml
 
 logger = frappe.logger("builder.ai.agent.loop")
@@ -107,11 +109,85 @@ def claims_unbacked_action(summary_text: str) -> bool:
 	return bool(summary_text) and bool(ACTION_CLAIM_RE.search(summary_text))
 
 
+# Above this many chars of compact-YAML page structure, switch the page context
+# from the full tree to a compact outline (read_block pulls detail on demand).
+# Tuned so a typical multi-section page still ships in full; only big pages skeletonise.
+FULL_CONTEXT_LIMIT = 9000
+
+# Tools that already surface as their own card in the chat (clarify question, plan,
+# task group) — no activity line for them.
+ACTIVITY_SILENT = frozenset({"ask_clarification", "propose_plan", "spawn_parallel_agents"})
+
+
+def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
+	"""Render a page's block tree as model-readable context: the full compact YAML
+	for a normal page, or an outline (+ full detail for selected blocks) past
+	FULL_CONTEXT_LIMIT. Shared by the turn's page-context message and the page
+	tools (open_page / create_page / read_page)."""
+	if root is None:
+		return ""
+	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
+	# Small pages: ship the full structure — cheapest path is no extra read_block
+	# round-trips, and the model can match existing styles directly. Big pages: ship
+	# a compact outline instead (styles/attrs omitted) and let the model pull detail
+	# on demand with read_block. The threshold is on the full serialisation length,
+	# which tracks token cost closely.
+	if len(full) <= FULL_CONTEXT_LIMIT:
+		return f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
+	return render_skeleton_context(root, selected_block_ids)
+
+
+def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -> str:
+	"""Outline + full detail for any blocks the user has selected (so the common
+	targeted-edit case needs no read_block round-trip)."""
+	from builder.ai.agent.selectors import find_block, render_skeleton
+
+	outline = render_skeleton(root)
+	parts = [
+		"This page is large, so you're given a compact OUTLINE (one line per block: "
+		"indentation = nesting, then ref, element, optional name, and a short text "
+		"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
+		"edit it. To see a block's full styles/attributes/text before editing, call "
+		"read_block(ref); to act on many blocks at once, call query_blocks then "
+		"update_blocks.",
+		outline,
+	]
+	for ref in selected_block_ids:
+		block = find_block(root, ref)
+		if block is None:
+			continue
+		detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
+		parts.append(f"Full detail for selected block {ref}:\n{detail}")
+	return "\n\n".join(parts)
+
+
+def activity_summary(tool_name: str, args: dict) -> str:
+	"""A short human line for the chat's live activity feed ("Read page: Home")."""
+	args = args or {}
+
+	def page_title(page_id: str | None) -> str:
+		return (page_id and frappe.db.get_value("Builder Page", page_id, "page_title")) or page_id or "…"
+
+	if tool_name in ("read_page", "open_page"):
+		verb = "Read" if tool_name == "read_page" else "Opened"
+		return f"{verb} page: {page_title(args.get('page_id'))}"
+	if tool_name == "create_page":
+		return f"Created page: {args.get('page_title') or ''}".strip()
+	if tool_name == "generate_page":
+		return "Building the page"
+	if tool_name == "preview_page":
+		return "Screenshot"
+	if tool_name == "set_theme_variable":
+		return f"Set --{args['name']}" if args.get("name") else "Set theme variable"
+	if tool_name == "create_component":
+		return f"Created component: {args.get('name') or ''}".strip()
+	if tool_name in ("get_document", "query_records", "get_doctype_schema"):
+		return f"Read {args.get('doctype') or 'records'}"
+	return tool_name.replace("_", " ").capitalize()
+
+
 class AgentRunner:
-	# Above this many chars of compact-YAML page structure, switch the page context
-	# from the full tree to a compact outline (read_block pulls detail on demand).
-	# Tuned so a typical multi-section page still ships in full; only big pages skeletonise.
-	FULL_CONTEXT_LIMIT = 9000
+	FULL_CONTEXT_LIMIT = FULL_CONTEXT_LIMIT  # class alias for existing callers/tests
 
 	def __init__(
 		self,
@@ -141,10 +217,29 @@ class AgentRunner:
 		# block/script ops can't be applied; work goes through server tools + page
 		# generation persisted server-side (page_writer). Events are session-scoped.
 		self.headless = headless or not page_id
+		# The realtime channel is fixed at construction: focus_page() may change
+		# self.page_id mid-turn (dashboard agent opening a page), and the chat that
+		# started the turn must keep receiving events on the channel it subscribed to.
+		self.channel = page_id or session_id
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
 		self.system_prompt = system_prompt or Prompts.AGENT_SYSTEM
+		# The working tree is built lazily in run() (or by focus_page for headless
+		# turns that open/create a page mid-turn).
+		self.tree: WorkingTree | None = None
+		# Page locks acquired via focus_page this turn; released in run()'s finally.
+		self.held_locks: list[str] = []
+		# Images a server tool wants shown to the model (e.g. a preview_page screenshot).
+		# Drained after each round as a follow-up user message — OpenAI-shape tool
+		# results can't reliably carry image parts through OpenRouter.
+		self.pending_images: list[dict] = []
+		# Live activity feed: one entry per server-tool call, streamed to the chat as
+		# ai_chat_tool_activity events and persisted on the final message metadata.
+		self.activity: list[dict] = []
+		self.current_activity: dict | None = None
+		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
+		self.preview_count = 0
 		# Page state captured before this turn (in api.run). A snapshot doc is created
 		# from it ONLY if the turn mutates the page; its name lands on the final
 		# assistant message as the revert handle. None when the page was empty.
@@ -216,11 +311,10 @@ class AgentRunner:
 
 	def emit(self, suffix: str, **kwargs):
 		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
-		# chat + sub-agent progress). One central rule generalizes every event's suffix.
+		# chat + sub-agent progress). Fixed at construction — see self.channel.
 		event = f"{EVENT_PREFIX}_{suffix}"
-		channel = self.page_id or self.session_id
-		if channel:
-			event = f"{event}_{channel}"
+		if self.channel:
+			event = f"{event}_{self.channel}"
 		frappe.publish_realtime(
 			event, {"page_id": self.page_id, "session_id": self.session_id, **kwargs}, user=self.user
 		)
@@ -284,43 +378,7 @@ class AgentRunner:
 	# --- message construction --------------------------------------------
 
 	def build_page_context(self) -> str:
-		root = self.page_root()
-		if root is None:
-			return ""
-		full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
-		# Small pages: ship the full structure — cheapest path is no extra read_block
-		# round-trips, and the model can match existing styles directly. Big pages: ship
-		# a compact outline instead (styles/attrs omitted) and let the model pull detail
-		# on demand with read_block. The threshold is on the full serialisation length,
-		# which tracks token cost closely.
-		if len(full) <= self.FULL_CONTEXT_LIMIT:
-			return (
-				f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
-			)
-		return self.build_skeleton_context(root)
-
-	def build_skeleton_context(self, root: dict) -> str:
-		"""Outline + full detail for any blocks the user has selected (so the common
-		targeted-edit case needs no read_block round-trip)."""
-		from builder.ai.agent.selectors import find_block, render_skeleton
-
-		outline = render_skeleton(root)
-		parts = [
-			"This page is large, so you're given a compact OUTLINE (one line per block: "
-			"indentation = nesting, then ref, element, optional name, and a short text "
-			"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
-			"edit it. To see a block's full styles/attributes/text before editing, call "
-			"read_block(ref); to act on many blocks at once, call query_blocks then "
-			"update_blocks. The outline reflects the page at the start of this turn.",
-			outline,
-		]
-		for ref in self.selected_block_ids:
-			block = find_block(root, ref)
-			if block is None:
-				continue
-			detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-			parts.append(f"Full detail for selected block {ref}:\n{detail}")
-		return "\n\n".join(parts)
+		return render_page_context(self.page_root(), self.selected_block_ids)
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
@@ -508,7 +566,12 @@ class AgentRunner:
 		return tool_operations, content, raw_tool_calls
 
 	def page_root(self) -> dict | None:
-		"""Parse page_context_json into the root block dict, or None if empty/invalid."""
+		"""The current page's root block dict, or None if empty/invalid. Headless, the
+		mutating working tree IS the page — edits made this turn are visible to context
+		rebuilds and the query tools, with refs staying valid. The editor path parses
+		the browser-shipped page_context_json (state at the start of the turn)."""
+		if self.headless and self.tree is not None:
+			return self.tree.root
 		try:
 			data = json.loads(self.page_context_json)
 		except (json.JSONDecodeError, TypeError):
@@ -516,6 +579,57 @@ class AgentRunner:
 		if isinstance(data, list):
 			data = data[0] if data else None
 		return data if isinstance(data, dict) else None
+
+	def focus_page(self, page_id: str, *, lock: bool = True) -> str:
+		"""Point the turn at a page: load its blocks from the DB into a mutating
+		working tree (context, query tools, and block edits all read/write it), and
+		capture the pre-edit state so the turn stays revertable. With lock=True the
+		page lock is held for the rest of the turn so parallel AI tasks can't fight
+		over one page (sub-agents pass lock=False — their task runner already holds it).
+		Returns the rendered page context — the tool result for open_page/create_page."""
+		from builder.ai import page_writer
+
+		key = locks.page_key(page_id)
+		if lock and key not in self.held_locks:
+			if not locks.acquire(key, locks.PAGE_LOCK_TTL):
+				return (
+					f"FAILED: page {page_id} is being edited by another AI task right now — "
+					"try again in a moment."
+				)
+			self.held_locks.append(key)
+		root = page_writer.load_page_root(page_id)
+		self.page_id = page_id
+		self.tree = WorkingTree(root, mutating=True)
+		# One revert handle per focused page: a focus switch starts a fresh snapshot,
+		# and the LAST focused page's handle lands on the message metadata.
+		self.pre_turn_state = capture_page_state(page_id)
+		self.revert_snapshot = None
+		if root is None:
+			return f"Opened page {page_id} — it is empty. Build it with generate_page."
+		return f"Opened page {page_id}.\n{render_page_context(root, self.selected_block_ids)}"
+
+	# --- live activity feed ------------------------------------------------
+
+	def begin_activity(self, tool_name: str, args: dict) -> dict | None:
+		entry = None
+		if tool_name not in ACTIVITY_SILENT:
+			entry = {
+				"id": len(self.activity),
+				"tool": tool_name,
+				"summary": activity_summary(tool_name, args),
+				"status": "running",
+			}
+			self.activity.append(entry)
+			self.current_activity = entry
+			self.emit("tool_activity", **entry)
+		return entry
+
+	def end_activity(self, entry: dict | None) -> None:
+		if entry is None:
+			return
+		entry["status"] = "done"
+		self.current_activity = None
+		self.emit("tool_activity", **entry)
 
 	@staticmethod
 	def describe_operations(operations: list[dict]) -> str:
@@ -574,12 +688,15 @@ class AgentRunner:
 		started = time.monotonic()
 		# Editing an existing page runs the loop on the user's CHOSEN model — edit
 		# taste matters as much as generation taste, and silently downgrading a
-		# deliberately-picked heavy model is the surest way to degrade output. Only
-		# the lightweight new-page conversation (clarify/plan on an empty page) drops
-		# to the cheap model; full-page generation always uses the heavy model inside
-		# the artifact generator regardless.
+		# deliberately-picked heavy model is the surest way to degrade output.
+		# Headless turns (dashboard orchestrator + sub-agents) always use the chosen
+		# model too: reading a reference page's design and writing sub-agent briefs is
+		# quality-sensitive work even before any page is open. Only the editor's
+		# lightweight empty-page conversation (clarify/plan) drops to the cheap model.
 		has_content = self.page_root() is not None
-		self.loop_model = self.model if has_content else ModelRegistry.get_simple(self.model)
+		self.loop_model = (
+			self.model if (has_content or self.headless) else ModelRegistry.get_simple(self.model)
+		)
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, loop_model={self.loop_model}, "
 			f"session_id={self.session_id}, user={self.user}"
@@ -600,10 +717,17 @@ class AgentRunner:
 			except Exception:
 				pass
 
+		# A sub-agent arrives with its page assigned but no context loaded — focus it
+		# now (its task runner already holds the page lock) so build_messages ships the
+		# page structure and the query/block tools work on it.
+		if self.headless and self.page_id and self.tree is None:
+			self.focus_page(self.page_id, lock=False)
 		messages = self.build_messages()
-		# Mirror of the page tree this turn. Client ops are validated against it so the
-		# tool result fed back is the truth, not a blanket "Applied." (see WorkingTree).
-		self.tree = WorkingTree(self.page_root())
+		# Mirror of the page tree this turn. The editor validates client ops against it
+		# (the browser applies the real edit); headless, the tree IS the page and ops
+		# mutate it for real (see WorkingTree).
+		if self.tree is None:
+			self.tree = WorkingTree(self.page_root(), mutating=self.headless)
 		client_operations: list[dict] = []
 		summary_text = ""
 
@@ -632,10 +756,14 @@ class AgentRunner:
 					self.handle_terminal(terminal_ops[0])
 					return
 
-				# An artifact tool (full-page generation) is the turn's work:
-				# its generator streams the artifact live on the heavy model and
-				# returns the canonical client op(s). Generation ends the loop.
-				if artifact_ops:
+				# EDITOR: an artifact tool (full-page generation) is the turn's work —
+				# its generator streams the artifact live to the canvas on the heavy
+				# model and returns the canonical client op(s). Generation ends the loop.
+				# HEADLESS: generation is a STEP, not the end — it falls through to the
+				# tool-result loop below (run_headless_generation), where the page is
+				# persisted, the context refreshed, and the model can read back and
+				# refine what it built before finishing.
+				if artifact_ops and not self.headless:
 					self.stop_reason = "generated"
 					self.ensure_revert_snapshot()  # generate_page replaces the block tree
 					for op in artifact_ops:
@@ -643,7 +771,7 @@ class AgentRunner:
 						if tool and tool.generator:
 							ops = tool.generator(self, op["args"])
 							client_operations.extend(ops)
-							if ops and not self.headless:
+							if ops:
 								self.emit("tool_batch", operations=ops)
 					break
 
@@ -662,11 +790,6 @@ class AgentRunner:
 					note = (summary_text or "").strip()
 					if not note and client_ops:
 						note = self.describe_operations(client_ops)
-					# Headless server-tool rounds emit no client batch, so surface the tool
-					# activity itself — otherwise the dashboard chat looks frozen between the
-					# model's narration lines.
-					if not note and server_ops:
-						note = "Working: " + ", ".join(op["tool_name"].replace("_", " ") for op in server_ops)
 					if note:
 						self.emit("progress", message=note)
 
@@ -702,8 +825,14 @@ class AgentRunner:
 				)
 				for tc_dict, op in zip(raw_tool_calls, tool_operations, strict=True):
 					tool = self.registry.get(op["tool_name"])
-					if tool and tool.side == "server" and tool.handler:
+					if tool and tool.artifact and tool.generator:
+						# Only reachable headless — the editor broke out of the loop above.
+						content, ops = self.run_headless_generation(tool, op)
+						client_operations.extend(ops)
+					elif tool and tool.side == "server" and tool.handler:
+						entry = self.begin_activity(op["tool_name"], op["args"])
 						content = tool.handler(self, op["args"])
+						self.end_activity(entry)
 					else:
 						content = self.tree.apply(op["tool_name"], op["args"])
 						# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
@@ -712,6 +841,29 @@ class AgentRunner:
 							self.tool_failures.append(f"{op['tool_name']}: {content}")
 							logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
+
+				# Headless block edits mutated the working tree for real — persist after
+				# every applied round so a cancel/crash keeps the work done so far (the
+				# same live-apply semantics the editor canvas gives).
+				if self.headless and self.page_id and client_ops and self.tree.root:
+					from builder.ai import page_writer
+
+					page_writer.save_draft_blocks(self.page_id, self.tree.root)
+
+				# Images a tool captured this round (preview_page screenshots) ride a
+				# follow-up user message — appended only after every role:"tool" result,
+				# as the OpenAI message shape requires.
+				for img in self.pending_images:
+					messages.append(
+						{
+							"role": "user",
+							"content": [
+								{"type": "text", "text": img["caption"]},
+								{"type": "image_url", "image_url": {"url": img["data_url"]}},
+							],
+						}
+					)
+				self.pending_images.clear()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
 				# bulk edit or a stuck loop. The work done so far still applies.
@@ -734,6 +886,9 @@ class AgentRunner:
 			return
 		finally:
 			self.clear_cancel_flag()
+			for key in self.held_locks:
+				locks.release(key)
+			self.held_locks = []
 			if self.session_id:
 				try:
 					AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
@@ -849,6 +1004,10 @@ class AgentRunner:
 		}
 		if self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
+		if self.activity:
+			# The chat's activity feed (tool lines + screenshots) — rendered live from
+			# tool_activity events, rehydrated from here on a session reload.
+			final_metadata["activity"] = self.activity
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
@@ -866,6 +1025,33 @@ class AgentRunner:
 		tool = self.registry.get(op["tool_name"])
 		if tool and tool.handler:
 			tool.handler(self, op["args"])
+
+	def run_headless_generation(self, tool, op: dict) -> tuple[str, list[dict]]:
+		"""Run generate_page as one STEP of a headless turn. The generator persists the
+		page server-side (page_writer.persist_page); reload it into the working tree so
+		the model can read back — and surgically refine — what it just built."""
+		from builder.ai import page_writer
+
+		if not self.page_id:
+			return ("FAILED: no page is open — call create_page or open_page first, then generate.", [])
+		entry = self.begin_activity(op["tool_name"], op["args"])
+		self.ensure_revert_snapshot()  # generation replaces the block tree
+		try:
+			ops = tool.generator(self, op["args"])
+		except ValueError as e:
+			self.end_activity(entry)
+			return (f"FAILED: {e}. Retry generate_page with a fuller brief.", [])
+		self.end_activity(entry)
+		if not ops:
+			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
+		root = page_writer.load_page_root(self.page_id)
+		self.tree = WorkingTree(root, mutating=True)
+		context = render_page_context(root)
+		return (
+			"Page generated and saved. Verify it (preview_page / read_block), make surgical "
+			f"fixes with the block tools if needed, then finish with a short summary.\n{context}",
+			ops,
+		)
 
 
 def run_agent_job(prompt: str, page_context_json: str, model: str, api_key: str, **kwargs):

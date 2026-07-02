@@ -52,7 +52,7 @@ def run_query_blocks(ctx, args: dict) -> str:
 
 	if not matches:
 		return "No blocks matched. Loosen the filters or check the page outline."
-	header = f"{len(matches)} block(s) matched (page as it was at the start of this turn):\n"
+	header = f"{len(matches)} block(s) matched:\n"
 	return header + to_compact_yaml(matches)
 
 
@@ -65,9 +65,7 @@ query_blocks = Tool(
 		"'ref' (its block_id), element, and FULL text. Use this before any change that "
 		"affects MANY blocks — translate the page, restyle every button, rewrite all "
 		"headings — so you act on the complete, exact set instead of guessing from the "
-		"outline. Filters AND together. Then apply the change with ONE update_blocks call. "
-		"Results reflect the page at the start of this turn (edits you make mid-turn are not "
-		"re-queried)."
+		"outline. Filters AND together. Then apply the change with ONE update_blocks call."
 	),
 	parameters={
 		"type": "object",
@@ -106,7 +104,7 @@ def run_read_block(ctx, args: dict) -> str:
 	if block is None:
 		return f"No block found with ref {ref}."
 	detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-	return f"Block {ref} (full styles/attributes/children, as of the start of this turn):\n{detail}"
+	return f"Block {ref} (full styles/attributes/children):\n{detail}"
 
 
 read_block = Tool(
@@ -117,7 +115,7 @@ read_block = Tool(
 		"Return a block's FULL detail — its styles, attributes, text, and child subtree — "
 		"by ref. Use this on a large page (where the context is only an outline) before "
 		"editing a block whose current styles you need to see, or to match the styling of an "
-		"existing section. Reflects the page at the start of this turn."
+		"existing section."
 	),
 	parameters={
 		"type": "object",

@@ -294,6 +294,29 @@ def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
 	return [block], data_script
 
 
+def load_page_root(page_id: str) -> dict | None:
+	"""The page's current root block dict — draft_blocks when present, else the
+	published blocks. None when the page is empty or the JSON is invalid."""
+	draft, published = frappe.db.get_value("Builder Page", page_id, ["draft_blocks", "blocks"])
+	try:
+		data = json.loads(draft or published or "")
+	except (json.JSONDecodeError, TypeError):
+		return None
+	if isinstance(data, list):
+		data = data[0] if data else None
+	return data if isinstance(data, dict) else None
+
+
+def save_draft_blocks(page_id: str, root_block: dict) -> None:
+	"""Persist an edited block tree back to draft_blocks (same shape persist_page
+	writes). Used by the headless loop after each round of applied block ops, so a
+	cancelled or crashed turn keeps the work done so far."""
+	frappe.db.set_value(
+		"Builder Page", page_id, "draft_blocks", compact_json([root_block]), update_modified=True
+	)
+	frappe.db.commit()
+
+
 def persist_page(page_id: str, yaml_text: str, page_fields: dict | None = None) -> bool:
 	"""Expand generation YAML and write it to a Builder Page's draft_blocks (+ the
 	repeater data shim). The page stays a DRAFT (published=0). Returns False if the

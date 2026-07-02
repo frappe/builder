@@ -9,6 +9,24 @@
 
 	<!-- assistant -->
 	<div v-else class="flex flex-col gap-2">
+		<!-- live tool activity feed (research, edits, screenshots) -->
+		<div v-if="message.activity?.length" class="flex flex-col gap-1">
+			<template v-for="a in message.activity" :key="a.id">
+				<div class="flex items-center gap-2 text-xs text-ink-gray-5">
+					<span
+						v-if="a.status === 'running'"
+						class="bg-ink-gray-6 size-2 shrink-0 animate-pulse rounded-full" />
+					<span v-else class="shrink-0 text-ink-gray-6">✓</span>
+					<span class="truncate">{{ a.summary }}</span>
+				</div>
+				<img
+					v-if="a.imageUrl"
+					:src="a.imageUrl"
+					class="max-w-[320px] rounded-md border border-outline-gray-2"
+					alt="Page screenshot" />
+			</template>
+		</div>
+
 		<!-- working indicator while running with no text yet -->
 		<div v-if="isWorking" class="flex items-center gap-2 text-ink-gray-5">
 			<span class="ab-dots">

@@ -6,18 +6,76 @@ tool result handed back to the model is the truth — "applied to block X",
 hides a silently dropped edit (the frontend no-ops on a missing ref, and that
 never travels back). A wrong ref then drives a self-correcting round.
 
-The mirror tracks only what reference-validation needs: it resolves refs
-against the live tree and keeps structure honest across rounds (remove detaches
-the subtree, move reparents). Style/text changes are not mirrored — nothing
-reads them back yet — and add_block does not assign a ref (that is Phase 2).
+Two modes:
+  - validating (default): the editor path. The browser applies the real edit;
+    the mirror only resolves refs and keeps structure honest across rounds
+    (remove detaches, move reparents).
+  - mutating: the headless path (dashboard chat + sub-agents). There is no
+    browser, so the mirror IS the page — apply() performs the full edit on the
+    serialized tree, matching the frontend applier (toolDispatch.applyBlockUpdate
+    / applyToolOperation) so the two paths can't drift. The loop persists the
+    tree to draft_blocks after each applied round.
 """
 
 from builder.ai.agent.selectors import find_block, walk_blocks
+from builder.ai.block_codec import STANDARD_ATTRS
+
+
+def merge_styles(block: dict, args: dict) -> None:
+	from builder.ai.page_writer import normalize_styles
+
+	for arg_key, block_key in (
+		("base_styles", "baseStyles"),
+		("mobile_styles", "mobileStyles"),
+		("tablet_styles", "tabletStyles"),
+	):
+		if styles := normalize_styles(args.get(arg_key)):
+			block.setdefault(block_key, {}).update(styles)
+
+
+def merge_attributes(block: dict, attrs: dict) -> None:
+	# Same standard/custom split the editor applies (toolDispatch.applyBlockUpdate).
+	for key, value in attrs.items():
+		target = "attributes" if key in STANDARD_ATTRS else "customAttributes"
+		if value is None:
+			block.get(target, {}).pop(key, None)
+		else:
+			block.setdefault(target, {})[key] = value
+
+
+def merge_block_update(block: dict, args: dict) -> None:
+	"""One block's worth of changes (styles/attrs/text/element/classes) — the server
+	twin of toolDispatch.applyBlockUpdate, shared by update_block and update_blocks."""
+	merge_styles(block, args)
+	if isinstance(args.get("attributes"), dict):
+		merge_attributes(block, args["attributes"])
+	if args.get("inner_text") is not None:
+		block["innerHTML"] = args["inner_text"]
+	if args.get("inner_html") is not None:  # html wins when both are given
+		block["innerHTML"] = args["inner_html"]
+	if args.get("element") is not None:
+		block["element"] = args["element"]
+	if args.get("classes") is not None:
+		block["classes"] = args["classes"]
+
+
+def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:
+	children = parent.setdefault("children", [])
+	if after_block_id:
+		for i, child in enumerate(children):
+			if isinstance(child, dict) and child.get("blockId") == after_block_id:
+				children.insert(i + 1, block)
+				return
+	if isinstance(index, int) and 0 <= index <= len(children):
+		children.insert(index, block)
+		return
+	children.append(block)
 
 
 class WorkingTree:
-	def __init__(self, root: dict | None):
+	def __init__(self, root: dict | None, mutating: bool = False):
 		self.root = root
+		self.mutating = mutating
 
 	def resolve(self, block_id: str | None) -> dict | None:
 		return find_block(self.root, block_id) if (self.root and block_id) else None
@@ -45,7 +103,7 @@ class WorkingTree:
 	def apply(self, tool_name: str, args: dict) -> str:
 		args = args or {}
 		if tool_name == "update_block":
-			return self.apply_update(args.get("block_id"))
+			return self.apply_update(args.get("block_id"), args)
 		if tool_name == "update_blocks":
 			return self.apply_update_blocks(args)
 		if tool_name == "remove_block":
@@ -53,29 +111,37 @@ class WorkingTree:
 		if tool_name == "move_block":
 			return self.apply_move(args)
 		if tool_name == "add_block":
-			return self.apply_add(args.get("parent_block_id"))
+			return self.apply_add(args)
 		# Non-block client tools (scripts) carry no ref to validate.
 		return "Applied."
 
-	def apply_update(self, block_id: str | None) -> str:
+	def apply_update(self, block_id: str | None, args: dict) -> str:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
+		if self.mutating:
+			merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
 	def apply_update_blocks(self, args: dict) -> str:
 		patches = args.get("patches")
 		if isinstance(patches, list):
-			ids = [p.get("block_id") for p in patches if isinstance(p, dict)]
+			targets = [(p.get("block_id"), p) for p in patches if isinstance(p, dict)]
 		else:
-			ids = args.get("block_ids") or []
-		if not ids:
+			targets = [(block_id, args) for block_id in args.get("block_ids") or []]
+		if not targets:
 			return "FAILED: no block_ids or patches supplied — nothing to update."
-		missing = [i for i in ids if self.resolve(i) is None]
-		applied = len(ids) - len(missing)
+		missing = []
+		for block_id, patch in targets:
+			block = self.resolve(block_id)
+			if block is None:
+				missing.append(block_id)
+			elif self.mutating:
+				merge_block_update(block, patch)
+		applied = len(targets) - len(missing)
 		if missing:
 			return (
-				f"Applied to {applied} of {len(ids)} blocks. NOT FOUND: {missing}. "
+				f"Applied to {applied} of {len(targets)} blocks. NOT FOUND: {missing}. "
 				"Those refs don't exist — recheck them, don't reissue the same ids."
 			)
 		return f"Applied to all {applied} block(s)."
@@ -101,10 +167,21 @@ class WorkingTree:
 		if find_block(block, new_parent_id) is not None:
 			return f"FAILED: can't move {block_id} into itself or its own descendant ({new_parent_id})."
 		self.detach(block_id)
-		new_parent.setdefault("children", []).append(block)
+		insert_child(new_parent, block, args.get("after_block_id"), args.get("index"))
 		return f"Moved block {block_id} under {new_parent_id}."
 
-	def apply_add(self, parent_id: str | None) -> str:
-		if self.resolve(parent_id) is None:
+	def apply_add(self, args: dict) -> str:
+		parent_id = args.get("parent_block_id")
+		parent = self.resolve(parent_id)
+		if parent is None:
 			return f"FAILED: parent_block_id '{parent_id}' not found{self.id_hint(parent_id)}"
-		return f"Added block under {parent_id}."
+		if not self.mutating:
+			return f"Added block under {parent_id}."
+		from builder.ai.page_writer import convert_yaml_block
+
+		if not isinstance(args.get("block"), dict):
+			return "FAILED: no block definition supplied."
+		block = convert_yaml_block(args["block"], is_root=False)
+		insert_child(parent, block, args.get("after_block_id"), args.get("index"))
+		# Name the new ref so the model can chain edits onto the block it just added.
+		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."

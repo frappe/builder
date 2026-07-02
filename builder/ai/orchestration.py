@@ -224,6 +224,9 @@ def run_subagent_task(
 				page_id=page_id,
 				session_id=session.name,
 				registry=build_subagent_registry(),
+				# The default AGENT_SYSTEM is written for the live editor canvas; a
+				# fan-out child is a headless page builder with no user to ask.
+				system_prompt=Prompts.SUBAGENT_SYSTEM,
 				headless=True,
 			).run()
 

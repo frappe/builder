@@ -11,12 +11,21 @@ import { computed, nextTick, ref } from "vue";
  * clarify/confirm cards inline — no hardcoded pipeline.
  */
 
+export interface ActivityEntry {
+	id: number;
+	tool: string;
+	summary: string;
+	status: string; // running | done
+	imageUrl?: string; // preview_page screenshots render inline
+}
+
 export interface AgentMessage {
 	id: string;
 	role: "user" | "assistant";
 	text: string;
 	status: string; // running | complete | error | clarification | plan_summary | pending_action
 	progress?: string;
+	activity?: ActivityEntry[]; // live tool feed ("Read page: Home", screenshots…)
 	options?: string[];
 	previews?: Array<{ colors: string[] }> | null;
 	plan?: { headline: string; sections: string[]; palette: string };
@@ -31,10 +40,26 @@ export interface BatchState {
 	total: number;
 	completed: number;
 	failed: number;
-	tasks: Array<{ row: string; title: string; page: string | null; status: string; error?: string }>;
+	tasks: Array<{
+		row: string;
+		title: string;
+		page: string | null;
+		status: string;
+		error?: string;
+		preview?: string | null;
+	}>;
 }
 
-const EVENTS = ["progress", "stream", "tool_batch", "clarify", "complete", "error", "task_group"] as const;
+const EVENTS = [
+	"progress",
+	"stream",
+	"tool_batch",
+	"tool_activity",
+	"clarify",
+	"complete",
+	"error",
+	"task_group",
+] as const;
 
 let uid = 0;
 const nextId = () => `m${++uid}`;
@@ -92,6 +117,19 @@ const handlers: Record<string, (data: any) => void> = {
 		scrollToBottom();
 	},
 	tool_batch: () => {}, // headless: no client ops to apply
+	// One entry per server-tool call; the same id arrives twice (running → done,
+	// possibly gaining an image_url) — upsert by id.
+	tool_activity: (d) => {
+		const m = pending();
+		if (!m || d.id === undefined) return;
+		m.status = "running";
+		if (!m.activity) m.activity = [];
+		const entry = { id: d.id, tool: d.tool, summary: d.summary, status: d.status, imageUrl: d.image_url };
+		const i = m.activity.findIndex((a) => a.id === d.id);
+		if (i === -1) m.activity.push(entry);
+		else m.activity[i] = entry;
+		scrollToBottom();
+	},
 	task_group: (d) => {
 		const m = pending();
 		if (!m || !d.batch_id) return;
@@ -227,6 +265,9 @@ function hydrate(rows: any[]): AgentMessage[] {
 		const meta = r.metadata || {};
 		const status = meta.status || "complete";
 		const m: AgentMessage = { id: r.id || nextId(), role: r.role === "user" ? "user" : "assistant", text: r.content || "", status };
+		if (Array.isArray(meta.activity) && meta.activity.length) {
+			m.activity = meta.activity.map((a: any) => ({ ...a, imageUrl: a.image_url ?? a.imageUrl }));
+		}
 		if (status === "clarification") {
 			m.options = meta.options || [];
 			m.previews = meta.previews ?? null;

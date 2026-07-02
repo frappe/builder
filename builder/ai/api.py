@@ -227,7 +227,15 @@ def get_ai_batch_status(batch_id: str):
 		"completed_tasks": batch.completed_tasks,
 		"failed_tasks": batch.failed_tasks,
 		"tasks": [
-			{"row": t.name, "title": t.title, "page": t.page, "status": t.status, "error": t.error}
+			{
+				"row": t.name,
+				"title": t.title,
+				"page": t.page,
+				"status": t.status,
+				"error": t.error,
+				# Sub-agents screenshot their page via preview_page — thumbnail for the card.
+				"preview": frappe.db.get_value("Builder Page", t.page, "preview") if t.page else None,
+			}
 			for t in batch.tasks
 		],
 	}

@@ -103,15 +103,27 @@ def build_default_registry() -> ToolRegistry:
 	return registry
 
 
+def headless_page_tools() -> list[Tool]:
+	"""The page capabilities every HEADLESS agent gets: focus a page (open/create),
+	read any page, generate a full page, edit it surgically with the block tools
+	(applied server-side by the mutating WorkingTree), query its structure, and
+	screenshot it for a self-review pass."""
+	from builder.ai.agent.tools import blocks, generate, pages, preview, query
+
+	return [*pages.TOOLS, *generate.TOOLS, *blocks.TOOLS, *query.TOOLS, *preview.TOOLS]
+
+
 def build_orchestrator_registry() -> ToolRegistry:
-	"""The page-less dashboard chat. It cannot apply client block/script edits (no
-	canvas), so it has NO block tools and does page building via `spawn_parallel_agents`
-	(one headless sub-agent per page) after laying down shared assets (theme variables,
-	header/footer components). Site-wide + data-model changes stay confirm-gated."""
+	"""The page-less dashboard chat — the full builder. It reads/creates/edits/
+	generates single pages inline (headless page tools) and reserves
+	`spawn_parallel_agents` for genuinely parallel multi-page work, after laying
+	down shared assets (theme variables, header/footer components). Site-wide +
+	data-model changes stay confirm-gated."""
 	from builder.ai.agent.tools import conversation, data, orchestrate, settings
 
 	registry = ToolRegistry()
 	registry.extend(conversation.TOOLS)  # ask_clarification, propose_plan
+	registry.extend(headless_page_tools())
 	registry.extend(
 		pick(
 			data.TOOLS,
@@ -120,28 +132,38 @@ def build_orchestrator_registry() -> ToolRegistry:
 				"get_doctype_schema",
 				"query_records",
 				"get_document",
+				"write_page_data_script",
 				"create_doctype",
 				"seed_sample_data",
 			},
 		)
 	)
 	registry.extend(
-		pick(settings.TOOLS, {"set_theme_variable", "set_home_page", "edit_global_settings", "publish_site"})
+		pick(
+			settings.TOOLS,
+			{
+				"set_theme_variable",
+				"set_page_settings",
+				"set_home_page",
+				"edit_global_settings",
+				"publish_site",
+			},
+		)
 	)
 	registry.extend(orchestrate.TOOLS)  # spawn_parallel_agents, create_component
 	return registry
 
 
 def build_subagent_registry() -> ToolRegistry:
-	"""One headless page builder in a fan-out. It generates a page server-side and can
-	populate data / page settings / theme tokens — but has NO `spawn_parallel_agents`
-	(recursion guard), NO confirm-gated terminal tools (no user to confirm in a worker),
-	and NO client block/script tools (nothing to apply them to)."""
-	from builder.ai.agent.tools import data, generate, query, scripts, settings
+	"""One headless page builder in a fan-out. Same page capabilities as the
+	orchestrator minus focus-switching (open_page/create_page — a child stays on its
+	assigned page; read_page covers references), with NO `spawn_parallel_agents`
+	(recursion guard) and NO confirm-gated terminal tools (no user to confirm in a
+	worker)."""
+	from builder.ai.agent.tools import data, scripts, settings
 
 	registry = ToolRegistry()
-	registry.extend(generate.TOOLS)  # generate_page → persisted server-side (headless)
-	registry.extend(query.TOOLS)  # query_blocks, read_block (on its own page)
+	registry.extend([t for t in headless_page_tools() if t.name not in {"open_page", "create_page"}])
 	registry.extend(
 		pick(
 			data.TOOLS,
