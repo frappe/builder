@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="editor pointer-events-none fixed box-content select-none ring-2 ring-inset"
+		class="editor pointer-events-none fixed box-content select-none ring-4 ring-inset"
 		ref="editor"
 		:selected="isBlockSelected"
 		@click.stop="handleClick"

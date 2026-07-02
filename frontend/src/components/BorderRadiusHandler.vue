@@ -1,7 +1,7 @@
 <template>
 	<div
 		ref="handler"
-		class="border-radius-resize pointer-events-auto absolute h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
+		class="border-radius-resize pointer-events-auto absolute h-[12px] w-[12px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
 			hidden: !isHandlerVisible,
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
