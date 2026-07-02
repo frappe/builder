@@ -33,6 +33,8 @@ def run_create_page(ctx, args: dict) -> str:
 	page_id = create_draft_page(folder, title, args.get("route"))
 	route = frappe.db.get_value("Builder Page", page_id, "route")
 	ctx.focus_page(page_id)
+	if ctx.current_activity is not None:
+		ctx.current_activity["page"] = page_id  # "Open" link on the activity line
 	return f"Created draft page '{title}' (id={page_id}, route=/{route}) and opened it — build it with generate_page."
 
 

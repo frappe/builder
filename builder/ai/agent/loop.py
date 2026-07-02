@@ -170,13 +170,20 @@ def activity_summary(tool_name: str, args: dict) -> str:
 
 	if tool_name in ("read_page", "open_page"):
 		verb = "Read" if tool_name == "read_page" else "Opened"
-		return f"{verb} page: {page_title(args.get('page_id'))}"
+		line = f"{verb} page: {page_title(args.get('page_id'))}"
+		if args.get("block_id"):
+			line += f" — block {args['block_id']}"
+		return line
 	if tool_name == "create_page":
 		return f"Created page: {args.get('page_title') or ''}".strip()
 	if tool_name == "generate_page":
 		return "Building the page"
 	if tool_name == "preview_page":
 		return "Screenshot"
+	if tool_name == "read_block":
+		return f"Read block {args.get('block_id') or ''}".strip()
+	if tool_name == "query_blocks":
+		return "Searched blocks"
 	if tool_name == "set_theme_variable":
 		return f"Set --{args['name']}" if args.get("name") else "Set theme variable"
 	if tool_name == "create_component":
@@ -619,6 +626,10 @@ class AgentRunner:
 				"summary": activity_summary(tool_name, args),
 				"status": "running",
 			}
+			# Working-page tools carry the page id so the chat can offer an "Open"
+			# link on the line (create_page fills it in from its handler).
+			if tool_name in ("open_page", "generate_page", "preview_page"):
+				entry["page"] = (args or {}).get("page_id") or self.page_id
 			self.activity.append(entry)
 			self.current_activity = entry
 			self.emit("tool_activity", **entry)

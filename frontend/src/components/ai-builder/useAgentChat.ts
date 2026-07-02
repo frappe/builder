@@ -17,6 +17,7 @@ export interface ActivityEntry {
 	summary: string;
 	status: string; // running | done
 	imageUrl?: string; // preview_page screenshots render inline
+	page?: string; // working-page id → "Open" link on the line
 }
 
 export interface AgentMessage {
@@ -124,7 +125,14 @@ const handlers: Record<string, (data: any) => void> = {
 		if (!m || d.id === undefined) return;
 		m.status = "running";
 		if (!m.activity) m.activity = [];
-		const entry = { id: d.id, tool: d.tool, summary: d.summary, status: d.status, imageUrl: d.image_url };
+		const entry = {
+			id: d.id,
+			tool: d.tool,
+			summary: d.summary,
+			status: d.status,
+			imageUrl: d.image_url,
+			page: d.page,
+		};
 		const i = m.activity.findIndex((a) => a.id === d.id);
 		if (i === -1) m.activity.push(entry);
 		else m.activity[i] = entry;

@@ -10,20 +10,30 @@
 	<!-- assistant -->
 	<div v-else class="flex flex-col gap-2">
 		<!-- live tool activity feed (research, edits, screenshots) -->
-		<div v-if="message.activity?.length" class="flex flex-col gap-1">
-			<template v-for="a in message.activity" :key="a.id">
-				<div class="flex items-center gap-2 text-xs text-ink-gray-5">
+		<div v-if="activityDisplay.length" class="flex flex-col gap-1">
+			<template v-for="a in activityDisplay" :key="a.id">
+				<div class="group flex items-center gap-2 text-xs text-ink-gray-5">
 					<span
 						v-if="a.status === 'running'"
 						class="bg-ink-gray-6 size-2 shrink-0 animate-pulse rounded-full" />
 					<span v-else class="shrink-0 text-ink-gray-6">✓</span>
-					<span class="truncate">{{ a.summary }}</span>
+					<span class="truncate">
+						{{ a.summary }}
+						<span v-if="a.count > 1" class="text-ink-gray-4">×{{ a.count }}</span>
+					</span>
+					<button
+						v-if="a.page && a.status === 'done'"
+						class="shrink-0 text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-8 hover:underline group-hover:opacity-100"
+						@click="openPage(a.page)">
+						Open
+					</button>
 				</div>
 				<img
 					v-if="a.imageUrl"
 					:src="a.imageUrl"
-					class="max-w-[320px] rounded-md border border-outline-gray-2"
-					alt="Page screenshot" />
+					class="max-w-[320px] cursor-pointer rounded-md border border-outline-gray-2"
+					alt="Page screenshot"
+					@click="a.page && openPage(a.page)" />
 			</template>
 		</div>
 
@@ -37,13 +47,21 @@
 			<span class="text-p-sm">{{ message.progress || "Working…" }}</span>
 		</div>
 
-		<!-- body text -->
+		<!-- body text (markdown) -->
 		<div
 			v-if="message.text && !isPlan"
-			class="whitespace-pre-wrap text-p-sm leading-relaxed"
-			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'">
-			{{ message.text }}
-		</div>
+			class="ai-prose prose prose-sm max-w-none break-words text-p-sm leading-relaxed"
+			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'"
+			v-html="renderMarkdown(message.text)" />
+
+		<!-- the page this turn built/edited, one click away -->
+		<button
+			v-if="donePage"
+			class="flex w-fit items-center gap-2 rounded-lg border border-outline-gray-2 px-3 py-1.5 text-xs text-ink-gray-8 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2"
+			@click="openPage(donePage.page!)">
+			<FeatherIcon name="external-link" class="size-3.5 text-ink-gray-5" />
+			Open {{ donePageTitle }} in the editor
+		</button>
 
 		<!-- plan summary -->
 		<div v-if="isPlan" class="rounded-lg border border-outline-gray-2 p-3">
@@ -100,10 +118,12 @@
 </template>
 
 <script setup lang="ts">
+import { renderMarkdown } from "@/components/ai/markdown";
+import router from "@/router";
 import { Button, FeatherIcon } from "frappe-ui";
 import { computed } from "vue";
 import TaskGroupCard from "./TaskGroupCard.vue";
-import type { AgentMessage, BatchState } from "./useAgentChat";
+import type { ActivityEntry, AgentMessage, BatchState } from "./useAgentChat";
 
 const props = defineProps<{ message: AgentMessage; batch?: BatchState | null; publishing?: boolean }>();
 defineEmits<{
@@ -114,6 +134,37 @@ defineEmits<{
 }>();
 
 const isPlan = computed(() => props.message.status === "plan_summary" && !!props.message.plan);
+
+// Collapse consecutive repeats ("Read block", "Read block", …) into one "×N" line.
+const activityDisplay = computed(() => {
+	const out: Array<ActivityEntry & { count: number }> = [];
+	for (const a of props.message.activity || []) {
+		const last = out[out.length - 1];
+		if (last && !last.imageUrl && !a.imageUrl && last.summary === a.summary && last.status === a.status) {
+			last.count++;
+		} else {
+			out.push({ ...a, count: 1 });
+		}
+	}
+	return out;
+});
+
+// The page this turn worked on — surfaced as a review link once the turn settles.
+const donePage = computed(() => {
+	if (!["complete", "action_applied", "action_skipped"].includes(props.message.status)) return null;
+	const withPage = (props.message.activity || []).filter((a) => a.page);
+	return withPage.length ? withPage[withPage.length - 1] : null;
+});
+const donePageTitle = computed(() => {
+	const named = (props.message.activity || []).find(
+		(a) => a.page === donePage.value?.page && a.summary.includes("page: "),
+	);
+	return named ? named.summary.split("page: ")[1].split(" — ")[0] : "the page";
+});
+
+function openPage(pageId: string) {
+	router.push({ name: "builder", params: { pageId } });
+}
 const isWorking = computed(
 	() => props.message.status === "running" && !props.message.text && !props.message.batchId,
 );
@@ -133,6 +184,42 @@ function swatch(i: number): string[] | null {
 	return p?.colors?.length ? p.colors : null;
 }
 </script>
+
+<style>
+/* Unscoped: v-html markdown children carry no scope attribute. Same tokens as the
+   editor chat's .ai-prose (BuilderAIChatPanel) so the two chats read identically. */
+.ai-prose {
+	--tw-prose-body: var(--ink-gray-8);
+	--tw-prose-headings: var(--ink-gray-9);
+	--tw-prose-bold: var(--ink-gray-9);
+	--tw-prose-code: var(--ink-gray-8);
+	--tw-prose-links: var(--ink-gray-9);
+	--tw-prose-bullets: var(--ink-gray-4);
+	--tw-prose-hr: var(--outline-gray-1);
+	--tw-prose-quotes: var(--ink-gray-6);
+	--tw-prose-quote-borders: var(--outline-gray-2);
+}
+.ai-prose p:first-child {
+	margin-top: 0;
+}
+.ai-prose p:last-child {
+	margin-bottom: 0;
+}
+.ai-prose code {
+	background: var(--surface-gray-2);
+	border-radius: 0.25rem;
+	padding: 0.1em 0.35em;
+	font-size: 0.8em;
+}
+.ai-prose code::before,
+.ai-prose code::after {
+	content: none;
+}
+.ai-prose pre {
+	background: var(--surface-gray-2) !important;
+	border-radius: 0.375rem;
+}
+</style>
 
 <style scoped>
 .ab-dots {

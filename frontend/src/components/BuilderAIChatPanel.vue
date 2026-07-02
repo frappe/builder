@@ -340,39 +340,10 @@ import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
+import { renderMarkdown } from "@/components/ai/markdown";
 import useBuilderStore from "@/stores/builderStore";
-import DOMPurify from "dompurify";
 import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
-import { marked } from "marked";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-
-marked.use({ breaks: true, gfm: true });
-
-function renderMarkdown(content: string): string {
-	return DOMPurify.sanitize(marked.parse(content) as string, {
-		ALLOWED_TAGS: [
-			"p",
-			"br",
-			"strong",
-			"em",
-			"code",
-			"pre",
-			"ul",
-			"ol",
-			"li",
-			"a",
-			"h1",
-			"h2",
-			"h3",
-			"h4",
-			"blockquote",
-			"hr",
-			"span",
-		],
-		ALLOWED_ATTR: ["href", "target", "rel", "class"],
-		ADD_ATTR: ["target"],
-	});
-}
 
 const chat = new AIChatController();
 
