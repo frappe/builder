@@ -9,7 +9,10 @@ function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvas
 		top: 0,
 		left: 0,
 		update() {
-			const rect = getElementRectInEditor(target);
+			const rect =
+				target.ownerDocument === host.ownerDocument
+					? target.getBoundingClientRect()
+					: getElementRectInEditor(target);
 			targetBounds.width = rect.width;
 			targetBounds.height = rect.height;
 			targetBounds.top = rect.top;

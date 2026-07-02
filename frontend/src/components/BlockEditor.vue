@@ -37,7 +37,12 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { elementFromEditorPoint } from "@/utils/canvasFrameDom";
+import {
+	elementFromEditorPoint,
+	getElementDocument,
+	getEventPointInDocument,
+	getEventPointInEditor,
+} from "@/utils/canvasFrameDom";
 import { addPxToNumber } from "@/utils/helpers";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -84,7 +89,7 @@ const props = withDefaults(
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
-const guides = setGuides(props.target, canvasProps);
+let guides: ReturnType<typeof setGuides>;
 const moving = ref(false);
 const preventCLick = ref(false);
 
@@ -202,6 +207,7 @@ const movable = computed(() => {
 });
 
 onMounted(() => {
+	guides = setGuides(props.target, canvasProps);
 	updateTracker.value = trackTarget(props.target, editor.value, canvasProps);
 });
 
@@ -218,21 +224,23 @@ const handleClick = (ev: MouseEvent) => {
 
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
-	let element = elementFromEditorPoint(ev.x, ev.y) as HTMLElement;
+	const editorPoint = getEventPointInEditor(ev);
+	let element = elementFromEditorPoint(editorPoint.x, editorPoint.y) as HTMLElement;
 	if (!element) return;
 	if (element.classList.contains("editor")) {
 		element.classList.remove("pointer-events-auto");
 		element.classList.add("pointer-events-none");
-		element = elementFromEditorPoint(ev.x, ev.y) as HTMLElement;
+		element = elementFromEditorPoint(editorPoint.x, editorPoint.y) as HTMLElement;
 	}
 	if (element.classList.contains("__builder_component__")) {
 		const EventConstructor = element.ownerDocument.defaultView?.MouseEvent || MouseEvent;
+		const point = getEventPointInDocument(ev, element.ownerDocument);
 		element.dispatchEvent(
 			new EventConstructor("click", {
 				bubbles: true,
 				cancelable: true,
-				clientX: ev.clientX,
-				clientY: ev.clientY,
+				clientX: point.x,
+				clientY: point.y,
 				ctrlKey: ev.ctrlKey,
 				metaKey: ev.metaKey,
 				shiftKey: ev.shiftKey,
@@ -270,8 +278,8 @@ const handleMove = (ev: MouseEvent) => {
 	ev.stopPropagation();
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	const target = ev.target as HTMLElement;
-	const startX = ev.clientX;
-	const startY = ev.clientY;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
 	const startTop = (props.target as HTMLElement).offsetTop || 0;
 
@@ -279,15 +287,15 @@ const handleMove = (ev: MouseEvent) => {
 	guides.showX();
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = "grabbing";
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = "grabbing";
 	target.style.cursor = "grabbing";
 
 	const mousemove = async (mouseMoveEvent: MouseEvent) => {
 		if (canvasStore.isMarqueeActive) return;
-		const scale = canvasProps.scale;
-		const movementX = (mouseMoveEvent.clientX - startX) / scale;
-		const movementY = (mouseMoveEvent.clientY - startY) / scale;
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
+		const movementX = point.x - startPoint.x;
+		const movementY = point.y - startPoint.y;
 		let finalLeft = startLeft + movementX;
 		let finalTop = startTop + movementY;
 		props.block.setStyle("left", addPxToNumber(finalLeft));
@@ -309,7 +317,7 @@ const handleMove = (ev: MouseEvent) => {
 		"mouseup",
 		(mouseUpEvent) => {
 			moving.value = false;
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			target.style.cursor = "grab";
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();

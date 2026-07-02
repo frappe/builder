@@ -115,7 +115,12 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { getComputedStyleFor } from "@/utils/canvasFrameDom";
+import {
+	getComputedStyleFor,
+	getElementDocument,
+	getElementWindow,
+	getEventPointInDocument,
+} from "@/utils/canvasFrameDom";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
@@ -133,11 +138,18 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	canvasPixelsForScreenScale,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
@@ -148,7 +160,7 @@ const topMarginHandlerHeight = computed(() => {
 	blockStyles.value.display;
 	blockStyles.value.margin;
 	let marginTop = getComputedStyleFor(props.target).marginTop;
-	let value = getNumberFromPx(marginTop) * canvasProps.scale;
+	let value = getNumberFromPx(marginTop);
 	return value;
 });
 const bottomMarginHandlerHeight = computed(() => {
@@ -156,7 +168,7 @@ const bottomMarginHandlerHeight = computed(() => {
 	blockStyles.value.display;
 	blockStyles.value.margin;
 	let marginBottom = getComputedStyleFor(props.target).marginBottom;
-	let value = getNumberFromPx(marginBottom) * canvasProps.scale;
+	let value = getNumberFromPx(marginBottom);
 	return value;
 });
 const leftMarginHandlerWidth = computed(() => {
@@ -164,7 +176,7 @@ const leftMarginHandlerWidth = computed(() => {
 	blockStyles.value.display;
 	blockStyles.value.margin;
 	let marginLeft = getComputedStyleFor(props.target).marginLeft;
-	let value = getNumberFromPx(marginLeft) * canvasProps.scale;
+	let value = getNumberFromPx(marginLeft);
 	return value;
 });
 const rightMarginHandlerWidth = computed(() => {
@@ -172,7 +184,7 @@ const rightMarginHandlerWidth = computed(() => {
 	blockStyles.value.display;
 	blockStyles.value.margin;
 	let marginRight = getComputedStyleFor(props.target).marginRight;
-	let value = getNumberFromPx(marginRight) * canvasProps.scale;
+	let value = getNumberFromPx(marginRight);
 	return value;
 });
 
@@ -181,7 +193,7 @@ const topHandle = computed(() => {
 	return {
 		width,
 		height,
-		bottom: `clamp(0px, calc(4px * ${canvasProps.scale}), 12px)`,
+		bottom: `${canvasPixelsForScreenScale(4, 0, 12)}px`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -191,7 +203,7 @@ const bottomHandle = computed(() => {
 	return {
 		width,
 		height,
-		bottom: `clamp(-16px, calc(-8px * ${canvasProps.scale}), 2px)`,
+		bottom: `${canvasPixelsForScreenScale(-8, -16, 2)}px`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -201,7 +213,7 @@ const leftHandle = computed(() => {
 	return {
 		width,
 		height,
-		right: `clamp(0px, calc(4px * ${canvasProps.scale}), 12px)`,
+		right: `${canvasPixelsForScreenScale(4, 0, 12)}px`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
@@ -211,7 +223,7 @@ const rightHandle = computed(() => {
 	return {
 		width,
 		height,
-		right: `clamp(-16px, calc(-8px * ${canvasProps.scale}), 2px)`,
+		right: `${canvasPixelsForScreenScale(-8, -16, 2)}px`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
@@ -220,8 +232,8 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
 	ev.preventDefault();
 	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const target = ev.target as HTMLElement;
 
 	const startTop = getNumberFromPx(blockStyles.value.marginTop) || 0;
@@ -230,27 +242,28 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 	const startRight = getNumberFromPx(blockStyles.value.marginRight) || 0;
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(target).cursor;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
 		let movement = 0;
 		let affectingAxis = null;
 		props.onUpdate && props.onUpdate();
 		if (position === Position.Top) {
-			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
+			movement = Math.max(startTop + point.y - startPoint.y, 0);
 			props.targetBlock.setStyle("marginTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + mouseMoveEvent.clientY - startY, 0);
+			movement = Math.max(startBottom + point.y - startPoint.y, 0);
 			props.targetBlock.setStyle("marginBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
+			movement = Math.max(startLeft + point.x - startPoint.x, 0);
 			props.targetBlock.setStyle("marginLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
-			movement = Math.max(startRight + mouseMoveEvent.clientX - startX, 0);
+			movement = Math.max(startRight + point.x - startPoint.x, 0);
 			props.targetBlock.setStyle("marginRight", movement + "px");
 			affectingAxis = "x";
 		}
@@ -276,7 +289,7 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			updating.value = false;
 			mouseUpEvent.preventDefault();

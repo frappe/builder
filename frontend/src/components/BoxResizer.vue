@@ -34,7 +34,12 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
-import { getComputedStyleFor } from "@/utils/canvasFrameDom";
+import {
+	getComputedStyleFor,
+	getElementDocument,
+	getElementWindow,
+	getEventPointInDocument,
+} from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -88,7 +93,8 @@ const fontSize = computed(() => {
 });
 
 const handleRightResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
@@ -96,12 +102,15 @@ const handleRightResize = (ev: MouseEvent) => {
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
+		ev.target as HTMLElement,
+	).cursor;
 	resizing.value = true;
 	guides.showX();
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
+		const movement = point.x - startPoint.x;
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movement, startFontSize);
 			return mouseMoveEvent.preventDefault();
@@ -116,7 +125,7 @@ const handleRightResize = (ev: MouseEvent) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			resizing.value = false;
@@ -127,7 +136,8 @@ const handleRightResize = (ev: MouseEvent) => {
 };
 
 const handleBottomResize = (ev: MouseEvent) => {
-	const startY = ev.clientY;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
@@ -135,13 +145,16 @@ const handleBottomResize = (ev: MouseEvent) => {
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
+		ev.target as HTMLElement,
+	).cursor;
 	resizing.value = true;
 	guides.showY();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
+		const movement = point.y - startPoint.y;
 
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movement, startFontSize);
@@ -157,7 +170,7 @@ const handleBottomResize = (ev: MouseEvent) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			resizing.value = false;
@@ -168,8 +181,8 @@ const handleBottomResize = (ev: MouseEvent) => {
 };
 
 const handleBottomCornerResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
@@ -177,13 +190,16 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	const startFontSize = fontSize.value || 0;
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(
+		ev.target as HTMLElement,
+	).cursor;
 	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
+		const movementX = point.x - startPoint.x;
+		const movementY = point.y - startPoint.y;
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movementY, startFontSize);
 			return mouseMoveEvent.preventDefault();
@@ -196,7 +212,7 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			resizing.value = false;

@@ -2,11 +2,11 @@
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
 		<TextBlockBubbleMenu
-			v-if="editor"
+			v-if="editor && canvasOverlayElement"
 			:block="block"
 			:editor="editor"
 			:canvas-props="canvasProps"
-			:overlay-element="overlayElement"
+			:overlay-element="canvasOverlayElement"
 			:is-editable="isEditable"
 			ref="bubbleMenu" />
 		<editor-content
@@ -70,9 +70,7 @@ const props = withDefaults(
 );
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
-const overlayElement = computed(
-	() => component.value?.ownerDocument.body || canvasProps?.overlayElement || document.body,
-);
+const canvasOverlayElement = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
 
 const FontFamilyPasteRule = Extension.create({
 	name: "fontFamilyPasteRule",

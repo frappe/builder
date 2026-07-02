@@ -111,7 +111,12 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { getComputedStyleFor } from "@/utils/canvasFrameDom";
+import {
+	getComputedStyleFor,
+	getElementDocument,
+	getElementWindow,
+	getEventPointInDocument,
+} from "@/utils/canvasFrameDom";
 import { computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
@@ -132,11 +137,18 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	canvasPixelsForScreenScale,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
@@ -164,7 +176,7 @@ const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
 	blockStyles.value.paddingBottom;
 	blockStyles.value.paddingLeft;
 	blockStyles.value.padding;
-	return getNumberFromPx(getComputedStyleFor(props.target)[`padding${side}`]) * canvasProps.scale;
+	return getNumberFromPx(getComputedStyleFor(props.target)[`padding${side}`]);
 };
 
 const topHandle = computed(() => {
@@ -172,7 +184,7 @@ const topHandle = computed(() => {
 	return {
 		width,
 		height,
-		bottom: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
+		bottom: `${canvasPixelsForScreenScale(-10, -20, -6)}px`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -182,7 +194,7 @@ const bottomHandle = computed(() => {
 	return {
 		width,
 		height,
-		top: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
+		top: `${canvasPixelsForScreenScale(-10, -20, -6)}px`,
 		left: `calc(50% - ${width / 2}px)`,
 	};
 });
@@ -192,7 +204,7 @@ const leftHandle = computed(() => {
 	return {
 		width,
 		height,
-		right: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
+		right: `${canvasPixelsForScreenScale(-10, -20, -6)}px`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
@@ -202,7 +214,7 @@ const rightHandle = computed(() => {
 	return {
 		width,
 		height,
-		left: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
+		left: `${canvasPixelsForScreenScale(-10, -20, -6)}px`,
 		top: `calc(50% - ${height / 2}px)`,
 	};
 });
@@ -216,8 +228,8 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	// 	messageShown.value = true;
 	// }
 	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
+	const ownerDocument = getElementDocument(props.target);
+	const startPoint = getEventPointInDocument(ev, ownerDocument);
 	const target = ev.target as HTMLElement;
 
 	const startTop = getNumberFromPx(blockStyles.value.paddingTop) || 5;
@@ -226,27 +238,28 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
 
 	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
+	const docCursor = ownerDocument.body.style.cursor;
+	ownerDocument.body.style.cursor = getElementWindow(props.target).getComputedStyle(target).cursor;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
 		let movement = 0;
 		let affectingAxis = null;
 		props.onUpdate && props.onUpdate();
 		if (position === Position.Top) {
-			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
+			movement = Math.max(startTop + point.y - startPoint.y, 0);
 			props.targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
+			movement = Math.max(startBottom + startPoint.y - point.y, 0);
 			props.targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
+			movement = Math.max(startLeft + point.x - startPoint.x, 0);
 			props.targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
-			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
+			movement = Math.max(startRight + startPoint.x - point.x, 0);
 			props.targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
 		}
@@ -273,7 +286,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			ownerDocument.body.style.cursor = docCursor;
 			document.removeEventListener("mousemove", mousemove);
 			updating.value = false;
 			mouseUpEvent.preventDefault();

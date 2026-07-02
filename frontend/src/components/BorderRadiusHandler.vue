@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
-import { getComputedStyleFor, getElementRectInEditor } from "@/utils/canvasFrameDom";
+import { getComputedStyleFor, getElementDocument, getEventPointInDocument } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
@@ -42,7 +42,7 @@ const targetBounds = reactive({
 	width: 0,
 	height: 0,
 	update() {
-		const rect = getElementRectInEditor(props.target);
+		const rect = props.target.getBoundingClientRect();
 		targetBounds.width = rect.width;
 		targetBounds.height = rect.height;
 	},
@@ -77,18 +77,17 @@ const setHandlerPosition = (radius: number) => {
 };
 
 const handleRounded = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
-	let lastX = startX;
-	let lastY = startY;
+	const ownerDocument = getElementDocument(props.target);
+	let lastPoint = getEventPointInDocument(ev, ownerDocument);
 	updating.value = true;
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
-		const movementX = mouseMoveEvent.clientX - lastX;
-		const movementY = mouseMoveEvent.clientY - lastY;
+		const point = getEventPointInDocument(mouseMoveEvent, ownerDocument);
+		const movementX = point.x - lastPoint.x;
+		const movementY = point.y - lastPoint.y;
 		const movement = ((movementX + movementY) / 2) * 2;
 
 		if (movement < 0) {
@@ -104,8 +103,7 @@ const handleRounded = (ev: MouseEvent) => {
 		setHandlerPosition(radius);
 		props.targetBlock.setStyle("borderRadius", `${radius}px`);
 
-		lastX = mouseMoveEvent.clientX;
-		lastY = mouseMoveEvent.clientY;
+		lastPoint = point;
 	};
 
 	const mouseup = (mouseUpEvent: MouseEvent) => {
