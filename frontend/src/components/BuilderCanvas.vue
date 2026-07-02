@@ -1,5 +1,9 @@
 <template>
-	<div ref="canvasContainer" :data-builder-canvas="canvasId" @click="handleClick">
+	<div
+		ref="canvasContainer"
+		:data-builder-canvas="canvasId"
+		@click="handleClick"
+		@mousedown="handleMarqueeStart">
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -161,19 +165,14 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory, CanvasProps } from "@/types/Builder/BuilderCanvas";
-import { elementFromEditorPoint } from "@/utils/canvasFrameDom";
-import { getBlockObject, isCtrlOrCmd, isTargetEditable } from "@/utils/helpers";
+import { elementFromEditorPoint, forwardFrameEvents } from "@/utils/canvasFrameDom";
+import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
 	executeClientScriptUnrestricted,
 } from "@/utils/scriptSandbox";
-import {
-	handleBlockClick,
-	handleBlockContextMenu,
-	handleBlockDoubleClick,
-	useBlockEventHandlers,
-} from "@/utils/useBlockEventHandlers";
+import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -210,6 +209,7 @@ const frameRoots = reactive(new Map<string, HTMLElement>());
 const frameDocuments = reactive(new Map<string, Document>());
 const frameEpoch = ref(0);
 const frameDropStates = reactive(new Map<string, boolean>());
+const frameEventCleanups = new Map<Document, () => void>();
 const cursorStyle = ref("default");
 
 const props = withDefaults(
@@ -345,6 +345,8 @@ onMounted(() => {
 
 onUnmounted(() => {
 	cleanupMarqueeListeners();
+	frameEventCleanups.forEach((cleanup) => cleanup());
+	frameEventCleanups.clear();
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -365,94 +367,22 @@ function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, ifr
 	frameRoots.set(breakpoint, root);
 	frameDocuments.set(breakpoint, doc);
 
-	doc.addEventListener("mousedown", handleMarqueeStart);
-	doc.addEventListener("click", handleBlockClick);
-	doc.addEventListener("dblclick", handleBlockDoubleClick);
-	doc.addEventListener("contextmenu", handleBlockContextMenu);
-	useCanvasEvents(
-		ref(root) as Ref<HTMLElement>,
-		canvasProps,
-		history as CanvasHistory,
-		selectedBlocks,
-		getRootBlock,
-		findBlock,
-		false,
-		doc,
-	);
+	frameEventCleanups.set(doc, forwardFrameEvents(doc, iframe));
 	const { isOverDropZone: frameIsOverDropZone } = useCanvasDropZone(ref(doc.body), block, findBlock);
 	watch(frameIsOverDropZone, (value) => frameDropStates.set(breakpoint, value), { immediate: true });
-	bridgeFrameEvents(doc, iframe);
 	nextTick(setScaleAndTranslate);
 }
 
 function unregisterFrame(breakpoint: string, doc: Document | null) {
-	doc?.removeEventListener("mousedown", handleMarqueeStart);
-	doc?.removeEventListener("click", handleBlockClick);
-	doc?.removeEventListener("dblclick", handleBlockDoubleClick);
-	doc?.removeEventListener("contextmenu", handleBlockContextMenu);
+	if (doc) {
+		frameEventCleanups.get(doc)?.();
+		frameEventCleanups.delete(doc);
+	}
 	if (!doc || frameDocuments.get(breakpoint) === doc) {
 		frameRoots.delete(breakpoint);
 		frameDocuments.delete(breakpoint);
 		frameDropStates.delete(breakpoint);
 	}
-}
-
-function bridgeFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
-	const forwardWheel = (event: WheelEvent) => {
-		event.preventDefault();
-		const frameRect = iframe.getBoundingClientRect();
-		const scaleX = iframe.clientWidth ? frameRect.width / iframe.clientWidth : 1;
-		const scaleY = iframe.clientHeight ? frameRect.height / iframe.clientHeight : 1;
-		iframe.dispatchEvent(
-			new WheelEvent("wheel", {
-				bubbles: true,
-				cancelable: true,
-				clientX: frameRect.left + event.clientX * scaleX,
-				clientY: frameRect.top + event.clientY * scaleY,
-				deltaX: event.deltaX,
-				deltaY: event.deltaY,
-				deltaZ: event.deltaZ,
-				deltaMode: event.deltaMode,
-				ctrlKey: event.ctrlKey,
-				metaKey: event.metaKey,
-				shiftKey: event.shiftKey,
-				altKey: event.altKey,
-			}),
-		);
-	};
-	doc.addEventListener("wheel", forwardWheel, { passive: false });
-
-	const forwardKeyboard = (event: KeyboardEvent) => {
-		console.log(event);
-		if (isTargetEditable(event)) return;
-		const forwarded = new KeyboardEvent(event.type, {
-			bubbles: true,
-			cancelable: true,
-			key: event.key,
-			code: event.code,
-			repeat: event.repeat,
-			ctrlKey: event.ctrlKey,
-			metaKey: event.metaKey,
-			shiftKey: event.shiftKey,
-			altKey: event.altKey,
-		});
-		if (!document.dispatchEvent(forwarded)) event.preventDefault();
-	};
-	doc.addEventListener("keydown", forwardKeyboard);
-	doc.addEventListener("keyup", forwardKeyboard);
-
-	const forwardClipboard = (event: ClipboardEvent) => {
-		if (isTargetEditable(event)) return;
-		const forwarded = new ClipboardEvent(event.type, {
-			bubbles: true,
-			cancelable: true,
-			clipboardData: event.clipboardData,
-		});
-		if (!document.dispatchEvent(forwarded)) event.preventDefault();
-	};
-	doc.addEventListener("copy", forwardClipboard);
-	doc.addEventListener("cut", forwardClipboard);
-	doc.addEventListener("paste", forwardClipboard);
 }
 
 onMounted(() => {
@@ -648,7 +578,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 						frameRoots.get(script.breakpoint) || null,
 						script.javascript,
 						context,
-				  );
+					);
 	}
 
 	return () => {

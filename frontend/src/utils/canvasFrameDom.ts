@@ -3,6 +3,8 @@ export type CanvasFramePoint = {
 	y: number;
 };
 
+const forwardedEventSources = new WeakMap<Event, Event>();
+
 export function getElementDocument(element: Element | null): Document {
 	return element?.ownerDocument || document;
 }
@@ -60,6 +62,34 @@ export function editorPointToFrame(frame: HTMLIFrameElement, point: CanvasFrameP
 	};
 }
 
+export function getEventSource(event: Event): Event {
+	return forwardedEventSources.get(event) || event;
+}
+
+export function getEventTarget(event: Event): EventTarget | null {
+	return getEventSource(event).target || event.target;
+}
+
+export function getEventDocument(event: Event): Document {
+	const target = getEventTarget(event) as { nodeType?: number; ownerDocument?: Document } | null;
+	if (target?.nodeType === 9) return target as unknown as Document;
+	return target?.ownerDocument || document;
+}
+
+export function getEventPointInEditor(event: MouseEvent): CanvasFramePoint {
+	const source = getEventSource(event) as MouseEvent;
+	return framePointToEditor(getEventDocument(event), {
+		x: source.clientX,
+		y: source.clientY,
+	});
+}
+
+export function getEventPointInDocument(event: MouseEvent, doc: Document): CanvasFramePoint {
+	const point = getEventPointInEditor(event);
+	const frame = getFrameElement(doc);
+	return frame ? editorPointToFrame(frame, point) : point;
+}
+
 export function elementFromEditorPoint(x: number, y: number): Element | null {
 	const outerElement = document.elementFromPoint(x, y);
 	if (!(outerElement instanceof HTMLIFrameElement)) return outerElement;
@@ -77,4 +107,150 @@ export function isElementLike(value: unknown): value is Element {
 			"nodeType" in value &&
 			(value as { nodeType: number }).nodeType === Node.ELEMENT_NODE,
 	);
+}
+
+const bubblingMouseEventTypes = [
+	"auxclick",
+	"click",
+	"contextmenu",
+	"dblclick",
+	"mousedown",
+	"mousemove",
+	"mouseout",
+	"mouseover",
+	"mouseup",
+] as const;
+
+const keyboardEventTypes = ["keydown", "keypress", "keyup"] as const;
+const clipboardEventTypes = ["copy", "cut", "paste"] as const;
+const dragEventTypes = [
+	"drag",
+	"dragend",
+	"dragenter",
+	"dragleave",
+	"dragover",
+	"dragstart",
+	"drop",
+] as const;
+
+function getForwardedMouseEventInit(event: MouseEvent, doc: Document): MouseEventInit {
+	const point = framePointToEditor(doc, { x: event.clientX, y: event.clientY });
+	return {
+		bubbles: true,
+		cancelable: event.cancelable,
+		composed: true,
+		view: window,
+		detail: event.detail,
+		screenX: event.screenX,
+		screenY: event.screenY,
+		clientX: point.x,
+		clientY: point.y,
+		ctrlKey: event.ctrlKey,
+		altKey: event.altKey,
+		shiftKey: event.shiftKey,
+		metaKey: event.metaKey,
+		button: event.button,
+		buttons: event.buttons,
+		relatedTarget: event.relatedTarget,
+	};
+}
+
+export function forwardFrameEvents(doc: Document, iframe: HTMLIFrameElement) {
+	const frameTarget: EventTarget = doc.defaultView || doc;
+
+	const forward = (source: Event, forwarded: Event) => {
+		forwardedEventSources.set(forwarded, source);
+		if (source.target) {
+			// Keep target-based guards working as if the iframe were part of the editor's DOM tree.
+			Object.defineProperty(forwarded, "target", {
+				configurable: true,
+				value: source.target,
+			});
+		}
+		if (!iframe.dispatchEvent(forwarded)) source.preventDefault();
+	};
+
+	const forwardMouse = (event: MouseEvent) => {
+		console.log(99, event.type)
+		forward(event, new MouseEvent(event.type, getForwardedMouseEventInit(event, doc)));
+	};
+
+	const forwardWheel = (event: WheelEvent) => {
+		forward(
+			event,
+			new WheelEvent(event.type, {
+				...getForwardedMouseEventInit(event, doc),
+				deltaX: event.deltaX,
+				deltaY: event.deltaY,
+				deltaZ: event.deltaZ,
+				deltaMode: event.deltaMode,
+			}),
+		);
+	};
+
+	const forwardDrag = (event: DragEvent) => {
+		forward(
+			event,
+			new DragEvent(event.type, {
+				...getForwardedMouseEventInit(event, doc),
+				dataTransfer: event.dataTransfer,
+			}),
+		);
+	};
+
+	const forwardKeyboard = (event: KeyboardEvent) => {
+		forward(
+			event,
+			new KeyboardEvent(event.type, {
+				bubbles: true,
+				cancelable: event.cancelable,
+				composed: true,
+				key: event.key,
+				code: event.code,
+				location: event.location,
+				repeat: event.repeat,
+				isComposing: event.isComposing,
+				ctrlKey: event.ctrlKey,
+				altKey: event.altKey,
+				shiftKey: event.shiftKey,
+				metaKey: event.metaKey,
+			}),
+		);
+	};
+
+	const forwardClipboard = (event: ClipboardEvent) => {
+		forward(
+			event,
+			new ClipboardEvent(event.type, {
+				bubbles: true,
+				cancelable: event.cancelable,
+				composed: true,
+				clipboardData: event.clipboardData,
+			}),
+		);
+	};
+
+	bubblingMouseEventTypes.forEach((type) =>
+		frameTarget.addEventListener(type, forwardMouse as EventListener),
+	);
+	frameTarget.addEventListener("wheel", forwardWheel as EventListener, { passive: false });
+	dragEventTypes.forEach((type) => frameTarget.addEventListener(type, forwardDrag as EventListener));
+	keyboardEventTypes.forEach((type) => frameTarget.addEventListener(type, forwardKeyboard as EventListener));
+	clipboardEventTypes.forEach((type) =>
+		frameTarget.addEventListener(type, forwardClipboard as EventListener),
+	);
+
+	return () => {
+		bubblingMouseEventTypes.forEach((type) =>
+			frameTarget.removeEventListener(type, forwardMouse as EventListener),
+		);
+		frameTarget.removeEventListener("wheel", forwardWheel as EventListener);
+		dragEventTypes.forEach((type) => frameTarget.removeEventListener(type, forwardDrag as EventListener));
+		keyboardEventTypes.forEach((type) =>
+			frameTarget.removeEventListener(type, forwardKeyboard as EventListener),
+		);
+		clipboardEventTypes.forEach((type) =>
+			frameTarget.removeEventListener(type, forwardClipboard as EventListener),
+		);
+	};
 }

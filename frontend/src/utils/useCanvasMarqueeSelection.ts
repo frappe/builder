@@ -2,7 +2,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import type { CanvasProps } from "@/types/Builder/BuilderCanvas";
-import { framePointToEditor, getElementRectInEditor } from "@/utils/canvasFrameDom";
+import { getElementRectInEditor, getEventPointInEditor, getEventTarget } from "@/utils/canvasFrameDom";
 import { computed, reactive, ref, type Ref } from "vue";
 
 const MIN_MARQUEE_DRAG = 5;
@@ -52,7 +52,6 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	let rafId: number | null = null;
 	// Tracks which blocks currently have the DOM highlight attribute (no Vue overhead)
 	let marqueePreviewIds = new Set<string>();
-	let activeWindow: Window = window;
 	const marquee = reactive({
 		active: false,
 		visible: false,
@@ -99,14 +98,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const removeWindowListeners = () => {
-		activeWindow.removeEventListener("mousemove", handleMarqueeMove as EventListener);
-		activeWindow.removeEventListener("mouseup", handleMarqueeEnd);
-		activeWindow.removeEventListener("dragstart", cancelMarqueeOnDrag);
-		if (activeWindow !== window) {
-			window.removeEventListener("mousemove", handleMarqueeMove);
-			window.removeEventListener("mouseup", handleMarqueeEnd);
-			window.removeEventListener("dragstart", cancelMarqueeOnDrag);
-		}
+		window.removeEventListener("mousemove", handleMarqueeMove);
+		window.removeEventListener("mouseup", handleMarqueeEnd);
+		window.removeEventListener("dragstart", cancelMarqueeOnDrag);
 	};
 
 	const handleMarqueeStart = (ev: MouseEvent) => {
@@ -119,8 +113,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 
 		marquee.active = true;
 		marquee.visible = false;
-		const eventDocument = getEventDocument(ev);
-		const point = framePointToEditor(eventDocument, { x: ev.clientX, y: ev.clientY });
+		const point = getEventPointInEditor(ev);
 		marquee.startX = point.x;
 		marquee.startY = point.y;
 		marquee.currentX = point.x;
@@ -128,19 +121,13 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		marqueeAdditiveSelection.value = ev.shiftKey || ev.metaKey || ev.ctrlKey;
 		marqueeInitialSelection.value = new Set(selectedBlockIds.value);
 		marqueeBreakpoint.value =
-			(ev.target as HTMLElement | null)?.closest(".canvas")?.getAttribute("data-breakpoint") ||
+			(getEventTarget(ev) as HTMLElement | null)?.closest(".canvas")?.getAttribute("data-breakpoint") ||
 			getBreakpointAtPoint(point.x, point.y);
 
-		activeWindow = eventDocument.defaultView || window;
-		activeWindow.addEventListener("mousemove", handleMarqueeMove as EventListener);
-		activeWindow.addEventListener("mouseup", handleMarqueeEnd);
+		window.addEventListener("mousemove", handleMarqueeMove);
+		window.addEventListener("mouseup", handleMarqueeEnd);
 		// Cancel marquee if the browser starts an HTML5 block drag (mouseup won't fire during drag)
-		activeWindow.addEventListener("dragstart", cancelMarqueeOnDrag);
-		if (activeWindow !== window) {
-			window.addEventListener("mousemove", handleMarqueeMove);
-			window.addEventListener("mouseup", handleMarqueeEnd);
-			window.addEventListener("dragstart", cancelMarqueeOnDrag);
-		}
+		window.addEventListener("dragstart", cancelMarqueeOnDrag);
 	};
 
 	const snapshotBlockRects = (): BlockRectSnapshot[] => {
@@ -188,8 +175,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (!marquee.active) return;
 
 		// Always capture the latest position — even if a rAF is already pending
-		const eventDocument = (ev.currentTarget as Window | null)?.document || document;
-		const point = framePointToEditor(eventDocument, { x: ev.clientX, y: ev.clientY });
+		const point = getEventPointInEditor(ev);
 		marquee.currentX = point.x;
 		marquee.currentY = point.y;
 
@@ -377,12 +363,4 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		handleMarqueeStart,
 		cleanupMarqueeListeners: removeWindowListeners,
 	};
-}
-
-function getEventDocument(event: Event): Document {
-	const target = event.currentTarget as
-		| (EventTarget & { nodeType?: number; ownerDocument?: Document })
-		| null;
-	if (target?.nodeType === 9) return target as unknown as Document;
-	return target?.ownerDocument || document;
 }

@@ -2,7 +2,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
-import { framePointToEditor } from "@/utils/canvasFrameDom";
+import { getEventPointInEditor } from "@/utils/canvasFrameDom";
 import { nextTick } from "vue";
 
 const builderStore = useBuilderStore();
@@ -80,8 +80,7 @@ export function handleBlockContextMenu(e: MouseEvent) {
 	e.stopPropagation();
 	e.preventDefault();
 	selectBlock(e);
-	const ownerDocument = (e.target as Element).ownerDocument;
-	const point = framePointToEditor(ownerDocument, { x: e.clientX, y: e.clientY });
+	const point = getEventPointInEditor(e);
 	nextTick(() => {
 		document.querySelector(`.editor[data-block-id="${blockId}"]`)?.dispatchEvent(
 			new MouseEvent("contextmenu", {
