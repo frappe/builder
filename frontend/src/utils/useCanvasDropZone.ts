@@ -15,6 +15,7 @@ import { useDropZone } from "@vueuse/core";
 import { useTelemetry } from "frappe-ui/frappe";
 import { Ref } from "vue";
 import blockController from "./blockController";
+import { getComputedStyleFor } from "./canvasFrameDom";
 
 const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
@@ -69,7 +70,9 @@ export function useCanvasDropZone(
 	});
 
 	const getInitialParentBlock = (ev: DragEvent) => {
-		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		const ownerDocument = (ev.currentTarget as Element | null)?.ownerDocument || document;
+		const element = ownerDocument.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		if (!element) return block.value as Block | null;
 		const targetElement = element.closest(".__builder_component__") as HTMLElement;
 
 		// set the hoveredBreakpoint from the target element to show placeholder at the correct breakpoint canvas
@@ -97,7 +100,8 @@ export function useCanvasDropZone(
 	const getBlockElement = (block: Block) => {
 		const breakpoint =
 			canvasStore.activeCanvas?.hoveredBreakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		return document.querySelector(
+		const root = breakpoint ? canvasStore.activeCanvas?.canvasProps?.frameRoots?.get(breakpoint) : null;
+		return root?.querySelector(
 			`.__builder_component__[data-block-id="${block.blockId}"][data-breakpoint="${breakpoint}"]`,
 		) as HTMLElement;
 	};
@@ -158,7 +162,7 @@ export function useCanvasDropZone(
 	};
 
 	const getLayoutDirection = (element: HTMLElement): LayoutDirection => {
-		const style = window.getComputedStyle(element);
+		const style = getComputedStyleFor(element);
 		const display = style.display;
 		if (display === "flex" || display === "inline-flex") {
 			return style.flexDirection.includes("row") ? "row" : "column";

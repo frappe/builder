@@ -30,19 +30,30 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		return styles;
 	});
 
-	const handleBorderWidth = computed(() => `${clamp(1 * canvasProps.scale, 1, 2)}px`);
+	const canvasPixelsForScreenScale = (size: number, min: number, max: number) =>
+		clamp(size * canvasProps.scale, min, max) / canvasProps.scale;
+
+	const handleBorderWidth = computed(() => `${canvasPixelsForScreenScale(1, 1, 2)}px`);
 
 	// Long-edge handles (top/bottom) are wide and short; side handles (left/right)
 	// are tall and narrow. The dimensions are identical for margin and padding;
 	// only the offsets (set per-component) differ.
 	const longHandleSize = computed(() => ({
-		width: clamp(16 * canvasProps.scale, 8, 32),
-		height: clamp(4 * canvasProps.scale, 2, 8),
+		width: canvasPixelsForScreenScale(16, 8, 32),
+		height: canvasPixelsForScreenScale(4, 2, 8),
 	}));
 	const sideHandleSize = computed(() => ({
-		width: clamp(4 * canvasProps.scale, 2, 8),
-		height: clamp(16 * canvasProps.scale, 8, 32),
+		width: canvasPixelsForScreenScale(4, 2, 8),
+		height: canvasPixelsForScreenScale(16, 8, 32),
 	}));
 
-	return { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize };
+	return {
+		canvasProps,
+		updating,
+		blockStyles,
+		handleBorderWidth,
+		longHandleSize,
+		sideHandleSize,
+		canvasPixelsForScreenScale,
+	};
 }

@@ -2,83 +2,99 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
-import { useEventListener } from "@vueuse/core";
+import { getEventDocument, getEventPointInDocument } from "@/utils/canvasFrameDom";
 import { nextTick } from "vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 export function useBlockEventHandlers(target: HTMLElement) {
-	useEventListener(target, "click", handleClick);
-	useEventListener(target, "dblclick", handleDoubleClick);
-	useEventListener(target, "contextmenu", triggerContextMenu);
+	target.addEventListener("click", handleBlockClick);
+	target.addEventListener("dblclick", handleBlockDoubleClick);
+	target.addEventListener("contextmenu", handleBlockContextMenu);
 
-	function handleClick(e: MouseEvent) {
-		if (!isBlock(e) || isEditable(e)) return;
-		if (canvasStore.preventClick) {
-			e.stopPropagation();
-			e.preventDefault();
-			canvasStore.preventClick = false;
-			return;
-		}
-		selectBlock(e);
+	return () => {
+		target.removeEventListener("click", handleBlockClick);
+		target.removeEventListener("dblclick", handleBlockDoubleClick);
+		target.removeEventListener("contextmenu", handleBlockContextMenu);
+	};
+}
+
+export function handleBlockClick(e: MouseEvent) {
+	if (!isBlock(e) || isEditable(e)) return;
+	if (canvasStore.preventClick) {
 		e.stopPropagation();
 		e.preventDefault();
+		canvasStore.preventClick = false;
+		return;
 	}
+	selectBlock(e);
+	e.stopPropagation();
+	e.preventDefault();
+}
 
-	function handleDoubleClick(e: MouseEvent) {
-		if (!isBlock(e) || isEditable(e)) return;
-		canvasStore.editableBlock = null;
-		const block = getBlock(e);
-		if (!block) return;
-		if (block.isImage()) {
-			nextTick(() => {
-				builderStore.openImageUpload = true;
-			});
-			e.stopPropagation();
-			return;
-		}
-		if (block.isText() || block.isLink() || block.isButton()) {
-			canvasStore.editableBlock = block;
-			e.stopPropagation();
-		}
-
-		// dblclick on container adds text block or selects text block if only one child
-		let children = block.getChildren();
-		if (block.isHTML()) {
-			document
-				.querySelector(`.editor[data-block-id="${block.blockId}"]`)
-				?.dispatchEvent(new MouseEvent("dblclick", e));
-			e.stopPropagation();
-		} else if (block.isContainer()) {
-			if (!children.length) {
-				const child = getBlockTemplate("text");
-				block.setBaseStyle("alignItems", "center");
-				block.setBaseStyle("justifyContent", "center");
-				const childBlock = block.addChild(child);
-				childBlock.makeBlockEditable();
-			} else if (children.length === 1 && children[0].isText()) {
-				const child = children[0];
-				child.makeBlockEditable();
-			}
-			e.stopPropagation();
-		}
-	}
-
-	function triggerContextMenu(e: MouseEvent) {
-		if (!isBlock(e) || isEditable(e)) return;
-		const block = getBlock(e);
-		const { blockId } = getBlockInfo(e);
-		if (block && block.isRoot()) return;
-		e.stopPropagation();
-		e.preventDefault();
-		selectBlock(e);
+export function handleBlockDoubleClick(e: MouseEvent) {
+	if (!isBlock(e) || isEditable(e)) return;
+	canvasStore.editableBlock = null;
+	const block = getBlock(e);
+	if (!block) return;
+	if (block.isImage()) {
 		nextTick(() => {
-			document
-				.querySelector(`.editor[data-block-id="${blockId}"]`)
-				?.dispatchEvent(new MouseEvent("contextmenu", e));
+			builderStore.openImageUpload = true;
 		});
+		e.stopPropagation();
+		return;
 	}
+	if (block.isText() || block.isLink() || block.isButton()) {
+		canvasStore.editableBlock = block;
+		e.stopPropagation();
+	}
+
+	// dblclick on container adds text block or selects text block if only one child
+	let children = block.getChildren();
+	if (block.isHTML()) {
+		const eventDocument = getEventDocument(e);
+		const EventConstructor = eventDocument.defaultView?.MouseEvent || MouseEvent;
+		eventDocument
+			.querySelector(`.editor[data-block-id="${block.blockId}"]`)
+			?.dispatchEvent(new EventConstructor("dblclick", { bubbles: true, cancelable: true }));
+		e.stopPropagation();
+	} else if (block.isContainer()) {
+		if (!children.length) {
+			const child = getBlockTemplate("text");
+			block.setBaseStyle("alignItems", "center");
+			block.setBaseStyle("justifyContent", "center");
+			const childBlock = block.addChild(child);
+			childBlock.makeBlockEditable();
+		} else if (children.length === 1 && children[0].isText()) {
+			const child = children[0];
+			child.makeBlockEditable();
+		}
+		e.stopPropagation();
+	}
+}
+
+export function handleBlockContextMenu(e: MouseEvent) {
+	if (!isBlock(e) || isEditable(e)) return;
+	const block = getBlock(e);
+	const { blockId } = getBlockInfo(e);
+	if (block && block.isRoot()) return;
+	e.stopPropagation();
+	e.preventDefault();
+	selectBlock(e);
+	const eventDocument = getEventDocument(e);
+	const point = getEventPointInDocument(e, eventDocument);
+	const EventConstructor = eventDocument.defaultView?.MouseEvent || MouseEvent;
+	nextTick(() => {
+		eventDocument.querySelector(`.editor[data-block-id="${blockId}"]`)?.dispatchEvent(
+			new EventConstructor("contextmenu", {
+				bubbles: true,
+				cancelable: true,
+				clientX: point.x,
+				clientY: point.y,
+			}),
+		);
+	});
 }
 
 const isEditable = (e: MouseEvent) => {

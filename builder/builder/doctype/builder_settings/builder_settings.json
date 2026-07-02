@@ -109,7 +109,7 @@
    "default": "Restricted",
    "fieldname": "execute_block_scripts_in_editor",
    "fieldtype": "Select",
-   "label": "Execute Block Scripts in Editor",
+   "label": "Execute Client Scripts in Editor",
    "options": "Don't Execute\nRestricted\nUnrestricted"
   },
   {

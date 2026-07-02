@@ -17,10 +17,15 @@ type ScriptContext = {
 	props?: Record<string, any>;
 };
 
-function createEvents(defaultTarget: EventTarget) {
+type PageScriptContext = {
+	pageData?: Record<string, any>;
+};
+
+function createEvents(defaultTarget: EventTarget, targetWindow: Window) {
+	const CustomEventConstructor = (targetWindow as any).CustomEvent as typeof CustomEvent;
 	return {
 		dispatch(name: string, data: any, target: EventTarget = defaultTarget) {
-			target.dispatchEvent(new CustomEvent(name, { detail: data }));
+			target.dispatchEvent(new CustomEventConstructor(name, { detail: data }));
 		},
 		listen(name: string, callback: (data: any, event: Event) => void, target: EventTarget = defaultTarget) {
 			const handler = (event: Event) => callback((event as CustomEvent).detail, event);
@@ -30,40 +35,92 @@ function createEvents(defaultTarget: EventTarget) {
 	};
 }
 
-function createScriptFunction(userScript: string) {
-	return new Function(
+function createScriptFunction(userScript: string, targetWindow: Window, pageScript = false) {
+	const FunctionConstructor = (targetWindow as any).Function as FunctionConstructor;
+	const parameters = pageScript ? "" : "component_data, props";
+	const callArguments = pageScript ? "thisRef" : "thisRef, component_data, props";
+	return new FunctionConstructor(
 		"context",
 		`with (context) {
-			return (async function(component_data, props) { ${userScript} })
-				.call(thisRef, component_data, props);
+			return (async function(${parameters}) { ${userScript} })
+				.call(${callArguments});
 		}`,
 	);
+}
+
+function createScriptCleanup(
+	result: unknown,
+	thisArg: unknown,
+	mode: "restricted" | "unrestricted",
+	onDispose: () => void = () => {},
+): ScriptCleanup {
+	let disposed = false;
+	let resolvedCleanup: unknown;
+
+	const runCleanup = (cleanup: unknown) => {
+		if (typeof cleanup !== "function") return;
+		try {
+			cleanup.call(thisArg);
+		} catch (error) {
+			console.error(`Error cleaning up user script (${mode}):`, error);
+		}
+	};
+
+	Promise.resolve(result).then(
+		(value) => {
+			resolvedCleanup = value;
+			if (disposed) runCleanup(value);
+		},
+		(error) => console.error(`Error in user script (${mode}):`, error),
+	);
+
+	return () => {
+		if (disposed) return;
+		disposed = true;
+		onDispose();
+		runCleanup(resolvedCleanup);
+	};
 }
 
 function executeClientScriptUnrestricted(
 	thisElement: HTMLElement | null,
 	userScript: string,
 	{ componentData = {}, props = {} }: ScriptContext = {},
+	pageContext: PageScriptContext | null = null,
 ): ScriptCleanup {
 	if (!thisElement || !userScript.trim()) return () => {};
 
 	try {
-		const fn = createScriptFunction(userScript);
-		const cleanup = fn({
-			component_data: componentData,
-			document,
-			events: createEvents(document),
-			props,
-			thisRef: thisElement,
-		});
-		if (typeof cleanup !== "function") return () => {};
-		return () => {
-			try {
-				cleanup.call(thisElement);
-			} catch (error) {
-				console.error("Error cleaning up user script (unrestricted):", error);
-			}
-		};
+		const targetDocument = thisElement.ownerDocument;
+		const targetWindow = targetDocument.defaultView || window;
+		const events = createEvents(targetDocument, targetWindow);
+		const isPageScript = pageContext !== null;
+		const thisRef = isPageScript ? targetWindow : thisElement;
+		const context = isPageScript
+			? {
+					document: targetDocument,
+					events,
+					page_data: pageContext.pageData ?? {},
+					thisRef,
+			  }
+			: {
+					component_data: componentData,
+					document: targetDocument,
+					events,
+					props,
+					thisRef,
+			  };
+
+		if (isPageScript) {
+			Object.assign(targetWindow, {
+				events,
+				page_data: pageContext.pageData ?? {},
+			});
+		}
+
+		const fn = createScriptFunction(userScript, targetWindow, isPageScript);
+		const cleanup = fn(context);
+		return createScriptCleanup(cleanup, thisRef, "unrestricted");
 	} catch (error) {
 		console.error("Error in user script (unrestricted):", error);
 		return () => {};
@@ -79,8 +136,17 @@ function executeClientScriptRestricted(
 	sandboxRoot: HTMLElement | null,
 	userScript: string,
 	{ componentData = {}, props = {} }: ScriptContext = {},
+	pageContext: PageScriptContext | null = null,
 ): ScriptCleanup {
 	if (!thisElement || !sandboxRoot || !userScript.trim()) return () => {};
+	const targetDocument = thisElement.ownerDocument;
+	const targetWindow = targetDocument.defaultView || window;
+	const FrameNode = targetWindow.Node;
+	const FrameNamedNodeMap = targetWindow.NamedNodeMap;
+	const FrameDOMTokenList = targetWindow.DOMTokenList;
+	const FrameCSSStyleDeclaration = targetWindow.CSSStyleDeclaration;
+	const FrameNodeList = targetWindow.NodeList;
+	const FrameHTMLCollection = targetWindow.HTMLCollection;
 
 	const cache = new WeakMap<object, any>();
 	const rawValues = new WeakMap<object, object>();
@@ -129,11 +195,15 @@ function executeClientScriptRestricted(
 			const val = Reflect.get(target, prop, target);
 
 			// Wrap DOM returns
-			if (val instanceof Node) return wrap(val);
-			if (val instanceof NamedNodeMap || val instanceof DOMTokenList || val instanceof CSSStyleDeclaration)
+			if (val instanceof FrameNode) return wrap(val);
+			if (
+				val instanceof FrameNamedNodeMap ||
+				val instanceof FrameDOMTokenList ||
+				val instanceof FrameCSSStyleDeclaration
+			)
 				return wrap(val as any);
 
-			if (val instanceof NodeList || val instanceof HTMLCollection) {
+			if (val instanceof FrameNodeList || val instanceof FrameHTMLCollection) {
 				return Array.from(val, wrap);
 			}
 
@@ -161,7 +231,7 @@ function executeClientScriptRestricted(
 
 					// Do not allow inserting nodes outside the sandbox
 					for (const a of realArgs) {
-						if (a instanceof Node && !sandboxRoot.contains(a)) {
+						if (a instanceof FrameNode && !sandboxRoot.contains(a)) {
 							throw new Error("Blocked: external node insertion");
 						}
 					}
@@ -190,13 +260,13 @@ function executeClientScriptRestricted(
 
 	const proxiedRoot = wrap(sandboxRoot);
 	const proxiedThis = wrap(thisElement);
+	const isPageScript = pageContext !== null;
+	const thisRef = isPageScript ? proxiedRoot : proxiedThis;
 
-	const context = {
+	const restrictedGlobals = {
 		document: proxiedRoot,
-		events: createEvents(proxiedRoot),
-		thisRef: proxiedThis,
-		props,
-		component_data: componentData,
+		events: createEvents(proxiedRoot, targetWindow),
+		thisRef,
 		// Escape hatches blocked
 		window: undefined,
 		globalThis: undefined,
@@ -205,22 +275,25 @@ function executeClientScriptRestricted(
 		setTimeout: undefined,
 		setInterval: undefined,
 	};
+	const context = isPageScript
+		? {
+				...restrictedGlobals,
+				page_data: pageContext.pageData ?? {},
+		  }
+		: {
+				...restrictedGlobals,
+				props,
+				component_data: componentData,
+		  };
 
 	try {
-		const fn = createScriptFunction(userScript);
+		const fn = createScriptFunction(userScript, targetWindow, isPageScript);
 		const userCleanup = fn(context);
-		return () => {
+		return createScriptCleanup(userCleanup, thisRef, "restricted", () => {
 			eventListeners.forEach(({ target, type, listener, options }) => {
 				target.removeEventListener(type, listener, options);
 			});
-			if (typeof userCleanup === "function") {
-				try {
-					userCleanup.call(proxiedThis);
-				} catch (error) {
-					console.error("Error cleaning up user script (restricted):", error);
-				}
-			}
-		};
+		});
 	} catch (error) {
 		console.error("Error in user script (restricted):", error);
 		return () => {
@@ -231,4 +304,25 @@ function executeClientScriptRestricted(
 	}
 }
 
-export { executeClientScriptRestricted, executeClientScriptUnrestricted };
+function executePageClientScriptUnrestricted(
+	canvasRoot: HTMLElement | null,
+	userScript: string,
+	pageData: Record<string, any>,
+) {
+	return executeClientScriptUnrestricted(canvasRoot, userScript, {}, { pageData });
+}
+
+function executePageClientScriptRestricted(
+	canvasRoot: HTMLElement | null,
+	userScript: string,
+	pageData: Record<string, any>,
+) {
+	return executeClientScriptRestricted(canvasRoot, canvasRoot, userScript, {}, { pageData });
+}
+
+export {
+	executeClientScriptRestricted,
+	executeClientScriptUnrestricted,
+	executePageClientScriptRestricted,
+	executePageClientScriptUnrestricted,
+};

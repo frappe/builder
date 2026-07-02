@@ -130,7 +130,7 @@ declare interface CanvasProps {
 	panning: boolean;
 	background: string;
 	settingCanvas: boolean;
-	overlayElement: HTMLElement | null;
+	frameRoots?: Map<string, HTMLElement>;
 	breakpoints: Breakpoint[];
 }
 
