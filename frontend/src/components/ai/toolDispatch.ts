@@ -192,6 +192,22 @@ export class ToolDispatcher {
 		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
 		if (args.element !== undefined) block.element = args.element;
 		if (args.classes !== undefined) block.classes = args.classes;
+		// `bind` = {property: data_key} → dynamicValues (same mapping as yaml.ts).
+		// One entry per property: a re-bind replaces, a null value unbinds.
+		if (args.bind && typeof args.bind === "object" && !Array.isArray(args.bind)) {
+			for (const [rawProp, field] of Object.entries(args.bind as Record<string, string | null>)) {
+				const property = rawProp === "text" ? "innerHTML" : rawProp;
+				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
+				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);
+				if (field != null) {
+					block.dynamicValues.push(
+						property === "innerHTML"
+							? { key: String(field), property: "innerHTML", type: "key" }
+							: { key: String(field), property, type: "attribute" },
+					);
+				}
+			}
+		}
 	}
 
 	applyToolOperation(toolName: string, args: Record<string, any>) {

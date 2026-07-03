@@ -18,7 +18,8 @@ class Prompts:
 - update_block merges (does not replace) styles and attributes — only specify what changes. For add_block, define the full block with semantic HTML and do NOT include a 'ref' or 'id' field.
 - UI icons: never use emoji. Emit a Lucide icon block with an `icon` field in kebab-case (e.g. `{ el: svg, icon: arrow-right }`); set `style.color` and `style.width`/`style.height`.
 - SVG illustrations: for decorative art, blobs, diagrams, or wave dividers, use add_block with `el: div` and set `inner_html` to the raw SVG string. Raw SVG in innerHTML renders natively — this is the correct path for visual illustrations.
-- Inline-coloured & code text: every block is block-level, so sibling <span> blocks stack vertically (one word per line). NEVER build syntax-highlighted code or a multi-colour text run as one block per token. Put the whole run in ONE block's inner_html as an HTML string with inline `<span style="color:...">…</span>`; for code use el: pre (preserves whitespace/newlines)."""
+- Inline-coloured & code text: every block is block-level, so sibling <span> blocks stack vertically (one word per line). NEVER build syntax-highlighted code or a multi-colour text run as one block per token. Put the whole run in ONE block's inner_html as an HTML string with inline `<span style="color:...">…</span>`; for code use el: pre (preserves whitespace/newlines).
+- Dynamic data: render database records through a REPEATER (add_block with `repeat: {data: <page-data key>, item: {...}}`) whose item template binds fields via `bind` (e.g. bind: {innerHTML: 'title', src: 'image'}); the page data script sets the key. Bindings are the ONLY dynamic mechanism — text like '{{ item.title }}' in inner_text or attributes renders LITERALLY and is always wrong. Re-bind or unbind with update_block's `bind`."""
 
 	AGENT_SYSTEM = """You are Bob, an AI assistant that builds and edits web pages in Frappe Builder by calling tools.
 
@@ -207,7 +208,7 @@ The item template must be AS DETAILED as a one-off block. Minimum for a feature 
         - el: p
           bind: {innerHTML: body}
           style: {fontSize: '15px', lineHeight: '1.72', color: 'rgba(0,0,0,0.55)'}
-`bind` maps a field: use innerHTML/text for text content, or an attribute name (href, src, icon) for HTML attributes.
+`bind` maps a field: use innerHTML/text for text content, or an attribute name (href, src, icon) for HTML attributes. Bindings are the ONLY dynamic mechanism — moustache text like '{{ item.title }}' in text/attrs renders LITERALLY and is always wrong.
 Two data sources for a repeat:
 - STATIC content you author here: include `items` (as above) — it ships with the page.
 - LIVE database records (the brief names a DocType or a data key): OMIT `items` and set `data` to the key the page's server data script populates (e.g. `data: products` when the script sets data.products). The repeater then renders the real records at request time. NEVER hardcode copies of database records as one-off cards — that snapshot goes stale the moment the data changes.

@@ -174,6 +174,17 @@ def convert_icon_block(node: dict) -> dict:
 	return block
 
 
+def bind_to_dynamic_values(bind: dict) -> list:
+	"""{property: item_key} → dynamicValues entries (the editor's binding shape).
+	innerHTML/text bind by content ("key"); anything else binds an HTML attribute."""
+	return [
+		{"key": str(field), "property": "innerHTML", "type": "key"}
+		if prop in ("innerHTML", "text")
+		else {"key": str(field), "property": prop, "type": "attribute"}
+		for prop, field in bind.items()
+	]
+
+
 def convert_yaml_block(node, is_root: bool = False) -> dict:
 	if not isinstance(node, dict):
 		return node
@@ -216,12 +227,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict:
 	# anything else binds an HTML attribute (href, src, …).
 	bind = node.get("bind")
 	if isinstance(bind, dict) and bind:
-		block["dynamicValues"] = [
-			{"key": str(field), "property": "innerHTML", "type": "key"}
-			if prop in ("innerHTML", "text")
-			else {"key": str(field), "property": prop, "type": "attribute"}
-			for prop, field in bind.items()
-		]
+		block["dynamicValues"] = bind_to_dynamic_values(bind)
 
 	children = node.get("c")
 	child_blocks = (

@@ -43,9 +43,21 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 			block.setdefault(target, {})[key] = value
 
 
+def merge_bindings(block: dict, bind: dict) -> None:
+	"""Merge {property: item_key} bindings into dynamicValues — one entry per bound
+	property (a re-bind replaces, a None value unbinds)."""
+	from builder.ai.page_writer import bind_to_dynamic_values
+
+	incoming = {prop: field for prop, field in bind.items() if field is not None}
+	dropped = {("innerHTML" if p in ("innerHTML", "text") else p) for p in bind}
+	kept = [dv for dv in block.get("dynamicValues") or [] if dv.get("property") not in dropped]
+	block["dynamicValues"] = kept + bind_to_dynamic_values(incoming)
+
+
 def merge_block_update(block: dict, args: dict) -> None:
-	"""One block's worth of changes (styles/attrs/text/element/classes) — the server
-	twin of toolDispatch.applyBlockUpdate, shared by update_block and update_blocks."""
+	"""One block's worth of changes (styles/attrs/text/element/classes/bindings) —
+	the server twin of toolDispatch.applyBlockUpdate, shared by update_block and
+	update_blocks."""
 	merge_styles(block, args)
 	if isinstance(args.get("attributes"), dict):
 		merge_attributes(block, args["attributes"])
@@ -57,6 +69,8 @@ def merge_block_update(block: dict, args: dict) -> None:
 		block["element"] = args["element"]
 	if args.get("classes") is not None:
 		block["classes"] = args["classes"]
+	if isinstance(args.get("bind"), dict):
+		merge_bindings(block, args["bind"])
 
 
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:

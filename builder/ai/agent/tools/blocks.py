@@ -52,6 +52,16 @@ update_block = Tool(
 				"items": {"type": "string"},
 				"description": "Replace the classes array on the block.",
 			},
+			"bind": {
+				"type": "object",
+				"description": (
+					"Data bindings: {property: data_key}, e.g. {innerHTML: 'title', src: 'image', "
+					"href: 'url'}. Inside a repeater's item template the key is a field of each "
+					"record; elsewhere it's a page-data key. This is the ONLY way to render "
+					"dynamic data — NEVER write '{{ item.title }}' moustache text into "
+					"inner_text/attributes (it renders literally). A null value unbinds."
+				),
+			},
 		},
 		"required": ["block_id"],
 	},
@@ -115,6 +125,44 @@ add_block = Tool(
 						"type": "array",
 						"description": "Child blocks (same schema, recursively).",
 						"items": {"type": "object"},
+					},
+					"bind": {
+						"type": "object",
+						"description": (
+							"Data bindings {property: data_key} (e.g. {innerHTML: 'title', src: 'image'}). "
+							"Inside a repeat item the key is a record field. NEVER put '{{ … }}' "
+							"moustache text in text/attrs — bindings are the only dynamic mechanism."
+						),
+					},
+					"repeat": {
+						"type": "object",
+						"description": (
+							"Make this block a REPEATER: {data: '<page-data key>', item: {…one child "
+							"template (same block schema), fields bound via bind…}}. For live database "
+							"records the page's data script must set that key (write_page_data_script) "
+							"and 'items' is omitted. Renders the template once per record."
+						),
+						"properties": {
+							"data": {"type": "string"},
+							"item": {"type": "object"},
+							"items": {
+								"type": "array",
+								"description": (
+									"STATIC inline records — only honoured by generate_page YAML. When "
+									"adding a repeater with add_block, use a data-script key instead "
+									"(write_page_data_script) and omit this."
+								),
+								"items": {"type": "object"},
+							},
+						},
+					},
+					"icon": {
+						"type": "string",
+						"description": "Lucide icon name in kebab-case (renders an svg icon block).",
+					},
+					"component": {
+						"type": "string",
+						"description": "Embed an existing Builder Component by its component_id.",
 					},
 				},
 				"required": ["el"],
@@ -199,6 +247,10 @@ update_blocks = Tool(
 						"inner_html": {"type": "string", "description": "Replace the block's inner HTML."},
 						"element": {"type": "string"},
 						"classes": {"type": "array", "items": {"type": "string"}},
+						"bind": {
+							"type": "object",
+							"description": "Data bindings {property: data_key} — same contract as update_block's bind.",
+						},
 					},
 					"required": ["block_id"],
 				},

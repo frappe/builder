@@ -79,6 +79,43 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertEqual(self.tree.resolve("h1")["innerHTML"], "Uno")
 		self.assertEqual(self.tree.resolve("cta")["innerHTML"], "Dos")
 
+	def test_bind_merges_replaces_and_unbinds(self):
+		self.tree.apply("update_block", {"block_id": "h1", "bind": {"innerHTML": "title", "src": "image"}})
+		h1 = self.tree.resolve("h1")
+		self.assertIn({"key": "title", "property": "innerHTML", "type": "key"}, h1["dynamicValues"])
+		self.assertIn({"key": "image", "property": "src", "type": "attribute"}, h1["dynamicValues"])
+		# re-bind replaces (no duplicate property entries); "text" aliases innerHTML
+		self.tree.apply("update_block", {"block_id": "h1", "bind": {"text": "name"}})
+		h1 = self.tree.resolve("h1")
+		content = [dv for dv in h1["dynamicValues"] if dv["property"] == "innerHTML"]
+		self.assertEqual(content, [{"key": "name", "property": "innerHTML", "type": "key"}])
+		# null unbinds
+		self.tree.apply("update_block", {"block_id": "h1", "bind": {"src": None}})
+		props = [dv["property"] for dv in self.tree.resolve("h1")["dynamicValues"]]
+		self.assertNotIn("src", props)
+
+	def test_add_repeater_with_bound_template(self):
+		self.tree.apply(
+			"add_block",
+			{
+				"parent_block_id": "hero",
+				"block": {
+					"el": "div",
+					"repeat": {
+						"data": "products",
+						"item": {"el": "div", "c": [{"el": "h3", "bind": {"innerHTML": "title"}}]},
+					},
+				},
+			},
+		)
+		repeater = self.tree.resolve("hero")["children"][-1]
+		self.assertTrue(repeater["isRepeaterBlock"])
+		self.assertEqual(repeater["dataKey"]["key"], "products")
+		template_heading = repeater["children"][0]["children"][0]
+		self.assertEqual(
+			template_heading["dynamicValues"], [{"key": "title", "property": "innerHTML", "type": "key"}]
+		)
+
 	def test_validating_mode_does_not_mutate(self):
 		tree = WorkingTree(sample_root())  # mutating=False (editor)
 		msg = tree.apply("update_block", {"block_id": "hero", "base_styles": {"padding": "1px"}})
