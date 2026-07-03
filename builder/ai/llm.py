@@ -78,20 +78,6 @@ TASK_PARAMS = {
 	"agent": {"max_tokens": 16000, "temperature": 0.3},
 }
 
-# If the primary model fails, try the next in order. Matched by substring.
-FALLBACK_CHAIN: list[tuple[str, str]] = [
-	("claude-sonnet-4", "openrouter/google/gemini-3.1-pro-preview"),
-	("gemini-3.1-pro", "openrouter/google/gemini-3.5-flash"),
-	("claude-haiku-4", "openrouter/google/gemini-3.5-flash"),
-]
-
-
-def fallbacks_for(model: str) -> list[str]:
-	for pattern, fallback in FALLBACK_CHAIN:
-		if pattern in model and fallback not in model:
-			return [fallback]
-	return []
-
 
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
 	"""Anthropic via OpenRouter reads cache_control from INSIDE a content block, not
@@ -110,10 +96,11 @@ def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
 	"""Plain completion. Returns the response iterator when streaming, else the
-	text content. litellm handles fallback + retry."""
+	text content. Transient failures are retried by litellm (and, for streaming
+	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
 	patch_messages_for_provider(model, messages)
 	logger.info(
-		f"LLM | model={model} stream={stream} fallbacks={fallbacks_for(model)} params={params}\n"
+		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
 	resp = litellm.completion(
@@ -121,10 +108,6 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		messages=messages,
 		stream=stream,
 		api_key=api_key,
-		# Fallbacks are disabled during streaming: litellm's mid-stream fallback
-		# attempts __next__ on async generators returned by OpenRouter, causing
-		# MidStreamFallbackError. Fallbacks only work safely for non-streaming calls.
-		fallbacks=[] if stream else fallbacks_for(model),
 		num_retries=1,
 		# Emit a final usage chunk while streaming so the loop can tally tokens per
 		# turn (dropped automatically for providers that don't support it).
@@ -147,8 +130,7 @@ def complete_with_tools(
 	api_key: str | None = None,
 	stream: bool = False,
 ):
-	"""Tool-calling completion. Returns the raw response (iterator when
-	streaming). litellm handles fallback + retry."""
+	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
@@ -160,8 +142,6 @@ def complete_with_tools(
 		tools=tools,
 		stream=stream,
 		api_key=api_key,
-		# Fallbacks disabled during streaming — see comment in complete().
-		fallbacks=[] if stream else fallbacks_for(model),
 		num_retries=1,
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),

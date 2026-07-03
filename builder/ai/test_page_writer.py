@@ -117,6 +117,14 @@ class TestExpandPageYaml(unittest.TestCase):
 		self.assertEqual(pw.expand_page_yaml("just a string"), ([], ""))
 		self.assertEqual(pw.expand_page_yaml("- foo: 1"), ([], ""))
 
+	def test_salvages_truncated_tail(self):
+		# A stream cut off mid-line (max_tokens) still yields the valid prefix,
+		# mirroring the frontend's getValidPartialYAML.
+		truncated = "el: div\nname: body\nc:\n  - el: p\n    text: Hello\n  - el: h1\n    text: 'unclosed"
+		blocks, _ = pw.expand_page_yaml(truncated)
+		self.assertEqual(len(blocks), 1)
+		self.assertEqual(blocks[0]["children"][0]["innerHTML"], "Hello")
+
 
 if __name__ == "__main__":
 	unittest.main()

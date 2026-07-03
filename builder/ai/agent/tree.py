@@ -1,20 +1,14 @@
-"""Server-side mirror of the canvas block tree for one agent turn.
+"""Server-side working tree of the page's blocks for one agent turn.
 
-The loop applies each client block op to this mirror as it emits it, so the
-tool result handed back to the model is the truth — "applied to block X",
-"3 of 12 not found", "parent not found" — instead of a blanket "Applied." that
-hides a silently dropped edit (the frontend no-ops on a missing ref, and that
-never travels back). A wrong ref then drives a self-correcting round.
+The loop applies every client block op here FIRST — this tree is the source of
+truth (loaded from draft_blocks, persisted back after each round). The tool
+result handed to the model is therefore honest — "applied to block X", "3 of 12
+not found", "parent not found" — and a wrong ref drives a self-correcting round.
+Ops the tree accepts are then mirrored to the canvas (the editor's live view);
+ops it rejects are never emitted, so the two sides can't diverge.
 
-Two modes:
-  - validating (default): the editor path. The browser applies the real edit;
-    the mirror only resolves refs and keeps structure honest across rounds
-    (remove detaches, move reparents).
-  - mutating: the headless path (dashboard chat + sub-agents). There is no
-    browser, so the mirror IS the page — apply() performs the full edit on the
-    serialized tree, matching the frontend applier (toolDispatch.applyBlockUpdate
-    / applyToolOperation) so the two paths can't drift. The loop persists the
-    tree to draft_blocks after each applied round.
+Kept in lockstep with the frontend applier (toolDispatch.applyBlockUpdate /
+applyToolOperation), which replays the same accepted ops on the canvas.
 """
 
 import re
@@ -162,9 +156,8 @@ def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -
 
 
 class WorkingTree:
-	def __init__(self, root: dict | None, mutating: bool = False):
+	def __init__(self, root: dict | None):
 		self.root = root
-		self.mutating = mutating
 
 	def resolve(self, block_id: str | None) -> dict | None:
 		return find_block(self.root, block_id) if (self.root and block_id) else None
@@ -214,8 +207,7 @@ class WorkingTree:
 			return f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if fields := moustache_fields(args):
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
-		if self.mutating:
-			merge_block_update(block, args)
+		merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
 	def apply_update_blocks(self, args: dict) -> str:
@@ -237,7 +229,7 @@ class WorkingTree:
 				rejected.append(f"{block_id} {bad}")
 			elif fields := moustache_fields(patch):
 				rejected.append(f"{block_id} moustache in {fields}")
-			elif self.mutating:
+			else:
 				merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)
 		problems = []
@@ -280,13 +272,14 @@ class WorkingTree:
 			return f"FAILED: parent_block_id '{parent_id}' not found{self.id_hint(parent_id)}"
 		if fields := moustache_fields(args):
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
-		if not self.mutating:
-			return f"Added block under {parent_id}."
-		from builder.ai.page_writer import convert_yaml_block
-
 		if not isinstance(args.get("block"), dict):
 			return "FAILED: no block definition supplied."
+		from builder.ai.page_writer import convert_yaml_block
+
 		block = convert_yaml_block(args["block"], is_root=False)
 		insert_child(parent, block, args.get("after_block_id"), args.get("index"))
-		# Name the new ref so the model can chain edits onto the block it just added.
+		# Ship the expanded block (with its assigned refs, children included) to the
+		# canvas so both sides key the same ids, and name the new ref so the model can
+		# chain edits onto the block it just added.
+		args["block_json"] = block
 		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."

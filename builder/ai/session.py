@@ -3,6 +3,8 @@ import json
 import frappe
 from frappe import _
 
+from builder.ai import locks
+
 
 class AISession:
 	DOCTYPE = "Builder AI Session"
@@ -15,96 +17,38 @@ class AISession:
 	# --- factories --------------------------------------------------------
 
 	@classmethod
-	def get_or_create(cls, page_id: str, model: str | None = None, user: str | None = None):
-		user = user or frappe.session.user
-
-		session_name = frappe.db.get_value(
-			cls.DOCTYPE,
-			{"page": page_id, "session_user": user, "status": "Active"},
-			"name",
-		)
-		if session_name:
-			doc = frappe.get_doc(cls.DOCTYPE, str(session_name))
+	def find_or_create(cls, filters: dict, model: str | None = None):
+		"""Return the Active session matching `filters`, or insert one with those
+		values. A late model pick is saved onto a session created without one."""
+		name = frappe.db.get_value(cls.DOCTYPE, {**filters, "status": "Active"}, "name")
+		if name:
+			doc = frappe.get_doc(cls.DOCTYPE, str(name))
 			if model and not doc.selected_model:
 				doc.selected_model = model
 				doc.save(ignore_permissions=True)
 			return cls(doc)
-
 		doc = frappe.get_doc(
 			{
 				"doctype": cls.DOCTYPE,
-				"page": page_id,
-				"session_user": user,
+				**filters,
 				"status": "Active",
 				"selected_model": model or "",
 				"last_interaction_on": frappe.utils.now_datetime(),
 			}
-		)
-		doc.insert(ignore_permissions=True)
+		).insert(ignore_permissions=True)
 		return cls(doc)
 
 	@classmethod
-	def get_or_create_site(cls, folder: str, model: str | None = None, user: str | None = None):
-		"""The site-level session for the architect conversation (clarify / plan). Keyed on
-		(project_folder, user) rather than a page — sub-agents still use per-page sessions."""
-		user = user or frappe.session.user
-
-		session_name = frappe.db.get_value(
-			cls.DOCTYPE,
-			{"project_folder": folder, "session_user": user, "session_kind": "site", "status": "Active"},
-			"name",
-		)
-		if session_name:
-			doc = frappe.get_doc(cls.DOCTYPE, str(session_name))
-			if model and not doc.selected_model:
-				doc.selected_model = model
-				doc.save(ignore_permissions=True)
-			return cls(doc)
-
-		doc = frappe.get_doc(
-			{
-				"doctype": cls.DOCTYPE,
-				"session_kind": "site",
-				"project_folder": folder,
-				"session_user": user,
-				"status": "Active",
-				"selected_model": model or "",
-				"last_interaction_on": frappe.utils.now_datetime(),
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		return cls(doc)
+	def get_or_create(cls, page_id: str, model: str | None = None, user: str | None = None):
+		return cls.find_or_create({"page": page_id, "session_user": user or frappe.session.user}, model)
 
 	@classmethod
 	def get_or_create_general(cls, user: str | None = None, model: str | None = None):
 		"""The page-less dashboard chat session (session_kind='general'). One active
 		general session per user, reused across turns so the conversation continues."""
-		user = user or frappe.session.user
-
-		session_name = frappe.db.get_value(
-			cls.DOCTYPE,
-			{"session_user": user, "session_kind": "general", "status": "Active"},
-			"name",
+		return cls.find_or_create(
+			{"session_kind": "general", "session_user": user or frappe.session.user}, model
 		)
-		if session_name:
-			doc = frappe.get_doc(cls.DOCTYPE, str(session_name))
-			if model and not doc.selected_model:
-				doc.selected_model = model
-				doc.save(ignore_permissions=True)
-			return cls(doc)
-
-		doc = frappe.get_doc(
-			{
-				"doctype": cls.DOCTYPE,
-				"session_kind": "general",
-				"session_user": user,
-				"status": "Active",
-				"selected_model": model or "",
-				"last_interaction_on": frappe.utils.now_datetime(),
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		return cls(doc)
 
 	@classmethod
 	def create_subagent_session(cls, user: str | None = None, model: str | None = None):
@@ -121,8 +65,7 @@ class AISession:
 				"selected_model": model or "",
 				"last_interaction_on": frappe.utils.now_datetime(),
 			}
-		)
-		doc.insert(ignore_permissions=True)
+		).insert(ignore_permissions=True)
 		return cls(doc)
 
 	@classmethod
@@ -158,10 +101,6 @@ class AISession:
 	@property
 	def page(self):
 		return self._doc.page
-
-	@property
-	def project_folder(self):
-		return self._doc.project_folder
 
 	@property
 	def selected_model(self):
@@ -230,7 +169,9 @@ class AISession:
 		"""Return the last N prior turns as proper role-tagged messages.
 
 		Excludes the current-turn user message (the agent loop appends a fresh
-		one), and filters out transient status/error/cancelled chatter."""
+		one) and transient chatter (running/error/cancelled turns). Durable
+		status notes — e.g. the outcome of a confirmed action — stay in, so the
+		model knows on later turns what was actually applied."""
 		# Fetch one extra (the current user message) and drop it.
 		rows = frappe.db.get_all(
 			self.MESSAGE_DOCTYPE,
@@ -246,8 +187,6 @@ class AISession:
 			content = (r.get("content") or "").strip()
 			role = r.get("role")
 			if not content or role not in ("user", "assistant"):
-				continue
-			if r.get("message_type") == "status":
 				continue
 			if r.get("status") in ("running", "error", "cancelled"):
 				continue
@@ -341,21 +280,24 @@ class AISession:
 			update_modified=False,
 		)
 
-	# --- running flag (concurrency guard) --------------------------------
+	# --- run lock (one turn per session at a time) -------------------------
+	# Redis NX+TTL via builder.ai.locks: atomic (the old is_running DB flag was a
+	# check-then-set race) and self-healing — a crashed worker's lock expires
+	# instead of bricking the session until someone edits the row.
 
-	def set_running(self):
-		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 1, update_modified=False)
-		frappe.db.commit()
+	@staticmethod
+	def start_run(session_id: str) -> str | None:
+		"""Try to claim this session's turn slot. Returns the release token, or None
+		when another turn is still running."""
+		return locks.acquire(locks.session_key(session_id), locks.SESSION_LOCK_TTL)
 
-	def clear_running(self):
-		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 0, update_modified=False)
-		frappe.db.commit()
+	@staticmethod
+	def end_run(session_id: str, token: str | None) -> None:
+		locks.release(locks.session_key(session_id), token)
 
 	@classmethod
 	def is_session_running(cls, session_id: str) -> bool:
-		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
-			return False
-		return bool(frappe.db.get_value(cls.DOCTYPE, session_id, "is_running"))
+		return bool(session_id) and locks.held(locks.session_key(session_id))
 
 	# --- lifecycle --------------------------------------------------------
 
@@ -378,7 +320,6 @@ class AISession:
 		)
 		cutoff = user_creation or target
 		frappe.db.delete(self.MESSAGE_DOCTYPE, {"session": self._doc.name, "creation": [">=", cutoff]})
-		frappe.db.set_value(self.DOCTYPE, self._doc.name, "is_running", 0, update_modified=False)
 		frappe.db.commit()
 
 	def clear(self):
@@ -388,7 +329,6 @@ class AISession:
 			self.DOCTYPE,
 			self._doc.name,
 			{
-				"is_running": 0,
 				"last_task_type": None,
 				"last_interaction_on": frappe.utils.now_datetime(),
 			},

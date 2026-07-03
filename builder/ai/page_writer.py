@@ -1,14 +1,11 @@
-"""Server-side YAML → blocks apply path for headless page generation.
+"""Server-side YAML → blocks apply path — the authoritative one for ALL turns.
 
-The interactive editor turns generation YAML into a page's block tree in the
-BROWSER (frontend/src/components/ai/{yaml.ts, toolDispatch.ts, normalizeStyles.ts}).
-Fan-out sub-agents run on RQ workers with no browser attached, so this module is a
-faithful server-side port of that path: parse the YAML, expand it to the editor's
-serialized Block shape, build the repeater data-script shim, and persist it to
-`draft_blocks` on the page.
-
-Keep in lockstep with convertYAMLtoBlock / normalizeStyles / buildRepeaterDataScript
-in the frontend — a fixture round-trip test guards the two against drift.
+Generation YAML is expanded to the editor's serialized Block shape and persisted
+to `draft_blocks` here; the editor canvas receives the expanded tree (same block
+ids) and only renders it. The frontend keeps a small port of the conversion
+(frontend/src/components/ai/{yaml.ts, normalizeStyles.ts}) purely for the
+live streaming PREVIEW while the YAML is still being written — the final apply
+always comes from this module.
 """
 
 import json
@@ -320,11 +317,21 @@ def build_repeater_data_script(parsed) -> str:
 
 
 def parse_generation_yaml(yaml_text: str):
-	"""Parse a full (non-streaming) generation YAML document, tolerating fences."""
+	"""Parse a generation YAML document, tolerating fences and a truncated tail —
+	a stream that got cut off (max_tokens) still yields the valid prefix instead of
+	failing outright (mirrors the frontend's getValidPartialYAML)."""
+	text = BlockCodec.strip_fences(yaml_text or "")
 	try:
-		return yaml.safe_load(BlockCodec.strip_fences(yaml_text or ""))
+		return yaml.safe_load(text)
 	except yaml.YAMLError:
-		return None
+		lines = text.split("\n")
+		for i in range(len(lines) - 1, max(0, len(lines) - 12), -1):
+			try:
+				if parsed := yaml.safe_load("\n".join(lines[:i])):
+					return parsed
+			except yaml.YAMLError:
+				continue
+	return None
 
 
 def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
@@ -366,20 +373,17 @@ def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	frappe.db.commit()
 
 
-def persist_page(page_id: str, yaml_text: str, page_fields: dict | None = None) -> bool:
+def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	"""Expand generation YAML and write it to a Builder Page's draft_blocks (+ the
-	repeater data shim). The page stays a DRAFT (published=0). Returns False if the
-	YAML produced no blocks."""
+	repeater data shim). The page stays a DRAFT (published=0). Returns the expanded
+	root block and data script — (None, "") if the YAML produced no blocks."""
 	blocks, data_script = expand_page_yaml(yaml_text)
 	if not blocks:
-		return False
+		return None, ""
 
 	doc = frappe.get_doc("Builder Page", page_id)
 	doc.draft_blocks = compact_json(blocks)
 	if data_script:
 		doc.page_data_script = data_script
-	for key, value in (page_fields or {}).items():
-		if value is not None:
-			doc.set(key, value)
 	doc.save(ignore_permissions=True)
-	return True
+	return blocks[0], data_script

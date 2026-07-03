@@ -6,7 +6,7 @@ import { buildLocalMessage } from "@/components/ai/yaml";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { confirm, getBlockObject } from "@/utils/helpers";
+import { confirm } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
@@ -66,7 +66,6 @@ export class AIChatController {
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
 	);
-	readonly rootBlock = computed<Block | null>(() => (this.pageStore.pageBlocks[0] || null) as Block | null);
 	readonly modelLabel = computed(
 		() =>
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
@@ -474,9 +473,10 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = true;
 
-		const pageContext = this.rootBlock.value
-			? JSON.stringify(getBlockObject(this.rootBlock.value as Block))
-			: "[]";
+		// The server edits the page authoritatively from draft_blocks — flush any
+		// unsaved canvas changes first so the turn (and its revert snapshot) starts
+		// from exactly what the user sees.
+		await this.pageStore.savePage();
 
 		try {
 			const result = await createResource({
@@ -486,17 +486,12 @@ export class AIChatController {
 					page_id: this.pageId.value,
 					model: this.selectedModel.value,
 					session_id: this.sessionId.value,
-					page_context: pageContext,
 					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
 					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
 				}),
 			}).submit();
 			const response = result as { session_id?: string; status?: string; message?: string };
-			if (response.status === "budget_exceeded") {
-				await this.onError({ message: response.message || "Monthly AI budget reached." });
-				return;
-			}
 			if (response.session_id) this.sessionId.value = response.session_id;
 		} catch (error) {
 			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });

@@ -16,7 +16,6 @@ from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.session import AISession
-from builder.ai.snapshots import capture_page_state
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
@@ -60,7 +59,6 @@ def build_mention_hint(mentioned_pages: list | str | None) -> str:
 @has_page_write()
 def run(
 	prompt: str,
-	page_context: str = "[]",
 	page_id: str | None = None,
 	model: str | None = None,
 	session_id: str | None = None,
@@ -71,23 +69,19 @@ def run(
 ):
 	"""Single entry point: run the agent for one user turn.
 
-	Two modes, one loop: WITH a page_id it's the in-editor chat (client block ops apply
-	to the canvas); WITHOUT one it's the page-less dashboard chat, which orchestrates via
-	server tools + parallel sub-agents (see run_agent_job / build_orchestrator_registry).
+	Two modes, one loop: WITH a page_id it's the in-editor chat (the server edits the
+	page authoritatively from draft_blocks and mirrors accepted ops to the canvas);
+	WITHOUT one it's the page-less dashboard chat, which orchestrates via server tools
+	+ parallel sub-agents (see run_agent_job / build_orchestrator_registry).
 
 	`mentioned_pages` carries inline @page references from the dashboard chat so the agent
 	can resolve "@My Page" to the exact page id/route.
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	if page_context:
-		try:
-			json.loads(page_context)
-		except (json.JSONDecodeError, TypeError):
-			frappe.throw(_("Invalid page context JSON"))
-
 	# Append the user turn + guard concurrency for any established session (page or
-	# page-less). AISession.get tolerates page_id=None.
+	# page-less). AISession.get tolerates page_id=None. The worker takes the atomic
+	# run lock; this check just gives a fast 429 instead of a queued rejection.
 	if session_id:
 		if AISession.is_session_running(session_id):
 			frappe.local.response.http_status_code = 429
@@ -109,12 +103,6 @@ def run(
 	# message keeps the user's original "@Title" text; only the enqueued turn is augmented).
 	agent_prompt = prompt + build_mention_hint(mentioned_pages)
 
-	# Capture the pre-turn page state now (synchronously, before the worker or any
-	# streaming touches the canvas — so it's reliably pre-turn). The snapshot DOC is
-	# created later, by the loop, only if the turn actually changes the page. Page-less
-	# dashboard turns have nothing to snapshot.
-	pre_turn_state = capture_page_state(page_id) if page_id else None
-
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
 	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
@@ -125,7 +113,6 @@ def run(
 		queue="default",
 		timeout=1200 if not page_id else 600,
 		prompt=agent_prompt,
-		page_context_json=page_context or "[]",
 		model=resolved_model,
 		api_key=api_key,
 		user=frappe.session.user,
@@ -133,7 +120,6 @@ def run(
 		session_id=session_id,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
-		pre_turn_state=pre_turn_state,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
@@ -239,21 +225,37 @@ def delete_ai_session(session_id: str):
 @frappe.whitelist()
 @has_page_write()
 def revert_ai_turn(session_id: str, message_id: str):
-	"""Dashboard revert, fully server-side (no canvas to restore through): put the
-	page back to the turn's pre-edit snapshot, then rewind the conversation — this
-	turn and everything after it."""
+	"""Dashboard revert, fully server-side (no canvas to restore through): put every
+	page the turn touched back to its pre-edit snapshot, then rewind the conversation
+	— this turn and everything after it."""
 	ensure_session_owner(session_id)
-	meta = frappe.db.get_value(
-		AISession.MESSAGE_DOCTYPE, {"name": message_id, "session": session_id}, "metadata_json"
+	meta = AISession.load_metadata(
+		frappe.db.get_value(
+			AISession.MESSAGE_DOCTYPE, {"name": message_id, "session": session_id}, "metadata_json"
+		)
 	)
-	snapshot = AISession.load_metadata(meta).get("revertSnapshot")
-	if not snapshot or not frappe.db.exists("Builder Snapshot", snapshot):
+	# A multi-page turn carries one snapshot per page in revertSnapshots; a
+	# single-page turn just revertSnapshot.
+	snapshots = list((meta.get("revertSnapshots") or {}).values()) or [meta.get("revertSnapshot")]
+	snapshots = [s for s in snapshots if s and frappe.db.exists("Builder Snapshot", s)]
+	if not snapshots:
 		frappe.throw(_("This turn has no revert snapshot"))
-	page = frappe.db.get_value("Builder Snapshot", snapshot, "reference_name")
-	frappe.get_doc("Builder Page", page).restore_snapshot(snapshot)
+	for snapshot in snapshots:
+		page = frappe.db.get_value("Builder Snapshot", snapshot, "reference_name")
+		frappe.get_doc("Builder Page", page).restore_snapshot(snapshot)
 	session = AISession.get(session_id)
 	session.truncate_from_turn(message_id)
 	return {"messages": session.get_messages()}
+
+
+def get_owned_batch(batch_id: str):
+	"""Load a Builder AI Batch, asserting the caller owns it (or is a System Manager)."""
+	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
+		frappe.throw(_("Batch not found"))
+	batch = frappe.get_doc("Builder AI Batch", batch_id)
+	if batch.created_by_user != frappe.session.user and "System Manager" not in frappe.get_roles():
+		frappe.throw(_("This batch belongs to another user"), frappe.PermissionError)
+	return batch
 
 
 @frappe.whitelist()
@@ -261,9 +263,7 @@ def revert_ai_turn(session_id: str, message_id: str):
 def get_ai_batch_status(batch_id: str):
 	"""Live progress of a parallel sub-agent fan-out: batch status + per-task rows. The
 	chat's task-group card polls this alongside the realtime nudges."""
-	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
-		frappe.throw(_("Batch not found"))
-	batch = frappe.get_doc("Builder AI Batch", batch_id)
+	batch = get_owned_batch(batch_id)
 	return {
 		"batch_id": batch.batch_id,
 		"status": batch.status,
@@ -292,12 +292,10 @@ def publish_site_batch(batch_id: str):
 	from builder.ai.agent.pending import apply_publish_site
 
 	ensure_site_permission()
-	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
-		frappe.throw(_("Batch not found"))
-	folder = frappe.db.get_value("Builder AI Batch", batch_id, "project_folder")
-	if not folder:
+	batch = get_owned_batch(batch_id)
+	if not batch.project_folder:
 		frappe.throw(_("This batch has no site to publish"))
-	return {"status": "published", "message": apply_publish_site({"folder": folder})}
+	return {"status": "published", "message": apply_publish_site({"folder": batch.project_folder})}
 
 
 @frappe.whitelist()
@@ -366,7 +364,6 @@ def resume_agent_after_decision(session_id: str, decision: str, result: str) -> 
 		queue="default",
 		timeout=1200,
 		prompt=prompt,
-		page_context_json="[]",
 		model=ModelRegistry.get_default(row.selected_model or "openrouter"),
 		api_key=resolve_api_key(),
 		user=frappe.session.user,
@@ -383,6 +380,7 @@ def cancel(session_id: str):
 	next stream chunk. The loop closes the LLM stream — Anthropic / OpenRouter
 	stop billing for further tokens once the connection drops."""
 	if session_id:
+		ensure_session_owner(session_id)
 		frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
 	return {"status": "ok"}
 
@@ -444,7 +442,7 @@ def update_session_message_metadata(session_id: str, metadata: dict):
 	onto the last assistant message so it survives page reloads."""
 	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
 		return
-	session = AISession(frappe.get_doc(AISession.DOCTYPE, session_id))
+	session = AISession.get(session_id)  # asserts ownership
 	safe_meta = {
 		k: metadata[k] for k in ("affectedBlocks", "affectedScripts", "undoScripts") if k in metadata
 	}

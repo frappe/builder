@@ -220,7 +220,17 @@ export class ToolDispatcher {
 	applyToolOperation(toolName: string, args: Record<string, any>) {
 		switch (toolName) {
 			case "generate_page": {
-				// Final authoritative apply — persist repeater data here (not while streaming).
+				// Final authoritative apply. The server persisted the page and ships the
+				// expanded block tree (server-assigned ids — the canvas must key the same
+				// refs the agent's later edits target); the YAML streamed earlier was only
+				// the live preview. args.yaml is the legacy fallback (recovered
+				// YAML-as-content turns).
+				if (Array.isArray(args.blocks) && args.blocks.length) {
+					this.pageStore.pageBlocks = [getBlockInstance(args.blocks[0])];
+					this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+					if (args.data_script) this.pageStore.applyRepeaterDataScript(args.data_script as string);
+					return;
+				}
 				this.applyPageYaml(args.yaml as string, true);
 				return;
 			}
@@ -249,7 +259,12 @@ export class ToolDispatcher {
 			case "add_block": {
 				const parent = this.findBlockInTree(args.parent_block_id);
 				if (!parent) return;
-				const newBlock = getBlockInstance(convertYAMLtoBlock(args.block as Record<string, any>));
+				// block_json is the server-expanded block, refs (whole subtree) included —
+				// the canvas must use the same ids the agent chains follow-up edits onto.
+				const newBlock = getBlockInstance(
+					(args.block_json as Record<string, any>) ??
+						convertYAMLtoBlock(args.block as Record<string, any>),
+				);
 				if (args.after_block_id) {
 					const sibling = this.findBlockInTree(args.after_block_id, parent);
 					if (sibling) {

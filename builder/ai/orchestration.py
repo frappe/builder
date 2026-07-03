@@ -217,7 +217,6 @@ def run_subagent_task(
 
 			AgentRunner(
 				instructions,
-				"",
 				model,
 				api_key,
 				user=user,

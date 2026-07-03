@@ -55,13 +55,15 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 
 
 def generate_page_yaml(ctx, args: dict) -> list[dict]:
-	"""Stream a complete page of YAML on the heavy model, then return a
-	`generate_page` client op carrying the authoritative full document.
+	"""Stream a complete page of YAML on the heavy model, persist it to the page
+	(the server is authoritative), and return a `generate_page` client op carrying
+	the expanded block tree — the canvas applies that, so both sides share block ids.
 
 	`ctx` is the AgentRunner. `args["brief"]` is the concise spec the
 	conversational model assembled from the approved plan / conversation.
-	Streams `kind="page_yaml"` chunks to the canvas as the model writes them.
-	Returns [] if cancelled or the model produced nothing.
+	Streams `kind="page_yaml"` chunks to the canvas as the model writes them
+	(live preview only — the returned op is the final word).
+	Returns [] if the model produced nothing usable.
 	"""
 	brief = (args.get("brief") or "").strip()
 
@@ -111,21 +113,14 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	# the model, finish_reason (="length" → ran out of tokens mid-page), the YAML size,
 	# whether it parses, and how many top-level sections (root.c) it actually produced.
 	log_generation_quality(ctx.model, finish_reason, yaml_text)
-	if not yaml_text:
-		logger.warning("generate_page_yaml: model produced empty YAML (model=%s)", ctx.model)
+	if not yaml_text or not ctx.page_id:
+		logger.warning("generate_page_yaml: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)
 		return []
 
-	# Headless: there is no browser to apply the client op — write the page ourselves,
-	# exactly as the old single-shot site sub-agent did. The returned op is informational
-	# (the loop won't emit it as a canvas batch in headless mode; see AgentRunner).
-	if ctx.headless:
-		if not ctx.page_id:
-			logger.warning("generate_page_yaml: headless run with no page to persist to")
-			return []
-		from builder.ai import page_writer
+	from builder.ai import page_writer
 
-		if not page_writer.persist_page(ctx.page_id, yaml_text):
-			raise ValueError("generation produced no blocks")
-		return [{"tool_name": "generate_page", "args": {}}]
-
-	return [{"tool_name": "generate_page", "args": {"yaml": yaml_text}}]
+	root, data_script = page_writer.persist_page(ctx.page_id, yaml_text)
+	if root is None:
+		logger.warning("generate_page_yaml: YAML produced no blocks (model=%s)", ctx.model)
+		return []
+	return [{"tool_name": "generate_page", "args": {"blocks": [root], "data_script": data_script}}]

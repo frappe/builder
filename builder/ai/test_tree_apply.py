@@ -1,8 +1,6 @@
-"""Unit tests for the mutating WorkingTree (builder/ai/agent/tree.py).
-
-Headless agents have no browser, so apply() performs block edits on the
-serialized tree itself. These pin the Python applier to the frontend behaviour
-in toolDispatch.applyBlockUpdate / applyToolOperation so the two can't drift.
+"""Unit tests for the WorkingTree (builder/ai/agent/tree.py) — the authoritative
+server-side applier for every turn. These pin it to the frontend mirror in
+toolDispatch.applyBlockUpdate / applyToolOperation so the two can't drift.
 """
 
 import unittest
@@ -33,7 +31,7 @@ def sample_root() -> dict:
 class TestMutatingUpdate(unittest.TestCase):
 	def setUp(self):
 		self.root = sample_root()
-		self.tree = WorkingTree(self.root, mutating=True)
+		self.tree = WorkingTree(self.root)
 
 	def test_styles_merge_and_normalize(self):
 		msg = self.tree.apply(
@@ -188,25 +186,17 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertIn({"key": "city", "property": "data-city", "type": "attribute"}, block["dynamicValues"])
 		self.assertIn({"key": "title", "property": "innerHTML", "type": "key"}, block["dynamicValues"])
 
-	def test_validating_mode_does_not_mutate(self):
-		tree = WorkingTree(sample_root())  # mutating=False (editor)
-		msg = tree.apply("update_block", {"block_id": "hero", "base_styles": {"padding": "1px"}})
-		self.assertIn("Applied to block hero", msg)
-		self.assertEqual(tree.resolve("hero")["baseStyles"]["padding"], "40px")
-
 
 class TestMutatingStructure(unittest.TestCase):
 	def setUp(self):
-		self.tree = WorkingTree(sample_root(), mutating=True)
+		self.tree = WorkingTree(sample_root())
 
 	def child_ids(self, ref: str) -> list:
 		return [c["blockId"] for c in self.tree.resolve(ref)["children"]]
 
 	def test_add_assigns_ref_and_position(self):
-		msg = self.tree.apply(
-			"add_block",
-			{"parent_block_id": "hero", "block": {"el": "p", "text": "Sub"}, "after_block_id": "h1"},
-		)
+		args = {"parent_block_id": "hero", "block": {"el": "p", "text": "Sub"}, "after_block_id": "h1"}
+		msg = self.tree.apply("add_block", args)
 		self.assertIn("Added block", msg)
 		self.assertIn("under hero", msg)
 		ids = self.child_ids("hero")
@@ -216,6 +206,8 @@ class TestMutatingStructure(unittest.TestCase):
 		# the returned ref is usable for a follow-up edit
 		self.assertIn(new_ref, msg)
 		self.assertIn("Applied", self.tree.apply("update_block", {"block_id": new_ref, "inner_text": "x"}))
+		# the args are enriched with the expanded block so the canvas adopts the same refs
+		self.assertEqual(args["block_json"]["blockId"], new_ref)
 
 	def test_add_at_index_and_append(self):
 		self.tree.apply("add_block", {"parent_block_id": "hero", "block": {"el": "span"}, "index": 0})

@@ -1,17 +1,26 @@
 """The single agentic loop for Builder AI.
 
 `AgentRunner` holds the per-request state, builds the message list, and drives
-one tool-calling loop until the model stops requesting server/terminal tools.
-Tool *behaviour* lives in the registry; this file only orchestrates.
+one tool-calling loop until the model stops requesting tools. Tool *behaviour*
+lives in the registry; this file only orchestrates.
+
+The server is authoritative for every turn: the page is loaded from the DB into
+a mutating `WorkingTree`, ops are applied there first and persisted after each
+round, and the accepted ops are mirrored to the editor canvas (which is a live
+VIEW, not a second source of truth). Ops the tree rejects are never emitted, so
+canvas and server can't diverge.
 
 Realtime event contract (consumed by the frontend). Every event name is
 suffixed with the CHANNEL — the page id for the in-editor chat, or the session
 id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`:
 
     ai_chat_progress       {message}
-    ai_chat_stream         {chunk, kind?}   kind="page_yaml" → apply to canvas;
+    ai_chat_stream         {chunk, kind?}   kind="page_yaml" → live canvas preview;
                                             absent/"summary" → append to chat text
     ai_chat_tool_batch     {operations: [{tool_name, args}]}
+                           (generate_page args carry the expanded {blocks, data_script};
+                           add_block args carry block_json — the canvas applies those
+                           verbatim so both sides share block ids)
     ai_chat_tool_activity  {id, tool, summary, status: "running"|"done", image_url?}
                            (same id emitted twice — running then done; upsert by id)
     ai_chat_clarify        {question, options, previews?,
@@ -85,14 +94,20 @@ def looks_like_page_yaml(text: str) -> bool:
 	return stripped.startswith(("el:", "- el:", "id: root", "- id:"))
 
 
-# Past-tense verbs a summary uses when it CLAIMS it changed the page. The no-op-claim
-# guard uses this: if the model says it did one of these but called no tool, nothing was
-# applied — a hallucinated success (weaker models narrate the action instead of doing it).
+# First-person / sentence-initial past-tense claims that the page was changed. The
+# no-op-claim guard uses this: if the model says it did the work but called no tool,
+# nothing was applied — a hallucinated success (weaker models narrate the action
+# instead of doing it). Anchored to "I added…" / "Added a…" shapes so a truthful
+# answer ABOUT past work ("your page was created last week") doesn't trip it.
+ACTION_VERBS = (
+	"added|created|updated|changed|removed|deleted|applied|attached|inserted|"
+	"replaced|moved|translated|restyled|recolou?red|rebuilt|built|wired|enabled|"
+	"adjusted|swapped|renamed|resized|reordered|set up"
+)
 ACTION_CLAIM_RE = re.compile(
-	r"\b(added|created|updated|changed|removed|deleted|applied|attached|inserted|"
-	r"replaced|moved|translated|restyled|recolou?red|rebuilt|built|wired|enabled|"
-	r"adjusted|swapped|renamed|resized|reordered|set up)\b",
-	re.IGNORECASE,
+	rf"\b(?:I|I've|I have|we|we've)(?:\s+\w+){{0,2}}\s+(?:{ACTION_VERBS})\b"
+	rf"|^\s*(?:{ACTION_VERBS})\b",
+	re.IGNORECASE | re.MULTILINE,
 )
 
 NOOP_CORRECTION = (
@@ -236,12 +251,9 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 
 
 class AgentRunner:
-	FULL_CONTEXT_LIMIT = FULL_CONTEXT_LIMIT  # class alias for existing callers/tests
-
 	def __init__(
 		self,
 		prompt: str,
-		page_context_json: str,
 		model: str,
 		api_key: str,
 		*,
@@ -252,19 +264,17 @@ class AgentRunner:
 		image_url: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
-		pre_turn_state: dict | None = None,
 		headless: bool = False,
 	):
 		self.prompt = prompt
-		self.page_context_json = page_context_json
 		self.model = model
 		self.api_key = api_key
 		self.user = user or frappe.session.user
 		self.page_id = page_id
 		self.session_id = session_id
-		# Headless = no browser/canvas (dashboard chat + fan-out sub-agents). Client
-		# block/script ops can't be applied; work goes through server tools + page
-		# generation persisted server-side (page_writer). Events are session-scoped.
+		# Headless = no browser/canvas listening (dashboard chat + fan-out sub-agents):
+		# no page-YAML streaming, and client tools with a server twin (page scripts)
+		# apply via their handlers. Block edits are server-applied in BOTH modes.
 		self.headless = headless or not page_id
 		# The realtime channel is fixed at construction: focus_page() may change
 		# self.page_id mid-turn (dashboard agent opening a page), and the chat that
@@ -274,11 +284,12 @@ class AgentRunner:
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
 		self.system_prompt = system_prompt or Prompts.AGENT_SYSTEM
-		# The working tree is built lazily in run() (or by focus_page for headless
-		# turns that open/create a page mid-turn).
+		# The authoritative working tree — loaded from the DB by focus_page (in run(),
+		# or mid-turn when the dashboard agent opens/creates a page).
 		self.tree: WorkingTree | None = None
-		# Page locks acquired via focus_page this turn; released in run()'s finally.
-		self.held_locks: list[str] = []
+		# Page locks acquired via focus_page this turn ((key, token) pairs, token-fenced);
+		# released in run()'s finally.
+		self.held_locks: list[tuple[str, str]] = []
 		# Images a server tool wants shown to the model (e.g. a preview_page screenshot).
 		# Drained after each round as a follow-up user message — OpenAI-shape tool
 		# results can't reliably carry image parts through OpenRouter.
@@ -292,11 +303,13 @@ class AgentRunner:
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
 		# page creation…) — counts as real work for the no-op-claim guards.
 		self.server_mutations = 0
-		# Page state captured before this turn (in api.run). A snapshot doc is created
-		# from it ONLY if the turn mutates the page; its name lands on the final
-		# assistant message as the revert handle. None when the page was empty.
-		self.pre_turn_state = pre_turn_state
-		self.revert_snapshot: str | None = None
+		# Every client op the tree accepted this turn (block edits, scripts, generation).
+		self.applied_operations: list[dict] = []
+		# Revert bookkeeping: pending_state is the focused page's pre-turn state, not yet
+		# snapshotted; revert_snapshots maps each mutated page to its snapshot doc, so a
+		# multi-page dashboard turn reverts EVERY page it touched (not just the last).
+		self.pending_state: dict | None = None
+		self.revert_snapshots: dict[str, str] = {}
 		# Per-turn debug trace (one entry per round) + why the turn ended. Persisted on
 		# the assistant message so the agent debugger can explain what the model did and
 		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
@@ -318,6 +331,8 @@ class AgentRunner:
 		self.stream_retries = 0
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
+		# Redis run-lock token for this session's turn (see AISession.start_run).
+		self.run_token: str | None = None
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
 		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
 		# logged so the selector/tiered-context changes can be measured against baseline.
@@ -372,13 +387,14 @@ class AgentRunner:
 		)
 
 	def ensure_revert_snapshot(self) -> None:
-		"""Create the pre-turn snapshot the first time the turn changes the block tree.
-		Consumes pre_turn_state so it runs at most once — and runs as soon as the first
-		block batch is applied, so even a cancelled multi-round edit stays revertable."""
-		if self.pre_turn_state is None:
+		"""Snapshot the focused page's pre-turn state the first time the turn mutates it
+		— before the mutation lands, so even a cancelled multi-round edit stays
+		revertable. One snapshot per focused page per turn (focus_page arms the next)."""
+		if self.pending_state is None or not self.page_id:
 			return
-		state, self.pre_turn_state = self.pre_turn_state, None
-		self.revert_snapshot = save_revert_snapshot(self.page_id, state)
+		state, self.pending_state = self.pending_state, None
+		if snapshot := save_revert_snapshot(self.page_id, state):
+			self.revert_snapshots[self.page_id] = snapshot
 
 	@staticmethod
 	def cached_prompt_tokens(usage) -> int:
@@ -432,6 +448,26 @@ class AgentRunner:
 	def build_page_context(self) -> str:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
+	def build_site_context(self) -> str:
+		"""A compact inventory of the site's pages for the page-less dashboard agent,
+		so it starts every turn knowing what exists instead of spending a
+		query_records round-trip (or guessing) to find out."""
+		rows = frappe.get_all(
+			"Builder Page",
+			fields=["name", "route", "page_title", "published", "project_folder"],
+			order_by="modified desc",
+			limit=100,
+		)
+		if not rows:
+			return "This site has no pages yet."
+		lines = [
+			f"- {r.name} | /{(r.route or '').lstrip('/')} | {r.page_title or ''}"
+			f" | {'published' if r.published else 'draft'}"
+			+ (f" | folder: {r.project_folder}" if r.project_folder else "")
+			for r in rows
+		]
+		return "Pages on this site (id | route | title | status):\n" + "\n".join(lines)
+
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
 			{
@@ -441,23 +477,16 @@ class AgentRunner:
 			},
 		]
 
-		if page_context_message := self.build_page_context():
-			# Cache the page structure too (system prompt is the other breakpoint): it's
-			# the largest stable block and is resent on every round of a multi-round edit,
-			# so caching it cuts both latency and input cost across the loop.
-			messages.append(
-				{
-					"role": "user",
-					"content": page_context_message,
-					"cache_control": {"type": "ephemeral"},
-				}
-			)
-			messages.append(
-				{
-					"role": "assistant",
-					"content": "Understood. I have the current page structure. What would you like me to change?",
-				}
-			)
+		# The second cache breakpoint (the system prompt is the first): the page
+		# structure, or — page-less — the site inventory. It's the largest stable
+		# block and is resent on every round of a multi-round turn, so caching it
+		# cuts both latency and input cost across the loop.
+		context = self.build_page_context()
+		if not context and not self.page_id:
+			context = self.build_site_context()
+		if context:
+			messages.append({"role": "user", "content": context, "cache_control": {"type": "ephemeral"}})
+			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
 
 		# Prior conversation as proper role-tagged turns (not a flattened system
 		# blob) — the model handles dialogue better and we save the "User:"/
@@ -618,44 +647,35 @@ class AgentRunner:
 		return tool_operations, content, raw_tool_calls
 
 	def page_root(self) -> dict | None:
-		"""The current page's root block dict, or None if empty/invalid. Headless, the
-		mutating working tree IS the page — edits made this turn are visible to context
-		rebuilds and the query tools, with refs staying valid. The editor path parses
-		the browser-shipped page_context_json (state at the start of the turn)."""
-		if self.headless and self.tree is not None:
-			return self.tree.root
-		try:
-			data = json.loads(self.page_context_json)
-		except (json.JSONDecodeError, TypeError):
-			return None
-		if isinstance(data, list):
-			data = data[0] if data else None
-		return data if isinstance(data, dict) else None
+		"""The current page's root block — the authoritative working tree. Edits made
+		this turn are visible to context rebuilds and the query tools, and refs stay
+		valid across rounds."""
+		return self.tree.root if self.tree else None
 
 	def focus_page(self, page_id: str, *, lock: bool = True) -> str:
-		"""Point the turn at a page: load its blocks from the DB into a mutating
-		working tree (context, query tools, and block edits all read/write it), and
-		capture the pre-edit state so the turn stays revertable. With lock=True the
-		page lock is held for the rest of the turn so parallel AI tasks can't fight
-		over one page (sub-agents pass lock=False — their task runner already holds it).
+		"""Point the turn at a page: load its blocks from the DB into the working tree
+		(context, query tools, and block edits all read/write it), and capture the
+		pre-edit state so the turn stays revertable. With lock=True the page lock is
+		held for the rest of the turn so parallel AI tasks can't fight over one page
+		(sub-agents pass lock=False — their task runner already holds it).
 		Returns the rendered page context — the tool result for open_page/create_page."""
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
-		if lock and key not in self.held_locks:
-			if not locks.acquire(key, locks.PAGE_LOCK_TTL):
+		if lock and key not in (k for k, _ in self.held_locks):
+			token = locks.acquire(key, locks.PAGE_LOCK_TTL)
+			if token is None:
 				return (
 					f"FAILED: page {page_id} is being edited by another AI task right now — "
 					"try again in a moment."
 				)
-			self.held_locks.append(key)
+			self.held_locks.append((key, token))
 		root = page_writer.load_page_root(page_id)
 		self.page_id = page_id
-		self.tree = WorkingTree(root, mutating=True)
-		# One revert handle per focused page: a focus switch starts a fresh snapshot,
-		# and the LAST focused page's handle lands on the message metadata.
-		self.pre_turn_state = capture_page_state(page_id)
-		self.revert_snapshot = None
+		self.tree = WorkingTree(root)
+		# Arm the revert snapshot — unless this page was already snapshotted this turn
+		# (a refocus must keep its original pre-turn state).
+		self.pending_state = None if page_id in self.revert_snapshots else capture_page_state(page_id)
 		if root is None:
 			return f"Opened page {page_id} — it is empty. Build it with generate_page."
 		return f"Opened page {page_id}.\n{render_page_context(root, self.selected_block_ids)}"
@@ -728,6 +748,119 @@ class AgentRunner:
 		sentence = parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
 		return sentence[0].upper() + sentence[1:] + "."
 
+	# --- round execution ----------------------------------------------------
+
+	def op_kind(self, op: dict) -> str:
+		"""How the loop must handle one tool call: "artifact" (streamed generation),
+		"terminal" (ends the turn), "server" (run the handler now), or "client"
+		(apply to the working tree + mirror to the canvas). Headless, a client tool
+		with a server twin (page scripts) runs as a server op — no canvas to apply it."""
+		tool = self.registry.get(op["tool_name"])
+		if tool and tool.artifact:
+			return "artifact"
+		side = tool.side if tool else "client"
+		if side == "client" and self.headless and tool and tool.handler:
+			return "server"
+		return side
+
+	def apply_client_ops(self, ops: list[dict]) -> tuple[dict[int, str], list[dict]]:
+		"""Apply this round's client ops to the working tree — the source of truth —
+		then mirror the ACCEPTED ones to the canvas and persist the draft. Rejected
+		ops are never emitted, so the canvas can't apply an edit the server refused.
+		Returns (tool-result per op, accepted ops)."""
+		results: dict[int, str] = {}
+		applied: list[dict] = []
+		for op in ops:
+			if op["tool_name"] in SNAPSHOT_TOOLS:
+				self.ensure_revert_snapshot()
+			content = self.tree.apply(op["tool_name"], op["args"])
+			results[id(op)] = content
+			# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
+			# the model is now being asked to make. Record + log so it's not invisible.
+			if "FAILED" in content or "NOT FOUND" in content:
+				self.tool_failures.append(f"{op['tool_name']}: {content}")
+				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
+			if not content.startswith("FAILED"):
+				applied.append(op)
+		if applied:
+			self.applied_operations.extend(applied)
+			self.emit("tool_batch", operations=applied)
+			if self.page_id and self.tree.root:
+				from builder.ai import page_writer
+
+				# Persist after every applied round so a cancel/crash keeps the work
+				# done so far (the same live-apply semantics the canvas shows).
+				page_writer.save_draft_blocks(self.page_id, self.tree.root)
+		return results, applied
+
+	def run_op(self, op: dict, client_results: dict[int, str]) -> str | None:
+		"""Produce one tool call's result string. Client ops were already applied by
+		apply_client_ops; server ops run their handler here. Returns None when a
+		terminal tool ended the turn (its handler emitted the card and persisted it)."""
+		kind = self.op_kind(op)
+		if kind == "client":
+			return client_results[id(op)]
+		tool = self.registry.get(op["tool_name"])
+		if kind == "terminal":
+			# A terminal handler may DECLINE by returning a string (e.g. "that DocType
+			# already exists") — the reason goes back as a tool result and the loop
+			# continues. None = the card was emitted and the turn is over.
+			return self.handle_terminal(op)
+		if kind == "artifact":
+			# Only reachable headless — the editor broke out of the loop already.
+			content, ops = self.run_headless_generation(tool, op)
+			self.applied_operations.extend(ops)
+			return content
+		entry = self.begin_activity(op["tool_name"], op["args"])
+		content = tool.handler(self, op["args"])
+		self.end_activity(entry)
+		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
+			self.server_mutations += 1
+		return content
+
+	def emit_round_note(self, text: str, applied: list[dict]) -> None:
+		"""Live narration: surface what the model said / did this round, so a long
+		multi-round turn shows real progress instead of a frozen "Applying…"."""
+		note = (text or "").strip()
+		if looks_like_tool_syntax(note):
+			note = ""
+		if not note and applied:
+			note = self.describe_operations(applied)
+		if note:
+			self.emit("progress", message=note)
+
+	def needs_noop_correction(self, summary_text: str) -> bool:
+		"""No-op-claim guard: the model wrote a summary that CLAIMS an edit but called
+		no tool, and nothing has been applied this whole turn — a hallucinated success
+		(weaker models narrate instead of acting). Spend exactly one corrective round."""
+		if self.applied_operations or self.server_mutations or self.noop_corrected:
+			return False
+		if not claims_unbacked_action(summary_text):
+			return False
+		self.noop_corrected = True
+		self.stop_reason = "noop_retry"
+		logger.warning(
+			"No-op claim from model (no tools called): %s",
+			BlockCodec.truncate_for_log(summary_text, 300),
+		)
+		return True
+
+	def flush_pending_images(self, messages: list[dict]) -> None:
+		"""Images a tool captured this round (preview_page screenshots) ride a
+		follow-up user message — appended only after every role:"tool" result,
+		as the OpenAI message shape requires."""
+		for img in self.pending_images:
+			messages.append(
+				{
+					"role": "user",
+					"content": [
+						{"type": "text", "text": img["caption"]},
+						{"type": "image_url", "image_url": {"url": img["data_url"]}},
+					],
+				}
+			)
+		self.pending_images.clear()
+
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
@@ -738,214 +871,124 @@ class AgentRunner:
 		frappe.db.commit()
 		self.emit("complete", message=msg)
 
+	def fail_turn(self, message: str) -> None:
+		"""End the turn with a persisted error message + error event."""
+		AISession.try_append_message(
+			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+		)
+		frappe.db.commit()  # commit before emit so the client's reload sees it
+		self.emit("error", message=message)
+
 	def run(self):
 		# Clear any stale cancel flag from a previous turn before starting.
 		self.clear_cancel_flag()
 		started = time.monotonic()
+		logger.info(
+			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
+			f"session_id={self.session_id}, user={self.user}"
+		)
+
+		# One turn per session at a time — an atomic Redis lock with a TTL, so a
+		# crashed worker can never brick the session (the old is_running DB flag did).
+		if self.session_id:
+			self.run_token = AISession.start_run(self.session_id)
+			if self.run_token is None:
+				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
+				self.emit(
+					"error", message="Another AI request is still processing. Please wait for it to finish."
+				)
+				return
+
+		try:
+			self.run_turn(started)
+		finally:
+			self.clear_cancel_flag()
+			for key, token in self.held_locks:
+				locks.release(key, token)
+			self.held_locks = []
+			if self.session_id:
+				AISession.end_run(self.session_id, self.run_token)
+
+	def run_turn(self, started: float):
+		# Load the page into the authoritative working tree. Editor turns take the
+		# page lock (a dashboard task could otherwise edit the same page mid-turn);
+		# sub-agents arrive with the lock already held by their task runner.
+		if self.page_id and self.tree is None:
+			focused = self.focus_page(self.page_id, lock=not self.headless)
+			if focused.startswith("FAILED"):
+				self.fail_turn(focused)
+				return
+		if self.tree is None:
+			self.tree = WorkingTree(None)
+
 		# Editing an existing page runs the loop on the user's CHOSEN model — edit
 		# taste matters as much as generation taste, and silently downgrading a
 		# deliberately-picked heavy model is the surest way to degrade output.
 		# Headless turns (dashboard orchestrator + sub-agents) always use the chosen
-		# model too: reading a reference page's design and writing sub-agent briefs is
-		# quality-sensitive work even before any page is open. Only the editor's
-		# lightweight empty-page conversation (clarify/plan) drops to the cheap model.
+		# model too. Only the editor's lightweight empty-page conversation
+		# (clarify/plan) drops to the cheap model.
 		has_content = self.page_root() is not None
 		self.loop_model = (
 			self.model if (has_content or self.headless) else ModelRegistry.get_simple(self.model)
 		)
-		logger.info(
-			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, loop_model={self.loop_model}, "
-			f"session_id={self.session_id}, user={self.user}"
-		)
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 
-		if self.session_id and AISession.is_session_running(self.session_id):
-			logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
-			self.emit(
-				"error", message="Another AI request is still processing. Please wait for it to finish."
-			)
-			return
-
-		if self.session_id:
-			try:
-				AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).set_running()
-			except Exception:
-				pass
-
-		# A sub-agent arrives with its page assigned but no context loaded — focus it
-		# now (its task runner already holds the page lock) so build_messages ships the
-		# page structure and the query/block tools work on it.
-		if self.headless and self.page_id and self.tree is None:
-			self.focus_page(self.page_id, lock=False)
 		messages = self.build_messages()
-		# Mirror of the page tree this turn. The editor validates client ops against it
-		# (the browser applies the real edit); headless, the tree IS the page and ops
-		# mutate it for real (see WorkingTree).
-		if self.tree is None:
-			self.tree = WorkingTree(self.page_root(), mutating=self.headless)
-		client_operations: list[dict] = []
 		summary_text = ""
 
 		try:
-			for _round in range(MAX_ROUNDS):
+			for round_index in range(MAX_ROUNDS):
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
-				self.record_round(_round, tool_operations, summary_text)
+				self.record_round(round_index, tool_operations, summary_text)
 
-				# Classify each call. Artifact tools (e.g. generate_page) take
-				# precedence over their nominal side — they're handled by their
-				# generator, not emitted as a plain client op.
-				terminal_ops, artifact_ops, server_ops, client_ops = [], [], [], []
-				for op in tool_operations:
-					tool = self.registry.get(op["tool_name"])
-					if tool and tool.artifact:
-						artifact_ops.append(op)
-					elif self.registry.side(op["tool_name"]) == "terminal":
-						terminal_ops.append(op)
-					elif self.registry.side(op["tool_name"]) == "server":
-						server_ops.append(op)
-					else:
-						client_ops.append(op)
-				# A terminal tool ends the turn and hands control back to the user.
-				# If the model emits more than one, the first wins (the turn is over).
-				# EXCEPTION: a terminal handler may DECLINE by returning a string (e.g.
-				# "that DocType already exists") — the proposal never becomes a confirm
-				# card; the reason goes back as a tool result and the loop continues.
-				if terminal_ops:
-					op = terminal_ops[0]
-					declined = self.handle_terminal(op)
-					if not declined:
-						return
-					tc = raw_tool_calls[tool_operations.index(op)]
-					messages.append(
-						{"role": "assistant", "content": summary_text or None, "tool_calls": [tc]}
-					)
-					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": declined})
-					continue
-
-				# EDITOR: an artifact tool (full-page generation) is the turn's work —
-				# its generator streams the artifact live to the canvas on the heavy
-				# model and returns the canonical client op(s). Generation ends the loop.
-				# HEADLESS: generation is a STEP, not the end — it falls through to the
-				# tool-result loop below (run_headless_generation), where the page is
-				# persisted, the context refreshed, and the model can read back and
-				# refine what it built before finishing.
-				if artifact_ops and not self.headless:
-					self.stop_reason = "generated"
-					self.ensure_revert_snapshot()  # generate_page replaces the block tree
-					for op in artifact_ops:
-						tool = self.registry.get(op["tool_name"])
-						if tool and tool.generator:
-							ops = tool.generator(self, op["args"])
-							client_operations.extend(ops)
-							if ops:
-								self.emit("tool_batch", operations=ops)
-					break
-
-				# Apply this round's edits immediately so the canvas updates live and the
-				# user sees progress during a long multi-block change.
-				if client_ops:
-					if any(op["tool_name"] in SNAPSHOT_TOOLS for op in client_ops):
-						self.ensure_revert_snapshot()
-					client_operations.extend(client_ops)
-					self.emit("tool_batch", operations=client_ops)
-
-				# Live narration: surface what the model said / did THIS round so a long
-				# multi-round turn shows real progress instead of a frozen "Applying…".
-				# Only for rounds that CONTINUE — the final round's text is the turn summary.
-				if tool_operations:
-					note = (summary_text or "").strip()
-					if looks_like_tool_syntax(note):
-						note = ""
-					if not note and client_ops:
-						note = self.describe_operations(client_ops)
-					if note:
-						self.emit("progress", message=note)
-
-				# Keep looping as long as the model is still calling tools. A page-wide
-				# change (translate every block, restyle all buttons) spans several rounds,
-				# emitting a batch each round; the model ENDS the turn by replying with a
-				# final summary and NO tool calls. (Previously the loop broke after the
-				# first client-only round, so bulk edits silently did just the first few.)
 				if not tool_operations:
-					# No-op-claim guard: the model wrote a summary that CLAIMS an edit but
-					# called no tool, and nothing has been applied this whole turn — a
-					# hallucinated success (weaker models narrate instead of acting). Spend
-					# exactly one corrective round telling it to actually call the tools.
-					if (
-						not client_operations
-						and not self.server_mutations
-						and not self.noop_corrected
-						and claims_unbacked_action(summary_text)
-					):
-						self.noop_corrected = True
-						self.stop_reason = "noop_retry"
-						logger.warning(
-							"No-op claim from model (no tools called): %s",
-							BlockCodec.truncate_for_log(summary_text, 300),
-						)
+					if self.needs_noop_correction(summary_text):
 						messages.append({"role": "assistant", "content": summary_text})
 						messages.append({"role": "user", "content": NOOP_CORRECTION})
 						continue
 					self.stop_reason = "model_finished"
 					break
 
+				# Apply block/script ops FIRST — the canvas updates live, and a terminal
+				# tool in the same round can no longer silently discard them.
+				client_ops = [op for op in tool_operations if self.op_kind(op) == "client"]
+				client_results, applied = self.apply_client_ops(client_ops)
+
+				# EDITOR: an artifact tool (full-page generation) is the turn's work —
+				# its generator streams the YAML live to the canvas on the heavy model,
+				# persists the page, and returns the authoritative op. Generation ends
+				# the editor loop. (Headless, generation is a STEP handled in run_op —
+				# the model reads back and refines what it built before finishing.)
+				artifact_ops = [op for op in tool_operations if self.op_kind(op) == "artifact"]
+				if artifact_ops and not self.headless:
+					self.stop_reason = "generated"
+					self.ensure_revert_snapshot()  # generate_page replaces the block tree
+					for op in artifact_ops:
+						tool = self.registry.get(op["tool_name"])
+						ops = tool.generator(self, op["args"]) if tool and tool.generator else []
+						self.applied_operations.extend(ops)
+						if ops:
+							self.emit("tool_batch", operations=ops)
+					break
+
+				has_terminal = any(self.op_kind(op) == "terminal" for op in tool_operations)
+				if not has_terminal:
+					self.emit_round_note(summary_text, applied)
+
 				messages.append(
 					{"role": "assistant", "content": summary_text or None, "tool_calls": raw_tool_calls}
 				)
-				for tc_dict, op in zip(raw_tool_calls, tool_operations, strict=True):
-					tool = self.registry.get(op["tool_name"])
-					if tool and tool.artifact and tool.generator:
-						# Only reachable headless — the editor broke out of the loop above.
-						content, ops = self.run_headless_generation(tool, op)
-						client_operations.extend(ops)
-					elif tool and tool.side == "server" and tool.handler:
-						entry = self.begin_activity(op["tool_name"], op["args"])
-						content = tool.handler(self, op["args"])
-						self.end_activity(entry)
-						if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith(
-							"FAILED"
-						):
-							self.server_mutations += 1
-					elif self.headless and tool and tool.handler:
-						# A client-side tool with a server twin (page scripts): no browser
-						# here, so the handler applies it directly.
-						entry = self.begin_activity(op["tool_name"], op["args"])
-						content = tool.handler(self, op["args"])
-						self.end_activity(entry)
-						if not str(content).startswith("FAILED"):
-							self.server_mutations += 1
-					else:
-						content = self.tree.apply(op["tool_name"], op["args"])
-						# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
-						# the model is now being asked to make. Record + log so it's not invisible.
-						if "FAILED" in content or "NOT FOUND" in content:
-							self.tool_failures.append(f"{op['tool_name']}: {content}")
-							logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
-					messages.append({"role": "tool", "tool_call_id": tc_dict["id"], "content": content})
-
-				# Headless block edits mutated the working tree for real — persist after
-				# every applied round so a cancel/crash keeps the work done so far (the
-				# same live-apply semantics the editor canvas gives).
-				if self.headless and self.page_id and client_ops and self.tree.root:
-					from builder.ai import page_writer
-
-					page_writer.save_draft_blocks(self.page_id, self.tree.root)
-
-				# Images a tool captured this round (preview_page screenshots) ride a
-				# follow-up user message — appended only after every role:"tool" result,
-				# as the OpenAI message shape requires.
-				for img in self.pending_images:
-					messages.append(
-						{
-							"role": "user",
-							"content": [
-								{"type": "text", "text": img["caption"]},
-								{"type": "image_url", "image_url": {"url": img["data_url"]}},
-							],
-						}
-					)
-				self.pending_images.clear()
+				turn_over = False
+				for tc, op in zip(raw_tool_calls, tool_operations, strict=True):
+					content = self.run_op(op, client_results)
+					if content is None:
+						turn_over = True  # terminal card emitted + persisted
+						break
+					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
+				if turn_over:
+					return
+				self.flush_pending_images(messages)
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
 				# bulk edit or a stuck loop. The work done so far still applies.
@@ -959,41 +1002,25 @@ class AgentRunner:
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
 			# Show a generic message to the user — raw provider/exception strings can
 			# leak internals (keys, model ids, stack detail). Full error is logged above.
-			user_msg = "Something went wrong while building your changes. Please try again."
-			AISession.try_append_message(
-				self.session_id, "assistant", user_msg, message_type="status", metadata={"status": "error"}
-			)
-			frappe.db.commit()  # commit before emit so the client's reload sees it
-			self.emit("error", message=user_msg)
+			self.fail_turn("Something went wrong while building your changes. Please try again.")
 			return
-		finally:
-			self.clear_cancel_flag()
-			for key in self.held_locks:
-				locks.release(key)
-			self.held_locks = []
-			if self.session_id:
-				try:
-					AISession(frappe.get_doc(AISession.DOCTYPE, self.session_id)).clear_running()
-				except Exception:
-					pass
 
-		# Defensive: a weaker model may emit page YAML as content instead of
-		# calling generate_page. Treat that as a synthetic generate_page op.
-		if not client_operations and looks_like_page_yaml(summary_text):
+		self.finish_turn(summary_text, started)
+
+	def finish_turn(self, summary_text: str, started: float):
+		"""Wrap up a completed loop: recover stray output, guard hallucinated
+		summaries, pick/emit the final summary, and persist the turn."""
+		# Defensive: a weaker model may emit page YAML as content instead of calling
+		# generate_page. Persist it server-side and apply it as a generation op.
+		if not self.applied_operations and self.page_id and looks_like_page_yaml(summary_text):
 			logger.info("Recovering YAML-as-content into a synthetic generate_page op")
-			yaml_text = BlockCodec.strip_fences(summary_text)
-			op = {"tool_name": "generate_page", "args": {"yaml": yaml_text}}
-			client_operations.append(op)
-			if self.headless:
-				# No canvas to stream to — persist the page server-side, as the
-				# artifact generator does on the happy path.
-				if self.page_id:
-					from builder.ai import page_writer
+			from builder.ai import page_writer
 
-					page_writer.persist_page(self.page_id, yaml_text)
-			else:
-				self.ensure_revert_snapshot()
-				self.emit("stream", chunk=yaml_text, kind="page_yaml")
+			self.ensure_revert_snapshot()
+			root, data_script = page_writer.persist_page(self.page_id, BlockCodec.strip_fences(summary_text))
+			if root:
+				op = {"tool_name": "generate_page", "args": {"blocks": [root], "data_script": data_script}}
+				self.applied_operations.append(op)
 				self.emit("tool_batch", operations=[op])
 			summary_text = ""
 
@@ -1005,11 +1032,11 @@ class AgentRunner:
 			)
 			summary_text = (
 				""
-				if client_operations
+				if self.applied_operations
 				else "My last step came out garbled and was not applied — ask me to try that again."
 			)
 
-		if not client_operations and not summary_text:
+		if not self.applied_operations and not summary_text:
 			# A soft miss, not a failure: the model may have done real tool work (reads)
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
 			# vanish on reload.
@@ -1035,7 +1062,7 @@ class AgentRunner:
 		# Backstop: the model still claims an edit it never made (no ops applied, no
 		# server-side writes, even after the corrective round). Don't present a
 		# hallucinated success — say so.
-		if not client_operations and not self.server_mutations and claims_unbacked_action(summary_text):
+		if not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text):
 			logger.warning(
 				"Unbacked action claim persisted (no ops applied): %s",
 				BlockCodec.truncate_for_log(summary_text, 300),
@@ -1048,7 +1075,7 @@ class AgentRunner:
 
 		# Block/script edits and generation ops were already emitted incrementally inside
 		# the loop (live canvas progress); nothing more to emit here.
-		generated = any(op["tool_name"] == "generate_page" for op in client_operations)
+		generated = any(op["tool_name"] == "generate_page" for op in self.applied_operations)
 		if summary_text:
 			# The model wrote a summary alongside its tool calls — richest, and
 			# free (no extra round trip). Prefer it whenever present.
@@ -1064,7 +1091,7 @@ class AgentRunner:
 			# Block/script edits with no model text: synthesise the summary from
 			# the ops rather than making a second LLM call. The canvas already
 			# updated from the tool_batch above; this just ends the turn sooner.
-			summary_text = self.describe_operations(client_operations)
+			summary_text = self.describe_operations(self.applied_operations)
 			self.emit("stream", chunk=summary_text)
 
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
@@ -1074,9 +1101,6 @@ class AgentRunner:
 			summary_text += hint
 			self.emit("stream", chunk=hint)
 
-		# The revert snapshot was created lazily during the loop, the first time a block
-		# change was applied (see ensure_revert_snapshot). Script-only / no-op / clarify
-		# turns never trigger it, so they carry no revert handle.
 		elapsed_ms = round((time.monotonic() - started) * 1000)
 		logger.info(
 			"AI turn done | page=%s rounds=%d llm_calls=%d prompt_tokens=%d "
@@ -1097,7 +1121,7 @@ class AgentRunner:
 		final_metadata = {
 			"status": "complete",
 			"model": self.model,
-			"operations": len(client_operations),
+			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
 			"debug": {
@@ -1115,8 +1139,13 @@ class AgentRunner:
 				"trace": self.trace,
 			},
 		}
-		if self.revert_snapshot:
-			final_metadata["revertSnapshot"] = self.revert_snapshot
+		# Revert handles: one snapshot per page the turn mutated. revertSnapshot (the
+		# most recent) keeps the existing frontend contract; revertSnapshots carries
+		# the full set so a multi-page dashboard turn reverts every page it touched.
+		if self.revert_snapshots:
+			final_metadata["revertSnapshot"] = next(reversed(self.revert_snapshots.values()))
+			if len(self.revert_snapshots) > 1:
+				final_metadata["revertSnapshots"] = self.revert_snapshots
 		if self.activity:
 			# The chat's activity feed (tool lines + screenshots) — rendered live from
 			# tool_activity events, rehydrated from here on a session reload.
@@ -1124,7 +1153,7 @@ class AgentRunner:
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
-			summary_text or f"Applying {len(client_operations)} change(s).",
+			summary_text or f"Applying {len(self.applied_operations)} change(s).",
 			message_type="chat",
 			task_type="agent",
 			metadata=final_metadata,
@@ -1144,33 +1173,27 @@ class AgentRunner:
 
 	def run_headless_generation(self, tool, op: dict) -> tuple[str, list[dict]]:
 		"""Run generate_page as one STEP of a headless turn. The generator persists the
-		page server-side (page_writer.persist_page); reload it into the working tree so
-		the model can read back — and surgically refine — what it just built."""
-		from builder.ai import page_writer
-
+		page server-side; point the working tree at the result so the model can read
+		back — and surgically refine — what it just built."""
 		if not self.page_id:
 			return ("FAILED: no page is open — call create_page or open_page first, then generate.", [])
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
-		try:
-			ops = tool.generator(self, op["args"])
-		except ValueError as e:
-			self.end_activity(entry)
-			return (f"FAILED: {e}. Retry generate_page with a fuller brief.", [])
+		ops = tool.generator(self, op["args"])
 		self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
-		root = page_writer.load_page_root(self.page_id)
-		self.tree = WorkingTree(root, mutating=True)
-		context = render_page_context(root)
+		root = ops[0]["args"]["blocks"][0]
+		self.tree = WorkingTree(root)
 		return (
 			"Page generated and saved. Verify it (preview_page / read_block), make surgical "
-			f"fixes with the block tools if needed, then finish with a short summary.\n{context}",
+			f"fixes with the block tools if needed, then finish with a short summary.\n"
+			f"{render_page_context(root)}",
 			ops,
 		)
 
 
-def run_agent_job(prompt: str, page_context_json: str, model: str, api_key: str, **kwargs):
+def run_agent_job(prompt: str, model: str, api_key: str, **kwargs):
 	# A page-less turn is the dashboard orchestrator: no canvas, so it uses the
 	# orchestrator registry (server tools + parallel fan-out) and its own system prompt.
 	# The registry is built HERE (in the worker) rather than pickled through enqueue.
@@ -1185,4 +1208,4 @@ def run_agent_job(prompt: str, page_context_json: str, model: str, api_key: str,
 			"system_prompt", Prompts.ORCHESTRATOR_SYSTEM.replace("{BUILDER_PATH}", builder_path)
 		)
 		kwargs["headless"] = True
-	AgentRunner(prompt, page_context_json, model, api_key, **kwargs).run()
+	AgentRunner(prompt, model, api_key, **kwargs).run()
