@@ -22,13 +22,17 @@
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
 				<Tooltip
-					:text="scriptsDisabled ? 'Scripts are disabled in Builder Settings' : 'Run scripts in canvas'"
+					:text="
+						emulationDisabled
+							? 'Client script emulation is disabled in Builder Settings'
+							: 'Run scripts in canvas'
+					"
 					:hoverDelay="0.6">
 					<div
 						data-testid="run-canvas-scripts"
 						v-show="!canvasProps.scaling && !canvasProps.panning"
 						class="w-auto p-2"
-						:class="scriptsDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'"
+						:class="emulationDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'"
 						@click.stop="toggleCanvasScripts">
 						<span
 							:class="[
@@ -43,7 +47,7 @@
 						data-testid="refresh-canvas-scripts"
 						v-show="
 							builderStore.runCanvasScripts &&
-							!scriptsDisabled &&
+							!emulationDisabled &&
 							!canvasProps.scaling &&
 							!canvasProps.panning
 						"
@@ -169,11 +173,9 @@ import { elementFromEditorPoint, forwardFrameEvents } from "@/utils/canvasFrameD
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import {
 	type BlockClientScriptRuntime,
-	executeClientScriptRestricted,
-	executeClientScriptUnrestricted,
-	executePageClientScriptRestricted,
-	executePageClientScriptUnrestricted,
-} from "@/utils/scriptSandbox";
+	executeClientScript,
+	executePageClientScript,
+} from "@/utils/scriptEmulation";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
 import { useBuilderVariable } from "@/utils/useBuilderVariable";
@@ -239,17 +241,19 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
+const emulationDisabled = computed(() => builderSettings.doc?.execute_block_scripts_in_editor === "Disable");
 const blockClientStyles = computed(() => {
 	const css = Array.from(blockStyles.values()).filter(Boolean).join("\n");
 	return css ? `@layer builder-authored {\n${css}\n}` : "";
 });
-const pageClientStyles = computed(() =>
-	pageStore.activePageScripts
+const pageClientStyles = computed(() => {
+	if (!builderStore.runCanvasScripts || emulationDisabled.value) return "";
+	return pageStore.activePageScripts
 		.filter((script) => script.script_type === "CSS")
 		.map((script) => script.script)
 		.filter(Boolean)
-		.join("\n"),
-);
+		.join("\n");
+});
 const pageJavaScripts = computed(() =>
 	pageStore.activePageScripts.filter((script) => script.script_type === "JavaScript"),
 );
@@ -257,9 +261,6 @@ const pageJavaScriptSignature = computed(() =>
 	JSON.stringify(pageJavaScripts.value.map(({ name, script }) => [name, script])),
 );
 const pageDataSignature = computed(() => JSON.stringify(pageStore.pageData));
-const scriptsDisabled = computed(
-	() => builderSettings.doc?.execute_block_scripts_in_editor === "Don't Execute",
-);
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -402,7 +403,7 @@ function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, ifr
 		watch(
 			[() => builderStore.runCanvasScripts, () => pageStore.settingPage],
 			([runScripts, settingPage], _, onCleanup) => {
-				if (!runScripts || settingPage || scriptsDisabled.value) return;
+				if (!runScripts || settingPage || emulationDisabled.value) return;
 				onCleanup(executePageClientScripts(root));
 			},
 			{ immediate: true, flush: "post" },
@@ -508,7 +509,7 @@ watch(
 	() => builderSettings.doc?.execute_block_scripts_in_editor,
 	(mode, previousMode) => {
 		const scriptsWereRunning = builderStore.runCanvasScripts;
-		if (mode === "Don't Execute" && scriptsWereRunning) {
+		if (mode === "Disable" && scriptsWereRunning) {
 			builderStore.runCanvasScripts = false;
 		}
 		if (previousMode && mode !== previousMode && scriptsWereRunning) {
@@ -525,7 +526,7 @@ watch(
 			!pageJavaScripts.value.length ||
 			!builderStore.runCanvasScripts ||
 			pageStore.settingPage ||
-			scriptsDisabled.value
+			emulationDisabled.value
 		)
 			return;
 		frameEpoch.value++;
@@ -535,7 +536,7 @@ watch(
 watch(
 	() => pageStore.settingPage,
 	(settingPage, wasSettingPage) => {
-		if (!settingPage && wasSettingPage && builderStore.runCanvasScripts && !scriptsDisabled.value) {
+		if (!settingPage && wasSettingPage && builderStore.runCanvasScripts && !emulationDisabled.value) {
 			frameEpoch.value++;
 		}
 	},
@@ -610,13 +611,13 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 }
 
 function toggleCanvasScripts() {
-	if (scriptsDisabled.value) return;
+	if (emulationDisabled.value) return;
 	builderStore.runCanvasScripts = !builderStore.runCanvasScripts;
 	frameEpoch.value++;
 }
 
 function refreshCanvasScripts() {
-	if (!builderStore.runCanvasScripts || scriptsDisabled.value) return;
+	if (!builderStore.runCanvasScripts || emulationDisabled.value) return;
 	frameEpoch.value++;
 }
 
@@ -629,24 +630,17 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
 
-	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	const shouldEmulate = builderStore.runCanvasScripts && !emulationDisabled.value;
+	blockStyles.set(registrationKey, shouldEmulate && script.css ? `${selector} { ${script.css} }` : "");
+
 	let cleanup = () => {};
-	if (builderStore.runCanvasScripts && mode !== "Don't Execute" && script.javascript.trim()) {
+	if (shouldEmulate && script.javascript.trim()) {
 		const context = {
 			componentData: script.componentData,
 			props: script.props,
 		};
-		cleanup =
-			mode === "Unrestricted"
-				? executeClientScriptUnrestricted(script.element, script.javascript, context)
-				: executeClientScriptRestricted(
-						script.element,
-						frameRoots.get(script.breakpoint) || null,
-						script.javascript,
-						context,
-				  );
+		cleanup = executeClientScript(script.element, script.javascript, context);
 	}
 
 	return () => {
@@ -659,11 +653,8 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 }
 
 function executePageClientScripts(root: HTMLElement) {
-	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	const cleanups = pageJavaScripts.value.map(({ script }) =>
-		mode === "Unrestricted"
-			? executePageClientScriptUnrestricted(root, script, pageStore.pageData)
-			: executePageClientScriptRestricted(root, script, pageStore.pageData),
+		executePageClientScript(root, script, pageStore.pageData),
 	);
 
 	return () => {

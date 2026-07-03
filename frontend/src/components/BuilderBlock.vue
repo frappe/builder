@@ -50,7 +50,7 @@ import usePageStore from "@/stores/pageStore";
 import { setFont } from "@/utils/fontManager";
 import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
 import { isElementLike } from "@/utils/canvasFrameDom";
-import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
+import type { BlockClientScriptEmulator } from "@/utils/scriptEmulation";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,
@@ -180,16 +180,16 @@ const getComponentDataValue = (path: string): any => {
 };
 
 const attributes = computed(() => {
-	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
+	const RESERVED_ATTRIBUTES = ["data-block-id", "data-block-uid", "data-breakpoint"];
 	let additionalAttributes: Record<string, any> = {};
 
-	if (builderSettings.doc?.execute_block_scripts_in_editor !== "Don't Execute") {
+	if (builderSettings.doc?.execute_block_scripts_in_editor !== "Disable") {
 		additionalAttributes = props.block.getCustomAttributes();
 	}
 
 	Object.keys(additionalAttributes).forEach((key) => {
 		const trimmedKey = key.trim();
-		if (RESTRICTED_ATTRIBS.includes(trimmedKey) || trimmedKey === "") {
+		if (RESERVED_ATTRIBUTES.includes(trimmedKey) || trimmedKey === "") {
 			delete additionalAttributes[key];
 		} else if (trimmedKey !== key) {
 			additionalAttributes[trimmedKey] = additionalAttributes[key];

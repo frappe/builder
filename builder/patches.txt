@@ -13,5 +13,6 @@ builder.builder.doctype.builder_client_script.patches.trigger_asset_compression
 builder.builder.patches.add_composite_index_to_web_page_view
 builder.builder.patches.refactor_builder_variables
 builder.builder.patches.reset_builder_page_clicks
+builder.builder.patches.migrate_client_script_emulation_setting
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")

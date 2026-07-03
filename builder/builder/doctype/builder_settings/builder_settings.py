@@ -23,11 +23,10 @@ class BuilderSettings(Document):
 		body_html: DF.Code | None
 		default_language: DF.Data | None
 		disable_auto_dark_mode: DF.Check
-		execute_block_scripts_in_editor: DF.Literal["Don't Execute", "Restricted", "Unrestricted"]
+		execute_block_scripts_in_editor: DF.Literal["Disable", "Enable"]
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		home_page: DF.Data | None
-		restrict_click_handlers: DF.Check
 		script: DF.Code | None
 		script_public_url: DF.ReadOnly | None
 		style: DF.Code | None
