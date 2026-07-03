@@ -321,11 +321,18 @@ def confirm_pending_settings(message_id: str, decision: str = "apply", session_i
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
+		AISession.try_append_message(
+			msg.session, "assistant", "Skipped — nothing was changed.", message_type="status"
+		)
+		frappe.db.commit()
 		return {"status": "skipped"}
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
+	# The OUTCOME becomes part of the conversation — visible in the chat after a
+	# reload, and context for the agent's next turn (it knows what was applied).
+	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
 	frappe.db.commit()
 	return {"status": "applied", "message": result}
 

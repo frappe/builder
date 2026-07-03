@@ -393,7 +393,15 @@ async function confirmAction(m: AgentMessage, decision: "apply" | "skip") {
 		});
 		m.status = decision === "apply" ? "action_applied" : "action_skipped";
 		m.confirm = undefined;
-		if (decision === "apply") toast.success(res?.message || "Applied");
+		// The outcome is a real conversation message (the backend persisted the same
+		// text), not just a toast — so what happened stays visible in the thread.
+		messages.value.push({
+			id: nextId(),
+			role: "assistant",
+			text: decision === "apply" ? res?.message || "Applied." : "Skipped — nothing was changed.",
+			status: "complete",
+		});
+		scrollToBottom();
 	} catch (e: any) {
 		toast.error(e?.messages?.[0] || "Could not apply the change");
 	}

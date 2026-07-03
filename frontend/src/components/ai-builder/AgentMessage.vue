@@ -58,6 +58,14 @@
 			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'"
 			v-html="renderMarkdown(message.text)" />
 
+		<!-- outcome of a confirmed/skipped sensitive action -->
+		<div
+			v-if="message.status === 'action_applied' || message.status === 'action_skipped'"
+			class="flex items-center gap-1 text-[11px] text-ink-gray-4">
+			<span v-if="message.status === 'action_applied'" class="text-ink-gray-6">✓</span>
+			{{ message.status === "action_applied" ? "Applied" : "Skipped" }}
+		</div>
+
 		<!-- meta row: revert, matching the editor chat's treatment -->
 		<div v-if="message.revertSnapshot && !isRunning" class="flex items-center text-[11px] text-ink-gray-4">
 			<button
