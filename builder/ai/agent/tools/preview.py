@@ -29,16 +29,17 @@ def render_page_image(page) -> bytes:
 	return render(page.get_preview_html(), width=PREVIEW_WIDTH, height=PREVIEW_HEIGHT)
 
 
-def save_as_page_thumbnail(page, image: bytes) -> None:
-	"""Save as the page's preview file so the dashboard (and batch task) thumbnails
-	update for free. The screenshot is NOT shown in the chat — it exists for the
-	model's self-review pass."""
-	from builder.utils import get_builder_page_preview_file_paths
-
-	public_path, local_path = get_builder_page_preview_file_paths(page)
-	with open(local_path, "wb") as f:
-		f.write(image)
-	page.db_set("preview", public_path, commit=True, update_modified=False)
+def refresh_page_thumbnail(page) -> None:
+	"""Queue the page's OWN preview generation (same as the publish flow) so the
+	dashboard/batch thumbnails refresh in the standard card format. The tall
+	self-review capture is never saved as the preview — it crops badly on cards."""
+	frappe.enqueue_doc(
+		page.doctype,
+		page.name,
+		"generate_page_preview_image",
+		queue="short",
+		enqueue_after_commit=True,
+	)
 
 
 def attach_to_model(ctx, page, image: bytes) -> bool:
@@ -66,7 +67,7 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Preview unavailable (screenshot renderer not reachable). "
 			"Continue without the visual check — do not retry."
 		)
-	save_as_page_thumbnail(page, image)
+	refresh_page_thumbnail(page)
 	attached = attach_to_model(ctx, page, image)
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
