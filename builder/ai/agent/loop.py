@@ -960,8 +960,23 @@ class AgentRunner:
 			)
 
 		if not client_operations and not summary_text:
-			logger.warning("Agent returned empty response (no tools, no text)")
-			self.emit("error", message="The AI returned an empty response. Please try rephrasing.")
+			# A soft miss, not a failure: the model may have done real tool work (reads)
+			# and just failed to write its reply. Warn — and persist, so the turn doesn't
+			# vanish on reload.
+			logger.warning("Agent returned empty response (no text; activity=%d)", len(self.activity))
+			note = (
+				"I gathered that information but didn't write up a reply — ask me again and I'll answer."
+				if self.activity
+				else "I came back empty on that one — try rephrasing your request."
+			)
+			metadata = {"status": "warning"}
+			if self.activity:
+				metadata["activity"] = self.activity
+			AISession.try_append_message(
+				self.session_id, "assistant", note, message_type="status", metadata=metadata
+			)
+			frappe.db.commit()
+			self.emit("error", message=note, warning=True)
 			return
 
 		# Backstop: the model still claims an edit it never made (no ops applied, even

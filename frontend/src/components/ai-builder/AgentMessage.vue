@@ -55,7 +55,7 @@
 		<div
 			v-if="message.text && !isPlan && !message.confirm"
 			class="ai-prose prose prose-sm max-w-none break-words text-p-sm leading-relaxed"
-			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'"
+			:class="bodyClass"
 			v-html="renderMarkdown(message.text)" />
 
 		<!-- outcome of a confirmed/skipped sensitive action -->
@@ -167,6 +167,11 @@ defineEmits<{
 
 const isPlan = computed(() => props.message.status === "plan_summary" && !!props.message.plan);
 const stepsOpen = ref(false);
+const bodyClass = computed(() => {
+	if (props.message.status === "error") return "text-ink-red-6";
+	if (props.message.status === "warning") return "text-ink-gray-5";
+	return "text-ink-gray-8";
+});
 
 // Collapse consecutive repeats ("Read block", "Read block", …) into one "×N" line.
 const activityDisplay = computed(() => {
@@ -224,9 +229,8 @@ const confirmRows = computed<Array<{ label: string; detail?: string }>>(() => {
 	}
 	if (c.kind === "seed_sample_data") {
 		const rows = (p.rows || []).map((r: any) => ({
-			label: Object.values(r || {})
-				.slice(0, 3)
-				.join(" · "),
+			label: r?.title || r?.name || r?.label || String(Object.values(r || {})[0] ?? ""),
+			detail: `${Object.keys(r || {}).length} field(s)`,
 		}));
 		return rows.slice(0, 8).concat(rows.length > 8 ? [{ label: `… and ${rows.length - 8} more` }] : []);
 	}

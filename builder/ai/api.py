@@ -325,7 +325,8 @@ def confirm_pending_settings(message_id: str, decision: str = "apply", session_i
 			msg.session, "assistant", "Skipped — nothing was changed.", message_type="status"
 		)
 		frappe.db.commit()
-		return {"status": "skipped"}
+		resumed = resume_agent_after_decision(msg.session, "skip", "")
+		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
@@ -334,7 +335,45 @@ def confirm_pending_settings(message_id: str, decision: str = "apply", session_i
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
 	frappe.db.commit()
-	return {"status": "applied", "message": result}
+	resumed = resume_agent_after_decision(msg.session, "apply", result)
+	return {"status": "applied", "message": result, "resumed": resumed}
+
+
+def resume_agent_after_decision(session_id: str, decision: str, result: str) -> bool:
+	"""A confirm-gated step ENDS the agent's turn — so once the user decides, the
+	bigger task must continue without another prod ("create a merch store" should
+	not stall after each approved doctype/seed step). Dashboard (general) sessions
+	only: editor turns are canvas-bound. The continuation instruction rides only
+	this enqueued turn — it is never persisted, so no fake user bubble appears; the
+	durable outcome message above is what future context sees."""
+	row = frappe.db.get_value(AISession.DOCTYPE, session_id, ["session_kind", "selected_model"], as_dict=True)
+	if not row or row.session_kind != "general" or AISession.is_session_running(session_id):
+		return False
+	if decision == "apply":
+		prompt = (
+			f"[The user APPROVED the pending action and it was applied: {result}] "
+			"Continue the task from where you left off — do NOT redo or re-propose that step. "
+			"If nothing remains, wrap up with a 1-2 sentence summary."
+		)
+	else:
+		prompt = (
+			"[The user SKIPPED the pending action — it was NOT applied.] "
+			"Continue the task without that step, adapting where needed; if it can't proceed "
+			"without it, say so briefly."
+		)
+	frappe.enqueue(
+		run_agent_job,
+		queue="default",
+		timeout=1200,
+		prompt=prompt,
+		page_context_json="[]",
+		model=ModelRegistry.get_default(row.selected_model or "openrouter"),
+		api_key=resolve_api_key(),
+		user=frappe.session.user,
+		page_id=None,
+		session_id=session_id,
+	)
+	return True
 
 
 @frappe.whitelist()

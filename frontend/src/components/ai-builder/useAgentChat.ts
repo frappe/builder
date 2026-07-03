@@ -190,7 +190,9 @@ const handlers: Record<string, (data: any) => void> = {
 	error: (d) => {
 		const m = pending();
 		if (m) {
-			m.status = "error";
+			// A "warning" is a soft miss (e.g. the model read things but wrote no
+			// reply) — informational, not a failure.
+			m.status = d.warning ? "warning" : "error";
 			m.progress = "";
 			m.text = d.message || "Something went wrong.";
 		}
@@ -401,6 +403,17 @@ async function confirmAction(m: AgentMessage, decision: "apply" | "skip") {
 			text: decision === "apply" ? res?.message || "Applied." : "Skipped — nothing was changed.",
 			status: "complete",
 		});
+		// The decision resumes the agent's bigger task — surface the continuation.
+		if (res?.resumed) {
+			messages.value.push({
+				id: nextId(),
+				role: "assistant",
+				text: "",
+				status: "running",
+				progress: "Continuing…",
+			});
+			sending.value = true;
+		}
 		scrollToBottom();
 	} catch (e: any) {
 		toast.error(e?.messages?.[0] || "Could not apply the change");
