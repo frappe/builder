@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:reset": "tailwindcss -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
+    "build:reset": "tailwindcss -c ./tailwind.reset.config.js -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.ts,.vue",
     "test-local": "cypress open --e2e --browser chrome",

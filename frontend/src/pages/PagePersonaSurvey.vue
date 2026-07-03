@@ -7,7 +7,6 @@
 		<div class="flex-1 overflow-hidden">
 			<TemplateGallery
 				class="mx-auto h-full w-full max-w-3xl"
-				blank-label="Start from scratch"
 				:max-groups="8"
 				:heading="templateHeading"
 				subtitle="Choose a template to get a head start, or start from scratch. You can always change direction later." />
