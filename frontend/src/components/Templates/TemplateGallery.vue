@@ -37,6 +37,7 @@
 			:group="activeGroup"
 			:loading="Boolean(templateGroups.loading)"
 			@select="useTemplate"
+			@blank="createBlankPage('template_group')"
 			@edit="editTemplate"></TemplatePageGrid>
 
 		<!-- gallery: blank page + a preview card per template group -->
@@ -50,10 +51,10 @@
 			<div v-else class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
 				<button
 					class="flex w-full flex-col self-start rounded-lg border border-dashed border-outline-gray-3 p-1.5 text-ink-gray-5 transition-colors duration-150 hover:border-outline-gray-4 hover:bg-surface-gray-1 hover:text-ink-gray-7"
-					@click="createBlankPage">
+					@click="createBlankPage('gallery')">
 					<span class="flex aspect-video w-full flex-col items-center justify-center gap-2">
 						<PlusIcon class="size-5" />
-						<span class="text-sm">{{ blankLabel }}</span>
+						<span class="text-sm">Start from scratch</span>
 					</span>
 				</button>
 				<TemplateGroupCard
@@ -72,7 +73,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { templateGroups, webPages } from "@/data/webPage";
-import { TemplateGroup, TemplatePageSummary } from "@/types/doctypes";
+import { TemplateGroup, TemplatePageSummary } from "@/types/template";
 import { Button, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, onMounted, ref } from "vue";
@@ -84,14 +85,12 @@ const props = withDefaults(
 	defineProps<{
 		heading?: string;
 		subtitle?: string;
-		blankLabel?: string;
 		// cap the number of template groups shown (0 = show all); the blank tile is extra
 		maxGroups?: number;
 	}>(),
 	{
 		heading: "New page",
 		subtitle: "Start from a blank page or pick a template.",
-		blankLabel: "Blank page",
 		maxGroups: 0,
 	},
 );
@@ -122,7 +121,8 @@ onMounted(() => {
 	}
 });
 
-const createBlankPage = () => {
+const createBlankPage = (source: "gallery" | "template_group" = "gallery") => {
+	capture("builder_blank_page_selected", { source });
 	showTemplatesDialog.value = false;
 	router.push({ name: "builder", params: { pageId: "new" } });
 };

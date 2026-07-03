@@ -25,7 +25,7 @@
 </template>
 <script setup lang="ts">
 import router from "@/router";
-import { TemplateGroup } from "@/types/doctypes";
+import { TemplateGroup } from "@/types/template";
 import { computed } from "vue";
 
 const props = defineProps<{

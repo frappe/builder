@@ -30,6 +30,5 @@ const { capture } = useTelemetry();
 
 watch(showTemplatesDialog, (open) => {
 	if (!open) return;
-	capture("builder_template_dialog_opened");
 });
 </script>
