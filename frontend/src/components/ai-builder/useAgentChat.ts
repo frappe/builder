@@ -97,6 +97,18 @@ function pending(): AgentMessage | null {
 	return null;
 }
 
+/** The assistant bubble for the turn an event belongs to. Turns can start WITHOUT a
+ * send from this client — a parallel build finishing resumes the agent in the
+ * background — so when we're idle, open a fresh running bubble instead of mutating
+ * the last settled message. */
+function ensureTurnBubble(): AgentMessage | null {
+	if (!sending.value) {
+		messages.value.push({ id: nextId(), role: "assistant", text: "", status: "running" });
+		sending.value = true;
+	}
+	return pending();
+}
+
 function scrollToBottom() {
 	nextTick(() => {
 		const el = messageContainer.value;
@@ -108,7 +120,7 @@ function scrollToBottom() {
 
 const handlers: Record<string, (data: any) => void> = {
 	progress: (d) => {
-		const m = pending();
+		const m = ensureTurnBubble();
 		if (!m) return;
 		m.status = "running";
 		if (d.message) m.progress = d.message;
@@ -116,7 +128,7 @@ const handlers: Record<string, (data: any) => void> = {
 	},
 	stream: (d) => {
 		if (!d.chunk || d.kind === "page_yaml") return;
-		const m = pending();
+		const m = ensureTurnBubble();
 		if (!m) return;
 		m.status = "running";
 		m.text += d.chunk;
@@ -126,7 +138,7 @@ const handlers: Record<string, (data: any) => void> = {
 	// One entry per server-tool call; the same id arrives twice (running → done) —
 	// upsert by id.
 	tool_activity: (d) => {
-		const m = pending();
+		const m = ensureTurnBubble();
 		if (!m || d.id === undefined) return;
 		m.status = "running";
 		if (!m.activity) m.activity = [];
@@ -137,7 +149,7 @@ const handlers: Record<string, (data: any) => void> = {
 		scrollToBottom();
 	},
 	task_group: (d) => {
-		const m = pending();
+		const m = ensureTurnBubble();
 		if (!m || !d.batch_id) return;
 		m.batchId = d.batch_id;
 		batches.value[d.batch_id] = {
@@ -153,7 +165,7 @@ const handlers: Record<string, (data: any) => void> = {
 		scrollToBottom();
 	},
 	clarify: (d) => {
-		const m = pending();
+		const m = ensureTurnBubble();
 		if (!m) return;
 		m.progress = "";
 		if (d.plan_summary) {
@@ -283,6 +295,7 @@ function hydrate(rows: any[]): AgentMessage[] {
 		}
 		if (meta.attachedImageUrl) m.attachedImage = meta.attachedImageUrl;
 		if (meta.revertSnapshot) m.revertSnapshot = meta.revertSnapshot;
+		if (meta.batchId) m.batchId = meta.batchId;
 		if (status === "clarification") {
 			m.options = meta.options || [];
 			m.previews = meta.previews ?? null;
@@ -304,6 +317,11 @@ async function open(routeSessionId?: string) {
 	messages.value = hydrate(res.messages);
 	if (res.selected_model && !selectedModel.value) selectedModel.value = res.selected_model;
 	subscribe(sessionId.value);
+	// Rehydrate task-group cards: fetch each batch's durable state (pollBatch stops
+	// itself once the batch is settled, so old batches cost one fetch).
+	for (const m of messages.value) {
+		if (m.batchId) pollBatch(m.batchId);
+	}
 	scrollToBottom();
 }
 
@@ -480,6 +498,17 @@ async function cancel() {
 	}
 }
 
+async function cancelBatch(batchId: string) {
+	try {
+		await createResource({ url: "builder.ai.api.cancel_ai_batch", method: "POST" }).submit({
+			batch_id: batchId,
+		});
+		toast.success("Stopping…");
+	} catch (e: any) {
+		toast.error(e?.messages?.[0] || "Could not stop the build");
+	}
+}
+
 async function publishBatch(batchId: string) {
 	try {
 		const res: any = await createResource({ url: "builder.ai.api.publish_site_batch", method: "POST" }).submit({ batch_id: batchId });
@@ -529,6 +558,7 @@ export function useAgentChat() {
 		renameSession,
 		deleteSession,
 		cancel,
+		cancelBatch,
 		publishBatch,
 		teardown,
 	};

@@ -76,7 +76,8 @@
 						@approve-plan="chat.approvePlan"
 						@confirm="chat.confirmAction"
 						@revert="chat.revertTurn"
-						@publish="chat.publishBatch" />
+						@publish="chat.publishBatch"
+						@cancel-batch="chat.cancelBatch" />
 				</div>
 			</div>
 

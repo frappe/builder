@@ -19,11 +19,11 @@ from contextlib import contextmanager
 import frappe
 
 # TTLs sit just above each holder's job timeout so a dead worker's lock expires
-# on its own. Page locks can be held by a dashboard turn (timeout 1200s); task
-# locks by a fan-out sub-agent (timeout 780s); session locks by any turn.
-PAGE_LOCK_TTL = 1260
+# on its own. Page and session locks are held by chat turns (timeout 600s); task
+# locks by a fan-out sub-agent (timeout 780s).
+PAGE_LOCK_TTL = 660
 TASK_LOCK_TTL = 840
-SESSION_LOCK_TTL = 1260
+SESSION_LOCK_TTL = 660
 
 RELEASE_IF_TOKEN_MATCHES = """
 if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end

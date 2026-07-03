@@ -125,6 +125,9 @@ scheduler_events = {
 		"*/10 * * * *": [
 			"builder.builder_analytics.ingest_web_page_views_to_duckdb",
 			"builder.builder_analytics.ingest_clicks_to_duckdb",
+			# Safety net: finalize AI fan-out batches whose child worker died hard
+			# (OOM/kill) and could never report back.
+			"builder.ai.orchestration.reap_stale_batches",
 		],
 	}
 }

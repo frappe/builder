@@ -106,12 +106,12 @@ def run(
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
 	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
-	# of which process runs the job. Page-less turns may fan out sub-agents and block on
-	# the join, so they get a longer timeout (children run on a SEPARATE queue).
+	# of which process runs the job. A fan-out ends the turn (spawn is terminal), so no
+	# turn needs a long-join timeout anymore.
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
-		timeout=1200 if not page_id else 600,
+		timeout=600,
 		prompt=agent_prompt,
 		model=resolved_model,
 		api_key=api_key,
@@ -287,6 +287,19 @@ def get_ai_batch_status(batch_id: str):
 
 
 @frappe.whitelist()
+@has_page_write()
+def cancel_ai_batch(batch_id: str):
+	"""Stop a running fan-out: queued tasks abort at entry, running sub-agents abort at
+	their next stream chunk. The last one to settle finalizes the batch as cancelled
+	(without waking the agent to discuss it)."""
+	from builder.ai.orchestration import cancel_batch
+
+	batch = get_owned_batch(batch_id)
+	cancel_batch(batch.name)
+	return {"status": "cancelling"}
+
+
+@frappe.whitelist()
 def publish_site_batch(batch_id: str):
 	"""Publish every page in a generated site (a batch's project folder)."""
 	from builder.ai.agent.pending import apply_publish_site
@@ -362,7 +375,7 @@ def resume_agent_after_decision(session_id: str, decision: str, result: str) -> 
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
-		timeout=1200,
+		timeout=600,
 		prompt=prompt,
 		model=ModelRegistry.get_default(row.selected_model or "openrouter"),
 		api_key=resolve_api_key(),

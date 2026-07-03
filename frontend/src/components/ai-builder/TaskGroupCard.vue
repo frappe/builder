@@ -4,7 +4,17 @@
 			<span class="text-xs font-medium text-ink-gray-7">
 				{{ header }}
 			</span>
-			<span class="text-xs tabular-nums text-ink-gray-5">{{ batch.completed }}/{{ batch.total || "?" }}</span>
+			<span class="flex items-center gap-2">
+				<span class="text-xs tabular-nums text-ink-gray-5">
+					{{ batch.completed }}/{{ batch.total || "?" }}
+				</span>
+				<button
+					v-if="batch.status === 'running'"
+					class="text-xs text-ink-gray-5 hover:text-ink-gray-9 hover:underline"
+					@click="$emit('cancel', batch.batchId)">
+					Stop
+				</button>
+			</span>
 		</div>
 		<div class="divide-y divide-outline-gray-1">
 			<div v-for="t in batch.tasks" :key="t.row" class="flex items-center gap-2.5 px-3 py-2">
@@ -47,7 +57,7 @@ import { computed } from "vue";
 import type { BatchState } from "./useAgentChat";
 
 const props = defineProps<{ batch: BatchState; publishing?: boolean }>();
-defineEmits<{ (e: "publish", batchId: string): void }>();
+defineEmits<{ (e: "publish", batchId: string): void; (e: "cancel", batchId: string): void }>();
 
 const settled = computed(
 	() => ["done", "failed", "cancelled"].includes(props.batch.status) && props.batch.completed > 0,

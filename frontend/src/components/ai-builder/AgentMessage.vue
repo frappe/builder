@@ -144,7 +144,8 @@
 			v-if="batch"
 			:batch="batch"
 			:publishing="publishing"
-			@publish="(id) => $emit('publish', id)" />
+			@publish="(id) => $emit('publish', id)"
+			@cancel="(id) => $emit('cancel-batch', id)" />
 	</div>
 </template>
 
@@ -162,6 +163,7 @@ defineEmits<{
 	(e: "approve-plan"): void;
 	(e: "confirm", message: AgentMessage, decision: "apply" | "skip"): void;
 	(e: "publish", batchId: string): void;
+	(e: "cancel-batch", batchId: string): void;
 	(e: "revert", message: AgentMessage): void;
 }>();
 

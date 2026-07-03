@@ -1,4 +1,4 @@
-"""Generic parallel sub-agent fan-out for Builder AI.
+"""Generic parallel sub-agent fan-out for Builder AI — event-driven, no waiting worker.
 
 The dashboard chat agent can spawn N INDEPENDENT sub-agents that run in parallel —
 one full headless `AgentRunner` each — to do work that decomposes cleanly (build the
@@ -6,18 +6,20 @@ pages of a site, generate several posts, …). This is NOT site-specific: a "bui
 site" request just becomes "lay down shared theme + header/footer, then spawn one page
 task per page".
 
-Lifecycle of one `spawn_parallel_agents` call:
+Lifecycle of one `spawn_parallel_agents` call (a TERMINAL tool — it ends the turn):
 
   1. create a `Builder AI Batch` (+ one `Builder AI Batch Task` child per task)
-  2. enqueue one `run_subagent_task` per task on a SEPARATE queue from the parent
-     (so the parent's blocking join never competes with its own children for workers)
-  3. JOIN: the parent tool handler polls the batch counters until every task settles
-     (bounded by JOIN_TIMEOUT), then returns a compact summary to the model
-  4. the model reads the summary and continues (report to user / retry a failure)
+  2. enqueue one `run_subagent_task` per task, persist a "building N tasks" message,
+     and END the parent turn — no worker sits blocked polling for the results
+  3. each settling child bumps the counters; the one that settles the batch wins the
+     finalize lock, records the outcome on the conversation, and enqueues a
+     CONTINUATION turn on the parent session (same pattern as the confirm-card resume)
+  4. that turn reads the outcome and reports to the user / repairs failures
 
-Progress is durable on the batch doc (the chat's task-group card reads it) and nudged
+Progress is durable on the batch doc (the chat's task-group card polls it) and nudged
 live over the parent session's realtime channel. Counters are bumped with atomic SQL
-increments so parallel workers never lose an update.
+increments so parallel workers never lose an update; `reap_stale_batches` (scheduler)
+finalizes a batch whose child died too hard to report back.
 """
 
 import logging
@@ -37,14 +39,13 @@ TASK_DOCTYPE = "Builder AI Batch Task"
 COUNTER_FIELDS = {"completed_tasks", "failed_tasks"}
 
 MAX_PARALLEL_TASKS = 8
-# Children run on the `long` queue — a separate worker pool from the parent chat turn
-# (enqueued on `default`), so a parent blocked on join() can't starve its own children.
+# Children run on the `long` queue — a separate worker pool from the chat turns
+# (enqueued on `default`), so a burst of page builds can't starve the chat.
 SUBAGENT_QUEUE = "long"
 SUBAGENT_TIMEOUT = 780
-POLL_INTERVAL = 2.0
-# The parent turn (headless) is enqueued with a timeout comfortably above this so the
-# join always finishes (or times out cleanly) before the RQ hard-kill.
-JOIN_TIMEOUT = 840
+# The finalize lock only picks ONE finalizer; it never blocks anyone. Generous TTL so
+# a straggler child (or the reaper) can't double-resume the parent chat.
+FINALIZE_LOCK_TTL = 3600
 
 
 # --- realtime (parent-scoped; mirrors AgentRunner.emit) -----------------
@@ -88,6 +89,10 @@ def bump_batch_counter(batch_id: str, field: str) -> None:
 
 def batch_cancel_key(batch_id: str) -> str:
 	return f"builder_ai_cancel_batch:{batch_id}"
+
+
+def finalize_key(batch_id: str) -> str:
+	return f"builder_ai_batch_finalize:{batch_id}"
 
 
 def is_batch_cancelled(batch_id: str) -> bool:
@@ -187,16 +192,18 @@ def run_subagent_task(
 	parent_session: str | None,
 ) -> None:
 	"""Run ONE task as a full headless AgentRunner. Reports status to the batch + nudges
-	the parent chat. A failure here never aborts siblings — it's recorded and counted."""
+	the parent chat; the child that settles the batch finalizes it (maybe_finalize_batch).
+	A failure here never aborts siblings — it's recorded and counted."""
 	if is_batch_cancelled(batch_id):
 		fail_task(batch_id, task_row, title, "Cancelled before start", parent_session, user)
+		maybe_finalize_batch(batch_id)
 		return
 
 	lock = locks.page_key(page_id) if page_id else locks.task_key(f"{batch_id}:{task_row}")
 	with locks.guard(lock, locks.TASK_LOCK_TTL) as got:
 		if not got:
 			logger.warning("run_subagent_task: %s already locked, skipping", task_row)
-			return
+			return  # duplicate execution — the other holder settles this task
 		try:
 			update_batch_task(batch_id, task_row, status="running")
 			emit(
@@ -250,6 +257,7 @@ def run_subagent_task(
 			logger.error("run_subagent_task failed (task=%s): %s", task_row, e, exc_info=True)
 			fail_task(batch_id, task_row, title, str(e)[:500], parent_session, user)
 	frappe.db.commit()
+	maybe_finalize_batch(batch_id)
 
 
 def fail_task(batch_id, task_row, title, error, parent_session, user) -> None:
@@ -271,23 +279,25 @@ def page_has_blocks(page_id: str) -> bool:
 	return bool(blocks) and blocks.strip() not in ("", "[]", "null")
 
 
-# --- the spawn tool handler (runs in the parent chat turn) --------------
+# --- the spawn tool handler (terminal — ends the parent chat turn) -------
 
 
-def spawn_parallel_agents(ctx, args: dict) -> str:
-	"""Server tool: fan out INDEPENDENT tasks to parallel headless sub-agents, wait for
-	them, and return a compact summary. Each task with a `page_title` gets a fresh draft
-	page under a (shared) site folder; the sub-agent builds it."""
+def spawn_parallel_agents(ctx, args: dict) -> str | None:
+	"""Terminal tool: fan out INDEPENDENT tasks to parallel headless sub-agents and END
+	the turn — no worker waits on them. Each task with a `page_title` gets a fresh draft
+	page under a (shared) site folder; the sub-agent builds it. When the last task
+	settles, the parent chat is resumed with the outcome (see maybe_finalize_batch).
+	Returning a string DECLINES the spawn and the model self-corrects."""
 	tasks = args.get("tasks")
 	if not isinstance(tasks, list) or not tasks:
-		return "No tasks provided. Pass a non-empty `tasks` list."
+		return "DECLINED: no tasks provided. Pass a non-empty `tasks` list."
 	if len(tasks) > MAX_PARALLEL_TASKS:
 		return (
-			f"Too many tasks ({len(tasks)}). The max is {MAX_PARALLEL_TASKS} per call — "
+			f"DECLINED: too many tasks ({len(tasks)}). The max is {MAX_PARALLEL_TASKS} per call — "
 			"combine related work into fewer, larger tasks."
 		)
 	if not frappe.has_permission("Builder Page", "create"):
-		return "You do not have permission to create pages."
+		return "DECLINED: you do not have permission to create pages."
 
 	shared = (args.get("shared_context") or "").strip()
 	builds_pages = any(t.get("page_title") for t in tasks)
@@ -335,40 +345,110 @@ def spawn_parallel_agents(ctx, args: dict) -> str:
 		)
 	frappe.db.commit()  # fires the after-commit enqueues
 
+	# The turn ends here (terminal): persist the hand-off so it survives a reload —
+	# the batchId rehydrates the task-group card — then emit it. The results arrive
+	# in a continuation turn when the last child settles.
+	message = f"Building {len(prepared)} task(s) in parallel — I'll report back here when they finish."
+	metadata: dict = {"status": "complete", "batchId": batch.name}
+	if ctx.activity:
+		metadata["activity"] = ctx.activity  # research done before spawning survives a reload
+	AISession.try_append_message(
+		ctx.session_id, "assistant", message, message_type="chat", task_type="agent", metadata=metadata
+	)
+	frappe.db.commit()
 	ctx.emit(
 		"task_group",
 		batch_id=batch.name,
 		total=len(prepared),
 		tasks=[{"row": r, "title": t, "page": p, "status": "queued"} for r, t, _, p in prepared],
 	)
-	return join_batch(ctx, batch.name)
+	ctx.emit("complete", message=message)
+	return None
 
 
-def join_batch(ctx, batch_id: str) -> str:
-	"""Block until every task settles (or JOIN_TIMEOUT). Commit each poll iteration so a
-	long-lived parent worker sees other workers' committed counter bumps (MySQL
-	REPEATABLE READ would otherwise pin a stale snapshot for the whole transaction)."""
-	import time
+# --- settle: the last child finalizes and resumes the parent chat --------
 
-	deadline = time.monotonic() + JOIN_TIMEOUT
-	while True:
-		frappe.db.commit()  # end the txn → next read sees children's committed progress
-		row = frappe.db.get_value(
-			BATCH_DOCTYPE,
-			batch_id,
-			["total_tasks", "completed_tasks", "failed_tasks"],
-			as_dict=True,
-		)
-		total = (row.total_tasks or 0) if row else 0
-		settled = (row.completed_tasks or 0) + (row.failed_tasks or 0) if row else 0
-		if total and settled >= total:
-			return finalize_batch(batch_id, "done")
-		if ctx.is_cancelled():
-			cancel_batch(batch_id)
-			return finalize_batch(batch_id, "cancelled")
-		if time.monotonic() >= deadline:
-			return finalize_batch(batch_id, "timeout")
-		ctx.interruptible_sleep(POLL_INTERVAL)
+
+def maybe_finalize_batch(batch_id: str) -> None:
+	"""Called by every settling child. When the counters show the batch is fully
+	settled, exactly ONE caller (Redis NX finalize lock) records the outcome and
+	resumes the parent chat. Cancelled batches finalize silently — the user stopped
+	the work; don't wake the agent to discuss it."""
+	row = frappe.db.get_value(
+		BATCH_DOCTYPE, batch_id, ["total_tasks", "completed_tasks", "failed_tasks"], as_dict=True
+	)
+	if not row or not row.total_tasks:
+		return
+	if (row.completed_tasks or 0) + (row.failed_tasks or 0) < row.total_tasks:
+		return
+	if not locks.acquire(finalize_key(batch_id), FINALIZE_LOCK_TTL):
+		return  # another child (or the reaper) is finalizing
+	cancelled = is_batch_cancelled(batch_id)
+	summary = finalize_batch(batch_id, "cancelled" if cancelled else "done")
+	if not cancelled:
+		resume_parent_chat(batch_id, summary)
+
+
+def resume_parent_chat(batch_id: str, summary: str) -> None:
+	"""Durable outcome + continuation turn, mirroring the confirm-card resume
+	(api.resume_agent_after_decision): the outcome message is what future context
+	sees; the enqueued turn reports to the user / repairs failures without another
+	prod. Skipped (message only) when the session is mid-turn — the model will see
+	the outcome in its context on that turn anyway."""
+	batch = frappe.db.get_value(
+		BATCH_DOCTYPE, batch_id, ["session", "created_by_user", "model"], as_dict=True
+	)
+	if not batch or not batch.session:
+		return
+	AISession.try_append_message(batch.session, "assistant", summary, message_type="status")
+	frappe.db.commit()
+	if AISession.is_session_running(batch.session):
+		return
+	from builder.ai.agent.loop import run_agent_job
+	from builder.ai.api import resolve_api_key
+	from builder.ai.models import ModelRegistry
+
+	try:
+		api_key = resolve_api_key()
+	except Exception:
+		# The outcome message above is the durable record; a continuation without a
+		# key (removed mid-flight) would only crash the settling child's job.
+		logger.warning("resume_parent_chat: no API key — outcome recorded, continuation skipped")
+		return
+
+	prompt = (
+		f"[Background update — your parallel tasks finished: {summary}] "
+		"Report the outcome to the user in 1–2 sentences with clickable links to the pages. "
+		"Retry or repair a failed task only when that clearly makes sense; otherwise just report."
+	)
+	frappe.enqueue(
+		run_agent_job,
+		queue="default",
+		timeout=600,
+		prompt=prompt,
+		model=ModelRegistry.get_default(batch.model or "openrouter"),
+		api_key=api_key,
+		user=batch.created_by_user,
+		page_id=None,
+		session_id=batch.session,
+	)
+
+
+def reap_stale_batches() -> None:
+	"""Scheduler safety net: a hard-killed child (OOM, machine death) never bumps its
+	counter, which would leave the batch 'running' forever with nobody left to finalize.
+	Fail the stragglers on long-overdue batches and finalize them normally."""
+	cutoff = frappe.utils.add_to_date(None, seconds=-2 * SUBAGENT_TIMEOUT)
+	stale = frappe.get_all(
+		BATCH_DOCTYPE, filters={"status": "running", "creation": ("<", cutoff)}, pluck="name"
+	)
+	for batch_id in stale:
+		if not locks.acquire(finalize_key(batch_id), FINALIZE_LOCK_TTL):
+			continue
+		logger.warning("reap_stale_batches: finalizing overdue batch %s", batch_id)
+		summary = finalize_batch(batch_id, "timeout")
+		if not is_batch_cancelled(batch_id):
+			resume_parent_chat(batch_id, summary)
 
 
 def finalize_batch(batch_id: str, outcome: str) -> str:
