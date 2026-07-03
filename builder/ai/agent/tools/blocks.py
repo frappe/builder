@@ -56,9 +56,10 @@ update_block = Tool(
 				"type": "object",
 				"description": (
 					"Data bindings: {property: data_key}, e.g. {innerHTML: 'title', src: 'image', "
-					"href: 'url'}. Inside a repeater's item template the key is a field of each "
-					"record; elsewhere it's a page-data key. This is the ONLY way to render "
-					"dynamic data — NEVER write '{{ item.title }}' moustache text into "
+					"href: 'url'}. Keys are BARE names: inside a repeater's item template the key "
+					"is a field of each record ('image', NOT 'item.image'); elsewhere it's a "
+					"page-data key ('merch_items', NOT 'data.merch_items'). This is the ONLY way "
+					"to render dynamic data — NEVER write '{{ item.title }}' moustache text into "
 					"inner_text/attributes (it renders literally). A null value unbinds."
 				),
 			},

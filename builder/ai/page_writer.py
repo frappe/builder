@@ -174,13 +174,26 @@ def convert_icon_block(node: dict) -> dict:
 	return block
 
 
+def strip_binding_prefix(key) -> str:
+	"""Models habitually write 'item.image' or 'data.merch_items', but the renderer
+	resolves binding keys RELATIVE to their context — the loop record inside a
+	repeater, the page-data root elsewhere — so those prefixes silently break
+	resolution. Normalize here, at the single point keys land, instead of hoping
+	prompts prevent it."""
+	key = str(key or "").strip()
+	for prefix in ("data.", "item.", "row."):
+		if key.startswith(prefix):
+			return key[len(prefix) :]
+	return key
+
+
 def bind_to_dynamic_values(bind: dict) -> list:
 	"""{property: item_key} → dynamicValues entries (the editor's binding shape).
 	innerHTML/text bind by content ("key"); anything else binds an HTML attribute."""
 	return [
-		{"key": str(field), "property": "innerHTML", "type": "key"}
+		{"key": strip_binding_prefix(field), "property": "innerHTML", "type": "key"}
 		if prop in ("innerHTML", "text")
-		else {"key": str(field), "property": prop, "type": "attribute"}
+		else {"key": strip_binding_prefix(field), "property": prop, "type": "attribute"}
 		for prop, field in bind.items()
 	]
 
@@ -240,7 +253,11 @@ def convert_yaml_block(node, is_root: bool = False) -> dict:
 	repeat = node.get("repeat")
 	if isinstance(repeat, dict) and repeat.get("item"):
 		block["isRepeaterBlock"] = True
-		block["dataKey"] = {"key": str(repeat.get("data") or ""), "property": "innerHTML", "type": "key"}
+		block["dataKey"] = {
+			"key": strip_binding_prefix(repeat.get("data")),
+			"property": "innerHTML",
+			"type": "key",
+		}
 		child_blocks = [convert_yaml_block(repeat["item"])]
 
 	if child_blocks:

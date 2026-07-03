@@ -49,6 +49,19 @@ export function getValidPartialYAML(yamlStr: string): any {
 	return null;
 }
 
+/** Models habitually write 'item.image' / 'data.merch_items', but the renderer
+ * resolves binding keys RELATIVE to their context (the loop record inside a
+ * repeater, the page-data root elsewhere) — those prefixes silently break
+ * resolution. Normalize at the single point keys land. Mirrors
+ * page_writer.strip_binding_prefix. */
+export function stripBindingPrefix(key: unknown): string {
+	const k = String(key ?? "").trim();
+	for (const prefix of ["data.", "item.", "row."]) {
+		if (k.startsWith(prefix)) return k.slice(prefix.length);
+	}
+	return k;
+}
+
 /** Convert the agent's compact block YAML into the editor's BlockOptions shape.
  * `isRoot` marks the top-level block of a generated page as the <body>; the editor
  * then derives blockId="root" from that (Block.isRoot() === originalElement "body").
@@ -80,8 +93,8 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	if (yamlBlock.bind && typeof yamlBlock.bind === "object" && !Array.isArray(yamlBlock.bind)) {
 		block.dynamicValues = Object.entries(yamlBlock.bind).map(([prop, field]) =>
 			prop === "innerHTML" || prop === "text"
-				? { key: String(field), property: "innerHTML", type: "key" }
-				: { key: String(field), property: prop, type: "attribute" },
+				? { key: stripBindingPrefix(field), property: "innerHTML", type: "key" }
+				: { key: stripBindingPrefix(field), property: prop, type: "attribute" },
 		);
 	}
 	// NB: pass each child explicitly — Array.map would feed the index as `isRoot`.
@@ -91,7 +104,7 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	// buildRepeaterDataScript); the block keeps only the loop wiring + template child.
 	if (yamlBlock.repeat && typeof yamlBlock.repeat === "object" && yamlBlock.repeat.item) {
 		block.isRepeaterBlock = true;
-		block.dataKey = { key: String(yamlBlock.repeat.data || ""), property: "innerHTML", type: "key" };
+		block.dataKey = { key: stripBindingPrefix(yamlBlock.repeat.data), property: "innerHTML", type: "key" };
 		block.children = [convertYAMLtoBlock(yamlBlock.repeat.item)];
 	}
 	return block;

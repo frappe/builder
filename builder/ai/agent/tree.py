@@ -17,8 +17,31 @@ Two modes:
     tree to draft_blocks after each applied round.
 """
 
+import re
+
 from builder.ai.agent.selectors import find_block, walk_blocks
 from builder.ai.block_codec import STANDARD_ATTRS
+
+# A binding key is a PLAIN field/data key (dots allow nesting). Models sometimes try
+# expressions ("'$' + item.price", "in_stock ? 'In Stock' : '…'") — those can never
+# resolve; formatting belongs in the page data script or static text.
+BIND_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
+
+
+def bad_bind_keys(args: dict) -> list[str]:
+	bind = args.get("bind")
+	if not isinstance(bind, dict):
+		return []
+	from builder.ai.page_writer import strip_binding_prefix
+
+	return [str(v) for v in bind.values() if v is not None and not BIND_KEY_RE.match(strip_binding_prefix(v))]
+
+
+BAD_BIND_HINT = (
+	"bind keys must be PLAIN field/data keys (e.g. 'price', 'image') — expressions can't "
+	"resolve. Bind the raw field, and compute formatted/conditional text in the page data "
+	"script instead (e.g. set price_display on each record in write_page_data_script)."
+)
 
 
 def merge_styles(block: dict, args: dict) -> None:
@@ -133,6 +156,8 @@ class WorkingTree:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
+		if bad := bad_bind_keys(args):
+			return f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if self.mutating:
 			merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
@@ -145,19 +170,23 @@ class WorkingTree:
 			targets = [(block_id, args) for block_id in args.get("block_ids") or []]
 		if not targets:
 			return "FAILED: no block_ids or patches supplied — nothing to update."
-		missing = []
+		missing, rejected = [], []
 		for block_id, patch in targets:
 			block = self.resolve(block_id)
 			if block is None:
 				missing.append(block_id)
+			elif bad := bad_bind_keys(patch):
+				rejected.append(f"{block_id} {bad}")
 			elif self.mutating:
 				merge_block_update(block, patch)
-		applied = len(targets) - len(missing)
+		applied = len(targets) - len(missing) - len(rejected)
+		problems = []
 		if missing:
-			return (
-				f"Applied to {applied} of {len(targets)} blocks. NOT FOUND: {missing}. "
-				"Those refs don't exist — recheck them, don't reissue the same ids."
-			)
+			problems.append(f"NOT FOUND: {missing} — those refs don't exist, recheck them.")
+		if rejected:
+			problems.append(f"BAD BIND on {rejected} — {BAD_BIND_HINT}")
+		if problems:
+			return f"Applied to {applied} of {len(targets)} blocks. " + " ".join(problems)
 		return f"Applied to all {applied} block(s)."
 
 	def apply_remove(self, block_id: str | None) -> str:

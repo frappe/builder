@@ -7,7 +7,13 @@ import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { normalizeStyles } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
-import { buildRepeaterDataScript, convertYAMLtoBlock, parseBlock, STANDARD_ATTRS } from "./yaml";
+import {
+	buildRepeaterDataScript,
+	convertYAMLtoBlock,
+	parseBlock,
+	STANDARD_ATTRS,
+	stripBindingPrefix,
+} from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 type CanvasStore = ReturnType<typeof useCanvasStore>;
@@ -200,10 +206,11 @@ export class ToolDispatcher {
 				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
 				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);
 				if (field != null) {
+					const key = stripBindingPrefix(field);
 					block.dynamicValues.push(
 						property === "innerHTML"
-							? { key: String(field), property: "innerHTML", type: "key" }
-							: { key: String(field), property, type: "attribute" },
+							? { key, property: "innerHTML", type: "key" }
+							: { key, property, type: "attribute" },
 					);
 				}
 			}

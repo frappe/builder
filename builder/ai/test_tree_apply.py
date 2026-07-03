@@ -116,6 +116,47 @@ class TestMutatingUpdate(unittest.TestCase):
 			template_heading["dynamicValues"], [{"key": "title", "property": "innerHTML", "type": "key"}]
 		)
 
+	def test_binding_prefixes_are_normalized(self):
+		# The renderer resolves keys relative to their context: 'data.'/'item.' prefixes
+		# (which models habitually write) would silently break resolution.
+		self.tree.apply(
+			"add_block",
+			{
+				"parent_block_id": "hero",
+				"block": {
+					"el": "div",
+					"repeat": {
+						"data": "data.products",
+						"item": {"el": "img", "bind": {"src": "item.image"}},
+					},
+				},
+			},
+		)
+		repeater = self.tree.resolve("hero")["children"][-1]
+		self.assertEqual(repeater["dataKey"]["key"], "products")
+		self.assertEqual(repeater["children"][0]["dynamicValues"][0]["key"], "image")
+		self.tree.apply("update_block", {"block_id": "cta", "bind": {"innerHTML": "item.title"}})
+		self.assertEqual(self.tree.resolve("cta")["dynamicValues"][0]["key"], "title")
+
+	def test_expression_bind_keys_are_rejected(self):
+		msg = self.tree.apply(
+			"update_block", {"block_id": "cta", "bind": {"innerHTML": "in_stock ? 'In Stock' : 'Out'"}}
+		)
+		self.assertIn("FAILED", msg)
+		self.assertIn("data script", msg)
+		self.assertNotIn("dynamicValues", self.tree.resolve("cta"))
+		msg = self.tree.apply(
+			"update_blocks",
+			{
+				"patches": [
+					{"block_id": "h1", "inner_text": "ok"},
+					{"block_id": "cta", "bind": {"innerHTML": "'$' + price"}},
+				]
+			},
+		)
+		self.assertIn("BAD BIND", msg)
+		self.assertEqual(self.tree.resolve("h1")["innerHTML"], "ok")  # good patch still applied
+
 	def test_validating_mode_does_not_mutate(self):
 		tree = WorkingTree(sample_root())  # mutating=False (editor)
 		msg = tree.apply("update_block", {"block_id": "hero", "base_styles": {"padding": "1px"}})
