@@ -115,13 +115,34 @@ def get_document(ctx, args: dict) -> str:
 	return frappe.as_json(data)
 
 
+# A data script POPULATES `data` — it must never mutate documents. A script that
+# writes would run its mutation on EVERY page render (and is how a weaker model
+# once smuggled "doc.published = 0; doc.save()" past the missing lifecycle tool).
+DATA_SCRIPT_FORBIDDEN = (
+	".save(",
+	".insert(",
+	".submit(",
+	".delete(",
+	"delete_doc",
+	"set_value",
+	"ignore_permissions",
+)
+
+
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
 	`data.events = frappe.get_list("Event", ...)`). Runs in the frappe safe_exec
 	sandbox at render time; bind blocks/repeaters to the keys it sets."""
 	if not ctx.page_id:
 		return "No page in context to attach a data script to."
-	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", args.get("script") or "")
+	script = args.get("script") or ""
+	if any(token in script for token in DATA_SCRIPT_FORBIDDEN):
+		return (
+			"FAILED: a page data script only READS data into `data` for bindings — it runs on "
+			"every page render and must never save/insert/delete documents. To publish, "
+			"unpublish, or delete pages use manage_pages; for settings use the settings tools."
+		)
+	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	frappe.db.commit()
 	return "Saved the page data script (runs server-side to populate `data`)."
 

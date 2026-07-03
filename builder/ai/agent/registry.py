@@ -163,7 +163,10 @@ def build_subagent_registry() -> ToolRegistry:
 	from builder.ai.agent.tools import data, scripts, settings
 
 	registry = ToolRegistry()
-	registry.extend([t for t in headless_page_tools() if t.name not in {"open_page", "create_page"}])
+	# No focus-switching, and no confirm-gated lifecycle (nobody to confirm in a worker).
+	registry.extend(
+		[t for t in headless_page_tools() if t.name not in {"open_page", "create_page", "manage_pages"}]
+	)
 	registry.extend(
 		pick(
 			data.TOOLS,

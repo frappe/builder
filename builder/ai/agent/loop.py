@@ -109,6 +109,17 @@ def claims_unbacked_action(summary_text: str) -> bool:
 	return bool(summary_text) and bool(ACTION_CLAIM_RE.search(summary_text))
 
 
+# Weaker models sometimes emit a pseudo tool call as plain TEXT instead of calling
+# the tool ("calc:default_api:write_page_data_script{…}", "```tool_code…"). That
+# must never reach the chat as the turn's summary. Conservative signals only —
+# `default_api` is Gemini's function namespace, never natural prose.
+TOOL_SYNTAX_RE = re.compile(r"\bdefault_api\b|<tool_code|```tool_code")
+
+
+def looks_like_tool_syntax(text: str) -> bool:
+	return bool(text) and bool(TOOL_SYNTAX_RE.search(text))
+
+
 # Above this many chars of compact-YAML page structure, switch the page context
 # from the full tree to a compact outline (read_block pulls detail on demand).
 # Tuned so a typical multi-section page still ships in full; only big pages skeletonise.
@@ -807,6 +818,8 @@ class AgentRunner:
 				# Only for rounds that CONTINUE — the final round's text is the turn summary.
 				if tool_operations:
 					note = (summary_text or "").strip()
+					if looks_like_tool_syntax(note):
+						note = ""
 					if not note and client_ops:
 						note = self.describe_operations(client_ops)
 					if note:
@@ -933,6 +946,18 @@ class AgentRunner:
 				self.emit("stream", chunk=yaml_text, kind="page_yaml")
 				self.emit("tool_batch", operations=[op])
 			summary_text = ""
+
+		# Leaked tool-call syntax is never a summary — suppress it. With applied work
+		# the deterministic fallbacks below take over; with none, say what happened.
+		if looks_like_tool_syntax(summary_text):
+			logger.warning(
+				"Suppressed tool-syntax leak in summary: %s", BlockCodec.truncate_for_log(summary_text, 300)
+			)
+			summary_text = (
+				""
+				if client_operations
+				else "My last step came out garbled and was not applied — ask me to try that again."
+			)
 
 		if not client_operations and not summary_text:
 			logger.warning("Agent returned empty response (no tools, no text)")

@@ -77,6 +77,16 @@ def run_copy_page_design(ctx, args: dict) -> str:
 	)
 
 
+def request_manage_pages(ctx, args: dict) -> None:
+	from builder.ai.agent import pending
+
+	action = (args.get("action") or "").strip()
+	page_ids = [p for p in (args.get("page_ids") or []) if frappe.db.exists("Builder Page", p)]
+	titles = [frappe.db.get_value("Builder Page", p, "page_title") or p for p in page_ids]
+	summary = f"{action.capitalize()} {len(titles)} page(s): {', '.join(titles)}?"
+	pending.request_confirmation(ctx, "manage_pages", summary, {"action": action, "page_ids": page_ids})
+
+
 def run_read_page(ctx, args: dict) -> str:
 	from builder.ai import page_writer
 	from builder.ai.agent.loop import render_page_context
@@ -172,6 +182,29 @@ copy_page_design = Tool(
 	},
 )
 
+manage_pages = Tool(
+	name="manage_pages",
+	side="terminal",
+	handler=request_manage_pages,
+	description=(
+		"Publish, unpublish, or DELETE pages — the ONLY way to take a page down or remove "
+		"it. Asks the user to confirm before anything changes. NEVER improvise page "
+		"lifecycle through scripts or data tools."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"action": {"type": "string", "enum": ["publish", "unpublish", "delete"]},
+			"page_ids": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": "Builder Page ids (find them with query_records).",
+			},
+		},
+		"required": ["action", "page_ids"],
+	},
+)
+
 read_page = Tool(
 	name="read_page",
 	side="server",
@@ -195,4 +228,4 @@ read_page = Tool(
 	},
 )
 
-TOOLS = [open_page, create_page, copy_page_design, read_page]
+TOOLS = [open_page, create_page, copy_page_design, read_page, manage_pages]
