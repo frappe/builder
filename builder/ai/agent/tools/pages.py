@@ -38,6 +38,45 @@ def run_create_page(ctx, args: dict) -> str:
 	return f"Created draft page '{title}' (id={page_id}, route=/{route}) and opened it — build it with generate_page."
 
 
+def run_copy_page_design(ctx, args: dict) -> str:
+	"""The high-fidelity path for "make a page like @X": copy X's block tree (and
+	repeater data script) into the focused page verbatim — a data copy, no LLM in
+	the loop, so components, theme tokens, spacing and typography survive exactly.
+	The agent then ADAPTS the copy with the surgical block tools."""
+	from builder.ai import page_writer
+	from builder.ai.agent.loop import render_page_context
+	from builder.ai.agent.tree import WorkingTree
+	from builder.utils import compact_json
+
+	if not ctx.page_id:
+		return "FAILED: no page is open — create_page or open_page first, then copy into it."
+	source = (args.get("source_page_id") or "").strip()
+	if not source or not frappe.db.exists("Builder Page", source):
+		return f"FAILED: source page '{source}' not found — find its id with query_records."
+	if source == ctx.page_id:
+		return "FAILED: the source is the page you're editing."
+	if not frappe.has_permission("Builder Page", "read", source):
+		return "FAILED: you don't have permission to read the source page."
+	root = page_writer.load_page_root(source)
+	if root is None:
+		return f"Page {source} is empty — nothing to copy."
+	data_script = frappe.db.get_value("Builder Page", source, "page_data_script")
+	ctx.ensure_revert_snapshot()  # copying replaces the focused page's block tree
+	frappe.db.set_value(
+		"Builder Page",
+		ctx.page_id,
+		{"draft_blocks": compact_json([root]), "page_data_script": data_script or ""},
+	)
+	frappe.db.commit()
+	ctx.tree = WorkingTree(root, mutating=True)
+	return (
+		f"Copied the full design of {source} into this page — components, theme tokens, and "
+		"layout are now identical. ADAPT it for its new purpose with the block tools "
+		"(query_blocks + update_blocks patches for the copy, remove/add sections as needed).\n"
+		f"{render_page_context(root)}"
+	)
+
+
 def run_read_page(ctx, args: dict) -> str:
 	from builder.ai import page_writer
 	from builder.ai.agent.loop import render_page_context
@@ -109,6 +148,30 @@ create_page = Tool(
 	},
 )
 
+copy_page_design = Tool(
+	name="copy_page_design",
+	side="server",
+	handler=run_copy_page_design,
+	description=(
+		"Copy another page's ENTIRE design (block tree + repeater data) into the page you "
+		"have open — an exact, lossless copy that keeps shared components, var(--token) "
+		"references, spacing and typography identical. THE default first step when the user "
+		"wants a new page matching an existing one ('like @X', 'refer @X for design'): "
+		"create_page, copy_page_design, then adapt the copy's text and sections with the "
+		"block tools. Far more faithful and cheaper than regenerating from scratch."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"source_page_id": {
+				"type": "string",
+				"description": "The Builder Page id whose design to copy from.",
+			},
+		},
+		"required": ["source_page_id"],
+	},
+)
+
 read_page = Tool(
 	name="read_page",
 	side="server",
@@ -132,4 +195,4 @@ read_page = Tool(
 	},
 )
 
-TOOLS = [open_page, create_page, read_page]
+TOOLS = [open_page, create_page, copy_page_design, read_page]

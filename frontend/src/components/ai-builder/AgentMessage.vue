@@ -28,12 +28,6 @@
 						Open
 					</button>
 				</div>
-				<img
-					v-if="a.imageUrl"
-					:src="a.imageUrl"
-					class="max-w-[320px] cursor-pointer rounded-md border border-outline-gray-2"
-					alt="Page screenshot"
-					@click="a.page && openPage(a.page)" />
 			</template>
 		</div>
 
@@ -140,7 +134,7 @@ const activityDisplay = computed(() => {
 	const out: Array<ActivityEntry & { count: number }> = [];
 	for (const a of props.message.activity || []) {
 		const last = out[out.length - 1];
-		if (last && !last.imageUrl && !a.imageUrl && last.summary === a.summary && last.status === a.status) {
+		if (last && last.summary === a.summary && last.status === a.status) {
 			last.count++;
 		} else {
 			out.push({ ...a, count: 1 });

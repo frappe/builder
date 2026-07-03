@@ -29,17 +29,16 @@ def render_page_image(page) -> bytes:
 	return render(page.get_preview_html(), width=PREVIEW_WIDTH, height=PREVIEW_HEIGHT)
 
 
-def attach_to_chat(ctx, page, image: bytes) -> None:
-	"""Save as the page's preview file — the dashboard thumbnail updates for free —
-	and pin the URL on the current activity entry so the chat renders it inline."""
+def save_as_page_thumbnail(page, image: bytes) -> None:
+	"""Save as the page's preview file so the dashboard (and batch task) thumbnails
+	update for free. The screenshot is NOT shown in the chat — it exists for the
+	model's self-review pass."""
 	from builder.utils import get_builder_page_preview_file_paths
 
 	public_path, local_path = get_builder_page_preview_file_paths(page)
 	with open(local_path, "wb") as f:
 		f.write(image)
 	page.db_set("preview", public_path, commit=True, update_modified=False)
-	if ctx.current_activity is not None:
-		ctx.current_activity["image_url"] = public_path
 
 
 def attach_to_model(ctx, page, image: bytes) -> bool:
@@ -67,14 +66,14 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Preview unavailable (screenshot renderer not reachable). "
 			"Continue without the visual check — do not retry."
 		)
-	attach_to_chat(ctx, page, image)
+	save_as_page_thumbnail(page, image)
 	attached = attach_to_model(ctx, page, image)
 	if not attached:
-		return "Screenshot captured and shown to the user (too large to attach for review) — finish up."
+		return "Screenshot captured but too large to attach for review — finish up."
 	return (
-		"Screenshot captured — it's shown to the user and attached below for you. Review it "
+		"Screenshot attached below — for YOUR eyes only (the user doesn't see it). Review it "
 		"ONCE: fix only obvious breakage (unreadable contrast, overlapping or empty sections), "
-		"then finish. Don't re-describe the screenshot to the user."
+		"then finish. Don't describe the screenshot to the user."
 	)
 
 
@@ -83,10 +82,11 @@ preview_page = Tool(
 	side="server",
 	handler=run_preview_page,
 	description=(
-		"Render a page's draft to a screenshot: shown to the user in the chat, and attached "
-		"to you so you can SEE what you built. Use it once after generate_page or a major "
-		"edit for a single self-review pass — fix only obvious visual breakage, never loop "
-		"screenshots. If the renderer is unavailable, continue without it."
+		"Render a page's draft to a screenshot attached to you so you can SEE what you "
+		"built (also refreshes the page's dashboard thumbnail — the user is not shown the "
+		"image in chat). Use it once after generate_page or a major edit for a single "
+		"self-review pass — fix only obvious visual breakage, never loop screenshots. If "
+		"the renderer is unavailable, continue without it."
 	),
 	parameters={
 		"type": "object",

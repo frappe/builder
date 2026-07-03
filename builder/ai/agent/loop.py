@@ -176,6 +176,8 @@ def activity_summary(tool_name: str, args: dict) -> str:
 		return line
 	if tool_name == "create_page":
 		return f"Created page: {args.get('page_title') or ''}".strip()
+	if tool_name == "copy_page_design":
+		return f"Copied design from {page_title(args.get('source_page_id'))}"
 	if tool_name == "generate_page":
 		return "Building the page"
 	if tool_name == "preview_page":
@@ -628,7 +630,7 @@ class AgentRunner:
 			}
 			# Working-page tools carry the page id so the chat can offer an "Open"
 			# link on the line (create_page fills it in from its handler).
-			if tool_name in ("open_page", "generate_page", "preview_page"):
+			if tool_name in ("open_page", "generate_page", "preview_page", "copy_page_design"):
 				entry["page"] = (args or {}).get("page_id") or self.page_id
 			self.activity.append(entry)
 			self.current_activity = entry

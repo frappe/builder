@@ -16,7 +16,6 @@ export interface ActivityEntry {
 	tool: string;
 	summary: string;
 	status: string; // running | done
-	imageUrl?: string; // preview_page screenshots render inline
 	page?: string; // working-page id → "Open" link on the line
 }
 
@@ -118,21 +117,14 @@ const handlers: Record<string, (data: any) => void> = {
 		scrollToBottom();
 	},
 	tool_batch: () => {}, // headless: no client ops to apply
-	// One entry per server-tool call; the same id arrives twice (running → done,
-	// possibly gaining an image_url) — upsert by id.
+	// One entry per server-tool call; the same id arrives twice (running → done) —
+	// upsert by id.
 	tool_activity: (d) => {
 		const m = pending();
 		if (!m || d.id === undefined) return;
 		m.status = "running";
 		if (!m.activity) m.activity = [];
-		const entry = {
-			id: d.id,
-			tool: d.tool,
-			summary: d.summary,
-			status: d.status,
-			imageUrl: d.image_url,
-			page: d.page,
-		};
+		const entry = { id: d.id, tool: d.tool, summary: d.summary, status: d.status, page: d.page };
 		const i = m.activity.findIndex((a) => a.id === d.id);
 		if (i === -1) m.activity.push(entry);
 		else m.activity[i] = entry;
@@ -274,7 +266,7 @@ function hydrate(rows: any[]): AgentMessage[] {
 		const status = meta.status || "complete";
 		const m: AgentMessage = { id: r.id || nextId(), role: r.role === "user" ? "user" : "assistant", text: r.content || "", status };
 		if (Array.isArray(meta.activity) && meta.activity.length) {
-			m.activity = meta.activity.map((a: any) => ({ ...a, imageUrl: a.image_url ?? a.imageUrl }));
+			m.activity = meta.activity;
 		}
 		if (status === "clarification") {
 			m.options = meta.options || [];
