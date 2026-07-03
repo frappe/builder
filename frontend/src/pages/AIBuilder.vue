@@ -37,20 +37,21 @@
 						@blur="renamingSession = ''">
 						{{ s.title || "New chat" }}
 					</EditableSpan>
+					<!-- The slot content IS the trigger (reka-ui as-child) — no open() call;
+					     @click.stop only keeps the row's openSession from firing. -->
 					<Dropdown
-						placement="right-start"
+						side="right"
+						align="start"
 						:options="[
 							{ label: 'Rename', icon: 'lucide-edit', onClick: () => (renamingSession = s.name) },
 							{ label: 'Delete', icon: 'lucide-trash', onClick: () => removeSession(s.name) },
 						]">
-						<template v-slot="{ open }">
-							<Button
-								icon="lucide-more-horizontal"
-								size="sm"
-								variant="ghost"
-								class="opacity-0 group-hover:opacity-100"
-								@click.stop="open" />
-						</template>
+						<Button
+							icon="lucide-more-horizontal"
+							size="sm"
+							variant="ghost"
+							class="opacity-0 group-hover:opacity-100"
+							@click.stop />
 					</Dropdown>
 				</div>
 			</div>
@@ -139,7 +140,7 @@
 							@keydown="onKeydown"
 							@paste="onPaste" />
 						<div class="mt-1.5 flex items-center gap-2">
-							<Dropdown :options="modelOptions" placement="top-start">
+							<Dropdown :options="modelOptions" side="top" align="start">
 								<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
 									{{ modelLabel }}
 								</button>

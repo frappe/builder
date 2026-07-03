@@ -59,14 +59,12 @@
 				</div>
 
 				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
-					<template v-slot="{ open }">
-						<Button
-							icon="lucide-more-horizontal"
-							size="sm"
-							variant="ghost"
-							class="bg-surface-base !text-ink-gray-5 hover:!text-ink-gray-9"
-							@click.stop></Button>
-					</template>
+					<Button
+						icon="lucide-more-horizontal"
+						size="sm"
+						variant="ghost"
+						class="bg-surface-base !text-ink-gray-5 hover:!text-ink-gray-9"
+						@click.stop></Button>
 				</PageActionsDropdown>
 			</div>
 

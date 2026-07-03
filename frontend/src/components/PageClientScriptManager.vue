@@ -56,9 +56,7 @@
 											icon: 'lucide-trash',
 										},
 									]">
-									<template v-slot="{ open }">
-										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
-									</template>
+									<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click.stop></Button>
 								</Dropdown>
 							</a>
 						</template>
@@ -79,9 +77,7 @@
 							]"
 							size="sm"
 							class="[&>div>div>div]:w-full">
-							<template v-slot="{ open }">
-								<Button class="w-full text-xs" @click="open">New Script</Button>
-							</template>
+							<Button class="w-full text-xs">New Script</Button>
 						</Dropdown>
 
 						<Combobox

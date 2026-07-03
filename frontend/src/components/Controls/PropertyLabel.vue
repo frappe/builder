@@ -1,13 +1,10 @@
 <template>
 	<div class="flex items-center gap-2" :class="containerClass">
 		<Dropdown v-if="showDropdown" size="sm" :options="dropdownOptions">
-			<template v-slot="{ open }">
-				<span
-					ref="dropdownTrigger"
-					class="lucide-plus-circle h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
-					aria-hidden="true"
-					@click="open" />
-			</template>
+			<span
+				ref="dropdownTrigger"
+				class="lucide-plus-circle h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
+				aria-hidden="true" />
 		</Dropdown>
 		<InputLabel
 			class="truncate"

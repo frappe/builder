@@ -38,9 +38,8 @@
 		]"
 		:size="size"
 		:placement="placement">
-		<template v-slot="{ open }">
-			<slot :open="open" />
-		</template>
+		<!-- The slot content becomes the dropdown trigger (reka-ui as-child). -->
+		<slot />
 	</Dropdown>
 </template>
 
@@ -56,11 +55,11 @@ const props = withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
-		placement?: "left" | "right" | "top" | "bottom";
+		placement?: "left" | "right" | "center";
 	}>(),
 	{
 		size: "md",
-		placement: "bottom",
+		placement: "left",
 	},
 );
 </script>
