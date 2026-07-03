@@ -174,6 +174,31 @@ def convert_icon_block(node: dict) -> dict:
 	return block
 
 
+# A value that is EXACTLY one moustache ("{{ item.city }}"). On the published page
+# such text goes through Jinja and an undefined variable crashes the whole route —
+# so generation absorbs these into real bindings instead of shipping them.
+MOUSTACHE_BINDING = re.compile(r"^\s*\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}\s*$")
+
+
+def absorb_moustache_bindings(block: dict) -> None:
+	"""Convert pure-moustache attribute/text values the model wrote into proper
+	dynamicValues bindings (prefixes like item./data. normalized away)."""
+	for key, value in list((block.get("attributes") or {}).items()):
+		if isinstance(value, str) and (m := MOUSTACHE_BINDING.match(value)):
+			block.setdefault("dynamicValues", []).append(
+				{"key": strip_binding_prefix(m.group(1)), "property": key, "type": "attribute"}
+			)
+			block["attributes"][key] = ""
+	text = block.get("innerHTML")
+	if isinstance(text, str) and (m := MOUSTACHE_BINDING.match(text)):
+		bound = {dv.get("property") for dv in block.get("dynamicValues") or []}
+		if "innerHTML" not in bound:
+			block.setdefault("dynamicValues", []).append(
+				{"key": strip_binding_prefix(m.group(1)), "property": "innerHTML", "type": "key"}
+			)
+		block["innerHTML"] = ""
+
+
 def strip_binding_prefix(key) -> str:
 	"""Models habitually write 'item.image' or 'data.merch_items', but the renderer
 	resolves binding keys RELATIVE to their context — the loop record inside a
@@ -262,6 +287,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict:
 
 	if child_blocks:
 		block["children"] = child_blocks
+	absorb_moustache_bindings(block)
 	return block
 
 

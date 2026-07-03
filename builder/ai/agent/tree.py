@@ -60,6 +60,42 @@ def repeater_bind_props(args: dict) -> list[str]:
 	return [p for p in bind if p.lower() in REPEATER_BIND_PROPS]
 
 
+# Attribute values and innerHTML go through Jinja on the PUBLISHED page — moustache
+# text like data-city="{{ item.city }}" doesn't render literally there, it crashes the
+# whole route with UndefinedError. Bindings are the only sanctioned dynamic mechanism.
+MOUSTACHE_RE = re.compile(r"\{\{|\{%")
+MOUSTACHE_HINT = (
+	"'{{ … }}' Jinja/moustache text in content or attributes CRASHES the published page "
+	"(undefined variable at render). Use bind for dynamic values instead — e.g. "
+	"bind: {'data-city': 'city', innerHTML: 'title'}."
+)
+
+
+def moustache_fields(args: dict) -> list[str]:
+	"""Fields of an update/add payload carrying moustache text."""
+	hits = []
+	for field in ("inner_text", "inner_html"):
+		if MOUSTACHE_RE.search(str(args.get(field) or "")):
+			hits.append(field)
+	for key, value in (
+		(args.get("attributes") or {}).items() if isinstance(args.get("attributes"), dict) else []
+	):
+		if MOUSTACHE_RE.search(str(value or "")):
+			hits.append(f"attributes.{key}")
+	if "block" in args and MOUSTACHE_RE.search(json_dumps_safe(args.get("block"))):
+		hits.append("block")
+	return hits
+
+
+def json_dumps_safe(value) -> str:
+	import json
+
+	try:
+		return json.dumps(value, default=str)
+	except (TypeError, ValueError):
+		return str(value)
+
+
 def merge_styles(block: dict, args: dict) -> None:
 	from builder.ai.page_writer import normalize_styles
 
@@ -176,6 +212,8 @@ class WorkingTree:
 			return f"FAILED: bind {props} — {REPEATER_BIND_HINT}"
 		if bad := bad_bind_keys(args):
 			return f"FAILED: {bad} — {BAD_BIND_HINT}"
+		if fields := moustache_fields(args):
+			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if self.mutating:
 			merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
@@ -197,6 +235,8 @@ class WorkingTree:
 				rejected.append(f"{block_id} bind {props} ({REPEATER_BIND_HINT.split('.')[0]})")
 			elif bad := bad_bind_keys(patch):
 				rejected.append(f"{block_id} {bad}")
+			elif fields := moustache_fields(patch):
+				rejected.append(f"{block_id} moustache in {fields}")
 			elif self.mutating:
 				merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)
@@ -238,6 +278,8 @@ class WorkingTree:
 		parent = self.resolve(parent_id)
 		if parent is None:
 			return f"FAILED: parent_block_id '{parent_id}' not found{self.id_hint(parent_id)}"
+		if fields := moustache_fields(args):
+			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if not self.mutating:
 			return f"Added block under {parent_id}."
 		from builder.ai.page_writer import convert_yaml_block

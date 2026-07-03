@@ -97,6 +97,30 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 				: { key: stripBindingPrefix(field), property: prop, type: "attribute" },
 		);
 	}
+	// A value that is EXACTLY one moustache ("{{ item.city }}") would go through Jinja
+	// on the published page and CRASH the route on the undefined variable — absorb it
+	// into a real binding instead (mirrors page_writer.absorb_moustache_bindings).
+	const MOUSTACHE_BINDING = /^\s*\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}\s*$/;
+	for (const [key, value] of Object.entries(block.attributes || {})) {
+		const m = typeof value === "string" && value.match(MOUSTACHE_BINDING);
+		if (m) {
+			(block.dynamicValues ||= []).push({
+				key: stripBindingPrefix(m[1]),
+				property: key,
+				type: "attribute",
+			});
+			(block.attributes as Record<string, string>)[key] = "";
+		}
+	}
+	const textMatch = typeof block.innerText === "string" && block.innerText.match(MOUSTACHE_BINDING);
+	if (textMatch) {
+		(block.dynamicValues ||= []).push({
+			key: stripBindingPrefix(textMatch[1]),
+			property: "innerHTML",
+			type: "key",
+		});
+		block.innerText = "";
+	}
 	// NB: pass each child explicitly — Array.map would feed the index as `isRoot`.
 	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map((c: any) => convertYAMLtoBlock(c)) : [];
 	// `repeat` = a static repeater: ONE template + JSON data. The data array is NOT

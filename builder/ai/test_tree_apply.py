@@ -163,6 +163,31 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertIn("add_block", msg)
 		self.assertNotIn("dynamicValues", self.tree.resolve("hero"))
 
+	def test_moustache_text_is_rejected(self):
+		# Jinja moustaches in attrs/content CRASH the published page (UndefinedError).
+		msg = self.tree.apply(
+			"update_block", {"block_id": "cta", "attributes": {"data-city": "{{ item.city }}"}}
+		)
+		self.assertIn("FAILED", msg)
+		self.assertIn("bind", msg)
+		self.assertNotIn("data-city", self.tree.resolve("cta").get("customAttributes") or {})
+		msg = self.tree.apply(
+			"add_block",
+			{"parent_block_id": "hero", "block": {"el": "span", "text": "{{ item.title }}"}},
+		)
+		self.assertIn("FAILED", msg)
+
+	def test_generation_absorbs_pure_moustache_values(self):
+		from builder.ai.page_writer import convert_yaml_block
+
+		block = convert_yaml_block(
+			{"el": "div", "attrs": {"data-city": "{{ item.city }}"}, "text": "{{ item.title }}"}
+		)
+		self.assertEqual(block["attributes"]["data-city"], "")
+		self.assertEqual(block["innerHTML"], "")
+		self.assertIn({"key": "city", "property": "data-city", "type": "attribute"}, block["dynamicValues"])
+		self.assertIn({"key": "title", "property": "innerHTML", "type": "key"}, block["dynamicValues"])
+
 	def test_validating_mode_does_not_mutate(self):
 		tree = WorkingTree(sample_root())  # mutating=False (editor)
 		msg = tree.apply("update_block", {"block_id": "hero", "base_styles": {"padding": "1px"}})
