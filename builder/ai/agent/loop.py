@@ -129,6 +129,25 @@ FULL_CONTEXT_LIMIT = 9000
 # task group) — no activity line for them.
 ACTIVITY_SILENT = frozenset({"ask_clarification", "propose_plan", "spawn_parallel_agents"})
 
+# Server tools that only READ. Everything else that runs server-side (settings, theme,
+# data scripts, page creation, generation…) mutates real state — the no-op-claim guards
+# must count that as backing for an action claim, or a purely-server-tool turn (the
+# dashboard's normal mode) gets its truthful summary replaced with "I didn't apply it".
+READ_ONLY_SERVER_TOOLS = frozenset(
+	{
+		"read_page",
+		"open_page",
+		"query_blocks",
+		"read_block",
+		"get_document",
+		"query_records",
+		"list_doctypes",
+		"get_doctype_schema",
+		"get_page_scripts",
+		"preview_page",
+	}
+)
+
 
 def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
 	"""Render a page's block tree as model-readable context: the full compact YAML
@@ -205,6 +224,10 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 		return "Searched blocks"
 	if tool_name == "set_theme_variable":
 		return f"Set --{args['name']}" if args.get("name") else "Set theme variable"
+	if tool_name == "set_page_script":
+		return f"Added script: {args.get('name') or ''}".rstrip(": ")
+	if tool_name == "update_script":
+		return f"Updated script: {args.get('script_name') or ''}".rstrip(": ")
 	if tool_name == "create_component":
 		return f"Created component: {args.get('name') or ''}".strip()
 	if tool_name in ("get_document", "query_records", "get_doctype_schema"):
@@ -266,6 +289,9 @@ class AgentRunner:
 		self.current_activity: dict | None = None
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
+		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
+		# page creation…) — counts as real work for the no-op-claim guards.
+		self.server_mutations = 0
 		# Page state captured before this turn (in api.run). A snapshot doc is created
 		# from it ONLY if the turn mutates the page; its name lands on the final
 		# assistant message as the revert handle. None when the page was empty.
@@ -837,6 +863,7 @@ class AgentRunner:
 					# exactly one corrective round telling it to actually call the tools.
 					if (
 						not client_operations
+						and not self.server_mutations
 						and not self.noop_corrected
 						and claims_unbacked_action(summary_text)
 					):
@@ -865,6 +892,18 @@ class AgentRunner:
 						entry = self.begin_activity(op["tool_name"], op["args"])
 						content = tool.handler(self, op["args"])
 						self.end_activity(entry)
+						if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith(
+							"FAILED"
+						):
+							self.server_mutations += 1
+					elif self.headless and tool and tool.handler:
+						# A client-side tool with a server twin (page scripts): no browser
+						# here, so the handler applies it directly.
+						entry = self.begin_activity(op["tool_name"], op["args"])
+						content = tool.handler(self, op["args"])
+						self.end_activity(entry)
+						if not str(content).startswith("FAILED"):
+							self.server_mutations += 1
 					else:
 						content = self.tree.apply(op["tool_name"], op["args"])
 						# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
@@ -964,11 +1003,14 @@ class AgentRunner:
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
 			# vanish on reload.
 			logger.warning("Agent returned empty response (no text; activity=%d)", len(self.activity))
-			note = (
-				"I gathered that information but didn't write up a reply — ask me again and I'll answer."
-				if self.activity
-				else "I came back empty on that one — try rephrasing your request."
-			)
+			if self.server_mutations:
+				note = "Done — the steps above were applied (I skipped the write-up)."
+			elif self.activity:
+				note = (
+					"I gathered that information but didn't write up a reply — ask me again and I'll answer."
+				)
+			else:
+				note = "I came back empty on that one — try rephrasing your request."
 			metadata = {"status": "warning"}
 			if self.activity:
 				metadata["activity"] = self.activity
@@ -979,9 +1021,10 @@ class AgentRunner:
 			self.emit("error", message=note, warning=True)
 			return
 
-		# Backstop: the model still claims an edit it never made (no ops applied, even
-		# after the corrective round). Don't present a hallucinated success — say so.
-		if not client_operations and claims_unbacked_action(summary_text):
+		# Backstop: the model still claims an edit it never made (no ops applied, no
+		# server-side writes, even after the corrective round). Don't present a
+		# hallucinated success — say so.
+		if not client_operations and not self.server_mutations and claims_unbacked_action(summary_text):
 			logger.warning(
 				"Unbacked action claim persisted (no ops applied): %s",
 				BlockCodec.truncate_for_log(summary_text, 300),

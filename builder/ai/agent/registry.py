@@ -119,11 +119,12 @@ def build_orchestrator_registry() -> ToolRegistry:
 	`spawn_parallel_agents` for genuinely parallel multi-page work, after laying
 	down shared assets (theme variables, header/footer components). Site-wide +
 	data-model changes stay confirm-gated."""
-	from builder.ai.agent.tools import conversation, data, orchestrate, settings
+	from builder.ai.agent.tools import conversation, data, orchestrate, scripts, settings
 
 	registry = ToolRegistry()
 	registry.extend(conversation.TOOLS)  # ask_clarification, propose_plan
 	registry.extend(headless_page_tools())
+	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	registry.extend(
 		pick(
 			data.TOOLS,
@@ -180,5 +181,5 @@ def build_subagent_registry() -> ToolRegistry:
 		)
 	)
 	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_theme_variable"}))
-	registry.extend(pick(scripts.TOOLS, {"get_page_scripts"}))
+	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	return registry

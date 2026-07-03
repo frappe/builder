@@ -1,9 +1,11 @@
 """Page client-script tools.
 
-`set_page_script` and `update_script` are client-side (the frontend creates /
-updates the Builder Client Script and tracks it for undo). `get_page_scripts`
-is server-side: the loop runs it and feeds the result back to the model so it
-can read existing code before editing it.
+`set_page_script` and `update_script` are client-side in the editor (the
+frontend creates / updates the Builder Client Script and tracks it for undo),
+but they also carry a handler: HEADLESS turns (dashboard chat + sub-agents)
+have no browser, so the loop runs the handler instead — same outcome, applied
+server-side. `get_page_scripts` is server-side everywhere: the loop runs it and
+feeds the result back so the model can read existing code before editing it.
 """
 
 import json
@@ -47,9 +49,45 @@ def fetch_page_scripts(ctx, args: dict) -> str:
 		return json.dumps([])
 
 
+def apply_set_page_script(ctx, args: dict) -> str:
+	"""Headless twin of the editor's set_page_script apply (toolDispatch.ts): create
+	the Builder Client Script (model's descriptive name when free) and attach it."""
+	if not ctx.page_id:
+		return "FAILED: no page is open — open_page or create_page first."
+	script_type = args.get("script_type") or "JavaScript"
+	name = (args.get("name") or "").strip()[:120]
+	doc_fields = {
+		"doctype": "Builder Client Script",
+		"script_type": script_type,
+		"script": args.get("script") or "",
+	}
+	if name and frappe.db.exists("Builder Client Script", name):
+		name = f"{name}-{frappe.generate_hash(length=5)}"
+	doc = frappe.get_doc({**doc_fields, **({"name": name} if name else {})}).insert(ignore_permissions=True)
+	page = frappe.get_doc("Builder Page", ctx.page_id)
+	page.append("client_scripts", {"builder_script": doc.name})
+	page.save(ignore_permissions=True)
+	frappe.db.commit()
+	return f"Created {script_type} script '{doc.name}' and attached it to the page."
+
+
+def apply_update_script(ctx, args: dict) -> str:
+	"""Headless twin of the editor's update_script apply."""
+	name = (args.get("script_name") or "").strip()
+	if not name or not frappe.db.exists("Builder Client Script", name):
+		return f"FAILED: script '{name}' not found — call get_page_scripts and use its exact script_name."
+	values = {"script": args.get("script") or ""}
+	if args.get("script_type"):
+		values["script_type"] = args["script_type"]
+	frappe.db.set_value("Builder Client Script", name, values)
+	frappe.db.commit()
+	return f"Updated script '{name}'."
+
+
 set_page_script = Tool(
 	name="set_page_script",
 	side="client",
+	handler=apply_set_page_script,  # used by HEADLESS turns only; the editor applies client-side
 	description=(
 		"Create a new JavaScript or CSS client script and attach it to the page. "
 		"Use this to add event listeners, animations, dynamic behaviour, fetch calls, "
@@ -87,6 +125,7 @@ set_page_script = Tool(
 update_script = Tool(
 	name="update_script",
 	side="client",
+	handler=apply_update_script,  # used by HEADLESS turns only; the editor applies client-side
 	description=(
 		"Replace the source code of an existing page script. "
 		"You MUST call get_page_scripts first and copy the exact 'script_name' value "
