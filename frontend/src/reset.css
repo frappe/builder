@@ -28,12 +28,10 @@
 		padding: revert;
 	}
 
-	/* Base defaults published pages rely on. Previously inherited from the
-	   frappe-ui Tailwind preset, but that preset also dumped its entire design-token
-	   set (--surface-*, --ink-*, …) and Tailwind's --tw-* utility vars into every
-	   published page — none of which published pages use. reset.css now builds with a
-	   preflight-only config (see tailwind.reset.config.js), so these are authored
-	   here with values inlined instead of pulled from the preset. */
+	/* Font defaults published pages rely on. Previously came from the frappe-ui
+	   Tailwind preset, but that preset also dumped its entire design-token set onto
+	   every published page (see tailwind.reset.config.js), so the font rules are
+	   authored here instead — Preflight and @tailwindcss/forms cover the rest. */
 	html {
 		font-family:
 			InterVar, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
@@ -50,17 +48,6 @@
 		font-variation-settings: "opsz" 24, "cv11" 1;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
-	}
-
-	select {
-		background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%237C7C7C" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" aria-hidden="true" viewBox="0 0 24 24" ><path d="m6 9 6 6 6-6" /></svg>');
-		background-size: 1.13em;
-		background-position: right 0.44rem center;
-	}
-
-	:focus-visible {
-		outline: 2px solid #c9c9c9e5;
-		outline-offset: 0px;
 	}
 }
 
