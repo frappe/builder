@@ -51,9 +51,9 @@
 			</template>
 		</div>
 
-		<!-- body text (markdown) -->
+		<!-- body text (markdown) — the confirm card carries its own title, don't repeat it -->
 		<div
-			v-if="message.text && !isPlan"
+			v-if="message.text && !isPlan && !message.confirm"
 			class="ai-prose prose prose-sm max-w-none break-words text-p-sm leading-relaxed"
 			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'"
 			v-html="renderMarkdown(message.text)" />
@@ -119,12 +119,20 @@
 		<!-- confirm card (sensitive action) -->
 		<div v-if="message.confirm" class="rounded-lg border border-outline-gray-2 p-3">
 			<div class="flex items-center gap-2">
-				<span class="grid size-5 place-items-center rounded-md bg-surface-gray-2 text-ink-gray-7">
+				<span class="grid size-5 shrink-0 place-items-center rounded-md bg-surface-gray-2 text-ink-gray-7">
 					<FeatherIcon name="shield" class="size-3.5" />
 				</span>
 				<span class="text-p-sm font-medium text-ink-gray-9">{{ confirmTitle }}</span>
 			</div>
-			<pre v-if="confirmPreview" class="ab-code mt-2">{{ confirmPreview }}</pre>
+			<div
+				v-if="confirmRows.length"
+				class="mt-2 max-h-52 divide-y divide-outline-gray-1 overflow-auto rounded-md bg-surface-gray-1">
+				<div v-for="(row, i) in confirmRows" :key="i" class="flex items-baseline gap-2 px-2.5 py-1.5 text-xs">
+					<span class="min-w-0 truncate text-ink-gray-8">{{ row.label }}</span>
+					<span v-if="row.detail" class="ml-auto shrink-0 text-[11px] text-ink-gray-5">{{ row.detail }}</span>
+				</div>
+			</div>
+			<pre v-else-if="confirmPreview" class="ab-code mt-2">{{ confirmPreview }}</pre>
 			<div class="mt-2.5 flex justify-end gap-1.5">
 				<Button size="sm" variant="ghost" @click="$emit('confirm', message, 'skip')">Skip</Button>
 				<Button size="sm" variant="subtle" @click="$emit('confirm', message, 'apply')">Apply</Button>
@@ -202,11 +210,50 @@ function openPage(pageId: string) {
 	router.push({ name: "builder", params: { pageId } });
 }
 const confirmTitle = computed(() => (props.message.text || "Confirm this change?").split("\n")[0]);
+
+/** Human-readable payload preview per action kind — never a raw JSON dump. */
+const confirmRows = computed<Array<{ label: string; detail?: string }>>(() => {
+	const c = props.message.confirm;
+	if (!c) return [];
+	const p = c.payload || {};
+	if (c.kind === "create_doctype") {
+		return (p.fields || []).map((f: any) => ({
+			label: f.label || f.fieldname,
+			detail: f.options ? `${f.fieldtype} · ${String(f.options).split("\n").join(" / ")}` : f.fieldtype,
+		}));
+	}
+	if (c.kind === "seed_sample_data") {
+		const rows = (p.rows || []).map((r: any) => ({
+			label: Object.values(r || {})
+				.slice(0, 3)
+				.join(" · "),
+		}));
+		return rows.slice(0, 8).concat(rows.length > 8 ? [{ label: `… and ${rows.length - 8} more` }] : []);
+	}
+	if (c.kind === "home_page") return [{ label: `Route: /${(p.route || "").replace(/^\//, "")}` }];
+	if (c.kind === "global_settings") {
+		return Object.keys(p)
+			.filter((k) => p[k] != null)
+			.map((k) => ({ label: k.replace(/_/g, " "), detail: `${String(p[k]).length} chars` }));
+	}
+	// manage_pages / publish_site: the title already says it all.
+	return [];
+});
+
+// Fallback for a kind this component doesn't know yet.
+const KNOWN_KINDS = [
+	"create_doctype",
+	"seed_sample_data",
+	"home_page",
+	"global_settings",
+	"manage_pages",
+	"publish_site",
+];
 const confirmPreview = computed(() => {
-	const p = props.message.confirm?.payload;
-	if (!p) return "";
+	const c = props.message.confirm;
+	if (!c || KNOWN_KINDS.includes(c.kind)) return "";
 	try {
-		return JSON.stringify(p, null, 2);
+		return JSON.stringify(c.payload, null, 2);
 	} catch {
 		return "";
 	}
