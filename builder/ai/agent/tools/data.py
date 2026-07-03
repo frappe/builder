@@ -11,6 +11,7 @@ anything is written.
 
 import json
 import logging
+import re
 
 import frappe
 
@@ -128,6 +129,11 @@ DATA_SCRIPT_FORBIDDEN = (
 	"ignore_permissions",
 )
 
+# `data` is a frappe._dict: assigning data.items stores the key, but READING
+# data.items returns the dict's built-in method (real attributes beat __getattr__)
+# — "TypeError: 'builtin_function_or_method' object is not iterable" at render.
+RESERVED_DATA_KEYS_RE = re.compile(r"\bdata\.(items|keys|values|get|update|copy|pop|clear|setdefault)\b")
+
 
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
@@ -141,6 +147,13 @@ def write_page_data_script(ctx, args: dict) -> str:
 			"FAILED: a page data script only READS data into `data` for bindings — it runs on "
 			"every page render and must never save/insert/delete documents. To publish, "
 			"unpublish, or delete pages use manage_pages; for settings use the settings tools."
+		)
+	if match := RESERVED_DATA_KEYS_RE.search(script):
+		return (
+			f"FAILED: 'data.{match.group(1)}' is a reserved dict method name — reading it back "
+			"returns the method, not your records, and the page errors at render "
+			"(''builtin_function_or_method' is not iterable'). Use a descriptive key instead, "
+			"e.g. data.products or data.merch_items."
 		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	frappe.db.commit()
@@ -264,7 +277,9 @@ write_page_data_script_tool = Tool(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
 		"for data-driven pages, e.g. `data.events = frappe.get_list('Event', fields=['title','date'], "
 		"filters={'published': 1})`. Then bind blocks/repeaters to the keys you set. Runs in the "
-		"safe_exec sandbox at render time."
+		"safe_exec sandbox at render time. Keys must be descriptive names (data.products) — "
+		"NEVER dict method names like data.items/keys/values/get (they shadow and break the "
+		"render). READ-ONLY: never save/insert/delete documents here."
 	),
 	parameters={
 		"type": "object",

@@ -208,6 +208,10 @@ The item template must be AS DETAILED as a one-off block. Minimum for a feature 
           bind: {innerHTML: body}
           style: {fontSize: '15px', lineHeight: '1.72', color: 'rgba(0,0,0,0.55)'}
 `bind` maps a field: use innerHTML/text for text content, or an attribute name (href, src, icon) for HTML attributes.
+Two data sources for a repeat:
+- STATIC content you author here: include `items` (as above) — it ships with the page.
+- LIVE database records (the brief names a DocType or a data key): OMIT `items` and set `data` to the key the page's server data script populates (e.g. `data: products` when the script sets data.products). The repeater then renders the real records at request time. NEVER hardcode copies of database records as one-off cards — that snapshot goes stale the moment the data changes.
+The data key must be a descriptive name like products/posts/team — NEVER a dict method name (items, keys, values, get, update).
 Use `repeat` ONLY for 3+ genuinely repeated items. Write one-off sections inline.
 
 # Copy
@@ -242,6 +246,7 @@ Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCode
 - SELF-REVIEW: after generate_page or a major edit, call preview_page ONCE and look at the screenshot. Fix only obvious breakage (unreadable text, broken layout, empty sections), then stop — one review pass, never a screenshot loop. The screenshot is for your eyes only; don't describe it to the user.
 - Theme tokens: set_theme_variable (referenced as var(--name)). Data model: list_doctypes / get_doctype_schema / query_records, and create_doctype / seed_sample_data (these ask the user to confirm). Site-wide: set_home_page, edit_global_settings, publish_site (all confirm-gated).
 - Page LIFECYCLE — publish, unpublish, or delete pages → manage_pages (confirm-gated). This is the ONLY way; never fake it through scripts, data tools, or by emptying a page.
+- DATA-DRIVEN pages (products, posts, listings from a DocType): the records must render through a REPEATER bound to a data-script key — write_page_data_script sets e.g. data.products (descriptive keys only, never data.items — dict method names break the render), and generate_page's brief must SAY "bind the grid to data.products with a repeater". Hardcoding copies of the records as static cards is a failure — it goes stale the moment the data changes.
 - Keep replies short: after your tools run, write 1–2 sentences on what happened.
 
 # Reading current state (answer "what is …" questions)
@@ -262,7 +267,7 @@ Build the page now. Output the YAML only.""".replace("{BLOCK_FIELDS}", BlockCode
 - If the brief says the page must MATCH a reference page, copy_page_design(source) — an exact copy of its block tree — then adapt the copy's text/sections with the block tools. If the reference is only inspiration, read_page it and derive the design language.
 - Otherwise build the page with ONE generate_page call carrying a rich brief. After generation your context refreshes with the real structure — verify with preview_page (once) and query_blocks/read_block, fix only obvious breakage with the surgical block tools, then finish.
 - Do NOT call generate_page twice unless the first attempt failed outright.
-- Data-driven sections (lists of real records) → write_page_data_script to populate `data`, bound via repeaters. Page SEO/settings → set_page_settings.
+- Data-driven sections (lists of real records) → write_page_data_script to populate `data` (descriptive keys, never data.items), and render them through a repeater bound to that key — never hardcode record copies. Page SEO/settings → set_page_settings.
 - Finish with a 1–2 sentence summary of what you built. Never claim work you didn't do.
 
 {STYLING_RULES}""".replace("{STYLING_RULES}", STYLING_RULES)
