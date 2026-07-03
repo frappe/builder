@@ -409,7 +409,9 @@ function registerFrame(breakpoint: string, doc: Document, root: HTMLElement, ifr
 			{ immediate: true, flush: "post" },
 		);
 	});
-	nextTick(setScaleAndTranslate);
+	if (canvasProps.settingCanvas) {
+		nextTick(setScaleAndTranslate);
+	}
 }
 
 function unregisterFrame(breakpoint: string, doc: Document | null = null) {
