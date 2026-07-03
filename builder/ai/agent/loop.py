@@ -808,9 +808,20 @@ class AgentRunner:
 						client_ops.append(op)
 				# A terminal tool ends the turn and hands control back to the user.
 				# If the model emits more than one, the first wins (the turn is over).
+				# EXCEPTION: a terminal handler may DECLINE by returning a string (e.g.
+				# "that DocType already exists") — the proposal never becomes a confirm
+				# card; the reason goes back as a tool result and the loop continues.
 				if terminal_ops:
-					self.handle_terminal(terminal_ops[0])
-					return
+					op = terminal_ops[0]
+					declined = self.handle_terminal(op)
+					if not declined:
+						return
+					tc = raw_tool_calls[tool_operations.index(op)]
+					messages.append(
+						{"role": "assistant", "content": summary_text or None, "tool_calls": [tc]}
+					)
+					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": declined})
+					continue
 
 				# EDITOR: an artifact tool (full-page generation) is the turn's work —
 				# its generator streams the artifact live to the canvas on the heavy
@@ -1121,12 +1132,15 @@ class AgentRunner:
 		frappe.db.commit()  # commit before emit so the client's reload sees the final turn
 		self.emit("complete", message=summary_text or "Done")
 
-	def handle_terminal(self, op: dict):
+	def handle_terminal(self, op: dict) -> str | None:
 		"""Run a terminal tool's handler (which emits the appropriate event and
-		persists the message). Terminal tools register a handler."""
+		persists the message). Returns the handler's return value: None = the turn
+		is over (question/plan/confirm card emitted); a string = the handler DECLINED
+		(invalid proposal) and the loop should continue with that as the tool result."""
 		tool = self.registry.get(op["tool_name"])
 		if tool and tool.handler:
-			tool.handler(self, op["args"])
+			return tool.handler(self, op["args"])
+		return None
 
 	def run_headless_generation(self, tool, op: dict) -> tuple[str, list[dict]]:
 		"""Run generate_page as one STEP of a headless turn. The generator persists the

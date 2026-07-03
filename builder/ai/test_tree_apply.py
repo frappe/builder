@@ -157,6 +157,12 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertIn("BAD BIND", msg)
 		self.assertEqual(self.tree.resolve("h1")["innerHTML"], "ok")  # good patch still applied
 
+	def test_repeater_via_bind_is_rejected(self):
+		msg = self.tree.apply("update_block", {"block_id": "hero", "bind": {"repeat": "events"}})
+		self.assertIn("FAILED", msg)
+		self.assertIn("add_block", msg)
+		self.assertNotIn("dynamicValues", self.tree.resolve("hero"))
+
 	def test_validating_mode_does_not_mutate(self):
 		tree = WorkingTree(sample_root())  # mutating=False (editor)
 		msg = tree.apply("update_block", {"block_id": "hero", "base_styles": {"padding": "1px"}})

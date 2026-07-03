@@ -43,6 +43,22 @@ BAD_BIND_HINT = (
 	"script instead (e.g. set price_display on each record in write_page_data_script)."
 )
 
+# bind maps PROPERTIES (innerHTML or an HTML attribute) to data keys — it cannot turn
+# a block into a repeater.
+REPEATER_BIND_PROPS = {"repeat", "data", "loop", "items", "datakey"}
+REPEATER_BIND_HINT = (
+	"a repeater cannot be created via bind. Build it with add_block: "
+	"{el: div, repeat: {data: '<page-data key>', item: {…card template with bind…}}} — "
+	"then remove_block the static copies."
+)
+
+
+def repeater_bind_props(args: dict) -> list[str]:
+	bind = args.get("bind")
+	if not isinstance(bind, dict):
+		return []
+	return [p for p in bind if p.lower() in REPEATER_BIND_PROPS]
+
 
 def merge_styles(block: dict, args: dict) -> None:
 	from builder.ai.page_writer import normalize_styles
@@ -156,6 +172,8 @@ class WorkingTree:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
+		if props := repeater_bind_props(args):
+			return f"FAILED: bind {props} — {REPEATER_BIND_HINT}"
 		if bad := bad_bind_keys(args):
 			return f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if self.mutating:
@@ -175,6 +193,8 @@ class WorkingTree:
 			block = self.resolve(block_id)
 			if block is None:
 				missing.append(block_id)
+			elif props := repeater_bind_props(patch):
+				rejected.append(f"{block_id} bind {props} ({REPEATER_BIND_HINT.split('.')[0]})")
 			elif bad := bad_bind_keys(patch):
 				rejected.append(f"{block_id} {bad}")
 			elif self.mutating:

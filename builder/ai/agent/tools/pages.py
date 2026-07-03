@@ -77,14 +77,19 @@ def run_copy_page_design(ctx, args: dict) -> str:
 	)
 
 
-def request_manage_pages(ctx, args: dict) -> None:
+def request_manage_pages(ctx, args: dict) -> str | None:
 	from builder.ai.agent import pending
 
 	action = (args.get("action") or "").strip()
 	page_ids = [p for p in (args.get("page_ids") or []) if frappe.db.exists("Builder Page", p)]
+	if not page_ids:
+		return (
+			"DECLINED: none of those page ids exist — find the real ids with query_records('Builder Page')."
+		)
 	titles = [frappe.db.get_value("Builder Page", p, "page_title") or p for p in page_ids]
 	summary = f"{action.capitalize()} {len(titles)} page(s): {', '.join(titles)}?"
 	pending.request_confirmation(ctx, "manage_pages", summary, {"action": action, "page_ids": page_ids})
+	return None
 
 
 def run_read_page(ctx, args: dict) -> str:

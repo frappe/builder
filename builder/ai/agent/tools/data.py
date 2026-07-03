@@ -134,6 +134,9 @@ DATA_SCRIPT_FORBIDDEN = (
 # — "TypeError: 'builtin_function_or_method' object is not iterable" at render.
 RESERVED_DATA_KEYS_RE = re.compile(r"\bdata\.(items|keys|values|get|update|copy|pop|clear|setdefault)\b")
 
+# safe_exec has no __import__ — any import statement dies with ImportError at render.
+IMPORT_RE = re.compile(r"^\s*(import|from)\s+\w", re.MULTILINE)
+
 
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
@@ -155,6 +158,15 @@ def write_page_data_script(ctx, args: dict) -> str:
 			"(''builtin_function_or_method' is not iterable'). Use a descriptive key instead, "
 			"e.g. data.products or data.merch_items."
 		)
+	if IMPORT_RE.search(script):
+		return (
+			"FAILED: the data script runs in Frappe's safe_exec sandbox — IMPORT statements are "
+			"not allowed (ImportError at render). A curated namespace is already available: "
+			"frappe.get_all / frappe.get_list / frappe.db.get_value / frappe.db.count, and date/"
+			"format helpers under frappe.utils (frappe.utils.getdate, frappe.utils.formatdate(d, "
+			"'MMM dd'), frappe.utils.now_datetime, frappe.utils.add_days, frappe.utils.fmt_money). "
+			"Rewrite without imports."
+		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	frappe.db.commit()
 	return "Saved the page data script (runs server-side to populate `data`)."
@@ -163,18 +175,43 @@ def write_page_data_script(ctx, args: dict) -> str:
 # --- writes (terminal, confirm-gated) -----------------------------------
 
 
-def request_create_doctype(ctx, args: dict) -> None:
+def request_create_doctype(ctx, args: dict) -> str | None:
+	"""Returning a string DECLINES the proposal (no confirm card) and feeds the
+	reason back to the model — e.g. proposing 'Event', a built-in Frappe doctype."""
 	name = (args.get("name") or "").strip()
 	fields = args.get("fields") or []
+	if not name or not fields:
+		return "DECLINED: a doctype proposal needs a name and at least one field."
+	if frappe.db.exists("DocType", name):
+		return (
+			f"DECLINED: DocType '{name}' already EXISTS — do not create it. Either reuse it with its "
+			f"REAL fieldnames (schema follows), or propose a different name (e.g. 'Community {name}').\n"
+			f"{get_doctype_schema(ctx, {'doctype': name})}"
+		)
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
 	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
+	return None
 
 
-def request_seed_sample_data(ctx, args: dict) -> None:
+def request_seed_sample_data(ctx, args: dict) -> str | None:
 	doctype = (args.get("doctype") or "").strip()
-	rows = args.get("rows") or []
+	rows = [r for r in (args.get("rows") or []) if isinstance(r, dict)]
+	if not doctype or not frappe.db.exists("DocType", doctype):
+		return f"DECLINED: DocType '{doctype}' does not exist — create it first (create_doctype)."
+	if not rows:
+		return "DECLINED: no rows to insert."
+	# Rows with made-up fieldnames would insert as empty records — bounce them back
+	# with the real schema instead of putting a doomed proposal in front of the user.
+	valid = {f.fieldname for f in frappe.get_meta(doctype).fields}
+	unknown = sorted({key for row in rows for key in row} - valid)
+	if unknown:
+		return (
+			f"DECLINED: '{doctype}' has no field(s) {unknown}. Re-map your rows to its real "
+			f"fieldnames: {sorted(valid)}."
+		)
 	summary = f"Insert {len(rows)} sample record(s) into '{doctype}'?"
 	pending.request_confirmation(ctx, "seed_sample_data", summary, {"doctype": doctype, "rows": rows})
+	return None
 
 
 # --- schemas ------------------------------------------------------------
@@ -277,9 +314,11 @@ write_page_data_script_tool = Tool(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
 		"for data-driven pages, e.g. `data.events = frappe.get_list('Event', fields=['title','date'], "
 		"filters={'published': 1})`. Then bind blocks/repeaters to the keys you set. Runs in the "
-		"safe_exec sandbox at render time. Keys must be descriptive names (data.products) — "
-		"NEVER dict method names like data.items/keys/values/get (they shadow and break the "
-		"render). READ-ONLY: never save/insert/delete documents here."
+		"safe_exec SANDBOX at render time: NO import statements — frappe.get_all/get_list/get_doc, "
+		"frappe.db.get_value/count, and frappe.utils date/format helpers (getdate, formatdate, "
+		"now_datetime, add_days, fmt_money) are preinjected. Keys must be descriptive names "
+		"(data.products) — NEVER dict method names like data.items/keys/values/get (they shadow "
+		"and break the render). READ-ONLY: never save/insert/delete documents here."
 	),
 	parameters={
 		"type": "object",
