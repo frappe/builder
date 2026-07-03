@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "session_kind",
+  "title",
   "page",
   "project_folder",
   "session_user",
@@ -24,6 +25,11 @@
    "fieldtype": "Select",
    "label": "Session Kind",
    "options": "page\nsite\ngeneral"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
   },
   {
    "depends_on": "eval:doc.session_kind==='page'",
@@ -85,7 +91,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-01 12:00:00.000000",
+ "modified": "2026-07-03 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Session",

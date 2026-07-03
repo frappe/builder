@@ -1,28 +1,48 @@
 <template>
 	<!-- user -->
 	<div v-if="message.role === 'user'" class="flex justify-end">
-		<div
-			class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-surface-gray-3 px-3.5 py-2 text-p-sm text-ink-gray-8">
-			{{ message.text }}
+		<div class="bg-surface-white max-w-[88%] rounded-md border px-3 py-2 text-p-sm text-ink-gray-8 shadow-sm">
+			<img
+				v-if="message.attachedImage"
+				:src="message.attachedImage"
+				class="mb-1.5 max-h-32 rounded border border-outline-gray-2"
+				alt="Attached image" />
+			<div class="whitespace-pre-wrap break-words">{{ message.text }}</div>
 		</div>
 	</div>
 
 	<!-- assistant -->
 	<div v-else class="flex flex-col gap-2">
-		<!-- live tool activity feed (research, edits, screenshots) -->
-		<div v-if="activityDisplay.length" class="flex flex-col gap-1">
-			<template v-for="a in activityDisplay" :key="a.id">
-				<div class="group flex items-center gap-2 text-xs text-ink-gray-5">
-					<span
-						v-if="a.status === 'running'"
-						class="bg-ink-gray-6 size-2 shrink-0 animate-pulse rounded-full" />
-					<span v-else class="shrink-0 text-ink-gray-6">✓</span>
+		<!-- while running: ONE quiet line — the current step (or the model's narration) -->
+		<div v-if="isRunning" class="flex items-center gap-2 text-ink-gray-5">
+			<span class="ab-dots">
+				<span></span>
+				<span></span>
+				<span></span>
+			</span>
+			<span class="text-p-sm">{{ workingLine }}</span>
+		</div>
+
+		<!-- once settled: the steps collapse into a small disclosure -->
+		<div v-else-if="activityDisplay.length" class="flex flex-col gap-1">
+			<button
+				class="flex w-fit items-center gap-1 text-xs text-ink-gray-4 transition-colors hover:text-ink-gray-7"
+				@click="stepsOpen = !stepsOpen">
+				<FeatherIcon :name="stepsOpen ? 'chevron-down' : 'chevron-right'" class="size-3" />
+				{{ stepCount }} step{{ stepCount === 1 ? "" : "s" }}
+			</button>
+			<template v-if="stepsOpen">
+				<div
+					v-for="a in activityDisplay"
+					:key="a.id"
+					class="group flex items-center gap-2 pl-4 text-xs text-ink-gray-5">
+					<span class="shrink-0 text-ink-gray-6">✓</span>
 					<span class="truncate">
 						{{ a.summary }}
 						<span v-if="a.count > 1" class="text-ink-gray-4">×{{ a.count }}</span>
 					</span>
 					<button
-						v-if="a.page && a.status === 'done'"
+						v-if="a.page"
 						class="shrink-0 text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-8 hover:underline group-hover:opacity-100"
 						@click="openPage(a.page)">
 						Open
@@ -31,22 +51,23 @@
 			</template>
 		</div>
 
-		<!-- working indicator while running with no text yet -->
-		<div v-if="isWorking" class="flex items-center gap-2 text-ink-gray-5">
-			<span class="ab-dots">
-				<span></span>
-				<span></span>
-				<span></span>
-			</span>
-			<span class="text-p-sm">{{ message.progress || "Working…" }}</span>
-		</div>
-
 		<!-- body text (markdown) -->
 		<div
 			v-if="message.text && !isPlan"
 			class="ai-prose prose prose-sm max-w-none break-words text-p-sm leading-relaxed"
 			:class="message.status === 'error' ? 'text-ink-red-6' : 'text-ink-gray-8'"
 			v-html="renderMarkdown(message.text)" />
+
+		<!-- meta row: revert, matching the editor chat's treatment -->
+		<div v-if="message.revertSnapshot && !isRunning" class="flex items-center text-[11px] text-ink-gray-4">
+			<button
+				class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+				title="Revert the page to before this AI edit"
+				@click="$emit('revert', message)">
+				<span class="lucide-rotate-ccw size-3" />
+				Revert
+			</button>
+		</div>
 
 		<!-- the page this turn built/edited, one click away -->
 		<button
@@ -115,7 +136,7 @@
 import { renderMarkdown } from "@/components/ai/markdown";
 import router from "@/router";
 import { Button, FeatherIcon } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import TaskGroupCard from "./TaskGroupCard.vue";
 import type { ActivityEntry, AgentMessage, BatchState } from "./useAgentChat";
 
@@ -125,9 +146,11 @@ defineEmits<{
 	(e: "approve-plan"): void;
 	(e: "confirm", message: AgentMessage, decision: "apply" | "skip"): void;
 	(e: "publish", batchId: string): void;
+	(e: "revert", message: AgentMessage): void;
 }>();
 
 const isPlan = computed(() => props.message.status === "plan_summary" && !!props.message.plan);
+const stepsOpen = ref(false);
 
 // Collapse consecutive repeats ("Read block", "Read block", …) into one "×N" line.
 const activityDisplay = computed(() => {
@@ -141,6 +164,17 @@ const activityDisplay = computed(() => {
 		}
 	}
 	return out;
+});
+const stepCount = computed(() => (props.message.activity || []).length);
+
+const isRunning = computed(() => props.message.status === "running" && !props.message.batchId);
+// While running, the single status line prefers the model's narration, then the
+// step in flight, then the last finished step.
+const workingLine = computed(() => {
+	if (props.message.progress) return props.message.progress;
+	const acts = props.message.activity || [];
+	const current = acts.find((a) => a.status === "running") || acts[acts.length - 1];
+	return current?.summary || "Working…";
 });
 
 // The page this turn worked on — surfaced as a review link once the turn settles.
@@ -159,9 +193,6 @@ const donePageTitle = computed(() => {
 function openPage(pageId: string) {
 	router.push({ name: "builder", params: { pageId } });
 }
-const isWorking = computed(
-	() => props.message.status === "running" && !props.message.text && !props.message.batchId,
-);
 const confirmTitle = computed(() => (props.message.text || "Confirm this change?").split("\n")[0]);
 const confirmPreview = computed(() => {
 	const p = props.message.confirm?.payload;

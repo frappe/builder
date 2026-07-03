@@ -161,18 +161,24 @@ def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -
 	return "\n\n".join(parts)
 
 
-def activity_summary(tool_name: str, args: dict) -> str:
+def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 	"""A short human line for the chat's live activity feed ("Read page: Home")."""
 	args = args or {}
 
 	def page_title(page_id: str | None) -> str:
 		return (page_id and frappe.db.get_value("Builder Page", page_id, "page_title")) or page_id or "…"
 
+	def block_label(ref: str | None) -> str:
+		block = tree.resolve(ref) if (tree and ref) else None
+		if block:
+			return block.get("blockName") or f"<{block.get('element') or 'div'}>"
+		return ref or ""
+
 	if tool_name in ("read_page", "open_page"):
 		verb = "Read" if tool_name == "read_page" else "Opened"
 		line = f"{verb} page: {page_title(args.get('page_id'))}"
 		if args.get("block_id"):
-			line += f" — block {args['block_id']}"
+			line += " — one block"
 		return line
 	if tool_name == "create_page":
 		return f"Created page: {args.get('page_title') or ''}".strip()
@@ -183,7 +189,7 @@ def activity_summary(tool_name: str, args: dict) -> str:
 	if tool_name == "preview_page":
 		return "Screenshot"
 	if tool_name == "read_block":
-		return f"Read block {args.get('block_id') or ''}".strip()
+		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
 	if tool_name == "query_blocks":
 		return "Searched blocks"
 	if tool_name == "set_theme_variable":
@@ -625,7 +631,7 @@ class AgentRunner:
 			entry = {
 				"id": len(self.activity),
 				"tool": tool_name,
-				"summary": activity_summary(tool_name, args),
+				"summary": activity_summary(tool_name, args, self.tree),
 				"status": "running",
 			}
 			# Working-page tools carry the page id so the chat can offer an "Open"

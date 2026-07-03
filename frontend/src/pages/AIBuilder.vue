@@ -14,18 +14,45 @@
 				</Button>
 			</div>
 			<div class="flex-1 overflow-auto px-2 pb-3">
-				<button
+				<div
 					v-for="s in chat.sessions.value"
 					:key="s.name"
-					class="mb-0.5 block w-full truncate rounded-md px-2.5 py-2 text-left text-xs leading-snug"
+					class="group mb-0.5 flex w-full cursor-pointer items-center gap-1 rounded-md py-1 pl-2.5 pr-1 text-xs leading-snug"
 					:class="
 						s.name === chat.sessionId.value
 							? 'bg-surface-gray-3 text-ink-gray-9'
 							: 'text-ink-gray-6 hover:bg-surface-gray-2'
 					"
 					@click="openSession(s.name)">
-					{{ s.title || "New chat" }}
-				</button>
+					<EditableSpan
+						v-model="s.title"
+						:editable="renamingSession === s.name"
+						:onChange="
+							async (newTitle: string) => {
+								await chat.renameSession(s.name, newTitle);
+								renamingSession = '';
+							}
+						"
+						class="min-w-0 flex-1 truncate py-1"
+						@blur="renamingSession = ''">
+						{{ s.title || "New chat" }}
+					</EditableSpan>
+					<Dropdown
+						placement="right-start"
+						:options="[
+							{ label: 'Rename', icon: 'lucide-edit', onClick: () => (renamingSession = s.name) },
+							{ label: 'Delete', icon: 'lucide-trash', onClick: () => removeSession(s.name) },
+						]">
+						<template v-slot="{ open }">
+							<Button
+								icon="lucide-more-horizontal"
+								size="sm"
+								variant="ghost"
+								class="opacity-0 group-hover:opacity-100"
+								@click.stop="open" />
+						</template>
+					</Dropdown>
+				</div>
 			</div>
 		</aside>
 
@@ -48,6 +75,7 @@
 						@select-option="chat.selectOption"
 						@approve-plan="chat.approvePlan"
 						@confirm="chat.confirmAction"
+						@revert="chat.revertTurn"
 						@publish="chat.publishBatch" />
 				</div>
 			</div>
@@ -79,7 +107,27 @@
 						</button>
 					</div>
 
-					<div class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-3 py-2.5">
+					<div
+						class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-3 py-2.5"
+						:class="{ 'border-outline-gray-4': isDragging }"
+						@dragover.prevent="isDragging = true"
+						@dragleave="isDragging = false"
+						@drop.prevent="onDrop">
+						<!-- attached image (vision) -->
+						<div v-if="chat.imageData.value" class="mb-1.5 flex">
+							<div class="relative">
+								<img
+									:src="chat.imageData.value"
+									class="h-14 rounded-md border border-outline-gray-2 object-cover"
+									alt="Attached image" />
+								<Button
+									icon="lucide-x"
+									size="sm"
+									variant="solid"
+									class="absolute -right-1.5 -top-1.5 !size-4 rounded-full"
+									@click="chat.clearImage" />
+							</div>
+						</div>
 						<textarea
 							ref="inputEl"
 							v-model="chat.prompt.value"
@@ -87,13 +135,22 @@
 							placeholder="Ask Builder AI…  (type @ to reference a page)"
 							class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
 							@input="onInput"
-							@keydown="onKeydown" />
+							@keydown="onKeydown"
+							@paste="onPaste" />
 						<div class="mt-1.5 flex items-center gap-2">
 							<Dropdown :options="modelOptions" placement="top-start">
 								<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
 									{{ modelLabel }}
 								</button>
 							</Dropdown>
+							<Button
+								v-if="chat.isVisionModel.value"
+								icon="lucide-paperclip"
+								size="sm"
+								variant="ghost"
+								tooltip="Attach an image"
+								@click="fileInput?.click()" />
+							<input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFilePick" />
 							<span class="flex-1"></span>
 							<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
 								<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
@@ -112,6 +169,7 @@
 <script setup lang="ts">
 import AgentMessage from "@/components/ai-builder/AgentMessage.vue";
 import { useAgentChat } from "@/components/ai-builder/useAgentChat";
+import EditableSpan from "@/components/EditableSpan.vue";
 import router from "@/router";
 import { Button, createResource, Dropdown, FeatherIcon } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -133,6 +191,9 @@ const route = useRoute();
 const chat = useAgentChat();
 const inputEl = ref<HTMLTextAreaElement | null>(null);
 const scrollEl = ref<HTMLElement | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+const isDragging = ref(false);
+const renamingSession = ref("");
 
 // Inline @page references. The "@Title" stays in the prompt text; the resolved pages
 // ride along to the backend as context so the agent knows which page each refers to.
@@ -276,6 +337,36 @@ async function loadPages() {
 function openSession(id: string) {
 	if (id === chat.sessionId.value) return;
 	router.push({ name: "ai-builder", params: { sessionId: id } });
+}
+
+async function removeSession(id: string) {
+	const deleted = await chat.deleteSession(id);
+	// Deleting the open chat drops you on a fresh one.
+	if (deleted && id === chat.sessionId.value) router.push({ name: "ai-builder-new" });
+}
+
+function onFilePick(e: Event) {
+	const file = (e.target as HTMLInputElement).files?.[0];
+	if (file) chat.attachImageFile(file);
+	if (fileInput.value) fileInput.value.value = "";
+}
+
+function onDrop(e: DragEvent) {
+	isDragging.value = false;
+	if (!chat.isVisionModel.value) return;
+	const file = e.dataTransfer?.files?.[0];
+	if (file) chat.attachImageFile(file);
+}
+
+function onPaste(e: ClipboardEvent) {
+	if (!chat.isVisionModel.value) return;
+	const file = Array.from(e.clipboardData?.items || [])
+		.find((i) => i.type.startsWith("image/"))
+		?.getAsFile();
+	if (file) {
+		e.preventDefault();
+		chat.attachImageFile(file);
+	}
 }
 
 async function newChat() {

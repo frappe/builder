@@ -196,19 +196,64 @@ def list_ai_sessions(limit: int = 30):
 	rows = frappe.get_all(
 		AISession.DOCTYPE,
 		filters={"session_user": frappe.session.user, "session_kind": "general"},
-		fields=["name", "last_task_type", "last_interaction_on", "modified"],
+		fields=["name", "title", "last_task_type", "last_interaction_on", "modified"],
 		order_by="last_interaction_on desc",
 		limit=min(int(limit), 50),
 	)
-	# Use the first user message as the human-readable title (cheap sub-query per row).
+	# A user-set title wins; otherwise the first user message (cheap sub-query per row).
 	for r in rows:
-		r["title"] = frappe.db.get_value(
+		r["title"] = r["title"] or frappe.db.get_value(
 			AISession.MESSAGE_DOCTYPE,
 			{"session": r["name"], "role": "user"},
 			"content",
 			order_by="creation asc",
 		)
 	return rows
+
+
+def ensure_session_owner(session_id: str) -> None:
+	owner = frappe.db.get_value(AISession.DOCTYPE, session_id, "session_user")
+	if not owner:
+		frappe.throw(_("Session not found"))
+	if owner != frappe.session.user and "System Manager" not in frappe.get_roles():
+		frappe.throw(_("This chat belongs to another user"), frappe.PermissionError)
+
+
+@frappe.whitelist()
+@has_page_write()
+def rename_ai_session(session_id: str, title: str):
+	ensure_session_owner(session_id)
+	frappe.db.set_value(AISession.DOCTYPE, session_id, "title", (title or "").strip()[:140])
+	return {"status": "ok"}
+
+
+@frappe.whitelist()
+@has_page_write()
+def delete_ai_session(session_id: str):
+	ensure_session_owner(session_id)
+	AISession.get(session_id).clear()  # messages first (separate doctype)
+	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
+	return {"status": "ok"}
+
+
+@frappe.whitelist()
+@has_page_write()
+def revert_ai_turn(session_id: str, message_id: str):
+	"""Dashboard revert, fully server-side (no canvas to restore through): put the
+	page back to the turn's pre-edit snapshot, then rewind the conversation — this
+	turn and everything after it."""
+	ensure_session_owner(session_id)
+	meta = frappe.db.get_value(
+		AISession.MESSAGE_DOCTYPE, {"name": message_id, "session": session_id}, "metadata_json"
+	)
+	snapshot = AISession.load_metadata(meta).get("revertSnapshot")
+	if not snapshot or not frappe.db.exists("Builder Snapshot", snapshot):
+		frappe.throw(_("This turn has no revert snapshot"))
+	page = frappe.db.get_value("Builder Snapshot", snapshot, "reference_name")
+	frappe.get_doc("Builder Page", page).restore_snapshot(snapshot)
+	session = AISession.get(session_id)
+	session.truncate_from_turn(message_id)
+	return {"messages": session.get_messages()}
 
 
 @frappe.whitelist()

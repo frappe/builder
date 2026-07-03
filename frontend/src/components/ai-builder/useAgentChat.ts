@@ -1,4 +1,5 @@
 import useBuilderStore from "@/stores/builderStore";
+import { confirm } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref } from "vue";
@@ -25,7 +26,9 @@ export interface AgentMessage {
 	text: string;
 	status: string; // running | complete | error | clarification | plan_summary | pending_action
 	progress?: string;
-	activity?: ActivityEntry[]; // live tool feed ("Read page: Home", screenshots…)
+	activity?: ActivityEntry[]; // live tool feed ("Read page: Home", …)
+	attachedImage?: string; // image the user sent with this prompt
+	revertSnapshot?: string; // pre-turn snapshot → the turn is revertable
 	options?: string[];
 	previews?: Array<{ colors: string[] }> | null;
 	plan?: { headline: string; sections: string[]; palette: string };
@@ -75,14 +78,17 @@ const batches = ref<Record<string, BatchState>>({});
 const prompt = ref("");
 const sending = ref(false);
 const cancelling = ref(false);
-const models = ref<Array<{ name: string; label: string }>>([]);
+const models = ref<Array<{ name: string; label: string; vision?: boolean }>>([]);
 const selectedModel = useLocalStorage("ai-selected-model", "");
 const messageContainer = ref<HTMLElement | null>(null);
+// Image attached to the next prompt (data URL) — vision models only.
+const imageData = ref<string | null>(null);
 
 let boundSuffix = "";
 const pollTimers: Record<string, ReturnType<typeof setInterval>> = {};
 
 const canSubmit = computed(() => !!prompt.value.trim() && !sending.value && !!selectedModel.value);
+const isVisionModel = computed(() => models.value.find((m) => m.name === selectedModel.value)?.vision ?? false);
 
 function pending(): AgentMessage | null {
 	for (let i = messages.value.length - 1; i >= 0; i--) {
@@ -178,6 +184,7 @@ const handlers: Record<string, (data: any) => void> = {
 		sending.value = false;
 		cancelling.value = false;
 		loadSessions();
+		syncLastAssistant(); // pick up the server message id + revertSnapshot
 		scrollToBottom();
 	},
 	error: (d) => {
@@ -243,7 +250,11 @@ async function loadModels() {
 	try {
 		const data: any = await createResource({ url: "builder.ai.api.get_ai_models" }).fetch();
 		const provider = (data || []).find((p: any) => p.provider === "openrouter") || (data || [])[0];
-		models.value = (provider?.models || []).map((m: any) => ({ name: m.name, label: m.label }));
+		models.value = (provider?.models || []).map((m: any) => ({
+			name: m.name,
+			label: m.label,
+			vision: m.vision,
+		}));
 		if (models.value.length && !models.value.some((m) => m.name === selectedModel.value)) {
 			selectedModel.value = models.value[0].name;
 		}
@@ -268,6 +279,8 @@ function hydrate(rows: any[]): AgentMessage[] {
 		if (Array.isArray(meta.activity) && meta.activity.length) {
 			m.activity = meta.activity;
 		}
+		if (meta.attachedImageUrl) m.attachedImage = meta.attachedImageUrl;
+		if (meta.revertSnapshot) m.revertSnapshot = meta.revertSnapshot;
 		if (status === "clarification") {
 			m.options = meta.options || [];
 			m.previews = meta.previews ?? null;
@@ -292,13 +305,55 @@ async function open(routeSessionId?: string) {
 	scrollToBottom();
 }
 
+// After a turn settles, adopt the persisted assistant message's identity — the
+// server id (needed for revert), its revert snapshot, and the durable activity.
+async function syncLastAssistant() {
+	if (!sessionId.value) return;
+	try {
+		const res: any = await createResource({ url: "builder.ai.api.get_ai_session_messages" }).submit({
+			session_id: sessionId.value,
+		});
+		const rows = (res.messages || []).filter((r: any) => r.role !== "user");
+		const row = rows[rows.length - 1];
+		const m = pending();
+		if (!row || !m) return;
+		m.id = row.id;
+		const meta = row.metadata || {};
+		if (meta.revertSnapshot) m.revertSnapshot = meta.revertSnapshot;
+		if (Array.isArray(meta.activity) && meta.activity.length) m.activity = meta.activity;
+	} catch {
+		/* cosmetic — revert just won't show until reload */
+	}
+}
+
 // --- actions ----------------------------------------------------------
+
+function attachImageFile(file: File) {
+	if (!file.type.startsWith("image/")) return;
+	const reader = new FileReader();
+	reader.onload = (e) => {
+		imageData.value = (e.target?.result as string) || null;
+	};
+	reader.readAsDataURL(file);
+}
+
+function clearImage() {
+	imageData.value = null;
+}
 
 async function send(mentionedPages: Array<{ name: string; title: string; route: string }> = []) {
 	const text = prompt.value.trim();
 	if (!text || sending.value || !selectedModel.value) return;
 	prompt.value = "";
-	messages.value.push({ id: nextId(), role: "user", text, status: "complete" });
+	const attached = imageData.value;
+	imageData.value = null;
+	messages.value.push({
+		id: nextId(),
+		role: "user",
+		text,
+		status: "complete",
+		...(attached ? { attachedImage: attached } : {}),
+	});
 	messages.value.push({ id: nextId(), role: "assistant", text: "", status: "running", progress: "Thinking…" });
 	sending.value = true;
 	scrollToBottom();
@@ -307,6 +362,7 @@ async function send(mentionedPages: Array<{ name: string; title: string; route: 
 			prompt: text,
 			model: selectedModel.value,
 			session_id: sessionId.value || undefined,
+			...(attached ? { image_data: attached } : {}),
 			...(mentionedPages.length ? { mentioned_pages: mentionedPages } : {}),
 		});
 		if (res.session_id && !sessionId.value) {
@@ -340,6 +396,54 @@ async function confirmAction(m: AgentMessage, decision: "apply" | "skip") {
 		if (decision === "apply") toast.success(res?.message || "Applied");
 	} catch (e: any) {
 		toast.error(e?.messages?.[0] || "Could not apply the change");
+	}
+}
+
+/** Revert an AI turn in ONE go, mirroring the editor chat: the page returns to its
+ * pre-turn snapshot (server-side restore into the draft) and the conversation is
+ * rewound — this message and everything after it are removed. */
+async function revertTurn(m: AgentMessage) {
+	if (!m.revertSnapshot || !sessionId.value || sending.value) return;
+	const confirmed = await confirm(
+		"Revert this AI edit? The page returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+	);
+	if (!confirmed) return;
+	try {
+		const res: any = await createResource({ url: "builder.ai.api.revert_ai_turn", method: "POST" }).submit(
+			{ session_id: sessionId.value, message_id: m.id },
+		);
+		messages.value = hydrate(res.messages);
+		toast.success("Reverted");
+		scrollToBottom();
+	} catch (e: any) {
+		toast.error(e?.messages?.[0] || "Could not revert");
+	}
+}
+
+async function renameSession(id: string, title: string) {
+	try {
+		await createResource({ url: "builder.ai.api.rename_ai_session", method: "POST" }).submit({
+			session_id: id,
+			title,
+		});
+		await loadSessions();
+	} catch (e: any) {
+		toast.error(e?.messages?.[0] || "Could not rename");
+	}
+}
+
+async function deleteSession(id: string): Promise<boolean> {
+	const confirmed = await confirm("Delete this chat? Its messages are removed permanently.");
+	if (!confirmed) return false;
+	try {
+		await createResource({ url: "builder.ai.api.delete_ai_session", method: "POST" }).submit({
+			session_id: id,
+		});
+		await loadSessions();
+		return true;
+	} catch (e: any) {
+		toast.error(e?.messages?.[0] || "Could not delete");
+		return false;
 	}
 }
 
@@ -389,6 +493,10 @@ export function useAgentChat() {
 		selectedModel,
 		messageContainer,
 		canSubmit,
+		isVisionModel,
+		imageData,
+		attachImageFile,
+		clearImage,
 		loadModels,
 		loadSessions,
 		open,
@@ -396,6 +504,9 @@ export function useAgentChat() {
 		selectOption,
 		approvePlan,
 		confirmAction,
+		revertTurn,
+		renameSession,
+		deleteSession,
 		cancel,
 		publishBatch,
 		teardown,
