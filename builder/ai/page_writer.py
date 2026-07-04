@@ -176,6 +176,10 @@ def convert_icon_block(node: dict) -> dict:
 # so generation absorbs these into real bindings instead of shipping them.
 MOUSTACHE_BINDING = re.compile(r"^\s*\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}\s*$")
 
+# Elements that never belong in a block tree: code (doesn't execute in the editor,
+# bypasses the script system) and document plumbing. Dropped at conversion.
+FORBIDDEN_ELEMENTS = frozenset({"style", "script", "link", "meta", "head", "title", "base", "noscript"})
+
 
 def absorb_moustache_bindings(block: dict) -> None:
 	"""Convert pure-moustache attribute/text values the model wrote into proper
@@ -220,12 +224,17 @@ def bind_to_dynamic_values(bind: dict) -> list:
 	]
 
 
-def convert_yaml_block(node, is_root: bool = False) -> dict:
+def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	if not isinstance(node, dict):
 		return node
 	# Icon reference → inline-svg wrapper (see convert_icon_block).
 	if node.get("icon"):
 		return convert_icon_block(node)
+	# Code/document elements never belong in the block tree: scripts don't execute
+	# in the editor, style blocks bypass the styling system (Google Fonts load from
+	# fontFamily automatically). Drop them — the page script tools are the code path.
+	if (node.get("el") or "").strip().lower() in FORBIDDEN_ELEMENTS:
+		return None
 
 	block = {
 		"blockId": "root" if is_root else new_block_id(),
@@ -266,7 +275,9 @@ def convert_yaml_block(node, is_root: bool = False) -> dict:
 
 	children = node.get("c")
 	child_blocks = (
-		[convert_yaml_block(c) for c in children if isinstance(c, dict)] if isinstance(children, list) else []
+		[b for c in children if isinstance(c, dict) and (b := convert_yaml_block(c))]
+		if isinstance(children, list)
+		else []
 	)
 
 	# `repeat` = a static repeater: ONE template child + JSON data. The data array is
@@ -274,13 +285,15 @@ def convert_yaml_block(node, is_root: bool = False) -> dict:
 	# data_script); the block keeps only the loop wiring + template child.
 	repeat = node.get("repeat")
 	if isinstance(repeat, dict) and repeat.get("item"):
-		block["isRepeaterBlock"] = True
-		block["dataKey"] = {
-			"key": strip_binding_prefix(repeat.get("data")),
-			"property": "innerHTML",
-			"type": "key",
-		}
-		child_blocks = [convert_yaml_block(repeat["item"])]
+		item = convert_yaml_block(repeat["item"])
+		if item:
+			block["isRepeaterBlock"] = True
+			block["dataKey"] = {
+				"key": strip_binding_prefix(repeat.get("data")),
+				"property": "innerHTML",
+				"type": "key",
+			}
+			child_blocks = [item]
 
 	if child_blocks:
 		block["children"] = child_blocks
@@ -346,6 +359,8 @@ def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
 	if not isinstance(root, dict) or not root.get("el"):
 		return [], ""
 	block = convert_yaml_block(root, is_root=is_root)
+	if not block:
+		return [], ""
 	data_script = build_repeater_data_script(parsed)
 	return [block], data_script
 
@@ -380,18 +395,13 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	blocks, data_script = expand_page_yaml(yaml_text)
 	if not blocks:
 		return None, ""
-
-	def save() -> None:
-		doc = frappe.get_doc("Builder Page", page_id)
-		doc.draft_blocks = compact_json(blocks)
-		if data_script:
-			doc.page_data_script = data_script
-		doc.save(ignore_permissions=True)
-
-	try:
-		save()
-	except frappe.TimestampMismatchError:
-		# A canvas autosave (of the throwaway streaming preview) can land between our
-		# read and save during a long generation. The generated result must win.
-		save()
+	updates = {"draft_blocks": compact_json(blocks)}
+	if data_script:
+		updates["page_data_script"] = data_script
+	# set_value, NOT doc.save: the canvas autosaves the throwaway streamed preview
+	# repeatedly throughout a generation, so a timestamp-checked save loses the race
+	# arbitrarily often (a single retry was observed losing twice within 200ms). The
+	# generated result is authoritative and must land regardless.
+	frappe.db.set_value("Builder Page", page_id, updates, update_modified=True)
+	frappe.db.commit()
 	return blocks[0], data_script

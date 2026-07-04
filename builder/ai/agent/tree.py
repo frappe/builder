@@ -135,7 +135,12 @@ def merge_block_update(block: dict, args: dict) -> None:
 	if args.get("inner_html") is not None:  # html wins when both are given
 		block["innerHTML"] = args["inner_html"]
 	if args.get("element") is not None:
-		block["element"] = args["element"]
+		from builder.ai.page_writer import FORBIDDEN_ELEMENTS
+
+		# Silently keep the old element rather than fail the whole (multi-field)
+		# update; code belongs in the script tools, not the block tree.
+		if str(args["element"]).strip().lower() not in FORBIDDEN_ELEMENTS:
+			block["element"] = args["element"]
 	if args.get("classes") is not None:
 		block["classes"] = args["classes"]
 	if isinstance(args.get("bind"), dict):
@@ -277,6 +282,11 @@ class WorkingTree:
 		from builder.ai.page_writer import convert_yaml_block
 
 		block = convert_yaml_block(args["block"], is_root=False)
+		if not block:
+			return (
+				"FAILED: style/script/document elements are not blocks — JS/CSS goes through "
+				"set_page_script; fonts load automatically from fontFamily."
+			)
 		insert_child(parent, block, args.get("after_block_id"), args.get("index"))
 		# Ship the expanded block (with its assigned refs, children included) to the
 		# canvas so both sides key the same ids, and name the new ref so the model can
