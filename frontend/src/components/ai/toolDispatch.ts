@@ -201,6 +201,15 @@ export class ToolDispatcher {
 				this.applyPageYaml(args.yaml as string, true);
 				return;
 			}
+			case "set_page_blocks": {
+				// run_python mutated the tree server-side; replace it wholesale. Blocks keep
+				// their blockIds, so refs/selection stay valid — unlike generate_page.
+				const root = args.blocks as Record<string, any>;
+				if (!root) return;
+				this.pageStore.pageBlocks = [getBlockInstance(root)];
+				this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+				return;
+			}
 			case "update_block": {
 				const block = this.findBlockInTree(args.block_id);
 				if (!block) return;

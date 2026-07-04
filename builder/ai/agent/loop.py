@@ -11,8 +11,9 @@ suffixed with the page id, e.g. `ai_chat_stream_<page_id>`:
     ai_chat_stream      {chunk, kind?}   kind="page_yaml" → apply to canvas;
                                          absent/"summary" → append to chat text
     ai_chat_tool_batch  {operations: [{tool_name, args}]}
-    ai_chat_clarify     {question, options, previews?,
-                         plan_summary?, headline?, sections?, palette?}
+    ai_chat_clarify     {question, ui: [element]}   generic card the agent
+                                         composed (present_ui); renderer skips
+                                         unknown element kinds
     ai_chat_complete    {message}
     ai_chat_error       {message}
 
@@ -63,6 +64,7 @@ SNAPSHOT_TOOLS = frozenset(
 		"update_blocks",
 		"remove_block",
 		"move_block",
+		"set_page_blocks",
 		"generate_page",
 		"set_page_script",
 		"update_script",
@@ -95,9 +97,9 @@ ACTION_CLAIM_RE = re.compile(
 NOOP_CORRECTION = (
 	"You wrote a summary describing changes, but you called no tools — so NOTHING was "
 	"applied to the page. If the request needs a change, call the appropriate tool(s) now "
-	"(update_block, update_blocks, add_block, set_page_script, …) and actually do the work. "
-	"If no change is genuinely needed, or you were only answering a question, reply plainly "
-	"and do NOT claim you changed anything."
+	"(run_python to mutate the page, set_page_script, generate_page, …) and actually do the "
+	"work. If no change is genuinely needed, or you were only answering a question, reply "
+	"plainly and do NOT claim you changed anything."
 )
 
 
@@ -163,6 +165,12 @@ class AgentRunner:
 		# Surfaced like args_repaired so a flaky provider shows up in the data, not as a
 		# silent turn failure.
 		self.stream_retries = 0
+		# Client ops a server tool queued mid-call (run_python mutating the page).
+		# Drained right after the handler returns — see drain_queued_ops.
+		self.pending_client_ops: list[dict] = []
+		# Server tool calls executed this turn — real work even when no client op
+		# results (site-level edits), so the no-op-claim guard must not fire.
+		self.server_calls = 0
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -297,10 +305,10 @@ class AgentRunner:
 		parts = [
 			"This page is large, so you're given a compact OUTLINE (one line per block: "
 			"indentation = nesting, then ref, element, optional name, and a short text "
-			"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
-			"edit it. To see a block's full styles/attributes/text before editing, call "
-			"read_block(ref); to act on many blocks at once, call query_blocks then "
-			"update_blocks. The outline reflects the page at the start of this turn.",
+			"preview). Styles and attributes are omitted. The ref is the block's blockId in "
+			"the `page` dict run_python sees — read full detail there (walk `page` and "
+			"log()), and edit by mutating `page`. The outline reflects the page at the start "
+			"of this turn; `page` is always current.",
 			outline,
 		]
 		for ref in self.selected_block_ids:
@@ -496,6 +504,25 @@ class AgentRunner:
 		)
 		return tool_operations, content, raw_tool_calls
 
+	def queue_client_op(self, op: dict) -> None:
+		"""Called by a server tool mid-handler to emit a client op (run_python queues
+		the mutated page tree here). Drained by the loop right after the handler."""
+		self.pending_client_ops.append(op)
+
+	def drain_queued_ops(self) -> list[dict]:
+		"""Snapshot, sync the mirror, and emit ops a server tool queued, so the canvas
+		updates live and a later run_python sees the tree it already mutated."""
+		ops, self.pending_client_ops = self.pending_client_ops, []
+		if not ops:
+			return []
+		if any(op["tool_name"] in SNAPSHOT_TOOLS for op in ops):
+			self.ensure_revert_snapshot()
+		for op in ops:
+			if op["tool_name"] == "set_page_blocks":
+				self.tree.root = op["args"]["blocks"]
+		self.emit("tool_batch", operations=ops)
+		return ops
+
 	def page_root(self) -> dict | None:
 		"""Parse page_context_json into the root block dict, or None if empty/invalid."""
 		try:
@@ -536,6 +563,8 @@ class AgentRunner:
 			parts.append(f"removed {n} {blk(n)}")
 		if n := counts.get("move_block"):
 			parts.append(f"moved {n} {blk(n)}")
+		if counts.get("set_page_blocks"):
+			parts.append("updated the page")
 		if counts.get("set_page_script"):
 			parts.append("added a script")
 		if counts.get("update_script"):
@@ -664,8 +693,11 @@ class AgentRunner:
 					# called no tool, and nothing has been applied this whole turn — a
 					# hallucinated success (weaker models narrate instead of acting). Spend
 					# exactly one corrective round telling it to actually call the tools.
+					# Server tool calls count as real work: run_python can change the SITE
+					# (page meta, redirects, other pages) without producing any client op.
 					if (
 						not client_operations
+						and not self.server_calls
 						and not self.noop_corrected
 						and claims_unbacked_action(summary_text)
 					):
@@ -688,6 +720,8 @@ class AgentRunner:
 					tool = self.registry.get(op["tool_name"])
 					if tool and tool.side == "server" and tool.handler:
 						content = tool.handler(self, op["args"])
+						self.server_calls += 1
+						client_operations.extend(self.drain_queued_ops())
 					else:
 						content = self.tree.apply(op["tool_name"], op["args"])
 						# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction

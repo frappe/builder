@@ -349,16 +349,9 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 	};
 
-	onClarify = async (data: {
-		question?: string;
-		options?: string[];
-		previews?: Array<{ colors: string[] }> | null;
-		ready?: boolean;
-		plan_summary?: boolean;
-		headline?: string;
-		sections?: string[];
-		palette?: string;
-	}) => {
+	/** The agent composed a UI card (present_ui). The spec is generic — one
+	 * renderer (AIUISpec) draws it; there are no per-card message shapes. */
+	onClarify = async (data: { question?: string; ui?: Array<Record<string, any>> }) => {
 		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
@@ -366,21 +359,11 @@ export class AIChatController {
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
 
-		if (data.plan_summary) {
-			this.replacePendingAssistant(data.headline || "Here's my plan", {
-				status: "plan_summary",
-				headline: data.headline || "",
-				sections: data.sections || [],
-				palette: data.palette || "",
-			});
-		} else {
-			this.replacePendingAssistant(data.question || "Could you clarify?", {
-				status: "clarification",
-				options: data.options || [],
-				previews: data.previews ?? null,
-				ready: data.ready ?? false,
-			});
-		}
+		this.replacePendingAssistant(data.question || "…", {
+			status: "ui",
+			text: data.question || "",
+			ui: data.ui || [],
+		});
 		this.pendingAssistantId.value = null;
 		// Backend persists+commits clarify messages before emitting, so this is race-free.
 		await this.loadSession();
@@ -389,13 +372,10 @@ export class AIChatController {
 
 	// --- user actions -----------------------------------------------------
 
+	/** Submit a reply composed by an agent UI card (option tap, action button,
+	 * collected form values) as the user's next ordinary message. */
 	selectOption = (option: string) => {
 		this.prompt.value = option;
-		this.submitPrompt();
-	};
-
-	approvePlan = () => {
-		this.prompt.value = "Yes, that plan looks good — go ahead and build the page.";
 		this.submitPrompt();
 	};
 

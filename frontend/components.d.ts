@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
+    AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
     AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']

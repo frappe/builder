@@ -84,12 +84,17 @@ class ToolRegistry:
 def build_default_registry() -> ToolRegistry:
 	"""Assemble the registry from the tool modules. Imported lazily to avoid
 	import cycles (tool handlers reference the agent context type)."""
-	from builder.ai.agent.tools import blocks, conversation, generate, query, scripts
+	# Primitives-only experiment: run_python (read/compute/mutate the page) replaces
+	# the whole update/add/remove/move/query block-tool family; source access gives
+	# the model ground truth instead of a prompt full of mechanics. The specialised
+	# block tools still exist in tools/blocks.py + tools/query.py (and the frontend
+	# still applies their ops) — re-register them to fall back.
+	from builder.ai.agent.tools import codebase, conversation, generate, sandbox, scripts
 
 	registry = ToolRegistry()
 	registry.extend(generate.TOOLS)
-	registry.extend(blocks.TOOLS)
-	registry.extend(query.TOOLS)
 	registry.extend(scripts.TOOLS)
 	registry.extend(conversation.TOOLS)
+	registry.extend(codebase.TOOLS)
+	registry.extend(sandbox.TOOLS)
 	return registry

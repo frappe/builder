@@ -20,9 +20,9 @@ generate_page = Tool(
 		"Use this when the page is empty, or when the user asks to create a new page or "
 		"fully redesign/restructure the existing one — but only AFTER the user has "
 		"approved a proposed plan. When a plan is pending and the user approves it (any "
-		"affirmative), call THIS — do not call propose_plan again. For small, targeted "
-		"edits to an existing page, use the block tools (update_block, add_block, …) "
-		"instead — do NOT regenerate the whole page for a minor change."
+		"affirmative), call THIS — do not present the plan again. For small, targeted "
+		"edits to an existing page, use run_python instead — do NOT regenerate the whole "
+		"page for a minor change."
 	),
 	parameters={
 		"type": "object",

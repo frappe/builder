@@ -1,165 +1,150 @@
-"""Conversation tools — the agent's way of pausing the loop to talk to the user.
+"""Conversational UI primitive — the agent's way of pausing the loop to talk.
 
-Both are *terminal*: calling one ends the turn and hands control back to the
-user. They replace the old approach of smuggling clarification/plan JSON inside
-the model's text and regex-parsing it out, plus the `✓ APPROVED` magic string.
-Approval is now just the user's next ordinary message.
+One terminal tool, `present_ui`: instead of hardcoded cards (a clarify card, a
+plan card, …) the agent composes whatever the moment needs from a small set of
+UI atoms — text, heading, list, swatches, image, choices, input, actions — and
+the frontend has ONE generic renderer for them. The user's interaction comes
+back as their next ordinary chat message, so approval/refinement is just
+conversation, no magic strings.
+
+The persisted message content is a plain-text rendering of the whole card:
+that's what the model sees on replay, so it always knows exactly what it
+offered (options, plan sections, buttons) without any per-card special-casing.
 """
+
+import json
 
 import frappe
 
 from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
 
+ELEMENT_KINDS = frozenset(
+	{"text", "heading", "list", "swatches", "image", "svg", "choices", "input", "actions", "divider"}
+)
+MAX_ELEMENTS = 30
+# Roomy enough for a few small inline-SVG layout sketches; the tool description
+# tells the model to keep sketches tiny.
+MAX_UI_JSON = 24000
 
-def ask_clarification(ctx, args: dict) -> None:
-	question = (args.get("question") or "Could you clarify?").strip()
-	options = [str(o).strip() for o in (args.get("options") or []) if str(o).strip()]
-	previews = clean_previews(args.get("previews"), len(options))
+
+def run_present_ui(ctx, args: dict) -> None:
+	text = (args.get("text") or "").strip()
+	ui = sanitize_ui(args.get("ui"))
+	content = render_ui_text(text, ui)
 	# Persist + commit BEFORE emitting: the realtime event triggers a session
 	# reload on the client, which must see this message already in the DB.
 	AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
-		question,
+		content,
 		message_type="clarification",
 		task_type="agent",
-		metadata={"status": "clarification", "options": options, "previews": previews},
+		metadata={"status": "ui", "text": text, "ui": ui},
 	)
 	frappe.db.commit()
-	ctx.emit("clarify", question=question, options=options, previews=previews)
+	ctx.emit("clarify", question=text, ui=ui)
 
 
-def normalize_sections(raw) -> list[str]:
-	"""Accept sections as a newline-delimited string (the robust contract for weaker
-	models — one quoted JSON array per item is where their tool-call JSON breaks) OR a
-	list (Claude does arrays fine). Strip bullets/leading dashes and stray quotes."""
-	if isinstance(raw, str):
-		items = raw.splitlines()
-	elif isinstance(raw, list):
-		items = [str(s) for s in raw]
-	else:
-		items = []
-	out = []
-	for item in items:
-		s = item.strip().lstrip("-•*").strip().strip("'\"").strip()
-		if s:
-			out.append(s)
-	return out
+def sanitize_ui(raw) -> list[dict]:
+	"""Keep only dict elements with a known kind, capped in count and size —
+	the renderer skips anything else anyway; this keeps garbage out of the DB."""
+	if not isinstance(raw, list):
+		return []
+	elements = [e for e in raw if isinstance(e, dict) and e.get("kind") in ELEMENT_KINDS]
+	elements = elements[:MAX_ELEMENTS]
+	while elements and len(json.dumps(elements)) > MAX_UI_JSON:
+		elements.pop()
+	return elements
 
 
-def propose_plan(ctx, args: dict) -> None:
-	headline = (args.get("headline") or "Here's my plan").strip()
-	sections = normalize_sections(args.get("sections"))
-	palette = (args.get("palette") or "").strip()
-	AISession.try_append_message(
-		ctx.session_id,
-		"assistant",
-		headline,
-		message_type="clarification",
-		task_type="agent",
-		metadata={"status": "plan_summary", "headline": headline, "sections": sections, "palette": palette},
-	)
-	frappe.db.commit()
-	ctx.emit(
-		"clarify",
-		question=headline,
-		options=[],
-		plan_summary=True,
-		headline=headline,
-		sections=sections,
-		palette=palette,
-	)
+def render_ui_text(text: str, ui: list[dict]) -> str:
+	"""Plain-text rendering of the card — the message content the model sees on
+	replay, and the fallback display for clients without the generic renderer."""
+	lines = [text] if text else []
+	for el in ui:
+		lines.extend(render_element_text(el))
+	return "\n".join(lines).strip() or "…"
 
 
-def clean_previews(raw, n_options: int) -> list[dict] | None:
-	"""Validate optional colour-swatch previews; must align 1:1 with options."""
-	if not isinstance(raw, list) or len(raw) != n_options:
-		return None
-	previews = []
-	for p in raw:
-		if isinstance(p, dict) and isinstance(p.get("colors"), list):
-			colors = [str(c).strip() for c in p["colors"] if c and str(c).strip()]
-			previews.append({"colors": colors})
-		else:
-			return None
-	return previews
+def render_element_text(el: dict) -> list[str]:
+	kind = el.get("kind")
+	if kind in ("heading", "text"):
+		return [str(el.get("text") or "")]
+	if kind == "list":
+		return [f"- {i}" for i in el.get("items") or []]
+	if kind == "swatches":
+		colors = ", ".join(str(c) for c in el.get("colors") or [])
+		return [f"[palette: {colors}]"] if colors else []
+	if kind == "image":
+		return [f"[image: {el.get('src') or ''}]"]
+	if kind == "svg":
+		return [f"[sketch: {el.get('caption')}]"] if el.get("caption") else ["[sketch]"]
+	if kind == "choices":
+		return [option_text(o) for o in el.get("options") or []]
+	if kind == "actions":
+		labels = " / ".join(str(b.get("label") or "") for b in el.get("buttons") or [])
+		return [f"[buttons: {labels}]"] if labels else []
+	return []
 
 
-ask_clarification = Tool(
-	name="ask_clarification",
+def option_text(option) -> str:
+	if not isinstance(option, dict):
+		return f"* {option}"
+	label = option.get("label") or option.get("value") or ""
+	desc = option.get("description") or ""
+	return f"* {label} — {desc}" if desc else f"* {label}"
+
+
+present_ui = Tool(
+	name="present_ui",
 	side="terminal",
+	handler=run_present_ui,
 	description=(
-		"Ask the user ONE focused question to gather information you need (e.g. brand name, "
-		"positioning, audience, visual style). Ends your turn and waits for their reply. "
-		"Provide 2–5 short options when there are sensible choices; omit options for "
-		"open-ended answers like a name (the user can type their reply)."
+		"Show the user an interactive card composed from UI atoms, then END your turn and "
+		"wait. This is your ONLY conversational UI — compose whatever the moment needs: a "
+		"single question with tappable options, a plan for approval, a confirmation, a "
+		"small form. Their interaction (option tapped, button clicked, text typed) arrives "
+		"as their next ordinary message; free-typed text is an equally valid reply. "
+		"Elements render in order. Interaction model: a lone single-select 'choices' "
+		"submits on tap; 'input' fields and multi-select choices are collected and sent by "
+		"an 'actions' button (always add one when using them). Keep cards focused — one "
+		"decision per card."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
-			"question": {"type": "string", "description": "A single, focused question."},
-			"options": {
-				"type": "array",
-				"items": {"type": "string"},
-				"description": "Optional: 2–5 short plain-text answer choices. Omit for open-ended questions.",
+			"text": {
+				"type": "string",
+				"description": "The message above the card — the question being asked or what you're proposing. Short.",
 			},
-			"previews": {
+			"ui": {
 				"type": "array",
 				"description": (
-					"For questions offering a DESIGN DIRECTION or a COLOUR PALETTE: one entry per "
-					"option, each {colors: ['#hex', ...]} = that option's palette swatches (for a "
-					"direction, use that direction's palette). One entry per option, in the same "
-					"order. Omit for purely textual answers like the brand name."
+					"UI elements, rendered in order. Kinds:\n"
+					"{kind:'heading', text} — bold card heading\n"
+					"{kind:'text', text} — paragraph (line breaks preserved)\n"
+					"{kind:'list', items:[str]} — bulleted list (e.g. plan sections)\n"
+					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
+					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
+					"{kind:'svg', svg, caption?} — small inline-SVG figure (sanitized; no scripts)\n"
+					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
+					"svg?}]} — tappable option cards; single-select submits immediately, multi "
+					"collects. An option's `svg` is a MINIMAL layout sketch: abstract wireframe of "
+					"flat rects/lines in that option's palette on its background colour, "
+					"viewBox='0 0 120 80', no words, <15 shapes — it must make the layout "
+					"difference between options visible at a glance\n"
+					"{kind:'input', label?, placeholder?} — one-line text field\n"
+					"{kind:'actions', buttons:[{label, variant:'primary'|'secondary'?}]} — "
+					"submit buttons (e.g. 'Build it'); the clicked label + all collected "
+					"values become the user's reply\n"
+					"{kind:'divider'}"
 				),
-				"items": {
-					"type": "object",
-					"properties": {"colors": {"type": "array", "items": {"type": "string"}}},
-				},
+				"items": {"type": "object"},
 			},
 		},
-		"required": ["question"],
+		"required": ["text"],
 	},
-	handler=ask_clarification,
 )
 
-propose_plan = Tool(
-	name="propose_plan",
-	side="terminal",
-	description=(
-		"Before building a NEW page or doing a major redesign, present a short plan and "
-		"wait for the user to approve or refine it. The plan must EXPRESS the chosen design "
-		"direction — its sections, copy, and layout should read unmistakably as that "
-		"aesthetic, not a generic structure. Ends your turn. Never call this twice in a row: "
-		"if a plan is already pending and the user approved it, call generate_page instead. "
-		"Only re-propose when the user asked for changes."
-	),
-	parameters={
-		"type": "object",
-		"properties": {
-			"headline": {
-				"type": "string",
-				"description": "One concrete line stating what the page is and who it's for — not a slogan.",
-			},
-			"sections": {
-				"type": "string",
-				"description": (
-					"3–5 sections as ONE string, with each section on its OWN LINE (separate them with "
-					"a newline). Do NOT send a JSON array. Make each line DECISION-USEFUL: the real "
-					"headline/key copy it will use (in 'single quotes'), what's concretely in it (named "
-					"items, not 'categories'), and the layout (e.g. 'full-bleed split, photo right'). "
-					"Use single quotes for any quoted copy. Write real nouns and copy, never "
-					"mood-adjective filler — do NOT use 'striking', 'clean', 'elegant', 'minimalist', "
-					"'sleek', 'modern', or 'premium'. Example (two lines):\n"
-					"Hero — deep-green full-bleed panel, headline 'Bring the forest home', sapling photo right, 'Shop the collection' button\n"
-					"Story — two-column split, founder portrait left, 120-word origin note right"
-				),
-			},
-			"palette": {"type": "string", "description": "Palette description with hex codes."},
-		},
-		"required": ["headline", "sections"],
-	},
-	handler=propose_plan,
-)
-
-TOOLS = [ask_clarification, propose_plan]
+TOOLS = [present_ui]
