@@ -18,19 +18,32 @@ class AISession:
 
 	@classmethod
 	def find_or_create(cls, filters: dict, model: str | None = None):
-		"""Return the Active session matching `filters`, or insert one with those
-		values. A late model pick is saved onto a session created without one."""
-		name = frappe.db.get_value(cls.DOCTYPE, {**filters, "status": "Active"}, "name")
+		"""Return the most recently used Active session matching `filters` (a page can
+		hold several parallel sessions), or insert one with those values. A late model
+		pick is saved onto a session created without one."""
+		name = frappe.db.get_value(
+			cls.DOCTYPE,
+			{**filters, "status": "Active"},
+			"name",
+			order_by="last_interaction_on desc, modified desc",
+		)
 		if name:
 			doc = frappe.get_doc(cls.DOCTYPE, str(name))
 			if model and not doc.selected_model:
 				doc.selected_model = model
 				doc.save(ignore_permissions=True)
 			return cls(doc)
+		return cls.create({**filters}, model)
+
+	@classmethod
+	def create(cls, values: dict, model: str | None = None):
+		"""Insert a fresh Active session — the 'new chat' action and the create branch
+		of find_or_create share this."""
 		doc = frappe.get_doc(
 			{
 				"doctype": cls.DOCTYPE,
-				**filters,
+				"session_user": frappe.session.user,
+				**values,
 				"status": "Active",
 				"selected_model": model or "",
 				"last_interaction_on": frappe.utils.now_datetime(),

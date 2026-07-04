@@ -1,16 +1,20 @@
 <template>
 	<div class="bg-surface-white flex h-full min-h-full flex-col">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
-			<div class="flex flex-col gap-1">
+			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="text-p-xs leading-4 text-ink-gray-5">Session persists for this page</div>
+				<div class="truncate text-p-xs leading-4 text-ink-gray-5">{{ currentSessionTitle }}</div>
 			</div>
-			<Button
-				v-if="builderStore.isAIEnabled && messages.length"
-				variant="ghost"
-				size="sm"
-				label="Clear"
-				@click="clearSession" />
+			<div v-if="builderStore.isAIEnabled" class="flex shrink-0 items-center gap-1">
+				<Tooltip text="New chat">
+					<Button variant="ghost" size="sm" icon="lucide-plus" :disabled="isSubmitting" @click="newSession" />
+				</Tooltip>
+				<!-- Button sits directly in the Dropdown slot: a Tooltip wrapper breaks
+				     the as-child trigger wiring (frappe-ui slot API). -->
+				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
+					<Button variant="ghost" size="sm" icon="lucide-history" title="Chats on this page" />
+				</Dropdown>
+			</div>
 		</div>
 
 		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
@@ -305,7 +309,27 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, revertTurn, selectOption } = chat;
+const { revertTurn, selectOption } = chat;
+const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
+
+const currentSessionTitle = computed(() => {
+	const current = sessions.value.find((s) => s.name === sessionId.value);
+	return current?.title || "New chat";
+});
+
+/** VS Code-style session switcher: this page's chats (current one checked),
+ * plus delete for the current chat. */
+const sessionOptions = computed(() => {
+	if (!sessions.value.length) return [];
+	return [
+		...sessions.value.map((s) => ({
+			label: s.title || "New chat",
+			icon: s.name === sessionId.value ? "lucide-check" : "lucide-message-circle",
+			onClick: () => switchSession(s.name),
+		})),
+		{ label: "Delete current chat", icon: "lucide-trash-2", onClick: deleteSession },
+	];
+});
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;

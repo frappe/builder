@@ -344,7 +344,10 @@ def get_ai_models():
 
 @frappe.whitelist()
 @has_page_write()
-def get_ai_session(page_id: str, model: str | None = None):
+def get_ai_session(page_id: str, model: str | None = None, session_id: str | None = None):
+	"""One page can hold several parallel chat sessions. With `session_id` this loads
+	that specific session; without it, the page's most recently used one (creating
+	the first if none exist)."""
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
 		return {
 			"session_id": "",
@@ -354,7 +357,10 @@ def get_ai_session(page_id: str, model: str | None = None):
 			"messages": [],
 		}
 
-	session = AISession.get_or_create(page_id, model=model)
+	if session_id and frappe.db.exists(AISession.DOCTYPE, session_id):
+		session = AISession.get(session_id, page_id=page_id)
+	else:
+		session = AISession.get_or_create(page_id, model=model)
 	return {
 		"session_id": session.name,
 		"page_id": session.page,
@@ -362,6 +368,50 @@ def get_ai_session(page_id: str, model: str | None = None):
 		"last_task_type": session.last_task_type,
 		"messages": session.get_messages(),
 	}
+
+
+@frappe.whitelist()
+@has_page_write()
+def new_ai_session(page_id: str, model: str | None = None):
+	"""Start a fresh chat session on this page — existing sessions stay untouched
+	and switchable (VS Code-style parallel chats)."""
+	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
+		frappe.throw(_("Save the page before starting a chat session"))
+	session = AISession.create({"page": page_id}, model)
+	return {"session_id": session.name, "messages": []}
+
+
+@frappe.whitelist()
+@has_page_write()
+def list_page_ai_sessions(page_id: str, limit: int = 20):
+	"""This page's chat sessions for the current user — powers the session switcher."""
+	if not page_id or page_id == "new":
+		return []
+	rows = frappe.get_all(
+		AISession.DOCTYPE,
+		filters={"page": page_id, "session_user": frappe.session.user, "status": "Active"},
+		fields=["name", "title", "last_interaction_on"],
+		order_by="last_interaction_on desc",
+		limit=min(int(limit), 50),
+	)
+	# A user-set title wins; otherwise the first user message names the session.
+	for r in rows:
+		r["title"] = r["title"] or frappe.db.get_value(
+			AISession.MESSAGE_DOCTYPE,
+			{"session": r["name"], "role": "user"},
+			"content",
+			order_by="creation asc",
+		)
+	return rows
+
+
+@frappe.whitelist()
+@has_page_write()
+def delete_ai_session(session_id: str):
+	ensure_session_owner(session_id)
+	AISession.get(session_id).clear()  # messages first (separate doctype)
+	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
+	return {"status": "ok"}
 
 
 @frappe.whitelist()

@@ -42,6 +42,8 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
+	// This page's chat sessions (most recent first) — the panel's session switcher.
+	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
 
@@ -111,9 +113,11 @@ export class AIChatController {
 			if (!newPageId) return;
 			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
+			// Sessions are page-scoped: never carry one across a page switch.
+			this.sessionId.value = "";
+			this.sessions.value = [];
 			if (newPageId === "new") {
 				this.messages.value = [];
-				this.sessionId.value = "";
 				return;
 			}
 			await this.loadSession();
@@ -191,11 +195,18 @@ export class AIChatController {
 		});
 	}
 
-	async loadSession() {
+	/** Load a chat session: the given one, else the current one, else the page's
+	 * most recently used (the server creates the first). A page can hold several
+	 * parallel sessions — see switchSession/newSession. */
+	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
 		const result = await createResource({
 			url: "builder.ai.api.get_ai_session",
-			makeParams: () => ({ page_id: this.pageId.value, model: this.selectedModel.value }),
+			makeParams: () => ({
+				page_id: this.pageId.value,
+				model: this.selectedModel.value,
+				session_id: sessionId || this.sessionId.value || undefined,
+			}),
 		}).submit();
 		const session = result as { session_id: string; messages: ChatMessage[] };
 		this.sessionId.value = session.session_id;
@@ -208,18 +219,47 @@ export class AIChatController {
 			const batchId = (m.metadata as any)?.batchId;
 			if (batchId) this.batchTracker.track(batchId);
 		}
+		this.loadSessions();
 	}
 
-	clearSession = async () => {
+	/** Refresh the session-switcher list (fire-and-forget; the panel renders it). */
+	loadSessions = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
-		const result = await createResource({
-			url: "builder.ai.api.clear_ai_session",
-			makeParams: () => ({ page_id: this.pageId.value }),
-		}).submit();
-		const session = result as { session_id: string; messages: ChatMessage[] };
-		this.sessionId.value = session.session_id;
-		this.messages.value = session.messages || [];
+		const rows = await createResource({ url: "builder.ai.api.list_page_ai_sessions" })
+			.submit({ page_id: this.pageId.value })
+			.catch(() => null);
+		if (rows) this.sessions.value = rows as Array<{ name: string; title: string | null }>;
+	};
+
+	switchSession = async (sessionId: string) => {
+		if (!sessionId || sessionId === this.sessionId.value) return;
 		this.resetTransientState();
+		await this.loadSession(sessionId);
+		this.scrollToBottom();
+	};
+
+	newSession = async () => {
+		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
+			page_id: this.pageId.value,
+			model: this.selectedModel.value,
+		});
+		this.resetTransientState();
+		this.sessionId.value = (result as { session_id: string }).session_id;
+		this.messages.value = [];
+		this.loadSessions();
+	};
+
+	deleteSession = async () => {
+		if (!this.sessionId.value) return;
+		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched.")))
+			return;
+		await createResource({ url: "builder.ai.api.delete_ai_session" })
+			.submit({ session_id: this.sessionId.value })
+			.catch(() => null);
+		this.resetTransientState();
+		this.sessionId.value = "";
+		await this.loadSession(); // falls back to the next most recent (or a fresh one)
 	};
 
 	clearImage = () => {
@@ -243,15 +283,24 @@ export class AIChatController {
 
 	// --- realtime handlers ------------------------------------------------
 
-	onProgress = (data: { message?: string }) => {
+	/** All events on this page's channel carry the session that produced them.
+	 * With parallel sessions, chat-UI events from a session the user isn't
+	 * viewing must not touch this view (canvas ops in onToolBatch still apply —
+	 * the canvas is page-level, not session-level). */
+	private isForeignSession(data: { session_id?: string }): boolean {
+		return !!(data.session_id && this.sessionId.value && data.session_id !== this.sessionId.value);
+	}
+
+	onProgress = (data: { message?: string; session_id?: string }) => {
+		if (this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
 		this.scrollToBottom();
 	};
 
-	onStream = (data: { chunk?: string; kind?: string }) => {
-		if (!data.chunk) return;
+	onStream = (data: { chunk?: string; kind?: string; session_id?: string }) => {
+		if (!data.chunk || this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		if (data.kind === "page_yaml") {
 			if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
@@ -267,8 +316,13 @@ export class AIChatController {
 	/** The agent fanned out parallel page builds (spawn_parallel_agents ends the
 	 * turn). Track the batch so the panel's task-group card shows live progress;
 	 * the reload on complete picks up the persisted message carrying batchId. */
-	onTaskGroup = (data: { batch_id?: string; total?: number; tasks?: Array<Record<string, any>> }) => {
-		if (!data.batch_id) return;
+	onTaskGroup = (data: {
+		batch_id?: string;
+		total?: number;
+		tasks?: Array<Record<string, any>>;
+		session_id?: string;
+	}) => {
+		if (!data.batch_id || this.isForeignSession(data)) return;
 		this.batchTracker.track(data.batch_id, {
 			total: data.total || data.tasks?.length || 0,
 			tasks: (data.tasks || []).map((t: any) => ({ ...t })),
@@ -314,7 +368,8 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
-	onComplete = async (data: { message?: string }) => {
+	onComplete = async (data: { message?: string; session_id?: string }) => {
+		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
 		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
 			this.submittedForPageId = null;
@@ -383,7 +438,8 @@ export class AIChatController {
 		}, 1200);
 	};
 
-	onError = async (data: { message?: string }) => {
+	onError = async (data: { message?: string; session_id?: string }) => {
+		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
@@ -402,7 +458,9 @@ export class AIChatController {
 		question?: string;
 		ui?: Array<Record<string, any>>;
 		pending_action?: { kind: string; payload: Record<string, any> };
+		session_id?: string;
 	}) => {
+		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
