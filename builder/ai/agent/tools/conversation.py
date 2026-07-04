@@ -70,6 +70,12 @@ def sanitize_option(option: dict) -> dict:
 		font = coerce_font(option.pop("font"))
 		if font:
 			option["font"] = font
+	# A font option without a label (models lean on the specimen) would submit
+	# an empty tap-reply — name it after its pairing.
+	if not option.get("label") and isinstance(option.get("font"), dict):
+		option["label"] = " + ".join(
+			v for v in (option["font"].get("heading"), option["font"].get("body")) if v
+		)
 	if option.get("colors") is not None and not isinstance(option["colors"], list):
 		option.pop("colors")
 	if option.get("svg") is not None and not isinstance(option["svg"], str):
