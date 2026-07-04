@@ -143,6 +143,8 @@ def render_element_text(el: dict) -> list[str]:
 		return [f"[sketch: {el.get('caption')}]"] if el.get("caption") else ["[sketch]"]
 	if kind == "choices":
 		return [option_text(o) for o in el.get("options") or []]
+	if kind == "input":
+		return [f"[input: {el.get('label') or el.get('placeholder') or 'text field'}]"]
 	if kind == "upload":
 		return [f"[upload: {el.get('label') or 'image'}]"]
 	if kind == "actions":

@@ -127,6 +127,23 @@ def claims_unbacked_action(summary_text: str) -> bool:
 	return bool(summary_text) and bool(ACTION_CLAIM_RE.search(summary_text))
 
 
+# Persisted present_ui cards replay to the model as plain text ("[buttons: …]"),
+# and a model can MIMIC that format — writing a card as chat text instead of
+# calling present_ui. Text renders no controls, so the user is stuck.
+CARD_TEXT_RE = re.compile(r"\[\s*(?:input|choices|buttons|upload|swatches|sketch)\s*:", re.IGNORECASE)
+
+CARD_CORRECTION = (
+	"Your last message wrote interactive-card markup as plain TEXT ([input: …], "
+	"[choices: …], [buttons: …]). Text renders NO controls — the user cannot answer it. "
+	"Ask again properly: ONE present_ui call composing the same fields from its ui atoms "
+	"(input/choices/upload/actions). Do not repeat the markup in your text."
+)
+
+
+def looks_like_card_text(summary_text: str) -> bool:
+	return bool(summary_text) and bool(CARD_TEXT_RE.search(summary_text))
+
+
 # Weaker models sometimes emit a pseudo tool call as plain TEXT instead of calling
 # the tool ("calc:default_api:write_page_data_script{…}", "```tool_code…"). That
 # must never reach the chat as the turn's summary. Conservative signals only —
@@ -912,21 +929,30 @@ class AgentRunner:
 		if note:
 			self.emit("progress", message=note)
 
-	def needs_noop_correction(self, summary_text: str) -> bool:
-		"""No-op-claim guard: the model wrote a summary that CLAIMS an edit but called
-		no tool, and nothing has been applied this whole turn — a hallucinated success
-		(weaker models narrate instead of acting). Spend exactly one corrective round."""
-		if self.applied_operations or self.server_mutations or self.noop_corrected:
-			return False
-		if not claims_unbacked_action(summary_text):
-			return False
+	def correction_for(self, summary_text: str) -> str | None:
+		"""A no-tool round that should have been a tool call gets EXACTLY ONE
+		corrective round. Two shapes: card markup written as plain text (mimicking
+		the persisted replay format — renders no controls), and a summary that
+		CLAIMS an edit when nothing was applied this turn (hallucinated success)."""
+		if self.noop_corrected:
+			return None
+		correction = None
+		if looks_like_card_text(summary_text):
+			correction = CARD_CORRECTION
+		elif (
+			not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text)
+		):
+			correction = NOOP_CORRECTION
+		if correction is None:
+			return None
 		self.noop_corrected = True
 		self.stop_reason = "noop_retry"
 		logger.warning(
-			"No-op claim from model (no tools called): %s",
+			"No-tool round corrected (%s): %s",
+			"card-as-text" if correction is CARD_CORRECTION else "no-op claim",
 			BlockCodec.truncate_for_log(summary_text, 300),
 		)
-		return True
+		return correction
 
 	def flush_pending_images(self, messages: list[dict]) -> None:
 		"""Images a tool captured this round (preview_page screenshots) ride a
@@ -1026,9 +1052,9 @@ class AgentRunner:
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
-					if self.needs_noop_correction(summary_text):
+					if correction := self.correction_for(summary_text):
 						messages.append({"role": "assistant", "content": summary_text})
-						messages.append({"role": "user", "content": NOOP_CORRECTION})
+						messages.append({"role": "user", "content": correction})
 						continue
 					self.stop_reason = "model_finished"
 					break
