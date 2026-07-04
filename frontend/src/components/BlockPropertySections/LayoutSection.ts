@@ -48,12 +48,14 @@ const layoutSectionProperties = [
 	},
 	{
 		component: BlockGridLayoutHandler,
+		condition: () => blockController.isGrid() || Boolean(blockController.getParentBlock()?.isGrid()),
 		getProps: () => {},
 		searchKeyWords:
 			"Layout, Grid, GridTemplate, Grid Template, GridGap, Grid Gap, GridRow, Grid Row, GridColumn, Grid Column",
 	},
 	{
 		component: BlockFlexLayoutHandler,
+		condition: () => blockController.isFlex() || Boolean(blockController.getParentBlock()?.isFlex()),
 		getProps: () => {},
 		searchKeyWords:
 			"Layout, Flex, Flexbox, Flex Box, FlexBox, Justify, Space Between, Flex Grow, Flex Shrink, Flex Basis, Align Items, Align Content, Align Self, Flex Direction, Flex Wrap, Flex Flow, Flex Grow, Flex Shrink, Flex Basis, Gap, Order",

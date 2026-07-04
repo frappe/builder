@@ -84,7 +84,8 @@ const showSection = (section: PropertySection) => {
 	if (section.condition) {
 		showSection = section.condition();
 	}
-	if (showSection && builderStore.propertyFilter) {
+	// hide sections whose properties are all condition-hidden (blank header otherwise)
+	if (showSection) {
 		showSection = getFilteredProperties(section).length > 0;
 	}
 	return showSection;

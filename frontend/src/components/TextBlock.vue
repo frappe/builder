@@ -1,10 +1,10 @@
 <template>
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div
+			class="__text_content__ bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			v-html="textContent"
 			v-show="!editor && textContent"
-			@click="handleClick"
-			class="bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"></div>
+			@click="handleClick"></div>
 		<TextBlockBubbleMenu
 			v-if="editor"
 			:block="block"
@@ -22,7 +22,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
+			class="__text_editor__ bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -257,6 +257,13 @@ const getInnerHTML = (editor: Editor | null) => {
 	) {
 		innerHTML = editor?.getText();
 	}
+	// a lone attribute-less <p> wrapper is redundant inside the block's own tag
+	// (and a block box inside inline elements like span/a breaks their layout)
+	const doc = editor.state.doc;
+	const wrapped = innerHTML.match(/^<p>([\s\S]*)<\/p>$/);
+	if (doc.childCount === 1 && doc.firstChild?.type.name === "paragraph" && wrapped) {
+		innerHTML = wrapped[1];
+	}
 	return innerHTML;
 };
 
@@ -367,6 +374,19 @@ defineExpose({
 });
 </script>
 <style scoped>
+/* no box — a block box inside inline tags (span/a) fragments their background/radius */
+.__text_content__ {
+	display: contents;
+}
+
+/* the contenteditable editor root needs a box, so keep it inline-level inside inline tags */
+:is(span, a, b, i, em, strong, cite, label).__text_block__ > .__text_editor__ {
+	display: inline-block;
+}
+:is(span, a, b, i, em, strong, cite, label).__text_block__ :deep(.ProseMirror p) {
+	display: inline;
+}
+
 .__text_block__ :deep([contenteditable="true"]) {
 	caret-color: currentcolor;
 	/* blocks inherit `select-none`; re-enable native text selection while editing */
