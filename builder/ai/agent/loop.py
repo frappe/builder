@@ -867,15 +867,22 @@ class AgentRunner:
 			# continues. None = the card was emitted and the turn is over.
 			return self.handle_terminal(op)
 		if kind == "artifact":
-			# Only reachable headless — the editor broke out of the loop already.
-			content, ops = self.run_headless_generation(tool, op)
+			# Generation is a STEP of the turn in both modes: the generator streams
+			# YAML live (canvas preview in the editor), persists the page, and the
+			# loop continues — so the model can add scripts, verify, and refine in
+			# the same turn.
+			content, ops = self.run_generation_step(tool, op)
 			self.applied_operations.extend(ops)
 			if ops:
-				# Hand the authoritative result to any watching editor: it replaces the
-				# throwaway streamed preview with the server's block tree (shared ids),
-				# and the complete resets the watcher's "working" state.
-				self.emit_page("tool_batch", operations=ops)
-				self.emit_page("complete", message="Page generated — the agent may keep refining it.")
+				# The authoritative op replaces the throwaway streamed preview with
+				# the server's block tree (shared ids).
+				self.emit("tool_batch", operations=ops)
+				if self.channel != self.page_id:
+					# Mirror to any editor watching the focused page (headless build,
+					# or an editor agent that opened another page); the complete
+					# resets that watcher's "working" state.
+					self.emit_page("tool_batch", operations=ops)
+					self.emit_page("complete", message="Page generated — the agent may keep refining it.")
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		content = tool.handler(self, op["args"])
@@ -1021,23 +1028,6 @@ class AgentRunner:
 				# tool in the same round can no longer silently discard them.
 				client_ops = [op for op in tool_operations if self.op_kind(op) == "client"]
 				client_results, applied = self.apply_client_ops(client_ops)
-
-				# EDITOR: an artifact tool (full-page generation) is the turn's work —
-				# its generator streams the YAML live to the canvas on the heavy model,
-				# persists the page, and returns the authoritative op. Generation ends
-				# the editor loop. (Headless, generation is a STEP handled in run_op —
-				# the model reads back and refines what it built before finishing.)
-				artifact_ops = [op for op in tool_operations if self.op_kind(op) == "artifact"]
-				if artifact_ops and not self.headless:
-					self.stop_reason = "generated"
-					self.ensure_revert_snapshot()  # generate_page replaces the block tree
-					for op in artifact_ops:
-						tool = self.registry.get(op["tool_name"])
-						ops = tool.generator(self, op["args"]) if tool and tool.generator else []
-						self.applied_operations.extend(ops)
-						if ops:
-							self.emit("tool_batch", operations=ops)
-					break
 
 				has_terminal = any(self.op_kind(op) == "terminal" for op in tool_operations)
 				if not has_terminal:
@@ -1238,10 +1228,11 @@ class AgentRunner:
 			return tool.handler(self, op["args"])
 		return None
 
-	def run_headless_generation(self, tool, op: dict) -> tuple[str, list[dict]]:
-		"""Run generate_page as one STEP of a headless turn. The generator persists the
-		page server-side; point the working tree at the result so the model can read
-		back — and surgically refine — what it just built."""
+	def run_generation_step(self, tool, op: dict) -> tuple[str, list[dict]]:
+		"""Run generate_page as one STEP of the turn (editor and headless alike). The
+		generator persists the page server-side; point the working tree at the result
+		so the model can read back — and build on — what it just made (scripts,
+		surgical fixes, one verify pass)."""
 		if not self.page_id:
 			return ("FAILED: no page is open — call create_page or open_page first, then generate.", [])
 		entry = self.begin_activity(op["tool_name"], op["args"])
@@ -1253,8 +1244,9 @@ class AgentRunner:
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
 		return (
-			"Page generated and saved. Verify it (preview_page / read_block), make surgical "
-			f"fixes with the block tools if needed, then finish with a short summary.\n"
+			"Page generated and saved. Now finish the build: add the client scripts the plan "
+			"calls for (set_page_script), fix obvious breakage with the block tools, verify "
+			"with preview_page at most once, then finish with a short summary.\n"
 			f"{render_page_context(root)}",
 			ops,
 		)

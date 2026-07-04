@@ -7,6 +7,8 @@ visitor and are hard to undo — those are `side="terminal"` and go through the
 confirm-gate (builder/ai/agent/pending.py); the user approves before they apply.
 """
 
+import re
+
 import frappe
 
 from builder.ai.agent import pending
@@ -38,10 +40,17 @@ def set_page_settings(ctx, args: dict) -> str:
 	return f"Updated page settings: {', '.join(updates)}."
 
 
+def clean_variable_id(raw: str) -> str:
+	"""A Builder Variable's doc name doubles as its CSS custom-property name, so it
+	must be a valid css ident: lowercase, [a-z0-9_-] only."""
+	return re.sub(r"[^a-z0-9_-]+", "-", (raw or "").strip().lower()).strip("-")
+
+
 def set_theme_variable(ctx, args: dict) -> str:
 	"""Create or update a site theme token (Builder Variable). The CSS handle is
-	var(--<doc name>) — a uuid; variable_name is only the human label. The result
-	names the exact handle so the model references something that resolves."""
+	var(--<doc name>); variable_name is only the human label. An explicit `id`
+	becomes the doc name, so the caller knows the handle before creating it. The
+	result names the exact handle so the model references something that resolves."""
 	label = (args.get("variable_name") or "").strip().lstrip("-")
 	value = (args.get("value") or "").strip()
 	if not label or not value:
@@ -51,9 +60,12 @@ def set_theme_variable(ctx, args: dict) -> str:
 		"value": value,
 		"dark_value": (args.get("dark_value") or "").strip(),
 	}
-	# The model may pass the label OR the uuid handle it saw in query_records.
-	existing = frappe.db.exists("Builder Variable", label) or frappe.db.exists(
-		"Builder Variable", {"variable_name": label}
+	wanted_id = clean_variable_id(args.get("id") or "")
+	# The model may pass the label OR the id/handle it saw in query_records.
+	existing = (
+		(wanted_id and frappe.db.exists("Builder Variable", wanted_id))
+		or frappe.db.exists("Builder Variable", label)
+		or frappe.db.exists("Builder Variable", {"variable_name": label})
 	)
 	if existing:
 		doc = frappe.get_doc("Builder Variable", existing)
@@ -64,7 +76,9 @@ def set_theme_variable(ctx, args: dict) -> str:
 		return f"Updated theme variable '{doc.variable_name}' — reference it in styles as var(--{doc.name})."
 	doc = frappe.get_doc(
 		{"doctype": "Builder Variable", "variable_name": label, "group": "Brand", **fields}
-	).insert(ignore_permissions=True)
+		# set_name survives naming (insert clears doc.name before autoname runs),
+		# so the caller can know the var(--<id>) handle before the doc exists.
+	).insert(ignore_permissions=True, set_name=wanted_id or None)
 	frappe.db.commit()
 	return (
 		f"Created theme variable '{label}'. Reference it in styles EXACTLY as var(--{doc.name}) — "
@@ -133,15 +147,25 @@ set_theme_variable_tool = Tool(
 	description=(
 		"Create or update a site theme token (Builder Variable). Use for brand "
 		"colours/dimensions so the whole site restyles from one place. The result names the "
-		"exact CSS handle to use in styles — var(--<id>), where <id> is the document id, NOT "
-		"the human variable_name. type is Color or Dimension; give a dark_value for colours."
+		"exact CSS handle to use in styles — var(--<id>). Pass an explicit `id` (e.g. "
+		"'acme-ink') to CHOOSE that handle upfront, so you can write var(--acme-ink) in "
+		"briefs and styles you compose in the same turn. type is Color or Dimension; give "
+		"a dark_value for colours."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
 			"variable_name": {
 				"type": "string",
-				"description": "Bare name, e.g. brand-primary (no leading --).",
+				"description": "Human label, e.g. Brand Primary.",
+			},
+			"id": {
+				"type": "string",
+				"description": (
+					"Optional explicit handle id: lowercase letters/digits/hyphens, unique and "
+					"brand-prefixed (e.g. 'acme-ink'). Becomes the <id> in var(--<id>). Omit to "
+					"get a generated uuid handle."
+				),
 			},
 			"value": {"type": "string"},
 			"dark_value": {"type": "string"},
