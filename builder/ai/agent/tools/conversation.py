@@ -13,6 +13,7 @@ offered (options, plan sections, buttons) without any per-card special-casing.
 """
 
 import json
+import re
 
 import frappe
 
@@ -53,9 +54,43 @@ def sanitize_ui(raw) -> list[dict]:
 		return []
 	elements = [e for e in raw if isinstance(e, dict) and e.get("kind") in ELEMENT_KINDS]
 	elements = elements[:MAX_ELEMENTS]
+	for el in elements:
+		if el.get("kind") == "choices":
+			el["options"] = [sanitize_option(o) for o in el.get("options") or [] if isinstance(o, dict)]
 	while elements and len(json.dumps(elements)) > MAX_UI_JSON:
 		elements.pop()
 	return elements
+
+
+def sanitize_option(option: dict) -> dict:
+	"""Normalize decorations to the shapes the renderer expects, dropping what
+	can't be salvaged (models emit font as a dict, a 'Heading + Body' string, or
+	even a bare number — be liberal in what we accept)."""
+	if "font" in option:
+		font = coerce_font(option.pop("font"))
+		if font:
+			option["font"] = font
+	if option.get("colors") is not None and not isinstance(option["colors"], list):
+		option.pop("colors")
+	if option.get("svg") is not None and not isinstance(option["svg"], str):
+		option.pop("svg")
+	return option
+
+
+def coerce_font(font) -> dict | None:
+	"""Accept {heading, body} or a 'Heading + Body' string; None for anything else."""
+	if isinstance(font, dict):
+		pair = {k: font[k] for k in ("heading", "body") if isinstance(font.get(k), str) and font[k].strip()}
+		return pair or None
+	if isinstance(font, str):
+		parts = [p.strip() for p in re.split(r"\s*[+/|]\s*", font) if p.strip()]
+		if not parts:
+			return None
+		pair = {"heading": parts[0]}
+		if len(parts) > 1:
+			pair["body"] = parts[1]
+		return pair
+	return None
 
 
 def render_ui_text(text: str, ui: list[dict]) -> str:
@@ -93,7 +128,11 @@ def option_text(option) -> str:
 		return f"* {option}"
 	label = option.get("label") or option.get("value") or ""
 	desc = option.get("description") or ""
-	return f"* {label} — {desc}" if desc else f"* {label}"
+	line = f"* {label} — {desc}" if desc else f"* {label}"
+	font = option.get("font")
+	if isinstance(font, dict) and (font.get("heading") or font.get("body")):
+		line += f" [fonts: {font.get('heading') or '—'} + {font.get('body') or '—'}]"
+	return line
 
 
 present_ui = Tool(
@@ -129,11 +168,14 @@ present_ui = Tool(
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
 					"{kind:'svg', svg, caption?} — small inline-SVG figure (sanitized; no scripts)\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"svg?}]} — tappable option cards; single-select submits immediately, multi "
-					"collects. An option's `svg` is a MINIMAL layout sketch: abstract wireframe of "
-					"flat rects/lines in that option's palette on its background colour, "
-					"viewBox='0 0 120 80', no words, <15 shapes — it must make the layout "
-					"difference between options visible at a glance\n"
+					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?}]} — tappable option cards; "
+					"single-select submits immediately, multi collects. An option's `svg` is a "
+					"MINIMAL layout sketch: abstract wireframe of flat rects/lines in that option's "
+					"palette on its background colour, viewBox='0 0 120 80', no words, <15 shapes — it "
+					"must make the layout difference between options visible at a glance. An option's "
+					"`font` is a STRING: the exact Google Font names of that option's heading and body "
+					"faces joined by ' + ' — the card renders a live type specimen in the real fonts, "
+					"so the user sees the typography they're picking\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'actions', buttons:[{label, variant:'primary'|'secondary'?}]} — "
 					"submit buttons (e.g. 'Build it'); the clicked label + all collected "

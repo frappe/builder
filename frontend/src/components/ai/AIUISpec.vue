@@ -81,6 +81,25 @@
 								class="size-3.5"
 								:style="{ backgroundColor: color }" />
 						</span>
+						<!-- live type specimen: fonts are loaded on render (fontManager) -->
+						<span v-if="option.font?.heading" class="flex items-baseline gap-2">
+							<span
+								class="text-xl font-bold leading-none text-ink-gray-8"
+								:style="{ fontFamily: option.font.heading }">
+								Aa
+							</span>
+							<span class="flex min-w-0 flex-col">
+								<span class="truncate text-xs text-ink-gray-7" :style="{ fontFamily: option.font.heading }">
+									{{ option.font.heading }}
+								</span>
+								<span
+									v-if="option.font.body"
+									class="truncate text-xs text-ink-gray-5"
+									:style="{ fontFamily: option.font.body }">
+									{{ option.font.body }}
+								</span>
+							</span>
+						</span>
 						<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
 						<span v-if="option.description" class="line-clamp-4 text-xs leading-snug text-ink-gray-5">
 							{{ option.description }}
@@ -125,8 +144,9 @@
 </template>
 
 <script setup lang="ts">
+import { setFont } from "@/utils/fontManager";
 import DOMPurify from "dompurify";
-import { computed, reactive } from "vue";
+import { computed, reactive, watchEffect } from "vue";
 
 /** Generic renderer for the agent's `present_ui` cards. The agent composes a
  * card from atoms (heading/text/list/swatches/image/choices/input/actions);
@@ -146,6 +166,18 @@ const emit = defineEmits<{ submit: [reply: string] }>();
 
 const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
 const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
+
+// Load the Google Fonts referenced by option specimens (cached in fontManager,
+// so re-renders are free). Heading fonts also need their bold face.
+watchEffect(() => {
+	for (const el of elements.value) {
+		if (el.kind !== "choices") continue;
+		for (const option of el.options || []) {
+			if (option?.font?.heading) setFont(option.font.heading, "700");
+			if (option?.font?.body) setFont(option.font.body);
+		}
+	}
+});
 
 // Collected state keyed by element index: multi-select picks + typed inputs.
 const selections = reactive<Record<number, Set<number>>>({});
