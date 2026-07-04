@@ -192,8 +192,10 @@ const TOOL_TONES: Record<string, string> = {
 	update_script: AMBER,
 	move_block: AMBER,
 	remove_block: RED,
-	propose_plan: GRAY,
-	ask_clarification: GRAY,
+	present_ui: GRAY,
+	run_python: GREEN,
+	search_source: BLUE,
+	read_source: BLUE,
 };
 const toolTone = (name: string) => TOOL_TONES[name] || GRAY;
 

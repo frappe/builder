@@ -189,13 +189,13 @@ def run_subagent_task(
 	model: str,
 	api_key: str,
 	user: str,
-	parent_session: str | None,
+	parent_channel: str | None,
 ) -> None:
 	"""Run ONE task as a full headless AgentRunner. Reports status to the batch + nudges
 	the parent chat; the child that settles the batch finalizes it (maybe_finalize_batch).
 	A failure here never aborts siblings — it's recorded and counted."""
 	if is_batch_cancelled(batch_id):
-		fail_task(batch_id, task_row, title, "Cancelled before start", parent_session, user)
+		fail_task(batch_id, task_row, title, "Cancelled before start", parent_channel, user)
 		maybe_finalize_batch(batch_id)
 		return
 
@@ -207,7 +207,7 @@ def run_subagent_task(
 		try:
 			update_batch_task(batch_id, task_row, status="running")
 			emit(
-				parent_session,
+				parent_channel,
 				user,
 				"progress",
 				message=f"Building: {title}",
@@ -244,7 +244,7 @@ def run_subagent_task(
 			update_batch_task(batch_id, task_row, status="done")
 			bump_batch_counter(batch_id, "completed_tasks")
 			emit(
-				parent_session,
+				parent_channel,
 				user,
 				"progress",
 				message=f"Done: {title}",
@@ -255,16 +255,16 @@ def run_subagent_task(
 			)
 		except Exception as e:
 			logger.error("run_subagent_task failed (task=%s): %s", task_row, e, exc_info=True)
-			fail_task(batch_id, task_row, title, str(e)[:500], parent_session, user)
+			fail_task(batch_id, task_row, title, str(e)[:500], parent_channel, user)
 	frappe.db.commit()
 	maybe_finalize_batch(batch_id)
 
 
-def fail_task(batch_id, task_row, title, error, parent_session, user) -> None:
+def fail_task(batch_id, task_row, title, error, parent_channel, user) -> None:
 	update_batch_task(batch_id, task_row, status="failed", error=error)
 	bump_batch_counter(batch_id, "failed_tasks")
 	emit(
-		parent_session,
+		parent_channel,
 		user,
 		"progress",
 		message=f"Failed: {title}",
@@ -341,7 +341,9 @@ def spawn_parallel_agents(ctx, args: dict) -> str | None:
 			model=ctx.model,
 			api_key=ctx.api_key,
 			user=ctx.user,
-			parent_session=ctx.session_id,
+			# The channel the parent chat listens on — the page id for an editor
+			# session, the session id for a page-less one (see AgentRunner.channel).
+			parent_channel=ctx.channel,
 		)
 	frappe.db.commit()  # fires the after-commit enqueues
 
@@ -421,6 +423,9 @@ def resume_parent_chat(batch_id: str, summary: str) -> None:
 		"Report the outcome to the user in 1–2 sentences with clickable links to the pages. "
 		"Retry or repair a failed task only when that clearly makes sense; otherwise just report."
 	)
+	# A page-bound parent (editor chat) listens on its page channel and expects a
+	# page turn; a page-less one (session channel) expects an orchestrator turn.
+	parent_page = frappe.db.get_value("Builder AI Session", batch.session, "page")
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
@@ -429,7 +434,7 @@ def resume_parent_chat(batch_id: str, summary: str) -> None:
 		model=ModelRegistry.get_default(batch.model or "openrouter"),
 		api_key=api_key,
 		user=batch.created_by_user,
-		page_id=None,
+		page_id=parent_page or None,
 		session_id=batch.session,
 	)
 

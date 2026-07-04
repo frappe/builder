@@ -249,11 +249,17 @@ export class AIChatController {
 		}
 	};
 
-	onToolBatch = (data: { operations?: Array<{ tool_name: string; args: Record<string, any> }> }) => {
+	onToolBatch = (data: {
+		page_id?: string;
+		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
+	}) => {
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
 		if (!data.operations?.length) return;
+		// The agent may focus another page mid-turn (open_page/create_page): its ops
+		// are applied server-side; the canvas only mirrors ops for the page it shows.
+		if (data.page_id && data.page_id !== this.pageId.value) return;
 		for (const op of data.operations) {
 			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
 			try {
@@ -349,15 +355,12 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 	};
 
+	/** The agent composed a UI card (present_ui) — one generic renderer (AIUISpec)
+	 * draws it. Confirm-gated actions arrive as pending_action instead and keep
+	 * their dedicated Apply/Skip card. */
 	onClarify = async (data: {
 		question?: string;
-		options?: string[];
-		previews?: Array<{ colors: string[] }> | null;
-		ready?: boolean;
-		plan_summary?: boolean;
-		headline?: string;
-		sections?: string[];
-		palette?: string;
+		ui?: Array<Record<string, any>>;
 		pending_action?: { kind: string; payload: Record<string, any> };
 	}) => {
 		this.clearStreamRenderTimer();
@@ -367,25 +370,17 @@ export class AIChatController {
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
 
-		if (data.plan_summary) {
-			this.replacePendingAssistant(data.headline || "Here's my plan", {
-				status: "plan_summary",
-				headline: data.headline || "",
-				sections: data.sections || [],
-				palette: data.palette || "",
-			});
-		} else if (data.pending_action) {
+		if (data.pending_action) {
 			this.replacePendingAssistant(data.question || "Confirm this change?", {
 				status: "pending_action",
 				kind: data.pending_action.kind,
 				payload: data.pending_action.payload,
 			});
 		} else {
-			this.replacePendingAssistant(data.question || "Could you clarify?", {
-				status: "clarification",
-				options: data.options || [],
-				previews: data.previews ?? null,
-				ready: data.ready ?? false,
+			this.replacePendingAssistant(data.question || "…", {
+				status: "ui",
+				text: data.question || "",
+				ui: data.ui || [],
 			});
 		}
 		this.pendingAssistantId.value = null;
@@ -396,6 +391,8 @@ export class AIChatController {
 
 	// --- user actions -----------------------------------------------------
 
+	/** Submit a reply composed by an agent UI card (option tap, action button,
+	 * collected form values) as the user's next ordinary message. */
 	selectOption = (option: string) => {
 		this.prompt.value = option;
 		this.submitPrompt();
@@ -417,10 +414,6 @@ export class AIChatController {
 		}
 	};
 
-	approvePlan = () => {
-		this.prompt.value = "Yes, that plan looks good — go ahead and build the page.";
-		this.submitPrompt();
-	};
 
 	/** Ask the backend to abort the in-flight turn at its next stream chunk.
 	 * Anthropic/OpenRouter stop billing once the stream is closed. The backend's

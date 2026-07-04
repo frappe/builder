@@ -45,10 +45,18 @@
 								? 'animate-shine'
 								: 'text-ink-gray-8',
 						]">
+						<!-- ui-card messages persist the full card as text (for model replay);
+						     the bubble shows only the short lead-in — the card renders the rest -->
 						<div
 							v-if="message.role === 'assistant'"
 							class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
-							v-html="renderMarkdown(message.content)" />
+							v-html="
+								renderMarkdown(
+									message.metadata?.status === 'ui'
+										? (message.metadata?.text ?? message.content)
+										: message.content,
+								)
+							" />
 						<div v-else>
 							<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
 						</div>
@@ -95,43 +103,6 @@
 								</div>
 							</template>
 						</div>
-						<!-- Plan summary card -->
-						<div
-							v-if="message.metadata?.status === 'plan_summary'"
-							class="mt-2 w-full rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
-							<ul class="m-0 list-none space-y-1 p-0">
-								<li
-									v-for="section in message.metadata.sections"
-									:key="section"
-									class="flex items-start gap-2 text-p-sm leading-snug text-ink-gray-7">
-									<span class="mt-[6px] size-1 shrink-0 rounded-full bg-surface-gray-4" />
-									<span class="min-w-0 break-words">{{ section }}</span>
-								</li>
-							</ul>
-							<div v-if="message.metadata.palette" class="mt-2.5 border-t border-outline-gray-1 pt-2.5">
-								<div v-if="paletteColors(message.metadata.palette).length" class="mb-1 flex flex-wrap gap-1">
-									<span
-										v-for="hex in paletteColors(message.metadata.palette)"
-										:key="hex"
-										class="size-3.5 rounded-full border border-outline-gray-2"
-										:style="{ backgroundColor: hex }"
-										:title="hex" />
-								</div>
-								<p class="text-xs leading-snug text-ink-gray-5">{{ message.metadata.palette }}</p>
-							</div>
-							<!-- Action buttons — only on last message -->
-							<template v-if="message.id === lastMessageId">
-								<p class="mb-2 mt-2.5 text-xs text-ink-gray-5">
-									Refine the plan below, or go ahead and create the page.
-								</p>
-								<button
-									:disabled="isSubmitting"
-									class="rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
-									@click="approvePlan">
-									✦ Create Page
-								</button>
-							</template>
-						</div>
 						<!-- Sensitive action — needs the user's OK -->
 						<div
 							v-if="message.metadata?.status === 'pending_action'"
@@ -155,40 +126,13 @@
 								</Button>
 							</div>
 						</div>
-						<!-- Clarification options -->
-						<div
-							v-if="message.metadata?.status === 'clarification' && message.metadata?.options?.length"
-							class="mt-3 flex w-full flex-wrap gap-3">
-							<button
-								v-for="(option, idx) in message.metadata.options"
-								:key="option"
-								:disabled="isSubmitting"
-								class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5 text-left transition-all hover:border-outline-gray-3 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-50"
-								@click="selectOption(option)">
-								<!-- Color palette swatches -->
-								<span
-									v-if="message.metadata.previews?.[idx]?.colors?.length"
-									class="flex shrink-0 overflow-hidden rounded border border-black/10">
-									<span
-										v-for="color in message.metadata.previews[idx].colors.slice(0, 5)"
-										:key="color"
-										class="size-3.5"
-										:style="{ backgroundColor: color }" />
-								</span>
-								<span class="text-p-sm font-medium leading-snug text-ink-gray-8">
-									{{ optionParts(option).label }}
-								</span>
-								<span
-									v-if="optionParts(option).desc"
-									class="line-clamp-4 text-xs leading-snug text-ink-gray-5">
-									{{ optionParts(option).desc }}
-								</span>
-							</button>
-							<!-- Type-your-own nudge: only on last message -->
-							<p v-if="message.id === lastMessageId" class="mt-1 text-xs text-ink-gray-4">
-								Or describe something different below
-							</p>
-						</div>
+						<!-- Agent-composed UI card (present_ui) -->
+						<AIUISpec
+							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
+							:ui="message.metadata.ui"
+							:interactive="message.id === lastMessageId"
+							:disabled="isSubmitting"
+							@submit="selectOption" />
 					</div>
 					<!-- Block + image chips below the bubble -->
 					<div
@@ -335,6 +279,7 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIUISpec from "@/components/ai/AIUISpec.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
@@ -348,7 +293,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
-const { clearSession, revertTurn, selectOption, approvePlan } = chat;
+const { clearSession, revertTurn, selectOption } = chat;
 const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
@@ -386,11 +331,6 @@ const builderStore = useBuilderStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 
-/** Extract hex colour codes from a palette description for swatch previews. */
-function paletteColors(palette: string): string[] {
-	return palette.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
-}
-
 // --- Turn debugger ---------------------------------------------------------
 const debugOpen = ref(false);
 const debugData = ref<Record<string, any> | null>(null);
@@ -421,33 +361,6 @@ function formatDuration(ms: number): string {
 	if (mins < 60) return secs % 60 ? `${mins}m ${secs % 60}s` : `${mins}m`;
 	const hrs = Math.floor(mins / 60);
 	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
-}
-
-/** Split a clarification option like "Editorial — asymmetric, serif headlines" or
- * "Warm Heritage (cream, terracotta)" into a bold label + muted description so
- * richer design-direction options stay readable instead of being truncated. */
-function optionParts(option: string): { label: string; desc: string } {
-	const dash = option.search(/\s[—–-]\s/);
-	if (dash !== -1) {
-		return {
-			label: option.slice(0, dash).trim(),
-			desc: option
-				.slice(dash)
-				.replace(/^\s[—–-]\s/, "")
-				.trim(),
-		};
-	}
-	const paren = option.indexOf(" (");
-	if (paren !== -1 && option.trimEnd().endsWith(")")) {
-		return {
-			label: option.slice(0, paren).trim(),
-			desc: option
-				.slice(paren + 2)
-				.replace(/\)\s*$/, "")
-				.trim(),
-		};
-	}
-	return { label: option.trim(), desc: "" };
 }
 
 const selectedPreset = ref<{

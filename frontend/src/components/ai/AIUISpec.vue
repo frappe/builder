@@ -1,0 +1,245 @@
+<template>
+	<div class="mt-2 w-full space-y-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+		<template v-for="(el, i) in elements" :key="i">
+			<!-- heading -->
+			<p v-if="el.kind === 'heading'" class="text-p-sm font-semibold leading-snug text-ink-gray-8">
+				{{ el.text }}
+			</p>
+
+			<!-- text -->
+			<p v-else-if="el.kind === 'text'" class="whitespace-pre-line text-p-sm leading-snug text-ink-gray-7">
+				{{ el.text }}
+			</p>
+
+			<!-- list -->
+			<ul v-else-if="el.kind === 'list'" class="m-0 list-none space-y-1 p-0">
+				<li
+					v-for="(item, j) in el.items || []"
+					:key="j"
+					class="flex items-start gap-2 text-p-sm leading-snug text-ink-gray-7">
+					<span class="mt-[6px] size-1 shrink-0 rounded-full bg-surface-gray-4" />
+					<span class="min-w-0 break-words">{{ item }}</span>
+				</li>
+			</ul>
+
+			<!-- swatches -->
+			<div v-else-if="el.kind === 'swatches'" class="flex flex-wrap items-center gap-1.5">
+				<span class="flex overflow-hidden rounded border border-black/10">
+					<span
+						v-for="color in (el.colors || []).slice(0, 8)"
+						:key="color"
+						class="size-3.5"
+						:style="{ backgroundColor: color }"
+						:title="color" />
+				</span>
+				<span v-if="el.label" class="text-xs text-ink-gray-5">{{ el.label }}</span>
+			</div>
+
+			<!-- image -->
+			<figure v-else-if="el.kind === 'image' && safeSrc(el.src)" class="m-0">
+				<img :src="el.src" class="max-h-48 w-auto max-w-full rounded border border-outline-gray-2" alt="" />
+				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
+			</figure>
+
+			<!-- inline svg figure -->
+			<figure v-else-if="el.kind === 'svg' && el.svg" class="m-0">
+				<div
+					class="ai-sketch max-h-40 w-full overflow-hidden rounded border border-outline-gray-2"
+					v-html="sanitizeSvg(el.svg)" />
+				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
+			</figure>
+
+			<!-- divider -->
+			<hr v-else-if="el.kind === 'divider'" class="border-outline-gray-1" />
+
+			<!-- choices -->
+			<div v-else-if="el.kind === 'choices'" class="w-full">
+				<p v-if="el.label" class="mb-1.5 text-xs font-medium text-ink-gray-6">{{ el.label }}</p>
+				<div class="flex w-full flex-wrap gap-2">
+					<button
+						v-for="(option, j) in el.options || []"
+						:key="j"
+						:disabled="!interactive || disabled"
+						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
+						:class="
+							isSelected(i, j)
+								? 'border-outline-gray-4 bg-surface-gray-2'
+								: 'bg-surface-white border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-2'
+						"
+						@click="onOptionClick(i, el, j, option)">
+						<!-- minimal layout sketch: the model draws an abstract wireframe SVG -->
+						<span
+							v-if="option.svg"
+							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
+							v-html="sanitizeSvg(option.svg)" />
+						<span
+							v-if="option.colors?.length"
+							class="flex shrink-0 overflow-hidden rounded border border-black/10">
+							<span
+								v-for="color in option.colors.slice(0, 5)"
+								:key="color"
+								class="size-3.5"
+								:style="{ backgroundColor: color }" />
+						</span>
+						<!-- live type specimen: fonts are loaded on render (fontManager) -->
+						<span v-if="option.font?.heading" class="flex items-baseline gap-2">
+							<span
+								class="text-xl font-bold leading-none text-ink-gray-8"
+								:style="{ fontFamily: option.font.heading }">
+								Aa
+							</span>
+							<span class="flex min-w-0 flex-col">
+								<span class="truncate text-xs text-ink-gray-7" :style="{ fontFamily: option.font.heading }">
+									{{ option.font.heading }}
+								</span>
+								<span
+									v-if="option.font.body"
+									class="truncate text-xs text-ink-gray-5"
+									:style="{ fontFamily: option.font.body }">
+									{{ option.font.body }}
+								</span>
+							</span>
+						</span>
+						<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
+						<span v-if="option.description" class="line-clamp-4 text-xs leading-snug text-ink-gray-5">
+							{{ option.description }}
+						</span>
+					</button>
+				</div>
+			</div>
+
+			<!-- input -->
+			<label v-else-if="el.kind === 'input'" class="block w-full">
+				<span v-if="el.label" class="mb-1 block text-xs font-medium text-ink-gray-6">{{ el.label }}</span>
+				<input
+					v-model="inputs[i]"
+					type="text"
+					:placeholder="el.placeholder || ''"
+					:disabled="!interactive || disabled"
+					class="bg-surface-white w-full rounded border border-outline-gray-2 px-2.5 py-1.5 text-p-sm text-ink-gray-8 placeholder:text-ink-gray-4 focus:border-outline-gray-4 focus:outline-none disabled:opacity-50"
+					@keydown.enter.prevent="submitCollected()" />
+			</label>
+
+			<!-- actions -->
+			<div v-else-if="el.kind === 'actions'" class="flex flex-wrap gap-2 pt-0.5">
+				<button
+					v-for="(btn, j) in el.buttons || []"
+					:key="j"
+					:disabled="!interactive || disabled"
+					class="rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+					:class="
+						btn.variant === 'secondary'
+							? 'bg-surface-white border border-outline-gray-2 text-ink-gray-7 hover:bg-surface-gray-2'
+							: 'border border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
+					"
+					@click="submitCollected(btn.label)">
+					{{ btn.label }}
+				</button>
+			</div>
+		</template>
+		<p v-if="interactive && hasChoices" class="text-xs text-ink-gray-4">
+			Or describe something different below
+		</p>
+	</div>
+</template>
+
+<script setup lang="ts">
+import { setFont } from "@/utils/fontManager";
+import DOMPurify from "dompurify";
+import { computed, reactive, watchEffect } from "vue";
+
+/** Generic renderer for the agent's `present_ui` cards. The agent composes a
+ * card from atoms (heading/text/list/swatches/image/choices/input/actions);
+ * this component renders them and turns the user's interaction into one plain
+ * chat reply. Unknown element kinds are skipped, so the agent can be ahead of
+ * the renderer without breaking. */
+
+type UIElement = Record<string, any>;
+
+const props = defineProps<{
+	ui: UIElement[];
+	interactive: boolean;
+	disabled?: boolean;
+}>();
+
+const emit = defineEmits<{ submit: [reply: string] }>();
+
+const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
+const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
+
+// Load the Google Fonts referenced by option specimens (cached in fontManager,
+// so re-renders are free). Heading fonts also need their bold face.
+watchEffect(() => {
+	for (const el of elements.value) {
+		if (el.kind !== "choices") continue;
+		for (const option of el.options || []) {
+			if (option?.font?.heading) setFont(option.font.heading, "700");
+			if (option?.font?.body) setFont(option.font.body);
+		}
+	}
+});
+
+// Collected state keyed by element index: multi-select picks + typed inputs.
+const selections = reactive<Record<number, Set<number>>>({});
+const inputs = reactive<Record<number, string>>({});
+
+function isSelected(elIndex: number, optIndex: number): boolean {
+	return selections[elIndex]?.has(optIndex) ?? false;
+}
+
+function optionReply(option: UIElement): string {
+	const label = option.label || option.value || "";
+	return option.description ? `${label} — ${option.description}` : String(label);
+}
+
+function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
+	if (!el.multi) {
+		emit("submit", optionReply(option));
+		return;
+	}
+	selections[elIndex] ??= new Set();
+	selections[elIndex].has(optIndex)
+		? selections[elIndex].delete(optIndex)
+		: selections[elIndex].add(optIndex);
+}
+
+/** Compose one plain-text reply from the clicked action + everything collected.
+ * Reads like a normal user message, so the model needs no special parsing. */
+function submitCollected(actionLabel?: string) {
+	const lines: string[] = actionLabel ? [actionLabel] : [];
+	elements.value.forEach((el, i) => {
+		if (el.kind === "choices" && el.multi && selections[i]?.size) {
+			const picked = [...selections[i]]
+				.map((j) => (el.options?.[j] ? el.options[j].label : ""))
+				.filter(Boolean);
+			if (picked.length) lines.push(`${el.label || "Selected"}: ${picked.join(", ")}`);
+		}
+		if (el.kind === "input" && inputs[i]?.trim()) {
+			lines.push(el.label ? `${el.label}: ${inputs[i].trim()}` : inputs[i].trim());
+		}
+	});
+	const reply = lines.join("\n").trim();
+	if (reply) emit("submit", reply);
+}
+
+/** Same-origin paths and https only — the spec comes from the model. */
+function safeSrc(src: unknown): boolean {
+	if (typeof src !== "string" || !src) return false;
+	return src.startsWith("/") || src.startsWith("https://");
+}
+
+/** Model-drawn sketches are untrusted markup: strip everything but plain SVG. */
+function sanitizeSvg(svg: unknown): string {
+	if (typeof svg !== "string") return "";
+	return DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
+}
+</script>
+
+<style scoped>
+/* Sketch SVGs arrive with a viewBox but arbitrary width/height — scale to the box. */
+.ai-sketch :deep(svg) {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+</style>

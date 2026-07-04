@@ -23,8 +23,9 @@ id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`
                            verbatim so both sides share block ids)
     ai_chat_tool_activity  {id, tool, summary, status: "running"|"done", image_url?}
                            (same id emitted twice — running then done; upsert by id)
-    ai_chat_clarify        {question, options, previews?,
-                            plan_summary?, headline?, sections?, palette?}
+    ai_chat_clarify        {question, ui: [element]}   generic card the agent
+                           composed (present_ui); renderer skips unknown element
+                           kinds. Confirm-gated actions add {pending_action}.
     ai_chat_complete       {message}
     ai_chat_error          {message}
 
@@ -75,6 +76,7 @@ SNAPSHOT_TOOLS = frozenset(
 		"update_blocks",
 		"remove_block",
 		"move_block",
+		"set_page_blocks",
 		"generate_page",
 		"set_page_script",
 		"update_script",
@@ -113,9 +115,10 @@ ACTION_CLAIM_RE = re.compile(
 NOOP_CORRECTION = (
 	"You wrote a summary describing changes, but you called no tools — so NOTHING was "
 	"applied to the page. If the request needs a change, call the appropriate tool(s) now "
-	"(update_block, update_blocks, add_block, set_page_script, …) and actually do the work. "
-	"If no change is genuinely needed, or you were only answering a question, reply plainly "
-	"and do NOT claim you changed anything."
+	"(update_block/add_block for targeted edits, run_python for bulk mutations, "
+	"set_page_script, generate_page, …) and actually do the work. If no change is genuinely "
+	"needed, or you were only answering a question, reply plainly and do NOT claim you "
+	"changed anything."
 )
 
 
@@ -142,7 +145,7 @@ FULL_CONTEXT_LIMIT = 9000
 
 # Tools that already surface as their own card in the chat (clarify question, plan,
 # task group) — no activity line for them.
-ACTIVITY_SILENT = frozenset({"ask_clarification", "propose_plan", "spawn_parallel_agents"})
+ACTIVITY_SILENT = frozenset({"present_ui", "spawn_parallel_agents"})
 
 # Server tools that only READ. Everything else that runs server-side (settings, theme,
 # data scripts, page creation, generation…) mutates real state — the no-op-claim guards
@@ -194,7 +197,7 @@ def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -
 		"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
 		"edit it. To see a block's full styles/attributes/text before editing, call "
 		"read_block(ref); to act on many blocks at once, call query_blocks then "
-		"update_blocks.",
+		"update_blocks, or run_python (refs are blockIds in the `page` dict it sees).",
 		outline,
 	]
 	for ref in selected_block_ids:
@@ -277,9 +280,13 @@ class AgentRunner:
 		# apply via their handlers. Block edits are server-applied in BOTH modes.
 		self.headless = headless or not page_id
 		# The realtime channel is fixed at construction: focus_page() may change
-		# self.page_id mid-turn (dashboard agent opening a page), and the chat that
+		# self.page_id mid-turn (the agent opening another page), and the chat that
 		# started the turn must keep receiving events on the channel it subscribed to.
 		self.channel = page_id or session_id
+		# The page the user's editor canvas is showing (None headless). When focus
+		# moves to ANOTHER page mid-turn, client tools with a server twin must apply
+		# server-side — the canvas can't apply ops for a page it isn't showing.
+		self.canvas_page_id = page_id if not self.headless else None
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
@@ -329,6 +336,9 @@ class AgentRunner:
 		# Surfaced like args_repaired so a flaky provider shows up in the data, not as a
 		# silent turn failure.
 		self.stream_retries = 0
+		# Client ops a server tool queued mid-call (run_python mutating the page).
+		# Drained right after the handler returns — see drain_queued_ops.
+		self.pending_client_ops: list[dict] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Redis run-lock token for this session's turn (see AISession.start_run).
@@ -461,9 +471,9 @@ class AgentRunner:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
 	def build_site_context(self) -> str:
-		"""A compact inventory of the site's pages for the page-less dashboard agent,
-		so it starts every turn knowing what exists instead of spending a
-		query_records round-trip (or guessing) to find out."""
+		"""A compact inventory of the site's pages, so the agent starts every turn
+		knowing what exists instead of spending a query_records round-trip (or
+		guessing) to find out."""
 		rows = frappe.get_all(
 			"Builder Page",
 			fields=["name", "route", "page_title", "published", "project_folder"],
@@ -490,12 +500,14 @@ class AgentRunner:
 		]
 
 		# The second cache breakpoint (the system prompt is the first): the page
-		# structure, or — page-less — the site inventory. It's the largest stable
-		# block and is resent on every round of a multi-round turn, so caching it
-		# cuts both latency and input cost across the loop.
-		context = self.build_page_context()
-		if not context and not self.page_id:
-			context = self.build_site_context()
+		# structure plus the site inventory (page-less turns get just the inventory).
+		# It's the largest stable block and is resent on every round of a multi-round
+		# turn, so caching it cuts both latency and input cost across the loop. The
+		# inventory is what lets the agent act on OTHER pages (read_page/open_page/
+		# manage_pages) without spending a discovery round-trip.
+		page_context = self.build_page_context()
+		site_context = self.build_site_context()
+		context = f"{page_context}\n\n{site_context}" if page_context else site_context
 		if context:
 			messages.append({"role": "user", "content": context, "cache_control": {"type": "ephemeral"}})
 			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
@@ -658,6 +670,33 @@ class AgentRunner:
 		)
 		return tool_operations, content, raw_tool_calls
 
+	def queue_client_op(self, op: dict) -> None:
+		"""Called by a server tool mid-handler to emit a client op (run_python queues
+		the mutated page tree here). Drained by the loop right after the handler."""
+		self.pending_client_ops.append(op)
+
+	def drain_queued_ops(self) -> list[dict]:
+		"""Snapshot, sync the working tree, persist, and emit ops a server tool queued
+		mid-handler (run_python queues the mutated page as set_page_blocks), so the
+		canvas updates live and a later run_python sees the tree it already mutated."""
+		ops, self.pending_client_ops = self.pending_client_ops, []
+		if not ops:
+			return []
+		if any(op["tool_name"] in SNAPSHOT_TOOLS for op in ops):
+			self.ensure_revert_snapshot()
+		for op in ops:
+			if op["tool_name"] == "set_page_blocks":
+				self.tree.root = op["args"]["blocks"]
+		self.applied_operations.extend(ops)
+		self.emit("tool_batch", operations=ops)
+		if self.channel != self.page_id:
+			self.emit_page("tool_batch", operations=ops)
+		if self.page_id and self.tree and self.tree.root:
+			from builder.ai import page_writer
+
+			page_writer.save_draft_blocks(self.page_id, self.tree.root)
+		return ops
+
 	def page_root(self) -> dict | None:
 		"""The current page's root block — the authoritative working tree. Edits made
 		this turn are visible to context rebuilds and the query tools, and refs stay
@@ -749,6 +788,8 @@ class AgentRunner:
 			parts.append(f"removed {n} {blk(n)}")
 		if n := counts.get("move_block"):
 			parts.append(f"moved {n} {blk(n)}")
+		if counts.get("set_page_blocks"):
+			parts.append("updated the page")
 		if counts.get("set_page_script"):
 			parts.append("added a script")
 		if counts.get("update_script"):
@@ -765,13 +806,15 @@ class AgentRunner:
 	def op_kind(self, op: dict) -> str:
 		"""How the loop must handle one tool call: "artifact" (streamed generation),
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
-		(apply to the working tree + mirror to the canvas). Headless, a client tool
-		with a server twin (page scripts) runs as a server op — no canvas to apply it."""
+		(apply to the working tree + mirror to the canvas). A client tool with a
+		server twin (page scripts) runs as a server op when there is no canvas to
+		apply it — headless, or the agent focused a page the canvas isn't showing."""
 		tool = self.registry.get(op["tool_name"])
 		if tool and tool.artifact:
 			return "artifact"
 		side = tool.side if tool else "client"
-		if side == "client" and self.headless and tool and tool.handler:
+		off_canvas = self.headless or self.page_id != self.canvas_page_id
+		if side == "client" and off_canvas and tool and tool.handler:
 			return "server"
 		return side
 
@@ -797,9 +840,10 @@ class AgentRunner:
 		if applied:
 			self.applied_operations.extend(applied)
 			self.emit("tool_batch", operations=applied)
-			# The dashboard chat streams on the session channel — mirror accepted ops to
-			# the page channel too, so an editor opened on the page updates live.
-			if self.headless and self.channel != self.page_id:
+			# When the focused page isn't the channel's page (headless session chat, or
+			# an editor agent that opened another page), mirror accepted ops to the
+			# focused page's channel too, so an editor open on it updates live.
+			if self.channel != self.page_id:
 				self.emit_page("tool_batch", operations=applied)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
@@ -836,6 +880,7 @@ class AgentRunner:
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		content = tool.handler(self, op["args"])
 		self.end_activity(entry)
+		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
 			self.server_mutations += 1
 		return content

@@ -91,7 +91,20 @@ def pick(tools: list[Tool], names: set[str]) -> list[Tool]:
 def build_default_registry() -> ToolRegistry:
 	"""Assemble the registry from the tool modules. Imported lazily to avoid
 	import cycles (tool handlers reference the agent context type)."""
-	from builder.ai.agent.tools import blocks, conversation, data, generate, query, scripts, settings
+	from builder.ai.agent.tools import (
+		blocks,
+		codebase,
+		conversation,
+		data,
+		generate,
+		orchestrate,
+		pages,
+		preview,
+		query,
+		sandbox,
+		scripts,
+		settings,
+	)
 
 	registry = ToolRegistry()
 	registry.extend(generate.TOOLS)
@@ -101,6 +114,16 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(conversation.TOOLS)
 	registry.extend(data.TOOLS)
 	registry.extend(settings.TOOLS)
+	# Whole-site capabilities in the editor: focus/create/manage other pages,
+	# screenshot self-review, and parallel fan-out for multi-page builds.
+	registry.extend(pages.TOOLS)
+	registry.extend(preview.TOOLS)
+	registry.extend(orchestrate.TOOLS)
+	# Primitives from the codebase-context experiment: run_python covers bulk or
+	# unusual page mutations the block tools don't express well, and source access
+	# lets the model check Builder mechanics instead of guessing.
+	registry.extend(codebase.TOOLS)
+	registry.extend(sandbox.TOOLS)
 	return registry
 
 
@@ -123,7 +146,7 @@ def build_orchestrator_registry() -> ToolRegistry:
 	from builder.ai.agent.tools import conversation, data, orchestrate, scripts, settings
 
 	registry = ToolRegistry()
-	registry.extend(conversation.TOOLS)  # ask_clarification, propose_plan
+	registry.extend(conversation.TOOLS)  # present_ui
 	registry.extend(headless_page_tools())
 	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	registry.extend(

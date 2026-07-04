@@ -75,7 +75,11 @@ TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
 	"complex": {"max_tokens": 40000, "temperature": 0.7},
 	"clarify": {"max_tokens": 700, "temperature": 0.1},
-	"agent": {"max_tokens": 16000, "temperature": 0.3},
+	# 0.7 (not 0.3): the agent tier also composes the creative option cards
+	# (layout directions, font pairings) — at 0.3 every session got the same
+	# three flat options and the same famous fonts. Matches the "complex"
+	# generation tier, which already proves 0.7 is safe for structured output.
+	"agent": {"max_tokens": 16000, "temperature": 0.7},
 }
 
 

@@ -10,6 +10,8 @@ export interface AIChatHandlers {
 	onClarify: Handler;
 	onComplete: Handler;
 	onError: Handler;
+	/** A spawn_parallel_agents fan-out started this turn (batch id + task list). */
+	onTaskGroup?: Handler;
 }
 
 interface Realtime {
@@ -18,7 +20,7 @@ interface Realtime {
 }
 
 function listenerMap(h: AIChatHandlers): Record<string, Handler> {
-	return {
+	const map: Record<string, Handler> = {
 		ai_chat_progress: h.onProgress,
 		ai_chat_stream: h.onStream,
 		ai_chat_tool_batch: h.onToolBatch,
@@ -26,6 +28,8 @@ function listenerMap(h: AIChatHandlers): Record<string, Handler> {
 		ai_chat_complete: h.onComplete,
 		ai_chat_error: h.onError,
 	};
+	if (h.onTaskGroup) map.ai_chat_task_group = h.onTaskGroup;
+	return map;
 }
 
 const eventName = (base: string, pageId: string) => (pageId ? `${base}_${pageId}` : base);
