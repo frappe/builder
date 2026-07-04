@@ -58,7 +58,11 @@
 								)
 							" />
 						<div v-else>
-							<div class="whitespace-pre-wrap break-words">{{ message.content }}</div>
+							<!-- Card-composed replies relay a long labelled text to the model;
+							     the chat shows only the compact display line. -->
+							<div class="whitespace-pre-wrap break-words">
+								{{ message.metadata?.displayText || message.content }}
+							</div>
 						</div>
 						<div
 							v-if="

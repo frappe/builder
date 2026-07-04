@@ -69,12 +69,32 @@ export interface BuilderVariable extends DocType {
   group?: string;
 }
 
-// Last updated: 2025-11-11 11:51:16.422175
+// Last updated: 2026-07-01 12:00:00.000000
 export interface BuilderProjectFolder extends DocType {
-	/** Folder Name: Data */
-	folder_name?: string;
-	/** Is Standard: Check */
-	is_standard: 0 | 1;
+  /** Folder Name: Data */
+  folder_name?: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
+  /** Is AI Site: Check */
+  is_ai_site: 0 | 1;
+  /** Generation Status: Select */
+  generation_status?: '' | 'Draft' | 'Generating' | 'Ready' | 'Published' | 'Failed';
+  /** Active Batch ID: Data */
+  active_batch_id?: string;
+  /** Site Brief: Small Text */
+  site_brief?: string;
+  /** Home Page Route: Data */
+  home_page?: string;
+  /** Font Pairing: Data */
+  font_pairing?: string;
+  /** Header Component: Link (Builder Component) */
+  header_component?: string;
+  /** Footer Component: Link (Builder Component) */
+  footer_component?: string;
+  /** Site Spec (JSON): Long Text */
+  site_spec_json?: any;
+  /** Nav (JSON): Long Text */
+  nav_json?: any;
 }
 
 // Last updated: 2024-09-19 13:07:00.935349

@@ -66,6 +66,7 @@ def run(
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
 	mentioned_pages: list | str | None = None,
+	display_text: str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn.
 
@@ -91,6 +92,10 @@ def run(
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
 		if image_data:
 			msg_meta["attachedImageUrl"] = image_data
+		# A card-composed reply (option tap, form submit) shows as this compact line
+		# in the chat; the full labelled text stays the message content for the model.
+		if display_text:
+			msg_meta["displayText"] = display_text.strip()[:300]
 		session.append_message("user", prompt, message_type="chat", task_type="agent", metadata=msg_meta)
 
 	resolved_model = ModelRegistry.get_default(model or "openrouter")

@@ -1,5 +1,9 @@
 <template>
-	<div class="mt-2 w-full space-y-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+	<!-- A card that is ONLY tappable options renders flat: the option tiles are
+	     cards already, and a second wrapper reads as a box-in-a-box. -->
+	<div
+		class="mt-2 w-full space-y-2.5"
+		:class="{ 'rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3': hasChrome }">
 		<template v-for="(el, i) in elements" :key="i">
 			<!-- heading -->
 			<p v-if="el.kind === 'heading'" class="text-p-sm font-semibold leading-snug text-ink-gray-8">
@@ -67,13 +71,14 @@
 								: 'bg-surface-white border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-2'
 						"
 						@click="onOptionClick(i, el, j, option)">
-						<!-- minimal layout sketch: the model draws an abstract wireframe SVG -->
+						<!-- minimal layout sketch: the model draws an abstract wireframe SVG.
+						     The sketch already carries the option's palette, so no swatch strip. -->
 						<span
 							v-if="option.svg"
 							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
 							v-html="sanitizeSvg(option.svg)" />
 						<span
-							v-if="option.colors?.length"
+							v-else-if="option.colors?.length && !option.font"
 							class="flex shrink-0 overflow-hidden rounded border border-black/10">
 							<span
 								v-for="color in option.colors.slice(0, 5)"
@@ -81,29 +86,27 @@
 								class="size-3.5"
 								:style="{ backgroundColor: color }" />
 						</span>
-						<!-- live type specimen: fonts are loaded on render (fontManager) -->
-						<span v-if="option.font?.heading" class="flex items-baseline gap-2">
+						<!-- Full type specimen — the fonts speak for themselves (loaded on
+						     render via fontManager), no pairing label or mood copy. -->
+						<template v-if="option.font?.heading">
 							<span
-								class="text-xl font-bold leading-none text-ink-gray-8"
-								:style="{ fontFamily: option.font.heading }">
-								Aa
+								class="text-2xl leading-tight text-ink-gray-9"
+								:style="{ fontFamily: option.font.heading, fontWeight: 700 }">
+								{{ option.font.heading }}
 							</span>
-							<span class="flex min-w-0 flex-col">
-								<span class="truncate text-xs text-ink-gray-7" :style="{ fontFamily: option.font.heading }">
-									{{ option.font.heading }}
-								</span>
-								<span
-									v-if="option.font.body"
-									class="truncate text-xs text-ink-gray-5"
-									:style="{ fontFamily: option.font.body }">
-									{{ option.font.body }}
-								</span>
+							<span
+								v-if="option.font.body"
+								class="text-p-sm leading-snug text-ink-gray-7"
+								:style="{ fontFamily: option.font.body }">
+								{{ option.font.body }} · The quick brown fox jumps over the lazy dog. 0123456789
 							</span>
-						</span>
-						<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
-						<span v-if="option.description" class="line-clamp-4 text-xs leading-snug text-ink-gray-5">
-							{{ option.description }}
-						</span>
+						</template>
+						<template v-else>
+							<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
+							<span v-if="option.description" class="line-clamp-3 text-xs leading-snug text-ink-gray-5">
+								{{ option.description }}
+							</span>
+						</template>
 					</button>
 				</div>
 			</div>
@@ -124,6 +127,7 @@
 				<Button
 					v-for="(btn, j) in el.buttons || []"
 					:key="j"
+					size="xs"
 					:variant="btn.variant === 'secondary' ? 'subtle' : 'solid'"
 					:disabled="!interactive || disabled"
 					@click="submitCollected(btn.label)">
@@ -157,10 +161,14 @@ const props = defineProps<{
 	disabled?: boolean;
 }>();
 
-const emit = defineEmits<{ submit: [reply: string] }>();
+/** `reply` is the full text the model receives; `display` is the compact line
+ * the chat shows as the user's message (option label, typed values). */
+const emit = defineEmits<{ submit: [reply: string, display?: string] }>();
 
 const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
 const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
+// Options-only cards render flat — anything else needs the card wrapper.
+const hasChrome = computed(() => elements.value.some((el) => el.kind !== "choices"));
 
 // Load the Google Fonts referenced by option specimens (cached in fontManager,
 // so re-renders are free). Heading fonts also need their bold face.
@@ -189,7 +197,7 @@ function optionReply(option: UIElement): string {
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
 	if (!el.multi) {
-		emit("submit", optionReply(option));
+		emit("submit", optionReply(option), String(option.label || option.value || ""));
 		return;
 	}
 	selections[elIndex] ??= new Set();
@@ -199,22 +207,28 @@ function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option:
 }
 
 /** Compose one plain-text reply from the clicked action + everything collected.
- * Reads like a normal user message, so the model needs no special parsing. */
+ * Reads like a normal user message, so the model needs no special parsing. The
+ * labelled long form goes to the model; the chat shows just the values. */
 function submitCollected(actionLabel?: string) {
 	const lines: string[] = actionLabel ? [actionLabel] : [];
+	const values: string[] = [];
 	elements.value.forEach((el, i) => {
 		if (el.kind === "choices" && el.multi && selections[i]?.size) {
 			const picked = [...selections[i]]
 				.map((j) => (el.options?.[j] ? el.options[j].label : ""))
 				.filter(Boolean);
-			if (picked.length) lines.push(`${el.label || "Selected"}: ${picked.join(", ")}`);
+			if (picked.length) {
+				lines.push(`${el.label || "Selected"}: ${picked.join(", ")}`);
+				values.push(picked.join(", "));
+			}
 		}
 		if (el.kind === "input" && inputs[i]?.trim()) {
 			lines.push(el.label ? `${el.label}: ${inputs[i].trim()}` : inputs[i].trim());
+			values.push(inputs[i].trim());
 		}
 	});
 	const reply = lines.join("\n").trim();
-	if (reply) emit("submit", reply);
+	if (reply) emit("submit", reply, values.join(" · ") || actionLabel);
 }
 
 /** Same-origin paths and https only — the spec comes from the model. */

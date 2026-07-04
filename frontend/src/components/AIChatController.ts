@@ -52,6 +52,8 @@ export class AIChatController {
 
 	// Set by the panel's style-preset picker; folded into the prompt on submit.
 	pendingStylePreset: string | null = null;
+	// Compact display line for a card-composed reply (set by selectOption).
+	private pendingDisplayText: string | null = null;
 
 	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
 	private readonly summaryContent = ref(""); // accumulates summary chunks
@@ -430,9 +432,12 @@ export class AIChatController {
 	// --- user actions -----------------------------------------------------
 
 	/** Submit a reply composed by an agent UI card (option tap, action button,
-	 * collected form values) as the user's next ordinary message. */
-	selectOption = (option: string) => {
+	 * collected form values) as the user's next ordinary message. `display` is
+	 * the compact line the chat shows instead of the full relay — the model
+	 * still receives the full reply. */
+	selectOption = (option: string, display?: string) => {
 		this.prompt.value = option;
+		this.pendingDisplayText = display?.trim() || null;
 		this.submitPrompt();
 	};
 
@@ -490,9 +495,13 @@ export class AIChatController {
 		const attachedImageUrl = this.imagePreviewUrl.value;
 		this.clearImage();
 
+		const displayText = this.pendingDisplayText;
+		this.pendingDisplayText = null;
+
 		const contextMeta: Record<string, any> = {};
 		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
 		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
+		if (displayText) contextMeta.displayText = displayText;
 
 		const userMessage = buildLocalMessage("user", userText, contextMeta);
 		const assistantMessage = buildLocalMessage("assistant", "Thinking...", { status: "running" });
@@ -520,6 +529,7 @@ export class AIChatController {
 					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
 					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
+					...(displayText ? { display_text: displayText } : {}),
 				}),
 			}).submit();
 			const response = result as { session_id?: string; status?: string; message?: string };
