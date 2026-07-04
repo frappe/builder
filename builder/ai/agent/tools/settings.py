@@ -39,26 +39,37 @@ def set_page_settings(ctx, args: dict) -> str:
 
 
 def set_theme_variable(ctx, args: dict) -> str:
-	"""Create or update a site theme token (Builder Variable). Reference it in styles
-	as var(--<variable_name>) so a single change recolours the whole site."""
-	name = (args.get("variable_name") or "").strip().lstrip("-")
+	"""Create or update a site theme token (Builder Variable). The CSS handle is
+	var(--<doc name>) — a uuid; variable_name is only the human label. The result
+	names the exact handle so the model references something that resolves."""
+	label = (args.get("variable_name") or "").strip().lstrip("-")
 	value = (args.get("value") or "").strip()
-	if not name or not value:
+	if not label or not value:
 		return "variable_name and value are required."
-	existing = frappe.db.exists("Builder Variable", {"variable_name": name})
 	fields = {
 		"type": args.get("type") if args.get("type") in ("Color", "Dimension") else "Color",
 		"value": value,
 		"dark_value": (args.get("dark_value") or "").strip(),
 	}
-	if existing:
-		frappe.db.set_value("Builder Variable", existing, fields)
-		frappe.db.commit()
-		return f"Updated theme variable --{name}."
-	frappe.get_doc({"doctype": "Builder Variable", "variable_name": name, "group": "Brand", **fields}).insert(
-		ignore_permissions=True
+	# The model may pass the label OR the uuid handle it saw in query_records.
+	existing = frappe.db.exists("Builder Variable", label) or frappe.db.exists(
+		"Builder Variable", {"variable_name": label}
 	)
-	return f"Created theme variable --{name} (use it as var(--{name}))."
+	if existing:
+		doc = frappe.get_doc("Builder Variable", existing)
+		doc.update(fields)
+		# Full save (not db.set_value) so on_update busts the rendered-CSS cache.
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()
+		return f"Updated theme variable '{doc.variable_name}' — reference it in styles as var(--{doc.name})."
+	doc = frappe.get_doc(
+		{"doctype": "Builder Variable", "variable_name": label, "group": "Brand", **fields}
+	).insert(ignore_permissions=True)
+	frappe.db.commit()
+	return (
+		f"Created theme variable '{label}'. Reference it in styles EXACTLY as var(--{doc.name}) — "
+		f"'{label}' is only the display label, so var(--{label}) will NOT resolve."
+	)
 
 
 # --- sensitive (terminal, confirm-gated) --------------------------------
@@ -119,7 +130,12 @@ set_page_settings_tool = Tool(
 set_theme_variable_tool = Tool(
 	name="set_theme_variable",
 	side="server",
-	description="Create or update a site theme token (Builder Variable) referenced as var(--name). Use for brand colours/dimensions so the whole site restyles from one place. type is Color or Dimension; give a dark_value for colours.",
+	description=(
+		"Create or update a site theme token (Builder Variable). Use for brand "
+		"colours/dimensions so the whole site restyles from one place. The result names the "
+		"exact CSS handle to use in styles — var(--<id>), where <id> is the document id, NOT "
+		"the human variable_name. type is Color or Dimension; give a dark_value for colours."
+	),
 	parameters={
 		"type": "object",
 		"properties": {
