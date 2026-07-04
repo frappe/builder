@@ -666,11 +666,26 @@ export class AIChatController {
 		this.isCancelling.value = true;
 		this.progressMessage.value = "Cancelling...";
 		this.replacePendingAssistant("Cancelling...", { status: "running" });
+		const resetStuckCancel = async () => {
+			if (!this.isCancelling.value) return;
+			this.endCanvasBuild(!!this.pageStreamContent.value);
+			this.resetTransientState();
+			await this.loadSession();
+			toast.info("That run is no longer active.");
+		};
 		try {
-			await createResource({ url: "builder.ai.api.cancel" }).submit({ session_id: this.sessionId.value });
+			const res: any = await createResource({ url: "builder.ai.api.cancel" }).submit({
+				session_id: this.sessionId.value,
+			});
+			// No live turn holds the session lock (it crashed or timed out): nothing
+			// will ever acknowledge the flag, so resolve the UI now.
+			if (res?.status === "not_running") await resetStuckCancel();
 		} catch {
 			// Ignore — the user will see the event when it arrives.
 		}
+		// Watchdog: a wedged run (e.g. a stalled provider connection) can't reach its
+		// next cancellation check. Don't leave "Cancelling…" up forever.
+		setTimeout(resetStuckCancel, 20000);
 	};
 
 	submitPrompt = async () => {

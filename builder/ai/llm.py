@@ -113,6 +113,10 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		stream=stream,
 		api_key=api_key,
 		num_retries=1,
+		# Read timeout (max stall between bytes, not total duration): a wedged
+		# provider connection otherwise blocks the worker forever — the loop only
+		# checks cancellation between chunks, so a silent stall is uncancellable.
+		timeout=120,
 		# Emit a final usage chunk while streaming so the loop can tally tokens per
 		# turn (dropped automatically for providers that don't support it).
 		**({"stream_options": {"include_usage": True}} if stream else {}),
@@ -147,6 +151,7 @@ def complete_with_tools(
 		stream=stream,
 		api_key=api_key,
 		num_retries=1,
+		timeout=120,  # see complete() — a stalled connection must fail, not wedge the turn
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**params,

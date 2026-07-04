@@ -320,9 +320,24 @@ def cancel(session_id: str):
 	"""Request that the currently-running turn for this session abort at its
 	next stream chunk. The loop closes the LLM stream — Anthropic / OpenRouter
 	stop billing for further tokens once the connection drops."""
-	if session_id:
-		ensure_session_owner(session_id)
-		frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
+	from builder.ai import locks
+	from builder.ai.agent.loop import EVENT_PREFIX
+
+	if not session_id:
+		return {"status": "ok"}
+	ensure_session_owner(session_id)
+	frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
+	# Only a live loop acknowledges the flag. If no turn holds the session lock
+	# (the run crashed, timed out, or never started), tell the panel directly —
+	# otherwise "Cancelling…" spins forever.
+	if not locks.held(locks.session_key(session_id)):
+		channel = frappe.db.get_value("Builder AI Session", session_id, "page") or session_id
+		frappe.publish_realtime(
+			f"{EVENT_PREFIX}_error_{channel}",
+			{"session_id": session_id, "message": "That run is no longer active."},
+			user=frappe.session.user,
+		)
+		return {"status": "not_running"}
 	return {"status": "ok"}
 
 

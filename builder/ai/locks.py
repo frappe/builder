@@ -62,8 +62,9 @@ def release(key: str, token: str | None) -> None:
 
 
 def held(key: str) -> bool:
-	cache = frappe.cache()
-	return bool(cache.exists(cache.make_key(key)))
+	# RedisWrapper.exists applies make_key itself — prefixing here double-scopes
+	# the key and the check always misses.
+	return bool(frappe.cache().exists(key))
 
 
 @contextmanager
