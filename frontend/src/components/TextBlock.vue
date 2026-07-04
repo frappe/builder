@@ -1,10 +1,10 @@
 <template>
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div
+			class="__text_content__ bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			v-html="textContent"
 			v-show="!editor && textContent"
-			@click="handleClick"
-			class="bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"></div>
+			@click="handleClick"></div>
 		<TextBlockBubbleMenu
 			v-if="editor"
 			:block="block"
@@ -376,6 +376,14 @@ defineExpose({
 });
 </script>
 <style scoped>
+/* The published page renders text directly inside the block's own tag; this wrapper
+   div exists only for v-html. Without display:contents it adds a block box, which
+   shatters inline blocks (span/a pills): the background/radius paint on empty inline
+   fragments while the text renders full-width with no background behind it. */
+.__text_content__ {
+	display: contents;
+}
+
 .__text_block__ :deep([contenteditable="true"]) {
 	caret-color: currentcolor;
 	/* blocks inherit `select-none`; re-enable native text selection while editing */
