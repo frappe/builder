@@ -11,6 +11,7 @@ class ModelRegistry:
 					"label": "Claude Opus 4.8",
 					"max_tokens": 1048576,
 					"input_price": 5.0,
+					"output_price": 25.0,
 					"vision": True,
 				},
 				{
@@ -18,6 +19,7 @@ class ModelRegistry:
 					"label": "Claude Sonnet 4.6",
 					"max_tokens": 200000,
 					"input_price": 3.0,
+					"output_price": 15.0,
 					"vision": True,
 				},
 				{
@@ -25,6 +27,7 @@ class ModelRegistry:
 					"label": "Claude Haiku 4.6",
 					"max_tokens": 200000,
 					"input_price": 1.0,
+					"output_price": 5.0,
 					"vision": True,
 				},
 				{
@@ -32,6 +35,7 @@ class ModelRegistry:
 					"label": "GPT-5.4",
 					"max_tokens": 1048576,
 					"input_price": 2.5,
+					"output_price": 10.0,
 					"vision": True,
 				},
 				{
@@ -39,6 +43,7 @@ class ModelRegistry:
 					"label": "Gemini 3.1 Pro",
 					"max_tokens": 1048576,
 					"input_price": 2.0,
+					"output_price": 12.0,
 					"vision": True,
 				},
 				# --- Fast / cheap (great value for the conversational loop + edits) ---
@@ -47,6 +52,7 @@ class ModelRegistry:
 					"label": "Gemini 3.5 Flash",
 					"max_tokens": 1048576,
 					"input_price": 1.5,
+					"output_price": 4.5,
 					"vision": True,
 				},
 				{
@@ -54,6 +60,7 @@ class ModelRegistry:
 					"label": "Gemini 3.1 Flash Lite",
 					"max_tokens": 1048576,
 					"input_price": 0.25,
+					"output_price": 1.0,
 					"vision": True,
 				},
 				{
@@ -61,6 +68,7 @@ class ModelRegistry:
 					"label": "GPT-5.4 Mini",
 					"max_tokens": 400000,
 					"input_price": 0.75,
+					"output_price": 3.0,
 					"vision": True,
 				},
 				{
@@ -68,6 +76,7 @@ class ModelRegistry:
 					"label": "DeepSeek V4 Pro",
 					"max_tokens": 1048576,
 					"input_price": 0.435,
+					"output_price": 1.75,
 					"vision": False,
 				},
 				{
@@ -75,6 +84,7 @@ class ModelRegistry:
 					"label": "DeepSeek V4 Flash",
 					"max_tokens": 1048576,
 					"input_price": 0.098,
+					"output_price": 0.4,
 					"vision": False,
 				},
 				# --- Open-weight alternatives ---
@@ -83,6 +93,7 @@ class ModelRegistry:
 					"label": "Kimi K2.6",
 					"max_tokens": 262144,
 					"input_price": 0.68,
+					"output_price": 2.7,
 					"vision": True,
 				},
 				{
@@ -90,6 +101,7 @@ class ModelRegistry:
 					"label": "GLM-5.2",
 					"max_tokens": 203000,
 					"input_price": 1.1,
+					"output_price": 4.4,
 					"vision": False,
 				},
 				{
@@ -97,6 +109,7 @@ class ModelRegistry:
 					"label": "GLM-5.1",
 					"max_tokens": 203000,
 					"input_price": 0.98,
+					"output_price": 3.9,
 					"vision": False,
 				},
 				{
@@ -104,6 +117,7 @@ class ModelRegistry:
 					"label": "Qwen 3.7 Max",
 					"max_tokens": 1048576,
 					"input_price": 1.25,
+					"output_price": 5.0,
 					"vision": True,
 				},
 			],
@@ -141,6 +155,37 @@ class ModelRegistry:
 				if m["name"] == model_name:
 					return m.get("input_price", float("inf"))
 		return float("inf")
+
+	@classmethod
+	def output_price(cls, model_name: str) -> float | None:
+		"""Output price (USD per 1M tokens); None for unknown models (cost then
+		reads as unavailable rather than a wrong number)."""
+		for provider in cls.AVAILABLE:
+			for m in provider["models"]:
+				if m["name"] == model_name:
+					return m.get("output_price")
+		return None
+
+	@classmethod
+	def context_window(cls, model_name: str) -> int:
+		"""The model's context window in tokens (`max_tokens` in the registry)."""
+		for provider in cls.AVAILABLE:
+			for m in provider["models"]:
+				if m["name"] == model_name:
+					return int(m.get("max_tokens") or 200_000)
+		return 200_000
+
+	@classmethod
+	def estimate_cost(cls, model_name: str, prompt: int, completion: int, cached: int = 0) -> float | None:
+		"""Approximate USD cost of one call from the registry's per-1M prices.
+		Cache reads bill at a provider discount (~10% Anthropic, ~25% elsewhere).
+		Approximate by design — OpenRouter's exact cost isn't surfaced by litellm."""
+		inp, outp = cls.input_price(model_name), cls.output_price(model_name)
+		if outp is None or inp == float("inf"):
+			return None
+		factor = 0.1 if "/anthropic/" in model_name else 0.25
+		fresh = max(prompt - cached, 0)
+		return (fresh * inp + cached * inp * factor + completion * outp) / 1_000_000
 
 	@classmethod
 	def get_simple(cls, model: str) -> str:

@@ -92,7 +92,7 @@
 			<div class="mt-2 max-h-48 overflow-y-auto font-mono text-[11px] leading-relaxed text-ink-gray-6">
 				<div v-for="(c, i) in perCall" :key="i">
 					#{{ i + 1 }} · {{ fmt(c.prompt) }} prompt{{ c.cached ? ` (${fmt(c.cached)} cached)` : "" }} ·
-					{{ fmt(c.completion) }} completion
+					{{ fmt(c.completion) }} completion{{ c.cost ? ` · ${formatCost(c.cost)}` : "" }}
 				</div>
 			</div>
 		</details>
@@ -116,6 +116,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatCost } from "@/components/ai/format";
 import { computed, ref } from "vue";
 
 const props = defineProps<{ debug: Record<string, any> | null }>();
@@ -152,7 +153,7 @@ const metrics = computed(() => {
 	const t = tokens.value;
 	const secs = ((d.elapsedMs || 0) / 1000).toFixed(1);
 	const cached = t.cached_tokens ? ` (${fmt(t.cached_tokens)} cached)` : "";
-	return [
+	const rows = [
 		{ label: "Rounds", value: `${d.rounds ?? trace.value.length}` },
 		{ label: "LLM calls", value: `${t.calls || 0}` },
 		{ label: "Latency", value: `${secs}s` },
@@ -160,6 +161,14 @@ const metrics = computed(() => {
 		{ label: "Prompt", value: fmt(t.prompt_tokens) },
 		{ label: "Completion", value: fmt(t.completion_tokens) },
 	];
+	if (t.cost) rows.push({ label: "Cost (est.)", value: formatCost(t.cost) });
+	// The latest call's prompt is the conversation's current size in the window.
+	const lastPrompt = perCall.value.at(-1)?.prompt || 0;
+	if (d.contextWindow && lastPrompt) {
+		const pct = Math.round((lastPrompt / d.contextWindow) * 100);
+		rows.push({ label: "Context used", value: `${fmt(lastPrompt)} / ${fmt(d.contextWindow)} (${pct}%)` });
+	}
+	return rows;
 });
 
 const signals = computed(() => {

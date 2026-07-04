@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import { BatchTracker } from "@/components/ai/batches";
+import { setCostCurrency } from "@/components/ai/format";
 import builderVariables from "@/data/builderVariable";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
@@ -662,6 +663,9 @@ export class AIChatController {
 				this.availableModels.value = data;
 			},
 		});
+		// Costs display in the site's currency (converted from USD at a cached
+		// daily rate); until this resolves they show as USD.
+		createResource({ url: "builder.ai.api.get_ai_cost_currency", auto: true, onSuccess: setCostCurrency });
 		await this.loadSession();
 		await this.maybeRunInitialPrompt();
 	}

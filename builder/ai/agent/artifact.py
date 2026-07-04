@@ -95,7 +95,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			from builder.ai.agent.loop import CancelledError
 
 			raise CancelledError
-		ctx.record_usage(chunk)
+		ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 		if not chunk.choices:
 			continue
 		if fr := chunk.choices[0].finish_reason:

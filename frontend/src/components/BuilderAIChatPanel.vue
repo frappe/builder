@@ -96,6 +96,9 @@
 								<div class="ml-auto flex items-center gap-2">
 									<span v-if="message.metadata.debug.elapsedMs" class="font-mono">
 										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
+										<template v-if="message.metadata.debug.tokens?.cost">
+											· ~{{ formatCost(message.metadata.debug.tokens.cost) }}
+										</template>
 									</span>
 									<button
 										class="inline-flex items-center transition-colors"
@@ -301,6 +304,7 @@ import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
+import { formatCost } from "@/components/ai/format";
 import { renderMarkdown } from "@/components/ai/markdown";
 import useBuilderStore from "@/stores/builderStore";
 import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
