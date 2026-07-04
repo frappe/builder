@@ -257,6 +257,15 @@ const getInnerHTML = (editor: Editor | null) => {
 	) {
 		innerHTML = editor?.getText();
 	}
+	// tiptap wraps content in a paragraph node, so getHTML() returns <p>…</p>. Storing
+	// that wrapper as the block's innerHTML nests a block box inside the block's own
+	// text element — a <p> inside a <span> fragments the inline box (background/radius
+	// shatter into pieces), and <p> inside <p> is invalid HTML that the parser splits
+	// on publish. When the whole doc is that one paragraph, the wrapper is redundant.
+	const doc = editor.state.doc;
+	if (doc.childCount === 1 && doc.firstChild?.type.name === "paragraph" && innerHTML.startsWith("<p>")) {
+		innerHTML = innerHTML.slice(3).replace(/<\/p>$/, "");
+	}
 	return innerHTML;
 };
 
