@@ -3,21 +3,14 @@
 		<!-- sessions sidebar -->
 		<aside class="flex w-60 shrink-0 flex-col border-r border-outline-gray-2">
 			<div class="flex items-center justify-between px-3 py-3">
-				<button
-					class="flex items-center gap-1.5 text-sm text-ink-gray-6 hover:text-ink-gray-9"
-					@click="goHome">
-					<FeatherIcon name="arrow-left" class="size-3.5" />
-					Dashboard
-				</button>
-				<Button variant="ghost" size="sm" @click="newChat">
-					<template #icon><FeatherIcon name="plus" class="size-4" /></template>
-				</Button>
+				<Button variant="ghost" icon-left="lucide-arrow-left" label="Dashboard" @click="goHome" />
+				<Button variant="ghost" icon="lucide-plus" @click="newChat" />
 			</div>
 			<div class="flex-1 overflow-auto px-2 pb-3">
 				<div
 					v-for="s in chat.sessions.value"
 					:key="s.name"
-					class="group mb-0.5 flex w-full cursor-pointer items-center gap-1 rounded-md py-1 pl-2.5 pr-1 text-xs leading-snug"
+					class="group mb-0.5 flex w-full cursor-pointer items-center gap-1 rounded-md py-1 pl-2.5 pr-1 text-sm leading-snug"
 					:class="
 						s.name === chat.sessionId.value
 							? 'bg-surface-gray-3 text-ink-gray-9'
@@ -64,7 +57,7 @@
 					<div v-if="!chat.messages.value.length" class="pt-16 text-center">
 						<h1 class="text-xl font-semibold text-ink-gray-9">What do you want to build?</h1>
 						<p class="mt-1.5 text-p-base text-ink-gray-5">
-							A whole site, a page, or a quick change — just ask.
+							A whole site, a page, or a quick change - just ask.
 						</p>
 					</div>
 					<AgentMessage
@@ -83,7 +76,7 @@
 			</div>
 
 			<!-- composer -->
-			<div class="border-t border-outline-gray-2 px-6 py-3">
+			<div class="border-t border-outline-gray-2 px-6 py-4">
 				<div class="relative mx-auto max-w-2xl">
 					<!-- inline @page mention list (keyboard-navigable). Positioned above the
 					     composer; the "@…" stays inline in the text as a reference. -->
@@ -93,7 +86,7 @@
 						<button
 							v-for="(p, i) in filteredPages"
 							:key="p.name"
-							class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs"
+							class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm"
 							:class="
 								i === mentionIndex
 									? 'bg-surface-gray-3 text-ink-gray-9'
@@ -103,14 +96,14 @@
 							@mousedown.prevent="selectMention(p)">
 							<FeatherIcon name="file" class="size-3.5 shrink-0 text-ink-gray-4" />
 							<span class="min-w-0 flex-1 truncate">{{ p.page_title || p.name }}</span>
-							<span class="shrink-0 font-mono text-[10px] text-ink-gray-4">
+							<span class="shrink-0 font-mono text-xs text-ink-gray-4">
 								/{{ (p.route || "").replace(/^\//, "") }}
 							</span>
 						</button>
 					</div>
 
 					<div
-						class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-3 py-2.5"
+						class="ai-composer bg-surface-white rounded-xl border border-outline-gray-2 px-4 py-3"
 						:class="{ 'border-outline-gray-4': isDragging }"
 						@dragover.prevent="isDragging = true"
 						@dragleave="isDragging = false"
@@ -124,42 +117,34 @@
 									alt="Attached image" />
 								<Button
 									icon="lucide-x"
-									size="sm"
+									size="xs"
 									variant="solid"
-									class="absolute -right-1.5 -top-1.5 !size-4 rounded-full"
+									class="absolute -right-2 -top-2"
 									@click="chat.clearImage" />
 							</div>
 						</div>
 						<textarea
 							ref="inputEl"
 							v-model="chat.prompt.value"
-							rows="1"
+							rows="2"
 							placeholder="Ask Builder AI…  (type @ to reference a page)"
-							class="ai-input block max-h-40 w-full resize-none border-0 bg-transparent text-p-sm leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
+							class="ai-input block max-h-52 w-full resize-none border-0 bg-transparent p-0 text-p-base leading-relaxed text-ink-gray-9 placeholder:text-ink-gray-4"
 							@input="onInput"
 							@keydown="onKeydown"
 							@paste="onPaste" />
-						<div class="mt-1.5 flex items-center gap-2">
+						<div class="mt-2 flex items-center gap-2">
 							<Dropdown :options="modelOptions" side="top" align="start">
-								<button class="rounded px-1.5 py-1 text-[11px] text-ink-gray-5 hover:bg-surface-gray-2">
-									{{ modelLabel }}
-								</button>
+								<Button variant="ghost" :label="modelLabel" icon-right="lucide-chevron-down" />
 							</Dropdown>
-							<Button
-								v-if="chat.isVisionModel.value"
-								icon="lucide-paperclip"
-								size="sm"
-								variant="ghost"
-								tooltip="Attach an image"
-								@click="fileInput?.click()" />
 							<input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFilePick" />
 							<span class="flex-1"></span>
-							<Button v-if="chat.sending.value" variant="subtle" @click="chat.cancel">
-								<template #icon><FeatherIcon name="square" class="size-3.5" /></template>
-							</Button>
-							<Button v-else variant="solid" :disabled="!chat.canSubmit.value" @click="onSend">
-								<template #icon><FeatherIcon name="arrow-up" class="size-4" /></template>
-							</Button>
+							<Button v-if="chat.sending.value" variant="subtle" icon="lucide-square" @click="chat.cancel" />
+							<Button
+								v-else
+								variant="solid"
+								icon="lucide-arrow-up"
+								:disabled="!chat.canSubmit.value"
+								@click="onSend" />
 						</div>
 					</div>
 				</div>
@@ -226,7 +211,7 @@ function resize() {
 	const t = inputEl.value;
 	if (!t) return;
 	t.style.height = "auto";
-	t.style.height = `${Math.min(t.scrollHeight, 160)}px`;
+	t.style.height = `${Math.min(t.scrollHeight, 208)}px`;
 }
 
 function onInput() {

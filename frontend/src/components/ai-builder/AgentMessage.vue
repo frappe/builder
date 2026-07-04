@@ -1,7 +1,8 @@
 <template>
 	<!-- user -->
 	<div v-if="message.role === 'user'" class="flex justify-end">
-		<div class="bg-surface-white max-w-[88%] rounded-md border px-3 py-2 text-p-sm text-ink-gray-8 shadow-sm">
+		<div
+			class="bg-surface-white max-w-[88%] rounded-lg border px-3.5 py-2.5 text-p-base text-ink-gray-8 shadow-sm">
 			<img
 				v-if="message.attachedImage"
 				:src="message.attachedImage"
@@ -20,22 +21,22 @@
 				<span></span>
 				<span></span>
 			</span>
-			<span class="text-p-sm">{{ workingLine }}</span>
+			<span class="text-p-base">{{ workingLine }}</span>
 		</div>
 
 		<!-- once settled: the steps collapse into a small disclosure -->
 		<div v-else-if="activityDisplay.length" class="flex flex-col gap-1">
 			<button
-				class="flex w-fit items-center gap-1 text-xs text-ink-gray-4 transition-colors hover:text-ink-gray-7"
+				class="flex w-fit items-center gap-1 text-sm text-ink-gray-4 transition-colors hover:text-ink-gray-7"
 				@click="stepsOpen = !stepsOpen">
-				<FeatherIcon :name="stepsOpen ? 'chevron-down' : 'chevron-right'" class="size-3" />
+				<FeatherIcon :name="stepsOpen ? 'chevron-down' : 'chevron-right'" class="size-3.5" />
 				{{ stepCount }} step{{ stepCount === 1 ? "" : "s" }}
 			</button>
 			<template v-if="stepsOpen">
 				<div
 					v-for="a in activityDisplay"
 					:key="a.id"
-					class="group flex items-center gap-2 pl-4 text-xs text-ink-gray-5">
+					class="group flex items-center gap-2 pl-4 text-sm text-ink-gray-5">
 					<span class="shrink-0 text-ink-gray-6">✓</span>
 					<span class="truncate">
 						{{ a.summary }}
@@ -43,7 +44,7 @@
 					</span>
 					<button
 						v-if="a.page"
-						class="shrink-0 text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-8 hover:underline group-hover:opacity-100"
+						class="shrink-0 text-xs text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-8 hover:underline group-hover:opacity-100"
 						@click="openPage(a.page)">
 						Open
 					</button>
@@ -54,20 +55,20 @@
 		<!-- body text (markdown) — the confirm card carries its own title, don't repeat it -->
 		<div
 			v-if="message.text && !isPlan && !message.confirm"
-			class="ai-prose prose prose-sm max-w-none break-words text-p-sm leading-relaxed"
+			class="ai-prose prose prose-sm max-w-none break-words text-p-base leading-relaxed"
 			:class="bodyClass"
 			v-html="renderMarkdown(message.text)" />
 
 		<!-- outcome of a confirmed/skipped sensitive action -->
 		<div
 			v-if="message.status === 'action_applied' || message.status === 'action_skipped'"
-			class="flex items-center gap-1 text-[11px] text-ink-gray-4">
+			class="flex items-center gap-1 text-xs text-ink-gray-4">
 			<span v-if="message.status === 'action_applied'" class="text-ink-gray-6">✓</span>
 			{{ message.status === "action_applied" ? "Applied" : "Skipped" }}
 		</div>
 
 		<!-- meta row: revert, matching the editor chat's treatment -->
-		<div v-if="message.revertSnapshot && !isRunning" class="flex items-center text-[11px] text-ink-gray-4">
+		<div v-if="message.revertSnapshot && !isRunning" class="flex items-center text-xs text-ink-gray-4">
 			<button
 				class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
 				title="Revert the page to before this AI edit"
@@ -78,21 +79,21 @@
 		</div>
 
 		<!-- the page this turn built/edited, one click away -->
-		<button
+		<Button
 			v-if="donePage"
-			class="flex w-fit items-center gap-2 rounded-lg border border-outline-gray-2 px-3 py-1.5 text-xs text-ink-gray-8 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2"
-			@click="openPage(donePage.page!)">
-			<FeatherIcon name="external-link" class="size-3.5 text-ink-gray-5" />
-			Open {{ donePageTitle }} in the editor
-		</button>
+			class="w-fit"
+			variant="outline"
+			icon-left="lucide-external-link"
+			:label="`Open ${donePageTitle} in the editor`"
+			@click="openPage(donePage.page!)" />
 
 		<!-- plan summary -->
-		<div v-if="isPlan" class="rounded-lg border border-outline-gray-2 p-3">
-			<div class="text-p-sm font-medium text-ink-gray-9">{{ message.plan!.headline }}</div>
-			<ul v-if="message.plan!.sections.length" class="mt-1.5 flex flex-col gap-1">
-				<li v-for="(s, i) in message.plan!.sections" :key="i" class="text-xs text-ink-gray-6">— {{ s }}</li>
+		<div v-if="isPlan" class="rounded-lg border border-outline-gray-2 p-4">
+			<div class="text-p-base font-medium text-ink-gray-9">{{ message.plan!.headline }}</div>
+			<ul v-if="message.plan!.sections.length" class="mt-2 flex flex-col gap-1.5">
+				<li v-for="(s, i) in message.plan!.sections" :key="i" class="text-sm text-ink-gray-6">— {{ s }}</li>
 			</ul>
-			<div v-if="message.plan!.palette" class="mt-2 text-xs text-ink-gray-5">{{ message.plan!.palette }}</div>
+			<div v-if="message.plan!.palette" class="mt-2 text-sm text-ink-gray-5">{{ message.plan!.palette }}</div>
 			<Button class="mt-3" size="sm" variant="subtle" @click="$emit('approve-plan')">
 				Looks good — build it
 			</Button>
@@ -103,7 +104,7 @@
 			<button
 				v-for="(opt, i) in message.options"
 				:key="i"
-				class="flex items-center gap-2 rounded-lg border border-outline-gray-2 px-3 py-1.5 text-xs text-ink-gray-8 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2"
+				class="flex items-center gap-2 rounded-lg border border-outline-gray-2 px-3 py-2 text-sm text-ink-gray-8 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-2"
 				@click="$emit('select-option', opt)">
 				<span v-if="swatch(i)" class="flex gap-0.5">
 					<span
@@ -117,19 +118,19 @@
 		</div>
 
 		<!-- confirm card (sensitive action) -->
-		<div v-if="message.confirm" class="rounded-lg border border-outline-gray-2 p-3">
+		<div v-if="message.confirm" class="rounded-lg border border-outline-gray-2 p-4">
 			<div class="flex items-center gap-2">
 				<span class="grid size-5 shrink-0 place-items-center rounded-md bg-surface-gray-2 text-ink-gray-7">
 					<FeatherIcon name="shield" class="size-3.5" />
 				</span>
-				<span class="text-p-sm font-medium text-ink-gray-9">{{ confirmTitle }}</span>
+				<span class="text-p-base font-medium text-ink-gray-9">{{ confirmTitle }}</span>
 			</div>
 			<div
 				v-if="confirmRows.length"
 				class="mt-2 max-h-52 divide-y divide-outline-gray-1 overflow-auto rounded-md bg-surface-gray-1">
-				<div v-for="(row, i) in confirmRows" :key="i" class="flex items-baseline gap-2 px-2.5 py-1.5 text-xs">
+				<div v-for="(row, i) in confirmRows" :key="i" class="flex items-baseline gap-2 px-2.5 py-1.5 text-sm">
 					<span class="min-w-0 truncate text-ink-gray-8">{{ row.label }}</span>
-					<span v-if="row.detail" class="ml-auto shrink-0 text-[11px] text-ink-gray-5">{{ row.detail }}</span>
+					<span v-if="row.detail" class="ml-auto shrink-0 text-xs text-ink-gray-5">{{ row.detail }}</span>
 				</div>
 			</div>
 			<pre v-else-if="confirmPreview" class="ab-code mt-2">{{ confirmPreview }}</pre>

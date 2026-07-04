@@ -1,16 +1,16 @@
 <template>
 	<div class="mt-2 overflow-hidden rounded-lg border border-outline-gray-2">
 		<div class="flex items-center justify-between border-b border-outline-gray-2 bg-surface-gray-1 px-3 py-2">
-			<span class="text-xs font-medium text-ink-gray-7">
+			<span class="text-sm font-medium text-ink-gray-7">
 				{{ header }}
 			</span>
 			<span class="flex items-center gap-2">
-				<span class="text-xs tabular-nums text-ink-gray-5">
+				<span class="text-sm tabular-nums text-ink-gray-5">
 					{{ batch.completed }}/{{ batch.total || "?" }}
 				</span>
 				<button
 					v-if="batch.status === 'running'"
-					class="text-xs text-ink-gray-5 hover:text-ink-gray-9 hover:underline"
+					class="text-sm text-ink-gray-5 hover:text-ink-gray-9 hover:underline"
 					@click="$emit('cancel', batch.batchId)">
 					Stop
 				</button>
@@ -29,20 +29,20 @@
 					:src="t.preview"
 					class="h-9 w-14 shrink-0 rounded border border-outline-gray-2 object-cover object-top"
 					alt="" />
-				<span class="min-w-0 flex-1 truncate text-xs text-ink-gray-8">{{ t.title }}</span>
+				<span class="min-w-0 flex-1 truncate text-sm text-ink-gray-8">{{ t.title }}</span>
 				<button
 					v-if="t.status === 'done' && t.page"
-					class="shrink-0 text-xs text-ink-gray-6 hover:text-ink-gray-9 hover:underline"
+					class="shrink-0 text-sm text-ink-gray-6 hover:text-ink-gray-9 hover:underline"
 					@click="openPage(t.page)">
 					Open
 				</button>
-				<span v-else-if="t.status === 'failed'" class="shrink-0 text-[11px] text-ink-gray-4">failed</span>
+				<span v-else-if="t.status === 'failed'" class="shrink-0 text-xs text-ink-gray-4">failed</span>
 			</div>
 		</div>
 		<div
 			v-if="settled && batch.projectFolder"
 			class="flex items-center justify-between border-t border-outline-gray-2 bg-surface-gray-1 px-3 py-2">
-			<span class="text-xs text-ink-gray-5">{{ batch.completed }} page(s) ready to review</span>
+			<span class="text-sm text-ink-gray-5">{{ batch.completed }} page(s) ready to review</span>
 			<Button size="sm" variant="subtle" :loading="publishing" @click="$emit('publish', batch.batchId)">
 				Publish
 			</Button>
