@@ -11,7 +11,6 @@ export interface BreakpointConfig {
 }
 
 export interface CanvasProps {
-	overlayElement: HTMLElement | null;
 	background: string;
 	scale: number;
 	translateX: number;
@@ -20,6 +19,7 @@ export interface CanvasProps {
 	scaling: boolean;
 	panning: boolean;
 	breakpoints: BreakpointConfig[];
+	frameRoots?: Map<string, HTMLElement>;
 }
 
 export type CanvasHistory = Ref<ReturnType<typeof useCanvasHistory>>;

@@ -6,11 +6,11 @@
 			v-show="!editor && textContent"
 			@click="handleClick"></div>
 		<TextBlockBubbleMenu
-			v-if="editor"
+			v-if="editor && canvasRoot"
 			:block="block"
 			:editor="editor"
 			:canvas-props="canvasProps"
-			:overlay-element="overlayElement"
+			:overlay-element="canvasRoot"
 			:is-editable="isEditable"
 			ref="bubbleMenu" />
 		<editor-content
@@ -45,14 +45,13 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
-import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
+import { Ref, computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const canvasStore = useCanvasStore();
 
 const dataChanged = ref(false);
 const component = ref(null) as Ref<HTMLElement | null>;
 const bubbleMenu = ref(null) as Ref<{ handleKeydown: (e: KeyboardEvent) => void } | null>;
-const overlayElement = document.querySelector("#overlay") as HTMLElement;
 let editor: Ref<Editor | null> = ref(null);
 let selectionTriggered = false as boolean;
 
@@ -75,6 +74,7 @@ const props = withDefaults(
 );
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+const canvasRoot = computed(() => canvasProps?.frameRoots?.get(props.breakpoint) || null);
 
 const FontFamilyPasteRule = Extension.create({
 	name: "fontFamilyPasteRule",
@@ -186,9 +186,9 @@ const showEditor = computed(() => {
 	return !((props.block.isLink() || props.block.isButton()) && props.block.hasChildren());
 });
 
-onBeforeMount(() => {
+onMounted(() => {
 	let html = props.block.getInnerHTML() || "";
-	setFontFromHTML(html);
+	setFontFromHTML(html, component.value?.ownerDocument || document);
 });
 
 let pauseId: PauseId | undefined = undefined;
@@ -364,7 +364,7 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	if ((e.target as HTMLElement).closest(".canvas, .canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };

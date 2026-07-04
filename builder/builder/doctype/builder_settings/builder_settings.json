@@ -19,7 +19,6 @@
   "home_page",
   "developer_options_section",
   "execute_block_scripts_in_editor",
-  "restrict_click_handlers",
   "ai_section",
   "ai_api_key",
   "persona_survey_done"
@@ -106,17 +105,11 @@
    "label": "Developer Options"
   },
   {
-   "default": "Restricted",
+   "default": "Enable",
    "fieldname": "execute_block_scripts_in_editor",
    "fieldtype": "Select",
-   "label": "Execute Block Scripts in Editor",
-   "options": "Don't Execute\nRestricted\nUnrestricted"
-  },
-  {
-   "default": "1",
-   "fieldname": "restrict_click_handlers",
-   "fieldtype": "Check",
-   "label": "Restrict Click Handlers"
+   "label": "Client Script Emulation",
+   "options": "Enable\nDisable"
   },
   {
    "fieldname": "ai_section",

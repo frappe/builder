@@ -1,7 +1,7 @@
 <template>
 	<div
 		ref="handler"
-		class="border-radius-resize pointer-events-auto absolute h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
+		class="border-radius-resize pointer-events-auto absolute h-[12px] w-[12px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
 			hidden: !isHandlerVisible,
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
-import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
 
@@ -38,13 +38,21 @@ const handlerLeft = ref(10);
 const MIN_POSITION = { top: 10, left: 10 };
 const MIN_TARGET_SIZE = 25;
 
-const targetBounds = reactive(useElementBounding(props.target));
+const targetBounds = reactive({
+	width: 0,
+	height: 0,
+	update() {
+		const rect = props.target.getBoundingClientRect();
+		targetBounds.width = rect.width;
+		targetBounds.height = rect.height;
+	},
+});
 const maxDistance = computed(() => Math.min(targetBounds.width, targetBounds.height) / 2);
 
 const maxRadius = computed(() => {
 	props.targetBlock.getStyle("width");
 	props.targetBlock.getStyle("height");
-	const targetStyle = window.getComputedStyle(props.target);
+	const targetStyle = getComputedStyleFor(props.target);
 	return Math.min(parseInt(targetStyle.height, 10), parseInt(targetStyle.width, 10)) / 2;
 });
 
@@ -69,49 +77,43 @@ const setHandlerPosition = (radius: number) => {
 };
 
 const handleRounded = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
-	let lastX = startX;
-	let lastY = startY;
+	let lastPoint: { x: number; y: number } | null = null;
 	updating.value = true;
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		const movementX = mouseMoveEvent.clientX - lastX;
-		const movementY = mouseMoveEvent.clientY - lastY;
-		const movement = ((movementX + movementY) / 2) * 2;
+	startCanvasDrag(ev, props.target, {
+		onMove: ({ event, point, startPoint }) => {
+			const previousPoint = lastPoint || startPoint;
+			event.preventDefault();
+			const movementX = point.x - previousPoint.x;
+			const movementY = point.y - previousPoint.y;
+			const movement = ((movementX + movementY) / 2) * 2;
 
-		if (movement < 0) {
-			MIN_POSITION.top = -(handleDimensions.height / 2);
-			MIN_POSITION.left = -(handleDimensions.width / 2);
-		}
+			if (movement < 0) {
+				MIN_POSITION.top = -(handleDimensions.height / 2);
+				MIN_POSITION.left = -(handleDimensions.width / 2);
+			}
 
-		const radius = Math.round(
-			Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
-		);
+			const radius = Math.round(
+				Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
+			);
 
-		borderRadius.value = radius;
-		setHandlerPosition(radius);
-		props.targetBlock.setStyle("borderRadius", `${radius}px`);
+			borderRadius.value = radius;
+			setHandlerPosition(radius);
+			props.targetBlock.setStyle("borderRadius", `${radius}px`);
 
-		lastX = mouseMoveEvent.clientX;
-		lastY = mouseMoveEvent.clientY;
-	};
-
-	const mouseup = (mouseUpEvent: MouseEvent) => {
-		mouseUpEvent.preventDefault();
-		if (getNumberFromPx(props.targetBlock.getStyle("borderRadius")) < 10) {
-			handlerTop.value = MIN_POSITION.top;
-			handlerLeft.value = MIN_POSITION.left;
-		}
-		updating.value = false;
-		document.removeEventListener("mousemove", mousemove);
-	};
-
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", mouseup, { once: true });
+			lastPoint = point;
+		},
+		onEnd: (event) => {
+			event.preventDefault();
+			if (getNumberFromPx(String(props.targetBlock.getStyle("borderRadius") || "")) < 10) {
+				handlerTop.value = MIN_POSITION.top;
+				handlerLeft.value = MIN_POSITION.left;
+			}
+			updating.value = false;
+		},
+	});
 };
 
 onMounted(() => {

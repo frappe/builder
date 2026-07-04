@@ -255,18 +255,19 @@ const useCanvasStore = defineStore("canvasStore", {
 			// to avoid re-rendering the whole canvas
 			if (this.dropTarget.placeholder) return;
 
-			let element = document.createElement("div");
-			element.id = "placeholder";
+			const breakpoint = this.activeCanvas?.hoveredBreakpoint || this.activeCanvas?.activeBreakpoint;
+			const frameRoot = breakpoint ? this.activeCanvas?.canvasProps.frameRoots?.get(breakpoint) : null;
+			const root = frameRoot?.querySelector(".__builder_component__[data-block-id='root']");
+			if (!root) return;
 
-			const root = document.querySelector(".__builder_component__[data-block-id='root']");
-			if (root) {
-				this.dropTarget.placeholder = root.appendChild(element);
-			}
+			let element = root.ownerDocument.createElement("div");
+			element.id = "placeholder";
+			this.dropTarget.placeholder = root.appendChild(element);
 			return this.dropTarget.placeholder;
 		},
 
 		removeDropPlaceholder() {
-			const placeholder = document.getElementById("placeholder");
+			const placeholder = this.dropTarget.placeholder;
 			if (placeholder) {
 				placeholder.remove();
 			}

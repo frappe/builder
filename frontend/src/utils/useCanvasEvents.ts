@@ -4,6 +4,12 @@ import useCanvasStore from "@/stores/canvasStore";
 import { CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
+	getComputedStyleFor,
+	getEventDocument,
+	getEventPointInDocument,
+	startCanvasDrag,
+} from "@/utils/canvasFrameDom";
+import {
 	addPxToNumber,
 	getBlock,
 	getBlockInfo,
@@ -30,15 +36,15 @@ export function useCanvasEvents(
 		if (builderStore.mode === "move") {
 			return;
 		}
-		const initialX = ev.clientX;
-		const initialY = ev.clientY;
 		if (builderStore.mode === "select") {
 			return;
 		} else {
 			if (builderStore.readOnlyMode) return;
 			const pauseId = canvasHistory.value?.pause();
 			ev.stopPropagation();
-			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+			const ownerDocument = getEventDocument(ev);
+			const initialPoint = getEventPointInDocument(ev, ownerDocument);
+			let element = ownerDocument.elementFromPoint(initialPoint.x, initialPoint.y) as HTMLElement;
 			let block = getRootBlock();
 			if (element) {
 				if (element.dataset.blockId) {
@@ -46,25 +52,29 @@ export function useCanvasEvents(
 				}
 			}
 			let parentBlock = getRootBlock();
-			if (element.dataset.blockId) {
+			if (element?.dataset.blockId) {
 				parentBlock = findBlock(element.dataset.blockId) || parentBlock;
 				while (parentBlock && !parentBlock.canHaveChildren()) {
 					parentBlock = parentBlock.getParentBlock() || getRootBlock();
 				}
 			}
 			const child = getBlockTemplate(builderStore.mode);
-			const parentElement = document.body.querySelector(
+			const parentElement = ownerDocument.body.querySelector(
 				`.canvas [data-block-id="${parentBlock.blockId}"]`,
 			) as HTMLElement;
+			if (!parentElement) {
+				pauseId && canvasHistory.value?.resume(pauseId);
+				return;
+			}
 			const parentOldPosition = parentBlock.getStyle("position");
 			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
 				parentBlock.setBaseStyle("position", "relative");
 			}
 			const parentElementBounds = parentElement.getBoundingClientRect();
-			let x = (ev.x - parentElementBounds.left) / canvasProps.scale;
-			let y = (ev.y - parentElementBounds.top) / canvasProps.scale;
-			const parentWidth = getNumberFromPx(getComputedStyle(parentElement).width);
-			const parentHeight = getNumberFromPx(getComputedStyle(parentElement).height);
+			let x = initialPoint.x - parentElementBounds.left;
+			let y = initialPoint.y - parentElementBounds.top;
+			const parentWidth = getNumberFromPx(getComputedStyleFor(parentElement).width);
+			const parentHeight = getNumberFromPx(getComputedStyleFor(parentElement).height);
 
 			const childBlock = parentBlock.addChild(child);
 			childBlock.setBaseStyle("position", "absolute");
@@ -76,26 +86,19 @@ export function useCanvasEvents(
 				counter++;
 			}
 
-			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				if (builderStore.mode === "text") {
-					return;
-				} else {
-					mouseMoveEvent.preventDefault();
-					let width = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
-					let height = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
+			startCanvasDrag(ev, parentElement, {
+				onMove: ({ event, movementX, movementY }) => {
+					if (builderStore.mode === "text") return;
+					event.preventDefault();
+					let width = movementX;
+					let height = movementY;
 					width = clamp(width, 0, parentWidth);
 					height = clamp(height, 0, parentHeight);
 					const setFullWidth = width === parentWidth;
 					childBlock.setBaseStyle("width", setFullWidth ? "100%" : addPxToNumber(width));
 					childBlock.setBaseStyle("height", addPxToNumber(height));
-				}
-			};
-			useEventListener(document, "mousemove", mouseMoveHandler);
-			useEventListener(
-				document,
-				"mouseup",
-				() => {
-					document.removeEventListener("mousemove", mouseMoveHandler);
+				},
+				onEnd: () => {
 					parentBlock.setBaseStyle("position", parentOldPosition || "static");
 					childBlock.setBaseStyle("position", "static");
 					childBlock.setBaseStyle("top", "auto");
@@ -113,10 +116,10 @@ export function useCanvasEvents(
 						childBlock.setStyle("width", "auto");
 						childBlock.setStyle("height", "100%");
 					} else {
-						if (getNumberFromPx(childBlock.getStyle("width")) < 100) {
+						if (getNumberFromPx(String(childBlock.getStyle("width") || "")) < 100) {
 							childBlock.setBaseStyle("width", "100%");
 						}
-						if (getNumberFromPx(childBlock.getStyle("height")) < 100) {
+						if (getNumberFromPx(String(childBlock.getStyle("height") || "")) < 100) {
 							childBlock.setBaseStyle("height", "200px");
 						}
 					}
@@ -125,35 +128,25 @@ export function useCanvasEvents(
 						builderStore.openImageUpload = true;
 					}
 				},
-				{ once: true },
-			);
+			});
 		}
 	});
 
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
 		if (builderStore.mode === "move") {
 			container.value.style.cursor = "grabbing";
-			const initialX = ev.clientX;
-			const initialY = ev.clientY;
 			const initialTranslateX = canvasProps.translateX;
 			const initialTranslateY = canvasProps.translateY;
-			const mouseMoveHandler = (mouseMoveEvent: MouseEvent) => {
-				mouseMoveEvent.preventDefault();
-				const diffX = (mouseMoveEvent.clientX - initialX) / canvasProps.scale;
-				const diffY = (mouseMoveEvent.clientY - initialY) / canvasProps.scale;
-				canvasProps.translateX = initialTranslateX + diffX;
-				canvasProps.translateY = initialTranslateY + diffY;
-			};
-			useEventListener(document, "mousemove", mouseMoveHandler);
-			useEventListener(
-				document,
-				"mouseup",
-				() => {
-					document.removeEventListener("mousemove", mouseMoveHandler);
+			startCanvasDrag(ev, container.value, {
+				onMove: ({ event, movementX, movementY }) => {
+					event.preventDefault();
+					canvasProps.translateX = initialTranslateX + movementX / canvasProps.scale;
+					canvasProps.translateY = initialTranslateY + movementY / canvasProps.scale;
+				},
+				onEnd: () => {
 					container.value.style.cursor = "grab";
 				},
-				{ once: true },
-			);
+			});
 			ev.stopPropagation();
 			ev.preventDefault();
 		}

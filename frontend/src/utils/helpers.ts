@@ -4,6 +4,7 @@ import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
+import { getEventTarget, isElementLike } from "./canvasFrameDom";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
 import {
 	addPxToNumber,
@@ -128,10 +129,10 @@ function isJSONString(str: string) {
 }
 
 function isTargetEditable(e: Event) {
-	const target = e.target as HTMLElement;
-	const isEditable = target.isContentEditable;
-	const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
-	return isEditable || isInput;
+	const target = getEventTarget(e) as HTMLElement | null;
+	const isEditable = target?.isContentEditable;
+	const isInput = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
+	return Boolean(isEditable || isInput);
 }
 
 function getDataForKey(datum: Object, key: string) {
@@ -504,10 +505,8 @@ function generateId() {
 }
 
 function isBlock(e: MouseEvent) {
-	return (
-		(e.target instanceof HTMLElement || e.target instanceof SVGElement) &&
-		e.target.closest(".__builder_component__")
-	);
+	const target = getEventTarget(e);
+	return isElementLike(target) && target.closest(".__builder_component__");
 }
 
 type BlockInfo = {
@@ -516,7 +515,11 @@ type BlockInfo = {
 };
 
 function getBlockInfo(e: MouseEvent) {
-	const target = (e.target as HTMLElement)?.closest(".__builder_component__") as HTMLElement;
+	const eventTarget = getEventTarget(e);
+	const target = isElementLike(eventTarget)
+		? (eventTarget.closest(".__builder_component__") as HTMLElement)
+		: null;
+	if (!target) return {} as BlockInfo;
 	return target.dataset as BlockInfo;
 }
 

@@ -37,10 +37,8 @@ export interface BuilderSettings extends DocType {
   head_html?: string;
   /** Body HTML: Code */
   body_html?: string;
-  /** Execute Block Scripts in Editor: Select */
-  execute_block_scripts_in_editor?: 'Don\'t Execute' | 'Restricted' | 'Unrestricted';
-  /** Restrict Click Handlers: Check */
-  restrict_click_handlers: 0 | 1;
+  /** Client Script Emulation: Select */
+  execute_block_scripts_in_editor?: 'Enable' | 'Disable';
   /** AI API Key: Password */
   ai_api_key?: string;
 }

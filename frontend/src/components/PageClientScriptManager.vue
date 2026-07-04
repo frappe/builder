@@ -52,7 +52,7 @@
 										},
 										{
 											label: 'Remove Script',
-											onClick: () => deleteScript(script.name),
+											onClick: () => deleteScript(script),
 											icon: 'lucide-trash',
 										},
 									]">
@@ -161,6 +161,19 @@ const props = defineProps<{
 	page: BuilderPage;
 }>();
 
+function syncActivePageScripts(scripts: attachedScript[]) {
+	const currentScripts = new Map(pageStore.activePageScripts.map((script) => [script.name, script]));
+	pageStore.activePageScripts = scripts.map(
+		({ script_name, script, script_type }) =>
+			({
+				...currentScripts.get(script_name),
+				name: script_name,
+				script,
+				script_type,
+			} as BuilderClientScript),
+	);
+}
+
 const attachedScriptResource = createListResource({
 	doctype: "Builder Page Client Script",
 	parent: "Builder Page",
@@ -176,6 +189,7 @@ const attachedScriptResource = createListResource({
 	orderBy: "`tabBuilder Page Client Script`.idx asc",
 	auto: true,
 	onSuccess: (data: attachedScript[]) => {
+		syncActivePageScripts(data || []);
 		if (data && data.length > 0 && !activeScript.value) {
 			selectScript(data[0]);
 		}
@@ -203,13 +217,6 @@ const updateScript = (value: string) => {
 		toast.warning("Script cannot be empty");
 		return;
 	}
-
-	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
-		if (script.name === activeScript.value?.script_name) {
-			script.script = value;
-		}
-		return script;
-	});
 
 	clientScriptResource.setValue
 		.submit({
@@ -257,7 +264,6 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 							selectScript(script);
 						}
 					});
-					pageStore.activePageScripts.push(res);
 				});
 		});
 };
@@ -283,44 +289,32 @@ const attachScript = (builder_script_name: string) => {
 		});
 };
 
-const deleteScript = (scriptName: string) => {
+const deleteScript = async (script: attachedScript) => {
 	if (builderStore.readOnlyMode) return;
 
 	activeScript.value = null;
-	attachedScriptResource.delete.submit(scriptName).then(() => {
-		attachedScriptResource.reload();
-	});
-	pageStore.activePageScripts = pageStore.activePageScripts.filter(
-		(script: BuilderClientScript) => script.name !== scriptName,
-	);
+	await attachedScriptResource.delete.submit(script.name);
+	await attachedScriptResource.reload();
 };
 
 const updateScriptName = async (newName: string, script: attachedScript) => {
 	if (!newName || builderStore.readOnlyMode) return;
 	script.editable = false;
-	pageStore.activePageScripts = pageStore.activePageScripts.map((_script: BuilderClientScript) => {
-		if (_script.name === script.name) {
-			script.name = newName;
-		}
-		return script;
-	});
+	const oldName = script.script_name;
 	return createResource({
 		url: "frappe.client.rename_doc",
 	})
 		.submit({
 			doctype: "Builder Client Script",
-			old_name: script?.script_name,
+			old_name: oldName,
 			new_name: newName,
 		})
 		.then(async () => {
-			attachedScriptResource.data = attachedScriptResource.data.map(
-				(s: { script_name: string; script: string }) => {
-					if (s.script_name === script.script_name) {
-						s.script_name = newName;
-					}
-					return s;
-				},
+			await Promise.all([attachedScriptResource.reload(), clientScriptResource.reload()]);
+			const renamedScript = attachedScriptResource.data?.find(
+				(attached: attachedScript) => attached.script_name === newName,
 			);
+			if (renamedScript) selectScript(renamedScript);
 		});
 };
 
@@ -331,26 +325,27 @@ const clientScriptOptions = computed(() =>
 	})),
 );
 
-const onScriptReorder = () => {
+const onScriptReorder = async () => {
 	if (!attachedScriptResource.data) return;
 
 	const scriptOrder = attachedScriptResource.data.map((script: attachedScript) => script.name);
 
-	createResource({
-		url: "builder.api.reorder_client_scripts",
-	})
-		.submit({
+	try {
+		await createResource({
+			url: "builder.api.reorder_client_scripts",
+		}).submit({
 			script_order: scriptOrder,
-		})
-		.then(() => {
-			toast.success("Script order updated");
-		})
-		.catch((e: { message: string; exc: string }) => {
-			const error_message = e.exc.split("\n").slice(-2)[0];
-			toast.error("Failed to update script order", {
-				description: error_message,
-			});
 		});
+		syncActivePageScripts(attachedScriptResource.data);
+		toast.success("Script order updated");
+	} catch (e) {
+		await attachedScriptResource.reload();
+		const error_message =
+			(e as { exc?: string }).exc?.split("\n").slice(-2)[0] || "Could not save script order";
+		toast.error("Failed to update script order", {
+			description: error_message,
+		});
+	}
 };
 
 watch(

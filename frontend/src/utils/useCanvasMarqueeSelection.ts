@@ -2,6 +2,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import type { CanvasProps } from "@/types/Builder/BuilderCanvas";
+import { getElementRectInEditor, getEventPointInEditor, getEventTarget } from "@/utils/canvasFrameDom";
 import { computed, reactive, ref, type Ref } from "vue";
 
 const MIN_MARQUEE_DRAG = 5;
@@ -19,6 +20,7 @@ const setsEqual = (a: Set<string>, b: Set<string>): boolean => {
 
 type UseCanvasMarqueeSelectionOptions = {
 	canvasContainer: Ref<HTMLElement | null>;
+	frameRoots: Map<string, HTMLElement>;
 	canvasProps: CanvasProps;
 	activeBreakpoint: Ref<string | null>;
 	selectedBlockIds: Ref<Set<string>>;
@@ -30,6 +32,7 @@ type UseCanvasMarqueeSelectionOptions = {
 export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOptions) {
 	const {
 		canvasContainer,
+		frameRoots,
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
@@ -110,13 +113,16 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 
 		marquee.active = true;
 		marquee.visible = false;
-		marquee.startX = ev.clientX;
-		marquee.startY = ev.clientY;
-		marquee.currentX = ev.clientX;
-		marquee.currentY = ev.clientY;
+		const point = getEventPointInEditor(ev);
+		marquee.startX = point.x;
+		marquee.startY = point.y;
+		marquee.currentX = point.x;
+		marquee.currentY = point.y;
 		marqueeAdditiveSelection.value = ev.shiftKey || ev.metaKey || ev.ctrlKey;
 		marqueeInitialSelection.value = new Set(selectedBlockIds.value);
-		marqueeBreakpoint.value = getBreakpointAtPoint(ev.clientX, ev.clientY);
+		marqueeBreakpoint.value =
+			(getEventTarget(ev) as HTMLElement | null)?.closest(".canvas")?.getAttribute("data-breakpoint") ||
+			getBreakpointAtPoint(point.x, point.y);
 
 		window.addEventListener("mousemove", handleMarqueeMove);
 		window.addEventListener("mouseup", handleMarqueeEnd);
@@ -125,10 +131,10 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const snapshotBlockRects = (): BlockRectSnapshot[] => {
-		const container = canvasContainer.value;
-		if (!container) return [];
 		const target = marqueeBreakpoint.value || activeBreakpoint.value;
-		const elements = container.querySelectorAll<HTMLElement>(
+		const root = target ? frameRoots.get(target) : null;
+		if (!root) return [];
+		const elements = root.querySelectorAll<HTMLElement>(
 			".__builder_component__[data-block-id][data-breakpoint]",
 		);
 		const result: BlockRectSnapshot[] = [];
@@ -136,7 +142,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			if ((el.dataset.breakpoint || null) !== target) continue;
 			const blockId = el.dataset.blockId;
 			if (!blockId || blockId === "root") continue;
-			const rect = el.getBoundingClientRect();
+			const rect = getElementRectInEditor(el);
 			if (!rect.width || !rect.height) continue;
 			const block = findBlock(blockId);
 			if (!block) continue;
@@ -169,8 +175,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (!marquee.active) return;
 
 		// Always capture the latest position — even if a rAF is already pending
-		marquee.currentX = ev.clientX;
-		marquee.currentY = ev.clientY;
+		const point = getEventPointInEditor(ev);
+		marquee.currentX = point.x;
+		marquee.currentY = point.y;
 
 		if (rafId !== null) return; // coalesce: only one rAF per frame
 
@@ -231,7 +238,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (builderStore.readOnlyMode) return false;
 		if (canvasStore.isDragging || canvasProps.panning || canvasProps.scaling) return false;
 
-		const target = ev.target as HTMLElement | null;
+		const target = getEventTarget(ev) as HTMLElement | null;
 		if (!target) return false;
 
 		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {
@@ -247,13 +254,15 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			return activeBreakpoint.value;
 		}
 
-		const canvases = Array.from(container.querySelectorAll(".canvas[data-breakpoint]")) as HTMLElement[];
+		const canvases = Array.from(
+			container.querySelectorAll("iframe[data-canvas-breakpoint]"),
+		) as HTMLIFrameElement[];
 
 		for (const canvasElement of canvases) {
 			const rect = canvasElement.getBoundingClientRect();
 			if (!rect.width || !rect.height) continue;
 			if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-				return canvasElement.dataset.breakpoint || activeBreakpoint.value;
+				return canvasElement.dataset.canvasBreakpoint || activeBreakpoint.value;
 			}
 		}
 

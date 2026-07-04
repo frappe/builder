@@ -24,7 +24,7 @@
 		:class="{ 'cursor-ns-resize': true }"
 		@mousedown.stop="handleBottomResize" />
 	<div
-		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
+		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[14px] w-[14px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
 		:class="{
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
 		}"
@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -73,136 +74,72 @@ watch(resizing, () => {
 
 const targetWidth = computed(() => {
 	props.targetBlock.getStyle("width"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("width")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
 	props.targetBlock.getStyle("height"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("height")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
 	props.targetBlock.getStyle("fontSize"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
+	return Math.round(getNumberFromPx(getComputedStyleFor(props.target).getPropertyValue("font-size")));
 });
 
-const handleRightResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
+type ResizeDirection = "right" | "bottom" | "corner";
+
+const startResize = (ev: MouseEvent, direction: ResizeDirection) => {
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
 	resizing.value = true;
-	guides.showX();
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setWidth(movement, startWidth, blockStartWidth);
-		if (mouseMoveEvent.shiftKey) {
-			setHeight(movement, startHeight, blockStartHeight);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-			guides.hideX();
+	if (direction === "right") guides.showX();
+	if (direction === "bottom") guides.showY();
+
+	startCanvasDrag(ev, props.target, {
+		cursor: getComputedStyleFor(ev.target as Element).cursor,
+		onMove: ({ event, movementX, movementY }) => {
+			const primaryMovement = direction === "right" ? movementX : movementY;
+			if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+				setFontSize(primaryMovement, startFontSize);
+				event.preventDefault();
+				return;
+			}
+
+			if (direction !== "bottom") {
+				setWidth(movementX, startWidth, blockStartWidth);
+			}
+			if (direction !== "right") {
+				setHeight(
+					direction === "corner" && event.shiftKey ? movementX : movementY,
+					startHeight,
+					blockStartHeight,
+				);
+			}
+			if (direction === "right" && event.shiftKey) {
+				setHeight(movementX, startHeight, blockStartHeight);
+			}
+			if (direction === "bottom" && event.shiftKey) {
+				setWidth(movementY, startWidth, blockStartWidth);
+			}
+			event.preventDefault();
 		},
-		{ once: true },
-	);
+		onEnd: (event) => {
+			event.preventDefault();
+			resizing.value = false;
+			if (direction === "right") guides.hideX();
+			if (direction === "bottom") guides.hideY();
+		},
+	});
 };
 
-const handleBottomResize = (ev: MouseEvent) => {
-	const startY = ev.clientY;
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
-	resizing.value = true;
-	guides.showY();
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setHeight(movement, startHeight, blockStartHeight);
-		if (mouseMoveEvent.shiftKey) {
-			setWidth(movement, startWidth, blockStartWidth);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-			guides.hideY();
-		},
-		{ once: true },
-	);
-};
-
-const handleBottomCornerResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
-	resizing.value = true;
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movementY, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setWidth(movementX, startWidth, blockStartWidth);
-		setHeight(mouseMoveEvent.shiftKey ? movementX : movementY, startHeight, blockStartHeight);
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-		},
-		{ once: true },
-	);
-};
+const handleRightResize = (ev: MouseEvent) => startResize(ev, "right");
+const handleBottomResize = (ev: MouseEvent) => startResize(ev, "bottom");
+const handleBottomCornerResize = (ev: MouseEvent) => startResize(ev, "corner");
 
 const setWidth = (movementX: number, startWidth: number, blockStartWidth: string) => {
 	const finalWidth = Math.round(startWidth + movementX);

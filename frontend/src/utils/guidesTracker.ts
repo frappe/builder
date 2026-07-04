@@ -1,6 +1,5 @@
 import useCanvasStore from "@/stores/canvasStore";
-import { useElementBounding } from "@vueuse/core";
-import { reactive } from "vue";
+import { getElementRectInEditor } from "./canvasFrameDom";
 const canvasStore = useCanvasStore();
 const tracks = [
 	{
@@ -27,11 +26,10 @@ const tracks = [
 
 function setGuides(target: HTMLElement | SVGElement, canvasProps: CanvasProps) {
 	const threshold = 10;
-	// TODO: Remove canvas dependency
 	const canvasElement = target.closest(".canvas") as HTMLElement;
-	const canvasBounds = reactive(useElementBounding(canvasElement));
-	const targetBounds = reactive(useElementBounding(target));
-	const parentBounds = reactive(useElementBounding(target.parentElement as HTMLElement));
+	const canvasBounds = createBounds(canvasElement);
+	const targetBounds = createBounds(target);
+	const parentBounds = createBounds(target.parentElement as HTMLElement);
 
 	const getFinalWidth = (calculatedWidth: number) => {
 		targetBounds.update();
@@ -158,6 +156,33 @@ function setGuides(target: HTMLElement | SVGElement, canvasProps: CanvasProps) {
 		hideX,
 		hideY,
 		getPositionOffset,
+	};
+}
+
+function createBounds(element: Element) {
+	let rect = getElementRectInEditor(element);
+	return {
+		get left() {
+			return rect.left;
+		},
+		get right() {
+			return rect.right;
+		},
+		get top() {
+			return rect.top;
+		},
+		get bottom() {
+			return rect.bottom;
+		},
+		get width() {
+			return rect.width;
+		},
+		get height() {
+			return rect.height;
+		},
+		update() {
+			rect = getElementRectInEditor(element);
+		},
 	};
 }
 
