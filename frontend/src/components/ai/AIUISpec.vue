@@ -109,32 +109,26 @@
 			</div>
 
 			<!-- input -->
-			<label v-else-if="el.kind === 'input'" class="block w-full">
-				<span v-if="el.label" class="mb-1 block text-xs font-medium text-ink-gray-6">{{ el.label }}</span>
-				<input
-					v-model="inputs[i]"
-					type="text"
-					:placeholder="el.placeholder || ''"
-					:disabled="!interactive || disabled"
-					class="bg-surface-white w-full rounded border border-outline-gray-2 px-2.5 py-1.5 text-p-sm text-ink-gray-8 placeholder:text-ink-gray-4 focus:border-outline-gray-4 focus:outline-none disabled:opacity-50"
-					@keydown.enter.prevent="submitCollected()" />
-			</label>
+			<FormControl
+				v-else-if="el.kind === 'input'"
+				v-model="inputs[i]"
+				type="text"
+				:label="el.label"
+				:placeholder="el.placeholder || ''"
+				:disabled="!interactive || disabled"
+				autocomplete="off"
+				@keydown.enter.prevent="submitCollected()" />
 
 			<!-- actions -->
 			<div v-else-if="el.kind === 'actions'" class="flex flex-wrap gap-2 pt-0.5">
-				<button
+				<Button
 					v-for="(btn, j) in el.buttons || []"
 					:key="j"
+					:variant="btn.variant === 'secondary' ? 'subtle' : 'solid'"
 					:disabled="!interactive || disabled"
-					class="rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-					:class="
-						btn.variant === 'secondary'
-							? 'bg-surface-white border border-outline-gray-2 text-ink-gray-7 hover:bg-surface-gray-2'
-							: 'border border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
-					"
 					@click="submitCollected(btn.label)">
 					{{ btn.label }}
-				</button>
+				</Button>
 			</div>
 		</template>
 		<p v-if="interactive && hasChoices" class="text-xs text-ink-gray-4">
@@ -146,6 +140,7 @@
 <script setup lang="ts">
 import { setFont } from "@/utils/fontManager";
 import DOMPurify from "dompurify";
+import { Button, FormControl } from "frappe-ui";
 import { computed, reactive, watchEffect } from "vue";
 
 /** Generic renderer for the agent's `present_ui` cards. The agent composes a
@@ -189,7 +184,7 @@ function isSelected(elIndex: number, optIndex: number): boolean {
 
 function optionReply(option: UIElement): string {
 	const label = option.label || option.value || "";
-	return option.description ? `${label} — ${option.description}` : String(label);
+	return option.description ? `${label}: ${option.description}` : String(label);
 }
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
