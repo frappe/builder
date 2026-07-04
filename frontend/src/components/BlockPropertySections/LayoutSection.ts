@@ -48,8 +48,7 @@ const layoutSectionProperties = [
 	},
 	{
 		component: BlockGridLayoutHandler,
-		// mirrors the component's own v-ifs so an all-hidden section can be detected
-		condition: () => blockController.isGrid(),
+		condition: () => blockController.isGrid() || Boolean(blockController.getParentBlock()?.isGrid()),
 		getProps: () => {},
 		searchKeyWords:
 			"Layout, Grid, GridTemplate, Grid Template, GridGap, Grid Gap, GridRow, Grid Row, GridColumn, Grid Column",

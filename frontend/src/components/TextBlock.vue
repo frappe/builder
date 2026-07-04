@@ -257,14 +257,12 @@ const getInnerHTML = (editor: Editor | null) => {
 	) {
 		innerHTML = editor?.getText();
 	}
-	// tiptap wraps content in a paragraph node, so getHTML() returns <p>…</p>. Storing
-	// that wrapper as the block's innerHTML nests a block box inside the block's own
-	// text element — a <p> inside a <span> fragments the inline box (background/radius
-	// shatter into pieces), and <p> inside <p> is invalid HTML that the parser splits
-	// on publish. When the whole doc is that one paragraph, the wrapper is redundant.
+	// a lone attribute-less <p> wrapper is redundant inside the block's own tag
+	// (and a block box inside inline elements like span/a breaks their layout)
 	const doc = editor.state.doc;
-	if (doc.childCount === 1 && doc.firstChild?.type.name === "paragraph" && innerHTML.startsWith("<p>")) {
-		innerHTML = innerHTML.slice(3).replace(/<\/p>$/, "");
+	const wrapped = innerHTML.match(/^<p>([\s\S]*)<\/p>$/);
+	if (doc.childCount === 1 && doc.firstChild?.type.name === "paragraph" && wrapped) {
+		innerHTML = wrapped[1];
 	}
 	return innerHTML;
 };
@@ -376,18 +374,12 @@ defineExpose({
 });
 </script>
 <style scoped>
-/* The published page renders text directly inside the block's own tag; this wrapper
-   div exists only for v-html. Without display:contents it adds a block box, which
-   shatters inline blocks (span/a pills): the background/radius paint on empty inline
-   fragments while the text renders full-width with no background behind it. */
+/* no box — a block box inside inline tags (span/a) fragments their background/radius */
 .__text_content__ {
 	display: contents;
 }
 
-/* Same problem on the editing path: selecting a text block swaps the static div for
-   the tiptap editor root, another block box. Keep it inline-level inside inline tags
-   so the host element's background/radius still paint as one box. (display:contents
-   is not an option here — the contenteditable ProseMirror element needs a box.) */
+/* the contenteditable editor root needs a box, so keep it inline-level inside inline tags */
 :is(span, a, b, i, em, strong, cite, label).__text_block__ > .__text_editor__ {
 	display: inline-block;
 }
