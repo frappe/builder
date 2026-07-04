@@ -20,13 +20,24 @@ def run_open_page(ctx, args: dict) -> str:
 
 
 def run_create_page(ctx, args: dict) -> str:
-	from builder.ai.orchestration import create_draft_page, get_or_create_site_folder
+	from builder.ai.orchestration import create_draft_page, get_or_create_site_folder, page_has_blocks
 
 	title = (args.get("page_title") or "").strip()
 	if not title:
 		return "FAILED: page_title is required."
 	if not frappe.has_permission("Builder Page", "create"):
 		return "FAILED: you don't have permission to create pages."
+	# The page the user has OPEN is where their build must land. create_page while
+	# the open page is still empty silently splits the build onto an orphan page:
+	# the canvas shows only the throwaway preview and the user's page stays blank.
+	canvas_page = getattr(ctx, "canvas_page_id", None)
+	if canvas_page and not page_has_blocks(canvas_page):
+		return (
+			"DECLINED: the page the user has OPEN is still empty — build THAT page. "
+			"generate_page builds the currently open page; rename it / set its route via "
+			"set_page_settings or run_python. create_page is only for ADDITIONAL pages, "
+			"after the open one has content."
+		)
 	folder = (args.get("folder") or "").strip() or None
 	if folder and not frappe.db.exists("Builder Project Folder", folder):
 		folder = get_or_create_site_folder(folder, title)

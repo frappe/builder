@@ -748,6 +748,12 @@ class AgentRunner:
 				)
 			self.held_locks.append((key, token))
 		root = page_writer.load_page_root(page_id)
+		# A focus move away from the page the user is looking at must be VISIBLE —
+		# ops there won't show on their canvas, and a silent switch reads as the
+		# agent lying about what it built.
+		if self.page_id and page_id != self.page_id:
+			title = frappe.db.get_value("Builder Page", page_id, "page_title") or page_id
+			self.emit("progress", message=f"Now editing another page: '{title}'")
 		self.page_id = page_id
 		self.tree = WorkingTree(root)
 		# Arm the revert snapshot — unless this page was already snapshotted this turn
