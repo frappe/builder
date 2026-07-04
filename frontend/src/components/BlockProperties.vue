@@ -84,7 +84,9 @@ const showSection = (section: PropertySection) => {
 	if (section.condition) {
 		showSection = section.condition();
 	}
-	if (showSection && builderStore.propertyFilter) {
+	// a section whose properties are all condition-hidden renders as a blank header
+	// (e.g. Layout on text blocks) — hide it entirely
+	if (showSection) {
 		showSection = getFilteredProperties(section).length > 0;
 	}
 	return showSection;
