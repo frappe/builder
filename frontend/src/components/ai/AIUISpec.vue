@@ -209,8 +209,10 @@ const emit = defineEmits<{ submit: [reply: string, display?: string] }>();
 
 const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
 const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
-// Options-only cards render flat — anything else needs the card wrapper.
-const hasChrome = computed(() => elements.value.some((el) => el.kind !== "choices"));
+// Option tiles are cards already, so ANY card containing choices renders flat —
+// its other atoms (heading, upload, actions) sit between the tiles unboxed.
+// Only choice-less cards (pure forms, plans) get the wrapper box.
+const hasChrome = computed(() => !hasChoices.value);
 
 // Load the Google Fonts referenced by option specimens (cached in fontManager,
 // so re-renders are free). Heading fonts also need their bold face.

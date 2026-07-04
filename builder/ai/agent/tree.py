@@ -123,6 +123,28 @@ def merge_bindings(block: dict, bind: dict) -> None:
 	block["dynamicValues"] = kept + bind_to_dynamic_values(incoming)
 
 
+STYLE_INJECTION_MARKERS = (
+	"createElement('style'",
+	'createElement("style"',
+	"createElement(`style`",
+	"<style",
+)
+
+
+def validate_script(args: dict) -> str:
+	"""Script ops are otherwise free-form; the one hard rule is separation: CSS lives
+	in a script_type='CSS' script, never injected into the DOM from JavaScript."""
+	if (args.get("script_type") or "JavaScript") == "JavaScript":
+		src = args.get("script") or ""
+		if any(marker in src for marker in STYLE_INJECTION_MARKERS):
+			return (
+				"FAILED: this JavaScript script injects CSS (a <style> tag). Split it into TWO "
+				"set_page_script calls: the stylesheet content in its own script_type='CSS' "
+				"script, and only the behaviour in the JavaScript one."
+			)
+	return "Applied."
+
+
 def merge_block_update(block: dict, args: dict) -> None:
 	"""One block's worth of changes (styles/attrs/text/element/classes/bindings) —
 	the server twin of toolDispatch.applyBlockUpdate, shared by update_block and
@@ -199,7 +221,9 @@ class WorkingTree:
 			return self.apply_move(args)
 		if tool_name == "add_block":
 			return self.apply_add(args)
-		# Non-block client tools (scripts) carry no ref to validate.
+		if tool_name in ("set_page_script", "update_script"):
+			return validate_script(args)
+		# Non-block client tools carry no ref to validate.
 		return "Applied."
 
 	def apply_update(self, block_id: str | None, args: dict) -> str:

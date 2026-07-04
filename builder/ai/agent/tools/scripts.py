@@ -52,8 +52,12 @@ def fetch_page_scripts(ctx, args: dict) -> str:
 def apply_set_page_script(ctx, args: dict) -> str:
 	"""Headless twin of the editor's set_page_script apply (toolDispatch.ts): create
 	the Builder Client Script (model's descriptive name when free) and attach it."""
+	from builder.ai.agent.tree import validate_script
+
 	if not ctx.page_id:
 		return "FAILED: no page is open — open_page or create_page first."
+	if (verdict := validate_script(args)) != "Applied.":
+		return verdict
 	script_type = args.get("script_type") or "JavaScript"
 	name = (args.get("name") or "").strip()[:120]
 	doc_fields = {
@@ -73,9 +77,13 @@ def apply_set_page_script(ctx, args: dict) -> str:
 
 def apply_update_script(ctx, args: dict) -> str:
 	"""Headless twin of the editor's update_script apply."""
+	from builder.ai.agent.tree import validate_script
+
 	name = (args.get("script_name") or "").strip()
 	if not name or not frappe.db.exists("Builder Client Script", name):
 		return f"FAILED: script '{name}' not found — call get_page_scripts and use its exact script_name."
+	if (verdict := validate_script(args)) != "Applied.":
+		return verdict
 	values = {"script": args.get("script") or ""}
 	if args.get("script_type"):
 		values["script_type"] = args["script_type"]
@@ -92,6 +100,10 @@ set_page_script = Tool(
 		"Create a new JavaScript or CSS client script and attach it to the page. "
 		"Use this to add event listeners, animations, dynamic behaviour, fetch calls, "
 		"or any page-level code that cannot be expressed via block styles alone. "
+		"CSS and JS are SEPARATE scripts: put stylesheet content (reveal/hover classes, "
+		"@keyframes, cursors) in a script_type='CSS' script and behaviour in a "
+		"'JavaScript' one — never inject a <style> tag from JS "
+		"(document.createElement('style') is always wrong; make two calls instead). "
 		"To target an element, in the SAME turn give it a hook — a class (preferred) in "
 		"'classes', or attrs.id for a single unique element — via update_block or "
 		"run_python, and select that. Do NOT select by a block's 'ref'/blockId "
