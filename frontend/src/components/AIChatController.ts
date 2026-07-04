@@ -54,18 +54,87 @@ export class AIChatController {
 	readonly batches = this.batchTracker.batches;
 	readonly publishingBatch = ref(false);
 
-	// A build driven from ANOTHER chat is writing to this page right now
-	// (watch-live). Drives the floating indicator; originPage links back to the
-	// chat that started it.
-	readonly foreignBuild = ref<{ originPage: string | null } | null>(null);
+	// Floating build indicator. originPage: a build driven from ANOTHER chat is
+	// writing to THIS page (watch-live) — link back to that chat. targetPage: this
+	// chat's agent is building a DIFFERENT page — link there to watch it live.
+	readonly foreignBuild = ref<{ originPage: string | null; targetPage: string | null } | null>(null);
 	private foreignBuildTimer: ReturnType<typeof setTimeout> | null = null;
 
-	private noteForeignBuild(originPage?: string | null) {
-		this.foreignBuild.value = { originPage: originPage || null };
+	private noteForeignBuild(originPage?: string | null, targetPage?: string | null) {
+		this.foreignBuild.value = { originPage: originPage || null, targetPage: targetPage || null };
 		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
 		// No completion event is guaranteed to reach us; fade the pill out once the
 		// stream goes quiet.
 		this.foreignBuildTimer = setTimeout(() => (this.foreignBuild.value = null), 8000);
+	}
+
+	/** While a build stream owns this page's canvas, the editor's autosave stands
+	 * down — persisting the partial preview is how a mid-build refresh (or an
+	 * off-target render) corrupts the draft. The server saves the real result. */
+	private buildQuietTimer: ReturnType<typeof setTimeout> | null = null;
+
+	private beginCanvasBuild() {
+		this.builderStore.aiBuildingCanvas = true;
+		if (this.buildQuietTimer) clearTimeout(this.buildQuietTimer);
+		// If the run dies without a complete event, release the canvas and resync
+		// the draft from the server so the user isn't left editing a dead preview.
+		this.buildQuietTimer = setTimeout(() => this.endCanvasBuild(true), 45000);
+	}
+
+	private endCanvasBuild(resyncDraft = false) {
+		if (this.buildQuietTimer) {
+			clearTimeout(this.buildQuietTimer);
+			this.buildQuietTimer = null;
+		}
+		if (!this.builderStore.aiBuildingCanvas) return;
+		this.builderStore.aiBuildingCanvas = false;
+		if (resyncDraft && this.pageId.value && this.pageId.value !== "new") {
+			this.pageStore.setPage(this.pageId.value, false);
+		}
+	}
+
+	/** Accept one page_yaml chunk for the canvas. Drops chunks meant for another
+	 * page (pill instead of paint), dedupes replayed chunks by stream offset, and
+	 * refetches the server buffer when a gap shows we missed some. */
+	private acceptPageYamlChunk(data: {
+		chunk?: string;
+		page_id?: string;
+		offset?: number;
+		origin_page?: string;
+	}): void {
+		if (data.page_id && data.page_id !== this.pageId.value) {
+			this.noteForeignBuild(null, data.page_id);
+			return;
+		}
+		if (typeof data.offset === "number") {
+			const have = this.pageStreamContent.value.length;
+			if (data.offset < have) return;
+			if (data.offset > have) {
+				this.syncActiveBuild();
+				return;
+			}
+		}
+		this.beginCanvasBuild();
+		this.pageStreamContent.value += data.chunk!;
+		this.scheduleStreamRender();
+	}
+
+	/** A mid-build page load: replay the in-flight generation stream from the
+	 * server's buffer so the canvas shows the live build, not the stale draft. */
+	private async syncActiveBuild() {
+		const pid = this.pageId.value;
+		if (!pid || pid === "new") return;
+		const build: any = await createResource({ url: "builder.ai.api.get_active_build" })
+			.submit({ page_id: pid })
+			.catch(() => null);
+		if (!build?.yaml || this.pageId.value !== pid) return;
+		if (build.yaml.length <= this.pageStreamContent.value.length) return;
+		this.beginCanvasBuild();
+		this.pageStreamContent.value = build.yaml;
+		if (build.origin_page && build.origin_page !== pid) {
+			this.noteForeignBuild(build.origin_page);
+		}
+		this.scheduleStreamRender();
 	}
 
 	// Set by the panel's style-preset picker; folded into the prompt on submit.
@@ -137,6 +206,9 @@ export class AIChatController {
 				return;
 			}
 			await this.loadSession();
+			// A build may be mid-stream on this page (opened from another chat's link,
+			// or a refresh mid-generation): replay the buffered stream as live preview.
+			this.syncActiveBuild();
 		});
 	}
 
@@ -155,6 +227,7 @@ export class AIChatController {
 
 	resetTransientState() {
 		this.clearStreamRenderTimer();
+		this.endCanvasBuild();
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
@@ -316,24 +389,30 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
-	onStream = (data: { chunk?: string; kind?: string; session_id?: string; origin_page?: string }) => {
+	onStream = (data: {
+		chunk?: string;
+		kind?: string;
+		session_id?: string;
+		origin_page?: string;
+		page_id?: string;
+		offset?: number;
+	}) => {
 		if (!data.chunk) return;
 		if (this.isForeignSession(data)) {
 			// A build driven from ANOTHER chat is streaming onto this page (watch-live).
 			// The canvas is page-level: apply the preview, and surface the floating
 			// "building live" indicator — but keep chat-text chunks out of this session.
 			if (data.kind === "page_yaml") {
-				this.noteForeignBuild(data.origin_page);
-				this.pageStreamContent.value += data.chunk;
-				this.scheduleStreamRender();
+				if (!data.page_id || data.page_id === this.pageId.value) {
+					this.noteForeignBuild(data.origin_page);
+				}
+				this.acceptPageYamlChunk(data);
 			}
 			return;
 		}
 		this.isSubmitting.value = true;
 		if (data.kind === "page_yaml") {
-			if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
-			this.pageStreamContent.value += data.chunk;
-			this.scheduleStreamRender();
+			this.acceptPageYamlChunk(data);
 		} else {
 			this.summaryContent.value += data.chunk;
 			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
@@ -403,7 +482,10 @@ export class AIChatController {
 		if (this.isForeignSession(data)) this.noteForeignBuild(data.origin_page);
 		// The agent may focus another page mid-turn (open_page/create_page): its ops
 		// are applied server-side; the canvas only mirrors ops for the page it shows.
-		if (data.page_id && data.page_id !== this.pageId.value) return;
+		if (data.page_id && data.page_id !== this.pageId.value) {
+			if (!this.isForeignSession(data)) this.noteForeignBuild(null, data.page_id);
+			return;
+		}
 		for (const op of data.operations) {
 			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
 			try {
@@ -423,9 +505,11 @@ export class AIChatController {
 			// The other chat's build on this page finished; the authoritative
 			// tool_batch already replaced the streamed preview.
 			this.foreignBuild.value = null;
+			this.endCanvasBuild();
 			return;
 		}
 		this.clearStreamRenderTimer();
+		this.endCanvasBuild();
 		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
 			this.submittedForPageId = null;
 			return;
@@ -496,6 +580,7 @@ export class AIChatController {
 	onError = async (data: { message?: string; session_id?: string }) => {
 		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
+		this.endCanvasBuild(!!this.pageStreamContent.value);
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";

@@ -345,6 +345,7 @@ watch(
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
 			!builderStore.readOnlyMode &&
+			!builderStore.aiBuildingCanvas &&
 			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			pageStore.savingPage = true;

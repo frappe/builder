@@ -1,18 +1,29 @@
 <template>
-	<!-- Floating status: a build driven from ANOTHER chat is writing to this page
-	     live. Teleported so it shows whichever left-panel tab is open. -->
+	<!-- Floating status: a build is streaming somewhere the user isn't looking —
+	     another chat writing to THIS page (watch-live), or this chat's agent
+	     building a DIFFERENT page. Teleported so it shows whichever tab is open. -->
 	<Teleport to="body">
 		<div
 			v-if="foreignBuild"
 			class="bg-surface-white fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-outline-gray-2 px-3.5 py-2 text-p-sm text-ink-gray-8 shadow-lg">
 			<span class="size-2 animate-pulse rounded-full bg-surface-amber-3" />
-			Bob is building this page from another chat
-			<router-link
-				v-if="foreignBuild.originPage"
-				:to="{ name: 'builder', params: { pageId: foreignBuild.originPage } }"
-				class="font-medium text-ink-gray-9 underline">
-				Open that chat
-			</router-link>
+			<template v-if="foreignBuild.targetPage">
+				Bob is building another page
+				<router-link
+					:to="{ name: 'builder', params: { pageId: foreignBuild.targetPage } }"
+					class="font-medium text-ink-gray-9 underline">
+					Watch it live
+				</router-link>
+			</template>
+			<template v-else>
+				Bob is building this page from another chat
+				<router-link
+					v-if="foreignBuild.originPage"
+					:to="{ name: 'builder', params: { pageId: foreignBuild.originPage } }"
+					class="font-medium text-ink-gray-9 underline">
+					Open that chat
+				</router-link>
+			</template>
 		</div>
 	</Teleport>
 	<div class="bg-surface-white flex h-full min-h-full flex-col">

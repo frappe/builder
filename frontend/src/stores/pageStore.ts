@@ -280,7 +280,7 @@ const usePageStore = defineStore("pageStore", {
 
 		savePage() {
 			const builderStore = useBuilderStore();
-			if (builderStore.readOnlyMode) {
+			if (builderStore.readOnlyMode || builderStore.aiBuildingCanvas) {
 				// callers may have optimistically set this before invoking savePage
 				this.savingPage = false;
 				return;

@@ -40,6 +40,9 @@ const useBuilderStore = defineStore("builderStore", {
 		showDataScriptDialog: <"page" | null>null,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
+		// An AI build is streaming onto the canvas: the server owns the draft, so the
+		// editor's autosave must stand down (it would persist the partial preview).
+		aiBuildingCanvas: false,
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),

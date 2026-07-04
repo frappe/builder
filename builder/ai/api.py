@@ -501,3 +501,14 @@ def test_api_key():
 	except Exception as e:
 		logger.error(f"test_api_key failed: {e!s}", exc_info=True)
 		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+@has_page_write()
+def get_active_build(page_id: str):
+	"""The in-flight generation stream for a page, if one is running — lets an editor
+	that loads mid-build replay the live preview instead of showing the stale draft."""
+	from builder.ai.agent.artifact import stream_buffer_key
+
+	raw = frappe.cache().get_value(stream_buffer_key(page_id))
+	return frappe.parse_json(raw) if raw else None

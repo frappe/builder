@@ -108,6 +108,27 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 		logger.warning("generate_page unparsed tail:\n%s", yaml_text[-400:])
 
 
+def stream_buffer_key(page_id: str) -> str:
+	return f"builder_ai_page_stream:{page_id}"
+
+
+def save_stream_buffer(ctx, yaml_content: str) -> None:
+	"""Keep the in-flight generation stream in Redis so an editor that loads (or
+	refreshes) mid-build can replay the preview instead of showing a stale draft."""
+	frappe.cache().set_value(
+		stream_buffer_key(ctx.page_id),
+		frappe.as_json(
+			{"yaml": yaml_content, "session_id": ctx.session_id, "origin_page": ctx.canvas_page_id}
+		),
+		expires_in_sec=600,
+	)
+
+
+def clear_stream_buffer(page_id: str | None) -> None:
+	if page_id:
+		frappe.cache().delete_value(stream_buffer_key(page_id))
+
+
 def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	"""Stream a complete page of YAML on the heavy model, persist it to the page
 	(the server is authoritative), and return a `generate_page` client op carrying
@@ -156,6 +177,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 
 	yaml_content = ""
 	finish_reason = None
+	buffered_at = 0
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -163,30 +185,44 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		stream=True,
 		api_key=ctx.api_key,
 	)
-	for chunk in stream:
-		if ctx.is_cancelled():
-			try:
-				stream.close()
-			except Exception:
-				pass
-			from builder.ai.agent.loop import CancelledError
+	try:
+		for chunk in stream:
+			if ctx.is_cancelled():
+				try:
+					stream.close()
+				except Exception:
+					pass
+				from builder.ai.agent.loop import CancelledError
 
-			raise CancelledError
-		ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
-		if not chunk.choices:
-			continue
-		if fr := chunk.choices[0].finish_reason:
-			finish_reason = fr
-		delta = chunk.choices[0].delta.content
-		if delta:
-			yaml_content += delta
-			if not ctx.headless:
-				ctx.emit("stream", chunk=delta, kind="page_yaml")
-			else:
-				# Headless build: the chat has no canvas, but an editor opened on the
-				# page IS one — stream the preview there so the user can click through
-				# and watch the page assemble live ("Watch live" in the dashboard chat).
-				ctx.emit_page("stream", chunk=delta, kind="page_yaml")
+				raise CancelledError
+			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
+			if not chunk.choices:
+				continue
+			if fr := chunk.choices[0].finish_reason:
+				finish_reason = fr
+			delta = chunk.choices[0].delta.content
+			if delta:
+				# offset = position of this chunk in the full stream, so a client that
+				# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
+				offset = len(yaml_content)
+				yaml_content += delta
+				# Every event names its TARGET page (ctx.page_id): the canvas renders the
+				# stream only when it is showing that page — an off-canvas build must
+				# never paint (and get autosaved) over a page it wasn't meant for.
+				if not ctx.headless:
+					ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset)
+				if ctx.headless or ctx.page_id != ctx.canvas_page_id:
+					# An editor open on the target page is the live viewport ("watch it
+					# build") — headless chats have no canvas, editor chats may have
+					# focused a different page than the one on their canvas.
+					ctx.emit_page("stream", chunk=delta, kind="page_yaml", offset=offset)
+				if len(yaml_content) - buffered_at >= 512:
+					buffered_at = len(yaml_content)
+					save_stream_buffer(ctx, yaml_content)
+	finally:
+		# The buffer only serves mid-build refreshes; once this function returns the
+		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
+		clear_stream_buffer(ctx.page_id)
 
 	yaml_text = BlockCodec.strip_fences(yaml_content)
 	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
