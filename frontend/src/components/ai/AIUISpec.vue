@@ -136,7 +136,7 @@
 
 			<!-- upload: the user's own image (logo, photo); URL rides the reply -->
 			<div v-else-if="el.kind === 'upload'" class="w-full">
-				<span v-if="el.label" class="mb-1 block text-xs text-ink-gray-5">{{ el.label }}</span>
+				<span v-if="el.label" class="mb-1 block text-p-xs text-ink-gray-5">{{ el.label }}</span>
 				<FileUploader
 					fileTypes="image/*"
 					:uploadArgs="{

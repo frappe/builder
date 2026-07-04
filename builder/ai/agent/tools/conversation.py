@@ -195,8 +195,11 @@ present_ui = Tool(
 			"ui": {
 				"type": "array",
 				"description": (
-					"UI elements, rendered in order. Kinds:\n"
-					"{kind:'heading', text} — bold card heading\n"
+					"UI elements, rendered in order. The card must be COMPACT: `text` already "
+					"renders above it — never repeat the question as a heading or a choices "
+					"label. Kinds:\n"
+					"{kind:'heading', text} — bold card heading (for plan titles etc., NEVER a "
+					"restatement of `text`)\n"
 					"{kind:'text', text} — paragraph (line breaks preserved)\n"
 					"{kind:'list', items:[str]} — bulleted list (e.g. plan sections)\n"
 					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
