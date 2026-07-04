@@ -13,17 +13,64 @@ model decides to build the page, it calls `generate_page(brief=…)` and the loo
 hands off here. No DB status or out-of-band heuristic gates generation.
 """
 
+import base64
 import logging
+import re
 
 import frappe
 
 from builder.ai import llm
 from builder.ai.block_codec import BlockCodec
+from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
 
 logger = frappe.logger("builder.ai.agent.artifact")
 logger.setLevel(logging.INFO)
+
+# Brief marker lines the design flow emits for images the generator should SEE
+# (not just place): the user's reference and the chosen hero shot.
+IMAGE_MARKER_RE = re.compile(r"(?:REFERENCE|HERO) IMAGE:\s*(\S+)", re.IGNORECASE)
+MAX_ATTACHED_IMAGES = 2
+MAX_IMAGE_BYTES = 3 * 1024 * 1024
+
+
+def brief_image_parts(brief: str) -> list[dict]:
+	"""Resolve the brief's image markers into message image parts. https URLs are
+	attached directly (the provider fetches them); /files/ paths are read from the
+	site and inlined as data URLs. The marker lines always stay in the brief text,
+	so the model still knows the exact URLs to place in blocks."""
+	parts = []
+	for url in IMAGE_MARKER_RE.findall(brief or ""):
+		if len(parts) >= MAX_ATTACHED_IMAGES:
+			break
+		if url.startswith("https://"):
+			parts.append({"type": "image_url", "image_url": {"url": url}})
+		elif url.startswith("/files/"):
+			data_url = read_site_image(url)
+			if data_url:
+				parts.append({"type": "image_url", "image_url": {"url": data_url}})
+	return parts
+
+
+def read_site_image(file_url: str) -> str | None:
+	try:
+		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
+		if not name:
+			return None
+		content = frappe.get_doc("File", name).get_content()
+		if isinstance(content, str):
+			content = content.encode()
+		if not content or len(content) > MAX_IMAGE_BYTES:
+			return None
+		ext = (file_url.rsplit(".", 1)[-1] or "png").lower()
+		mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "webp": "webp", "gif": "gif"}.get(ext)
+		if not mime:
+			return None
+		return f"data:image/{mime};base64,{base64.b64encode(content).decode()}"
+	except Exception as e:
+		logger.warning(f"read_site_image failed for {file_url}: {e}")
+		return None
 
 
 def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
@@ -36,8 +83,10 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 	chars = len(yaml_text)
 	sections = -1  # -1 = did not parse
 	try:
+		from builder.ai.page_writer import unwrap_root
+
 		parsed = yaml_lib.safe_load(yaml_text)
-		root = parsed[0] if isinstance(parsed, list) and parsed else parsed
+		root = unwrap_root(parsed)
 		if isinstance(root, dict):
 			sections = len(root.get("c") or [])
 	except Exception as e:
@@ -52,6 +101,11 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 		chars,
 		sections,
 	)
+	if sections in (-1, 0):
+		# A no-blocks generation costs a full retry — capture enough of the actual
+		# output to diagnose WHAT didn't parse (bad quoting, prose preamble, …).
+		logger.warning("generate_page unparsed head:\n%s", yaml_text[:800])
+		logger.warning("generate_page unparsed tail:\n%s", yaml_text[-400:])
 
 
 def generate_page_yaml(ctx, args: dict) -> list[dict]:
@@ -72,8 +126,31 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	]
 	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
 	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))
+	# The approved wireframes (plan strip + chosen layout sketch) as plain SVG text.
+	# Cards replay as text where svg degrades to '[sketch]', so without this the
+	# generator never sees the composition the user actually approved.
+	if svgs := AISession.collect_design_svgs(ctx.session_id):
+		messages.append(
+			{
+				"role": "user",
+				"content": "Approved wireframes (abstract layout sketches — match this composition and "
+				"rhythm, not the literal shapes):\n" + "\n".join(svgs),
+			}
+		)
 	if brief:
-		messages.append({"role": "user", "content": f"Build this page now:\n{brief}"})
+		build_text = f"Build this page now:\n{brief}"
+		# Vision models get the reference/hero images themselves, not just their
+		# URLs: the user's attached image for THIS turn, plus the brief's marker
+		# images. Text-only models keep working from the marker URLs.
+		image_parts: list[dict] = []
+		if ModelRegistry.supports_vision(ctx.model):
+			if ctx.image_url:
+				image_parts.append({"type": "image_url", "image_url": {"url": ctx.image_url}})
+			image_parts.extend(brief_image_parts(brief))
+		if image_parts:
+			messages.append({"role": "user", "content": [{"type": "text", "text": build_text}, *image_parts]})
+		else:
+			messages.append({"role": "user", "content": build_text})
 
 	ctx.emit("progress", message="Building the page…")
 

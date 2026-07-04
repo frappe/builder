@@ -72,7 +72,8 @@ LENGTH_PROPS = {
 }
 
 # Props where a leading/trailing quote is meaningful CSS — don't strip it.
-QUOTE_MEANINGFUL = {"content", "quotes"}
+# gridTemplateAreas/gridTemplate: each row is a double-quoted string ("hero hero").
+QUOTE_MEANINGFUL = {"content", "quotes", "gridTemplateAreas", "gridTemplate"}
 
 BARE_NUMBER = re.compile(r"^-?\d+(\.\d+)?$")
 
@@ -347,6 +348,24 @@ def parse_generation_yaml(yaml_text: str):
 	return None
 
 
+def unwrap_root(parsed) -> dict | None:
+	"""The root block of generated YAML, tolerating the wrappers models emit.
+	Expected: the block itself (or a one-item list). Models sometimes wrap it in a
+	mapping key — `root:` / `page:` — which used to cost a whole failed generation;
+	unwrap one level when the inner value looks like a block."""
+	root = parsed[0] if isinstance(parsed, list) and parsed else parsed
+	if isinstance(root, dict) and not root.get("el"):
+		for key in ("root", "page", "body"):
+			inner = root.get(key)
+			if isinstance(inner, dict) and inner.get("el"):
+				return inner
+		if len(root) == 1:
+			inner = next(iter(root.values()))
+			if isinstance(inner, dict) and inner.get("el"):
+				return inner
+	return root
+
+
 def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
 	"""Return ([root_block_dict], page_data_script). Empty ([], "") if unparseable.
 
@@ -355,7 +374,7 @@ def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
 	parsed = parse_generation_yaml(yaml_text)
 	if parsed is None:
 		return [], ""
-	root = parsed[0] if isinstance(parsed, list) and parsed else parsed
+	root = unwrap_root(parsed)
 	if not isinstance(root, dict) or not root.get("el"):
 		return [], ""
 	block = convert_yaml_block(root, is_root=is_root)

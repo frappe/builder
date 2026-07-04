@@ -69,7 +69,8 @@ const BARE_NUMBER = /^-?\d+(\.\d+)?$/;
 // Props where a leading/trailing quote is meaningful CSS (don't strip it). fontFamily is
 // handled separately above; everything else (position, display, color, gradients, …) never
 // legitimately starts or ends with a quote, so a stray one is a model slip.
-const QUOTE_MEANINGFUL = new Set(["content", "quotes"]);
+// gridTemplateAreas/gridTemplate: each row is a double-quoted string ("hero hero").
+const QUOTE_MEANINGFUL = new Set(["content", "quotes", "gridTemplateAreas", "gridTemplate"]);
 
 function normalizeValue(prop: string, value: unknown): unknown {
 	if (prop === "fontFamily" && typeof value === "string") {

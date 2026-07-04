@@ -82,9 +82,20 @@ def run_preview_page(ctx, args: dict) -> str:
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
 	return (
-		"Screenshot attached below — for YOUR eyes only (the user doesn't see it). Review it "
-		"ONCE: fix only obvious breakage (unreadable contrast, overlapping or empty sections), "
-		"then finish. Don't describe the screenshot to the user."
+		"Screenshot attached below — for YOUR eyes only (the user doesn't see it). Review in "
+		"two passes, then act:\n"
+		"1. BREAKAGE: unreadable contrast, accidental overlap, empty sections, a layout that "
+		"clearly collapses.\n"
+		"2. TEMPLATE FINGERPRINT — five yes/no checks: (a) is the signature move actually "
+		"visible? (b) are sections STRUCTURALLY distinct (different widths/grids/densities), "
+		"not one centered column with background swaps? (c) does the largest text read at "
+		"least ~3.5x the body size? (d) are photos TREATED (scrim/duotone/knockout/frame) "
+		"rather than plain rectangles? (e) does the page look like the brief's named concept?\n"
+		"Fix failures with surgical edits on the specific blocks (update_block / "
+		"update_blocks / set_page_script) — NEVER regenerate the page. Motion and hover are "
+		"invisible in a static screenshot; don't chase them here. If two or more fingerprint "
+		"checks still fail after your fixes, say so honestly in your summary and stop. Don't "
+		"describe the screenshot to the user."
 	)
 
 
@@ -95,8 +106,9 @@ preview_page = Tool(
 	description=(
 		"Render a page's draft to a screenshot attached to you so you can SEE what you "
 		"built (also refreshes the page's dashboard thumbnail — the user is not shown the "
-		"image in chat). Use it once after generate_page or a major edit for a single "
-		"self-review pass — fix only obvious visual breakage, never loop screenshots. If "
+		"image in chat). Call it after EVERY generate_page build: it returns a review "
+		"rubric (breakage + template-fingerprint checks); fix failures with surgical "
+		"block/script edits, optionally preview once more, never loop screenshots. If "
 		"the renderer is unavailable, continue without it."
 	),
 	parameters={

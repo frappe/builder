@@ -166,6 +166,49 @@ class AISession:
 		"creation",
 	)
 
+	@classmethod
+	def collect_design_svgs(cls, session_id: str | None) -> list[str]:
+		"""The design-flow wireframes the user actually approved, for the generation
+		stream: the plan card's page-strip SVG, plus the SVG sketch of the layout
+		option the user tapped. Cards replay into the transcript as plain text where
+		svg renders as just '[sketch]', so generation would never see the approved
+		composition without this targeted extraction from message metadata."""
+		if not session_id:
+			return []
+		rows = frappe.db.get_all(
+			cls.MESSAGE_DOCTYPE,
+			filters={"session": session_id},
+			# status is hoisted to its own column by append_message — it is NOT
+			# inside metadata_json.
+			fields=["role", "content", "status", "metadata_json"],
+			order_by="creation asc",
+			limit_page_length=0,
+		)
+		plan_svg = None
+		chosen_svg = None
+		for i, row in enumerate(rows):
+			if row.get("role") != "assistant" or row.get("status") != "ui":
+				continue
+			meta = cls.load_metadata(row.get("metadata_json"))
+			ui = meta.get("ui") or []
+			kinds = {el.get("kind") for el in ui if isinstance(el, dict)}
+			# The plan card is the one carrying both a wireframe and the note brief.
+			if "svg" in kinds and "note" in kinds:
+				svg = next((el.get("svg") for el in ui if el.get("kind") == "svg" and el.get("svg")), None)
+				plan_svg = svg or plan_svg
+				continue
+			# A layout card: match the option the user's NEXT message names.
+			reply = next((r.get("content") or "" for r in rows[i + 1 :] if r.get("role") == "user"), "")
+			for el in ui:
+				if el.get("kind") != "choices":
+					continue
+				for option in el.get("options") or []:
+					label = (option.get("label") or "").strip()
+					if label and option.get("svg") and label in reply:
+						chosen_svg = option["svg"]
+		out = [s for s in (plan_svg, chosen_svg) if s]
+		return [s[:4000] for s in out[:2]]
+
 	def get_messages(self) -> list[dict]:
 		"""Return ALL messages for this session in chronological order, shaped
 		for the frontend's ChatMessage interface."""
