@@ -1,4 +1,5 @@
 import type Block from "@/block";
+import { BatchTracker } from "@/components/ai/batches";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
 import type { AIProvider, ChatMessage } from "@/components/ai/types";
@@ -43,6 +44,11 @@ export class AIChatController {
 	readonly messages = ref<ChatMessage[]>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
+
+	// spawn_parallel_agents fan-outs this session — the task-group card's state.
+	readonly batchTracker = new BatchTracker();
+	readonly batches = this.batchTracker.batches;
+	readonly publishingBatch = ref(false);
 
 	// Set by the panel's style-preset picker; folded into the prompt on submit.
 	pendingStylePreset: string | null = null;
@@ -120,6 +126,7 @@ export class AIChatController {
 			onClarify: this.onClarify,
 			onComplete: this.onComplete,
 			onError: this.onError,
+			onTaskGroup: this.onTaskGroup,
 		};
 	}
 
@@ -193,6 +200,12 @@ export class AIChatController {
 		this.messages.value = (session.messages || []).map(
 			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 		);
+		// Rehydrate task-group cards: fetch each batch's durable state (polling
+		// stops by itself once the batch settles).
+		for (const m of this.messages.value) {
+			const batchId = (m.metadata as any)?.batchId;
+			if (batchId) this.batchTracker.track(batchId);
+		}
 	}
 
 	clearSession = async () => {
@@ -246,6 +259,31 @@ export class AIChatController {
 			this.summaryContent.value += data.chunk;
 			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
 			this.scrollToBottom();
+		}
+	};
+
+	/** The agent fanned out parallel page builds (spawn_parallel_agents ends the
+	 * turn). Track the batch so the panel's task-group card shows live progress;
+	 * the reload on complete picks up the persisted message carrying batchId. */
+	onTaskGroup = (data: { batch_id?: string; total?: number; tasks?: Array<Record<string, any>> }) => {
+		if (!data.batch_id) return;
+		this.batchTracker.track(data.batch_id, {
+			total: data.total || data.tasks?.length || 0,
+			tasks: (data.tasks || []).map((t: any) => ({ ...t })),
+		});
+	};
+
+	cancelBatch = (batchId: string) => this.batchTracker.cancel(batchId);
+
+	publishBatch = async (batchId: string) => {
+		this.publishingBatch.value = true;
+		try {
+			const res: any = await this.batchTracker.publish(batchId);
+			toast.success(res?.message || "Published");
+		} catch (e: any) {
+			toast.error(e?.messages?.[0] || "Could not publish");
+		} finally {
+			this.publishingBatch.value = false;
 		}
 	};
 
@@ -562,5 +600,6 @@ export class AIChatController {
 	unmount() {
 		if (this.pageId.value)
 			detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		this.batchTracker.stopAll();
 	}
 }

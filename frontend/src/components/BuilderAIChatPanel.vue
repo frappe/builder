@@ -133,6 +133,13 @@
 							:interactive="message.id === lastMessageId"
 							:disabled="isSubmitting"
 							@submit="selectOption" />
+						<!-- Parallel page-build progress (spawn_parallel_agents) -->
+						<AITaskGroupCard
+							v-if="message.metadata?.batchId && batches[message.metadata.batchId]"
+							:batch="batches[message.metadata.batchId]"
+							:publishing="publishingBatch"
+							@cancel="cancelBatch"
+							@publish="publishBatch" />
 					</div>
 					<!-- Block + image chips below the bubble -->
 					<div
@@ -279,6 +286,7 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AITaskGroupCard from "@/components/ai/AITaskGroupCard.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
@@ -298,6 +306,8 @@ const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
+const { batches, publishingBatch } = chat;
+const { cancelBatch, publishBatch } = chat;
 
 const confirmingAction = ref(false);
 async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {
