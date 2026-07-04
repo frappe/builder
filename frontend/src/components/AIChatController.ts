@@ -54,6 +54,20 @@ export class AIChatController {
 	readonly batches = this.batchTracker.batches;
 	readonly publishingBatch = ref(false);
 
+	// A build driven from ANOTHER chat is writing to this page right now
+	// (watch-live). Drives the floating indicator; originPage links back to the
+	// chat that started it.
+	readonly foreignBuild = ref<{ originPage: string | null } | null>(null);
+	private foreignBuildTimer: ReturnType<typeof setTimeout> | null = null;
+
+	private noteForeignBuild(originPage?: string | null) {
+		this.foreignBuild.value = { originPage: originPage || null };
+		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
+		// No completion event is guaranteed to reach us; fade the pill out once the
+		// stream goes quiet.
+		this.foreignBuildTimer = setTimeout(() => (this.foreignBuild.value = null), 8000);
+	}
+
 	// Set by the panel's style-preset picker; folded into the prompt on submit.
 	pendingStylePreset: string | null = null;
 	// Compact display line for a card-composed reply (set by selectOption).
@@ -302,8 +316,19 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
-	onStream = (data: { chunk?: string; kind?: string; session_id?: string }) => {
-		if (!data.chunk || this.isForeignSession(data)) return;
+	onStream = (data: { chunk?: string; kind?: string; session_id?: string; origin_page?: string }) => {
+		if (!data.chunk) return;
+		if (this.isForeignSession(data)) {
+			// A build driven from ANOTHER chat is streaming onto this page (watch-live).
+			// The canvas is page-level: apply the preview, and surface the floating
+			// "building live" indicator — but keep chat-text chunks out of this session.
+			if (data.kind === "page_yaml") {
+				this.noteForeignBuild(data.origin_page);
+				this.pageStreamContent.value += data.chunk;
+				this.scheduleStreamRender();
+			}
+			return;
+		}
 		this.isSubmitting.value = true;
 		if (data.kind === "page_yaml") {
 			if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) return;
@@ -367,12 +392,15 @@ export class AIChatController {
 
 	onToolBatch = (data: {
 		page_id?: string;
+		session_id?: string;
+		origin_page?: string;
 		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
 	}) => {
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
 		if (!data.operations?.length) return;
+		if (this.isForeignSession(data)) this.noteForeignBuild(data.origin_page);
 		// The agent may focus another page mid-turn (open_page/create_page): its ops
 		// are applied server-side; the canvas only mirrors ops for the page it shows.
 		if (data.page_id && data.page_id !== this.pageId.value) return;
@@ -391,7 +419,12 @@ export class AIChatController {
 	};
 
 	onComplete = async (data: { message?: string; session_id?: string }) => {
-		if (this.isForeignSession(data)) return;
+		if (this.isForeignSession(data)) {
+			// The other chat's build on this page finished; the authoritative
+			// tool_batch already replaced the streamed preview.
+			this.foreignBuild.value = null;
+			return;
+		}
 		this.clearStreamRenderTimer();
 		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
 			this.submittedForPageId = null;

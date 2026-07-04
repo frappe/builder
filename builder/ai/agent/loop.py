@@ -307,7 +307,11 @@ class AgentRunner:
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
-		self.system_prompt = system_prompt or Prompts.AGENT_SYSTEM
+		# The editor-URL prefix is site-configurable; resolve it so the links the
+		# agent writes (e.g. to a page it built off-canvas) actually work here.
+		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
+			"{BUILDER_PATH}", frappe.conf.builder_path or "builder"
+		)
 		# The authoritative working tree — loaded from the DB by focus_page (in run(),
 		# or mid-turn when the dashboard agent opens/creates a page).
 		self.tree: WorkingTree | None = None
@@ -418,12 +422,18 @@ class AgentRunner:
 	def emit_page(self, suffix: str, **kwargs):
 		"""Emit on the FOCUSED PAGE's channel (regardless of self.channel) so any open
 		editor acts as a live viewport on a headless build — the user can click through
-		from the chat and watch the page assemble."""
+		from the chat and watch the page assemble. origin_page names the page whose
+		chat is driving this build, so the watching editor can link back to it."""
 		if not self.page_id:
 			return
 		frappe.publish_realtime(
 			f"{EVENT_PREFIX}_{suffix}_{self.page_id}",
-			{"page_id": self.page_id, "session_id": self.session_id, **kwargs},
+			{
+				"page_id": self.page_id,
+				"session_id": self.session_id,
+				"origin_page": self.canvas_page_id,
+				**kwargs,
+			},
 			user=self.user,
 		)
 

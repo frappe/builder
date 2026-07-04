@@ -1,4 +1,20 @@
 <template>
+	<!-- Floating status: a build driven from ANOTHER chat is writing to this page
+	     live. Teleported so it shows whichever left-panel tab is open. -->
+	<Teleport to="body">
+		<div
+			v-if="foreignBuild"
+			class="bg-surface-white fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-outline-gray-2 px-3.5 py-2 text-p-sm text-ink-gray-8 shadow-lg">
+			<span class="size-2 animate-pulse rounded-full bg-surface-amber-3" />
+			Bob is building this page from another chat
+			<router-link
+				v-if="foreignBuild.originPage"
+				:to="{ name: 'builder', params: { pageId: foreignBuild.originPage } }"
+				class="font-medium text-ink-gray-9 underline">
+				Open that chat
+			</router-link>
+		</div>
+	</Teleport>
 	<div class="bg-surface-white flex h-full min-h-full flex-col">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
@@ -340,6 +356,7 @@ const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 const { batches, publishingBatch } = chat;
 const { cancelBatch, publishBatch } = chat;
+const { foreignBuild } = chat;
 
 const confirmingAction = ref(false);
 async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {

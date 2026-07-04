@@ -22,6 +22,7 @@ increments so parallel workers never lose an update; `reap_stale_batches` (sched
 finalizes a batch whose child died too hard to report back.
 """
 
+import json
 import logging
 
 import frappe
@@ -275,8 +276,22 @@ def fail_task(batch_id, task_row, title, error, parent_channel, user) -> None:
 
 
 def page_has_blocks(page_id: str) -> bool:
+	"""Whether the page has REAL content. The editor autosaves an empty canvas as a
+	bare root skeleton ([{root, children: []}]) — that must count as empty, or the
+	'build the open page' guard lets a build slip onto a fresh orphan page."""
 	blocks = frappe.db.get_value("Builder Page", page_id, "draft_blocks")
-	return bool(blocks) and blocks.strip() not in ("", "[]", "null")
+	if not blocks or blocks.strip() in ("", "[]", "null"):
+		return False
+	try:
+		parsed = json.loads(blocks)
+	except (json.JSONDecodeError, TypeError):
+		return True  # unparseable but non-empty: assume content, never block edits on it
+	if not isinstance(parsed, list):
+		return bool(parsed)
+	for block in parsed:
+		if isinstance(block, dict) and (block.get("children") or block.get("innerHTML")):
+			return True
+	return False
 
 
 # --- the spawn tool handler (terminal — ends the parent chat turn) -------
