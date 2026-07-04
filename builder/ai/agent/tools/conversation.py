@@ -21,7 +21,7 @@ from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
 
 ELEMENT_KINDS = frozenset(
-	{"text", "heading", "list", "swatches", "image", "svg", "choices", "input", "actions", "divider"}
+	{"text", "heading", "list", "swatches", "image", "svg", "choices", "input", "actions", "divider", "note"}
 )
 MAX_ELEMENTS = 30
 # Roomy enough for a few small inline-SVG layout sketches; the tool description
@@ -113,7 +113,9 @@ def render_ui_text(text: str, ui: list[dict]) -> str:
 
 def render_element_text(el: dict) -> list[str]:
 	kind = el.get("kind")
-	if kind in ("heading", "text"):
+	# A note is model-only: it lands in the persisted message (replay context)
+	# but the renderer never shows it to the user.
+	if kind in ("heading", "text", "note"):
 		return [str(el.get("text") or "")]
 	if kind == "list":
 		return [f"- {i}" for i in el.get("items") or []]
@@ -189,6 +191,10 @@ present_ui = Tool(
 					"faces joined by ' + ' — the card renders a live type specimen in the real fonts, "
 					"so the user sees the typography they're picking\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
+					"{kind:'note', text} — model-only context: persisted as part of your message "
+					"(you'll see it on replay) but NEVER shown to the user. Put detailed working "
+					"notes here (e.g. the full build brief behind a plan) so the visible card "
+					"stays scannable\n"
 					"{kind:'actions', buttons:[{label, variant:'primary'|'secondary'?}]} — "
 					"submit buttons (e.g. 'Build it'); the clicked label + all collected "
 					"values become the user's reply\n"

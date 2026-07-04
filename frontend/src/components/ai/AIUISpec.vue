@@ -45,10 +45,11 @@
 				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
 			</figure>
 
-			<!-- inline svg figure -->
+			<!-- inline svg figure. Fixed height, not max-height: tall figures (plan
+			     wireframes) scale down to fit instead of being cropped mid-page. -->
 			<figure v-else-if="el.kind === 'svg' && el.svg" class="m-0">
 				<div
-					class="ai-sketch max-h-40 w-full overflow-hidden rounded border border-outline-gray-2"
+					class="ai-sketch h-64 w-full overflow-hidden rounded border border-outline-gray-2"
 					v-html="sanitizeSvg(el.svg)" />
 				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
 			</figure>
@@ -103,7 +104,11 @@
 						</template>
 						<template v-else>
 							<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
-							<span v-if="option.description" class="line-clamp-3 text-xs leading-snug text-ink-gray-5">
+							<!-- A sketch option is chosen on looks — the description only reaches
+							     the model (spec + tap reply), not the eye. -->
+							<span
+								v-if="option.description && !option.svg"
+								class="line-clamp-3 text-xs leading-snug text-ink-gray-5">
 								{{ option.description }}
 							</span>
 						</template>
