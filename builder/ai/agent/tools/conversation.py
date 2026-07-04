@@ -21,7 +21,20 @@ from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
 
 ELEMENT_KINDS = frozenset(
-	{"text", "heading", "list", "swatches", "image", "svg", "choices", "input", "actions", "divider", "note"}
+	{
+		"text",
+		"heading",
+		"list",
+		"swatches",
+		"image",
+		"svg",
+		"choices",
+		"input",
+		"upload",
+		"actions",
+		"divider",
+		"note",
+	}
 )
 MAX_ELEMENTS = 30
 # Roomy enough for a few small inline-SVG layout sketches; the tool description
@@ -83,6 +96,8 @@ def sanitize_option(option: dict) -> dict:
 		option.pop("colors")
 	if option.get("svg") is not None and not isinstance(option["svg"], str):
 		option.pop("svg")
+	if option.get("image") is not None and not isinstance(option["image"], str):
+		option.pop("image")
 	return option
 
 
@@ -128,6 +143,8 @@ def render_element_text(el: dict) -> list[str]:
 		return [f"[sketch: {el.get('caption')}]"] if el.get("caption") else ["[sketch]"]
 	if kind == "choices":
 		return [option_text(o) for o in el.get("options") or []]
+	if kind == "upload":
+		return [f"[upload: {el.get('label') or 'image'}]"]
 	if kind == "actions":
 		labels = " / ".join(str(b.get("label") or "") for b in el.get("buttons") or [])
 		return [f"[buttons: {labels}]"] if labels else []
@@ -143,6 +160,8 @@ def option_text(option) -> str:
 	font = option.get("font")
 	if isinstance(font, dict) and (font.get("heading") or font.get("body")):
 		line += f" [fonts: {font.get('heading') or '—'} + {font.get('body') or '—'}]"
+	if option.get("image"):
+		line += f" [image: {option['image']}]"
 	return line
 
 
@@ -182,15 +201,22 @@ present_ui = Tool(
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
 					"{kind:'svg', svg, caption?} — small inline-SVG figure (sanitized; no scripts)\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?}]} — tappable option cards; "
+					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?, image:'https://…'?}]} — tappable option cards; "
 					"single-select submits immediately, multi collects. An option's `svg` is a "
 					"MINIMAL layout sketch: abstract wireframe of flat rects/lines in that option's "
 					"palette on its background colour, viewBox='0 0 120 80', no words, <15 shapes — it "
 					"must make the layout difference between options visible at a glance. An option's "
 					"`font` is a STRING: the exact Google Font names of that option's heading and body "
 					"faces joined by ' + ' — the card renders a live type specimen in the real fonts, "
-					"so the user sees the typography they're picking\n"
+					"so the user sees the typography they're picking. An option's `image` is a "
+					"photo thumbnail URL (use the `thumb` from search_images) — for letting the "
+					"user pick a hero/section photo; the chosen option's image URL comes back in "
+					"their reply\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
+					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
+					"uploaded file's URL arrives in their reply. Pair with an actions button, and "
+					"usually alongside a choices card of found images as the 'or upload your own' "
+					"escape hatch\n"
 					"{kind:'note', text} — model-only context: persisted as part of your message "
 					"(you'll see it on replay) but NEVER shown to the user. Put detailed working "
 					"notes here (e.g. the full build brief behind a plan) so the visible card "

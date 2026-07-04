@@ -97,6 +97,7 @@ def build_default_registry() -> ToolRegistry:
 		conversation,
 		data,
 		generate,
+		images,
 		orchestrate,
 		pages,
 		preview,
@@ -114,6 +115,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(conversation.TOOLS)
 	registry.extend(data.TOOLS)
 	registry.extend(settings.TOOLS)
+	registry.extend(images.TOOLS)
 	# Whole-site capabilities in the editor: focus/create/manage other pages,
 	# screenshot self-review, and parallel fan-out for multi-page builds.
 	registry.extend(pages.TOOLS)
@@ -130,11 +132,11 @@ def build_default_registry() -> ToolRegistry:
 def headless_page_tools() -> list[Tool]:
 	"""The page capabilities every HEADLESS agent gets: focus a page (open/create),
 	read any page, generate a full page, edit it surgically with the block tools
-	(applied server-side by the mutating WorkingTree), query its structure, and
-	screenshot it for a self-review pass."""
-	from builder.ai.agent.tools import blocks, generate, pages, preview, query
+	(applied server-side by the mutating WorkingTree), query its structure, find
+	real photos for it, and screenshot it for a self-review pass."""
+	from builder.ai.agent.tools import blocks, generate, images, pages, preview, query
 
-	return [*pages.TOOLS, *generate.TOOLS, *blocks.TOOLS, *query.TOOLS, *preview.TOOLS]
+	return [*pages.TOOLS, *generate.TOOLS, *blocks.TOOLS, *query.TOOLS, *preview.TOOLS, *images.TOOLS]
 
 
 def build_orchestrator_registry() -> ToolRegistry:

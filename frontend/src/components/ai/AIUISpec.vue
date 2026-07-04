@@ -72,10 +72,17 @@
 								: 'bg-surface-white border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-2'
 						"
 						@click="onOptionClick(i, el, j, option)">
+						<!-- photo option (search_images thumb): the picture IS the choice -->
+						<img
+							v-if="option.image && safeSrc(option.image)"
+							:src="option.image"
+							class="h-24 w-full rounded border border-black/10 object-cover"
+							loading="lazy"
+							alt="" />
 						<!-- minimal layout sketch: the model draws an abstract wireframe SVG.
 						     The sketch already carries the option's palette, so no swatch strip. -->
 						<span
-							v-if="option.svg"
+							v-else-if="option.svg"
 							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
 							v-html="sanitizeSvg(option.svg)" />
 						<span
@@ -127,6 +134,36 @@
 				autocomplete="off"
 				@keydown.enter.prevent="submitCollected()" />
 
+			<!-- upload: the user's own image (logo, photo); URL rides the reply -->
+			<div v-else-if="el.kind === 'upload'" class="w-full">
+				<span v-if="el.label" class="mb-1 block text-xs text-ink-gray-5">{{ el.label }}</span>
+				<FileUploader
+					fileTypes="image/*"
+					:uploadArgs="{
+						private: false,
+						folder: 'Home/Builder Uploads',
+						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+					}"
+					@success="(file: any) => (uploads[i] = file.file_url)">
+					<template #default="{ openFileSelector, uploading, progress }">
+						<div class="flex items-center gap-2">
+							<img
+								v-if="uploads[i]"
+								:src="uploads[i]"
+								class="h-10 w-14 rounded border border-outline-gray-2 object-cover"
+								alt="" />
+							<Button
+								size="sm"
+								variant="subtle"
+								:disabled="!interactive || disabled || uploading"
+								@click="openFileSelector()">
+								{{ uploading ? `Uploading ${progress}%` : uploads[i] ? "Replace image" : "Upload image" }}
+							</Button>
+						</div>
+					</template>
+				</FileUploader>
+			</div>
+
 			<!-- actions -->
 			<div v-else-if="el.kind === 'actions'" class="flex flex-wrap gap-2 pt-0.5">
 				<Button
@@ -149,7 +186,7 @@
 <script setup lang="ts">
 import { setFont } from "@/utils/fontManager";
 import DOMPurify from "dompurify";
-import { Button, FormControl } from "frappe-ui";
+import { Button, FileUploader, FormControl } from "frappe-ui";
 import { computed, reactive, watchEffect } from "vue";
 
 /** Generic renderer for the agent's `present_ui` cards. The agent composes a
@@ -187,9 +224,11 @@ watchEffect(() => {
 	}
 });
 
-// Collected state keyed by element index: multi-select picks + typed inputs.
+// Collected state keyed by element index: multi-select picks, typed inputs,
+// uploaded file URLs.
 const selections = reactive<Record<number, Set<number>>>({});
 const inputs = reactive<Record<number, string>>({});
+const uploads = reactive<Record<number, string>>({});
 
 function isSelected(elIndex: number, optIndex: number): boolean {
 	return selections[elIndex]?.has(optIndex) ?? false;
@@ -197,7 +236,10 @@ function isSelected(elIndex: number, optIndex: number): boolean {
 
 function optionReply(option: UIElement): string {
 	const label = option.label || option.value || "";
-	return option.description ? `${label}: ${option.description}` : String(label);
+	let reply = option.description ? `${label}: ${option.description}` : String(label);
+	// The model needs the exact URL of a picked photo to place it in the page.
+	if (option.image) reply += `\n(chosen image: ${option.image})`;
+	return reply;
 }
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
@@ -230,6 +272,10 @@ function submitCollected(actionLabel?: string) {
 		if (el.kind === "input" && inputs[i]?.trim()) {
 			lines.push(el.label ? `${el.label}: ${inputs[i].trim()}` : inputs[i].trim());
 			values.push(inputs[i].trim());
+		}
+		if (el.kind === "upload" && uploads[i]) {
+			lines.push(`${el.label || "Uploaded image"}: ${uploads[i]}`);
+			values.push(`${el.label || "image"} uploaded`);
 		}
 	});
 	const reply = lines.join("\n").trim();
