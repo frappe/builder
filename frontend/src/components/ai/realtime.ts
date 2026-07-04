@@ -12,6 +12,9 @@ export interface AIChatHandlers {
 	onError: Handler;
 	/** A spawn_parallel_agents fan-out started this turn (batch id + task list). */
 	onTaskGroup?: Handler;
+	/** A server tool changed state the canvas loads once at editor start
+	 * (theme variables, page data, page doc) — refetch the named resources. */
+	onRefetch?: Handler;
 }
 
 interface Realtime {
@@ -29,6 +32,7 @@ function listenerMap(h: AIChatHandlers): Record<string, Handler> {
 		ai_chat_error: h.onError,
 	};
 	if (h.onTaskGroup) map.ai_chat_task_group = h.onTaskGroup;
+	if (h.onRefetch) map.ai_chat_refetch = h.onRefetch;
 	return map;
 }
 

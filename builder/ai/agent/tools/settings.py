@@ -37,7 +37,17 @@ def set_page_settings(ctx, args: dict) -> str:
 		return "No recognised settings to update."
 	frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	frappe.db.commit()
+	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}."
+
+
+def emit_refetch(ctx, *resources: str) -> None:
+	"""Tell any open editor to refetch state this tool changed OUTSIDE the block
+	ops it mirrors (theme variables, evaluated page data, page doc fields) — the
+	canvas loads these once at editor start and would otherwise show stale state
+	until a manual refresh."""
+	if ctx is not None and hasattr(ctx, "emit"):
+		ctx.emit("refetch", resources=list(resources))
 
 
 def clean_variable_id(raw: str) -> str:
@@ -73,6 +83,7 @@ def set_theme_variable(ctx, args: dict) -> str:
 		# Full save (not db.set_value) so on_update busts the rendered-CSS cache.
 		doc.save(ignore_permissions=True)
 		frappe.db.commit()
+		emit_refetch(ctx, "variables")
 		return f"Updated theme variable '{doc.variable_name}' — reference it in styles as var(--{doc.name})."
 	doc = frappe.get_doc(
 		{"doctype": "Builder Variable", "variable_name": label, "group": "Brand", **fields}
@@ -80,6 +91,7 @@ def set_theme_variable(ctx, args: dict) -> str:
 		# so the caller can know the var(--<id>) handle before the doc exists.
 	).insert(ignore_permissions=True, set_name=wanted_id or None)
 	frappe.db.commit()
+	emit_refetch(ctx, "variables")
 	return (
 		f"Created theme variable '{label}'. Reference it in styles EXACTLY as var(--{doc.name}) — "
 		f"'{label}' is only the display label, so var(--{label}) will NOT resolve."

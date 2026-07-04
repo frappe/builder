@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import { BatchTracker } from "@/components/ai/batches";
+import builderVariables from "@/data/builderVariable";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
 import type { AIProvider, ChatMessage } from "@/components/ai/types";
@@ -133,6 +134,7 @@ export class AIChatController {
 			onComplete: this.onComplete,
 			onError: this.onError,
 			onTaskGroup: this.onTaskGroup,
+			onRefetch: this.onRefetch,
 		};
 	}
 
@@ -327,6 +329,25 @@ export class AIChatController {
 			total: data.total || data.tasks?.length || 0,
 			tasks: (data.tasks || []).map((t: any) => ({ ...t })),
 		});
+	};
+
+	/** A server tool changed state the canvas only loads at editor start. Refetch
+	 * exactly what changed so mid-turn results render without a manual refresh:
+	 * theme variables (var(--id) styles), the evaluated page data (repeater
+	 * previews), or the page doc (route/meta). NOT session-scoped — this state is
+	 * page/site-level, so any chat's turn should refresh it. */
+	onRefetch = async (data: { resources?: string[] }) => {
+		const resources = data.resources || [];
+		if (resources.includes("variables")) {
+			builderVariables.reload();
+		}
+		if (resources.includes("page_data") || resources.includes("page")) {
+			const page = await this.pageStore.fetchActivePage(this.pageId.value).catch(() => null);
+			if (page) {
+				this.pageStore.activePage = page;
+				if (resources.includes("page_data")) await this.pageStore.setPageData(page);
+			}
+		}
 	};
 
 	cancelBatch = (batchId: string) => this.batchTracker.cancel(batchId);
