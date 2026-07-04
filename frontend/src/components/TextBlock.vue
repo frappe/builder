@@ -22,7 +22,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
+			class="__text_editor__ bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			:style="block.getRawStyles()"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
@@ -382,6 +382,17 @@ defineExpose({
    fragments while the text renders full-width with no background behind it. */
 .__text_content__ {
 	display: contents;
+}
+
+/* Same problem on the editing path: selecting a text block swaps the static div for
+   the tiptap editor root, another block box. Keep it inline-level inside inline tags
+   so the host element's background/radius still paint as one box. (display:contents
+   is not an option here — the contenteditable ProseMirror element needs a box.) */
+:is(span, a, b, i, em, strong, cite, label).__text_block__ > .__text_editor__ {
+	display: inline-block;
+}
+:is(span, a, b, i, em, strong, cite, label).__text_block__ :deep(.ProseMirror p) {
+	display: inline;
 }
 
 .__text_block__ :deep([contenteditable="true"]) {
