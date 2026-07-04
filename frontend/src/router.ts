@@ -71,18 +71,6 @@ const routes = [
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
-		path: "/build",
-		name: "ai-builder-new",
-		beforeEnter: validateVisit,
-		component: () => import("@/pages/AIBuilder.vue"),
-	},
-	{
-		path: "/build/:sessionId",
-		name: "ai-builder",
-		beforeEnter: validateVisit,
-		component: () => import("@/pages/AIBuilder.vue"),
-	},
-	{
 		path: "/page/:pageId",
 		name: "builder",
 		beforeEnter: validateVisit,

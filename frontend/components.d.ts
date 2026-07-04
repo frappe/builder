@@ -11,9 +11,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AgentMessage: typeof import('./src/components/ai-builder/AgentMessage.vue')['default']
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
+    AITaskGroupCard: typeof import('./src/components/ai/AITaskGroupCard.vue')['default']
     AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
     AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
@@ -138,7 +138,6 @@ declare module 'vue' {
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']
     TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
-    TaskGroupCard: typeof import('./src/components/ai-builder/TaskGroupCard.vue')['default']
     TemplateGroupCard: typeof import('./src/components/Templates/TemplateGroupCard.vue')['default']
     TemplatePageCard: typeof import('./src/components/Templates/TemplatePageCard.vue')['default']
     TemplatePageGrid: typeof import('./src/components/Templates/TemplatePageGrid.vue')['default']

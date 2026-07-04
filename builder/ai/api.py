@@ -136,73 +136,6 @@ def ensure_site_permission():
 		frappe.throw(_("You do not have permission to build sites"), frappe.PermissionError)
 
 
-@frappe.whitelist()
-@has_page_write()
-def get_general_session(model: str | None = None):
-	"""The page-less dashboard chat session — one active session per user, reused so the
-	conversation continues across turns (a new message must NOT start a new session)."""
-	session = AISession.get_or_create_general(model=model)
-	return {
-		"session_id": session.name,
-		"page_id": None,
-		"selected_model": session.selected_model,
-		"last_task_type": session.last_task_type,
-		"messages": session.get_messages(),
-	}
-
-
-@frappe.whitelist()
-@has_page_write()
-def new_general_session(model: str | None = None):
-	"""Start a fresh dashboard chat: retire the current active general session so the next
-	get_general_session mints a new one. (History stays queryable; it's just deactivated.)"""
-	name = frappe.db.get_value(
-		AISession.DOCTYPE,
-		{"session_user": frappe.session.user, "session_kind": "general", "status": "Active"},
-		"name",
-	)
-	if name:
-		frappe.db.set_value(AISession.DOCTYPE, name, "status", "Inactive", update_modified=False)
-	session = AISession.get_or_create_general(model=model)
-	return {"session_id": session.name, "messages": []}
-
-
-@frappe.whitelist()
-@has_page_write()
-def get_ai_session_messages(session_id: str):
-	"""Load a specific dashboard chat session's messages (opening a past session)."""
-	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
-		return {"session_id": "", "messages": []}
-	session = AISession.get(session_id)  # asserts ownership
-	return {
-		"session_id": session.name,
-		"selected_model": session.selected_model,
-		"messages": session.get_messages(),
-	}
-
-
-@frappe.whitelist()
-@has_page_write()
-def list_ai_sessions(limit: int = 30):
-	"""Recent dashboard chat sessions for the current user — powers the sidebar."""
-	rows = frappe.get_all(
-		AISession.DOCTYPE,
-		filters={"session_user": frappe.session.user, "session_kind": "general"},
-		fields=["name", "title", "last_task_type", "last_interaction_on", "modified"],
-		order_by="last_interaction_on desc",
-		limit=min(int(limit), 50),
-	)
-	# A user-set title wins; otherwise the first user message (cheap sub-query per row).
-	for r in rows:
-		r["title"] = r["title"] or frappe.db.get_value(
-			AISession.MESSAGE_DOCTYPE,
-			{"session": r["name"], "role": "user"},
-			"content",
-			order_by="creation asc",
-		)
-	return rows
-
-
 def ensure_session_owner(session_id: str) -> None:
 	owner = frappe.db.get_value(AISession.DOCTYPE, session_id, "session_user")
 	if not owner:
@@ -213,25 +146,8 @@ def ensure_session_owner(session_id: str) -> None:
 
 @frappe.whitelist()
 @has_page_write()
-def rename_ai_session(session_id: str, title: str):
-	ensure_session_owner(session_id)
-	frappe.db.set_value(AISession.DOCTYPE, session_id, "title", (title or "").strip()[:140])
-	return {"status": "ok"}
-
-
-@frappe.whitelist()
-@has_page_write()
-def delete_ai_session(session_id: str):
-	ensure_session_owner(session_id)
-	AISession.get(session_id).clear()  # messages first (separate doctype)
-	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
-	return {"status": "ok"}
-
-
-@frappe.whitelist()
-@has_page_write()
 def revert_ai_turn(session_id: str, message_id: str):
-	"""Dashboard revert, fully server-side (no canvas to restore through): put every
+	"""Server-side revert (no canvas to restore through): put every
 	page the turn touched back to its pre-edit snapshot, then rewind the conversation
 	— this turn and everything after it."""
 	ensure_session_owner(session_id)
