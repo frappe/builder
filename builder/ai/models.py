@@ -157,6 +157,17 @@ class ModelRegistry:
 		return simple
 
 	@classmethod
+	def supports_vision(cls, model_name: str) -> bool:
+		"""Whether this model accepts image input. Unknown models are treated as
+		text-only — sending an image a provider can't route kills the whole turn
+		(OpenRouter: 'No endpoints found that support image input')."""
+		for provider in cls.AVAILABLE:
+			for m in provider["models"]:
+				if m["name"] == model_name:
+					return bool(m.get("vision"))
+		return False
+
+	@classmethod
 	def get_default(cls, model_or_provider: str) -> str:
 		return cls.PROVIDER_DEFAULT.get(model_or_provider, model_or_provider)
 

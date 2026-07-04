@@ -68,6 +68,16 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Continue without the visual check — do not retry."
 		)
 	refresh_page_thumbnail(page)
+	# A text-only model can't receive the image — attaching it kills the whole turn
+	# (OpenRouter: "No endpoints found that support image input"). The screenshot
+	# still refreshed the page thumbnail above; just skip the visual review.
+	from builder.ai.models import ModelRegistry
+
+	if not ModelRegistry.supports_vision(ctx.loop_model):
+		return (
+			"Screenshot saved as the page's thumbnail, but your selected model can't view "
+			"images — skip the visual check and continue."
+		)
 	attached = attach_to_model(ctx, page, image)
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."

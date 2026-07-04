@@ -96,6 +96,12 @@ def run(
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
+	if image_data and not ModelRegistry.supports_vision(resolved_model):
+		frappe.throw(
+			_("{0} can't view images — pick a vision-capable model or remove the image").format(
+				resolved_model
+			)
+		)
 	api_key = resolve_api_key()
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 

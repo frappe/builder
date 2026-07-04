@@ -381,9 +381,17 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	if not blocks:
 		return None, ""
 
-	doc = frappe.get_doc("Builder Page", page_id)
-	doc.draft_blocks = compact_json(blocks)
-	if data_script:
-		doc.page_data_script = data_script
-	doc.save(ignore_permissions=True)
+	def save() -> None:
+		doc = frappe.get_doc("Builder Page", page_id)
+		doc.draft_blocks = compact_json(blocks)
+		if data_script:
+			doc.page_data_script = data_script
+		doc.save(ignore_permissions=True)
+
+	try:
+		save()
+	except frappe.TimestampMismatchError:
+		# A canvas autosave (of the throwaway streaming preview) can land between our
+		# read and save during a long generation. The generated result must win.
+		save()
 	return blocks[0], data_script
