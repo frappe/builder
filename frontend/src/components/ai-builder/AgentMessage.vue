@@ -22,6 +22,14 @@
 				<span></span>
 			</span>
 			<span class="text-p-base">{{ workingLine }}</span>
+			<button
+				v-if="workingPage"
+				class="flex shrink-0 items-center gap-1 text-sm text-ink-gray-5 hover:text-ink-gray-9 hover:underline"
+				title="Open the editor in a new tab and watch the page assemble live"
+				@click="watchPage(workingPage)">
+				Watch live
+				<span class="lucide-external-link size-3" />
+			</button>
 		</div>
 
 		<!-- once settled: the steps collapse into a small disclosure -->
@@ -200,6 +208,12 @@ const workingLine = computed(() => {
 	const current = acts.find((a) => a.status === "running") || acts[acts.length - 1];
 	return current?.summary || "Working…";
 });
+// The page currently being worked on — the "Watch live" target while running.
+const workingPage = computed(() => {
+	if (!isRunning.value) return null;
+	const withPage = (props.message.activity || []).filter((a) => a.page);
+	return withPage.length ? withPage[withPage.length - 1].page : null;
+});
 
 // The page this turn worked on — surfaced as a review link once the turn settles.
 const donePage = computed(() => {
@@ -216,6 +230,12 @@ const donePageTitle = computed(() => {
 
 function openPage(pageId: string) {
 	router.push({ name: "builder", params: { pageId } });
+}
+
+// New tab: the chat stays put while the editor plays the live build.
+function watchPage(pageId: string) {
+	const { href } = router.resolve({ name: "builder", params: { pageId } });
+	window.open(href, "_blank");
 }
 const confirmTitle = computed(() => (props.message.text || "Confirm this change?").split("\n")[0]);
 

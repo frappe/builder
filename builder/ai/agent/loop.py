@@ -386,6 +386,18 @@ class AgentRunner:
 			event, {"page_id": self.page_id, "session_id": self.session_id, **kwargs}, user=self.user
 		)
 
+	def emit_page(self, suffix: str, **kwargs):
+		"""Emit on the FOCUSED PAGE's channel (regardless of self.channel) so any open
+		editor acts as a live viewport on a headless build — the user can click through
+		from the chat and watch the page assemble."""
+		if not self.page_id:
+			return
+		frappe.publish_realtime(
+			f"{EVENT_PREFIX}_{suffix}_{self.page_id}",
+			{"page_id": self.page_id, "session_id": self.session_id, **kwargs},
+			user=self.user,
+		)
+
 	def ensure_revert_snapshot(self) -> None:
 		"""Snapshot the focused page's pre-turn state the first time the turn mutates it
 		— before the mutation lands, so even a cancelled multi-round edit stays
@@ -785,6 +797,10 @@ class AgentRunner:
 		if applied:
 			self.applied_operations.extend(applied)
 			self.emit("tool_batch", operations=applied)
+			# The dashboard chat streams on the session channel — mirror accepted ops to
+			# the page channel too, so an editor opened on the page updates live.
+			if self.headless and self.channel != self.page_id:
+				self.emit_page("tool_batch", operations=applied)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
 
@@ -810,6 +826,12 @@ class AgentRunner:
 			# Only reachable headless — the editor broke out of the loop already.
 			content, ops = self.run_headless_generation(tool, op)
 			self.applied_operations.extend(ops)
+			if ops:
+				# Hand the authoritative result to any watching editor: it replaces the
+				# throwaway streamed preview with the server's block tree (shared ids),
+				# and the complete resets the watcher's "working" state.
+				self.emit_page("tool_batch", operations=ops)
+				self.emit_page("complete", message="Page generated — the agent may keep refining it.")
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		content = tool.handler(self, op["args"])

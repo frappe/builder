@@ -31,7 +31,15 @@
 					alt="" />
 				<span class="min-w-0 flex-1 truncate text-sm text-ink-gray-8">{{ t.title }}</span>
 				<button
-					v-if="t.status === 'done' && t.page"
+					v-if="t.status === 'running' && t.page"
+					class="flex shrink-0 items-center gap-1 text-sm text-ink-gray-6 hover:text-ink-gray-9 hover:underline"
+					title="Open the editor in a new tab and watch this page assemble live"
+					@click="watchPage(t.page)">
+					Watch live
+					<span class="lucide-external-link size-3" />
+				</button>
+				<button
+					v-else-if="t.status === 'done' && t.page"
 					class="shrink-0 text-sm text-ink-gray-6 hover:text-ink-gray-9 hover:underline"
 					@click="openPage(t.page)">
 					Open
@@ -70,5 +78,11 @@ const header = computed(() =>
 
 function openPage(pageId: string) {
 	router.push({ name: "builder", params: { pageId } });
+}
+
+// New tab: the chat stays put while the editor plays the live build.
+function watchPage(pageId: string) {
+	const { href } = router.resolve({ name: "builder", params: { pageId } });
+	window.open(href, "_blank");
 }
 </script>

@@ -103,10 +103,13 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		delta = chunk.choices[0].delta.content
 		if delta:
 			yaml_content += delta
-			# Headless (sub-agent): no canvas to stream to — skip the per-chunk emit and
-			# apply the finished YAML server-side below.
 			if not ctx.headless:
 				ctx.emit("stream", chunk=delta, kind="page_yaml")
+			else:
+				# Headless build: the chat has no canvas, but an editor opened on the
+				# page IS one — stream the preview there so the user can click through
+				# and watch the page assemble live ("Watch live" in the dashboard chat).
+				ctx.emit_page("stream", chunk=delta, kind="page_yaml")
 
 	yaml_text = BlockCodec.strip_fences(yaml_content)
 	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
