@@ -1,126 +1,99 @@
+"""The model registry: a small CURATED allowlist + live metadata.
+
+Which models are offered is a hand-picked QUALITY judgment — only models that
+reliably produce well-designed pages (plus one fast/cheap model for the
+lightweight conversational loop). Everything factual about them — context
+window, pricing (incl. cache-read), vision support — is fetched from
+OpenRouter's public models API and cached, so it never goes stale in code.
+The static values on each curated entry are only the offline fallback.
+"""
+
+import logging
 from typing import ClassVar
+
+import frappe
+import requests
+from frappe.utils.caching import redis_cache
+
+logger = frappe.logger("builder.ai.models")
+logger.setLevel(logging.INFO)
+
+CATALOG_TTL = 6 * 3600
+FETCH_TIMEOUT = 10
+
+
+@redis_cache(ttl=CATALOG_TTL)
+def fetch_openrouter_catalog() -> dict:
+	"""Live metadata for every OpenRouter model, keyed by our litellm-prefixed
+	name. Prices normalised to USD per 1M tokens."""
+	r = requests.get("https://openrouter.ai/api/v1/models", timeout=FETCH_TIMEOUT)
+	r.raise_for_status()
+	catalog = {}
+	for m in r.json().get("data", []):
+		pricing = m.get("pricing") or {}
+		modalities = (m.get("architecture") or {}).get("input_modalities") or []
+
+		def per_million(key: str) -> float | None:
+			try:
+				return float(pricing[key]) * 1_000_000
+			except (KeyError, TypeError, ValueError):
+				return None
+
+		catalog[f"openrouter/{m['id']}"] = {
+			"max_tokens": m.get("context_length"),
+			"input_price": per_million("prompt"),
+			"output_price": per_million("completion"),
+			"cache_read_price": per_million("input_cache_read"),
+			"vision": "image" in modalities,
+		}
+	return catalog
 
 
 class ModelRegistry:
-	AVAILABLE: ClassVar[list] = [
+	# The quality gate: models trusted to design good pages, in display order.
+	# Gemini 3.5 Flash stays as the cheap conversational-loop model (see
+	# PROVIDER_SIMPLE). Static fields are offline fallbacks — live OpenRouter
+	# data overrides them (see catalog()).
+	CURATED: ClassVar[list] = [
 		{
-			"provider": "openrouter",
-			"models": [
-				{
-					"name": "openrouter/anthropic/claude-opus-4.8",
-					"label": "Claude Opus 4.8",
-					"max_tokens": 1048576,
-					"input_price": 5.0,
-					"output_price": 25.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/anthropic/claude-sonnet-4.6",
-					"label": "Claude Sonnet 4.6",
-					"max_tokens": 200000,
-					"input_price": 3.0,
-					"output_price": 15.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/anthropic/claude-haiku-4-6",
-					"label": "Claude Haiku 4.6",
-					"max_tokens": 200000,
-					"input_price": 1.0,
-					"output_price": 5.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/openai/gpt-5.4",
-					"label": "GPT-5.4",
-					"max_tokens": 1048576,
-					"input_price": 2.5,
-					"output_price": 10.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/google/gemini-3.1-pro-preview",
-					"label": "Gemini 3.1 Pro",
-					"max_tokens": 1048576,
-					"input_price": 2.0,
-					"output_price": 12.0,
-					"vision": True,
-				},
-				# --- Fast / cheap (great value for the conversational loop + edits) ---
-				{
-					"name": "openrouter/google/gemini-3.5-flash",
-					"label": "Gemini 3.5 Flash",
-					"max_tokens": 1048576,
-					"input_price": 1.5,
-					"output_price": 4.5,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/google/gemini-3.1-flash-lite",
-					"label": "Gemini 3.1 Flash Lite",
-					"max_tokens": 1048576,
-					"input_price": 0.25,
-					"output_price": 1.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/openai/gpt-5.4-mini",
-					"label": "GPT-5.4 Mini",
-					"max_tokens": 400000,
-					"input_price": 0.75,
-					"output_price": 3.0,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/deepseek/deepseek-v4-pro",
-					"label": "DeepSeek V4 Pro",
-					"max_tokens": 1048576,
-					"input_price": 0.435,
-					"output_price": 1.75,
-					"vision": False,
-				},
-				{
-					"name": "openrouter/deepseek/deepseek-v4-flash",
-					"label": "DeepSeek V4 Flash",
-					"max_tokens": 1048576,
-					"input_price": 0.098,
-					"output_price": 0.4,
-					"vision": False,
-				},
-				# --- Open-weight alternatives ---
-				{
-					"name": "openrouter/moonshotai/kimi-k2.6",
-					"label": "Kimi K2.6",
-					"max_tokens": 262144,
-					"input_price": 0.68,
-					"output_price": 2.7,
-					"vision": True,
-				},
-				{
-					"name": "openrouter/z-ai/glm-5.2",
-					"label": "GLM-5.2",
-					"max_tokens": 203000,
-					"input_price": 1.1,
-					"output_price": 4.4,
-					"vision": False,
-				},
-				{
-					"name": "openrouter/z-ai/glm-5.1",
-					"label": "GLM-5.1",
-					"max_tokens": 203000,
-					"input_price": 0.98,
-					"output_price": 3.9,
-					"vision": False,
-				},
-				{
-					"name": "openrouter/qwen/qwen3.7-max",
-					"label": "Qwen 3.7 Max",
-					"max_tokens": 1048576,
-					"input_price": 1.25,
-					"output_price": 5.0,
-					"vision": True,
-				},
-			],
+			"name": "openrouter/anthropic/claude-sonnet-4.6",
+			"label": "Claude Sonnet 4.6",
+			"max_tokens": 1_000_000,
+			"input_price": 3.0,
+			"output_price": 15.0,
+			"vision": True,
+		},
+		{
+			"name": "openrouter/anthropic/claude-opus-4.8",
+			"label": "Claude Opus 4.8",
+			"max_tokens": 1_000_000,
+			"input_price": 5.0,
+			"output_price": 25.0,
+			"vision": True,
+		},
+		{
+			"name": "openrouter/openai/gpt-5.4",
+			"label": "GPT-5.4",
+			"max_tokens": 1_050_000,
+			"input_price": 2.5,
+			"output_price": 15.0,
+			"vision": True,
+		},
+		{
+			"name": "openrouter/google/gemini-3.1-pro-preview",
+			"label": "Gemini 3.1 Pro",
+			"max_tokens": 1_048_576,
+			"input_price": 2.0,
+			"output_price": 12.0,
+			"vision": True,
+		},
+		{
+			"name": "openrouter/google/gemini-3.5-flash",
+			"label": "Gemini 3.5 Flash",
+			"max_tokens": 1_048_576,
+			"input_price": 1.5,
+			"output_price": 9.0,
+			"vision": True,
 		},
 	]
 
@@ -133,11 +106,36 @@ class ModelRegistry:
 	}
 
 	@classmethod
+	def catalog(cls) -> list[dict]:
+		"""The curated models with live metadata merged over the static fallbacks.
+		A failed/unreachable fetch degrades to the fallbacks, never to an error."""
+		live = {}
+		try:
+			live = fetch_openrouter_catalog()
+		except Exception as e:
+			logger.warning(f"OpenRouter catalog fetch failed, using static fallbacks: {e}")
+		return [
+			{**m, **{k: v for k, v in (live.get(m["name"]) or {}).items() if v is not None}}
+			for m in cls.CURATED
+		]
+
+	@classmethod
+	def available(cls) -> list[dict]:
+		"""Provider-grouped catalog — the shape the model picker consumes."""
+		return [{"provider": "openrouter", "models": cls.catalog()}]
+
+	@classmethod
+	def find(cls, model_name: str) -> dict | None:
+		for m in cls.catalog():
+			if m["name"] == model_name:
+				return m
+		return None
+
+	@classmethod
 	def get_label(cls, model_name: str) -> str:
-		for provider in cls.AVAILABLE:
-			for m in provider["models"]:
-				if m["name"] == model_name:
-					return m["label"]
+		m = cls.find(model_name)
+		if m:
+			return m["label"]
 		return model_name.removeprefix("openrouter/").replace("/", " ").replace("-", " ").title()
 
 	@classmethod
@@ -150,42 +148,35 @@ class ModelRegistry:
 	def input_price(cls, model_name: str) -> float:
 		"""Input price (USD per 1M tokens) for cost comparison. Unknown models are
 		treated as expensive (inf) so the loop safely downgrades to the cheap model."""
-		for provider in cls.AVAILABLE:
-			for m in provider["models"]:
-				if m["name"] == model_name:
-					return m.get("input_price", float("inf"))
-		return float("inf")
+		m = cls.find(model_name)
+		return m.get("input_price", float("inf")) if m else float("inf")
 
 	@classmethod
 	def output_price(cls, model_name: str) -> float | None:
 		"""Output price (USD per 1M tokens); None for unknown models (cost then
 		reads as unavailable rather than a wrong number)."""
-		for provider in cls.AVAILABLE:
-			for m in provider["models"]:
-				if m["name"] == model_name:
-					return m.get("output_price")
-		return None
+		m = cls.find(model_name)
+		return m.get("output_price") if m else None
 
 	@classmethod
 	def context_window(cls, model_name: str) -> int:
-		"""The model's context window in tokens (`max_tokens` in the registry)."""
-		for provider in cls.AVAILABLE:
-			for m in provider["models"]:
-				if m["name"] == model_name:
-					return int(m.get("max_tokens") or 200_000)
-		return 200_000
+		m = cls.find(model_name)
+		return int((m or {}).get("max_tokens") or 200_000)
 
 	@classmethod
 	def estimate_cost(cls, model_name: str, prompt: int, completion: int, cached: int = 0) -> float | None:
-		"""Approximate USD cost of one call from the registry's per-1M prices.
-		Cache reads bill at a provider discount (~10% Anthropic, ~25% elsewhere).
-		Approximate by design — OpenRouter's exact cost isn't surfaced by litellm."""
-		inp, outp = cls.input_price(model_name), cls.output_price(model_name)
-		if outp is None or inp == float("inf"):
+		"""Approximate USD cost of one call. Uses the provider's exact cache-read
+		price when the live catalog has it; otherwise a discount heuristic
+		(~10% Anthropic, ~25% elsewhere)."""
+		m = cls.find(model_name)
+		if not m or m.get("output_price") is None or m.get("input_price") is None:
 			return None
-		factor = 0.1 if "/anthropic/" in model_name else 0.25
+		inp, outp = m["input_price"], m["output_price"]
+		cache_read = m.get("cache_read_price")
+		if cache_read is None:
+			cache_read = inp * (0.1 if "/anthropic/" in model_name else 0.25)
 		fresh = max(prompt - cached, 0)
-		return (fresh * inp + cached * inp * factor + completion * outp) / 1_000_000
+		return (fresh * inp + cached * cache_read + completion * outp) / 1_000_000
 
 	@classmethod
 	def get_simple(cls, model: str) -> str:
@@ -206,11 +197,8 @@ class ModelRegistry:
 		"""Whether this model accepts image input. Unknown models are treated as
 		text-only — sending an image a provider can't route kills the whole turn
 		(OpenRouter: 'No endpoints found that support image input')."""
-		for provider in cls.AVAILABLE:
-			for m in provider["models"]:
-				if m["name"] == model_name:
-					return bool(m.get("vision"))
-		return False
+		m = cls.find(model_name)
+		return bool(m.get("vision")) if m else False
 
 	@classmethod
 	def get_default(cls, model_or_provider: str) -> str:
@@ -218,4 +206,4 @@ class ModelRegistry:
 
 	@classmethod
 	def is_known_model(cls, model: str) -> bool:
-		return any(m["name"] == model for provider in cls.AVAILABLE for m in provider["models"])
+		return cls.find(model) is not None

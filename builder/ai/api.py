@@ -340,7 +340,7 @@ def revert_to_message(session_id: str, message_id: str):
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
-	return ModelRegistry.AVAILABLE
+	return ModelRegistry.available()
 
 
 @frappe.whitelist()
