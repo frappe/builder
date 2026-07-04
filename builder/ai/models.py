@@ -56,11 +56,11 @@ class ModelRegistry:
 	# data overrides them (see catalog()).
 	CURATED: ClassVar[list] = [
 		{
-			"name": "openrouter/anthropic/claude-sonnet-4.6",
-			"label": "Claude Sonnet 4.6",
+			"name": "openrouter/anthropic/claude-sonnet-5",
+			"label": "Claude Sonnet 5",
 			"max_tokens": 1_000_000,
-			"input_price": 3.0,
-			"output_price": 15.0,
+			"input_price": 2.0,
+			"output_price": 10.0,
 			"vision": True,
 		},
 		{
@@ -72,11 +72,19 @@ class ModelRegistry:
 			"vision": True,
 		},
 		{
-			"name": "openrouter/openai/gpt-5.4",
-			"label": "GPT-5.4",
+			"name": "openrouter/anthropic/claude-fable-5",
+			"label": "Claude Fable 5",
+			"max_tokens": 1_000_000,
+			"input_price": 10.0,
+			"output_price": 50.0,
+			"vision": True,
+		},
+		{
+			"name": "openrouter/openai/gpt-5.5",
+			"label": "GPT-5.5",
 			"max_tokens": 1_050_000,
-			"input_price": 2.5,
-			"output_price": 15.0,
+			"input_price": 5.0,
+			"output_price": 30.0,
 			"vision": True,
 		},
 		{
@@ -98,7 +106,7 @@ class ModelRegistry:
 	]
 
 	PROVIDER_DEFAULT: ClassVar[dict[str, str]] = {
-		"openrouter": "openrouter/anthropic/claude-sonnet-4.6",
+		"openrouter": "openrouter/anthropic/claude-sonnet-5",
 	}
 
 	PROVIDER_SIMPLE: ClassVar[dict[str, str]] = {
