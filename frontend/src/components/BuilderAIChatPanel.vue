@@ -349,12 +349,16 @@ const currentSessionTitle = computed(() => {
 });
 
 /** VS Code-style session switcher: this page's chats (current one checked),
- * plus delete for the current chat. */
+ * plus delete for the current chat. Titles are first prompts, so cap them —
+ * the dropdown sizes to its longest label and would sprawl across the canvas. */
+const truncateTitle = (title: string, max = 44) =>
+	title.length > max ? title.slice(0, max - 1).trimEnd() + "…" : title;
+
 const sessionOptions = computed(() => {
 	if (!sessions.value.length) return [];
 	return [
 		...sessions.value.map((s) => ({
-			label: s.title || "New chat",
+			label: truncateTitle(s.title || "New chat"),
 			icon: s.name === sessionId.value ? "lucide-check" : "lucide-message-circle",
 			onClick: () => switchSession(s.name),
 		})),
