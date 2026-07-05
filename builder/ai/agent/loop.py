@@ -246,6 +246,21 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 	}
 )
 
+# --- prompt-cache breakpoints (Claude via OpenRouter; stripped elsewhere) ------
+# Ported from the agent-v2 rewrite, where this scheme measured ~90% cache reads
+# on real multi-round builds (~80% input-cost cut). The system breakpoint holds
+# the prompt + tools; user turns are minutes apart, so the default 5-minute TTL
+# would expire between turns — 1h costs 2x to write but breaks even by the third
+# turn of a session.
+SYSTEM_CACHE_CONTROL = {"type": "ephemeral", "ttl": "1h"}
+TURN_CACHE_CONTROL = {"type": "ephemeral"}
+# Anthropic allows at most 4 cache_control markers per request.
+MAX_CACHE_MARKERS = 4
+# Anthropic matches an existing cache entry only within ~20 content blocks
+# behind a marker; long turns get a mid-turn anchor every this many messages so
+# consecutive rounds always land inside the lookback window.
+MID_TURN_MARKER_EVERY = 15
+
 
 def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
 	"""Render a page's block tree as model-readable context: the full compact YAML
@@ -428,6 +443,9 @@ class AgentRunner:
 		self.pending_client_ops: list[dict] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
+		# Cache-breakpoint anchors, set by build_messages (see refresh_cache_markers).
+		self.history_end_index = 0
+		self.prompt_index = 0
 		# Redis run-lock token for this session's turn (see AISession.start_run).
 		self.run_token: str | None = None
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
@@ -600,31 +618,26 @@ class AgentRunner:
 		return memory_context()
 
 	def build_messages(self) -> list[dict]:
-		messages: list[dict] = [
-			{
-				"role": "system",
-				"content": self.system_prompt,
-				"cache_control": {"type": "ephemeral"},
-			},
-		]
+		messages: list[dict] = [{"role": "system", "content": self.system_prompt}]
 
-		# The second cache breakpoint (the system prompt is the first): the page
-		# structure plus the site inventory (page-less turns get just the inventory).
-		# It's the largest stable block and is resent on every round of a multi-round
-		# turn, so caching it cuts both latency and input cost across the loop. The
-		# inventory is what lets the agent act on OTHER pages (read_page/open_page/
-		# manage_pages) without spending a discovery round-trip.
+		# Prior conversation FIRST, as proper role-tagged turns: old turns replay
+		# byte-stable from the session rows, so system + history stays a provider-
+		# cache prefix hit ACROSS turns. The page context goes after — it changes
+		# every turn and would otherwise invalidate everything behind it.
+		messages.extend(AISession.build_context_messages_from_id(self.session_id))
+		self.history_end_index = len(messages) - 1
+
+		# The page structure plus the site inventory (page-less turns get just the
+		# inventory). It's resent on every round of a multi-round turn, so a cache
+		# marker on the prompt right after it cuts both latency and input cost
+		# across the loop. The inventory is what lets the agent act on OTHER pages
+		# (read_page/open_page/manage_pages) without spending a discovery round-trip.
 		page_context = self.build_page_context()
 		site_context = self.build_site_context()
 		context = "\n\n".join(filter(None, [page_context, site_context, self.build_memory_context()]))
 		if context:
-			messages.append({"role": "user", "content": context, "cache_control": {"type": "ephemeral"}})
+			messages.append({"role": "user", "content": context})
 			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
-
-		# Prior conversation as proper role-tagged turns (not a flattened system
-		# blob) — the model handles dialogue better and we save the "User:"/
-		# "Assistant:" prefix tokens on every call.
-		messages.extend(AISession.build_context_messages_from_id(self.session_id))
 
 		user_text = self.prompt
 		if self.selected_block_ids:
@@ -641,7 +654,33 @@ class AgentRunner:
 			)
 		else:
 			messages.append({"role": "user", "content": user_text})
+		self.prompt_index = len(messages) - 1
 		return messages
+
+	def refresh_cache_markers(self, messages: list[dict]) -> None:
+		"""Re-derive the prompt-cache breakpoints before every LLM round (Claude
+		routes only benefit; llm.py strips the markers for other providers).
+		Deterministic positions: the system prompt (1h TTL), the end of the replayed
+		history (the prefix next turn's first request re-matches), the current user
+		prompt (the stable turn-start prefix), the newest message (caches this
+		round's prefix for the next), and a mid-turn anchor every
+		MID_TURN_MARKER_EVERY messages so a long turn's rounds stay inside
+		Anthropic's cache-lookback window. Capped at 4 markers, oldest dropped
+		first — their cache entries were already written by earlier rounds."""
+		for m in messages:
+			m.pop("cache_control", None)
+			if isinstance(m.get("content"), list):
+				for block in m["content"]:
+					if isinstance(block, dict):
+						block.pop("cache_control", None)
+		last = len(messages) - 1
+		positions = {0, max(self.history_end_index, 0), self.prompt_index, last}
+		span = last - self.prompt_index
+		if span > MID_TURN_MARKER_EVERY + 3:
+			anchor = self.prompt_index + MID_TURN_MARKER_EVERY * (span // MID_TURN_MARKER_EVERY)
+			positions.add(min(anchor, last))
+		for pos in sorted(positions)[-MAX_CACHE_MARKERS:]:
+			messages[pos]["cache_control"] = SYSTEM_CACHE_CONTROL if pos == 0 else TURN_CACHE_CONTROL
 
 	# --- LLM call ---------------------------------------------------------
 
@@ -1164,6 +1203,7 @@ class AgentRunner:
 
 		try:
 			for round_index in range(MAX_ROUNDS):
+				self.refresh_cache_markers(messages)
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 				self.record_round(round_index, tool_operations, summary_text)
 

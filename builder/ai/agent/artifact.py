@@ -142,7 +142,13 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	brief = (args.get("brief") or "").strip()
 
 	messages: list[dict] = [
-		{"role": "system", "content": Prompts.GENERATION_YAML, "cache_control": {"type": "ephemeral"}},
+		# 1h TTL: the generation system prompt is identical across every build on
+		# the site, so it stays a cache read from one page build to the next.
+		{
+			"role": "system",
+			"content": Prompts.GENERATION_YAML,
+			"cache_control": {"type": "ephemeral", "ttl": "1h"},
+		},
 	]
 	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
 	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))

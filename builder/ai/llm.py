@@ -88,16 +88,28 @@ TASK_PARAMS = {
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
 	"""Anthropic via OpenRouter reads cache_control from INSIDE a content block, not
 	from the message level (a message-level marker is silently ignored → full input
-	price every turn). For any Claude message that carries a cache_control marker with
-	plain string content, wrap it in a text block and move the marker inside. Mutates
-	in place. Callers set the markers (system prompt + page context); each becomes a
-	cache breakpoint, well within Anthropic's limit of four."""
-	if "claude-" in model:
-		for m in messages:
-			if isinstance(m.get("content"), str) and "cache_control" in m:
-				m["content"] = [
-					{"type": "text", "text": m["content"], "cache_control": m.pop("cache_control")}
-				]
+	price every turn). Relocate each marker set by the agent loop into the message's
+	last content block for Claude models; strip markers entirely for other providers
+	(their caching is implicit). Mutates in place."""
+	claude = "claude-" in model
+	for m in messages:
+		marker = m.pop("cache_control", None)
+		if not marker or not claude:
+			continue
+		content = m.get("content")
+		if isinstance(content, str) or content is None:
+			m["content"] = [{"type": "text", "text": content or "", "cache_control": marker}]
+		elif isinstance(content, list) and content:
+			content[-1] = {**content[-1], "cache_control": marker}
+
+
+def provider_kwargs(model: str) -> dict:
+	"""Pin Claude calls to the Anthropic route on OpenRouter: a fallback provider
+	would silently drop the cache breakpoints and re-bill the whole prefix at full
+	input price on every round."""
+	if model.startswith("openrouter/") and "claude-" in model:
+		return {"extra_body": {"provider": {"order": ["anthropic"], "allow_fallbacks": False}}}
+	return {}
 
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
@@ -125,6 +137,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		# Emit a final usage chunk while streaming so the loop can tally tokens per
 		# turn (dropped automatically for providers that don't support it).
 		**({"stream_options": {"include_usage": True}} if stream else {}),
+		**provider_kwargs(model),
 		**params,
 	)
 	if not stream:
@@ -181,6 +194,7 @@ def complete_with_tools(
 		timeout=120,  # see complete() — a stalled connection must fail, not wedge the turn
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),
+		**provider_kwargs(model),
 		**params,
 	)
 	if cas:
