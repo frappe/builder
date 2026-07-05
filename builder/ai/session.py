@@ -169,10 +169,12 @@ class AISession:
 	@classmethod
 	def collect_design_svgs(cls, session_id: str | None) -> list[str]:
 		"""The design-flow wireframes the user actually approved, for the generation
-		stream: the plan card's page-strip SVG, plus the SVG sketch of the layout
-		option the user tapped. Cards replay into the transcript as plain text where
-		svg renders as just '[sketch]', so generation would never see the approved
-		composition without this targeted extraction from message metadata."""
+		stream: the SVG sketch of the layout option the user tapped (plus the plan
+		card's page-strip SVG on older sessions — new plan cards carry a `mock` atom
+		instead, whose sections/colors replay as text). Cards replay into the
+		transcript as plain text where svg renders as just '[sketch]', so generation
+		would never see the approved composition without this targeted extraction
+		from message metadata."""
 		if not session_id:
 			return []
 		rows = frappe.db.get_all(

@@ -177,6 +177,16 @@ def render_element_text(el: dict) -> list[str]:
 		return [f"[image: {el.get('src') or ''}]"]
 	if kind == "svg":
 		return [f"[sketch: {el.get('caption')}]"] if el.get("caption") else ["[sketch]"]
+	if kind == "mock":
+		lines = []
+		for section in el.get("sections") or []:
+			name = section.get("headline") or section.get("name") or ""
+			detail = section.get("detail") or ""
+			lines.append(f"- {name} — {detail}" if detail else f"- {name}")
+		fonts = el.get("fonts") or {}
+		if fonts.get("heading") or fonts.get("body"):
+			lines.append(f"[fonts: {fonts.get('heading') or '—'} + {fonts.get('body') or '—'}]")
+		return lines
 	if kind == "choices":
 		return [option_text(o) for o in el.get("options") or []]
 	if kind == "input":
@@ -241,6 +251,12 @@ present_ui = Tool(
 					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
 					"{kind:'svg', svg, caption?} — small inline-SVG figure (sanitized; no scripts)\n"
+					"{kind:'mock', fonts:{heading, body}, sections:[{name, detail?, bg:'#hex', "
+					"ink:'#hex', headline?}]} — a rendered mini-page preview: one band per section "
+					"in its actual background/ink colours, the name (or the first section's real "
+					"headline) set in the real heading font, detail in the body font. THE preview "
+					"for plan cards — it IS the palette, typography and section list in one atom, "
+					"so never pair it with an svg wireframe, swatches, or a duplicate section list\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
 					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?, image:'https://…'?}]} — tappable option cards; "
 					"single-select submits immediately, multi collects. An option's `svg` is a "

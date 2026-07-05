@@ -57,6 +57,33 @@
 				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
 			</figure>
 
+			<!-- mock: a deterministic mini-page rendered from plan data (sections,
+			     palette, fonts) — replaces the model-drawn SVG strip AND the section
+			     list on plan cards. Real fonts, real colors, readable section names. -->
+			<div
+				v-else-if="el.kind === 'mock' && el.sections?.length"
+				class="w-full overflow-hidden rounded-md border border-outline-gray-2">
+				<div
+					v-for="(section, j) in el.sections.slice(0, 8)"
+					:key="j"
+					class="px-3"
+					:class="j === 0 ? 'py-5' : 'py-2.5'"
+					:style="{ backgroundColor: safeColor(section.bg), color: safeColor(section.ink) }">
+					<p
+						class="m-0 truncate leading-tight"
+						:class="j === 0 ? 'text-base font-bold' : 'text-xs font-semibold'"
+						:style="{ fontFamily: el.fonts?.heading }">
+						{{ section.headline || section.name }}
+					</p>
+					<p
+						v-if="section.detail"
+						class="m-0 mt-0.5 truncate text-[11px] leading-snug opacity-75"
+						:style="{ fontFamily: el.fonts?.body }">
+						{{ section.detail }}
+					</p>
+				</div>
+			</div>
+
 			<!-- divider -->
 			<hr v-else-if="el.kind === 'divider'" class="border-outline-gray-1" />
 
@@ -263,10 +290,15 @@ function controlLabel(i: number, el: UIElement): string {
 	return consumedAsLabel(i - 1) ? String(elements.value[i - 1].text || "") : "";
 }
 
-// Load the Google Fonts referenced by option specimens (cached in fontManager,
-// so re-renders are free). Heading fonts also need their bold face.
+// Load the Google Fonts referenced by option specimens and plan mocks (cached
+// in fontManager, so re-renders are free). Heading fonts also need their bold face.
 watchEffect(() => {
 	for (const el of elements.value) {
+		if (el.kind === "mock") {
+			if (el.fonts?.heading) setFont(el.fonts.heading, "700");
+			if (el.fonts?.body) setFont(el.fonts.body);
+			continue;
+		}
 		if (el.kind !== "choices") continue;
 		for (const option of el.options || []) {
 			if (option?.font?.heading) setFont(option.font.heading, "700");
@@ -274,6 +306,15 @@ watchEffect(() => {
 		}
 	}
 });
+
+/** Only plain CSS color literals reach inline styles — a url(...) or var() from
+ * the model must not become a style injection vector. */
+function safeColor(value: unknown): string | undefined {
+	const color = String(value ?? "").trim();
+	return /^(#[0-9a-fA-F]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\)|[a-zA-Z]{3,20})$/.test(color)
+		? color
+		: undefined;
+}
 
 // Collected state keyed by element index: multi-select picks, typed inputs,
 // uploaded file URLs.
