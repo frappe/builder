@@ -145,6 +145,34 @@ def looks_like_card_text(summary_text: str) -> bool:
 	return bool(summary_text) and bool(CARD_TEXT_RE.search(summary_text))
 
 
+# The subtler mimic: a question with enumerated options written as clean prose
+# ("Choose a typography pairing: • Syne + Albert Sans — … • …"). No card markup,
+# so CARD_TEXT_RE misses it — but the user gets a dead list instead of tappable
+# chips, and one such message in the history teaches the model to answer every
+# later question the same way (the design flow degrades permanently).
+BULLET_LINE_RE = re.compile(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+\S")
+ASKS_CHOICE_RE = re.compile(
+	r"(?mi)^\s*(?:choose|pick|select|which|what(?:'s| is)? your|would you (?:like|prefer)|let me know which)\b"
+)
+
+OPTIONS_AS_TEXT_CORRECTION = (
+	"You ended your turn by asking a question with a LIST OF OPTIONS as plain text — text "
+	"renders no controls, so the user has nothing to tap. Ask it again as ONE present_ui "
+	"call: a single short lead-in `text` atom, then a `choices` group with one option per "
+	"item (label + short description; include `font` for font pairings and `svg`+`colors` "
+	"for layout directions so previews render). A single-question card needs no extra "
+	"button. Do NOT repeat the options in your message text."
+)
+
+
+def asks_options_as_text(summary_text: str) -> bool:
+	"""True when a no-tool round poses a multi-option question as prose."""
+	text = (summary_text or "").strip()
+	if not text or len(BULLET_LINE_RE.findall(text)) < 2:
+		return False
+	return "?" in text or bool(ASKS_CHOICE_RE.search(text))
+
+
 # Weaker models sometimes emit a pseudo tool call as plain TEXT instead of calling
 # the tool ("calc:default_api:write_page_data_script{…}", "```tool_code…"). That
 # must never reach the chat as the turn's summary. Conservative signals only —
@@ -1087,14 +1115,18 @@ class AgentRunner:
 
 	def correction_for(self, summary_text: str) -> str | None:
 		"""A no-tool round that should have been a tool call gets EXACTLY ONE
-		corrective round. Two shapes: card markup written as plain text (mimicking
-		the persisted replay format — renders no controls), and a summary that
-		CLAIMS an edit when nothing was applied this turn (hallucinated success)."""
+		corrective round. Three shapes: card markup written as plain text (mimicking
+		the persisted replay format — renders no controls), a multi-option question
+		asked as prose bullets (same dead end, no markup to match), and a summary
+		that CLAIMS an edit when nothing was applied this turn (hallucinated
+		success)."""
 		if self.noop_corrected:
 			return None
 		correction = None
 		if looks_like_card_text(summary_text) or looks_like_json_card(summary_text):
 			correction = CARD_CORRECTION
+		elif asks_options_as_text(summary_text):
+			correction = OPTIONS_AS_TEXT_CORRECTION
 		elif (
 			not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text)
 		):
@@ -1103,9 +1135,14 @@ class AgentRunner:
 			return None
 		self.noop_corrected = True
 		self.stop_reason = "noop_retry"
+		kind = {
+			id(CARD_CORRECTION): "card-as-text",
+			id(OPTIONS_AS_TEXT_CORRECTION): "options-as-text",
+			id(NOOP_CORRECTION): "no-op claim",
+		}[id(correction)]
 		logger.warning(
 			"No-tool round corrected (%s): %s",
-			"card-as-text" if correction is CARD_CORRECTION else "no-op claim",
+			kind,
 			BlockCodec.truncate_for_log(summary_text, 300),
 		)
 		return correction
