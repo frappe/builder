@@ -10,6 +10,8 @@ import logging
 import frappe
 import litellm
 
+from builder.ai import cassette
+
 litellm.drop_params = True
 
 logger = frappe.logger("builder.ai.llm")
@@ -107,6 +109,9 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
+	cas = cassette.config()
+	if cas and cas["mode"] == "replay":
+		return cassette.replay_call(cas, model, messages, stream)
 	resp = litellm.completion(
 		model=model,
 		messages=messages,
@@ -125,7 +130,26 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	if not stream:
 		content = resp.choices[0].message.content or ""
 		logger.info(f"LLM response | length={len(content)}\n{content}")
+		if cas:
+			cassette.append_record(
+				cas["episode"],
+				{
+					"seq": cassette.next_seq(cas["episode"]),
+					"kind": "text",
+					"model": model,
+					"hash": cassette.prompt_hash(model, messages),
+					"content": content,
+				},
+			)
 		return content
+	if cas:
+		return cassette.record_stream(
+			cas["episode"],
+			cassette.next_seq(cas["episode"]),
+			model,
+			cassette.prompt_hash(model, messages),
+			resp,
+		)
 	return resp
 
 
@@ -144,7 +168,10 @@ def complete_with_tools(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
-	return litellm.completion(
+	cas = cassette.config()
+	if cas and cas["mode"] == "replay":
+		return cassette.replay_call(cas, model, messages, stream)
+	resp = litellm.completion(
 		model=model,
 		messages=messages,
 		tools=tools,
@@ -156,3 +183,19 @@ def complete_with_tools(
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**params,
 	)
+	if cas:
+		seq = cassette.next_seq(cas["episode"])
+		phash = cassette.prompt_hash(model, messages)
+		if stream:
+			return cassette.record_stream(cas["episode"], seq, model, phash, resp)
+		cassette.append_record(
+			cas["episode"],
+			{
+				"seq": seq,
+				"kind": "response",
+				"model": model,
+				"hash": phash,
+				"data": cassette.serialize_chunk(resp),
+			},
+		)
+	return resp
