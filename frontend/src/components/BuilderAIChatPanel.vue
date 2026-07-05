@@ -59,9 +59,20 @@
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div
 					v-if="!messages.length"
-					class="flex h-full flex-col items-center justify-center gap-2 pb-8 text-center">
-					<SparklesIcon class="size-8 text-ink-gray-3" />
-					<p class="text-xs text-ink-gray-4">Chat with Bob to create or edit page</p>
+					class="flex h-full flex-col items-center justify-center gap-5 pb-8 text-center">
+					<SparklesIcon class="size-7 text-ink-gray-4" />
+					<p class="text-lg font-semibold text-ink-gray-9">
+						{{ pageHasContent ? "Describe a change" : "Describe your site" }}
+					</p>
+					<div class="flex w-full max-w-[280px] flex-col items-stretch gap-2">
+						<button
+							v-for="suggestion in promptSuggestions"
+							:key="suggestion"
+							class="truncate rounded-full border border-outline-gray-2 px-4 py-2 text-p-sm text-ink-gray-6 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-1 hover:text-ink-gray-8"
+							@click="useSuggestion(suggestion)">
+							{{ suggestion }}
+						</button>
+					</div>
 				</div>
 				<div
 					v-for="message in messages"
@@ -250,6 +261,7 @@
 					@dragleave="isDragging = false"
 					@drop.prevent="handleDrop">
 					<textarea
+						ref="promptInput"
 						v-model="prompt"
 						rows="4"
 						class="hover:border-outline-gray-modals focus:bg-surface-white w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
@@ -336,6 +348,7 @@ import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { formatCost } from "@/components/ai/format";
 import { renderMarkdown } from "@/components/ai/markdown";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -404,8 +417,30 @@ function pendingPreview(m: Record<string, any>): string {
 	}
 }
 const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
+
+// --- Empty-state suggestions -------------------------------------------------
+// Fresh page → describe the site to build; page with content → describe a change.
+// Tapping a pill prefills the prompt (it's an example to personalise, not a command).
+const pageHasContent = computed(() => (canvasStore.activeCanvas?.getRootBlock()?.children?.length ?? 0) > 0);
+const BUILD_SUGGESTIONS = [
+	"A site for my bakery in Pune",
+	"Portfolio for a photographer",
+	"Landing page + blog for my app",
+];
+const EDIT_SUGGESTIONS = [
+	"Add a testimonials section",
+	"Make the hero more dramatic",
+	"Rework this page in a dark theme",
+];
+const promptSuggestions = computed(() => (pageHasContent.value ? EDIT_SUGGESTIONS : BUILD_SUGGESTIONS));
+const promptInput = ref<HTMLTextAreaElement | null>(null);
+function useSuggestion(text: string) {
+	prompt.value = text;
+	promptInput.value?.focus();
+}
 
 // --- Turn debugger ---------------------------------------------------------
 const debugOpen = ref(false);
