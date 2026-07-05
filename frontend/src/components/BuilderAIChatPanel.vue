@@ -66,13 +66,14 @@
 						<p class="text-p-xs text-ink-gray-5">Try one of these, or type your own below</p>
 					</div>
 					<div class="flex w-full flex-col gap-2">
-						<button
+						<Button
 							v-for="suggestion in promptSuggestions"
 							:key="suggestion.label"
-							class="truncate rounded-md bg-surface-gray-2 px-3 py-2 text-left text-p-base text-ink-gray-7 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-9"
+							variant="subtle"
+							size="xs"
 							@click="useSuggestion(suggestion)">
 							{{ suggestion.label }}
-						</button>
+						</Button>
 					</div>
 				</div>
 				<div
@@ -406,7 +407,9 @@ function pendingPreview(m: Record<string, any>): string {
 		case "create_doctype":
 			return `Create a new DocType “${p.name}” with ${(p.fields || []).length} field(s).`;
 		case "connect_form":
-			return `Save this form's submissions to a new “${p.doctype_name}” DocType (${(p.fields || []).length} field(s)) — you'll see entries in Desk.`;
+			return `Save this form's submissions to a new “${p.doctype_name}” DocType (${
+				(p.fields || []).length
+			} field(s)) — you'll see entries in Desk.`;
 		case "seed_sample_data":
 			return `Insert ${(p.rows || []).length} sample record(s) into “${p.doctype}”.`;
 		case "global_settings":
