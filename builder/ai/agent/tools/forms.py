@@ -13,6 +13,8 @@ the submission DocType needs NO guest permission.
 The user then reads submissions in Desk at /app/<doctype>.
 """
 
+import re
+
 import frappe
 from frappe.model import child_table_fields, default_fields
 
@@ -48,11 +50,38 @@ def safe_fieldname(fieldname: str) -> str:
 	return f"{fieldname}_field" if fieldname in RESERVED_FIELDNAMES else fieldname
 
 
+def connected_submission_doctype(page_id: str) -> str | None:
+	"""The submission DocType a form on this page already saves to, if any — read
+	from the attached 'Save <doctype> submissions' client script. Lets a "where do
+	my submissions go?" question be answered instead of creating a duplicate."""
+	if not page_id or not frappe.db.exists("Builder Page", page_id):
+		return None
+	names = frappe.get_all(
+		"Builder Page Client Script",
+		filters={"parent": page_id, "parenttype": "Builder Page"},
+		pluck="builder_script",
+	)
+	for name in names:
+		m = re.match(r"^Save (.+) submissions$", name or "")
+		if m and frappe.db.exists("DocType", m.group(1)):
+			return m.group(1)
+	return None
+
+
 def request_connect_form(ctx, args: dict) -> str | None:
 	"""Validate the proposal and raise the confirm card. Nothing is created until
 	the user approves (see pending.apply_connect_form)."""
 	if not getattr(ctx, "page_id", None):
 		return "DECLINED: no page is open — build the form's page first."
+	# A form here is already wired — very likely a "where do submissions go?" ask.
+	# Answer with the existing DocType; don't create a duplicate (unless forced).
+	if not args.get("force_new") and (connected := connected_submission_doctype(ctx.page_id)):
+		return (
+			f"ALREADY CONNECTED: a form on this page saves to the '{connected}' DocType — its "
+			f"submissions are in Desk at /app/{desk_slug(connected)}. Do NOT create a new doctype; "
+			f"just tell the user where to find the entries (give that link). Only pass force_new=true "
+			f"if they explicitly want a SEPARATE, additional form."
+		)
 	doctype = (args.get("doctype_name") or "").strip()
 	fields = [f for f in (args.get("fields") or []) if isinstance(f, dict) and f.get("fieldname")]
 	selector = (args.get("form_selector") or "").strip()
@@ -148,6 +177,10 @@ connect_form_tool = Tool(
 			"form_selector": {
 				"type": "string",
 				"description": "CSS selector of the <form> or its container block, e.g. '.reservation-form'.",
+			},
+			"force_new": {
+				"type": "boolean",
+				"description": "Only set true to add a SEPARATE form when the page already has a connected one.",
 			},
 		},
 		"required": ["doctype_name", "fields", "form_selector"],
