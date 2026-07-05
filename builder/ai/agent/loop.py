@@ -592,6 +592,13 @@ class AgentRunner:
 		]
 		return "Pages on this site (id | route | title | status):\n" + "\n".join(lines)
 
+	def build_memory_context(self) -> str:
+		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
+		the cached context block, so remembering costs nothing per-round."""
+		from builder.ai.agent.tools.memory import memory_context
+
+		return memory_context()
+
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [
 			{
@@ -609,7 +616,7 @@ class AgentRunner:
 		# manage_pages) without spending a discovery round-trip.
 		page_context = self.build_page_context()
 		site_context = self.build_site_context()
-		context = f"{page_context}\n\n{site_context}" if page_context else site_context
+		context = "\n\n".join(filter(None, [page_context, site_context, self.build_memory_context()]))
 		if context:
 			messages.append({"role": "user", "content": context, "cache_control": {"type": "ephemeral"}})
 			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
