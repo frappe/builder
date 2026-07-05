@@ -97,6 +97,13 @@ def normalize_value(prop: str, value):
 			return KEYWORD_VALUE_FIX[v]
 		if prop in LENGTH_PROPS and BARE_NUMBER.match(v) and v != "0":
 			return f"{v}px"
+		# Unquoted `var(--x, #hex)` in YAML loses everything from " #" on (comment):
+		# the value arrives as "var(--x," — valid as a lenient inline style (the editor
+		# looks right) but dropped by the compiled stylesheet (published page breaks).
+		# Reclose the parens; the lost fallback is redundant (the token itself resolves).
+		if "(" in v and v.count("(") > v.count(")"):
+			v = v.rstrip(", ")
+			v += ")" * (v.count("(") - v.count(")"))
 		return v
 	if isinstance(value, (int, float)) and not isinstance(value, bool):
 		if prop in LENGTH_PROPS and value != 0:
