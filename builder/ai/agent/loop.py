@@ -320,7 +320,7 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
 	if tool_name == "query_blocks":
 		return "Searched blocks"
-	if tool_name == "set_theme_variable":
+	if tool_name == "set_design_token":
 		return f"Set --{args['name']}" if args.get("name") else "Set theme variable"
 	if tool_name == "set_page_script":
 		return f"Added script: {args.get('name') or ''}".rstrip(": ")

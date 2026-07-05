@@ -10,7 +10,7 @@ from frappe.utils.caching import redis_cache
 from frappe.website.utils import delete_page_cache
 
 
-class BuilderVariable(Document):
+class BuilderToken(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -24,7 +24,7 @@ class BuilderVariable(Document):
 		is_standard: DF.Check
 		type: DF.Literal["Color", "Dimension"]
 		value: DF.Data
-		variable_name: DF.Data
+		token_name: DF.Data
 	# end: auto-generated types
 
 	def autoname(self):
@@ -32,37 +32,37 @@ class BuilderVariable(Document):
 			self.name = str(uuid.uuid4())
 
 	def after_insert(self):
-		clear_builder_variable_cache()
+		clear_builder_token_cache()
 
 	def on_update(self):
-		clear_builder_variable_cache()
+		clear_builder_token_cache()
 		if self.is_standard:
 			export_to_files(
-				record_list=[["Builder Variable", self.name, "builder_variable"]], record_module="builder"
+				record_list=[["Builder Token", self.name, "builder_token"]], record_module="builder"
 			)
 
 		if self.has_value_changed("is_standard") and not self.is_standard:
-			delete_folder("builder", "builder_variable", self.name)
+			delete_folder("builder", "builder_token", self.name)
 
 	def on_trash(self):
-		clear_builder_variable_cache()
+		clear_builder_token_cache()
 		if self.is_standard:
-			delete_folder("builder", "builder_variable", self.name)
+			delete_folder("builder", "builder_token", self.name)
 
 
 @redis_cache(ttl=10 * 24 * 3600)
 def get_css_variables():
-	builder_variables = frappe.get_all("Builder Variable", fields=["name", "value", "dark_value"])
+	builder_tokens = frappe.get_all("Builder Token", fields=["name", "value", "dark_value"])
 	css_variables = {}
 	dark_mode_css_variables = {}
 
-	for builder_variable in builder_variables:
-		if not builder_variable.value:
+	for builder_token in builder_tokens:
+		if not builder_token.value:
 			continue
-		key = f"--{builder_variable.name}"
-		css_variables[key] = builder_variable.value
-		if builder_variable.dark_value:
-			dark_mode_css_variables[key] = builder_variable.dark_value
+		key = f"--{builder_token.name}"
+		css_variables[key] = builder_token.value
+		if builder_token.dark_value:
+			dark_mode_css_variables[key] = builder_token.dark_value
 
 	return css_variables, dark_mode_css_variables
 
@@ -70,10 +70,10 @@ def get_css_variables():
 def get_variables_css() -> str:
 	"""Render the CSS variables as an inline `:root {...}` rule.
 
-	The /builder_assets/variables.css route is a dynamically rendered page, not a
+	The /builder_assets/tokens.css route is a dynamically rendered page, not a
 	real file, so the preview/PDF generator can't fetch it (it blocks access to
 	non-existent local paths). Preview rendering inlines this string instead of
-	linking the route. Mirrors www/builder_assets/variables.css."""
+	linking the route. Mirrors www/builder_assets/tokens.css."""
 	css_variables, dark_mode_css_variables = get_css_variables()
 	if not css_variables:
 		return ""
@@ -89,7 +89,7 @@ def get_variables_css() -> str:
 	return ":root {\n" + "\n".join(declarations) + "\n}"
 
 
-def clear_builder_variable_cache(doc=None, method=None):
+def clear_builder_token_cache(doc=None, method=None):
 	get_css_variables.clear_cache()
-	# bust the rendered page cache for /builder_assets/variables.css
-	delete_page_cache("builder_assets/variables.css")
+	# bust the rendered page cache for /builder_assets/tokens.css
+	delete_page_cache("builder_assets/tokens.css")

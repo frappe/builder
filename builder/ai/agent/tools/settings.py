@@ -51,20 +51,20 @@ def emit_refetch(ctx, *resources: str) -> None:
 
 
 def clean_variable_id(raw: str) -> str:
-	"""A Builder Variable's doc name doubles as its CSS custom-property name, so it
+	"""A Builder Token's doc name doubles as its CSS custom-property name, so it
 	must be a valid css ident: lowercase, [a-z0-9_-] only."""
 	return re.sub(r"[^a-z0-9_-]+", "-", (raw or "").strip().lower()).strip("-")
 
 
-def set_theme_variable(ctx, args: dict) -> str:
-	"""Create or update a site theme token (Builder Variable). The CSS handle is
-	var(--<doc name>); variable_name is only the human label. An explicit `id`
+def set_design_token(ctx, args: dict) -> str:
+	"""Create or update a site theme token (Builder Token). The CSS handle is
+	var(--<doc name>); token_name is only the human label. An explicit `id`
 	becomes the doc name, so the caller knows the handle before creating it. The
 	result names the exact handle so the model references something that resolves."""
-	label = (args.get("variable_name") or "").strip().lstrip("-")
+	label = (args.get("token_name") or "").strip().lstrip("-")
 	value = (args.get("value") or "").strip()
 	if not label or not value:
-		return "variable_name and value are required."
+		return "token_name and value are required."
 	fields = {
 		"type": args.get("type") if args.get("type") in ("Color", "Dimension") else "Color",
 		"value": value,
@@ -73,20 +73,20 @@ def set_theme_variable(ctx, args: dict) -> str:
 	wanted_id = clean_variable_id(args.get("id") or "")
 	# The model may pass the label OR the id/handle it saw in query_records.
 	existing = (
-		(wanted_id and frappe.db.exists("Builder Variable", wanted_id))
-		or frappe.db.exists("Builder Variable", label)
-		or frappe.db.exists("Builder Variable", {"variable_name": label})
+		(wanted_id and frappe.db.exists("Builder Token", wanted_id))
+		or frappe.db.exists("Builder Token", label)
+		or frappe.db.exists("Builder Token", {"token_name": label})
 	)
 	if existing:
-		doc = frappe.get_doc("Builder Variable", existing)
+		doc = frappe.get_doc("Builder Token", existing)
 		doc.update(fields)
 		# Full save (not db.set_value) so on_update busts the rendered-CSS cache.
 		doc.save(ignore_permissions=True)
 		frappe.db.commit()
 		emit_refetch(ctx, "variables")
-		return f"Updated theme variable '{doc.variable_name}' — reference it in styles as var(--{doc.name})."
+		return f"Updated theme variable '{doc.token_name}' — reference it in styles as var(--{doc.name})."
 	doc = frappe.get_doc(
-		{"doctype": "Builder Variable", "variable_name": label, "group": "Brand", **fields}
+		{"doctype": "Builder Token", "token_name": label, "group": "Brand", **fields}
 		# set_name survives naming (insert clears doc.name before autoname runs),
 		# so the caller can know the var(--<id>) handle before the doc exists.
 	).insert(ignore_permissions=True, set_name=wanted_id or None)
@@ -153,11 +153,11 @@ set_page_settings_tool = Tool(
 	handler=set_page_settings,
 )
 
-set_theme_variable_tool = Tool(
-	name="set_theme_variable",
+set_design_token_tool = Tool(
+	name="set_design_token",
 	side="server",
 	description=(
-		"Create or update a site theme token (Builder Variable). Use for brand "
+		"Create or update a site theme token (Builder Token). Use for brand "
 		"colours/dimensions so the whole site restyles from one place. The result names the "
 		"exact CSS handle to use in styles — var(--<id>). Pass an explicit `id` (e.g. "
 		"'acme-ink') to CHOOSE that handle upfront, so you can write var(--acme-ink) in "
@@ -167,7 +167,7 @@ set_theme_variable_tool = Tool(
 	parameters={
 		"type": "object",
 		"properties": {
-			"variable_name": {
+			"token_name": {
 				"type": "string",
 				"description": "Human label, e.g. Brand Primary.",
 			},
@@ -183,9 +183,9 @@ set_theme_variable_tool = Tool(
 			"dark_value": {"type": "string"},
 			"type": {"type": "string", "enum": ["Color", "Dimension"]},
 		},
-		"required": ["variable_name", "value"],
+		"required": ["token_name", "value"],
 	},
-	handler=set_theme_variable,
+	handler=set_design_token,
 )
 
 set_home_page_tool = Tool(
@@ -227,7 +227,7 @@ publish_site_tool = Tool(
 
 TOOLS = [
 	set_page_settings_tool,
-	set_theme_variable_tool,
+	set_design_token_tool,
 	set_home_page_tool,
 	edit_global_settings_tool,
 	publish_site_tool,

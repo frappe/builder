@@ -11,18 +11,18 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class UnitTestbuilderVariable(UnitTestCase):
+class UnitTestbuilderToken(UnitTestCase):
 	"""
-	Unit tests for builderVariable.
+	Unit tests for builderToken.
 	Use this class for testing individual functions and methods.
 	"""
 
 	pass
 
 
-class IntegrationTestbuilderVariable(IntegrationTestCase):
+class IntegrationTestbuilderToken(IntegrationTestCase):
 	"""
-	Integration tests for builderVariable.
+	Integration tests for builderToken.
 	Use this class for testing interactions between multiple components.
 	"""
 

@@ -1,7 +1,7 @@
 import type Block from "@/block";
 import { BatchTracker } from "@/components/ai/batches";
 import { setCostCurrency } from "@/components/ai/format";
-import builderVariables from "@/data/builderVariable";
+import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
 import type { AIProvider, ChatMessage } from "@/components/ai/types";
@@ -465,7 +465,7 @@ export class AIChatController {
 	onRefetch = async (data: { resources?: string[] }) => {
 		const resources = data.resources || [];
 		if (resources.includes("variables")) {
-			builderVariables.reload();
+			builderTokens.reload();
 		}
 		if (resources.includes("page_data") || resources.includes("page")) {
 			const page = await this.pageStore.fetchActivePage(this.pageId.value).catch(() => null);

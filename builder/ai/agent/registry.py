@@ -169,7 +169,7 @@ def build_orchestrator_registry() -> ToolRegistry:
 		pick(
 			settings.TOOLS,
 			{
-				"set_theme_variable",
+				"set_design_token",
 				"set_page_settings",
 				"set_home_page",
 				"edit_global_settings",
@@ -206,6 +206,6 @@ def build_subagent_registry() -> ToolRegistry:
 			},
 		)
 	)
-	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_theme_variable"}))
+	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_design_token"}))
 	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	return registry

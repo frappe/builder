@@ -2,9 +2,9 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderVariable } from "@/types/doctypes";
+import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderToken } from "@/types/doctypes";
 
-import builderVariables from "@/data/builderVariable";
+import builderTokens from "@/data/builderToken";
 import {
 	copyToClipboard,
 	detachBlockFromComponent,
@@ -43,7 +43,7 @@ type BuilderPageSettings = Pick<
 interface BuilderClipboardData {
 	blocks: (Block | BlockOptions)[];
 	components: BuilderComponent[];
-	variables?: BuilderVariable[];
+	variables?: BuilderToken[];
 	sourceURL?: string;
 	pageDoc?: BuilderPageSettings;
 	pageScripts?: BuilderClientScript[];
@@ -96,9 +96,9 @@ export function copyBuilderBlocks(
 		return blockCopy;
 	});
 
-	const variableDocuments: BuilderVariable[] = [];
+	const variableDocuments: BuilderToken[] = [];
 	for (const variableName of variableNames) {
-		const variable = builderVariables.data?.find((v: BuilderVariable) => v.name === variableName);
+		const variable = builderTokens.data?.find((v: BuilderToken) => v.name === variableName);
 		if (variable) {
 			variableDocuments.push(variable);
 		}
@@ -230,17 +230,17 @@ async function handleVariables(clipboardData: BuilderClipboardData, crossSitePas
 			variable.name = newName;
 			idMap.set(originalName, newName);
 			try {
-				await builderVariables.insert.submit(variable);
+				await builderTokens.insert.submit(variable);
 			} catch (error: any) {
 				if (error?.response?.status === 409) {
-					await builderVariables.setValue.submit(variable);
+					await builderTokens.setValue.submit(variable);
 				}
 			}
 		} else {
-			const existing = builderVariables.data?.find((v: BuilderVariable) => v.name === variable.name);
+			const existing = builderTokens.data?.find((v: BuilderToken) => v.name === variable.name);
 			if (!existing) {
 				try {
-					await builderVariables.insert.submit(variable);
+					await builderTokens.insert.submit(variable);
 				} catch (error: any) {
 					if (error?.response?.status !== 409) {
 						console.error("Error inserting variable:", error);

@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "is_standard",
-  "variable_name",
+  "token_name",
   "group",
   "type",
   "value",
@@ -28,7 +28,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "variable_name",
+   "fieldname": "token_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Variable Name",
@@ -61,7 +61,7 @@
  "modified": "2026-05-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder Variable",
+ "name": "Builder Token",
  "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
@@ -89,5 +89,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "variable_name"
+ "title_field": "token_name"
 }

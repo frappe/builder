@@ -290,7 +290,7 @@ get_document_tool = Tool(
 		"to answer 'what is X'. Examples: get_document('Website Settings') for the site home page "
 		"and brand; get_document('Builder Settings') for global head/body/script HTML; "
 		"get_document('Builder Page', <page_id>) for a page's route/SEO/settings; "
-		"get_document('Builder Variable', <name>) for a theme token's value. Omit 'name' for Single "
+		"get_document('Builder Token', <name>) for a theme token's value. Omit 'name' for Single "
 		"doctypes. Pass 'fields' to read only some. Discover doctypes/fields with list_doctypes / "
 		"get_doctype_schema."
 	),

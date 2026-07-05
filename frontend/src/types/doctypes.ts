@@ -54,13 +54,13 @@ export interface UserFont extends DocType {
 }
 
 // Last updated: 2026-05-24 12:00:00.000000
-export interface BuilderVariable extends DocType {
+export interface BuilderToken extends DocType {
   /** Type: Select */
   type?: 'Color' | 'Dimension';
   /** Value: Data */
   value: string;
   /** Variable Name: Data */
-  variable_name: string;
+  token_name: string;
   /** Is Standard: Check */
   is_standard: 0 | 1;
   /** Dark Value: Data */
