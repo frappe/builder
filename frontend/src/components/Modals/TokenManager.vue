@@ -209,6 +209,18 @@
 											@dblclick="startEdit(row, 'token_name')">
 											{{ row.token_name || "unnamed" }}
 										</div>
+										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
+										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
+											<button
+												class="ml-auto mr-1 hidden shrink-0 rounded p-1 text-ink-gray-4 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-7 group-hover/row:flex"
+												:class="{ '!flex text-ink-green-6': copiedId === row.id }"
+												@mousedown.stop
+												@click.stop="copyHandle(row)">
+												<span
+													:class="copiedId === row.id ? 'lucide-check' : 'lucide-copy'"
+													class="size-3.5" />
+											</button>
+										</Tooltip>
 									</div>
 									<!-- Value (Font/Dimension): plain text cell, dblclick to edit -->
 									<div
@@ -417,6 +429,20 @@ const {
 const csvFileInput = ref<HTMLInputElement>();
 const activeType = ref<"Color" | "Font" | "Dimension">("Color");
 const isColorType = computed(() => activeType.value === "Color");
+
+// Copy a token's CSS handle — var(--<doc-id>) — for pasting into any style field.
+const copiedId = ref<string | null>(null);
+const copyHandle = async (row: Row) => {
+	if (!row.name) return;
+	const handle = `var(--${row.name})`;
+	try {
+		await navigator.clipboard.writeText(handle);
+		copiedId.value = row.id;
+		setTimeout(() => (copiedId.value = null), 1200);
+	} catch {
+		toast.error("Couldn't copy to clipboard");
+	}
+};
 // Total tokens per type — shown as a count pill on each tab (search-independent
 // so the numbers stay stable while filtering within a tab).
 const tokenCounts = computed<Record<string, number>>(() => {
