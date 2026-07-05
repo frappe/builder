@@ -99,9 +99,14 @@ function builderTokenComposable() {
 		await builderTokenStore.delete.submit(name);
 	};
 
+	const fontTokens = computed(() =>
+		(builderTokenStore.data || []).filter((t: BuilderToken) => t.type === "Font" && t.value),
+	);
+
 	return {
 		cssVariables,
 		darkCssVariables,
+		fontTokens,
 		resolveVariableValue,
 		getVariableName,
 		createVariable,

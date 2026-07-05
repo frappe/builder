@@ -7,6 +7,7 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -43,6 +44,24 @@ const typographySectionProperties = [
 				propertyKey: "fontFamily",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
+					// Font design tokens first: picking one stores var(--id), so retheming
+					// the token updates every block bound to it.
+					const { fontTokens } = useBuilderToken();
+					const matchingTokens = fontTokens.value.filter(
+						(t: any) =>
+							!filterString ||
+							(t.token_name || t.value).toLowerCase().includes(filterString.toLowerCase()) ||
+							t.value.toLowerCase().includes(filterString.toLowerCase()),
+					);
+					if (matchingTokens.length) {
+						fontOptions.push({ label: "Design tokens", value: "_separator_0" });
+						matchingTokens.forEach((t: any) =>
+							fontOptions.push({
+								label: `${t.token_name || t.value} (${t.value})`,
+								value: `var(--${t.name})`,
+							}),
+						);
+					}
 					userFonts.data?.forEach((font: UserFont) => {
 						if (fontOptions.length >= 20) {
 							return;

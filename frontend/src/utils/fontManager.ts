@@ -1,4 +1,5 @@
 import userFont from "@/data/userFonts";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import fontList from "@/utils/fontList.json";
 
 type FontWeight = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
@@ -71,6 +72,14 @@ function loadGoogleFont(font: string, weight?: string): Promise<string> {
 
 export function setFont(font: string | null, weight?: string): Promise<string> {
 	if (!font) return Promise.resolve("");
+	// A Font design token (fontFamily: var(--id)) resolves to its family before
+	// loading — no caller needs to know whether a style is tokenized.
+	if (font.includes("var(")) {
+		const { resolveVariableValue } = useBuilderToken();
+		const resolved = resolveVariableValue(font);
+		if (resolved === font) return Promise.resolve(font); // unknown token: nothing to load
+		font = resolved;
+	}
 	const cacheKey = weight ? `${font}:${weight}` : font;
 	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
