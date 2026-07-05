@@ -3,10 +3,8 @@
 		<!-- Summary card: status + model, primary stat tiles, context meter -->
 		<div class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-gray-1">
 			<div class="flex items-center justify-between gap-3 border-b border-outline-gray-2 px-4 py-2.5">
-				<span
-					class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-					:class="stopPill.class">
-					<span class="size-1.5 rounded-full" :class="stopPill.dot" />
+				<span class="inline-flex items-center gap-1.5 text-xs font-medium" :class="stopPill.text">
+					<span class="size-2 rounded-full" :class="stopPill.dot" />
 					{{ stopPill.label }}
 				</span>
 				<span class="truncate font-mono text-xs text-ink-gray-5" :title="modelLabel">{{ modelLabel }}</span>
@@ -75,10 +73,10 @@
 				<div v-for="(round, idx) in trace" :key="idx" class="relative flex gap-3 pb-4 last:pb-0">
 					<div class="flex flex-col items-center">
 						<span
-							class="ring-surface-white z-10 grid size-6 shrink-0 place-items-center rounded-full bg-surface-gray-3 font-mono text-[11px] font-semibold text-ink-gray-7 ring-4">
+							class="z-10 grid size-5 shrink-0 place-items-center rounded-full bg-surface-gray-3 font-mono text-[10px] font-semibold text-ink-gray-6">
 							{{ (round.round ?? idx) + 1 }}
 						</span>
-						<span v-if="idx < trace.length - 1" class="bg-outline-gray-2 -mb-4 w-px flex-1" />
+						<span v-if="idx < trace.length - 1" class="bg-outline-gray-2 -mb-4 mt-1 w-px flex-1" />
 					</div>
 					<div class="min-w-0 flex-1 pt-0.5">
 						<div v-if="round.tools?.length" class="flex flex-col gap-2">
@@ -190,11 +188,11 @@ const modelLabel = computed(() => (props.debug?.loopModel || "?").replace(/^open
 const stopPill = computed(() => {
 	const meta = STOP_META[props.debug?.stopReason] || { label: props.debug?.stopReason || "?", tone: "warn" };
 	const map = {
-		good: { class: "bg-surface-green-2 text-ink-green-8", dot: "bg-ink-green-6" },
-		bad: { class: "bg-surface-red-2 text-ink-red-8", dot: "bg-ink-red-6" },
-		warn: { class: "bg-surface-amber-2 text-ink-amber-8", dot: "bg-ink-amber-6" },
+		good: { text: "text-ink-green-7", dot: "bg-ink-green-5" },
+		bad: { text: "text-ink-red-7", dot: "bg-ink-red-5" },
+		warn: { text: "text-ink-amber-7", dot: "bg-ink-amber-5" },
 	}[meta.tone];
-	return { label: meta.label, class: map.class, dot: map.dot };
+	return { label: meta.label, text: map.text, dot: map.dot };
 });
 
 // The four headline tiles: cost (credits), tokens (+ cache read), latency, rounds.
