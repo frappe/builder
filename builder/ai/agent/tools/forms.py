@@ -14,6 +14,7 @@ The user then reads submissions in Desk at /app/<doctype>.
 """
 
 import frappe
+from frappe.model import child_table_fields, default_fields
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
@@ -21,6 +22,27 @@ from builder.ai.agent.registry import Tool
 # Fieldtypes a public form can safely write. Anything else (Link, Table, Attach…)
 # is coerced to Data so a guest submission can't reach into other doctypes/files.
 SAFE_FIELDTYPES = {"Data", "Small Text", "Text", "Int", "Float", "Check", "Select", "Date", "Datetime"}
+
+# Fieldnames Frappe reserves (every doc has `name`, `owner`, `parent`, …). A form
+# input called "name" would otherwise crash DocType creation ("Fieldname name is
+# restricted"), so the DocType field is renamed (`name` → `name_field`) while the
+# input keeps its own name attribute — the wiring script maps between them.
+RESERVED_FIELDNAMES = (
+	set(default_fields)
+	| set(child_table_fields)
+	| {
+		"name",
+		"parent",
+		"idx",
+		"naming_series",
+		"amended_from",
+		"workflow_state",
+	}
+)
+
+
+def safe_fieldname(fieldname: str) -> str:
+	return f"{fieldname}_field" if fieldname in RESERVED_FIELDNAMES else fieldname
 
 
 def request_connect_form(ctx, args: dict) -> str | None:
@@ -57,8 +79,10 @@ def request_connect_form(ctx, args: dict) -> str | None:
 
 def normalize_field(f: dict) -> dict:
 	fieldtype = f.get("fieldtype") if f.get("fieldtype") in SAFE_FIELDTYPES else "Data"
+	input_name = frappe.scrub(f["fieldname"])  # the form input's `name` attribute
 	out = {
-		"fieldname": frappe.scrub(f["fieldname"]),
+		"input_name": input_name,
+		"fieldname": safe_fieldname(input_name),  # DocType fieldname (reserved names remapped)
 		"label": f.get("label") or f["fieldname"].replace("_", " ").title(),
 		"fieldtype": fieldtype,
 	}

@@ -201,6 +201,12 @@ def apply_connect_form(payload: dict) -> str:
 	# 1. private submission DocType — System Manager only, NO guest permission
 	#    (the Web Form is the trusted boundary; submissions must not be readable by
 	#    other guests).
+	# Only DocType field keys (drop input_name, which is the browser-side name attr).
+	doctype_fields = [
+		{k: v for k, v in f.items() if k in ("fieldname", "label", "fieldtype", "options")}
+		| {"in_list_view": 1}
+		for f in fields
+	]
 	if not frappe.db.exists("DocType", doctype):
 		frappe.get_doc(
 			{
@@ -209,7 +215,7 @@ def apply_connect_form(payload: dict) -> str:
 				"module": "Builder",
 				"custom": 1,
 				"naming_rule": "Random",
-				"fields": [{**f, "in_list_view": 1} for f in fields],
+				"fields": doctype_fields,
 				"permissions": [{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}],
 			}
 		).insert(ignore_permissions=True)
@@ -237,8 +243,10 @@ def apply_connect_form(payload: dict) -> str:
 
 	# 3. client script on the page: capture the form's fields and POST them to the
 	#    stock Web Form accept endpoint (guest-safe, rate-limited, ignore_permissions).
+	#    Map the input's own `name` attr → the (possibly-renamed) DocType fieldname.
 	if page_id and frappe.db.exists("Builder Page", page_id):
-		attach_form_script(page_id, doctype, wf_name, selector, [f["fieldname"] for f in fields])
+		field_map = {f.get("input_name", f["fieldname"]): f["fieldname"] for f in fields}
+		attach_form_script(page_id, doctype, wf_name, selector, field_map)
 
 	frappe.db.commit()
 	slug = desk_slug(doctype)
@@ -247,12 +255,12 @@ def apply_connect_form(payload: dict) -> str:
 	).format(doctype, slug)
 
 
-def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, fieldnames: list) -> None:
+def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, field_map: dict) -> None:
 	"""Create + attach a Builder Client Script that submits `selector`'s inputs to
 	the Web Form accept endpoint. Idempotent per (page, web_form)."""
 	script_name = f"Save {doctype} submissions"
 	existing = frappe.db.get_value("Builder Client Script", {"name": script_name}, "name")
-	code = build_form_script(selector, web_form, fieldnames)
+	code = build_form_script(selector, web_form, field_map)
 	if existing:
 		frappe.db.set_value("Builder Client Script", existing, "script", code, update_modified=False)
 		script_id = existing
@@ -275,19 +283,20 @@ def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str,
 		page.save(ignore_permissions=True)
 
 
-def build_form_script(selector: str, web_form: str, fieldnames: list) -> str:
-	"""The submit-wiring JS. Reads only the known fields (never a honeypot/extra),
-	POSTs to the accept endpoint, and reflects success on the submit button."""
+def build_form_script(selector: str, web_form: str, field_map: dict) -> str:
+	"""The submit-wiring JS. `field_map` is {input name attr → DocType fieldname};
+	only mapped inputs are sent (never a honeypot/extra). POSTs to the accept
+	endpoint and reflects success on the submit button."""
 	import json
 
 	sel = json.dumps(selector)
 	wf = json.dumps(web_form)
-	fields = json.dumps(fieldnames)
+	fmap = json.dumps(field_map)
 	return f"""// Auto-wired by Bob: saves this form to the '{web_form}' Web Form.
 (function () {{
   var form = document.querySelector({sel});
   if (!form) return;
-  var FIELDS = {fields};
+  var MAP = {fmap};
   var btn = form.querySelector('button, [type="submit"], input[type="submit"]');
   var busy = false;
   function submit(e) {{
@@ -295,7 +304,8 @@ def build_form_script(selector: str, web_form: str, fieldnames: list) -> str:
     if (busy) return false;
     var data = {{}};
     form.querySelectorAll('[name]').forEach(function (el) {{
-      if (FIELDS.indexOf(el.name) !== -1 && el.value) data[el.name] = el.value;
+      var fn = MAP[el.name];
+      if (fn && el.value) data[fn] = el.value;
     }});
     if (!Object.keys(data).length) return false;
     busy = true;
