@@ -10,12 +10,11 @@
 				{{ el.text }}
 			</p>
 
-			<!-- text: a line right before a control is that control's label — keep them
-			     visibly closer to each other than to the previous group (proximity) -->
+			<!-- text: a line right before an unlabelled control IS that control's label —
+			     it renders inside the control (form-label size, hugging it), not here -->
 			<p
-				v-else-if="el.kind === 'text'"
-				class="whitespace-pre-line text-p-sm leading-snug text-ink-gray-7"
-				:class="{ '!mb-[-4px]': labelsNext(i), '!mt-4': labelsNext(i) && i > 0 }">
+				v-else-if="el.kind === 'text' && !consumedAsLabel(i)"
+				class="whitespace-pre-line text-p-sm leading-snug text-ink-gray-7">
 				{{ el.text }}
 			</p>
 
@@ -62,8 +61,13 @@
 			<hr v-else-if="el.kind === 'divider'" class="border-outline-gray-1" />
 
 			<!-- choices -->
-			<div v-else-if="el.kind === 'choices'" class="w-full">
-				<p v-if="el.label" class="mb-1.5 text-xs font-medium text-ink-gray-6">{{ el.label }}</p>
+			<div
+				v-else-if="el.kind === 'choices'"
+				class="w-full"
+				:class="{ '!mt-4': i > 0 && controlLabel(i, el) }">
+				<p v-if="controlLabel(i, el)" class="mb-1.5 text-xs font-medium text-ink-gray-6">
+					{{ controlLabel(i, el) }}
+				</p>
 				<div class="flex w-full flex-wrap gap-2">
 					<button
 						v-for="(option, j) in el.options || []"
@@ -132,7 +136,8 @@
 				v-else-if="el.kind === 'input'"
 				v-model="inputs[i]"
 				type="text"
-				:label="el.label"
+				:class="{ '!mt-4': i > 0 && controlLabel(i, el) }"
+				:label="controlLabel(i, el)"
 				:placeholder="el.placeholder || ''"
 				:disabled="!interactive || disabled"
 				autocomplete="off"
@@ -140,7 +145,9 @@
 
 			<!-- upload: the user's own image (logo, photo); URL rides the reply -->
 			<div v-else-if="el.kind === 'upload'" class="w-full">
-				<span v-if="el.label" class="mb-1 block text-p-xs text-ink-gray-5">{{ el.label }}</span>
+				<span v-if="controlLabel(i, el)" class="mb-1 block text-p-xs text-ink-gray-5">
+					{{ controlLabel(i, el) }}
+				</span>
 				<FileUploader
 					fileTypes="image/*"
 					:uploadArgs="{
@@ -235,10 +242,25 @@ const isSingleQuestion = computed(
 	() => interactiveAtoms.value.length === 1 && interactiveAtoms.value[0].kind === "choices",
 );
 
-/** True when this text atom reads as the label of the control right after it. */
-function labelsNext(i: number): boolean {
+const LABELLABLE = new Set(["input", "choices", "upload"]);
+
+/** A text atom right before an unlabelled control is that control's question —
+ * the control renders it as its form label, so it must not render twice. */
+function consumedAsLabel(i: number): boolean {
+	const el = elements.value[i];
 	const next = elements.value[i + 1];
-	return !!next && (next.kind === "input" || next.kind === "choices" || next.kind === "upload");
+	return (
+		el?.kind === "text" &&
+		!!next &&
+		LABELLABLE.has(next.kind) &&
+		!next.label &&
+		!!String(el.text || "").trim()
+	);
+}
+
+function controlLabel(i: number, el: UIElement): string {
+	if (el.label) return String(el.label);
+	return consumedAsLabel(i - 1) ? String(elements.value[i - 1].text || "") : "";
 }
 
 // Load the Google Fonts referenced by option specimens (cached in fontManager,
@@ -292,7 +314,8 @@ function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option:
 /** The question a choices/input atom answers: its own label, or the text atom
  * right above it (the model often writes the question as a separate line). */
 function atomLabel(i: number, el: UIElement): string {
-	if (el.label) return el.label;
+	const label = controlLabel(i, el);
+	if (label) return label;
 	const prev = elements.value[i - 1];
 	return prev?.kind === "text" || prev?.kind === "heading" ? String(prev.text || "") : "";
 }
