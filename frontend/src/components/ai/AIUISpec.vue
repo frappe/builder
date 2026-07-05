@@ -10,8 +10,12 @@
 				{{ el.text }}
 			</p>
 
-			<!-- text -->
-			<p v-else-if="el.kind === 'text'" class="whitespace-pre-line text-p-sm leading-snug text-ink-gray-7">
+			<!-- text: a line right before a control is that control's label — keep them
+			     visibly closer to each other than to the previous group (proximity) -->
+			<p
+				v-else-if="el.kind === 'text'"
+				class="whitespace-pre-line text-p-sm leading-snug text-ink-gray-7"
+				:class="{ '!mb-[-4px]': labelsNext(i), '!mt-4': labelsNext(i) && i > 0 }">
 				{{ el.text }}
 			</p>
 
@@ -177,6 +181,13 @@
 				</Button>
 			</div>
 		</template>
+		<!-- A waiting card with nothing tappable strands the user (e.g. a plan the
+		     model forgot to put buttons on) — give it a default way forward. -->
+		<div v-if="interactive && !hasInteractiveAtoms" class="flex gap-2 pt-0.5">
+			<Button size="xs" variant="solid" :disabled="disabled" @click="submitCollected('Looks good, go ahead')">
+				Looks good, go ahead
+			</Button>
+		</div>
 		<p v-if="interactive && hasChoices" class="text-xs text-ink-gray-4">
 			Or describe something different below
 		</p>
@@ -214,6 +225,22 @@ const hasChoices = computed(() => elements.value.some((el) => el.kind === "choic
 // Only choice-less cards (pure forms, plans) get the wrapper box.
 const hasChrome = computed(() => !hasChoices.value);
 
+const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions"]);
+const interactiveAtoms = computed(() => elements.value.filter((el) => INTERACTIVE_KINDS.has(el.kind)));
+const hasInteractiveAtoms = computed(() => interactiveAtoms.value.length > 0);
+// A card that is ONE question (a single choices group, nothing else to fill in):
+// tapping an option IS the answer. In a bigger form a tap is just a pick — the
+// action button submits everything together.
+const isSingleQuestion = computed(
+	() => interactiveAtoms.value.length === 1 && interactiveAtoms.value[0].kind === "choices",
+);
+
+/** True when this text atom reads as the label of the control right after it. */
+function labelsNext(i: number): boolean {
+	const next = elements.value[i + 1];
+	return !!next && (next.kind === "input" || next.kind === "choices" || next.kind === "upload");
+}
+
 // Load the Google Fonts referenced by option specimens (cached in fontManager,
 // so re-renders are free). Heading fonts also need their bold face.
 watchEffect(() => {
@@ -245,14 +272,29 @@ function optionReply(option: UIElement): string {
 }
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
-	if (!el.multi) {
+	if (!el.multi && isSingleQuestion.value) {
 		emit("submit", optionReply(option), String(option.label || option.value || ""));
 		return;
 	}
 	selections[elIndex] ??= new Set();
+	if (!el.multi) {
+		// Radio pick inside a form: record it, the action button submits the lot.
+		// Submitting on tap here silently threw away every other answer on the card.
+		selections[elIndex].clear();
+		selections[elIndex].add(optIndex);
+		return;
+	}
 	selections[elIndex].has(optIndex)
 		? selections[elIndex].delete(optIndex)
 		: selections[elIndex].add(optIndex);
+}
+
+/** The question a choices/input atom answers: its own label, or the text atom
+ * right above it (the model often writes the question as a separate line). */
+function atomLabel(i: number, el: UIElement): string {
+	if (el.label) return el.label;
+	const prev = elements.value[i - 1];
+	return prev?.kind === "text" || prev?.kind === "heading" ? String(prev.text || "") : "";
 }
 
 /** Compose one plain-text reply from the clicked action + everything collected.
@@ -262,17 +304,18 @@ function submitCollected(actionLabel?: string) {
 	const lines: string[] = actionLabel ? [actionLabel] : [];
 	const values: string[] = [];
 	elements.value.forEach((el, i) => {
-		if (el.kind === "choices" && el.multi && selections[i]?.size) {
+		if (el.kind === "choices" && selections[i]?.size) {
 			const picked = [...selections[i]]
 				.map((j) => (el.options?.[j] ? el.options[j].label : ""))
 				.filter(Boolean);
 			if (picked.length) {
-				lines.push(`${el.label || "Selected"}: ${picked.join(", ")}`);
+				lines.push(`${atomLabel(i, el) || "Selected"}: ${picked.join(", ")}`);
 				values.push(picked.join(", "));
 			}
 		}
 		if (el.kind === "input" && inputs[i]?.trim()) {
-			lines.push(el.label ? `${el.label}: ${inputs[i].trim()}` : inputs[i].trim());
+			const label = atomLabel(i, el);
+			lines.push(label ? `${label}: ${inputs[i].trim()}` : inputs[i].trim());
 			values.push(inputs[i].trim());
 		}
 		if (el.kind === "upload" && uploads[i]) {
