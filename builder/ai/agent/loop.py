@@ -1381,8 +1381,46 @@ class AgentRunner:
 			task_type="agent",
 			metadata=final_metadata,
 		)
+		self.maybe_name_session()
 		frappe.db.commit()  # commit before emit so the client's reload sees the final turn
 		self.emit("complete", message=summary_text or "Done")
+
+	def maybe_name_session(self) -> None:
+		"""The first completed turn names the chat: a short generated title reads
+		better in the session switcher than the raw first prompt ("Collection page
+		for The Pieces" vs "Create a collection page and link it here")."""
+		if not self.session_id or frappe.db.get_value(AISession.DOCTYPE, self.session_id, "title"):
+			return
+		first = frappe.db.get_value(
+			AISession.MESSAGE_DOCTYPE,
+			{"session": self.session_id, "role": "user"},
+			"content",
+			order_by="creation asc",
+		)
+		if not first:
+			return
+		try:
+			title = llm.complete(
+				ModelRegistry.get_simple(self.model),
+				[
+					{
+						"role": "user",
+						"content": (
+							"Name this website-builder chat in 2-5 words — what it's about, not what was "
+							"asked. Title case, no quotes, no trailing punctuation. Reply with the title "
+							f"only.\nFirst message: {first[:400]}"
+						),
+					}
+				],
+				{"max_tokens": 24, "temperature": 0.3},
+				stream=False,
+				api_key=self.api_key,
+			)
+			title = (title or "").strip().strip("\"'.").strip()
+			if 0 < len(title) <= 60 and "\n" not in title:
+				frappe.db.set_value(AISession.DOCTYPE, self.session_id, "title", title, update_modified=False)
+		except Exception as e:
+			logger.warning("session title generation skipped: %s", e)
 
 	def handle_terminal(self, op: dict) -> str | None:
 		"""Run a terminal tool's handler (which emits the appropriate event and
