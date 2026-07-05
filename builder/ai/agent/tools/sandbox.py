@@ -54,6 +54,12 @@ def run_python(ctx, args: dict) -> str:
 	except Exception as e:
 		return f"Script error: {type(e).__name__}: {e}"
 	status = apply_mutation(ctx, root, exec_globals.get("page"))
+	# The script may have changed doc-level state the editor only loads at start
+	# (route, meta, page data) — tell any open editor to refetch, or the toolbar
+	# and repeater previews stay stale until a manual refresh.
+	from builder.ai.agent.tools.settings import emit_refetch
+
+	emit_refetch(ctx, "page", "page_data")
 	return status + render_output(logs, exec_globals.get("result"))
 
 

@@ -844,6 +844,8 @@ class AgentRunner:
 		"""Snapshot, sync the working tree, persist, and emit ops a server tool queued
 		mid-handler (run_python queues the mutated page as set_page_blocks), so the
 		canvas updates live and a later run_python sees the tree it already mutated."""
+		from builder.ai import page_writer
+
 		ops, self.pending_client_ops = self.pending_client_ops, []
 		if not ops:
 			return []
@@ -851,14 +853,15 @@ class AgentRunner:
 			self.ensure_revert_snapshot()
 		for op in ops:
 			if op["tool_name"] == "set_page_blocks":
+				# run_python lets the model hand-build component instances; repair
+				# childless ones or they render as nothing (editor + published alike).
+				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
 		self.applied_operations.extend(ops)
 		self.emit("tool_batch", operations=ops)
 		if self.channel != self.page_id:
 			self.emit_page("tool_batch", operations=ops)
 		if self.page_id and self.tree and self.tree.root:
-			from builder.ai import page_writer
-
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return ops
 

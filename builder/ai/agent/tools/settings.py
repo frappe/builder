@@ -33,9 +33,22 @@ def set_page_settings(ctx, args: dict) -> str:
 	if not ctx.page_id:
 		return "No page in context."
 	updates = {f: args[f] for f in PAGE_SETTING_FIELDS if f in args and args[f] is not None}
+	if args.get("route"):
+		route = args["route"].strip().strip("/")
+		taken = frappe.db.get_value("Builder Page", {"route": route, "name": ("!=", ctx.page_id)})
+		if taken:
+			return f"FAILED: route '/{route}' is already used by page {taken} — pick another."
+		updates["route"] = route
 	if not updates:
 		return "No recognised settings to update."
-	frappe.db.set_value("Builder Page", ctx.page_id, updates)
+	if "route" in updates:
+		# A route change must run the doc lifecycle (dynamic-route detection,
+		# website cache clear) or the new URL won't resolve until a manual clear.
+		doc = frappe.get_doc("Builder Page", ctx.page_id)
+		doc.update(updates)
+		doc.save()
+	else:
+		frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	frappe.db.commit()
 	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}."
@@ -142,11 +155,15 @@ def request_publish_site(ctx, args: dict) -> None:
 set_page_settings_tool = Tool(
 	name="set_page_settings",
 	side="server",
-	description="Update the current page's SEO/meta and page-level settings (title, meta description, meta image, canonical URL, language, custom head/body HTML, disable indexing). Applies immediately.",
+	description="Update the current page's SEO/meta and page-level settings (title, URL route, meta description, meta image, canonical URL, language, custom head/body HTML, disable indexing). Applies immediately.",
 	parameters={
 		"type": "object",
 		"properties": {
 			"page_title": {"type": "string"},
+			"route": {
+				"type": "string",
+				"description": "The page's URL path, e.g. 'bakery' or 'menu/drinks' (no leading slash needed).",
+			},
 			"meta_description": {"type": "string"},
 			"meta_image": {"type": "string"},
 			"canonical_url": {"type": "string"},

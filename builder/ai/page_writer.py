@@ -313,6 +313,26 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	return block
 
 
+def normalize_component_instances(root: dict | None) -> dict | None:
+	"""Repair childless component instances anywhere in a tree. The editor and the
+	published renderer both render an instance through the PAGE block's children
+	(matched to the component via referenceBlockId) — an instance with no children
+	shows NOTHING. add_block and generation attach the skeleton at conversion, but
+	run_python lets the model hand-build `{extendedFromComponent: id}` dicts, so
+	every tree that reaches the WorkingTree passes through here. Mutates in place."""
+	if not isinstance(root, dict):
+		return root
+	stack = [root]
+	while stack:
+		block = stack.pop()
+		comp_id = block.get("extendedFromComponent")
+		if comp_id and not block.get("children"):
+			block["children"] = component_instance_children(comp_id)
+		else:
+			stack.extend(c for c in block.get("children") or [] if isinstance(c, dict))
+	return root
+
+
 def component_instance_children(component_id: str) -> list:
 	"""Instance-side child skeletons for a component embed. The published renderer
 	(extend_block) renders the PAGE block's children matched to component blocks
