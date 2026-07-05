@@ -1,4 +1,4 @@
-from builder.builder.doctype.builder_variable.builder_variable import get_css_variables
+from builder.builder.doctype.builder_token.builder_token import get_css_variables
 
 
 def get_context(context):

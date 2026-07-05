@@ -18,7 +18,7 @@
 					size="md"
 					:variant="
 						builderStore.leftPanelActiveTab === option.value ||
-						(showVariableManager && option.value === 'variables')
+						(showTokenManager && option.value === 'variables')
 							? 'subtle'
 							: 'ghost'
 					"
@@ -77,13 +77,13 @@
 			</div>
 		</div>
 
-		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
+		<TokenManager v-model="showTokenManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import VariableManager from "@/components/Modals/VariableManager.vue";
+import TokenManager from "@/components/Modals/TokenManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -97,7 +97,7 @@ import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
-const showVariableManager = ref(false);
+const showTokenManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
@@ -141,10 +141,10 @@ const leftPanelOptions = [
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
-		showVariableManager.value = !showVariableManager.value;
+		showTokenManager.value = !showTokenManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
-		showVariableManager.value = false;
+		showTokenManager.value = false;
 	}
 };
 
@@ -159,7 +159,7 @@ watchEffect(() => {
 watch(
 	() => route.fullPath,
 	() => {
-		showVariableManager.value = false;
+		showTokenManager.value = false;
 	},
 );
 

@@ -134,7 +134,7 @@ import {
 } from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
@@ -151,7 +151,7 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasId = `builder-canvas-${useId()}`;
 
-const { cssVariables, darkCssVariables } = useBuilderVariable();
+const { cssVariables, darkCssVariables } = useBuilderToken();
 
 const variables = computed(() => {
 	return {

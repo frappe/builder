@@ -59,12 +59,12 @@
 									@focusout="(e) => handleNewRowFocusOut(e, row)">
 									<input
 										type="text"
-										:value="row.variable_name"
+										:value="row.token_name"
 										placeholder="Variable name"
 										:class="[cellBoxClass, editableInputClass]"
 										data-new-name
 										@mousedown.stop
-										@input="(e) => (row.variable_name = inputValue(e))"
+										@input="(e) => (row.token_name = inputValue(e))"
 										@keydown.enter.prevent="() => createVariable(row)"
 										@keydown.esc.stop.prevent="() => (newVariable = null)" />
 									<div
@@ -153,21 +153,21 @@
 												aria-hidden="true" />
 										</Tooltip>
 										<input
-											v-if="isEditing(row, 'variable_name')"
+											v-if="isEditing(row, 'token_name')"
 											type="text"
-											:value="row.variable_name"
+											:value="row.token_name"
 											:class="[cellBoxClass, editableInputClass]"
 											:ref="focusEditInput"
 											@mousedown.stop
-											@blur="(e) => commitEdit(row, 'variable_name', e)"
-											@keydown.enter.prevent="(e) => commitEdit(row, 'variable_name', e)"
+											@blur="(e) => commitEdit(row, 'token_name', e)"
+											@keydown.enter.prevent="(e) => commitEdit(row, 'token_name', e)"
 											@keydown.esc.stop.prevent="() => cancelEdit(row)"
-											@keydown.tab.prevent="(e) => commitAndEditNext(row, 'variable_name', e)" />
+											@keydown.tab.prevent="(e) => commitAndEditNext(row, 'token_name', e)" />
 										<div
 											v-else
-											:class="[cellBoxClass, cellTextClass(row), row.variable_name ? '' : 'text-ink-gray-4']"
-											@dblclick="startEdit(row, 'variable_name')">
-											{{ row.variable_name || "unnamed" }}
+											:class="[cellBoxClass, cellTextClass(row), row.token_name ? '' : 'text-ink-gray-4']"
+											@dblclick="startEdit(row, 'token_name')">
+											{{ row.token_name || "unnamed" }}
 										</div>
 									</div>
 									<!-- Light -->
@@ -319,9 +319,9 @@ import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
-import { BuilderVariable } from "@/types/doctypes";
+import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
@@ -341,7 +341,7 @@ const {
 	updateVariable,
 	deleteVariable,
 	variables,
-} = useBuilderVariable();
+} = useBuilderToken();
 
 const csvFileInput = ref<HTMLInputElement>();
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
@@ -364,16 +364,16 @@ const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-sm p
 const colorValueInputClass =
 	"w-full min-w-0 border-none bg-transparent p-0 text-sm text-ink-gray-8 outline-none placeholder:text-ink-gray-4 focus:outline-none focus:ring-0";
 
-type Row = Partial<BuilderVariable> & { id: string; isNew: boolean };
+type Row = Partial<BuilderToken> & { id: string; isNew: boolean };
 type RowGroup = { group: string | null; open: boolean; rows: Row[] };
-type EditableField = "variable_name" | "group" | "value" | "dark_value";
+type EditableField = "token_name" | "group" | "value" | "dark_value";
 
 const UNGROUPED_LABEL = "Ungrouped";
 
 // row objects are reused across recomputes so that an open cell editor is never
 // rebuilt or stomped by a save round-trip
 const rowObjects = new Map<string, Row>();
-const getRowObject = (variable: BuilderVariable) => {
+const getRowObject = (variable: BuilderToken) => {
 	let row = rowObjects.get(variable.name);
 	if (!row) {
 		row = reactive({ ...variable, id: variable.name, isNew: false });
@@ -400,8 +400,7 @@ const displayGroups = computed<RowGroup[]>(() => {
 		const query = searchQuery.value.toLowerCase().trim();
 		filteredVariables = variables.value.filter(
 			(variable) =>
-				variable.variable_name?.toLowerCase().includes(query) ||
-				variable.group?.toLowerCase().includes(query),
+				variable.token_name?.toLowerCase().includes(query) || variable.group?.toLowerCase().includes(query),
 		);
 	}
 
@@ -445,7 +444,7 @@ const hasRows = computed(() => displayGroups.value.some((group) => group.rows.le
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
 // --- cell editing: double-click to edit, Enter/blur commits, Esc cancels ---
-const EDIT_ORDER: EditableField[] = ["variable_name", "group", "value", "dark_value"];
+const EDIT_ORDER: EditableField[] = ["token_name", "group", "value", "dark_value"];
 const editingCell = ref<{ rowId: string; field: EditableField } | null>(null);
 
 const isEditing = (row: Row, field: EditableField) =>
@@ -599,7 +598,7 @@ const moveSelectedToGroup = async (group: string) => {
 };
 
 const uniqueCopyName = (name: string) => {
-	const names = new Set(variables.value.map((variable) => variable.variable_name));
+	const names = new Set(variables.value.map((variable) => variable.token_name));
 	let copyName = `${name} copy`;
 	let counter = 2;
 	while (names.has(copyName)) copyName = `${name} copy ${counter++}`;
@@ -619,7 +618,7 @@ const deleteSelected = async () => {
 			rowObjects.delete(row.name!);
 			deleted++;
 		} catch (error) {
-			toast.error(`Failed to delete "${row.variable_name}"`);
+			toast.error(`Failed to delete "${row.token_name}"`);
 		}
 	}
 	if (deleted) toast.success(`Deleted ${deleted} variable(s)`);
@@ -646,7 +645,7 @@ const addNewVariable = async () => {
 	newVariable.value = reactive({
 		id: `new-${nextNewId.value}`,
 		isNew: true,
-		variable_name: "",
+		token_name: "",
 		value: "#ffffff",
 		dark_value: "",
 		group: "",
@@ -673,7 +672,7 @@ const updateColor = async (row: Row, value: string | null, mode: "light" | "dark
 	syncStoreColors(row);
 
 	if (row.isNew) {
-		if (row.variable_name?.trim()) {
+		if (row.token_name?.trim()) {
 			debouncedSaveVariable(row);
 		}
 	} else if (row.name) {
@@ -694,12 +693,12 @@ const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
 }, 300);
 
 const createVariable = async (row: Row) => {
-	if (!row.isNew || !row.variable_name?.trim() || isCreating.value) return;
+	if (!row.isNew || !row.token_name?.trim() || isCreating.value) return;
 
 	isCreating.value = true;
 	try {
 		const createdVariable = await createVar({
-			variable_name: row.variable_name!,
+			token_name: row.token_name!,
 			value: row.value || "#ffffff",
 			dark_value: row.dark_value || undefined,
 			group: row.group || undefined,
@@ -722,7 +721,7 @@ const saveVariable = async (row: Row) => {
 	try {
 		await updateVariable({
 			name: row.name,
-			variable_name: row.variable_name!,
+			token_name: row.token_name!,
 			value: row.value!,
 			dark_value: row.dark_value || undefined,
 			group: row.group || "",
@@ -770,8 +769,8 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		return;
 	}
 
-	const newVariables: Partial<BuilderVariable>[] = [];
-	const updateVariables: Partial<BuilderVariable & { name?: string }>[] = [];
+	const newVariables: Partial<BuilderToken>[] = [];
+	const updateVariables: Partial<BuilderToken & { name?: string }>[] = [];
 	let invalidCount = 0;
 	let standardCount = 0;
 
@@ -785,10 +784,10 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		const groupValue = groupIndex !== -1 ? values[groupIndex] : undefined;
 
 		if (variableName && lightValue) {
-			const existing = variables.value.find((v) => v.variable_name === variableName);
+			const existing = variables.value.find((v) => v.token_name === variableName);
 			if (!existing) {
 				newVariables.push({
-					variable_name: variableName,
+					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					group: groupValue,
@@ -800,7 +799,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			} else {
 				updateVariables.push({
 					name: existing.name,
-					variable_name: variableName,
+					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					group: groupValue,
@@ -847,7 +846,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		try {
 			await updateVariable({
 				name: variable.name!,
-				variable_name: variable.variable_name!,
+				token_name: variable.token_name!,
 				value: variable.value!,
 				dark_value: variable.dark_value || undefined,
 				group: variable.group,
@@ -855,7 +854,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			});
 			updatedCount++;
 		} catch (error) {
-			console.error("Failed to update variable:", variable.variable_name, error);
+			console.error("Failed to update variable:", variable.token_name, error);
 			updateErrors++;
 		}
 	}
@@ -863,7 +862,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	for (const variable of newVariables) {
 		try {
 			await createVar({
-				variable_name: variable.variable_name!,
+				token_name: variable.token_name!,
 				value: variable.value!,
 				dark_value: variable.dark_value || undefined,
 				group: variable.group || undefined,
@@ -871,7 +870,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			});
 			createdCount++;
 		} catch (error) {
-			console.error("Failed to create variable:", variable.variable_name, error);
+			console.error("Failed to create variable:", variable.token_name, error);
 			createErrors++;
 		}
 	}

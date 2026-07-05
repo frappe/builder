@@ -15,27 +15,27 @@
 			<div class="flex flex-col gap-4">
 				<BuilderInput
 					type="text"
-					v-model="activeBuilderVariable.variable_name"
-					@input="(val: string) => (activeBuilderVariable.variable_name = val)"
+					v-model="activeBuilderToken.token_name"
+					@input="(val: string) => (activeBuilderToken.token_name = val)"
 					label="Variable Name"
 					required
 					:autofocus="true"
 					placeholder="e.g., primary, accent, background"
 					:hideClearButton="true" />
-				<div v-if="activeBuilderVariable.type === 'Color'" class="flex flex-col gap-3">
+				<div v-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
 						<InputLabel>Light Mode Color</InputLabel>
 						<ColorInput
-							v-model="activeBuilderVariable.value"
+							v-model="activeBuilderToken.value"
 							class="relative"
 							:show-color-variable-options="false" />
 					</div>
 					<div class="flex flex-col gap-1.5">
 						<InputLabel>Dark Mode Color</InputLabel>
 						<ColorInput
-							:modelValue="activeBuilderVariable.dark_value || activeBuilderVariable.value"
+							:modelValue="activeBuilderToken.dark_value || activeBuilderToken.value"
 							:show-color-variable-options="false"
-							@update:modelValue="activeBuilderVariable.dark_value = $event"
+							@update:modelValue="activeBuilderToken.dark_value = $event"
 							class="relative" />
 					</div>
 				</div>
@@ -47,32 +47,32 @@
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import { BuilderVariable } from "@/types/doctypes";
-import { defaultBuilderVariable, useBuilderVariable } from "@/utils/useBuilderVariable";
+import { BuilderToken } from "@/types/doctypes";
+import { defaultBuilderToken, useBuilderToken } from "@/utils/useBuilderToken";
 import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 
 const props = defineProps<{
 	modelValue: boolean;
-	variable?: Partial<BuilderVariable> | null;
+	variable?: Partial<BuilderToken> | null;
 }>();
 
 const emit = defineEmits(["update:modelValue", "success"]);
 
-const { createVariable, updateVariable } = useBuilderVariable();
+const { createVariable, updateVariable } = useBuilderToken();
 
 const dialogMode = computed(() => (props.variable?.name ? "edit" : "add"));
-const activeBuilderVariable = ref<Partial<BuilderVariable>>({ ...defaultBuilderVariable });
+const activeBuilderToken = ref<Partial<BuilderToken>>({ ...defaultBuilderToken });
 
 watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (newValue) {
 			if (props.variable) {
-				activeBuilderVariable.value = { ...props.variable };
+				activeBuilderToken.value = { ...props.variable };
 			} else {
-				activeBuilderVariable.value = { ...defaultBuilderVariable };
+				activeBuilderToken.value = { ...defaultBuilderToken };
 			}
 		}
 	},
@@ -85,10 +85,10 @@ const handleSave = async () => {
 	try {
 		let savedVariable;
 		if (dialogMode.value === "edit") {
-			savedVariable = await updateVariable(activeBuilderVariable.value);
+			savedVariable = await updateVariable(activeBuilderToken.value);
 			toast.success("Variable updated");
 		} else {
-			savedVariable = await createVariable(activeBuilderVariable.value);
+			savedVariable = await createVariable(activeBuilderToken.value);
 			toast.success("New Variable created");
 		}
 		emit("success", savedVariable);

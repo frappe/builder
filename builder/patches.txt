@@ -4,6 +4,7 @@ builder.builder.patches.rename_web_page_beta_to_builder_page
 builder.builder.patches.rename_web_page_component_to_builder_component
 execute:frappe.delete_doc("DocType", "Builder Page Library", ignore_missing=True, force=True)
 
+builder.builder.patches.rename_builder_variable_to_builder_token
 [post_model_sync]
 builder.builder.doctype.builder_component.patches.set_component_id
 builder.builder.doctype.builder_page.patches.properly_extend_blocks_from_component
@@ -15,3 +16,4 @@ builder.builder.patches.refactor_builder_variables
 builder.builder.patches.reset_builder_page_clicks
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
+
