@@ -425,18 +425,38 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 // --- Empty-state suggestions -------------------------------------------------
 // Fresh page → describe the site to build; page with content → describe a change.
 // Tapping a pill prefills the prompt (it's an example to personalise, not a command).
+// A wide, characterful pool sampled 3-at-a-time so the panel feels fresh, not the
+// same generic trio every visit.
 const pageHasContent = computed(() => (canvasStore.activeCanvas?.getRootBlock()?.children?.length ?? 0) > 0);
-const BUILD_SUGGESTIONS = [
-	"A site for my bakery in Pune",
-	"Portfolio for a photographer",
-	"Landing page + blog for my app",
+const BUILD_POOL = [
+	"A wood-fired pizzeria in Goa",
+	"Moody portfolio for a photographer",
+	"Waitlist page for an AI app",
+	"Menu & story for a ramen bar",
+	"A vintage record store",
+	"Landing page for a yoga studio",
+	"A bold skincare brand",
+	"Personal site for a designer",
+	"A craft coffee roaster",
+	"Event page for a design meetup",
 ];
-const EDIT_SUGGESTIONS = [
+const EDIT_POOL = [
 	"Add a testimonials section",
 	"Make the hero more dramatic",
-	"Rework this page in a dark theme",
+	"Switch to a dark theme",
+	"Add a pricing section",
+	"Add smooth scroll animations",
+	"Tighten the spacing everywhere",
+	"Add a sticky header with nav",
+	"Make it feel more premium",
 ];
-const promptSuggestions = computed(() => (pageHasContent.value ? EDIT_SUGGESTIONS : BUILD_SUGGESTIONS));
+function sample3(pool: string[]): string[] {
+	return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+}
+// Picked once per mount (a computed would reshuffle on every reactive read).
+const buildPicks = sample3(BUILD_POOL);
+const editPicks = sample3(EDIT_POOL);
+const promptSuggestions = computed(() => (pageHasContent.value ? editPicks : buildPicks));
 const promptInput = ref<HTMLTextAreaElement | null>(null);
 function useSuggestion(text: string) {
 	prompt.value = text;
