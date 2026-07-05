@@ -57,18 +57,18 @@
 			</div> -->
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
-				<div
-					v-if="!messages.length"
-					class="flex h-full flex-col items-center justify-center gap-5 pb-8 text-center">
-					<SparklesIcon class="size-7 text-ink-gray-4" />
-					<p class="text-lg font-semibold text-ink-gray-9">
-						{{ pageHasContent ? "Describe a change" : "Describe your site" }}
-					</p>
-					<div class="flex w-full max-w-[280px] flex-col items-stretch gap-2">
+				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-4 pb-8">
+					<div class="flex flex-col items-center gap-1.5">
+						<SparklesIcon class="size-5 text-ink-gray-3" />
+						<p class="text-sm font-medium text-ink-gray-8">
+							{{ pageHasContent ? "Describe a change" : "Describe your site" }}
+						</p>
+					</div>
+					<div class="flex w-full max-w-[260px] flex-col gap-1">
 						<button
 							v-for="suggestion in promptSuggestions"
 							:key="suggestion"
-							class="truncate rounded-full border border-outline-gray-2 px-4 py-2 text-p-sm text-ink-gray-6 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-1 hover:text-ink-gray-8"
+							class="truncate rounded-md px-2.5 py-1.5 text-left text-p-sm text-ink-gray-6 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
 							@click="useSuggestion(suggestion)">
 							{{ suggestion }}
 						</button>
