@@ -287,6 +287,22 @@ onActivated(async () => {
 	}
 });
 
+// In-editor navigation to ANOTHER page (the build pill's "View"/"Go back" links):
+// the component is reused, so onActivated never refires — swap the page here or
+// the URL changes while the canvas keeps showing the previous page.
+watch(
+	() => route.params.pageId,
+	(pageId, oldPageId) => {
+		if (!pageId || pageId === "new" || pageId === pageStore.selectedPage) return;
+		if (oldPageId && oldPageId !== "new") {
+			builderStore.realtime.doc_close("Builder Page", oldPageId as string);
+		}
+		builderStore.realtime.doc_subscribe("Builder Page", pageId as string);
+		builderStore.realtime.doc_open("Builder Page", pageId as string);
+		pageStore.setPage(pageId as string, true, route.query);
+	},
+);
+
 watch(
 	route,
 	(to, from) => {

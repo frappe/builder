@@ -5,6 +5,8 @@ FOCUS one page (open_page / create_page) and the block tools, query_blocks /
 read_block, and generate_page all act on it; or READ any page (read_page)
 without moving focus — e.g. to study a reference page's design."""
 
+import re
+
 import frappe
 
 from builder.ai.agent.registry import Tool
@@ -46,7 +48,56 @@ def run_create_page(ctx, args: dict) -> str:
 	ctx.focus_page(page_id)
 	if ctx.current_activity is not None:
 		ctx.current_activity["page"] = page_id  # "Open" link on the activity line
-	return f"Created draft page '{title}' (id={page_id}, route=/{route}) and opened it — build it with generate_page."
+	result = f"Created draft page '{title}' (id={page_id}, route=/{route}) and opened it — build it with generate_page."
+	# An additional page must read as the SAME SITE. Weaker loop models skim the
+	# system prompt's consistency rule, so restate it here — with the sibling's
+	# actual design system in hand — right before the model writes the brief.
+	if consistency := sibling_design_summary(canvas_page):
+		result += (
+			f"\nCONSISTENCY (mandatory): this is an additional page of an existing site — it must look like "
+			f"the SAME site as {canvas_page}. Do NOT present design/layout/typography cards for it. Write the "
+			f"generate_page brief FROM that page's system: the same nav and footer structure (link this new "
+			f"page in both), and exactly these tokens —\n{consistency}\n"
+			f"Reuse its client scripts' class hooks (get_page_scripts on {canvas_page}) via set_page_script "
+			f"on this page."
+		)
+	return result
+
+
+def sibling_design_summary(page_id: str | None) -> str:
+	"""The design tokens an additional page must inherit, read from the sibling
+	page's draft: fonts and var(--…) palette handles, plus its script names."""
+	if not page_id:
+		return ""
+	blocks = frappe.db.get_value("Builder Page", page_id, "draft_blocks") or ""
+	if len(blocks) < 200:
+		blocks = frappe.db.get_value("Builder Page", page_id, "blocks") or ""
+	if not blocks:
+		return ""
+	fonts = sorted(set(re.findall(r'"fontFamily":\s*"([^"]+)"', blocks)))
+	handles = sorted(set(re.findall(r"var\((--[a-zA-Z0-9-]+)", blocks)))
+	scripts = frappe.get_all(
+		"Builder Client Script",
+		filters=[
+			[
+				"name",
+				"in",
+				[
+					r.builder_script
+					for r in frappe.get_doc("Builder Page", page_id).get("client_scripts") or []
+				],
+			]
+		],
+		fields=["name", "script_type"],
+	)
+	parts = []
+	if fonts:
+		parts.append(f"fonts: {', '.join(fonts)}")
+	if handles:
+		parts.append(f"palette handles: {', '.join(f'var({h})' for h in handles)}")
+	if scripts:
+		parts.append(f"scripts: {', '.join(f'{s.name} ({s.script_type})' for s in scripts)}")
+	return "\n".join(parts)
 
 
 def run_copy_page_design(ctx, args: dict) -> str:
@@ -155,7 +206,9 @@ create_page = Tool(
 	description=(
 		"Create a new draft Builder Page and open it for building. Then call generate_page "
 		"with a rich brief for a full page, or add_block for a small fragment. For a single "
-		"new page ALWAYS use this — never spawn_parallel_agents."
+		"new page ALWAYS use this — never spawn_parallel_agents. When the site already has "
+		"designed pages, do NOT run the design flow for the new page: it inherits the "
+		"existing site's design system (the result of this call names the exact tokens)."
 	),
 	parameters={
 		"type": "object",

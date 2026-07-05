@@ -14,7 +14,7 @@
 				<router-link
 					:to="{ name: 'builder', params: { pageId: foreignBuild.targetPage } }"
 					class="text-ink-white underline underline-offset-2">
-					Watch it live
+					View
 				</router-link>
 			</template>
 			<template v-else>
