@@ -12,19 +12,33 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		action-label="Add Variable"
+		action-label="Add Token"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-lg-semibold py-2">Manage Variables</h2></template>
+		<template #header><h2 class="text-lg-semibold py-2">Design System</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
+				<div class="mb-2 flex gap-1">
+					<button
+						v-for="tab in TYPE_TABS"
+						:key="tab.value"
+						class="rounded-md px-2.5 py-1 text-sm transition-colors"
+						:class="
+							activeType === tab.value
+								? 'bg-surface-gray-3 font-medium text-ink-gray-9'
+								: 'text-ink-gray-6 hover:bg-surface-gray-2'
+						"
+						@click="activeType = tab.value">
+						{{ tab.label }}
+					</button>
+				</div>
 				<div class="mb-3">
 					<BuilderInput
 						:modelValue="searchQuery"
 						@input="(val: string) => (searchQuery = val)"
 						@update:modelValue="(val: string) => (searchQuery = val)"
 						type="text"
-						placeholder="Search variables"
+						placeholder="Search tokens"
 						class="w-full"
 						icon-left="search" />
 				</div>
@@ -35,8 +49,11 @@
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
 						<div class="pl-2">Name</div>
-						<div class="border-l border-outline-gray-1 pl-2">Light</div>
-						<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+						<template v-if="isColorType">
+							<div class="border-l border-outline-gray-1 pl-2">Light</div>
+							<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+						</template>
+						<div v-else class="border-l border-outline-gray-1 pl-2">Value</div>
 					</div>
 
 					<template v-for="group in displayGroups" :key="group.group ?? '__flat__'">
@@ -68,6 +85,7 @@
 										@keydown.enter.prevent="() => createVariable(row)"
 										@keydown.esc.stop.prevent="() => (newVariable = null)" />
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
@@ -95,6 +113,22 @@
 											@input="(e) => updateColor(row, inputValue(e), 'light')" />
 									</div>
 									<div
+										v-else
+										:class="[
+											colorCellBoxClass,
+											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+										]">
+										<input
+											type="text"
+											:value="row.value"
+											:placeholder="VALUE_PLACEHOLDERS[activeType]"
+											:class="colorValueInputClass"
+											@mousedown.stop
+											@input="(e) => updateColor(row, inputValue(e), 'light')"
+											@keydown.enter.prevent="() => createVariable(row)" />
+									</div>
+									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
@@ -170,8 +204,38 @@
 											{{ row.token_name || "unnamed" }}
 										</div>
 									</div>
+									<!-- Value (Font/Dimension): plain text cell, dblclick to edit -->
+									<div
+										v-if="!isColorType"
+										:class="[
+											colorCellBoxClass,
+											'rounded-l-none border-l border-outline-gray-1',
+											isEditing(row, 'value')
+												? 'bg-surface-base ring-2 ring-outline-gray-3'
+												: cellTextClass(row),
+										]"
+										@dblclick="startEdit(row, 'value')">
+										<input
+											v-if="isEditing(row, 'value')"
+											type="text"
+											:value="row.value"
+											:placeholder="VALUE_PLACEHOLDERS[activeType]"
+											:class="colorValueInputClass"
+											:ref="focusEditInput"
+											@mousedown.stop
+											@blur="(e) => commitEdit(row, 'value', e)"
+											@keydown.enter.prevent="(e) => commitEdit(row, 'value', e)"
+											@keydown.esc.stop.prevent="() => cancelEdit(row)" />
+										<span
+											v-else
+											class="truncate"
+											:style="activeType === 'Font' && row.value ? { fontFamily: row.value } : {}">
+											{{ row.value }}
+										</span>
+									</div>
 									<!-- Light -->
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
@@ -215,6 +279,7 @@
 									</div>
 									<!-- Dark -->
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
@@ -269,7 +334,7 @@
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
 						<div class="text-base-medium text-ink-gray-7">
-							{{ searchQuery.trim() ? "No Variables Found" : "No Variables" }}
+							{{ searchQuery.trim() ? "No tokens found" : `No ${activeType.toLowerCase()} tokens yet` }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
@@ -344,6 +409,15 @@ const {
 } = useBuilderToken();
 
 const csvFileInput = ref<HTMLInputElement>();
+const activeType = ref<"Color" | "Font" | "Dimension">("Color");
+const isColorType = computed(() => activeType.value === "Color");
+const TYPE_TABS = [
+	{ label: "Colors", value: "Color" },
+	{ label: "Fonts", value: "Font" },
+	{ label: "Dimensions", value: "Dimension" },
+] as const;
+const NEW_VALUE_DEFAULTS = { Color: "#ffffff", Font: "", Dimension: "" } as const;
+const VALUE_PLACEHOLDERS = { Color: "#ffffff", Font: "e.g. Fraunces", Dimension: "e.g. 24px" } as const;
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
 const nextNewId = ref(1);
 const newVariable = ref<Row | null>(null);
@@ -351,7 +425,11 @@ const searchQuery = ref("");
 const isCreating = ref(false);
 
 // shared column template so the header and every row stay aligned
-const rowGridClass = "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1";
+const rowGridClass = computed(() =>
+	isColorType.value
+		? "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1"
+		: "grid grid-cols-[minmax(0,1fr)_200px] items-center gap-x-2 px-1",
+);
 
 const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
@@ -395,10 +473,12 @@ const getGroupObject = (groupName: string) => {
 const flatGroup = reactive({ group: null, open: true, rows: [] }) as RowGroup;
 
 const displayGroups = computed<RowGroup[]>(() => {
-	let filteredVariables = variables.value;
+	let filteredVariables = variables.value.filter(
+		(variable) => (variable.type || "Color") === activeType.value,
+	);
 	if (searchQuery.value.trim()) {
 		const query = searchQuery.value.toLowerCase().trim();
-		filteredVariables = variables.value.filter(
+		filteredVariables = filteredVariables.filter(
 			(variable) =>
 				variable.token_name?.toLowerCase().includes(query) || variable.group?.toLowerCase().includes(query),
 		);
@@ -646,10 +726,10 @@ const addNewVariable = async () => {
 		id: `new-${nextNewId.value}`,
 		isNew: true,
 		token_name: "",
-		value: "#ffffff",
+		value: NEW_VALUE_DEFAULTS[activeType.value],
 		dark_value: "",
 		group: "",
-		type: "Color" as const,
+		type: activeType.value,
 	});
 	await nextTick();
 	document.querySelector<HTMLInputElement>("input[data-new-name]")?.focus();
@@ -699,7 +779,7 @@ const createVariable = async (row: Row) => {
 	try {
 		const createdVariable = await createVar({
 			token_name: row.token_name!,
-			value: row.value || "#ffffff",
+			value: row.value || NEW_VALUE_DEFAULTS[row.type || "Color"],
 			dark_value: row.dark_value || undefined,
 			group: row.group || undefined,
 			type: row.type || "Color",
@@ -763,6 +843,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	const lightIndex = headers.findIndex((h) => h.includes("light") || h.includes("value"));
 	const darkIndex = headers.findIndex((h) => h.includes("dark"));
 	const groupIndex = headers.findIndex((h) => h.includes("group"));
+	const typeIndex = headers.findIndex((h) => h.includes("type"));
 
 	if (nameIndex === -1 || lightIndex === -1) {
 		toast.error("CSV must contain 'Variable Name' and 'Light Mode' columns");
@@ -783,10 +864,12 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		// a present-but-blank cell clears the group explicitly
 		const groupValue = groupIndex !== -1 ? values[groupIndex] : undefined;
 
+		const typeValue = typeIndex !== -1 ? values[typeIndex] : undefined;
 		if (variableName && lightValue) {
 			const existing = variables.value.find((v) => v.token_name === variableName);
 			if (!existing) {
 				newVariables.push({
+					...(typeValue ? { type: typeValue as BuilderToken["type"] } : {}),
 					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,

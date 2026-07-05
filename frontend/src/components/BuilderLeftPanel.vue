@@ -133,7 +133,7 @@ const leftPanelOptions = [
 		icon: "lucide-code",
 	},
 	{
-		label: "Variables",
+		label: "Design System",
 		value: "variables",
 		icon: "lucide-aperture",
 	},
