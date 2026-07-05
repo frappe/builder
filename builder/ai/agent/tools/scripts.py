@@ -72,6 +72,9 @@ def apply_set_page_script(ctx, args: dict) -> str:
 	page.append("client_scripts", {"builder_script": doc.name})
 	page.save(ignore_permissions=True)
 	frappe.db.commit()
+	# The created name rides the op back to the canvas (see SCRIPT_TWIN_TOOLS
+	# mirroring in the loop) so its script list / undo tracking pick it up.
+	args["script_name"] = doc.name
 	return f"Created {script_type} script '{doc.name}' and attached it to the page."
 
 

@@ -208,6 +208,43 @@
 				</FileUploader>
 			</div>
 
+			<!-- color_input: the user builds their own palette — any number of colors,
+			     added one picker at a time; hexes ride the reply -->
+			<div v-else-if="el.kind === 'color_input'" class="w-full">
+				<span v-if="controlLabel(i, el)" class="mb-1 block text-p-xs text-ink-gray-5">
+					{{ controlLabel(i, el) }}
+				</span>
+				<div class="flex flex-wrap items-center gap-1.5">
+					<span v-for="(c, k) in colorLists[i] || []" :key="`${c}-${k}`" class="group/chip relative">
+						<span
+							class="block size-7 rounded-md border border-black/10"
+							:style="{ backgroundColor: c }"
+							:title="c" />
+						<button
+							v-if="interactive && !disabled"
+							class="absolute -right-1.5 -top-1.5 hidden size-3.5 items-center justify-center rounded-full bg-surface-gray-3 text-[9px] leading-none text-ink-gray-7 shadow group-hover/chip:flex"
+							title="Remove color"
+							@click="removeColor(i, k)">
+							✕
+						</button>
+					</span>
+					<label
+						class="relative flex size-7 items-center justify-center rounded-md border border-dashed border-outline-gray-3 text-sm text-ink-gray-5 transition-colors"
+						:class="
+							!interactive || disabled
+								? 'cursor-not-allowed opacity-50'
+								: 'cursor-pointer hover:border-outline-gray-4 hover:text-ink-gray-7'
+						">
+						+
+						<input
+							type="color"
+							class="absolute inset-0 size-full cursor-pointer opacity-0"
+							:disabled="!interactive || disabled"
+							@change="addColor(i, $event)" />
+					</label>
+				</div>
+			</div>
+
 			<!-- actions -->
 			<div v-else-if="el.kind === 'actions'" class="flex flex-wrap gap-2 pt-0.5">
 				<Button
@@ -265,7 +302,7 @@ const hasChoices = computed(() => elements.value.some((el) => el.kind === "choic
 // Only choice-less cards (pure forms, plans) get the wrapper box.
 const hasChrome = computed(() => !hasChoices.value);
 
-const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions"]);
+const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions", "color_input"]);
 // A choices group with zero options renders nothing tappable — it must not
 // count as interactive, or it suppresses the fallback button and dead-ends the card.
 const interactiveAtoms = computed(() =>
@@ -329,10 +366,22 @@ function safeColor(value: unknown): string | undefined {
 }
 
 // Collected state keyed by element index: multi-select picks, typed inputs,
-// uploaded file URLs.
+// uploaded file URLs, picked colors.
 const selections = reactive<Record<number, Set<number>>>({});
 const inputs = reactive<Record<number, string>>({});
 const uploads = reactive<Record<number, string>>({});
+const colorLists = reactive<Record<number, string[]>>({});
+
+function addColor(i: number, event: Event) {
+	const value = (event.target as HTMLInputElement)?.value;
+	if (!value) return;
+	colorLists[i] ??= [];
+	if (!colorLists[i].includes(value)) colorLists[i].push(value);
+}
+
+function removeColor(i: number, k: number) {
+	colorLists[i]?.splice(k, 1);
+}
 
 function isSelected(elIndex: number, optIndex: number): boolean {
 	return selections[elIndex]?.has(optIndex) ?? false;
@@ -397,6 +446,10 @@ function submitCollected(actionLabel?: string) {
 		if (el.kind === "upload" && uploads[i]) {
 			lines.push(`${el.label || "Uploaded image"}: ${uploads[i]}`);
 			values.push(`${el.label || "image"} uploaded`);
+		}
+		if (el.kind === "color_input" && colorLists[i]?.length) {
+			lines.push(`${atomLabel(i, el) || "Colors"}: ${colorLists[i].join(", ")}`);
+			values.push(colorLists[i].join(" "));
 		}
 	});
 	const reply = lines.join("\n").trim();

@@ -83,6 +83,13 @@ SNAPSHOT_TOOLS = frozenset(
 	}
 )
 
+# Script tools ALWAYS apply through their server handlers, editor sessions included.
+# Applying them in the browser (frappe.client.insert from toolDispatch) lost scripts
+# silently — two parallel attaches in one round raced and .catch(() => null) ate the
+# failure; a page then published with its reveal CSS but not the JS that fires it.
+# The server apply is atomic and verified; the canvas just mirrors the result.
+SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "update_script"})
+
 
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
@@ -1024,8 +1031,9 @@ class AgentRunner:
 			return "artifact"
 		side = tool.side if tool else "client"
 		off_canvas = self.headless or self.page_id != self.canvas_page_id
-		if side == "client" and off_canvas and tool and tool.handler:
-			return "server"
+		if side == "client" and tool and tool.handler:
+			if off_canvas or op["tool_name"] in SCRIPT_TWIN_TOOLS:
+				return "server"
 		return side
 
 	def apply_client_ops(self, ops: list[dict]) -> tuple[dict[int, str], list[dict]]:
@@ -1095,11 +1103,21 @@ class AgentRunner:
 					self.emit_page("complete", message="Page generated — the agent may keep refining it.")
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
+		if op["tool_name"] in SNAPSHOT_TOOLS:
+			self.ensure_revert_snapshot()
 		content = tool.handler(self, op["args"])
 		self.end_activity(entry)
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
 			self.server_mutations += 1
+			if op["tool_name"] in SCRIPT_TWIN_TOOLS and not self.headless:
+				# Mirror the server-applied script op so the open editor updates its
+				# script list / undo tracking — flagged so the canvas does NO DB work.
+				op["args"]["server_applied"] = True
+				self.applied_operations.append(op)
+				self.emit("tool_batch", operations=[op])
+				if self.channel != self.page_id:
+					self.emit_page("tool_batch", operations=[op])
 		return content
 
 	def emit_round_note(self, text: str, applied: list[dict]) -> None:
@@ -1537,10 +1555,62 @@ class AgentRunner:
 		return (
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
 			"calls for (set_page_script), fix obvious breakage with the block tools, verify "
-			"with preview_page at most once, then finish with a short summary.\n"
+			"with preview_page at most once, then finish with a short summary."
+			f"{self.script_hook_gap_note(root)}\n"
 			f"{render_page_context(root)}",
 			ops,
 		)
+
+	def script_hook_gap_note(self, root: dict) -> str:
+		"""The class-contract check: scripts written in parallel with generation
+		target class hooks the generated blocks must carry — a missing hook silently
+		kills the behaviour (seen live: scripts selecting .suraj-project-card on a
+		page whose blocks only carried .suraj-reveal). Compare the attached scripts'
+		querySelector targets and CSS class selectors against the blocks' classes
+		and tell the model NOW, while it can still patch with update_blocks."""
+		if not self.page_id:
+			return ""
+		names = frappe.db.get_all(
+			"Builder Page Client Script",
+			filters={"parent": self.page_id, "parenttype": "Builder Page"},
+			pluck="builder_script",
+		)
+		if not names:
+			return ""
+		scripts = frappe.get_all(
+			"Builder Client Script", filters={"name": ["in", names]}, fields=["script_type", "script"]
+		)
+		selected, runtime_added, css_used = set(), set(), set()
+		for s in scripts:
+			text = s.script or ""
+			if s.script_type == "CSS":
+				css_used.update(re.findall(r"\.([a-zA-Z][\w-]{2,})", text))
+			else:
+				selected.update(re.findall(r"""querySelector(?:All)?\(\s*['"]\.([\w-]+)""", text))
+				# Classes the JS creates/toggles at runtime are not expected on blocks.
+				runtime_added.update(
+					re.findall(r"""classList\.(?:add|remove|toggle)\(\s*['"]([\w-]+)""", text)
+				)
+				runtime_added.update(re.findall(r"""\.className\s*=\s*['"]([\w\s-]+)['"]""", text))
+		blob = json.dumps(root)
+		present = set(re.findall(r'"([^"]+)"', " ".join(re.findall(r'"classes":\s*\[([^\]]*)\]', blob))))
+		missing_js = sorted(selected - present - runtime_added)
+		missing_css = sorted(css_used - present - runtime_added - selected)[:8]
+		if not missing_js and not missing_css:
+			return ""
+		parts = ["\nCLASS CONTRACT CHECK:"]
+		if missing_js:
+			parts.append(
+				f"your JS selects {', '.join('.' + c for c in missing_js)} but NO block carries "
+				"those classes — that behaviour will never fire. Add each class to the intended "
+				"blocks (update_blocks) or rewrite the script."
+			)
+		if missing_css:
+			parts.append(
+				f"CSS rules target unused classes: {', '.join('.' + c for c in missing_css)} — "
+				"apply them to the intended blocks or they are dead styling."
+			)
+		return " ".join(parts)
 
 
 def run_agent_job(prompt: str, model: str, api_key: str, **kwargs):

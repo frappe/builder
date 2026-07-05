@@ -306,6 +306,19 @@ export class ToolDispatcher {
 				return;
 			}
 			case "update_script": {
+				// server_applied: the loop already persisted the change (scripts are
+				// server-authoritative now) — only mirror the local UI state.
+				if (args.server_applied) {
+					const existing = this.pageStore.activePageScripts.find(
+						(s) => s.name === (args.script_name as string),
+					);
+					if (existing) {
+						existing.script = args.script as string;
+						if (args.script_type) existing.script_type = args.script_type as any;
+					}
+					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
+					return;
+				}
 				const op = createResource({ url: "frappe.client.set_value" })
 					.submit({
 						doctype: "Builder Client Script",
@@ -330,6 +343,16 @@ export class ToolDispatcher {
 				return;
 			}
 			case "set_page_script": {
+				// server_applied: the script doc exists and is attached — mirror only.
+				if (args.server_applied && args.script_name) {
+					this.pageStore.activePageScripts.push({
+						name: args.script_name as string,
+						script_type: ((args.script_type as string) || "JavaScript") as any,
+						script: args.script as string,
+					} as any);
+					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
+					return;
+				}
 				const scriptType = (args.script_type as string) || "JavaScript";
 				// Use the model's descriptive name as the doc name (autoname is "prompt"), so the
 				// script list reads "Confetti On Load", not "JavaScript-52b52". Falls back to the

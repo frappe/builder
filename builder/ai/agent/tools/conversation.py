@@ -28,9 +28,11 @@ ELEMENT_KINDS = frozenset(
 		"swatches",
 		"image",
 		"svg",
+		"mock",
 		"choices",
 		"input",
 		"upload",
+		"color_input",
 		"actions",
 		"divider",
 		"note",
@@ -207,6 +209,8 @@ def render_element_text(el: dict) -> list[str]:
 		return [f"[input: {el.get('label') or el.get('placeholder') or 'text field'}]"]
 	if kind == "upload":
 		return [f"[upload: {el.get('label') or 'image'}]"]
+	if kind == "color_input":
+		return [f"[color picker: {el.get('label') or 'brand colors'}]"]
 	if kind == "actions":
 		labels = " / ".join(str(b.get("label") or "") for b in el.get("buttons") or [])
 		return [f"[buttons: {labels}]"] if labels else []
@@ -288,6 +292,10 @@ present_ui = Tool(
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "
 					"usually alongside a choices card of found images as the 'or upload your own' "
 					"escape hatch\n"
+					"{kind:'color_input', label?} — lets the user build their own palette: they add "
+					"any number of colours with a picker; the hexes arrive in their reply. Pair with "
+					"an actions button. Use for optional brand colours early in a design flow — "
+					"colours the user gives are LAW for everything that follows\n"
 					"{kind:'note', text} — model-only context: persisted as part of your message "
 					"(you'll see it on replay) but NEVER shown to the user. Put detailed working "
 					"notes here (e.g. the full build brief behind a plan) so the visible card "
