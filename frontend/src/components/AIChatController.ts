@@ -64,8 +64,10 @@ export class AIChatController {
 		this.foreignBuild.value = { originPage: originPage || null, targetPage: targetPage || null };
 		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
 		// No completion event is guaranteed to reach us; fade the pill out once the
-		// stream goes quiet.
-		this.foreignBuildTimer = setTimeout(() => (this.foreignBuild.value = null), 8000);
+		// build goes quiet. Generous window: a build's quiet gaps (scripts round,
+		// preview screenshot) run well past a few seconds, and losing the pill also
+		// loses the user's only way back to the driving chat.
+		this.foreignBuildTimer = setTimeout(() => (this.foreignBuild.value = null), 30000);
 	}
 
 	/** While a build stream owns this page's canvas, the editor's autosave stands
