@@ -65,8 +65,10 @@ def run_create_page(ctx, args: dict) -> str:
 
 
 def sibling_design_summary(page_id: str | None) -> str:
-	"""The design tokens an additional page must inherit, read from the sibling
-	page's draft: fonts and var(--…) palette handles, plus its script names."""
+	"""The design system an additional page must inherit. Primary source is the
+	Builder Token registry (exact var() handles, grouped by type); the sibling
+	page's blocks narrow the color set to this site's own tokens and surface
+	anything not yet tokenized (literal fonts) plus its script names."""
 	if not page_id:
 		return ""
 	blocks = frappe.db.get_value("Builder Page", page_id, "draft_blocks") or ""
@@ -74,8 +76,26 @@ def sibling_design_summary(page_id: str | None) -> str:
 		blocks = frappe.db.get_value("Builder Page", page_id, "blocks") or ""
 	if not blocks:
 		return ""
-	fonts = sorted(set(re.findall(r'"fontFamily":\s*"([^"]+)"', blocks)))
-	handles = sorted(set(re.findall(r"var\((--[a-zA-Z0-9-]+)", blocks)))
+	used_handles = set(re.findall(r"var\((--[a-zA-Z0-9-]+)", blocks))
+	by_type: dict[str, list[str]] = {}
+	for t in frappe.get_all("Builder Token", fields=["name", "token_name", "type", "value"]):
+		handle = f"--{t.name}"
+		# The registry spans every brand on the site — keep the colors to the ones
+		# this page actually references; Font/Dimension sets are small, show all.
+		if t.type == "Color" and handle not in used_handles:
+			continue
+		by_type.setdefault(t.type, []).append(f"var({handle}) = {t.value} ({t.token_name})")
+	parts = []
+	for type_name, label in (
+		("Color", "color tokens"),
+		("Font", "font tokens"),
+		("Dimension", "dimension tokens"),
+	):
+		if by_type.get(type_name):
+			parts.append(f"{label}: " + "; ".join(sorted(by_type[type_name])))
+	literal_fonts = sorted(set(re.findall(r'"fontFamily":\s*"([^"v][^"]*)"', blocks)))
+	if literal_fonts:
+		parts.append(f"fonts (literal): {', '.join(literal_fonts)}")
 	scripts = frappe.get_all(
 		"Builder Client Script",
 		filters=[
@@ -90,11 +110,6 @@ def sibling_design_summary(page_id: str | None) -> str:
 		],
 		fields=["name", "script_type"],
 	)
-	parts = []
-	if fonts:
-		parts.append(f"fonts: {', '.join(fonts)}")
-	if handles:
-		parts.append(f"palette handles: {', '.join(f'var({h})' for h in handles)}")
 	if scripts:
 		parts.append(f"scripts: {', '.join(f'{s.name} ({s.script_type})' for s in scripts)}")
 	return "\n".join(parts)
