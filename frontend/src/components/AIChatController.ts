@@ -115,6 +115,7 @@ export class AIChatController {
 			}
 		}
 		this.beginCanvasBuild();
+		this.previewUnconfirmed = true;
 		this.pageStreamContent.value += data.chunk!;
 		this.scheduleStreamRender();
 	}
@@ -143,6 +144,10 @@ export class AIChatController {
 	private pendingDisplayText: string | null = null;
 
 	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
+	// True while the canvas shows a streamed preview that no authoritative
+	// tool_batch has replaced — if the turn ends in that state (failed generation,
+	// cancel), the preview is dead weight and the canvas must resync to the draft.
+	private previewUnconfirmed = false;
 	private readonly summaryContent = ref(""); // accumulates summary chunks
 	private readonly pendingAssistantId = ref<string | null>(null);
 	private submittedForPageId: string | null = null;
@@ -486,6 +491,7 @@ export class AIChatController {
 			if (!this.isForeignSession(data)) this.noteForeignBuild(null, data.page_id);
 			return;
 		}
+		this.previewUnconfirmed = false;
 		for (const op of data.operations) {
 			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
 			try {
@@ -509,7 +515,8 @@ export class AIChatController {
 			return;
 		}
 		this.clearStreamRenderTimer();
-		this.endCanvasBuild();
+		this.endCanvasBuild(this.previewUnconfirmed);
+		this.previewUnconfirmed = false;
 		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
 			this.submittedForPageId = null;
 			return;
@@ -580,7 +587,8 @@ export class AIChatController {
 	onError = async (data: { message?: string; session_id?: string }) => {
 		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
-		this.endCanvasBuild(!!this.pageStreamContent.value);
+		this.endCanvasBuild(this.previewUnconfirmed);
+		this.previewUnconfirmed = false;
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";
@@ -602,6 +610,8 @@ export class AIChatController {
 	}) => {
 		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
+		this.endCanvasBuild(this.previewUnconfirmed);
+		this.previewUnconfirmed = false;
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";

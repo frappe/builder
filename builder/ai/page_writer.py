@@ -17,6 +17,8 @@ import yaml
 from builder.ai.block_codec import BlockCodec
 from builder.utils import compact_json
 
+logger = frappe.logger("builder.ai.page_writer")
+
 # --- style normalization — port of frontend/src/components/ai/normalizeStyles.ts ---
 
 # The model camelCases keyword VALUES too (justifyContent: 'spaceBetween'); map back.
@@ -331,13 +333,35 @@ def build_repeater_data_script(parsed) -> str:
 
 
 def parse_generation_yaml(yaml_text: str):
-	"""Parse a generation YAML document, tolerating fences and a truncated tail —
-	a stream that got cut off (max_tokens) still yields the valid prefix instead of
-	failing outright (mirrors the frontend's getValidPartialYAML)."""
+	"""Parse a generation YAML document, tolerating fences and model slips —
+	one bad line in a 30k-char page must not discard the whole (paid) generation.
+	Salvage order: drop the offending line the parser points at (up to 8 times,
+	losing a property or a block instead of the page), then fall back to trimming
+	a truncated tail (a stream cut off by max_tokens still yields its valid prefix)."""
 	text = BlockCodec.strip_fences(yaml_text or "")
 	try:
 		return yaml.safe_load(text)
-	except yaml.YAMLError:
+	except yaml.YAMLError as exc:
+		first_error = exc
+		lines = text.split("\n")
+		for attempt in range(8):
+			mark = getattr(exc, "problem_mark", None)
+			if mark is None or not (0 <= mark.line < len(lines)):
+				break
+			dropped = lines.pop(mark.line)
+			try:
+				parsed = yaml.safe_load("\n".join(lines))
+			except yaml.YAMLError as next_exc:
+				exc = next_exc
+				continue
+			logger.warning(
+				"generation YAML salvaged by dropping %d line(s); first error: %s; last dropped: %r",
+				attempt + 1,
+				str(first_error).replace("\n", " "),
+				dropped.strip()[:160],
+			)
+			return parsed
+		logger.warning("generation YAML unsalvageable: %s", str(first_error).replace("\n", " "))
 		lines = text.split("\n")
 		for i in range(len(lines) - 1, max(0, len(lines) - 12), -1):
 			try:

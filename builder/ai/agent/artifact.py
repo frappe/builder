@@ -78,15 +78,14 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 	result, and top-level section count. A thin/broken page shows up here as a 'length'
 	finish, a parse error, or very few sections — distinguishing a weak model from a
 	pipeline bug."""
-	import yaml as yaml_lib
-
 	chars = len(yaml_text)
 	sections = -1  # -1 = did not parse
 	try:
-		from builder.ai.page_writer import unwrap_root
+		from builder.ai.page_writer import parse_generation_yaml, unwrap_root
 
-		parsed = yaml_lib.safe_load(yaml_text)
-		root = unwrap_root(parsed)
+		# The same salvaging parser persist_page uses — telemetry must agree with
+		# what actually lands on the page (a salvaged parse is not a failed one).
+		root = unwrap_root(parse_generation_yaml(yaml_text))
 		if isinstance(root, dict):
 			sections = len(root.get("c") or [])
 	except Exception as e:
@@ -237,6 +236,16 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 
 	root, data_script = page_writer.persist_page(ctx.page_id, yaml_text)
 	if root is None:
-		logger.warning("generate_page_yaml: YAML produced no blocks (model=%s)", ctx.model)
+		# A discarded generation is paid-for work — keep the raw text for diagnosis
+		# (the parse error itself is logged by parse_generation_yaml with line info).
+		dump = frappe.get_site_path("private", "files", f"ai-failed-generation-{ctx.page_id}.yaml")
+		try:
+			with open(dump, "w") as f:
+				f.write(yaml_text)
+		except OSError:
+			dump = "<unwritable>"
+		logger.warning(
+			"generate_page_yaml: YAML produced no blocks (model=%s), raw saved to %s", ctx.model, dump
+		)
 		return []
 	return [{"tool_name": "generate_page", "args": {"blocks": [root], "data_script": data_script}}]
