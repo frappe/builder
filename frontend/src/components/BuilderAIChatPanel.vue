@@ -68,10 +68,10 @@
 					<div class="flex w-full flex-col gap-2">
 						<button
 							v-for="suggestion in promptSuggestions"
-							:key="suggestion"
+							:key="suggestion.label"
 							class="truncate rounded-md bg-surface-gray-2 px-3 py-2 text-left text-p-base text-ink-gray-7 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-9"
 							@click="useSuggestion(suggestion)">
-							{{ suggestion }}
+							{{ suggestion.label }}
 						</button>
 					</div>
 				</div>
@@ -424,33 +424,107 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 
 // --- Empty-state suggestions -------------------------------------------------
 // Fresh page → describe the site to build; page with content → describe a change.
-// Tapping a pill prefills the prompt (it's an example to personalise, not a command).
-// A wide, characterful pool sampled 3-at-a-time so the panel feels fresh, not the
-// same generic trio every visit.
+// Each pill shows a short `label` but prefills a rich `prompt` — a complete brief
+// (name, vibe, sections, emphasis) so the agent can proceed with the fewest
+// follow-up questions. It's an editable starting point, not a command.
+// A wide, characterful pool sampled 3-at-a-time so the panel feels fresh.
+type Suggestion = { label: string; prompt: string };
 const pageHasContent = computed(() => (canvasStore.activeCanvas?.getRootBlock()?.children?.length ?? 0) > 0);
-const BUILD_POOL = [
-	"A wood-fired pizzeria in Goa",
-	"Moody portfolio for a photographer",
-	"Waitlist page for an AI app",
-	"Menu & story for a ramen bar",
-	"A vintage record store",
-	"Landing page for a yoga studio",
-	"A bold skincare brand",
-	"Personal site for a designer",
-	"A craft coffee roaster",
-	"Event page for a design meetup",
+const BUILD_POOL: Suggestion[] = [
+	{
+		label: "A wood-fired pizzeria in Goa",
+		prompt:
+			"Build a website for Forno, a wood-fired pizzeria in Anjuna, Goa. Warm, rustic-modern feel with big appetizing food photography and a cozy dark-terracotta palette. Sections: a hero with our story, the menu (wood-fired pizzas, small plates, natural wines), a photo gallery, and a visit section with hours and location.",
+	},
+	{
+		label: "Moody portfolio for a photographer",
+		prompt:
+			"Build a portfolio for Aria Sen, a portrait and editorial photographer. Dark, cinematic, image-first design where the photos dominate. Sections: a full-bleed hero image, a gallery of selected work, a short about/bio, a client list, and a contact/booking section.",
+	},
+	{
+		label: "Waitlist page for an AI app",
+		prompt:
+			"Build a launch and waitlist page for Nimbus, an AI note-taking app. Clean and modern with a confident gradient accent. Sections: a punchy hero with the value prop and an email waitlist form, three key features, a short 'how it works', and social proof.",
+	},
+	{
+		label: "Menu & story for a ramen bar",
+		prompt:
+			"Build a website for Slurp, a ramen bar in Bandra, Mumbai. Bold, appetizing, a little playful. Sections: a hero, the ramen menu with descriptions and prices, our origin story, a gallery, and hours and location.",
+	},
+	{
+		label: "A vintage record store",
+		prompt:
+			"Build a website for Groove Vault, a vintage vinyl record store. Retro, textured, warm analog vibe. Sections: a hero, featured new arrivals, the genres we stock, our story, in-store events, and how to find us.",
+	},
+	{
+		label: "Landing page for a yoga studio",
+		prompt:
+			"Build a landing page for Stillpoint, a boutique yoga studio. Calm, airy, minimal with soft natural tones and gentle motion. Sections: a hero, class types and schedule, the teachers, a membership/pricing section, and a book-a-first-class CTA.",
+	},
+	{
+		label: "A bold skincare brand",
+		prompt:
+			"Build a product site for Lumen, a clean skincare brand. Bold, premium, editorial with big product shots. Sections: a hero, the hero product with ingredients and benefits, results, reviews, and a shop/buy CTA.",
+	},
+	{
+		label: "Personal site for a designer",
+		prompt:
+			"Build a personal site for Maya Rao, a product designer. Confident, minimal, type-driven. Sections: a short intro hero, selected case studies, an about section, and contact links (email, LinkedIn, resume).",
+	},
+	{
+		label: "A craft coffee roaster",
+		prompt:
+			"Build a website for Ember & Oak, a craft coffee roaster. Warm, artisanal, rich browns and texture. Sections: a hero, our roasts with tasting notes, the roasting story, wholesale info, and where to buy or visit.",
+	},
+	{
+		label: "Event page for a design meetup",
+		prompt:
+			"Build an event page for Design Jam, a monthly design meetup in Pune. Energetic, modern, poster-like. Sections: a hero with date, venue and RSVP, the speaker lineup, the schedule, past-event highlights, and sponsors.",
+	},
 ];
-const EDIT_POOL = [
-	"Add a testimonials section",
-	"Make the hero more dramatic",
-	"Switch to a dark theme",
-	"Add a pricing section",
-	"Add smooth scroll animations",
-	"Tighten the spacing everywhere",
-	"Add a sticky header with nav",
-	"Make it feel more premium",
+const EDIT_POOL: Suggestion[] = [
+	{
+		label: "Add a testimonials section",
+		prompt:
+			"Add a testimonials section with three or four short customer quotes, each with a name and role, styled to match the rest of the page.",
+	},
+	{
+		label: "Make the hero more dramatic",
+		prompt:
+			"Make the hero more dramatic: a larger headline, stronger contrast, a full-bleed background image or bold color, and a clear primary call-to-action.",
+	},
+	{
+		label: "Switch to a dark theme",
+		prompt:
+			"Rework the whole page in a cohesive dark theme — keep the layout but adjust backgrounds, text, and accents for good contrast.",
+	},
+	{
+		label: "Add a pricing section",
+		prompt:
+			"Add a pricing section with three tiers (name, price, feature list, and a CTA button each), styled to match the page.",
+	},
+	{
+		label: "Add scroll animations",
+		prompt:
+			"Add tasteful scroll animations: staggered fade-and-rise reveals on each section as it enters the viewport, subtle and smooth.",
+	},
+	{
+		label: "Tighten the spacing everywhere",
+		prompt:
+			"Tighten the spacing across the page: reduce oversized gaps, align section padding to a consistent rhythm, and improve the vertical flow.",
+	},
+	{
+		label: "Add a sticky header with nav",
+		prompt:
+			"Add a sticky header with the name or logo on the left and nav links to each section on the right, gaining a subtle background on scroll.",
+	},
+	{
+		label: "Make it feel more premium",
+		prompt:
+			"Make the page feel more premium: refine the typography and spacing, add depth with subtle shadows and borders, and elevate the color and imagery treatment.",
+	},
 ];
-function sample3(pool: string[]): string[] {
+function sample3(pool: Suggestion[]): Suggestion[] {
 	return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
 }
 // Picked once per mount (a computed would reshuffle on every reactive read).
@@ -458,8 +532,8 @@ const buildPicks = sample3(BUILD_POOL);
 const editPicks = sample3(EDIT_POOL);
 const promptSuggestions = computed(() => (pageHasContent.value ? editPicks : buildPicks));
 const promptInput = ref<HTMLTextAreaElement | null>(null);
-function useSuggestion(text: string) {
-	prompt.value = text;
+function useSuggestion(suggestion: Suggestion) {
+	prompt.value = suggestion.prompt;
 	promptInput.value?.focus();
 }
 
