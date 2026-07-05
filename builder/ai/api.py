@@ -527,3 +527,44 @@ def get_active_build(page_id: str):
 
 	raw = frappe.cache().get_value(stream_buffer_key(page_id))
 	return frappe.parse_json(raw) if raw else None
+
+
+CASSETTE_MODES = ("record", "replay")
+
+
+@frappe.whitelist()
+@has_page_write()
+def cassette_status():
+	"""Cassette state for the dev UI. Only exposed on developer-mode benches —
+	record/replay is a testing tool, not a product feature."""
+	from builder.ai import cassette
+
+	if not (frappe.conf.developer_mode or frappe.conf.ai_cassette_enabled):
+		return {"enabled": False}
+	import os
+
+	directory = os.path.dirname(cassette.episode_path("probe"))
+	episodes = sorted(f[: -len(".jsonl")] for f in os.listdir(directory) if f.endswith(".jsonl"))
+	return {"enabled": True, "active": cassette.config(), "episodes": episodes}
+
+
+@frappe.whitelist()
+@has_page_write()
+def cassette_arm(mode: str, episode: str):
+	from builder.ai import cassette
+
+	if not (frappe.conf.developer_mode or frappe.conf.ai_cassette_enabled):
+		frappe.throw(_("Cassettes are only available in developer mode"))
+	if mode not in CASSETTE_MODES or not (episode or "").strip():
+		frappe.throw(_("Pick record/replay and an episode name"))
+	cassette.arm(mode, episode.strip())
+	return cassette_status()
+
+
+@frappe.whitelist()
+@has_page_write()
+def cassette_disarm():
+	from builder.ai import cassette
+
+	cassette.disarm()
+	return cassette_status()

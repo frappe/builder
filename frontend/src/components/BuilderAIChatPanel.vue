@@ -33,6 +33,17 @@
 				<div class="truncate text-p-xs leading-4 text-ink-gray-5">{{ currentSessionTitle }}</div>
 			</div>
 			<div v-if="builderStore.isAIEnabled" class="flex shrink-0 items-center gap-1">
+				<!-- Dev-only LLM cassette: record one paid run, replay it for free. -->
+				<span
+					v-if="cassette?.active"
+					class="flex items-center gap-1 rounded-full bg-surface-red-1 px-2 py-0.5 text-p-xs font-medium text-ink-red-3"
+					:title="`Cassette ${cassette.active.mode}: ${cassette.active.episode}`">
+					<span class="size-1.5 animate-pulse rounded-full bg-surface-red-5" />
+					{{ cassette.active.mode === "record" ? "REC" : "REPLAY" }}
+				</span>
+				<Dropdown v-if="cassette?.enabled" :options="cassetteOptions" :offset="6">
+					<Button variant="ghost" size="sm" icon="lucide-disc" title="LLM cassette (dev)" />
+				</Dropdown>
 				<Tooltip text="New chat">
 					<Button variant="ghost" size="sm" icon="lucide-plus" :disabled="isSubmitting" @click="newSession" />
 				</Tooltip>
@@ -334,7 +345,7 @@ import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { formatCost } from "@/components/ai/format";
 import { renderMarkdown } from "@/components/ai/markdown";
 import useBuilderStore from "@/stores/builderStore";
-import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
+import { Button, Dropdown, Popover, Tooltip, createResource, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -342,6 +353,53 @@ const chat = new AIChatController();
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
 const { revertTurn, selectOption } = chat;
 const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
+
+// --- dev cassette (LLM record/replay) ------------------------------------
+type CassetteStatus = {
+	enabled: boolean;
+	active?: { mode: string; episode: string } | null;
+	episodes?: string[];
+};
+const cassette = ref<CassetteStatus | null>(null);
+
+async function cassetteCall(url: string, args: Record<string, any> = {}) {
+	try {
+		cassette.value = await createResource({ url }).submit(args);
+	} catch (e: any) {
+		toast.error(e?.messages?.[0] || "Cassette call failed");
+	}
+}
+
+onMounted(() => cassetteCall("builder.ai.api.cassette_status"));
+
+const cassetteOptions = computed(() => {
+	const opts: any[] = [
+		{
+			label: "Record new episode…",
+			icon: "lucide-circle",
+			onClick: () => {
+				const name = window.prompt(
+					"Episode name (one paid run is captured, then replays are free):",
+					`ep-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}`,
+				);
+				if (name) cassetteCall("builder.ai.api.cassette_arm", { mode: "record", episode: name });
+			},
+		},
+		...(cassette.value?.episodes || []).map((ep) => ({
+			label: `Replay: ${ep}`,
+			icon: "lucide-play",
+			onClick: () => cassetteCall("builder.ai.api.cassette_arm", { mode: "replay", episode: ep }),
+		})),
+	];
+	if (cassette.value?.active) {
+		opts.push({
+			label: `Stop (${cassette.value.active.mode}: ${cassette.value.active.episode})`,
+			icon: "lucide-square",
+			onClick: () => cassetteCall("builder.ai.api.cassette_disarm"),
+		});
+	}
+	return opts;
+});
 
 const currentSessionTitle = computed(() => {
 	const current = sessions.value.find((s) => s.name === sessionId.value);
