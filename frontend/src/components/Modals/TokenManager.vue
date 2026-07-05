@@ -22,7 +22,7 @@
 					<button
 						v-for="tab in TYPE_TABS"
 						:key="tab.value"
-						class="rounded-md px-2.5 py-1 text-sm transition-colors"
+						class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors"
 						:class="
 							activeType === tab.value
 								? 'bg-surface-gray-3 font-medium text-ink-gray-9'
@@ -30,6 +30,12 @@
 						"
 						@click="activeType = tab.value">
 						{{ tab.label }}
+						<span
+							v-if="tokenCounts[tab.value]"
+							class="rounded bg-surface-gray-4 px-1 text-[11px] font-medium leading-4 text-ink-gray-6"
+							:class="{ 'text-ink-gray-8': activeType === tab.value }">
+							{{ tokenCounts[tab.value] }}
+						</span>
 					</button>
 				</div>
 				<div class="mb-3">
@@ -411,6 +417,13 @@ const {
 const csvFileInput = ref<HTMLInputElement>();
 const activeType = ref<"Color" | "Font" | "Dimension">("Color");
 const isColorType = computed(() => activeType.value === "Color");
+// Total tokens per type — shown as a count pill on each tab (search-independent
+// so the numbers stay stable while filtering within a tab).
+const tokenCounts = computed<Record<string, number>>(() => {
+	const counts: Record<string, number> = { Color: 0, Font: 0, Dimension: 0 };
+	for (const variable of variables.value) counts[variable.type || "Color"]++;
+	return counts;
+});
 const TYPE_TABS = [
 	{ label: "Colors", value: "Color" },
 	{ label: "Fonts", value: "Font" },
