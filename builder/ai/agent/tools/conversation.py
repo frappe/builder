@@ -74,7 +74,7 @@ def decline_design_card(ctx, args: dict, ui: list[dict]) -> str | None:
 	if args.get("redesign"):
 		return None
 	is_design_card = any(
-		option.get("svg") or option.get("font")
+		option.get("svg") or option.get("font") or option.get("layout")
 		for el in ui
 		if el.get("kind") == "choices"
 		for option in el.get("options") or []
@@ -132,6 +132,8 @@ def sanitize_option(option: dict) -> dict:
 		option.pop("colors")
 	if option.get("svg") is not None and not isinstance(option["svg"], str):
 		option.pop("svg")
+	if option.get("layout") is not None and not isinstance(option["layout"], str):
+		option.pop("layout")
 	if option.get("image") is not None and not isinstance(option["image"], str):
 		option.pop("image")
 	return option
@@ -205,6 +207,8 @@ def option_text(option) -> str:
 	label = option.get("label") or option.get("value") or ""
 	desc = option.get("description") or ""
 	line = f"* {label} — {desc}" if desc else f"* {label}"
+	if option.get("layout"):
+		line += f" [layout: {option['layout']}]"
 	font = option.get("font")
 	if isinstance(font, dict) and (font.get("heading") or font.get("body")):
 		line += f" [fonts: {font.get('heading') or '—'} + {font.get('body') or '—'}]"
@@ -258,17 +262,17 @@ present_ui = Tool(
 					"for plan cards — it IS the palette, typography and section list in one atom, "
 					"so never pair it with an svg wireframe, swatches, or a duplicate section list\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?, image:'https://…'?}]} — tappable option cards; "
-					"single-select submits immediately, multi collects. An option's `svg` is a "
-					"MINIMAL layout sketch: abstract wireframe of flat rects/lines in that option's "
-					"palette on its background colour, viewBox='0 0 120 80', no words, <15 shapes — it "
-					"must make the layout difference between options visible at a glance. An option's "
-					"`font` is a STRING: the exact Google Font names of that option's heading and body "
-					"faces joined by ' + ' — the card renders a live type specimen in the real fonts, "
-					"so the user sees the typography they're picking. An option's `image` is a "
-					"photo thumbnail URL (use the `thumb` from search_images) — for letting the "
-					"user pick a hero/section photo; the chosen option's image URL comes back in "
-					"their reply\n"
+					"layout:'bento'?, font:'Fraunces + DM Sans'?, image:'https://…'?}]} — tappable option cards; "
+					"single-select submits immediately, multi collects. An option's `layout` names "
+					"its layout system — one of editorial-grid, split-screen, bento, poster-brutalist, "
+					"dense-utility, single-object, zine-collage, classic-centered — and the card draws "
+					"that system's wireframe in the option's `colors` ([bg, accent, ink]); never draw "
+					"sketch SVG yourself. An option's `font` is a STRING: the exact Google Font names "
+					"of that option's heading and body faces joined by ' + ' — the card renders a live "
+					"type specimen in the real fonts, so the user sees the typography they're picking. "
+					"An option's `image` is a photo thumbnail URL (use the `thumb` from search_images) "
+					"— for letting the user pick a hero/section photo; the chosen option's image URL "
+					"comes back in their reply\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "

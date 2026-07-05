@@ -114,8 +114,13 @@
 							class="h-24 w-full rounded border border-black/10 object-cover"
 							loading="lazy"
 							alt="" />
-						<!-- minimal layout sketch: the model draws an abstract wireframe SVG.
-						     The sketch already carries the option's palette, so no swatch strip. -->
+						<!-- layout archetype: the model names a layout system + palette and the
+						     sketch is drawn HERE (layoutSketches.ts) — deterministic and cheap. -->
+						<span
+							v-else-if="option.layout && layoutSketch(option.layout, option.colors)"
+							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
+							v-html="layoutSketch(option.layout, option.colors)" />
+						<!-- legacy: a model-drawn wireframe SVG (old sessions replaying) -->
 						<span
 							v-else-if="option.svg"
 							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
@@ -129,9 +134,15 @@
 								class="size-3.5"
 								:style="{ backgroundColor: color }" />
 						</span>
-						<!-- Full type specimen — the fonts speak for themselves (loaded on
-						     render via fontManager), no pairing label or mood copy. -->
+						<!-- Full type specimen (loaded on render via fontManager). On a pure
+						     typography option the fonts speak for themselves; when the model
+						     mixes a specimen onto a visual option, the label must survive. -->
 						<template v-if="option.font?.heading">
+							<span
+								v-if="option.label && (option.layout || option.svg || option.image)"
+								class="text-p-sm font-medium leading-snug text-ink-gray-8">
+								{{ option.label }}
+							</span>
 							<span
 								class="text-2xl leading-tight text-ink-gray-9"
 								:style="{ fontFamily: option.font.heading, fontWeight: 700 }">
@@ -149,7 +160,7 @@
 							<!-- A sketch option is chosen on looks — the description only reaches
 							     the model (spec + tap reply), not the eye. -->
 							<span
-								v-if="option.description && !option.svg"
+								v-if="option.description && !option.svg && !option.layout"
 								class="line-clamp-3 text-xs leading-snug text-ink-gray-5">
 								{{ option.description }}
 							</span>
@@ -229,6 +240,7 @@
 </template>
 
 <script setup lang="ts">
+import { layoutSketch } from "@/components/ai/layoutSketches";
 import { setFont } from "@/utils/fontManager";
 import DOMPurify from "dompurify";
 import { Button, FileUploader, FormControl } from "frappe-ui";
