@@ -7,13 +7,13 @@
 	<Teleport to="body">
 		<div
 			v-if="foreignBuild"
-			class="text-ink-white fixed left-1/2 top-14 z-50 flex -translate-x-1/2 items-center gap-2.5 rounded-full bg-surface-gray-7 px-4 py-2.5 text-p-sm font-medium shadow-xl">
+			class="fixed left-1/2 top-14 z-50 flex -translate-x-1/2 items-center gap-2.5 rounded-full bg-zinc-900 px-4 py-2.5 text-p-sm font-medium text-white shadow-xl ring-1 ring-white/10">
 			<span class="size-2 animate-pulse rounded-full bg-surface-amber-4" />
 			<template v-if="foreignBuild.targetPage">
 				Bob is building another page
 				<router-link
 					:to="{ name: 'builder', params: { pageId: foreignBuild.targetPage } }"
-					class="text-ink-white underline underline-offset-2">
+					class="text-white underline underline-offset-2">
 					View
 				</router-link>
 			</template>
@@ -22,7 +22,7 @@
 				<router-link
 					v-if="foreignBuild.originPage"
 					:to="{ name: 'builder', params: { pageId: foreignBuild.originPage } }"
-					class="text-ink-white underline underline-offset-2">
+					class="text-white underline underline-offset-2">
 					Go back to that chat
 				</router-link>
 			</template>

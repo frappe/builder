@@ -124,13 +124,23 @@ export class AIChatController {
 
 	/** A mid-build page load: replay the in-flight generation stream from the
 	 * server's buffer so the canvas shows the live build, not the stale draft. */
+	private syncTimer: ReturnType<typeof setTimeout> | null = null;
+
 	private async syncActiveBuild() {
 		const pid = this.pageId.value;
 		if (!pid || pid === "new") return;
 		const build: any = await createResource({ url: "builder.ai.api.get_active_build" })
 			.submit({ page_id: pid })
 			.catch(() => null);
-		if (!build?.yaml || this.pageId.value !== pid) return;
+		if (this.pageId.value !== pid) return;
+		// This page's own chat is building ANOTHER page: show the pill (with the
+		// target link) and keep it alive by re-checking while the run lasts.
+		if (build?.building_page && build.building_page !== pid) {
+			this.noteForeignBuild(null, build.building_page);
+			if (this.syncTimer) clearTimeout(this.syncTimer);
+			this.syncTimer = setTimeout(() => this.syncActiveBuild(), 15000);
+		}
+		if (!build?.yaml) return;
 		if (build.yaml.length <= this.pageStreamContent.value.length) return;
 		this.beginCanvasBuild();
 		this.pageStreamContent.value = build.yaml;
@@ -235,6 +245,10 @@ export class AIChatController {
 	resetTransientState() {
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild();
+		// A pill carried across a page switch shows the WRONG flavor ("from another
+		// chat" on the chat that drives the build) — re-derived by syncActiveBuild.
+		this.foreignBuild.value = null;
+		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";

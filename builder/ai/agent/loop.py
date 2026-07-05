@@ -847,6 +847,14 @@ class AgentRunner:
 		if self.page_id and page_id != self.page_id:
 			title = frappe.db.get_value("Builder Page", page_id, "page_title") or page_id
 			self.emit("progress", message=f"Now editing another page: '{title}'")
+		# Let the origin editor's pill survive navigation/reload: record that this
+		# chat's run is working on an off-canvas page (cleared when the run ends).
+		if not self.headless and self.canvas_page_id and page_id != self.canvas_page_id:
+			frappe.cache().set_value(
+				f"builder_ai_offpage_build:{self.canvas_page_id}",
+				{"target": page_id, "session_id": self.session_id},
+				expires_in_sec=locks.PAGE_LOCK_TTL,
+			)
 		self.page_id = page_id
 		self.tree = WorkingTree(root)
 		# Arm the revert snapshot — unless this page was already snapshotted this turn
@@ -1111,6 +1119,8 @@ class AgentRunner:
 			self.run_turn(started)
 		finally:
 			self.clear_cancel_flag()
+			if self.canvas_page_id:
+				frappe.cache().delete_value(f"builder_ai_offpage_build:{self.canvas_page_id}")
 			for key, token in self.held_locks:
 				locks.release(key, token)
 			self.held_locks = []
@@ -1285,6 +1295,23 @@ class AgentRunner:
 			# updated from the tool_batch above; this just ends the turn sooner.
 			summary_text = self.describe_operations(self.applied_operations)
 			self.emit("stream", chunk=summary_text)
+
+		# The turn built/edited a DIFFERENT page than the one on the user's canvas:
+		# the editor link is their only path to the result, and models (especially
+		# cheap ones) skip the prompt rule — append it deterministically.
+		if (
+			not self.headless
+			and self.applied_operations
+			and self.page_id
+			and self.canvas_page_id
+			and self.page_id != self.canvas_page_id
+			and f"/page/{self.page_id}" not in summary_text
+		):
+			title = frappe.db.get_value("Builder Page", self.page_id, "page_title") or self.page_id
+			builder_path = frappe.conf.builder_path or "builder"
+			link_note = f"\n\nOpen the page: [{title}](/{builder_path}/page/{self.page_id})"
+			summary_text += link_note
+			self.emit("stream", chunk=link_note)
 
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
 		# doesn't look finished; the user can reply "continue" to resume from here.

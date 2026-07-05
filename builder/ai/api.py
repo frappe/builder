@@ -521,9 +521,17 @@ def test_api_key():
 @frappe.whitelist()
 @has_page_write()
 def get_active_build(page_id: str):
-	"""The in-flight generation stream for a page, if one is running — lets an editor
-	that loads mid-build replay the live preview instead of showing the stale draft."""
+	"""Build state relevant to an editor loading this page: the in-flight
+	generation stream to replay (mid-build refresh / watch-live), and whether
+	this page's own chat is currently building a DIFFERENT page (drives the
+	"building another page — View" pill across navigation)."""
 	from builder.ai.agent.artifact import stream_buffer_key
 
+	out = {}
 	raw = frappe.cache().get_value(stream_buffer_key(page_id))
-	return frappe.parse_json(raw) if raw else None
+	if raw:
+		out.update(frappe.parse_json(raw))
+	offpage = frappe.cache().get_value(f"builder_ai_offpage_build:{page_id}")
+	if isinstance(offpage, dict) and offpage.get("target"):
+		out["building_page"] = offpage["target"]
+	return out or None
