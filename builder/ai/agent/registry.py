@@ -97,6 +97,7 @@ def build_default_registry() -> ToolRegistry:
 		components,
 		conversation,
 		data,
+		forms,
 		generate,
 		images,
 		memory,
@@ -117,6 +118,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(conversation.TOOLS)
 	registry.extend(memory.TOOLS)
 	registry.extend(data.TOOLS)
+	registry.extend(forms.TOOLS)
 	registry.extend(settings.TOOLS)
 	registry.extend(images.TOOLS)
 	# Whole-site capabilities in the editor: focus/create/manage other pages,
@@ -149,13 +151,23 @@ def build_orchestrator_registry() -> ToolRegistry:
 	`spawn_parallel_agents` for genuinely parallel multi-page work, after laying
 	down shared assets (theme variables, header/footer components). Site-wide +
 	data-model changes stay confirm-gated."""
-	from builder.ai.agent.tools import components, conversation, data, memory, orchestrate, scripts, settings
+	from builder.ai.agent.tools import (
+		components,
+		conversation,
+		data,
+		forms,
+		memory,
+		orchestrate,
+		scripts,
+		settings,
+	)
 
 	registry = ToolRegistry()
 	registry.extend(conversation.TOOLS)  # present_ui
 	registry.extend(memory.TOOLS)
 	registry.extend(components.TOOLS)
 	registry.extend(headless_page_tools())
+	registry.extend(forms.TOOLS)  # connect_form (confirm-gated)
 	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	registry.extend(
 		pick(

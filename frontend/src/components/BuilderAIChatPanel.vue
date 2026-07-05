@@ -405,6 +405,8 @@ function pendingPreview(m: Record<string, any>): string {
 	switch (m.kind) {
 		case "create_doctype":
 			return `Create a new DocType “${p.name}” with ${(p.fields || []).length} field(s).`;
+		case "connect_form":
+			return `Save this form's submissions to a new “${p.doctype_name}” DocType (${(p.fields || []).length} field(s)) — you'll see entries in Desk.`;
 		case "seed_sample_data":
 			return `Insert ${(p.rows || []).length} sample record(s) into “${p.doctype}”.`;
 		case "global_settings":
