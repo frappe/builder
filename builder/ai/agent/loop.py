@@ -167,6 +167,14 @@ ASKS_CHOICE_RE = re.compile(
 # in a bullet is mimicking a past card as prose, whatever the lead-in reads like.
 OPTION_MARKER_RE = re.compile(r"\[\s*(?:fonts?|palette|layout|image)\s*:", re.IGNORECASE)
 
+BUILD_INCOMPLETE_CORRECTION = (
+	"You set up the design system (tokens, scripts, page settings) but NEVER built the page — "
+	"it is still EMPTY. Call generate_page NOW with a full brief: the chosen layout SYSTEM and "
+	"its signature move, the font pairing, the palette and spacing as the exact var(--<id>) token "
+	"handles you just minted, every section with real copy, and the class hooks your scripts "
+	"target. The turn is NOT done until the page has content."
+)
+
 OPTIONS_AS_TEXT_CORRECTION = (
 	"You ended your turn by asking a question with a LIST OF OPTIONS as plain text — text "
 	"renders no controls, so the user has nothing to tap. Ask it again as ONE present_ui "
@@ -464,6 +472,9 @@ class AgentRunner:
 		self.stop_reason = ""
 		# Set once the no-op-claim guard has spent its single corrective round this turn.
 		self.noop_corrected = False
+		# Set once the incomplete-build guard has fired (foundation minted but page
+		# left empty because generate_page was never called).
+		self.build_correction_used = False
 		# Debug signals: how many tool-arg blobs needed json_repair, and the finish_reason
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
@@ -1144,6 +1155,16 @@ class AgentRunner:
 		asked as prose bullets (same dead end, no markup to match), and a summary
 		that CLAIMS an edit when nothing was applied this turn (hallucinated
 		success)."""
+		# Incomplete build: the model minted the design system (tokens/scripts) but
+		# never called generate_page, so the page is still empty. Its own dedicated
+		# one-shot correction, independent of the no-op guard (this turn DID mutate).
+		if not self.build_correction_used and self.build_incomplete():
+			self.build_correction_used = True
+			self.stop_reason = "build_retry"
+			logger.warning(
+				"Incomplete build corrected: foundation set but page still empty (no generate_page)"
+			)
+			return BUILD_INCOMPLETE_CORRECTION
 		if self.noop_corrected:
 			return None
 		correction = None
@@ -1170,6 +1191,18 @@ class AgentRunner:
 			BlockCodec.truncate_for_log(summary_text, 300),
 		)
 		return correction
+
+	def build_incomplete(self) -> bool:
+		"""True when this turn laid the FOUNDATION (minted design tokens) but never
+		called generate_page, leaving the page empty — the model stopped mid-build.
+		Only meaningful on a page turn; the fix is one more round that generates."""
+		if not self.page_id:
+			return False
+		root = self.page_root()
+		if root and (root.get("children") or []):
+			return False  # the page has content — build reached the layout
+		tools_called = {t.get("name") for entry in self.trace for t in entry.get("tools") or []}
+		return "set_design_token" in tools_called and "generate_page" not in tools_called
 
 	def flush_pending_images(self, messages: list[dict]) -> None:
 		"""Images a tool captured this round (preview_page screenshots) ride a
