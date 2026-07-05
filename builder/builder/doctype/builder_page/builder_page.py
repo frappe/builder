@@ -1344,8 +1344,20 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 
 
 def get_font_family(font: str) -> str:
-	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter')."""
+	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter').
+	A Font design token (var(--id)) resolves to its family so the Google Fonts
+	links include tokenized families."""
+	font = resolve_font_token(font)
 	return font.split(",")[0].strip().strip("'\"")
+
+
+def resolve_font_token(font: str) -> str:
+	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
+	if not match:
+		return font
+	token_id = match.group(1)[2:]
+	value = frappe.db.get_value("Builder Token", token_id, "value")
+	return value or ""
 
 
 def set_fonts(styles, font_map, inherited_font=None):
@@ -1394,8 +1406,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
 			font = get_font_family(font)
 
-			# Skip if it is a system font
-			if font.lower() in system_fonts:
+			# Skip system fonts and unresolvable font tokens
+			if not font or font.lower() in system_fonts:
 				continue
 
 			weight = str(style.get("fontWeight") or "400").lower()

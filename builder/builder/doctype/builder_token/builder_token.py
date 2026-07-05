@@ -22,7 +22,7 @@ class BuilderToken(Document):
 		dark_value: DF.Data | None
 		group: DF.Data | None
 		is_standard: DF.Check
-		type: DF.Literal["Color", "Dimension"]
+		type: DF.Literal["Color", "Dimension", "Font"]
 		value: DF.Data
 		token_name: DF.Data
 	# end: auto-generated types

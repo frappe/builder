@@ -17,7 +17,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Color\nDimension"
+   "options": "Color\nDimension\nFont"
   },
   {
    "fieldname": "value",
