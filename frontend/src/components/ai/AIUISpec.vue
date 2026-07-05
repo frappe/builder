@@ -208,40 +208,24 @@
 				</FileUploader>
 			</div>
 
-			<!-- color_input: the user builds their own palette — any number of colors,
-			     added one picker at a time; hexes ride the reply -->
+			<!-- color_input: LABELLED role slots (Brand/Background/Accent/Text…) the model
+			     defines, each a Builder ColorInput — so the reply says which colour goes
+			     WHERE, not a random pile of swatches. Every slot is optional. -->
 			<div v-else-if="el.kind === 'color_input'" class="w-full">
-				<span v-if="controlLabel(i, el)" class="mb-1 block text-p-xs text-ink-gray-5">
+				<span v-if="controlLabel(i, el)" class="mb-1.5 block text-p-xs font-medium text-ink-gray-5">
 					{{ controlLabel(i, el) }}
 				</span>
-				<div class="flex flex-wrap items-center gap-1.5">
-					<span v-for="(c, k) in colorLists[i] || []" :key="`${c}-${k}`" class="group/chip relative">
-						<span
-							class="block size-7 rounded-md border border-black/10"
-							:style="{ backgroundColor: c }"
-							:title="c" />
-						<button
-							v-if="interactive && !disabled"
-							class="absolute -right-1.5 -top-1.5 hidden size-3.5 items-center justify-center rounded-full bg-surface-gray-3 text-[9px] leading-none text-ink-gray-7 shadow group-hover/chip:flex"
-							title="Remove color"
-							@click="removeColor(i, k)">
-							✕
-						</button>
-					</span>
-					<label
-						class="relative flex size-7 items-center justify-center rounded-md border border-dashed border-outline-gray-3 text-sm text-ink-gray-5 transition-colors"
-						:class="
-							!interactive || disabled
-								? 'cursor-not-allowed opacity-50'
-								: 'cursor-pointer hover:border-outline-gray-4 hover:text-ink-gray-7'
-						">
-						+
-						<input
-							type="color"
-							class="absolute inset-0 size-full cursor-pointer opacity-0"
-							:disabled="!interactive || disabled"
-							@change="addColor(i, $event)" />
-					</label>
+				<div class="flex flex-col gap-2.5">
+					<div v-for="(slot, k) in colorSlotDefs(el)" :key="k" class="flex flex-col gap-1">
+						<span class="text-p-sm text-ink-gray-7">{{ slot.label }}</span>
+						<span v-if="slot.hint" class="-mt-0.5 text-p-xs text-ink-gray-4">{{ slot.hint }}</span>
+						<ColorInput
+							:modelValue="colorSlots[i]?.[k] || null"
+							:showColorVariableOptions="false"
+							placement="left"
+							placeholder="Pick a colour"
+							@update:modelValue="(c: string) => setColorSlot(i, k, c)" />
+					</div>
 				</div>
 			</div>
 
@@ -272,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import ColorInput from "@/components/Controls/ColorInput.vue";
 import { setFont } from "@/utils/fontManager";
 import DOMPurify from "dompurify";
 import { Button, FileUploader, FormControl } from "frappe-ui";
@@ -366,21 +351,26 @@ function safeColor(value: unknown): string | undefined {
 }
 
 // Collected state keyed by element index: multi-select picks, typed inputs,
-// uploaded file URLs, picked colors.
+// uploaded file URLs, and per-slot picked colors (colorSlots[elIndex][slotIndex]).
 const selections = reactive<Record<number, Set<number>>>({});
 const inputs = reactive<Record<number, string>>({});
 const uploads = reactive<Record<number, string>>({});
-const colorLists = reactive<Record<number, string[]>>({});
+const colorSlots = reactive<Record<number, Record<number, string>>>({});
 
-function addColor(i: number, event: Event) {
-	const value = (event.target as HTMLInputElement)?.value;
-	if (!value) return;
-	colorLists[i] ??= [];
-	if (!colorLists[i].includes(value)) colorLists[i].push(value);
+/** The role slots a color_input offers. The model sends `colors: [{label, hint?}]`;
+ * fall back to one slot named after the atom's own label. */
+function colorSlotDefs(el: UIElement): { label: string; hint?: string }[] {
+	const defs = Array.isArray(el.colors) ? el.colors : [];
+	const clean = defs
+		.filter((d: any) => d && typeof d === "object" && d.label)
+		.map((d: any) => ({ label: String(d.label), hint: d.hint ? String(d.hint) : undefined }));
+	return clean.length ? clean : [{ label: el.label || "Colour" }];
 }
 
-function removeColor(i: number, k: number) {
-	colorLists[i]?.splice(k, 1);
+function setColorSlot(i: number, k: number, color: string) {
+	colorSlots[i] ??= {};
+	if (color) colorSlots[i][k] = color;
+	else delete colorSlots[i][k];
 }
 
 function isSelected(elIndex: number, optIndex: number): boolean {
@@ -447,9 +437,16 @@ function submitCollected(actionLabel?: string) {
 			lines.push(`${el.label || "Uploaded image"}: ${uploads[i]}`);
 			values.push(`${el.label || "image"} uploaded`);
 		}
-		if (el.kind === "color_input" && colorLists[i]?.length) {
-			lines.push(`${atomLabel(i, el) || "Colors"}: ${colorLists[i].join(", ")}`);
-			values.push(colorLists[i].join(" "));
+		if (el.kind === "color_input") {
+			const picked = colorSlotDefs(el)
+				.map((slot, k) => ({ label: slot.label, hex: colorSlots[i]?.[k] }))
+				.filter((s) => s.hex);
+			if (picked.length) {
+				// Explicit role→hex mapping so the model uses each colour WHERE the user
+				// meant it (never a random spread): "Brand: #C4552D, Background: #F4EFE8".
+				lines.push(`Colours the user chose — ${picked.map((s) => `${s.label}: ${s.hex}`).join(", ")}`);
+				values.push(picked.map((s) => s.hex).join(" "));
+			}
 		}
 	});
 	const reply = lines.join("\n").trim();

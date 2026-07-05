@@ -120,9 +120,26 @@ def sanitize_ui(raw) -> list[dict]:
 	for el in elements:
 		if el.get("kind") == "choices":
 			el["options"] = [o for o in map(sanitize_option, el.get("options") or []) if o]
+		elif el.get("kind") == "color_input":
+			el["colors"] = sanitize_color_slots(el.get("colors"))
 	while elements and len(json.dumps(elements)) > MAX_UI_JSON:
 		elements.pop()
 	return elements
+
+
+def sanitize_color_slots(colors) -> list[dict]:
+	"""A color_input's role slots: [{label, hint?}]. Keep dicts with a string label
+	(tolerate bare-string slot names); cap the count so a card can't sprawl."""
+	out = []
+	for slot in colors or []:
+		if isinstance(slot, str) and slot.strip():
+			out.append({"label": slot.strip()[:60]})
+		elif isinstance(slot, dict) and slot.get("label"):
+			clean = {"label": str(slot["label"])[:60]}
+			if slot.get("hint"):
+				clean["hint"] = str(slot["hint"])[:120]
+			out.append(clean)
+	return out[:6]
 
 
 def sanitize_option(option) -> dict | None:
@@ -210,7 +227,9 @@ def render_element_text(el: dict) -> list[str]:
 	if kind == "upload":
 		return [f"[upload: {el.get('label') or 'image'}]"]
 	if kind == "color_input":
-		return [f"[color picker: {el.get('label') or 'brand colors'}]"]
+		slots = [s.get("label") for s in el.get("colors") or [] if isinstance(s, dict) and s.get("label")]
+		roles = ", ".join(slots) if slots else (el.get("label") or "brand colours")
+		return [f"[colour picker — {roles}]"]
 	if kind == "actions":
 		labels = " / ".join(str(b.get("label") or "") for b in el.get("buttons") or [])
 		return [f"[buttons: {labels}]"] if labels else []
@@ -292,10 +311,13 @@ present_ui = Tool(
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "
 					"usually alongside a choices card of found images as the 'or upload your own' "
 					"escape hatch\n"
-					"{kind:'color_input', label?} — lets the user build their own palette: they add "
-					"any number of colours with a picker; the hexes arrive in their reply. Pair with "
-					"an actions button. Use for optional brand colours early in a design flow — "
-					"colours the user gives are LAW for everything that follows\n"
+					"{kind:'color_input', label?, colors:[{label, hint?}]} — LABELLED colour slots the "
+					"user fills with a picker, ONE per role so it's clear which colour goes WHERE. Give "
+					"each slot a role label (e.g. 'Brand / Primary', 'Background', 'Accent', 'Text / Ink' "
+					"— adapt to the brand) and an optional one-line hint; every slot is optional. The "
+					"reply names each chosen colour by its role ('Brand: #C4552D, Background: #F4EFE8'). "
+					"Pair with an actions button. Use early in a design flow — the colours the user "
+					"assigns are LAW: use each one in the role they named, for that role, everywhere\n"
 					"{kind:'note', text} — model-only context: persisted as part of your message "
 					"(you'll see it on replay) but NEVER shown to the user. Put detailed working "
 					"notes here (e.g. the full build brief behind a plan) so the visible card "
