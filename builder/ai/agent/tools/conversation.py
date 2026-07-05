@@ -45,6 +45,15 @@ MAX_UI_JSON = 24000
 def run_present_ui(ctx, args: dict) -> str | None:
 	text = (args.get("text") or "").strip()
 	ui = sanitize_ui(args.get("ui"))
+	# A choices group with zero usable options renders nothing tappable — the
+	# turn would end on a dead card (seen live: 'more options' answered with an
+	# empty options array). Bounce it back instead of stranding the user.
+	if any(el.get("kind") == "choices" and not el.get("options") for el in ui):
+		return (
+			"FAILED: a choices group has no usable options — nothing renders and the user "
+			"cannot answer. Every option must be an object like {label, description?, font?, "
+			"svg?, colors?}. Call present_ui again with real options."
+		)
 	if decline := decline_design_card(ctx, args, ui):
 		return decline
 	content = render_ui_text(text, ui)
@@ -108,16 +117,21 @@ def sanitize_ui(raw) -> list[dict]:
 	elements = elements[:MAX_ELEMENTS]
 	for el in elements:
 		if el.get("kind") == "choices":
-			el["options"] = [sanitize_option(o) for o in el.get("options") or [] if isinstance(o, dict)]
+			el["options"] = [o for o in map(sanitize_option, el.get("options") or []) if o]
 	while elements and len(json.dumps(elements)) > MAX_UI_JSON:
 		elements.pop()
 	return elements
 
 
-def sanitize_option(option: dict) -> dict:
+def sanitize_option(option) -> dict | None:
 	"""Normalize decorations to the shapes the renderer expects, dropping what
 	can't be salvaged (models emit font as a dict, a 'Heading + Body' string, or
-	even a bare number — be liberal in what we accept)."""
+	even a bare number — be liberal in what we accept). A bare-string option
+	becomes a plain labelled chip — dropping it would strand the card."""
+	if isinstance(option, str) and option.strip():
+		return {"label": option.strip()[:120]}
+	if not isinstance(option, dict):
+		return None
 	if "font" in option:
 		font = coerce_font(option.pop("font"))
 		if font:

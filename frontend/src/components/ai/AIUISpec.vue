@@ -266,7 +266,13 @@ const hasChoices = computed(() => elements.value.some((el) => el.kind === "choic
 const hasChrome = computed(() => !hasChoices.value);
 
 const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions"]);
-const interactiveAtoms = computed(() => elements.value.filter((el) => INTERACTIVE_KINDS.has(el.kind)));
+// A choices group with zero options renders nothing tappable — it must not
+// count as interactive, or it suppresses the fallback button and dead-ends the card.
+const interactiveAtoms = computed(() =>
+	elements.value.filter(
+		(el) => INTERACTIVE_KINDS.has(el.kind) && (el.kind !== "choices" || el.options?.length),
+	),
+);
 const hasInteractiveAtoms = computed(() => interactiveAtoms.value.length > 0);
 // A card that is ONE question (a single choices group, nothing else to fill in):
 // tapping an option IS the answer. In a bigger form a tap is just a pick — the
