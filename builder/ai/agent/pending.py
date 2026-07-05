@@ -243,10 +243,11 @@ def apply_connect_form(payload: dict) -> str:
 
 	# 3. client script on the page: capture the form's fields and POST them to the
 	#    stock Web Form accept endpoint (guest-safe, rate-limited, ignore_permissions).
-	#    Map the input's own `name` attr → the (possibly-renamed) DocType fieldname.
+	#    Fieldnames in FORM ORDER — the script maps inputs positionally (preferring a
+	#    matching name attr) so it works even if the form has no name attrs/class.
 	if page_id and frappe.db.exists("Builder Page", page_id):
-		field_map = {f.get("input_name", f["fieldname"]): f["fieldname"] for f in fields}
-		attach_form_script(page_id, doctype, wf_name, selector, field_map)
+		ordered_fieldnames = [f["fieldname"] for f in fields]
+		attach_form_script(page_id, doctype, wf_name, selector, ordered_fieldnames)
 
 	frappe.db.commit()
 	slug = desk_slug(doctype)
@@ -255,14 +256,18 @@ def apply_connect_form(payload: dict) -> str:
 	).format(doctype, slug)
 
 
-def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, field_map: dict) -> None:
-	"""Create + attach a Builder Client Script that submits `selector`'s inputs to
+def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, fieldnames: list) -> None:
+	"""Create + attach a Builder Client Script that submits the form's inputs to
 	the Web Form accept endpoint. Idempotent per (page, web_form)."""
 	script_name = f"Save {doctype} submissions"
 	existing = frappe.db.get_value("Builder Client Script", {"name": script_name}, "name")
-	code = build_form_script(selector, web_form, field_map)
+	code = build_form_script(selector, web_form, fieldnames)
 	if existing:
-		frappe.db.set_value("Builder Client Script", existing, "script", code, update_modified=False)
+		# save(), NOT db.set_value — the doc's on_update regenerates the served
+		# public .js file; a bare set_value leaves the page serving stale JS.
+		doc = frappe.get_doc("Builder Client Script", existing)
+		doc.script = code
+		doc.save(ignore_permissions=True)
 		script_id = existing
 	else:
 		script_id = (
@@ -283,29 +288,51 @@ def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str,
 		page.save(ignore_permissions=True)
 
 
-def build_form_script(selector: str, web_form: str, field_map: dict) -> str:
-	"""The submit-wiring JS. `field_map` is {input name attr → DocType fieldname};
-	only mapped inputs are sent (never a honeypot/extra). POSTs to the accept
-	endpoint and reflects success on the submit button."""
+def build_form_script(selector: str, web_form: str, fieldnames: list) -> str:
+	"""The submit-wiring JS. `fieldnames` are the DocType fieldnames in FORM ORDER.
+	It finds the form (the given selector, else auto-detects the container that best
+	matches — has a submit control and roughly `fieldnames` many inputs), maps each
+	input to a field POSITIONALLY (preferring a matching name attr), and POSTs to
+	the stock accept endpoint. Robust to a form with no name attrs or class."""
 	import json
 
-	sel = json.dumps(selector)
+	sel = json.dumps(selector or "")
 	wf = json.dumps(web_form)
-	fmap = json.dumps(field_map)
+	fields = json.dumps(fieldnames)
 	return f"""// Auto-wired by Bob: saves this form to the '{web_form}' Web Form.
 (function () {{
-  var form = document.querySelector({sel});
+  // The script loads in <head>, before the form is parsed — wait for the DOM.
+  if (document.readyState === 'loading') {{ document.addEventListener('DOMContentLoaded', init); }}
+  else {{ init(); }}
+  function init() {{
+  var SEL = {sel}, WF = {wf}, FIELDS = {fields};
+  var Q = 'input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea';
+  function findForm() {{
+    if (SEL) {{ var f = document.querySelector(SEL); if (f && f.querySelector(Q)) return f; }}
+    // Fallback: the tightest container that has a submit control and about the
+    // expected number of inputs — the form even without a class hook.
+    var best = null, bestScore = -1;
+    document.querySelectorAll('form, section, div').forEach(function (c) {{
+      var ins = c.querySelectorAll(Q);
+      if (!ins.length || ins.length > 15) return;
+      if (!c.querySelector('button, [type="submit"], [type="button"]')) return;
+      var score = 100 - Math.abs(ins.length - FIELDS.length) * 20 - Math.min(c.querySelectorAll('*').length, 400) / 20;
+      if (score > bestScore) {{ bestScore = score; best = c; }}
+    }});
+    return best;
+  }}
+  var form = findForm();
   if (!form) return;
-  var MAP = {fmap};
-  var btn = form.querySelector('button, [type="submit"], input[type="submit"]');
+  var inputs = Array.prototype.slice.call(form.querySelectorAll(Q));
+  var btn = form.querySelector('button, [type="submit"], input[type="submit"], [type="button"]');
   var busy = false;
   function submit(e) {{
     if (e) e.preventDefault();
     if (busy) return false;
     var data = {{}};
-    form.querySelectorAll('[name]').forEach(function (el) {{
-      var fn = MAP[el.name];
-      if (fn && el.value) data[fn] = el.value;
+    inputs.forEach(function (el, i) {{
+      var fn = (el.name && FIELDS.indexOf(el.name) !== -1) ? el.name : FIELDS[i];
+      if (fn && (el.value || '').trim()) data[fn] = el.value;
     }});
     if (!Object.keys(data).length) return false;
     busy = true;
@@ -314,11 +341,11 @@ def build_form_script(selector: str, web_form: str, field_map: dict) -> str:
     fetch('/api/method/frappe.website.doctype.web_form.web_form.accept', {{
       method: 'POST',
       headers: {{ 'Content-Type': 'application/json' }},
-      body: JSON.stringify({{ web_form: {wf}, data: data }})
+      body: JSON.stringify({{ web_form: WF, data: data }})
     }}).then(function (r) {{ if (!r.ok) throw r; return r.json(); }})
       .then(function () {{
         if (btn) btn.textContent = 'Thank you!';
-        form.querySelectorAll('[name]').forEach(function (el) {{ el.value = ''; }});
+        inputs.forEach(function (el) {{ el.value = ''; }});
       }})
       .catch(function () {{
         busy = false;
@@ -326,7 +353,10 @@ def build_form_script(selector: str, web_form: str, field_map: dict) -> str:
       }});
     return false;
   }}
+  // Attach to BOTH: the button click (fires whether or not it's type=submit) and,
+  // for a real <form>, the submit event (Enter key). The busy flag dedupes.
+  if (btn) btn.addEventListener('click', submit);
   if (form.tagName === 'FORM') form.addEventListener('submit', submit);
-  else if (btn) btn.addEventListener('click', submit);
+  }}
 }})();
 """

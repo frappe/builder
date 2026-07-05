@@ -20,8 +20,11 @@ from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
 
 # Fieldtypes a public form can safely write. Anything else (Link, Table, Attach…)
-# is coerced to Data so a guest submission can't reach into other doctypes/files.
-SAFE_FIELDTYPES = {"Data", "Small Text", "Text", "Int", "Float", "Check", "Select", "Date", "Datetime"}
+# is coerced to Data. Select is deliberately EXCLUDED: an HTML <select> submits its
+# option's `value` attr (e.g. "breathwork"), which rarely matches the DocType's
+# Select option labels ("Breathwork & Stillness") — Frappe then rejects the insert
+# with a validation error. Storing dropdowns as Data accepts whatever was chosen.
+SAFE_FIELDTYPES = {"Data", "Small Text", "Text", "Int", "Float", "Check", "Date", "Datetime"}
 
 # Fieldnames Frappe reserves (every doc has `name`, `owner`, `parent`, …). A form
 # input called "name" would otherwise crash DocType creation ("Fieldname name is
@@ -108,9 +111,9 @@ connect_form_tool = Tool(
 		"you build a real form that collects user input (contact, booking, signup, waitlist, RSVP). "
 		"Under the hood it creates a private DocType for the submissions, a guest-safe Web Form, and a "
 		"script that sends the form's fields to it — the owner reads entries in Desk at /app/<doctype>. "
-		'BEFORE calling: give the form a container with a stable class and set name="<fieldname>" on '
-		"every input/select the form has (matching the fieldnames you pass here). Ends your turn to ask "
-		"the user to confirm creating the DocType."
+		"List `fields` in the SAME ORDER the inputs appear in the form (they map positionally); one field "
+		"per input/select. `form_selector` is a best-effort hint — the tool auto-finds the form if it "
+		"misses, so you need not pre-set name attributes or a class. Ends your turn to confirm."
 	),
 	parameters={
 		"type": "object",
