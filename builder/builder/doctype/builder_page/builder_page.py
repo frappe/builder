@@ -403,6 +403,12 @@ class BuilderPage(WebsiteGenerator):
 
 		content, style, fonts, has_dual_mode_image = get_block_html(blocks)
 
+		# Propagate the root block's background to html/body. Otherwise a full-bleed
+		# (e.g. all-black) page paints only its root <div>, and everything the div
+		# doesn't cover — the preview screenshot's canvas, a short page's tail,
+		# overscroll — falls through to the browser's default white.
+		context.page_background = get_root_background(blocks)
+
 		if self.dynamic_route or page_data or self.page_data_script:
 			context.no_cache = 1
 		context.has_dual_mode_image = has_dual_mode_image
@@ -628,6 +634,19 @@ def get_block_data(
 	if isinstance(_locals["block"], dict):
 		block_data = frappe._dict({k: v for k, v in _locals["block"].items() if prev_block_data.get(k) != v})
 	return block_data
+
+
+def get_root_background(blocks: str | list) -> str | None:
+	"""The page's root (body) block background, to paint html/body so a full-bleed
+	page has no white gaps. Returns a CSS value (color, var(--token), or gradient)
+	or None when the root sets no background. `background`/`backgroundImage` (a
+	gradient) win over a plain `backgroundColor`."""
+	data = blocks if isinstance(blocks, list) else frappe.parse_json(blocks or "[]")
+	root = (data[0] if data else None) if isinstance(data, list) else data
+	if not isinstance(root, dict):
+		return None
+	styles = root.get("baseStyles") or {}
+	return styles.get("background") or styles.get("backgroundImage") or styles.get("backgroundColor") or None
 
 
 def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
