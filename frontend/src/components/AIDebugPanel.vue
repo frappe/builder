@@ -2,8 +2,8 @@
 	<div class="flex flex-col gap-5 text-sm text-ink-gray-7">
 		<!-- Summary card: status + model, primary stat tiles, context meter -->
 		<div class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-gray-1">
-			<div class="flex items-center justify-between gap-3 border-b border-outline-gray-2 px-4 py-2.5">
-				<span class="inline-flex items-center gap-1.5 text-xs font-medium" :class="stopPill.text">
+			<div class="flex items-center justify-between gap-3 border-b border-outline-gray-2 px-3.5 py-2.5">
+				<span class="inline-flex items-center gap-1.5 text-xs font-semibold" :class="stopPill.text">
 					<span class="size-2 rounded-full" :class="stopPill.dot" />
 					{{ stopPill.label }}
 				</span>
@@ -188,9 +188,9 @@ const modelLabel = computed(() => (props.debug?.loopModel || "?").replace(/^open
 const stopPill = computed(() => {
 	const meta = STOP_META[props.debug?.stopReason] || { label: props.debug?.stopReason || "?", tone: "warn" };
 	const map = {
-		good: { text: "text-ink-green-7", dot: "bg-ink-green-5" },
-		bad: { text: "text-ink-red-7", dot: "bg-ink-red-5" },
-		warn: { text: "text-ink-amber-7", dot: "bg-ink-amber-5" },
+		good: { text: "text-ink-green-7", dot: "bg-surface-green-7" },
+		bad: { text: "text-ink-red-7", dot: "bg-surface-red-7" },
+		warn: { text: "text-ink-amber-7", dot: "bg-surface-amber-7" },
 	}[meta.tone];
 	return { label: meta.label, text: map.text, dot: map.dot };
 });
