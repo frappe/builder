@@ -74,8 +74,15 @@ const QUOTE_MEANINGFUL = new Set(["content", "quotes", "gridTemplateAreas", "gri
 
 function normalizeValue(prop: string, value: unknown): unknown {
 	if (prop === "fontFamily" && typeof value === "string") {
-		// Bare family name only — strip quotes and any fallback stack.
-		return value.split(",")[0].replace(/['"]/g, "").trim();
+		const v = value.replace(/['"]/g, "").trim();
+		// A font TOKEN handle: return var(--id) clean. Never split on comma first —
+		// the model sometimes bakes a fallback INSIDE the parens (var(--id, Inter)),
+		// and splitting there truncates the var() and drops its closing ) (invalid
+		// CSS → the family silently falls back to serif on the published page).
+		const match = v.match(/var\(\s*(--[A-Za-z0-9_-]+)/);
+		if (match) return `var(${match[1]})`;
+		// Literal family: bare name only — strip any fallback stack.
+		return v.split(",")[0].trim();
 	}
 	if (typeof value === "string") {
 		let v = value.trim();

@@ -86,8 +86,15 @@ def kebab_to_camel(text: str) -> str:
 
 def normalize_value(prop: str, value):
 	if prop == "fontFamily" and isinstance(value, str):
-		# Bare family name only — strip quotes and any fallback stack.
-		return value.split(",")[0].replace("'", "").replace('"', "").strip()
+		v = value.replace("'", "").replace('"', "").strip()
+		# A font TOKEN handle: return var(--id) clean. Never split on comma first —
+		# the model sometimes bakes a fallback INSIDE the parens (var(--id, Inter)),
+		# and splitting there truncates the var() and drops its closing ) (invalid
+		# CSS → the family silently falls back to serif on the published page).
+		if match := re.search(r"var\(\s*(--[A-Za-z0-9_-]+)", v):
+			return f"var({match.group(1)})"
+		# Literal family: bare name only — strip any fallback stack.
+		return v.split(",")[0].strip()
 	if isinstance(value, str):
 		v = value.strip()
 		if prop not in QUOTE_MEANINGFUL:
