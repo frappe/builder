@@ -159,8 +159,13 @@ def looks_like_card_text(summary_text: str) -> bool:
 # later question the same way (the design flow degrades permanently).
 BULLET_LINE_RE = re.compile(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+\S")
 ASKS_CHOICE_RE = re.compile(
-	r"(?mi)^\s*(?:choose|pick|select|which|what(?:'s| is)? your|would you (?:like|prefer)|let me know which)\b"
+	r"(?mi)^\s*(?:choose|pick|select|which|what(?:'s| is)? your|would you (?:like|prefer)|let me know which|"
+	r"here are|let's (?:explore|look at)|consider (?:these|the following)|a few (?:more )?options)\b"
 )
+# Option-DECORATION markers (fonts/palette/layout/image) are the exact format
+# option_text() replays a card in — a model writing "[fonts: Fraunces + Albert Sans]"
+# in a bullet is mimicking a past card as prose, whatever the lead-in reads like.
+OPTION_MARKER_RE = re.compile(r"\[\s*(?:fonts?|palette|layout|image)\s*:", re.IGNORECASE)
 
 OPTIONS_AS_TEXT_CORRECTION = (
 	"You ended your turn by asking a question with a LIST OF OPTIONS as plain text — text "
@@ -173,11 +178,12 @@ OPTIONS_AS_TEXT_CORRECTION = (
 
 
 def asks_options_as_text(summary_text: str) -> bool:
-	"""True when a no-tool round poses a multi-option question as prose."""
+	"""True when a no-tool round poses a multi-option question as prose (2+ bullets
+	plus either a question, a presenting lead-in, or leaked card-option markers)."""
 	text = (summary_text or "").strip()
 	if not text or len(BULLET_LINE_RE.findall(text)) < 2:
 		return False
-	return "?" in text or bool(ASKS_CHOICE_RE.search(text))
+	return "?" in text or bool(ASKS_CHOICE_RE.search(text)) or bool(OPTION_MARKER_RE.search(text))
 
 
 # Weaker models sometimes emit a pseudo tool call as plain TEXT instead of calling
