@@ -133,10 +133,11 @@ def claims_unbacked_action(summary_text: str) -> bool:
 CARD_TEXT_RE = re.compile(r"\[\s*(?:input|choices|buttons|upload|swatches|sketch)\s*:", re.IGNORECASE)
 
 CARD_CORRECTION = (
-	"Your last message wrote interactive-card markup as plain TEXT ([input: …], "
-	"[choices: …], [buttons: …]). Text renders NO controls — the user cannot answer it. "
+	"Your last message wrote an interactive card as plain TEXT (markup like [input: …] "
+	"or a raw JSON blob). Text renders NO controls — the user cannot answer it. "
 	"Ask again properly: ONE present_ui call composing the same fields from its ui atoms "
-	"(input/choices/upload/actions). Do not repeat the markup in your text."
+	"(input/choices/upload/actions), following the tool's exact schema. Do not repeat "
+	"the markup or JSON in your text."
 )
 
 
@@ -153,6 +154,68 @@ TOOL_SYNTAX_RE = re.compile(r"\bdefault_api\b|<tool_code|```tool_code")
 
 def looks_like_tool_syntax(text: str) -> bool:
 	return bool(text) and bool(TOOL_SYNTAX_RE.search(text))
+
+
+# Weaker models sometimes emit their tool call as a plain-text JSON blob instead
+# of a native tool call — without salvage the raw JSON lands in the chat as the
+# turn's summary. Two salvageable shapes (an optional prose prefix is tolerated):
+# a wrapped call ({"type": "present_ui", "args": {…}}) naming a REGISTERED tool,
+# and bare present_ui args ({"text": …, "ui": […]} — the exact schema, nothing
+# looser). Card-ish JSON that matches neither (hallucinated schemas) gets the
+# corrective round instead — see looks_like_json_card.
+TEXT_TOOL_NAME_KEYS = ("type", "name", "tool", "tool_name")
+TEXT_TOOL_ARG_KEYS = ("args", "arguments", "parameters", "input")
+UI_CARD_KEYS = frozenset({"ui", "choices", "options", "buttons", "inputs", "swatches", "upload"})
+
+
+def split_trailing_json(text: str) -> tuple[str, str | None]:
+	"""Split "prose… {json}" into (prose, blob). The blob must run to the end of
+	the message; code fences are tolerated. blob is None when there isn't one."""
+	text = (text or "").strip()
+	if text.startswith("```"):
+		text = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", text).strip()
+	start = text.find("{")
+	if start == -1 or not text.endswith("}"):
+		return text, None
+	return text[:start].strip(), text[start:]
+
+
+def parse_text_tool_call(text: str, known_tools: list[str]) -> tuple[str, dict, str] | None:
+	"""Salvage a tool call the model wrote as text. Returns (tool_name, args,
+	prose_prefix) or None when nothing safely matches."""
+	prose, blob = split_trailing_json(text)
+	if not blob:
+		return None
+	parsed, _ = llm.loads_tolerant(blob)
+	if not isinstance(parsed, dict):
+		return None
+	name = next((parsed[k] for k in TEXT_TOOL_NAME_KEYS if isinstance(parsed.get(k), str)), None)
+	if name in known_tools:
+		args = next((parsed[k] for k in TEXT_TOOL_ARG_KEYS if isinstance(parsed.get(k), dict)), {})
+		return name, args, prose
+	if (
+		"present_ui" in known_tools
+		and isinstance(parsed.get("text"), str)
+		and isinstance(parsed.get("ui"), list)
+	):
+		return "present_ui", parsed, prose
+	return None
+
+
+def looks_like_json_card(text: str) -> bool:
+	"""A JSON blob that TRIES to be an interactive card but matches no salvageable
+	shape (hallucinated schema, e.g. {"text": …, "choices": {…}, "actions": {…}}).
+	Mapping arbitrary invented schemas is a losing game — send the model a
+	corrective round instead."""
+	_, blob = split_trailing_json(text)
+	if not blob:
+		return False
+	parsed, _ = llm.loads_tolerant(blob)
+	return (
+		isinstance(parsed, dict)
+		and isinstance(parsed.get("text"), str)
+		and bool(UI_CARD_KEYS & parsed.keys())
+	)
 
 
 # Above this many chars of compact-YAML page structure, switch the page context
@@ -348,6 +411,9 @@ class AgentRunner:
 		# Debug signals: how many tool-arg blobs needed json_repair, and the finish_reason
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
+		# Tool calls the model emitted as plain-text JSON instead of native calls
+		# (see parse_text_tool_call) — salvaged, but a signal the model is weak.
+		self.text_tools_salvaged = 0
 		self.finish_reasons: list[str | None] = []
 		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
@@ -693,6 +759,23 @@ class AgentRunner:
 			)
 
 		content = "".join(content_parts)
+		if not tool_operations and (salvaged := parse_text_tool_call(content, self.registry.names())):
+			name, args, prose = salvaged
+			self.text_tools_salvaged += 1
+			logger.warning(
+				"AI tool call emitted as TEXT, salvaged (tool=%s): %s",
+				name,
+				BlockCodec.truncate_for_log(content, 300),
+			)
+			tool_operations.append({"tool_name": name, "args": args})
+			raw_tool_calls.append(
+				{
+					"id": f"call_text_salvage_{len(self.trace)}",
+					"type": "function",
+					"function": {"name": name, "arguments": json.dumps(args)},
+				}
+			)
+			content = prose
 		self.finish_reasons.append(finish_reason)
 		# finish_reason="length" means the model hit max_tokens mid-output — the usual
 		# cause of truncated/unparseable tool args. Surface it as the prime suspect.
@@ -953,7 +1036,7 @@ class AgentRunner:
 		if self.noop_corrected:
 			return None
 		correction = None
-		if looks_like_card_text(summary_text):
+		if looks_like_card_text(summary_text) or looks_like_json_card(summary_text):
 			correction = CARD_CORRECTION
 		elif (
 			not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text)
@@ -1132,9 +1215,10 @@ class AgentRunner:
 				self.emit("tool_batch", operations=[op])
 			summary_text = ""
 
-		# Leaked tool-call syntax is never a summary — suppress it. With applied work
-		# the deterministic fallbacks below take over; with none, say what happened.
-		if looks_like_tool_syntax(summary_text):
+		# Leaked tool-call syntax (or a JSON card that survived its corrective round)
+		# is never a summary — suppress it. With applied work the deterministic
+		# fallbacks below take over; with none, say what happened.
+		if looks_like_tool_syntax(summary_text) or looks_like_json_card(summary_text):
 			logger.warning(
 				"Suppressed tool-syntax leak in summary: %s", BlockCodec.truncate_for_log(summary_text, 300)
 			)
@@ -1238,6 +1322,7 @@ class AgentRunner:
 				"rounds": len(self.trace),
 				"noopCorrected": self.noop_corrected,
 				"argsRepaired": self.args_repaired,
+				"textToolsSalvaged": self.text_tools_salvaged,
 				"finishReasons": self.finish_reasons,
 				"toolFailures": self.tool_failures,
 				"streamRetries": self.stream_retries,
