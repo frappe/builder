@@ -57,20 +57,22 @@
 			</div> -->
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
-				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-4 pb-8">
-					<div class="flex flex-col items-center gap-1.5">
-						<SparklesIcon class="size-5 text-ink-gray-3" />
+				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
+					<div class="flex flex-col items-center gap-2">
+						<SparklesIcon class="size-5 text-ink-gray-4" />
 						<p class="text-sm font-medium text-ink-gray-8">
 							{{ pageHasContent ? "Describe a change" : "Describe your site" }}
 						</p>
+						<p class="text-p-xs text-ink-gray-5">Try one of these, or type your own below</p>
 					</div>
-					<div class="flex w-full max-w-[260px] flex-col gap-1">
+					<div class="flex w-full flex-col gap-1.5">
 						<button
 							v-for="suggestion in promptSuggestions"
 							:key="suggestion"
-							class="truncate rounded-md px-2.5 py-1.5 text-left text-p-sm text-ink-gray-6 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
+							class="flex items-center gap-2 truncate rounded-md bg-surface-gray-2 px-3 py-2 text-left text-p-sm text-ink-gray-7 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-9"
 							@click="useSuggestion(suggestion)">
-							{{ suggestion }}
+							<span class="lucide-arrow-up-right size-3.5 shrink-0 text-ink-gray-4" />
+							<span class="truncate">{{ suggestion }}</span>
 						</button>
 					</div>
 				</div>
