@@ -94,6 +94,7 @@ def build_default_registry() -> ToolRegistry:
 	from builder.ai.agent.tools import (
 		blocks,
 		codebase,
+		components,
 		conversation,
 		data,
 		generate,
@@ -123,6 +124,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(pages.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(orchestrate.TOOLS)
+	registry.extend(components.TOOLS)
 	# Primitives from the codebase-context experiment: run_python covers bulk or
 	# unusual page mutations the block tools don't express well, and source access
 	# lets the model check Builder mechanics instead of guessing.
@@ -147,11 +149,12 @@ def build_orchestrator_registry() -> ToolRegistry:
 	`spawn_parallel_agents` for genuinely parallel multi-page work, after laying
 	down shared assets (theme variables, header/footer components). Site-wide +
 	data-model changes stay confirm-gated."""
-	from builder.ai.agent.tools import conversation, data, memory, orchestrate, scripts, settings
+	from builder.ai.agent.tools import components, conversation, data, memory, orchestrate, scripts, settings
 
 	registry = ToolRegistry()
 	registry.extend(conversation.TOOLS)  # present_ui
 	registry.extend(memory.TOOLS)
+	registry.extend(components.TOOLS)
 	registry.extend(headless_page_tools())
 	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	registry.extend(

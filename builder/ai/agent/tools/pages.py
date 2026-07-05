@@ -96,6 +96,18 @@ def sibling_design_summary(page_id: str | None) -> str:
 	literal_fonts = sorted(set(re.findall(r'"fontFamily":\s*"([^"v][^"]*)"', blocks)))
 	if literal_fonts:
 		parts.append(f"fonts (literal): {', '.join(literal_fonts)}")
+	if comp_ids := set(re.findall(r'"extendedFromComponent":\s*"([^"]+)"', blocks)):
+		comps = frappe.get_all(
+			"Builder Component",
+			filters={"name": ["in", sorted(comp_ids)]},
+			fields=["name", "component_name"],
+		)
+		if comps:
+			parts.append(
+				"shared components — embed each as a block {el: div, component: <id>} instead of "
+				"rebuilding it (header first, footer last): "
+				+ "; ".join(f"{c.name} ({c.component_name or 'Component'})" for c in comps)
+			)
 	scripts = frappe.get_all(
 		"Builder Client Script",
 		filters=[

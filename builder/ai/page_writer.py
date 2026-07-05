@@ -307,8 +307,41 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 
 	if child_blocks:
 		block["children"] = child_blocks
+	elif block.get("extendedFromComponent"):
+		block["children"] = component_instance_children(block["extendedFromComponent"])
 	absorb_moustache_bindings(block)
 	return block
+
+
+def component_instance_children(component_id: str) -> list:
+	"""Instance-side child skeletons for a component embed. The published renderer
+	(extend_block) renders the PAGE block's children matched to component blocks
+	via referenceBlockId — an instance with NO children publishes empty. The editor
+	papers over that by syncing children on load, but headless-built pages can be
+	published without ever passing through an editor, so embeds must carry the
+	skeleton. Content, styles and element stay in the component; the skeleton
+	carries linkage only, so component edits keep propagating."""
+	raw = frappe.db.get_value("Builder Component", component_id, "block")
+	if not raw:
+		return []
+	try:
+		component = json.loads(raw)
+	except (json.JSONDecodeError, TypeError):
+		return []
+
+	def walk(children) -> list:
+		return [
+			{
+				"blockId": new_block_id(),
+				"referenceBlockId": child.get("blockId"),
+				"isChildOfComponent": component_id,
+				"children": walk(child.get("children")),
+			}
+			for child in children or []
+			if isinstance(child, dict)
+		]
+
+	return walk(component.get("children"))
 
 
 # --- repeater data shim — port of collectRepeaterData + buildRepeaterDataScript ---
