@@ -1,13 +1,10 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
-import FontUploader from "@/components/Controls/FontUploader.vue";
+import FontInput from "@/components/Controls/FontInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
-import { useBuilderToken } from "@/utils/useBuilderToken";
+import { setFont as _setFont, getFontWeightOptions } from "@/utils/fontManager";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -40,66 +37,8 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Family",
-				component: Autocomplete,
+				component: FontInput,
 				propertyKey: "fontFamily",
-				getOptions: (filterString: string) => {
-					const fontOptions = [] as { label: string; value: string }[];
-					// Font design tokens first: picking one stores var(--id), so retheming
-					// the token updates every block bound to it.
-					const { fontTokens } = useBuilderToken();
-					const matchingTokens = fontTokens.value.filter(
-						(t: any) =>
-							!filterString ||
-							(t.token_name || t.value).toLowerCase().includes(filterString.toLowerCase()) ||
-							t.value.toLowerCase().includes(filterString.toLowerCase()),
-					);
-					if (matchingTokens.length) {
-						fontOptions.push({ label: "Design tokens", value: "_separator_0" });
-						matchingTokens.forEach((t: any) =>
-							fontOptions.push({
-								label: `${t.token_name || t.value} (${t.value})`,
-								value: `var(--${t.name})`,
-							}),
-						);
-					}
-					userFonts.data?.forEach((font: UserFont) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						const fontName = font.font_name as string;
-						if (fontName.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: fontName,
-								value: fontName,
-							});
-						}
-					});
-					if (fontOptions.length) {
-						fontOptions.unshift({
-							label: "Custom",
-							value: "_separator_1",
-						});
-						fontOptions.push({
-							label: "Default",
-							value: "_separator_2",
-						});
-					}
-					fontList.items.forEach((font) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						if (font.family.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: font.family,
-								value: font.family,
-							});
-						}
-					});
-					return fontOptions;
-				},
-				actionButton: {
-					component: FontUploader,
-				},
 				getModelValue: () => blockController.getFontFamily(),
 				setModelValue: (val: string) => setFont(val),
 			};
