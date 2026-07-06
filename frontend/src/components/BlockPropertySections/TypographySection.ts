@@ -43,7 +43,7 @@ const typographySectionProperties = [
 				propertyKey: "fontFamily",
 				getOptions: (filterString: string) => {
 					const fontOptions = [] as { label: string; value: string }[];
-					userFonts.data.forEach((font: UserFont) => {
+					userFonts.data?.forEach((font: UserFont) => {
 						if (fontOptions.length >= 20) {
 							return;
 						}

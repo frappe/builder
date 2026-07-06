@@ -166,7 +166,7 @@ const focusInput = (el: any) => el?.$el?.querySelector?.("input")?.focus();
 
 onMounted(() => routeRedirects.fetch());
 
-const findIndex = (id: string) => routeRedirects.data.findIndex((r: any) => r.name === id);
+const findIndex = (id: string) => (routeRedirects.data ?? []).findIndex((r: any) => r.name === id);
 
 const rows = computed<RedirectRow[]>(() => {
 	const query = searchQuery.value.toLowerCase().trim();
@@ -247,7 +247,7 @@ const insertNew = (d: Draft) => {
 		},
 		() => {
 			const i = findIndex(tempId);
-			if (i !== -1) routeRedirects.data.splice(i, 1);
+			if (i !== -1) routeRedirects.data?.splice(i, 1);
 		},
 		{ loading: "Adding redirect...", success: "Redirect added", error: "Error adding redirect" },
 	);
@@ -255,11 +255,11 @@ const insertNew = (d: Draft) => {
 
 const saveExisting = (id: string, d: Draft) => {
 	const index = findIndex(id);
-	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+	const backup = index !== -1 ? { ...routeRedirects.data![index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.setValue.submit({ name: id, ...docFields(d) }),
-		() => index !== -1 && Object.assign(routeRedirects.data[index], docFields(d)),
-		() => backup && Object.assign(routeRedirects.data[index], backup),
+		() => index !== -1 && Object.assign(routeRedirects.data![index], docFields(d)),
+		() => backup && Object.assign(routeRedirects.data![index], backup),
 		{ loading: "Updating redirect...", success: "Redirect updated", error: "Error updating redirect" },
 	);
 };
@@ -272,11 +272,11 @@ const deleteRedirect = async (id: string) => {
 	if (!(await confirm(message))) return;
 
 	const index = findIndex(id);
-	const backup = index !== -1 ? { ...routeRedirects.data[index] } : null;
+	const backup = index !== -1 ? { ...routeRedirects.data![index] } : null;
 	performOptimisticUpdate(
 		() => routeRedirects.delete.submit(id),
-		() => index !== -1 && routeRedirects.data.splice(index, 1),
-		() => backup && routeRedirects.data.splice(index, 0, backup),
+		() => index !== -1 && routeRedirects.data!.splice(index, 1),
+		() => backup && routeRedirects.data!.splice(index, 0, backup),
 		{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
 	);
 };

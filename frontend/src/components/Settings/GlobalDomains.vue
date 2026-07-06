@@ -186,11 +186,13 @@ function brokenReason(d: any): string {
 }
 
 function statusTheme(status: string) {
-	return (
-		({ Active: "green", Broken: "red", Pending: "orange", "In Progress": "blue" } as Record<string, string>)[
-			status
-		] ?? "gray"
-	);
+	const themes: Record<string, "green" | "red" | "orange" | "blue"> = {
+		Active: "green",
+		Broken: "red",
+		Pending: "orange",
+		"In Progress": "blue",
+	};
+	return themes[status] ?? "gray";
 }
 
 async function copyToClipboard(text: string) {

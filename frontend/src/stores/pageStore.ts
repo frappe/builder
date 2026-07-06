@@ -120,7 +120,7 @@ const usePageStore = defineStore("pageStore", {
 		async fetchActivePage(pageName?: string) {
 			const webPageResource = await createDocumentResource({
 				doctype: "Builder Page",
-				name: pageName,
+				name: pageName as string,
 				auto: true,
 			});
 			try {

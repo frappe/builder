@@ -543,7 +543,7 @@ watch(
 		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
 		const cleanup = emulateBlockClientScript({
 			key: uidToUse,
-			element,
+			element: element as HTMLElement,
 			breakpoint: props.breakpoint,
 			css: clientScript.css ?? "",
 			javascript:
