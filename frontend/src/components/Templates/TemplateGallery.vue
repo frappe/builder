@@ -12,7 +12,7 @@
 			</Button>
 			<div class="mb-2 flex flex-col gap-2">
 				<div class="flex items-center justify-between">
-					<h2 class="text-3xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
+					<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
 					<Button
 						v-if="activeGroup"
 						variant="outline"

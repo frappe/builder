@@ -19,7 +19,7 @@
 			<div class="flex flex-col gap-6">
 				<img src="/builder_logo.png" alt="Builder" class="h-8 self-start" />
 				<div class="flex flex-col gap-2">
-					<h1 class="text-2xl font-semibold text-ink-gray-9">{{ activeQuestion.heading }}</h1>
+					<h1 class="text-xl font-semibold text-ink-gray-9">{{ activeQuestion.heading }}</h1>
 				</div>
 			</div>
 

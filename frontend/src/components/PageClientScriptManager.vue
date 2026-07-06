@@ -4,7 +4,7 @@
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
 					<draggable
-						v-model="attachedScriptResource.data"
+						v-model="attachedScripts"
 						:item-key="(script: attachedScript) => script.name"
 						handle=".drag-handle"
 						@end="onScriptReorder"
@@ -182,6 +182,13 @@ const attachedScriptResource = createListResource({
 	},
 });
 
+const attachedScripts = computed({
+	get: () => attachedScriptResource.data ?? [],
+	set: (scripts: attachedScript[]) => {
+		attachedScriptResource.data = scripts;
+	},
+});
+
 const clientScriptResource = createListResource({
 	doctype: "Builder Client Script",
 	fields: ["script_type", "name"],
@@ -303,7 +310,7 @@ const updateScriptName = async (newName: string, script: attachedScript) => {
 			script.name = newName;
 		}
 		return script;
-	});
+	}) as unknown as BuilderClientScript[];
 	return createResource({
 		url: "frappe.client.rename_doc",
 	})
@@ -313,7 +320,7 @@ const updateScriptName = async (newName: string, script: attachedScript) => {
 			new_name: newName,
 		})
 		.then(async () => {
-			attachedScriptResource.data = attachedScriptResource.data.map(
+			attachedScriptResource.data = (attachedScriptResource.data ?? []).map(
 				(s: { script_name: string; script: string }) => {
 					if (s.script_name === script.script_name) {
 						s.script_name = newName;
