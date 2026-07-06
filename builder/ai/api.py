@@ -11,7 +11,6 @@ import logging
 import frappe
 import litellm
 from frappe import _
-from frappe.utils.caching import redis_cache
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
@@ -410,9 +409,15 @@ def site_display_currency() -> str:
 	return "USD"
 
 
-@redis_cache(ttl=24 * 3600)
 def usd_rate(currency: str) -> float | None:
-	"""USD → currency, from the ECB daily fixing (frankfurter.app, keyless)."""
+	"""USD → currency, from the ECB daily fixing (frankfurter.app, keyless).
+	Cached for a day, but only on success — redis_cache would memoize a None from
+	a transient network failure and strand cost display on USD for 24h."""
+	key = f"builder_usd_rate::{currency}"
+	cached = frappe.cache.get_value(key)
+	if cached:
+		return float(cached)
+
 	import requests
 
 	try:
@@ -420,9 +425,12 @@ def usd_rate(currency: str) -> float | None:
 			"https://api.frankfurter.app/latest", params={"from": "USD", "to": currency}, timeout=8
 		)
 		r.raise_for_status()
-		return float(r.json()["rates"][currency])
+		rate = float(r.json()["rates"][currency])
 	except Exception:
 		return None
+
+	frappe.cache.set_value(key, rate, expires_in_sec=24 * 3600)
+	return rate
 
 
 @frappe.whitelist()
