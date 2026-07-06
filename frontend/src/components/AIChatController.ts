@@ -90,6 +90,9 @@ export class AIChatController {
 		}
 		if (!this.builderStore.aiBuildingCanvas) return;
 		this.builderStore.aiBuildingCanvas = false;
+		this.builderStore.aiBuildStatus = "";
+		// One-shot signal for the canvas to celebrate the finished build.
+		this.builderStore.aiBuildDoneTick++;
 		if (resyncDraft && this.pageId.value && this.pageId.value !== "new") {
 			this.pageStore.setPage(this.pageId.value, false);
 		}
@@ -237,6 +240,7 @@ export class AIChatController {
 			onClarify: this.onClarify,
 			onComplete: this.onComplete,
 			onError: this.onError,
+			onToolActivity: this.onToolActivity,
 			onTaskGroup: this.onTaskGroup,
 			onRefetch: this.onRefetch,
 		};
@@ -406,7 +410,26 @@ export class AIChatController {
 		if (this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
+		// Narrate the canvas build overlay with Bob's own words for this round.
+		if (data.message) this.builderStore.aiBuildStatus = data.message;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
+		this.scrollToBottom();
+	};
+
+	/** Live per-tool status: each tool call announces itself ("Set --color-primary",
+	 * "Read block: Hero") as it starts, so a long tool-calling round shows real
+	 * progress instead of a frozen "Thinking…". Only the "running" edge is shown; the
+	 * model's streamed answer, once it begins, takes over the bubble. */
+	onToolActivity = (data: { tool?: string; summary?: string; status?: string; session_id?: string }) => {
+		if (this.isForeignSession(data)) return;
+		if (!data.summary || (data.status && data.status !== "running")) return;
+		this.isSubmitting.value = true;
+		this.progressMessage.value = data.summary;
+		this.builderStore.aiBuildStatus = data.summary;
+		// Don't clobber the model's answer text once it has started streaming.
+		if (!this.summaryContent.value) {
+			this.replacePendingAssistant(data.summary, { status: "running" });
+		}
 		this.scrollToBottom();
 	};
 

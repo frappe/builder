@@ -10,6 +10,9 @@ export interface AIChatHandlers {
 	onClarify: Handler;
 	onComplete: Handler;
 	onError: Handler;
+	/** Per-tool live activity ({tool, summary, status}) — drives the "what Bob is
+	 * doing right now" status while a round runs its tool calls. */
+	onToolActivity?: Handler;
 	/** A spawn_parallel_agents fan-out started this turn (batch id + task list). */
 	onTaskGroup?: Handler;
 	/** A server tool changed state the canvas loads once at editor start
@@ -31,6 +34,7 @@ function listenerMap(h: AIChatHandlers): Record<string, Handler> {
 		ai_chat_complete: h.onComplete,
 		ai_chat_error: h.onError,
 	};
+	if (h.onToolActivity) map.ai_chat_tool_activity = h.onToolActivity;
 	if (h.onTaskGroup) map.ai_chat_task_group = h.onTaskGroup;
 	if (h.onRefetch) map.ai_chat_refetch = h.onRefetch;
 	return map;

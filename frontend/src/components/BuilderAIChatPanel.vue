@@ -32,7 +32,9 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="truncate text-p-xs leading-4 text-ink-gray-5">{{ currentSessionTitle }}</div>
+				<div class="truncate text-p-xs leading-4 text-ink-gray-5">
+					{{ isSubmitting ? currentActivity : currentSessionTitle }}
+				</div>
 			</div>
 			<div v-if="builderStore.isAIEnabled" class="flex shrink-0 items-center gap-1">
 				<Tooltip text="New chat">
@@ -58,8 +60,11 @@
 
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
-					<div class="flex flex-col items-center gap-2">
-						<SparklesIcon class="size-7 text-ink-gray-4" />
+					<div class="flex flex-col items-center gap-2.5">
+						<span class="bob-hero-orb">
+							<BobOrb class="bob-orb-aura" />
+							<SparklesIcon class="bob-orb-spark relative z-10 size-7 text-ink-gray-8" />
+						</span>
 						<p class="text-sm font-medium text-ink-gray-8">
 							{{ pageHasContent ? "Describe a change" : "Describe your site" }}
 						</p>
@@ -67,8 +72,10 @@
 					</div>
 					<div class="flex w-full flex-col gap-2">
 						<Button
-							v-for="suggestion in promptSuggestions"
+							v-for="(suggestion, i) in promptSuggestions"
 							:key="suggestion.label"
+							class="bob-pill-in"
+							:style="{ animationDelay: `${i * 70}ms` }"
 							variant="subtle"
 							size="xs"
 							@click="useSuggestion(suggestion)">
@@ -342,6 +349,7 @@
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AITaskGroupCard from "@/components/ai/AITaskGroupCard.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
+import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
@@ -357,6 +365,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { progressMessage } = chat;
+const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
 const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
 
@@ -684,5 +694,93 @@ function toggleChips(messageId: string) {
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
 	animation: shine 2.5s linear infinite;
+}
+
+/* Empty-state hero: a living aurora of drifting color blobs behind the sparkle.
+ * Each blob only animates transform (GPU-composited) under a single static blur,
+ * so the motion stays silky. Prime-ish, mismatched durations keep it organic —
+ * the loop never visibly repeats. */
+.bob-hero-orb {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 76px;
+	height: 76px;
+	isolation: isolate;
+}
+/* Soft outer bloom that gently breathes */
+.bob-hero-orb::after {
+	content: "";
+	position: absolute;
+	inset: 4px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgb(139 92 246 / 0.28), transparent 70%);
+	filter: blur(7px);
+	z-index: 0;
+	animation: bob-orb-bloom 5s ease-in-out infinite;
+}
+@keyframes bob-orb-bloom {
+	0%,
+	100% {
+		opacity: 0.55;
+		transform: scale(0.9);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.08);
+	}
+}
+
+/* The shader canvas, clipped to a soft disc. A light blur melts the pixel grid
+ * into the surrounding bloom so the edge reads as glow, not a hard circle. */
+.bob-orb-aura {
+	position: absolute;
+	inset: -6%;
+	z-index: 1;
+	border-radius: 999px;
+	overflow: hidden;
+	filter: blur(4px) saturate(1.15);
+}
+
+/* The sparkle sits above the aura with a soft glow and a gentle twinkle */
+.bob-orb-spark {
+	filter: drop-shadow(0 0 6px rgb(196 181 253 / 0.7));
+	animation: bob-twinkle 3.4s ease-in-out infinite;
+}
+@keyframes bob-twinkle {
+	0%,
+	100% {
+		opacity: 0.9;
+		transform: scale(1) rotate(0deg);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.08) rotate(4deg);
+	}
+}
+
+/* Suggestion pills fade-and-rise in, staggered */
+.bob-pill-in {
+	animation: bob-pill-in 0.4s ease both;
+}
+@keyframes bob-pill-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bob-hero-orb::after,
+	.bob-blob,
+	.bob-orb-spark,
+	.bob-pill-in,
+	.animate-shine {
+		animation: none;
+	}
 }
 </style>

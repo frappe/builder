@@ -77,6 +77,9 @@
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
+
+		<!-- Ambient "Bob is building" layer over the canvas (teleported to body) -->
+		<AIBuildOverlay />
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -105,6 +108,7 @@
 </template>
 
 <script setup lang="ts">
+import AIBuildOverlay from "@/components/ai/AIBuildOverlay.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";

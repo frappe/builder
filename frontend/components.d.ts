@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
+    AIBuildOverlay: typeof import('./src/components/ai/AIBuildOverlay.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
     AITaskGroupCard: typeof import('./src/components/ai/AITaskGroupCard.vue')['default']
     AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
@@ -35,6 +36,7 @@ declare module 'vue' {
     BlockPositionHandler: typeof import('./src/components/BlockPositionHandler.vue')['default']
     BlockProperties: typeof import('./src/components/BlockProperties.vue')['default']
     BlockSnapGuides: typeof import('./src/components/BlockSnapGuides.vue')['default']
+    BobOrb: typeof import('./src/components/ai/BobOrb.vue')['default']
     BooleanOptions: typeof import('./src/components/PropsOptions/BooleanOptions.vue')['default']
     BorderRadiusHandler: typeof import('./src/components/BorderRadiusHandler.vue')['default']
     BoxResizer: typeof import('./src/components/BoxResizer.vue')['default']
@@ -75,6 +77,8 @@ declare module 'vue' {
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
     Files: typeof import('./src/components/Icons/Files.vue')['default']
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
+    FontInput: typeof import('./src/components/Controls/FontInput.vue')['default']
+    FontInputActions: typeof import('./src/components/Controls/FontInputActions.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
     GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
