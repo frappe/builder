@@ -2,7 +2,7 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-4xl-semibold">Screen too small</h1>
+			<h1 class="text-p-3xl-semibold">Screen too small</h1>
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
@@ -505,7 +505,7 @@ watch(
 				},
 				auto: true,
 			});
-			usageCountResource.promise.then((res: { count: number; pages: BuilderPage[] }) => {
+			usageCountResource.promise?.then((res: { count: number; pages: BuilderPage[] }) => {
 				usageCount.value = res.count;
 				componentUsedInPages.value = res.pages;
 			});

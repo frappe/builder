@@ -4,7 +4,7 @@
 			<FeatherIcon name="bar-chart-2" class="h-6 w-6 text-ink-gray-5" />
 		</div>
 		<div class="flex flex-col gap-1">
-			<h3 class="text-lg-medium text-ink-gray-9">View tracking is off</h3>
+			<h3 class="text-md-medium text-ink-gray-9">View tracking is off</h3>
 			<p class="max-w-sm text-p-sm text-ink-gray-6">
 				Turn on view tracking to start collecting page views, clicks and click-through rates for your
 				published pages.

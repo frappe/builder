@@ -103,9 +103,9 @@ const getRouteOptions = async (query: string) => {
 
 	const queryLower = query?.toLowerCase() || "";
 
-	return webPages.data
+	return (webPages.data ?? [])
 		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
-		.map((page: BuilderPage) => ({ value: page.route, label: page.route }))
+		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }))
 		.filter(
 			(option: { value: string; label: string }) =>
 				!queryLower || option.label.toLowerCase().includes(queryLower),

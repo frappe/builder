@@ -71,8 +71,8 @@ export function promptSelectFolder() {
 	const options = [
 		{ label: "Home", value: "" },
 		...(builderProjectFolder.data || []).map((p: BuilderProjectFolder) => ({
-			label: p.folder_name,
-			value: p.folder_name,
+			label: p.folder_name as string,
+			value: p.folder_name as string,
 		})),
 	];
 	dialog.prompt({
