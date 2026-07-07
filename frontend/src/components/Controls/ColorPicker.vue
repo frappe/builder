@@ -4,8 +4,7 @@
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		:offset="offset"
-		class="!block w-full"
-		popoverClass="!min-w-fit">
+		class="!block w-full">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
 				name="target"

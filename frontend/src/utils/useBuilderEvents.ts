@@ -532,8 +532,8 @@ export function useBuilderEvents(
 			if (route.params.pageId && route.params.pageId !== "new") {
 				const currentModified = pageStore.activePage?.modified;
 				webComponent.reload();
-				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[]) => {
-					if (currentModified !== doc[0]?.modified) {
+				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[] | null) => {
+					if (currentModified !== doc?.[0]?.modified) {
 						pageStore.setPage(route.params.pageId as string, false, route.query);
 					}
 				});
