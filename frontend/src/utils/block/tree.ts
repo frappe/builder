@@ -20,6 +20,9 @@ export function resetBlock(
 		block.dataKey = null;
 		block.dynamicValues = [];
 		block.props = {};
+		block.clientScript = {};
+		// @ts-ignore
+		delete block.blockClientScript;
 	}
 
 	if (resetChildren) {
