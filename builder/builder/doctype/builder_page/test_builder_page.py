@@ -320,6 +320,63 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_duplicate_binding_does_not_leak_jinja(self):
+		"""A block recording the same binding in BOTH dataKey and dynamicValues must not
+		wrap the placeholder twice. Double-wrapping nests the expression inside its own
+		fallback (`{{ ... else '{{ ... }}' }}`), which leaks the raw Jinja to the page for
+		values that are None (falsy and not in ['', 0])."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		# same industry -> innerHTML binding recorded in both places (regression trigger)
+		industry.set_dynamic_value("industry", "key", "innerHTML")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Duplicate Binding Test",
+				"published": 1,
+				"route": "/duplicate-binding-test",
+				"page_data_script": 'data.update({"stories": [{"industry": "Real Estate"}, {"industry": None}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/duplicate-binding-test")
+			# the raw expression must never leak to the rendered page
+			self.assertNotIn("{{", content)
+			self.assertNotIn("get('industry'", content)
+			# story with a value renders it; the None story falls back
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_duplicate_binding_deduped_in_placeholders(self):
+		"""set_dynamic_content_placeholders should apply a (property, type) binding once
+		even when it appears in both dataKey and dynamicValues, producing a single
+		placeholder rather than one nested inside its own fallback."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "industry", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		self.assertEqual(block["innerHTML"].count("{{"), 1)
+		self.assertNotIn("else '{{", block["innerHTML"])
+
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
 		component_root = Block(element="div", blockId="comp-block-1")

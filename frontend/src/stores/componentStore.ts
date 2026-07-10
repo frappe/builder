@@ -120,7 +120,7 @@ const useComponentStore = defineStore("componentStore", {
 									},
 									auto: true,
 								});
-								await toast.promise(componentResource.promise, {
+								await toast.promise(componentResource.promise!, {
 									loading: "Syncing component in all the pages...",
 									success: () => {
 										pageStore.fetchActivePage().then(() => {

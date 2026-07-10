@@ -63,7 +63,7 @@
 								}">
 								<div class="flex w-full cursor-pointer items-center gap-2">
 									<img src="/builder_logo.png" alt="logo" class="h-7" />
-									<h1 class="text-md mt-[2px] font-semibold leading-5 text-gray-800 dark:text-gray-200">
+									<h1 class="mt-[2px] text-md font-semibold leading-5 text-gray-800 dark:text-gray-200">
 										Builder
 									</h1>
 								</div>
@@ -231,7 +231,7 @@ const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectF
 			new_name: newFolderName,
 		})
 		.then(() => {
-			builderProjectFolder.data = builderProjectFolder.data.map((folder: BuilderProjectFolder) => {
+			builderProjectFolder.data = (builderProjectFolder.data ?? []).map((folder: BuilderProjectFolder) => {
 				if (folder.folder_name === builderStore.activeFolder) {
 					folder.folder_name = newFolderName;
 				}
@@ -254,7 +254,7 @@ const deleteFolder = async (folderName: string) => {
 		},
 		auto: true,
 	});
-	builderProjectFolder.data = builderProjectFolder.data.filter(
+	builderProjectFolder.data = (builderProjectFolder.data ?? []).filter(
 		(folder: BuilderProjectFolder) => folder.folder_name !== folderName,
 	);
 	setFolderActive("");

@@ -19,10 +19,13 @@ import DashboardToolbar from "@/components/DashboardToolbar.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";
+import { prefetchBuilderSettings } from "@/utils/prefetch";
 import { useTelemetry } from "frappe-ui/frappe";
-import { watch } from "vue";
+import { onMounted, watch } from "vue";
 
 const telemetry = useTelemetry();
+
+onMounted(prefetchBuilderSettings);
 // Dev benches have telemetry (and thus the survey) off; ?persona_survey=test forces the redirect.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 

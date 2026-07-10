@@ -17,7 +17,7 @@
 				</template>
 			</AnalyticsOverview>
 			<div class="mt-8">
-				<h3 class="text-xl-medium mb-4 text-ink-gray-7">Top Pages</h3>
+				<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Pages</h3>
 				<div
 					v-if="analytics.loading"
 					class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">

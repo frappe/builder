@@ -66,7 +66,7 @@
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
+					class="absolute left-0 cursor-pointer select-none text-4xl text-ink-gray-7"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,

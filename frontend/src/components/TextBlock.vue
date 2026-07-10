@@ -1,7 +1,7 @@
 <template>
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div
-			class="__text_content__"
+			class="__text_content__ bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			v-html="textContent"
 			v-show="!editor && textContent"
 			@click="handleClick"></div>

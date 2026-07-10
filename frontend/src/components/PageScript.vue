@@ -40,7 +40,7 @@
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
 			<template #title>
 				<div class="flex w-full items-center justify-between gap-3 pr-2">
-					<span class="text-xl font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
+					<span class="text-lg font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:reset": "tailwindcss -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
+    "build:reset": "tailwindcss -c ./tailwind.reset.config.js -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.ts,.vue",
     "test-local": "cypress open --e2e --browser chrome",
@@ -40,7 +40,7 @@
     "autoprefixer": "^10.4.2",
     "codemirror": "^6.0.2",
     "dompurify": "^3.4.5",
-    "frappe-ui": "1.0.0-beta.8",
+    "frappe-ui": "1.0.0-beta.21",
     "js-yaml": "^4.1.1",
     "marked": "^18.0.0",
     "opentype.js": "^1.3.4",

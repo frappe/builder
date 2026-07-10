@@ -1219,6 +1219,19 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 	dynamic_values = [block_data_key] if block_data_key else []
 	dynamic_values += block.get("dynamicValues", []) or []
 
+	# A binding can be recorded in both dataKey and dynamicValues (same property + type).
+	# Applying it twice nests the placeholder inside its own fallback (`{{ ... else '{{ ... }}' }}`),
+	# which leaks the raw expression when the value is falsy. Keep only the first per (property, type).
+	seen = set()
+	deduped = []
+	for dv in dynamic_values:
+		sig = (dv.get("property"), dv.get("type")) if isinstance(dv, dict) else (dv, "key")
+		if sig in seen:
+			continue
+		seen.add(sig)
+		deduped.append(dv)
+	dynamic_values = deduped
+
 	for dynamic_value_doc in dynamic_values:
 		original_key = dynamic_value_doc.get("key", "")
 

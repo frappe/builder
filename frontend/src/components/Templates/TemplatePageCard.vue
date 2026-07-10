@@ -31,7 +31,7 @@
 </template>
 <script setup lang="ts">
 import router from "@/router";
-import { TemplatePageSummary } from "@/types/doctypes";
+import { TemplatePageSummary } from "@/types/template";
 
 const props = defineProps<{
 	page: TemplatePageSummary;
