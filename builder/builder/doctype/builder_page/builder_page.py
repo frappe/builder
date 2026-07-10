@@ -1583,7 +1583,7 @@ def reset_block(block):
 
 
 def normalize_legacy_block_client_script(block):
-	if block.get("clientScript") is None and block.get("blockClientScript"):
+	if not block.get("clientScript") and block.get("blockClientScript"):
 		block["clientScript"] = {"js": block.get("blockClientScript")}
 
 
