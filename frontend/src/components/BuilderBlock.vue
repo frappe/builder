@@ -47,9 +47,10 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
-import { extractComponentId, getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
+import { extractComponentId } from "@/utils/helpers";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
@@ -131,8 +132,15 @@ const draggable = computed(() => {
 	return !props.block.isRoot() && !props.preview && false;
 });
 
-const isHovered = ref(false);
 const isSelected = ref(false);
+
+const isHovered = computed(() => {
+	return !props.preview && canvasStore.activeCanvas?.hoveredBlock === props.block.blockId;
+});
+
+const selectedInCanvas = computed(() => {
+	return !props.preview && Boolean(canvasStore.activeCanvas?.isSelected(props.block));
+});
 
 // For repeater items the same Block object is rendered multiple times,
 // so we need a unique identifier per rendered instance (used by client scripts)
@@ -164,19 +172,12 @@ const classes = computed(() => {
 	];
 });
 
-const hasBlockProps = computed(() => {
-	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+const valueResolver = new BlockValueResolver({
+	block: () => props.block,
+	data: () => props.data ?? null,
+	componentData: () => resolvedComponentData.value ?? null,
+	defaultProps: () => props.defaultProps ?? null,
 });
-
-const hasComponentData = computed(() => Object.keys(resolvedComponentData.value || {}).length > 0);
-
-const getDataScriptValue = (path: string): any => {
-	return getDataForKey(props.data || {}, path);
-};
-
-const getComponentDataValue = (path: string): any => {
-	return getDataForKey(resolvedComponentData.value || {}, path);
-};
 
 const attributes = computed(() => {
 	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
@@ -226,49 +227,7 @@ const attributes = computed(() => {
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (props.data || hasBlockProps.value || hasComponentData.value) {
-		if (props.block.getDataKey("type") === "attribute") {
-			let value;
-			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(
-					props.block.getDataKey("key") as string,
-					props.block,
-					getDataScriptValue,
-					props.defaultProps,
-					getComponentDataValue,
-				);
-			} else if (props.block.getDataKey("comesFrom") === "componentData") {
-				value = getComponentDataValue(props.block.getDataKey("key") as string);
-			} else {
-				value = getDataScriptValue(props.block.getDataKey("key") as string);
-			}
-			attribs[props.block.getDataKey("property") as string] =
-				value ?? attribs[props.block.getDataKey("property") as string];
-		}
-		props.block
-			.getDynamicValues()
-			?.filter((dataKeyObj: BlockDataKey) => {
-				return dataKeyObj.type === "attribute";
-			})
-			?.forEach((dataKeyObj: BlockDataKey) => {
-				const property = dataKeyObj.property as string;
-				let value;
-				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						props.defaultProps,
-						getComponentDataValue,
-					);
-				} else if (dataKeyObj.comesFrom === "componentData") {
-					value = getComponentDataValue(dataKeyObj.key as string);
-				} else {
-					value = getDataScriptValue(dataKeyObj.key as string);
-				}
-				attribs[property] = value ?? attribs[property];
-			});
-	}
+	valueResolver.applyDynamicValues("attribute", attribs);
 
 	if (props.block.isInput()) {
 		attribs.readonly = true;
@@ -293,51 +252,7 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	let dynamicStyles = {} as { [key: string]: string };
-	if (props.data || hasBlockProps.value || hasComponentData.value) {
-		if (props.block.getDataKey("type") === "style") {
-			let value;
-			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(
-					props.block.getDataKey("key") as string,
-					props.block,
-					getDataScriptValue,
-					props.defaultProps,
-					getComponentDataValue,
-				);
-			} else if (props.block.getDataKey("comesFrom") === "componentData") {
-				value = getComponentDataValue(props.block.getDataKey("key") as string);
-			} else {
-				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
-			}
-			dynamicStyles = {
-				[props.block.getDataKey("property") as string]: value,
-			};
-		}
-		props.block
-			.getDynamicValues()
-			?.filter((dataKeyObj: BlockDataKey) => {
-				return dataKeyObj.type === "style";
-			})
-			?.forEach((dataKeyObj: BlockDataKey) => {
-				const property = dataKeyObj.property as string;
-				let value;
-				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(
-						dataKeyObj.key as string,
-						props.block,
-						getDataScriptValue,
-						props.defaultProps,
-						getComponentDataValue,
-					);
-				} else if (dataKeyObj.comesFrom === "componentData") {
-					value = getComponentDataValue(dataKeyObj.key as string);
-				} else {
-					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
-				}
-				dynamicStyles[property] = value ?? dynamicStyles[property];
-			});
-	}
+	const dynamicStyles = valueResolver.applyDynamicValues("style", {}) as BlockStyleMap;
 
 	const styleMap = {
 		...props.block.getStyles(props.breakpoint),
@@ -437,49 +352,7 @@ onUnmounted(() => {
 });
 
 const allResolvedProps = computed(() => {
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
-		(acc, [key, value]) => {
-			acc[key] = value.value;
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	const blockProps = Object.entries({
-		...props.block.getBlockProps(),
-	}).reduce(
-		(acc, [key]) => {
-			acc[key] = getPropValue(
-				key,
-				props.block,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	const parentProps = Object.entries(getParentProps(props.block)).reduce(
-		(acc, [key, value]) => {
-			acc[key] = getPropValue(
-				key,
-				value.block!,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	return {
-		...parentProps,
-		...blockProps,
-		...defaultProps,
-	};
+	return valueResolver.getResolvedProps();
 });
 
 const fetchingComponentDetails = computed(() => {
@@ -549,7 +422,7 @@ watch(
 			javascript:
 				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
-					: (clientScript.javascript ?? ""),
+					: clientScript.javascript ?? "",
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});
@@ -567,61 +440,25 @@ const isEditable = computed(() => {
 });
 
 const hiddenDueToVisibilityCondition = computed(() => {
-	const visibilityCondition = props.block.getVisibilityCondition();
-	const key = visibilityCondition?.key;
-	const comesFrom = visibilityCondition?.comesFrom || "dataScript";
-	if (!key) return false;
-	if (comesFrom == "dataScript") {
-		const value = getDataScriptValue(key as string);
-		return !Boolean(value);
-	} else if (comesFrom == "componentData") {
-		const value = getComponentDataValue(key as string);
-		return !Boolean(value);
-	} else {
-		const value = getPropValue(
-			key as string,
-			props.block,
-			getDataScriptValue,
-			props.defaultProps,
-			getComponentDataValue,
-		);
-		return !Boolean(value);
-	}
+	return valueResolver.isHiddenByVisibilityCondition();
 });
 
-if (!props.preview) {
-	watch(
-		() => canvasStore.activeCanvas?.hoveredBlock,
-		(newValue, oldValue) => {
-			if (newValue === props.block.blockId) {
-				isHovered.value = true;
-			} else if (oldValue === props.block.blockId) {
-				isHovered.value = false;
-			}
-		},
-	);
-	watch(
-		() => canvasStore.activeCanvas?.selectedBlockIds,
-		() => {
-			if (canvasStore.activeCanvas?.isSelected(props.block)) {
-				if (props.block.isImage()) {
-					// delay setting selected state for images to accecpt double click for triggering image upload in editor
-					setTimeout(() => {
-						isSelected.value = true;
-					}, 200);
-				} else {
-					isSelected.value = true;
-				}
-			} else {
-				isSelected.value = false;
-			}
-		},
-		{
-			deep: true,
-			immediate: true,
-		},
-	);
-}
+watch(
+	selectedInCanvas,
+	(selected, _, onCleanup) => {
+		if (!selected || !props.block.isImage()) {
+			isSelected.value = selected;
+			return;
+		}
+
+		// Preserve double-click image uploads before showing the selection editor.
+		const timeout = setTimeout(() => {
+			isSelected.value = true;
+		}, 200);
+		onCleanup(() => clearTimeout(timeout));
+	},
+	{ immediate: true },
+);
 
 // Note: All the block event listeners are delegated to parent for better scalability
 </script>
