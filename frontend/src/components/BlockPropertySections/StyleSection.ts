@@ -28,7 +28,7 @@ const overflowOptions = [
 	},
 ];
 
-const styleSectionProperties = [
+const styleSectionProperties = [	
 	{
 		component: StylePropertyControl,
 		getProps: () => {
@@ -223,6 +223,22 @@ const styleSectionProperties = [
 			};
 		},
 		searchKeyWords: "Cursor, Pointer, Move, Text, Crosshair, NotAllowed, Not Allowed",
+	},
+	{
+		component: StylePropertyControl,
+		getProps: () => {
+			return {
+				label: "Rotation",
+				propertyKey: "rotate",
+				enableSlider: true,
+				unitOptions: ["deg"],
+				minValue: -360,
+				maxValue: 360,
+				defaultValue: 0,
+			};
+		},
+		searchKeyWords: "Rotation, Rotate, Angle, Degrees",
+		condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
 	},
 ];
 

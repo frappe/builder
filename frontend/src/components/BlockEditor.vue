@@ -29,6 +29,11 @@
 			v-if="showBorderRadiusHandler"
 			:target-block="block"
 			:target="target" />
+		<RotationHandler
+			v-if="showResizer"
+			:target-block="block"
+			:target="target"
+			@rotating="resizing = $event" />
 		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
 	</div>
 </template>
@@ -45,6 +50,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import RotationHandler from "./RotationHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
 const canvasStore = useCanvasStore();
