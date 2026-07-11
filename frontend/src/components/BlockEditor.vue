@@ -30,11 +30,15 @@
 			:target-block="block"
 			:target="target" />
 		<RotationHandler
-			v-if="showResizer"
+			v-if="showResizer && !resizing"
 			:target-block="block"
 			:target="target"
-			@rotating="resizing = $event" />
-		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+			@rotating="rotating = $event" />
+		<BoxResizer
+			v-if="showResizer && !rotating"
+			:targetBlock="block"
+			@resizing="resizing = $event"
+			:target="target" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -89,6 +93,8 @@ const props = withDefaults(
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
+const rotating = ref(false);
+const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventCLick = ref(false);
@@ -96,7 +102,7 @@ const preventCLick = ref(false);
 const showPaddingHandler = computed(() => {
 	return (
 		isBlockSelected.value &&
-		!resizing.value &&
+		!transforming.value &&
 		!canvasStore.isDragging &&
 		!props.editable &&
 		!props.readonly &&
@@ -111,7 +117,7 @@ const showMarginHandler = computed(() => {
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!canvasStore.isDragging &&
-		!resizing.value &&
+		!transforming.value &&
 		!props.editable &&
 		!props.readonly &&
 		!blockController.multipleBlocksSelected() &&
@@ -128,7 +134,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isSVG() &&
 		!props.editable &&
 		!props.readonly &&
-		!resizing.value &&
+		!transforming.value &&
 		!canvasStore.isDragging &&
 		!blockController.multipleBlocksSelected()
 	);
