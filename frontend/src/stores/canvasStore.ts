@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
+import type { IndicatorGeometry } from "@/utils/dropGeometry";
 import { getVersionedDoc } from "@/data/snapshot";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
 import { toast } from "frappe-ui";
@@ -30,6 +31,25 @@ const useCanvasStore = defineStore("canvasStore", {
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
+		},
+		// On-canvas block reordering (pointer-based). Kept separate from dropTarget
+		// (panel → canvas drops) so the two systems don't interfere. The overlay
+		// DropIndicator reads this; nothing here mutates the canvas DOM, so the
+		// layout stays stable during the drag.
+		reorderTarget: {
+			active: <boolean>false,
+			// "slot": exact in-flow placeholder (same-container reorder, shifts siblings)
+			// "line": no-reflow line between children (cross-container drop)
+			mode: <"slot" | "line">"slot",
+			// exact drop slot (screen px) — measured from the in-flow placeholder,
+			// so it reflects the container's real flex/grid layout
+			slotRect: <{ top: number; left: number; width: number; height: number } | null>null,
+			// cross-container line indicator geometry (screen px)
+			line: <IndicatorGeometry | null>null,
+			containerRect: <{ top: number; left: number; width: number; height: number } | null>null,
+			isComponentParent: <boolean>false,
+			// spacing guide: the container's main-axis gap (px), positioned for a label
+			spacing: <{ value: number; left: number; top: number } | null>null,
 		},
 		editableBlock: <Block | null>null,
 		editingContentType: <"html" | "css" | "js">"html", // TODO: Remove js and css
@@ -270,6 +290,18 @@ const useCanvasStore = defineStore("canvasStore", {
 			if (placeholder) {
 				placeholder.remove();
 			}
+		},
+
+		clearReorderTarget() {
+			this.reorderTarget = {
+				active: false,
+				mode: "slot",
+				slotRect: null,
+				line: null,
+				containerRect: null,
+				isComponentParent: false,
+				spacing: null,
+			};
 		},
 	},
 });

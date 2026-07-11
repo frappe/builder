@@ -3,6 +3,7 @@ import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import { getLayoutDirection, type LayoutDirection } from "@/utils/dropGeometry";
 import {
 	getBlockCopy,
 	getBlockInstance,
@@ -21,8 +22,6 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
 const blockTemplateStore = useBlockTemplateStore();
-
-type LayoutDirection = "row" | "column";
 
 export function useCanvasDropZone(
 	canvasContainer: Ref<HTMLElement>,
@@ -114,7 +113,7 @@ export function useCanvasDropZone(
 
 		if (parentBlock) {
 			const parentElement = getBlockElement(parentBlock);
-			layoutDirection = getLayoutDirection(parentElement);
+			layoutDirection = getLayoutDirection(window.getComputedStyle(parentElement));
 			index = findDropIndex(ev, parentElement, layoutDirection);
 		}
 
@@ -155,17 +154,6 @@ export function useCanvasDropZone(
 		// Determine if we should insert before or after the closest child
 		// if mouse is closer to left/top side of the child, insert before, else after
 		return mousePos <= childPositions[closestIndex].midPoint ? closestIndex : closestIndex + 1;
-	};
-
-	const getLayoutDirection = (element: HTMLElement): LayoutDirection => {
-		const style = window.getComputedStyle(element);
-		const display = style.display;
-		if (display === "flex" || display === "inline-flex") {
-			return style.flexDirection.includes("row") ? "row" : "column";
-		} else if (display === "grid" || display == "inline-grid") {
-			return style.gridAutoFlow.includes("row") ? "row" : "column";
-		}
-		return "column";
 	};
 
 	const updateDropTarget = (

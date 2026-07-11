@@ -38,6 +38,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { addPxToNumber } from "@/utils/helpers";
+import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -165,7 +166,7 @@ const isBlockSelected = computed(() => {
 
 const getStyleClasses = computed(() => {
 	const classes = [];
-	if (movable.value && !props.block.isRoot()) {
+	if ((movable.value || reorderable.value) && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
 	if (props.block.isExtendedFromComponent()) {
@@ -199,6 +200,9 @@ watch(
 const movable = computed(() => {
 	return props.block.isMovable() && !props.readonly;
 });
+
+// In-flow blocks that can be reordered via the pointer-based reorder engine.
+const reorderable = computed(() => !props.readonly && isReorderable(props.block));
 
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value, canvasProps);
@@ -252,6 +256,16 @@ const handleMove = (ev: MouseEvent) => {
 	if (builderStore.mode === "text") {
 		canvasStore.editableBlock = props.block;
 	}
+
+	// In-flow blocks (not absolutely positioned) reorder within their flex/flow
+	// layout via the pointer-based engine — the canvas stays stable and only an
+	// overlay indicator moves until the block is dropped.
+	if (reorderable.value) {
+		ev.stopPropagation();
+		startBlockReorder(ev, props.block);
+		return;
+	}
+
 	if (!movable.value || props.block.isRoot()) return;
 	ev.stopPropagation();
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
