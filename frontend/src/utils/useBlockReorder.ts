@@ -136,18 +136,28 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 	// siblings — impossible when they're flush. 0.3 → the outer 30% on each side
 	// reorders (so ~60% of a flush row is reorderable), the inner 40% nests.
 	const EDGE_REORDER_BAND = 0.3;
+	// EMPTY child containers default to before/after (you usually want to add a
+	// sibling next to an existing child, not drop inside it) — nesting is reserved
+	// for a small dead-centre core. Populated containers keep the normal band.
+	const EDGE_REORDER_BAND_EMPTY = 0.42;
 
 	// Is the pointer in `childEl`'s outer edge band (NOT its inner core), measured
 	// along its parent's layout axis? In the edge band = "reorder beside this
 	// container"; in the core = "nest into it".
-	const inEdgeBand = (childEl: HTMLElement, parentBlock: Block, clientX: number, clientY: number): boolean => {
+	const inEdgeBand = (
+		childEl: HTMLElement,
+		parentBlock: Block,
+		clientX: number,
+		clientY: number,
+		bandFraction: number,
+	): boolean => {
 		const parentEl = getContainerEl(parentBlock);
 		const dir = parentEl ? getLayoutDirection(getComputedStyle(parentEl)) : "column";
 		const r = childEl.getBoundingClientRect();
 		const lo = dir === "row" ? r.left : r.top;
 		const hi = dir === "row" ? r.right : r.bottom;
 		const pointer = dir === "row" ? clientX : clientY;
-		const band = (hi - lo) * EDGE_REORDER_BAND;
+		const band = (hi - lo) * bandFraction;
 		return pointer < lo + band || pointer > hi - band;
 	};
 
@@ -171,13 +181,24 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 
 		const rawEl = getContainerEl(raw);
 		const nonDragged = raw.getChildren().filter((c) => c.blockId !== block.blockId);
-		let canNest = raw.canHaveChildren() && !!rawEl && (nonDragged.length > 0 || isSpaciousContainer(rawEl));
+		// Dropping back into the source's OWN parent when the source is its only
+		// child is a no-op — so never nest there; fall through to before/after it.
+		// This is what lets you drag a deeply-nested block OUT: hovering the (now
+		// apparently empty) parent it came from resolves to its grandparent.
+		const isEmptySourceParent = raw.blockId === originalParentId && nonDragged.length === 0;
+		let canNest =
+			!isEmptySourceParent &&
+			raw.canHaveChildren() &&
+			!!rawEl &&
+			(nonDragged.length > 0 || isSpaciousContainer(rawEl));
 
 		// Over a nestable container's outer edge band → reorder BESIDE it in its
-		// parent instead of nesting.
+		// parent instead of nesting. Empty containers get a wider band so they
+		// default to before/after (add a sibling) rather than nest-inside.
 		const parent = raw.getParentBlock();
-		if (canNest && rawEl && parent && inEdgeBand(rawEl, parent, clientX, clientY)) {
-			canNest = false;
+		if (canNest && rawEl && parent) {
+			const band = nonDragged.length === 0 ? EDGE_REORDER_BAND_EMPTY : EDGE_REORDER_BAND;
+			if (inEdgeBand(rawEl, parent, clientX, clientY, band)) canNest = false;
 		}
 
 		let container: Block | null = canNest ? raw : parent || raw;
