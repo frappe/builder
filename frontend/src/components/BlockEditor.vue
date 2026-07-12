@@ -274,7 +274,7 @@ const handleMove = (ev: MouseEvent) => {
 	// fall through to the free-move handler below.
 	if (reorderable.value) {
 		ev.stopPropagation();
-		startBlockReorder(ev, props.block);
+		startBlockReorder(ev, props.block, props.breakpoint);
 		return;
 	}
 

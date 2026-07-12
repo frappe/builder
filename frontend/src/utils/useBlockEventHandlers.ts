@@ -24,7 +24,7 @@ export function useBlockEventHandlers(target: HTMLElement) {
 		if (builderStore.mode !== "select" || builderStore.readOnlyMode) return;
 		const block = getBlock(e);
 		if (!block || !isReorderable(block)) return;
-		startBlockReorder(e, block);
+		startBlockReorder(e, block, getBlockInfo(e).breakpoint);
 	}
 
 	function handleClick(e: MouseEvent) {

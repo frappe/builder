@@ -30,17 +30,26 @@ export function isReorderable(block: Block): boolean {
 // is computed in 2D reading order, so flex rows/columns, wrapped flex and grid
 // all share one path. The tree is mutated once, on release, as a single history
 // entry.
-export function startBlockReorder(event: MouseEvent, block: Block) {
+export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: string) {
 	const canvasStore = useCanvasStore();
 	const findBlock = (id: string): Block | null => canvasStore.activeCanvas?.findBlock(id) ?? null;
 	const getScale = () => canvasStore.activeCanvas?.canvasProps?.scale || 1;
 
-	const activeBreakpoint =
-		canvasStore.activeCanvas?.activeBreakpoint || canvasStore.activeCanvas?.hoveredBreakpoint || "desktop";
+	// Measure the elements of the breakpoint the drag actually happens in — the
+	// same block renders one element per visible breakpoint (each a separate
+	// canvas with different layout), so a hard-coded active breakpoint would
+	// measure the wrong layout when dragging on, e.g., the mobile canvas.
+	const dragBreakpoint =
+		breakpoint ||
+		((event.target as HTMLElement)?.closest?.(".__builder_component__") as HTMLElement | null)?.dataset
+			.breakpoint ||
+		canvasStore.activeCanvas?.activeBreakpoint ||
+		canvasStore.activeCanvas?.hoveredBreakpoint ||
+		"desktop";
 
 	const getContainerEl = (target: Block): HTMLElement | null =>
 		document.querySelector(
-			`.__builder_component__[data-block-id="${target.blockId}"][data-breakpoint="${activeBreakpoint}"]`,
+			`.__builder_component__[data-block-id="${target.blockId}"][data-breakpoint="${dragBreakpoint}"]`,
 		) as HTMLElement | null;
 
 	const sourceEl = getContainerEl(block);
