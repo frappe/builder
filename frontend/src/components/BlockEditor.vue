@@ -270,9 +270,8 @@ const handleMove = (ev: MouseEvent) => {
 	// draw inside this block instead of dragging it.
 	if (builderStore.mode !== "select") return;
 
-	// In-flow blocks (not absolutely positioned) reorder within their flex/flow
-	// layout via the pointer-based engine — the canvas stays stable and only an
-	// overlay indicator moves until the block is dropped.
+	// In-flow blocks reorder via the pointer engine; absolutely-positioned ones
+	// fall through to the free-move handler below.
 	if (reorderable.value) {
 		ev.stopPropagation();
 		startBlockReorder(ev, props.block);

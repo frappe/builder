@@ -32,13 +32,9 @@ const useCanvasStore = defineStore("canvasStore", {
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
 		},
-		// On-canvas block reordering (pointer-based). Kept separate from dropTarget
-		// (panel → canvas drops) so the two systems don't interfere. The overlay
-		// DropIndicator reads this; NOTHING here mutates the canvas DOM during a
-		// drag — the layout is frozen after the source is lifted, so there are zero
-		// per-move reflows and no jitter. The indicator is a pure overlay computed
-		// from the (static) children, and is layout-aware (flex row/column, wrapped
-		// flex, and grid).
+		// On-canvas block reordering (pointer-based). Separate from dropTarget
+		// (panel → canvas drops). The overlay DropIndicator reads this; nothing here
+		// touches the canvas DOM, so the layout stays frozen during a drag.
 		reorderTarget: {
 			active: <boolean>false,
 			// insertion line geometry (screen px), placed to reflect the target

@@ -56,10 +56,9 @@ export function collectChildRects(
 
 	const rects: ChildRect[] = [];
 	for (const el of children) {
-		// Skip only the dragged element itself — NOT an ancestor-path child that
-		// merely contains it. When you drag a deeply-nested block out to one of its
-		// ancestors, the child on the path to the source is a real sibling target
-		// (you want to drop before/after it), so it must stay counted.
+		// Skip only the dragged element itself — not an ancestor that merely
+		// contains it, so dragging a nested block out counts the path-child as a
+		// sibling drop target.
 		if (excludeEl && el === excludeEl) continue;
 		const rect = el.getBoundingClientRect();
 		// ignore zero-size / detached nodes

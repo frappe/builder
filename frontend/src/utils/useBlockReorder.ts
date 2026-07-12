@@ -23,16 +23,12 @@ export function isReorderable(block: Block): boolean {
 	);
 }
 
-// Pointer-based on-canvas reorder, designed for zero layout jitter.
-//
-// The whole point: the canvas DOM is NEVER mutated while dragging. On pickup the
-// source is lifted out of the flow exactly once (a single, clean reflow — the
-// siblings close the gap) and a floating ghost follows the cursor. From then on
-// every pointer move only MEASURES the target container's children (read-only)
-// and repositions a fixed overlay line — no insertions, no per-move reflow, so
-// there's nothing to jitter. The insertion index is computed in 2D reading
-// order, so flex rows, flex columns, wrapped flex and CSS grid are all handled
-// by the same code. The block tree is mutated once, on release, in one history
+// Pointer-based on-canvas reorder with zero layout jitter: the canvas DOM is
+// never mutated during the drag. On pickup the source is hidden in place and a
+// floating ghost follows the cursor; each move only measures the target's
+// children (read-only) and repositions a fixed overlay line. The insertion index
+// is computed in 2D reading order, so flex rows/columns, wrapped flex and grid
+// all share one path. The tree is mutated once, on release, as a single history
 // entry.
 export function startBlockReorder(event: MouseEvent, block: Block) {
 	const canvasStore = useCanvasStore();
@@ -79,7 +75,7 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		pauseId = canvasStore.activeCanvas?.history?.pause();
 
 		const scale = getScale();
-		// floating ghost — clone BEFORE dimming the source
+		// floating ghost — clone before hiding the source
 		ghost = document.createElement("div");
 		ghost.id = "reorder-ghost";
 		const clone = sourceEl.cloneNode(true) as HTMLElement;
