@@ -122,14 +122,6 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		return false;
 	};
 
-	// An empty container is worth nesting into when it's clearly bigger than the
-	// dragged block (a drop zone), not a same-sized leaf box you'd reorder past.
-	const NEST_SIZE_FACTOR = 1.6;
-	const isSpaciousContainer = (rawEl: HTMLElement): boolean => {
-		const r = rawEl.getBoundingClientRect();
-		return r.width >= sourceRect.width * NEST_SIZE_FACTOR && r.height >= sourceRect.height * NEST_SIZE_FACTOR;
-	};
-
 	// Fraction of a container-child's main-axis extent, at EACH end, reserved for
 	// "reorder beside me" instead of "nest inside me". Without this you could only
 	// reorder past a child container by hitting the hairline gap/edge between
@@ -186,11 +178,12 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		// This is what lets you drag a deeply-nested block OUT: hovering the (now
 		// apparently empty) parent it came from resolves to its grandparent.
 		const isEmptySourceParent = raw.blockId === originalParentId && nonDragged.length === 0;
-		let canNest =
-			!isEmptySourceParent &&
-			raw.canHaveChildren() &&
-			!!rawEl &&
-			(nonDragged.length > 0 || isSpaciousContainer(rawEl));
+		// Any container that can hold children is a nest target — including one the
+		// same size as (or smaller than) the dragged block. The edge band below is
+		// what separates nest (dead-centre) from reorder-beside (edges), so no size
+		// heuristic is needed; empty containers just get a wider band (mostly
+		// before/after, centre nests).
+		let canNest = !isEmptySourceParent && raw.canHaveChildren() && !!rawEl;
 
 		// Over a nestable container's outer edge band → reorder BESIDE it in its
 		// parent instead of nesting. Empty containers get a wider band so they
