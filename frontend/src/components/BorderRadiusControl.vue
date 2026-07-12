@@ -44,8 +44,8 @@
 						background-size: 16px 16px;
 					">
 					<div
-						class="h-16 w-16 border bg-white transition-[border-radius] duration-200"
-						:style="{ borderRadius: previewRadius }" />
+						class="border bg-white transition-[border-radius] duration-200"
+						:style="{ ...previewDimensions, borderRadius: scaledPreviewRadius }" />
 				</div>
 
 				<div class="mb-2 flex items-center justify-between">
@@ -98,6 +98,8 @@ const activeState = ref<string | null>(null);
 const cornersLinked = ref(true);
 const cornerValues = ref(["0px", "0px", "0px", "0px"]);
 const popoverOpen = ref(false);
+const previewDimensions = ref({ width: "64px", height: "64px" });
+const previewScale = ref(1);
 
 const getStyleKey = (state: string | null = activeState.value) =>
 	state ? `${state}:borderRadius` : "borderRadius";
@@ -116,9 +118,30 @@ const expandRadius = (value: string): string[] => {
 
 const previewRadius = computed(() => cornerValues.value.join(" "));
 
+// converts every pixel radius into its scaled preview equivalent
+const scaledPreviewRadius = computed(() =>
+	previewRadius.value.replace(/(-?\d*\.?\d+)px\b/g, (_, value) => `${Number(value) * previewScale.value}px`),
+);
+
+const syncPreviewDimensions = () => {
+	const block = blockController.getFirstSelectedBlock();
+	const element = block
+		? document.querySelector<HTMLElement>(`[data-block-id="${block.blockId}"][data-block-uid]`)
+		: null;
+	const width = element?.offsetWidth || parseFloat(String(block?.getStyle("width"))) || 64;
+	const height = element?.offsetHeight || parseFloat(String(block?.getStyle("height"))) || 64;
+	const scale = Math.min(160 / width, 80 / height);
+	previewScale.value = scale;
+	previewDimensions.value = {
+		width: `${Math.max(1, width * scale)}px`,
+		height: `${Math.max(1, height * scale)}px`,
+	};
+};
+
 const syncCornerValues = (value = getBorderRadiusValue(activeState.value)) => {
 	cornerValues.value = expandRadius(value);
 	cornersLinked.value = new Set(cornerValues.value).size === 1;
+	syncPreviewDimensions();
 };
 
 const updateActiveState = (event: FocusEvent) => {
