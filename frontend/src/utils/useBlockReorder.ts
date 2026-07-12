@@ -1,9 +1,10 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import {
+	clusterLines,
 	collectChildRects,
-	computeDropIndex,
-	computeIndicator,
+	computeDropIndicator,
+	computeReadingOrderIndex,
 	getLayoutDirection,
 } from "@/utils/dropGeometry";
 
@@ -22,12 +23,17 @@ export function isReorderable(block: Block): boolean {
 	);
 }
 
-// Pointer-based on-canvas reorder. The dragged block is lifted out of the flow
-// (a floating ghost follows the cursor) and a real, same-sized placeholder is
-// inserted into the target container — so the browser's own flex/grid engine
-// positions the drop slot EXACTLY where the block will land (respecting
-// display / justify-content / align-items / gap), and siblings open up to make
-// room. The tree is only mutated on release, in one history entry.
+// Pointer-based on-canvas reorder, designed for zero layout jitter.
+//
+// The whole point: the canvas DOM is NEVER mutated while dragging. On pickup the
+// source is lifted out of the flow exactly once (a single, clean reflow — the
+// siblings close the gap) and a floating ghost follows the cursor. From then on
+// every pointer move only MEASURES the target container's children (read-only)
+// and repositions a fixed overlay line — no insertions, no per-move reflow, so
+// there's nothing to jitter. The insertion index is computed in 2D reading
+// order, so flex rows, flex columns, wrapped flex and CSS grid are all handled
+// by the same code. The block tree is mutated once, on release, in one history
+// entry.
 export function startBlockReorder(event: MouseEvent, block: Block) {
 	const canvasStore = useCanvasStore();
 	const findBlock = (id: string): Block | null => canvasStore.activeCanvas?.findBlock(id) ?? null;
@@ -49,56 +55,31 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 	const sourceRect = sourceEl.getBoundingClientRect();
 	const grabOffsetX = startX - sourceRect.left;
 	const grabOffsetY = startY - sourceRect.top;
-	// the block's own container — reordering here shifts siblings (a real slot),
-	// dropping into any OTHER container just shows a no-reflow line indicator
+	// the block's own container — dropping here reorders (same parent); dropping
+	// into any other container moves the block across
 	const originalParentId = block.getParentBlock()?.blockId ?? null;
 
 	let started = false;
 	let ghost: HTMLElement | null = null;
-	let placeholder: HTMLElement | null = null;
 	let pauseId: unknown = null;
-	let prevBodyCursor = "";
-	let prevSourceDisplay = "";
+	let prevSourceVisibility = "";
 
 	// resolved drop target at release time
 	let dropParent: Block | null = null;
 	let dropIndex: number | null = null;
 
-	// A transparent spacer that occupies the dragged block's box (size + margins +
-	// cross-axis alignment) so the flex layout reserves the real slot. The visible
-	// indicator is drawn crisply as an overlay on top of this (see DropIndicator).
-	const buildPlaceholder = (): HTMLElement => {
-		const el = document.createElement("div");
-		el.className = "reorder-placeholder";
-		const cs = getComputedStyle(sourceEl);
-		Object.assign(el.style, {
-			boxSizing: "border-box",
-			// offsetWidth/Height are unscaled border-box px (the placeholder lives
-			// inside the scaled canvas, so it must use design-space sizes)
-			width: `${sourceEl.offsetWidth}px`,
-			height: `${sourceEl.offsetHeight}px`,
-			marginTop: cs.marginTop,
-			marginRight: cs.marginRight,
-			marginBottom: cs.marginBottom,
-			marginLeft: cs.marginLeft,
-			alignSelf: cs.alignSelf,
-			flex: "0 0 auto",
-			pointerEvents: "none",
-			background: "transparent",
-		});
-		return el;
-	};
-
 	const beginDrag = () => {
 		started = true;
 		canvasStore.isDragging = true;
-		// suppress the click that fires after the drag so the block isn't
-		// re-selected/toggled by useBlockEventHandlers
+		// selecting on grab means point-drag doubles as selection — no need to
+		// click-to-select first. preventClick stops the trailing click from
+		// toggling the selection back off.
+		canvasStore.selectBlock(block, null);
 		canvasStore.preventClick = true;
 		pauseId = canvasStore.activeCanvas?.history?.pause();
 
 		const scale = getScale();
-		// floating ghost — clone BEFORE hiding the source
+		// floating ghost — clone BEFORE dimming the source
 		ghost = document.createElement("div");
 		ghost.id = "reorder-ghost";
 		const clone = sourceEl.cloneNode(true) as HTMLElement;
@@ -122,14 +103,13 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		});
 		document.body.appendChild(ghost);
 
-		placeholder = buildPlaceholder();
-
-		// lift the source out of the flow so its own slot closes up
-		prevSourceDisplay = sourceEl.style.display;
-		sourceEl.style.display = "none";
-
-		prevBodyCursor = document.body.style.cursor;
-		document.body.style.cursor = "grabbing";
+		// Hide the source WITHOUT removing it from the flow (visibility, not
+		// display) so it keeps its slot. Nothing shifts on pickup — critical for
+		// grids, where display:none would renumber every following cell — and since
+		// visibility:hidden elements are skipped by elementFromPoint and excluded
+		// from measurement, the layout is completely frozen for the whole drag.
+		prevSourceVisibility = sourceEl.style.visibility;
+		sourceEl.style.visibility = "hidden";
 	};
 
 	// Is `candidate` the dragged block itself, or somewhere inside its subtree?
@@ -150,12 +130,36 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		return r.width >= sourceRect.width * NEST_SIZE_FACTOR && r.height >= sourceRect.height * NEST_SIZE_FACTOR;
 	};
 
-	// Decide the container to drop into, from whatever is under the cursor:
-	//  - cursor over a container's body (populated, or an empty drop-zone) → nest inside
-	//  - cursor over a childless leaf box → reorder as its sibling
-	//  - cursor in the gap between items → elementFromPoint returns the parent, so
-	//    you reorder at that level. No edge bands: the live layout (placeholder in
-	//    place) drives everything, which is what keeps the drop stable.
+	// Fraction of a container-child's main-axis extent, at EACH end, reserved for
+	// "reorder beside me" instead of "nest inside me". Without this you could only
+	// reorder past a child container by hitting the hairline gap/edge between
+	// siblings — impossible when they're flush. 0.3 → the outer 30% on each side
+	// reorders (so ~60% of a flush row is reorderable), the inner 40% nests.
+	const EDGE_REORDER_BAND = 0.3;
+
+	// Is the pointer in `childEl`'s outer edge band (NOT its inner core), measured
+	// along its parent's layout axis? In the edge band = "reorder beside this
+	// container"; in the core = "nest into it".
+	const inEdgeBand = (childEl: HTMLElement, parentBlock: Block, clientX: number, clientY: number): boolean => {
+		const parentEl = getContainerEl(parentBlock);
+		const dir = parentEl ? getLayoutDirection(getComputedStyle(parentEl)) : "column";
+		const r = childEl.getBoundingClientRect();
+		const lo = dir === "row" ? r.left : r.top;
+		const hi = dir === "row" ? r.right : r.bottom;
+		const pointer = dir === "row" ? clientX : clientY;
+		const band = (hi - lo) * EDGE_REORDER_BAND;
+		return pointer < lo + band || pointer > hi - band;
+	};
+
+	// Auto-detect intent from whatever is under the cursor, no modifier keys.
+	// Decided from the DEEPEST hovered block only (single level — deeper climbing
+	// wrongly pops out of tall containers like a grid's lower row):
+	//  - a childless leaf → reorder among its siblings (in its parent)
+	//  - a container hovered on its INNER CORE → nest inside it
+	//  - a container hovered on its outer EDGE BAND → reorder beside it in its parent
+	//    (this is what makes a flush row/column of containers reorderable without a
+	//    gap to aim at)
+	//  - a gap between items → elementFromPoint already returns the parent
 	// Returns the resolved block AND its element so the caller doesn't re-query.
 	const resolveTargetContainer = (clientX: number, clientY: number) => {
 		const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
@@ -166,44 +170,35 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		if (!raw) return null;
 
 		const rawEl = getContainerEl(raw);
-		const nonDraggedChildren = raw.getChildren().filter((c) => c.blockId !== block.blockId);
-		const canNest =
-			raw.canHaveChildren() && !!rawEl && (nonDraggedChildren.length > 0 || isSpaciousContainer(rawEl));
+		const nonDragged = raw.getChildren().filter((c) => c.blockId !== block.blockId);
+		let canNest = raw.canHaveChildren() && !!rawEl && (nonDragged.length > 0 || isSpaciousContainer(rawEl));
 
-		let container: Block | null = canNest ? raw : raw.getParentBlock() || raw;
+		// Over a nestable container's outer edge band → reorder BESIDE it in its
+		// parent instead of nesting.
+		const parent = raw.getParentBlock();
+		if (canNest && rawEl && parent && inEdgeBand(rawEl, parent, clientX, clientY)) {
+			canNest = false;
+		}
+
+		let container: Block | null = canNest ? raw : parent || raw;
 
 		while (container && (!container.canHaveChildren() || isSelfOrInsideDragged(container))) {
 			container = container.getParentBlock();
 		}
 		if (!container) return null;
-		// reuse rawEl when we settled on `raw` itself, otherwise resolve the element
 		const parentEl = container === raw ? rawEl : getContainerEl(container);
 		if (!parentEl) return null;
 		return { parent: container, parentEl };
 	};
 
-	// Direct block children of a container, excluding the placeholder and the
-	// (hidden) source — i.e. the real siblings, in DOM order.
-	const realChildren = (containerEl: HTMLElement): HTMLElement[] =>
-		Array.from(containerEl.children).filter(
-			(c) => c !== placeholder && c !== sourceEl,
-		) as HTMLElement[];
-
-	const positionPlaceholder = (containerEl: HTMLElement, index: number) => {
-		if (!placeholder) return;
-		const ref = realChildren(containerEl)[index] || null;
-		if (placeholder.parentElement !== containerEl || placeholder.nextElementSibling !== ref) {
-			containerEl.insertBefore(placeholder, ref);
-		}
-	};
-
 	const clearTarget = () => {
 		dropParent = null;
 		dropIndex = null;
-		if (placeholder?.parentElement) placeholder.remove();
 		canvasStore.clearReorderTarget();
 	};
 
+	// Read-only: measure the resolved container's children and update the overlay.
+	// No DOM writes → no reflow → no jitter.
 	const updateTarget = (clientX: number, clientY: number) => {
 		const resolved = resolveTargetContainer(clientX, clientY);
 		if (!resolved) {
@@ -215,43 +210,22 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		const style = getComputedStyle(parentEl);
 		const direction = getLayoutDirection(style);
 		const pointerMain = direction === "row" ? clientX : clientY;
+		const pointerCross = direction === "row" ? clientY : clientX;
+
+		const rects = collectChildRects(parentEl, direction, sourceEl);
+		const lines = clusterLines(rects);
+		const index = computeReadingOrderIndex(lines, pointerMain, pointerCross);
+
 		const cr = parentEl.getBoundingClientRect();
+		dropParent = parent;
+		dropIndex = index;
+
 		const t = canvasStore.reorderTarget;
 		t.active = true;
 		t.isComponentParent = parent.isExtendedFromComponent();
+		t.isSameContainer = parent.blockId === originalParentId;
 		t.containerRect = { top: cr.top, left: cr.left, width: cr.width, height: cr.height };
-		dropParent = parent;
-
-		if (parent.blockId === originalParentId) {
-			// SAME container → real in-flow slot: the placeholder shifts siblings so
-			// the drop position is exact. Index from the live layout (placeholder
-			// excluded by class, hidden source by zero rect).
-			const rects = collectChildRects(parentEl, direction, sourceEl);
-			const index = computeDropIndex(rects, pointerMain);
-			positionPlaceholder(parentEl, index);
-			dropIndex = index;
-
-			const pr = (placeholder as HTMLElement).getBoundingClientRect();
-			t.mode = "slot";
-			t.slotRect = { top: pr.top, left: pr.left, width: pr.width, height: pr.height };
-			t.line = null;
-
-			const gap = parseFloat(direction === "row" ? style.columnGap : style.rowGap) || 0;
-			t.spacing = gap > 0 ? { value: Math.round(gap), left: pr.left + pr.width / 2, top: pr.top } : null;
-		} else {
-			// CROSS container → no layout shift: keep the placeholder out and show a
-			// line indicator between the target's existing children. Computed from
-			// the untouched layout, so there's no reflow feedback / jitter.
-			if (placeholder?.parentElement) placeholder.remove();
-			const rects = collectChildRects(parentEl, direction);
-			const index = computeDropIndex(rects, pointerMain);
-			dropIndex = index;
-
-			t.mode = "line";
-			t.slotRect = null;
-			t.line = computeIndicator(rects, index, cr, style, direction);
-			t.spacing = null;
-		}
+		t.line = computeDropIndicator(lines, index, cr, style, direction);
 	};
 
 	const positionGhost = (clientX: number, clientY: number) => {
@@ -265,7 +239,7 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		if (!oldParent) return;
 
 		if (dropParent.blockId === oldParent.blockId) {
-			// moveChild removes then inserts, so dropIndex (position among the
+			// moveChild removes then re-inserts, so dropIndex (position among the
 			// non-dragged siblings) maps directly.
 			oldParent.moveChild(block, dropIndex);
 		} else {
@@ -282,12 +256,9 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 
 		if (ghost) ghost.remove();
 		ghost = null;
-		if (placeholder?.parentElement) placeholder.remove();
-		placeholder = null;
 
 		if (started) {
-			sourceEl.style.display = prevSourceDisplay;
-			document.body.style.cursor = prevBodyCursor;
+			sourceEl.style.visibility = prevSourceVisibility;
 			canvasStore.isDragging = false;
 		}
 		canvasStore.clearReorderTarget();
@@ -317,9 +288,6 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 
 	const onUp = () => {
 		if (started && dropParent !== null && dropIndex !== null) {
-			// remove the placeholder before mutating the tree so Vue's re-render of
-			// the container children isn't fighting a stray DOM node
-			if (placeholder?.parentElement) placeholder.remove();
 			commit();
 		}
 		cleanup();

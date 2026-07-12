@@ -166,7 +166,7 @@ const isBlockSelected = computed(() => {
 
 const getStyleClasses = computed(() => {
 	const classes = [];
-	if ((movable.value || reorderable.value) && !props.block.isRoot()) {
+	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}
 	if (props.block.isExtendedFromComponent()) {

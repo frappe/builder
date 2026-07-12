@@ -34,22 +34,22 @@ const useCanvasStore = defineStore("canvasStore", {
 		},
 		// On-canvas block reordering (pointer-based). Kept separate from dropTarget
 		// (panel → canvas drops) so the two systems don't interfere. The overlay
-		// DropIndicator reads this; nothing here mutates the canvas DOM, so the
-		// layout stays stable during the drag.
+		// DropIndicator reads this; NOTHING here mutates the canvas DOM during a
+		// drag — the layout is frozen after the source is lifted, so there are zero
+		// per-move reflows and no jitter. The indicator is a pure overlay computed
+		// from the (static) children, and is layout-aware (flex row/column, wrapped
+		// flex, and grid).
 		reorderTarget: {
 			active: <boolean>false,
-			// "slot": exact in-flow placeholder (same-container reorder, shifts siblings)
-			// "line": no-reflow line between children (cross-container drop)
-			mode: <"slot" | "line">"slot",
-			// exact drop slot (screen px) — measured from the in-flow placeholder,
-			// so it reflects the container's real flex/grid layout
-			slotRect: <{ top: number; left: number; width: number; height: number } | null>null,
-			// cross-container line indicator geometry (screen px)
+			// insertion line geometry (screen px), placed to reflect the target
+			// container's real flex/grid layout
 			line: <IndicatorGeometry | null>null,
 			containerRect: <{ top: number; left: number; width: number; height: number } | null>null,
 			isComponentParent: <boolean>false,
-			// spacing guide: the container's main-axis gap (px), positioned for a label
-			spacing: <{ value: number; left: number; top: number } | null>null,
+			// true while hovering the block's own container (reorder) vs a different
+			// one (move) — used to keep the container outline out of the way when the
+			// drop wouldn't change the parent
+			isSameContainer: <boolean>false,
 		},
 		editableBlock: <Block | null>null,
 		editingContentType: <"html" | "css" | "js">"html", // TODO: Remove js and css
@@ -295,12 +295,10 @@ const useCanvasStore = defineStore("canvasStore", {
 		clearReorderTarget() {
 			this.reorderTarget = {
 				active: false,
-				mode: "slot",
-				slotRect: null,
 				line: null,
 				containerRect: null,
 				isComponentParent: false,
-				spacing: null,
+				isSameContainer: false,
 			};
 		},
 	},
