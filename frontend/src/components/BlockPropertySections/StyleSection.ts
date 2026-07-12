@@ -4,6 +4,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
+import BorderRadiusControl from "@/components/BorderRadiusControl.vue";
 
 const overflowOptions = [
 	{
@@ -128,30 +129,9 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
-				label: "Radius",
-				propertyKey: "borderRadius",
-				enableSlider: true,
-				unitOptions: ["px", "%"],
-				minValue: 0,
-			};
-		},
+		component: BorderRadiusControl,
+		getProps: () => {},
 		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
-		events: {
-			"update:modelValue": (val: StyleValue) => {
-				blockController.setStyle("borderRadius", val);
-				if (val) {
-					if (!blockController.getStyle("overflowX")) {
-						blockController.setStyle("overflowX", "hidden");
-					}
-					if (!blockController.getStyle("overflowY")) {
-						blockController.setStyle("overflowY", "hidden");
-					}
-				}
-			},
-		},
 	},
 	{
 		component: StylePropertyControl,
