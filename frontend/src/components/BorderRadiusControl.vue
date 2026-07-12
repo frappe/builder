@@ -44,7 +44,7 @@
 						background-size: 16px 16px;
 					">
 					<div
-						class="h-16 w-28 border bg-white transition-[border-radius] duration-200"
+						class="h-16 w-16 border bg-white transition-[border-radius] duration-200"
 						:style="{ borderRadius: previewRadius }" />
 				</div>
 
