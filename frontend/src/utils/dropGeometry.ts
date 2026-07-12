@@ -159,15 +159,19 @@ export function computeReadingOrderIndex(
 //     its leading edge, spanning that cell — reads as "insert before this cell",
 //     which is what makes grid drops legible
 //   - only a preceding child (very last slot) → a caret at its trailing edge
-//   - no children (empty container) → span the container's content box
+//   - no children (empty container) → place it where the first child will land,
+//     honouring the container's justify-content (main axis) and align-items
+//     (cross axis), sized to the dragged block when known
 // The caller passes the container's measured rect + computed style so the drag
-// hot path doesn't re-measure them.
+// hot path doesn't re-measure them. `sourceSize` (the dragged block's screen-px
+// box) lets the empty-container indicator match the incoming block's extent.
 export function computeDropIndicator(
 	lines: ChildRect[][],
 	index: number,
 	parentRect: DOMRect,
 	style: CSSStyleDeclaration,
 	direction: LayoutDirection,
+	sourceSize?: { width: number; height: number },
 ): IndicatorGeometry {
 	const orientation: IndicatorOrientation = direction === "row" ? "vertical" : "horizontal";
 	const flat = lines.flat();
@@ -184,10 +188,44 @@ export function computeDropIndicator(
 		const padBottom = parseFloat(style.paddingBottom) || 0;
 		const padLeft = parseFloat(style.paddingLeft) || 0;
 		const padRight = parseFloat(style.paddingRight) || 0;
-		if (direction === "row") {
-			return build(parentRect.left + padLeft, parentRect.top + padTop, parentRect.bottom - padBottom);
+		// content-box extents along the main + cross axes
+		const mainLo = direction === "row" ? parentRect.left + padLeft : parentRect.top + padTop;
+		const mainHi = direction === "row" ? parentRect.right - padRight : parentRect.bottom - padBottom;
+		const crossLo = direction === "row" ? parentRect.top + padTop : parentRect.left + padLeft;
+		const crossHi = direction === "row" ? parentRect.bottom - padBottom : parentRect.right - padRight;
+
+		// main-axis position of the line ← justify-content
+		const justify = style.justifyContent;
+		let mainPos: number;
+		if (justify === "center" || justify === "space-around" || justify === "space-evenly") {
+			mainPos = (mainLo + mainHi) / 2;
+		} else if (justify === "flex-end" || justify === "end" || justify === "right") {
+			mainPos = mainHi;
+		} else {
+			mainPos = mainLo;
 		}
-		return build(parentRect.top + padTop, parentRect.left + padLeft, parentRect.right - padRight);
+
+		// cross-axis span of the line ← align-items (sized to the dragged block)
+		const align = style.alignItems;
+		const sourceCross = sourceSize ? (direction === "row" ? sourceSize.height : sourceSize.width) : 0;
+		let cs = crossLo;
+		let ce = crossHi;
+		if (sourceCross > 0 && align !== "stretch" && align !== "normal" && align !== "") {
+			if (align === "center") {
+				const c = (crossLo + crossHi) / 2;
+				cs = c - sourceCross / 2;
+				ce = c + sourceCross / 2;
+			} else if (align === "flex-end" || align === "end") {
+				cs = crossHi - sourceCross;
+				ce = crossHi;
+			} else {
+				cs = crossLo;
+				ce = crossLo + sourceCross;
+			}
+			cs = Math.max(cs, crossLo);
+			ce = Math.min(ce, crossHi);
+		}
+		return build(mainPos, cs, ce);
 	}
 
 	const prev = index > 0 ? flat[index - 1] : null;

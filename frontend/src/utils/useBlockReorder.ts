@@ -225,7 +225,10 @@ export function startBlockReorder(event: MouseEvent, block: Block) {
 		t.isComponentParent = parent.isExtendedFromComponent();
 		t.isSameContainer = parent.blockId === originalParentId;
 		t.containerRect = { top: cr.top, left: cr.left, width: cr.width, height: cr.height };
-		t.line = computeDropIndicator(lines, index, cr, style, direction);
+		t.line = computeDropIndicator(lines, index, cr, style, direction, {
+			width: sourceRect.width,
+			height: sourceRect.height,
+		});
 	};
 
 	const positionGhost = (clientX: number, clientY: number) => {
