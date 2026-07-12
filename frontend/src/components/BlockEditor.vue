@@ -38,6 +38,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { addPxToNumber } from "@/utils/helpers";
+import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -52,6 +53,7 @@ const builderStore = useBuilderStore();
 
 const showResizer = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		!props.block.isRoot() &&
 		!props.editable &&
 		!props.readonly &&
@@ -89,6 +91,7 @@ const preventCLick = ref(false);
 
 const showPaddingHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!resizing.value &&
 		!canvasStore.isDragging &&
@@ -102,6 +105,7 @@ const showPaddingHandler = computed(() => {
 
 const showMarginHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!canvasStore.isDragging &&
@@ -115,6 +119,7 @@ const showMarginHandler = computed(() => {
 
 const showBorderRadiusHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!props.block.isText() &&
@@ -175,13 +180,17 @@ const getStyleClasses = computed(() => {
 	}
 	if (
 		isBlockSelected.value &&
+		builderStore.mode === "select" &&
 		!props.editable &&
 		!props.readonly &&
 		!props.block.isRoot() &&
 		!props.block.isRepeater() &&
 		!canvasStore.isDragging
 	) {
-		// make editor interactive
+		// make editor interactive — ONLY in select mode. In draw modes
+		// (container/text/image/repeater) or pan (move) the overlay must stay
+		// transparent so the press falls through to the canvas (e.g. to draw a
+		// container INSIDE this block instead of reordering it).
 		classes.push("pointer-events-auto");
 	}
 	return classes;
@@ -199,6 +208,9 @@ watch(
 const movable = computed(() => {
 	return props.block.isMovable() && !props.readonly;
 });
+
+// In-flow blocks that can be reordered via the pointer-based reorder engine.
+const reorderable = computed(() => !props.readonly && isReorderable(props.block));
 
 onMounted(() => {
 	updateTracker.value = trackTarget(props.target, editor.value, canvasProps);
@@ -252,6 +264,20 @@ const handleMove = (ev: MouseEvent) => {
 	if (builderStore.mode === "text") {
 		canvasStore.editableBlock = props.block;
 	}
+
+	// Reorder / free-move are select-mode only. In draw modes (container, image,
+	// repeater) or pan (move) the press must fall through to the canvas so you can
+	// draw inside this block instead of dragging it.
+	if (builderStore.mode !== "select") return;
+
+	// In-flow blocks reorder via the pointer engine; absolutely-positioned ones
+	// fall through to the free-move handler below.
+	if (reorderable.value) {
+		ev.stopPropagation();
+		startBlockReorder(ev, props.block, props.breakpoint);
+		return;
+	}
+
 	if (!movable.value || props.block.isRoot()) return;
 	ev.stopPropagation();
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
