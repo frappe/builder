@@ -11,9 +11,7 @@ import {
 const DRAG_THRESHOLD = 4; // px before a mousedown becomes a drag
 const GHOST_OPACITY = 0.9;
 
-// Can this block be reordered by dragging it on the canvas? (in-flow, not root,
-// not an absolutely-positioned block — those free-move — and not owned by a
-// component instance).
+// Absolutely-positioned blocks free-move; component-owned blocks are locked.
 export function isReorderable(block: Block): boolean {
 	return (
 		!block.isRoot() &&
@@ -60,16 +58,12 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 	const sourceRect = sourceEl.getBoundingClientRect();
 	const grabOffsetX = startX - sourceRect.left;
 	const grabOffsetY = startY - sourceRect.top;
-	// the block's own container — dropping here reorders (same parent); dropping
-	// into any other container moves the block across
 	const originalParentId = block.getParentBlock()?.blockId ?? null;
 
 	let started = false;
 	let ghost: HTMLElement | null = null;
 	let pauseId: unknown = null;
 	let prevSourceVisibility = "";
-
-	// resolved drop target at release time
 	let dropParent: Block | null = null;
 	let dropIndex: number | null = null;
 
@@ -84,7 +78,7 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 		pauseId = canvasStore.activeCanvas?.history?.pause();
 
 		const scale = getScale();
-		// floating ghost — clone before hiding the source
+		// clone before hiding the source below
 		ghost = document.createElement("div");
 		ghost.id = "reorder-ghost";
 		const clone = sourceEl.cloneNode(true) as HTMLElement;
@@ -190,9 +184,7 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 		// before/after, centre nests).
 		let canNest = !isEmptySourceParent && raw.canHaveChildren() && !!rawEl;
 
-		// Over a nestable container's outer edge band → reorder BESIDE it in its
-		// parent instead of nesting. Empty containers get a wider band so they
-		// default to before/after (add a sibling) rather than nest-inside.
+		// Empty containers use a wider band so they default to before/after.
 		const parent = raw.getParentBlock();
 		if (canNest && rawEl && parent) {
 			const band = nonDragged.length === 0 ? EDGE_REORDER_BAND_EMPTY : EDGE_REORDER_BAND;
@@ -216,8 +208,6 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 		canvasStore.clearReorderTarget();
 	};
 
-	// Read-only: measure the resolved container's children and update the overlay.
-	// No DOM writes → no reflow → no jitter.
 	const updateTarget = (clientX: number, clientY: number) => {
 		const resolved = resolveTargetContainer(clientX, clientY);
 		if (!resolved) {

@@ -37,14 +37,11 @@ const useCanvasStore = defineStore("canvasStore", {
 		// touches the canvas DOM, so the layout stays frozen during a drag.
 		reorderTarget: {
 			active: <boolean>false,
-			// insertion line geometry (screen px), placed to reflect the target
-			// container's real flex/grid layout
+			// insertion line geometry, screen px
 			line: <IndicatorGeometry | null>null,
 			containerRect: <{ top: number; left: number; width: number; height: number } | null>null,
 			isComponentParent: <boolean>false,
-			// true while hovering the block's own container (reorder) vs a different
-			// one (move) — used to keep the container outline out of the way when the
-			// drop wouldn't change the parent
+			// dropping into the block's own container (reorder) vs a different one
 			isSameContainer: <boolean>false,
 		},
 		editableBlock: <Block | null>null,

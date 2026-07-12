@@ -61,7 +61,6 @@ export function collectChildRects(
 		// sibling drop target.
 		if (excludeEl && el === excludeEl) continue;
 		const rect = el.getBoundingClientRect();
-		// ignore zero-size / detached nodes
 		if (rect.width === 0 && rect.height === 0) continue;
 		if (direction === "row") {
 			rects.push({
