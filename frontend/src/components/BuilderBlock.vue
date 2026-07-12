@@ -216,6 +216,7 @@ const attributes = computed(() => {
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||
+		props.block.isInlineSVG() ||
 		props.block.isLink() ||
 		props.block.isButton() ||
 		props.block.isRepeater()
@@ -525,10 +526,12 @@ const blockClientScript = computed(() => {
 	const clientScript = props.block.extendedFromComponent
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
-	return {
-		javascript: clientScript?.js || "",
-		css: clientScript?.css || "",
-	};
+	const javascript = clientScript?.js || "";
+	const css = clientScript?.css || "";
+	// null (not an empty object) so scriptless blocks skip canvas registration
+	// and don't churn the shared blockStyles map into a render loop
+	if (!javascript && !css) return null;
+	return { javascript, css };
 });
 
 watch(
