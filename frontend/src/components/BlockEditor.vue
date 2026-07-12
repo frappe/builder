@@ -53,6 +53,7 @@ const builderStore = useBuilderStore();
 
 const showResizer = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		!props.block.isRoot() &&
 		!props.editable &&
 		!props.readonly &&
@@ -90,6 +91,7 @@ const preventCLick = ref(false);
 
 const showPaddingHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!resizing.value &&
 		!canvasStore.isDragging &&
@@ -103,6 +105,7 @@ const showPaddingHandler = computed(() => {
 
 const showMarginHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!canvasStore.isDragging &&
@@ -116,6 +119,7 @@ const showMarginHandler = computed(() => {
 
 const showBorderRadiusHandler = computed(() => {
 	return (
+		builderStore.mode === "select" &&
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!props.block.isText() &&
@@ -176,13 +180,17 @@ const getStyleClasses = computed(() => {
 	}
 	if (
 		isBlockSelected.value &&
+		builderStore.mode === "select" &&
 		!props.editable &&
 		!props.readonly &&
 		!props.block.isRoot() &&
 		!props.block.isRepeater() &&
 		!canvasStore.isDragging
 	) {
-		// make editor interactive
+		// make editor interactive — ONLY in select mode. In draw modes
+		// (container/text/image/repeater) or pan (move) the overlay must stay
+		// transparent so the press falls through to the canvas (e.g. to draw a
+		// container INSIDE this block instead of reordering it).
 		classes.push("pointer-events-auto");
 	}
 	return classes;
@@ -256,6 +264,11 @@ const handleMove = (ev: MouseEvent) => {
 	if (builderStore.mode === "text") {
 		canvasStore.editableBlock = props.block;
 	}
+
+	// Reorder / free-move are select-mode only. In draw modes (container, image,
+	// repeater) or pan (move) the press must fall through to the canvas so you can
+	// draw inside this block instead of dragging it.
+	if (builderStore.mode !== "select") return;
 
 	// In-flow blocks (not absolutely positioned) reorder within their flex/flow
 	// layout via the pointer-based engine — the canvas stays stable and only an
