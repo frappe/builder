@@ -23,6 +23,7 @@ declare module 'vue' {
     Autocomplete: typeof import('./src/components/Controls/Autocomplete.vue')['default']
     BackgroundHandler: typeof import('./src/components/BackgroundHandler.vue')['default']
     BasePropertyControl: typeof import('./src/components/Controls/BasePropertyControl.vue')['default']
+    BlankPageCard: typeof import('./src/components/Templates/BlankPageCard.vue')['default']
     BlockContextMenu: typeof import('./src/components/BlockContextMenu.vue')['default']
     BlockEditor: typeof import('./src/components/BlockEditor.vue')['default']
     BlockFlexLayoutHandler: typeof import('./src/components/BlockFlexLayoutHandler.vue')['default']

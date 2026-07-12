@@ -9,12 +9,7 @@
 		</div>
 		<!-- blank page + template pages -->
 		<div v-else class="grid gap-x-4 gap-y-5 auto-fill-[220px]">
-			<button
-				class="flex aspect-video w-full flex-col items-center justify-center gap-2 self-start rounded-lg border border-dashed border-outline-gray-3 p-1.5 text-ink-gray-5 shadow-sm transition-colors duration-150 hover:border-outline-gray-4 hover:bg-surface-gray-1 hover:text-ink-gray-7"
-				@click="$emit('blank')">
-				<PlusIcon class="size-5" />
-				<span class="text-sm">Start from scratch</span>
-			</button>
+			<BlankPageCard label="Blank Page" @click="$emit('blank')" />
 			<TemplatePageCard
 				v-for="page in group?.pages"
 				:key="page.name"
@@ -26,7 +21,7 @@
 </template>
 <script setup lang="ts">
 import type { TemplateGroup, TemplatePageSummary } from "@/types/template";
-import PlusIcon from "~icons/lucide/plus";
+import BlankPageCard from "./BlankPageCard.vue";
 import TemplatePageCard from "./TemplatePageCard.vue";
 
 defineProps<{
