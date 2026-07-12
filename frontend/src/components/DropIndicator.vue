@@ -65,15 +65,9 @@ const lineStyle = computed(() => {
 <style scoped>
 .drop-line.accent-blue {
 	background-color: theme("colors.blue.500");
-	box-shadow:
-		0 0 0 1px theme("colors.blue.500 / 25%"),
-		0 0 6px theme("colors.blue.500 / 55%");
 }
 .drop-line.accent-purple {
 	background-color: theme("colors.purple.500");
-	box-shadow:
-		0 0 0 1px theme("colors.purple.500 / 25%"),
-		0 0 6px theme("colors.purple.500 / 55%");
 }
 .drop-line-cap {
 	position: absolute;
@@ -81,7 +75,6 @@ const lineStyle = computed(() => {
 	height: 7px;
 	border-radius: 9999px;
 	background: inherit;
-	box-shadow: inherit;
 }
 .drop-line.is-vertical .drop-line-cap--start {
 	left: 50%;
