@@ -144,7 +144,7 @@ const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
 		return DataLoaderBlock;
 	}
-	if (block.isSVG() && block.getInnerHTML()) {
+	if (block.isInlineSVG()) {
 		return BlockHTML;
 	}
 	if (block.isText() || block.isLink() || block.isButton()) {

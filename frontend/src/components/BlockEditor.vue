@@ -249,7 +249,7 @@ const handleDrop = (ev: DragEvent) => {
 
 const handleDoubleClick = (ev: MouseEvent) => {
 	if (props.readonly) return;
-	if (props.block.isHTML()) {
+	if (props.block.isHTML() || props.block.isInlineSVG()) {
 		canvasStore.editHTML(props.block);
 		return;
 	}
