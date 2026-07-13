@@ -48,13 +48,25 @@
 					<div class="h-3.5 w-2/3 animate-pulse rounded bg-surface-gray-2"></div>
 				</div>
 			</div>
-			<div v-else class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
-				<BlankPageCard label="Start from scratch" @click="createBlankPage('gallery')" />
-				<TemplateGroupCard
-					v-for="group in visibleGroups"
-					:key="group.name"
-					:group="group"
-					@select="(group: TemplateGroup) => (selectedGroup = group.name)"></TemplateGroupCard>
+			<div v-else class="flex flex-col gap-5">
+				<!-- category filter, only when the catalog has categories -->
+				<div v-if="categories.length" class="flex flex-wrap gap-2">
+					<Button
+						v-for="category in ['', ...categories]"
+						:key="category"
+						:variant="selectedCategory === category ? 'subtle' : 'outline'"
+						:label="category || 'All'"
+						:class="{ 'border border-transparent': selectedCategory === category }"
+						@click="selectedCategory = category" />
+				</div>
+				<div class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
+					<BlankPageCard label="Start from scratch" @click="createBlankPage('gallery')" />
+					<TemplateGroupCard
+						v-for="group in filteredGroups"
+						:key="group.name"
+						:group="group"
+						@select="(group: TemplateGroup) => (selectedGroup = group.name)"></TemplateGroupCard>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -69,7 +81,7 @@ import usePageStore from "@/stores/pageStore";
 import { TemplateGroup, TemplatePageSummary } from "@/types/template";
 import { Button, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import BlankPageCard from "./BlankPageCard.vue";
 import TemplateGroupCard from "./TemplateGroupCard.vue";
 import TemplatePageGrid from "./TemplatePageGrid.vue";
@@ -88,7 +100,7 @@ const props = withDefaults(
 	},
 );
 
-const { showTemplatesDialog, lastTemplateGroup } = useDashboardState();
+const { showTemplatesDialog, lastTemplateGroup, templateCategoryFilter } = useDashboardState();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const { capture } = useTelemetry();
@@ -101,6 +113,39 @@ const groups = computed<TemplateGroup[]>(() => templateGroups.data || []);
 const visibleGroups = computed<TemplateGroup[]>(() =>
 	props.maxGroups > 0 ? groups.value.slice(0, props.maxGroups) : groups.value,
 );
+// distinct hub manifest categories in catalog order; drives the filter pills
+const categories = computed<string[]>(() => {
+	const seen = new Set<string>();
+	for (const group of visibleGroups.value) {
+		for (const category of group.categories || []) seen.add(category);
+	}
+	return [...seen];
+});
+
+// "" = All; persisted, and seeded by the persona survey's use-case answer.
+// Reset to All if the stored category disappears from the catalog.
+const selectedCategory = templateCategoryFilter;
+watch(
+	categories,
+	() => {
+		// only once the catalog is in; an empty list just means it hasn't loaded yet
+		if (
+			categories.value.length &&
+			selectedCategory.value &&
+			!categories.value.includes(selectedCategory.value)
+		) {
+			selectedCategory.value = "";
+		}
+	},
+	{ immediate: true },
+);
+
+const filteredGroups = computed<TemplateGroup[]>(() =>
+	selectedCategory.value
+		? visibleGroups.value.filter((group) => group.categories?.includes(selectedCategory.value))
+		: visibleGroups.value,
+);
+
 const activeGroup = computed<TemplateGroup | null>(
 	() => groups.value.find((group) => group.name === selectedGroup.value) || null,
 );
