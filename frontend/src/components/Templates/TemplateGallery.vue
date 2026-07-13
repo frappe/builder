@@ -49,7 +49,6 @@
 				</div>
 			</div>
 			<div v-else class="flex flex-col gap-5">
-				<!-- category filter, only when the catalog has categories -->
 				<div v-if="categories.length" class="flex flex-wrap gap-2">
 					<Button
 						v-for="category in ['', ...categories]"
@@ -113,7 +112,6 @@ const groups = computed<TemplateGroup[]>(() => templateGroups.data || []);
 const visibleGroups = computed<TemplateGroup[]>(() =>
 	props.maxGroups > 0 ? groups.value.slice(0, props.maxGroups) : groups.value,
 );
-// distinct hub manifest categories in catalog order; drives the filter pills
 const categories = computed<string[]>(() => {
 	const seen = new Set<string>();
 	for (const group of visibleGroups.value) {
@@ -122,13 +120,11 @@ const categories = computed<string[]>(() => {
 	return [...seen];
 });
 
-// "" = All; persisted, and seeded by the persona survey's use-case answer.
-// Reset to All if the stored category disappears from the catalog.
+// "" = All; reset if the stored category disappears from a loaded catalog
 const selectedCategory = templateCategoryFilter;
 watch(
 	categories,
 	() => {
-		// only once the catalog is in; an empty list just means it hasn't loaded yet
 		if (
 			categories.value.length &&
 			selectedCategory.value &&
