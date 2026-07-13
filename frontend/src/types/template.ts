@@ -15,5 +15,8 @@ export interface TemplateGroup {
 	title: string;
 	description?: string;
 	preview?: string;
+	// hub manifest categories used to section the gallery (e.g. ["Marketing", "Portfolio"]);
+	// a group is shown under each of its categories
+	categories?: string[];
 	pages: TemplatePageSummary[];
 }
