@@ -34,11 +34,30 @@ function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvas
 
 	watch(canvasProps, () => nextTick(targetBounds.update), { deep: true });
 
+	// `targetBounds` is the axis-aligned box enclosing the rotated element, so it can't be
+	// used directly for a rotated element: rotate the host around the same center instead,
+	// sized to the target's own (unrotated) box, so it overlaps the element exactly.
 	watchEffect(() => {
-		host.style.width = addPxToNumber(targetBounds.width, false);
-		host.style.height = addPxToNumber(targetBounds.height, false);
-		host.style.top = addPxToNumber(targetBounds.top, false);
-		host.style.left = addPxToNumber(targetBounds.left, false);
+		const computedRotation = getComputedStyle(target as Element).rotate;
+		const angle = computedRotation && computedRotation !== "none" ? parseFloat(computedRotation) || 0 : 0;
+		if (angle) {
+			const scale = canvasProps.scale;
+			const width = (target as HTMLElement).offsetWidth * scale;
+			const height = (target as HTMLElement).offsetHeight * scale;
+			const centerX = targetBounds.left + targetBounds.width / 2;
+			const centerY = targetBounds.top + targetBounds.height / 2;
+			host.style.rotate = `${angle}deg`;
+			host.style.width = addPxToNumber(width, false);
+			host.style.height = addPxToNumber(height, false);
+			host.style.left = addPxToNumber(centerX - width / 2, false);
+			host.style.top = addPxToNumber(centerY - height / 2, false);
+		} else {
+			host.style.rotate = "";
+			host.style.width = addPxToNumber(targetBounds.width, false);
+			host.style.height = addPxToNumber(targetBounds.height, false);
+			host.style.top = addPxToNumber(targetBounds.top, false);
+			host.style.left = addPxToNumber(targetBounds.left, false);
+		}
 	});
 
 	onScopeDispose(() => {
