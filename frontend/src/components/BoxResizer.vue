@@ -15,26 +15,29 @@
 		class="left-handle ew-resize pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent" />
 	<div
 		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-2 border-none bg-transparent"
-		:class="{ 'cursor-ew-resize': true }"
+		:style="{ cursor: horizontalCursor }"
 		@mousedown.stop="handleRightResize" />
 	<div
 		class="top-handle ns-resize pointer-events-auto absolute left-0 right-0 top-[-2px] h-2 border-none bg-transparent" />
 	<div
 		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-2 border-none bg-transparent"
-		:class="{ 'cursor-ns-resize': true }"
+		:style="{ cursor: verticalCursor }"
 		@mousedown.stop="handleBottomResize" />
 	<div
-		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] cursor-nwse-resize rounded-full border-[2.5px] border-blue-400 bg-white"
+		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] rounded-full border-[2.5px] border-blue-400 bg-white"
 		:class="{
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
 		}"
+		:style="{ cursor: cornerCursor }"
 		v-show="!resizing"
 		@mousedown.stop.prevent="handleBottomCornerResize" />
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import useCanvasStore from "@/stores/canvasStore";
 import { getNumberFromPx } from "@/utils/helpers";
+import getRotatedCursor from "@/utils/rotatedCursor";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -54,6 +57,24 @@ const canvasProps = inject("canvasProps") as CanvasProps;
 onMounted(() => {
 	guides = guidesTracker(props.target as HTMLElement, canvasProps);
 });
+
+// keeps each handle's resize cursor pointing along its edge/corner as the block rotates
+const rotation = computed(() => parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0);
+const horizontalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value, "ew-resize"));
+const verticalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 90, "ns-resize"));
+const cornerCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 45, "nwse-resize"));
+
+// projects a screen-space mouse movement onto the block's own (unrotated) width/height
+// axes, so a handle still grows the right dimension when the block is rotated on screen
+const toLocalDelta = (dx: number, dy: number, rotationDeg: number) => {
+	const rad = (rotationDeg * Math.PI) / 180;
+	const cos = Math.cos(rad);
+	const sin = Math.sin(rad);
+	return {
+		x: dx * cos + dy * sin,
+		y: dy * cos - dx * sin,
+	};
+};
 
 watch(resizing, () => {
 	if (resizing.value) {
@@ -88,6 +109,7 @@ const fontSize = computed(() => {
 
 const handleRightResize = (ev: MouseEvent) => {
 	const startX = ev.clientX;
+	const startY = ev.clientY;
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
@@ -100,7 +122,9 @@ const handleRightResize = (ev: MouseEvent) => {
 	resizing.value = true;
 	guides.showX();
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const { x: movement } = toLocalDelta(dx, dy, rotation.value);
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movement, startFontSize);
 			return mouseMoveEvent.preventDefault();
@@ -126,6 +150,7 @@ const handleRightResize = (ev: MouseEvent) => {
 };
 
 const handleBottomResize = (ev: MouseEvent) => {
+	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const startHeight = (props.target as HTMLElement).offsetHeight;
 	const startWidth = (props.target as HTMLElement).offsetWidth;
@@ -140,7 +165,9 @@ const handleBottomResize = (ev: MouseEvent) => {
 	guides.showY();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movement = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const { y: movement } = toLocalDelta(dx, dy, rotation.value);
 
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movement, startFontSize);
@@ -181,8 +208,9 @@ const handleBottomCornerResize = (ev: MouseEvent) => {
 	resizing.value = true;
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const movementX = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const movementY = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+		const { x: movementX, y: movementY } = toLocalDelta(dx, dy, rotation.value);
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
 			setFontSize(movementY, startFontSize);
 			return mouseMoveEvent.preventDefault();

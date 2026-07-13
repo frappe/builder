@@ -1,12 +1,16 @@
 <template>
 	<div
-		class="rotation-cursor pointer-events-auto absolute bottom-[-20px] right-[-20px] size-7 rounded-full"
+		class="pointer-events-auto absolute bottom-[-20px] right-[-20px] size-7 rounded-full"
+		:style="{ cursor: idleCursor }"
 		@mousedown.stop.prevent="handleRotate" />
 </template>
 
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import rotationCursorSvg from "@/assets/rotation-cursor.svg?raw";
+import getRotatedCursor from "@/utils/rotatedCursor";
+import { computed } from "vue";
 
 const props = defineProps<{
 	targetBlock: Block;
@@ -18,6 +22,11 @@ const emit = defineEmits<{
 }>();
 
 const canvasStore = useCanvasStore();
+
+const idleCursor = computed(() => {
+	const rotation = parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0;
+	return getRotatedCursor(rotationCursorSvg, rotation, "pointer");
+});
 
 const handleRotate = (ev: MouseEvent) => {
 	const bounds = props.target.getBoundingClientRect();
@@ -36,10 +45,11 @@ const handleRotate = (ev: MouseEvent) => {
 		let angleChange = pointerAngle - previousPointerAngle;
 		if (angleChange > 180) angleChange -= 360;
 		if (angleChange < -180) angleChange += 360;
-		rotation += angleChange;
+		rotation = (rotation + angleChange) % 360;
 		previousPointerAngle = pointerAngle;
 		const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
 		props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
+		document.body.style.cursor = getRotatedCursor(rotationCursorSvg, finalRotation, "pointer");
 		mouseMoveEvent.preventDefault();
 	};
 
@@ -57,9 +67,3 @@ const handleRotate = (ev: MouseEvent) => {
 	);
 };
 </script>
-
-<style scoped>
-.rotation-cursor {
-	cursor: url("@/assets/rotation-cursor.svg") 16 16, pointer;
-}
-</style>
