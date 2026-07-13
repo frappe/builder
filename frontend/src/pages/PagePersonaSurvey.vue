@@ -15,8 +15,7 @@
 
 	<!-- question steps: one question per page -->
 	<div v-else class="flex h-screen flex-col items-center overflow-y-auto p-5">
-		<!-- top-anchored (not centered) so the logo/heading never move between steps
-		     or when the "Other" textarea expands -->
+		<!-- top-anchored so the logo/heading never move between steps -->
 		<div class="mt-[28vh] flex w-full max-w-sm flex-col gap-5">
 			<img src="/builder_logo.png" alt="Builder" class="h-8 self-start" />
 			<div class="relative flex flex-col gap-1.5">
@@ -45,11 +44,7 @@
 					@click="select(opt.value)" />
 			</div>
 
-			<!-- free-text detail, revealed when "Other" is picked. -mt-5 cancels the
-			     column gap while collapsed (the inner mt-5 restores it when open) so
-			     the closed state doesn't leave a double gap before Next. The inner
-			     translate makes the whole textarea slide down from under the pills
-			     (drawer-style) instead of being clipped mid-reveal. -->
+			<!-- "Other" free text; -mt-5 + inner mt-5 avoid a double column gap while collapsed -->
 			<div
 				class="-mt-5 grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
 				:class="isOtherSelected ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
@@ -188,7 +183,6 @@ const templateHeading = computed(() =>
 	greetingName.value ? `You're all set${greetingName.value}. Pick a starting point` : "Pick a starting point",
 );
 
-// surface the templates that match what the user said they want to build:
 // seeds the gallery's persisted category filter (used by the templates dialog too)
 const useCaseToCategory: Record<string, string> = {
 	marketing_site: "Marketing",
@@ -200,8 +194,7 @@ function select(value: string) {
 	// only highlight the choice; advancing is a deliberate Next click so a
 	// stray double-click can't skip past the following question
 	answers[activeQuestion.value.key] = value;
-	// preventScroll: focusing the still-clipped textarea mid-animation would
-	// otherwise scroll-jump the page
+	// preventScroll: focusing the still-clipped textarea would scroll-jump the page
 	if (value === "other") nextTick(() => otherInput.value?.el?.focus({ preventScroll: true }));
 }
 
@@ -229,10 +222,12 @@ function finishQuestions(skipped = false) {
 	const category = answers.use_case && useCaseToCategory[answers.use_case];
 	if (category) templateCategoryFilter.value = category;
 	// Optimistically flag done so the dashboard's redirect guard sees it before the async save lands.
-	// Never let a failed save/capture block the user from moving on.
+	// A failed save/capture must never block the user from moving on.
 	try {
 		if (builderSettings.doc) builderSettings.doc.persona_survey_done = 1;
-		builderSettings.setValue.submit({ persona_survey_done: 1 });
+		Promise.resolve(builderSettings.setValue.submit({ persona_survey_done: 1 })).catch((e: unknown) => {
+			console.error("[persona-survey] failed to persist", e);
+		});
 	} catch (e) {
 		console.error("[persona-survey] failed to persist", e);
 	}

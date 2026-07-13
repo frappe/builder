@@ -10,8 +10,7 @@ const showTemplatesDialog = ref(false);
 // remembers the template group the picker was last drilled into ("" = gallery)
 const lastTemplateGroup = useStorage("lastTemplateGroup", "") as Ref<string>;
 
-// active category filter in the template gallery ("" = All); seeded by the
-// persona survey's use-case answer so the picker opens on relevant templates
+// active category filter in the template gallery ("" = All)
 const templateCategoryFilter = useStorage("templateCategoryFilter", "") as Ref<string>;
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
