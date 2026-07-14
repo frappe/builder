@@ -21,7 +21,7 @@
 		:style="{ cursor: verticalCursor }"
 		@mousedown.stop="(ev) => handleResize(ev, 0, 1)" />
 	<div
-		v-for="corner in corners"
+		v-for="corner in visibleCorners"
 		:key="corner.name"
 		class="pointer-events-auto absolute h-[10px] w-[10px] rounded-full border-2 border-blue-400 bg-white"
 		:class="[corner.positionClass, { 'border-purple-400': targetBlock.isExtendedFromComponent() }]"
@@ -101,6 +101,8 @@ const corners = [
 		cursor: cornerCursorNWSE,
 	},
 ] as const;
+
+const visibleCorners = computed(() => (props.targetBlock.isText() ? corners.slice(-1) : corners));
 
 watch(resizing, () => {
 	if (resizing.value) {
