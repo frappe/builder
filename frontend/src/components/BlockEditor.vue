@@ -29,7 +29,16 @@
 			v-if="showBorderRadiusHandler"
 			:target-block="block"
 			:target="target" />
-		<BoxResizer v-if="showResizer" :targetBlock="block" @resizing="resizing = $event" :target="target" />
+		<RotationHandler
+			v-if="showResizer && !resizing"
+			:target-block="block"
+			:target="target"
+			@rotating="rotating = $event" />
+		<BoxResizer
+			v-if="showResizer && !rotating"
+			:targetBlock="block"
+			@resizing="resizing = $event"
+			:target="target" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -46,6 +55,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import RotationHandler from "./RotationHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
 const canvasStore = useCanvasStore();
@@ -85,6 +95,8 @@ const props = withDefaults(
 const editor = ref(null) as unknown as Ref<HTMLElement>;
 const updateTracker = ref(() => {});
 const resizing = ref(false);
+const rotating = ref(false);
+const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventCLick = ref(false);
@@ -93,7 +105,7 @@ const showPaddingHandler = computed(() => {
 	return (
 		builderStore.mode === "select" &&
 		isBlockSelected.value &&
-		!resizing.value &&
+		!transforming.value &&
 		!canvasStore.isDragging &&
 		!props.editable &&
 		!props.readonly &&
@@ -109,7 +121,7 @@ const showMarginHandler = computed(() => {
 		isBlockSelected.value &&
 		!props.block.isRoot() &&
 		!canvasStore.isDragging &&
-		!resizing.value &&
+		!transforming.value &&
 		!props.editable &&
 		!props.readonly &&
 		!blockController.multipleBlocksSelected() &&
@@ -127,7 +139,7 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isSVG() &&
 		!props.editable &&
 		!props.readonly &&
-		!resizing.value &&
+		!transforming.value &&
 		!canvasStore.isDragging &&
 		!blockController.multipleBlocksSelected()
 	);
