@@ -28,7 +28,7 @@ const overflowOptions = [
 	},
 ];
 
-const styleSectionProperties = [	
+const styleSectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
