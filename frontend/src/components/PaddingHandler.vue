@@ -21,11 +21,9 @@
 					left: topHandle.left,
 					height: topHandle.height + 'px',
 					width: topHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingTop }}
@@ -46,11 +44,9 @@
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
 					width: bottomHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingBottom }}
@@ -71,11 +67,9 @@
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
 					width: leftHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingLeft }}
@@ -96,11 +90,9 @@
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
 					width: rightHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingRight }}
@@ -110,7 +102,10 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
+import { getTotalRotation, toLocalDelta } from "@/utils/elementRotation";
 import { computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
@@ -140,6 +135,11 @@ const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, s
 watchEffect(() => {
 	emit("update", updating.value);
 });
+
+// the block's rendered angle, so the cursor and drag axes stay correct when rotated
+const rotation = computed(() => getTotalRotation(props.target as Element, props.targetBlock));
+const horizontalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value, "ew-resize"));
+const verticalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 90, "ns-resize"));
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
@@ -224,28 +224,29 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	const startLeft = getNumberFromPx(blockStyles.value.paddingLeft) || 5;
 	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
 
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
+	setDragCursor(window.getComputedStyle(target).cursor);
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		let movement = 0;
 		let affectingAxis = null;
 		props.onUpdate && props.onUpdate();
+		const dx = mouseMoveEvent.clientX - startX;
+		const dy = mouseMoveEvent.clientY - startY;
+		const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
 		if (position === Position.Top) {
-			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
+			movement = Math.round(Math.max(startTop + localY, 0));
 			props.targetBlock.setStyle("paddingTop", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
+			movement = Math.round(Math.max(startBottom - localY, 0));
 			props.targetBlock.setStyle("paddingBottom", movement + "px");
 			affectingAxis = "y";
 		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
+			movement = Math.round(Math.max(startLeft + localX, 0));
 			props.targetBlock.setStyle("paddingLeft", movement + "px");
 			affectingAxis = "x";
 		} else if (position === Position.Right) {
-			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
+			movement = Math.round(Math.max(startRight - localX, 0));
 			props.targetBlock.setStyle("paddingRight", movement + "px");
 			affectingAxis = "x";
 		}
@@ -272,7 +273,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			clearDragCursor();
 			document.removeEventListener("mousemove", mousemove);
 			updating.value = false;
 			mouseUpEvent.preventDefault();
