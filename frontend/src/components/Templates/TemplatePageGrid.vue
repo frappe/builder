@@ -15,7 +15,8 @@
 				:key="page.name"
 				:page="page"
 				@select="(page: TemplatePageSummary) => $emit('select', page)"
-				@edit="(page: TemplatePageSummary) => $emit('edit', page)"></TemplatePageCard>
+				@edit="(page: TemplatePageSummary) => $emit('edit', page)"
+				@preview="(page: TemplatePageSummary) => $emit('preview', page)"></TemplatePageCard>
 		</div>
 	</div>
 </template>
@@ -29,5 +30,5 @@ defineProps<{
 	loading: boolean;
 }>();
 
-defineEmits(["select", "blank", "edit"]);
+defineEmits(["select", "blank", "edit", "preview"]);
 </script>

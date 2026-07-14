@@ -141,6 +141,7 @@ declare module 'vue' {
     TemplateGroupCard: typeof import('./src/components/Templates/TemplateGroupCard.vue')['default']
     TemplatePageCard: typeof import('./src/components/Templates/TemplatePageCard.vue')['default']
     TemplatePageGrid: typeof import('./src/components/Templates/TemplatePageGrid.vue')['default']
+    TemplatePreview: typeof import('./src/components/Templates/TemplatePreview.vue')['default']
     TemplatesDialog: typeof import('./src/components/Templates/TemplatesDialog.vue')['default']
     TextBlock: typeof import('./src/components/TextBlock.vue')['default']
     TextBlockBubbleMenu: typeof import('./src/components/TextBlockBubbleMenu.vue')['default']
