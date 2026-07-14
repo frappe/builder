@@ -14,7 +14,6 @@ function getElementRotation(el: Element | null): number {
 		}
 		current = current.parentElement;
 	}
-	console.log({ el, rotation });
 	return rotation;
 }
 

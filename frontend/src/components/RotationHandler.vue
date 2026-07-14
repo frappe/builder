@@ -54,6 +54,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	// ancestors don't rotate mid-drag, so their contribution can be captured once up front
 	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
+	let lastCursorAngle: number | null = null;
 	setDragCursor(getRotatedCursor(rotationCursorSvg, ancestorRotation + rotation + baseAngle, "pointer"));
 	emit("rotating", true);
 
@@ -67,9 +68,14 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 		previousPointerAngle = pointerAngle;
 		const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
 		props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
-		setDragCursor(
-			getRotatedCursor(rotationCursorSvg, ancestorRotation + finalRotation + baseAngle, "pointer"),
-		);
+		// the cursor SVG only needs rebuilding when the rounded/snapped angle actually
+		// changes - most mousemove ticks land on the same value, especially while snapping
+		if (finalRotation !== lastCursorAngle) {
+			lastCursorAngle = finalRotation;
+			setDragCursor(
+				getRotatedCursor(rotationCursorSvg, ancestorRotation + finalRotation + baseAngle, "pointer"),
+			);
+		}
 		mouseMoveEvent.preventDefault();
 	};
 
