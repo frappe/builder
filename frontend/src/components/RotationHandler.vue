@@ -12,11 +12,12 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
-import useCanvasStore from "@/stores/canvasStore";
 import rotationCursorSvg from "@/assets/rotation-cursor.svg?raw";
-import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getElementRotation, getTotalRotation } from "@/utils/rotation";
-import { computed, ref } from "vue";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
+import useCanvasStore from "@/stores/canvasStore";
+import { getRotatedCursor, setDragCursor, startDrag } from "@/utils/cursor";
+import { getElementRotation } from "@/utils/rotation";
+import { ref } from "vue";
 import TransformPreview from "./TransformPreview.vue";
 
 const props = defineProps<{
@@ -41,15 +42,14 @@ const rotating = ref(false);
 const currentRotation = ref(0);
 const cursorPosition = ref({ x: 0, y: 0 });
 
+const { rotationCursor } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
+
 const corners = cornerLayout.map((corner) => ({
 	...corner,
-	cursor: computed(() =>
-		getRotatedCursor(
-			rotationCursorSvg,
-			getTotalRotation(props.target as Element, props.targetBlock) + corner.baseAngle,
-			"pointer",
-		),
-	),
+	cursor: rotationCursor(corner.baseAngle),
 }));
 
 const handleRotate = (ev: MouseEvent, baseAngle: number) => {
@@ -62,47 +62,42 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
 	let lastCursorAngle: number | null = null;
-	setDragCursor(getRotatedCursor(rotationCursorSvg, ancestorRotation + rotation + baseAngle, "pointer"));
+	const dragCursor = (angle: number) =>
+		getRotatedCursor(rotationCursorSvg, ancestorRotation + angle + baseAngle, "pointer");
+
 	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	currentRotation.value = Math.round(rotation);
 	rotating.value = true;
 	emit("rotating", true);
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
-		const pointerAngle =
-			Math.atan2(mouseMoveEvent.clientY - centerY, mouseMoveEvent.clientX - centerX) * (180 / Math.PI);
-		let angleChange = pointerAngle - previousPointerAngle;
-		if (angleChange > 180) angleChange -= 360;
-		if (angleChange < -180) angleChange += 360;
-		rotation = (rotation + angleChange) % 360;
-		previousPointerAngle = pointerAngle;
-		const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
-		currentRotation.value = finalRotation;
-		props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
-		// the cursor SVG only needs rebuilding when the rounded/snapped angle actually
-		// changes - most mousemove ticks land on the same value, especially while snapping
-		if (finalRotation !== lastCursorAngle) {
-			lastCursorAngle = finalRotation;
-			setDragCursor(
-				getRotatedCursor(rotationCursorSvg, ancestorRotation + finalRotation + baseAngle, "pointer"),
-			);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			clearDragCursor();
-			document.removeEventListener("mousemove", mousemove);
+	startDrag({
+		cursor: dragCursor(rotation),
+		onMove: (mouseMoveEvent) => {
+			cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
+			const pointerAngle =
+				Math.atan2(mouseMoveEvent.clientY - centerY, mouseMoveEvent.clientX - centerX) * (180 / Math.PI);
+			let angleChange = pointerAngle - previousPointerAngle;
+			if (angleChange > 180) angleChange -= 360;
+			if (angleChange < -180) angleChange += 360;
+			rotation = (rotation + angleChange) % 360;
+			previousPointerAngle = pointerAngle;
+			const finalRotation = mouseMoveEvent.shiftKey
+				? Math.round(rotation / 15) * 15
+				: Math.round(rotation);
+			currentRotation.value = finalRotation;
+			props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
+			// the cursor SVG only needs rebuilding when the rounded/snapped angle actually
+			// changes - most mousemove ticks land on the same value, especially while snapping
+			if (finalRotation !== lastCursorAngle) {
+				lastCursorAngle = finalRotation;
+				setDragCursor(dragCursor(finalRotation));
+			}
+		},
+		onEnd: () => {
 			rotating.value = false;
 			emit("rotating", false);
-			mouseUpEvent.preventDefault();
 			canvasStore.activeCanvas?.history?.resume(pauseId, true);
 		},
-		{ once: true },
-	);
+	});
 };
 </script>

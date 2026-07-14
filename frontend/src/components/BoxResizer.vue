@@ -31,10 +31,10 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import useCanvasStore from "@/stores/canvasStore";
-import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getResizePositionDelta, getTotalRotation, toLocalDelta } from "@/utils/rotation";
+import { startDrag } from "@/utils/cursor";
+import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
@@ -59,18 +59,12 @@ onMounted(() => {
 	guides = guidesTracker(props.target as HTMLElement, canvasProps);
 });
 
-// the block's *rendered* angle, including any rotated ancestors, not just its own style -
-// keeps each handle's cursor and the resize-axis projection correct when nested
-const rotation = computed(() => getTotalRotation(props.target as Element, props.targetBlock));
-const horizontalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value, "ew-resize"));
-const verticalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 90, "ns-resize"));
-// top-left/bottom-right share one diagonal (nwse), top-right/bottom-left the other (nesw)
-const cornerCursorNWSE = computed(() =>
-	getRotatedCursor(resizeCursorSvg, rotation.value + 45, "nwse-resize"),
-);
-const cornerCursorNESW = computed(() =>
-	getRotatedCursor(resizeCursorSvg, rotation.value - 45, "nesw-resize"),
-);
+// `rotation` also projects the resize axes, so pointer movement follows the rotated edges
+const { rotation, horizontalCursor, verticalCursor, cornerCursorNWSE, cornerCursorNESW } =
+	useRotatedCursors(
+		() => props.target as Element,
+		() => props.targetBlock,
+	);
 
 const resizeDirections = {
 	left: { horizontal: "left" },
@@ -159,70 +153,61 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
 
-	setDragCursor(window.getComputedStyle(ev.target as HTMLElement).cursor);
 	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	resizing.value = true;
 	if (horizontal) guides.showX();
 	if (vertical) guides.showY();
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
-		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
+	startDrag({
+		cursor: window.getComputedStyle(ev.target as HTMLElement).cursor,
+		onMove: (mouseMoveEvent) => {
+			cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
+			const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
+			const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
+			const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
 
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			const fontSizeMovement = vertical
-				? verticalMovement(vertical, localY)
-				: horizontalMovement(horizontal, localX);
-			setFontSize(fontSizeMovement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-
-		let widthMovement = horizontalMovement(horizontal, localX);
-		let heightMovement = verticalMovement(vertical, localY);
-		if (mouseMoveEvent.shiftKey && startWidth && startHeight) {
-			const aspectRatio = startWidth / startHeight;
-			if (horizontal) {
-				heightMovement = (startWidth + widthMovement) / aspectRatio - startHeight;
-			} else if (vertical) {
-				widthMovement = (startHeight + heightMovement) * aspectRatio - startWidth;
+			if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
+				const fontSizeMovement = vertical
+					? verticalMovement(vertical, localY)
+					: horizontalMovement(horizontal, localX);
+				return setFontSize(fontSizeMovement, startFontSize);
 			}
-		}
 
-		if (horizontal || (mouseMoveEvent.shiftKey && vertical)) {
-			setWidth(widthMovement, startWidth, blockStartWidth);
-		}
-		if (vertical || (mouseMoveEvent.shiftKey && horizontal)) {
-			setHeight(heightMovement, startHeight, blockStartHeight);
-		}
+			let widthMovement = horizontalMovement(horizontal, localX);
+			let heightMovement = verticalMovement(vertical, localY);
+			if (mouseMoveEvent.shiftKey && startWidth && startHeight) {
+				const aspectRatio = startWidth / startHeight;
+				if (horizontal) {
+					heightMovement = (startWidth + widthMovement) / aspectRatio - startHeight;
+				} else if (vertical) {
+					widthMovement = (startHeight + heightMovement) * aspectRatio - startWidth;
+				}
+			}
 
-		if (canReposition) {
-			const positionDelta = getResizePositionDelta(
-				widthMovement,
-				heightMovement,
-				{ horizontal, vertical },
-				ownRotation,
-			);
-			props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
-			props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
-		}
+			if (horizontal || (mouseMoveEvent.shiftKey && vertical)) {
+				setWidth(widthMovement, startWidth, blockStartWidth);
+			}
+			if (vertical || (mouseMoveEvent.shiftKey && horizontal)) {
+				setHeight(heightMovement, startHeight, blockStartHeight);
+			}
 
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			clearDragCursor();
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
+			if (canReposition) {
+				const positionDelta = getResizePositionDelta(
+					widthMovement,
+					heightMovement,
+					{ horizontal, vertical },
+					ownRotation,
+				);
+				props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
+				props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
+			}
+		},
+		onEnd: () => {
 			resizing.value = false;
 			if (horizontal) guides.hideX();
 			if (vertical) guides.hideY();
 		},
-		{ once: true },
-	);
+	});
 };
 
 const horizontalMovement = (direction: ResizeDirection["horizontal"], movement: number) => {

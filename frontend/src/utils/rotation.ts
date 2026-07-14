@@ -19,15 +19,17 @@ function getElementRotation(el: Element | null): number {
 	return rotation;
 }
 
+function rotateDelta(x: number, y: number, rotationDeg: number) {
+	const rad = (rotationDeg * Math.PI) / 180;
+	return {
+		x: x * Math.cos(rad) - y * Math.sin(rad),
+		y: x * Math.sin(rad) + y * Math.cos(rad),
+	};
+}
+
 // Converts screen-space movement to the element's local axes.
 function toLocalDelta(dx: number, dy: number, rotationDeg: number) {
-	const rad = (rotationDeg * Math.PI) / 180;
-	const cos = Math.cos(rad);
-	const sin = Math.sin(rad);
-	return {
-		x: dx * cos + dy * sin,
-		y: dy * cos - dx * sin,
-	};
+	return rotateDelta(dx, dy, -rotationDeg);
 }
 
 // Uses the reactive block style so computed cursors update with style-panel edits.
@@ -52,14 +54,6 @@ function getResizePositionDelta(
 	return {
 		x: -centerDelta.x - rotatedEdgeDelta.x || 0,
 		y: -centerDelta.y - rotatedEdgeDelta.y || 0,
-	};
-}
-
-function rotateDelta(x: number, y: number, rotationDeg: number) {
-	const rad = (rotationDeg * Math.PI) / 180;
-	return {
-		x: x * Math.cos(rad) - y * Math.sin(rad),
-		y: x * Math.sin(rad) + y * Math.cos(rad),
 	};
 }
 

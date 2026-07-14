@@ -106,10 +106,10 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getTotalRotation, toLocalDelta } from "@/utils/rotation";
+import { startDrag } from "@/utils/cursor";
+import { toLocalDelta } from "@/utils/rotation";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
@@ -137,43 +137,25 @@ watchEffect(() => {
 	emit("update", updating.value);
 });
 
-// the block's rendered angle, so the cursor and drag axes stay correct when rotated
-const rotation = computed(() => getTotalRotation(props.target as Element, props.targetBlock));
-const horizontalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value, "ew-resize"));
-const verticalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 90, "ns-resize"));
+const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
 
-const topMarginHandlerHeight = computed(() => {
+const topMarginHandlerHeight = computed(() => getMargin("Top"));
+const bottomMarginHandlerHeight = computed(() => getMargin("Bottom"));
+const leftMarginHandlerWidth = computed(() => getMargin("Left"));
+const rightMarginHandlerWidth = computed(() => getMargin("Right"));
+
+const getMargin = (side: "Top" | "Left" | "Right" | "Bottom") => {
 	blockStyles.value.marginTop;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginTop = window.getComputedStyle(props.target).marginTop;
-	let value = getNumberFromPx(marginTop) * canvasProps.scale;
-	return value;
-});
-const bottomMarginHandlerHeight = computed(() => {
 	blockStyles.value.marginBottom;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginBottom = window.getComputedStyle(props.target).marginBottom;
-	let value = getNumberFromPx(marginBottom) * canvasProps.scale;
-	return value;
-});
-const leftMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginLeft;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginLeft = window.getComputedStyle(props.target).marginLeft;
-	let value = getNumberFromPx(marginLeft) * canvasProps.scale;
-	return value;
-});
-const rightMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginRight;
-	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginRight = window.getComputedStyle(props.target).marginRight;
-	let value = getNumberFromPx(marginRight) * canvasProps.scale;
-	return value;
-});
+	blockStyles.value.display;
+	return getNumberFromPx(getComputedStyle(props.target)[`margin${side}`]) * canvasProps.scale;
+};
 
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;
@@ -228,61 +210,52 @@ const handleMargin = (ev: MouseEvent, position: Position) => {
 	const startLeft = getNumberFromPx(blockStyles.value.marginLeft) || 0;
 	const startRight = getNumberFromPx(blockStyles.value.marginRight) || 0;
 
-	setDragCursor(window.getComputedStyle(target).cursor);
+	startDrag({
+		cursor: window.getComputedStyle(target).cursor,
+		onMove: (mouseMoveEvent) => {
+			let movement = 0;
+			let affectingAxis = null;
+			props.onUpdate && props.onUpdate();
+			const dx = mouseMoveEvent.clientX - startX;
+			const dy = mouseMoveEvent.clientY - startY;
+			const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
+			if (position === Position.Top) {
+				// top/left handles sit outside the block, so dragging away from it (up/left) grows the margin
+				movement = Math.round(Math.max(startTop - localY, 0));
+				props.targetBlock.setStyle("marginTop", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Bottom) {
+				movement = Math.round(Math.max(startBottom + localY, 0));
+				props.targetBlock.setStyle("marginBottom", movement + "px");
+				affectingAxis = "y";
+			} else if (position === Position.Left) {
+				movement = Math.round(Math.max(startLeft - localX, 0));
+				props.targetBlock.setStyle("marginLeft", movement + "px");
+				affectingAxis = "x";
+			} else if (position === Position.Right) {
+				movement = Math.round(Math.max(startRight + localX, 0));
+				props.targetBlock.setStyle("marginRight", movement + "px");
+				affectingAxis = "x";
+			}
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		let movement = 0;
-		let affectingAxis = null;
-		props.onUpdate && props.onUpdate();
-		const dx = mouseMoveEvent.clientX - startX;
-		const dy = mouseMoveEvent.clientY - startY;
-		const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
-		if (position === Position.Top) {
-			// top/left handles sit outside the block, so dragging away from it (up/left) grows the margin
-			movement = Math.round(Math.max(startTop - localY, 0));
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Bottom) {
-			movement = Math.round(Math.max(startBottom + localY, 0));
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Left) {
-			movement = Math.round(Math.max(startLeft - localX, 0));
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			affectingAxis = "x";
-		} else if (position === Position.Right) {
-			movement = Math.round(Math.max(startRight + localX, 0));
-			props.targetBlock.setStyle("marginRight", movement + "px");
-			affectingAxis = "x";
-		}
-
-		if (mouseMoveEvent.shiftKey) {
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			props.targetBlock.setStyle("marginRight", movement + "px");
-		} else if (mouseMoveEvent.altKey) {
-			if (affectingAxis === "y") {
+			if (mouseMoveEvent.shiftKey) {
 				props.targetBlock.setStyle("marginTop", movement + "px");
 				props.targetBlock.setStyle("marginBottom", movement + "px");
-			} else if (affectingAxis === "x") {
 				props.targetBlock.setStyle("marginLeft", movement + "px");
 				props.targetBlock.setStyle("marginRight", movement + "px");
+			} else if (mouseMoveEvent.altKey) {
+				if (affectingAxis === "y") {
+					props.targetBlock.setStyle("marginTop", movement + "px");
+					props.targetBlock.setStyle("marginBottom", movement + "px");
+				} else if (affectingAxis === "x") {
+					props.targetBlock.setStyle("marginLeft", movement + "px");
+					props.targetBlock.setStyle("marginRight", movement + "px");
+				}
 			}
-		}
-
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			clearDragCursor();
-			document.removeEventListener("mousemove", mousemove);
-			updating.value = false;
-			mouseUpEvent.preventDefault();
 		},
-		{ once: true },
-	);
+		onEnd: () => {
+			updating.value = false;
+		},
+	});
 };
 </script>

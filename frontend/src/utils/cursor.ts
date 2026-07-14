@@ -33,4 +33,32 @@ function clearDragCursor() {
 	overlay = null;
 }
 
-export { clearDragCursor, getRotatedCursor, setDragCursor };
+type DragOptions = {
+	cursor?: string;
+	onMove: (event: MouseEvent) => void;
+	onEnd?: (event: MouseEvent) => void;
+};
+
+// Runs a mouse drag with the cursor locked for its duration, tearing down its listeners on mouseup.
+function startDrag({ cursor, onMove, onEnd }: DragOptions) {
+	if (cursor) setDragCursor(cursor);
+
+	const mousemove = (moveEvent: MouseEvent) => {
+		onMove(moveEvent);
+		moveEvent.preventDefault();
+	};
+
+	document.addEventListener("mousemove", mousemove);
+	document.addEventListener(
+		"mouseup",
+		(upEvent) => {
+			document.removeEventListener("mousemove", mousemove);
+			clearDragCursor();
+			onEnd?.(upEvent);
+			upEvent.preventDefault();
+		},
+		{ once: true },
+	);
+}
+
+export { clearDragCursor, getRotatedCursor, setDragCursor, startDrag };
