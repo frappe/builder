@@ -23,7 +23,7 @@
 	<div
 		v-for="corner in corners"
 		:key="corner.name"
-		class="pointer-events-auto absolute h-[12px] w-[12px] rounded-full border-[2.5px] border-blue-400 bg-white"
+		class="pointer-events-auto absolute h-[10px] w-[10px] rounded-full border-2 border-blue-400 bg-white"
 		:class="[corner.positionClass, { 'border-purple-400': targetBlock.isExtendedFromComponent() }]"
 		:style="{ cursor: corner.cursor.value }"
 		v-show="!resizing"
@@ -76,28 +76,28 @@ const corners = [
 		name: "top-left",
 		horizontal: -1,
 		vertical: -1,
-		positionClass: "top-[-5px] left-[-5px]",
+		positionClass: "left-[-4px] top-[-4px]",
 		cursor: cornerCursorNWSE,
 	},
 	{
 		name: "top-right",
 		horizontal: 1,
 		vertical: -1,
-		positionClass: "top-[-5px] right-[-5px]",
+		positionClass: "right-[-4px] top-[-4px]",
 		cursor: cornerCursorNESW,
 	},
 	{
 		name: "bottom-left",
 		horizontal: -1,
 		vertical: 1,
-		positionClass: "bottom-[-5px] left-[-5px]",
+		positionClass: "bottom-[-4px] left-[-4px]",
 		cursor: cornerCursorNESW,
 	},
 	{
 		name: "bottom-right",
 		horizontal: 1,
 		vertical: 1,
-		positionClass: "bottom-[-5px] right-[-5px]",
+		positionClass: "bottom-[-4px] right-[-4px]",
 		cursor: cornerCursorNWSE,
 	},
 ] as const;

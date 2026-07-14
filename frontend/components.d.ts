@@ -145,6 +145,7 @@ declare module 'vue' {
     TopClicksList: typeof import('./src/components/Settings/TopClicksList.vue')['default']
     TopReferrersList: typeof import('./src/components/Settings/TopReferrersList.vue')['default']
     TrackingDisabledNotice: typeof import('./src/components/Settings/TrackingDisabledNotice.vue')['default']
+    TransformPreview: typeof import('./src/components/TransformPreview.vue')['default']
     VariableManager: typeof import('./src/components/Modals/VariableManager.vue')['default']
     VariantControl: typeof import('./src/components/Controls/VariantControl.vue')['default']
     VersionHistory: typeof import('./src/components/VersionHistory.vue')['default']
