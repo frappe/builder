@@ -104,12 +104,8 @@
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { startDrag } from "@/utils/cursor";
-import { toLocalDelta } from "@/utils/rotation";
-import { computed, ref, watchEffect } from "vue";
+import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
-
-import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{
@@ -126,11 +122,18 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	startSpacingDrag,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
@@ -206,74 +209,13 @@ const rightHandle = computed(() => {
 	};
 });
 
-const messageShown = ref(false);
-
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	// if (!messageShown.value && !(ev.shiftKey || ev.altKey)) {
-	// 	showToast();
-	// 	messageShown.value = true;
-	// }
-	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
-	const target = ev.target as HTMLElement;
-
-	const startTop = getNumberFromPx(blockStyles.value.paddingTop) || 5;
-	const startBottom = getNumberFromPx(blockStyles.value.paddingBottom) || 5;
-	const startLeft = getNumberFromPx(blockStyles.value.paddingLeft) || 5;
-	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
-
-	startDrag({
-		cursor: window.getComputedStyle(target).cursor,
-		onMove: (mouseMoveEvent) => {
-			let movement = 0;
-			let affectingAxis = null;
-			props.onUpdate && props.onUpdate();
-			const dx = mouseMoveEvent.clientX - startX;
-			const dy = mouseMoveEvent.clientY - startY;
-			const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
-			if (position === Position.Top) {
-				movement = Math.round(Math.max(startTop + localY, 0));
-				props.targetBlock.setStyle("paddingTop", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Bottom) {
-				movement = Math.round(Math.max(startBottom - localY, 0));
-				props.targetBlock.setStyle("paddingBottom", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Left) {
-				movement = Math.round(Math.max(startLeft + localX, 0));
-				props.targetBlock.setStyle("paddingLeft", movement + "px");
-				affectingAxis = "x";
-			} else if (position === Position.Right) {
-				movement = Math.round(Math.max(startRight - localX, 0));
-				props.targetBlock.setStyle("paddingRight", movement + "px");
-				affectingAxis = "x";
-			}
-
-			if (mouseMoveEvent.altKey) {
-				if (affectingAxis === "y") {
-					props.targetBlock.setStyle("paddingTop", movement + "px");
-					props.targetBlock.setStyle("paddingBottom", movement + "px");
-				} else if (affectingAxis === "x") {
-					props.targetBlock.setStyle("paddingLeft", movement + "px");
-					props.targetBlock.setStyle("paddingRight", movement + "px");
-				}
-			} else if (mouseMoveEvent.shiftKey) {
-				props.targetBlock.setStyle("paddingTop", movement + "px");
-				props.targetBlock.setStyle("paddingBottom", movement + "px");
-				props.targetBlock.setStyle("paddingLeft", movement + "px");
-				props.targetBlock.setStyle("paddingRight", movement + "px");
-			}
-
-			mouseMoveEvent.stopPropagation();
-		},
-		onEnd: () => {
-			updating.value = false;
-		},
+	startSpacingDrag(ev, position, {
+		property: "padding",
+		fallback: 5,
+		getRotation: () => rotation.value,
+		onUpdate: props.onUpdate,
 	});
 };
-
-let showToast = () =>
-	toast('Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.');
 </script>

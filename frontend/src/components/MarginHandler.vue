@@ -108,8 +108,6 @@
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { startDrag } from "@/utils/cursor";
-import { toLocalDelta } from "@/utils/rotation";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 const props = withDefaults(
@@ -127,11 +125,18 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	startSpacingDrag,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
@@ -199,63 +204,11 @@ const rightHandle = computed(() => {
 
 const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	ev.preventDefault();
-	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
-	const target = ev.target as HTMLElement;
-
-	const startTop = getNumberFromPx(blockStyles.value.marginTop) || 0;
-	const startBottom = getNumberFromPx(blockStyles.value.marginBottom) || 0;
-	const startLeft = getNumberFromPx(blockStyles.value.marginLeft) || 0;
-	const startRight = getNumberFromPx(blockStyles.value.marginRight) || 0;
-
-	startDrag({
-		cursor: window.getComputedStyle(target).cursor,
-		onMove: (mouseMoveEvent) => {
-			let movement = 0;
-			let affectingAxis = null;
-			props.onUpdate && props.onUpdate();
-			const dx = mouseMoveEvent.clientX - startX;
-			const dy = mouseMoveEvent.clientY - startY;
-			const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
-			if (position === Position.Top) {
-				// top/left handles sit outside the block, so dragging away from it (up/left) grows the margin
-				movement = Math.round(Math.max(startTop - localY, 0));
-				props.targetBlock.setStyle("marginTop", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Bottom) {
-				movement = Math.round(Math.max(startBottom + localY, 0));
-				props.targetBlock.setStyle("marginBottom", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Left) {
-				movement = Math.round(Math.max(startLeft - localX, 0));
-				props.targetBlock.setStyle("marginLeft", movement + "px");
-				affectingAxis = "x";
-			} else if (position === Position.Right) {
-				movement = Math.round(Math.max(startRight + localX, 0));
-				props.targetBlock.setStyle("marginRight", movement + "px");
-				affectingAxis = "x";
-			}
-
-			if (mouseMoveEvent.shiftKey) {
-				props.targetBlock.setStyle("marginTop", movement + "px");
-				props.targetBlock.setStyle("marginBottom", movement + "px");
-				props.targetBlock.setStyle("marginLeft", movement + "px");
-				props.targetBlock.setStyle("marginRight", movement + "px");
-			} else if (mouseMoveEvent.altKey) {
-				if (affectingAxis === "y") {
-					props.targetBlock.setStyle("marginTop", movement + "px");
-					props.targetBlock.setStyle("marginBottom", movement + "px");
-				} else if (affectingAxis === "x") {
-					props.targetBlock.setStyle("marginLeft", movement + "px");
-					props.targetBlock.setStyle("marginRight", movement + "px");
-				}
-			}
-		},
-		onEnd: () => {
-			updating.value = false;
-		},
+	startSpacingDrag(ev, position, {
+		property: "margin",
+		fallback: 0,
+		getRotation: () => rotation.value,
+		onUpdate: props.onUpdate,
 	});
 };
 </script>
