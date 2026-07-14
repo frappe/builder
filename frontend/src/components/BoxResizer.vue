@@ -41,7 +41,7 @@ import type Block from "@/block";
 import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import useCanvasStore from "@/stores/canvasStore";
 import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getTotalRotation, toLocalDelta } from "@/utils/elementRotation";
+import { getTotalRotation, toLocalDelta } from "@/utils/rotation";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";

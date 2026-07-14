@@ -13,7 +13,7 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import rotationCursorSvg from "@/assets/rotation-cursor.svg?raw";
 import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getElementRotation, getTotalRotation } from "@/utils/elementRotation";
+import { getElementRotation, getTotalRotation } from "@/utils/rotation";
 import { computed } from "vue";
 
 const props = defineProps<{

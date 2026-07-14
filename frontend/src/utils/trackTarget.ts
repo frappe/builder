@@ -1,6 +1,6 @@
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, onScopeDispose, reactive, watch, watchEffect } from "vue";
-import { getElementRotation } from "./elementRotation";
+import { getElementRotation } from "./rotation";
 import { addPxToNumber } from "./helpers";
 
 // All tracked targets share one MutationObserver on the canvas container. It is

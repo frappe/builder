@@ -105,7 +105,7 @@ import type Block from "@/block";
 import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
 import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getTotalRotation, toLocalDelta } from "@/utils/elementRotation";
+import { getTotalRotation, toLocalDelta } from "@/utils/rotation";
 import { computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
