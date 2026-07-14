@@ -1,5 +1,10 @@
 import type Block from "@/block";
 
+type ResizeDirection = {
+	horizontal?: "left" | "right";
+	vertical?: "top" | "bottom";
+};
+
 // Sums rotation from this element through the canvas.
 function getElementRotation(el: Element | null): number {
 	let rotation = 0;
@@ -31,4 +36,32 @@ function getTotalRotation(target: Element, targetBlock: Block): number {
 	return ownRotation + getElementRotation(target.parentElement);
 }
 
-export { getElementRotation, getTotalRotation, toLocalDelta };
+// Keeps the opposite local edge fixed as a center-rotated element changes size.
+function getResizePositionDelta(
+	widthMovement: number,
+	heightMovement: number,
+	{ horizontal, vertical }: ResizeDirection,
+	rotationDeg: number,
+) {
+	const centerDelta = { x: widthMovement / 2, y: heightMovement / 2 };
+	const oppositeEdgeDelta = {
+		x: horizontal === "left" ? centerDelta.x : horizontal === "right" ? -centerDelta.x : 0,
+		y: vertical === "top" ? centerDelta.y : vertical === "bottom" ? -centerDelta.y : 0,
+	};
+	const rotatedEdgeDelta = rotateDelta(oppositeEdgeDelta.x, oppositeEdgeDelta.y, rotationDeg);
+	return {
+		x: -centerDelta.x - rotatedEdgeDelta.x || 0,
+		y: -centerDelta.y - rotatedEdgeDelta.y || 0,
+	};
+}
+
+function rotateDelta(x: number, y: number, rotationDeg: number) {
+	const rad = (rotationDeg * Math.PI) / 180;
+	return {
+		x: x * Math.cos(rad) - y * Math.sin(rad),
+		y: x * Math.sin(rad) + y * Math.cos(rad),
+	};
+}
+
+export { getElementRotation, getResizePositionDelta, getTotalRotation, toLocalDelta };
+export type { ResizeDirection };

@@ -34,7 +34,8 @@ import type Block from "@/block";
 import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import useCanvasStore from "@/stores/canvasStore";
 import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
-import { getTotalRotation, toLocalDelta } from "@/utils/rotation";
+import { getResizePositionDelta, getTotalRotation, toLocalDelta } from "@/utils/rotation";
+import type { ResizeDirection } from "@/utils/rotation";
 import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -70,11 +71,6 @@ const cornerCursorNWSE = computed(() =>
 const cornerCursorNESW = computed(() =>
 	getRotatedCursor(resizeCursorSvg, rotation.value - 45, "nesw-resize"),
 );
-
-type ResizeDirection = {
-	horizontal?: "left" | "right";
-	vertical?: "top" | "bottom";
-};
 
 const resizeDirections = {
 	left: { horizontal: "left" },
@@ -157,6 +153,7 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const startWidth = target.offsetWidth;
 	const startTop = target.offsetTop;
 	const startLeft = target.offsetLeft;
+	const ownRotation = parseFloat(getComputedStyle(target).rotate) || 0;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
@@ -201,8 +198,14 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 		}
 
 		if (canReposition) {
-			if (horizontal === "left") props.targetBlock.setStyle("left", `${Math.round(startLeft - widthMovement)}px`);
-			if (vertical === "top") props.targetBlock.setStyle("top", `${Math.round(startTop - heightMovement)}px`);
+			const positionDelta = getResizePositionDelta(
+				widthMovement,
+				heightMovement,
+				{ horizontal, vertical },
+				ownRotation,
+			);
+			props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
+			props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
 		}
 
 		mouseMoveEvent.preventDefault();
