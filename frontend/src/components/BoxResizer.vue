@@ -12,32 +12,37 @@
 	</span>
 
 	<div
-		class="left-handle ew-resize pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent" />
+		class="left-handle pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent"
+		:style="{ cursor: horizontalCursor }"
+		@mousedown.stop="(ev) => handleResize(ev, -1, 0)" />
 	<div
 		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-2 border-none bg-transparent"
 		:style="{ cursor: horizontalCursor }"
-		@mousedown.stop="handleRightResize" />
+		@mousedown.stop="(ev) => handleResize(ev, 1, 0)" />
 	<div
-		class="top-handle ns-resize pointer-events-auto absolute left-0 right-0 top-[-2px] h-2 border-none bg-transparent" />
+		class="top-handle pointer-events-auto absolute left-0 right-0 top-[-2px] h-2 border-none bg-transparent"
+		:style="{ cursor: verticalCursor }"
+		@mousedown.stop="(ev) => handleResize(ev, 0, -1)" />
 	<div
 		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-2 border-none bg-transparent"
 		:style="{ cursor: verticalCursor }"
-		@mousedown.stop="handleBottomResize" />
+		@mousedown.stop="(ev) => handleResize(ev, 0, 1)" />
 	<div
-		class="pointer-events-auto absolute bottom-[-5px] right-[-5px] h-[12px] w-[12px] rounded-full border-[2.5px] border-blue-400 bg-white"
-		:class="{
-			'border-purple-400': targetBlock.isExtendedFromComponent(),
-		}"
-		:style="{ cursor: cornerCursor }"
+		v-for="corner in corners"
+		:key="corner.name"
+		class="pointer-events-auto absolute h-[12px] w-[12px] rounded-full border-[2.5px] border-blue-400 bg-white"
+		:class="[corner.positionClass, { 'border-purple-400': targetBlock.isExtendedFromComponent() }]"
+		:style="{ cursor: corner.cursor.value }"
 		v-show="!resizing"
-		@mousedown.stop.prevent="handleBottomCornerResize" />
+		@mousedown.stop.prevent="(ev) => handleResize(ev, corner.horizontal, corner.vertical)" />
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
 import resizeCursorSvg from "@/assets/resize-cursor.svg?raw";
 import useCanvasStore from "@/stores/canvasStore";
+import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
+import { getTotalRotation, toLocalDelta } from "@/utils/elementRotation";
 import { getNumberFromPx } from "@/utils/helpers";
-import getRotatedCursor from "@/utils/rotatedCursor";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -58,23 +63,49 @@ onMounted(() => {
 	guides = guidesTracker(props.target as HTMLElement, canvasProps);
 });
 
-// keeps each handle's resize cursor pointing along its edge/corner as the block rotates
-const rotation = computed(() => parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0);
+// the block's *rendered* angle, including any rotated ancestors, not just its own style -
+// keeps each handle's cursor and the resize-axis projection correct when nested
+const rotation = computed(() => getTotalRotation(props.target as Element, props.targetBlock));
 const horizontalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value, "ew-resize"));
 const verticalCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 90, "ns-resize"));
-const cornerCursor = computed(() => getRotatedCursor(resizeCursorSvg, rotation.value + 45, "nwse-resize"));
+// top-left/bottom-right share one diagonal (nwse), top-right/bottom-left the other (nesw)
+const cornerCursorNWSE = computed(() =>
+	getRotatedCursor(resizeCursorSvg, rotation.value + 45, "nwse-resize"),
+);
+const cornerCursorNESW = computed(() =>
+	getRotatedCursor(resizeCursorSvg, rotation.value - 45, "nesw-resize"),
+);
 
-// projects a screen-space mouse movement onto the block's own (unrotated) width/height
-// axes, so a handle still grows the right dimension when the block is rotated on screen
-const toLocalDelta = (dx: number, dy: number, rotationDeg: number) => {
-	const rad = (rotationDeg * Math.PI) / 180;
-	const cos = Math.cos(rad);
-	const sin = Math.sin(rad);
-	return {
-		x: dx * cos + dy * sin,
-		y: dy * cos - dx * sin,
-	};
-};
+const corners = [
+	{
+		name: "top-left",
+		horizontal: -1,
+		vertical: -1,
+		positionClass: "top-[-5px] left-[-5px]",
+		cursor: cornerCursorNWSE,
+	},
+	{
+		name: "top-right",
+		horizontal: 1,
+		vertical: -1,
+		positionClass: "top-[-5px] right-[-5px]",
+		cursor: cornerCursorNESW,
+	},
+	{
+		name: "bottom-left",
+		horizontal: -1,
+		vertical: 1,
+		positionClass: "bottom-[-5px] left-[-5px]",
+		cursor: cornerCursorNESW,
+	},
+	{
+		name: "bottom-right",
+		horizontal: 1,
+		vertical: 1,
+		positionClass: "bottom-[-5px] right-[-5px]",
+		cursor: cornerCursorNWSE,
+	},
+] as const;
 
 watch(resizing, () => {
 	if (resizing.value) {
@@ -107,126 +138,64 @@ const fontSize = computed(() => {
 	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
 });
 
-const handleRightResize = (ev: MouseEvent) => {
+// horizontal/vertical: -1 = left/top edge or corner, 1 = right/bottom, 0 = not resized on that axis.
+// For the -1 side, the opposite edge is kept visually fixed by shifting top/left the same
+// amount the block grew (only meaningful for absolute/fixed blocks, which own their position).
+const handleResize = (ev: MouseEvent, horizontal: -1 | 0 | 1, vertical: -1 | 0 | 1) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
+	const target = props.target as HTMLElement;
+	const startHeight = target.offsetHeight;
+	const startWidth = target.offsetWidth;
+	const startTop = target.offsetTop;
+	const startLeft = target.offsetLeft;
 	const blockStartWidth = props.targetBlock.getStyle("width") as string;
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
+	const canReposition = props.targetBlock.isMovable();
 
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
+	setDragCursor(window.getComputedStyle(ev.target as HTMLElement).cursor);
 	resizing.value = true;
-	guides.showX();
+	if (horizontal) guides.showX();
+	if (vertical) guides.showY();
+
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		const { x: movement } = toLocalDelta(dx, dy, rotation.value);
+		const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
+
 		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
+			setFontSize(vertical ? vertical * localY : horizontal * localX, startFontSize);
 			return mouseMoveEvent.preventDefault();
 		}
-		setWidth(movement, startWidth, blockStartWidth);
+
+		let widthMovement = horizontal * localX;
+		let heightMovement = vertical * localY;
 		if (mouseMoveEvent.shiftKey) {
-			setHeight(movement, startHeight, blockStartHeight);
+			if (horizontal) heightMovement = widthMovement;
+			else if (vertical) widthMovement = heightMovement;
 		}
+
+		if (horizontal) setWidth(widthMovement, startWidth, blockStartWidth);
+		if (vertical) setHeight(heightMovement, startHeight, blockStartHeight);
+
+		if (canReposition) {
+			if (horizontal === -1) props.targetBlock.setStyle("left", `${Math.round(startLeft - widthMovement)}px`);
+			if (vertical === -1) props.targetBlock.setStyle("top", `${Math.round(startTop - heightMovement)}px`);
+		}
+
 		mouseMoveEvent.preventDefault();
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			clearDragCursor();
 			document.removeEventListener("mousemove", mousemove);
 			mouseUpEvent.preventDefault();
 			resizing.value = false;
-			guides.hideX();
-		},
-		{ once: true },
-	);
-};
-
-const handleBottomResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
-	resizing.value = true;
-	guides.showY();
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		const { y: movement } = toLocalDelta(dx, dy, rotation.value);
-
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movement, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setHeight(movement, startHeight, blockStartHeight);
-		if (mouseMoveEvent.shiftKey) {
-			setWidth(movement, startWidth, blockStartWidth);
-		}
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
-			guides.hideY();
-		},
-		{ once: true },
-	);
-};
-
-const handleBottomCornerResize = (ev: MouseEvent) => {
-	const startX = ev.clientX;
-	const startY = ev.clientY;
-	const startHeight = (props.target as HTMLElement).offsetHeight;
-	const startWidth = (props.target as HTMLElement).offsetWidth;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
-	const startFontSize = fontSize.value || 0;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.target as HTMLElement).cursor;
-	resizing.value = true;
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
-		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
-		const { x: movementX, y: movementY } = toLocalDelta(dx, dy, rotation.value);
-		if (props.targetBlock.isText() && !props.targetBlock.hasChildren()) {
-			setFontSize(movementY, startFontSize);
-			return mouseMoveEvent.preventDefault();
-		}
-		setWidth(movementX, startWidth, blockStartWidth);
-		setHeight(mouseMoveEvent.shiftKey ? movementX : movementY, startHeight, blockStartHeight);
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			mouseUpEvent.preventDefault();
-			resizing.value = false;
+			if (horizontal) guides.hideX();
+			if (vertical) guides.hideY();
 		},
 		{ once: true },
 	);

@@ -1,5 +1,6 @@
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, onScopeDispose, reactive, watch, watchEffect } from "vue";
+import { getElementRotation } from "./elementRotation";
 import { addPxToNumber } from "./helpers";
 
 // All tracked targets share one MutationObserver on the canvas container. It is
@@ -38,8 +39,7 @@ function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvas
 	// used directly for a rotated element: rotate the host around the same center instead,
 	// sized to the target's own (unrotated) box, so it overlaps the element exactly.
 	watchEffect(() => {
-		const computedRotation = getComputedStyle(target as Element).rotate;
-		const angle = computedRotation && computedRotation !== "none" ? parseFloat(computedRotation) || 0 : 0;
+		const angle = getElementRotation(target as Element);
 		if (angle) {
 			const scale = canvasProps.scale;
 			const width = (target as HTMLElement).offsetWidth * scale;

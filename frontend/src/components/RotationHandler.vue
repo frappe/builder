@@ -1,15 +1,19 @@
 <template>
 	<div
-		class="pointer-events-auto absolute bottom-[-20px] right-[-20px] size-7 rounded-full"
-		:style="{ cursor: idleCursor }"
-		@mousedown.stop.prevent="handleRotate" />
+		v-for="corner in corners"
+		:key="corner.name"
+		class="pointer-events-auto absolute size-7 rounded-full"
+		:class="corner.positionClass"
+		:style="{ cursor: corner.cursor.value }"
+		@mousedown.stop.prevent="(ev) => handleRotate(ev, corner.baseAngle)" />
 </template>
 
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import rotationCursorSvg from "@/assets/rotation-cursor.svg?raw";
-import getRotatedCursor from "@/utils/rotatedCursor";
+import { clearDragCursor, getRotatedCursor, setDragCursor } from "@/utils/cursor";
+import { getElementRotation, getTotalRotation } from "@/utils/elementRotation";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -23,20 +27,34 @@ const emit = defineEmits<{
 
 const canvasStore = useCanvasStore();
 
-const idleCursor = computed(() => {
-	const rotation = parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0;
-	return getRotatedCursor(rotationCursorSvg, rotation, "pointer");
-});
+const cornerLayout = [
+	{ name: "bottom-right", positionClass: "bottom-[-20px] right-[-20px]", baseAngle: 0 },
+	{ name: "bottom-left", positionClass: "bottom-[-20px] left-[-20px]", baseAngle: 90 },
+	{ name: "top-left", positionClass: "top-[-20px] left-[-20px]", baseAngle: 180 },
+	{ name: "top-right", positionClass: "top-[-20px] right-[-20px]", baseAngle: 270 },
+] as const;
 
-const handleRotate = (ev: MouseEvent) => {
+const corners = cornerLayout.map((corner) => ({
+	...corner,
+	cursor: computed(() =>
+		getRotatedCursor(
+			rotationCursorSvg,
+			getTotalRotation(props.target as Element, props.targetBlock) + corner.baseAngle,
+			"pointer",
+		),
+	),
+}));
+
+const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	const bounds = props.target.getBoundingClientRect();
 	const centerX = bounds.left + bounds.width / 2;
 	const centerY = bounds.top + bounds.height / 2;
 	let previousPointerAngle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX) * (180 / Math.PI);
 	let rotation = parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0;
+	// ancestors don't rotate mid-drag, so their contribution can be captured once up front
+	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(ev.currentTarget as HTMLElement).cursor;
+	setDragCursor(getRotatedCursor(rotationCursorSvg, ancestorRotation + rotation + baseAngle, "pointer"));
 	emit("rotating", true);
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
@@ -49,7 +67,9 @@ const handleRotate = (ev: MouseEvent) => {
 		previousPointerAngle = pointerAngle;
 		const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
 		props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
-		document.body.style.cursor = getRotatedCursor(rotationCursorSvg, finalRotation, "pointer");
+		setDragCursor(
+			getRotatedCursor(rotationCursorSvg, ancestorRotation + finalRotation + baseAngle, "pointer"),
+		);
 		mouseMoveEvent.preventDefault();
 	};
 
@@ -57,7 +77,7 @@ const handleRotate = (ev: MouseEvent) => {
 	document.addEventListener(
 		"mouseup",
 		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
+			clearDragCursor();
 			document.removeEventListener("mousemove", mousemove);
 			emit("rotating", false);
 			mouseUpEvent.preventDefault();

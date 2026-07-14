@@ -19,4 +19,26 @@ function getRotatedCursor(svg: string, angle: number, fallback: string, hotspot 
 	return `url("data:image/svg+xml,${dataUri}") ${hotspot} ${hotspot}, ${fallback}`;
 }
 
-export default getRotatedCursor;
+let overlay: HTMLDivElement | null = null;
+
+// Pins the mouse cursor for the duration of a drag. Setting `document.body.style.cursor`
+// alone isn't enough: moving over another element with its own `cursor` style (text, a
+// button, another block) overrides it and the cursor flickers away from the drag in
+// progress. A full-viewport overlay is always the topmost element, so its cursor always wins.
+function setDragCursor(cursor: string) {
+	if (!overlay) {
+		overlay = document.createElement("div");
+		overlay.style.position = "fixed";
+		overlay.style.inset = "0";
+		overlay.style.zIndex = "2147483647";
+		document.body.appendChild(overlay);
+	}
+	overlay.style.cursor = cursor;
+}
+
+function clearDragCursor() {
+	overlay?.remove();
+	overlay = null;
+}
+
+export { clearDragCursor, getRotatedCursor, setDragCursor };
