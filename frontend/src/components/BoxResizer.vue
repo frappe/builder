@@ -1,15 +1,8 @@
 <template>
-	<span
-		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-20 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing && !props.targetBlock.isText()">
-		{{ targetWidth }} x
-		{{ targetHeight }}
-	</span>
-	<span
-		class="resize-dimensions absolute bottom-[-40px] right-[-40px] flex h-8 w-fit items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
-		v-if="resizing && props.targetBlock.isText()">
-		{{ fontSize }}
-	</span>
+	<TransformPreview v-if="resizing" :position="cursorPosition" :wide="!props.targetBlock.isText()">
+		<template v-if="props.targetBlock.isText()">{{ fontSize }}</template>
+		<template v-else>{{ targetWidth }} x {{ targetHeight }}</template>
+	</TransformPreview>
 
 	<div
 		class="left-handle pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent"
@@ -46,6 +39,7 @@ import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
+import TransformPreview from "./TransformPreview.vue";
 
 const canvasStore = useCanvasStore();
 const props = defineProps<{
@@ -55,6 +49,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["resizing"]);
 const resizing = ref(false);
+const cursorPosition = ref({ x: 0, y: 0 });
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
 const canvasProps = inject("canvasProps") as CanvasProps;
@@ -155,11 +150,13 @@ const handleResize = (ev: MouseEvent, horizontal: -1 | 0 | 1, vertical: -1 | 0 |
 	const canReposition = props.targetBlock.isMovable();
 
 	setDragCursor(window.getComputedStyle(ev.target as HTMLElement).cursor);
+	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	resizing.value = true;
 	if (horizontal) guides.showX();
 	if (vertical) guides.showY();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
+		cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
 		const dx = (mouseMoveEvent.clientX - startX) / canvasProps.scale;
 		const dy = (mouseMoveEvent.clientY - startY) / canvasProps.scale;
 		const { x: localX, y: localY } = toLocalDelta(dx, dy, rotation.value);
@@ -171,13 +168,21 @@ const handleResize = (ev: MouseEvent, horizontal: -1 | 0 | 1, vertical: -1 | 0 |
 
 		let widthMovement = horizontal * localX;
 		let heightMovement = vertical * localY;
-		if (mouseMoveEvent.shiftKey) {
-			if (horizontal) heightMovement = widthMovement;
-			else if (vertical) widthMovement = heightMovement;
+		if (mouseMoveEvent.shiftKey && startWidth && startHeight) {
+			const aspectRatio = startWidth / startHeight;
+			if (horizontal) {
+				heightMovement = (startWidth + widthMovement) / aspectRatio - startHeight;
+			} else if (vertical) {
+				widthMovement = (startHeight + heightMovement) * aspectRatio - startWidth;
+			}
 		}
 
-		if (horizontal) setWidth(widthMovement, startWidth, blockStartWidth);
-		if (vertical) setHeight(heightMovement, startHeight, blockStartHeight);
+		if (horizontal || (mouseMoveEvent.shiftKey && vertical)) {
+			setWidth(widthMovement, startWidth, blockStartWidth);
+		}
+		if (vertical || (mouseMoveEvent.shiftKey && horizontal)) {
+			setHeight(heightMovement, startHeight, blockStartHeight);
+		}
 
 		if (canReposition) {
 			if (horizontal === -1) props.targetBlock.setStyle("left", `${Math.round(startLeft - widthMovement)}px`);
