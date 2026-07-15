@@ -32,6 +32,7 @@
 
 <script lang="ts" setup>
 import Input from "@/components/Controls/Input.vue";
+import { startDrag } from "@/utils/cursor";
 import { extractNumberAndUnit } from "@/utils/helpers";
 import { computed } from "vue";
 
@@ -86,14 +87,13 @@ const handleLabelMouseDown = (event: MouseEvent, index: number) => {
 	const min = attrs.min === undefined ? -Infinity : Number(attrs.min);
 	const max = attrs.max === undefined ? Infinity : Number(attrs.max);
 
-	const handleMouseMove = (event: MouseEvent) => {
-		const difference = Math.round(startY - event.clientY) * step;
-		const nextValue = Math.max(min, Math.min(max, startValue + difference));
-		updateValue(index, `${nextValue}${unit}`);
-	};
-
-	const handleMouseUp = () => window.removeEventListener("mousemove", handleMouseMove);
-	window.addEventListener("mousemove", handleMouseMove);
-	window.addEventListener("mouseup", handleMouseUp, { once: true });
+	startDrag({
+		cursor: window.getComputedStyle(event.currentTarget as HTMLElement).cursor,
+		onMove: (moveEvent) => {
+			const difference = Math.round(startY - moveEvent.clientY) * step;
+			const nextValue = Math.max(min, Math.min(max, startValue + difference));
+			updateValue(index, `${nextValue}${unit}`);
+		},
+	});
 };
 </script>
