@@ -47,6 +47,7 @@
 </template>
 <script lang="ts" setup>
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
+import { useInputOverflow } from "@/utils/useInputOverflow";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
@@ -91,14 +92,9 @@ const slots = useSlots();
 
 const containerRef = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
-const hasOverflow = ref(false);
 let fontSet: FontFaceSet | undefined;
 
-const checkOverflow = () => {
-	const input = containerRef.value?.querySelector("input");
-	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
-};
-
+const { hasOverflow, checkOverflow } = useInputOverflow(containerRef);
 const checkOverflowAfterRender = () => void nextTick(checkOverflow);
 
 useResizeObserver(containerRef, (entries) => {

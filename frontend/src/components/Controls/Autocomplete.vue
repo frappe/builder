@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
+import { useInputOverflow } from "@/utils/useInputOverflow";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useResizeObserver } from "@vueuse/core";
 import {
@@ -172,7 +173,6 @@ const emit = defineEmits<{
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
-const hasOverflow = ref(false);
 const isOpen = ref(false);
 const searchQuery = ref("");
 const asyncOptions = ref<Option[]>([]);
@@ -182,10 +182,7 @@ const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
-const checkOverflow = () => {
-	const input = containerRef.value?.querySelector("input");
-	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
-};
+const { hasOverflow, checkOverflow } = useInputOverflow(containerRef);
 
 useResizeObserver(containerRef, checkOverflow);
 onMounted(checkOverflow);

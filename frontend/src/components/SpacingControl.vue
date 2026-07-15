@@ -8,18 +8,18 @@
 			defaultUnit="px"
 			:enableStates="true"
 			:enableSlider="true"
-			:split="!sidesLinked"
+			:split="!linked"
 			:uniformTitle="`Use uniform ${type}`"
 			:splitTitle="`Use individual ${type} sides`"
 			:labels="SIDE_LABELS"
-			:splitValue="expandSpacing"
-			:combineValues="combineSpacingValues"
-			:normalizeValue="normalizeSideValue"
+			:splitValue="splitValue"
+			:combineValues="combine"
+			:normalizeValue="normalize"
 			:inputAttrs="{ min: 0 }"
-			:getModelValue="() => getSpacingValue(null)"
+			:getModelValue="() => readValue(null)"
 			:getPlaceholder="getPlaceholder"
-			:setModelValue="setSpacing"
-			:getVariantValue="getSpacingValue"
+			:setModelValue="applyValue"
+			:getVariantValue="readValue"
 			:setVariantValue="setVariantValue"
 			@update:split="setSplitMode" />
 	</div>
@@ -29,78 +29,35 @@
 import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { normalizeValueWithUnits } from "@/utils/helpers";
-import { computed, onMounted, ref, watch } from "vue";
+import { useSplitBoxControl } from "@/utils/useSplitBoxControl";
+import { computed } from "vue";
 
 type SpacingType = "margin" | "padding";
+type BoxValue = string | number | boolean | null;
 
 const UNITS = ["px", "em", "rem"];
 const SIDE_LABELS = ["T", "R", "B", "L"];
 
 const props = defineProps<{ type: SpacingType }>();
 
-const activeState = ref<string | null>(null);
-const sidesLinked = ref(true);
-const sideValues = ref(["0px", "0px", "0px", "0px"]);
 const label = computed(() => (props.type === "margin" ? "Margin" : "Padding"));
-
-const expandSpacing = (value: unknown): string[] => {
-	const values = String(value ?? "")
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
-	if (!values.length) return ["0px", "0px", "0px", "0px"];
-	if (values.length === 1) return Array(4).fill(values[0]);
-	if (values.length === 2) return [values[0], values[1], values[0], values[1]];
-	if (values.length === 3) return [values[0], values[1], values[2], values[1]];
-	return values.slice(0, 4);
-};
 
 const getBaseValue = (cascading = false) =>
 	props.type === "margin"
 		? blockController.getMargin({ nativeOnly: !cascading, cascading })
 		: blockController.getPadding({ nativeOnly: !cascading, cascading });
 
-const getSpacingValue = (state: string | null) =>
+const readValue = (state: string | null) =>
 	state ? String(blockController.getNativeStyle(`${state}:${props.type}`) ?? "") : String(getBaseValue());
 
 const getPlaceholder = () => String(getBaseValue(true));
 
-const syncSideValues = (value = getSpacingValue(activeState.value)) => {
-	sideValues.value = expandSpacing(value);
-	sidesLinked.value = new Set(sideValues.value).size === 1;
+const writeValue = (state: string | null, value: BoxValue) => {
+	if (state) blockController.setStyle(`${state}:${props.type}`, value);
+	else if (props.type === "margin") blockController.setMargin(String(value || ""));
+	else blockController.setPadding(String(value || ""));
 };
 
-onMounted(() => syncSideValues());
-
-const setBaseValue = (value: string) => {
-	if (props.type === "margin") blockController.setMargin(value);
-	else blockController.setPadding(value);
-};
-
-const setSpacing = (value: string | number | boolean | null) => {
-	const spacing = String(value || "");
-	if (activeState.value) blockController.setStyle(`${activeState.value}:${props.type}`, value);
-	else setBaseValue(spacing);
-	sideValues.value = expandSpacing(spacing);
-};
-
-const normalizeSideValue = (value: string | number | boolean | null) =>
-	normalizeValueWithUnits(String(value), UNITS[0]);
-
-const combineSpacingValues = (values: Array<string | number | boolean | null>) => values.join(" ");
-
-const setSplitMode = (split: boolean) => {
-	if (split) {
-		sidesLinked.value = false;
-		return;
-	}
-	setSpacing(sideValues.value[0]);
-	sidesLinked.value = true;
-};
-
-const setVariantValue = (variant: string, value: string | number | boolean | null) => {
-	activeState.value = variant;
-	setSpacing(value);
-};
+const { linked, applyValue, splitValue, normalize, combine, setSplitMode, setVariantValue } =
+	useSplitBoxControl({ defaultUnit: UNITS[0], readValue, writeValue });
 </script>

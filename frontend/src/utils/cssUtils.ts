@@ -308,6 +308,25 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
 }
 
 /**
+ * Expands a CSS box shorthand (margin, padding, border-radius) into its four
+ * component values following the standard 1/2/3/4-value rules.
+ * @param value - Shorthand value string
+ * @param fallback - Value used for every side when the shorthand is empty
+ * @returns Array of exactly four side values
+ */
+function expandBoxShorthand(value: unknown, fallback = "0px"): string[] {
+	const parts = String(value ?? "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+	if (!parts.length) return Array(4).fill(fallback);
+	if (parts.length === 1) return Array(4).fill(parts[0]);
+	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
+	if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
+	return parts.slice(0, 4);
+}
+
+/**
  * Normalizes CSS values by adding the default unit where missing.
  * Handles both single and whitespace-separated numeric values.
  * @param value - CSS value string
@@ -324,6 +343,7 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 
 export {
 	addPxToNumber,
+	expandBoxShorthand,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,

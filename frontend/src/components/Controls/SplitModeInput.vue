@@ -30,6 +30,7 @@
 <script lang="ts" setup>
 import Input from "@/components/Controls/Input.vue";
 import SplitInput from "@/components/Controls/SplitInput.vue";
+import { expandBoxShorthand } from "@/utils/cssUtils";
 import { TabButtons, type TabButton } from "frappe-ui";
 import type { Component, HTMLAttributes } from "vue";
 import { computed, useAttrs } from "vue";
@@ -81,14 +82,8 @@ const controlAttrs = computed(() =>
 
 const displayValue = computed(() => {
 	if (!props.split) return props.modelValue;
-	const values = String(props.modelValue ?? "")
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
-	if (values[0] === "Mixed") return "";
-	if (!values.length) return "0px";
-	if (values.length === 2) values.push(values[0], values[1]);
-	if (values.length === 3) values.push(values[1]);
+	if (String(props.modelValue ?? "").trim() === "Mixed") return "";
+	const values = expandBoxShorthand(props.modelValue);
 	return new Set(values).size === 1 ? values[0] : "";
 });
 
