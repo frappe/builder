@@ -10,6 +10,10 @@
 			@mousedown="handleMouseDown" />
 
 		<div class="relative flex w-full items-start gap-2" :data-property="propertyKey">
+			<span
+				v-if="labelPlacement === 'left' && visibleVariants.length"
+				class="pointer-events-none absolute -bottom-2 left-[5.5px] top-5 w-px bg-surface-gray-4"
+				aria-hidden="true" />
 			<PropertyLabel
 				v-if="labelPlacement === 'left' && label"
 				ref="propertyLabelRef"
@@ -35,7 +39,7 @@
 
 			<PropertyControlInput
 				:component="props.component"
-				:controlAttrs="controlAttrs"
+				:controlAttrs="resolveControlAttrs(null)"
 				:events="props.events"
 				:modelValue="modelValue"
 				:defaultValue="defaultValue"
@@ -54,18 +58,19 @@
 
 		<!-- Variant controls -->
 		<VariantControl
-			v-for="variant in visibleVariants"
+			v-for="(variant, index) in visibleVariants"
 			:key="variant.name"
 			:data-variant="variant.name"
 			:label="variant.label"
 			:labelPlacement="labelPlacement"
 			:component="props.component"
-			:controlAttrs="controlAttrs"
+			:controlAttrs="resolveControlAttrs(variant.name)"
 			:events="props.events"
 			:modelValue="getDisplayVariantValue(variant.name)"
 			:defaultValue="defaultValue"
 			:placeholder="placeholderValue"
 			:enableSlider="enableSlider"
+			:isLast="index === visibleVariants.length - 1"
 			@update:modelValue="(v: any) => updateVariantValue(variant.name, v)"
 			@keydown="(e: KeyboardEvent) => handleKeyDown(e, variant.name)"
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
@@ -121,6 +126,7 @@ const props = withDefaults(
 		variants?: Array<{ name: string; property: string; label: string }>;
 		getVariantValue?: (variant: string) => string | number | boolean;
 		setVariantValue?: (variant: string, value: string | number | boolean | null) => void;
+		getControlAttrs?: (variant: string | null) => Record<string, unknown>;
 	}>(),
 	{
 		placeholder: "unset",
@@ -141,11 +147,16 @@ const showDropdown = computed(() => {
 	return props.allowDynamicValue || (props.variants && props.variants.length > 0);
 });
 
-const controlAttrs = computed(() => {
+const inheritedControlAttrs = computed(() => {
 	const attrs = useAttrs();
 	const propKeys = Object.keys(props);
 	propKeys.push("style");
 	return Object.fromEntries(Object.entries(attrs).filter(([key]) => !propKeys.includes(key)));
+});
+
+const resolveControlAttrs = (variant: string | null) => ({
+	...inheritedControlAttrs.value,
+	...props.getControlAttrs?.(variant),
 });
 
 const storageUnit = computed(() => props.defaultUnit || props.unitOptions[0] || "");

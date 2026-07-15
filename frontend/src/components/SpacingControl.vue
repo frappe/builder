@@ -8,20 +8,17 @@
 			defaultUnit="px"
 			:enableStates="true"
 			:enableSlider="true"
-			:split="!linked"
 			:uniformTitle="`Use uniform ${type}`"
 			:splitTitle="`Use individual ${type} sides`"
-			:labels="SIDE_LABELS"
+			:labels="SPLIT_LABELS"
 			:splitValue="splitValue"
 			:combineValues="combine"
 			:normalizeValue="normalize"
 			:inputAttrs="type === 'margin' ? {} : { min: 0 }"
 			:getModelValue="() => readValue(null)"
 			:getPlaceholder="getPlaceholder"
-			:setModelValue="applyValue"
 			:getVariantValue="readValue"
-			:setVariantValue="setVariantValue"
-			@update:split="setSplitMode" />
+			:getControlAttrs="getControlAttrs" />
 	</div>
 </template>
 
@@ -29,16 +26,17 @@
 import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { useSplitBoxControl } from "@/utils/useSplitBoxControl";
-import { computed } from "vue";
+import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
+import { computed, reactive } from "vue";
 
 type SpacingType = "margin" | "padding";
 type BoxValue = string | number | boolean | null;
 
 const UNITS = ["px", "em", "rem"];
-const SIDE_LABELS = ["T", "R", "B", "L"];
+const SPLIT_LABELS = ["T", "R", "B", "L"];
 
 const props = defineProps<{ type: SpacingType }>();
+const splitModes = reactive<Record<string, boolean>>({});
 
 const label = computed(() => (props.type === "margin" ? "Margin" : "Padding"));
 
@@ -52,12 +50,15 @@ const readValue = (state: string | null) =>
 
 const getPlaceholder = () => String(getBaseValue(true));
 
-const writeValue = (state: string | null, value: BoxValue) => {
-	if (state) blockController.setStyle(`${state}:${props.type}`, value);
-	else if (props.type === "margin") blockController.setMargin(String(value || ""));
-	else blockController.setPadding(String(value || ""));
-};
+const splitValue = (value: unknown) => expandBoxShorthand(value);
+const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const combine = (parts: BoxValue[]) => parts.join(" ");
 
-const { linked, applyValue, splitValue, normalize, combine, setSplitMode, setVariantValue } =
-	useSplitBoxControl({ defaultUnit: UNITS[0], readValue, writeValue });
+const getControlAttrs = (variant: string | null) => {
+	const key = variant ?? "main";
+	return {
+		split: splitModes[key] ?? new Set(splitValue(readValue(variant))).size > 1,
+		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
+	};
+};
 </script>

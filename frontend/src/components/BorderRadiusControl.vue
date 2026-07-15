@@ -7,20 +7,17 @@
 			:unitOptions="['px', '%']"
 			defaultUnit="px"
 			:enableStates="true"
-			:split="!linked"
 			uniformTitle="Use uniform radius"
 			splitTitle="Use individual corner radii"
-			:labels="CORNER_LABELS"
+			:labels="SPLIT_LABELS"
 			:splitValue="splitValue"
 			:combineValues="combine"
 			:normalizeValue="normalize"
 			:inputAttrs="{ min: 0 }"
 			placeholder="None"
 			:getModelValue="() => readValue(null)"
-			:setModelValue="applyValue"
 			:getVariantValue="readValue"
-			:setVariantValue="setVariantValue"
-			@update:split="setSplitMode" />
+			:getControlAttrs="getControlAttrs" />
 	</div>
 </template>
 
@@ -28,25 +25,27 @@
 import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { useSplitBoxControl } from "@/utils/useSplitBoxControl";
+import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
+import { reactive } from "vue";
 
 type BoxValue = string | number | boolean | null;
 
-const CORNER_LABELS = ["TL", "TR", "BR", "BL"];
+const SPLIT_LABELS = ["TL", "TR", "BR", "BL"];
+
+const splitModes = reactive<Record<string, boolean>>({});
 
 const readValue = (state: string | null) =>
 	String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || "");
 
-const ensureRoundedContentIsClipped = () => {
-	if (!blockController.getStyle("overflowX")) blockController.setStyle("overflowX", "hidden");
-	if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
-};
+const splitValue = (value: unknown) => expandBoxShorthand(value);
+const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const combine = (parts: BoxValue[]) => parts.join(" ");
 
-const writeValue = (state: string | null, value: BoxValue) => {
-	blockController.setStyle(state ? `${state}:borderRadius` : "borderRadius", value);
-	if (value) ensureRoundedContentIsClipped();
+const getControlAttrs = (variant: string | null) => {
+	const key = variant ?? "main";
+	return {
+		split: splitModes[key] ?? new Set(splitValue(readValue(variant))).size > 1,
+		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
+	};
 };
-
-const { linked, applyValue, splitValue, normalize, combine, setSplitMode, setVariantValue } =
-	useSplitBoxControl({ defaultUnit: "px", readValue, writeValue });
 </script>

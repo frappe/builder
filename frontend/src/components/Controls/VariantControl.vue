@@ -30,15 +30,21 @@
 		</div>
 	</div>
 
-	<div v-else class="group/variant flex items-start justify-between gap-2" v-bind="$attrs">
-		<div
-			class="relative flex h-7 w-1/3 min-w-[88px] shrink-0 items-center gap-2 before:absolute before:left-[5px] before:-mt-[33px] before:h-[22px] before:w-[1px] before:bg-surface-gray-4 before:content-['_'] after:absolute after:ml-[3px] after:h-1.5 after:w-1.5 after:rounded-full after:bg-surface-gray-4 hover:after:hidden">
-			<button
-				type="button"
-				class="invisible text-ink-gray-7 hover:text-ink-gray-9 group-hover/variant:visible"
-				@click="$emit('clear')">
-				<span class="lucide-x size-3" aria-hidden="true" />
-			</button>
+	<div v-else class="group/variant relative flex items-start justify-between gap-2" v-bind="$attrs">
+		<span
+			class="pointer-events-none absolute left-[5.5px] top-0 w-px bg-surface-gray-4"
+			:class="isLast ? 'h-3.5' : '-bottom-2'"
+			aria-hidden="true" />
+		<div class="relative flex h-7 w-1/3 min-w-[88px] shrink-0 items-center gap-2">
+			<span class="relative flex size-3 shrink-0 items-center justify-center">
+				<span class="size-1.5 rounded-full bg-surface-gray-4 group-hover/variant:hidden" />
+				<button
+					type="button"
+					class="invisible absolute inset-0 flex items-center justify-center text-ink-gray-7 hover:text-ink-gray-9 group-hover/variant:visible"
+					@click="$emit('clear')">
+					<span class="lucide-x size-3" aria-hidden="true" />
+				</button>
+			</span>
 			<InputLabel :class="{ 'cursor-ns-resize': enableSlider }" @mousedown="$emit('labelMousedown', $event)">
 				{{ label }}
 			</InputLabel>
@@ -76,6 +82,7 @@ defineProps<{
 	defaultValue?: string | number | boolean;
 	placeholder?: string | number | boolean;
 	enableSlider?: boolean;
+	isLast?: boolean;
 }>();
 
 defineEmits<{
