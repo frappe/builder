@@ -1,0 +1,106 @@
+<template>
+	<div class="flex w-full min-w-0 flex-col gap-2" v-bind="rootAttrs">
+		<div class="flex w-full min-w-0 gap-2">
+			<Input
+				class="min-w-0 flex-1"
+				:modelValue="displayValue"
+				:placeholder="split && !displayValue ? 'Mixed' : placeholder"
+				v-bind="controlAttrs"
+				@update:modelValue="setUniformValue" />
+
+			<TabButtons
+				class="shrink-0"
+				:modelValue="split"
+				:options="splitOptions"
+				@click.stop
+				@update:modelValue="setSplitValue" />
+		</div>
+
+		<SplitInput
+			v-if="split && labels.length"
+			:modelValue="modelValue"
+			:labels="labels"
+			:splitValue="splitValue"
+			:combineValues="combineValues"
+			:normalizeValue="normalizeValue"
+			:inputAttrs="inputAttrs"
+			@update:modelValue="setIndividualValue" />
+	</div>
+</template>
+
+<script lang="ts" setup>
+import Input from "@/components/Controls/Input.vue";
+import SplitInput from "@/components/Controls/SplitInput.vue";
+import { TabButtons } from "frappe-ui";
+import type { HTMLAttributes } from "vue";
+import { computed, useAttrs } from "vue";
+
+defineOptions({ inheritAttrs: false });
+
+type InputValue = string | number | boolean | null;
+type InputAttrs = Record<string, unknown>;
+
+const props = withDefaults(
+	defineProps<{
+		modelValue?: InputValue;
+		placeholder?: string | number | boolean;
+		split?: boolean;
+		uniformTitle?: string;
+		splitTitle?: string;
+		labels?: string[];
+		splitValue?: (value: unknown, count: number) => InputValue[];
+		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
+		normalizeValue?: (value: InputValue, index: number) => InputValue;
+		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
+	}>(),
+	{
+		modelValue: "",
+		placeholder: "",
+		split: false,
+		uniformTitle: "Use uniform value",
+		splitTitle: "Use individual values",
+		labels: () => [],
+		splitValue: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
+		combineValues: (values: InputValue[]) => values,
+		normalizeValue: (value: InputValue) => value,
+		inputAttrs: () => ({}),
+	},
+);
+
+const emit = defineEmits<{
+	"update:modelValue": [value: InputValue];
+	"update:split": [value: boolean];
+}>();
+
+const attrs = useAttrs();
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }) as HTMLAttributes);
+const controlAttrs = computed(() =>
+	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
+);
+
+const displayValue = computed(() => {
+	if (!props.split) return props.modelValue;
+	const values = String(props.modelValue ?? "").trim().split(/\s+/).filter(Boolean);
+	if (values[0] === "Mixed") return "";
+	if (!values.length) return "0px";
+	if (values.length === 2) values.push(values[0], values[1]);
+	if (values.length === 3) values.push(values[1]);
+	return new Set(values).size === 1 ? values[0] : "";
+});
+
+const splitOptions = computed(() => [
+	{ label: props.uniformTitle, value: false, icon: "lucide-square", tooltip: props.uniformTitle },
+	{ label: props.splitTitle, value: true, icon: "lucide-scan", tooltip: props.splitTitle },
+]);
+
+const setSplitValue = (value: string | number | boolean | undefined) => {
+	if (value !== undefined) emit("update:split", Boolean(value));
+};
+
+const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);
+
+const setUniformValue = (value: InputValue) => {
+	if (props.split) emit("update:split", false);
+	emit("update:modelValue", value);
+};
+</script>
