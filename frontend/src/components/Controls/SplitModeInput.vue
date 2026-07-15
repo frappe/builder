@@ -4,14 +4,14 @@
 			<Input
 				class="min-w-0 flex-1"
 				:modelValue="displayValue"
-				:placeholder="split && !displayValue ? 'Mixed' : placeholder"
+				:placeholder="split && labels.length && !displayValue ? 'Mixed' : placeholder"
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
 
 			<TabButtons
 				class="shrink-0"
 				:modelValue="split"
-				:options="splitOptions"
+				:options="resolvedSplitOptions"
 				@update:modelValue="setSplitValue" />
 		</div>
 
@@ -30,14 +30,15 @@
 <script lang="ts" setup>
 import Input from "@/components/Controls/Input.vue";
 import SplitInput from "@/components/Controls/SplitInput.vue";
-import { TabButtons } from "frappe-ui";
-import type { HTMLAttributes } from "vue";
+import { TabButtons, type TabButton } from "frappe-ui";
+import type { Component, HTMLAttributes } from "vue";
 import { computed, useAttrs } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 type InputValue = string | number | boolean | null;
 type InputAttrs = Record<string, unknown>;
+type SplitOption = Omit<TabButton, "value"> & { value: boolean };
 
 const props = withDefaults(
 	defineProps<{
@@ -46,6 +47,7 @@ const props = withDefaults(
 		split?: boolean;
 		uniformTitle?: string;
 		splitTitle?: string;
+		splitOptions?: SplitOption[];
 		labels?: string[];
 		splitValue?: (value: unknown, count: number) => InputValue[];
 		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
@@ -90,13 +92,25 @@ const displayValue = computed(() => {
 	return new Set(values).size === 1 ? values[0] : "";
 });
 
-const splitOptions = computed(() => [
-	{ label: props.uniformTitle, value: false, icon: "lucide-square", tooltip: props.uniformTitle },
-	{ label: props.splitTitle, value: true, icon: "lucide-scan", tooltip: props.splitTitle },
+const defaultSplitOptions = computed<SplitOption[]>(() => [
+	{
+		label: props.uniformTitle,
+		value: false,
+		icon: "lucide-square",
+		tooltip: props.uniformTitle,
+	},
+	{
+		label: props.splitTitle,
+		value: true,
+		icon: "lucide-scan",
+		tooltip: props.splitTitle,
+	},
 ]);
 
+const resolvedSplitOptions = computed(() => props.splitOptions ?? defaultSplitOptions.value);
+
 const setSplitValue = (value: string | number | boolean | undefined) => {
-	if (value !== undefined) emit("update:split", Boolean(value));
+	if (typeof value === "boolean") emit("update:split", value);
 };
 
 const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);

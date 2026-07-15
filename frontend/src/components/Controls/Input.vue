@@ -50,7 +50,7 @@ import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
-import { computed, nextTick, onMounted, ref, useAttrs, useSlots, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useAttrs, useSlots, watch } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -90,21 +90,30 @@ const attrs = useAttrs();
 const slots = useSlots();
 
 const containerRef = ref<HTMLElement | null>(null);
-const containerWidth = ref(Infinity);
+const containerWidth = ref(0);
 const hasOverflow = ref(false);
+let fontSet: FontFaceSet | undefined;
 
 const checkOverflow = () => {
 	const input = containerRef.value?.querySelector("input");
 	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
 };
 
+const checkOverflowAfterRender = () => void nextTick(checkOverflow);
+
 useResizeObserver(containerRef, (entries) => {
 	containerWidth.value = entries[0].contentRect.width;
-	checkOverflow();
+	checkOverflowAfterRender();
 });
 
-onMounted(checkOverflow);
-watch(data, () => nextTick(checkOverflow), { flush: "post" });
+onMounted(() => {
+	checkOverflowAfterRender();
+	fontSet = document.fonts;
+	void fontSet?.ready.then(checkOverflow);
+	fontSet?.addEventListener("loadingdone", checkOverflow);
+});
+
+onUnmounted(() => fontSet?.removeEventListener("loadingdone", checkOverflow));
 
 const canShowArrows = computed(
 	() => !props.disabled && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,
@@ -132,6 +141,8 @@ const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 	},
 	getAttrs: () => attrs,
 });
+
+watch([data, paddingClass], checkOverflowAfterRender, { flush: "post" });
 
 const clearValue = () => {
 	data.value = "";
