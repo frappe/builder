@@ -1430,6 +1430,9 @@ def set_fonts_from_html(soup, font_map):
 
 
 def extend_block(block, overridden_block):
+	normalize_legacy_block_client_script(block)
+	normalize_legacy_block_client_script(overridden_block)
+
 	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
 	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
 	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
@@ -1462,6 +1465,9 @@ def extend_block(block, overridden_block):
 	if not block.get("props"):
 		block["props"] = {}
 	block["props"].update(overridden_block.get("props", {}))
+
+	if block.get("clientScript") or overridden_block.get("clientScript"):
+		block.setdefault("clientScript", {}).update(overridden_block.get("clientScript", {}))
 
 	dataKey = overridden_block.get("dataKey", {})
 	if not block.get("dataKey"):
@@ -1536,7 +1542,7 @@ def resolve_path(path):
 def reset_with_component(block, extended_with_component, component_children):
 	reset_block(block)
 	block["children"] = []
-	for component_child in component_children:
+	for component_child in component_children or []:
 		component_child_id = component_child.get("blockId")
 		child_block = reset_block(component_child)
 		child_block["isChildOfComponent"] = extended_with_component
@@ -1571,7 +1577,14 @@ def reset_block(block):
 	block["dataKey"] = {}
 	block["props"] = {}
 	block["dynamicValues"] = []
+	block["clientScript"] = {}
+	block.pop("blockClientScript", None)
 	return block
+
+
+def normalize_legacy_block_client_script(block):
+	if not block.get("clientScript") and block.get("blockClientScript"):
+		block["clientScript"] = {"js": block.get("blockClientScript")}
 
 
 def extract_data_key(data_key):
