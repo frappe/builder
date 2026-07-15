@@ -19,10 +19,11 @@
 
 		<div class="mt-1 grid" :style="gridStyle">
 			<span
-				v-for="label in labels"
+				v-for="(label, index) in labels"
 				:key="`label-${label}`"
-				class="truncate text-center text-[8px] text-ink-gray-5"
-				:title="label">
+				class="cursor-ns-resize truncate text-center text-[8px] text-ink-gray-5"
+				:title="label"
+				@mousedown.prevent="handleLabelMouseDown($event, index)">
 				{{ label }}
 			</span>
 		</div>
@@ -31,6 +32,7 @@
 
 <script lang="ts" setup>
 import Input from "@/components/Controls/Input.vue";
+import { extractNumberAndUnit } from "@/utils/helpers";
 import { computed } from "vue";
 
 type InputValue = string | number | boolean | null;
@@ -73,5 +75,25 @@ const updateValue = (index: number, value: InputValue) => {
 	const nextValues: InputValue[] = [...values.value];
 	nextValues[index] = props.normalizeValue(value, index);
 	emit("update:modelValue", props.combineValues(nextValues, index));
+};
+
+const handleLabelMouseDown = (event: MouseEvent, index: number) => {
+	const { number, unit } = extractNumberAndUnit(String(values.value[index] ?? ""));
+	const startValue = Number(number);
+	const startY = event.clientY;
+	const attrs = getInputAttrs(index);
+	const step = Number(attrs.step) || 1;
+	const min = attrs.min === undefined ? -Infinity : Number(attrs.min);
+	const max = attrs.max === undefined ? Infinity : Number(attrs.max);
+
+	const handleMouseMove = (event: MouseEvent) => {
+		const difference = Math.round(startY - event.clientY) * step;
+		const nextValue = Math.max(min, Math.min(max, startValue + difference));
+		updateValue(index, `${nextValue}${unit}`);
+	};
+
+	const handleMouseUp = () => window.removeEventListener("mousemove", handleMouseMove);
+	window.addEventListener("mousemove", handleMouseMove);
+	window.addEventListener("mouseup", handleMouseUp, { once: true });
 };
 </script>
