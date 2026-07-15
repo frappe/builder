@@ -122,6 +122,75 @@ def render_results(provider: str, results: list[dict]) -> str:
 	return "\n".join(lines)
 
 
+def pick_video_file(files: list[dict]) -> str | None:
+	"""A browser-friendly mp4, biggest quality that isn't a 4K monster. Pexels
+	returns several renditions per clip (sd/hd/uhd); a hero-background loop wants
+	~1080p, not a 30 MB 4K file that stalls the page."""
+	mp4s = [f for f in files if f.get("file_type") == "video/mp4" and f.get("link")]
+	if not mp4s:
+		return None
+	sane = [f for f in mp4s if (f.get("width") or 0) <= 1920] or mp4s
+	return max(sane, key=lambda f: f.get("width") or 0)["link"]
+
+
+def search_pexels_videos(query: str, orientation: str | None, key: str) -> list[dict]:
+	params = {"query": query, "per_page": MAX_RESULTS}
+	if orientation:
+		params["orientation"] = orientation
+	r = requests.get(
+		"https://api.pexels.com/videos/search",
+		params=params,
+		headers={"Authorization": key},
+		timeout=SEARCH_TIMEOUT,
+	)
+	r.raise_for_status()
+	out = []
+	for v in r.json().get("videos", []):
+		link = pick_video_file(v.get("video_files") or [])
+		if not link:
+			continue
+		out.append(
+			{
+				"url": link,
+				"thumb": v.get("image") or "",
+				"description": (v.get("user") or {}).get("name") and f"clip by {v['user']['name']}" or "",
+				"credit": (v.get("user") or {}).get("name") or "Pexels",
+				"size": f"{v.get('width')}x{v.get('height')}, {v.get('duration')}s",
+			}
+		)
+	return out
+
+
+def run_search_videos(ctx, args: dict) -> str:
+	query = (args.get("query") or "").strip()
+	if not query:
+		return "query is required."
+	key = frappe.conf.pexels_api_key
+	if not key:
+		return (
+			"Stock video search is unavailable (no pexels_api_key configured). Fall back to a "
+			"still photo (search_images) or a CSS-animated composition for motion."
+		)
+	orientation = args.get("orientation") if args.get("orientation") in ORIENTATIONS else None
+	try:
+		results = search_pexels_videos(query, orientation, key)
+	except Exception as e:
+		frappe.logger("builder.ai").warning(f"search_videos via Pexels failed: {e}")
+		results = []
+	if not results:
+		return (
+			f"No videos found for '{query}'. Try a simpler, more visual query (subject + setting, "
+			"e.g. 'coffee pour slow motion'), or fall back to a still photo / CSS motion."
+		)
+	lines = ["Pexels video results — put `url` in a video block's src (attrs.src), `thumb` as its poster:"]
+	for i, v in enumerate(results, 1):
+		desc = v["description"][:120] or "(no description)"
+		lines.append(
+			f"{i}. {desc} — by {v['credit']}, {v['size']}\n   url: {v['url']}\n   thumb: {v['thumb']}"
+		)
+	return "\n".join(lines)
+
+
 search_images = Tool(
 	name="search_images",
 	side="server",
@@ -146,4 +215,30 @@ search_images = Tool(
 	},
 )
 
-TOOLS = [search_images]
+search_videos = Tool(
+	name="search_videos",
+	side="server",
+	handler=run_search_videos,
+	description=(
+		"Search stock video libraries for REAL footage (ambient hero loops, product motion, "
+		"textures, b-roll). Use this when a page wants motion a still photo can't give — a "
+		"muted, looping hero background or a section accent. Returns direct .mp4 URLs: put `url` "
+		"in a video block's attrs.src and `thumb` as the poster. A video block is "
+		"{el: 'video', attrs: {src: <url>, autoplay: '', muted: '', loop: '', playsinline: '', "
+		"poster: <thumb>}, style: {objectFit: 'cover', width: '100%', height: '100%'}} — muted is "
+		"REQUIRED for autoplay to work. Search with a concrete visual query (subject + motion + mood)."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"query": {
+				"type": "string",
+				"description": "Visual description of the motion, e.g. 'slow motion coffee pour on dark counter'.",
+			},
+			"orientation": {"type": "string", "enum": list(ORIENTATIONS)},
+		},
+		"required": ["query"],
+	},
+)
+
+TOOLS = [search_images, search_videos]
