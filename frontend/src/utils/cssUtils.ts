@@ -264,8 +264,11 @@ function getBoxSpacing(
 	const sRight = String(right);
 	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
 	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
-	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
-	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
+	// A side left unset while others are set falls back to an empty base; treat it as 0
+	// so the reconstructed shorthand stays well-formed and expands to the right corners.
+	const fill = (value: string) => value || "0px";
+	if (sTop === sBottom && sLeft === sRight) return `${fill(sTop)} ${fill(sLeft)}`;
+	return `${fill(sTop)} ${fill(sRight)} ${fill(sBottom)} ${fill(sLeft)}`;
 }
 
 /**
