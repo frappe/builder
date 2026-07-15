@@ -30,7 +30,8 @@
 		label="Gap"
 		propertyKey="gap"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']" />
+		:unitOptions="['px', 'em', 'rem']"
+		defaultUnit="px" />
 	<StylePropertyControl
 		propertyKey="flexWrap"
 		:component="OptionToggle"

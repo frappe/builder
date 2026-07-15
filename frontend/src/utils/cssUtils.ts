@@ -3,6 +3,8 @@
 
 import Block from "@/block";
 
+const numericValuePattern = /^(-?(?:\d+(?:\.\d*)?|\.\d+))([a-z%]*)$/i;
+
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
@@ -283,7 +285,7 @@ function extractNumberAndUnit(value: string): { number: string; unit: string } {
  * @returns String with unit attached
  */
 function addUnitToNumber(numberStr: string, unit: string): string {
-	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
+	const match = numberStr.match(numericValuePattern);
 	if (match) {
 		const [, number, existingUnit] = match;
 		return existingUnit ? numberStr : number + unit;
@@ -292,27 +294,32 @@ function addUnitToNumber(numberStr: string, unit: string): string {
 }
 
 /**
- * Normalizes CSS values by adding default units where missing
- * Handles both single values and spacing properties with multiple values
+ * Removes the default unit from numeric values for display in controls.
+ * Other units remain visible.
+ */
+function removeDefaultUnit(value: string, defaultUnit: string): string {
+	return value
+		.split(/(\s+)/)
+		.map((part) => {
+			const match = part.match(numericValuePattern);
+			return match?.[2].toLowerCase() === defaultUnit.toLowerCase() ? match[1] : part;
+		})
+		.join("");
+}
+
+/**
+ * Normalizes CSS values by adding the default unit where missing.
+ * Handles both single and whitespace-separated numeric values.
  * @param value - CSS value string
- * @param unitOptions - Array of possible units, first is used as default
- * @param propertyKey - CSS property name (used to detect spacing properties)
+ * @param defaultUnit - Unit to add to unitless numbers
  * @returns Normalized value string with units added
  */
-function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
-	if (!unitOptions.length) return value;
-
-	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
-
-	if (isSpacingProperty) {
-		const parts = value.trim().split(/\s+/);
-		if (parts.length > 1) {
-			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
-		}
-	}
-
-	return addUnitToNumber(value, defaultUnit);
+function normalizeValueWithUnits(value: string, defaultUnit: string): string {
+	if (!defaultUnit) return value;
+	return value
+		.split(/(\s+)/)
+		.map((part) => addUnitToNumber(part, defaultUnit))
+		.join("");
 }
 
 export {
@@ -322,6 +329,7 @@ export {
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
+	removeDefaultUnit,
 	setBoxSpacing,
 	shortenNumber,
 };

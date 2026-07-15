@@ -9,10 +9,7 @@
 			:enableSlider="enableSlider"
 			@mousedown="handleMouseDown" />
 
-		<div
-			class="relative flex w-full gap-2"
-			:class="labelPlacement === 'top' ? 'items-start' : 'items-center'"
-			:data-property="propertyKey">
+		<div class="relative flex w-full items-start gap-2" :data-property="propertyKey">
 			<PropertyLabel
 				v-if="labelPlacement === 'left' && label"
 				ref="propertyLabelRef"
@@ -20,7 +17,7 @@
 				:showDropdown="showDropdown"
 				:dropdownOptions="dropdownOptions"
 				:enableSlider="enableSlider"
-				containerClass="min-w-[88px] w-1/3 shrink-0"
+				containerClass="h-7 min-w-[88px] w-1/3 shrink-0"
 				@mousedown="handleMouseDown" />
 
 			<DraggablePopup
@@ -65,7 +62,7 @@
 			:component="props.component"
 			:controlAttrs="controlAttrs"
 			:events="props.events"
-			:modelValue="getVariantValue(variant.name)"
+			:modelValue="getDisplayVariantValue(variant.name)"
 			:defaultValue="defaultValue"
 			:placeholder="placeholderValue"
 			:enableSlider="enableSlider"
@@ -87,7 +84,7 @@ import PropertyControlInput from "@/components/Controls/PropertyControlInput.vue
 import PropertyLabel from "@/components/Controls/PropertyLabel.vue";
 import VariantControl from "@/components/Controls/VariantControl.vue";
 import blockController from "@/utils/blockController";
-import { extractNumberAndUnit, normalizeValueWithUnits } from "@/utils/helpers";
+import { extractNumberAndUnit, normalizeValueWithUnits, removeDefaultUnit } from "@/utils/helpers";
 import type { Component } from "vue";
 import { computed, ref, useAttrs } from "vue";
 
@@ -112,6 +109,7 @@ const props = withDefaults(
 		setDynamicValue?: (key: string, comesFrom: BlockDataKey["comesFrom"]) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
+		defaultUnit?: string;
 		changeFactor?: number;
 		minValue?: number;
 		maxValue?: number | null;
@@ -150,21 +148,35 @@ const controlAttrs = computed(() => {
 	return Object.fromEntries(Object.entries(attrs).filter(([key]) => !propKeys.includes(key)));
 });
 
+const storageUnit = computed(() => props.defaultUnit || props.unitOptions[0] || "");
+
+const formatValueForDisplay = (value: string | number | boolean) => {
+	if (typeof value !== "string" || !props.defaultUnit) return value;
+	return removeDefaultUnit(value, props.defaultUnit);
+};
+
 const defaultValue = computed(() => {
-	return blockController.getCascadingStyle(props.propertyKey) ?? props.defaultValue;
+	const value = blockController.getCascadingStyle(props.propertyKey) ?? props.defaultValue;
+	return value === undefined ? value : formatValueForDisplay(value);
 });
 
-const modelValue = computed(() => props.getModelValue?.() ?? "");
+const rawModelValue = computed(() => props.getModelValue?.() ?? "");
+const modelValue = computed(() => formatValueForDisplay(rawModelValue.value));
 
-const placeholderValue = computed(() => props.getPlaceholder?.() ?? props.placeholder);
+const placeholderValue = computed(() => formatValueForDisplay(props.getPlaceholder?.() ?? props.placeholder));
 
 // Normalize and extract value from various input formats
-const normalizeInputValue = (value: string | number | boolean | null | { label: string; value: string }) => {
+const normalizeInputValue = (
+	inputValue: string | number | boolean | null | { label: string; value: string },
+) => {
+	let value = inputValue;
 	if (typeof value === "object" && value !== null && "value" in value) {
 		value = value.value;
 	}
-	if (value && typeof value === "string") {
-		value = normalizeValueWithUnits(value, props.unitOptions, props.propertyKey);
+	if (typeof value === "number" && storageUnit.value) {
+		value = `${value}${storageUnit.value}`;
+	} else if (typeof value === "string" && storageUnit.value) {
+		value = normalizeValueWithUnits(value, storageUnit.value);
 	}
 	return value as string | number | boolean;
 };
@@ -176,7 +188,7 @@ const updateValue = (value: string | number | boolean | null | { label: string; 
 // Generic slider handler for both main control and variants
 const handleSliderMouseDown = (e: MouseEvent, variantName?: string) => {
 	if (!props.enableSlider) return;
-	const currentValue = variantName ? getVariantValue(variantName) : modelValue.value;
+	const currentValue = variantName ? getRawVariantValue(variantName) : rawModelValue.value;
 	const { number } = extractNumberAndUnit(String(currentValue || ""));
 	const startY = e.clientY;
 	const startValue = Number(number);
@@ -194,12 +206,15 @@ const handleSliderMouseDown = (e: MouseEvent, variantName?: string) => {
 
 const handleMouseDown = (e: MouseEvent) => handleSliderMouseDown(e);
 
-const getVariantValue = (variantName: string) => {
+const getRawVariantValue = (variantName: string) => {
 	if (props.getVariantValue) {
 		return props.getVariantValue(variantName);
 	}
 	return "";
 };
+
+const getDisplayVariantValue = (variantName: string) =>
+	formatValueForDisplay(getRawVariantValue(variantName));
 
 const updateVariantValue = (
 	variantName: string,
@@ -217,12 +232,12 @@ const dropdownOptions = computed(() => {
 	if (props.variants?.length) {
 		options.push(
 			...props.variants
-				.filter((variant) => !getVariantValue(variant.name))
+				.filter((variant) => !getRawVariantValue(variant.name))
 				.map((variant) => ({
 					label: variant.label,
 					onClick: () => {
 						if (props.setVariantValue) {
-							props.setVariantValue(variant.name, modelValue.value as string);
+							props.setVariantValue(variant.name, rawModelValue.value as string);
 						}
 					},
 				})),
@@ -242,14 +257,13 @@ const dropdownOptions = computed(() => {
 
 const visibleVariants = computed(() => {
 	if (!props.variants?.length) return [];
-	return props.variants.filter((variant) => getVariantValue(variant.name));
+	return props.variants.filter((variant) => getRawVariantValue(variant.name));
 });
 
 const adjustNumericValue = (step: number, initialValue: number | null = null, variantName?: string) => {
-	const currentValue = variantName ? getVariantValue(variantName) : String(modelValue.value || "");
+	const currentValue = variantName ? getRawVariantValue(variantName) : String(rawModelValue.value || "");
 	const { number, unit: existingUnit } = extractNumberAndUnit(String(currentValue));
-	const unit =
-		existingUnit || (props.unitOptions.length && !isNaN(Number(number)) ? props.unitOptions[0] : "");
+	const unit = existingUnit || (!isNaN(Number(number)) ? storageUnit.value : "");
 
 	let newValue = (initialValue != null ? initialValue : Number(number)) + step;
 	newValue = Math.max(props.minValue, Math.min(props.maxValue ?? Infinity, newValue));

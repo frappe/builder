@@ -1,27 +1,26 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<div @pointerdown="selectActiveState" @focusin="updateActiveState">
-			<StylePropertyControl
-				propertyKey="borderRadius"
-				:component="SplitModeInput"
-				label="Radius"
-				:unitOptions="['px', '%']"
-				:enableStates="true"
-				:split="!cornersLinked"
-				uniformTitle="Use uniform radius"
-				splitTitle="Use individual corner radii"
-				:labels="CORNER_LABELS"
-				:splitValue="expandRadius"
-				:combineValues="combineRadiusValues"
-				:normalizeValue="normalizeCornerValue"
-				:inputAttrs="{ min: 0 }"
-				placeholder="None"
-				:getModelValue="() => getBorderRadiusValue(null)"
-				:getVariantValue="getBorderRadiusValue"
-				:setVariantValue="setVariantValue"
-				@update:split="setSplitMode"
-				@update:modelValue="setBorderRadius" />
-		</div>
+		<StylePropertyControl
+			propertyKey="borderRadius"
+			:component="SplitModeInput"
+			label="Radius"
+			:unitOptions="['px', '%']"
+			defaultUnit="px"
+			:enableStates="true"
+			:split="!cornersLinked"
+			uniformTitle="Use uniform radius"
+			splitTitle="Use individual corner radii"
+			:labels="CORNER_LABELS"
+			:splitValue="expandRadius"
+			:combineValues="combineRadiusValues"
+			:normalizeValue="normalizeCornerValue"
+			:inputAttrs="{ min: 0 }"
+			placeholder="None"
+			:getModelValue="() => getBorderRadiusValue(null)"
+			:getVariantValue="getBorderRadiusValue"
+			:setVariantValue="setVariantValue"
+			@update:split="setSplitMode"
+			@update:modelValue="setBorderRadius" />
 	</div>
 </template>
 
@@ -45,7 +44,10 @@ const getBorderRadiusValue = (state: string | null) =>
 	(blockController.getStyle(getStyleKey(state)) || "") as string;
 
 const expandRadius = (value: unknown): string[] => {
-	const values = String(value ?? "").trim().split(/\s+/).filter(Boolean);
+	const values = String(value ?? "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
 	if (!values.length) return ["0px", "0px", "0px", "0px"];
 	if (values.length === 1) return Array(4).fill(values[0]);
 	if (values.length === 2) return [values[0], values[1], values[0], values[1]];
@@ -82,7 +84,7 @@ const setBorderRadius = (value: string | number | boolean | null) => {
 };
 
 const normalizeCornerValue = (value: string | number | boolean | null) =>
-	normalizeValueWithUnits(String(value || "0px"), ["px", "%"], "borderRadius");
+	normalizeValueWithUnits(String(value || "0px"), "px");
 
 const combineRadiusValues = (values: Array<string | number | boolean | null>) => values.join(" ");
 

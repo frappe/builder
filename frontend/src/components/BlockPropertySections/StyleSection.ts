@@ -100,6 +100,7 @@ const styleSectionProperties = [
 				propertyKey: "borderWidth",
 				enableSlider: true,
 				unitOptions: ["px", "%", "em", "rem"],
+				defaultUnit: "px",
 				minValue: 0,
 			};
 		},

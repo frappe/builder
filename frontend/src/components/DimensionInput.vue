@@ -18,7 +18,8 @@
 				value: '100%',
 			},
 		]"
-		:unitOptions="['px', '%', 'vw', 'vh']"></StylePropertyControl>
+		:unitOptions="['px', '%', 'vw', 'vh']"
+		defaultUnit="px"></StylePropertyControl>
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";

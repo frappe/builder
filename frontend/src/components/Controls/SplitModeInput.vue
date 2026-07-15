@@ -12,7 +12,6 @@
 				class="shrink-0"
 				:modelValue="split"
 				:options="splitOptions"
-				@click.stop
 				@update:modelValue="setSplitValue" />
 		</div>
 
@@ -80,7 +79,10 @@ const controlAttrs = computed(() =>
 
 const displayValue = computed(() => {
 	if (!props.split) return props.modelValue;
-	const values = String(props.modelValue ?? "").trim().split(/\s+/).filter(Boolean);
+	const values = String(props.modelValue ?? "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
 	if (values[0] === "Mixed") return "";
 	if (!values.length) return "0px";
 	if (values.length === 2) values.push(values[0], values[1]);
@@ -100,6 +102,7 @@ const setSplitValue = (value: string | number | boolean | undefined) => {
 const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);
 
 const setUniformValue = (value: InputValue) => {
+	if (String(value ?? "") === String(displayValue.value ?? "")) return;
 	if (props.split) emit("update:split", false);
 	emit("update:modelValue", value);
 };

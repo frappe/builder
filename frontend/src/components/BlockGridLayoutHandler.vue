@@ -53,7 +53,8 @@
 		label="Gap"
 		v-if="blockController.isGrid()"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']" />
+		:unitOptions="['px', 'em', 'rem']"
+		defaultUnit="px" />
 	<!-- <InlineInput
 		label="Align"
 		v-if="blockController.isGrid()"

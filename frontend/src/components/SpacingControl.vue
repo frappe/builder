@@ -1,28 +1,27 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<div @pointerdown="selectActiveState" @focusin="selectActiveState">
-			<StylePropertyControl
-				:propertyKey="type"
-				:component="SplitModeInput"
-				:label="label"
-				:unitOptions="UNITS"
-				:enableStates="true"
-				:enableSlider="true"
-				:split="!sidesLinked"
-				:uniformTitle="`Use uniform ${type}`"
-				:splitTitle="`Use individual ${type} sides`"
-				:labels="SIDE_LABELS"
-				:splitValue="expandSpacing"
-				:combineValues="combineSpacingValues"
-				:normalizeValue="normalizeSideValue"
-				:inputAttrs="{ min: 0 }"
-				:getModelValue="() => getSpacingValue(null)"
-				:getPlaceholder="getPlaceholder"
-				:setModelValue="setSpacing"
-				:getVariantValue="getSpacingValue"
-				:setVariantValue="setVariantValue"
-				@update:split="setSplitMode" />
-		</div>
+		<StylePropertyControl
+			:propertyKey="type"
+			:component="SplitModeInput"
+			:label="label"
+			:unitOptions="UNITS"
+			defaultUnit="px"
+			:enableStates="true"
+			:enableSlider="true"
+			:split="!sidesLinked"
+			:uniformTitle="`Use uniform ${type}`"
+			:splitTitle="`Use individual ${type} sides`"
+			:labels="SIDE_LABELS"
+			:splitValue="expandSpacing"
+			:combineValues="combineSpacingValues"
+			:normalizeValue="normalizeSideValue"
+			:inputAttrs="{ min: 0 }"
+			:getModelValue="() => getSpacingValue(null)"
+			:getPlaceholder="getPlaceholder"
+			:setModelValue="setSpacing"
+			:getVariantValue="getSpacingValue"
+			:setVariantValue="setVariantValue"
+			@update:split="setSplitMode" />
 	</div>
 </template>
 
@@ -31,7 +30,7 @@ import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { normalizeValueWithUnits } from "@/utils/helpers";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 type SpacingType = "margin" | "padding";
 
@@ -46,7 +45,10 @@ const sideValues = ref(["0px", "0px", "0px", "0px"]);
 const label = computed(() => (props.type === "margin" ? "Margin" : "Padding"));
 
 const expandSpacing = (value: unknown): string[] => {
-	const values = String(value ?? "").trim().split(/\s+/).filter(Boolean);
+	const values = String(value ?? "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
 	if (!values.length) return ["0px", "0px", "0px", "0px"];
 	if (values.length === 1) return Array(4).fill(values[0]);
 	if (values.length === 2) return [values[0], values[1], values[0], values[1]];
@@ -71,12 +73,6 @@ const syncSideValues = (value = getSpacingValue(activeState.value)) => {
 
 onMounted(() => syncSideValues());
 
-const selectActiveState = (event: Event) => {
-	const variantRow = (event.target as HTMLElement).closest("[data-variant]:not(input)");
-	activeState.value = variantRow?.getAttribute("data-variant") || null;
-	syncSideValues();
-};
-
 const setBaseValue = (value: string) => {
 	if (props.type === "margin") blockController.setMargin(value);
 	else blockController.setPadding(value);
@@ -90,7 +86,7 @@ const setSpacing = (value: string | number | boolean | null) => {
 };
 
 const normalizeSideValue = (value: string | number | boolean | null) =>
-	normalizeValueWithUnits(String(value), UNITS, props.type);
+	normalizeValueWithUnits(String(value), UNITS[0]);
 
 const combineSpacingValues = (values: Array<string | number | boolean | null>) => values.join(" ");
 

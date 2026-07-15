@@ -26,6 +26,7 @@ const props = withDefaults(
 		setModelValue?: (value: string | number | boolean) => void;
 		enableSlider?: boolean;
 		unitOptions?: string[];
+		defaultUnit?: string;
 		changeFactor?: number;
 		minValue?: number;
 		maxValue?: number | null;
