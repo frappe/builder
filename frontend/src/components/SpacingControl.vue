@@ -15,7 +15,7 @@
 			:splitValue="splitValue"
 			:combineValues="combine"
 			:normalizeValue="normalize"
-			:inputAttrs="{ min: 0 }"
+			:inputAttrs="type === 'margin' ? {} : { min: 0 }"
 			:getModelValue="() => readValue(null)"
 			:getPlaceholder="getPlaceholder"
 			:setModelValue="applyValue"

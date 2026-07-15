@@ -14,11 +14,10 @@ interface SplitBoxOptions {
  * border-radius) that toggle between a uniform value and four individual sides.
  */
 export function useSplitBoxControl({ defaultUnit, readValue, writeValue }: SplitBoxOptions) {
-	const activeState = ref<string | null>(null);
 	const linked = ref(true);
 	const values = ref<string[]>(expandBoxShorthand(""));
 
-	const sync = (value = readValue(activeState.value)) => {
+	const sync = (value = readValue(null)) => {
 		values.value = expandBoxShorthand(value);
 		linked.value = new Set(values.value).size === 1;
 	};
@@ -26,7 +25,7 @@ export function useSplitBoxControl({ defaultUnit, readValue, writeValue }: Split
 	onMounted(() => sync());
 
 	const applyValue = (value: BoxValue) => {
-		writeValue(activeState.value, value);
+		writeValue(null, value);
 		values.value = expandBoxShorthand(value);
 	};
 
@@ -44,8 +43,7 @@ export function useSplitBoxControl({ defaultUnit, readValue, writeValue }: Split
 	};
 
 	const setVariantValue = (variant: string, value: BoxValue) => {
-		activeState.value = variant;
-		applyValue(value);
+		writeValue(variant, value);
 	};
 
 	return { linked, applyValue, splitValue, normalize, combine, setSplitMode, setVariantValue };
