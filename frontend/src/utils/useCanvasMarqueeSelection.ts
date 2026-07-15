@@ -238,6 +238,14 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 			return false;
 		}
 
+		// Pressing on an actual block starts a block drag/selection (see
+		// useBlockEventHandlers), not a marquee. The root block (page background)
+		// and truly empty canvas still start a marquee.
+		const blockEl = target.closest(".__builder_component__") as HTMLElement | null;
+		if (blockEl && blockEl.dataset.blockId && blockEl.dataset.blockId !== "root") {
+			return false;
+		}
+
 		return true;
 	};
 

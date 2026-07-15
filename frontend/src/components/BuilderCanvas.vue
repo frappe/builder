@@ -100,6 +100,7 @@
 			id="overlay"
 			ref="overlay" />
 		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
+		<DropIndicator />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
@@ -155,6 +156,7 @@ import {
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import DropIndicator from "./DropIndicator.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();

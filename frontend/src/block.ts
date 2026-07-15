@@ -363,6 +363,9 @@ class Block implements BlockOptions {
 	isSVG() {
 		return this.getElement() === "svg" || this.getInnerHTML()?.startsWith("<svg");
 	}
+	isInlineSVG() {
+		return this.isSVG() && Boolean(this.getInnerHTML());
+	}
 	isText() {
 		return TEXT_ELEMENTS.has(this.getElement() as string);
 	}

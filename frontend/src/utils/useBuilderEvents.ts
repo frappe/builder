@@ -579,20 +579,20 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 			message: "Do you want to copy the entire page including settings and scripts?",
 			actions: [
 				{
-					label: "Yes",
-					variant: "solid",
-					onClick: () => {
-						canvasStore.requiresConfirmationForCopyingEntirePage = false;
-						canvasStore.copyEntirePage = true;
-						triggerCopyEvent();
-					},
-				},
-				{
 					label: "No, just blocks",
 					variant: "subtle",
 					onClick: () => {
 						canvasStore.requiresConfirmationForCopyingEntirePage = false;
 						canvasStore.copyEntirePage = false;
+						triggerCopyEvent();
+					},
+				},
+				{
+					label: "Yes",
+					variant: "solid",
+					onClick: () => {
+						canvasStore.requiresConfirmationForCopyingEntirePage = false;
+						canvasStore.copyEntirePage = true;
 						triggerCopyEvent();
 					},
 				},

@@ -1,5 +1,8 @@
 import type Block from "@/block";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
+import { startDrag } from "@/utils/cursor";
+import { getNumberFromPx } from "@/utils/helpers";
+import { toLocalDelta } from "@/utils/rotation";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref } from "vue";
 
@@ -10,10 +13,30 @@ export enum Position {
 	Left = "left",
 }
 
-// Shared state and derivations for the Margin and Padding drag handlers. Only
-// the pieces that are byte-for-byte identical between the two live here; the
-// per-side positioning, drag direction, defaults and value display differ and
-// stay in each component.
+type SpacingProperty = "margin" | "padding";
+
+type SpacingDragOptions = {
+	property: SpacingProperty;
+	// the value to grow from when the side has none set yet
+	fallback: number;
+	getRotation: () => number;
+	onUpdate?: () => void;
+};
+
+// `outward` is the sign of a drag pointing away from the block along the side's axis.
+const sides = {
+	[Position.Top]: { axis: "y", outward: -1, styleSuffix: "Top" },
+	[Position.Bottom]: { axis: "y", outward: 1, styleSuffix: "Bottom" },
+	[Position.Left]: { axis: "x", outward: -1, styleSuffix: "Left" },
+	[Position.Right]: { axis: "x", outward: 1, styleSuffix: "Right" },
+} as const;
+
+const verticalSides = [Position.Top, Position.Bottom];
+const horizontalSides = [Position.Left, Position.Right];
+const allSides = [...verticalSides, ...horizontalSides];
+
+// Shared state and drag behaviour for the Margin and Padding handlers. The per-side
+// positioning and value display differ and stay in each component.
 export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: () => string) {
 	const canvasProps = inject("canvasProps") as CanvasProps;
 	const updating = ref(false);
@@ -44,5 +67,58 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		height: clamp(16 * canvasProps.scale, 8, 32),
 	}));
 
-	return { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize };
+	const styleKey = (property: SpacingProperty, side: Position) =>
+		`${property}${sides[side].styleSuffix}` as styleProperty;
+
+	const setSpacing = (property: SpacingProperty, side: Position, value: number) =>
+		getTargetBlock().setStyle(styleKey(property, side), `${value}px`);
+
+	// Shift spreads the value to all four sides, alt to both sides of the dragged axis.
+	const sidesToUpdate = (event: MouseEvent, side: Position) => {
+		if (event.shiftKey) return allSides;
+		if (event.altKey) return sides[side].axis === "y" ? verticalSides : horizontalSides;
+		return [side];
+	};
+
+	const startSpacingDrag = (
+		event: MouseEvent,
+		side: Position,
+		{ property, fallback, getRotation, onUpdate }: SpacingDragOptions,
+	) => {
+		const { axis, outward } = sides[side];
+		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a padding
+		const sign = property === "margin" ? outward : -outward;
+		const startValue = getNumberFromPx(blockStyles.value[styleKey(property, side)] as string) || fallback;
+		const startPoint = { x: event.clientX, y: event.clientY };
+
+		event.preventDefault();
+		updating.value = true;
+
+		startDrag({
+			cursor: window.getComputedStyle(event.target as HTMLElement).cursor,
+			onMove: (moveEvent) => {
+				onUpdate?.();
+				const delta = toLocalDelta(
+					moveEvent.clientX - startPoint.x,
+					moveEvent.clientY - startPoint.y,
+					getRotation(),
+				);
+				const value = Math.round(Math.max(startValue + sign * delta[axis], 0));
+				sidesToUpdate(moveEvent, side).forEach((updatedSide) => setSpacing(property, updatedSide, value));
+			},
+			onEnd: () => {
+				updating.value = false;
+			},
+		});
+	};
+
+	return {
+		canvasProps,
+		updating,
+		blockStyles,
+		handleBorderWidth,
+		longHandleSize,
+		sideHandleSize,
+		startSpacingDrag,
+	};
 }

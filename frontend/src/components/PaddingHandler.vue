@@ -21,11 +21,9 @@
 					left: topHandle.left,
 					height: topHandle.height + 'px',
 					width: topHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingTop }}
@@ -46,11 +44,9 @@
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
 					width: bottomHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingBottom }}
@@ -71,11 +67,9 @@
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
 					width: leftHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingLeft }}
@@ -96,11 +90,9 @@
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
 					width: rightHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
 				{{ blockStyles.paddingRight }}
@@ -110,11 +102,10 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { computed, ref, watchEffect } from "vue";
+import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
-
-import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{
@@ -131,15 +122,27 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	startSpacingDrag,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
 });
+
+const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
@@ -206,81 +209,13 @@ const rightHandle = computed(() => {
 	};
 });
 
-const messageShown = ref(false);
-
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	// if (!messageShown.value && !(ev.shiftKey || ev.altKey)) {
-	// 	showToast();
-	// 	messageShown.value = true;
-	// }
-	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
-	const target = ev.target as HTMLElement;
-
-	const startTop = getNumberFromPx(blockStyles.value.paddingTop) || 5;
-	const startBottom = getNumberFromPx(blockStyles.value.paddingBottom) || 5;
-	const startLeft = getNumberFromPx(blockStyles.value.paddingLeft) || 5;
-	const startRight = getNumberFromPx(blockStyles.value.paddingRight) || 5;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		let movement = 0;
-		let affectingAxis = null;
-		props.onUpdate && props.onUpdate();
-		if (position === Position.Top) {
-			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			props.targetBlock.setStyle("paddingTop", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + startY - mouseMoveEvent.clientY, 0);
-			props.targetBlock.setStyle("paddingBottom", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			props.targetBlock.setStyle("paddingLeft", movement + "px");
-			affectingAxis = "x";
-		} else if (position === Position.Right) {
-			movement = Math.max(startRight + startX - mouseMoveEvent.clientX, 0);
-			props.targetBlock.setStyle("paddingRight", movement + "px");
-			affectingAxis = "x";
-		}
-
-		if (mouseMoveEvent.altKey) {
-			if (affectingAxis === "y") {
-				props.targetBlock.setStyle("paddingTop", movement + "px");
-				props.targetBlock.setStyle("paddingBottom", movement + "px");
-			} else if (affectingAxis === "x") {
-				props.targetBlock.setStyle("paddingLeft", movement + "px");
-				props.targetBlock.setStyle("paddingRight", movement + "px");
-			}
-		} else if (mouseMoveEvent.shiftKey) {
-			props.targetBlock.setStyle("paddingTop", movement + "px");
-			props.targetBlock.setStyle("paddingBottom", movement + "px");
-			props.targetBlock.setStyle("paddingLeft", movement + "px");
-			props.targetBlock.setStyle("paddingRight", movement + "px");
-		}
-
-		mouseMoveEvent.preventDefault();
-		mouseMoveEvent.stopPropagation();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			updating.value = false;
-			mouseUpEvent.preventDefault();
-		},
-		{ once: true },
-	);
+	startSpacingDrag(ev, position, {
+		property: "padding",
+		fallback: 5,
+		getRotation: () => rotation.value,
+		onUpdate: props.onUpdate,
+	});
 };
-
-let showToast = () =>
-	toast('Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.');
 </script>

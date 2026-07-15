@@ -22,11 +22,9 @@
 					left: topHandle.left,
 					height: topHandle.height + 'px',
 					width: topHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginTop || "auto" }}
@@ -48,11 +46,9 @@
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
 					width: bottomHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginBottom || "auto" }}
@@ -74,11 +70,9 @@
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
 					width: leftHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginLeft || "auto" }}
@@ -100,11 +94,9 @@
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
 					width: rightHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
 				{{ blockStyles.marginRight || "auto" }}
@@ -114,6 +106,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
@@ -132,48 +125,42 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update"]);
-const { canvasProps, updating, blockStyles, handleBorderWidth, longHandleSize, sideHandleSize } =
-	useSpacingHandler(
-		() => props.targetBlock,
-		() => props.breakpoint,
-	);
+const {
+	canvasProps,
+	updating,
+	blockStyles,
+	handleBorderWidth,
+	longHandleSize,
+	sideHandleSize,
+	startSpacingDrag,
+} = useSpacingHandler(
+	() => props.targetBlock,
+	() => props.breakpoint,
+);
 
 watchEffect(() => {
 	emit("update", updating.value);
 });
 
-const topMarginHandlerHeight = computed(() => {
+const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
+
+const topMarginHandlerHeight = computed(() => getMargin("Top"));
+const bottomMarginHandlerHeight = computed(() => getMargin("Bottom"));
+const leftMarginHandlerWidth = computed(() => getMargin("Left"));
+const rightMarginHandlerWidth = computed(() => getMargin("Right"));
+
+const getMargin = (side: "Top" | "Left" | "Right" | "Bottom") => {
 	blockStyles.value.marginTop;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginTop = window.getComputedStyle(props.target).marginTop;
-	let value = getNumberFromPx(marginTop) * canvasProps.scale;
-	return value;
-});
-const bottomMarginHandlerHeight = computed(() => {
 	blockStyles.value.marginBottom;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginBottom = window.getComputedStyle(props.target).marginBottom;
-	let value = getNumberFromPx(marginBottom) * canvasProps.scale;
-	return value;
-});
-const leftMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginLeft;
-	blockStyles.value.display;
-	blockStyles.value.margin;
-	let marginLeft = window.getComputedStyle(props.target).marginLeft;
-	let value = getNumberFromPx(marginLeft) * canvasProps.scale;
-	return value;
-});
-const rightMarginHandlerWidth = computed(() => {
 	blockStyles.value.marginRight;
-	blockStyles.value.display;
 	blockStyles.value.margin;
-	let marginRight = window.getComputedStyle(props.target).marginRight;
-	let value = getNumberFromPx(marginRight) * canvasProps.scale;
-	return value;
-});
+	blockStyles.value.display;
+	return getNumberFromPx(getComputedStyle(props.target)[`margin${side}`]) * canvasProps.scale;
+};
 
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;
@@ -217,70 +204,11 @@ const rightHandle = computed(() => {
 
 const handleMargin = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	ev.preventDefault();
-	updating.value = true;
-	const startY = ev.clientY;
-	const startX = ev.clientX;
-	const target = ev.target as HTMLElement;
-
-	const startTop = getNumberFromPx(blockStyles.value.marginTop) || 0;
-	const startBottom = getNumberFromPx(blockStyles.value.marginBottom) || 0;
-	const startLeft = getNumberFromPx(blockStyles.value.marginLeft) || 0;
-	const startRight = getNumberFromPx(blockStyles.value.marginRight) || 0;
-
-	// to disable cursor jitter
-	const docCursor = document.body.style.cursor;
-	document.body.style.cursor = window.getComputedStyle(target).cursor;
-
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		let movement = 0;
-		let affectingAxis = null;
-		props.onUpdate && props.onUpdate();
-		if (position === Position.Top) {
-			movement = Math.max(startTop + mouseMoveEvent.clientY - startY, 0);
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Bottom) {
-			movement = Math.max(startBottom + mouseMoveEvent.clientY - startY, 0);
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			affectingAxis = "y";
-		} else if (position === Position.Left) {
-			movement = Math.max(startLeft + mouseMoveEvent.clientX - startX, 0);
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			affectingAxis = "x";
-		} else if (position === Position.Right) {
-			movement = Math.max(startRight + mouseMoveEvent.clientX - startX, 0);
-			props.targetBlock.setStyle("marginRight", movement + "px");
-			affectingAxis = "x";
-		}
-
-		if (mouseMoveEvent.shiftKey) {
-			props.targetBlock.setStyle("marginTop", movement + "px");
-			props.targetBlock.setStyle("marginBottom", movement + "px");
-			props.targetBlock.setStyle("marginLeft", movement + "px");
-			props.targetBlock.setStyle("marginRight", movement + "px");
-		} else if (mouseMoveEvent.altKey) {
-			if (affectingAxis === "y") {
-				props.targetBlock.setStyle("marginTop", movement + "px");
-				props.targetBlock.setStyle("marginBottom", movement + "px");
-			} else if (affectingAxis === "x") {
-				props.targetBlock.setStyle("marginLeft", movement + "px");
-				props.targetBlock.setStyle("marginRight", movement + "px");
-			}
-		}
-
-		mouseMoveEvent.preventDefault();
-	};
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(mouseUpEvent) => {
-			document.body.style.cursor = docCursor;
-			document.removeEventListener("mousemove", mousemove);
-			updating.value = false;
-			mouseUpEvent.preventDefault();
-		},
-		{ once: true },
-	);
+	startSpacingDrag(ev, position, {
+		property: "margin",
+		fallback: 0,
+		getRotation: () => rotation.value,
+		onUpdate: props.onUpdate,
+	});
 };
 </script>
