@@ -314,7 +314,7 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
  * @param fallback - Value used for every side when the shorthand is empty
  * @returns Array of exactly four side values
  */
-function expandBoxShorthand(value: unknown, fallback = "0px"): string[] {
+function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
 	const parts = String(value ?? "")
 		.trim()
 		.split(/\s+/)
