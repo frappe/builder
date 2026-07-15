@@ -47,7 +47,6 @@
 </template>
 <script lang="ts" setup>
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
-import { useInputOverflow } from "@/utils/useInputOverflow";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
@@ -91,10 +90,15 @@ const attrs = useAttrs();
 const slots = useSlots();
 
 const containerRef = ref<HTMLElement | null>(null);
-const containerWidth = ref(0);
-let fontSet: FontFaceSet | undefined;
+const containerWidth = ref(Infinity);
 
-const { hasOverflow, checkOverflow } = useInputOverflow(containerRef);
+const hasOverflow = ref(false);
+
+const checkOverflow = () => {
+	const input = containerRef.value?.querySelector("input");
+	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+};
+
 const checkOverflowAfterRender = () => void nextTick(checkOverflow);
 
 useResizeObserver(containerRef, (entries) => {
@@ -104,12 +108,7 @@ useResizeObserver(containerRef, (entries) => {
 
 onMounted(() => {
 	checkOverflowAfterRender();
-	fontSet = document.fonts;
-	void fontSet?.ready.then(checkOverflow);
-	fontSet?.addEventListener("loadingdone", checkOverflow);
 });
-
-onUnmounted(() => fontSet?.removeEventListener("loadingdone", checkOverflow));
 
 const canShowArrows = computed(
 	() => !props.disabled && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,

@@ -35,7 +35,7 @@
 					}" />
 				<span
 					v-if="hasOverflow"
-					class="pointer-events-none relative z-10 -ml-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-hover:to-surface-gray-3 group-focus-within:hidden"
+					class="pointer-events-none relative z-10 -ml-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-focus-within:hidden group-hover:to-surface-gray-3"
 					aria-hidden="true" />
 				<div class="flex items-center gap-0.5">
 					<NumberArrows
@@ -117,7 +117,6 @@
 
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
-import { useInputOverflow } from "@/utils/useInputOverflow";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useResizeObserver } from "@vueuse/core";
 import {
@@ -182,7 +181,12 @@ const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
-const { hasOverflow, checkOverflow } = useInputOverflow(containerRef);
+const hasOverflow = ref(false);
+
+const checkOverflow = () => {
+	const input = containerRef.value?.querySelector("input");
+	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+};
 
 useResizeObserver(containerRef, checkOverflow);
 onMounted(checkOverflow);

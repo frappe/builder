@@ -159,7 +159,7 @@ const resolveControlAttrs = (variant: string | null) => ({
 	...props.getControlAttrs?.(variant),
 });
 
-const storageUnit = computed(() => props.defaultUnit || props.unitOptions[0] || "");
+const defaultUnit = computed(() => props.defaultUnit || props.unitOptions[0] || "");
 
 const formatValueForDisplay = (value: string | number | boolean) => {
 	if (typeof value !== "string" || !props.defaultUnit) return value;
@@ -184,10 +184,10 @@ const normalizeInputValue = (
 	if (typeof value === "object" && value !== null && "value" in value) {
 		value = value.value;
 	}
-	if (typeof value === "number" && storageUnit.value) {
-		value = `${value}${storageUnit.value}`;
-	} else if (typeof value === "string" && storageUnit.value) {
-		value = normalizeValueWithUnits(value, storageUnit.value);
+	if (typeof value === "number" && defaultUnit.value) {
+		value = `${value}${defaultUnit.value}`;
+	} else if (typeof value === "string" && defaultUnit.value) {
+		value = normalizeValueWithUnits(value, defaultUnit.value);
 	}
 	return value as string | number | boolean;
 };
@@ -274,7 +274,7 @@ const visibleVariants = computed(() => {
 const adjustNumericValue = (step: number, initialValue: number | null = null, variantName?: string) => {
 	const currentValue = variantName ? getRawVariantValue(variantName) : String(rawModelValue.value || "");
 	const { number, unit: existingUnit } = extractNumberAndUnit(String(currentValue));
-	const unit = existingUnit || (!isNaN(Number(number)) ? storageUnit.value : "");
+	const unit = existingUnit || (!isNaN(Number(number)) ? defaultUnit.value : "");
 
 	let newValue = (initialValue != null ? initialValue : Number(number)) + step;
 	newValue = Math.max(props.minValue, Math.min(props.maxValue ?? Infinity, newValue));
