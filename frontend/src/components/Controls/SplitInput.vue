@@ -1,15 +1,10 @@
 <template>
 	<div class="w-full">
-		<div class="flex overflow-hidden rounded">
+		<div class="flex divide-x divide-outline-gray-2 overflow-hidden rounded">
 			<Input
 				v-for="(label, index) in labels"
 				:key="`input-${index}`"
-				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center"
-				:class="{
-					'border-l border-outline-gray-2': index > 0,
-					'*:rounded-l': index == 0,
-					'*:rounded-r': index == labels.length - 1,
-				}"
+				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center first:rounded-l last:rounded-r"
 				:modelValue="values[index]"
 				:aria-label="label"
 				:hideClearButton="true"
@@ -21,9 +16,10 @@
 			<span
 				v-for="(label, index) in labels"
 				:key="`label-${label}`"
-				class="cursor-ns-resize truncate text-center text-[8px] text-ink-gray-5"
+				class="truncate text-center text-[8px] text-ink-gray-5"
+				:class="{ 'cursor-ns-resize': enableSlider }"
 				:title="label"
-				@mousedown.prevent="handleLabelMouseDown($event, index)">
+				@mousedown="handleLabelMouseDown($event, index)">
 				{{ label }}
 			</span>
 		</div>
@@ -47,12 +43,14 @@ const props = withDefaults(
 		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
+		enableSlider?: boolean;
 	}>(),
 	{
 		splitValue: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
 		combineValues: (values: InputValue[]) => values,
 		normalizeValue: (value: InputValue) => value,
 		inputAttrs: () => ({}),
+		enableSlider: false,
 	},
 );
 
@@ -79,6 +77,9 @@ const updateValue = (index: number, value: InputValue) => {
 };
 
 const handleLabelMouseDown = (event: MouseEvent, index: number) => {
+	if (!props.enableSlider) return;
+	event.preventDefault();
+
 	const { number, unit } = extractNumberAndUnit(String(values.value[index] ?? ""));
 	const startValue = Number(number);
 	const startY = event.clientY;

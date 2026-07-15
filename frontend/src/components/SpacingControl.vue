@@ -7,7 +7,7 @@
 			:unitOptions="UNITS"
 			defaultUnit="px"
 			:enableStates="true"
-			:enableSlider="true"
+			:enableSlider="enableSlider"
 			:uniformTitle="`Use uniform ${type}`"
 			:splitTitle="`Use individual ${type} sides`"
 			:labels="SPLIT_LABELS"
@@ -34,6 +34,7 @@ type BoxValue = string | number | boolean | null;
 
 const UNITS = ["px", "em", "rem"];
 const SPLIT_LABELS = ["T", "R", "B", "L"];
+const enableSlider = true;
 
 const props = defineProps<{ type: SpacingType }>();
 const splitModes = reactive<Record<string, boolean>>({});
@@ -58,6 +59,7 @@ const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
 		split: splitModes[key] ?? new Set(splitValue(readValue(variant))).size > 1,
+		enableSlider,
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};
 };

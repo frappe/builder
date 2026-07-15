@@ -23,6 +23,7 @@
 			:combineValues="combineValues"
 			:normalizeValue="normalizeValue"
 			:inputAttrs="inputAttrs"
+			:enableSlider="enableSlider"
 			@update:modelValue="setIndividualValue" />
 	</div>
 </template>
@@ -54,6 +55,7 @@ const props = withDefaults(
 		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
+		enableSlider?: boolean;
 	}>(),
 	{
 		modelValue: "",
@@ -66,6 +68,7 @@ const props = withDefaults(
 		combineValues: (values: InputValue[]) => values,
 		normalizeValue: (value: InputValue) => value,
 		inputAttrs: () => ({}),
+		enableSlider: false,
 	},
 );
 
@@ -75,7 +78,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }) as HTMLAttributes);
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style } as HTMLAttributes));
 const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
@@ -105,7 +108,10 @@ const defaultSplitOptions = computed<SplitOption[]>(() => [
 const resolvedSplitOptions = computed(() => props.splitOptions ?? defaultSplitOptions.value);
 
 const setSplitValue = (value: string | number | boolean | undefined) => {
-	if (typeof value === "boolean") emit("update:split", value);
+	if (typeof value !== "boolean") return;
+	// Collapse to the uniform value when leaving split mode ("" clears mixed values)
+	if (!value && props.split) emit("update:modelValue", displayValue.value);
+	emit("update:split", value);
 };
 
 const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);
