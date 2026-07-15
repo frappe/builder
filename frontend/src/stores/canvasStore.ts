@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
+import type { IndicatorGeometry } from "@/utils/dropGeometry";
 import { getVersionedDoc } from "@/data/snapshot";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
 import { toast } from "frappe-ui";
@@ -30,6 +31,18 @@ const useCanvasStore = defineStore("canvasStore", {
 			placeholder: <HTMLElement | null>null,
 			parentBlock: <Block | null>null,
 			index: <number | null>null,
+		},
+		// On-canvas block reordering (pointer-based). Separate from dropTarget
+		// (panel → canvas drops). The overlay DropIndicator reads this; nothing here
+		// touches the canvas DOM, so the layout stays frozen during a drag.
+		reorderTarget: {
+			active: <boolean>false,
+			// insertion line geometry, screen px
+			line: <IndicatorGeometry | null>null,
+			containerRect: <{ top: number; left: number; width: number; height: number } | null>null,
+			isComponentParent: <boolean>false,
+			// dropping into the block's own container (reorder) vs a different one
+			isSameContainer: <boolean>false,
 		},
 		editableBlock: <Block | null>null,
 		editingContentType: <"html" | "css" | "js">"html", // TODO: Remove js and css
@@ -270,6 +283,16 @@ const useCanvasStore = defineStore("canvasStore", {
 			if (placeholder) {
 				placeholder.remove();
 			}
+		},
+
+		clearReorderTarget() {
+			this.reorderTarget = {
+				active: false,
+				line: null,
+				containerRect: null,
+				isComponentParent: false,
+				isSameContainer: false,
+			};
 		},
 	},
 });
