@@ -103,6 +103,18 @@ class ModelRegistry:
 			"output_price": 9.0,
 			"vision": True,
 		},
+		{
+			# Free OpenRouter tier for local testing — native tool calling, zero cost.
+			# 0.0 prices keep the whole loop (incl. the lightweight clarify/plan rounds)
+			# on this model rather than falling back to paid Gemini via PROVIDER_SIMPLE.
+			# Text-only: vision False, or an image input kills the turn.
+			"name": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+			"label": "Nemotron 3 Ultra (Free)",
+			"max_tokens": 1_000_000,
+			"input_price": 0.0,
+			"output_price": 0.0,
+			"vision": False,
+		},
 	]
 
 	PROVIDER_DEFAULT: ClassVar[dict[str, str]] = {
