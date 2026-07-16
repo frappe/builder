@@ -91,5 +91,6 @@ def get_variables_css() -> str:
 
 def clear_builder_token_cache(doc=None, method=None):
 	get_css_variables.clear_cache()
-	# bust the rendered page cache for /builder_assets/tokens.css
+	# bust the rendered page cache for tokens.css and its compat alias variables.css
 	delete_page_cache("builder_assets/tokens.css")
+	delete_page_cache("builder_assets/variables.css")
