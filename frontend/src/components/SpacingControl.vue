@@ -18,6 +18,7 @@
 			:getModelValue="() => readValue(null)"
 			:getPlaceholder="getPlaceholder"
 			:getVariantValue="readValue"
+			:getMergedValue
 			:getControlAttrs="getControlAttrs" />
 	</div>
 </template>
@@ -54,7 +55,7 @@ const getPlaceholder = () => String(getBaseValue(true));
 const splitValue = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
 const combine = (parts: BoxValue[]) => parts.join(" ");
-
+const getMergedValue = (parts: any[]) => 0;
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {

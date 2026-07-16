@@ -56,6 +56,7 @@ const props = withDefaults(
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
 		enableSlider?: boolean;
+		getMergedValue: (values: InputValue[]) => InputValue;
 	}>(),
 	{
 		modelValue: "",
@@ -83,6 +84,7 @@ const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
 
+const splitValues = computed(() => props.splitValue(props.modelValue, props.labels.length));
 const displayValue = computed(() => {
 	if (!props.split) return props.modelValue;
 	if (String(props.modelValue ?? "").trim() === "Mixed") return "";
@@ -109,8 +111,11 @@ const resolvedSplitOptions = computed(() => props.splitOptions ?? defaultSplitOp
 
 const setSplitValue = (value: string | number | boolean | undefined) => {
 	if (typeof value !== "boolean") return;
-	// Collapse to the uniform value when leaving split mode ("" clears mixed values)
-	if (!value && props.split) emit("update:modelValue", displayValue.value);
+	if (!value) {
+		const mergedValue = props.getMergedValue(splitValues.value);
+		setUniformValue(mergedValue);
+		return;
+	}
 	emit("update:split", value);
 };
 
