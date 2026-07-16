@@ -113,8 +113,7 @@ const setSplitValue = (value: string | number | boolean | undefined) => {
 	if (typeof value !== "boolean") return;
 	if (!value) {
 		const mergedValue = props.getMergedValue(splitValues.value);
-		setUniformValue(mergedValue);
-		return;
+		emit("update:modelValue", mergedValue);
 	}
 	emit("update:split", value);
 };
