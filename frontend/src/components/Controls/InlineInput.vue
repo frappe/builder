@@ -139,8 +139,9 @@ const handleMouseDown = (e: MouseEvent) => {
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
-	// Arrow-key stepping only for numeric inputs, not plain text fields.
-	if (!props.unitOptions.length && !props.enableSlider) return;
+	// Only numeric inputs (those with unit options or a slider) step via arrow keys.
+	const supportsArrowStepping = props.unitOptions.length > 0 || props.enableSlider;
+	if (!supportsArrowStepping) return;
 	if (e.key === "ArrowUp" || e.key === "ArrowDown") {
 		const step = e.key === "ArrowUp" ? 1 : -1;
 		incrementOrDecrement(step);
