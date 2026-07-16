@@ -36,7 +36,7 @@
 			:class="isLast ? 'h-3.5' : '-bottom-2'"
 			aria-hidden="true" />
 		<div class="relative flex h-7 w-1/3 min-w-[88px] shrink-0 items-center gap-2">
-			<span class="relative flex size-3 shrink-0 items-center justify-center">
+			<span class="relative z-[1] flex size-3 shrink-0 items-center justify-center bg-surface-base">
 				<span class="size-1.5 rounded-full bg-surface-gray-4 group-hover/variant:hidden" />
 				<button
 					type="button"

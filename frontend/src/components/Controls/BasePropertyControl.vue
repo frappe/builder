@@ -12,7 +12,7 @@
 		<div class="relative flex w-full items-start gap-2" :data-property="propertyKey">
 			<span
 				v-if="labelPlacement === 'left' && visibleVariants.length"
-				class="pointer-events-none absolute -bottom-2 left-[5.5px] top-5 w-px bg-surface-gray-4"
+				class="pointer-events-none absolute -bottom-2 left-[5.5px] top-6 w-px bg-surface-gray-4"
 				aria-hidden="true" />
 			<PropertyLabel
 				v-if="labelPlacement === 'left' && label"
