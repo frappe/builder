@@ -15,23 +15,7 @@
 {% endif %}
 {% if not preview %}
 <script>
-(function () {
-	var cookie = document.cookie;
-	var isDesktop = window.matchMedia("(min-width:768px)").matches;
-	var isLoggedIn = cookie.includes("user_id=") && !cookie.includes("user_id=Guest");
-	var isSystemUser = !cookie.includes("system_user=no;");
-	if (!(isDesktop && isLoggedIn && isSystemUser)) return;
-
-	var link = document.createElement("a");
-	link.rel = "nofollow";
-	link.href = "{{ editor_link }}";
-	link.target = "editor-{{ page_name }}";
-	link.style.cssText = "position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1";
-	link.innerHTML = '<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>';
-	link.addEventListener("mouseover", function () { link.style.opacity = "1"; });
-	link.addEventListener("mouseout", function () { link.style.opacity = ".1"; });
-	document.body.appendChild(link);
-})();
+{const c=document.cookie,show=window.matchMedia("(min-width:768px)").matches&&c.includes("user_id=")&&!c.includes("user_id=Guest")&&!c.includes("system_user=no;");if(show){const link=document.createElement("a");link.rel="nofollow";link.href="{{ editor_link }}";link.target="editor-{{ page_name }}";link.style.cssText="position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1";link.innerHTML='<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>';link.addEventListener("mouseover",()=>link.style.opacity="1");link.addEventListener("mouseout",()=>link.style.opacity=".1");document.body.appendChild(link)}}
 </script>
 {% endif %}
 <style>
