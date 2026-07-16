@@ -18,25 +18,11 @@
 		<template #header><h2 class="text-lg-semibold py-2">Design System</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
-				<div class="mb-2 flex gap-1">
-					<button
-						v-for="tab in TYPE_TABS"
-						:key="tab.value"
-						class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors"
-						:class="
-							activeType === tab.value
-								? 'bg-surface-gray-3 font-medium text-ink-gray-9'
-								: 'text-ink-gray-6 hover:bg-surface-gray-2'
-						"
-						@click="activeType = tab.value">
-						{{ tab.label }}
-						<span
-							v-if="tokenCounts[tab.value]"
-							class="rounded bg-surface-gray-4 px-1 text-[11px] font-medium leading-4 text-ink-gray-6"
-							:class="{ 'text-ink-gray-8': activeType === tab.value }">
-							{{ tokenCounts[tab.value] }}
-						</span>
-					</button>
+				<div class="mb-2">
+					<TabButtons
+						:modelValue="activeType"
+						@update:modelValue="(val: BuilderToken['type']) => (activeType = val || 'Color')"
+						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
 					<BuilderInput
@@ -211,15 +197,17 @@
 										</div>
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
 										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
-											<button
-												class="ml-auto mr-1 hidden shrink-0 rounded p-1 text-ink-gray-4 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-7 group-hover/row:flex"
-												:class="{ '!flex text-ink-green-6': copiedId === row.id }"
-												@mousedown.stop
-												@click.stop="copyHandle(row)">
-												<span
-													:class="copiedId === row.id ? 'lucide-check' : 'lucide-copy'"
-													class="size-3.5" />
-											</button>
+											<div
+												class="ml-auto mr-1 hidden shrink-0 group-hover/row:block"
+												:class="{ '!block': copiedId === row.id }">
+												<Button
+													variant="ghost"
+													size="xs"
+													:icon="copiedId === row.id ? 'lucide-check' : 'lucide-copy'"
+													:class="{ '!text-ink-green-6': copiedId === row.id }"
+													@mousedown.stop
+													@click.stop="copyHandle(row)" />
+											</div>
 										</Tooltip>
 									</div>
 									<!-- Value (Font/Dimension): plain text cell, dblclick to edit -->
@@ -406,7 +394,7 @@ import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
-import { Button, Dialog, toast, Tooltip } from "frappe-ui";
+import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
 
 defineProps<{
@@ -455,6 +443,12 @@ const TYPE_TABS = [
 	{ label: "Fonts", value: "Font" },
 	{ label: "Dimensions", value: "Dimension" },
 ] as const;
+const typeTabOptions = computed(() =>
+	TYPE_TABS.map((tab) => ({
+		value: tab.value,
+		label: tokenCounts.value[tab.value] ? `${tab.label} · ${tokenCounts.value[tab.value]}` : tab.label,
+	})),
+);
 const NEW_VALUE_DEFAULTS = { Color: "#ffffff", Font: "", Dimension: "" } as const;
 const VALUE_PLACEHOLDERS = { Color: "#ffffff", Font: "e.g. Fraunces", Dimension: "e.g. 24px" } as const;
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
