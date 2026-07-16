@@ -48,7 +48,7 @@ const ensureRoundedContentIsClipped = (value: BoxValue) => {
 const splitValue = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
 const combine = (parts: BoxValue[]) => parts.join(" ");
-const getMergedValue = (parts: any[]) => "0px";
+const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
