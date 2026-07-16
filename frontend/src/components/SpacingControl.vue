@@ -7,7 +7,7 @@
 			:unitOptions="BOX_UNIT_OPTIONS"
 			:enableStates="true"
 			:enableSlider="enableSlider"
-			:labels="SPLIT_LABELS"
+			:splits="SPLITS"
 			:toControlValues
 			:toModelValue
 			:normalizeValue="normalize"
@@ -31,7 +31,7 @@ import { computed, reactive } from "vue";
 type SpacingType = "margin" | "padding";
 type BoxValue = string | number | boolean | null;
 
-const SPLIT_LABELS = ["T", "R", "B", "L"];
+const SPLITS = ["T", "R", "B", "L"];
 const enableSlider = true;
 
 const props = defineProps<{ type: SpacingType }>();

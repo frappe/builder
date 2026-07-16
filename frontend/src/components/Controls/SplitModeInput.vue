@@ -4,7 +4,7 @@
 			<Input
 				class="min-w-0 flex-1"
 				:modelValue="displayValue"
-				:placeholder="split && labels.length && !displayValue ? 'Mixed' : placeholder"
+				:placeholder="split && splitCount && !displayValue ? 'Mixed' : placeholder"
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
 
@@ -16,9 +16,9 @@
 		</div>
 
 		<SplitInput
-			v-if="split && labels.length"
+			v-if="split && splitCount"
 			:modelValue="modelValue"
-			:labels="labels"
+			:splits="splits"
 			:toControlValues
 			:toModelValue
 			:normalizeValue="normalizeValue"
@@ -40,6 +40,7 @@ defineOptions({ inheritAttrs: false });
 
 type InputValue = string | number | boolean | null;
 type InputAttrs = Record<string, unknown>;
+type SplitConfig = string | { label?: string; attrs?: InputAttrs };
 type SplitOption = Omit<TabButton, "value"> & { value: boolean };
 
 const props = withDefaults(
@@ -50,11 +51,11 @@ const props = withDefaults(
 		uniformTitle?: string;
 		splitTitle?: string;
 		splitOptions?: SplitOption[];
-		labels?: string[];
+		splits?: number | SplitConfig[];
 		toControlValues?: (value: unknown, count: number) => InputValue[];
 		toModelValue?: (values: InputValue[], changedIndex: number) => unknown;
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
-		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
+		inputAttrs?: InputAttrs;
 		enableSlider?: boolean;
 		getMergedValue: (values: InputValue[]) => InputValue;
 	}>(),
@@ -64,7 +65,7 @@ const props = withDefaults(
 		split: false,
 		uniformTitle: "Use for all",
 		splitTitle: "Set separately",
-		labels: () => [],
+		splits: 0,
 		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
 		toModelValue: (values: InputValue[]) => values,
 		normalizeValue: (value: InputValue) => value,
@@ -84,7 +85,8 @@ const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
 
-const splitValues = computed(() => props.toControlValues(props.modelValue, props.labels.length));
+const splitCount = computed(() => (typeof props.splits === "number" ? props.splits : props.splits.length));
+const splitValues = computed(() => props.toControlValues(props.modelValue, splitCount.value));
 const displayValue = computed(() => {
 	if (!props.split) return props.modelValue;
 	if (String(props.modelValue ?? "").trim() === "Mixed") return "";

@@ -8,7 +8,7 @@
 			:unitOptions="RADIUS_UNIT_OPTIONS"
 			:enableStates="true"
 			:enableSlider="true"
-			:labels="SPLIT_LABELS"
+			:splits="SPLITS"
 			:toControlValues
 			:toModelValue
 			:normalizeValue="normalize"
@@ -31,7 +31,7 @@ import { reactive } from "vue";
 
 type BoxValue = string | number | boolean | null;
 
-const SPLIT_LABELS = ["TL", "TR", "BR", "BL"];
+const SPLITS = ["TL", "TR", "BR", "BL"];
 
 const splitModes = reactive<Record<string, boolean>>({});
 
