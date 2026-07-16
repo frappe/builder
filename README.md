@@ -26,8 +26,6 @@
 [Website](https://frappe.io/builder) - [Documentation](https://docs.frappe.io/builder)
 </div>
 
-## Frappe Builder
-
 Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with an intuitive visual builder. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you. It also features a click-to-publish option that gives you the complete end-to-end website creation experience.
 
 ### Motivation
