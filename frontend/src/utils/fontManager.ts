@@ -36,25 +36,36 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 }
 
 function loadGoogleFont(font: string, weight?: string): Promise<string> {
-	const familyParam = weight ? `${encodeURIComponent(font)}:wght@${weight}` : encodeURIComponent(font);
-
 	return new Promise<string>((resolve) => {
-		const id = `gf-${font.replace(/\s+/g, "-")}${weight ? `-${weight}` : ""}`;
-		const link = document.createElement("link");
-		link.id = id;
-		link.rel = "stylesheet";
-		link.crossOrigin = "anonymous";
-		link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
-		link.addEventListener("load", () => resolve(font), { once: true });
-		link.addEventListener(
-			"error",
-			() => {
-				console.warn(`Failed to load font: ${font}`);
-				resolve(font);
-			},
-			{ once: true },
-		);
-		document.head.appendChild(link);
+		const attempt = (withWeight: boolean) => {
+			const familyParam = withWeight
+				? `${encodeURIComponent(font)}:wght@${weight}`
+				: encodeURIComponent(font);
+			const link = document.createElement("link");
+			link.id = `gf-${font.replace(/\s+/g, "-")}${withWeight ? `-${weight}` : ""}`;
+			link.rel = "stylesheet";
+			link.crossOrigin = "anonymous";
+			link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
+			link.addEventListener("load", () => resolve(font), { once: true });
+			link.addEventListener(
+				"error",
+				() => {
+					link.remove();
+					if (withWeight) {
+						// Single-weight faces (Italiana, Young Serif, Caprasimo…) 400 on ANY
+						// wght@ request — the css2 API rejects weights a family doesn't carry.
+						// Retry the family default; the browser synthesises the bold.
+						attempt(false);
+						return;
+					}
+					console.warn(`Failed to load font: ${font}`);
+					resolve(font);
+				},
+				{ once: true },
+			);
+			document.head.appendChild(link);
+		};
+		attempt(!!weight);
 	});
 }
 
