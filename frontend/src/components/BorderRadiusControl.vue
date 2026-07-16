@@ -52,7 +52,7 @@ const getMergedValue = (parts: any[]) => "0px";
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
-		split: splitModes[key] ?? new Set(splitValue(readValue(variant))).size > 1,
+		split: new Set(splitValue(readValue(variant))).size > 1 || (splitModes[key] ?? false),
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};
 };

@@ -59,7 +59,7 @@ const getMergedValue = (parts: any[]) => 0;
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
-		split: splitModes[key] ?? new Set(splitValue(readValue(variant))).size > 1,
+		split: new Set(splitValue(readValue(variant))).size > 1 || (splitModes[key] ?? false),
 		enableSlider,
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};
