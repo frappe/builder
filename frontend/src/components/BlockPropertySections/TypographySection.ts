@@ -7,6 +7,7 @@ import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -111,8 +112,7 @@ const typographySectionProperties = [
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
-				unitOptions: ["px", "em", "rem"],
-				defaultUnit: "px",
+				unitOptions: BOX_UNIT_OPTIONS,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",

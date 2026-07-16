@@ -162,8 +162,8 @@ const resolveControlAttrs = (variant: string | null) => ({
 const defaultUnit = computed(() => props.defaultUnit || props.unitOptions[0] || "");
 
 const formatValueForDisplay = (value: string | number | boolean) => {
-	if (typeof value !== "string" || !props.defaultUnit) return value;
-	return removeDefaultUnit(value, props.defaultUnit);
+	if (typeof value !== "string" || !defaultUnit.value) return value;
+	return removeDefaultUnit(value, defaultUnit.value);
 };
 
 const defaultValue = computed(() => {

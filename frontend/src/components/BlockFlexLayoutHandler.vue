@@ -30,8 +30,7 @@
 		label="Gap"
 		propertyKey="gap"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']"
-		defaultUnit="px" />
+		:unitOptions="BOX_UNIT_OPTIONS" />
 	<StylePropertyControl
 		propertyKey="flexWrap"
 		:component="OptionToggle"
@@ -75,5 +74,6 @@
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import PlacementControl from "./PlacementControl.vue";
 </script>

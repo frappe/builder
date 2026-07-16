@@ -4,8 +4,7 @@
 			:propertyKey="type"
 			:component="SplitModeInput"
 			:label="label"
-			:unitOptions="UNITS"
-			defaultUnit="px"
+			:unitOptions="BOX_UNIT_OPTIONS"
 			:enableStates="true"
 			:enableSlider="enableSlider"
 			:uniformTitle="`Use uniform ${type}`"
@@ -28,12 +27,12 @@ import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
+import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed, reactive } from "vue";
 
 type SpacingType = "margin" | "padding";
 type BoxValue = string | number | boolean | null;
 
-const UNITS = ["px", "em", "rem"];
 const SPLIT_LABELS = ["T", "R", "B", "L"];
 const enableSlider = true;
 
