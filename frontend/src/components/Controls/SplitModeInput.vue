@@ -19,8 +19,8 @@
 			v-if="split && labels.length"
 			:modelValue="modelValue"
 			:labels="labels"
-			:splitValue="splitValue"
-			:combineValues="combineValues"
+			:toControlValues
+			:toModelValue
 			:normalizeValue="normalizeValue"
 			:inputAttrs="inputAttrs"
 			:enableSlider="enableSlider"
@@ -33,7 +33,7 @@ import Input from "@/components/Controls/Input.vue";
 import SplitInput from "@/components/Controls/SplitInput.vue";
 import { expandBoxShorthand } from "@/utils/cssUtils";
 import { TabButtons, type TabButton } from "frappe-ui";
-import type { Component, HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { computed, useAttrs } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -51,8 +51,8 @@ const props = withDefaults(
 		splitTitle?: string;
 		splitOptions?: SplitOption[];
 		labels?: string[];
-		splitValue?: (value: unknown, count: number) => InputValue[];
-		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
+		toControlValues?: (value: unknown, count: number) => InputValue[];
+		toModelValue?: (values: InputValue[], changedIndex: number) => unknown;
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
 		enableSlider?: boolean;
@@ -65,8 +65,8 @@ const props = withDefaults(
 		uniformTitle: "Use uniform value",
 		splitTitle: "Use individual values",
 		labels: () => [],
-		splitValue: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
-		combineValues: (values: InputValue[]) => values,
+		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
+		toModelValue: (values: InputValue[]) => values,
 		normalizeValue: (value: InputValue) => value,
 		inputAttrs: () => ({}),
 		enableSlider: false,
@@ -84,7 +84,7 @@ const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
 
-const splitValues = computed(() => props.splitValue(props.modelValue, props.labels.length));
+const splitValues = computed(() => props.toControlValues(props.modelValue, props.labels.length));
 const displayValue = computed(() => {
 	if (!props.split) return props.modelValue;
 	if (String(props.modelValue ?? "").trim() === "Mixed") return "";

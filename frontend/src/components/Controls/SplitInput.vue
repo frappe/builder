@@ -43,15 +43,15 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: unknown;
 		labels: string[];
-		splitValue?: (value: unknown, count: number) => InputValue[];
-		combineValues?: (values: InputValue[], changedIndex: number) => unknown;
+		toControlValues?: (value: unknown, count: number) => InputValue[];
+		toModelValue?: (values: InputValue[], changedIndex: number) => unknown;
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs | ((index: number) => InputAttrs);
 		enableSlider?: boolean;
 	}>(),
 	{
-		splitValue: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
-		combineValues: (values: InputValue[]) => values,
+		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
+		toModelValue: (values: InputValue[]) => values,
 		normalizeValue: (value: InputValue) => value,
 		inputAttrs: () => ({}),
 		enableSlider: false,
@@ -63,7 +63,7 @@ const emit = defineEmits<{
 }>();
 
 const values = computed(() => {
-	const splitValues = props.splitValue(props.modelValue, props.labels.length);
+	const splitValues = props.toControlValues(props.modelValue, props.labels.length);
 	return Array.from({ length: props.labels.length }, (_, index) => splitValues[index] ?? "");
 });
 
@@ -77,7 +77,7 @@ const getInputAttrs = (index: number) =>
 const updateValue = (index: number, value: InputValue) => {
 	const nextValues: InputValue[] = [...values.value];
 	nextValues[index] = props.normalizeValue(value, index);
-	emit("update:modelValue", props.combineValues(nextValues, index));
+	emit("update:modelValue", props.toModelValue(nextValues, index));
 };
 
 const handleLabelMouseDown = (event: MouseEvent, index: number) => {

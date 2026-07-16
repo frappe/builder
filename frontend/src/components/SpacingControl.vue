@@ -10,8 +10,8 @@
 			:uniformTitle="`Use uniform ${type}`"
 			:splitTitle="`Use individual ${type} sides`"
 			:labels="SPLIT_LABELS"
-			:splitValue="splitValue"
-			:combineValues="combine"
+			:toControlValues
+			:toModelValue
 			:normalizeValue="normalize"
 			:inputAttrs="type === 'margin' ? {} : { min: 0 }"
 			:getModelValue="readValue"
@@ -51,14 +51,14 @@ const readValue = (state: string | null = null) =>
 
 const getPlaceholder = () => String(getBaseValue(true));
 
-const splitValue = (value: unknown) => expandBoxShorthand(value);
+const toControlValues = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const combine = (parts: BoxValue[]) => parts.join(" ");
+const toModelValue = (parts: BoxValue[]) => parts.join(" ");
 const getMergedValue = (parts: BoxValue[]) => parts[0] ?? 0;
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
-		split: new Set(splitValue(readValue(variant))).size > 1 || (splitModes[key] ?? false),
+		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes[key] ?? false),
 		enableSlider,
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};

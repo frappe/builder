@@ -11,8 +11,8 @@
 			:enableStates="true"
 			:enableSlider="true"
 			:labels="SPLIT_LABELS"
-			:splitValue="splitValue"
-			:combineValues="combine"
+			:toControlValues
+			:toModelValue
 			:normalizeValue="normalize"
 			:inputAttrs="{ min: 0 }"
 			:getModelValue="readValue"
@@ -46,15 +46,15 @@ const ensureRoundedContentIsClipped = (value: BoxValue) => {
 	if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
 };
 
-const splitValue = (value: unknown) => expandBoxShorthand(value);
+const toControlValues = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const combine = (parts: BoxValue[]) => parts.join(" ");
+const toModelValue = (parts: BoxValue[]) => parts.join(" ");
 const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
 		enableSlider: true,
-		split: new Set(splitValue(readValue(variant))).size > 1 || (splitModes[key] ?? false),
+		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes[key] ?? false),
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};
 };
