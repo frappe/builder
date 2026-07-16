@@ -7,8 +7,6 @@
 			:unitOptions="BOX_UNIT_OPTIONS"
 			:enableStates="true"
 			:enableSlider="enableSlider"
-			:uniformTitle="`Use uniform ${type}`"
-			:splitTitle="`Use individual ${type} sides`"
 			:labels="SPLIT_LABELS"
 			:toControlValues
 			:toModelValue

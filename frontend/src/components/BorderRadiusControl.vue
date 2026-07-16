@@ -4,8 +4,6 @@
 			label="Radius"
 			placeholder="None"
 			propertyKey="borderRadius"
-			uniformTitle="Use uniform radius"
-			splitTitle="Use individual corner radii"
 			:component="SplitModeInput"
 			:unitOptions="RADIUS_UNIT_OPTIONS"
 			:enableStates="true"
