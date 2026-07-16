@@ -9,6 +9,7 @@
 			:component="SplitModeInput"
 			:unitOptions="RADIUS_UNIT_OPTIONS"
 			:enableStates="true"
+			:enableSlider="true"
 			:labels="SPLIT_LABELS"
 			:splitValue="splitValue"
 			:combineValues="combine"
@@ -52,6 +53,7 @@ const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
+		enableSlider: true,
 		split: new Set(splitValue(readValue(variant))).size > 1 || (splitModes[key] ?? false),
 		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
 	};
