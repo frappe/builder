@@ -326,6 +326,10 @@ def sync_builder_tokens():
 	make_records(builder_token_path)
 
 
+# Compat alias, external scripts may still call the old name
+sync_builder_variables = sync_builder_tokens
+
+
 def make_records(path):
 	if not os.path.isdir(path):
 		return
