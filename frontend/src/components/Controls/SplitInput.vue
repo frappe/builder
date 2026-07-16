@@ -4,7 +4,11 @@
 			<Input
 				v-for="(label, index) in labels"
 				:key="`input-${index}`"
-				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center first:rounded-l last:rounded-r"
+				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center"
+				:class="{
+					'*:rounded-l': index == 0,
+					'*:rounded-r': index == labels.length - 1,
+				}"
 				:modelValue="values[index]"
 				:aria-label="label"
 				:hideClearButton="true"

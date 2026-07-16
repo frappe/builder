@@ -1,23 +1,24 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
 		<StylePropertyControl
-			propertyKey="borderRadius"
-			:component="SplitModeInput"
 			label="Radius"
-			:unitOptions="['px', '%']"
-			defaultUnit="px"
-			:enableStates="true"
+			placeholder="None"
+			propertyKey="borderRadius"
 			uniformTitle="Use uniform radius"
 			splitTitle="Use individual corner radii"
+			defaultUnit="px"
+			:component="SplitModeInput"
+			:unitOptions="['px', '%']"
+			:enableStates="true"
 			:labels="SPLIT_LABELS"
 			:splitValue="splitValue"
 			:combineValues="combine"
 			:normalizeValue="normalize"
 			:inputAttrs="{ min: 0 }"
-			placeholder="None"
 			:getModelValue="() => readValue(null)"
 			:getVariantValue="readValue"
-			:getControlAttrs="getControlAttrs" />
+			:getControlAttrs="getControlAttrs"
+			@update:modelValue="ensureRoundedContentIsClipped" />
 	</div>
 </template>
 
@@ -36,6 +37,12 @@ const splitModes = reactive<Record<string, boolean>>({});
 
 const readValue = (state: string | null) =>
 	String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || "");
+
+const ensureRoundedContentIsClipped = (value: BoxValue) => {
+	if (!value) return;
+	if (!blockController.getStyle("overflowX")) blockController.setStyle("overflowX", "hidden");
+	if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
+};
 
 const splitValue = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
