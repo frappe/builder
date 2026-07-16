@@ -13,6 +13,8 @@ export function getColorVariableOptions(
 
 	return variables
 		.filter((builderToken: BuilderToken) => {
+			// legacy rows have a blank or lowercase type; treat them as colors
+			if ((builderToken.type || "Color").toLowerCase() !== "color") return false;
 			const label = (builderToken.token_name || "").toLowerCase();
 			const group = (builderToken.group || "").toLowerCase();
 			const queryLower = processedQuery.toLowerCase();
