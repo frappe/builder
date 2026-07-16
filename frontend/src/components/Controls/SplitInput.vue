@@ -42,7 +42,7 @@ type Split = { label?: string; attrs?: InputAttrs };
 
 const props = withDefaults(
 	defineProps<{
-		modelValue?: unknown;
+		modelValue?: InputValue;
 		// A count renders unlabelled splits; labels double as the slider handles.
 		splits: number | (string | Split)[];
 		toControlValues?: (value: unknown, count: number) => InputValue[];
