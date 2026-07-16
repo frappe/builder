@@ -14,7 +14,7 @@
 			:combineValues="combine"
 			:normalizeValue="normalize"
 			:inputAttrs="{ min: 0 }"
-			:getModelValue="() => readValue(null)"
+			:getModelValue="readValue"
 			:getVariantValue="readValue"
 			:getControlAttrs="getControlAttrs"
 			:getMergedValue
@@ -36,7 +36,7 @@ const SPLIT_LABELS = ["TL", "TR", "BR", "BL"];
 
 const splitModes = reactive<Record<string, boolean>>({});
 
-const readValue = (state: string | null) =>
+const readValue = (state: string | null = null) =>
 	String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || "");
 
 const ensureRoundedContentIsClipped = (value: BoxValue) => {

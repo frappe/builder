@@ -14,7 +14,7 @@
 			:combineValues="combine"
 			:normalizeValue="normalize"
 			:inputAttrs="type === 'margin' ? {} : { min: 0 }"
-			:getModelValue="() => readValue(null)"
+			:getModelValue="readValue"
 			:getPlaceholder="getPlaceholder"
 			:getVariantValue="readValue"
 			:getMergedValue
@@ -46,7 +46,7 @@ const getBaseValue = (cascading = false) =>
 		? blockController.getMargin({ nativeOnly: !cascading, cascading })
 		: blockController.getPadding({ nativeOnly: !cascading, cascading });
 
-const readValue = (state: string | null) =>
+const readValue = (state: string | null = null) =>
 	state ? String(blockController.getNativeStyle(`${state}:${props.type}`) ?? "") : String(getBaseValue());
 
 const getPlaceholder = () => String(getBaseValue(true));
