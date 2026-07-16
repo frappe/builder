@@ -903,17 +903,19 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		// a present-but-blank cell clears the group explicitly
 		const groupValue = groupIndex !== -1 ? values[groupIndex] : undefined;
 
-		const typeValue = typeIndex !== -1 ? values[typeIndex] : undefined;
+		const rawType = (typeIndex !== -1 && values[typeIndex]) || "";
+		const typeValue = (["Color", "Font", "Dimension"].find(
+			(t) => t.toLowerCase() === rawType.toLowerCase(),
+		) || "Color") as BuilderToken["type"];
 		if (variableName && lightValue) {
 			const existing = variables.value.find((v) => v.token_name === variableName);
 			if (!existing) {
 				newVariables.push({
-					...(typeValue ? { type: typeValue as BuilderToken["type"] } : {}),
 					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					group: groupValue,
-					type: "Color",
+					type: typeValue,
 				});
 			} else if (existing.is_standard) {
 				// standard variables are read-only in the manager; skip them here too
@@ -1012,11 +1014,13 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 
 const downloadSampleCSV = () => {
 	const sampleData = [
-		["Variable Name", "Light Mode", "Dark Mode", "Group"],
-		["primary-color", "#3b82f6", "#60a5fa", "Brand"],
-		["secondary-color", "#10b981", "#34d399", "Brand"],
-		["background-color", "#ffffff", "#1f2937", "Surface"],
-		["text-color", "#111827", "#f9fafb", ""],
+		["Variable Name", "Light Mode", "Dark Mode", "Group", "Type"],
+		["primary-color", "#3b82f6", "#60a5fa", "Brand", "Color"],
+		["secondary-color", "#10b981", "#34d399", "Brand", "Color"],
+		["background-color", "#ffffff", "#1f2937", "Surface", "Color"],
+		["text-color", "#111827", "#f9fafb", "", "Color"],
+		["heading-font", "Fraunces", "", "Brand", "Font"],
+		["section-gap", "96px", "", "Layout", "Dimension"],
 	];
 
 	const csvContent = sampleData.map((row) => row.join(",")).join("\n");
