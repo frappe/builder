@@ -11,8 +11,8 @@ from urllib.parse import unquote, urlparse
 import frappe
 import yaml
 from frappe.model.document import Document
-from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_url
+from frappe.modules.import_file import import_doc, import_file_by_path, update_modified
+from frappe.utils import get_datetime, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -330,12 +330,32 @@ def sync_builder_tokens():
 sync_builder_variables = sync_builder_tokens
 
 
+# Fixture exports made before the Builder Token rename still say Builder Variable
+RENAMED_FIXTURE_DOCTYPES = {"Builder Variable": "Builder Token"}
+
+
 def make_records(path):
 	if not os.path.isdir(path):
 		return
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
-			import_file_by_path(f"{path}/{fname}/{fname}.json")
+			import_fixture_record(f"{path}/{fname}/{fname}.json")
+
+
+def import_fixture_record(fpath):
+	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
+	with open(fpath, encoding="utf-8") as f:
+		docdict = frappe.parse_json(f.read())
+	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
+	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+		import_file_by_path(fpath)
+		return
+	docdict["doctype"] = new_doctype
+	db_modified = frappe.db.get_value(new_doctype, docdict.get("name"), "modified")
+	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
+		return
+	import_doc(docdict)
+	update_modified(docdict.get("modified"), docdict)
 
 
 def copy_img_to_asset_folder(block, page_doc, app=None):
