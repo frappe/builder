@@ -1220,6 +1220,8 @@ component.update({
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
+			self.assertTrue("--builder-image-dim: brightness(0.85) contrast(1.05)" in content)
+			self.assertTrue("img { filter: var(--builder-image-dim, none) }" in content)
 		finally:
 			page.delete()
 

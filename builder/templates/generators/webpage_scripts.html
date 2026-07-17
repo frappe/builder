@@ -24,6 +24,10 @@
 :root[data-prefers-color-scheme="light"], :root[data-theme="light"] { color-scheme: light }
 :root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { color-scheme: dark }
 ::selection { background: Highlight; color: HighlightText }
+img { filter: var(--builder-image-dim, none) }
+picture img { filter: none }
+@media (prefers-color-scheme: dark) { :root:not([data-prefers-color-scheme="light"]):not([data-theme="light"]) { --builder-image-dim: brightness(0.85) contrast(1.05) } }
+:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { --builder-image-dim: brightness(0.85) contrast(1.05) }
 </style>
 {% if has_dual_mode_image %}
 <script>
