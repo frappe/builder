@@ -260,7 +260,7 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 
 
 def export_variables(variables, builder_files_path):
-	"""Export Builder Variable records"""
+	"""Export Builder Token records"""
 	if not variables:
 		return
 
@@ -274,19 +274,19 @@ def export_variables(variables, builder_files_path):
 
 			# Try to find the variable by name
 			var_docs = frappe.get_all(
-				"Builder Variable",
+				"Builder Token",
 				filters=[
-					["variable_name", "in", [var_name, db_name, var_name.replace("-", " ").title()]],
+					["token_name", "in", [var_name, db_name, var_name.replace("-", " ").title()]],
 				],
-				fields=["name", "variable_name", "type", "value", "dark_value"],
+				fields=["name", "token_name", "type", "value", "dark_value"],
 			)
 
 			if not var_docs:
 				# Also try searching by the scrubbed name
 				var_docs = frappe.get_all(
-					"Builder Variable",
+					"Builder Token",
 					filters={"name": db_name},
-					fields=["name", "variable_name", "type", "value", "dark_value"],
+					fields=["name", "token_name", "type", "value", "dark_value"],
 				)
 
 			if not var_docs:
@@ -295,15 +295,15 @@ def export_variables(variables, builder_files_path):
 			var_doc = var_docs[0]
 
 			var_config = {
-				"doctype": "Builder Variable",
+				"doctype": "Builder Token",
 				"name": var_doc.name,
-				"variable_name": var_doc.variable_name,
+				"token_name": var_doc.token_name,
 				"type": var_doc.type,
 				"value": var_doc.value,
 				"dark_value": var_doc.dark_value,
 			}
 
-			safe_var_name = frappe.scrub(var_doc.variable_name)
+			safe_var_name = frappe.scrub(var_doc.token_name)
 			var_dir = os.path.join(variables_path, safe_var_name)
 			os.makedirs(var_dir, exist_ok=True)
 			var_file_path = os.path.join(var_dir, f"{safe_var_name}.json")

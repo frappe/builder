@@ -1,23 +1,23 @@
-import builderVariableStore from "@/data/builderVariable";
-import { BuilderVariable } from "@/types/doctypes";
+import builderTokenStore from "@/data/builderToken";
+import { BuilderToken } from "@/types/doctypes";
 import { computed } from "vue";
 
-export const defaultBuilderVariable = {
-	variable_name: "",
+export const defaultBuilderToken = {
+	token_name: "",
 	value: "#000000",
 	type: "Color" as const,
 	dark_value: undefined as string | undefined,
 	group: undefined as string | undefined,
 };
 
-let instance: ReturnType<typeof builderVariableComposable> | null = null;
+let instance: ReturnType<typeof builderTokenComposable> | null = null;
 
-function builderVariableComposable() {
+function builderTokenComposable() {
 	const cssVariables = computed(() => {
-		return (builderVariableStore.data || []).reduce(
-			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
-				if (!builderVariable.name || !builderVariable.value) return obj;
-				obj[`--${builderVariable.name}`] = builderVariable.value;
+		return (builderTokenStore.data || []).reduce(
+			(obj: Record<string, string>, builderToken: BuilderToken) => {
+				if (!builderToken.name || !builderToken.value) return obj;
+				obj[`--${builderToken.name}`] = builderToken.value;
 				return obj;
 			},
 			{},
@@ -25,10 +25,10 @@ function builderVariableComposable() {
 	});
 
 	const darkCssVariables = computed(() => {
-		return (builderVariableStore.data || []).reduce(
-			(obj: Record<string, string>, builderVariable: BuilderVariable) => {
-				if (!builderVariable.name || !builderVariable.dark_value) return obj;
-				obj[`--${builderVariable.name}`] = builderVariable.dark_value;
+		return (builderTokenStore.data || []).reduce(
+			(obj: Record<string, string>, builderToken: BuilderToken) => {
+				if (!builderToken.name || !builderToken.dark_value) return obj;
+				obj[`--${builderToken.name}`] = builderToken.dark_value;
 				return obj;
 			},
 			{},
@@ -69,55 +69,60 @@ function builderVariableComposable() {
 		}
 
 		const name = key.slice(2);
-		const variable = (builderVariableStore.data || []).find(
-			(builderVariable: BuilderVariable) => builderVariable.name === name,
+		const variable = (builderTokenStore.data || []).find(
+			(builderToken: BuilderToken) => builderToken.name === name,
 		);
-		return variable?.variable_name || null;
+		return variable?.token_name || null;
 	};
 
-	const createVariable = async (builderVariable: Partial<BuilderVariable>) => {
-		if (!builderVariable.variable_name || !builderVariable.value) {
+	const createVariable = async (builderToken: Partial<BuilderToken>) => {
+		if (!builderToken.token_name || !builderToken.value) {
 			throw new Error("Variable name and value are required");
 		}
-		return await builderVariableStore.insert.submit({
-			...defaultBuilderVariable,
-			...builderVariable,
+		return await builderTokenStore.insert.submit({
+			...defaultBuilderToken,
+			...builderToken,
 		});
 	};
 
-	const updateVariable = async (builderVariable: Partial<BuilderVariable>) => {
-		if (!builderVariable.name || !builderVariable.variable_name || !builderVariable.value) {
+	const updateVariable = async (builderToken: Partial<BuilderToken>) => {
+		if (!builderToken.name || !builderToken.token_name || !builderToken.value) {
 			throw new Error("Variable name, id and value are required");
 		}
-		return await builderVariableStore.setValue.submit(builderVariable);
+		return await builderTokenStore.setValue.submit(builderToken);
 	};
 
 	const deleteVariable = async (name: string) => {
 		if (!name) {
 			throw new Error("Variable name is required");
 		}
-		await builderVariableStore.delete.submit(name);
+		await builderTokenStore.delete.submit(name);
 	};
+
+	const fontTokens = computed(() =>
+		(builderTokenStore.data || []).filter((t: BuilderToken) => t.type === "Font" && t.value),
+	);
 
 	return {
 		cssVariables,
 		darkCssVariables,
+		fontTokens,
 		resolveVariableValue,
 		getVariableName,
 		createVariable,
 		updateVariable,
 		deleteVariable,
 		variables: computed({
-			get: () => (builderVariableStore.data as BuilderVariable[]) || [],
-			set: (value: BuilderVariable[]) => {
-				builderVariableStore.data = value;
+			get: () => (builderTokenStore.data as BuilderToken[]) || [],
+			set: (value: BuilderToken[]) => {
+				builderTokenStore.data = value;
 			},
 		}),
 	};
 }
 
-export function useBuilderVariable() {
+export function useBuilderToken() {
 	if (instance) return instance;
-	instance = builderVariableComposable();
+	instance = builderTokenComposable();
 	return instance;
 }

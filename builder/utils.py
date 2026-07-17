@@ -320,10 +320,14 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
-def sync_builder_variables():
-	print("Syncing Builder Builder Variables")
-	builder_variable_path = frappe.get_module_path("builder", "builder_variable")
-	make_records(builder_variable_path)
+def sync_builder_tokens():
+	print("Syncing Builder Builder Tokens")
+	builder_token_path = frappe.get_module_path("builder", "builder_token")
+	make_records(builder_token_path)
+
+
+# Compat alias, external scripts may still call the old name
+sync_builder_variables = sync_builder_tokens
 
 
 def make_records(path):

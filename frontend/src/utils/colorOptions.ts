@@ -1,30 +1,32 @@
-import { BuilderVariable } from "@/types/doctypes";
+import { BuilderToken } from "@/types/doctypes";
 import { defineComponent, h, shallowRef } from "vue";
 
 export function getColorVariableOptions(
 	query: string,
-	variables: BuilderVariable[],
+	variables: BuilderToken[],
 	resolveVariableValue: (val: string, dark?: boolean) => string,
 	isDark: boolean,
-	onEdit?: (variable: BuilderVariable) => void,
+	onEdit?: (variable: BuilderToken) => void,
 ) {
 	let processedQuery = query.replace(/^(--|var|\s+)/, "");
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 
 	return variables
-		.filter((builderVariable: BuilderVariable) => {
-			const label = (builderVariable.variable_name || "").toLowerCase();
-			const group = (builderVariable.group || "").toLowerCase();
+		.filter((builderToken: BuilderToken) => {
+			// legacy rows have a blank or lowercase type; treat them as colors
+			if ((builderToken.type || "Color").toLowerCase() !== "color") return false;
+			const label = (builderToken.token_name || "").toLowerCase();
+			const group = (builderToken.group || "").toLowerCase();
 			const queryLower = processedQuery.toLowerCase();
 			return queryLower === "" || label.includes(queryLower) || group.includes(queryLower);
 		})
-		.map((builderVariable: BuilderVariable) => {
-			const varName = `var(--${builderVariable.name})`;
+		.map((builderToken: BuilderToken) => {
+			const varName = `var(--${builderToken.name})`;
 			const resolvedLightColor = resolveVariableValue(varName);
 			const resolvedDarkColor = resolveVariableValue(varName, true);
 
 			return {
-				label: `${builderVariable?.variable_name || ""}`,
+				label: `${builderToken?.token_name || ""}`,
 				value: varName,
 				prefix: shallowRef(
 					defineComponent({
@@ -38,7 +40,7 @@ export function getColorVariableOptions(
 					}),
 				),
 				suffix:
-					!builderVariable.is_standard && onEdit
+					!builderToken.is_standard && onEdit
 						? shallowRef(
 								defineComponent({
 									setup() {
@@ -48,7 +50,7 @@ export function getColorVariableOptions(
 												{
 													class: "hidden group-hover:inline-block",
 													onClick: (e: Event) => {
-														onEdit(builderVariable);
+														onEdit(builderToken);
 													},
 												},
 												"Edit",

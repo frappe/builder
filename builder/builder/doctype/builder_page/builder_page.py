@@ -355,11 +355,11 @@ class BuilderPage(WebsiteGenerator):
 
 		if context.preview:
 			context.disable_auto_dark_mode = 0
-			# /builder_assets/variables.css is a rendered route, not a real file, so
+			# /builder_assets/tokens.css is a rendered route, not a real file, so
 			# the preview/PDF generator can't fetch it. Inline the variables instead.
-			from builder.builder.doctype.builder_variable.builder_variable import get_variables_css
+			from builder.builder.doctype.builder_token.builder_token import get_variables_css
 
-			context.inline_variables_css = get_variables_css()
+			context.inline_tokens_css = get_variables_css()
 			# Honour the dark/light mode the editor previews in (canvasDarkMode), so the
 			# initial server render matches it instead of falling back to the OS scheme.
 			scheme = frappe.form_dict.get("prefers_color_scheme")
@@ -1327,8 +1327,20 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 
 
 def get_font_family(font: str) -> str:
-	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter')."""
+	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter').
+	A Font design token (var(--id)) resolves to its family so the Google Fonts
+	links include tokenized families."""
+	font = resolve_font_token(font)
 	return font.split(",")[0].strip().strip("'\"")
+
+
+def resolve_font_token(font: str) -> str:
+	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
+	if not match:
+		return font
+	token_id = match.group(1)[2:]
+	value = frappe.db.get_value("Builder Token", token_id, "value")
+	return value or ""
 
 
 def set_fonts(styles, font_map, inherited_font=None):
@@ -1377,8 +1389,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
 			font = get_font_family(font)
 
-			# Skip if it is a system font
-			if font.lower() in system_fonts:
+			# Skip system fonts and unresolvable font tokens
+			if not font or font.lower() in system_fonts:
 				continue
 
 			weight = str(style.get("fontWeight") or "400").lower()
