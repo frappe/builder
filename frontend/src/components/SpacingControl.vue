@@ -26,7 +26,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { computed, reactive } from "vue";
+import { computed, ref, watch } from "vue";
 
 type SpacingType = "margin" | "padding";
 type BoxValue = string | number | boolean | null;
@@ -35,7 +35,12 @@ const SPLITS = ["T", "R", "B", "L"];
 const enableSlider = true;
 
 const props = defineProps<{ type: SpacingType }>();
-const splitModes = reactive<Record<string, boolean>>({});
+const splitModes = ref<Record<string, boolean>>({});
+
+watch(
+	() => blockController.getSelectedBlocks(),
+	() => (splitModes.value = {}),
+);
 
 const label = computed(() => (props.type === "margin" ? "Margin" : "Padding"));
 
@@ -56,9 +61,9 @@ const getMergedValue = (parts: BoxValue[]) => parts[0] ?? 0;
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes[key] ?? false),
+		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
 		enableSlider,
-		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
+		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
 	};
 };
 </script>

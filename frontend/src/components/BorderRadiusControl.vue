@@ -27,13 +27,18 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { RADIUS_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { reactive } from "vue";
+import { ref, watch } from "vue";
 
 type BoxValue = string | number | boolean | null;
 
 const SPLITS = ["TL", "TR", "BR", "BL"];
 
-const splitModes = reactive<Record<string, boolean>>({});
+const splitModes = ref<Record<string, boolean>>({});
+
+watch(
+	() => blockController.getSelectedBlocks(),
+	() => (splitModes.value = {}),
+);
 
 const readValue = (state: string | null = null) =>
 	String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || "");
@@ -52,8 +57,8 @@ const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";
 	return {
 		enableSlider: true,
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes[key] ?? false),
-		"onUpdate:split": (split: boolean) => (splitModes[key] = split),
+		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
+		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
 	};
 };
 </script>
