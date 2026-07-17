@@ -33,6 +33,10 @@
 						'pl-2': !$slots.prefix,
 						'pr-2': !hasValue && !canShowArrows,
 					}" />
+				<span
+					v-if="hasOverflow"
+					class="pointer-events-none relative z-10 -ml-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-focus-within:hidden group-hover:to-surface-gray-3"
+					aria-hidden="true" />
 				<div class="flex items-center gap-0.5">
 					<NumberArrows
 						v-if="canShowArrows"
@@ -114,6 +118,7 @@
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
+import { useResizeObserver } from "@vueuse/core";
 import {
 	ComboboxContent,
 	ComboboxInput,
@@ -123,7 +128,7 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
-import { computed, nextTick, ref, useAttrs, watch } from "vue";
+import { computed, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 
 interface Option {
@@ -175,6 +180,16 @@ const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
+
+const hasOverflow = ref(false);
+
+const checkOverflow = () => {
+	const input = containerRef.value?.querySelector("input");
+	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+};
+
+useResizeObserver(containerRef, checkOverflow);
+onMounted(checkOverflow);
 
 const attrs = useAttrs();
 
@@ -268,6 +283,7 @@ const handleBlur = (event: FocusEvent) => {
 };
 
 watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
+watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
 watch(
 	() => props.modelValue,
 	(val) => (searchQuery.value = val ?? ""),

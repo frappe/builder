@@ -2,8 +2,10 @@ import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { BORDER_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions";
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
+import BorderRadiusControl from "@/components/BorderRadiusControl.vue";
 
 const overflowOptions = [
 	{
@@ -98,7 +100,7 @@ const styleSectionProperties = [
 				label: "Border Width",
 				propertyKey: "borderWidth",
 				enableSlider: true,
-				unitOptions: ["px", "%", "em", "rem"],
+				unitOptions: BORDER_UNIT_OPTIONS,
 				minValue: 0,
 			};
 		},
@@ -128,30 +130,9 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
-				label: "Radius",
-				propertyKey: "borderRadius",
-				enableSlider: true,
-				unitOptions: ["px", "%"],
-				minValue: 0,
-			};
-		},
+		component: BorderRadiusControl,
+		getProps: () => {},
 		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
-		events: {
-			"update:modelValue": (val: StyleValue) => {
-				blockController.setStyle("borderRadius", val);
-				if (val) {
-					if (!blockController.getStyle("overflowX")) {
-						blockController.setStyle("overflowX", "hidden");
-					}
-					if (!blockController.getStyle("overflowY")) {
-						blockController.setStyle("overflowY", "hidden");
-					}
-				}
-			},
-		},
 	},
 	{
 		component: StylePropertyControl,
@@ -231,7 +212,7 @@ const styleSectionProperties = [
 				label: "Rotation",
 				propertyKey: "rotate",
 				enableSlider: true,
-				unitOptions: ["deg"],
+				unitOptions: ROTATION_UNIT_OPTIONS,
 				minValue: -360,
 				maxValue: 360,
 				defaultValue: 0,

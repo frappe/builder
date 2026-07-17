@@ -37,14 +37,14 @@
 		type="text"
 		:modelValue="width"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem', 'fr']"
+		:unitOptions="GRID_UNIT_OPTIONS"
 		@update:modelValue="setWidth" />
 	<InlineInput
 		label="Row Height"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(rows as string)"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem', 'fr']"
+		:unitOptions="GRID_UNIT_OPTIONS"
 		type="text"
 		:modelValue="height"
 		@update:modelValue="setHeight" />
@@ -53,7 +53,7 @@
 		label="Gap"
 		v-if="blockController.isGrid()"
 		:enableSlider="true"
-		:unitOptions="['px', 'em', 'rem']" />
+		:unitOptions="BOX_UNIT_OPTIONS" />
 	<!-- <InlineInput
 		label="Align"
 		v-if="blockController.isGrid()"
@@ -217,6 +217,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { BOX_UNIT_OPTIONS, GRID_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed } from "vue";
 
 const getGridType = () => {

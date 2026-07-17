@@ -21,7 +21,7 @@
 			<div class="col-span-1 col-start-2 w-16 self-center">
 				<InlineInput
 					placeholder="Top"
-					:unitOptions="['px', '%']"
+					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="blockController.getStyle('top') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('top', value)" />
@@ -29,7 +29,7 @@
 			<div class="col-span-1 col-start-1 w-16 self-center">
 				<InlineInput
 					placeholder="Left"
-					:unitOptions="['px', '%']"
+					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="blockController.getStyle('left') as string"
 					@update:modelValue="(value: string) => blockController.setStyle('left', value)" />
@@ -50,7 +50,7 @@
 				<!-- prettier-ignore -->
 				<InlineInput
 					placeholder="Right"
-					:unitOptions="['px', '%']"
+					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="(blockController.getStyle('right') as string)"
 					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
@@ -59,7 +59,7 @@
 				<!-- prettier-ignore -->
 				<InlineInput
 					placeholder="Bottom"
-					:unitOptions="['px', '%']"
+					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="(blockController.getStyle('bottom') as string)"
 					@update:modelValue="(value: string) => blockController.setStyle('bottom', value)" />
@@ -71,6 +71,7 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { POSITION_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed, watch } from "vue";
 
 const position = computed({

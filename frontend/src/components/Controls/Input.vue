@@ -1,5 +1,5 @@
 <template>
-	<div ref="containerRef" class="group relative w-full" :class="paddingClass">
+	<div ref="containerRef" class="group relative w-full" :class="[paddingClass, { disabled }]">
 		<Select
 			v-if="type === 'select'"
 			:modelValue="data as string"
@@ -42,6 +42,7 @@
 				</div>
 			</template>
 		</FormControl>
+		<span v-if="hasOverflow" class="input-overflow-fade" aria-hidden="true" />
 	</div>
 </template>
 <script lang="ts" setup>
@@ -49,7 +50,7 @@ import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
-import { computed, ref, useAttrs, useSlots } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useAttrs, useSlots, watch } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -90,8 +91,23 @@ const slots = useSlots();
 
 const containerRef = ref<HTMLElement | null>(null);
 const containerWidth = ref(Infinity);
+
+const hasOverflow = ref(false);
+
+const checkOverflow = () => {
+	const input = containerRef.value?.querySelector("input");
+	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+};
+
+const checkOverflowAfterRender = () => void nextTick(checkOverflow);
+
 useResizeObserver(containerRef, (entries) => {
 	containerWidth.value = entries[0].contentRect.width;
+	checkOverflowAfterRender();
+});
+
+onMounted(() => {
+	checkOverflowAfterRender();
 });
 
 const canShowArrows = computed(
@@ -120,6 +136,8 @@ const { hasNumber, incrementValue, decrementValue } = useNumberInput({
 	},
 	getAttrs: () => attrs,
 });
+
+watch([data, paddingClass], checkOverflowAfterRender, { flush: "post" });
 
 const clearValue = () => {
 	data.value = "";
@@ -181,5 +199,53 @@ input[type="number"] {
 
 .has-both-suffix:hover :deep(input) {
 	padding-right: 2.8rem !important;
+}
+
+.input-overflow-fade {
+	--fade-color: var(--surface-gray-2);
+
+	pointer-events: none;
+	position: absolute;
+	inset-block: 1px;
+	right: 0px;
+	z-index: 10;
+	width: 1rem;
+	background: linear-gradient(to right, transparent, var(--fade-color) 75%);
+}
+
+.group:hover > .input-overflow-fade {
+	--fade-color: var(--surface-gray-3);
+}
+
+.group:focus-within > .input-overflow-fade {
+	display: none;
+}
+
+.group.disabled > .input-overflow-fade {
+	--fade-color: var(--surface-gray-1);
+}
+
+.cross-only-suffix > .input-overflow-fade {
+	right: 1.8rem;
+}
+
+.arrows-only-suffix > .input-overflow-fade {
+	right: 3px;
+}
+
+.arrows-only-suffix:hover > .input-overflow-fade {
+	right: 1.4rem;
+}
+
+.has-both-suffix > .input-overflow-fade {
+	right: 1.5rem;
+}
+
+.has-both-suffix:hover > .input-overflow-fade {
+	right: 2.8rem;
+}
+
+.group :deep(input + div) {
+	z-index: 20;
 }
 </style>
