@@ -18,17 +18,6 @@
 {const c=document.cookie,show=window.matchMedia("(min-width:768px)").matches&&c.includes("user_id=")&&!c.includes("user_id=Guest")&&!c.includes("system_user=no;");if(show){const link=document.createElement("a");link.rel="nofollow";link.href="{{ editor_link }}";link.target="editor-{{ page_name }}";link.style.cssText="position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1";link.innerHTML='<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>';link.addEventListener("mouseover",()=>link.style.opacity="1");link.addEventListener("mouseout",()=>link.style.opacity=".1");document.body.appendChild(link)}}
 </script>
 {% endif %}
-<style>
-:root { color-scheme: light dark }
-:root { background: transparent; color: CanvasText }
-:root[data-prefers-color-scheme="light"], :root[data-theme="light"] { color-scheme: light }
-:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { color-scheme: dark }
-::selection { background: Highlight; color: HighlightText }
-img { filter: var(--builder-image-dim, none) }
-picture img { filter: none }
-@media (prefers-color-scheme: dark) { :root:not([data-prefers-color-scheme="light"]):not([data-theme="light"]) { --builder-image-dim: brightness(0.85) contrast(1.05) } }
-:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { --builder-image-dim: brightness(0.85) contrast(1.05) }
-</style>
 {% if has_dual_mode_image %}
 <script>
 (function(){function s(){var t=document.documentElement.getAttribute('data-theme')||document.documentElement.getAttribute('data-prefers-color-scheme');document.querySelectorAll('picture source[data-scheme="dark"]').forEach(function(s){s.media=t==='dark'?'all':t==='light'?'not all':'(prefers-color-scheme: dark)';});}new MutationObserver(s).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-prefers-color-scheme']});s();})();

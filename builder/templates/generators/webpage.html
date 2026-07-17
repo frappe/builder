@@ -23,6 +23,17 @@
 	<link rel="icon" href="{{ favicon_dark or favicon or '/assets/builder/images/frappe_white.png' }}"  media="(prefers-color-scheme: dark)"/>
 	{% block meta_block %}{% include "templates/includes/meta_block.html" %}{% endblock %}
 	<link rel="stylesheet" href="/assets/builder/reset.css?v=6" media="screen">
+	<style>
+	:root { color-scheme: light dark }
+	:root { background: transparent; color: CanvasText }
+	:root[data-prefers-color-scheme="light"], :root[data-theme="light"] { color-scheme: light }
+	:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { color-scheme: dark }
+	::selection { background: Highlight; color: HighlightText }
+	img { filter: var(--builder-image-dim, none) }
+	picture img { filter: none }
+	@media (prefers-color-scheme: dark) { :root:not([data-prefers-color-scheme="light"]):not([data-theme="light"]) { --builder-image-dim: brightness(0.85) contrast(1.05) } }
+	:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { --builder-image-dim: brightness(0.85) contrast(1.05) }
+	</style>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	{% for font_url in font_urls %}
