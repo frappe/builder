@@ -876,6 +876,11 @@ def set_image_loading_attributes(tag: bs.Tag, state: dict) -> None:
 	index = state["image_count"]
 	state["image_count"] += 1
 
+	# No alt at all makes screen readers announce the filename; empty alt
+	# marks the image as decorative until the user provides one.
+	if "alt" not in tag.attrs:
+		tag.attrs["alt"] = ""
+
 	dimensions = get_image_dimensions(tag.get("src") or "")
 	if dimensions and "width" not in tag.attrs and "height" not in tag.attrs:
 		tag.attrs["width"] = str(dimensions[0])
