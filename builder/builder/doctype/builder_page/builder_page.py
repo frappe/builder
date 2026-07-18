@@ -3,13 +3,15 @@
 
 import copy
 import hashlib
+import os
 import re
 from typing import Any
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, unquote
 
 import bs4 as bs
 import frappe
 import frappe.utils
+from frappe.core.doctype.file.file import get_local_image
 from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -53,6 +55,11 @@ from builder.utils import (
 MOBILE_BREAKPOINT = 576
 TABLET_BREAKPOINT = 768
 DESKTOP_BREAKPOINT = 1024
+
+# Images after the first few are likely below the fold and safe to lazy-load
+EAGER_IMAGE_COUNT = 3
+# Roughly hero-sized; used to pick the likely LCP image for fetchpriority
+LCP_IMAGE_AREA = 250_000
 
 # Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
 KEEP_PUBLISH_SNAPSHOTS = 25
@@ -632,6 +639,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 		"style_tag": style_tag,
 		"font_map": font_map,
 		"has_dual_mode_image": False,
+		"image_count": 0,
 		"standard_props_stack": {},  # prop_name -> list of prop_info
 		"global_script_tag": soup.new_tag("script"),
 		"used_block_scripts": set(),
@@ -844,6 +852,9 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	for key, value in block.get("customAttributes", {}).items():
 		tag[key] = value
 
+	if tag.name == "img":
+		set_image_loading_attributes(tag, state)
+
 	# Stamp the live blockId so duplicated blocks each get their own tracking id.
 	if tag.get("data-track") and block.get("blockId"):
 		tag["data-track"] = block.get("blockId")
@@ -858,6 +869,51 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 		return picture_tag
 
 	return tag
+
+
+def set_image_loading_attributes(tag: bs.Tag, state: dict) -> None:
+	"""Add loading defaults for good LCP/CLS. Explicit user attributes always win."""
+	index = state["image_count"]
+	state["image_count"] += 1
+
+	dimensions = get_image_dimensions(tag.get("src") or "")
+	if dimensions and "width" not in tag.attrs and "height" not in tag.attrs:
+		tag.attrs["width"] = str(dimensions[0])
+		tag.attrs["height"] = str(dimensions[1])
+
+	if index >= EAGER_IMAGE_COUNT:
+		if "loading" not in tag.attrs:
+			tag.attrs["loading"] = "lazy"
+			tag.attrs.setdefault("decoding", "async")
+	elif (
+		dimensions
+		and dimensions[0] * dimensions[1] >= LCP_IMAGE_AREA
+		and not state.get("lcp_image_found")
+		and "fetchpriority" not in tag.attrs
+	):
+		state["lcp_image_found"] = True
+		tag.attrs["fetchpriority"] = "high"
+
+
+@redis_cache(ttl=60 * 60)
+def get_image_dimensions(src: str) -> tuple[int, int] | None:
+	"""Intrinsic size of locally hosted images; None for external or dynamic sources."""
+	if "{{" in src:
+		return None
+	try:
+		if src.startswith("/files/"):
+			image, _, _ = get_local_image(unquote(src))
+			return image.size
+		if src.startswith("/builder_assets/"):
+			www_path = os.path.abspath(frappe.get_app_path("builder", "www"))
+			image_path = os.path.abspath(os.path.join(www_path, unquote(src).lstrip("/")))
+			if image_path.startswith(www_path):
+				from PIL import Image
+
+				return Image.open(image_path).size
+	except Exception:
+		pass
+	return None
 
 
 def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None) -> list[str]:
