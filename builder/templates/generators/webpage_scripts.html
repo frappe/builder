@@ -1,7 +1,7 @@
 {% block script %}
 {%- if scripts -%}
 {% for script_path in scripts %}
-<script src="{{ script_path }}"></script>
+<script src="{{ script_path }}" defer></script>
 {% endfor %}
 {%- endif -%}
 {%- endblock %}
