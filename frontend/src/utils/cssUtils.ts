@@ -335,12 +335,8 @@ function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
  * @returns Shorthand value string
  */
 function collapseBoxShorthand(parts: unknown[]): string {
-	console.log(parts)
 	const [top, right, bottom, left] = parts.map((part) => String(part ?? ""));
-	if (top === right && top === bottom && top === left) {
-		console.log(99)
-		return top;
-	};
+	if (top === right && top === bottom && top === left) return top;
 	if (top === bottom && right === left) return `${top} ${right}`;
 	if (right === left) return `${top} ${right} ${bottom}`;
 	return [top, right, bottom, left].join(" ");
