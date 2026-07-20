@@ -18,7 +18,7 @@ import { startDrag } from "@/utils/cursor";
 import { getNumberFromPx } from "@/utils/helpers";
 import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
-import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
+import { computed, inject, reactive, ref, watchEffect } from "vue";
 import CursorTooltip from "./CursorTooltip.vue";
 
 const props = defineProps<{
@@ -123,7 +123,7 @@ const handleRounded = (ev: MouseEvent) => {
 	});
 };
 
-onMounted(() => setHandlerPosition(borderRadius.value));
+watchEffect(() => setHandlerPosition(borderRadius.value));
 
 watchEffect(() => {
 	props.targetBlock.getStyle("height");
