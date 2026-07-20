@@ -1,5 +1,5 @@
 <template>
-	<TransformPreview v-if="rotating" :position="cursorPosition">{{ currentRotation }}°</TransformPreview>
+	<CursorTooltip v-if="rotating" :position="cursorPosition">{{ currentRotation }}°</CursorTooltip>
 	<div
 		v-for="corner in corners"
 		v-show="!rotating"
@@ -18,7 +18,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getRotatedCursor, setDragCursor, startDrag } from "@/utils/cursor";
 import { getElementRotation } from "@/utils/rotation";
 import { ref } from "vue";
-import TransformPreview from "./TransformPreview.vue";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const props = defineProps<{
 	targetBlock: Block;
@@ -32,10 +32,10 @@ const emit = defineEmits<{
 const canvasStore = useCanvasStore();
 
 const cornerLayout = [
-	{ name: "bottom-right", positionClass: "bottom-[-20px] right-[-20px]", baseAngle: 0 },
-	{ name: "bottom-left", positionClass: "bottom-[-20px] left-[-20px]", baseAngle: 90 },
-	{ name: "top-left", positionClass: "top-[-20px] left-[-20px]", baseAngle: 180 },
-	{ name: "top-right", positionClass: "top-[-20px] right-[-20px]", baseAngle: 270 },
+	{ name: "bottom-right", positionClass: "bottom-[-26px] right-[-26px]", baseAngle: 0 },
+	{ name: "bottom-left", positionClass: "bottom-[-26px] left-[-26px]", baseAngle: 90 },
+	{ name: "top-left", positionClass: "top-[-26px] left-[-26px]", baseAngle: 180 },
+	{ name: "top-right", positionClass: "top-[-26px] right-[-26px]", baseAngle: 270 },
 ] as const;
 
 const rotating = ref(false);
@@ -61,6 +61,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	// ancestors don't rotate mid-drag, so their contribution can be captured once up front
 	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
+	const startRotate = props.targetBlock.getStyle("rotate", null, true);
 	let lastCursorAngle: number | null = null;
 	const dragCursor = (angle: number) =>
 		getRotatedCursor(rotationCursorSvg, ancestorRotation + angle + baseAngle, "pointer");
@@ -93,6 +94,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 				setDragCursor(dragCursor(finalRotation));
 			}
 		},
+		onCancel: () => props.targetBlock.setStyle("rotate", startRotate ?? null),
 		onEnd: () => {
 			rotating.value = false;
 			emit("rotating", false);

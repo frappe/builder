@@ -5,6 +5,7 @@
 				class="min-w-0 flex-1"
 				:modelValue="displayValue"
 				:placeholder="split && splitCount && !displayValue ? 'Mixed' : placeholder"
+				:type="type"
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
 
@@ -24,6 +25,7 @@
 			:normalizeValue="normalizeValue"
 			:inputAttrs="inputAttrs"
 			:enableSlider="enableSlider"
+			:type="type"
 			@update:modelValue="setIndividualValue" />
 	</div>
 </template>
@@ -57,6 +59,7 @@ const props = withDefaults(
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs;
 		enableSlider?: boolean;
+		type?: string;
 		getMergedValue: (values: InputValue[]) => InputValue;
 	}>(),
 	{

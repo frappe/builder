@@ -1,29 +1,29 @@
 <template>
-	<TransformPreview v-if="resizing" :position="cursorPosition" :wide="!props.targetBlock.isText()">
+	<CursorTooltip v-if="resizing" :position="cursorPosition" :wide="!props.targetBlock.isText()">
 		<template v-if="props.targetBlock.isText()">{{ fontSize }}</template>
 		<template v-else>{{ targetWidth }} x {{ targetHeight }}</template>
-	</TransformPreview>
+	</CursorTooltip>
 
 	<div
-		class="left-handle pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent"
+		class="left-handle pointer-events-auto absolute bottom-0 left-[-6px] top-0 w-3 border-none bg-transparent"
 		:style="{ cursor: horizontalCursor }"
 		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.left)" />
 	<div
-		class="right-handle pointer-events-auto absolute bottom-0 right-[-2px] top-0 w-2 border-none bg-transparent"
+		class="right-handle pointer-events-auto absolute bottom-0 right-[-6px] top-0 w-3 border-none bg-transparent"
 		:style="{ cursor: horizontalCursor }"
 		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.right)" />
 	<div
-		class="top-handle pointer-events-auto absolute left-0 right-0 top-[-2px] h-2 border-none bg-transparent"
+		class="top-handle pointer-events-auto absolute left-0 right-0 top-[-6px] h-3 border-none bg-transparent"
 		:style="{ cursor: verticalCursor }"
 		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.top)" />
 	<div
-		class="bottom-handle pointer-events-auto absolute bottom-[-2px] left-0 right-0 h-2 border-none bg-transparent"
+		class="bottom-handle pointer-events-auto absolute bottom-[-6px] left-0 right-0 h-3 border-none bg-transparent"
 		:style="{ cursor: verticalCursor }"
 		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.bottom)" />
 	<div
 		v-for="corner in visibleCorners"
 		:key="corner.name"
-		class="pointer-events-auto absolute h-[10px] w-[10px] rounded-full border-2 border-blue-400 bg-white"
+		class="pointer-events-auto absolute h-[10px] w-[10px] rounded-full border-2 border-blue-400 bg-white before:absolute before:-inset-2 before:content-['']"
 		:class="[corner.positionClass, { 'border-purple-400': targetBlock.isExtendedFromComponent() }]"
 		:style="{ cursor: corner.cursor.value }"
 		v-show="!resizing"
@@ -40,7 +40,7 @@ import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
-import TransformPreview from "./TransformPreview.vue";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const canvasStore = useCanvasStore();
 const props = defineProps<{
@@ -152,6 +152,14 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
+	// pressing `esc` resetsnto startStyles
+	const startStyles = {
+		width: props.targetBlock.getStyle("width", null, true),
+		height: props.targetBlock.getStyle("height", null, true),
+		left: props.targetBlock.getStyle("left", null, true),
+		top: props.targetBlock.getStyle("top", null, true),
+		fontSize: props.targetBlock.getStyle("fontSize", null, true),
+	};
 
 	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	resizing.value = true;
@@ -201,6 +209,11 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 				props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
 				props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
 			}
+		},
+		onCancel: () => {
+			Object.entries(startStyles).forEach(([style, value]) => {
+				props.targetBlock.setStyle(style as styleProperty, value ?? null);
+			});
 		},
 		onEnd: () => {
 			resizing.value = false;
