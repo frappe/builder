@@ -314,7 +314,7 @@ class Block implements BlockOptions {
 		if (this.isExtendedFromComponent()) {
 			rawStyles = this.referenceComponent?.getRawStyles(currentBreakpoint) || {};
 		}
-		rawStyles = { ...rawStyles, ...this.getRawStyleMapForBreakpoint(currentBreakpoint) };
+		rawStyles = { ...rawStyles, ...this.getRawStylesWithCascading(currentBreakpoint) };
 		return rawStyles;
 	}
 	getVisibilityCondition() {
@@ -457,6 +457,16 @@ class Block implements BlockOptions {
 			desktop: this.rawStyles,
 		};
 		return styleMap[breakpoint as keyof typeof styleMap] || this.rawStyles;
+	}
+
+	private getRawStylesWithCascading(breakpoint: string) {
+		if (breakpoint === "mobile") {
+			return { ...this.rawStyles, ...this.tabletRawStyles, ...this.mobileRawStyles };
+		}
+		if (breakpoint === "tablet") {
+			return { ...this.rawStyles, ...this.tabletRawStyles };
+		}
+		return this.rawStyles;
 	}
 
 	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
