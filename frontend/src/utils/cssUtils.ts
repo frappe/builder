@@ -330,6 +330,23 @@ function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
 }
 
 /**
+ * Collapses four side values into the shortest shorthand that expands back to them.
+ * @param parts - Four side values, in the order expandBoxShorthand returns
+ * @returns Shorthand value string
+ */
+function collapseBoxShorthand(parts: unknown[]): string {
+	console.log(parts)
+	const [top, right, bottom, left] = parts.map((part) => String(part ?? ""));
+	if (top === right && top === bottom && top === left) {
+		console.log(99)
+		return top;
+	};
+	if (top === bottom && right === left) return `${top} ${right}`;
+	if (right === left) return `${top} ${right} ${bottom}`;
+	return [top, right, bottom, left].join(" ");
+}
+
+/**
  * Normalizes CSS values by adding the default unit where missing.
  * Handles both single and whitespace-separated numeric values.
  * @param value - CSS value string
@@ -346,6 +363,7 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 
 export {
 	addPxToNumber,
+	collapseBoxShorthand,
 	expandBoxShorthand,
 	extractNumberAndUnit,
 	getBoxSpacing,

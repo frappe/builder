@@ -87,8 +87,10 @@ const gridStyle = computed(() => ({
 const getInputAttrs = (index: number) => ({ ...props.inputAttrs, ...splits.value[index]?.attrs });
 
 const updateValue = (index: number, value: InputValue) => {
-	const nextValues: InputValue[] = [...values.value];
-	nextValues[index] = props.normalizeValue(value, index);
+	// Every side is normalized, not just the edited one, so units stay consistent across sides.
+	const nextValues = values.value.map((current, side) =>
+		props.normalizeValue(side === index ? value : current, side),
+	);
 	emit("update:modelValue", props.toModelValue(nextValues, index));
 };
 
