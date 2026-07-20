@@ -3,7 +3,10 @@
 
 import copy
 import hashlib
+import json
+import os
 import re
+from functools import lru_cache
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -851,7 +854,7 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
 	tag.attrs["class"] = " ".join(classes)
 
-	add_inner_html_content(tag, block, state)
+	add_inner_html_content(tag, block, state, ancestor_font=ancestor_font)
 
 	if picture_tag is not None:
 		picture_tag.append(tag)
@@ -919,7 +922,7 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 	return style_class
 
 
-def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
+def add_inner_html_content(tag: bs.Tag, block: dict, state: dict, ancestor_font: str | None = None):
 	"""Add inner HTML content to the tag."""
 	inner_content = block.get("innerHTML")
 	if inner_content:
@@ -928,8 +931,38 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict):
 			inner_content = str(inner_content)
 		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
 		set_fonts_from_html(inner_soup, state["font_map"])
+		set_italics_from_html(inner_soup, state["font_map"], ancestor_font)
 		if inner_soup.contents:
 			tag.append(inner_soup)
+
+
+def set_italics_from_html(soup, font_map, ancestor_font: str | None = None):
+	"""Register italic usage that lives inside a block's inner HTML, e.g.
+	`<i>`/`<em>` tags or inline `font-style: italic` spans, so the italic faces
+	are part of the font request instead of being browser-synthesised."""
+
+	def italic_font_for(tag) -> str | None:
+		# an inline font-family wins; otherwise the italic text inherits the
+		# block's resolved font
+		for parent in [tag, *tag.parents]:
+			style = parent.attrs.get("style") if getattr(parent, "attrs", None) else None
+			if style and "font-family" in style:
+				for declaration in style.split(";"):
+					if "font-family" in declaration:
+						return get_font_family(declaration.split(":", 1)[1])
+		return get_font_family(ancestor_font) if ancestor_font else None
+
+	def register(tag):
+		font = italic_font_for(tag)
+		if font and font in font_map:
+			register_italic_font(font_map, font, 400)
+
+	for tag in soup.find_all(["i", "em"]):
+		register(tag)
+	for tag in soup.find_all(style=True):
+		style = tag.attrs.get("style", "")
+		if re.search(r"font-style\s*:\s*(italic|oblique)", style):
+			register(tag)
 
 
 def is_repeater_block(block: dict) -> bool:
@@ -1370,8 +1403,9 @@ def set_fonts(styles, font_map, inherited_font=None):
 	}
 	for style in styles:
 		font = style.get("fontFamily")
-		if not font and style.get("fontWeight") and inherited_font:
-			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
+		is_italic = str(style.get("fontStyle") or "").lower() in ("italic", "oblique")
+		if not font and inherited_font and (style.get("fontWeight") or is_italic):
+			# fontWeight/fontStyle is set but fontFamily is not — use the ancestor font
 			font = inherited_font
 		if font:
 			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
@@ -1397,6 +1431,9 @@ def set_fonts(styles, font_map, inherited_font=None):
 			else:
 				font_map[font] = {"weights": [weight]}
 
+			if is_italic:
+				register_italic_font(font_map, font, weight)
+
 
 def normalize_font_weights(font_map: dict) -> None:
 	"""Make each font's weights render-ready for the Google Fonts request: numeric,
@@ -1407,14 +1444,75 @@ def normalize_font_weights(font_map: dict) -> None:
 		options["weights"] = sorted(weights)
 
 
+def register_italic_font(font_map: dict, font: str, weight: int) -> None:
+	"""Record that `font` is used in italic at `weight` (used by the URL builder)."""
+	options = font_map.get(font)
+	if options is None:
+		options = font_map[font] = {"weights": [weight]}
+	italics = options.setdefault("italics", [])
+	if weight not in italics:
+		italics.append(weight)
+		italics.sort()
+
+
+@lru_cache(maxsize=1)
+def get_google_font_italic_weights() -> dict[str, tuple[int, ...]]:
+	"""Map of Google font family -> italic instance weights it actually ships,
+	read from the same catalog the editor's font picker uses. Families without
+	italic faces are absent, so we never emit an `ital` axis Google would reject."""
+	path = os.path.abspath(
+		os.path.join(frappe.get_app_path("builder"), "..", "frontend", "src", "utils", "fontList.json")
+	)
+	try:
+		with open(path, encoding="utf-8") as f:
+			catalog = json.load(f)
+	except (OSError, ValueError):
+		return {}
+	italic_map = {}
+	for item in catalog.get("items", []):
+		weights = set()
+		for variant in item.get("variants", []):
+			if variant == "italic":
+				weights.add(400)
+			elif variant.endswith("italic"):
+				try:
+					weights.add(int(variant[: -len("italic")]))
+				except ValueError:
+					continue
+		if weights:
+			italic_map[item.get("family")] = tuple(sorted(weights))
+	return italic_map
+
+
+def resolve_italic_weights(requested: list[int], available: tuple[int, ...] | None) -> list[int]:
+	"""Snap requested italic weights to instances the family really has, so the
+	stylesheet request stays valid. No italic faces -> no `ital` axis at all."""
+	if not requested or not available:
+		return []
+	return sorted({min(available, key=lambda a: (abs(a - weight), a)) for weight in requested})
+
+
 def get_google_font_urls(font_map: dict) -> list[str]:
-	"""Build one combined Google Fonts stylesheet URL per font family."""
+	"""Build one combined Google Fonts stylesheet URL per font family.
+
+	Families used only upright keep the exact `wght@...` URL shape they always
+	had. When italics are used AND the family ships italic faces, the same
+	single request carries them via the `ital` axis instead."""
 	normalize_font_weights(font_map)
+	italic_catalog = get_google_font_italic_weights()
 	urls = []
 	for font, options in font_map.items():
 		family = quote_plus(font)
-		weights = ";".join(str(weight) for weight in options["weights"])
-		urls.append(f"https://fonts.googleapis.com/css2?family={family}:wght@{weights}&display=swap")
+		requested_italics = sorted({int(weight) for weight in options.get("italics", [])})
+		italics = resolve_italic_weights(requested_italics, italic_catalog.get(font))
+		if italics:
+			tuples = [f"0,{weight}" for weight in options["weights"]]
+			tuples += [f"1,{weight}" for weight in italics]
+			axis = ";".join(tuples)
+			urls.append(f"https://fonts.googleapis.com/css2?family={family}:ital,wght@{axis}&display=swap")
+		else:
+			weights = ";".join(str(weight) for weight in options["weights"])
+			urls.append(f"https://fonts.googleapis.com/css2?family={family}:wght@{weights}&display=swap")
 	return urls
 
 

@@ -1325,6 +1325,84 @@ component.update({
 			],
 		)
 
+	def test_get_google_font_urls_with_italics(self):
+		"""Fonts used in italic get the ital axis in the same single request,
+		limited to italic instances the family actually ships."""
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			# Roboto ships italics at 100/300/400/500/700/900
+			"Roboto": {"weights": [400, 700], "italics": [400]},
+			# Oswald has no italic faces: the ital axis must NOT be emitted,
+			# otherwise Google rejects the whole stylesheet request
+			"Oswald": {"weights": [500], "italics": [500]},
+			# untouched fonts keep the exact legacy URL shape
+			"Open Sans": {"weights": [400]},
+		}
+		urls = get_google_font_urls(font_map)
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
+			],
+		)
+
+	def test_resolve_italic_weights_snaps_to_available_instances(self):
+		from builder.builder.doctype.builder_page.builder_page import resolve_italic_weights
+
+		# 600 italic requested but the family only ships 400/700: snap to nearest
+		self.assertEqual(resolve_italic_weights([600], (400, 700)), [700])
+		self.assertEqual(resolve_italic_weights([450], (400, 700)), [400])
+		self.assertEqual(resolve_italic_weights([400, 700], (400, 700)), [400, 700])
+		self.assertEqual(resolve_italic_weights([400], None), [])
+		self.assertEqual(resolve_italic_weights([], (400,)), [])
+
+	def test_set_fonts_collects_font_style_italics(self):
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		set_fonts(
+			[
+				{"fontFamily": "Fraunces", "fontWeight": "600", "fontStyle": "italic"},
+				{"fontFamily": "Fraunces", "fontWeight": "400"},
+			],
+			font_map,
+		)
+		self.assertEqual(font_map["Fraunces"]["weights"], [400, 600])
+		self.assertEqual(font_map["Fraunces"]["italics"], [600])
+
+	def test_set_fonts_italic_with_inherited_family(self):
+		"""fontStyle set without fontFamily should register italics on the ancestor font."""
+		from builder.builder.doctype.builder_page.builder_page import set_fonts
+
+		font_map = {}
+		set_fonts([{"fontStyle": "italic"}], font_map, inherited_font="Newsreader")
+		self.assertEqual(font_map["Newsreader"]["italics"], [400])
+
+	def test_set_italics_from_html(self):
+		"""<i>/<em> and inline font-style inside innerHTML register italic usage
+		for the block's resolved font."""
+		import bs4 as bs
+
+		from builder.builder.doctype.builder_page.builder_page import set_italics_from_html
+
+		font_map = {"Fraunces": {"weights": [400]}, "Lora": {"weights": [400]}}
+		soup = bs.BeautifulSoup(
+			"Fire is the <i>only</i> recipe and "
+			'<span style="font-family: Lora; font-style: italic">this too</span>',
+			"html.parser",
+		)
+		set_italics_from_html(soup, font_map, ancestor_font="Fraunces")
+		self.assertEqual(font_map["Fraunces"].get("italics"), [400])
+		self.assertEqual(font_map["Lora"].get("italics"), [400])
+
+		# fonts that never made it into the map (e.g. system fonts) are ignored
+		font_map_2 = {}
+		set_italics_from_html(bs.BeautifulSoup("<i>hi</i>", "html.parser"), font_map_2, "Arial")
+		self.assertEqual(font_map_2, {})
+
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
 		from builder.builder.doctype.builder_page.builder_page import set_fonts
