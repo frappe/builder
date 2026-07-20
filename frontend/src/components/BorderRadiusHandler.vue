@@ -26,7 +26,6 @@ const props = defineProps<{
 	target: HTMLElement | SVGElement;
 }>();
 
-const borderRadius = ref(parseInt(props.target.style.borderRadius, 10) || 0);
 const updating = ref(false);
 const cursorPosition = ref({ x: 0, y: 0 });
 const canvasProps = inject("canvasProps") as CanvasProps;
@@ -45,6 +44,11 @@ const maxRadius = computed(() => {
 	props.targetBlock.getStyle("height");
 	const targetStyle = window.getComputedStyle(props.target);
 	return Math.min(parseInt(targetStyle.height, 10), parseInt(targetStyle.width, 10)) / 2;
+});
+
+const borderRadius = computed(() => {
+	const radius = getNumberFromPx(props.targetBlock.getStyle("borderRadius") as string);
+	return Math.max(0, Math.min(radius, maxRadius.value));
 });
 
 const handlerPosition = computed(() => ({
@@ -76,8 +80,8 @@ const handleRounded = (ev: MouseEvent) => {
 	cursorPosition.value = { x: startX, y: startY };
 
 	const handleDimensions = handler.value.getBoundingClientRect();
-	const startRadius = props.targetBlock.getStyle("borderRadius", null, true);
-	const startBorderRadius = borderRadius.value;
+	// Native read so Escape can restore the original unit, or its absence when inherited.
+	const startRadiusStyle = props.targetBlock.getStyle("borderRadius", null, true);
 	const startMinPosition = { ...MIN_POSITION };
 
 	startDrag({
@@ -94,25 +98,23 @@ const handleRounded = (ev: MouseEvent) => {
 			}
 
 			const radius = Math.round(
-				Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
+				Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)),
 			);
 
-			borderRadius.value = radius;
-			setHandlerPosition(radius);
 			props.targetBlock.setStyle("borderRadius", `${radius}px`);
+			setHandlerPosition(radius);
 
 			lastX = mouseMoveEvent.clientX;
 			lastY = mouseMoveEvent.clientY;
 		},
 		onCancel: () => {
-			props.targetBlock.setStyle("borderRadius", startRadius ?? null);
-			borderRadius.value = startBorderRadius;
+			props.targetBlock.setStyle("borderRadius", startRadiusStyle ?? null);
 			// onMove drags this below zero to let the handle sit outside the corner
 			Object.assign(MIN_POSITION, startMinPosition);
-			setHandlerPosition(startBorderRadius);
+			setHandlerPosition(borderRadius.value);
 		},
 		onEnd: () => {
-			if (getNumberFromPx(props.targetBlock.getStyle("borderRadius") as string) < 10) {
+			if (borderRadius.value < 10) {
 				handlerTop.value = MIN_POSITION.top;
 				handlerLeft.value = MIN_POSITION.left;
 			}
@@ -121,11 +123,7 @@ const handleRounded = (ev: MouseEvent) => {
 	});
 };
 
-onMounted(() => {
-	const radius = Math.max(0, Math.min(borderRadius.value, maxRadius.value));
-	borderRadius.value = radius;
-	setHandlerPosition(radius);
-});
+onMounted(() => setHandlerPosition(borderRadius.value));
 
 watchEffect(() => {
 	props.targetBlock.getStyle("height");
