@@ -92,7 +92,6 @@ const updateValue = (index: number, value: InputValue) => {
 	emit("update:modelValue", props.toModelValue(nextValues, index));
 };
 
-// Slider and arrow keys share the same step/bounds, read off the input's own attrs.
 const getNumericBounds = (index: number) => {
 	const attrs = getInputAttrs(index);
 	return {

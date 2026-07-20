@@ -37,11 +37,12 @@ type DragOptions = {
 	cursor?: string;
 	onMove: (event: MouseEvent) => void;
 	onEnd?: (event?: MouseEvent) => void;
-	// Escape aborts the drag; restore whatever was captured at mousedown. onEnd still runs after.
+	// Runs before onEnd.
 	onCancel?: () => void;
 };
 
-// Runs a mouse drag with the cursor locked for its duration, tearing down its listeners on mouseup.
+// Runs a mouse drag with the cursor locked for its duration, tearing down its listeners on mouseup
+// or Escape.
 function startDrag({ cursor, onMove, onEnd, onCancel }: DragOptions) {
 	if (cursor) setDragCursor(cursor);
 

@@ -152,7 +152,7 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
-	// Captured natively so Escape can delete styles the block did not own before the drag.
+	// pressing `esc` resetsnto startStyles
 	const startStyles = {
 		width: props.targetBlock.getStyle("width", null, true),
 		height: props.targetBlock.getStyle("height", null, true),
