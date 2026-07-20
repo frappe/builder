@@ -666,7 +666,11 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 
 
 def build_tag(
-	block: dict, state: dict, data_key: dict | None = None, ancestor_font: str | None = None
+	block: dict,
+	state: dict,
+	data_key: dict | None = None,
+	ancestor_font: str | None = None,
+	ancestor_italic: bool = False,
 ) -> bs.Tag:
 	"""
 	Transforms a single block to an HTML tag.
@@ -690,13 +694,27 @@ def build_tag(
 		)
 		or ancestor_font
 	)
+	# font-style cascades exactly like font-family: the block's own value wins,
+	# otherwise italic (or not) is inherited from the ancestor
+	resolved_italic = next(
+		(str(s["fontStyle"]).lower() in ("italic", "oblique") for s in all_styles if s.get("fontStyle")),
+		ancestor_italic,
+	)
 
 	tag = create_html_tag(block, state, ancestor_font=resolved_font)
 
+	if resolved_italic and resolved_font:
+		weight = next((s.get("fontWeight") for s in all_styles if s.get("fontWeight")), 400)
+		register_italic_font(state["font_map"], get_font_family(resolved_font), weight)
+
 	if is_repeater_block(block):
-		render_repeater_children(tag, block, data_key, state, ancestor_font=resolved_font)
+		render_repeater_children(
+			tag, block, data_key, state, ancestor_font=resolved_font, ancestor_italic=resolved_italic
+		)
 	else:
-		render_children(tag, block, data_key, state, ancestor_font=resolved_font)
+		render_children(
+			tag, block, data_key, state, ancestor_font=resolved_font, ancestor_italic=resolved_italic
+		)
 
 	attach_client_script(tag, block, state)
 
@@ -937,32 +955,20 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict, ancestor_font:
 
 
 def set_italics_from_html(soup, font_map, ancestor_font: str | None = None):
-	"""Register italic usage that lives inside a block's inner HTML, e.g.
-	`<i>`/`<em>` tags or inline `font-style: italic` spans, so the italic faces
-	are part of the font request instead of being browser-synthesised."""
-
-	def italic_font_for(tag) -> str | None:
-		# an inline font-family wins; otherwise the italic text inherits the
-		# block's resolved font
-		for parent in [tag, *tag.parents]:
-			style = parent.attrs.get("style") if getattr(parent, "attrs", None) else None
-			if style and "font-family" in style:
-				for declaration in style.split(";"):
-					if "font-family" in declaration:
-						return get_font_family(declaration.split(":", 1)[1])
-		return get_font_family(ancestor_font) if ancestor_font else None
-
-	def register(tag):
-		font = italic_font_for(tag)
-		if font and font in font_map:
-			register_italic_font(font_map, font, 400)
-
-	for tag in soup.find_all(["i", "em"]):
-		register(tag)
+	"""Register italics used inside a block's inner HTML: <i>/<em> tags or
+	inline font-style spans, which inherit the block's resolved font."""
+	fallback = get_font_family(ancestor_font) if ancestor_font else None
+	if soup.find(["i", "em"]):
+		register_italic_font(font_map, fallback)
 	for tag in soup.find_all(style=True):
 		style = tag.attrs.get("style", "")
-		if re.search(r"font-style\s*:\s*(italic|oblique)", style):
-			register(tag)
+		if not re.search(r"font-style\s*:\s*(italic|oblique)", style):
+			continue
+		family = None
+		for declaration in style.split(";"):
+			if "font-family" in declaration:
+				family = get_font_family(declaration.split(":", 1)[1])
+		register_italic_font(font_map, family or fallback)
 
 
 def is_repeater_block(block: dict) -> bool:
@@ -971,7 +977,12 @@ def is_repeater_block(block: dict) -> bool:
 
 
 def render_children(
-	tag: bs.Tag, block: dict, data_key: dict | None, state: dict, ancestor_font: str | None = None
+	tag: bs.Tag,
+	block: dict,
+	data_key: dict | None,
+	state: dict,
+	ancestor_font: str | None = None,
+	ancestor_italic: bool = False,
 ):
 	"""Render (non-repeater) children."""
 	for child in block.get("children", []) or []:
@@ -980,14 +991,21 @@ def render_children(
 		child_context = get_block_context(child, child_props, component_id)
 		child_context["visibility_key"] = get_visibility_condition_key(child, data_key)
 
-		child_tag = build_tag(child, state, data_key, ancestor_font=ancestor_font)
+		child_tag = build_tag(
+			child, state, data_key, ancestor_font=ancestor_font, ancestor_italic=ancestor_italic
+		)
 
 		append_child_with_context(tag, child_tag, child_context)
 		cleanup_props_stack(child_props, state["standard_props_stack"])
 
 
 def render_repeater_children(
-	tag: bs.Tag, block: dict, data_key: dict | None, state: dict, ancestor_font: str | None = None
+	tag: bs.Tag,
+	block: dict,
+	data_key: dict | None,
+	state: dict,
+	ancestor_font: str | None = None,
+	ancestor_italic: bool = False,
 ):
 	"""Render children for repeater blocks (with for loops)."""
 	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
@@ -1004,7 +1022,9 @@ def render_repeater_children(
 		data_key_key = block.get("dataKey").get("key")
 		child_context["default_props"] = extract_loop_variables(data_key_key, state["standard_props_stack"])
 
-	child_tag = build_tag(child, state, loop_info["data_key"], ancestor_font=ancestor_font)
+	child_tag = build_tag(
+		child, state, loop_info["data_key"], ancestor_font=ancestor_font, ancestor_italic=ancestor_italic
+	)
 
 	append_child_with_context(tag, child_tag, child_context)
 	cleanup_props_stack(child_props, state["standard_props_stack"])
@@ -1403,9 +1423,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 	}
 	for style in styles:
 		font = style.get("fontFamily")
-		is_italic = str(style.get("fontStyle") or "").lower() in ("italic", "oblique")
-		if not font and inherited_font and (style.get("fontWeight") or is_italic):
-			# fontWeight/fontStyle is set but fontFamily is not — use the ancestor font
+		if not font and style.get("fontWeight") and inherited_font:
+			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
 			font = inherited_font
 		if font:
 			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
@@ -1431,9 +1450,6 @@ def set_fonts(styles, font_map, inherited_font=None):
 			else:
 				font_map[font] = {"weights": [weight]}
 
-			if is_italic:
-				register_italic_font(font_map, font, weight)
-
 
 def normalize_font_weights(font_map: dict) -> None:
 	"""Make each font's weights render-ready for the Google Fonts request: numeric,
@@ -1444,11 +1460,16 @@ def normalize_font_weights(font_map: dict) -> None:
 		options["weights"] = sorted(weights)
 
 
-def register_italic_font(font_map: dict, font: str, weight: int) -> None:
-	"""Record that `font` is used in italic at `weight` (used by the URL builder)."""
-	options = font_map.get(font)
+def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
+	"""Record that a collected font is used in italic at `weight`. Fonts that
+	set_fonts skipped (system fonts, CSS stacks) are ignored here too."""
+	options = font_map.get(font) if font else None
 	if options is None:
-		options = font_map[font] = {"weights": [weight]}
+		return
+	try:
+		weight = int(str(weight))
+	except (TypeError, ValueError):
+		weight = 400
 	italics = options.setdefault("italics", [])
 	if weight not in italics:
 		italics.append(weight)

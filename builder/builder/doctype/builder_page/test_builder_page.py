@@ -1359,27 +1359,38 @@ component.update({
 		self.assertEqual(resolve_italic_weights([400], None), [])
 		self.assertEqual(resolve_italic_weights([], (400,)), [])
 
-	def test_set_fonts_collects_font_style_italics(self):
-		from builder.builder.doctype.builder_page.builder_page import set_fonts
+	def test_italics_cascade_like_font_family(self):
+		"""Italic usage is resolved on the rendered block tree with CSS cascade
+		semantics, not per style dict."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
 
-		font_map = {}
-		set_fonts(
-			[
-				{"fontFamily": "Fraunces", "fontWeight": "600", "fontStyle": "italic"},
-				{"fontFamily": "Fraunces", "fontWeight": "400"},
-			],
-			font_map,
+		def block(styles, children=None, element="div"):
+			return {"element": element, "baseStyles": styles, "children": children or []}
+
+		# child sets fontStyle without a family: italics land on the ancestor font
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces"}, [block({"fontStyle": "italic", "fontWeight": "600"})])]
 		)
-		self.assertEqual(font_map["Fraunces"]["weights"], [400, 600])
 		self.assertEqual(font_map["Fraunces"]["italics"], [600])
 
-	def test_set_fonts_italic_with_inherited_family(self):
-		"""fontStyle set without fontFamily should register italics on the ancestor font."""
-		from builder.builder.doctype.builder_page.builder_page import set_fonts
+		# italic parent, child only switches family: font-style inherits, so the
+		# child family needs its italic faces too
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces", "fontStyle": "italic"}, [block({"fontFamily": "Lora"})])]
+		)
+		self.assertEqual(font_map["Fraunces"]["italics"], [400])
+		self.assertEqual(font_map["Lora"]["italics"], [400])
 
-		font_map = {}
-		set_fonts([{"fontStyle": "italic"}], font_map, inherited_font="Newsreader")
-		self.assertEqual(font_map["Newsreader"]["italics"], [400])
+		# a child resetting fontStyle: normal breaks the cascade again
+		_, _, font_map, _ = get_block_html(
+			[
+				block(
+					{"fontFamily": "Fraunces", "fontStyle": "italic"},
+					[block({"fontFamily": "Lora", "fontStyle": "normal"})],
+				)
+			]
+		)
+		self.assertNotIn("italics", font_map["Lora"])
 
 	def test_set_italics_from_html(self):
 		"""<i>/<em> and inline font-style inside innerHTML register italic usage
