@@ -5,6 +5,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, getFontWeightOptions } from "@/utils/fontManager";
+import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -69,7 +70,7 @@ const typographySectionProperties = [
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
-				unitOptions: ["px", "em", "rem"],
+				unitOptions: BOX_UNIT_OPTIONS,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",

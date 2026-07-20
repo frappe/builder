@@ -41,6 +41,7 @@ const props = withDefaults(
 		variants?: Array<{ name: string; property: string; label: string }>;
 		getVariantValue?: (variantName: string) => string | number | boolean;
 		setVariantValue?: (variantName: string, value: string | number | boolean | null) => void;
+		getControlAttrs?: (variant: string | null) => Record<string, unknown>;
 	}>(),
 	{
 		enableStates: true,
@@ -76,7 +77,7 @@ const getVariantValue = (variantName: string): string | number | boolean => {
 		return blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) ?? "";
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	return property ? (blockController.getNativeStyle(property) ?? "") : "";
+	return property ? blockController.getNativeStyle(property) ?? "" : "";
 };
 
 const setVariantValue = (variantName: string, value: string | number | boolean | null) => {
