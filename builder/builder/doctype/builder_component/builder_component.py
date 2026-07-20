@@ -11,7 +11,7 @@ from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
 from builder.builder.component_versions import ensure_component_version
-from builder.utils import Block, compact_json, execute_script
+from builder.utils import STYLE_KEYS, Block, compact_json, execute_script
 
 
 class BuilderComponent(Document):
@@ -165,12 +165,8 @@ def reset_block_styles(block: Block) -> None:
 	"""Reset block styles to defaults"""
 	block.innerHTML = None
 	block.element = None
-	block.baseStyles = dict()
-	block.rawStyles = dict()
-	block.mobileStyles = dict()
-	block.tabletStyles = dict()
-	block.mobileRawStyles = dict()
-	block.tabletRawStyles = dict()
+	for style_key in STYLE_KEYS:
+		setattr(block, style_key, dict())
 	block.attributes = dict()
 	block.customAttributes = dict()
 	block.classes = []

@@ -27,9 +27,38 @@ from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
 
+STYLE_KEYS = (
+	"baseStyles",
+	"rawStyles",
+	"mobileStyles",
+	"tabletStyles",
+	"mobileRawStyles",
+	"tabletRawStyles",
+)
+
+STYLE_KEYS_BY_DEVICE = {
+	"desktop": ("baseStyles", "rawStyles"),
+	"tablet": ("tabletStyles", "tabletRawStyles"),
+	"mobile": ("mobileStyles", "mobileRawStyles"),
+}
+
 
 def compact_json(obj) -> str:
 	return frappe.as_json(obj, indent=None, separators=(",", ":"))
+
+
+def get_block_style(block, style_key):
+	if isinstance(block, dict):
+		return block.get(style_key) or {}
+	return getattr(block, style_key, None) or {}
+
+
+def get_block_styles(block, style_keys=STYLE_KEYS):
+	return [get_block_style(block, style_key) for style_key in style_keys]
+
+
+def has_block_styles(block):
+	return any(get_block_styles(block))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -156,15 +185,13 @@ class Block:
 		self.children.extend(children)
 
 	def as_dict(self):
-		return {
+		block = {
 			"blockId": self.blockId,
 			"children": [child.as_dict() for child in self.children] if self.children else None,
-			"baseStyles": self.baseStyles,
-			"rawStyles": self.rawStyles,
-			"mobileStyles": self.mobileStyles,
-			"tabletStyles": self.tabletStyles,
-			"mobileRawStyles": self.mobileRawStyles,
-			"tabletRawStyles": self.tabletRawStyles,
+		}
+		for style_key in STYLE_KEYS:
+			block[style_key] = getattr(self, style_key)
+		block.update({
 			"attributes": self.attributes,
 			"classes": self.classes,
 			"dataKey": self.dataKey,
@@ -185,7 +212,8 @@ class Block:
 			"dynamicValues": self.dynamicValues,
 			"props": self.props,
 			"clientScript": self.clientScript,
-		}
+		})
+		return block
 
 	def as_json(self, wrap_in_array=False):
 		return frappe.as_json([self.as_dict()]) if wrap_in_array else frappe.as_json(self.as_dict())

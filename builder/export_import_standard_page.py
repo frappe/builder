@@ -6,6 +6,7 @@ import frappe
 from frappe.modules.export_file import strip_default_fields
 
 from builder.utils import (
+	STYLE_KEYS,
 	copy_asset_file,
 	copy_assets_from_blocks,
 	create_export_directories,
@@ -118,14 +119,7 @@ def extract_fonts_from_blocks(blocks):
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in [
-			"baseStyles",
-			"mobileStyles",
-			"tabletStyles",
-			"rawStyles",
-			"mobileRawStyles",
-			"tabletRawStyles",
-		]:
+		for style_key in STYLE_KEYS:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				font = styles.get("fontFamily")
@@ -170,14 +164,7 @@ def extract_variables_from_blocks(blocks):
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in [
-			"baseStyles",
-			"mobileStyles",
-			"tabletStyles",
-			"rawStyles",
-			"mobileRawStyles",
-			"tabletRawStyles",
-		]:
+		for style_key in STYLE_KEYS:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				for _prop, value in styles.items():

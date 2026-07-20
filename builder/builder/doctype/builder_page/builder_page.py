@@ -38,13 +38,17 @@ from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
+	STYLE_KEYS,
+	STYLE_KEYS_BY_DEVICE,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
 	compact_json,
 	escape_single_quotes,
 	execute_script,
+	get_block_styles,
 	get_builder_page_preview_file_paths,
+	has_block_styles,
 	is_component_used,
 	sanitize_style_value,
 	split_styles,
@@ -674,14 +678,7 @@ def build_tag(
 
 	set_dynamic_content_placeholders(block, data_key)
 
-	all_styles = [
-		block.get("baseStyles") or {},
-		block.get("mobileStyles") or {},
-		block.get("tabletStyles") or {},
-		block.get("rawStyles") or {},
-		block.get("mobileRawStyles") or {},
-		block.get("tabletRawStyles") or {},
-	]
+	all_styles = get_block_styles(block)
 	resolved_font = (
 		next(
 			(s.get("fontFamily", "").strip("'\"") for s in all_styles if s.get("fontFamily")),
@@ -875,17 +872,7 @@ def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None
 	if element in text_elements:
 		classes.insert(0, "__text_block__")
 
-	if any(
-		block.get(style_key)
-		for style_key in [
-			"baseStyles",
-			"rawStyles",
-			"mobileStyles",
-			"tabletStyles",
-			"mobileRawStyles",
-			"tabletRawStyles",
-		]
-	):
+	if has_block_styles(block):
 		style_class = generate_and_apply_styles(block, state, ancestor_font=ancestor_font)
 		classes.insert(0, style_class)
 
@@ -898,45 +885,18 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 	style_tag = state["style_tag"]
 	font_map = state["font_map"]
 
-	styles = {
-		"base": split_styles(block.get("baseStyles", {})),
-		"mobile": split_styles(block.get("mobileStyles", {})),
-		"tablet": split_styles(block.get("tabletStyles", {})),
-		"raw": split_styles(block.get("rawStyles", {})),
-		"mobile_raw": split_styles(block.get("mobileRawStyles", {})),
-		"tablet_raw": split_styles(block.get("tabletRawStyles", {})),
-	}
-
-	style_list = [
-		styles["base"]["regular"],
-		styles["mobile"]["regular"],
-		styles["tablet"]["regular"],
-		styles["raw"]["regular"],
-		styles["mobile_raw"]["regular"],
-		styles["tablet_raw"]["regular"],
-	]
+	styles = {style_key: split_styles(block.get(style_key, {})) for style_key in STYLE_KEYS}
+	style_list = [styles[style_key]["regular"] for style_key in STYLE_KEYS]
 	set_fonts(style_list, font_map, inherited_font=ancestor_font)
 
-	append_device_styles(
-		[styles["base"]["regular"], styles["raw"]["regular"]],
-		[styles["base"]["state"], styles["raw"]["state"]],
-		style_tag,
-		style_class,
-	)
-	append_device_styles(
-		[styles["tablet"]["regular"], styles["tablet_raw"]["regular"]],
-		[styles["tablet"]["state"], styles["tablet_raw"]["state"]],
-		style_tag,
-		style_class,
-		device="tablet",
-	)
-	append_device_styles(
-		[styles["mobile"]["regular"], styles["mobile_raw"]["regular"]],
-		[styles["mobile"]["state"], styles["mobile_raw"]["state"]],
-		style_tag,
-		style_class,
-		device="mobile",
-	)
+	for device, style_keys in STYLE_KEYS_BY_DEVICE.items():
+		append_device_styles(
+			[styles[style_key]["regular"] for style_key in style_keys],
+			[styles[style_key]["state"] for style_key in style_keys],
+			style_tag,
+			style_class,
+			device=device,
+		)
 
 	return style_class
 
@@ -1465,11 +1425,8 @@ def extend_block(block, overridden_block):
 	normalize_legacy_block_client_script(block)
 	normalize_legacy_block_client_script(overridden_block)
 
-	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
-	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
-	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
-	block.setdefault("mobileRawStyles", {}).update(overridden_block.get("mobileRawStyles") or {})
-	block.setdefault("tabletRawStyles", {}).update(overridden_block.get("tabletRawStyles") or {})
+	for style_key in STYLE_KEYS:
+		block.setdefault(style_key, {}).update(overridden_block.get(style_key) or {})
 	block.setdefault("attributes", {}).update(overridden_block.get("attributes") or {})
 
 	dynamicValues = overridden_block.get("dynamicValues") or []
@@ -1489,10 +1446,6 @@ def extend_block(block, overridden_block):
 	if not block.get("customAttributes"):
 		block["customAttributes"] = {}
 	block["customAttributes"].update(overridden_block.get("customAttributes", {}))
-
-	if not block.get("rawStyles"):
-		block["rawStyles"] = {}
-	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
 	block.setdefault("classes", []).extend(overridden_block.get("classes") or [])
 
@@ -1601,12 +1554,8 @@ def reset_block(block):
 	block["blockId"] = frappe.generate_hash(length=8)
 	block["innerHTML"] = None
 	block["element"] = None
-	block["baseStyles"] = {}
-	block["rawStyles"] = {}
-	block["mobileStyles"] = {}
-	block["tabletStyles"] = {}
-	block["mobileRawStyles"] = {}
-	block["tabletRawStyles"] = {}
+	for style_key in STYLE_KEYS:
+		block[style_key] = {}
 	block["attributes"] = {}
 	block["customAttributes"] = {}
 	block["classes"] = []
