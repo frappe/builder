@@ -11,8 +11,10 @@
 				}"
 				:modelValue="values[index]"
 				:aria-label="split.label"
+				:type="type"
 				:hideClearButton="true"
 				v-bind="getInputAttrs(index)"
+				@keydown="(event: KeyboardEvent) => handleKeyDown(event, index)"
 				@update:modelValue="(value) => updateValue(index, value)" />
 		</div>
 
@@ -50,6 +52,7 @@ const props = withDefaults(
 		normalizeValue?: (value: InputValue, index: number) => InputValue;
 		inputAttrs?: InputAttrs;
 		enableSlider?: boolean;
+		type?: string;
 	}>(),
 	{
 		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
@@ -89,6 +92,31 @@ const updateValue = (index: number, value: InputValue) => {
 	emit("update:modelValue", props.toModelValue(nextValues, index));
 };
 
+// Slider and arrow keys share the same step/bounds, read off the input's own attrs.
+const getNumericBounds = (index: number) => {
+	const attrs = getInputAttrs(index);
+	return {
+		step: Number(attrs.step) || 1,
+		min: attrs.min === undefined ? -Infinity : Number(attrs.min),
+		max: attrs.max === undefined ? Infinity : Number(attrs.max),
+	};
+};
+
+const setNumericValue = (index: number, value: number, unit: string, min: number, max: number) => {
+	updateValue(index, `${Math.max(min, Math.min(max, value))}${unit}`);
+};
+
+// TODO: Duplicating code over BasePropertyControl, refactor
+const handleKeyDown = (event: KeyboardEvent, index: number) => {
+	if (!props.enableSlider || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+	event.preventDefault();
+
+	const { number, unit } = extractNumberAndUnit(String(values.value[index] ?? ""));
+	const { step, min, max } = getNumericBounds(index);
+	const direction = event.key === "ArrowUp" ? 1 : -1;
+	setNumericValue(index, Number(number) + direction * step, unit, min, max);
+};
+
 const handleLabelMouseDown = (event: MouseEvent, index: number) => {
 	if (!props.enableSlider || !splits.value[index]?.label) return;
 	event.preventDefault();
@@ -96,17 +124,13 @@ const handleLabelMouseDown = (event: MouseEvent, index: number) => {
 	const { number, unit } = extractNumberAndUnit(String(values.value[index] ?? ""));
 	const startValue = Number(number);
 	const startY = event.clientY;
-	const attrs = getInputAttrs(index);
-	const step = Number(attrs.step) || 1;
-	const min = attrs.min === undefined ? -Infinity : Number(attrs.min);
-	const max = attrs.max === undefined ? Infinity : Number(attrs.max);
+	const { step, min, max } = getNumericBounds(index);
 
 	startDrag({
 		cursor: window.getComputedStyle(event.currentTarget as HTMLElement).cursor,
 		onMove: (moveEvent) => {
 			const difference = Math.round(startY - moveEvent.clientY) * step;
-			const nextValue = Math.max(min, Math.min(max, startValue + difference));
-			updateValue(index, `${nextValue}${unit}`);
+			setNumericValue(index, startValue + difference, unit, min, max);
 		},
 	});
 };
