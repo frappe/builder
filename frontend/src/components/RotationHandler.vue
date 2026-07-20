@@ -32,10 +32,10 @@ const emit = defineEmits<{
 const canvasStore = useCanvasStore();
 
 const cornerLayout = [
-	{ name: "bottom-right", positionClass: "bottom-[-20px] right-[-20px]", baseAngle: 0 },
-	{ name: "bottom-left", positionClass: "bottom-[-20px] left-[-20px]", baseAngle: 90 },
-	{ name: "top-left", positionClass: "top-[-20px] left-[-20px]", baseAngle: 180 },
-	{ name: "top-right", positionClass: "top-[-20px] right-[-20px]", baseAngle: 270 },
+	{ name: "bottom-right", positionClass: "bottom-[-26px] right-[-26px]", baseAngle: 0 },
+	{ name: "bottom-left", positionClass: "bottom-[-26px] left-[-26px]", baseAngle: 90 },
+	{ name: "top-left", positionClass: "top-[-26px] left-[-26px]", baseAngle: 180 },
+	{ name: "top-right", positionClass: "top-[-26px] right-[-26px]", baseAngle: 270 },
 ] as const;
 
 const rotating = ref(false);
