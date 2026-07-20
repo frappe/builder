@@ -8,6 +8,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
+from builder.builder.doctype.builder_page.builder_page import append_device_styles
 from builder.utils import Block
 
 repeater_page_data_script = """
@@ -98,6 +99,26 @@ class TestBuilderPage(FrappeTestCase):
 	def test_can_render(self):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
+
+	def test_append_device_styles_groups_media_rules(self):
+		style_tag = []
+
+		append_device_styles(
+			[{"color": "red"}],
+			[
+				{"hover:color": "blue", "active:color": "yellow"},
+				{"hover:background": "green"},
+			],
+			style_tag,
+			"fb-test",
+			device="tablet",
+		)
+
+		self.assertEqual(len(style_tag), 1)
+		self.assertEqual(style_tag[0].count("@media"), 1)
+		self.assertIn(".fb-test { color: red; }", style_tag[0])
+		self.assertIn(".fb-test:hover { color: blue;background: green; }", style_tag[0])
+		self.assertIn(".fb-test:active { color: yellow; }", style_tag[0])
 
 	def test_get_preview_html_preserves_outer_request(self):
 		"""get_preview_html() fakes a request via set_request(); when it runs

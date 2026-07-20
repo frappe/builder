@@ -90,6 +90,8 @@ class Block:
 	rawStyles: ClassVar[dict] = {}
 	mobileStyles: ClassVar[dict] = {}
 	tabletStyles: ClassVar[dict] = {}
+	mobileRawStyles: ClassVar[dict] = {}
+	tabletRawStyles: ClassVar[dict] = {}
 	attributes: ClassVar[dict] = {}
 	classes: ClassVar[list[str]] = []
 	dataKey: BlockDataKey | None = None
@@ -161,6 +163,8 @@ class Block:
 			"rawStyles": self.rawStyles,
 			"mobileStyles": self.mobileStyles,
 			"tabletStyles": self.tabletStyles,
+			"mobileRawStyles": self.mobileRawStyles,
+			"tabletRawStyles": self.tabletRawStyles,
 			"attributes": self.attributes,
 			"classes": self.classes,
 			"dataKey": self.dataKey,

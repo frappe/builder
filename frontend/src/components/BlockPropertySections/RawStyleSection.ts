@@ -12,7 +12,7 @@ const rawStyleSectionProperties = [
 					<b>Note:</b>
 					<br />
 					<br />
-					• Raw styles get applied across all devices
+					• Raw styles get applied to the selected breakpoint
 					<br />
 					• State based styles are supported (e.g. hover, focus, visited)
 					<br />
@@ -33,6 +33,6 @@ export default {
 	name: "Raw Style",
 	properties: rawStyleSectionProperties,
 	collapsed: computed(() => {
-		return Object.keys(blockController.getRawStyles()).length === 0;
+		return Object.keys(blockController.getRawStyles() || {}).length === 0;
 	}),
 };

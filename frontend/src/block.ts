@@ -58,6 +58,8 @@ class Block implements BlockOptions {
 	rawStyles: BlockStyleMap;
 	mobileStyles: BlockStyleMap;
 	tabletStyles: BlockStyleMap;
+	mobileRawStyles: BlockStyleMap;
+	tabletRawStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
 	classes: Array<string>;
 	dataKey?: BlockDataKey | null = null;
@@ -170,6 +172,8 @@ class Block implements BlockOptions {
 		this.customAttributes = reactive(options.customAttributes || {});
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
+		this.mobileRawStyles = reactive(options.mobileRawStyles || {});
+		this.tabletRawStyles = reactive(options.tabletRawStyles || {});
 		this.attributes = reactive(options.attributes || {});
 		this.dynamicValues = reactive(options.dynamicValues || []);
 		this.props = reactive(options.props || {});
@@ -217,14 +221,13 @@ class Block implements BlockOptions {
 		if (this.isExtendedFromComponent()) {
 			styleObj = this.getComponentStyles(breakpoint);
 		}
-		styleObj = { ...styleObj, ...this.baseStyles };
+		styleObj = { ...styleObj, ...this.baseStyles, ...this.rawStyles };
 		if (["mobile", "tablet"].includes(breakpoint)) {
-			styleObj = { ...styleObj, ...this.tabletStyles };
+			styleObj = { ...styleObj, ...this.tabletStyles, ...this.tabletRawStyles };
 			if (breakpoint === "mobile") {
-				styleObj = { ...styleObj, ...this.mobileStyles };
+				styleObj = { ...styleObj, ...this.mobileStyles, ...this.mobileRawStyles };
 			}
 		}
-		styleObj = { ...styleObj, ...this.rawStyles };
 		// replace variables with values
 		// Object.keys(styleObj).forEach((style) => {
 		// 	const value = styleObj[style];
@@ -248,19 +251,21 @@ class Block implements BlockOptions {
 	}
 	hasOverrides(breakpoint: string) {
 		if (breakpoint === "mobile") {
-			return Object.keys(this.mobileStyles).length > 0;
+			return Object.keys(this.mobileStyles).length > 0 || Object.keys(this.mobileRawStyles).length > 0;
 		}
 		if (breakpoint === "tablet") {
-			return Object.keys(this.tabletStyles).length > 0;
+			return Object.keys(this.tabletStyles).length > 0 || Object.keys(this.tabletRawStyles).length > 0;
 		}
 		return false;
 	}
 	resetOverrides(breakpoint: string) {
 		if (breakpoint === "mobile") {
 			this.mobileStyles = {};
+			this.mobileRawStyles = {};
 		}
 		if (breakpoint === "tablet") {
 			this.tabletStyles = {};
+			this.tabletRawStyles = {};
 		}
 	}
 	getComponentStyles(breakpoint: string): BlockStyleMap {
@@ -302,12 +307,14 @@ class Block implements BlockOptions {
 		customAttributes = { ...customAttributes, ...this.customAttributes };
 		return customAttributes;
 	}
-	getRawStyles() {
+	getRawStyles(breakpoint?: string) {
+		const canvasStore = useCanvasStore();
+		const currentBreakpoint = breakpoint || canvasStore.activeCanvas?.activeBreakpoint || "desktop";
 		let rawStyles = {};
 		if (this.isExtendedFromComponent()) {
-			rawStyles = this.referenceComponent?.rawStyles || {};
+			rawStyles = this.referenceComponent?.getRawStyles(currentBreakpoint) || {};
 		}
-		rawStyles = { ...rawStyles, ...this.rawStyles };
+		rawStyles = { ...rawStyles, ...this.getRawStyleMapForBreakpoint(currentBreakpoint) };
 		return rawStyles;
 	}
 	getVisibilityCondition() {
@@ -443,6 +450,15 @@ class Block implements BlockOptions {
 		return styleMap[breakpoint as keyof typeof styleMap] || this.baseStyles;
 	}
 
+	getRawStyleMapForBreakpoint(breakpoint: string) {
+		const styleMap = {
+			mobile: this.mobileRawStyles,
+			tablet: this.tabletRawStyles,
+			desktop: this.rawStyles,
+		};
+		return styleMap[breakpoint as keyof typeof styleMap] || this.rawStyles;
+	}
+
 	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
 		if (this.isExtendedFromComponent()) {
 			const componentValue = this.referenceComponent?.getStyle(style, breakpoint, true, false);
@@ -541,8 +557,11 @@ class Block implements BlockOptions {
 	getStylesCopy() {
 		return {
 			baseStyles: Object.assign({}, this.baseStyles),
+			rawStyles: Object.assign({}, this.rawStyles),
 			mobileStyles: Object.assign({}, this.mobileStyles),
 			tabletStyles: Object.assign({}, this.tabletStyles),
+			mobileRawStyles: Object.assign({}, this.mobileRawStyles),
+			tabletRawStyles: Object.assign({}, this.tabletRawStyles),
 		};
 	}
 	isMovable(): boolean {
@@ -693,8 +712,11 @@ class Block implements BlockOptions {
 	}
 	updateStyles(styles: BlockStyleObjects) {
 		this.baseStyles = Object.assign({}, this.baseStyles, styles.baseStyles);
+		this.rawStyles = Object.assign({}, this.rawStyles, styles.rawStyles);
 		this.mobileStyles = Object.assign({}, this.mobileStyles, styles.mobileStyles);
 		this.tabletStyles = Object.assign({}, this.tabletStyles, styles.tabletStyles);
+		this.mobileRawStyles = Object.assign({}, this.mobileRawStyles, styles.mobileRawStyles);
+		this.tabletRawStyles = Object.assign({}, this.tabletRawStyles, styles.tabletRawStyles);
 	}
 	getBackgroundColor() {
 		return this.getStyle("backgroundColor") || "transparent";
@@ -941,7 +963,14 @@ class Block implements BlockOptions {
 			}
 		};
 
-		const styleObjects = [this.baseStyles, this.mobileStyles, this.tabletStyles, this.rawStyles];
+		const styleObjects = [
+			this.baseStyles,
+			this.rawStyles,
+			this.mobileStyles,
+			this.tabletStyles,
+			this.mobileRawStyles,
+			this.tabletRawStyles,
+		];
 		styleObjects.forEach((styleObj) => {
 			if (styleObj) {
 				Object.values(styleObj).forEach(extractVarsFromValue);

@@ -214,6 +214,12 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	blockCopy.rawStyles = component?.rawStyles
 		? { ...component.rawStyles, ...block.rawStyles }
 		: block.rawStyles;
+	blockCopy.mobileRawStyles = component?.mobileRawStyles
+		? { ...component.mobileRawStyles, ...block.mobileRawStyles }
+		: block.mobileRawStyles;
+	blockCopy.tabletRawStyles = component?.tabletRawStyles
+		? { ...component.tabletRawStyles, ...block.tabletRawStyles }
+		: block.tabletRawStyles;
 	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
 	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
 	blockCopy.innerHTML = block.innerHTML || component?.innerHTML;

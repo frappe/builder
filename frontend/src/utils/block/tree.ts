@@ -14,6 +14,8 @@ export function resetBlock(
 		block.rawStyles = {};
 		block.mobileStyles = {};
 		block.tabletStyles = {};
+		block.mobileRawStyles = {};
+		block.tabletRawStyles = {};
 		block.attributes = {};
 		block.customAttributes = {};
 		block.classes = [];

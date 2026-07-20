@@ -679,6 +679,8 @@ def build_tag(
 		block.get("mobileStyles") or {},
 		block.get("tabletStyles") or {},
 		block.get("rawStyles") or {},
+		block.get("mobileRawStyles") or {},
+		block.get("tabletRawStyles") or {},
 	]
 	resolved_font = (
 		next(
@@ -873,7 +875,17 @@ def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None
 	if element in text_elements:
 		classes.insert(0, "__text_block__")
 
-	if block.get("baseStyles"):
+	if any(
+		block.get(style_key)
+		for style_key in [
+			"baseStyles",
+			"rawStyles",
+			"mobileStyles",
+			"tabletStyles",
+			"mobileRawStyles",
+			"tabletRawStyles",
+		]
+	):
 		style_class = generate_and_apply_styles(block, state, ancestor_font=ancestor_font)
 		classes.insert(0, style_class)
 
@@ -891,6 +903,8 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 		"mobile": split_styles(block.get("mobileStyles", {})),
 		"tablet": split_styles(block.get("tabletStyles", {})),
 		"raw": split_styles(block.get("rawStyles", {})),
+		"mobile_raw": split_styles(block.get("mobileRawStyles", {})),
+		"tablet_raw": split_styles(block.get("tabletRawStyles", {})),
 	}
 
 	style_list = [
@@ -898,23 +912,31 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 		styles["mobile"]["regular"],
 		styles["tablet"]["regular"],
 		styles["raw"]["regular"],
+		styles["mobile_raw"]["regular"],
+		styles["tablet_raw"]["regular"],
 	]
 	set_fonts(style_list, font_map, inherited_font=ancestor_font)
 
-	# Append styles for different states and devices
-	# Base and raw
-	append_style(styles["base"]["regular"], style_tag, style_class)
-	append_style(styles["raw"]["regular"], style_tag, style_class)
-	append_state_style(styles["raw"]["state"], style_tag, style_class)
-	append_state_style(styles["base"]["state"], style_tag, style_class)
-
-	# Tablet
-	append_style(styles["tablet"]["regular"], style_tag, style_class, device="tablet")
-	append_state_style(styles["tablet"]["state"], style_tag, style_class, device="tablet")
-
-	# Mobile
-	append_style(styles["mobile"]["regular"], style_tag, style_class, device="mobile")
-	append_state_style(styles["mobile"]["state"], style_tag, style_class, device="mobile")
+	append_device_styles(
+		[styles["base"]["regular"], styles["raw"]["regular"]],
+		[styles["base"]["state"], styles["raw"]["state"]],
+		style_tag,
+		style_class,
+	)
+	append_device_styles(
+		[styles["tablet"]["regular"], styles["tablet_raw"]["regular"]],
+		[styles["tablet"]["state"], styles["tablet_raw"]["state"]],
+		style_tag,
+		style_class,
+		device="tablet",
+	)
+	append_device_styles(
+		[styles["mobile"]["regular"], styles["mobile_raw"]["regular"]],
+		[styles["mobile"]["state"], styles["mobile_raw"]["state"]],
+		style_tag,
+		style_class,
+		device="mobile",
+	)
 
 	return style_class
 
@@ -1309,21 +1331,31 @@ def get_style(style_obj):
 	)
 
 
-def append_style(style_obj, style_tag, style_class, device="desktop"):
-	style = get_style(style_obj)
-	if not style:
-		return
-	style_string = f".{style_class} {{ {style} }}"
-	style_tag.append(wrap_with_media_query(style_string, device))
+def append_device_styles(regular_style_objs, state_style_objs, style_tag, style_class, device="desktop"):
+	style_rules = []
+	regular_styles = {}
+	for style_obj in regular_style_objs:
+		regular_styles.update(style_obj)
 
+	style = get_style(regular_styles)
+	if style:
+		style_rules.append(f".{style_class} {{ {style} }}")
 
-def append_state_style(style_obj, style_tag, style_class, device="desktop"):
-	for key, value in style_obj.items():
-		if ":" in key:
+	state_styles_by_selector = {}
+	for style_obj in state_style_objs:
+		for key, value in style_obj.items():
+			if ":" not in key:
+				continue
 			state, property = key.split(":", 1)
-			css_property = camel_case_to_kebab_case(property)
-			style_string = f".{style_class}:{state} {{ {css_property}: {value}; }}"
-			style_tag.append(wrap_with_media_query(style_string, device))
+			state_styles_by_selector.setdefault(state, {})[property] = value
+
+	for state, state_styles in state_styles_by_selector.items():
+		style = get_style(state_styles)
+		if style:
+			style_rules.append(f".{style_class}:{state} {{ {style} }}")
+
+	if style_rules:
+		style_tag.append(wrap_with_media_query(" ".join(style_rules), device))
 
 
 def get_font_family(font: str) -> str:
@@ -1436,6 +1468,8 @@ def extend_block(block, overridden_block):
 	block.setdefault("baseStyles", {}).update(overridden_block.get("baseStyles") or {})
 	block.setdefault("mobileStyles", {}).update(overridden_block.get("mobileStyles") or {})
 	block.setdefault("tabletStyles", {}).update(overridden_block.get("tabletStyles") or {})
+	block.setdefault("mobileRawStyles", {}).update(overridden_block.get("mobileRawStyles") or {})
+	block.setdefault("tabletRawStyles", {}).update(overridden_block.get("tabletRawStyles") or {})
 	block.setdefault("attributes", {}).update(overridden_block.get("attributes") or {})
 
 	dynamicValues = overridden_block.get("dynamicValues") or []
@@ -1571,6 +1605,8 @@ def reset_block(block):
 	block["rawStyles"] = {}
 	block["mobileStyles"] = {}
 	block["tabletStyles"] = {}
+	block["mobileRawStyles"] = {}
+	block["tabletRawStyles"] = {}
 	block["attributes"] = {}
 	block["customAttributes"] = {}
 	block["classes"] = []

@@ -174,13 +174,15 @@ const blockController = {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
 	},
 	setRawStyles: (rawStyles: BlockStyleMap) => {
+		const breakpoint = canvasStore.activeCanvas?.activeBreakpoint || "desktop";
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			Object.keys(block.rawStyles).forEach((key) => {
+			const styleMap = block.getRawStyleMapForBreakpoint(breakpoint);
+			Object.keys(styleMap).forEach((key) => {
 				if (!rawStyles[key]) {
-					delete block.rawStyles[key];
+					delete styleMap[key];
 				}
 			});
-			Object.assign(block.rawStyles, rawStyles);
+			Object.assign(styleMap, rawStyles);
 		});
 	},
 	getCustomAttributes: () => {

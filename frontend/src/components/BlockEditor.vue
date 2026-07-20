@@ -152,6 +152,8 @@ watchEffect(() => {
 	props.block.getStyle("right");
 	props.block.getStyle("position");
 	props.block.rawStyles;
+	props.block.mobileRawStyles;
+	props.block.tabletRawStyles;
 	const parentBlock = props.block.getParentBlock();
 	parentBlock?.getStyle("display");
 	parentBlock?.getStyle("justifyContent");

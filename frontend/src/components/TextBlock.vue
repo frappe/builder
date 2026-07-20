@@ -23,7 +23,7 @@
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
 			class="__text_editor__ bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
-			:style="block.getRawStyles()"
+			:style="block.getRawStyles(breakpoint)"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
 	</component>
