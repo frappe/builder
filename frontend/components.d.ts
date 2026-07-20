@@ -58,6 +58,7 @@ declare module 'vue' {
     ComponentUpdates: typeof import('./src/components/ComponentUpdates.vue')['default']
     ContextMenu: typeof import('./src/components/ContextMenu.vue')['default']
     CSS: typeof import('./src/components/Icons/CSS.vue')['default']
+    CursorTooltip: typeof import('./src/components/CursorTooltip.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
     DashboardContent: typeof import('./src/components/DashboardContent.vue')['default']
     DashboardHead: typeof import('./src/components/DashboardHead.vue')['default']

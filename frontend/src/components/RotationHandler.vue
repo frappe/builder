@@ -1,5 +1,5 @@
 <template>
-	<TransformPreview v-if="rotating" :position="cursorPosition">{{ currentRotation }}°</TransformPreview>
+	<CursorTooltip v-if="rotating" :position="cursorPosition">{{ currentRotation }}°</CursorTooltip>
 	<div
 		v-for="corner in corners"
 		v-show="!rotating"
@@ -18,7 +18,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getRotatedCursor, setDragCursor, startDrag } from "@/utils/cursor";
 import { getElementRotation } from "@/utils/rotation";
 import { ref } from "vue";
-import TransformPreview from "./TransformPreview.vue";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const props = defineProps<{
 	targetBlock: Block;

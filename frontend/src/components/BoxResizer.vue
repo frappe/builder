@@ -1,8 +1,8 @@
 <template>
-	<TransformPreview v-if="resizing" :position="cursorPosition" :wide="!props.targetBlock.isText()">
+	<CursorTooltip v-if="resizing" :position="cursorPosition" :wide="!props.targetBlock.isText()">
 		<template v-if="props.targetBlock.isText()">{{ fontSize }}</template>
 		<template v-else>{{ targetWidth }} x {{ targetHeight }}</template>
-	</TransformPreview>
+	</CursorTooltip>
 
 	<div
 		class="left-handle pointer-events-auto absolute bottom-0 left-[-2px] top-0 w-2 border-none bg-transparent"
@@ -40,7 +40,7 @@ import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
-import TransformPreview from "./TransformPreview.vue";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const canvasStore = useCanvasStore();
 const props = defineProps<{

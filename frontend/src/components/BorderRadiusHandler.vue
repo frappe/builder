@@ -1,4 +1,6 @@
 <template>
+	<CursorTooltip v-if="updating" :position="cursorPosition">{{ borderRadius }}</CursorTooltip>
+
 	<div
 		ref="handler"
 		class="border-radius-resize pointer-events-auto absolute h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
@@ -7,13 +9,7 @@
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
 		}"
 		:style="handlerPosition"
-		@mousedown.stop="handleRounded">
-		<div
-			v-show="updating"
-			class="absolute left-2 top-2 w-fit rounded-full bg-gray-800 px-3 py-2 text-xs text-white opacity-60">
-			{{ borderRadius }}
-		</div>
-	</div>
+		@mousedown.stop="handleRounded" />
 </template>
 
 <script setup lang="ts">
@@ -22,6 +18,7 @@ import { getNumberFromPx } from "@/utils/helpers";
 import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
 import { computed, inject, onMounted, reactive, ref, watchEffect } from "vue";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const props = defineProps<{
 	targetBlock: Block;
@@ -30,6 +27,7 @@ const props = defineProps<{
 
 const borderRadius = ref(parseInt(props.target.style.borderRadius, 10) || 0);
 const updating = ref(false);
+const cursorPosition = ref({ x: 0, y: 0 });
 const canvasProps = inject("canvasProps") as CanvasProps;
 const handler = ref() as Ref<HTMLElement>;
 const handlerTop = ref(10);
@@ -74,11 +72,13 @@ const handleRounded = (ev: MouseEvent) => {
 	let lastX = startX;
 	let lastY = startY;
 	updating.value = true;
+	cursorPosition.value = { x: startX, y: startY };
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 
 	const mousemove = (mouseMoveEvent: MouseEvent) => {
 		mouseMoveEvent.preventDefault();
+		cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
 		const movementX = mouseMoveEvent.clientX - lastX;
 		const movementY = mouseMoveEvent.clientY - lastY;
 		const movement = ((movementX + movementY) / 2) * 2;
