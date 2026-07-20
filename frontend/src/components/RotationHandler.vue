@@ -61,6 +61,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	// ancestors don't rotate mid-drag, so their contribution can be captured once up front
 	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
+	const startRotate = props.targetBlock.getStyle("rotate", null, true);
 	let lastCursorAngle: number | null = null;
 	const dragCursor = (angle: number) =>
 		getRotatedCursor(rotationCursorSvg, ancestorRotation + angle + baseAngle, "pointer");
@@ -93,6 +94,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 				setDragCursor(dragCursor(finalRotation));
 			}
 		},
+		onCancel: () => props.targetBlock.setStyle("rotate", startRotate ?? null),
 		onEnd: () => {
 			rotating.value = false;
 			emit("rotating", false);

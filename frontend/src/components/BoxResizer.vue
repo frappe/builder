@@ -152,6 +152,14 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const blockStartHeight = props.targetBlock.getStyle("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
+	// Captured natively so Escape can delete styles the block did not own before the drag.
+	const startStyles = {
+		width: props.targetBlock.getStyle("width", null, true),
+		height: props.targetBlock.getStyle("height", null, true),
+		left: props.targetBlock.getStyle("left", null, true),
+		top: props.targetBlock.getStyle("top", null, true),
+		fontSize: props.targetBlock.getStyle("fontSize", null, true),
+	};
 
 	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	resizing.value = true;
@@ -201,6 +209,11 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 				props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
 				props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
 			}
+		},
+		onCancel: () => {
+			Object.entries(startStyles).forEach(([style, value]) => {
+				props.targetBlock.setStyle(style as styleProperty, value ?? null);
+			});
 		},
 		onEnd: () => {
 			resizing.value = false;

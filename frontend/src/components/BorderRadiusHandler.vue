@@ -76,6 +76,9 @@ const handleRounded = (ev: MouseEvent) => {
 	cursorPosition.value = { x: startX, y: startY };
 
 	const handleDimensions = handler.value.getBoundingClientRect();
+	const startRadius = props.targetBlock.getStyle("borderRadius", null, true);
+	const startBorderRadius = borderRadius.value;
+	const startMinPosition = { ...MIN_POSITION };
 
 	startDrag({
 		cursor: window.getComputedStyle(ev.target as HTMLElement).cursor,
@@ -100,6 +103,13 @@ const handleRounded = (ev: MouseEvent) => {
 
 			lastX = mouseMoveEvent.clientX;
 			lastY = mouseMoveEvent.clientY;
+		},
+		onCancel: () => {
+			props.targetBlock.setStyle("borderRadius", startRadius ?? null);
+			borderRadius.value = startBorderRadius;
+			// onMove drags this below zero to let the handle sit outside the corner
+			Object.assign(MIN_POSITION, startMinPosition);
+			setHandlerPosition(startBorderRadius);
 		},
 		onEnd: () => {
 			if (getNumberFromPx(props.targetBlock.getStyle("borderRadius") as string) < 10) {

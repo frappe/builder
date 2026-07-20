@@ -36,11 +36,13 @@ function clearDragCursor() {
 type DragOptions = {
 	cursor?: string;
 	onMove: (event: MouseEvent) => void;
-	onEnd?: (event: MouseEvent) => void;
+	onEnd?: (event?: MouseEvent) => void;
+	// Escape aborts the drag; restore whatever was captured at mousedown. onEnd still runs after.
+	onCancel?: () => void;
 };
 
 // Runs a mouse drag with the cursor locked for its duration, tearing down its listeners on mouseup.
-function startDrag({ cursor, onMove, onEnd }: DragOptions) {
+function startDrag({ cursor, onMove, onEnd, onCancel }: DragOptions) {
 	if (cursor) setDragCursor(cursor);
 
 	const mousemove = (moveEvent: MouseEvent) => {
@@ -48,17 +50,31 @@ function startDrag({ cursor, onMove, onEnd }: DragOptions) {
 		moveEvent.preventDefault();
 	};
 
+	const stop = () => {
+		document.removeEventListener("mousemove", mousemove);
+		document.removeEventListener("mouseup", mouseup);
+		document.removeEventListener("keydown", keydown);
+		clearDragCursor();
+	};
+
+	const mouseup = (upEvent: MouseEvent) => {
+		stop();
+		onEnd?.(upEvent);
+		upEvent.preventDefault();
+	};
+
+	// Dropping the mouseup listener keeps the pending release from ending the drag a second time.
+	const keydown = (keyEvent: KeyboardEvent) => {
+		if (keyEvent.key !== "Escape") return;
+		keyEvent.preventDefault();
+		stop();
+		onCancel?.();
+		onEnd?.();
+	};
+
 	document.addEventListener("mousemove", mousemove);
-	document.addEventListener(
-		"mouseup",
-		(upEvent) => {
-			document.removeEventListener("mousemove", mousemove);
-			clearDragCursor();
-			onEnd?.(upEvent);
-			upEvent.preventDefault();
-		},
-		{ once: true },
-	);
+	document.addEventListener("mouseup", mouseup);
+	document.addEventListener("keydown", keydown);
 }
 
 export { clearDragCursor, getRotatedCursor, setDragCursor, startDrag };
