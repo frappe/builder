@@ -349,16 +349,14 @@ const styles = computed(() => {
 		...dynamicStyles,
 	} as BlockStyleMap;
 
-	if (props.block.activeState) {
-		const [state, property] = props.block.activeState.split(":");
+	if (!props.preview && isSelected.value && props.block.activeState) {
+		const [state] = props.block.activeState.split(":");
 
 		if (canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint) {
 			const stateStyles = props.block.getStateStyles(state, props.breakpoint);
 			if (stateStyles) {
 				Object.keys(stateStyles).forEach((key) => {
-					if (key === property) {
-						styleMap[key] = stateStyles[key];
-					}
+					styleMap[key] = stateStyles[key];
 				});
 			}
 		}
@@ -620,6 +618,7 @@ if (!props.preview) {
 				}
 			} else {
 				isSelected.value = false;
+				props.block.activeState = null;
 			}
 		},
 		{

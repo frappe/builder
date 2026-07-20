@@ -28,7 +28,15 @@ const props = defineProps<{
 	target: HTMLElement | SVGElement;
 }>();
 
-const borderRadius = ref(parseInt(props.target.style.borderRadius, 10) || 0);
+const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
+
+const getCurrentRadius = () => {
+	const radius = props.targetBlock.getActiveStyleValue("borderRadius");
+	if (hasStyleValue(radius)) return getNumberFromPx(radius);
+	return parseInt(props.target.style.borderRadius, 10) || 0;
+};
+
+const borderRadius = ref(getCurrentRadius());
 const updating = ref(false);
 const canvasProps = inject("canvasProps") as CanvasProps;
 const handler = ref() as Ref<HTMLElement>;
@@ -73,6 +81,7 @@ const handleRounded = (ev: MouseEvent) => {
 	const startY = ev.clientY;
 	let lastX = startX;
 	let lastY = startY;
+	borderRadius.value = getCurrentRadius();
 	updating.value = true;
 
 	const handleDimensions = handler.value.getBoundingClientRect();
@@ -88,13 +97,11 @@ const handleRounded = (ev: MouseEvent) => {
 			MIN_POSITION.left = -(handleDimensions.width / 2);
 		}
 
-		const radius = Math.round(
-			Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
-		);
+		const radius = Math.round(Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)));
 
 		borderRadius.value = radius;
 		setHandlerPosition(radius);
-		props.targetBlock.setStyle("borderRadius", `${radius}px`);
+		props.targetBlock.setActiveStyle("borderRadius", `${radius}px`);
 
 		lastX = mouseMoveEvent.clientX;
 		lastY = mouseMoveEvent.clientY;
@@ -102,7 +109,7 @@ const handleRounded = (ev: MouseEvent) => {
 
 	const mouseup = (mouseUpEvent: MouseEvent) => {
 		mouseUpEvent.preventDefault();
-		if (getNumberFromPx(props.targetBlock.getStyle("borderRadius")) < 10) {
+		if (getNumberFromPx(props.targetBlock.getActiveStyleValue("borderRadius")) < 10) {
 			handlerTop.value = MIN_POSITION.top;
 			handlerLeft.value = MIN_POSITION.left;
 		}

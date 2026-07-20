@@ -34,6 +34,7 @@ const sides = {
 const verticalSides = [Position.Top, Position.Bottom];
 const horizontalSides = [Position.Left, Position.Right];
 const allSides = [...verticalSides, ...horizontalSides];
+const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
 
 // Shared state and drag behaviour for the Margin and Padding handlers. The per-side
 // positioning and value display differ and stay in each component.
@@ -42,13 +43,12 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	const updating = ref(false);
 
 	const blockStyles = computed(() => {
+		const block = getTargetBlock();
 		const breakpoint = getBreakpoint();
-		let styles = { ...getTargetBlock().baseStyles };
-		if (breakpoint === "mobile" || breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().mobileStyles };
-		}
-		if (breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().tabletStyles };
+		const styles = { ...block.getStyles(breakpoint) };
+		if (block.activeState) {
+			const [state] = block.activeState.split(":");
+			Object.assign(styles, block.getStateStyles(state, breakpoint));
 		}
 		return styles;
 	});
@@ -71,7 +71,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		`${property}${sides[side].styleSuffix}` as styleProperty;
 
 	const setSpacing = (property: SpacingProperty, side: Position, value: number) =>
-		getTargetBlock().setStyle(styleKey(property, side), `${value}px`);
+		getTargetBlock().setActiveStyle(styleKey(property, side), `${value}px`);
 
 	// Shift spreads the value to all four sides, alt to both sides of the dragged axis.
 	const sidesToUpdate = (event: MouseEvent, side: Position) => {
@@ -88,7 +88,8 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		const { axis, outward } = sides[side];
 		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a padding
 		const sign = property === "margin" ? outward : -outward;
-		const startValue = getNumberFromPx(blockStyles.value[styleKey(property, side)] as string) || fallback;
+		const currentValue = blockStyles.value[styleKey(property, side)];
+		const startValue = hasStyleValue(currentValue) ? getNumberFromPx(currentValue) : fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();
