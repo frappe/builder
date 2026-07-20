@@ -3,6 +3,8 @@
 
 import Block from "@/block";
 
+const numericValuePattern = /^(-?(?:\d+(?:\.\d*)?|\.\d+))([a-z%]*)$/i;
+
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
@@ -262,8 +264,11 @@ function getBoxSpacing(
 	const sRight = String(right);
 	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
 	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
-	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
-	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
+	// A side left unset while others are set falls back to an empty base; treat it as 0
+	// so the reconstructed shorthand stays well-formed and expands to the right corners.
+	const fill = (value: string) => value || "0px";
+	if (sTop === sBottom && sLeft === sRight) return `${fill(sTop)} ${fill(sLeft)}`;
+	return `${fill(sTop)} ${fill(sRight)} ${fill(sBottom)} ${fill(sLeft)}`;
 }
 
 /**
@@ -283,7 +288,7 @@ function extractNumberAndUnit(value: string): { number: string; unit: string } {
  * @returns String with unit attached
  */
 function addUnitToNumber(numberStr: string, unit: string): string {
-	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
+	const match = numberStr.match(numericValuePattern);
 	if (match) {
 		const [, number, existingUnit] = match;
 		return existingUnit ? numberStr : number + unit;
@@ -292,36 +297,62 @@ function addUnitToNumber(numberStr: string, unit: string): string {
 }
 
 /**
- * Normalizes CSS values by adding default units where missing
- * Handles both single values and spacing properties with multiple values
+ * Removes the default unit from numeric values for display in controls.
+ * Other units remain visible.
+ */
+function removeDefaultUnit(value: string, defaultUnit: string): string {
+	return value
+		.split(/(\s+)/)
+		.map((part) => {
+			const match = part.match(numericValuePattern);
+			return match?.[2].toLowerCase() === defaultUnit.toLowerCase() ? match[1] : part;
+		})
+		.join("");
+}
+
+/**
+ * Expands a CSS box shorthand (margin, padding, border-radius) into its four
+ * component values following the standard 1/2/3/4-value rules.
+ * @param value - Shorthand value string
+ * @param fallback - Value used for every side when the shorthand is empty
+ * @returns Array of exactly four side values
+ */
+function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
+	const parts = String(value ?? "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+	if (!parts.length) return Array(4).fill(fallback);
+	if (parts.length === 1) return Array(4).fill(parts[0]);
+	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
+	if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
+	return parts.slice(0, 4);
+}
+
+/**
+ * Normalizes CSS values by adding the default unit where missing.
+ * Handles both single and whitespace-separated numeric values.
  * @param value - CSS value string
- * @param unitOptions - Array of possible units, first is used as default
- * @param propertyKey - CSS property name (used to detect spacing properties)
+ * @param defaultUnit - Unit to add to unitless numbers
  * @returns Normalized value string with units added
  */
-function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
-	if (!unitOptions.length) return value;
-
-	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
-
-	if (isSpacingProperty) {
-		const parts = value.trim().split(/\s+/);
-		if (parts.length > 1) {
-			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
-		}
-	}
-
-	return addUnitToNumber(value, defaultUnit);
+function normalizeValueWithUnits(value: string, defaultUnit: string): string {
+	if (!defaultUnit) return value;
+	return value
+		.split(/(\s+)/)
+		.map((part) => addUnitToNumber(part, defaultUnit))
+		.join("");
 }
 
 export {
 	addPxToNumber,
+	expandBoxShorthand,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
+	removeDefaultUnit,
 	setBoxSpacing,
 	shortenNumber,
 };

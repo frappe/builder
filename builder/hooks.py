@@ -5,7 +5,7 @@ app_title = "Frappe Builder"
 app_publisher = "Frappe Technologies Pvt Ltd"
 app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
-app_license = "GNU Affero General Public License v3.0"
+app_license = "MIT"
 
 # Includes in <head>
 # ------------------

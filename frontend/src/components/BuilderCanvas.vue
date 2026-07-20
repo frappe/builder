@@ -530,4 +530,9 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 		line-height: revert;
 	}
 }
+
+/* mirrors the published-page default in webpage_scripts.html */
+.scheme-dark img:not([data-dark-src]) {
+	filter: brightness(0.85) contrast(1.05);
+}
 </style>
