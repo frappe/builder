@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
 import type Block from "@/block";
+import { startDrag } from "@/utils/cursor";
 import { getNumberFromPx } from "@/utils/helpers";
 import { useElementBounding } from "@vueuse/core";
 import type { Ref } from "vue";
@@ -76,42 +77,38 @@ const handleRounded = (ev: MouseEvent) => {
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 
-	const mousemove = (mouseMoveEvent: MouseEvent) => {
-		mouseMoveEvent.preventDefault();
-		cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
-		const movementX = mouseMoveEvent.clientX - lastX;
-		const movementY = mouseMoveEvent.clientY - lastY;
-		const movement = ((movementX + movementY) / 2) * 2;
+	startDrag({
+		cursor: window.getComputedStyle(ev.target as HTMLElement).cursor,
+		onMove: (mouseMoveEvent) => {
+			cursorPosition.value = { x: mouseMoveEvent.clientX, y: mouseMoveEvent.clientY };
+			const movementX = mouseMoveEvent.clientX - lastX;
+			const movementY = mouseMoveEvent.clientY - lastY;
+			const movement = ((movementX + movementY) / 2) * 2;
 
-		if (movement < 0) {
-			MIN_POSITION.top = -(handleDimensions.height / 2);
-			MIN_POSITION.left = -(handleDimensions.width / 2);
-		}
+			if (movement < 0) {
+				MIN_POSITION.top = -(handleDimensions.height / 2);
+				MIN_POSITION.left = -(handleDimensions.width / 2);
+			}
 
-		const radius = Math.round(
-			Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
-		);
+			const radius = Math.round(
+				Math.max(0, Math.min(getNumberFromPx(props.target.style.borderRadius) + movement, maxRadius.value)),
+			);
 
-		borderRadius.value = radius;
-		setHandlerPosition(radius);
-		props.targetBlock.setStyle("borderRadius", `${radius}px`);
+			borderRadius.value = radius;
+			setHandlerPosition(radius);
+			props.targetBlock.setStyle("borderRadius", `${radius}px`);
 
-		lastX = mouseMoveEvent.clientX;
-		lastY = mouseMoveEvent.clientY;
-	};
-
-	const mouseup = (mouseUpEvent: MouseEvent) => {
-		mouseUpEvent.preventDefault();
-		if (getNumberFromPx(props.targetBlock.getStyle("borderRadius")) < 10) {
-			handlerTop.value = MIN_POSITION.top;
-			handlerLeft.value = MIN_POSITION.left;
-		}
-		updating.value = false;
-		document.removeEventListener("mousemove", mousemove);
-	};
-
-	document.addEventListener("mousemove", mousemove);
-	document.addEventListener("mouseup", mouseup, { once: true });
+			lastX = mouseMoveEvent.clientX;
+			lastY = mouseMoveEvent.clientY;
+		},
+		onEnd: () => {
+			if (getNumberFromPx(props.targetBlock.getStyle("borderRadius") as string) < 10) {
+				handlerTop.value = MIN_POSITION.top;
+				handlerLeft.value = MIN_POSITION.left;
+			}
+			updating.value = false;
+		},
+	});
 };
 
 onMounted(() => {
