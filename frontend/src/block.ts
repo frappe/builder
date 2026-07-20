@@ -393,6 +393,20 @@ class Block implements BlockOptions {
 		}
 		styleObj[style] = value;
 	}
+	setActiveStyle(style: styleProperty, value: StyleValue) {
+		this.setStyle(this.getActiveStyleProperty(style), value);
+	}
+	getActiveStyleValue(style: styleProperty) {
+		const activeStateStyle = this.getActiveStyleProperty(style);
+		const activeValue = activeStateStyle === style ? undefined : this.getStyle(activeStateStyle);
+		return activeValue === null || activeValue === "" || activeValue === undefined
+			? this.getStyle(style)
+			: activeValue;
+	}
+	getActiveStyleProperty(style: styleProperty) {
+		const activeState = this.activeState?.split(":")[0];
+		return (activeState ? `${activeState}:${style}` : style) as styleProperty;
+	}
 	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
 	}

@@ -46,6 +46,8 @@
 				:placeholder="placeholderValue"
 				:dynamicValueKey="dynamicValue?.key"
 				componentClass="w-full"
+				@focusin="clearActiveVariant"
+				@mousedown="clearActiveVariant"
 				@update:modelValue="updateValue"
 				@keydown="handleKeyDown"
 				@openDynamicModal="showDynamicValueModal = true"
@@ -71,6 +73,8 @@
 			:placeholder="placeholderValue"
 			:enableSlider="enableSlider"
 			:isLast="index === visibleVariants.length - 1"
+			@focusin="setActiveVariant(variant.property)"
+			@mousedown="setActiveVariant(variant.property)"
 			@update:modelValue="(v: any) => updateVariantValue(variant.name, v)"
 			@keydown="(e: KeyboardEvent) => handleKeyDown(e, variant.name)"
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
@@ -238,6 +242,19 @@ const clearVariant = (variantName: string) => props.setVariantValue?.(variantNam
 
 const showDynamicValueModal = ref(false);
 
+const setActiveVariant = (property: string) => {
+	if (props.controlType !== "style") return;
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = property;
+	});
+};
+
+const clearActiveVariant = () => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = null;
+	});
+};
+
 const dropdownOptions = computed(() => {
 	const options = [];
 	if (props.variants?.length) {
@@ -249,6 +266,7 @@ const dropdownOptions = computed(() => {
 					onClick: () => {
 						if (props.setVariantValue) {
 							props.setVariantValue(variant.name, rawModelValue.value as string);
+							setActiveVariant(variant.property);
 						}
 					},
 				})),

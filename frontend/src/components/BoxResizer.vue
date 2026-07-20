@@ -54,6 +54,7 @@ const cursorPosition = ref({ x: 0, y: 0 });
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
 const canvasProps = inject("canvasProps") as CanvasProps;
+const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
 
 onMounted(() => {
 	guides = guidesTracker(props.target as HTMLElement, canvasProps);
@@ -123,18 +124,21 @@ watch(resizing, () => {
 });
 
 const targetWidth = computed(() => {
-	props.targetBlock.getStyle("width"); // to trigger reactivity
+	props.targetBlock.getActiveStyleValue("width"); // to trigger reactivity
 	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("width")));
 });
 
 const targetHeight = computed(() => {
-	props.targetBlock.getStyle("height"); // to trigger reactivity
+	props.targetBlock.getActiveStyleValue("height"); // to trigger reactivity
 	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("height")));
 });
 
 const fontSize = computed(() => {
-	props.targetBlock.getStyle("fontSize"); // to trigger reactivity
-	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
+	const activeFontSize = props.targetBlock.getActiveStyleValue("fontSize");
+	const fontSize = hasStyleValue(activeFontSize)
+		? getNumberFromPx(activeFontSize)
+		: getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size"));
+	return Math.round(fontSize);
 });
 
 // For the left/top side, the opposite edge is kept visually fixed by shifting top/left the same
@@ -148,8 +152,8 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const startTop = target.offsetTop;
 	const startLeft = target.offsetLeft;
 	const ownRotation = parseFloat(getComputedStyle(target).rotate) || 0;
-	const blockStartWidth = props.targetBlock.getStyle("width") as string;
-	const blockStartHeight = props.targetBlock.getStyle("height") as string;
+	const blockStartWidth = props.targetBlock.getActiveStyleValue("width") as string;
+	const blockStartHeight = props.targetBlock.getActiveStyleValue("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
 
@@ -198,8 +202,8 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 					{ horizontal, vertical },
 					ownRotation,
 				);
-				props.targetBlock.setStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
-				props.targetBlock.setStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
+				props.targetBlock.setActiveStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
+				props.targetBlock.setActiveStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
 			}
 		},
 		onEnd: () => {
@@ -229,9 +233,9 @@ const setWidth = (movementX: number, startWidth: number, blockStartWidth: string
 		const movementPercent = (movementX / parentWidth) * 100;
 		const startWidthPercent = (startWidth / parentWidth) * 100;
 		const finalWidthPercent = Math.abs(Math.round(startWidthPercent + movementPercent));
-		props.targetBlock.setStyle("width", `${finalWidthPercent}%`);
+		props.targetBlock.setActiveStyle("width", `${finalWidthPercent}%`);
 	} else {
-		props.targetBlock.setStyle("width", `${finalWidth}px`);
+		props.targetBlock.setActiveStyle("width", `${finalWidth}px`);
 	}
 };
 
@@ -242,14 +246,14 @@ const setHeight = (movementY: number, startHeight: number, blockStartHeight: str
 		const movementPercent = (movementY / parentHeight) * 100;
 		const startHeightPercent = (startHeight / parentHeight) * 100;
 		const finalHeightPercent = Math.abs(Math.round(startHeightPercent + movementPercent));
-		props.targetBlock.setStyle("height", `${finalHeightPercent}%`);
+		props.targetBlock.setActiveStyle("height", `${finalHeightPercent}%`);
 	} else {
-		props.targetBlock.setStyle("height", `${finalHeight}px`);
+		props.targetBlock.setActiveStyle("height", `${finalHeight}px`);
 	}
 };
 
 const setFontSize = (movement: number, startFontSize: number) => {
 	const fontSize = clamp(Math.round(startFontSize + 0.5 * movement), 10, 300);
-	props.targetBlock.setStyle("fontSize", `${fontSize}px`);
+	props.targetBlock.setActiveStyle("fontSize", `${fontSize}px`);
 };
 </script>
