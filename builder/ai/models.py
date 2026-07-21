@@ -104,6 +104,34 @@ class ModelRegistry:
 			"vision": True,
 		},
 		{
+			# OpenCode Zen free tier — an OpenAI-compatible gateway with native tool
+			# calling (see llm.zen_route). Key is site_config `zen_api_key`, so these
+			# work alongside the OpenRouter models rather than replacing them.
+			# NOTE: Zen states free-tier data may be used to improve the model.
+			"name": "opencode/nemotron-3-ultra-free",
+			"label": "Nemotron 3 Ultra (OpenCode, Free)",
+			"max_tokens": 1_000_000,
+			"input_price": 0.0,
+			"output_price": 0.0,
+			"vision": False,
+		},
+		{
+			"name": "opencode/deepseek-v4-flash-free",
+			"label": "DeepSeek V4 Flash (OpenCode, Free)",
+			"max_tokens": 200_000,
+			"input_price": 0.0,
+			"output_price": 0.0,
+			"vision": False,
+		},
+		{
+			"name": "opencode/north-mini-code-free",
+			"label": "North Mini Code (OpenCode, Free)",
+			"max_tokens": 256_000,
+			"input_price": 0.0,
+			"output_price": 0.0,
+			"vision": False,
+		},
+		{
 			# Free OpenRouter tier for local testing — native tool calling, zero cost.
 			# 0.0 prices keep the whole loop (incl. the lightweight clarify/plan rounds)
 			# on this model rather than falling back to paid Gemini via PROVIDER_SIMPLE.

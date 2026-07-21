@@ -110,10 +110,34 @@ def provider_kwargs(model: str) -> dict:
 	return {}
 
 
+# --- OpenCode Zen -------------------------------------------------------------
+# Zen is an OpenAI-compatible gateway (native tool calling, verified) whose free
+# tier costs nothing. Models are picked as `opencode/<id>` and routed to litellm's
+# openai provider against Zen's base URL. Its key lives in site_config
+# (`zen_api_key`) so Builder Settings' key stays the OpenRouter one.
+ZEN_API_BASE = "https://opencode.ai/zen/v1"
+# Cloudflare fronts Zen and rejects default httpx/urllib agents with error 1010.
+ZEN_HEADERS = {"User-Agent": "opencode/1.18.3"}
+
+
+def zen_route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
+	"""Rewrite an `opencode/<id>` selection into an openai-provider call against
+	Zen. Returns (model, litellm overrides, api_key) unchanged for other models."""
+	if not model.startswith("opencode/"):
+		return model, {}, api_key
+	target = model.split("/", 1)[1]
+	return (
+		f"openai/{target}",
+		{"api_base": ZEN_API_BASE, "extra_headers": ZEN_HEADERS},
+		frappe.conf.get("zen_api_key") or api_key,
+	)
+
+
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
 	"""Plain completion. Returns the response iterator when streaming, else the
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
+	model, zen_overrides, api_key = zen_route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM | model={model} stream={stream} params={params}\n"
@@ -133,6 +157,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		# turn (dropped automatically for providers that don't support it).
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**provider_kwargs(model),
+		**zen_overrides,
 		**params,
 	)
 	if not stream:
@@ -152,6 +177,7 @@ def complete_with_tools(
 	stream: bool = False,
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
+	model, zen_overrides, api_key = zen_route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
@@ -168,6 +194,7 @@ def complete_with_tools(
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**provider_kwargs(model),
+		**zen_overrides,
 		**params,
 	)
 	return resp
