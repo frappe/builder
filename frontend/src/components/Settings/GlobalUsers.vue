@@ -1,29 +1,15 @@
 <template>
 	<div class="flex h-full flex-col gap-3">
-		<div class="flex items-center gap-2">
+		<div class="flex items-center justify-between gap-2">
 			<BuilderInput
 				type="text"
-				class="flex-1"
-				placeholder="Invite by email, comma-separated"
-				:modelValue="inviteEmails"
-				:hideClearButton="true"
-				@input="(val: string) => (inviteEmails = val)"
-				@keydown.enter.prevent="sendInvites" />
-			<Button
-				variant="solid"
-				:disabled="!inviteEmails.trim()"
-				:loading="inviteResource.loading"
-				@click="sendInvites">
-				Invite
-			</Button>
+				class="w-72"
+				placeholder="Search by name or email"
+				icon-left="search"
+				:modelValue="searchQuery"
+				@input="(val: string) => (searchQuery = val)" />
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
 		</div>
-
-		<BuilderInput
-			type="text"
-			placeholder="Search members"
-			icon-left="search"
-			:modelValue="searchQuery"
-			@input="(val: string) => (searchQuery = val)" />
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
 			<div v-if="filteredInvites.length" class="mb-5 flex flex-col">
@@ -58,19 +44,38 @@
 			</div>
 
 			<div class="flex flex-col">
-				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-sm text-ink-gray-5">
-					Members ({{ filteredMembers.length }})
-				</span>
+				<div
+					class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 text-sm text-ink-gray-5"
+					:class="rowGridClass">
+					<span>User</span>
+					<span>Role</span>
+					<span>User since</span>
+					<span></span>
+				</div>
 				<div
 					v-for="user in filteredMembers"
 					:key="user.name"
-					class="flex items-center gap-2 border-b border-outline-gray-1 py-2">
-					<Avatar shape="circle" :image="user.user_image" :label="user.full_name" size="lg" />
-					<div class="flex min-w-0 flex-col">
-						<span class="truncate text-sm text-ink-gray-8">{{ user.full_name }}</span>
-						<span class="truncate text-xs text-ink-gray-5">{{ user.name }}</span>
+					class="group border-b border-outline-gray-1 py-2"
+					:class="rowGridClass">
+					<div class="flex min-w-0 items-center gap-2">
+						<Avatar shape="circle" :image="user.user_image" :label="user.full_name" size="lg" />
+						<div class="flex min-w-0 flex-col">
+							<span class="truncate text-sm text-ink-gray-8">
+								{{ user.full_name }}
+								<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
+							</span>
+							<span class="truncate text-xs text-ink-gray-5">{{ user.name }}</span>
+						</div>
 					</div>
-					<Badge v-if="user.name === sessionUser" theme="gray" class="ml-auto">You</Badge>
+					<span class="text-sm text-ink-gray-7">{{ user.is_admin ? "Admin" : "User" }}</span>
+					<span class="text-sm text-ink-gray-7">{{ memberSince(user.creation) }}</span>
+					<Button
+						v-if="!user.is_admin && user.name !== sessionUser"
+						variant="ghost"
+						size="sm"
+						icon="lucide-trash-2"
+						title="Remove from Builder"
+						@click="removeUser(user)" />
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
@@ -78,14 +83,31 @@
 				</div>
 			</div>
 		</div>
+
+		<Dialog
+			v-model="showInviteDialog"
+			title="Invite Users"
+			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			<template #default>
+				<BuilderInput
+					:ref="(el) => (inviteInputRef = el)"
+					type="text"
+					label="Email addresses"
+					placeholder="jane@example.com, john@example.com"
+					:hideClearButton="true"
+					:modelValue="inviteEmails"
+					@input="(val: string) => (inviteEmails = val)"
+					@keydown.enter.prevent="sendInvites" />
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
 import router, { sessionUser } from "@/router";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Badge, createResource, toast } from "frappe-ui";
-import { computed, ref } from "vue";
+import { Avatar, Badge, Dialog, createResource, toast } from "frappe-ui";
+import { computed, nextTick, ref } from "vue";
 
 type PendingInvite = {
 	name: string;
@@ -93,10 +115,20 @@ type PendingInvite = {
 	creation: string;
 	invited_by_name?: string;
 };
-type BuilderUser = { name: string; full_name: string; user_image?: string };
+type BuilderUser = {
+	name: string;
+	full_name: string;
+	user_image?: string;
+	creation: string;
+	is_admin: boolean;
+};
+
+const rowGridClass = "grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_32px] items-center gap-x-2";
 
 const inviteEmails = ref("");
 const searchQuery = ref("");
+const showInviteDialog = ref(false);
+const inviteInputRef = ref<any>(null);
 const builderPath = router.options.history.base || "/builder";
 
 const builderUsers = createResource({
@@ -121,6 +153,13 @@ const resendResource = createResource({
 	url: "frappe.core.api.user_invitation.resend_invitation",
 });
 
+const removeResource = createResource({
+	url: "builder.api.remove_builder_user",
+});
+
+const memberSince = (creation: string) =>
+	new Date(creation).toLocaleDateString(undefined, { month: "short", year: "numeric" });
+
 const matchesSearch = (...values: (string | undefined)[]) => {
 	const query = searchQuery.value.toLowerCase().trim();
 	return !query || values.some((value) => value?.toLowerCase().includes(query));
@@ -138,6 +177,13 @@ const filteredMembers = computed<BuilderUser[]>(() => {
 		a.name === sessionUser.value ? -1 : b.name === sessionUser.value ? 1 : 0,
 	);
 });
+
+const openInviteDialog = async () => {
+	inviteEmails.value = "";
+	showInviteDialog.value = true;
+	await nextTick();
+	inviteInputRef.value?.$el?.querySelector?.("input")?.focus();
+};
 
 const errorMessage = (error: any) => error?.messages?.[0] || error?.message || String(error);
 
@@ -163,6 +209,7 @@ const sendInvites = async () => {
 		if (res.disabled_user_emails.length) {
 			toast.error(`User is disabled: ${res.disabled_user_emails.join(", ")}`);
 		}
+		showInviteDialog.value = false;
 		inviteEmails.value = "";
 		pendingInvites.fetch();
 	} catch (error) {
@@ -174,6 +221,17 @@ const resendInvite = async (invite: PendingInvite) => {
 	try {
 		await resendResource.submit({ name: invite.name, app_name: "builder" });
 		toast.success(`Invitation resent to ${invite.email}`);
+	} catch (error) {
+		toast.error(errorMessage(error));
+	}
+};
+
+const removeUser = async (user: BuilderUser) => {
+	if (!(await confirm(`Remove ${user.full_name} from Builder?`))) return;
+	try {
+		await removeResource.submit({ user: user.name });
+		toast.success(`${user.full_name} removed from Builder`);
+		builderUsers.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));
 	}

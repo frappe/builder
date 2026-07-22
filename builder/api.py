@@ -217,23 +217,40 @@ def get_builder_users() -> list[dict]:
 	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
 
 	UserInvitation.validate_role("builder")
-	users_with_access = frappe.get_all(
+	role_rows = frappe.get_all(
 		"Has Role",
 		filters={"role": ["in", ["System Manager", "Website Manager"]], "parenttype": "User"},
-		pluck="parent",
-		distinct=True,
+		fields=["parent", "role"],
 	)
-	return frappe.get_all(
+	admins = {row.parent for row in role_rows if row.role == "System Manager"}
+	users = frappe.get_all(
 		"User",
 		filters=[
-			["name", "in", users_with_access],
+			["name", "in", list({row.parent for row in role_rows})],
 			["name", "not in", ["Administrator", "Guest"]],
 			["enabled", "=", 1],
 			["user_type", "=", "System User"],
 		],
-		fields=["name", "full_name", "user_image"],
+		fields=["name", "full_name", "user_image", "creation"],
 		order_by="full_name",
 	)
+	for user in users:
+		user.is_admin = user.name in admins
+	return users
+
+
+@frappe.whitelist()
+def remove_builder_user(user: str) -> None:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	if user == frappe.session.user:
+		frappe.throw(frappe._("You cannot remove yourself"))
+	user_doc = frappe.get_doc("User", user)
+	if "System Manager" in [role.role for role in user_doc.roles]:
+		frappe.throw(frappe._("Admins can only be managed from the Desk"))
+	user_doc.roles = [role for role in user_doc.roles if role.role != "Website Manager"]
+	user_doc.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
