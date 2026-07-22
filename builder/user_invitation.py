@@ -9,4 +9,5 @@ def capture_user_invited(doc: Document, method: str | None = None) -> None:
 
 
 def after_accept(invitation: Document, user: Document, user_inserted: bool) -> None:
-	capture("builder_user_invitation_accepted", "builder")
+	if invitation.app_name == "builder":
+		capture("builder_user_invitation_accepted", "builder")

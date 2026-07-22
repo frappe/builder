@@ -196,7 +196,7 @@ def check_app_permission():
 	return False
 
 
-# passthrough since the core endpoint only allows GET, which frappe-ui's call() can't send
+# core endpoint is GET-only; frappe-ui's call() always POSTs
 @frappe.whitelist()
 def get_pending_invitations() -> list[dict]:
 	from frappe.core.api.user_invitation import get_pending_invitations

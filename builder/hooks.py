@@ -97,10 +97,6 @@ after_app_install = "builder.install.after_app_install"
 # "Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
-# User Invitation
-# ---------------
-# Grants access to frappe core's User Invitation flow (frappe.core.api.user_invitation)
-
 user_invitation = {
 	"allowed_roles": {
 		"System Manager": ["Website Manager"],

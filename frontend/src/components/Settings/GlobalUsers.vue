@@ -9,7 +9,13 @@
 				:hideClearButton="true"
 				@input="(val: string) => (inviteEmails = val)"
 				@keydown.enter.prevent="sendInvites" />
-			<Button variant="solid" :loading="inviteResource.loading" @click="sendInvites">Invite</Button>
+			<Button
+				variant="solid"
+				:disabled="!inviteEmails.trim()"
+				:loading="inviteResource.loading"
+				@click="sendInvites">
+				Invite
+			</Button>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
