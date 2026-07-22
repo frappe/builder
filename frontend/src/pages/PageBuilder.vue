@@ -261,6 +261,7 @@ watch(
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
 		() => canvasStore.versionPreviewBlock,
+		() => builderStore.isSiteInReadOnlyMode,
 	],
 	() => {
 		const previewing = Boolean(canvasStore.versionPreviewBlock);
@@ -268,8 +269,12 @@ watch(
 			(Boolean(pageStore.activePage?.is_standard) ||
 				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
 			!window.is_developer_mode;
-		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
+		builderStore.toggleReadOnlyMode(
+			builderStore.isSiteInReadOnlyMode ||
+				(canvasStore.editingMode === "page" && (previewing || isProtected)),
+		);
 	},
+	{ immediate: true },
 );
 
 declare global {
