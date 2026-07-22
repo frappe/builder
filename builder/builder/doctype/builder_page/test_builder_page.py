@@ -1325,6 +1325,82 @@ component.update({
 			],
 		)
 
+	def test_get_google_font_urls_with_italics(self):
+		"""Fonts used in italic get the ital axis in the same single request,
+		with 400 italic always included as a fallback instance."""
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			"Roboto": {"weights": [400, 700], "italics": [400]},
+			"Lora": {"weights": [400], "italics": [600]},
+			# untouched fonts keep the exact legacy URL shape
+			"Open Sans": {"weights": [400]},
+		}
+		urls = get_google_font_urls(font_map)
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
+			],
+		)
+
+	def test_italics_cascade_like_font_family(self):
+		"""Italic usage is resolved on the rendered block tree with CSS cascade
+		semantics, not per style dict."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def block(styles, children=None, element="div"):
+			return {"element": element, "baseStyles": styles, "children": children or []}
+
+		# child sets fontStyle without a family: italics land on the ancestor font
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces"}, [block({"fontStyle": "italic", "fontWeight": "600"})])]
+		)
+		self.assertEqual(font_map["Fraunces"]["italics"], [600])
+
+		# italic parent, child only switches family: font-style inherits, so the
+		# child family needs its italic faces too
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces", "fontStyle": "italic"}, [block({"fontFamily": "Lora"})])]
+		)
+		self.assertEqual(font_map["Fraunces"]["italics"], [400])
+		self.assertEqual(font_map["Lora"]["italics"], [400])
+
+		# a child resetting fontStyle: normal breaks the cascade again
+		_, _, font_map, _ = get_block_html(
+			[
+				block(
+					{"fontFamily": "Fraunces", "fontStyle": "italic"},
+					[block({"fontFamily": "Lora", "fontStyle": "normal"})],
+				)
+			]
+		)
+		self.assertNotIn("italics", font_map["Lora"])
+
+	def test_set_italics_from_html(self):
+		"""<i>/<em> and inline font-style inside innerHTML register italic usage
+		for the block's resolved font."""
+		import bs4 as bs
+
+		from builder.builder.doctype.builder_page.builder_page import set_italics_from_html
+
+		font_map = {"Fraunces": {"weights": [400]}, "Lora": {"weights": [400]}}
+		soup = bs.BeautifulSoup(
+			"Fire is the <i>only</i> recipe and "
+			'<span style="font-family: Lora; font-style: italic">this too</span>',
+			"html.parser",
+		)
+		set_italics_from_html(soup, font_map, ancestor_font="Fraunces")
+		self.assertEqual(font_map["Fraunces"].get("italics"), [400])
+		self.assertEqual(font_map["Lora"].get("italics"), [400])
+
+		# fonts that never made it into the map (e.g. system fonts) are ignored
+		font_map_2 = {}
+		set_italics_from_html(bs.BeautifulSoup("<i>hi</i>", "html.parser"), font_map_2, "Arial")
+		self.assertEqual(font_map_2, {})
+
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
 		from builder.builder.doctype.builder_page.builder_page import set_fonts
