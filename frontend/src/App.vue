@@ -14,8 +14,8 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
-import { FrappeUIProvider, toast } from "frappe-ui";
-import { computed, onMounted, provide, watch } from "vue";
+import { frappeRequest, FrappeUIProvider, toast } from "frappe-ui";
+import { computed, nextTick, onMounted, provide, watch } from "vue";
 import { useRoute } from "vue-router";
 import { sessionUser } from "./router";
 
@@ -35,16 +35,31 @@ const title = computed(() => {
 useTitle(title);
 
 onMounted(() => {
+	let readOnlyPoll: number | null = null;
 	watch(
 		() => builderStore.isSiteInReadOnlyMode,
-		(readOnly) => {
-			if (!readOnly) return;
-			toast.warning("Site is in read-only mode", {
-				id: "site-read-only-mode",
-				duration: Infinity,
-				description:
-					"Editing is disabled while the site is being updated. Please try again in a few minutes.",
-			});
+		(readOnly, wasReadOnly) => {
+			if (readOnly) {
+				toast.warning("Site is in read-only mode", {
+					id: "site-read-only-mode",
+					duration: Infinity,
+					description:
+						"Editing is disabled while the site is being updated. Please try again in a few minutes.",
+				});
+				readOnlyPoll ??= window.setInterval(() => {
+					frappeRequest({ url: "builder.api.is_site_read_only" })
+						.then((readOnly: boolean) => (builderStore.isSiteInReadOnlyMode = readOnly))
+						.catch(() => {});
+				}, 10000);
+			} else if (wasReadOnly) {
+				if (readOnlyPoll) {
+					clearInterval(readOnlyPoll);
+					readOnlyPoll = null;
+				}
+				toast.dismiss("site-read-only-mode");
+				toast.success("Site is back online", { description: "You can continue editing." });
+				if (pageStore.selectedPage) nextTick(() => pageStore.savePage());
+			}
 		},
 		{ immediate: true },
 	);

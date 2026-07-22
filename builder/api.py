@@ -29,6 +29,11 @@ def get_versioned_doc(snapshot: str) -> dict:
 
 
 @frappe.whitelist()
+def is_site_read_only() -> bool:
+	return bool(frappe.flags.read_only)
+
+
+@frappe.whitelist()
 def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw("No permission to preview this page")
