@@ -236,6 +236,16 @@ export function useBuilderEvents(
 			},
 		},
 		{
+			key: "d",
+			ctrl: true,
+			shift: true,
+			description: "Toggle canvas dark mode",
+			group: "View",
+			handler: () => {
+				builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
+			},
+		},
+		{
 			key: "s",
 			ctrl: true,
 			description: "Save page / component",
