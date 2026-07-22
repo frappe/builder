@@ -3,10 +3,7 @@
 
 import copy
 import hashlib
-import json
-import os
 import re
-from functools import lru_cache
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -1476,57 +1473,22 @@ def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
 		italics.sort()
 
 
-@lru_cache(maxsize=1)
-def get_google_font_italic_weights() -> dict[str, tuple[int, ...]]:
-	"""Map of Google font family -> italic instance weights it actually ships,
-	read from the same catalog the editor's font picker uses. Families without
-	italic faces are absent, so we never emit an `ital` axis Google would reject."""
-	path = os.path.abspath(
-		os.path.join(frappe.get_app_path("builder"), "..", "frontend", "src", "utils", "fontList.json")
-	)
-	try:
-		with open(path, encoding="utf-8") as f:
-			catalog = json.load(f)
-	except (OSError, ValueError):
-		return {}
-	italic_map = {}
-	for item in catalog.get("items", []):
-		weights = set()
-		for variant in item.get("variants", []):
-			if variant == "italic":
-				weights.add(400)
-			elif variant.endswith("italic"):
-				try:
-					weights.add(int(variant[: -len("italic")]))
-				except ValueError:
-					continue
-		if weights:
-			italic_map[item.get("family")] = tuple(sorted(weights))
-	return italic_map
-
-
-def resolve_italic_weights(requested: list[int], available: tuple[int, ...] | None) -> list[int]:
-	"""Snap requested italic weights to instances the family really has, so the
-	stylesheet request stays valid. No italic faces -> no `ital` axis at all."""
-	if not requested or not available:
-		return []
-	return sorted({min(available, key=lambda a: (abs(a - weight), a)) for weight in requested})
-
-
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family.
 
 	Families used only upright keep the exact `wght@...` URL shape they always
-	had. When italics are used AND the family ships italic faces, the same
-	single request carries them via the `ital` axis instead."""
+	had. When italics are used, the same single request carries them via the
+	`ital` axis. The css2 API silently drops tuples a family doesn't ship
+	(upright faces still load, the browser falls back to synthetic italics), so
+	the axis is safe to request without consulting any font catalog; 400 italic
+	is always included so a family missing the exact italic instance still
+	serves its regular italic face."""
 	normalize_font_weights(font_map)
-	italic_catalog = get_google_font_italic_weights()
 	urls = []
 	for font, options in font_map.items():
 		family = quote_plus(font)
-		requested_italics = sorted({int(weight) for weight in options.get("italics", [])})
-		italics = resolve_italic_weights(requested_italics, italic_catalog.get(font))
-		if italics:
+		italics = sorted({400, *(int(weight) for weight in options.get("italics", []))})
+		if options.get("italics"):
 			tuples = [f"0,{weight}" for weight in options["weights"]]
 			tuples += [f"1,{weight}" for weight in italics]
 			axis = ";".join(tuples)

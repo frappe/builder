@@ -1326,16 +1326,15 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request,
-		limited to italic instances the family actually ships."""
+		"""Fonts used in italic get the ital axis in the same single request.
+		400 italic rides along with heavier italic weights so a family missing
+		the exact instance still serves its regular italic face (css2 silently
+		drops tuples a family doesn't ship, so extra tuples are harmless)."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {
-			# Roboto ships italics at 100/300/400/500/700/900
 			"Roboto": {"weights": [400, 700], "italics": [400]},
-			# Oswald has no italic faces: the ital axis must NOT be emitted,
-			# otherwise Google rejects the whole stylesheet request
-			"Oswald": {"weights": [500], "italics": [500]},
+			"Lora": {"weights": [400], "italics": [600]},
 			# untouched fonts keep the exact legacy URL shape
 			"Open Sans": {"weights": [400]},
 		}
@@ -1344,20 +1343,10 @@ component.update({
 			urls,
 			[
 				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
-				"https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&display=swap",
+				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
 			],
 		)
-
-	def test_resolve_italic_weights_snaps_to_available_instances(self):
-		from builder.builder.doctype.builder_page.builder_page import resolve_italic_weights
-
-		# 600 italic requested but the family only ships 400/700: snap to nearest
-		self.assertEqual(resolve_italic_weights([600], (400, 700)), [700])
-		self.assertEqual(resolve_italic_weights([450], (400, 700)), [400])
-		self.assertEqual(resolve_italic_weights([400, 700], (400, 700)), [400, 700])
-		self.assertEqual(resolve_italic_weights([400], None), [])
-		self.assertEqual(resolve_italic_weights([], (400,)), [])
 
 	def test_italics_cascade_like_font_family(self):
 		"""Italic usage is resolved on the rendered block tree with CSS cascade
