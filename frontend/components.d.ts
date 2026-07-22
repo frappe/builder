@@ -34,6 +34,7 @@ declare module 'vue' {
     BlockProperties: typeof import('./src/components/BlockProperties.vue')['default']
     BlockSnapGuides: typeof import('./src/components/BlockSnapGuides.vue')['default']
     BooleanOptions: typeof import('./src/components/PropsOptions/BooleanOptions.vue')['default']
+    BorderControl: typeof import('./src/components/BorderControl.vue')['default']
     BorderRadiusControl: typeof import('./src/components/BorderRadiusControl.vue')['default']
     BorderRadiusHandler: typeof import('./src/components/BorderRadiusHandler.vue')['default']
     BoxResizer: typeof import('./src/components/BoxResizer.vue')['default']

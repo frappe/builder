@@ -6,6 +6,7 @@ import { BORDER_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions"
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
 import BorderRadiusControl from "@/components/BorderRadiusControl.vue";
+import BorderControl from "@/components/BorderControl.vue";
 
 const overflowOptions = [
 	{
@@ -69,60 +70,11 @@ const styleSectionProperties = [
 		searchKeyWords: "Text, Color, TextColor, Text Color",
 	},
 	{
-		component: StylePropertyControl,
+		component: BorderControl,
 		getProps: () => {
-			return {
-				component: ColorInput,
-				propertyKey: "borderColor",
-				popoverOffset: 120,
-				label: "Border Color",
-			};
+			return {};
 		},
-		searchKeyWords: "Border, Color, BorderColor, Border Color",
-		events: {
-			"update:modelValue": (val: StyleValue) => {
-				if (val) {
-					if (!blockController.getStyle("borderWidth")) {
-						blockController.setStyle("borderWidth", "1px");
-						blockController.setStyle("borderStyle", "solid");
-					}
-				} else {
-					blockController.setStyle("borderWidth", null);
-					blockController.setStyle("borderStyle", null);
-				}
-			},
-		},
-	},
-	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
-				label: "Border Width",
-				propertyKey: "borderWidth",
-				enableSlider: true,
-				unitOptions: BORDER_UNIT_OPTIONS,
-				minValue: 0,
-			};
-		},
-		searchKeyWords: "Border, Width, BorderWidth, Border Width",
-		condition: () => blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"),
-	},
-	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
-				label: "Border Style",
-				propertyKey: "borderStyle",
-				type: "select",
-				options: [
-					{ value: "solid", label: "Solid" },
-					{ value: "dashed", label: "Dashed" },
-					{ value: "dotted", label: "Dotted" },
-				],
-			};
-		},
-		searchKeyWords: "Border, Style, BorderStyle, Border Style, Solid, Dashed, Dotted",
-		condition: () => blockController.getStyle("borderColor"),
+		searchKeyWords: "Border, Color, Width, Style, BorderColor, BorderWidth, BorderStyle",
 	},
 	{
 		component: ShadowHandler,
