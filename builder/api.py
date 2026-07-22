@@ -217,16 +217,16 @@ def get_builder_users() -> list[dict]:
 	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
 
 	UserInvitation.validate_role("builder")
-	users_with_access = frappe.get_all(
+	role_rows = frappe.get_all(
 		"Has Role",
 		filters={"role": ["in", ["System Manager", "Website Manager"]], "parenttype": "User"},
-		pluck="parent",
-		distinct=True,
+		fields=["parent", "role"],
 	)
-	return frappe.get_all(
+	admins = {row.parent for row in role_rows if row.role == "System Manager"}
+	users = frappe.get_all(
 		"User",
 		filters=[
-			["name", "in", users_with_access],
+			["name", "in", list({row.parent for row in role_rows})],
 			["name", "not in", ["Administrator", "Guest"]],
 			["enabled", "=", 1],
 			["user_type", "=", "System User"],
@@ -234,6 +234,9 @@ def get_builder_users() -> list[dict]:
 		fields=["name", "full_name", "user_image"],
 		order_by="full_name",
 	)
+	for user in users:
+		user.is_admin = user.name in admins
+	return users
 
 
 @frappe.whitelist()

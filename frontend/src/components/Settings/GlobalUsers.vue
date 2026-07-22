@@ -1,45 +1,31 @@
 <template>
-	<div class="flex h-full flex-col gap-3">
-		<div class="flex items-center gap-2">
+	<div class="flex h-full flex-col gap-5">
+		<div class="flex items-center justify-between gap-2">
 			<BuilderInput
 				type="text"
-				class="flex-1"
-				placeholder="Invite by email, comma-separated"
-				:modelValue="inviteEmails"
-				:hideClearButton="true"
-				@input="(val: string) => (inviteEmails = val)"
-				@keydown.enter.prevent="sendInvites" />
-			<Button
-				variant="solid"
-				:disabled="!inviteEmails.trim()"
-				:loading="inviteResource.loading"
-				@click="sendInvites">
-				Invite
-			</Button>
+				class="w-72"
+				placeholder="Search by name or email"
+				icon-left="search"
+				:modelValue="searchQuery"
+				@input="(val: string) => (searchQuery = val)" />
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
 		</div>
 
-		<BuilderInput
-			type="text"
-			placeholder="Search members"
-			icon-left="search"
-			:modelValue="searchQuery"
-			@input="(val: string) => (searchQuery = val)" />
-
 		<div class="min-h-0 flex-1 overflow-y-auto">
-			<div v-if="filteredInvites.length" class="mb-5 flex flex-col">
-				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-sm text-ink-gray-5">
+			<div v-if="filteredInvites.length" class="mb-6 flex flex-col">
+				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
 					Pending Invites ({{ filteredInvites.length }})
 				</span>
 				<div
 					v-for="invite in filteredInvites"
 					:key="invite.name"
-					class="flex items-center justify-between gap-2 border-b border-outline-gray-1 py-2">
+					class="flex items-center justify-between gap-2 border-b border-outline-gray-1 py-2 last:border-b-0">
 					<div class="flex min-w-0 items-center gap-2">
 						<Avatar shape="circle" :label="invite.email" size="lg" />
 						<div class="flex min-w-0 flex-col">
-							<span class="truncate text-sm text-ink-gray-8">{{ invite.email }}</span>
+							<span class="truncate text-p-sm text-ink-gray-8">{{ invite.email }}</span>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="invite.creation">
-								<span class="truncate text-xs text-ink-gray-5">
+								<span class="truncate text-p-xs text-ink-gray-5">
 									Invited {{ timeAgo }}{{ invite.invited_by_name ? ` by ${invite.invited_by_name}` : "" }}
 								</span>
 							</UseTimeAgo>
@@ -58,34 +44,54 @@
 			</div>
 
 			<div class="flex flex-col">
-				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-sm text-ink-gray-5">
+				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
 					Members ({{ filteredMembers.length }})
 				</span>
 				<div
 					v-for="user in filteredMembers"
 					:key="user.name"
-					class="flex items-center gap-2 border-b border-outline-gray-1 py-2">
+					class="flex items-center gap-2 border-b border-outline-gray-1 py-2 last:border-b-0">
 					<Avatar shape="circle" :image="user.user_image" :label="user.full_name" size="lg" />
 					<div class="flex min-w-0 flex-col">
-						<span class="truncate text-sm text-ink-gray-8">{{ user.full_name }}</span>
-						<span class="truncate text-xs text-ink-gray-5">{{ user.name }}</span>
+						<span class="truncate text-p-sm text-ink-gray-8">
+							{{ user.full_name }}
+							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
+						</span>
+						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.name === sessionUser" theme="gray" class="ml-auto">You</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
 				</div>
-				<div v-if="!filteredMembers.length" class="py-6 text-center text-sm text-ink-gray-5">
+				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
 					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
 				</div>
 			</div>
 		</div>
+
+		<Dialog
+			v-model="showInviteDialog"
+			title="Invite Users"
+			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			<template #default>
+				<BuilderInput
+					:ref="(el) => (inviteInputRef = el)"
+					type="textarea"
+					label="Email addresses"
+					placeholder="jane@example.com, john@example.com"
+					:hideClearButton="true"
+					:modelValue="inviteEmails"
+					@input="(val: string) => (inviteEmails = val)"
+					@keydown.enter.prevent="sendInvites" />
+			</template>
+		</Dialog>
 	</div>
 </template>
 <script setup lang="ts">
 import router, { sessionUser } from "@/router";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Badge, createResource, toast } from "frappe-ui";
-import { computed, ref } from "vue";
+import { Avatar, Badge, Dialog, createResource, toast } from "frappe-ui";
+import { computed, nextTick, ref } from "vue";
 
 type PendingInvite = {
 	name: string;
@@ -93,10 +99,17 @@ type PendingInvite = {
 	creation: string;
 	invited_by_name?: string;
 };
-type BuilderUser = { name: string; full_name: string; user_image?: string };
+type BuilderUser = {
+	name: string;
+	full_name: string;
+	user_image?: string;
+	is_admin: boolean;
+};
 
 const inviteEmails = ref("");
 const searchQuery = ref("");
+const showInviteDialog = ref(false);
+const inviteInputRef = ref<any>(null);
 const builderPath = router.options.history.base || "/builder";
 
 const builderUsers = createResource({
@@ -139,6 +152,13 @@ const filteredMembers = computed<BuilderUser[]>(() => {
 	);
 });
 
+const openInviteDialog = async () => {
+	inviteEmails.value = "";
+	showInviteDialog.value = true;
+	await nextTick();
+	inviteInputRef.value?.$el?.querySelector?.("textarea, input")?.focus();
+};
+
 const errorMessage = (error: any) => error?.messages?.[0] || error?.message || String(error);
 
 const sendInvites = async () => {
@@ -163,6 +183,7 @@ const sendInvites = async () => {
 		if (res.disabled_user_emails.length) {
 			toast.error(`User is disabled: ${res.disabled_user_emails.join(", ")}`);
 		}
+		showInviteDialog.value = false;
 		inviteEmails.value = "";
 		pendingInvites.fetch();
 	} catch (error) {
