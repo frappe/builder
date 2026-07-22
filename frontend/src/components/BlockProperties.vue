@@ -20,7 +20,7 @@
 				:key="section.name"
 				:sectionCollapsed="toValue(section.collapsed) && !builderStore.propertyFilter">
 				<template v-for="property in getFilteredProperties(section)">
-					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
+					<component :is="property.component" v-bind="property.getProps?.()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
 					</component>
 				</template>
@@ -43,9 +43,9 @@ import imageOptionsSection from "@/components/BlockPropertySections/ImageOptions
 import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import linkSection from "@/components/BlockPropertySections/LinkSection";
+import moreStylesSection from "@/components/BlockPropertySections/MoreStylesSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
-import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
@@ -63,7 +63,7 @@ const builderStore = useBuilderStore();
 
 type BlockProperty = {
 	component: Component;
-	getProps: () => Record<string, unknown>;
+	getProps?: () => Record<string, unknown>;
 	events?: Record<string, unknown>;
 	searchKeyWords: string;
 	condition?: () => boolean;
@@ -128,6 +128,6 @@ const sections = [
 	accessibilitySection,
 	customAttributesSection,
 	editorConfigSection,
-	rawStyleSection,
+	moreStylesSection,
 ] as PropertySection[];
 </script>

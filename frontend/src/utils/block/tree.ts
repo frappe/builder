@@ -11,7 +11,6 @@ export function resetBlock(
 		delete block.innerHTML;
 		delete block.element;
 		block.baseStyles = {};
-		block.rawStyles = {};
 		block.mobileStyles = {};
 		block.tabletStyles = {};
 		block.attributes = {};

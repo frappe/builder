@@ -170,19 +170,6 @@ const blockController = {
 		if (!block) return;
 		block.classes = classes;
 	},
-	getRawStyles: () => {
-		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
-	},
-	setRawStyles: (rawStyles: BlockStyleMap) => {
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			Object.keys(block.rawStyles).forEach((key) => {
-				if (!rawStyles[key]) {
-					delete block.rawStyles[key];
-				}
-			});
-			Object.assign(block.rawStyles, rawStyles);
-		});
-	},
 	getCustomAttributes: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
 	},

@@ -21,6 +21,7 @@ import {
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
+	toStyleProperty,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
 import { Editor } from "@tiptap/vue-3";
@@ -51,11 +52,20 @@ const CONTAINER_ELEMENTS = new Set(["section", "div"]);
 
 const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
+// rawStyles were dropped in favour of baseStyles; older blocks still carry them
+const mergeLegacyRawStyles = (baseStyles: BlockStyleMap, rawStyles?: BlockStyleMap) => {
+	if (!rawStyles) return baseStyles;
+	Object.entries(rawStyles).forEach(([style, value]) => {
+		if (value === null || value === "" || value === undefined) return;
+		baseStyles[toStyleProperty(style)] = value;
+	});
+	return baseStyles;
+};
+
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
 	baseStyles: BlockStyleMap;
-	rawStyles: BlockStyleMap;
 	mobileStyles: BlockStyleMap;
 	tabletStyles: BlockStyleMap;
 	attributes: BlockAttributeMap;
@@ -165,8 +175,9 @@ class Block implements BlockOptions {
 			return getBlockInstance(child);
 		});
 
-		this.baseStyles = reactive(options.styles || options.baseStyles || {});
-		this.rawStyles = reactive(options.rawStyles || {});
+		this.baseStyles = reactive(
+			mergeLegacyRawStyles({ ...(options.styles || options.baseStyles || {}) }, options.rawStyles),
+		);
 		this.customAttributes = reactive(options.customAttributes || {});
 		this.mobileStyles = reactive(options.mobileStyles || {});
 		this.tabletStyles = reactive(options.tabletStyles || {});
@@ -224,7 +235,6 @@ class Block implements BlockOptions {
 				styleObj = { ...styleObj, ...this.mobileStyles };
 			}
 		}
-		styleObj = { ...styleObj, ...this.rawStyles };
 		// replace variables with values
 		// Object.keys(styleObj).forEach((style) => {
 		// 	const value = styleObj[style];
@@ -301,14 +311,6 @@ class Block implements BlockOptions {
 		}
 		customAttributes = { ...customAttributes, ...this.customAttributes };
 		return customAttributes;
-	}
-	getRawStyles() {
-		let rawStyles = {};
-		if (this.isExtendedFromComponent()) {
-			rawStyles = this.referenceComponent?.rawStyles || {};
-		}
-		rawStyles = { ...rawStyles, ...this.rawStyles };
-		return rawStyles;
 	}
 	getVisibilityCondition() {
 		let visibilityCondition = this.visibilityCondition;
@@ -941,7 +943,7 @@ class Block implements BlockOptions {
 			}
 		};
 
-		const styleObjects = [this.baseStyles, this.mobileStyles, this.tabletStyles, this.rawStyles];
+		const styleObjects = [this.baseStyles, this.mobileStyles, this.tabletStyles];
 		styleObjects.forEach((styleObj) => {
 			if (styleObj) {
 				Object.values(styleObj).forEach(extractVarsFromValue);

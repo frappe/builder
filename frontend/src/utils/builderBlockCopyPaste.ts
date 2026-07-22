@@ -275,7 +275,6 @@ function rewriteVariableRefsInBlock(block: BlockOptions, idMap: Map<string, stri
 	rewriteObj(block.baseStyles as Record<string, unknown> | undefined);
 	rewriteObj(block.mobileStyles as Record<string, unknown> | undefined);
 	rewriteObj(block.tabletStyles as Record<string, unknown> | undefined);
-	rewriteObj(block.rawStyles as Record<string, unknown> | undefined);
 	rewriteObj(block.attributes as Record<string, unknown> | undefined);
 	if (block.innerHTML) block.innerHTML = rewrite(block.innerHTML) as string;
 	block.children?.forEach((child) => rewriteVariableRefsInBlock(child, idMap));

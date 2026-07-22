@@ -1,5 +1,9 @@
 <template>
-	<div v-if="labelPlacement === 'top'" class="flex flex-col gap-1" v-bind="$attrs">
+	<div
+		v-if="labelPlacement === 'top'"
+		class="flex flex-col gap-1"
+		v-bind="$attrs"
+		@contextmenu="showRemoveContextMenu">
 		<InputLabel
 			class="text-sm"
 			:class="{ 'cursor-ns-resize': enableSlider }"
@@ -30,7 +34,11 @@
 		</div>
 	</div>
 
-	<div v-else class="group/variant relative flex items-start justify-between gap-2" v-bind="$attrs">
+	<div
+		v-else
+		class="group/variant relative flex items-start justify-between gap-2"
+		v-bind="$attrs"
+		@contextmenu="showRemoveContextMenu">
 		<span
 			class="pointer-events-none absolute left-[5.5px] top-0 w-px bg-surface-gray-4"
 			:class="isLast ? 'h-3.5' : '-bottom-2'"
@@ -66,11 +74,15 @@
 			</component>
 		</div>
 	</div>
+	<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
 </template>
 
 <script lang="ts" setup>
+import ContextMenu from "@/components/ContextMenu.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import { isInteractiveControl } from "@/utils/helpers";
 import type { Component } from "vue";
+import { ref } from "vue";
 
 defineProps<{
 	label: string;
@@ -85,10 +97,24 @@ defineProps<{
 	isLast?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
 	(e: "update:modelValue", value: any): void;
 	(e: "keydown", event: KeyboardEvent): void;
 	(e: "labelMousedown", event: MouseEvent): void;
 	(e: "clear"): void;
 }>();
+
+const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
+
+const contextMenuOptions = [
+	{
+		label: "Remove",
+		action: () => emit("clear"),
+	},
+];
+
+const showRemoveContextMenu = (event: MouseEvent) => {
+	if (isInteractiveControl(event.target)) return;
+	contextMenu.value?.show(event);
+};
 </script>

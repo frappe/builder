@@ -46,6 +46,8 @@ from builder.utils import (
 	execute_script,
 	get_builder_page_preview_file_paths,
 	is_component_used,
+	merge_raw_styles_into_base_styles,
+	normalize_legacy_raw_styles,
 	sanitize_style_value,
 	split_styles,
 )
@@ -621,6 +623,7 @@ def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
 	blocks = frappe.parse_json(blocks)
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+	normalize_legacy_raw_styles(blocks)
 
 	soup = bs.BeautifulSoup("", "html.parser")
 	style_tag = soup.new_tag("style")
@@ -682,7 +685,6 @@ def build_tag(
 		block.get("baseStyles") or {},
 		block.get("mobileStyles") or {},
 		block.get("tabletStyles") or {},
-		block.get("rawStyles") or {},
 	]
 	resolved_font = (
 		next(
@@ -891,7 +893,7 @@ def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None
 	if element in text_elements:
 		classes.insert(0, "__text_block__")
 
-	if block.get("baseStyles"):
+	if block.get("baseStyles") or block.get("tabletStyles") or block.get("mobileStyles"):
 		style_class = generate_and_apply_styles(block, state, ancestor_font=ancestor_font)
 		classes.insert(0, style_class)
 
@@ -908,22 +910,18 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 		"base": split_styles(block.get("baseStyles", {})),
 		"mobile": split_styles(block.get("mobileStyles", {})),
 		"tablet": split_styles(block.get("tabletStyles", {})),
-		"raw": split_styles(block.get("rawStyles", {})),
 	}
 
 	style_list = [
 		styles["base"]["regular"],
 		styles["mobile"]["regular"],
 		styles["tablet"]["regular"],
-		styles["raw"]["regular"],
 	]
 	set_fonts(style_list, font_map, inherited_font=ancestor_font)
 
 	# Append styles for different states and devices
-	# Base and raw
+	# Base
 	append_style(styles["base"]["regular"], style_tag, style_class)
-	append_style(styles["raw"]["regular"], style_tag, style_class)
-	append_state_style(styles["raw"]["state"], style_tag, style_class)
 	append_state_style(styles["base"]["state"], style_tag, style_class)
 
 	# Tablet
@@ -1507,6 +1505,9 @@ def set_fonts_from_html(soup, font_map):
 
 
 def extend_block(block, overridden_block):
+	# children are normalized by the recursive extend_block call below
+	merge_raw_styles_into_base_styles(block)
+	merge_raw_styles_into_base_styles(overridden_block)
 	normalize_legacy_block_client_script(block)
 	normalize_legacy_block_client_script(overridden_block)
 
@@ -1532,10 +1533,6 @@ def extend_block(block, overridden_block):
 	if not block.get("customAttributes"):
 		block["customAttributes"] = {}
 	block["customAttributes"].update(overridden_block.get("customAttributes", {}))
-
-	if not block.get("rawStyles"):
-		block["rawStyles"] = {}
-	block["rawStyles"].update(overridden_block.get("rawStyles", {}))
 
 	block.setdefault("classes", []).extend(overridden_block.get("classes") or [])
 
@@ -1645,7 +1642,6 @@ def reset_block(block):
 	block["innerHTML"] = None
 	block["element"] = None
 	block["baseStyles"] = {}
-	block["rawStyles"] = {}
 	block["mobileStyles"] = {}
 	block["tabletStyles"] = {}
 	block["attributes"] = {}
