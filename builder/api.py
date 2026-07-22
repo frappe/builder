@@ -240,20 +240,6 @@ def get_builder_users() -> list[dict]:
 
 
 @frappe.whitelist()
-def remove_builder_user(user: str) -> None:
-	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
-
-	UserInvitation.validate_role("builder")
-	if user == frappe.session.user:
-		frappe.throw(frappe._("You cannot remove yourself"))
-	user_doc = frappe.get_doc("User", user)
-	if "System Manager" in [role.role for role in user_doc.roles]:
-		frappe.throw(frappe._("Admins can only be managed from the Desk"))
-	user_doc.roles = [role for role in user_doc.roles if role.role != "Website Manager"]
-	user_doc.save(ignore_permissions=True)
-
-
-@frappe.whitelist()
 @redis_cache()
 def get_apps():
 	apps = get_permitted_apps()

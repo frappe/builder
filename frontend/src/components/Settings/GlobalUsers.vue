@@ -59,16 +59,7 @@
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<div class="ml-auto flex shrink-0 items-center gap-2">
-						<Badge v-if="user.is_admin" theme="gray">Admin</Badge>
-						<Button
-							v-if="!user.is_admin && user.name !== sessionUser"
-							variant="ghost"
-							size="sm"
-							icon="lucide-trash-2"
-							title="Remove from Builder"
-							@click="removeUser(user)" />
-					</div>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
@@ -143,10 +134,6 @@ const resendResource = createResource({
 	url: "frappe.core.api.user_invitation.resend_invitation",
 });
 
-const removeResource = createResource({
-	url: "builder.api.remove_builder_user",
-});
-
 const matchesSearch = (...values: (string | undefined)[]) => {
 	const query = searchQuery.value.toLowerCase().trim();
 	return !query || values.some((value) => value?.toLowerCase().includes(query));
@@ -208,17 +195,6 @@ const resendInvite = async (invite: PendingInvite) => {
 	try {
 		await resendResource.submit({ name: invite.name, app_name: "builder" });
 		toast.success(`Invitation resent to ${invite.email}`);
-	} catch (error) {
-		toast.error(errorMessage(error));
-	}
-};
-
-const removeUser = async (user: BuilderUser) => {
-	if (!(await confirm(`Remove ${user.full_name} from Builder?`))) return;
-	try {
-		await removeResource.submit({ user: user.name });
-		toast.success(`${user.full_name} removed from Builder`);
-		builderUsers.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));
 	}
