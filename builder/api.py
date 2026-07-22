@@ -196,12 +196,20 @@ def check_app_permission():
 	return False
 
 
-# core endpoint is GET-only; frappe-ui's call() always POSTs
 @frappe.whitelist()
 def get_pending_invitations() -> list[dict]:
-	from frappe.core.api.user_invitation import get_pending_invitations
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
 
-	return get_pending_invitations("builder")
+	UserInvitation.validate_role("builder")
+	invitations = frappe.get_all(
+		"User Invitation",
+		filters={"status": "Pending", "app_name": "builder"},
+		fields=["name", "email", "creation", "invited_by"],
+		order_by="creation desc",
+	)
+	for invitation in invitations:
+		invitation.invited_by_name = frappe.db.get_value("User", invitation.invited_by, "full_name")
+	return invitations
 
 
 @frappe.whitelist()
