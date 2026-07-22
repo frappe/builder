@@ -104,6 +104,26 @@ class ModelRegistry:
 			"vision": True,
 		},
 		{
+			# OpenCode Go — a low-cost coding subscription, same zen_route path as Zen
+			# but against the /zen/go/v1 base (see llm.OPENCODE_BASES). Covered by the
+			# workspace subscription behind `zen_api_key`; prices below are the per-1M
+			# upper bound (overage rate) so cost estimates never understate.
+			"name": "opencode-go/kimi-k2.7-code",
+			"label": "Kimi K2.7 Code (OpenCode Go)",
+			"max_tokens": 256_000,
+			"input_price": 0.95,
+			"output_price": 4.0,
+			"vision": False,
+		},
+		{
+			"name": "opencode-go/kimi-k2.6",
+			"label": "Kimi K2.6 (OpenCode Go)",
+			"max_tokens": 256_000,
+			"input_price": 0.95,
+			"output_price": 4.0,
+			"vision": False,
+		},
+		{
 			# OpenCode Zen free tier — an OpenAI-compatible gateway with native tool
 			# calling (see llm.zen_route). Key is site_config `zen_api_key`, so these
 			# work alongside the OpenRouter models rather than replacing them.

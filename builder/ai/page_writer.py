@@ -332,6 +332,12 @@ def normalize_component_instances(root: dict | None) -> dict | None:
 	stack = [root]
 	while stack:
 		block = stack.pop()
+		# run_python-built (or weaker-model) blocks sometimes carry text in a bare
+		# `text` field — the format generate_page/add_block use — but Builder renders
+		# from innerHTML, so the block would show empty. Promote it here (the one path
+		# every hand-built tree passes through) rather than in each edit tool.
+		if isinstance(block.get("text"), str) and not block.get("innerHTML"):
+			block["innerHTML"] = block.pop("text")
 		comp_id = block.get("extendedFromComponent")
 		if comp_id and not block.get("children"):
 			block["children"] = component_instance_children(comp_id)

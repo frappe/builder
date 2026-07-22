@@ -110,27 +110,40 @@ def provider_kwargs(model: str) -> dict:
 	return {}
 
 
-# --- OpenCode Zen -------------------------------------------------------------
-# Zen is an OpenAI-compatible gateway (native tool calling, verified) whose free
-# tier costs nothing. Models are picked as `opencode/<id>` and routed to litellm's
-# openai provider against Zen's base URL. Its key lives in site_config
-# (`zen_api_key`) so Builder Settings' key stays the OpenRouter one.
+# --- OpenCode (Zen + Go) ------------------------------------------------------
+# opencode.ai fronts two OpenAI-compatible gateways with native tool calling
+# (both verified): Zen (`opencode/<id>`, has a free tier) and Go (`opencode-go/
+# <id>`, a low-cost coding subscription). Selections are routed to litellm's
+# openai provider against the matching base. Both share ONE site_config key
+# (`zen_api_key`, workspace-scoped), so Builder Settings' key stays OpenRouter's.
 ZEN_API_BASE = "https://opencode.ai/zen/v1"
-# Cloudflare fronts Zen and rejects default httpx/urllib agents with error 1010.
+# Cloudflare fronts opencode.ai and rejects default httpx/urllib agents (error 1010).
 ZEN_HEADERS = {"User-Agent": "opencode/1.18.3"}
+# provider prefix -> base URL; `opencode-go/` is checked before `opencode/`.
+OPENCODE_BASES = {"opencode-go/": "https://opencode.ai/zen/go/v1", "opencode/": ZEN_API_BASE}
 
 
 def zen_route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
-	"""Rewrite an `opencode/<id>` selection into an openai-provider call against
-	Zen. Returns (model, litellm overrides, api_key) unchanged for other models."""
-	if not model.startswith("opencode/"):
-		return model, {}, api_key
-	target = model.split("/", 1)[1]
-	return (
-		f"openai/{target}",
-		{"api_base": ZEN_API_BASE, "extra_headers": ZEN_HEADERS},
-		frappe.conf.get("zen_api_key") or api_key,
-	)
+	"""Rewrite an `opencode/<id>` (Zen) or `opencode-go/<id>` (Go) selection into an
+	openai-provider call against the matching base, using the shared `zen_api_key`.
+	Returns (model, litellm overrides, api_key) unchanged for other models."""
+	for prefix, base in OPENCODE_BASES.items():
+		if model.startswith(prefix):
+			return (
+				f"openai/{model[len(prefix) :]}",
+				{"api_base": base, "extra_headers": ZEN_HEADERS},
+				frappe.conf.get("zen_api_key") or api_key,
+			)
+	return model, {}, api_key
+
+
+def patch_params_for_provider(model: str, params: dict) -> dict:
+	"""Provider-specific param fixups. Moonshot's Kimi models (via OpenCode Go)
+	reject any temperature other than 1 with a 400, so the agent tier's 0.7 must be
+	coerced. Returns a new dict; the input is left untouched."""
+	if "kimi" in model and params.get("temperature") not in (None, 1):
+		return {**params, "temperature": 1}
+	return params
 
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
@@ -138,6 +151,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
 	model, zen_overrides, api_key = zen_route(model, api_key)
+	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM | model={model} stream={stream} params={params}\n"
@@ -178,6 +192,7 @@ def complete_with_tools(
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
 	model, zen_overrides, api_key = zen_route(model, api_key)
+	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
