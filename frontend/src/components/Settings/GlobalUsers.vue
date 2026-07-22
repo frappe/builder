@@ -84,7 +84,7 @@
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"
-					type="text"
+					type="textarea"
 					label="Email addresses"
 					placeholder="jane@example.com, john@example.com"
 					:hideClearButton="true"
@@ -169,7 +169,7 @@ const openInviteDialog = async () => {
 	inviteEmails.value = "";
 	showInviteDialog.value = true;
 	await nextTick();
-	inviteInputRef.value?.$el?.querySelector?.("input")?.focus();
+	inviteInputRef.value?.$el?.querySelector?.("textarea, input")?.focus();
 };
 
 const errorMessage = (error: any) => error?.messages?.[0] || error?.message || String(error);
