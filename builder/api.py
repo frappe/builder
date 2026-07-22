@@ -231,7 +231,7 @@ def get_builder_users() -> list[dict]:
 			["enabled", "=", 1],
 			["user_type", "=", "System User"],
 		],
-		fields=["name", "full_name", "user_image", "creation"],
+		fields=["name", "full_name", "user_image"],
 		order_by="full_name",
 	)
 	for user in users:

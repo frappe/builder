@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-full flex-col gap-3">
+	<div class="flex h-full flex-col gap-5">
 		<div class="flex items-center justify-between gap-2">
 			<BuilderInput
 				type="text"
@@ -12,20 +12,20 @@
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
-			<div v-if="filteredInvites.length" class="mb-5 flex flex-col">
-				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-sm text-ink-gray-5">
+			<div v-if="filteredInvites.length" class="mb-6 flex flex-col">
+				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
 					Pending Invites ({{ filteredInvites.length }})
 				</span>
 				<div
 					v-for="invite in filteredInvites"
 					:key="invite.name"
-					class="flex items-center justify-between gap-2 border-b border-outline-gray-1 py-2">
+					class="flex items-center justify-between gap-2 border-b border-outline-gray-1 py-2 last:border-b-0">
 					<div class="flex min-w-0 items-center gap-2">
 						<Avatar shape="circle" :label="invite.email" size="lg" />
 						<div class="flex min-w-0 flex-col">
-							<span class="truncate text-sm text-ink-gray-8">{{ invite.email }}</span>
+							<span class="truncate text-p-sm text-ink-gray-8">{{ invite.email }}</span>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="invite.creation">
-								<span class="truncate text-xs text-ink-gray-5">
+								<span class="truncate text-p-xs text-ink-gray-5">
 									Invited {{ timeAgo }}{{ invite.invited_by_name ? ` by ${invite.invited_by_name}` : "" }}
 								</span>
 							</UseTimeAgo>
@@ -44,40 +44,33 @@
 			</div>
 
 			<div class="flex flex-col">
-				<div
-					class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 text-sm text-ink-gray-5"
-					:class="rowGridClass">
-					<span>User</span>
-					<span>Role</span>
-					<span>User since</span>
-					<span></span>
-				</div>
+				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
+					Members ({{ filteredMembers.length }})
+				</span>
 				<div
 					v-for="user in filteredMembers"
 					:key="user.name"
-					class="group border-b border-outline-gray-1 py-2"
-					:class="rowGridClass">
-					<div class="flex min-w-0 items-center gap-2">
-						<Avatar shape="circle" :image="user.user_image" :label="user.full_name" size="lg" />
-						<div class="flex min-w-0 flex-col">
-							<span class="truncate text-sm text-ink-gray-8">
-								{{ user.full_name }}
-								<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
-							</span>
-							<span class="truncate text-xs text-ink-gray-5">{{ user.name }}</span>
-						</div>
+					class="flex items-center gap-2 border-b border-outline-gray-1 py-2 last:border-b-0">
+					<Avatar shape="circle" :image="user.user_image" :label="user.full_name" size="lg" />
+					<div class="flex min-w-0 flex-col">
+						<span class="truncate text-p-sm text-ink-gray-8">
+							{{ user.full_name }}
+							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
+						</span>
+						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<span class="text-sm text-ink-gray-7">{{ user.is_admin ? "Admin" : "User" }}</span>
-					<span class="text-sm text-ink-gray-7">{{ memberSince(user.creation) }}</span>
-					<Button
-						v-if="!user.is_admin && user.name !== sessionUser"
-						variant="ghost"
-						size="sm"
-						icon="lucide-trash-2"
-						title="Remove from Builder"
-						@click="removeUser(user)" />
+					<div class="ml-auto flex shrink-0 items-center gap-2">
+						<Badge v-if="user.is_admin" theme="gray">Admin</Badge>
+						<Button
+							v-if="!user.is_admin && user.name !== sessionUser"
+							variant="ghost"
+							size="sm"
+							icon="lucide-trash-2"
+							title="Remove from Builder"
+							@click="removeUser(user)" />
+					</div>
 				</div>
-				<div v-if="!filteredMembers.length" class="py-6 text-center text-sm text-ink-gray-5">
+				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
 					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
 				</div>
@@ -119,11 +112,8 @@ type BuilderUser = {
 	name: string;
 	full_name: string;
 	user_image?: string;
-	creation: string;
 	is_admin: boolean;
 };
-
-const rowGridClass = "grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_32px] items-center gap-x-2";
 
 const inviteEmails = ref("");
 const searchQuery = ref("");
@@ -156,9 +146,6 @@ const resendResource = createResource({
 const removeResource = createResource({
 	url: "builder.api.remove_builder_user",
 });
-
-const memberSince = (creation: string) =>
-	new Date(creation).toLocaleDateString(undefined, { month: "short", year: "numeric" });
 
 const matchesSearch = (...values: (string | undefined)[]) => {
 	const query = searchQuery.value.toLowerCase().trim();
