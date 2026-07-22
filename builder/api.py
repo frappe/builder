@@ -29,12 +29,12 @@ def get_versioned_doc(snapshot: str) -> dict:
 
 
 @frappe.whitelist()
-def get_page_preview_html(page: str, **kwarg) -> Response:
+def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw("No permission to preview this page")
 
 	# to load preview without publishing
-	frappe.form_dict.update(kwarg)
+	frappe.form_dict.update(kwargs)
 	frappe.local.request.for_preview = True
 	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
