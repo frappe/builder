@@ -356,18 +356,41 @@ const selections = reactive<Record<number, Set<number>>>({});
 const inputs = reactive<Record<number, string>>({});
 const uploads = reactive<Record<number, string>>({});
 const colorSlots = reactive<Record<number, Record<number, string>>>({});
+// Slots the user actually interacted with (picked or cleared). Untouched preset
+// slots submit as "(suggested)" so the model knows its own defaults from choices.
+const touchedColorSlots = reactive<Set<string>>(new Set());
 
-/** The role slots a color_input offers. The model sends `colors: [{label, hint?}]`;
- * fall back to one slot named after the atom's own label. */
-function colorSlotDefs(el: UIElement): { label: string; hint?: string }[] {
+/** The role slots a color_input offers. The model sends `colors: [{label, hint?,
+ * value?}]` — `value` is a curated preset hex shown as the starting point — with
+ * a fallback to one slot named after the atom's own label. */
+function colorSlotDefs(el: UIElement): { label: string; hint?: string; value?: string }[] {
 	const defs = Array.isArray(el.colors) ? el.colors : [];
 	const clean = defs
 		.filter((d: any) => d && typeof d === "object" && d.label)
-		.map((d: any) => ({ label: String(d.label), hint: d.hint ? String(d.hint) : undefined }));
+		.map((d: any) => ({
+			label: String(d.label),
+			hint: d.hint ? String(d.hint) : undefined,
+			value: safeColor(d.value),
+		}));
 	return clean.length ? clean : [{ label: el.label || "Colour" }];
 }
 
+// Seed preset values into the collected state so an untouched slot still submits
+// its preset. Never re-seed a slot the user touched (clearing one means "you pick").
+watchEffect(() => {
+	elements.value.forEach((el, i) => {
+		if (el.kind !== "color_input") return;
+		colorSlotDefs(el).forEach((slot, k) => {
+			if (slot.value && !touchedColorSlots.has(`${i}:${k}`) && !colorSlots[i]?.[k]) {
+				colorSlots[i] ??= {};
+				colorSlots[i][k] = slot.value;
+			}
+		});
+	});
+});
+
 function setColorSlot(i: number, k: number, color: string) {
+	touchedColorSlots.add(`${i}:${k}`);
 	colorSlots[i] ??= {};
 	if (color) colorSlots[i][k] = color;
 	else delete colorSlots[i][k];
@@ -439,12 +462,24 @@ function submitCollected(actionLabel?: string) {
 		}
 		if (el.kind === "color_input") {
 			const picked = colorSlotDefs(el)
-				.map((slot, k) => ({ label: slot.label, hex: colorSlots[i]?.[k] }))
+				.map((slot, k) => ({
+					label: slot.label,
+					hex: colorSlots[i]?.[k],
+					// A preset the user never touched is a suggestion, not a decision —
+					// the model may refine it; a touched slot is the user's law.
+					suggested: !touchedColorSlots.has(`${i}:${k}`) && colorSlots[i]?.[k] === slot.value,
+				}))
 				.filter((s) => s.hex);
 			if (picked.length) {
 				// Explicit role→hex mapping so the model uses each colour WHERE the user
 				// meant it (never a random spread): "Brand: #C4552D, Background: #F4EFE8".
-				lines.push(`Colours the user chose — ${picked.map((s) => `${s.label}: ${s.hex}`).join(", ")}`);
+				// Untouched presets carry "(suggested)" so the model keeps creative
+				// latitude on them while treating user-picked slots as law.
+				lines.push(
+					`Colours — ${picked
+						.map((s) => `${s.label}: ${s.hex}${s.suggested ? " (suggested)" : ""}`)
+						.join(", ")}`,
+				);
 				values.push(picked.map((s) => s.hex).join(" "));
 			}
 		}

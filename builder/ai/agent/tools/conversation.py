@@ -128,8 +128,10 @@ def sanitize_ui(raw) -> list[dict]:
 
 
 def sanitize_color_slots(colors) -> list[dict]:
-	"""A color_input's role slots: [{label, hint?}]. Keep dicts with a string label
-	(tolerate bare-string slot names); cap the count so a card can't sprawl."""
+	"""A color_input's role slots: [{label, hint?, value?}]. Keep dicts with a string
+	label (tolerate bare-string slot names); `value` is a curated preset hex the card
+	shows as the starting point — only a plain hex survives (anything else could reach
+	an inline style). Cap the count so a card can't sprawl."""
 	out = []
 	for slot in colors or []:
 		if isinstance(slot, str) and slot.strip():
@@ -138,6 +140,9 @@ def sanitize_color_slots(colors) -> list[dict]:
 			clean = {"label": str(slot["label"])[:60]}
 			if slot.get("hint"):
 				clean["hint"] = str(slot["hint"])[:120]
+			value = str(slot.get("value") or "").strip()
+			if re.fullmatch(r"#[0-9a-fA-F]{3,8}", value):
+				clean["value"] = value
 			out.append(clean)
 	return out[:6]
 
