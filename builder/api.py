@@ -196,6 +196,38 @@ def check_app_permission():
 	return False
 
 
+# core endpoint is GET-only; frappe-ui's call() always POSTs
+@frappe.whitelist()
+def get_pending_invitations() -> list[dict]:
+	from frappe.core.api.user_invitation import get_pending_invitations
+
+	return get_pending_invitations("builder")
+
+
+@frappe.whitelist()
+def get_builder_users() -> list[dict]:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	users_with_access = frappe.get_all(
+		"Has Role",
+		filters={"role": ["in", ["System Manager", "Website Manager"]], "parenttype": "User"},
+		pluck="parent",
+		distinct=True,
+	)
+	return frappe.get_all(
+		"User",
+		filters=[
+			["name", "in", users_with_access],
+			["name", "not in", ["Administrator", "Guest"]],
+			["enabled", "=", 1],
+			["user_type", "=", "System User"],
+		],
+		fields=["name", "full_name", "user_image"],
+		order_by="full_name",
+	)
+
+
 @frappe.whitelist()
 @redis_cache()
 def get_apps():
