@@ -137,7 +137,14 @@ def claims_unbacked_action(summary_text: str) -> bool:
 # Persisted present_ui cards replay to the model as plain text ("[buttons: …]"),
 # and a model can MIMIC that format — writing a card as chat text instead of
 # calling present_ui. Text renders no controls, so the user is stuck.
-CARD_TEXT_RE = re.compile(r"\[\s*(?:input|choices|buttons|upload|swatches|sketch)\s*:", re.IGNORECASE)
+# Any card-atom name in bracket notation is mimicry, never natural prose — cover the
+# replay vocabulary AND the schema vocabulary (a model can leak either: Kimi wrote
+# "[actions: Continue]", blending the schema's kind name into the replay format).
+CARD_TEXT_RE = re.compile(
+	r"\[\s*(?:input|choices|buttons|upload|swatches|sketch|actions|color_input)\s*:"
+	r"|\[\s*colou?r picker\b",
+	re.IGNORECASE,
+)
 
 CARD_CORRECTION = (
 	"Your last message wrote an interactive card as plain TEXT (markup like [input: …] "
@@ -165,7 +172,12 @@ ASKS_CHOICE_RE = re.compile(
 # Option-DECORATION markers (fonts/palette/layout/image) are the exact format
 # option_text() replays a card in — a model writing "[fonts: Fraunces + Albert Sans]"
 # in a bullet is mimicking a past card as prose, whatever the lead-in reads like.
-OPTION_MARKER_RE = re.compile(r"\[\s*(?:fonts?|palette|layout|image)\s*:", re.IGNORECASE)
+# Control-atom markers (actions/buttons/input/…) count the same way: a bulleted
+# question that leaks ANY card notation is a card written as text.
+OPTION_MARKER_RE = re.compile(
+	r"\[\s*(?:fonts?|palette|layout|image|actions|buttons|input|choices|upload|swatches)\s*:",
+	re.IGNORECASE,
+)
 
 BUILD_INCOMPLETE_CORRECTION = (
 	"You set up the design system (tokens, scripts, page settings) but NEVER built the page — "
