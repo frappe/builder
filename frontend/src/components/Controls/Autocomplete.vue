@@ -140,9 +140,10 @@ interface Option {
 }
 
 interface ActionButton {
-	label: string;
-	handler: () => void;
-	icon: string;
+	// label/handler/icon drive the default button; omit them when supplying a `component`
+	label?: string;
+	handler?: () => void;
+	icon?: string;
 	component?: Component;
 }
 

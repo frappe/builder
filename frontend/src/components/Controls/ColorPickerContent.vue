@@ -57,13 +57,13 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { clamp, useElementBounding, useEyeDropper } from "@vueuse/core";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
+const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 

@@ -27,7 +27,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showSearchBlock: false,
 		builderLayout: {
 			rightPanelWidth: 275,
-			leftPanelWidth: 250,
+			leftPanelWidth: 300,
 			scriptEditorHeight: 300,
 			optionsPanelWidth: 57,
 		},
@@ -36,9 +36,19 @@ const useBuilderStore = defineStore("builderStore", {
 		showLeftPanel: <boolean>true,
 		showVersionHistory: <boolean>false,
 		showHTMLDialog: false,
+		openClientScript: <string | null>null,
 		showDataScriptDialog: <"page" | null>null,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
+		// An AI build is streaming onto the canvas: the server owns the draft, so the
+		// editor's autosave must stand down (it would persist the partial preview).
+		aiBuildingCanvas: false,
+		// Bob's current activity line, mirrored from the chat controller so the
+		// canvas build overlay can narrate what's happening ("Designing the hero…").
+		aiBuildStatus: <string>"",
+		// Bumped once each time a build settles — the overlay watches it to fire a
+		// one-shot "done" flourish on the canvas.
+		aiBuildDoneTick: 0,
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),

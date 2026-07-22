@@ -77,6 +77,9 @@
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
+
+		<!-- Ambient "Bob is building" layer over the canvas (teleported to body) -->
+		<AIBuildOverlay />
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -98,18 +101,6 @@
 				required />
 		</template>
 	</Dialog>
-	<AIPageGeneratorModal
-		v-model="showAIGeneratorDialog"
-		v-if="builderStore.isAIEnabled"
-		:pageId="route.params.pageId as string"
-		:mode="aiMode"
-		:blockContext="modifyBlockContext"
-		@generated="handleGeneratedBlocks"
-		@streaming="handleStreamingBlocks"
-		@modified="handleModifiedBlocks"
-		@modifyStreaming="handleModifyStreamingBlocks"
-		@generating="isAIGenerating = $event"
-		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
 	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
@@ -117,8 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import type Block from "@/block";
-import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
+import AIBuildOverlay from "@/components/ai/AIBuildOverlay.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
@@ -137,7 +127,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController.js";
-import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
+import { getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
@@ -147,7 +137,6 @@ import CodeEditor from "../components/Controls/CodeEditor.vue";
 import { prefetchBuilderSettings } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
-const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
@@ -161,99 +150,6 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
-const showAIGeneratorDialog = ref(false);
-const aiMode = ref<"generate" | "modify">("generate");
-const modifyBlockContext = ref<Record<string, any> | null>(null);
-const modifyBlockId = ref<string | null>(null);
-const isAIGenerating = ref(false);
-
-provide("showAIGenerator", () => {
-	aiMode.value = "generate";
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	showAIGeneratorDialog.value = true;
-});
-
-const editWithAIFn = (block: Block) => {
-	aiMode.value = "modify";
-	modifyBlockContext.value = getBlockObject(block);
-	modifyBlockId.value = block.blockId;
-	showAIGeneratorDialog.value = true;
-};
-provide("editWithAI", editWithAIFn);
-
-const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
-	const blockObj = getBlockObject(block);
-	aiMode.value = "modify";
-	modifyBlockId.value = block.blockId;
-	modifyBlockContext.value = blockObj;
-	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
-};
-provide("runDirectAI", runDirectAI);
-
-const handleGeneratedBlocks = () => {
-	pageStore.savePage();
-};
-
-const handleStreamingBlocks = (block: BlockOptions) => {
-	if (!block) return;
-
-	try {
-		pageStore.pageBlocks = [getBlockInstance(block)];
-		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as Block, false);
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
-
-const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
-	if (!root || !replacement) return false;
-	if (root.blockId === targetId) {
-		root.element = replacement.element || root.element;
-		root.baseStyles = replacement.baseStyles || root.baseStyles;
-		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
-		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
-		root.classes = replacement.classes || root.classes;
-
-		if (replacement.attributes) {
-			root.attributes = { ...root.attributes, ...replacement.attributes };
-		}
-
-		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
-		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
-
-		if (replacement.children) {
-			root.children.splice(
-				0,
-				root.children.length,
-				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
-			);
-		}
-		return true;
-	}
-	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
-};
-
-const handleModifiedBlocks = () => {
-	pageStore.savePage();
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	aiMode.value = "generate";
-};
-
-const handleModifyStreamingBlocks = (block: BlockOptions) => {
-	const targetId = block?.blockId || modifyBlockId.value;
-	if (!block || !targetId) return;
-
-	try {
-		const rootBlock = pageStore.pageBlocks[0] as Block;
-		if (rootBlock) {
-			replaceBlockInTree(rootBlock, targetId, block);
-		}
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
 
 watch(
 	[
@@ -311,23 +207,6 @@ useShortcut([
 		group: "General",
 		handler: () => {
 			shortcutsModalOpen.value = true;
-		},
-	},
-	{
-		key: "i",
-		ctrl: true,
-		description: "Edit block with AI",
-		group: "Edit",
-		condition: () =>
-			builderStore.isAIEnabled &&
-			!blockController.isRoot() &&
-			!blockController.multipleBlocksSelected() &&
-			!builderStore.readOnlyMode,
-		handler: () => {
-			const block = blockController.getSelectedBlocks()[0];
-			if (block) {
-				editWithAIFn?.(block);
-			}
 		},
 	},
 	{
@@ -413,6 +292,22 @@ onActivated(async () => {
 	}
 });
 
+// In-editor navigation to ANOTHER page (the build pill's "View"/"Go back" links):
+// the component is reused, so onActivated never refires — swap the page here or
+// the URL changes while the canvas keeps showing the previous page.
+watch(
+	() => route.params.pageId,
+	(pageId, oldPageId) => {
+		if (!pageId || pageId === "new" || pageId === pageStore.selectedPage) return;
+		if (oldPageId && oldPageId !== "new") {
+			builderStore.realtime.doc_close("Builder Page", oldPageId as string);
+		}
+		builderStore.realtime.doc_subscribe("Builder Page", pageId as string);
+		builderStore.realtime.doc_open("Builder Page", pageId as string);
+		pageStore.setPage(pageId as string, true, route.query);
+	},
+);
+
 watch(
 	route,
 	(to, from) => {
@@ -472,8 +367,8 @@ watch(
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
 			!builderStore.readOnlyMode &&
-			!pageCanvas.value?.canvasProps?.settingCanvas &&
-			!isAIGenerating.value
+			!builderStore.aiBuildingCanvas &&
+			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();

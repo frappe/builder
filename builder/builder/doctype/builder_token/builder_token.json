@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "creation": "2025-07-10 20:15:35.907300",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "is_standard",
+  "token_name",
+  "group",
+  "type",
+  "value",
+  "dark_value"
+ ],
+ "fields": [
+  {
+   "default": "Color",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Color\nDimension\nFont"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "token_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Variable Name",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "label": "Is Standard"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Color\"",
+   "fieldname": "dark_value",
+   "fieldtype": "Data",
+   "label": "Dark Value"
+  },
+  {
+   "fieldname": "group",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Group"
+  }
+ ],
+ "grid_page_length": 50,
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-24 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Token",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Website Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "token_name"
+}

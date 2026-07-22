@@ -134,13 +134,25 @@ import {
 } from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { setFont } from "@/utils/fontManager";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
 import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
+import {
+	Ref,
+	computed,
+	onMounted,
+	onUnmounted,
+	provide,
+	reactive,
+	ref,
+	useId,
+	watch,
+	watchEffect,
+} from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -151,7 +163,13 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasId = `builder-canvas-${useId()}`;
 
-const { cssVariables, darkCssVariables } = useBuilderVariable();
+const { cssVariables, darkCssVariables, fontTokens } = useBuilderToken();
+
+// Font tokens' families must be loaded for the canvas to render them — blocks
+// reference var(--id), which resolves via CSS but never hits a font loader.
+watchEffect(() => {
+	fontTokens.value.forEach((t: any) => setFont(t.value));
+});
 
 const variables = computed(() => {
 	return {

@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "page",
+  "status",
+  "subagent_session",
+  "instructions",
+  "error"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title"
+  },
+  {
+   "columns": 2,
+   "fieldname": "page",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Page",
+   "options": "Builder Page"
+  },
+  {
+   "columns": 1,
+   "default": "queued",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "queued\nrunning\ndone\nfailed"
+  },
+  {
+   "fieldname": "subagent_session",
+   "fieldtype": "Link",
+   "label": "Sub-agent Session",
+   "options": "Builder AI Session"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Long Text",
+   "label": "Instructions"
+  },
+  {
+   "columns": 3,
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Error"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder AI Batch Task",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

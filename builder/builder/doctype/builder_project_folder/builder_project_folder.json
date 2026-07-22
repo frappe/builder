@@ -7,7 +7,18 @@
  "engine": "InnoDB",
  "field_order": [
   "is_standard",
-  "folder_name"
+  "folder_name",
+  "ai_site_section",
+  "is_ai_site",
+  "generation_status",
+  "active_batch_id",
+  "site_brief",
+  "home_page",
+  "font_pairing",
+  "header_component",
+  "footer_component",
+  "site_spec_json",
+  "nav_json"
  ],
  "fields": [
   {
@@ -21,12 +32,82 @@
    "fieldname": "is_standard",
    "fieldtype": "Check",
    "label": "Is Standard"
+  },
+  {
+   "fieldname": "ai_site_section",
+   "fieldtype": "Section Break",
+   "label": "AI Site"
+  },
+  {
+   "default": "0",
+   "description": "Set when this folder is an AI-generated multi-page site (vs. a plain page folder).",
+   "fieldname": "is_ai_site",
+   "fieldtype": "Check",
+   "label": "Is AI Site"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "generation_status",
+   "fieldtype": "Select",
+   "label": "Generation Status",
+   "options": "\nDraft\nGenerating\nReady\nPublished\nFailed"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "active_batch_id",
+   "fieldtype": "Data",
+   "label": "Active Batch ID",
+   "read_only": 1
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "site_brief",
+   "fieldtype": "Small Text",
+   "label": "Site Brief"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "home_page",
+   "fieldtype": "Data",
+   "label": "Home Page Route"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "font_pairing",
+   "fieldtype": "Data",
+   "label": "Font Pairing"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "header_component",
+   "fieldtype": "Link",
+   "label": "Header Component",
+   "options": "Builder Component"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "footer_component",
+   "fieldtype": "Link",
+   "label": "Footer Component",
+   "options": "Builder Component"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "site_spec_json",
+   "fieldtype": "Long Text",
+   "label": "Site Spec (JSON)"
+  },
+  {
+   "depends_on": "is_ai_site",
+   "fieldname": "nav_json",
+   "fieldtype": "Long Text",
+   "label": "Nav (JSON)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-11 11:51:16.422175",
+ "modified": "2026-07-01 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Project Folder",

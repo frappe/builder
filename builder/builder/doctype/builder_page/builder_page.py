@@ -238,6 +238,9 @@ class BuilderPage(WebsiteGenerator):
 		clear_cache(self.route)
 
 	def on_trash(self):
+		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
+			frappe.delete_doc("Builder AI Session", session, ignore_missing=True)
+
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:
 				delete_template_page_fixture(self, app=frappe.conf.get("template_target_app") or "builder")
@@ -327,7 +330,26 @@ class BuilderPage(WebsiteGenerator):
 		self.draft_blocks = blocks
 		if "page_data_script" in data:
 			self.page_data_script = data.get("page_data_script")
+		# AI snapshots also capture client scripts (publish/manual ones don't), so a single
+		# revert restores them: re-set the page's links to the pre-turn set (this unlinks any
+		# scripts the turn created) and restore each captured script's content (this reverts
+		# scripts the turn edited).
+		if "client_scripts" in data:
+			self.set(
+				"client_scripts",
+				[{"builder_script": s.get("builder_script")} for s in (data.get("client_scripts") or [])],
+			)
 		self.save()
+		for name, content in (data.get("_ai_scripts") or {}).items():
+			if not frappe.db.exists("Builder Client Script", name):
+				continue
+			# Save through the doc (NOT db.set_value): on_update regenerates the public JS/CSS
+			# file the published page actually loads (via public_url). A bare db write reverts
+			# the field but leaves the stale file, so publish would keep serving the old script.
+			script_doc = frappe.get_doc("Builder Client Script", name)
+			script_doc.script = content.get("script")
+			script_doc.script_type = content.get("script_type")
+			script_doc.save(ignore_permissions=True)
 		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
 
 	@frappe.whitelist()
@@ -355,11 +377,11 @@ class BuilderPage(WebsiteGenerator):
 
 		if context.preview:
 			context.disable_auto_dark_mode = 0
-			# /builder_assets/variables.css is a rendered route, not a real file, so
+			# /builder_assets/tokens.css is a rendered route, not a real file, so
 			# the preview/PDF generator can't fetch it. Inline the variables instead.
-			from builder.builder.doctype.builder_variable.builder_variable import get_variables_css
+			from builder.builder.doctype.builder_token.builder_token import get_variables_css
 
-			context.inline_variables_css = get_variables_css()
+			context.inline_tokens_css = get_variables_css()
 			# Honour the dark/light mode the editor previews in (canvasDarkMode), so the
 			# initial server render matches it instead of falling back to the OS scheme.
 			scheme = frappe.form_dict.get("prefers_color_scheme")
@@ -380,6 +402,12 @@ class BuilderPage(WebsiteGenerator):
 			blocks = self.draft_blocks
 
 		content, style, fonts, has_dual_mode_image = get_block_html(blocks)
+
+		# Propagate the root block's background to html/body. Otherwise a full-bleed
+		# (e.g. all-black) page paints only its root <div>, and everything the div
+		# doesn't cover — the preview screenshot's canvas, a short page's tail,
+		# overscroll — falls through to the browser's default white.
+		context.page_background = get_root_background(blocks)
 
 		if self.dynamic_route or page_data or self.page_data_script:
 			context.no_cache = 1
@@ -606,6 +634,19 @@ def get_block_data(
 	if isinstance(_locals["block"], dict):
 		block_data = frappe._dict({k: v for k, v in _locals["block"].items() if prev_block_data.get(k) != v})
 	return block_data
+
+
+def get_root_background(blocks: str | list) -> str | None:
+	"""The page's root (body) block background, to paint html/body so a full-bleed
+	page has no white gaps. Returns a CSS value (color, var(--token), or gradient)
+	or None when the root sets no background. `background`/`backgroundImage` (a
+	gradient) win over a plain `backgroundColor`."""
+	data = blocks if isinstance(blocks, list) else frappe.parse_json(blocks or "[]")
+	root = (data[0] if data else None) if isinstance(data, list) else data
+	if not isinstance(root, dict):
+		return None
+	styles = root.get("baseStyles") or {}
+	return styles.get("background") or styles.get("backgroundImage") or styles.get("backgroundColor") or None
 
 
 def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
@@ -1014,6 +1055,14 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 		else:
 			full_key = iterator_key
 
+		if not is_safe_data_key(full_key):
+			loop_var = f"key_invalid_{block.get('blockId', 'x')}"
+			return {
+				"loop_var": loop_var,
+				"iterator_key": "[]",
+				"data_key": {"key": loop_var, "comesFrom": "dataScript"},
+			}
+
 		loop_var = f"key_{full_key.replace('.', '__')}"
 
 		return {
@@ -1327,8 +1376,20 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 
 
 def get_font_family(font: str) -> str:
-	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter')."""
+	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter').
+	A Font design token (var(--id)) resolves to its family so the Google Fonts
+	links include tokenized families."""
+	font = resolve_font_token(font)
 	return font.split(",")[0].strip().strip("'\"")
+
+
+def resolve_font_token(font: str) -> str:
+	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
+	if not match:
+		return font
+	token_id = match.group(1)[2:]
+	value = frappe.db.get_value("Builder Token", token_id, "value")
+	return value or ""
 
 
 def set_fonts(styles, font_map, inherited_font=None):
@@ -1377,8 +1438,8 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
 			font = get_font_family(font)
 
-			# Skip if it is a system font
-			if font.lower() in system_fonts:
+			# Skip system fonts and unresolvable font tokens
+			if not font or font.lower() in system_fonts:
 				continue
 
 			weight = str(style.get("fontWeight") or "400").lower()
@@ -1595,9 +1656,22 @@ def extract_data_key(data_key):
 	return None
 
 
+# A data key is a dotted path of Jinja-safe identifiers (e.g. "features" or "props.items").
+# Anything else (spaces, commas, brackets — e.g. an array stringified to "[object Object],...")
+# would generate invalid Jinja and crash the page render.
+SAFE_DATA_KEY = re.compile(r"^\w[\w.]*$")
+
+
+def is_safe_data_key(key) -> bool:
+	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
+
+
 def jinja_safe_key(key):
 	# convert a.b to (a or {}).get('b', {})
 	# to avoid undefined error in jinja
+	if not is_safe_data_key(key):
+		# render nothing rather than emitting a broken Jinja expression
+		return "{}"
 	keys = (key or "").split(".")
 	key = f"({keys[0]} or {{}})"
 	for k in keys[1:]:

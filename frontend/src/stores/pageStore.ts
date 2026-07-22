@@ -31,6 +31,7 @@ const usePageStore = defineStore("pageStore", {
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
+		pageLoadToken: 0,
 		snapshotsVersion: 0,
 	}),
 	actions: {
@@ -40,7 +41,13 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 
+			this.selectedPage = pageName;
+			const pageLoadToken = ++this.pageLoadToken;
+
 			const page = await this.fetchActivePage(pageName);
+			if (pageLoadToken !== this.pageLoadToken || this.selectedPage !== pageName) {
+				return;
+			}
 			if (!page) {
 				toast.error("Page not found", {
 					duration: Infinity,
@@ -58,7 +65,6 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
 			if (routeParams) {
@@ -274,7 +280,7 @@ const usePageStore = defineStore("pageStore", {
 
 		savePage() {
 			const builderStore = useBuilderStore();
-			if (builderStore.readOnlyMode) {
+			if (builderStore.readOnlyMode || builderStore.aiBuildingCanvas) {
 				// callers may have optimistically set this before invoking savePage
 				this.savingPage = false;
 				return;
@@ -296,7 +302,7 @@ const usePageStore = defineStore("pageStore", {
 			// more save requests can be triggered till the first one is completed
 			this.saveId = saveId;
 			const args = {
-				name: this.selectedPage,
+				name: this.activePage?.name || this.selectedPage,
 				draft_blocks: pageData,
 			};
 			return webPages.setValue
@@ -337,6 +343,22 @@ const usePageStore = defineStore("pageStore", {
 						description: error_message,
 					});
 				});
+		},
+
+		/** Persist a generated page_data_script (the static-repeater data shim) and
+		 * refresh pageData so repeaters render immediately in the editor. The script
+		 * is code we generate from the AI's JSON data — never AI-authored. */
+		applyRepeaterDataScript(script: string) {
+			const name = this.activePage?.name || this.selectedPage;
+			if (!name) return;
+			if (this.activePage) this.activePage.page_data_script = script;
+			return webPages.setValue
+				.submit({ name, page_data_script: script })
+				.then((page: BuilderPage) => {
+					this.activePage = page;
+					this.setPageData(page);
+				})
+				.catch(() => null);
 		},
 
 		setRouteVariable(variable: string, value: string) {

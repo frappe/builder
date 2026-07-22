@@ -157,9 +157,7 @@
 							icon: 'lucide-trash',
 						},
 					]">
-					<template v-slot="{ open }">
-						<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
-					</template>
+					<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click.stop></Button>
 				</Dropdown>
 			</span>
 		</div>

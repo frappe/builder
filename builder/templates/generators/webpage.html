@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Made with Frappe Builder -->
-<html lang="{{ language or default_language or 'en' }}"{% if disable_auto_dark_mode %} data-prefers-color-scheme="light"{% elif prefers_color_scheme %} data-prefers-color-scheme="{{ prefers_color_scheme }}"{% endif %}>
+<html lang="{{ language or default_language or 'en' }}"{% if disable_auto_dark_mode %} data-prefers-color-scheme="light"{% elif prefers_color_scheme %} data-prefers-color-scheme="{{ prefers_color_scheme }}"{% endif %}{% if page_background %} style="background:{{ page_background }}"{% endif %}>
 <head>
 	{% if base_url %}
 	<base href="{{ base_url }}">
@@ -41,9 +41,12 @@
 	{% endfor %}
 	{{ style }}
 	{%- if preview -%}
-	<style>{{ inline_variables_css }}</style>
+	<style>{{ inline_tokens_css }}</style>
 	{%- else -%}
-	<link rel="stylesheet" href="/builder_assets/variables.css" media="screen">
+	<link rel="stylesheet" href="/builder_assets/tokens.css" media="screen">
+	{%- endif -%}
+	{%- if page_background -%}
+	<style>html,body{background:{{ page_background }};}</style>
 	{%- endif -%}
 	{%- if custom_fonts -%}
 	<style>{% for font in custom_fonts %}@font-face {font-family: "{{ font.font_name }}";src: url("{{ font.font_file }}");font-display: swap;}{% endfor %}</style>

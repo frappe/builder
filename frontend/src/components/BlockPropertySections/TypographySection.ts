@@ -1,12 +1,10 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
-import FontUploader from "@/components/Controls/FontUploader.vue";
+import FontInput from "@/components/Controls/FontInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, getFontWeightOptions } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
@@ -40,48 +38,8 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Family",
-				component: Autocomplete,
+				component: FontInput,
 				propertyKey: "fontFamily",
-				getOptions: (filterString: string) => {
-					const fontOptions = [] as { label: string; value: string }[];
-					userFonts.data?.forEach((font: UserFont) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						const fontName = font.font_name as string;
-						if (fontName.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: fontName,
-								value: fontName,
-							});
-						}
-					});
-					if (fontOptions.length) {
-						fontOptions.unshift({
-							label: "Custom",
-							value: "_separator_1",
-						});
-						fontOptions.push({
-							label: "Default",
-							value: "_separator_2",
-						});
-					}
-					fontList.items.forEach((font) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						if (font.family.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: font.family,
-								value: font.family,
-							});
-						}
-					});
-					return fontOptions;
-				},
-				actionButton: {
-					component: FontUploader,
-				},
 				getModelValue: () => blockController.getFontFamily(),
 				setModelValue: (val: string) => setFont(val),
 			};

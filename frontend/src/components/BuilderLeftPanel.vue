@@ -9,7 +9,11 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
+			<Tooltip
+				v-for="option of leftPanelOptions"
+				:key="option.value"
+				:text="`${option.label} (${formatShortcutLabel(option.shortcut)})`"
+				placement="right">
 				<Button
 					:icon="option.icon"
 					:class="{
@@ -18,7 +22,7 @@
 					size="md"
 					:variant="
 						builderStore.leftPanelActiveTab === option.value ||
-						(showVariableManager && option.value === 'variables')
+						(showTokenManager && option.value === 'variables')
 							? 'subtle'
 							: 'ghost'
 					"
@@ -75,20 +79,24 @@
 					v-if="pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
+			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Chat'">
+				<BuilderAIChatPanel />
+			</div>
 		</div>
 
-		<VariableManager v-model="showVariableManager" :container="miniSidebar" />
+		<TokenManager v-model="showTokenManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
-import VariableManager from "@/components/Modals/VariableManager.vue";
+import TokenManager from "@/components/Modals/TokenManager.vue";
 import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { Tooltip } from "frappe-ui";
+import { formatShortcutLabel, Tooltip, useShortcut } from "frappe-ui";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import BlockLayers from "./BlockLayers.vue";
@@ -97,7 +105,7 @@ import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
 import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
-const showVariableManager = ref(false);
+const showTokenManager = ref(false);
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
@@ -116,37 +124,59 @@ const leftPanelOptions = [
 		label: "Insert",
 		value: "Blocks",
 		icon: "lucide-plus",
+		shortcut: { key: "i", ctrl: true, shift: true },
 	},
 	{
 		label: "Layers",
 		value: "Layers",
 		icon: LayersIcon,
+		shortcut: { key: "l", ctrl: true, shift: true },
 	},
 	{
 		label: "Components",
 		value: "Assets",
 		icon: "lucide-box",
+		shortcut: { key: "a", ctrl: true, shift: true },
 	},
 	{
 		label: "Code",
 		value: "Code",
 		icon: "lucide-code",
+		shortcut: { key: "k", ctrl: true, shift: true },
 	},
 	{
-		label: "Variables",
+		label: "Design System",
 		value: "variables",
 		icon: "lucide-aperture",
+		shortcut: { key: "v", ctrl: true, shift: true },
+	},
+	{
+		label: "Bob AI",
+		value: "Chat",
+		icon: "lucide-sparkle",
+		shortcut: { key: "o", ctrl: true, shift: true },
 	},
 ];
 
 const setActiveTab = (tab: LeftSidebarTabOption) => {
 	if (tab === "variables") {
-		showVariableManager.value = !showVariableManager.value;
+		showTokenManager.value = !showTokenManager.value;
 	} else {
 		builderStore.leftPanelActiveTab = tab;
-		showVariableManager.value = false;
+		showTokenManager.value = false;
 	}
 };
+
+useShortcut(
+	leftPanelOptions.map((option) => ({
+		key: option.shortcut.key,
+		ctrl: option.shortcut.ctrl,
+		shift: option.shortcut.shift,
+		description: `Show ${option.label} panel`,
+		group: "View",
+		handler: () => setActiveTab(option.value as LeftSidebarTabOption),
+	})),
+);
 
 watchEffect(() => {
 	if (pageLayers.value) {
@@ -159,7 +189,7 @@ watchEffect(() => {
 watch(
 	() => route.fullPath,
 	() => {
-		showVariableManager.value = false;
+		showTokenManager.value = false;
 	},
 );
 
