@@ -1326,10 +1326,8 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request.
-		400 italic rides along with heavier italic weights so a family missing
-		the exact instance still serves its regular italic face (css2 silently
-		drops tuples a family doesn't ship, so extra tuples are harmless)."""
+		"""Fonts used in italic get the ital axis in the same single request,
+		with 400 italic always included as a fallback instance."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {

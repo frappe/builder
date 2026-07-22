@@ -1476,13 +1476,9 @@ def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family.
 
-	Families used only upright keep the exact `wght@...` URL shape they always
-	had. When italics are used, the same single request carries them via the
-	`ital` axis. The css2 API silently drops tuples a family doesn't ship
-	(upright faces still load, the browser falls back to synthetic italics), so
-	the axis is safe to request without consulting any font catalog; 400 italic
-	is always included so a family missing the exact italic instance still
-	serves its regular italic face."""
+	Families used in italic get the `ital` axis with 400 always included as a
+	fallback instance. css2 silently drops tuples a family doesn't ship, so
+	no font catalog is needed."""
 	normalize_font_weights(font_map)
 	urls = []
 	for font, options in font_map.items():
