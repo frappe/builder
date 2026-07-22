@@ -7,7 +7,7 @@
 				class="flex items-start"
 				@contextmenu="showRemoveContextMenu($event, row.property)">
 				<StylePropertyControl
-					class="max-h-12 min-w-0 flex-1"
+					class="min-w-0 flex-1"
 					v-bind="row.controlProps"
 					:propertyKey="row.styleProperty"
 					:label="row.label"
@@ -25,15 +25,8 @@
 			open-on-focus
 			@update:query="propertySearch = $event"
 			@update:modelValue="addProperty">
-			<template #suffix="{ open, setOpen }">
-				<button
-					type="button"
-					class="grid size-5 shrink-0 place-items-center rounded text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
-					aria-label="Add CSS property"
-					@click.stop="setOpen(!open)"
-					@pointerdown.stop.prevent>
-					<span class="lucide-plus size-4" aria-hidden="true" />
-				</button>
+			<template #suffix>
+				<span />
 			</template>
 			<template #item-label="{ item }">
 				<span class="flex min-w-0 flex-col gap-0.5">
@@ -159,10 +152,21 @@ const canAddProperty = (property: string) =>
 	!isCuratedStyleProperty(property) &&
 	!activeProperties.value.has(property);
 
+const normalizedPropertySearch = computed(() => propertySearch.value.trim().toLowerCase());
+
+const searchablePropertyOptions = computed(() =>
+	getCSSPropertyOptions(propertySearch.value, getCuratedStyleProperties())
+		.filter((option) => !activeProperties.value.has(option.value))
+		.map((option) => ({
+			...option,
+			label: normalizedPropertySearch.value
+				? `${option.label} ${normalizedPropertySearch.value}`
+				: option.label,
+		})),
+);
+
 const propertyOptions = computed(() => [
-	...getCSSPropertyOptions(propertySearch.value, getCuratedStyleProperties()).filter(
-		(option) => !activeProperties.value.has(option.value),
-	),
+	...searchablePropertyOptions.value,
 	{
 		type: "custom" as const,
 		key: "add-property",

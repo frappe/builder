@@ -104,13 +104,48 @@ const getCSSPropertyControl = (property: string) => {
 	return controlCache.get(property) as StyleControlConfig;
 };
 
-const getCSSPropertyOptions = (query: string, excludedProperties = new Set<string>()) => {
+const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const getFuzzySearchScore = (query: string, property: string) => {
 	const normalizedQuery = query.toLowerCase();
-	return baselineCSSProperties
-		.filter((property) => !excludedProperties.has(property))
-		.filter((property) => !normalizedQuery || property.includes(normalizedQuery))
+	const compactQuery = normalizeSearchText(query);
+	const compactProperty = normalizeSearchText(property);
+
+	if (!compactQuery) return 0;
+	if (property.includes(normalizedQuery)) return property.indexOf(normalizedQuery);
+	if (compactProperty.includes(compactQuery)) return 25 + compactProperty.indexOf(compactQuery);
+
+	let score = 100;
+	let previousIndex = -1;
+
+	for (const character of compactQuery) {
+		const index = compactProperty.indexOf(character, previousIndex + 1);
+		if (index === -1) return null;
+
+		const gap = index - previousIndex - 1;
+		score += gap * 2;
+		previousIndex = index;
+	}
+
+	return score + compactProperty.length - compactQuery.length;
+};
+
+const getCSSPropertyOptions = (query: string, excludedProperties = new Set<string>()) => {
+	const normalizedQuery = query.trim().toLowerCase();
+	const availableProperties = baselineCSSProperties.filter((property) => !excludedProperties.has(property));
+
+	if (!normalizedQuery) {
+		return availableProperties
+			.slice(0, MAX_SEARCH_RESULTS)
+			.map((property) => ({ label: property, value: property }));
+	}
+
+	return availableProperties
+		.map((property) => ({ property, score: getFuzzySearchScore(normalizedQuery, property) }))
+		.filter((result): result is { property: string; score: number } => result.score !== null)
+		.sort((a, b) => a.score - b.score || a.property.localeCompare(b.property))
 		.slice(0, MAX_SEARCH_RESULTS)
-		.map((property) => ({ label: property, value: property }));
+		.map(({ property }) => ({ label: property, value: property }));
 };
 
 const getCSSValueOptions = (property: string, query: string) => {
