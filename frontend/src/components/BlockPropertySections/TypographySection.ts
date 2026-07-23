@@ -6,7 +6,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, fontListItems, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
@@ -42,7 +42,8 @@ const typographySectionProperties = [
 				label: "Family",
 				component: Autocomplete,
 				propertyKey: "fontFamily",
-				getOptions: (filterString: string) => {
+				getOptions: async (filterString: string) => {
+					await loadFontList();
 					const fontOptions = [] as { label: string; value: string }[];
 					userFonts.data?.forEach((font: UserFont) => {
 						if (fontOptions.length >= 20) {
@@ -66,7 +67,7 @@ const typographySectionProperties = [
 							value: "_separator_2",
 						});
 					}
-					fontList.items.forEach((font) => {
+					fontListItems.value.forEach((font) => {
 						if (fontOptions.length >= 20) {
 							return;
 						}
