@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-2 focus-within:ring-outline-gray-3"
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
@@ -57,16 +57,20 @@
 
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
-					ref="contentRef"
-					class="z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
-					:class="[
-						referenceElementSelector ? 'fixed' : 'absolute',
-						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
-						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
-					]"
+					@after-enter="
+						() => {
+							fixedPositionStyles = getFixedPositionStyles();
+						}
+					"
+					@after-leave="
+						() => {
+							fixedPositionStyles = {};
+						}
+					"
+					:class="referenceElementSelector ? 'fixed' : 'absolute'"
 					:style="fixedPositionStyles"
-					@after-enter="updateOptionsPosition"
-					@after-leave="fixedPositionStyles = {}">
+					ref="contentRef"
+					class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl">
 					<div class="overflow-y-auto p-1">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 							<ComboboxSeparator
@@ -127,10 +131,6 @@ import type { Component, ComponentPublicInstance } from "vue";
 import { computed, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 
-const OPTIONS_GAP = 4;
-// keep in sync with the max-h-80 on the options container
-const MAX_OPTIONS_HEIGHT = 320;
-
 interface Option {
 	label: string;
 	value: string;
@@ -178,8 +178,7 @@ const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
 const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
-const fixedPositionStyles = ref<Record<string, string>>({});
-const openOptionsAbove = ref(false);
+const fixedPositionStyles = ref({});
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
 const hasOverflow = ref(false);
@@ -292,51 +291,41 @@ watch(
 );
 
 watch(isOpen, (val) => {
-	if (val) nextTick(updateOptionsPosition);
-});
-
-watch(displayOptions, () => {
-	if (isOpen.value) nextTick(updateOptionsPosition);
+	if (val && props.referenceElementSelector) {
+		nextTick(() => {
+			fixedPositionStyles.value = getFixedPositionStyles();
+		});
+	}
 });
 
 if (props.getOptions) refreshOptions();
 
-const shouldOpenOptionsAbove = () => {
-	const comboboxInputRect = containerRef.value?.getBoundingClientRect();
-	if (!comboboxInputRect) return false;
+// in Popover, absolute positioning keeps all options within the Popover taking extra space
+// making it fixed makes it float above Popover container
+const getFixedPositionStyles = () => {
+	if (props.referenceElementSelector) {
+		const comboboxInputRect = containerRef.value?.getBoundingClientRect();
+		const contentRect = contentRef.value?.$el?.getBoundingClientRect
+			? contentRef.value.$el.getBoundingClientRect()
+			: null;
+		if (!comboboxInputRect) {
+			return {};
+		}
+		// Calculate positions relative to viewport and use with Teleport to body
+		const isAbove = contentRect && comboboxInputRect.bottom + (contentRect?.height || 0) > window.innerHeight;
+		const top = isAbove ? "unset" : comboboxInputRect.bottom + 4 + "px";
+		const bottom = isAbove ? window.innerHeight - comboboxInputRect.top + 4 + "px" : "unset";
+		const left = comboboxInputRect.left + "px";
 
-	const contentRect = (contentRef.value?.$el as HTMLElement | undefined)?.getBoundingClientRect();
-	const optionsHeight = Math.min(contentRect?.height || MAX_OPTIONS_HEIGHT, MAX_OPTIONS_HEIGHT);
-	const spaceBelow = window.innerHeight - comboboxInputRect.bottom - OPTIONS_GAP;
-	const spaceAbove = comboboxInputRect.top - OPTIONS_GAP;
-
-	return spaceBelow < optionsHeight && spaceAbove > spaceBelow;
-};
-
-const updateOptionsPosition = () => {
-	openOptionsAbove.value = shouldOpenOptionsAbove();
-	fixedPositionStyles.value = props.referenceElementSelector ? getFixedPositionStyles() : {};
-};
-
-// inside a Popover, absolute positioning keeps the options within the Popover and takes extra
-// space; fixed positioning lets them float above the Popover container instead
-const getFixedPositionStyles = (): Record<string, string> => {
-	const comboboxInputRect = containerRef.value?.getBoundingClientRect();
-	if (!comboboxInputRect) return {};
-
-	const top = openOptionsAbove.value ? "unset" : comboboxInputRect.bottom + OPTIONS_GAP + "px";
-	const bottom = openOptionsAbove.value
-		? window.innerHeight - comboboxInputRect.top + OPTIONS_GAP + "px"
-		: "unset";
-	const left = comboboxInputRect.left + "px";
-
-	return {
-		top,
-		bottom,
-		left,
-		width: comboboxInputRect.width + "px",
-		zIndex: "999",
-	};
+		return {
+			top,
+			bottom,
+			left,
+			width: comboboxInputRect.width + "px",
+			zIndex: "999",
+		};
+	}
+	return {};
 };
 
 defineExpose({
