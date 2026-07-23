@@ -1,5 +1,5 @@
 import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
-import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import dimensionSection from "@/components/BlockPropertySections/DimensionSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import layoutSection from "@/components/BlockPropertySections/LayoutSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
