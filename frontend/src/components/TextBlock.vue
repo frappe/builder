@@ -215,6 +215,18 @@ const getInnerHTML = (editor: Editor | null) => {
 	return innerHTML;
 };
 
+const destroyEditor = () => {
+	if (!editor.value) return;
+	// the editor stash lives on the shared Block prototype; only clear it
+	// when it still points at this component's editor
+	if (props.block.getEditor() === editor.value) {
+		// @ts-ignore
+		props.block.__proto__.editor = null;
+	}
+	editor.value.destroy();
+	editor.value = null;
+};
+
 if (!props.preview) {
 	watch(
 		() => [
@@ -228,6 +240,9 @@ if (!props.preview) {
 				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
 				!blockController.multipleBlocksSelected()
 			) {
+				// undo/redo swaps the Block under a reused component, so a live
+				// editor may still exist here; destroy it or it leaks
+				destroyEditor();
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
@@ -281,18 +296,13 @@ if (!props.preview) {
 				props.block.__proto__.editor = editor.value;
 				editor.value?.setEditable(isEditable.value);
 			} else {
-				editor.value?.destroy();
-				editor.value = null;
-				// @ts-ignore
-				props.block.__proto__.editor = null;
+				destroyEditor();
 			}
 		},
 		{ immediate: true },
 	);
 
-	onBeforeUnmount(() => {
-		editor.value?.destroy();
-	});
+	onBeforeUnmount(destroyEditor);
 }
 
 const handleClick = (e: MouseEvent) => {
