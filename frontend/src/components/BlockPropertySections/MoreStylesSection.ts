@@ -14,10 +14,10 @@ export default {
 	name: "More Styles",
 	properties: moreStylesSectionProperties,
 	collapsed: computed(() => {
-		return false
 		const block = blockController.getFirstSelectedBlock();
 		if (!block) return true;
 		const styles = { ...block.baseStyles, ...block.tabletStyles, ...block.mobileStyles };
 		return getNonCuratedProperties(styles).size === 0;
 	}),
+	condition: () => blockController.getSelectedBlocks().length === 1
 };

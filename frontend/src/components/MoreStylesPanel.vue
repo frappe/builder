@@ -18,7 +18,6 @@
 
 		<Combobox
 			ref="propertyCombobox"
-			v-model="selectedProperty"
 			:options="propertyOptions"
 			placeholder="Add CSS property"
 			empty-text="No matching properties"
@@ -54,7 +53,6 @@
 import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import {
@@ -75,10 +73,8 @@ import { computed, nextTick, reactive, ref, watch } from "vue";
 
 const STATES = ["hover", "active", "focus"];
 
-const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const propertySearch = ref("");
-const selectedProperty = ref<string | null>(null);
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
 const contextMenuProperty = ref<string | null>(null);
 const propertyCombobox = ref<{ reset: () => void } | null>(null);
@@ -187,8 +183,6 @@ const focusProperty = async (property: string) => {
 
 const resetPropertyPicker = (clearPropertyFilter = false) => {
 	propertySearch.value = "";
-	selectedProperty.value = null;
-	if (clearPropertyFilter) builderStore.propertyFilter = null;
 	nextTick(() => propertyCombobox.value?.reset());
 };
 
