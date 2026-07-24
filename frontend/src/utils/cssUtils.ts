@@ -294,6 +294,28 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
 }
 
 /**
+ * Splits a CSS value list on whitespace, ignoring whitespace inside
+ * parentheses so functional values like `calc(10px + 5%)` stay intact.
+ */
+function splitCssValueList(value: string): string[] {
+	const parts: string[] = [];
+	let current = "";
+	let depth = 0;
+	for (const char of value) {
+		if (char === "(") depth++;
+		if (char === ")") depth--;
+		if (/\s/.test(char) && depth === 0) {
+			if (current) parts.push(current);
+			current = "";
+		} else {
+			current += char;
+		}
+	}
+	if (current) parts.push(current);
+	return parts;
+}
+
+/**
  * Expands a CSS box shorthand (margin, padding, border-radius) into its four
  * component values following the standard 1/2/3/4-value rules.
  * @param value - Shorthand value string
@@ -301,10 +323,7 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
  * @returns Array of exactly four side values
  */
 function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
-	const parts = String(value ?? "")
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
+	const parts = splitCssValueList(String(value ?? "").trim());
 	if (!parts.length) return Array(4).fill(fallback);
 	if (parts.length === 1) return Array(4).fill(parts[0]);
 	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
