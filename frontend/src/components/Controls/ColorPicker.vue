@@ -4,6 +4,9 @@
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		:offset="offset"
+		:portal-to="portalTo"
+		@open="emit('open')"
+		@close="emit('close')"
 		class="!block w-full">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
@@ -59,11 +62,12 @@ const props = withDefaults(
 			| "left";
 		renderMode?: "popover" | "inline";
 		offset?: number;
+		portalTo?: string | HTMLElement;
 	}>(),
 	{ modelValue: null, showInput: false, placement: "left-start", renderMode: "popover", offset: 10 },
 );
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "open", "close"]);
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
 
