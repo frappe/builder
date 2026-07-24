@@ -1,12 +1,12 @@
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import { findBlockInTree, resetBlock } from "@/utils/block/tree";
 import {
 	extendWithComponent,
 	rebuildWithComponent,
 	resetWithComponent,
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
+import { findBlockInTree, resetBlock } from "@/utils/block/tree";
 import {
 	addPxToNumber,
 	cssUrl,
@@ -51,6 +51,12 @@ const TEXT_ELEMENTS = new Set([
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
 
 const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
+
+// editor of the currently editable text block; kept off Block instances to
+// avoid Vue reactivity and serialization. Owner tracked by blockId since
+// undo/redo swaps instances but keeps ids.
+let activeEditor: Editor | null = null;
+let activeEditorBlockId: string | null = null;
 
 // rawStyles were dropped in favour of baseStyles; older blocks still carry them
 const mergeLegacyRawStyles = (baseStyles: BlockStyleMap, rawStyles?: BlockStyleMap) => {
@@ -139,7 +145,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						  componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -726,8 +732,11 @@ class Block implements BlockOptions {
 		}
 	}
 	getEditor(): null | Editor {
-		// @ts-ignore
-		return this.__proto__.editor || null;
+		return this.blockId === activeEditorBlockId ? activeEditor : null;
+	}
+	setEditor(editor: Editor | null) {
+		activeEditor = editor;
+		activeEditorBlockId = editor ? this.blockId : null;
 	}
 	setTextColor(color: string) {
 		const editor = this.getEditor();
