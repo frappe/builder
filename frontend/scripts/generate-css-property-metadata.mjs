@@ -39,6 +39,13 @@ const getKeywords = (syntax, seen = new Set()) => {
 		if (referencedSyntax) getKeywords(referencedSyntax, seen).forEach((keyword) => keywords.add(keyword));
 	});
 
+	// shorthands (eg. text-decoration) reference their longhands by quoted property name
+	const propertyReferences = syntax.match(/<'[^']+'>/g) || [];
+	propertyReferences.forEach((reference) => {
+		const property = reference.slice(2, -2);
+		getKeywords(getSyntax(property), seen).forEach((keyword) => keywords.add(keyword));
+	});
+
 	syntax
 		.replace(/<[^>]+>/g, " ")
 		.replace(/[,[\]{}()?*+#/]/g, " ")
@@ -50,7 +57,12 @@ const getKeywords = (syntax, seen = new Set()) => {
 	return keywords;
 };
 
+// components combined with || or && are independent value slots (eg. text-decoration's
+// line/style/color/thickness), so the shorthand is only color-like if every slot is
 const isColorLike = (syntax, seen = new Set()) => {
+	const components = syntax.split(/\s*(?:\|\||&&)\s*/).filter(Boolean);
+	if (components.length > 1) return components.every((component) => isColorLike(component, new Set(seen)));
+
 	if (syntax.includes("<color>")) return true;
 	const propertyReferences = syntax.match(/<'[^']+'>/g) || [];
 	return propertyReferences.some((reference) => {
@@ -98,7 +110,4 @@ const metadata = Object.entries(cssProperties)
 	}, {});
 
 fs.mkdirSync(new URL("../src/data/", import.meta.url), { recursive: true });
-fs.writeFileSync(
-	new URL("../src/data/cssPropertyMetadata.json", import.meta.url),
-	`${JSON.stringify(metadata, null, "\t")}\n`,
-);
+fs.writeFileSync(new URL("../src/data/cssPropertyMetadata.json", import.meta.url), JSON.stringify(metadata));
