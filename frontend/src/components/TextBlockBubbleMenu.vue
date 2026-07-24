@@ -183,8 +183,8 @@ const isInteractingWithMenu = () => {
 	return !!(menuEl && activeEl && menuEl.contains(activeEl));
 };
 
-const shouldShow = (props: any) => {
-	const { editor, from, to } = props;
+const shouldShow = (bubbleMenuProps: any) => {
+	const { editor, from, to } = bubbleMenuProps;
 	if (!editor) return false;
 	const hasSelection = from !== to;
 	if (!hasSelection) return false;
