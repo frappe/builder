@@ -26,7 +26,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingTop }}
+				{{ getPaddingValue(Position.Top) }}
 			</div>
 		</div>
 		<div
@@ -49,7 +49,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingBottom }}
+				{{ getPaddingValue(Position.Bottom) }}
 			</div>
 		</div>
 		<div
@@ -72,7 +72,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingLeft }}
+				{{ getPaddingValue(Position.Left) }}
 			</div>
 		</div>
 		<div
@@ -95,7 +95,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingRight }}
+				{{ getPaddingValue(Position.Right) }}
 			</div>
 		</div>
 	</div>
@@ -126,6 +126,7 @@ const {
 	canvasProps,
 	updating,
 	blockStyles,
+	getSpacingValue,
 	handleBorderWidth,
 	longHandleSize,
 	sideHandleSize,
@@ -161,13 +162,11 @@ const rightPaddingHandlerWidth = computed(() => {
 });
 
 const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
-	blockStyles.value.paddingRight;
-	blockStyles.value.paddingTop;
-	blockStyles.value.paddingBottom;
-	blockStyles.value.paddingLeft;
 	blockStyles.value.padding;
 	return getNumberFromPx(getComputedStyle(props.target)[`padding${side}`]) * canvasProps.scale;
 };
+
+const getPaddingValue = (position: Position) => getSpacingValue("padding", position);
 
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;

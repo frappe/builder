@@ -223,26 +223,8 @@ function shortenNumber(num: number): string {
 function setBoxSpacing(block: Block, type: "padding" | "margin", value: string) {
 	const props = [type, `${type}Top`, `${type}Right`, `${type}Bottom`, `${type}Left`];
 	props.forEach((prop) => block.setStyle(prop, null));
-	if (!value) return;
-	const arr = value.split(" ");
-	if (arr.length === 1) {
-		block.setStyle(type, arr[0]);
-	} else if (arr.length === 2) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Bottom`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-	} else if (arr.length === 3) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-	} else if (arr.length === 4) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-		block.setStyle(`${type}Left`, arr[3]);
-	}
+	const shorthand = value.trim();
+	if (shorthand) block.setStyle(type, shorthand);
 }
 
 function getBoxSpacing(
@@ -254,21 +236,22 @@ function getBoxSpacing(
 	const cascading = opts?.cascading ?? false;
 	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
 	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
-	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
-	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
-	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
-	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? base;
+	const baseParts = expandBoxShorthand(base, base);
+	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? baseParts[0];
+	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? baseParts[1];
+	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? baseParts[2];
+	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? baseParts[3];
 	const sTop = String(top);
+	const sRight = String(right);
 	const sBottom = String(bottom);
 	const sLeft = String(left);
-	const sRight = String(right);
-	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
-	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
+	if (sTop === baseParts[0] && sRight === baseParts[1] && sBottom === baseParts[2] && sLeft === baseParts[3]) {
+		return base;
+	}
 	// A side left unset while others are set falls back to an empty base; treat it as 0
 	// so the reconstructed shorthand stays well-formed and expands to the right corners.
 	const fill = (value: string) => value || "0px";
-	if (sTop === sBottom && sLeft === sRight) return `${fill(sTop)} ${fill(sLeft)}`;
-	return `${fill(sTop)} ${fill(sRight)} ${fill(sBottom)} ${fill(sLeft)}`;
+	return collapseBoxShorthand([fill(sTop), fill(sRight), fill(sBottom), fill(sLeft)]);
 }
 
 /**

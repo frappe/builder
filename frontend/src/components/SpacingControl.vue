@@ -16,6 +16,7 @@
 			:getPlaceholder="getPlaceholder"
 			:getVariantValue="readValue"
 			:getMergedValue
+			:setModelValue
 			:getControlAttrs="getControlAttrs" />
 	</div>
 </template>
@@ -65,5 +66,11 @@ const getControlAttrs = (variant: string | null) => {
 		enableSlider,
 		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
 	};
+};
+
+const setModelValue = (val: string | boolean | number) => {
+	if (typeof val == "boolean") return;
+	if (props.type == "margin") blockController.setMargin(String(val));
+	else if (props.type == "padding") blockController.setPadding(String(val));
 };
 </script>
