@@ -18,7 +18,7 @@ import {
 } from "./cssUtils";
 
 function toTitleCase(str: string): string {
-	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+	return str.replace(/[_-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {

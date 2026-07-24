@@ -30,7 +30,7 @@
 			<template #item-label="{ item }">
 				<span class="flex min-w-0 flex-col gap-0.5">
 					<span class="truncate text-sm text-ink-gray-8">
-						{{ getPropertyLabel(item.value) }}
+						{{ toTitleCase(item.value) }}
 					</span>
 					<code class="truncate font-mono text-xs text-ink-gray-5">
 						{{ item.value }}
@@ -67,7 +67,7 @@ import {
 	getNonCuratedProperties,
 	isCuratedStyleProperty,
 } from "@/utils/curatedStyleProperties";
-import { isInteractiveControl, toStyleProperty } from "@/utils/helpers";
+import { isInteractiveControl, toStyleProperty, toTitleCase } from "@/utils/helpers";
 import { Combobox } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
@@ -93,12 +93,7 @@ watch(
 const cascadingStyles = computed(() => {
 	const block = selectedBlock.value;
 	if (!block) return {};
-	const breakpoint = canvasStore.activeCanvas?.activeBreakpoint;
-	if (breakpoint === "mobile") {
-		return { ...block.baseStyles, ...block.tabletStyles, ...block.mobileStyles };
-	}
-	if (breakpoint === "tablet") return { ...block.baseStyles, ...block.tabletStyles };
-	return { ...block.baseStyles };
+	return block.getStyles(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
 });
 
 const activeProperties = computed(() => {
@@ -106,12 +101,6 @@ const activeProperties = computed(() => {
 	addedProperties.forEach((property) => properties.add(property));
 	return properties;
 });
-
-const getPropertyLabel = (property: string) =>
-	property
-		.split("-")
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(" ");
 
 // keyword suggestions are only meaningful on the fallback Autocomplete control
 const getControlAttrs = (property: string, { component, controlAttrs }: StyleControlConfig) => {
@@ -132,7 +121,7 @@ const propertyRows = computed(() =>
 			return {
 				property,
 				styleProperty: String(toStyleProperty(property)),
-				label: getPropertyLabel(property),
+				label: toTitleCase(property),
 				controlProps: {
 					...controlProps,
 					component: component || Autocomplete,
