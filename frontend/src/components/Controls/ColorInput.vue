@@ -4,6 +4,7 @@
 			ref="colorPickerRef"
 			:placement="placement"
 			:offset="popoverOffset"
+			:portal-to="portalTo"
 			@open="events.onFocus"
 			@close="handleClose"
 			:modelValue="resolvedColor"
@@ -164,6 +165,7 @@ const props = withDefaults(
 		showPickerOnMount?: boolean;
 		popoverOffset?: number;
 		autocompleteReferenceElementSelector?: string;
+		portalTo?: string | HTMLElement | boolean;
 	}>(),
 	{
 		modelValue: null,

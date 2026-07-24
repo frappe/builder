@@ -8,7 +8,8 @@
 		:should-show="shouldShow"
 		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl">
+		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl"
+		:class="{ '!border-none !bg-transparent !p-0 !shadow-none': settingColor }">
 		<div
 			class="text-block-bubble-menu flex items-center justify-center"
 			@mouseenter="isHoveringMenu = true"
@@ -115,37 +116,26 @@
 						:modelValue="selectedColor"
 						:show-input="true"
 						placement="top"
+						:portal-to="false"
+						@mousedown.stop
 						@update:modelValue="setTextColor"
 						@open="settingColor = true"
 						@close="settingColor = false">
 						<template #target="{ togglePopover }">
 							<button
-								v-show="!block.isHeader()"
-								class="rounded px-2 py-1 hover:bg-surface-gray-2"
+								class="rounded px-2 py-1 hover:bg-surface-gray-2 transition-all duration-100 overflow-hidden"
+								:class="settingColor ? 'h-0 p-0 m-0 opacity-0' : ''"
+								@click="togglePopover()"
 								@mousedown.prevent>
-								<div class="p-1">
-									<div
-										class="h-4 w-4 rounded shadow-sm"
-										@click="
-											() => {
-												togglePopover();
-											}
-										"
-										:style="{
-											background:
-												editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
-													? editor?.getAttributes('textStyle').color
-													: `url(/assets/builder/images/color-circle.png) center / contain`,
-										}"></div>
-								</div>
+								<div
+									class="h-5 w-5 rounded-full shadow-sm border border-outline-gray-2"
+									:style="{
+										background:
+											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
+												? editor?.getAttributes('textStyle').color
+												: `url(/assets/builder/images/color-circle.png) center / contain`,
+									}"></div>
 							</button>
-						</template>
-						<template>
-							<Input
-								type="text"
-								:modelValue="selectedColor"
-								class="!w-32 text-sm"
-								@update:modelValue="setTextColor" />
 						</template>
 					</ColorPicker>
 				</div>

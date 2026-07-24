@@ -1,53 +1,59 @@
 <template>
 	<div
 		:class="[
-			'color-picker-container flex flex-col gap-2',
-			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-base p-3 shadow-lg',
+			'color-picker-container flex flex-col gap-1.5',
+			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-base p-2 shadow-lg w-40',
 		]">
 		<div
 			ref="colorMap"
 			:style="colorMapStyle"
+			class="relative m-auto h-20 w-full rounded-md"
 			@mousedown.prevent="handleSelectorMove"
-			class="relative m-auto h-24 w-full rounded-md"
 			@click.prevent="setColor">
 			<div
-				@mousedown.stop.prevent="handleSelectorMove"
 				:class="selectorClass"
-				:style="colorSelectorStyle"></div>
+				:style="colorSelectorStyle"
+				@mousedown.stop.prevent="handleSelectorMove"></div>
 		</div>
 		<div
 			ref="hueMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-2.5 w-full rounded-md"
+			:style="hueMapStyle"
 			@click="setHue"
-			@mousedown.prevent="handleHueSelectorMove"
-			:style="hueMapStyle">
-			<div @mousedown="handleHueSelectorMove" :class="hueSelectorClass" :style="hueSelectorStyle"></div>
+			@mousedown.prevent="handleHueSelectorMove">
+			<div :class="hueSelectorClass" :style="hueSelectorStyle" @mousedown="handleHueSelectorMove"></div>
 		</div>
 		<div
 			ref="alphaMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-2.5 w-full rounded-md"
+			:style="alphaMapStyle"
 			@click="setAlpha"
-			@mousedown.prevent="handleAlphaSelectorMove"
-			:style="alphaMapStyle">
-			<div @mousedown="handleAlphaSelectorMove" :class="hueSelectorClass" :style="alphaSelectorStyle"></div>
+			@mousedown.prevent="handleAlphaSelectorMove">
+			<div :class="hueSelectorClass" :style="alphaSelectorStyle" @mousedown="handleAlphaSelectorMove"></div>
 		</div>
-		<div class="flex flex-wrap gap-1.5">
+		<div class="flex flex-wrap gap-1">
 			<div
 				v-for="color in colors"
 				:key="color"
-				class="h-3.5 w-3.5 cursor-pointer rounded-full shadow-sm"
-				@click="selectColor(color)"
-				:style="{ background: color }"></div>
+				class="h-3 w-3 cursor-pointer rounded-full shadow-sm"
+				:style="{ background: color }"
+				@click="selectColor(color)"></div>
 			<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 		</div>
 		<Autocomplete
 			v-if="showInput"
-			:modelValue="displayValue"
-			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
+			:model-value="displayValue"
+			class="mt-1 w-full text-sm [&>div>div>input]:text-sm"
 			placeholder="Set Color"
-			:getOptions="getOptions"
-			referenceElementSelector=".color-picker-container"
-			@update:modelValue="handleInputChange" />
+			:get-options="getOptions"
+			reference-element-selector=".color-picker-container"
+			@update:model-value="handleInputChange">
+			<template #prefix>
+				<div
+					class="size-4 shrink-0 rounded border border-outline-gray-2"
+					:style="{ background: currentColor }"></div>
+			</template>
+		</Autocomplete>
 	</div>
 </template>
 <script setup lang="ts">
@@ -104,8 +110,9 @@ const props = withDefaults(
 		modelValue?: CSSColorValue | null;
 		showInput?: boolean;
 		renderMode?: "popover" | "inline";
+		showColorVariableOptions?: boolean;
 	}>(),
-	{ modelValue: null, showInput: false, renderMode: "popover" },
+	{ modelValue: null, showInput: false, renderMode: "popover", showColorVariableOptions: true },
 );
 
 const modelColor = computed(() => {
@@ -122,8 +129,11 @@ const displayValue = computed(() => {
 	return props.modelValue;
 });
 
-const getOptions = async (query: string) =>
-	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
+const getOptions = async (query: string) => {
+	if (props.showColorVariableOptions === false) return [];
+	if (!query || !query.trim()) return [];
+	return getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
+};
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -158,7 +168,7 @@ const colorMapStyle = computed(() => ({
 }));
 
 const hueMapStyle = computed(() => ({
-	background: `linear-gradient(90deg, hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%), hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%))`,
+	background: "linear-gradient(90deg, hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%), hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%))",
 }));
 
 const alphaMapStyle = computed(() => ({

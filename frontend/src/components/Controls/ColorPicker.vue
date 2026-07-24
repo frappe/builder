@@ -24,7 +24,9 @@
 				ref="contentRef"
 				:modelValue="modelValue"
 				:showInput="showInput"
+				:showColorVariableOptions="showColorVariableOptions"
 				renderMode="popover"
+				@mousedown.stop
 				@update:modelValue="emit('update:modelValue', $event)" />
 		</template>
 	</Popover>
@@ -33,7 +35,9 @@
 		ref="contentRef"
 		:modelValue="modelValue"
 		:showInput="showInput"
+		:showColorVariableOptions="showColorVariableOptions"
 		renderMode="inline"
+		@mousedown.stop
 		@update:modelValue="emit('update:modelValue', $event)" />
 </template>
 <script setup lang="ts">
@@ -47,6 +51,7 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: CSSColorValue | null;
 		showInput?: boolean;
+		showColorVariableOptions?: boolean;
 		placement?:
 			| "bottom-start"
 			| "top-start"
@@ -64,7 +69,7 @@ const props = withDefaults(
 		offset?: number;
 		portalTo?: string | HTMLElement;
 	}>(),
-	{ modelValue: null, showInput: false, placement: "left-start", renderMode: "popover", offset: 10 },
+	{ modelValue: null, showInput: false, showColorVariableOptions: true, placement: "left-start", renderMode: "popover", offset: 10 },
 );
 
 const emit = defineEmits(["update:modelValue", "open", "close"]);
