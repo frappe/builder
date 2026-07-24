@@ -4,6 +4,7 @@
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		:offset="offset"
+		@update:open="isOpen = $event"
 		class="!block w-full">
 		<template #target="{ togglePopover, isOpen }">
 			<slot
@@ -66,6 +67,7 @@ const props = withDefaults(
 const emit = defineEmits(["update:modelValue"]);
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
+const isOpen = ref(false);
 
 function togglePopover(open?: boolean) {
 	if (open === undefined || open) {
@@ -75,5 +77,5 @@ function togglePopover(open?: boolean) {
 	}
 }
 
-defineExpose({ togglePopover });
+defineExpose({ togglePopover, isOpen });
 </script>

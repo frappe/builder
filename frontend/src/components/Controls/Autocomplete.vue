@@ -57,11 +57,7 @@
 
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
-					@after-enter="
-						() => {
-							fixedPositionStyles = getFixedPositionStyles();
-						}
-					"
+					@after-enter="scheduleFixedPositionUpdate"
 					@after-leave="
 						() => {
 							fixedPositionStyles = {};
@@ -290,12 +286,20 @@ watch(
 	{ immediate: true },
 );
 
-watch(isOpen, (val) => {
-	if (val && props.referenceElementSelector) {
-		nextTick(() => {
+const scheduleFixedPositionUpdate = () => {
+	if (!props.referenceElementSelector) return;
+	// nextTick only guarantees the DOM is updated, not that the browser has
+	// laid it out yet — the popover's own anchored position can still be
+	// mid-flight, so wait a frame for layout to actually settle.
+	nextTick(() => {
+		requestAnimationFrame(() => {
 			fixedPositionStyles.value = getFixedPositionStyles();
 		});
-	}
+	});
+};
+
+watch(isOpen, (val) => {
+	if (val) scheduleFixedPositionUpdate();
 });
 
 if (props.getOptions) refreshOptions();

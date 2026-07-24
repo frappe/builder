@@ -5,6 +5,7 @@
 		:append-to="overlayElement"
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		:plugin-key="bubbleMenuPluginKey"
+		:should-show="shouldShowBubbleMenu"
 		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
 		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl">
@@ -103,6 +104,7 @@
 			</button>
 			<div v-show="!block.isHeader()">
 				<ColorPicker
+					ref="colorPicker"
 					:modelValue="selectedColor"
 					@update:modelValue="setTextColor"
 					:show-input="true"
@@ -143,6 +145,10 @@
 import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
+import type { Editor as CoreEditor } from "@tiptap/core";
+import { isTextSelection } from "@tiptap/core";
+import type { EditorState } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
@@ -162,6 +168,7 @@ const settingLink = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
+const colorPicker = ref(null) as Ref<InstanceType<typeof ColorPicker> | null>;
 
 const editorRef = computed(() => props.editor);
 const bubbleMenuPluginKey = "bubbleMenu";
@@ -172,6 +179,37 @@ const selectedColor = computed(() => {
 	}
 	return null;
 });
+
+// The color picker popup is teleported to <body>, outside this menu's DOM
+// subtree, so the default shouldShow (which checks focus containment) would
+// otherwise hide the menu the moment the picker is focused.
+const shouldShowBubbleMenu = ({
+	editor,
+	element,
+	view,
+	state,
+	from,
+	to,
+}: {
+	editor: CoreEditor;
+	element: HTMLElement;
+	view: EditorView;
+	state: EditorState;
+	from: number;
+	to: number;
+}) => {
+	if (settingLink.value || colorPicker.value?.isOpen) {
+		return true;
+	}
+
+	const { doc, selection } = state;
+	const { empty } = selection;
+	const isEmptyTextBlock = !doc.textBetween(from, to).length && isTextSelection(selection);
+	const isChildOfMenu = element.contains(document.activeElement);
+	const hasEditorFocus = view.hasFocus() || isChildOfMenu;
+
+	return hasEditorFocus && !empty && !isEmptyTextBlock && editor.isEditable;
+};
 
 const enableLinkInput = () => {
 	settingLink.value = true;
