@@ -20,3 +20,18 @@ class UserFont(Document):
 
 	def on_trash(self):
 		get_all_user_fonts.clear_cache()
+
+	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None):
+		filters = filters or {}
+		fields = fields or ["name"]
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%font-family:{self.font_name}%"],
+				"draft_blocks": ["like", f"%font-family:{self.font_name}%"],
+			},
+		)
+		return pages

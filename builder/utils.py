@@ -615,22 +615,26 @@ def extract_components_from_blocks(blocks):
 	return components
 
 
-def export_client_scripts(page_doc, client_scripts_path):
+def export_client_scripts(client_scripts, client_scripts_path):
 	"""Export client scripts for a page"""
 	from frappe.modules.export_file import strip_default_fields
 
-	for script_row in page_doc.client_scripts:
-		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+	for script in client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script)
 		script_config = script_doc.as_dict(no_nulls=True)
+		script = script_config["script"]
 		script_config = strip_default_fields(script_doc, script_config)
 		fname = frappe.scrub(str(script_doc.name))
 		# ensure the target directory exists before writing the file
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
-		script_file_path = os.path.join(script_dir, f"{fname}.json")
+		script_config_path = os.path.join(script_dir, f"{fname}.json")
+		script_path = os.path.join(script_dir, "client_script.js")
 
-		with open(script_file_path, "w", encoding="utf-8") as f:
+		with open(script_config_path, "w", encoding="utf-8") as f:
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
+		with open(script_path, "w", encoding="utf-8") as f:
+			f.write(script)
 
 
 def export_components(components, components_path, assets_path, target_app="builder"):
@@ -644,10 +648,10 @@ def export_components(components, components_path, assets_path, target_app="buil
 			component_doc.block = frappe.as_json(component_blocks)
 
 			# Replace forward slashes with underscores to create valid directory names
-			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
-			component_dir = os.path.join(components_path, safe_component_name)
+			safe_component_id = frappe.scrub(component_doc.component_id).replace("/", "_")
+			component_dir = os.path.join(components_path, safe_component_id)
 			os.makedirs(component_dir, exist_ok=True)
-			component_file_path = os.path.join(component_dir, f"{safe_component_name}.json")
+			component_file_path = os.path.join(component_dir, f"{safe_component_id}.json")
 
 			with open(component_file_path, "w") as f:
 				f.write(frappe.as_json(component_doc.as_dict()))

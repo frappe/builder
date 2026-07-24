@@ -187,6 +187,7 @@ import { computed } from "vue";
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const isDeveloperMode = computed(() => Boolean(window.is_developer_mode));
+
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );

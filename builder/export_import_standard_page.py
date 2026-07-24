@@ -31,8 +31,11 @@ def export_page_as_standard(page_name, target_app):
 	page_config = strip_default_fields(page_doc, page_config)
 
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
+	data_script_path = os.path.join(paths["page_path"], "data_script.py")
 
-	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
+	blocks = frappe.parse_json(
+		page_config.get("draft_blocks") or page_config["blocks"]
+	)  # what if draft and published blocks have different components?
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"], target_app)
 		page_config["blocks"] = blocks
@@ -44,12 +47,19 @@ def export_page_as_standard(page_name, target_app):
 		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"], target_app)
 
 	page_config["project_folder"] = target_app
+
+	if page_config["page_data_script"]:
+		data_script = page_config["page_data_script"]
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
 	with open(config_file_path, "w", encoding="utf-8") as f:
 		f.write(page_config)
 
-	export_client_scripts(page_doc, paths["client_scripts_path"])
+	with open(data_script_path, "w", encoding="utf-8") as f:
+		f.write(data_script)
+
+	client_scripts = [row.builder_script for row in page_doc.client_scripts]
+	export_client_scripts(client_scripts, paths["client_scripts_path"])
 
 	if blocks:
 		components = extract_components_from_blocks(blocks)
@@ -78,6 +88,7 @@ def sync_standard_builder_pages(app_name=None):
 	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
 
 	for app in apps_to_sync:
+		# TODO: already extracted in a function?
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
 		components_path = os.path.join(app_path, "builder_files", "components")
@@ -269,50 +280,83 @@ def export_variables(variables, builder_files_path):
 
 	for var_name in variables:
 		try:
-			# Convert CSS variable name (kebab-case) to possible DB name (snake_case)
-			db_name = var_name.replace("-", "_")
+			var_doc = frappe.get_doc("Builder Variable", var_name).as_dict()
 
-			# Try to find the variable by name
-			var_docs = frappe.get_all(
-				"Builder Variable",
-				filters=[
-					["variable_name", "in", [var_name, db_name, var_name.replace("-", " ").title()]],
-				],
-				fields=["name", "variable_name", "type", "value", "dark_value"],
-			)
-
-			if not var_docs:
-				# Also try searching by the scrubbed name
-				var_docs = frappe.get_all(
-					"Builder Variable",
-					filters={"name": db_name},
-					fields=["name", "variable_name", "type", "value", "dark_value"],
-				)
-
-			if not var_docs:
-				continue
-
-			var_doc = var_docs[0]
-
-			var_config = {
-				"doctype": "Builder Variable",
-				"name": var_doc.name,
-				"variable_name": var_doc.variable_name,
-				"type": var_doc.type,
-				"value": var_doc.value,
-				"dark_value": var_doc.dark_value,
-			}
-
-			safe_var_name = frappe.scrub(var_doc.variable_name)
+			var_doc["doctype"] = "Builder Variable"
+			safe_var_name = frappe.scrub(var_doc.name)
 			var_dir = os.path.join(variables_path, safe_var_name)
 			os.makedirs(var_dir, exist_ok=True)
 			var_file_path = os.path.join(var_dir, f"{safe_var_name}.json")
 
 			with open(var_file_path, "w", encoding="utf-8") as f:
-				f.write(frappe.as_json(var_config, ensure_ascii=False))
+				f.write(frappe.as_json(var_doc, ensure_ascii=False))
 
 		except Exception as e:
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
+
+
+def delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None:
+	"""Remove an exported builder_files directory from the target app's source code."""
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return
+	export_path = os.path.join(app_path, "builder_files", subdir, frappe.scrub(name))
+	if os.path.isdir(export_path):
+		shutil.rmtree(export_path, ignore_errors=True)
+
+
+def delete_standard_page_files(page_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a standard page from the target app's source code."""
+	delete_standard_builder_files(page_name, app_name, "pages")
+
+
+def delete_standard_client_script_files(script_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a client script from the target app's source code."""
+	delete_standard_builder_files(script_name, app_name, "client_scripts")
+
+
+def delete_standard_component_files(component_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a component from the target app's source code."""
+	delete_standard_builder_files(component_name, app_name, "components")
+
+
+def delete_standard_variable_files(variable_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a variable from the target app's source code."""
+	delete_standard_builder_files(variable_name, app_name, "variables")
+
+
+def delete_standard_font_files(font_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a font from the target app's source code."""
+	delete_standard_builder_files(font_name, app_name, "fonts")
+
+
+def rename_standard_builder_files(old: str, new: str, app_name: str, subdir: str) -> None:
+	"""Rename an exported builder_files directory and its JSON config."""
+	app_path = frappe.get_app_path(app_name)
+	if not app_path:
+		return
+	old_export_name = frappe.scrub(old)
+	new_export_name = frappe.scrub(new)
+	old_path = os.path.join(app_path, "builder_files", subdir, old_export_name)
+	new_path = os.path.join(app_path, "builder_files", subdir, new_export_name)
+	if os.path.isdir(old_path):
+		if os.path.isdir(new_path):
+			shutil.rmtree(new_path, ignore_errors=True)
+		os.rename(old_path, new_path)
+		old_json = os.path.join(new_path, f"{old_export_name}.json")
+		new_json = os.path.join(new_path, f"{new_export_name}.json")
+		if os.path.exists(old_json):
+			os.rename(old_json, new_json)
+
+
+def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
+	"""Rename the builder_files directory for a standard page."""
+	rename_standard_builder_files(old, new, app_name, "pages")
+
+
+def rename_standard_client_script_files(old: str, new: str, app_name: str) -> None:
+	"""Rename the exported directory for a client script inside the target app's source code."""
+	rename_standard_builder_files(old, new, app_name, "client_scripts")
 
 
 def import_fonts(fonts_path):
