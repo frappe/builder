@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
+import { collapseBoxShorthand, expandBoxShorthand } from "@/utils/cssUtils";
 import { startDrag } from "@/utils/cursor";
 import { getNumberFromPx } from "@/utils/helpers";
 import { toLocalDelta } from "@/utils/rotation";
@@ -25,10 +26,10 @@ type SpacingDragOptions = {
 
 // `outward` is the sign of a drag pointing away from the block along the side's axis.
 const sides = {
-	[Position.Top]: { axis: "y", outward: -1, styleSuffix: "Top" },
-	[Position.Bottom]: { axis: "y", outward: 1, styleSuffix: "Bottom" },
-	[Position.Left]: { axis: "x", outward: -1, styleSuffix: "Left" },
-	[Position.Right]: { axis: "x", outward: 1, styleSuffix: "Right" },
+	[Position.Top]: { axis: "y", outward: -1, styleSuffix: "Top", index: 0 },
+	[Position.Right]: { axis: "x", outward: 1, styleSuffix: "Right", index: 1 },
+	[Position.Bottom]: { axis: "y", outward: 1, styleSuffix: "Bottom", index: 2 },
+	[Position.Left]: { axis: "x", outward: -1, styleSuffix: "Left", index: 3 },
 } as const;
 
 const verticalSides = [Position.Top, Position.Bottom];
@@ -70,8 +71,33 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	const styleKey = (property: SpacingProperty, side: Position) =>
 		`${property}${sides[side].styleSuffix}` as styleProperty;
 
-	const setSpacing = (property: SpacingProperty, side: Position, value: number) =>
-		getTargetBlock().setStyle(styleKey(property, side), `${value}px`);
+	// Side-specific spacing styles are legacy data. Read them for display/editing,
+	// then collapse every update back into the single shorthand style.
+	const getSpacingParts = (property: SpacingProperty) => {
+		const styles = blockStyles.value;
+		const parts = expandBoxShorthand(styles[property] ?? "", "0px");
+		allSides.forEach((side) => {
+			const sideValue = styles[styleKey(property, side)];
+			if (sideValue) parts[sides[side].index] = String(sideValue);
+		});
+		return parts;
+	};
+
+	const getSpacingValue = (property: SpacingProperty, side: Position) =>
+		getSpacingParts(property)[sides[side].index];
+
+	const setSpacingShorthand = (property: SpacingProperty, updatedSides: Position[], value: number) => {
+		const block = getTargetBlock();
+		const parts = getSpacingParts(property);
+		updatedSides.forEach((updatedSide) => {
+			parts[sides[updatedSide].index] = `${value}px`;
+		});
+		block.setStyle(`${property}Top`, null);
+		block.setStyle(`${property}Right`, null);
+		block.setStyle(`${property}Bottom`, null);
+		block.setStyle(`${property}Left`, null);
+		block.setStyle(property, collapseBoxShorthand(parts));
+	};
 
 	// Shift spreads the value to all four sides, alt to both sides of the dragged axis.
 	const sidesToUpdate = (event: MouseEvent, side: Position) => {
@@ -88,7 +114,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		const { axis, outward } = sides[side];
 		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a padding
 		const sign = property === "margin" ? outward : -outward;
-		const startValue = getNumberFromPx(blockStyles.value[styleKey(property, side)] as string) || fallback;
+		const startValue = getNumberFromPx(getSpacingValue(property, side)) || fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();
@@ -104,7 +130,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 					getRotation(),
 				);
 				const value = Math.round(Math.max(startValue + sign * delta[axis], 0));
-				sidesToUpdate(moveEvent, side).forEach((updatedSide) => setSpacing(property, updatedSide, value));
+				setSpacingShorthand(property, sidesToUpdate(moveEvent, side), value);
 			},
 			onEnd: () => {
 				updating.value = false;
@@ -119,6 +145,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		handleBorderWidth,
 		longHandleSize,
 		sideHandleSize,
+		getSpacingValue,
 		startSpacingDrag,
 	};
 }
