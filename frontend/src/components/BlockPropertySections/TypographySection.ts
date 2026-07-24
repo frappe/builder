@@ -97,7 +97,13 @@ const typographySectionProperties = [
 				label: "Weight",
 				propertyKey: "fontWeight",
 				component: Autocomplete,
-				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+				// static options were never query-filtered, so ignore the search
+				// string; awaiting the list keeps all weights of a preselected
+				// font available on first open
+				getOptions: async () => {
+					await loadFontList();
+					return getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string);
+				},
 				step: 100,
 				min: 100,
 				max: 900,
