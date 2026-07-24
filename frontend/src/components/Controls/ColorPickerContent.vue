@@ -131,7 +131,7 @@ const displayValue = computed(() => {
 
 const getOptions = async (query: string) => {
 	if (props.showColorVariableOptions === false) return [];
-	if (!query || !query.trim()) return [];
+	if (query && !query.trim()) return [];
 	return getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 };
 
