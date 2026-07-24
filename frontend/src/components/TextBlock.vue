@@ -217,11 +217,9 @@ const getInnerHTML = (editor: Editor | null) => {
 
 const destroyEditor = () => {
 	if (!editor.value) return;
-	// the editor stash lives on the shared Block prototype; only clear it
-	// when it still points at this component's editor
+	// a newer editor may already own the slot; clear only if it's still ours
 	if (props.block.getEditor() === editor.value) {
-		// @ts-ignore
-		props.block.__proto__.editor = null;
+		props.block.setEditor(null);
 	}
 	editor.value.destroy();
 	editor.value = null;
@@ -292,8 +290,7 @@ if (!props.preview) {
 					injectCSS: false,
 				});
 
-				// @ts-ignore
-				props.block.__proto__.editor = editor.value;
+				props.block.setEditor(editor.value);
 				editor.value?.setEditable(isEditable.value);
 			} else {
 				destroyEditor();
