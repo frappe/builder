@@ -8,6 +8,7 @@ const positionSectionProperties = [
 		searchKeyWords:
 			"Position, Top, Right, Bottom, Left, PositionTop, Position Top, PositionRight, Position Right, PositionBottom, Position Bottom, PositionLeft, Position Left, Free, Fixed, Absolute, Relative, Sticky",
 		getProps: () => {},
+		ownedStyleProperties: ["bottom", "left", "position", "right", "top"],
 	},
 ];
 
