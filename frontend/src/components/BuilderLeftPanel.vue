@@ -72,7 +72,7 @@
 			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Code'">
 				<PageScript
 					:key="pageStore.selectedPage"
-					v-if="pageStore.selectedPage && pageStore.activePage"
+					v-if="pageScriptMounted && pageStore.selectedPage && pageStore.activePage"
 					:page="pageStore.activePage" />
 			</div>
 		</div>
@@ -105,6 +105,15 @@ const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+
+// PageScript mounts a CodeMirror instance; defer it until the Code tab is
+// first opened (or a data-script dialog is requested), then keep it alive
+const pageScriptMounted = ref(false);
+watchEffect(() => {
+	if (builderStore.leftPanelActiveTab === "Code" || builderStore.showDataScriptDialog !== null) {
+		pageScriptMounted.value = true;
+	}
+});
 
 const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
 const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;

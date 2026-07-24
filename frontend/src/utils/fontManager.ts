@@ -1,5 +1,10 @@
 import userFont from "@/data/userFonts";
-import fontList from "@/utils/fontList.json";
+import { shallowRef } from "vue";
+
+interface FontListItem {
+	family: string;
+	variants: string[];
+}
 
 type FontWeight = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
 interface WeightOption {
@@ -21,6 +26,21 @@ const WEIGHT_LABELS: Record<FontWeight, string> = {
 
 const GF_CSS = "https://fonts.googleapis.com/css2";
 const fontCache = new Map<string, Promise<string>>();
+
+// the Google Fonts catalog is ~110KB, so it stays out of the main bundle
+// and loads on first use (font pickers read the reactive ref)
+const fontListItems = shallowRef<FontListItem[]>([]);
+let fontListPromise: Promise<FontListItem[]> | null = null;
+
+export function loadFontList(): Promise<FontListItem[]> {
+	if (!fontListPromise) {
+		fontListPromise = import("@/utils/fontList.json").then((m) => {
+			fontListItems.value = m.default.items as FontListItem[];
+			return fontListItems.value;
+		});
+	}
+	return fontListPromise;
+}
 
 function loadCustomFont(font: string, url: string): Promise<string> {
 	return new FontFace(font, `url("${url}")`)
@@ -84,7 +104,8 @@ export function setFontFromHTML(html: string): void {
 }
 
 export function getFontWeightOptions(font: string): WeightOption[] {
-	const fontObj = font && fontList.items.find((f) => f.family === font);
+	loadFontList();
+	const fontObj = font && fontListItems.value.find((f) => f.family === font);
 	if (!fontObj) return [{ value: "400", label: "Regular" }];
 
 	return fontObj.variants
@@ -95,4 +116,4 @@ export function getFontWeightOptions(font: string): WeightOption[] {
 		});
 }
 
-export { fontList };
+export { fontListItems };
