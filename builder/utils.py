@@ -87,7 +87,6 @@ class Block:
 
 	children: ClassVar[list["Block"]] = []
 	baseStyles: ClassVar[dict] = {}
-	rawStyles: ClassVar[dict] = {}
 	mobileStyles: ClassVar[dict] = {}
 	tabletStyles: ClassVar[dict] = {}
 	attributes: ClassVar[dict] = {}
@@ -158,7 +157,6 @@ class Block:
 			"blockId": self.blockId,
 			"children": [child.as_dict() for child in self.children] if self.children else None,
 			"baseStyles": self.baseStyles,
-			"rawStyles": self.rawStyles,
 			"mobileStyles": self.mobileStyles,
 			"tabletStyles": self.tabletStyles,
 			"attributes": self.attributes,
@@ -462,6 +460,39 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
+
+
+def kebab_to_camel_case(text):
+	return re.sub(r"-([a-z])", lambda match: match.group(1).upper(), text)
+
+
+def normalize_legacy_style_key(style):
+	if ":" not in style:
+		return kebab_to_camel_case(style)
+	state, property_name = style.split(":", 1)
+	return f"{state}:{kebab_to_camel_case(property_name)}"
+
+
+def merge_raw_styles_into_base_styles(block):
+	raw_styles = block.pop("rawStyles", None)
+	if not raw_styles:
+		return
+	base_styles = block.setdefault("baseStyles", {})
+	for style, value in raw_styles.items():
+		if value in (None, ""):
+			continue
+		base_styles[normalize_legacy_style_key(style)] = value
+
+
+def normalize_legacy_raw_styles(blocks):
+	# rawStyles were dropped in favour of baseStyles; older blocks still carry them
+	if isinstance(blocks, list):
+		for block in blocks:
+			normalize_legacy_raw_styles(block)
+	elif isinstance(blocks, dict):
+		merge_raw_styles_into_base_styles(blocks)
+		normalize_legacy_raw_styles(blocks.get("children") or [])
+	return blocks
 
 
 def sanitize_style_value(value):

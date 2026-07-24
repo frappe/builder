@@ -54,6 +54,18 @@ const styleSectionProperties = [
 	{
 		component: BackgroundHandler,
 		getProps: () => {},
+		ownedStyleProperties: [
+			"background",
+			"background-attachment",
+			"background-blend-mode",
+			"background-clip",
+			"background-color",
+			"background-image",
+			"background-origin",
+			"background-position",
+			"background-repeat",
+			"background-size",
+		],
 		searchKeyWords:
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
@@ -74,16 +86,25 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {};
 		},
+		ownedStyleProperties: ["border", "border-color", "border-style", "border-width"],
 		searchKeyWords: "Border, Color, Width, Style, BorderColor, BorderWidth, BorderStyle",
 	},
 	{
 		component: ShadowHandler,
 		getProps: () => {},
+		ownedStyleProperties: ["box-shadow"],
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
 		component: BorderRadiusControl,
 		getProps: () => {},
+		ownedStyleProperties: [
+			"border-bottom-left-radius",
+			"border-bottom-right-radius",
+			"border-radius",
+			"border-top-left-radius",
+			"border-top-right-radius",
+		],
 		searchKeyWords: "Border, Radius, BorderRadius, Border Radius",
 	},
 	{

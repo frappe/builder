@@ -1560,6 +1560,65 @@ component.update({
 		self.assertNotIn("display:", css_unset)
 		self.assertNotIn("None", css_unset)
 
+	def test_renders_legacy_raw_styles_from_base_styles(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"blockId": "legacy",
+				"element": "button",
+				"baseStyles": {"background": "red"},
+				"rawStyles": {"background": "blue", "hover:background-color": "black"},
+				"children": [],
+			}
+		]
+
+		_, css, _, _ = get_block_html(blocks)
+
+		self.assertIn("background: blue", css)
+		self.assertIn(":hover", css)
+		self.assertIn("background-color: black", css)
+		self.assertNotIn("background: red", css)
+
+	def test_renders_legacy_raw_styles_from_component(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		component_root = {
+			"blockId": "comp-root",
+			"element": "div",
+			"rawStyles": {"text-overflow": "ellipsis"},
+			"children": [{"blockId": "comp-child", "element": "span", "rawStyles": {"flex-shrink": "0"}}],
+		}
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": frappe.as_json(component_root)}
+		).insert()
+
+		blocks = [
+			{
+				"blockId": "instance",
+				"extendedFromComponent": component.name,
+				"children": [{"blockId": "comp-child", "isChildOfComponent": component.name}],
+			}
+		]
+
+		try:
+			_, css, _, _ = get_block_html(blocks)
+			self.assertIn("text-overflow: ellipsis", css)
+			self.assertIn("flex-shrink: 0", css)
+		finally:
+			component.delete()
+
+	def test_renders_blocks_with_only_responsive_styles(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [{"blockId": "mobile-only", "element": "div", "mobileStyles": {"textOverflow": "ellipsis"}}]
+
+		html, css, _, _ = get_block_html(blocks)
+
+		self.assertIn("fb-", html)
+		self.assertIn("@media only screen and (max-width: 576px)", css)
+		self.assertIn("text-overflow: ellipsis", css)
+
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""
 		from frappe.utils import add_to_date, now_datetime

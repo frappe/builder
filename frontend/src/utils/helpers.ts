@@ -18,7 +18,7 @@ import {
 } from "./cssUtils";
 
 function toTitleCase(str: string): string {
-	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+	return str.replace(/[_-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 async function confirm(message: string, title: string = "Confirm"): Promise<boolean> {
@@ -119,6 +119,42 @@ function toKebabCase(str: string) {
 		.replace(/\s+/g, "-");
 }
 
+function normalizeCSSPropertyName(property: string | null | undefined) {
+	return (property || "").trim().toLowerCase();
+}
+
+const INTERACTIVE_CONTROL_SELECTOR =
+	"input, textarea, select, button, a, [role='button'], [contenteditable='true'], .form-input, [class~='group/autocomplete']";
+
+// used to let control widgets keep their own click/contextmenu behaviour
+function isInteractiveControl(target: EventTarget | null) {
+	if (!(target instanceof HTMLElement)) return false;
+	return Boolean(target.closest(INTERACTIVE_CONTROL_SELECTOR));
+}
+
+// splits an optional state prefix (hover:color) from the property name
+function splitStylePrefix(style: string) {
+	const separatorIndex = style.indexOf(":");
+	if (separatorIndex === -1) return { prefix: "", property: style };
+	return { prefix: style.slice(0, separatorIndex + 1), property: style.slice(separatorIndex + 1) };
+}
+
+// hover:border-color -> hover:borderColor
+function toStyleProperty(cssProperty: string) {
+	const { prefix, property } = splitStylePrefix(cssProperty);
+	return `${prefix}${kebabToCamelCase(property)}` as styleProperty;
+}
+
+// hover:borderColor -> hover:border-color
+function toCSSProperty(style: string) {
+	const { prefix, property } = splitStylePrefix(style);
+	return `${prefix}${toKebabCase(property)}`;
+}
+
+function stripStatePrefix(style: string) {
+	return splitStylePrefix(style).property;
+}
+
 function isJSONString(str: string) {
 	try {
 		JSON.parse(str);
@@ -211,9 +247,6 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 	blockCopy.customAttributes = component?.customAttributes
 		? { ...component.customAttributes, ...block.customAttributes }
 		: block.customAttributes;
-	blockCopy.rawStyles = component?.rawStyles
-		? { ...component.rawStyles, ...block.rawStyles }
-		: block.rawStyles;
 	blockCopy.isRepeaterBlock = component?.isRepeaterBlock || block.isRepeaterBlock;
 	blockCopy.visibilityCondition = component?.visibilityCondition || block.visibilityCondition;
 	blockCopy.innerHTML = block.innerHTML || component?.innerHTML;
@@ -910,10 +943,12 @@ export {
 	isCtrlOrCmd,
 	isDialogOpen,
 	isHTMLString,
+	isInteractiveControl,
 	isJSONString,
 	isTargetEditable,
 	kebabToCamelCase,
 	mapToObject,
+	normalizeCSSPropertyName,
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
@@ -922,7 +957,10 @@ export {
 	setBoxSpacing,
 	shortenNumber,
 	showDialog,
+	stripStatePrefix,
+	toCSSProperty,
 	toKebabCase,
+	toStyleProperty,
 	toTitleCase,
 	triggerCopyEvent,
 	uploadBuilderAsset,
