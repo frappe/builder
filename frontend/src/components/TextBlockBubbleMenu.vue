@@ -189,7 +189,7 @@ const shouldShow = (bubbleMenuProps: any) => {
 	const hasSelection = from !== to;
 	if (!hasSelection) return false;
 
-	return editor.isFocused || isHoveringMenu.value || isMouseDownInMenu.value || isInteractingWithMenu();
+	return editor.isFocused || isHoveringMenu.value || isMouseDownInMenu.value || isInteractingWithMenu() || settingColor.value;
 };
 
 const handleMenuMouseDown = (e: MouseEvent) => {
