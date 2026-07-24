@@ -87,6 +87,13 @@
 			</div>
 		</div>
 		<div
+			class="overlay absolute"
+			:class="{ 'pointer-events-none': isOverDropZone }"
+			id="overlay"
+			ref="overlay" />
+		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
+		<DropIndicator />
+		<div
 			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
@@ -94,13 +101,6 @@
 				<FitScreenIcon />
 			</div>
 		</div>
-		<div
-			class="overlay absolute"
-			:class="{ 'pointer-events-none': isOverDropZone }"
-			id="overlay"
-			ref="overlay" />
-		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
-		<DropIndicator />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
