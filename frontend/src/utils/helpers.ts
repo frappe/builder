@@ -119,6 +119,10 @@ function toKebabCase(str: string) {
 		.replace(/\s+/g, "-");
 }
 
+function normalizeCSSPropertyName(property: string | null | undefined) {
+	return (property || "").trim().toLowerCase();
+}
+
 const INTERACTIVE_CONTROL_SELECTOR =
 	"input, textarea, select, button, a, [role='button'], [contenteditable='true'], .form-input, [class~='group/autocomplete']";
 
@@ -944,6 +948,7 @@ export {
 	isTargetEditable,
 	kebabToCamelCase,
 	mapToObject,
+	normalizeCSSPropertyName,
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,

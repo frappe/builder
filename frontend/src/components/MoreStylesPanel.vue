@@ -67,7 +67,7 @@ import {
 	getNonCuratedProperties,
 	isCuratedStyleProperty,
 } from "@/utils/curatedStyleProperties";
-import { isInteractiveControl, toStyleProperty, toTitleCase } from "@/utils/helpers";
+import { isInteractiveControl, normalizeCSSPropertyName, toStyleProperty, toTitleCase } from "@/utils/helpers";
 import { Combobox } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
@@ -132,12 +132,16 @@ const propertyRows = computed(() =>
 		}),
 );
 
-const canAddProperty = (property: string) =>
-	isValidCSSPropertyName(property) &&
-	!isCuratedStyleProperty(property) &&
-	!activeProperties.value.has(property);
+const canAddProperty = (property: string | null | undefined) => {
+	const normalizedProperty = normalizeCSSPropertyName(property);
+	return (
+		isValidCSSPropertyName(normalizedProperty) &&
+		!isCuratedStyleProperty(normalizedProperty) &&
+		!activeProperties.value.has(normalizedProperty)
+	);
+};
 
-const normalizedPropertySearch = computed(() => propertySearch.value.trim().toLowerCase());
+const normalizedPropertySearch = computed(() => normalizeCSSPropertyName(propertySearch.value));
 
 const searchablePropertyOptions = computed(() =>
 	getCSSPropertyOptions(propertySearch.value, getCuratedStyleProperties())
@@ -157,7 +161,7 @@ const propertyOptions = computed(() => [
 		key: "add-property",
 		label: "Add property",
 		slot: "add-property",
-		condition: ({ query }: { query: string }) => canAddProperty(query.trim().toLowerCase()),
+		condition: ({ query }: { query: string }) => canAddProperty(query),
 		onClick: ({ query }: { query: string }) => addProperty(query),
 	},
 ]);
@@ -176,7 +180,7 @@ const resetPropertyPicker = (clearPropertyFilter = false) => {
 };
 
 const addProperty = (property: string | null) => {
-	const normalizedProperty = property?.trim().toLowerCase();
+	const normalizedProperty = normalizeCSSPropertyName(property);
 	if (normalizedProperty && canAddProperty(normalizedProperty)) {
 		addedProperties.add(normalizedProperty);
 		focusProperty(normalizedProperty);
