@@ -27,7 +27,7 @@ export type BlockProperty = {
 	searchKeyWords: string;
 	condition?: () => boolean;
 	innerText?: string;
-	ownedStyleProperties?: string[];
+	usedStyleProperties?: string[];
 };
 
 export type PropertySection = {

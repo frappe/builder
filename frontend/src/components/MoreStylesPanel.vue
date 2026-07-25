@@ -63,10 +63,10 @@ import {
 	type StyleControlConfig,
 } from "@/utils/cssMetadata";
 import {
-	getCuratedStyleProperties,
-	getNonCuratedProperties,
-	isCuratedStyleProperty,
-} from "@/utils/curatedStyleProperties";
+	getStylePropertiesWithControls,
+	getStylePropertiesWithoutControls,
+	isStylePropertyWithControls,
+} from "@/utils/stylePropertiesWithControls";
 import { isInteractiveControl, normalizeCSSPropertyName, toStyleProperty, toTitleCase } from "@/utils/helpers";
 import { Combobox } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
@@ -97,7 +97,7 @@ const cascadingStyles = computed(() => {
 });
 
 const activeProperties = computed(() => {
-	const properties = getNonCuratedProperties(cascadingStyles.value);
+	const properties = getStylePropertiesWithoutControls(cascadingStyles.value);
 	addedProperties.forEach((property) => properties.add(property));
 	return properties;
 });
@@ -136,7 +136,7 @@ const canAddProperty = (property: string | null | undefined) => {
 	const normalizedProperty = normalizeCSSPropertyName(property);
 	return (
 		isValidCSSPropertyName(normalizedProperty) &&
-		!isCuratedStyleProperty(normalizedProperty) &&
+		!isStylePropertyWithControls(normalizedProperty) &&
 		!activeProperties.value.has(normalizedProperty)
 	);
 };
@@ -144,7 +144,7 @@ const canAddProperty = (property: string | null | undefined) => {
 const normalizedPropertySearch = computed(() => normalizeCSSPropertyName(propertySearch.value));
 
 const searchablePropertyOptions = computed(() =>
-	getCSSPropertyOptions(propertySearch.value, getCuratedStyleProperties())
+	getCSSPropertyOptions(propertySearch.value, getStylePropertiesWithControls())
 		.filter((option) => !activeProperties.value.has(option.value))
 		.map((option) => ({
 			...option,

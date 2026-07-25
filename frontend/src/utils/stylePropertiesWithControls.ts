@@ -7,8 +7,8 @@ const getSectionProperties = (section: PropertySection) =>
 
 const addSectionProperties = (section: PropertySection, properties: Set<string>) => {
 	getSectionProperties(section).forEach((property) => {
-		property.ownedStyleProperties?.forEach((styleProperty) => properties.add(styleProperty));
-		// descriptors may read block state that is unavailable here; ownedStyleProperties covers those
+		property.usedStyleProperties?.forEach((styleProperty) => properties.add(styleProperty));
+		// descriptors may read block state that is unavailable here; usedStyleProperties covers those
 		let props: Record<string, unknown> | undefined;
 		try {
 			props = property.getProps?.();
@@ -20,27 +20,27 @@ const addSectionProperties = (section: PropertySection, properties: Set<string>)
 	});
 };
 
-let curatedProperties: Set<string> | null = null;
+let cachedStyleProperties: Set<string> | null = null;
 
 // properties owned by a dedicated Builder control, so More Styles must not offer them
-const getCuratedStyleProperties = () => {
-	if (!curatedProperties) {
-		curatedProperties = new Set();
-		sections.forEach((section) => addSectionProperties(section, curatedProperties as Set<string>));
+const getStylePropertiesWithControls = () => {
+	if (!cachedStyleProperties) {
+		cachedStyleProperties = new Set();
+		sections.forEach((section) => addSectionProperties(section, cachedStyleProperties as Set<string>));
 	}
-	return curatedProperties;
+	return cachedStyleProperties;
 };
 
-const isCuratedStyleProperty = (property: string) => getCuratedStyleProperties().has(property);
+const isStylePropertyWithControls = (property: string) => getStylePropertiesWithControls().has(property);
 
 // properties on a block that only More Styles can edit
-const getNonCuratedProperties = (styleMap: BlockStyleMap) => {
+const getStylePropertiesWithoutControls = (styleMap: BlockStyleMap) => {
 	const properties = new Set<string>();
 	Object.keys(styleMap).forEach((style) => {
 		const property = stripStatePrefix(toCSSProperty(style));
-		if (!isCuratedStyleProperty(property) && isValidCSSPropertyName(property)) properties.add(property);
+		if (!isStylePropertyWithControls(property) && isValidCSSPropertyName(property)) properties.add(property);
 	});
 	return properties;
 };
 
-export { getCuratedStyleProperties, getNonCuratedProperties, isCuratedStyleProperty };
+export { getStylePropertiesWithControls, getStylePropertiesWithoutControls, isStylePropertyWithControls };

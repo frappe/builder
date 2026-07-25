@@ -50,7 +50,7 @@ const layoutSectionProperties = [
 		component: BlockGridLayoutHandler,
 		condition: () => blockController.isGrid() || Boolean(blockController.getParentBlock()?.isGrid()),
 		getProps: () => {},
-		ownedStyleProperties: [
+		usedStyleProperties: [
 			"column-gap",
 			"gap",
 			"grid-auto-columns",
@@ -79,7 +79,7 @@ const layoutSectionProperties = [
 		component: BlockFlexLayoutHandler,
 		condition: () => blockController.isFlex() || Boolean(blockController.getParentBlock()?.isFlex()),
 		getProps: () => {},
-		ownedStyleProperties: [
+		usedStyleProperties: [
 			"align-content",
 			"align-items",
 			"align-self",

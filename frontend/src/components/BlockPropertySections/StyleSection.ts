@@ -54,7 +54,7 @@ const styleSectionProperties = [
 	{
 		component: BackgroundHandler,
 		getProps: () => {},
-		ownedStyleProperties: [
+		usedStyleProperties: [
 			"background",
 			"background-attachment",
 			"background-blend-mode",
@@ -86,19 +86,19 @@ const styleSectionProperties = [
 		getProps: () => {
 			return {};
 		},
-		ownedStyleProperties: ["border", "border-color", "border-style", "border-width"],
+		usedStyleProperties: ["border", "border-color", "border-style", "border-width"],
 		searchKeyWords: "Border, Color, Width, Style, BorderColor, BorderWidth, BorderStyle",
 	},
 	{
 		component: ShadowHandler,
 		getProps: () => {},
-		ownedStyleProperties: ["box-shadow"],
+		usedStyleProperties: ["box-shadow"],
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
 		component: BorderRadiusControl,
 		getProps: () => {},
-		ownedStyleProperties: [
+		usedStyleProperties: [
 			"border-bottom-left-radius",
 			"border-bottom-right-radius",
 			"border-radius",
