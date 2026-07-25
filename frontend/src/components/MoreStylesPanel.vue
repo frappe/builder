@@ -174,7 +174,7 @@ const focusProperty = async (property: string) => {
 	row?.querySelector("input")?.focus();
 };
 
-const resetPropertyPicker = (clearPropertyFilter = false) => {
+const resetPropertyPicker = () => {
 	propertySearch.value = "";
 	nextTick(() => propertyCombobox.value?.reset());
 };
@@ -192,7 +192,7 @@ const removeProperty = (property: string) => {
 	addedProperties.delete(property);
 	blockController.setStyle(toStyleProperty(property), null);
 	STATES.forEach((state) => blockController.setStyle(toStyleProperty(`${state}:${property}`), null));
-	resetPropertyPicker(true);
+	resetPropertyPicker();
 };
 
 const contextMenuOptions = [
