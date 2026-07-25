@@ -1,35 +1,6 @@
-import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
-import dimensionSection from "@/components/BlockPropertySections/DimensionSection";
-import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
-import layoutSection from "@/components/BlockPropertySections/LayoutSection";
-import positionSection from "@/components/BlockPropertySections/PositionSection";
-import spacingSection from "@/components/BlockPropertySections/SpacingSection";
-import styleSection from "@/components/BlockPropertySections/StyleSection";
-import transitionSection from "@/components/BlockPropertySections/TransitionSection";
-import typographySection from "@/components/BlockPropertySections/TypographySection";
+import { sections, type PropertySection } from "@/components/BlockPropertySections";
 import { isValidCSSPropertyName } from "@/utils/cssMetadata";
 import { stripStatePrefix, toCSSProperty } from "@/utils/helpers";
-
-type SectionProperty = {
-	getProps?: () => Record<string, unknown> | undefined;
-	ownedStyleProperties?: string[];
-};
-
-type PropertySection = {
-	properties: SectionProperty[] | (() => SectionProperty[]);
-};
-
-const curatedSections = [
-	accessibilitySection,
-	dimensionSection,
-	imageOptionsSection,
-	layoutSection,
-	positionSection,
-	spacingSection,
-	styleSection,
-	transitionSection,
-	typographySection,
-] as PropertySection[];
 
 const getSectionProperties = (section: PropertySection) =>
 	typeof section.properties === "function" ? section.properties() : section.properties;
@@ -55,7 +26,7 @@ let curatedProperties: Set<string> | null = null;
 const getCuratedStyleProperties = () => {
 	if (!curatedProperties) {
 		curatedProperties = new Set();
-		curatedSections.forEach((section) => addSectionProperties(section, curatedProperties as Set<string>));
+		sections.forEach((section) => addSectionProperties(section, curatedProperties as Set<string>));
 	}
 	return curatedProperties;
 };
