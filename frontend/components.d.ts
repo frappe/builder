@@ -98,6 +98,7 @@ declare module 'vue' {
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MarginHandler: typeof import('./src/components/MarginHandler.vue')['default']
     MiddleTruncate: typeof import('./src/components/MiddleTruncate.vue')['default']
+    MoreStylesPanel: typeof import('./src/components/MoreStylesPanel.vue')['default']
     NewBlockTemplate: typeof import('./src/components/Modals/NewBlockTemplate.vue')['default']
     NewBuilderVariable: typeof import('./src/components/Modals/NewBuilderVariable.vue')['default']
     NumberArrows: typeof import('./src/components/Controls/NumberArrows.vue')['default']
