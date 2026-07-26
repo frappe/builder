@@ -102,7 +102,7 @@ const getOptions = async (filterString: string) => {
 	}
 
 	const customStart = options.length;
-	userFonts.data.forEach((font: UserFont) => {
+	userFonts.data?.forEach((font: UserFont) => {
 		if (options.length >= 20) return;
 		const fontName = font.font_name as string;
 		if (!query || fontName.toLowerCase().includes(query)) {
