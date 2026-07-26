@@ -16,4 +16,3 @@ builder.builder.patches.refactor_builder_variables
 builder.builder.patches.reset_builder_page_clicks
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
-
