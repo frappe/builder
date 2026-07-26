@@ -59,7 +59,7 @@ export interface BuilderToken extends DocType {
   type?: 'Color' | 'Dimension' | 'Font';
   /** Value: Data */
   value: string;
-  /** Variable Name: Data */
+  /** Token Name: Data */
   token_name: string;
   /** Is Standard: Check */
   is_standard: 0 | 1;

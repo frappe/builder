@@ -1,4 +1,5 @@
 import { BuilderToken } from "@/types/doctypes";
+import { tokenType } from "@/utils/useBuilderToken";
 import { defineComponent, h, shallowRef } from "vue";
 
 export function getColorVariableOptions(
@@ -13,8 +14,7 @@ export function getColorVariableOptions(
 
 	return variables
 		.filter((builderToken: BuilderToken) => {
-			// legacy rows have a blank or lowercase type; treat them as colors
-			if ((builderToken.type || "Color").toLowerCase() !== "color") return false;
+			if (tokenType(builderToken) !== "Color") return false;
 			const label = (builderToken.token_name || "").toLowerCase();
 			const group = (builderToken.group || "").toLowerCase();
 			const queryLower = processedQuery.toLowerCase();

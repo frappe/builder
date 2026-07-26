@@ -31,7 +31,7 @@
    "fieldname": "token_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Variable Name",
+   "label": "Token Name",
    "reqd": 1
   },
   {

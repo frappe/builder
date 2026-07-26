@@ -369,7 +369,8 @@ def import_fixture_record(fpath):
 	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
 		return
 	import_doc(docdict)
-	update_modified(docdict.get("modified"), docdict)
+	if docdict.get("modified"):
+		update_modified(docdict["modified"], docdict)
 
 
 def copy_img_to_asset_folder(block, page_doc, app=None):

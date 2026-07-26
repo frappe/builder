@@ -21,7 +21,7 @@
 				<div class="mb-2">
 					<TabButtons
 						:modelValue="activeType"
-						@update:modelValue="(val: BuilderToken['type']) => (activeType = val || 'Color')"
+						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
 						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
@@ -69,7 +69,7 @@
 									<input
 										type="text"
 										:value="row.token_name"
-										placeholder="Variable name"
+										placeholder="Token name"
 										:class="[cellBoxClass, editableInputClass]"
 										data-new-name
 										@mousedown.stop
@@ -345,8 +345,8 @@
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
 								searchQuery.trim()
-									? `No variables match "${searchQuery}". Try a different search term.`
-									: "No variables found. Click 'Add Variable' to create your first one."
+									? `No tokens match "${searchQuery}". Try a different search term.`
+									: "Click 'Add Token' to create your first one."
 							}}
 						</div>
 					</div>
@@ -392,7 +392,7 @@ import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
-import { useBuilderToken } from "@/utils/useBuilderToken";
+import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
@@ -435,7 +435,7 @@ const copyHandle = async (row: Row) => {
 // so the numbers stay stable while filtering within a tab).
 const tokenCounts = computed<Record<string, number>>(() => {
 	const counts: Record<string, number> = { Color: 0, Font: 0, Dimension: 0 };
-	for (const variable of variables.value) counts[variable.type || "Color"]++;
+	for (const variable of variables.value) counts[tokenType(variable)]++;
 	return counts;
 });
 const TYPE_TABS = [
@@ -506,9 +506,7 @@ const getGroupObject = (groupName: string) => {
 const flatGroup = reactive({ group: null, open: true, rows: [] }) as RowGroup;
 
 const displayGroups = computed<RowGroup[]>(() => {
-	let filteredVariables = variables.value.filter(
-		(variable) => (variable.type || "Color") === activeType.value,
-	);
+	let filteredVariables = variables.value.filter((variable) => tokenType(variable) === activeType.value);
 	if (searchQuery.value.trim()) {
 		const query = searchQuery.value.toLowerCase().trim();
 		filteredVariables = filteredVariables.filter(
@@ -706,7 +704,7 @@ const moveSelectedToGroup = async (group: string) => {
 		await saveVariable(row);
 	}
 	toast.success(
-		group ? `Moved ${rows.length} variable(s) to "${group}"` : `Ungrouped ${rows.length} variable(s)`,
+		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
 	);
 };
 
@@ -721,7 +719,7 @@ const uniqueCopyName = (name: string) => {
 const deleteSelected = async () => {
 	const rows = selectedRows();
 	if (!rows.length) return;
-	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} variable(s)?`);
+	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} token(s)?`);
 	if (!confirmed) return;
 
 	let deleted = 0;
@@ -734,7 +732,7 @@ const deleteSelected = async () => {
 			toast.error(`Failed to delete "${row.token_name}"`);
 		}
 	}
-	if (deleted) toast.success(`Deleted ${deleted} variable(s)`);
+	if (deleted) toast.success(`Deleted ${deleted} token(s)`);
 	clearSelection();
 };
 
@@ -819,7 +817,7 @@ const createVariable = async (row: Row) => {
 		});
 		newVariable.value = null;
 		await nextTick();
-		toast.success("Variable created successfully");
+		toast.success("Token created");
 		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
@@ -879,7 +877,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	const typeIndex = headers.findIndex((h) => h.includes("type"));
 
 	if (nameIndex === -1 || lightIndex === -1) {
-		toast.error("CSV must contain 'Variable Name' and 'Light Mode' columns");
+		toast.error("CSV must contain 'Token Name' and 'Light Mode' columns");
 		return;
 	}
 
@@ -938,14 +936,14 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// Warn user that existing variables will be updated
 	const skippedNotes = [
 		invalidCount > 0 ? `${invalidCount} invalid entries skipped` : "",
-		standardCount > 0 ? `${standardCount} standard variable(s) skipped` : "",
+		standardCount > 0 ? `${standardCount} standard token(s) skipped` : "",
 	]
 		.filter(Boolean)
 		.join(", ");
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new variable(s) and update ${
+		`Create ${newVariables.length} new token(s) and update ${
 			updateVariables.length
-		} existing variable(s)?${
+		} existing token(s)?${
 			skippedNotes ? ` (${skippedNotes})` : ""
 		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);
@@ -996,19 +994,19 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
-	if (createdCount > 0) toast.success(`Successfully created ${createdCount} variable(s)`);
-	if (updatedCount > 0) toast.success(`Successfully updated ${updatedCount} variable(s)`);
-	if (createErrors > 0) toast.error(`Failed to create ${createErrors} variable(s)`);
-	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} variable(s)`);
+	if (createdCount > 0) toast.success(`Created ${createdCount} token(s)`);
+	if (updatedCount > 0) toast.success(`Updated ${updatedCount} token(s)`);
+	if (createErrors > 0) toast.error(`Failed to create ${createErrors} token(s)`);
+	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} token(s)`);
 	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
-	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard variable(s) (read-only)`);
+	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard token(s) (read-only)`);
 
 	if (csvFileInput.value) csvFileInput.value.value = "";
 };
 
 const downloadSampleCSV = () => {
 	const sampleData = [
-		["Variable Name", "Light Mode", "Dark Mode", "Group", "Type"],
+		["Token Name", "Light Mode", "Dark Mode", "Group", "Type"],
 		["primary-color", "#3b82f6", "#60a5fa", "Brand", "Color"],
 		["secondary-color", "#10b981", "#34d399", "Brand", "Color"],
 		["background-color", "#ffffff", "#1f2937", "Surface", "Color"],
