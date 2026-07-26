@@ -328,8 +328,24 @@ def sync_builder_tokens():
 sync_builder_variables = sync_builder_tokens
 
 
-# Fixture exports made before the Builder Token rename still say Builder Variable
+# Fixture exports and template bundles made before the Builder Token rename still
+# say Builder Variable, and carry the pre-rename fieldname
 RENAMED_FIXTURE_DOCTYPES = {"Builder Variable": "Builder Token"}
+RENAMED_FIXTURE_FIELDS = {"Builder Token": {"variable_name": "token_name"}}
+
+
+def normalize_renamed_doc(docdict):
+	"""Rewrite a doc exported under a doctype's old name so it can be imported.
+
+	A no-op while the old doctype is still around, i.e. before the rename patch runs."""
+	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
+	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+		return docdict
+	docdict["doctype"] = new_doctype
+	for old_field, new_field in RENAMED_FIXTURE_FIELDS[new_doctype].items():
+		if old_field in docdict:
+			docdict.setdefault(new_field, docdict.pop(old_field))
+	return docdict
 
 
 def make_records(path):
@@ -344,12 +360,12 @@ def import_fixture_record(fpath):
 	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
 	with open(fpath, encoding="utf-8") as f:
 		docdict = frappe.parse_json(f.read())
-	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
-	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+	old_doctype = docdict.get("doctype")
+	normalize_renamed_doc(docdict)
+	if docdict.get("doctype") == old_doctype:
 		import_file_by_path(fpath)
 		return
-	docdict["doctype"] = new_doctype
-	db_modified = frappe.db.get_value(new_doctype, docdict.get("name"), "modified")
+	db_modified = frappe.db.get_value(docdict["doctype"], docdict.get("name"), "modified")
 	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
 		return
 	import_doc(docdict)
