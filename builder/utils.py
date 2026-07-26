@@ -321,7 +321,7 @@ def sync_block_templates():
 
 
 def sync_builder_tokens():
-	print("Syncing Builder Builder Tokens")
+	print("Syncing Builder Tokens")
 	builder_token_path = frappe.get_module_path("builder", "builder_token")
 	make_records(builder_token_path)
 
