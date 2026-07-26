@@ -6,10 +6,13 @@ def execute():
 	"""Builder Variable → Builder Token. Only the DocType and the label field are
 	renamed — token doc names (the CSS `--<id>` handles) are untouched, so every
 	existing page's var(--id) references keep resolving."""
-	if not frappe.db.exists("DocType", "Builder Variable"):
-		return
-	if frappe.db.exists("DocType", "Builder Token"):
+	# guard on the table, not the DocType row: syncing the old model back (a
+	# downgrade, or migrating on develop) drops the Builder Token DocType but
+	# leaves tabBuilder Token behind, and rename_doc can't rename onto it
+	if frappe.db.table_exists("Builder Token"):
 		merge_stale_builder_variables()
+		return
+	if not frappe.db.exists("DocType", "Builder Variable"):
 		return
 	frappe.rename_doc("DocType", "Builder Variable", "Builder Token", force=True)
 	frappe.reload_doc("builder", "doctype", "builder_token")
