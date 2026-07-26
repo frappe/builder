@@ -34,8 +34,8 @@ import type Block from "@/block";
 import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { BlockValueResolver } from "@/utils/blockValueResolver";
 import { setFontFromHTML } from "@/utils/fontManager";
-import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
@@ -103,76 +103,24 @@ const FontFamilyPasteRule = Extension.create({
 	},
 });
 
-const hasBlockProps = computed(() => {
-	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
-});
-
-const hasComponentData = computed(() => {
-	return props.componentData && Object.keys(props.componentData).length > 0;
+const valueResolver = new BlockValueResolver({
+	block: () => props.block,
+	data: () => props.data ?? null,
+	componentData: () => props.componentData ?? null,
+	defaultProps: () => props.defaultProps ?? null,
 });
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data || hasBlockProps.value || hasComponentData.value) {
-		const dynamicContent = getDynamicContent();
-		if (dynamicContent) {
-			innerHTML = dynamicContent;
-		}
+	const dynamicContent = getDynamicContent();
+	if (dynamicContent) {
+		innerHTML = dynamicContent;
 	}
 	return String(innerHTML ?? "");
 });
 
-const getDataScriptValue = (path: string): any => {
-	return getDataForKey(props.data, path);
-};
-
-const getComponentDataValue = (path: string): any => {
-	return getDataForKey(props.componentData || {}, path);
-};
-
 const getDynamicContent = () => {
-	let innerHTML = null as string | null;
-
-	if (props.block.getDataKey("property") === "innerHTML") {
-		let value;
-		if (props.block.getDataKey("comesFrom") === "props") {
-			value = getPropValue(
-				props.block.getDataKey("key"),
-				props.block,
-				getDataScriptValue,
-				props.defaultProps,
-				getComponentDataValue,
-			);
-		} else if (props.block.getDataKey("comesFrom") === "componentData") {
-			value = getComponentDataValue(props.block.getDataKey("key"));
-		} else {
-			value = getDataScriptValue(props.block.getDataKey("key"));
-		}
-		innerHTML = value ?? innerHTML;
-	}
-	props.block
-		.getDynamicValues()
-		?.filter((dataKeyObj: BlockDataKey) => {
-			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
-		})
-		?.forEach((dataKeyObj: BlockDataKey) => {
-			let value;
-			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(
-					dataKeyObj.key as string,
-					props.block,
-					getDataScriptValue,
-					props.defaultProps,
-					getComponentDataValue,
-				);
-			} else if (dataKeyObj.comesFrom === "componentData") {
-				value = getComponentDataValue(dataKeyObj.key as string);
-			} else {
-				value = getDataScriptValue(dataKeyObj.key as string);
-			}
-			innerHTML = value ?? innerHTML;
-		});
-	return innerHTML;
+	return valueResolver.applyDynamicValues("key", { innerHTML: null }).innerHTML;
 };
 
 const isEditable = computed(() => {
@@ -267,6 +215,16 @@ const getInnerHTML = (editor: Editor | null) => {
 	return innerHTML;
 };
 
+const destroyEditor = () => {
+	if (!editor.value) return;
+	// a newer editor may already own the slot; clear only if it's still ours
+	if (props.block.getEditor() === editor.value) {
+		props.block.setEditor(null);
+	}
+	editor.value.destroy();
+	editor.value = null;
+};
+
 if (!props.preview) {
 	watch(
 		() => [
@@ -280,6 +238,9 @@ if (!props.preview) {
 				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
 				!blockController.multipleBlocksSelected()
 			) {
+				// undo/redo swaps the Block under a reused component, so a live
+				// editor may still exist here; destroy it or it leaks
+				destroyEditor();
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
@@ -329,22 +290,16 @@ if (!props.preview) {
 					injectCSS: false,
 				});
 
-				// @ts-ignore
-				props.block.__proto__.editor = editor.value;
+				props.block.setEditor(editor.value);
 				editor.value?.setEditable(isEditable.value);
 			} else {
-				editor.value?.destroy();
-				editor.value = null;
-				// @ts-ignore
-				props.block.__proto__.editor = null;
+				destroyEditor();
 			}
 		},
 		{ immediate: true },
 	);
 
-	onBeforeUnmount(() => {
-		editor.value?.destroy();
-	});
+	onBeforeUnmount(destroyEditor);
 }
 
 const handleClick = (e: MouseEvent) => {

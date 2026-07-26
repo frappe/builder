@@ -36,7 +36,7 @@ import accessibilitySection from "@/components/BlockPropertySections/Accessibili
 import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
-import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
+import dimensionSection from "@/components/BlockPropertySections/DimensionSection";
 import editorConfigSection from "@/components/BlockPropertySections/EditorConfigSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";

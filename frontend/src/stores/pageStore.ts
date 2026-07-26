@@ -308,6 +308,13 @@ const usePageStore = defineStore("pageStore", {
 						this.activePage = page;
 					}
 				})
+				.catch((e: { exc_type?: string }) => {
+					if (e?.exc_type === "InReadOnlyMode") {
+						builderStore.isSiteInReadOnlyMode = true;
+						return;
+					}
+					throw e;
+				})
 				.finally(() => {
 					if (this.saveId === saveId) {
 						this.saveId = null;

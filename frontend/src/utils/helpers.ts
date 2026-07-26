@@ -12,6 +12,7 @@ import {
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
+	removeDefaultUnit,
 	setBoxSpacing,
 	shortenNumber,
 } from "./cssUtils";
@@ -916,6 +917,7 @@ export {
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
+	removeDefaultUnit,
 	replaceMapKey,
 	setBoxSpacing,
 	shortenNumber,

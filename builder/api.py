@@ -29,12 +29,17 @@ def get_versioned_doc(snapshot: str) -> dict:
 
 
 @frappe.whitelist()
-def get_page_preview_html(page: str, **kwarg) -> Response:
+def is_site_read_only() -> bool:
+	return bool(frappe.flags.read_only)
+
+
+@frappe.whitelist()
+def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw("No permission to preview this page")
 
 	# to load preview without publishing
-	frappe.form_dict.update(kwarg)
+	frappe.form_dict.update(kwargs)
 	frappe.local.request.for_preview = True
 	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
@@ -189,6 +194,49 @@ def check_app_permission():
 		return True
 
 	return False
+
+
+@frappe.whitelist()
+def get_pending_invitations() -> list[dict]:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	invitations = frappe.get_all(
+		"User Invitation",
+		filters={"status": "Pending", "app_name": "builder"},
+		fields=["name", "email", "creation", "invited_by"],
+		order_by="creation desc",
+	)
+	for invitation in invitations:
+		invitation.invited_by_name = frappe.db.get_value("User", invitation.invited_by, "full_name")
+	return invitations
+
+
+@frappe.whitelist()
+def get_builder_users() -> list[dict]:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	role_rows = frappe.get_all(
+		"Has Role",
+		filters={"role": ["in", ["System Manager", "Website Manager"]], "parenttype": "User"},
+		fields=["parent", "role"],
+	)
+	admins = {row.parent for row in role_rows if row.role == "System Manager"}
+	users = frappe.get_all(
+		"User",
+		filters=[
+			["name", "in", list({row.parent for row in role_rows})],
+			["name", "not in", ["Administrator", "Guest"]],
+			["enabled", "=", 1],
+			["user_type", "=", "System User"],
+		],
+		fields=["name", "full_name", "user_image"],
+		order_by="full_name",
+	)
+	for user in users:
+		user.is_admin = user.name in admins
+	return users
 
 
 @frappe.whitelist()

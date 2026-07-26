@@ -1,40 +1,17 @@
-import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import SpacingControl from "@/components/SpacingControl.vue";
 import blockController from "@/utils/blockController";
 
 const spacingSectionProperties = [
 	{
-		component: StylePropertyControl,
+		component: SpacingControl,
 		searchKeyWords: "Margin, Top, MarginTop, Margin Top",
-		getProps: () => {
-			return {
-				label: "Margin",
-				getModelValue: () => blockController.getMargin({ nativeOnly: true }),
-				getPlaceholder: () => blockController.getMargin({ cascading: true }),
-				setModelValue: (val: string) => blockController.setMargin(val),
-				propertyKey: "margin",
-				enableSlider: true,
-				unitOptions: ["px", "em", "rem"],
-			};
-		},
-		events: {
-			"update:modelValue": (val: string) => blockController.setMargin(val),
-		},
+		getProps: () => ({ type: "margin" }),
 		condition: () => !blockController.isRoot(),
 	},
 	{
-		component: StylePropertyControl,
+		component: SpacingControl,
 		searchKeyWords: "Padding, Top, PaddingTop, Padding Top",
-		getProps: () => {
-			return {
-				label: "Padding",
-				enableSlider: true,
-				unitOptions: ["px", "em", "rem"],
-				getModelValue: () => blockController.getPadding({ nativeOnly: true }),
-				getPlaceholder: () => blockController.getPadding({ cascading: true }),
-				setModelValue: (val: string) => blockController.setPadding(val),
-				propertyKey: "padding",
-			};
-		},
+		getProps: () => ({ type: "padding" }),
 	},
 ];
 
