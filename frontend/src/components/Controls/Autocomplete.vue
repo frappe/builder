@@ -280,7 +280,12 @@ const handleBlur = (event: FocusEvent) => {
 		emit("blur");
 		return;
 	}
-	if (props.allowArbitraryValue) submitArbitraryValue(getInputValue(event));
+	// input still matches the selected value: skip the label lookup.
+	// duplicate labels would otherwise resolve to the wrong option.
+	const inputValue = getInputValue(event);
+	if (props.allowArbitraryValue && inputValue !== getDisplayValue(props.modelValue)) {
+		submitArbitraryValue(inputValue);
+	}
 	emit("blur");
 };
 
