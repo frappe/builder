@@ -80,7 +80,7 @@
 										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
@@ -108,7 +108,7 @@
 										v-else
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<input
 											type="text"
@@ -123,7 +123,7 @@
 										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
