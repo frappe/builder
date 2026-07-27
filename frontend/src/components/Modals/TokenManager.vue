@@ -86,7 +86,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'light')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -102,7 +102,7 @@
 											placeholder="#ffffff"
 											:class="colorValueInputClass"
 											@mousedown.stop
-											@input="(e) => updateColor(row, inputValue(e), 'light')" />
+											@input="(e) => updateRowValue(row, inputValue(e), 'light')" />
 									</div>
 									<div
 										v-else
@@ -116,7 +116,7 @@
 											:placeholder="VALUE_PLACEHOLDERS[activeType]"
 											:class="colorValueInputClass"
 											@mousedown.stop
-											@input="(e) => updateColor(row, inputValue(e), 'light')"
+											@input="(e) => updateRowValue(row, inputValue(e), 'light')"
 											@keydown.enter.prevent="() => createVariable(row)" />
 									</div>
 									<div
@@ -129,7 +129,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'dark')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -147,7 +147,7 @@
 											:placeholder="row.value || '#000000'"
 											:class="colorValueInputClass"
 											@mousedown.stop
-											@input="(e) => updateColor(row, inputValue(e), 'dark')" />
+											@input="(e) => updateRowValue(row, inputValue(e), 'dark')" />
 									</div>
 								</div>
 
@@ -198,8 +198,8 @@
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
 										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
 											<div
-												class="ml-auto mr-1 hidden shrink-0 group-hover/row:block"
-												:class="{ '!block': copiedId === row.id }">
+												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
 													size="xs"
@@ -255,7 +255,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'light')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -299,7 +299,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'dark')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -773,8 +773,8 @@ const syncStoreColors = (row: Row) => {
 	);
 };
 
-// live color updates from the pickers (and the new row's inputs)
-const updateColor = async (row: Row, value: string | null, mode: "light" | "dark") => {
+// live value updates from the color pickers and the new row's inputs (any token type)
+const updateRowValue = async (row: Row, value: string | null, mode: "light" | "dark") => {
 	if (mode === "light") {
 		row.value = value || "";
 	} else {
@@ -782,22 +782,16 @@ const updateColor = async (row: Row, value: string | null, mode: "light" | "dark
 	}
 	syncStoreColors(row);
 
-	if (row.isNew) {
-		if (row.token_name?.trim()) {
-			debouncedSaveVariable(row);
-		}
-	} else if (row.name) {
+	// new rows are only committed by Enter or handleNewRowFocusOut (leaving the whole row);
+	// debouncing a save here would fire mid-keystroke and delete the still-focused input
+	if (!row.isNew && row.name) {
 		debouncedSaveVariable(row);
 	}
 };
 
 const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
 	try {
-		if (row.isNew) {
-			await createVariable(row);
-		} else {
-			await saveVariable(row);
-		}
+		await saveVariable(row);
 	} catch (error) {
 		console.error("Failed to update variable:", error);
 	}
