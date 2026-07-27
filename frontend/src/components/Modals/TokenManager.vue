@@ -65,7 +65,8 @@
 									data-row
 									class="rounded py-2"
 									:class="rowGridClass"
-									@focusout="(e) => handleNewRowFocusOut(e, row)">
+									@focusout="(e) => handleNewRowFocusOut(e, row)"
+									@contextmenu="handleNewRowContextMenu">
 									<input
 										type="text"
 										:value="row.token_name"
@@ -662,10 +663,18 @@ const handleRowMouseDown = (e: MouseEvent, row: Row) => {
 
 const handleRowContextMenu = (e: MouseEvent, row: Row) => {
 	if (row.isNew || row.is_standard) return;
+	isNewRowContextMenu.value = false;
 	if (!selectedIds.value.has(row.id)) {
 		selectedIds.value = new Set([row.id]);
 		anchorId.value = row.id;
 	}
+	contextMenu.value?.show(e);
+};
+
+// right-clicking the not-yet-created row offers a way out other than Esc or reload
+const isNewRowContextMenu = ref(false);
+const handleNewRowContextMenu = (e: MouseEvent) => {
+	isNewRowContextMenu.value = true;
 	contextMenu.value?.show(e);
 };
 
@@ -737,6 +746,9 @@ const deleteSelected = async () => {
 };
 
 const contextMenuOptions = computed(() => {
+	if (isNewRowContextMenu.value) {
+		return [{ label: "Remove", action: () => (newVariable.value = null) }];
+	}
 	const count = selectedIds.value.size;
 	const suffix = count > 1 ? ` ${count} variables` : " variable";
 	return [
