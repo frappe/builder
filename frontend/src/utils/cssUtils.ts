@@ -345,6 +345,30 @@ function collapseBoxShorthand(parts: unknown[]): string {
 }
 
 /**
+ * Expands a CSS gap shorthand into its two component values (row-gap, column-gap).
+ * @param value - Gap shorthand value string
+ * @param fallback - Value used when the shorthand is empty
+ * @returns Array of exactly two values: [row-gap, column-gap]
+ */
+function expandGapShorthand(value: unknown, fallback = "0"): [string, string] {
+	const parts = splitCssValueList(String(value ?? "").trim());
+	if (!parts.length) return [fallback, fallback];
+	if (parts.length === 1) return [parts[0], parts[0]];
+	return [parts[0], parts[1]];
+}
+
+/**
+ * Collapses two gap values (row-gap, column-gap) into the shortest shorthand.
+ * @param parts - Two gap values in [row-gap, column-gap] order
+ * @returns Gap shorthand value string
+ */
+function collapseGapShorthand(parts: unknown[]): string {
+	const [rowGap, colGap] = parts.map((part) => String(part ?? ""));
+	if (rowGap === colGap) return rowGap;
+	return `${rowGap} ${colGap}`;
+}
+
+/**
  * Normalizes CSS values by adding the default unit where missing.
  * Handles both single and whitespace-separated numeric values.
  * @param value - CSS value string
@@ -362,7 +386,9 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 export {
 	addPxToNumber,
 	collapseBoxShorthand,
+	collapseGapShorthand,
 	expandBoxShorthand,
+	expandGapShorthand,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,

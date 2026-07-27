@@ -48,12 +48,7 @@
 		type="text"
 		:modelValue="height"
 		@update:modelValue="setHeight" />
-	<StylePropertyControl
-		propertyKey="gap"
-		label="Gap"
-		v-if="blockController.isGrid()"
-		:enableSlider="true"
-		:unitOptions="BOX_UNIT_OPTIONS" />
+	<GapControl v-if="blockController.isGrid()" />
 	<!-- <InlineInput
 		label="Align"
 		v-if="blockController.isGrid()"
@@ -216,8 +211,9 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import GapControl from "@/components/GapControl.vue";
 import blockController from "@/utils/blockController";
-import { BOX_UNIT_OPTIONS, GRID_UNIT_OPTIONS } from "@/utils/unitOptions";
+import { GRID_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed } from "vue";
 
 const getGridType = () => {
