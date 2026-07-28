@@ -583,11 +583,13 @@ class Block implements BlockOptions {
 		const childBlock = getBlockInstance(child);
 		childBlock.parentBlock = this;
 		this.children.splice(index, 0, childBlock);
-		if (childBlock.isText()) {
-			// makeBlockEditable() selects the block and enters edit mode synchronously.
-			childBlock.makeBlockEditable();
-		} else if (select) {
-			childBlock.selectBlock();
+		if (select) {
+			if (childBlock.isText()) {
+				// makeBlockEditable() selects the block and enters edit mode synchronously.
+				childBlock.makeBlockEditable();
+			} else {
+				childBlock.selectBlock();
+			}
 		}
 
 		if (childBlock.getStyle("position")) {
