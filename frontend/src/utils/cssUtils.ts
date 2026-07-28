@@ -347,11 +347,13 @@ function collapseBoxShorthand(parts: unknown[]): string {
 /**
  * Expands a CSS gap shorthand into its two component values (row-gap, column-gap).
  * @param value - Gap shorthand value string
- * @param fallback - Value used when the shorthand is empty
+ * @param fallback - Value used when the shorthand is empty or Mixed
  * @returns Array of exactly two values: [row-gap, column-gap]
  */
 function expandGapShorthand(value: unknown, fallback = "0"): [string, string] {
-	const parts = splitCssValueList(String(value ?? "").trim());
+	const str = String(value ?? "").trim();
+	if (!str || str === "Mixed") return [fallback, fallback];
+	const parts = splitCssValueList(str);
 	if (!parts.length) return [fallback, fallback];
 	if (parts.length === 1) return [parts[0], parts[0]];
 	return [parts[0], parts[1]];
@@ -363,7 +365,10 @@ function expandGapShorthand(value: unknown, fallback = "0"): [string, string] {
  * @returns Gap shorthand value string
  */
 function collapseGapShorthand(parts: unknown[]): string {
-	const [rowGap, colGap] = parts.map((part) => String(part ?? ""));
+	const [rowGap, colGap] = parts.map((part) => {
+		const str = String(part ?? "").trim();
+		return !str || str === "Mixed" ? "0px" : str;
+	});
 	if (rowGap === colGap) return rowGap;
 	return `${rowGap} ${colGap}`;
 }

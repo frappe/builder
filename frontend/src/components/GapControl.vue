@@ -65,7 +65,7 @@ const readValue = (state: string | null = null) => {
 const getPlaceholder = () => String(blockController.getCascadingStyle("gap") ?? "unset");
 
 const toControlValues = (value: unknown) => {
-	const [rowGap, colGap] = expandGapShorthand(value);
+	const [rowGap, colGap] = expandGapShorthand(value, "");
 	return isColumnDirection.value ? [colGap, rowGap] : [rowGap, colGap];
 };
 
