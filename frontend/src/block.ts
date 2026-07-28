@@ -583,11 +583,11 @@ class Block implements BlockOptions {
 		const childBlock = getBlockInstance(child);
 		childBlock.parentBlock = this;
 		this.children.splice(index, 0, childBlock);
-		if (select) {
-			childBlock.selectBlock();
-		}
 		if (childBlock.isText()) {
+			// makeBlockEditable() selects the block and enters edit mode synchronously.
 			childBlock.makeBlockEditable();
+		} else if (select) {
+			childBlock.selectBlock();
 		}
 
 		if (childBlock.getStyle("position")) {
@@ -757,7 +757,9 @@ class Block implements BlockOptions {
 	}
 	makeBlockEditable() {
 		const canvasStore = useCanvasStore();
-		this.selectBlock();
+		// canvasStore.selectBlock() runs synchronously here. A deferred call would clear
+		// editableBlock right after this line sets it.
+		canvasStore.selectBlock(this, null);
 		canvasStore.editableBlock = this;
 		nextTick(() => {
 			this.getEditor()?.commands.focus("all");
