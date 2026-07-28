@@ -320,7 +320,7 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
 	} else {
 		canvasStore.pushBlocks(
-			blocks.map((block) => (block.blockId === "root" ? block : getBlockCopy(block))),
+			blocks.map((block) => getBlockCopy(block)),
 			false,
 		);
 	}
