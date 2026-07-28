@@ -11,6 +11,7 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController";
 import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
@@ -66,46 +67,19 @@ const defaultProps = computed(() => {
 	}
 	return Object.keys(getDefaultPropsList(currentBlock.value));
 });
-const getOptions = async (query: string) => {
-	let options: { label: string; value: string }[] = [];
+const visibilityOptions = computed(() => {
+	const toOptions = (props: string[], comesFrom: string) =>
+		props.map((prop) => ({ label: prop, value: `${prop}--${comesFrom}` }));
+	const propsList = [...new Set([...ownProps.value, ...parentProps.value, ...defaultProps.value])];
 
-	pageDataArray.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--dataScript`,
-			});
-		}
-	});
-	componentDataArray.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--componentData`,
-			});
-		}
-	});
-	const combinedProps = [...new Set([...ownProps.value, ...parentProps.value])];
+	return [
+		...toOptions(pageDataArray.value, "dataScript"),
+		...toOptions(componentDataArray.value, "componentData"),
+		...toOptions(propsList, "props"),
+	];
+});
 
-	combinedProps.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
-	defaultProps.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
-
-	return options;
-};
+const getOptions = async (query: string) => filterOptions(visibilityOptions.value, query);
 
 const handleModelValueUpdate = (value: string | null) => {
 	if (value == null) {

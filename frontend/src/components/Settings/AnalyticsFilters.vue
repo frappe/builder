@@ -25,6 +25,7 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/doctypes";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import { DateRangePicker, Select } from "frappe-ui";
 import { computed } from "vue";
 
@@ -101,14 +102,10 @@ const getRouteOptions = async (query: string) => {
 		await webPages.fetch();
 	}
 
-	const queryLower = query?.toLowerCase() || "";
-
-	return (webPages.data ?? [])
+	const routeOptions = (webPages.data ?? [])
 		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
-		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }))
-		.filter(
-			(option: { value: string; label: string }) =>
-				!queryLower || option.label.toLowerCase().includes(queryLower),
-		);
+		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }));
+
+	return filterOptions(routeOptions, query || "");
 };
 </script>
