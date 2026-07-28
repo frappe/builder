@@ -5,7 +5,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
-import { filterOptions, MAX_OPTIONS } from "@/utils/autocompleteOptions";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListItems, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
@@ -53,7 +53,6 @@ const typographySectionProperties = [
 					const defaultFontOptions = filterOptions(
 						fontListItems.value.map((font) => toOption(font.family)),
 						filterString,
-						Math.max(MAX_OPTIONS - userFontOptions.length, 0),
 					);
 
 					if (!userFontOptions.length) return defaultFontOptions;
