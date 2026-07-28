@@ -322,8 +322,10 @@ function splitCssValueList(value: string): string[] {
  * @param fallback - Value used for every side when the shorthand is empty
  * @returns Array of exactly four side values
  */
-function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
-	const parts = splitCssValueList(String(value ?? "").trim());
+function expandBoxShorthand(value: unknown, fallback = ""): string[] {
+	const str = String(value ?? "").trim();
+	if (!str || str === "Mixed" || str === "unset") return Array(4).fill(fallback);
+	const parts = splitCssValueList(str).map((p) => (p === "Mixed" || p === "unset" ? fallback : p));
 	if (!parts.length) return Array(4).fill(fallback);
 	if (parts.length === 1) return Array(4).fill(parts[0]);
 	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
@@ -350,10 +352,10 @@ function collapseBoxShorthand(parts: unknown[]): string {
  * @param fallback - Value used when the shorthand is empty or Mixed
  * @returns Array of exactly two values: [row-gap, column-gap]
  */
-function expandGapShorthand(value: unknown, fallback = "0"): [string, string] {
+function expandGapShorthand(value: unknown, fallback = ""): [string, string] {
 	const str = String(value ?? "").trim();
-	if (!str || str === "Mixed") return [fallback, fallback];
-	const parts = splitCssValueList(str);
+	if (!str || str === "Mixed" || str === "unset") return [fallback, fallback];
+	const parts = splitCssValueList(str).map((p) => (p === "Mixed" || p === "unset" ? fallback : p));
 	if (!parts.length) return [fallback, fallback];
 	if (parts.length === 1) return [parts[0], parts[0]];
 	return [parts[0], parts[1]];
@@ -367,7 +369,7 @@ function expandGapShorthand(value: unknown, fallback = "0"): [string, string] {
 function collapseGapShorthand(parts: unknown[]): string {
 	const [rowGap, colGap] = parts.map((part) => {
 		const str = String(part ?? "").trim();
-		return !str || str === "Mixed" ? "0px" : str;
+		return !str || str === "Mixed" || str === "unset" ? "0px" : str;
 	});
 	if (rowGap === colGap) return rowGap;
 	return `${rowGap} ${colGap}`;

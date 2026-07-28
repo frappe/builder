@@ -24,6 +24,7 @@
 <script lang="ts" setup>
 import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import type Block from "@/block";
 import blockController from "@/utils/blockController";
 import { collapseGapShorthand, expandGapShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
@@ -34,65 +35,59 @@ type BoxValue = string | number | boolean | null;
 const enableSlider = true;
 const splitModes = ref<Record<string, boolean>>({});
 
-watch(
-	() => blockController.getSelectedBlocks(),
-	() => (splitModes.value = {}),
+watch(() => blockController.getSelectedBlocks(), () => (splitModes.value = {}));
+
+const isColumnDirection = computed(() =>
+	String(blockController.getNativeStyle("flexDirection") || blockController.getCascadingStyle("flexDirection") || "").startsWith("column"),
 );
 
-const isColumnDirection = computed(() => {
-	const dir = blockController.getNativeStyle("flexDirection") || blockController.getCascadingStyle("flexDirection");
-	return String(dir || "").startsWith("column");
-});
+const splits = computed(() => isColumnDirection.value ? [{ label: "H" }, { label: "V" }] : [{ label: "V" }, { label: "H" }]);
 
-const splits = computed(() =>
-	isColumnDirection.value
-		? [{ label: "H" }, { label: "V" }]
-		: [{ label: "V" }, { label: "H" }],
-);
+const getBlockGap = (block: Block): [string, string] => {
+	const [exR, exC] = expandGapShorthand(block.getNativeStyle("gap"));
+	return [String(block.getNativeStyle("rowGap") ?? "").trim() || exR, String(block.getNativeStyle("columnGap") ?? "").trim() || exC];
+};
+
+const getEffectiveGap = (): [string, string] => {
+	const blocks = blockController.getSelectedBlocks();
+	if (!blocks.length) return ["", ""];
+	let [r, c] = getBlockGap(blocks[0]);
+	for (let i = 1; i < blocks.length; i++) {
+		const [bR, bC] = getBlockGap(blocks[i]);
+		if (r !== bR) r = "Mixed";
+		if (c !== bC) c = "Mixed";
+	}
+	return [r, c];
+};
 
 const readValue = (state: string | null = null) => {
-	if (state) {
-		return String(blockController.getNativeStyle(`${state}:gap`) ?? "");
-	}
-	const gap = String(blockController.getNativeStyle("gap") ?? "");
-	const rowGap = String(blockController.getNativeStyle("rowGap") ?? "");
-	const colGap = String(blockController.getNativeStyle("columnGap") ?? "");
-	if (gap) return gap;
-	if (rowGap || colGap) return collapseGapShorthand([rowGap || "0px", colGap || "0px"]);
-	return "";
+	if (state) return String(blockController.getNativeStyle(`${state}:gap`) ?? "");
+	const [r, c] = getEffectiveGap();
+	if (r === "Mixed" || c === "Mixed") return r === "Mixed" && c === "Mixed" ? "Mixed" : collapseGapShorthand([r, c]);
+	return !r && !c ? "" : r === c ? r : collapseGapShorthand([r, c]);
 };
 
 const getPlaceholder = () => String(blockController.getCascadingStyle("gap") ?? "unset");
 
 const toControlValues = (value: unknown) => {
-	const [rowGap, colGap] = expandGapShorthand(value, "");
-	return isColumnDirection.value ? [colGap, rowGap] : [rowGap, colGap];
+	const [r, c] = typeof value === "string" && value.includes("Mixed") ? getEffectiveGap() : expandGapShorthand(value);
+	return isColumnDirection.value ? [c, r] : [r, c];
 };
 
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
 
-const toModelValue = (parts: BoxValue[]) => {
-	const [first, second] = parts;
-	return isColumnDirection.value
-		? collapseGapShorthand([second, first])
-		: collapseGapShorthand([first, second]);
-};
+const toModelValue = (parts: BoxValue[], changedIndex?: number) => ({
+	type: "gap-split",
+	rowGap: isColumnDirection.value ? parts[1] : parts[0],
+	colGap: isColumnDirection.value ? parts[0] : parts[1],
+	changedAxis: changedIndex !== undefined ? ((isColumnDirection.value ? changedIndex === 0 : changedIndex === 1) ? "columnGap" : "rowGap") : null,
+});
 
-const getMergedValue = (parts: BoxValue[]) => parts[0] ?? 0;
+const getMergedValue = (parts: BoxValue[]) => parts.find((p) => p && String(p) !== "Mixed") ?? 0;
 
 const splitOptions = [
-	{
-		label: "Use for all",
-		value: false,
-		icon: "lucide-square",
-		tooltip: "Use for all",
-	},
-	{
-		label: "Set separately",
-		value: true,
-		icon: "lucide-layout-grid",
-		tooltip: "Set separately",
-	},
+	{ label: "Use for all", value: false, icon: "lucide-square", tooltip: "Use for all" },
+	{ label: "Set separately", value: true, icon: "lucide-layout-grid", tooltip: "Set separately" },
 ];
 
 const getControlAttrs = (variant: string | null) => {
@@ -105,11 +100,33 @@ const getControlAttrs = (variant: string | null) => {
 	};
 };
 
-const setModelValue = (val: string | boolean | number) => {
+const setModelValue = (val: unknown) => {
 	if (typeof val === "boolean") return;
-	const value = String(val);
-	blockController.setStyle("rowGap", null);
-	blockController.setStyle("columnGap", null);
-	blockController.setStyle("gap", value || null);
+	const payload = val && typeof val === "object" && (val as any).type === "gap-split" ? (val as any) : null;
+
+	blockController.getSelectedBlocks().forEach((block) => {
+		if (payload) {
+			const [exR, exC] = getBlockGap(block);
+			let r = (payload.changedAxis === "columnGap" ? exR : String(payload.rowGap ?? "").trim());
+			let c = (payload.changedAxis === "rowGap" ? exC : String(payload.colGap ?? "").trim());
+			r = r === "Mixed" ? "" : r;
+			c = c === "Mixed" ? "" : c;
+
+			block.setStyle("gap", null);
+			if (r && c && r === c) {
+				block.setStyle("rowGap", null);
+				block.setStyle("columnGap", null);
+				block.setStyle("gap", r);
+			} else {
+				block.setStyle("rowGap", r || null);
+				block.setStyle("columnGap", c || null);
+			}
+		} else {
+			const value = String(val ?? "").trim();
+			block.setStyle("rowGap", null);
+			block.setStyle("columnGap", null);
+			block.setStyle("gap", value || null);
+		}
+	});
 };
 </script>
