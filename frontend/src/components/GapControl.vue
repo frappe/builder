@@ -46,8 +46,8 @@ const isColumnDirection = computed(() => {
 
 const splits = computed(() =>
 	isColumnDirection.value
-		? [{ label: "HORIZONTAL" }, { label: "VERTICAL" }]
-		: [{ label: "VERTICAL" }, { label: "HORIZONTAL" }],
+		? [{ label: "H" }, { label: "V" }]
+		: [{ label: "V" }, { label: "H" }],
 );
 
 const readValue = (state: string | null = null) => {
