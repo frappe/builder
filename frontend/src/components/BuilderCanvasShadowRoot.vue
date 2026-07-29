@@ -15,7 +15,7 @@
  * BlockEditor to the light DOM overlay element.
  */
 import { registerCanvasShadowRoot } from "@/utils/canvasShadowDom";
-import { ShadowStyleSync } from "@/utils/canvasShadowStyles";
+import { registerShadowStyles } from "@/utils/canvasShadowStyles";
 import { Ref, onBeforeUnmount, onMounted, ref } from "vue";
 
 const emit = defineEmits<{ ready: [ShadowRoot]; teardown: [] }>();
@@ -23,14 +23,13 @@ const emit = defineEmits<{ ready: [ShadowRoot]; teardown: [] }>();
 const host = ref(null) as Ref<HTMLElement | null>;
 const mountPoint = ref(null) as Ref<HTMLElement | null>;
 
-let styleSync: ShadowStyleSync | null = null;
+let unregisterShadowStyles = () => {};
 let unregisterShadowRoot = () => {};
 
 onMounted(() => {
 	const shadowRoot = host.value?.attachShadow({ mode: "open" });
 	if (!shadowRoot) return;
-	styleSync = new ShadowStyleSync(shadowRoot);
-	styleSync.start();
+	unregisterShadowStyles = registerShadowStyles(shadowRoot);
 	unregisterShadowRoot = registerCanvasShadowRoot(shadowRoot);
 	mountPoint.value = shadowRoot.appendChild(createMountPoint());
 	emit("ready", shadowRoot);
@@ -38,7 +37,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
 	emit("teardown");
-	styleSync?.stop();
+	unregisterShadowStyles();
 	unregisterShadowRoot();
 });
 

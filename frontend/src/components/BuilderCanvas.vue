@@ -77,7 +77,10 @@
 				<BuilderCanvasShadowRoot
 					@ready="(root) => registerCanvasRoot(breakpoint, root)"
 					@teardown="releaseCanvasRoot(breakpoint)">
-					<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
+					<component
+						:is="'style'"
+						v-if="blockStylesByBreakpoint.get(breakpoint.device)"
+						v-text="blockStylesByBreakpoint.get(breakpoint.device)" />
 					<BuilderBlock
 						class="h-full min-h-[inherit]"
 						:block="block"
@@ -174,7 +177,7 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-const blockStyles = reactive(new Map<string, string>());
+const blockStyles = reactive(new Map<string, { breakpoint: string; css: string }>());
 
 const props = withDefaults(
 	defineProps<{
@@ -188,7 +191,15 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
-const blockClientStyles = computed(() => Array.from(blockStyles.values()).join("\n"));
+// grouped by breakpoint so each shadow root only gets the CSS for blocks it actually contains
+const blockStylesByBreakpoint = computed(() => {
+	const grouped = new Map<string, string>();
+	blockStyles.forEach(({ breakpoint, css }) => {
+		if (!css) return;
+		grouped.set(breakpoint, grouped.has(breakpoint) ? `${grouped.get(breakpoint)}\n${css}` : css);
+	});
+	return grouped;
+});
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
@@ -481,7 +492,10 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
 	const css = scriptsActive ? script.css : "";
-	blockStyles.set(registrationKey, css ? `${selector} { ${css} }` : "");
+	blockStyles.set(registrationKey, {
+		breakpoint: script.breakpoint,
+		css: css ? `${selector} { ${css} }` : "",
+	});
 
 	let cleanup = () => {};
 	if (scriptsActive && script.javascript.trim()) {

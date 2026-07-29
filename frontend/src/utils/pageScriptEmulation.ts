@@ -11,6 +11,13 @@ import { CanvasScriptScope } from "@/utils/canvasScriptFacade";
 
 const WIDTH_ONLY_CONDITION = /^\(\s*(?:min|max)-width\s*:[^()]+\)(?:\s+and\s+\(\s*(?:min|max)-width\s*:[^()]+\))*$/i;
 
+// the rewrite only depends on the CSS text, not the breakpoint, so every
+// PageScriptRuntime instance can share one result instead of re-parsing it.
+// Each save of a script adds an entry, so evict the oldest rather than hold
+// every past revision for the session.
+const CACHE_LIMIT = 50;
+const containerQueryCache = new Map<string, string>();
+
 /**
  * A shadow root resolves @media against the editor viewport, so every
  * breakpoint would get the same answer. The canvas host is a size container,
@@ -18,13 +25,22 @@ const WIDTH_ONLY_CONDITION = /^\(\s*(?:min|max)-width\s*:[^()]+\)(?:\s+and\s+\(\
  * breakpoint. Anything else (print, orientation, hover) passes through.
  */
 function toContainerQueries(css: string) {
+	const cached = containerQueryCache.get(css);
+	if (cached !== undefined) return cached;
+
+	let result: string;
 	try {
 		const sheet = new CSSStyleSheet();
 		sheet.replaceSync(css);
-		return Array.from(sheet.cssRules, rewriteMediaRule).join("\n");
+		result = Array.from(sheet.cssRules, rewriteMediaRule).join("\n");
 	} catch {
-		return css;
+		result = css;
 	}
+	if (containerQueryCache.size >= CACHE_LIMIT) {
+		containerQueryCache.delete(containerQueryCache.keys().next().value as string);
+	}
+	containerQueryCache.set(css, result);
+	return result;
 }
 
 function rewriteMediaRule(rule: CSSRule) {
