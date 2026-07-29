@@ -49,6 +49,46 @@ useShortcut({
 	},
 });
 
+function toggleClientScripts() {
+	const canvasProps = canvasStore.activeCanvas?.canvasProps;
+	if (canvasProps) canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
+}
+
+// Remembers the Run/Stop state from before a preview hold, so releasing the
+// key restores it instead of always landing on Stop.
+let scriptsRunningBeforeHold = false;
+
+useShortcut([
+	{
+		key: "p",
+		ctrl: true,
+		shift: true,
+		description: "Toggle Client Scripts",
+		group: "Page",
+		condition: () => isBuilderRoute.value,
+		handler: toggleClientScripts,
+	},
+	{
+		key: "p",
+		alt: true,
+		shift: true,
+		description: "Hold to Preview Client Scripts",
+		group: "Page",
+		triggeredOn: "hold",
+		condition: () => isBuilderRoute.value,
+		onHold: () => {
+			const canvasProps = canvasStore.activeCanvas?.canvasProps;
+			if (!canvasProps) return;
+			scriptsRunningBeforeHold = canvasProps.scriptsRunning;
+			canvasProps.scriptsRunning = true;
+		},
+		onRelease: () => {
+			const canvasProps = canvasStore.activeCanvas?.canvasProps;
+			if (canvasProps) canvasProps.scriptsRunning = scriptsRunningBeforeHold;
+		},
+	},
+]);
+
 const isDark = useDark({ attribute: "data-theme" });
 const toggleDark = useToggle(isDark);
 
@@ -147,10 +187,7 @@ const staticCommands = computed<Command[]>(() => {
 						icon: canvasStore.activeCanvas?.canvasProps.scriptsRunning ? "lucide-square" : "lucide-play",
 						description: "Page",
 						group: "Page",
-						action: () => {
-							const canvasProps = canvasStore.activeCanvas?.canvasProps;
-							if (canvasProps) canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
-						},
+						action: toggleClientScripts,
 					},
 				]
 			: []),
