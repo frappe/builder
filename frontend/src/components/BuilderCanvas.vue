@@ -134,6 +134,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
+import { blockSelector } from "@/utils/blockStateStyles";
 import { elementFromPoint, getShadowRootOf } from "@/utils/canvasShadowDom";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { PageScriptRuntime } from "@/utils/pageScriptEmulation";
@@ -177,7 +178,9 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-const blockStyles = reactive(new Map<string, { breakpoint: string; css: string }>());
+type BreakpointStyles = { breakpoint: string; css: string };
+const blockStyles = reactive(new Map<string, BreakpointStyles>());
+const blockStateStyles = reactive(new Map<string, BreakpointStyles>());
 
 const props = withDefaults(
 	defineProps<{
@@ -191,13 +194,19 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
+// State styles resolve only while previewing. Editing means hovering blocks to
+// select them, and a block that restyles itself under the pointer is unusable.
+const previewingStates = computed(() => canvasProps.scriptsRunning);
+
 // grouped by breakpoint so each shadow root only gets the CSS for blocks it actually contains
 const blockStylesByBreakpoint = computed(() => {
 	const grouped = new Map<string, string>();
-	blockStyles.forEach(({ breakpoint, css }) => {
+	const append = ({ breakpoint, css }: BreakpointStyles) => {
 		if (!css) return;
 		grouped.set(breakpoint, grouped.has(breakpoint) ? `${grouped.get(breakpoint)}\n${css}` : css);
-	});
+	};
+	blockStyles.forEach(append);
+	if (previewingStates.value) blockStateStyles.forEach(append);
 	return grouped;
 });
 
@@ -410,6 +419,7 @@ watch(
 
 provide("canvasProps", canvasProps);
 provide("emulateBlockClientScript", emulateBlockClientScript);
+provide("registerBlockStateStyles", registerBlockStateStyles);
 
 defineExpose({
 	setScaleAndTranslate,
@@ -476,8 +486,12 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 	}
 }
 
-function escapeAttributeValue(value: string) {
-	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+// Registered whatever the mode, so toggling preview flips one computed here
+// rather than re-running every block's watcher.
+function registerBlockStateStyles(uid: string, breakpoint: string, css: string) {
+	const registrationKey = `${uid}:${breakpoint}`;
+	blockStateStyles.set(registrationKey, { breakpoint, css });
+	return () => blockStateStyles.delete(registrationKey);
 }
 
 function emulateBlockClientScript(script: BlockClientScriptRuntime) {
@@ -488,9 +502,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const scriptsActive = canvasProps.scriptsRunning && mode !== "Don't Execute";
 
 	// each breakpoint's shadow root already scopes its own styles to one canvas
-	const selector = `[data-block-uid="${escapeAttributeValue(
-		script.key,
-	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
+	const selector = blockSelector(script.key, script.breakpoint);
 	const css = scriptsActive ? script.css : "";
 	blockStyles.set(registrationKey, {
 		breakpoint: script.breakpoint,

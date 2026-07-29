@@ -18,7 +18,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { useDark, useToggle, watchDebounced } from "@vueuse/core";
-import { useShortcut } from "frappe-ui";
+import { toast, useShortcut } from "frappe-ui";
 import { computed, inject, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
@@ -49,9 +49,13 @@ useShortcut({
 	},
 });
 
+// Preview leaves no lasting mark on the canvas, so say which way it just went.
+// Only the deliberate toggle announces itself; a hold is self-evident.
 function toggleClientScripts() {
 	const canvasProps = canvasStore.activeCanvas?.canvasProps;
-	if (canvasProps) canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
+	if (!canvasProps) return;
+	canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
+	toast.info(canvasProps.scriptsRunning ? "Canvas preview on" : "Canvas preview off");
 }
 
 // Remembers the Run/Stop state from before a preview hold, so releasing the
@@ -137,7 +141,7 @@ const staticCommands = computed<Command[]>(() => {
 						group: "Navigate",
 						action: () => router.push({ name: "home" }),
 					},
-				]
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -181,7 +185,7 @@ const staticCommands = computed<Command[]>(() => {
 						group: "Page",
 						action: toggleClientScripts,
 					},
-				]
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -211,7 +215,7 @@ const staticCommands = computed<Command[]>(() => {
 							builderStore.activeLayers?.collapseAll();
 						},
 					},
-				]
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -235,7 +239,7 @@ const staticCommands = computed<Command[]>(() => {
 							builderStore.showRightPanel = !builderStore.showRightPanel;
 						},
 					},
-				]
+			  ]
 			: []),
 		{
 			name: "toggle-theme",
@@ -255,7 +259,7 @@ const staticCommands = computed<Command[]>(() => {
 						group: "General",
 						action: () => showShortcuts(),
 					},
-				]
+			  ]
 			: []),
 		{
 			name: "settings",
@@ -485,7 +489,7 @@ const commandGroups = computed(() => {
 		const items = q
 			? settingsCommands.value.filter(
 					(s) => s.title.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q),
-				)
+			  )
 			: settingsCommands.value;
 		const pageItems = items.filter((s) => (s as SettingsCommand).section === "page");
 		const globalItems = items.filter((s) => (s as SettingsCommand).section === "global");
@@ -511,7 +515,7 @@ const commandGroups = computed(() => {
 							component: CommandPaletteItem,
 							items: pageSearchResults.value,
 						},
-					]
+				  ]
 				: [];
 		}
 		return recentPages.value.length
@@ -523,7 +527,7 @@ const commandGroups = computed(() => {
 						component: CommandPaletteItem,
 						items: recentPages.value,
 					},
-				]
+			  ]
 			: [];
 	}
 
