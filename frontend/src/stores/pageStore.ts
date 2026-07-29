@@ -81,7 +81,13 @@ const usePageStore = defineStore("pageStore", {
 				});
 
 				await scriptsResource.list.promise;
-				this.activePageScripts = scriptsResource.data as BuilderClientScript[];
+				// the fetch does not keep attachment order, but execution order matters
+				const scriptsByName = new Map(
+					(scriptsResource.data as BuilderClientScript[]).map((script) => [script.name, script]),
+				);
+				this.activePageScripts = page.client_scripts
+					.map((attached) => scriptsByName.get(attached.builder_script))
+					.filter(Boolean) as BuilderClientScript[];
 			} else {
 				this.activePageScripts = [];
 			}

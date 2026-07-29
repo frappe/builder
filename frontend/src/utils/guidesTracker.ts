@@ -1,4 +1,5 @@
 import useCanvasStore from "@/stores/canvasStore";
+import { closestAcrossShadow } from "@/utils/canvasShadowDom";
 import { useElementBounding } from "@vueuse/core";
 import { reactive } from "vue";
 const canvasStore = useCanvasStore();
@@ -28,7 +29,7 @@ const tracks = [
 function setGuides(target: HTMLElement | SVGElement, canvasProps: CanvasProps) {
 	const threshold = 10;
 	// TODO: Remove canvas dependency
-	const canvasElement = target.closest(".canvas") as HTMLElement;
+	const canvasElement = closestAcrossShadow(target, ".canvas") as HTMLElement;
 	const canvasBounds = reactive(useElementBounding(canvasElement));
 	const targetBounds = reactive(useElementBounding(target));
 	const parentBounds = reactive(useElementBounding(target.parentElement as HTMLElement));

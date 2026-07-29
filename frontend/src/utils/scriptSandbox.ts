@@ -76,7 +76,7 @@ function executeClientScriptUnrestricted(
  */
 function executeClientScriptRestricted(
 	thisElement: HTMLElement | null,
-	sandboxRoot: HTMLElement | null,
+	sandboxRoot: HTMLElement | ShadowRoot | null,
 	userScript: string,
 	{ componentData = {}, props = {} }: ScriptContext = {},
 ): ScriptCleanup {

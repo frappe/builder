@@ -1,5 +1,6 @@
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, onScopeDispose, reactive, watch, watchEffect } from "vue";
+import { closestAcrossShadow } from "./canvasShadowDom";
 import { getElementRotation } from "./rotation";
 import { addPxToNumber } from "./helpers";
 
@@ -9,29 +10,46 @@ import { addPxToNumber } from "./helpers";
 // observer would die with whichever editor happened to create it) without leaking
 // stale updaters across the session.
 const updateList = new Set<() => void>();
+const observedRoots = new Set<Node>();
 let observer: MutationObserver | null = null;
 
-function startObserver(container: HTMLElement) {
-	observer = new MutationObserver(() => {
-		nextTick(() => updateList.forEach((fn) => fn()));
-	});
-	observer.observe(container, {
-		attributes: true,
-		childList: true,
-		subtree: true,
-		attributeFilter: ["style", "class"],
-		characterData: true,
-	});
+const OBSERVER_OPTIONS = {
+	attributes: true,
+	childList: true,
+	subtree: true,
+	attributeFilter: ["style", "class"],
+	characterData: true,
+};
+
+// One observer watches several roots. subtree does not reach into a shadow tree,
+// so each canvas shadow root has to be observed on its own.
+function observeRoot(root: Node) {
+	if (!observer) {
+		observer = new MutationObserver(() => {
+			nextTick(() => updateList.forEach((fn) => fn()));
+		});
+	}
+	if (observedRoots.has(root)) return;
+	observedRoots.add(root);
+	observer.observe(root, OBSERVER_OPTIONS);
+}
+
+function stopObserver() {
+	observer?.disconnect();
+	observer = null;
+	observedRoots.clear();
 }
 
 function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvasProps: CanvasProps) {
 	const targetBounds = reactive(useElementBounding(target));
-	const container = target.closest(".canvas-container") as HTMLElement | null;
+	// the target renders in a shadow root, so closest() alone stops at the boundary
+	// and the observer would never start
+	const container = closestAcrossShadow(target, ".canvas-container");
 
 	updateList.add(targetBounds.update);
-	if (container && !observer) {
-		startObserver(container);
-	}
+	if (container) observeRoot(container);
+	const targetRoot = target.getRootNode();
+	if (targetRoot instanceof ShadowRoot) observeRoot(targetRoot);
 
 	watch(canvasProps, () => nextTick(targetBounds.update), { deep: true });
 
@@ -62,10 +80,7 @@ function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvas
 
 	onScopeDispose(() => {
 		updateList.delete(targetBounds.update);
-		if (updateList.size === 0 && observer) {
-			observer.disconnect();
-			observer = null;
-		}
+		if (updateList.size === 0) stopObserver();
 	});
 
 	return targetBounds.update;

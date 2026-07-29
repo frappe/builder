@@ -42,6 +42,7 @@ declare module 'vue' {
     BuilderBlock: typeof import('./src/components/BuilderBlock.vue')['default']
     BuilderBlockTemplates: typeof import('./src/components/BuilderBlockTemplates.vue')['default']
     BuilderCanvas: typeof import('./src/components/BuilderCanvas.vue')['default']
+    BuilderCanvasShadowRoot: typeof import('./src/components/BuilderCanvasShadowRoot.vue')['default']
     BuilderCommandPalette: typeof import('./src/components/BuilderCommandPalette.vue')['default']
     BuilderLeftPanel: typeof import('./src/components/BuilderLeftPanel.vue')['default']
     BuilderRightPanel: typeof import('./src/components/BuilderRightPanel.vue')['default']

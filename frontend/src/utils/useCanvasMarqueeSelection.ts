@@ -2,6 +2,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import type { CanvasProps } from "@/types/Builder/BuilderCanvas";
+import { closestAcrossShadow, getEventTarget, queryAllWithin } from "@/utils/canvasShadowDom";
 import { computed, reactive, ref, type Ref } from "vue";
 
 const MIN_MARQUEE_DRAG = 5;
@@ -128,7 +129,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		const container = canvasContainer.value;
 		if (!container) return [];
 		const target = marqueeBreakpoint.value || activeBreakpoint.value;
-		const elements = container.querySelectorAll<HTMLElement>(
+		const elements = queryAllWithin(
+			container,
 			".__builder_component__[data-block-id][data-breakpoint]",
 		);
 		const result: BlockRectSnapshot[] = [];
@@ -231,17 +233,17 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		if (builderStore.readOnlyMode) return false;
 		if (canvasStore.isDragging || canvasProps.panning || canvasProps.scaling) return false;
 
-		const target = ev.target as HTMLElement | null;
+		const target = getEventTarget(ev);
 		if (!target) return false;
 
-		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {
+		if (closestAcrossShadow(target, "input, textarea, select, button, a, [contenteditable='true']")) {
 			return false;
 		}
 
 		// Pressing on an actual block starts a block drag/selection (see
 		// useBlockEventHandlers), not a marquee. The root block (page background)
 		// and truly empty canvas still start a marquee.
-		const blockEl = target.closest(".__builder_component__") as HTMLElement | null;
+		const blockEl = closestAcrossShadow(target, ".__builder_component__");
 		if (blockEl && blockEl.dataset.blockId && blockEl.dataset.blockId !== "root") {
 			return false;
 		}

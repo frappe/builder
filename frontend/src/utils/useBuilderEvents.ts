@@ -8,6 +8,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { closestAcrossShadow, getEventTarget } from "@/utils/canvasShadowDom";
 
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
 import {
@@ -554,9 +555,10 @@ export function useBuilderEvents(
 	// context menu
 	useEventListener(document, "contextmenu", async (e) => {
 		if (isTargetEditable(e)) return;
+		const eventTarget = getEventTarget(e);
 		const target =
-			<HTMLElement | null>(e.target as HTMLElement)?.closest("[data-block-layer-id]") ||
-			(e.target as HTMLElement)?.closest("[data-block-id]");
+			closestAcrossShadow(eventTarget, "[data-block-layer-id]") ||
+			closestAcrossShadow(eventTarget, "[data-block-id]");
 		if (target) {
 			const blockId = target.dataset.blockLayerId || target.dataset.blockId;
 			const block = canvasStore.activeCanvas?.findBlock(blockId as string);

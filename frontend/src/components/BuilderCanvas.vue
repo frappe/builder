@@ -4,7 +4,10 @@
 		:data-builder-canvas="canvasId"
 		@click="handleClick"
 		@mousedown="handleMarqueeStart">
-		<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
+		<component
+			:is="'style'"
+			v-if="blockClientStyles && !shadowCanvasEnabled"
+			v-text="blockClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -75,15 +78,24 @@
 					@click="activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
-				<BuilderBlock
-					class="h-full min-h-[inherit]"
-					:block="block"
-					:style="variables"
-					:key="block.blockId"
-					:readonly="builderStore.readOnlyMode"
-					v-if="showBlocks"
-					:breakpoint="breakpoint.device"
-					:data="pageStore.pageData" />
+				<BuilderCanvasShadowRoot
+					:disabled="!shadowCanvasEnabled"
+					@ready="(root) => registerCanvasRoot(breakpoint, root)"
+					@teardown="releaseCanvasRoot(breakpoint)">
+					<component
+						:is="'style'"
+						v-if="blockClientStyles && shadowCanvasEnabled"
+						v-text="blockClientStyles" />
+					<BuilderBlock
+						class="h-full min-h-[inherit]"
+						:block="block"
+						:style="variables"
+						:key="block.blockId"
+						:readonly="builderStore.readOnlyMode"
+						v-if="showBlocks"
+						:breakpoint="breakpoint.device"
+						:data="pageStore.pageData" />
+				</BuilderCanvasShadowRoot>
 			</div>
 		</div>
 		<div
@@ -127,7 +139,9 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
+import { elementFromPoint, getShadowRootOf, shadowCanvasEnabled } from "@/utils/canvasShadowDom";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { PageScriptRuntime } from "@/utils/pageScriptEmulation";
 import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
@@ -145,6 +159,7 @@ import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, w
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import BuilderCanvasShadowRoot from "./BuilderCanvasShadowRoot.vue";
 import DropIndicator from "./DropIndicator.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
@@ -187,6 +202,7 @@ const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBlock = ref(null) as Ref<string | null>;
 const setCanvasZoom = ref<(scale: number, pinchPoint: { x: number; y: number } | "center") => void>();
+let cleanupShadowCanvasEvents = () => {};
 
 const {
 	clearSelection,
@@ -282,7 +298,7 @@ onMounted(() => {
 		(readOnly) => (readOnly ? history.value?.disable() : history.value?.enable()),
 		{ immediate: true },
 	);
-	useCanvasEvents(
+	cleanupShadowCanvasEvents = useCanvasEvents(
 		canvasContainer as unknown as Ref<HTMLElement>,
 		canvasProps,
 		history as CanvasHistory,
@@ -297,6 +313,9 @@ onMounted(() => {
 
 onUnmounted(() => {
 	cleanupMarqueeListeners();
+	cleanupShadowCanvasEvents();
+	pageScriptRuntimes.forEach((runtime) => runtime.destroy());
+	pageScriptRuntimes.clear();
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -305,7 +324,7 @@ const handleClick = (ev: MouseEvent) => {
 		return;
 	}
 
-	const target = document.elementFromPoint(ev.clientX, ev.clientY);
+	const target = elementFromPoint(ev.clientX, ev.clientY);
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
 	if (target?.classList.contains("canvas-container")) {
@@ -452,11 +471,17 @@ function escapeAttributeValue(value: string) {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
-function emulateBlockClientScript(script: BlockClientScriptRuntime) {
-	const registrationKey = `${script.key}:${script.breakpoint}`;
-	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
+function blockStyleSelector(script: BlockClientScriptRuntime) {
+	const blockSelector = `[data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
+	// a shadow root already scopes its styles to one canvas
+	return shadowCanvasEnabled ? blockSelector : `[data-builder-canvas="${canvasId}"] ${blockSelector}`;
+}
+
+function emulateBlockClientScript(script: BlockClientScriptRuntime) {
+	const registrationKey = `${script.key}:${script.breakpoint}`;
+	const selector = blockStyleSelector(script);
 	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
@@ -466,10 +491,12 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 			componentData: script.componentData,
 			props: script.props,
 		};
+		// the block's own shadow root is a tighter sandbox than the whole canvas
+		const sandboxRoot = getShadowRootOf(script.element) ?? canvasContainer.value;
 		cleanup =
 			mode === "Unrestricted"
 				? executeClientScriptUnrestricted(script.element, script.javascript, context)
-				: executeClientScriptRestricted(script.element, canvasContainer.value, script.javascript, context);
+				: executeClientScriptRestricted(script.element, sandboxRoot, script.javascript, context);
 	}
 
 	return () => {
@@ -482,6 +509,37 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 }
 
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));
+
+// Page client scripts run once per breakpoint, against that breakpoint's shadow root.
+const pageScriptRuntimes = new Map<string, PageScriptRuntime>();
+
+function registerCanvasRoot(breakpoint: BreakpointConfig, root: ShadowRoot) {
+	pageScriptRuntimes.set(breakpoint.device, new PageScriptRuntime(root, breakpoint.width));
+	applyPageClientScripts();
+}
+
+function releaseCanvasRoot(breakpoint: BreakpointConfig) {
+	pageScriptRuntimes.get(breakpoint.device)?.destroy();
+	pageScriptRuntimes.delete(breakpoint.device);
+}
+
+function applyPageClientScripts() {
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	pageScriptRuntimes.forEach((runtime) =>
+		runtime.apply(pageStore.activePageScripts, mode !== "Don't Execute", pageStore.pageData),
+	);
+}
+
+watch(
+	[
+		() => pageStore.activePageScripts,
+		() => pageStore.pageData,
+		() => builderSettings.doc?.execute_block_scripts_in_editor,
+		() => pageStore.settingPage,
+	],
+	applyPageClientScripts,
+	{ deep: true },
+);
 </script>
 <style>
 .fade-enter-active,
