@@ -4,10 +4,6 @@
 		:data-builder-canvas="canvasId"
 		@click="handleClick"
 		@mousedown="handleMarqueeStart">
-		<component
-			:is="'style'"
-			v-if="blockClientStyles && !shadowCanvasEnabled"
-			v-text="blockClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -37,6 +33,30 @@
 						<span
 							:class="[builderStore.canvasDarkMode ? 'lucide-sun' : 'lucide-moon', 'h-8 w-6 text-ink-gray-8']"
 							aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<div
+					v-show="!canvasProps.scaling && !canvasProps.panning"
+					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
+				<Tooltip :text="canvasProps.scriptsRunning ? 'Stop Client Scripts' : 'Run Client Scripts'" :hoverDelay="0.6">
+					<div
+						v-show="!canvasProps.scaling && !canvasProps.panning"
+						class="w-auto cursor-pointer p-2"
+						@click.stop="canvasProps.scriptsRunning = !canvasProps.scriptsRunning">
+						<span
+							:class="[
+								canvasProps.scriptsRunning ? 'lucide-square' : 'lucide-play',
+								'h-8 w-6 text-ink-gray-8',
+							]"
+							aria-hidden="true" />
+					</div>
+				</Tooltip>
+				<Tooltip text="Refresh Client Scripts" :hoverDelay="0.6">
+					<div
+						v-show="!canvasProps.scaling && !canvasProps.panning && canvasProps.scriptsRunning"
+						class="w-auto cursor-pointer p-2"
+						@click.stop="refreshClientScripts">
+						<span class="lucide-refresh-cw h-8 w-6 text-ink-gray-8" aria-hidden="true" />
 					</div>
 				</Tooltip>
 				<div
@@ -79,13 +99,9 @@
 					{{ breakpoint.displayName }}
 				</div>
 				<BuilderCanvasShadowRoot
-					:disabled="!shadowCanvasEnabled"
 					@ready="(root) => registerCanvasRoot(breakpoint, root)"
 					@teardown="releaseCanvasRoot(breakpoint)">
-					<component
-						:is="'style'"
-						v-if="blockClientStyles && shadowCanvasEnabled"
-						v-text="blockClientStyles" />
+					<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
 					<BuilderBlock
 						class="h-full min-h-[inherit]"
 						:block="block"
@@ -139,7 +155,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import { elementFromPoint, getShadowRootOf, shadowCanvasEnabled } from "@/utils/canvasShadowDom";
+import { elementFromPoint, getShadowRootOf } from "@/utils/canvasShadowDom";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import { PageScriptRuntime } from "@/utils/pageScriptEmulation";
 import {
@@ -222,6 +238,10 @@ const canvasProps = reactive({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
+	// scripts are opt-in per session: they run in the editor's own realm,
+	// so an editor left open shouldn't execute arbitrary page/block JS by default
+	scriptsRunning: false,
+	scriptsRefreshNonce: 0,
 	breakpoints: [
 		{
 			icon: "lucide-monitor",
@@ -471,17 +491,12 @@ function escapeAttributeValue(value: string) {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
-function blockStyleSelector(script: BlockClientScriptRuntime) {
-	const blockSelector = `[data-block-uid="${escapeAttributeValue(
-		script.key,
-	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	// a shadow root already scopes its styles to one canvas
-	return shadowCanvasEnabled ? blockSelector : `[data-builder-canvas="${canvasId}"] ${blockSelector}`;
-}
-
 function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const registrationKey = `${script.key}:${script.breakpoint}`;
-	const selector = blockStyleSelector(script);
+	// each breakpoint's shadow root already scopes its own styles to one canvas
+	const selector = `[data-block-uid="${escapeAttributeValue(
+		script.key,
+	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
 	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
@@ -525,9 +540,17 @@ function releaseCanvasRoot(breakpoint: BreakpointConfig) {
 
 function applyPageClientScripts() {
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	const runJavaScript = canvasProps.scriptsRunning && mode !== "Don't Execute";
 	pageScriptRuntimes.forEach((runtime) =>
-		runtime.apply(pageStore.activePageScripts, mode !== "Don't Execute", pageStore.pageData),
+		runtime.apply(pageStore.activePageScripts, runJavaScript, pageStore.pageData),
 	);
+}
+
+// Refresh restarts scripts already running — new timers, listeners and a clean
+// JavaScript pass — without the user having to stop and start again.
+function refreshClientScripts() {
+	applyPageClientScripts();
+	canvasProps.scriptsRefreshNonce++;
 }
 
 watch(
@@ -536,6 +559,7 @@ watch(
 		() => pageStore.pageData,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
+		() => canvasProps.scriptsRunning,
 	],
 	applyPageClientScripts,
 	{ deep: true },

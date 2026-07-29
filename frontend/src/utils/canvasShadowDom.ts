@@ -9,12 +9,7 @@
  * - `event.target` retargets to the host element. Use `getEventTarget`.
  * - `document.querySelector` does not descend into a shadow root. Use `queryCanvas`.
  *
- * These helpers also work when no shadow root exists, so the call sites stay
- * correct with the flag off.
  */
-
-/** Prototype switch. Set `localStorage.builderShadowCanvas = "1"` to turn it on. */
-const shadowCanvasEnabled = localStorage.getItem("builderShadowCanvas") === "1";
 
 type DelegatedListener = {
 	type: string;
@@ -141,5 +136,4 @@ export {
 	queryCanvas,
 	queryCanvasAll,
 	registerCanvasShadowRoot,
-	shadowCanvasEnabled,
 };

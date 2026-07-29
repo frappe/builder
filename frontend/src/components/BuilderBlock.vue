@@ -415,9 +415,15 @@ watch(
 		allResolvedProps,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
+		() => canvasProps?.scriptsRunning,
+		() => canvasProps?.scriptsRefreshNonce,
 		componentDataReady,
 	],
-	([element, clientScript, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+	(
+		[element, clientScript, componentData, resolvedProps, , settingPage, scriptsRunning, , dataReady],
+		_,
+		onCleanup,
+	) => {
 		if (!element || !clientScript) return;
 		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
 		const cleanup = emulateBlockClientScript({
@@ -426,7 +432,7 @@ watch(
 			breakpoint: props.breakpoint,
 			css: clientScript.css ?? "",
 			javascript:
-				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
+				!scriptsRunning || settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
 					: clientScript.javascript ?? "",
 			componentData: componentData ?? {},

@@ -1,6 +1,5 @@
 <template>
-	<slot v-if="disabled" />
-	<div v-else ref="host" class="flex h-full min-h-[inherit] w-full">
+	<div ref="host" class="flex h-full min-h-[inherit] w-full">
 		<Teleport :to="mountPoint" v-if="mountPoint">
 			<slot />
 		</Teleport>
@@ -19,7 +18,6 @@ import { registerCanvasShadowRoot } from "@/utils/canvasShadowDom";
 import { ShadowStyleSync } from "@/utils/canvasShadowStyles";
 import { Ref, onBeforeUnmount, onMounted, ref } from "vue";
 
-const props = defineProps<{ disabled?: boolean }>();
 const emit = defineEmits<{ ready: [ShadowRoot]; teardown: [] }>();
 
 const host = ref(null) as Ref<HTMLElement | null>;
@@ -29,7 +27,6 @@ let styleSync: ShadowStyleSync | null = null;
 let unregisterShadowRoot = () => {};
 
 onMounted(() => {
-	if (props.disabled) return;
 	const shadowRoot = host.value?.attachShadow({ mode: "open" });
 	if (!shadowRoot) return;
 	styleSync = new ShadowStyleSync(shadowRoot);

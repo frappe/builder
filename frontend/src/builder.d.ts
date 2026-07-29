@@ -132,6 +132,9 @@ declare interface CanvasProps {
 	settingCanvas: boolean;
 	overlayElement: HTMLElement | null;
 	breakpoints: Breakpoint[];
+	scriptsRunning: boolean;
+	// bumped by the canvas's Refresh control to force a clean re-run of already-running scripts
+	scriptsRefreshNonce: number;
 }
 
 declare type EditingMode = "page" | "fragment";
