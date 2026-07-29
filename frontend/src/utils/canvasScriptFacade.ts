@@ -59,9 +59,15 @@ class CanvasScriptScope {
 		this.disposers.push(disposer);
 	}
 
-	/** The rendered page body, which is the root block. */
+	/**
+	 * The rendered page body, which is the root block.
+	 *
+	 * No fallback here on purpose: the shadow root also holds an internal style
+	 * sync element unrelated to the page, so guessing at a substitute risks a
+	 * script mutating the wrong node instead of failing loudly.
+	 */
 	private get pageBody() {
-		return this.root.querySelector<HTMLElement>("[data-block-id='root']") ?? this.root.firstElementChild;
+		return this.root.querySelector<HTMLElement>("[data-block-id='root']");
 	}
 
 	private addRootListener(type: string, listener: EventListenerOrEventListenerObject, options?: any) {

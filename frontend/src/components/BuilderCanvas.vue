@@ -147,7 +147,7 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
+import { Ref, computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
@@ -505,7 +505,9 @@ const pageScriptRuntimes = new Map<string, PageScriptRuntime>();
 
 function registerCanvasRoot(breakpoint: BreakpointConfig, root: ShadowRoot) {
 	pageScriptRuntimes.set(breakpoint.device, new PageScriptRuntime(root, breakpoint.width));
-	applyPageClientScripts();
+	// the shadow root exists before Vue has teleported the block tree into it,
+	// so a script run right now would find no root block
+	nextTick(applyPageClientScripts);
 }
 
 function releaseCanvasRoot(breakpoint: BreakpointConfig) {
