@@ -150,7 +150,7 @@ const getCSSPropertyOptions = (query: string, excludedProperties = new Set<strin
 };
 
 const getCSSValueOptions = (property: string, query: string) => {
-	return filterOptions(getKeywordOptions(property), query, MAX_SEARCH_RESULTS);
+	return filterOptions(getKeywordOptions(property), query, { limit: MAX_SEARCH_RESULTS });
 };
 
 export type { StyleControlConfig };
