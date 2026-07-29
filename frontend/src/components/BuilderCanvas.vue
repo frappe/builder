@@ -82,7 +82,7 @@
 						class="h-full min-h-[inherit]"
 						:block="block"
 						:style="variables"
-						:key="block.blockId"
+						:key="`${block.blockId}-${canvasProps.pageRestoreNonce}`"
 						:readonly="builderStore.readOnlyMode"
 						v-if="showBlocks"
 						:breakpoint="breakpoint.device"
@@ -217,6 +217,9 @@ const canvasProps = reactive({
 	// scripts are opt-in per session: they run in the editor's own realm,
 	// so an editor left open shouldn't execute arbitrary page/block JS by default
 	scriptsRunning: false,
+	// bumped on Stop to force the block tree to remount, undoing any raw DOM
+	// mutation a script made directly (e.g. document.body.innerHTML = ...)
+	pageRestoreNonce: 0,
 	breakpoints: [
 		{
 			icon: "lucide-monitor",
@@ -533,6 +536,17 @@ watch(
 	],
 	applyPageClientScripts,
 	{ deep: true },
+);
+
+// Stopping cleans up listeners and timers, but a script can also mutate the
+// DOM directly (document.body.innerHTML = ...), which Vue has no way to know
+// about or undo on its own. Force the block tree to remount from the Block
+// model so the page comes back to what it should be.
+watch(
+	() => canvasProps.scriptsRunning,
+	(running, wasRunning) => {
+		if (!running && wasRunning) canvasProps.pageRestoreNonce++;
+	},
 );
 </script>
 <style>
