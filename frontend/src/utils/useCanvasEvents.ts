@@ -234,7 +234,7 @@ export function useCanvasEvents(
 	});
 
 	useEventListener(container, "mouseover", handleMouseOver);
-	// a container listener only sees the pointer entering the canvas, never a move
+	// a container listener only sees the pointer enter the canvas, never a move
 	// between two blocks inside it
 	return addShadowRootListener("mouseover", handleMouseOver as EventListener);
 }

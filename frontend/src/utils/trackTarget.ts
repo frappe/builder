@@ -22,7 +22,7 @@ const OBSERVER_OPTIONS = {
 };
 
 // One observer watches several roots. subtree does not reach into a shadow tree,
-// so each canvas shadow root has to be observed on its own.
+// so it must observe each canvas shadow root on its own.
 function observeRoot(root: Node) {
 	if (!observer) {
 		observer = new MutationObserver(() => {
@@ -43,7 +43,7 @@ function stopObserver() {
 function trackTarget(target: HTMLElement | SVGElement, host: HTMLElement, canvasProps: CanvasProps) {
 	const targetBounds = reactive(useElementBounding(target));
 	// the target renders in a shadow root, so closest() alone stops at the boundary
-	// and the observer would never start
+	// and the observer never starts
 	const container = closestAcrossShadow(target, ".canvas-container");
 
 	updateList.add(targetBounds.update);

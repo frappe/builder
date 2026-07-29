@@ -214,11 +214,11 @@ const canvasProps = reactive({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
-	// scripts are opt-in per session: they run in the editor's own realm,
-	// so an editor left open shouldn't execute arbitrary page/block JS by default
+	// Scripts are opt-in per session. They share the editor's own realm, so an
+	// open editor should not run arbitrary page or block JavaScript unless asked.
 	scriptsRunning: false,
 	// bumped on Stop to force the block tree to remount, undoing any raw DOM
-	// mutation a script made directly (e.g. document.body.innerHTML = ...)
+	// mutation a script made (e.g. document.body.innerHTML = ...)
 	pageRestoreNonce: 0,
 	breakpoints: [
 		{
@@ -508,8 +508,8 @@ const pageScriptRuntimes = new Map<string, PageScriptRuntime>();
 
 function registerCanvasRoot(breakpoint: BreakpointConfig, root: ShadowRoot) {
 	pageScriptRuntimes.set(breakpoint.device, new PageScriptRuntime(root, breakpoint.width));
-	// the shadow root exists before Vue has teleported the block tree into it,
-	// so a script run right now would find no root block
+	// the shadow root exists before Vue teleports the block tree into it,
+	// so a script run now finds no root block
 	nextTick(applyPageClientScripts);
 }
 
@@ -538,10 +538,10 @@ watch(
 	{ deep: true },
 );
 
-// Stopping cleans up listeners and timers, but a script can also mutate the
-// DOM directly (document.body.innerHTML = ...), which Vue has no way to know
-// about or undo on its own. Force the block tree to remount from the Block
-// model so the page comes back to what it should be.
+// Stopping cleans up listeners and timers only. A script can also mutate the
+// DOM directly, such as document.body.innerHTML = ... Vue has no way to detect
+// or undo that on its own. So this remounts the block tree from the Block
+// model to bring the page back.
 watch(
 	() => canvasProps.scriptsRunning,
 	(running, wasRunning) => {

@@ -2,13 +2,12 @@
  * Shadow DOM support for canvas breakpoints.
  *
  * Each breakpoint renders its blocks inside a shadow root, so page CSS cannot
- * reach the editor UI. A shadow root shares the viewport, the coordinate space
- * and the event loop with the editor, so rects, listeners and drag events need
+ * reach the editor UI. A shadow root shares the viewport, the coordinate space,
+ * and the event loop with the editor. Rects, listeners, and drag events need
  * no translation. Only two boundary rules need care:
  *
  * - `event.target` retargets to the host element. Use `getEventTarget`.
  * - `document.querySelector` does not descend into a shadow root. Use `queryCanvas`.
- *
  */
 
 type DelegatedListener = {
@@ -36,11 +35,11 @@ function registerCanvasShadowRoot(root: ShadowRoot) {
 /**
  * Listen inside every canvas shadow root, now and for roots added later.
  *
- * Needed for events that carry a relatedTarget, such as mouseover and mouseout.
- * Event dispatch skips any tree where the target and the relatedTarget retarget
- * to the same node, so moving the pointer between two blocks in one canvas never
- * reaches a listener above the host. Entering the canvas from outside still does,
- * which makes the bug look like "the highlight works once".
+ * Needed for events with a relatedTarget, such as mouseover and mouseout.
+ * Event dispatch skips a tree when the target and the relatedTarget retarget
+ * to the same node. So a pointer move between two blocks in one canvas never
+ * reaches a listener above the host, though entering the canvas from outside
+ * still does. That is why the bug looks like "the highlight works once".
  */
 function addShadowRootListener(
 	type: string,
@@ -108,7 +107,7 @@ function queryCanvasAll(selector: string): HTMLElement[] {
 	return searchRoots().flatMap((root) => Array.from(root.querySelectorAll<HTMLElement>(selector)));
 }
 
-/** querySelectorAll below `root`, descending into the canvas shadow roots it contains. */
+/** querySelectorAll under `root`, including any canvas shadow roots inside it. */
 function queryAllWithin(root: HTMLElement, selector: string): HTMLElement[] {
 	const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
 	for (const shadowRoot of canvasShadowRoots) {
@@ -119,7 +118,7 @@ function queryAllWithin(root: HTMLElement, selector: string): HTMLElement[] {
 	return matches;
 }
 
-/** The shadow root a block renders in, or null when the block is in light DOM. */
+/** The shadow root a block renders in, or null if the block is in the light DOM. */
 function getShadowRootOf(element: Node): ShadowRoot | null {
 	const root = element.getRootNode();
 	return root instanceof ShadowRoot ? root : null;

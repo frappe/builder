@@ -9,9 +9,9 @@
 /**
  * Renders one breakpoint inside a shadow root.
  *
- * The slot content stays in the parent render scope, so provide/inject, stores
+ * The slot content stays in the parent render scope, so provide/inject, stores,
  * and the block tree work as before. Only the rendered nodes move across the
- * boundary. Editor overlays are not affected: BuilderBlock already teleports
+ * boundary. This does not affect editor overlays: BuilderBlock already teleports
  * BlockEditor to the light DOM overlay element.
  */
 import { registerCanvasShadowRoot } from "@/utils/canvasShadowDom";
@@ -44,9 +44,9 @@ onBeforeUnmount(() => {
 
 /**
  * Mirrors the canvas box so the block tree keeps the layout it had as a direct
- * child of .canvas. display:contents looks tidier but breaks two things: the
- * min-height:inherit chain the root block relies on, and getBoundingClientRect
- * for code that reads a block's parentElement.
+ * child of .canvas. display:contents looks tidier, but it breaks the
+ * min-height:inherit chain the root block relies on. It also breaks
+ * getBoundingClientRect for any code that reads a block's parentElement.
  */
 function createMountPoint() {
 	const element = document.createElement("div");

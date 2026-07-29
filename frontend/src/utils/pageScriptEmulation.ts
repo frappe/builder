@@ -2,8 +2,8 @@
  * Runs page client scripts inside one breakpoint shadow root.
  *
  * A published page loads each attached script as a <script src> or a stylesheet
- * link, in attachment order. This reproduces that in the canvas: CSS goes into
- * the shadow root as one style element, JavaScript runs against the canvas
+ * link, in attachment order. This reproduces that in the canvas. CSS goes into
+ * the shadow root as one style element. JavaScript runs against the canvas
  * facades. Re-applying replaces both, so an edit re-runs the scripts.
  */
 import type { BuilderClientScript } from "@/types/doctypes";
@@ -59,7 +59,7 @@ class PageScriptRuntime {
 		scripts.filter(isJavaScript).forEach((script) => this.runScript(script));
 	}
 
-	/** Undo listeners and timers. DOM the scripts wrote is left to Vue to re-render. */
+	/** Undo listeners and timers only. BuilderCanvas.vue remounts the block tree separately to undo any DOM change. */
 	stop() {
 		this.scope?.dispose();
 		this.scope = null;
@@ -82,7 +82,7 @@ class PageScriptRuntime {
 	/**
 	 * container-type also applies layout containment, which makes the host a
 	 * containing block for absolutely positioned blocks. Only pay that cost on
-	 * pages whose CSS actually has width media queries to resolve.
+	 * pages whose CSS has width media queries to resolve.
 	 */
 	private setSizeContainer(needed: boolean) {
 		(this.root.host as HTMLElement).style.containerType = needed ? "inline-size" : "";

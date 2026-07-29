@@ -8,9 +8,8 @@
  * caller can undo them.
  *
  * These facades emulate. They do not sandbox. A page script still runs in the
- * editor JavaScript realm and can reach the real window through any global it
- * likes. Shadow DOM cannot prevent that. Use scriptSandbox.ts when you need the
- * restricted mode.
+ * editor's JavaScript realm and can reach the real window through any global.
+ * Shadow DOM does not prevent that. Use scriptSandbox.ts for the restricted mode.
  */
 
 type Disposer = () => void;
@@ -62,9 +61,9 @@ class CanvasScriptScope {
 	/**
 	 * The rendered page body, which is the root block.
 	 *
-	 * No fallback here on purpose: the shadow root also holds an internal style
-	 * sync element unrelated to the page, so guessing at a substitute risks a
-	 * script mutating the wrong node instead of failing loudly.
+	 * No fallback here on purpose. The shadow root also holds an internal
+	 * style-sync element unrelated to the page. Guessing at a substitute risks
+	 * a wrong mutation instead of a loud failure.
 	 */
 	private get pageBody() {
 		return this.root.querySelector<HTMLElement>("[data-block-id='root']");
