@@ -2,7 +2,7 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-4xl-semibold">Screen too small</h1>
+			<h1 class="text-p-3xl-semibold">Screen too small</h1>
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
@@ -136,6 +136,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
+import componentController from "@/utils/componentController.js";
 import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
@@ -143,7 +144,7 @@ import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
-import componentController from "@/utils/componentController.js";
+import { prefetchBuilderSettings } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
@@ -260,6 +261,7 @@ watch(
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
 		() => canvasStore.versionPreviewBlock,
+		() => builderStore.isSiteInReadOnlyMode,
 	],
 	() => {
 		const previewing = Boolean(canvasStore.versionPreviewBlock);
@@ -267,8 +269,12 @@ watch(
 			(Boolean(pageStore.activePage?.is_standard) ||
 				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
 			!window.is_developer_mode;
-		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
+		builderStore.toggleReadOnlyMode(
+			builderStore.isSiteInReadOnlyMode ||
+				(canvasStore.editingMode === "page" && (previewing || isProtected)),
+		);
 	},
+	{ immediate: true },
 );
 
 declare global {
@@ -354,7 +360,7 @@ useEventListener(document, "keyup", (e) => {
 });
 
 async function saveAndExitFragmentMode(e: Event) {
-	if (canvasStore.fragmentData.fragmentKind === "component") {
+	if (canvasStore.fragmentData.fragmentType === "component") {
 		componentController.applyComponentDoc();
 	}
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
@@ -440,6 +446,7 @@ onDeactivated(() => {
 
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
+	prefetchBuilderSettings();
 });
 
 watchEffect(() => {
@@ -503,7 +510,7 @@ watch(
 				},
 				auto: true,
 			});
-			usageCountResource.promise.then((res: { count: number; pages: BuilderPage[] }) => {
+			usageCountResource.promise?.then((res: { count: number; pages: BuilderPage[] }) => {
 				usageCount.value = res.count;
 				componentUsedInPages.value = res.pages;
 			});

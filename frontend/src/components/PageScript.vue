@@ -40,7 +40,7 @@
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
 			<template #title>
 				<div class="flex w-full items-center justify-between gap-3 pr-2">
-					<span class="text-xl font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
+					<span class="text-lg font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
@@ -149,17 +149,17 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
 import { toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
-import { computed, defineComponent, nextTick, ref, watch } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import TabButtons from "./Controls/TabButtons.vue";
-import PropsEditor from "./PropsEditor.vue";
-import useCanvasStore from "@/stores/canvasStore.js";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
+import PropsEditor from "./PropsEditor.vue";
 
 const { capture } = useTelemetry();
 
@@ -185,7 +185,7 @@ const blockCSSEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const currentScriptEditor = ref<"client" | "data">("client");
 const mode = computed<"page" | "component" | "blockTemplate">(() => {
 	if (canvasStore.editingMode !== "fragment") return "page";
-	return canvasStore.fragmentData.fragmentKind || "component";
+	return canvasStore.fragmentData.fragmentType || "component";
 });
 
 const blockClientScriptTabs = [
@@ -281,6 +281,8 @@ const isDirty = computed(() => {
 	return false;
 });
 
+// immediate: the request may have arrived before this component mounted,
+// since the left panel mounts it lazily
 watch(
 	() => builderStore.showDataScriptDialog,
 	() => {
@@ -289,5 +291,6 @@ watch(
 			builderStore.showDataScriptDialog = null;
 		}
 	},
+	{ immediate: true },
 );
 </script>

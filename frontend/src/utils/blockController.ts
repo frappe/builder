@@ -119,9 +119,10 @@ const blockController = {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				let blockKey = block[key] ?? block.referenceComponent?.[key];
 				if (keyValue === "__initial__") {
-					keyValue = block[key];
-				} else if (keyValue !== block[key]) {
+					keyValue = blockKey;
+				} else if (keyValue !== blockKey) {
 					keyValue = "Mixed";
 				}
 			});
@@ -168,19 +169,6 @@ const blockController = {
 		const block = canvasStore.activeCanvas?.selectedBlocks[0];
 		if (!block) return;
 		block.classes = classes;
-	},
-	getRawStyles: () => {
-		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
-	},
-	setRawStyles: (rawStyles: BlockStyleMap) => {
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			Object.keys(block.rawStyles).forEach((key) => {
-				if (!rawStyles[key]) {
-					delete block.rawStyles[key];
-				}
-			});
-			Object.assign(block.rawStyles, rawStyles);
-		});
 	},
 	getCustomAttributes: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();

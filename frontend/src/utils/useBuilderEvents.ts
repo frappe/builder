@@ -236,6 +236,16 @@ export function useBuilderEvents(
 			},
 		},
 		{
+			key: "d",
+			ctrl: true,
+			shift: true,
+			description: "Toggle canvas dark mode",
+			group: "View",
+			handler: () => {
+				builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
+			},
+		},
+		{
 			key: "s",
 			ctrl: true,
 			description: "Save page / component",
@@ -532,8 +542,8 @@ export function useBuilderEvents(
 			if (route.params.pageId && route.params.pageId !== "new") {
 				const currentModified = pageStore.activePage?.modified;
 				webComponent.reload();
-				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[]) => {
-					if (currentModified !== doc[0]?.modified) {
+				webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[] | null) => {
+					if (currentModified !== doc?.[0]?.modified) {
 						pageStore.setPage(route.params.pageId as string, false, route.query);
 					}
 				});
@@ -579,20 +589,20 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 			message: "Do you want to copy the entire page including settings and scripts?",
 			actions: [
 				{
-					label: "Yes",
-					variant: "solid",
-					onClick: () => {
-						canvasStore.requiresConfirmationForCopyingEntirePage = false;
-						canvasStore.copyEntirePage = true;
-						triggerCopyEvent();
-					},
-				},
-				{
 					label: "No, just blocks",
 					variant: "subtle",
 					onClick: () => {
 						canvasStore.requiresConfirmationForCopyingEntirePage = false;
 						canvasStore.copyEntirePage = false;
+						triggerCopyEvent();
+					},
+				},
+				{
+					label: "Yes",
+					variant: "solid",
+					onClick: () => {
+						canvasStore.requiresConfirmationForCopyingEntirePage = false;
+						canvasStore.copyEntirePage = true;
 						triggerCopyEvent();
 					},
 				},

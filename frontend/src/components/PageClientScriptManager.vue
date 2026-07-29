@@ -4,7 +4,7 @@
 			<div class="flex h-full w-48 flex-col justify-between gap-1">
 				<div class="flex flex-col gap-1">
 					<draggable
-						v-model="attachedScriptResource.data"
+						v-model="attachedScripts"
 						:item-key="(script: attachedScript) => script.name"
 						handle=".drag-handle"
 						@end="onScriptReorder"
@@ -193,6 +193,13 @@ const attachedScriptResource = createListResource({
 		if (data && data.length > 0 && !activeScript.value) {
 			selectScript(data[0]);
 		}
+	},
+});
+
+const attachedScripts = computed({
+	get: () => attachedScriptResource.data ?? [],
+	set: (scripts: attachedScript[]) => {
+		attachedScriptResource.data = scripts;
 	},
 });
 

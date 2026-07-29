@@ -6,7 +6,8 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontList, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, fontListItems, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
+import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -41,9 +42,10 @@ const typographySectionProperties = [
 				label: "Family",
 				component: Autocomplete,
 				propertyKey: "fontFamily",
-				getOptions: (filterString: string) => {
+				getOptions: async (filterString: string) => {
+					await loadFontList();
 					const fontOptions = [] as { label: string; value: string }[];
-					userFonts.data.forEach((font: UserFont) => {
+					userFonts.data?.forEach((font: UserFont) => {
 						if (fontOptions.length >= 20) {
 							return;
 						}
@@ -65,7 +67,7 @@ const typographySectionProperties = [
 							value: "_separator_2",
 						});
 					}
-					fontList.items.forEach((font) => {
+					fontListItems.value.forEach((font) => {
 						if (fontOptions.length >= 20) {
 							return;
 						}
@@ -95,7 +97,13 @@ const typographySectionProperties = [
 				label: "Weight",
 				propertyKey: "fontWeight",
 				component: Autocomplete,
-				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+				// static options were never query-filtered, so ignore the search
+				// string; awaiting the list keeps all weights of a preselected
+				// font available on first open
+				getOptions: async () => {
+					await loadFontList();
+					return getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string);
+				},
 				step: 100,
 				min: 100,
 				max: 900,
@@ -111,7 +119,7 @@ const typographySectionProperties = [
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
-				unitOptions: ["px", "em", "rem"],
+				unitOptions: BOX_UNIT_OPTIONS,
 			};
 		},
 		searchKeyWords: "Font, Size, FontSize",

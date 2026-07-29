@@ -42,8 +42,10 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, VNodeRef, watch } from "vue";
-import CodeMirrorEditor from "./CodeMirror/CodeMirrorEditor.vue";
+import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
+
+// keeps the CodeMirror stack out of the main editor bundle
+const CodeMirrorEditor = defineAsyncComponent(() => import("./CodeMirror/CodeMirrorEditor.vue"));
 
 const props = withDefaults(
 	defineProps<{

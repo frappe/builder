@@ -166,12 +166,12 @@ def reset_block_styles(block: Block) -> None:
 	block.innerHTML = None
 	block.element = None
 	block.baseStyles = dict()
-	block.rawStyles = dict()
 	block.mobileStyles = dict()
 	block.tabletStyles = dict()
 	block.attributes = dict()
 	block.customAttributes = dict()
 	block.classes = []
+	block.clientScript = dict()
 	block.children = block.children or []
 
 

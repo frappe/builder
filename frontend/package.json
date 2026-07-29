@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:reset": "tailwindcss -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
+    "build:reset": "tailwindcss -c ./tailwind.reset.config.js -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
+    "generate:css-metadata": "node ./scripts/generate-css-property-metadata.mjs",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.ts,.vue",
     "test-local": "cypress open --e2e --browser chrome",
@@ -38,7 +39,7 @@
     "@vueuse/core": "^10.2.1",
     "autoprefixer": "^10.4.2",
     "codemirror": "^6.0.2",
-    "frappe-ui": "1.0.0-beta.8",
+    "frappe-ui": "1.0.0-beta.21",
     "js-yaml": "^4.1.1",
     "opentype.js": "^1.3.4",
     "pinia": "^2.0.28",
@@ -62,9 +63,11 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-vue": "^9.11.0",
+    "mdn-data": "2.27.1",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.2.8",
-    "tslib": "^2.5.0"
+    "tslib": "^2.5.0",
+    "web-features": "3.34.1"
   },
   "peerDependencies": {}
 }

@@ -27,6 +27,28 @@
 		list-style: revert;
 		padding: revert;
 	}
+
+	/* Font defaults published pages rely on. Previously came from the frappe-ui
+	   Tailwind preset, but that preset also dumped its entire design-token set onto
+	   every published page (see tailwind.reset.config.js), so the font rules are
+	   authored here instead — Preflight and @tailwindcss/forms cover the rest. */
+	html {
+		font-family:
+			InterVar, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+			"Segoe UI Symbol", "Noto Color Emoji";
+		font-optical-sizing: auto;
+	}
+
+	html,
+	body,
+	button,
+	p,
+	span,
+	div {
+		font-variation-settings: "opsz" 24, "cv11" 1;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 }
 
 p:empty:before {
@@ -40,6 +62,14 @@ p:not(:where(.prose,.ProseMirror) *) {
 
 .__text_block__ {
 	overflow-wrap: break-word;
+}
+/* Clipped/gradient text (background-clip: text) is set on the text block element,
+   but the text lives in a child (<p>/<div>). background-image and background-clip
+   don't inherit, so without this the clipped text renders invisible. */
+.__text_block__ > * {
+	background-image: inherit;
+	-webkit-background-clip: inherit;
+	background-clip: inherit;
 }
 .__text_block__ a {
 	color: var(--link-color);

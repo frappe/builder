@@ -25,6 +25,7 @@ const imageOptionsSectionProperties = [
 		},
 		searchKeyWords:
 			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
+		usedStyleProperties: ["object-fit"],
 	},
 	{
 		component: Button,

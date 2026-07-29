@@ -59,7 +59,7 @@
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
-				<Tooltip text="Toggle Canvas Dark Mode" :hoverDelay="0.6">
+				<Tooltip text="Toggle Canvas Dark Mode (⌘⇧D)" :hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
 						class="w-auto cursor-pointer p-2"
@@ -93,7 +93,7 @@
 				v-show="breakpoint.visible"
 				:key="breakpoint.device">
 				<div
-					class="absolute left-0 cursor-pointer select-none text-5xl text-ink-gray-7"
+					class="absolute left-0 cursor-pointer select-none text-4xl text-ink-gray-7"
 					:style="{
 						fontSize: `calc(${12}px * 1/${canvasProps.scale})`,
 						top: `calc(${-20}px * 1/${canvasProps.scale})`,
@@ -134,15 +134,16 @@
 				</BuilderCanvasFrame>
 			</div>
 		</div>
+		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
+		<DropIndicator />
 		<div
 			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
-			v-show="!canvasProps.panning">
+			v-show="!canvasProps.panning && !canvasStore.isDragging">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
 			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
 				<FitScreenIcon />
 			</div>
 		</div>
-		<div v-show="marquee.visible" class="pointer-events-none fixed z-[200]" :style="marqueeStyle" />
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
@@ -167,6 +168,7 @@ import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory, CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { elementFromEditorPoint, forwardFrameEvents } from "@/utils/canvasFrameDom";
@@ -201,9 +203,11 @@ import {
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import DropIndicator from "./DropIndicator.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
 const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 const canvasId = `builder-canvas-${useId()}`;
 
@@ -700,5 +704,10 @@ const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) =
 
 .canvas[data-drop-active] > .editor {
 	pointer-events: none;
+}
+
+/* mirrors the published-page default in webpage_scripts.html */
+.scheme-dark img:not([data-dark-src]) {
+	filter: brightness(0.85) contrast(1.05);
 }
 </style>

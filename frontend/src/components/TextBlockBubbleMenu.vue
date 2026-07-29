@@ -7,7 +7,7 @@
 		:plugin-key="bubbleMenuPluginKey"
 		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-xl text-ink-gray-9 shadow-2xl">
+		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -106,9 +106,7 @@
 					:modelValue="selectedColor"
 					@update:modelValue="setTextColor"
 					:show-input="true"
-					placement="top"
-					:appendTo="overlayElement"
-					popoverClass="!min-w-fit">
+					placement="top">
 					<template #target="{ togglePopover, isOpen }">
 						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">

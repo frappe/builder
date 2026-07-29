@@ -21,14 +21,12 @@
 					left: topHandle.left,
 					height: topHandle.height + 'px',
 					width: topHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingTop }}
+				{{ getPaddingValue(Position.Top) }}
 			</div>
 		</div>
 		<div
@@ -46,14 +44,12 @@
 					left: bottomHandle.left,
 					height: bottomHandle.height + 'px',
 					width: bottomHandle.width + 'px',
+					cursor: disableHandlers ? undefined : verticalCursor,
 				}"
-				:class="{
-					'cursor-ns-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingBottom }}
+				{{ getPaddingValue(Position.Bottom) }}
 			</div>
 		</div>
 		<div
@@ -71,14 +67,12 @@
 					top: leftHandle.top,
 					height: leftHandle.height + 'px',
 					width: leftHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingLeft }}
+				{{ getPaddingValue(Position.Left) }}
 			</div>
 		</div>
 		<div
@@ -96,26 +90,23 @@
 					top: rightHandle.top,
 					height: rightHandle.height + 'px',
 					width: rightHandle.width + 'px',
+					cursor: disableHandlers ? undefined : horizontalCursor,
 				}"
-				:class="{
-					'cursor-ew-resize': !disableHandlers,
-					hidden: updating,
-				}"
+				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
-				{{ blockStyles.paddingRight }}
+				{{ getPaddingValue(Position.Right) }}
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
+import { useRotatedCursors } from "@/composables/useRotatedCursors";
 import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
-import { getComputedStyleFor, startCanvasDrag } from "@/utils/canvasFrameDom";
-import { computed, ref, watchEffect } from "vue";
+import { getComputedStyleFor } from "@/utils/canvasFrameDom";
+import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
-
-import { toast } from "frappe-ui";
 
 const props = withDefaults(
 	defineProps<{
@@ -136,10 +127,12 @@ const {
 	canvasProps,
 	updating,
 	blockStyles,
+	getSpacingValue,
 	handleBorderWidth,
 	longHandleSize,
 	sideHandleSize,
 	canvasPixelsForScreenScale,
+	startSpacingDrag,
 } = useSpacingHandler(
 	() => props.targetBlock,
 	() => props.breakpoint,
@@ -148,6 +141,11 @@ const {
 watchEffect(() => {
 	emit("update", updating.value);
 });
+
+const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
@@ -166,13 +164,11 @@ const rightPaddingHandlerWidth = computed(() => {
 });
 
 const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
-	blockStyles.value.paddingRight;
-	blockStyles.value.paddingTop;
-	blockStyles.value.paddingBottom;
-	blockStyles.value.paddingLeft;
 	blockStyles.value.padding;
 	return getNumberFromPx(getComputedStyleFor(props.target)[`padding${side}`]);
 };
+
+const getPaddingValue = (position: Position) => getSpacingValue("padding", position);
 
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;
@@ -214,71 +210,13 @@ const rightHandle = computed(() => {
 	};
 });
 
-const messageShown = ref(false);
-
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	// if (!messageShown.value && !(ev.shiftKey || ev.altKey)) {
-	// 	showToast();
-	// 	messageShown.value = true;
-	// }
-	updating.value = true;
-	const target = ev.target as HTMLElement;
-
-	const startTop = getNumberFromPx(String(blockStyles.value.paddingTop || "")) || 5;
-	const startBottom = getNumberFromPx(String(blockStyles.value.paddingBottom || "")) || 5;
-	const startLeft = getNumberFromPx(String(blockStyles.value.paddingLeft || "")) || 5;
-	const startRight = getNumberFromPx(String(blockStyles.value.paddingRight || "")) || 5;
-
-	startCanvasDrag(ev, props.target, {
-		cursor: getComputedStyleFor(target).cursor,
-		onMove: ({ event, point, startPoint }) => {
-			let movement = 0;
-			let affectingAxis = null;
-			props.onUpdate?.();
-			if (position === Position.Top) {
-				movement = Math.max(startTop + point.y - startPoint.y, 0);
-				props.targetBlock.setStyle("paddingTop", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Bottom) {
-				movement = Math.max(startBottom + startPoint.y - point.y, 0);
-				props.targetBlock.setStyle("paddingBottom", movement + "px");
-				affectingAxis = "y";
-			} else if (position === Position.Left) {
-				movement = Math.max(startLeft + point.x - startPoint.x, 0);
-				props.targetBlock.setStyle("paddingLeft", movement + "px");
-				affectingAxis = "x";
-			} else if (position === Position.Right) {
-				movement = Math.max(startRight + startPoint.x - point.x, 0);
-				props.targetBlock.setStyle("paddingRight", movement + "px");
-				affectingAxis = "x";
-			}
-
-			if (event.altKey) {
-				if (affectingAxis === "y") {
-					props.targetBlock.setStyle("paddingTop", movement + "px");
-					props.targetBlock.setStyle("paddingBottom", movement + "px");
-				} else if (affectingAxis === "x") {
-					props.targetBlock.setStyle("paddingLeft", movement + "px");
-					props.targetBlock.setStyle("paddingRight", movement + "px");
-				}
-			} else if (event.shiftKey) {
-				props.targetBlock.setStyle("paddingTop", movement + "px");
-				props.targetBlock.setStyle("paddingBottom", movement + "px");
-				props.targetBlock.setStyle("paddingLeft", movement + "px");
-				props.targetBlock.setStyle("paddingRight", movement + "px");
-			}
-
-			event.preventDefault();
-			event.stopPropagation();
-		},
-		onEnd: (event) => {
-			updating.value = false;
-			event.preventDefault();
-		},
+	startSpacingDrag(ev, position, {
+		property: "padding",
+		fallback: 5,
+		getRotation: () => rotation.value,
+		onUpdate: props.onUpdate,
 	});
 };
-
-let showToast = () =>
-	toast('Press "shift" key to apply padding to all sides and "alt" key to apply padding on either sides.');
 </script>

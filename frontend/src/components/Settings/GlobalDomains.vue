@@ -81,9 +81,8 @@
 <script setup lang="ts">
 import { useDomains } from "@/data/domains";
 import { useIntervalFn } from "@vueuse/core";
-import { Badge, Dropdown, ErrorMessage, FormControl } from "frappe-ui";
-import { computed, onMounted, ref, watch } from "vue";
-import { toast } from "frappe-ui";
+import { Badge, Dropdown, ErrorMessage, FormControl, toast } from "frappe-ui";
+import { computed, onActivated, onDeactivated, onMounted, ref, watch } from "vue";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
 
@@ -126,6 +125,11 @@ const { pause: stopPolling, resume: startPolling } = useIntervalFn(
 );
 
 watch(hasPendingDomains, (val) => (val ? startPolling() : stopPolling()));
+
+onDeactivated(stopPolling);
+onActivated(() => {
+	if (hasPendingDomains.value) startPolling();
+});
 
 onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
 
@@ -182,11 +186,13 @@ function brokenReason(d: any): string {
 }
 
 function statusTheme(status: string) {
-	return (
-		({ Active: "green", Broken: "red", Pending: "orange", "In Progress": "blue" } as Record<string, string>)[
-			status
-		] ?? "gray"
-	);
+	const themes: Record<string, "green" | "red" | "orange" | "blue"> = {
+		Active: "green",
+		Broken: "red",
+		Pending: "orange",
+		"In Progress": "blue",
+	};
+	return themes[status] ?? "gray";
 }
 
 async function copyToClipboard(text: string) {

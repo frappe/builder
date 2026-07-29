@@ -14,7 +14,9 @@ type CanvasDragMove = {
 type CanvasDragOptions = {
 	cursor?: string;
 	onMove: (move: CanvasDragMove) => void;
-	onEnd?: (event: MouseEvent) => void;
+	onEnd?: (event?: MouseEvent) => void;
+	// Runs before onEnd.
+	onCancel?: () => void;
 };
 
 const forwardedEventSources = new WeakMap<Event, Event>();
@@ -107,7 +109,7 @@ export function getEventPointInDocument(event: MouseEvent, doc: Document): Canva
 export function startCanvasDrag(
 	startEvent: MouseEvent,
 	target: Element,
-	{ cursor, onMove, onEnd }: CanvasDragOptions,
+	{ cursor, onMove, onEnd, onCancel }: CanvasDragOptions,
 ) {
 	const targetDocument = getElementDocument(target);
 	const listenerDocument = getFrameElement(targetDocument)?.ownerDocument || targetDocument;
@@ -119,6 +121,7 @@ export function startCanvasDrag(
 	const stop = () => {
 		listenerDocument.removeEventListener("mousemove", handleMove);
 		listenerDocument.removeEventListener("mouseup", handleEnd);
+		listenerDocument.removeEventListener("keydown", handleKeyDown);
 		if (cursor) targetDocument.body.style.cursor = previousCursor;
 	};
 	const handleMove = (event: MouseEvent) => {
@@ -135,9 +138,18 @@ export function startCanvasDrag(
 		stop();
 		onEnd?.(event);
 	};
+	// Dropping the mouseup listener keeps the pending release from ending the drag a second time.
+	const handleKeyDown = (event: KeyboardEvent) => {
+		if (event.key !== "Escape") return;
+		event.preventDefault();
+		stop();
+		onCancel?.();
+		onEnd?.();
+	};
 
 	listenerDocument.addEventListener("mousemove", handleMove);
 	listenerDocument.addEventListener("mouseup", handleEnd);
+	listenerDocument.addEventListener("keydown", handleKeyDown);
 	return stop;
 }
 

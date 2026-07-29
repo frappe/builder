@@ -6,7 +6,6 @@
 			<MainMenu
 				@showSettings="
 					() => {
-						builderStore.settingsActiveTab = 'page_general';
 						builderStore.showSettingsDialog = true;
 					}
 				"
@@ -27,7 +26,7 @@
 			</div>
 		</div>
 		<div>
-			<Popover placement="bottom" popoverClass="!mt-[20px]">
+			<Popover placement="bottom" :offset="20">
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
@@ -205,7 +204,6 @@ const openAIGenerator = (e: MouseEvent) => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	builderStore.settingsActiveTab = "page_general";
 	builderStore.showSettingsDialog = true;
 };
 

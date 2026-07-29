@@ -125,7 +125,7 @@ const usePageStore = defineStore("pageStore", {
 		async fetchActivePage(pageName?: string) {
 			const webPageResource = await createDocumentResource({
 				doctype: "Builder Page",
-				name: pageName,
+				name: pageName as string,
 				auto: true,
 			});
 			try {
@@ -312,6 +312,13 @@ const usePageStore = defineStore("pageStore", {
 					} else {
 						this.activePage = page;
 					}
+				})
+				.catch((e: { exc_type?: string }) => {
+					if (e?.exc_type === "InReadOnlyMode") {
+						builderStore.isSiteInReadOnlyMode = true;
+						return;
+					}
+					throw e;
 				})
 				.finally(() => {
 					if (this.saveId === saveId) {

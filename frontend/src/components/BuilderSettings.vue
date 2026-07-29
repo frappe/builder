@@ -1,8 +1,8 @@
 <template>
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="text-xl-semibold px-2 text-ink-gray-9">Settings</span>
-			<div class="flex flex-col gap-1" v-for="(item, index) in settingsSidebarItems" :key="index">
+			<span class="text-lg-semibold px-2 text-ink-gray-9">Settings</span>
+			<div class="flex flex-col gap-0.5" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
 				</span>
@@ -21,13 +21,15 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
-			<h2 class="text-3xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+			<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></Button>
-			<component :is="selectedItemDoc?.component" v-if="settingsLoaded" class="pb-16" />
+			<KeepAlive v-if="settingsLoaded">
+				<component :is="selectedItemDoc?.component" class="pb-16" />
+			</KeepAlive>
 			<div v-else class="flex items-center justify-center">
 				<span class="text-ink-gray-5">Loading...</span>
 			</div>
@@ -40,6 +42,7 @@ import PageCode from "@/components/Settings/PageCode.vue";
 import PageRobots from "@/components/Settings/PageRobots.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -49,6 +52,7 @@ import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
 import GlobalDomains from "./Settings/GlobalDomains.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
+import GlobalUsers from "./Settings/GlobalUsers.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
 import PageMeta from "./Settings/PageMeta.vue";
@@ -60,8 +64,13 @@ const props = defineProps<{
 
 const route = useRoute();
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
-const selectedItem = ref<string>(props.initialTab || (props.onlyGlobal ? "global_general" : "page_general"));
+const selectedItem = ref<string>(
+	props.initialTab ||
+		builderStore.settingsActiveTab ||
+		(props.onlyGlobal ? "global_general" : "page_general"),
+);
 const settingsLoaded = ref(false);
 
 onMounted(async () => {
@@ -125,6 +134,13 @@ const globalSettings = {
 			icon: "lucide-settings",
 			disabled: false,
 		},
+		{
+			label: "Users",
+			value: "global_users",
+			component: GlobalUsers,
+			title: "Users",
+			icon: "lucide-users",
+		},
 		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: "lucide-code" },
 		{
 			label: "Redirects",
@@ -180,7 +196,14 @@ if (!props.onlyGlobal) settingsSidebarItems.unshift(pageSettings);
 
 const selectItem = (value: string) => {
 	selectedItem.value = value;
+	builderStore.settingsActiveTab = value;
 };
+
+// the remembered tab may not exist here (e.g. page tabs are hidden in onlyGlobal mode); fall back
+// locally without persisting so the editor keeps its last page-level selection
+if (!selectedItemDoc.value) {
+	selectedItem.value = props.onlyGlobal ? "global_general" : "page_general";
+}
 
 provide("selectSettingsTab", selectItem);
 

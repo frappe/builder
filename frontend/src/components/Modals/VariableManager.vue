@@ -15,7 +15,7 @@
 		action-label="Add Variable"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-xl-semibold py-2">Manage Variables</h2></template>
+		<template #header><h2 class="text-lg-semibold py-2">Manage Variables</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
 				<div class="mb-3">

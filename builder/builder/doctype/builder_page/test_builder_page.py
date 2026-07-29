@@ -288,6 +288,63 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_duplicate_binding_does_not_leak_jinja(self):
+		"""A block recording the same binding in BOTH dataKey and dynamicValues must not
+		wrap the placeholder twice. Double-wrapping nests the expression inside its own
+		fallback (`{{ ... else '{{ ... }}' }}`), which leaks the raw Jinja to the page for
+		values that are None (falsy and not in ['', 0])."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		# same industry -> innerHTML binding recorded in both places (regression trigger)
+		industry.set_dynamic_value("industry", "key", "innerHTML")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Duplicate Binding Test",
+				"published": 1,
+				"route": "/duplicate-binding-test",
+				"page_data_script": 'data.update({"stories": [{"industry": "Real Estate"}, {"industry": None}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/duplicate-binding-test")
+			# the raw expression must never leak to the rendered page
+			self.assertNotIn("{{", content)
+			self.assertNotIn("get('industry'", content)
+			# story with a value renders it; the None story falls back
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=1, only_content=True))
+		finally:
+			page.delete()
+
+	def test_duplicate_binding_deduped_in_placeholders(self):
+		"""set_dynamic_content_placeholders should apply a (property, type) binding once
+		even when it appears in both dataKey and dynamicValues, producing a single
+		placeholder rather than one nested inside its own fallback."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "industry", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		self.assertEqual(block["innerHTML"].count("{{"), 1)
+		self.assertNotIn("else '{{", block["innerHTML"])
+
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
 		component_root = Block(element="div", blockId="comp-block-1")
@@ -1163,6 +1220,8 @@ component.update({
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
+			self.assertTrue("--builder-image-dim: brightness(0.85) contrast(1.05)" in content)
+			self.assertTrue("img { filter: var(--builder-image-dim, none) }" in content)
 		finally:
 			page.delete()
 
@@ -1265,6 +1324,82 @@ component.update({
 				"https://fonts.googleapis.com/css2?family=Foo+%26+Bar:wght@400&display=swap",
 			],
 		)
+
+	def test_get_google_font_urls_with_italics(self):
+		"""Fonts used in italic get the ital axis in the same single request,
+		with 400 italic always included as a fallback instance."""
+		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
+
+		font_map = {
+			"Roboto": {"weights": [400, 700], "italics": [400]},
+			"Lora": {"weights": [400], "italics": [600]},
+			# untouched fonts keep the exact legacy URL shape
+			"Open Sans": {"weights": [400]},
+		}
+		urls = get_google_font_urls(font_map)
+		self.assertEqual(
+			urls,
+			[
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
+				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
+			],
+		)
+
+	def test_italics_cascade_like_font_family(self):
+		"""Italic usage is resolved on the rendered block tree with CSS cascade
+		semantics, not per style dict."""
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def block(styles, children=None, element="div"):
+			return {"element": element, "baseStyles": styles, "children": children or []}
+
+		# child sets fontStyle without a family: italics land on the ancestor font
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces"}, [block({"fontStyle": "italic", "fontWeight": "600"})])]
+		)
+		self.assertEqual(font_map["Fraunces"]["italics"], [600])
+
+		# italic parent, child only switches family: font-style inherits, so the
+		# child family needs its italic faces too
+		_, _, font_map, _ = get_block_html(
+			[block({"fontFamily": "Fraunces", "fontStyle": "italic"}, [block({"fontFamily": "Lora"})])]
+		)
+		self.assertEqual(font_map["Fraunces"]["italics"], [400])
+		self.assertEqual(font_map["Lora"]["italics"], [400])
+
+		# a child resetting fontStyle: normal breaks the cascade again
+		_, _, font_map, _ = get_block_html(
+			[
+				block(
+					{"fontFamily": "Fraunces", "fontStyle": "italic"},
+					[block({"fontFamily": "Lora", "fontStyle": "normal"})],
+				)
+			]
+		)
+		self.assertNotIn("italics", font_map["Lora"])
+
+	def test_set_italics_from_html(self):
+		"""<i>/<em> and inline font-style inside innerHTML register italic usage
+		for the block's resolved font."""
+		import bs4 as bs
+
+		from builder.builder.doctype.builder_page.builder_page import set_italics_from_html
+
+		font_map = {"Fraunces": {"weights": [400]}, "Lora": {"weights": [400]}}
+		soup = bs.BeautifulSoup(
+			"Fire is the <i>only</i> recipe and "
+			'<span style="font-family: Lora; font-style: italic">this too</span>',
+			"html.parser",
+		)
+		set_italics_from_html(soup, font_map, ancestor_font="Fraunces")
+		self.assertEqual(font_map["Fraunces"].get("italics"), [400])
+		self.assertEqual(font_map["Lora"].get("italics"), [400])
+
+		# fonts that never made it into the map (e.g. system fonts) are ignored
+		font_map_2 = {}
+		set_italics_from_html(bs.BeautifulSoup("<i>hi</i>", "html.parser"), font_map_2, "Arial")
+		self.assertEqual(font_map_2, {})
 
 	def test_set_fonts_inherits_font_family_from_ancestor(self):
 		"""set_fonts should use inherited_font when a style has fontWeight but no fontFamily."""
@@ -1424,6 +1559,65 @@ component.update({
 		self.assertIn("color: red", css_unset)
 		self.assertNotIn("display:", css_unset)
 		self.assertNotIn("None", css_unset)
+
+	def test_renders_legacy_raw_styles_from_base_styles(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"blockId": "legacy",
+				"element": "button",
+				"baseStyles": {"background": "red"},
+				"rawStyles": {"background": "blue", "hover:background-color": "black"},
+				"children": [],
+			}
+		]
+
+		_, css, _, _ = get_block_html(blocks)
+
+		self.assertIn("background: blue", css)
+		self.assertIn(":hover", css)
+		self.assertIn("background-color: black", css)
+		self.assertNotIn("background: red", css)
+
+	def test_renders_legacy_raw_styles_from_component(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		component_root = {
+			"blockId": "comp-root",
+			"element": "div",
+			"rawStyles": {"text-overflow": "ellipsis"},
+			"children": [{"blockId": "comp-child", "element": "span", "rawStyles": {"flex-shrink": "0"}}],
+		}
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": frappe.as_json(component_root)}
+		).insert()
+
+		blocks = [
+			{
+				"blockId": "instance",
+				"extendedFromComponent": component.name,
+				"children": [{"blockId": "comp-child", "isChildOfComponent": component.name}],
+			}
+		]
+
+		try:
+			_, css, _, _ = get_block_html(blocks)
+			self.assertIn("text-overflow: ellipsis", css)
+			self.assertIn("flex-shrink: 0", css)
+		finally:
+			component.delete()
+
+	def test_renders_blocks_with_only_responsive_styles(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [{"blockId": "mobile-only", "element": "div", "mobileStyles": {"textOverflow": "ellipsis"}}]
+
+		html, css, _, _ = get_block_html(blocks)
+
+		self.assertIn("fb-", html)
+		self.assertIn("@media only screen and (max-width: 576px)", css)
+		self.assertIn("text-overflow: ellipsis", css)
 
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""

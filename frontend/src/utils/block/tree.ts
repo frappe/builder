@@ -11,7 +11,6 @@ export function resetBlock(
 		delete block.innerHTML;
 		delete block.element;
 		block.baseStyles = {};
-		block.rawStyles = {};
 		block.mobileStyles = {};
 		block.tabletStyles = {};
 		block.attributes = {};
@@ -20,6 +19,9 @@ export function resetBlock(
 		block.dataKey = null;
 		block.dynamicValues = [];
 		block.props = {};
+		block.clientScript = {};
+		// @ts-ignore
+		delete block.blockClientScript;
 	}
 
 	if (resetChildren) {

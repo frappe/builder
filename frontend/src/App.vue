@@ -14,6 +14,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
+import { useSiteReadOnlyNotice } from "@/utils/useSiteReadOnlyNotice";
 import { FrappeUIProvider } from "frappe-ui";
 import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
@@ -33,4 +34,6 @@ const title = computed(() => {
 });
 
 useTitle(title);
+
+useSiteReadOnlyNotice();
 </script>

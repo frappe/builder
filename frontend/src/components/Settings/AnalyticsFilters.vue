@@ -15,7 +15,7 @@
 			v-if="modelRange === 'custom'"
 			v-model="customDateRangeValue"
 			placeholder="Select date range"
-			:formatter="formatDate"
+			format="MMM D, YYYY"
 			size="sm"
 			class="!w-56" />
 	</div>
@@ -90,21 +90,11 @@ const modelRoute = computed({
 	get: () => props.route,
 	set: (val) => emit("update:route", val),
 });
-const customDateRangeValue = computed({
-	get: () => props.customDateRange,
-	set: (val) => emit("update:customDateRange", val),
+// DateRangePicker works with a [from, to] array; we persist it as a "from,to" string.
+const customDateRangeValue = computed<string[]>({
+	get: () => (props.customDateRange ? props.customDateRange.split(",") : []),
+	set: (val) => emit("update:customDateRange", (val ?? []).join(",")),
 });
-
-// Format date for display in the date range picker
-const formatDate = (date: string) => {
-	if (!date) return "";
-	const dateObj = new Date(date);
-	return dateObj.toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-};
 
 const getRouteOptions = async (query: string) => {
 	if (!webPages.data?.length) {
@@ -113,9 +103,9 @@ const getRouteOptions = async (query: string) => {
 
 	const queryLower = query?.toLowerCase() || "";
 
-	return webPages.data
+	return (webPages.data ?? [])
 		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
-		.map((page: BuilderPage) => ({ value: page.route, label: page.route }))
+		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }))
 		.filter(
 			(option: { value: string; label: string }) =>
 				!queryLower || option.label.toLowerCase().includes(queryLower),
