@@ -416,11 +416,10 @@ watch(
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
 		() => canvasProps?.scriptsRunning,
-		() => canvasProps?.scriptsRefreshNonce,
 		componentDataReady,
 	],
 	(
-		[element, clientScript, componentData, resolvedProps, , settingPage, scriptsRunning, , dataReady],
+		[element, clientScript, componentData, resolvedProps, , settingPage, scriptsRunning, dataReady],
 		_,
 		onCleanup,
 	) => {

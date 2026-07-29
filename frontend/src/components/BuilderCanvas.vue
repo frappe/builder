@@ -38,30 +38,6 @@
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
-				<Tooltip :text="canvasProps.scriptsRunning ? 'Stop Client Scripts' : 'Run Client Scripts'" :hoverDelay="0.6">
-					<div
-						v-show="!canvasProps.scaling && !canvasProps.panning"
-						class="w-auto cursor-pointer p-2"
-						@click.stop="canvasProps.scriptsRunning = !canvasProps.scriptsRunning">
-						<span
-							:class="[
-								canvasProps.scriptsRunning ? 'lucide-square' : 'lucide-play',
-								'h-8 w-6 text-ink-gray-8',
-							]"
-							aria-hidden="true" />
-					</div>
-				</Tooltip>
-				<Tooltip text="Refresh Client Scripts" :hoverDelay="0.6">
-					<div
-						v-show="!canvasProps.scaling && !canvasProps.panning && canvasProps.scriptsRunning"
-						class="w-auto cursor-pointer p-2"
-						@click.stop="refreshClientScripts">
-						<span class="lucide-refresh-cw h-8 w-6 text-ink-gray-8" aria-hidden="true" />
-					</div>
-				</Tooltip>
-				<div
-					v-show="!canvasProps.scaling && !canvasProps.panning"
-					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -241,7 +217,6 @@ const canvasProps = reactive({
 	// scripts are opt-in per session: they run in the editor's own realm,
 	// so an editor left open shouldn't execute arbitrary page/block JS by default
 	scriptsRunning: false,
-	scriptsRefreshNonce: 0,
 	breakpoints: [
 		{
 			icon: "lucide-monitor",
@@ -544,13 +519,6 @@ function applyPageClientScripts() {
 	pageScriptRuntimes.forEach((runtime) =>
 		runtime.apply(pageStore.activePageScripts, runJavaScript, pageStore.pageData),
 	);
-}
-
-// Refresh restarts scripts already running — new timers, listeners and a clean
-// JavaScript pass — without the user having to stop and start again.
-function refreshClientScripts() {
-	applyPageClientScripts();
-	canvasProps.scriptsRefreshNonce++;
 }
 
 watch(

@@ -21,8 +21,6 @@ export interface CanvasProps {
 	panning: boolean;
 	breakpoints: BreakpointConfig[];
 	scriptsRunning: boolean;
-	// bumped by the canvas's Refresh control to force a clean re-run of already-running scripts
-	scriptsRefreshNonce: number;
 }
 
 export type CanvasHistory = Ref<ReturnType<typeof useCanvasHistory>>;

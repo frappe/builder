@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { useDark, useToggle, watchDebounced } from "@vueuse/core";
@@ -30,6 +31,7 @@ const activeStep = ref<{ id: string; label: string; placeholder: string; hint: s
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const canvasStore = useCanvasStore();
 const route = useRoute();
 const router = useRouter();
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
@@ -137,6 +139,17 @@ const staticCommands = computed<Command[]>(() => {
 							if (pageStore.activePage) {
 								pageStore.duplicatePage(pageStore.activePage);
 							}
+						},
+					},
+					{
+						name: "toggle-client-scripts",
+						title: `${canvasStore.activeCanvas?.canvasProps.scriptsRunning ? "Stop" : "Run"} Client Scripts`,
+						icon: canvasStore.activeCanvas?.canvasProps.scriptsRunning ? "lucide-square" : "lucide-play",
+						description: "Page",
+						group: "Page",
+						action: () => {
+							const canvasProps = canvasStore.activeCanvas?.canvasProps;
+							if (canvasProps) canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
 						},
 					},
 				]
