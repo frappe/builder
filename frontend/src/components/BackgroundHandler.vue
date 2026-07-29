@@ -7,6 +7,7 @@
 					:component="BackgroundInput"
 					label="Background"
 					:enableStates="true"
+					:variants="bgVariants"
 					:allowDynamicValue="true"
 					placeholder="Set Background"
 					readonly
@@ -175,6 +176,10 @@ const BackgroundInput = defineComponent({
 			);
 	},
 });
+
+// "Dark Mode" sits alongside the hover/active/focus states in the "+" menu; its
+// value is stored as `dark:background*` styles and rendered under prefers-color-scheme.
+const bgVariants = [{ name: "dark", property: "dark:background", label: "Dark Mode" }];
 
 const activeState = ref<string | null>(null);
 
@@ -386,14 +391,17 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		return;
 	}
 
-	// Basic transition logic for states
-	blockController.getSelectedBlocks().forEach((block) => {
-		if (!block.getStyle("transitionDuration")) {
-			block.setStyle("transitionDuration", "300ms");
-			block.setStyle("transitionTimingFunction", "ease");
-			block.setStyle("transitionProperty", "all");
-		}
-	});
+	// Basic transition logic for interaction states; dark mode is a theme switch,
+	// not a hover-style state, so it shouldn't add a transition.
+	if (variantName !== "dark") {
+		blockController.getSelectedBlocks().forEach((block) => {
+			if (!block.getStyle("transitionDuration")) {
+				block.setStyle("transitionDuration", "300ms");
+				block.setStyle("transitionTimingFunction", "ease");
+				block.setStyle("transitionProperty", "all");
+			}
+		});
+	}
 
 	// the trigger input is read-only, so a non-null value here can only come from
 	// the "copy current value to state" dropdown — copy the actual base styles

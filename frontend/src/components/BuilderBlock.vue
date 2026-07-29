@@ -374,7 +374,13 @@ const styles = computed(() => {
 	}
 
 	Object.keys(styleMap).forEach((key) => {
-		if (key.startsWith("hover:")) {
+		if (key.startsWith("dark:")) {
+			// preview the dark variant when the canvas is in dark mode
+			if (!props.preview && builderStore.canvasDarkMode) {
+				styleMap[key.slice(5)] = styleMap[key];
+			}
+			delete styleMap[key];
+		} else if (key.startsWith("hover:")) {
 			// state style preview on hover
 			// if (!isHovered.value) {
 			// 	delete styleMap[key];
