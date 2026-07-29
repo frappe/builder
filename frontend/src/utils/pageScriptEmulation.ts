@@ -50,11 +50,15 @@ class PageScriptRuntime {
 		this.root.appendChild(this.styleElement);
 	}
 
-	/** Replace the applied CSS and re-run the JavaScript. */
-	apply(scripts: BuilderClientScript[], runJavaScript: boolean, pageData: Record<string, any> = {}) {
+	/** Apply the CSS and run the JavaScript together. Neither applies when stopped. */
+	apply(scripts: BuilderClientScript[], runScripts: boolean, pageData: Record<string, any> = {}) {
 		this.stop();
+		if (!runScripts) {
+			this.styleElement.textContent = "";
+			this.setSizeContainer(false);
+			return;
+		}
 		this.applyStyles(scripts);
-		if (!runJavaScript) return;
 		this.scope = new CanvasScriptScope(this.root, this.breakpointWidth, pageData);
 		scripts.filter(isJavaScript).forEach((script) => this.runScript(script));
 	}

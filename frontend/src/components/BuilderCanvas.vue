@@ -471,15 +471,20 @@ function escapeAttributeValue(value: string) {
 
 function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const registrationKey = `${script.key}:${script.breakpoint}`;
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	// CSS runs alongside the JavaScript, under the same Run/Stop and mode gate,
+	// not on its own
+	const scriptsActive = canvasProps.scriptsRunning && mode !== "Don't Execute";
+
 	// each breakpoint's shadow root already scopes its own styles to one canvas
 	const selector = `[data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+	const css = scriptsActive ? script.css : "";
+	blockStyles.set(registrationKey, css ? `${selector} { ${css} }` : "");
 
-	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	let cleanup = () => {};
-	if (mode !== "Don't Execute" && script.javascript.trim()) {
+	if (scriptsActive && script.javascript.trim()) {
 		const context = {
 			componentData: script.componentData,
 			props: script.props,
@@ -520,9 +525,9 @@ function releaseCanvasRoot(breakpoint: BreakpointConfig) {
 
 function applyPageClientScripts() {
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
-	const runJavaScript = canvasProps.scriptsRunning && mode !== "Don't Execute";
+	const runScripts = canvasProps.scriptsRunning && mode !== "Don't Execute";
 	pageScriptRuntimes.forEach((runtime) =>
-		runtime.apply(pageStore.activePageScripts, runJavaScript, pageStore.pageData),
+		runtime.apply(pageStore.activePageScripts, runScripts, pageStore.pageData),
 	);
 }
 
