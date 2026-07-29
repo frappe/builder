@@ -58,36 +58,28 @@ function toggleClientScripts() {
 // key restores it instead of always landing on Stop.
 let scriptsRunningBeforeHold = false;
 
-useShortcut([
-	{
-		key: "p",
-		ctrl: true,
-		shift: true,
-		description: "Toggle Client Scripts",
-		group: "Page",
-		condition: () => isBuilderRoute.value,
-		handler: toggleClientScripts,
+// One combo, two outcomes: a tap toggles Run/Stop, a hold previews with
+// scripts on and restores the prior state on release.
+useShortcut({
+	key: "p",
+	ctrl: true,
+	shift: true,
+	description: "Toggle Client Scripts (hold to preview)",
+	group: "Page",
+	triggeredOn: "hold",
+	condition: () => isBuilderRoute.value,
+	handler: toggleClientScripts,
+	onHold: () => {
+		const canvasProps = canvasStore.activeCanvas?.canvasProps;
+		if (!canvasProps) return;
+		scriptsRunningBeforeHold = canvasProps.scriptsRunning;
+		canvasProps.scriptsRunning = true;
 	},
-	{
-		key: "p",
-		alt: true,
-		shift: true,
-		description: "Hold to Preview Client Scripts",
-		group: "Page",
-		triggeredOn: "hold",
-		condition: () => isBuilderRoute.value,
-		onHold: () => {
-			const canvasProps = canvasStore.activeCanvas?.canvasProps;
-			if (!canvasProps) return;
-			scriptsRunningBeforeHold = canvasProps.scriptsRunning;
-			canvasProps.scriptsRunning = true;
-		},
-		onRelease: () => {
-			const canvasProps = canvasStore.activeCanvas?.canvasProps;
-			if (canvasProps) canvasProps.scriptsRunning = scriptsRunningBeforeHold;
-		},
+	onRelease: () => {
+		const canvasProps = canvasStore.activeCanvas?.canvasProps;
+		if (canvasProps) canvasProps.scriptsRunning = scriptsRunningBeforeHold;
 	},
-]);
+});
 
 const isDark = useDark({ attribute: "data-theme" });
 const toggleDark = useToggle(isDark);
