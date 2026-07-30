@@ -1,36 +1,27 @@
 const MAX_OPTIONS = 20;
-// how far down the window a match sits, so more of its neighbours show above it
-const MATCH_POSITION = 1 / 3;
+// options kept above the selected option when the list is windowed around it
+const NEIGHBOURS_ABOVE = 3;
 
-function windowAround(matchIndex: number, limit: number, total: number): [number, number] {
-	const offset = Math.floor((limit - 1) * MATCH_POSITION);
-	const start = Math.min(Math.max(0, matchIndex - offset), Math.max(0, total - limit));
-	return [start, Math.min(total - 1, start + limit - 1)];
-}
-
-// keeps every match in place and shows the options around it
+// typing filters to matching options; an exact match (the current selection)
+// shows the list windowed around it instead, so its neighbours stay visible
 function filterOptions<Option extends { label: string }>(
 	options: Option[],
 	query: string,
 	limit = MAX_OPTIONS,
 ): Option[] {
 	const normalizedQuery = query.trim().toLowerCase();
-	if (!normalizedQuery || options.length <= limit) return options.slice(0, limit);
+	if (!normalizedQuery) return options.slice(0, limit);
 
-	const matchIndexes = options.reduce((indexes: number[], option, index) => {
-		if (option.label.toLowerCase().includes(normalizedQuery)) indexes.push(index);
-		return indexes;
-	}, []);
-	if (!matchIndexes.length) return options.slice(0, limit);
+	const selectedIndex = options.findIndex((option) => option.label.toLowerCase() === normalizedQuery);
+	if (selectedIndex !== -1) return windowAround(options, selectedIndex, limit);
 
-	const kept = new Set<number>();
-	matchIndexes.forEach((matchIndex) => {
-		const [start, end] = windowAround(matchIndex, limit, options.length);
-		for (let index = start; index <= end; index++) {
-			kept.add(index);
-		}
-	});
-	return options.filter((_, index) => kept.has(index)).slice(0, limit);
+	return options.filter((option) => option.label.toLowerCase().includes(normalizedQuery)).slice(0, limit);
+}
+
+function windowAround<Option>(options: Option[], index: number, limit: number): Option[] {
+	const maxStart = Math.max(options.length - limit, 0);
+	const start = Math.min(Math.max(index - NEIGHBOURS_ABOVE, 0), maxStart);
+	return options.slice(start, start + limit);
 }
 
 export { filterOptions, MAX_OPTIONS };
