@@ -49,12 +49,10 @@ const typographySectionProperties = [
 					const userFontOptions = filterOptions(
 						(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
 						filterString,
-						{ limit: 10, windowRadius: { upper: 4, lower: 5 } },
 					);
 					const defaultFontOptions = filterOptions(
 						fontListItems.value.map((font) => toOption(font.family)),
 						filterString,
-						{ limit: 20, windowRadius: { upper: 4, lower: 15 } },
 					);
 
 					if (!userFontOptions.length) return defaultFontOptions;

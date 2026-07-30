@@ -13,10 +13,13 @@ export function getColorVariableOptions(
 	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
 
 	// the group name is searchable along with the variable name
-	const searchableOptions = variables.map((builderVariable: BuilderVariable) => ({
-		label: `${builderVariable.variable_name || ""} ${builderVariable.group || ""}`,
-		variable: builderVariable,
-	}));
+	const searchableOptions = variables
+		.map((builderVariable: BuilderVariable) => ({
+			label: `${builderVariable.variable_name || ""} ${builderVariable.group || ""}`,
+			variable: builderVariable,
+		}))
+		// alphabetical, so the options around a match are related ones
+		.sort((a, b) => (a.variable.variable_name || "").localeCompare(b.variable.variable_name || ""));
 
 	return filterOptions(searchableOptions, processedQuery).map(({ variable: builderVariable }) => {
 		const varName = `var(--${builderVariable.name})`;
