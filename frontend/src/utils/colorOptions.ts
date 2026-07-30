@@ -9,17 +9,33 @@ export function getColorVariableOptions(
 	isDark: boolean,
 	onEdit?: (variable: BuilderVariable) => void,
 ) {
-	let processedQuery = query.replace(/^(--|var|\s+)/, "");
-	processedQuery = processedQuery.replace(/^--|\(|\s+/g, "");
+	// strip var(--...) syntax, keep the rest of the query as typed
+	let processedQuery = query
+		.replace(/^\s*(var\()?\s*(--)?/, "")
+		.replace(/\)\s*$/, "")
+		.trim();
+
+	const searchableLabel = (builderVariable: BuilderVariable) =>
+		`${builderVariable.variable_name || ""} ${builderVariable.group || ""}`;
 
 	// the group name is searchable along with the variable name
 	const searchableOptions = variables
 		.map((builderVariable: BuilderVariable) => ({
-			label: `${builderVariable.variable_name || ""} ${builderVariable.group || ""}`,
+			label: searchableLabel(builderVariable),
 			variable: builderVariable,
 		}))
 		// alphabetical, so the options around a match are related ones
 		.sort((a, b) => (a.variable.variable_name || "").localeCompare(b.variable.variable_name || ""));
+
+	// the query is the current selection when it is the var() value or the
+	// variable's display name (what ColorInput shows on focus): use its full
+	// label so filterOptions windows the list around it
+	const normalizedQuery = processedQuery.toLowerCase();
+	const selectedVariable = variables.find(
+		(v) =>
+			query.trim() === `var(--${v.name})` || (v.variable_name || "").toLowerCase() === normalizedQuery,
+	);
+	if (selectedVariable) processedQuery = searchableLabel(selectedVariable);
 
 	return filterOptions(searchableOptions, processedQuery).map(({ variable: builderVariable }) => {
 		const varName = `var(--${builderVariable.name})`;
