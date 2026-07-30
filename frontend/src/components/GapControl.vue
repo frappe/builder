@@ -28,14 +28,8 @@ import type Block from "@/block";
 import blockController from "@/utils/blockController";
 import { collapseGapShorthand, expandGapShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { computed, ref, watch } from "vue";
-
-type BoxValue = string | number | boolean | null;
-
-const enableSlider = true;
-const splitModes = ref<Record<string, boolean>>({});
-
-watch(() => blockController.getSelectedBlocks(), () => (splitModes.value = {}));
+import { computed } from "vue";
+import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 const isColumnDirection = computed(() =>
 	String(blockController.getNativeStyle("flexDirection") || blockController.getCascadingStyle("flexDirection") || "").startsWith("column"),
@@ -74,31 +68,22 @@ const toControlValues = (value: unknown) => {
 	return isColumnDirection.value ? [c, r] : [r, c];
 };
 
-const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
 
-const toModelValue = (parts: BoxValue[], changedIndex?: number) => ({
+const toModelValue = (parts: SplitValue[], changedIndex?: number) => ({
 	type: "gap-split",
 	rowGap: isColumnDirection.value ? parts[1] : parts[0],
 	colGap: isColumnDirection.value ? parts[0] : parts[1],
 	changedAxis: changedIndex !== undefined ? ((isColumnDirection.value ? changedIndex === 0 : changedIndex === 1) ? "columnGap" : "rowGap") : null,
 });
 
-const getMergedValue = (parts: BoxValue[]) => parts.find((p) => p && String(p) !== "Mixed") ?? 0;
-
-const splitOptions = [
-	{ label: "Use for all", value: false, icon: "lucide-square", tooltip: "Use for all" },
-	{ label: "Set separately", value: true, icon: "lucide-layout-grid", tooltip: "Set separately" },
-];
-
-const getControlAttrs = (variant: string | null) => {
-	const key = variant ?? "main";
-	return {
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
-		enableSlider,
-		splitOptions,
-		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
-	};
-};
+const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue, {
+	splitOptions: [
+		{ label: "Use for all", value: false, icon: "lucide-square", tooltip: "Use for all" },
+		{ label: "Set separately", value: true, icon: "lucide-layout-grid", tooltip: "Set separately" },
+	],
+	getMergedValue: (parts) => parts.find((p) => p && String(p) !== "Mixed") ?? 0,
+});
 
 const setModelValue = (val: unknown) => {
 	if (typeof val === "boolean") return;

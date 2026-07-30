@@ -27,38 +27,21 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { collapseBoxShorthand, expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { RADIUS_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { ref, watch } from "vue";
-
-type BoxValue = string | number | boolean | null;
+import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 const SPLITS = ["TL", "TR", "BR", "BL"];
-
-const splitModes = ref<Record<string, boolean>>({});
-
-watch(
-	() => blockController.getSelectedBlocks(),
-	() => (splitModes.value = {}),
-);
 
 const readValue = (state: string | null = null) =>
 	String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || "");
 
-const ensureRoundedContentIsClipped = (value: BoxValue) => {
+const ensureRoundedContentIsClipped = (value: SplitValue) => {
 	if (!value) return;
 	if (!blockController.getStyle("overflowX")) blockController.setStyle("overflowX", "hidden");
 	if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
 };
 
 const toControlValues = (value: unknown) => expandBoxShorthand(value);
-const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: BoxValue[]) => collapseBoxShorthand(parts);
-const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
-const getControlAttrs = (variant: string | null) => {
-	const key = variant ?? "main";
-	return {
-		enableSlider: true,
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
-		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
-	};
-};
+const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const toModelValue = (parts: SplitValue[]) => collapseBoxShorthand(parts);
+const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue);
 </script>

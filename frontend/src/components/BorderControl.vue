@@ -48,20 +48,11 @@ import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
 import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BORDER_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { computed, ref, watch } from "vue";
-
-type BoxValue = string | number | boolean | null;
+import { computed } from "vue";
+import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 const SPLITS = ["T", "R", "B", "L"];
-const splitModes = ref<Record<string, boolean>>({});
 
-// Reset split modes on selection change
-watch(
-	() => blockController.getSelectedBlocks(),
-	() => {
-		splitModes.value = {};
-	}
-);
 
 const readValue = (state: string | null = null) => {
 	const key = state ? `${state}:borderWidth` : "borderWidth";
@@ -69,18 +60,9 @@ const readValue = (state: string | null = null) => {
 };
 
 const toControlValues = (value: unknown) => expandBoxShorthand(value);
-const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: BoxValue[]) => parts.join(" ");
-const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
-
-const getControlAttrs = (variant: string | null) => {
-	const key = variant ?? "main";
-	return {
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
-		enableSlider: true,
-		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
-	};
-};
+const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const toModelValue = (parts: SplitValue[]) => parts.join(" ");
+const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue);
 
 const hasColor = computed(() => {
 	return Boolean(

@@ -6,7 +6,7 @@
 			:label="label"
 			:unitOptions="BOX_UNIT_OPTIONS"
 			:enableStates="true"
-			:enableSlider="enableSlider"
+			:enableSlider="true"
 			:splits="SPLITS"
 			:toControlValues
 			:toModelValue
@@ -27,21 +27,15 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { collapseBoxShorthand, expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { computed, ref, watch } from "vue";
+import { computed } from "vue";
+import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 type SpacingType = "margin" | "padding";
-type BoxValue = string | number | boolean | null;
 
 const SPLITS = ["T", "R", "B", "L"];
-const enableSlider = true;
 
 const props = defineProps<{ type: SpacingType }>();
-const splitModes = ref<Record<string, boolean>>({});
 
-watch(
-	() => blockController.getSelectedBlocks(),
-	() => (splitModes.value = {}),
-);
 
 const label = computed(() => (props.type === "margin" ? "Margin" : "Padding"));
 
@@ -56,17 +50,11 @@ const readValue = (state: string | null = null) =>
 const getPlaceholder = () => String(getBaseValue(true));
 
 const toControlValues = (value: unknown) => expandBoxShorthand(value);
-const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: BoxValue[]) => collapseBoxShorthand(parts);
-const getMergedValue = (parts: BoxValue[]) => parts[0] ?? 0;
-const getControlAttrs = (variant: string | null) => {
-	const key = variant ?? "main";
-	return {
-		split: new Set(toControlValues(readValue(variant))).size > 1 || (splitModes.value[key] ?? false),
-		enableSlider,
-		"onUpdate:split": (split: boolean) => (splitModes.value[key] = split),
-	};
-};
+const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
+const toModelValue = (parts: SplitValue[]) => collapseBoxShorthand(parts);
+const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue, {
+	getMergedValue: (parts) => parts[0] ?? 0,
+});
 
 const setModelValue = (val: string | boolean | number) => {
 	if (typeof val == "boolean") return;

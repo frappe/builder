@@ -236,7 +236,7 @@ function getBoxSpacing(
 	const cascading = opts?.cascading ?? false;
 	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
 	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
-	const baseParts = expandBoxShorthand(base, base);
+	const baseParts = expandBoxShorthand(base);
 	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? baseParts[0];
 	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? baseParts[1];
 	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? baseParts[2];
@@ -316,21 +316,38 @@ function splitCssValueList(value: string): string[] {
 }
 
 /**
+ * Expands a CSS shorthand value into the given number of component slots
+ * following CSS conventions:
+ *   - 2 slots: `a` → `[a,a]`, `a b` → `[a,b]`
+ *   - 4 slots: `a` → `[a,a,a,a]`, `a b` → `[a,b,a,b]`,
+ *              `a b c` → `[a,b,c,b]`, `a b c d` → `[a,b,c,d]`
+ * @param value - Shorthand value string
+ * @param slots - Number of component slots (2 or 4)
+ * @returns Array of exactly `slots` values
+ */
+type ShorthandSlots = 2 | 4;
+
+function expandShorthand(value: unknown, slots: ShorthandSlots): string[] {
+	const str = String(value ?? "").trim();
+	if (!str || str === "Mixed" || str === "unset") return Array(slots).fill("");
+	const parts = splitCssValueList(str).filter((p) => p !== "Mixed" && p !== "unset");
+	const n = parts.length;
+	if (n === 0) return Array(slots).fill("");
+	if (n === 1) return Array(slots).fill(parts[0]);
+	if (n >= slots) return parts.slice(0, slots);
+	// CSS box shorthand: 2 values → T/B + R/L, 3 values → T + R/L + B
+	if (n === 2) return [parts[0], parts[1], parts[0], parts[1]];
+	return [parts[0], parts[1], parts[2], parts[1]];
+}
+
+/**
  * Expands a CSS box shorthand (margin, padding, border-radius) into its four
  * component values following the standard 1/2/3/4-value rules.
  * @param value - Shorthand value string
- * @param fallback - Value used for every side when the shorthand is empty
  * @returns Array of exactly four side values
  */
-function expandBoxShorthand(value: unknown, fallback = ""): string[] {
-	const str = String(value ?? "").trim();
-	if (!str || str === "Mixed" || str === "unset") return Array(4).fill(fallback);
-	const parts = splitCssValueList(str).map((p) => (p === "Mixed" || p === "unset" ? fallback : p));
-	if (!parts.length) return Array(4).fill(fallback);
-	if (parts.length === 1) return Array(4).fill(parts[0]);
-	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
-	if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
-	return parts.slice(0, 4);
+function expandBoxShorthand(value: unknown): string[] {
+	return expandShorthand(value, 4);
 }
 
 /**
@@ -349,16 +366,10 @@ function collapseBoxShorthand(parts: unknown[]): string {
 /**
  * Expands a CSS gap shorthand into its two component values (row-gap, column-gap).
  * @param value - Gap shorthand value string
- * @param fallback - Value used when the shorthand is empty or Mixed
  * @returns Array of exactly two values: [row-gap, column-gap]
  */
-function expandGapShorthand(value: unknown, fallback = ""): [string, string] {
-	const str = String(value ?? "").trim();
-	if (!str || str === "Mixed" || str === "unset") return [fallback, fallback];
-	const parts = splitCssValueList(str).map((p) => (p === "Mixed" || p === "unset" ? fallback : p));
-	if (!parts.length) return [fallback, fallback];
-	if (parts.length === 1) return [parts[0], parts[0]];
-	return [parts[0], parts[1]];
+function expandGapShorthand(value: unknown): [string, string] {
+	return expandShorthand(value, 2) as [string, string];
 }
 
 /**

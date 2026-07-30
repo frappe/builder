@@ -60,7 +60,7 @@ const props = withDefaults(
 		inputAttrs?: InputAttrs;
 		enableSlider?: boolean;
 		type?: string;
-		getMergedValue: (values: InputValue[]) => InputValue;
+		getMergedValue?: (values: InputValue[]) => InputValue;
 	}>(),
 	{
 		modelValue: "",
@@ -74,6 +74,7 @@ const props = withDefaults(
 		normalizeValue: (value: InputValue) => value,
 		inputAttrs: () => ({}),
 		enableSlider: false,
+		getMergedValue: (values: InputValue[]) => values[0] ?? "0px",
 	},
 );
 
