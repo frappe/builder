@@ -3,6 +3,8 @@
 
 import Block from "@/block";
 
+const numericValuePattern = /^(-?(?:\d+(?:\.\d*)?|\.\d+))([a-z%]*)$/i;
+
 function getNumberFromPx(px: string | number | null | undefined): number {
 	if (!px) {
 		return 0;
@@ -221,26 +223,8 @@ function shortenNumber(num: number): string {
 function setBoxSpacing(block: Block, type: "padding" | "margin", value: string) {
 	const props = [type, `${type}Top`, `${type}Right`, `${type}Bottom`, `${type}Left`];
 	props.forEach((prop) => block.setStyle(prop, null));
-	if (!value) return;
-	const arr = value.split(" ");
-	if (arr.length === 1) {
-		block.setStyle(type, arr[0]);
-	} else if (arr.length === 2) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Bottom`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-	} else if (arr.length === 3) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Left`, arr[1]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-	} else if (arr.length === 4) {
-		block.setStyle(`${type}Top`, arr[0]);
-		block.setStyle(`${type}Right`, arr[1]);
-		block.setStyle(`${type}Bottom`, arr[2]);
-		block.setStyle(`${type}Left`, arr[3]);
-	}
+	const shorthand = value.trim();
+	if (shorthand) block.setStyle(type, shorthand);
 }
 
 function getBoxSpacing(
@@ -252,18 +236,22 @@ function getBoxSpacing(
 	const cascading = opts?.cascading ?? false;
 	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
 	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
-	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? base;
-	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? base;
-	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? base;
-	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? base;
+	const baseParts = expandBoxShorthand(base, base);
+	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? baseParts[0];
+	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? baseParts[1];
+	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? baseParts[2];
+	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? baseParts[3];
 	const sTop = String(top);
+	const sRight = String(right);
 	const sBottom = String(bottom);
 	const sLeft = String(left);
-	const sRight = String(right);
-	if (sTop === base && sBottom === base && sLeft === base && sRight === base) return base;
-	if (sTop === sBottom && sTop === sRight && sTop === sLeft) return sTop;
-	if (sTop === sBottom && sLeft === sRight) return `${sTop} ${sLeft}`;
-	return `${sTop} ${sRight} ${sBottom} ${sLeft}`;
+	if (sTop === baseParts[0] && sRight === baseParts[1] && sBottom === baseParts[2] && sLeft === baseParts[3]) {
+		return base;
+	}
+	// A side left unset while others are set falls back to an empty base; treat it as 0
+	// so the reconstructed shorthand stays well-formed and expands to the right corners.
+	const fill = (value: string) => value || "0px";
+	return collapseBoxShorthand([fill(sTop), fill(sRight), fill(sBottom), fill(sLeft)]);
 }
 
 /**
@@ -283,7 +271,7 @@ function extractNumberAndUnit(value: string): { number: string; unit: string } {
  * @returns String with unit attached
  */
 function addUnitToNumber(numberStr: string, unit: string): string {
-	const match = numberStr.match(/^([0-9.]+)([a-z%]*)$/);
+	const match = numberStr.match(numericValuePattern);
 	if (match) {
 		const [, number, existingUnit] = match;
 		return existingUnit ? numberStr : number + unit;
@@ -292,36 +280,95 @@ function addUnitToNumber(numberStr: string, unit: string): string {
 }
 
 /**
- * Normalizes CSS values by adding default units where missing
- * Handles both single values and spacing properties with multiple values
- * @param value - CSS value string
- * @param unitOptions - Array of possible units, first is used as default
- * @param propertyKey - CSS property name (used to detect spacing properties)
- * @returns Normalized value string with units added
+ * Removes the default unit from numeric values for display in controls.
+ * Other units remain visible.
  */
-function normalizeValueWithUnits(value: string, unitOptions: string[], propertyKey: string): string {
-	if (!unitOptions.length) return value;
+function removeDefaultUnit(value: string, defaultUnit: string): string {
+	return value
+		.split(/(\s+)/)
+		.map((part) => {
+			const match = part.match(numericValuePattern);
+			return match?.[2].toLowerCase() === defaultUnit.toLowerCase() ? match[1] : part;
+		})
+		.join("");
+}
 
-	const defaultUnit = unitOptions[0];
-	const isSpacingProperty = propertyKey === "margin" || propertyKey === "padding";
-
-	if (isSpacingProperty) {
-		const parts = value.trim().split(/\s+/);
-		if (parts.length > 1) {
-			return parts.map((part) => addUnitToNumber(part, defaultUnit)).join(" ");
+/**
+ * Splits a CSS value list on whitespace, ignoring whitespace inside
+ * parentheses so functional values like `calc(10px + 5%)` stay intact.
+ */
+function splitCssValueList(value: string): string[] {
+	const parts: string[] = [];
+	let current = "";
+	let depth = 0;
+	for (const char of value) {
+		if (char === "(") depth++;
+		if (char === ")") depth--;
+		if (/\s/.test(char) && depth === 0) {
+			if (current) parts.push(current);
+			current = "";
+		} else {
+			current += char;
 		}
 	}
+	if (current) parts.push(current);
+	return parts;
+}
 
-	return addUnitToNumber(value, defaultUnit);
+/**
+ * Expands a CSS box shorthand (margin, padding, border-radius) into its four
+ * component values following the standard 1/2/3/4-value rules.
+ * @param value - Shorthand value string
+ * @param fallback - Value used for every side when the shorthand is empty
+ * @returns Array of exactly four side values
+ */
+function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
+	const parts = splitCssValueList(String(value ?? "").trim());
+	if (!parts.length) return Array(4).fill(fallback);
+	if (parts.length === 1) return Array(4).fill(parts[0]);
+	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
+	if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
+	return parts.slice(0, 4);
+}
+
+/**
+ * Collapses four side values into the shortest shorthand that expands back to them.
+ * @param parts - Four side values, in the order expandBoxShorthand returns
+ * @returns Shorthand value string
+ */
+function collapseBoxShorthand(parts: unknown[]): string {
+	const [top, right, bottom, left] = parts.map((part) => String(part ?? ""));
+	if (top === right && top === bottom && top === left) return top;
+	if (top === bottom && right === left) return `${top} ${right}`;
+	if (right === left) return `${top} ${right} ${bottom}`;
+	return [top, right, bottom, left].join(" ");
+}
+
+/**
+ * Normalizes CSS values by adding the default unit where missing.
+ * Handles both single and whitespace-separated numeric values.
+ * @param value - CSS value string
+ * @param defaultUnit - Unit to add to unitless numbers
+ * @returns Normalized value string with units added
+ */
+function normalizeValueWithUnits(value: string, defaultUnit: string): string {
+	if (!defaultUnit) return value;
+	return value
+		.split(/(\s+)/)
+		.map((part) => addUnitToNumber(part, defaultUnit))
+		.join("");
 }
 
 export {
 	addPxToNumber,
+	collapseBoxShorthand,
+	expandBoxShorthand,
 	extractNumberAndUnit,
 	getBoxSpacing,
 	getNumberFromPx,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
+	removeDefaultUnit,
 	setBoxSpacing,
 	shortenNumber,
 };

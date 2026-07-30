@@ -20,7 +20,7 @@
 				:key="section.name"
 				:sectionCollapsed="toValue(section.collapsed) && !builderStore.propertyFilter">
 				<template v-for="property in getFilteredProperties(section)">
-					<component :is="property.component" v-bind="property.getProps()" v-on="property.events || {}">
+					<component :is="property.component" v-bind="property.getProps?.()" v-on="property.events || {}">
 						{{ property.innerText || "" }}
 					</component>
 				</template>
@@ -32,50 +32,14 @@
 	</div>
 </template>
 <script setup lang="ts">
-import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
-import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
-import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
-import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
-import dimensionSection from "@/components/BlockPropertySections/DimenstionSection";
-import editorConfigSection from "@/components/BlockPropertySections/EditorConfigSection";
-import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
-import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
-import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
-import layoutSection from "@/components/BlockPropertySections/LayoutSection";
-import linkSection from "@/components/BlockPropertySections/LinkSection";
-import optionsSection from "@/components/BlockPropertySections/OptionsSection";
-import positionSection from "@/components/BlockPropertySections/PositionSection";
-import rawStyleSection from "@/components/BlockPropertySections/RawStyleSection";
-import spacingSection from "@/components/BlockPropertySections/SpacingSection";
-import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
-import styleSection from "@/components/BlockPropertySections/StyleSection";
-import transitionSection from "@/components/BlockPropertySections/TransitionSection";
-import typographySection from "@/components/BlockPropertySections/TypographySection";
-import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
+import { sections, type PropertySection } from "@/components/BlockPropertySections";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
-import type { Component } from "vue";
 import { Ref, ref } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
-
-type BlockProperty = {
-	component: Component;
-	getProps: () => Record<string, unknown>;
-	events?: Record<string, unknown>;
-	searchKeyWords: string;
-	condition?: () => boolean;
-	innerText?: string;
-};
-
-type PropertySection = {
-	name: string;
-	properties: BlockProperty[] | (() => BlockProperty[]);
-	condition?: () => boolean;
-	collapsed?: boolean;
-};
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
 
@@ -107,27 +71,4 @@ const getFilteredProperties = (section: PropertySection) => {
 		return showProperty;
 	});
 };
-
-const sections = [
-	standardPropsInputSection,
-	collectionOptionsSection,
-	linkSection,
-	layoutSection,
-	imageOptionsSection,
-	HTMLOptionsSection,
-	videoOptionsSection,
-	inputOptionsSection,
-	typographySection,
-	styleSection,
-	dimensionSection,
-	spacingSection,
-	transitionSection,
-	optionsSection,
-	positionSection,
-	dataKeySection,
-	accessibilitySection,
-	customAttributesSection,
-	editorConfigSection,
-	rawStyleSection,
-] as PropertySection[];
 </script>

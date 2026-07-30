@@ -27,7 +27,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Top)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginTop || "auto" }}
+				{{ getMarginValue(Position.Top) || "auto" }}
 			</div>
 		</div>
 		<div
@@ -51,7 +51,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginBottom || "auto" }}
+				{{ getMarginValue(Position.Bottom) || "auto" }}
 			</div>
 		</div>
 		<div
@@ -75,7 +75,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Left)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginLeft || "auto" }}
+				{{ getMarginValue(Position.Left) || "auto" }}
 			</div>
 		</div>
 		<div
@@ -99,7 +99,7 @@
 				:class="{ hidden: updating }"
 				@mousedown.stop="handleMargin($event, Position.Right)" />
 			<div class="m-auto text-sm text-yellow-900" v-show="updating">
-				{{ blockStyles.marginRight || "auto" }}
+				{{ getMarginValue(Position.Right) || "auto" }}
 			</div>
 		</div>
 	</div>
@@ -129,6 +129,7 @@ const {
 	canvasProps,
 	updating,
 	blockStyles,
+	getSpacingValue,
 	handleBorderWidth,
 	longHandleSize,
 	sideHandleSize,
@@ -153,14 +154,12 @@ const leftMarginHandlerWidth = computed(() => getMargin("Left"));
 const rightMarginHandlerWidth = computed(() => getMargin("Right"));
 
 const getMargin = (side: "Top" | "Left" | "Right" | "Bottom") => {
-	blockStyles.value.marginTop;
-	blockStyles.value.marginBottom;
-	blockStyles.value.marginLeft;
-	blockStyles.value.marginRight;
 	blockStyles.value.margin;
 	blockStyles.value.display;
 	return getNumberFromPx(getComputedStyle(props.target)[`margin${side}`]) * canvasProps.scale;
 };
+
+const getMarginValue = (position: Position) => getSpacingValue("margin", position);
 
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;

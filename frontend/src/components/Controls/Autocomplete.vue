@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-2 focus-within:ring-outline-gray-3"
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
@@ -33,6 +33,10 @@
 						'pl-2': !$slots.prefix,
 						'pr-2': !hasValue && !canShowArrows,
 					}" />
+				<span
+					v-if="hasOverflow"
+					class="pointer-events-none relative z-10 -ml-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-focus-within:hidden group-hover:to-surface-gray-3"
+					aria-hidden="true" />
 				<div class="flex items-center gap-0.5">
 					<NumberArrows
 						v-if="canShowArrows"
@@ -53,21 +57,17 @@
 
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
-					@after-enter="
-						() => {
-							fixedPositionStyles = getFixedPositionStyles();
-						}
-					"
-					@after-leave="
-						() => {
-							fixedPositionStyles = {};
-						}
-					"
-					:class="referenceElementSelector ? 'fixed' : 'absolute'"
-					:style="fixedPositionStyles"
 					ref="contentRef"
-					class="z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl">
-					<div class="overflow-y-auto p-1">
+					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
+					:class="[
+						referenceElementSelector ? 'fixed' : 'absolute',
+						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
+						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
+					]"
+					:style="fixedPositionStyles"
+					@after-enter="updateOptionsPosition"
+					@after-leave="fixedPositionStyles = {}">
+					<div class="options-list overflow-y-auto p-1 empty:p-0">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 							<ComboboxSeparator
 								v-if="option.value.startsWith('_separator_line')"
@@ -114,6 +114,7 @@
 <script setup lang="ts">
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
+import { useResizeObserver } from "@vueuse/core";
 import {
 	ComboboxContent,
 	ComboboxInput,
@@ -123,8 +124,12 @@ import {
 	ComboboxSeparator,
 } from "reka-ui";
 import type { Component, ComponentPublicInstance } from "vue";
-import { computed, nextTick, ref, useAttrs, watch } from "vue";
+import { computed, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
+
+const OPTIONS_GAP = 4;
+// keep in sync with the max-h-80 on the options container
+const MAX_OPTIONS_HEIGHT = 320;
 
 interface Option {
 	label: string;
@@ -173,8 +178,19 @@ const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
 const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
-const fixedPositionStyles = ref({});
+const fixedPositionStyles = ref<Record<string, string>>({});
+const openOptionsAbove = ref(false);
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
+
+const hasOverflow = ref(false);
+
+const checkOverflow = () => {
+	const input = containerRef.value?.querySelector("input");
+	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+};
+
+useResizeObserver(containerRef, checkOverflow);
+onMounted(checkOverflow);
 
 const attrs = useAttrs();
 
@@ -268,6 +284,7 @@ const handleBlur = (event: FocusEvent) => {
 };
 
 watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
+watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
 watch(
 	() => props.modelValue,
 	(val) => (searchQuery.value = val ?? ""),
@@ -275,41 +292,51 @@ watch(
 );
 
 watch(isOpen, (val) => {
-	if (val && props.referenceElementSelector) {
-		nextTick(() => {
-			fixedPositionStyles.value = getFixedPositionStyles();
-		});
-	}
+	if (val) nextTick(updateOptionsPosition);
+});
+
+watch(displayOptions, () => {
+	if (isOpen.value) nextTick(updateOptionsPosition);
 });
 
 if (props.getOptions) refreshOptions();
 
-// in Popover, absolute positioning keeps all options within the Popover taking extra space
-// making it fixed makes it float above Popover container
-const getFixedPositionStyles = () => {
-	if (props.referenceElementSelector) {
-		const comboboxInputRect = containerRef.value?.getBoundingClientRect();
-		const contentRect = contentRef.value?.$el?.getBoundingClientRect
-			? contentRef.value.$el.getBoundingClientRect()
-			: null;
-		if (!comboboxInputRect) {
-			return {};
-		}
-		// Calculate positions relative to viewport and use with Teleport to body
-		const isAbove = contentRect && comboboxInputRect.bottom + (contentRect?.height || 0) > window.innerHeight;
-		const top = isAbove ? "unset" : comboboxInputRect.bottom + 4 + "px";
-		const bottom = isAbove ? window.innerHeight - comboboxInputRect.top + 4 + "px" : "unset";
-		const left = comboboxInputRect.left + "px";
+const shouldOpenOptionsAbove = () => {
+	const comboboxInputRect = containerRef.value?.getBoundingClientRect();
+	if (!comboboxInputRect) return false;
 
-		return {
-			top,
-			bottom,
-			left,
-			width: comboboxInputRect.width + "px",
-			zIndex: "999",
-		};
-	}
-	return {};
+	const contentRect = (contentRef.value?.$el as HTMLElement | undefined)?.getBoundingClientRect();
+	const optionsHeight = Math.min(contentRect?.height || MAX_OPTIONS_HEIGHT, MAX_OPTIONS_HEIGHT);
+	const spaceBelow = window.innerHeight - comboboxInputRect.bottom - OPTIONS_GAP;
+	const spaceAbove = comboboxInputRect.top - OPTIONS_GAP;
+
+	return spaceBelow < optionsHeight && spaceAbove > spaceBelow;
+};
+
+const updateOptionsPosition = () => {
+	openOptionsAbove.value = shouldOpenOptionsAbove();
+	fixedPositionStyles.value = props.referenceElementSelector ? getFixedPositionStyles() : {};
+};
+
+// inside a Popover, absolute positioning keeps the options within the Popover and takes extra
+// space; fixed positioning lets them float above the Popover container instead
+const getFixedPositionStyles = (): Record<string, string> => {
+	const comboboxInputRect = containerRef.value?.getBoundingClientRect();
+	if (!comboboxInputRect) return {};
+
+	const top = openOptionsAbove.value ? "unset" : comboboxInputRect.bottom + OPTIONS_GAP + "px";
+	const bottom = openOptionsAbove.value
+		? window.innerHeight - comboboxInputRect.top + OPTIONS_GAP + "px"
+		: "unset";
+	const left = comboboxInputRect.left + "px";
+
+	return {
+		top,
+		bottom,
+		left,
+		width: comboboxInputRect.width + "px",
+		zIndex: "999",
+	};
 };
 
 defineExpose({
@@ -320,5 +347,14 @@ defineExpose({
 <style scoped>
 .can-show-arrows:hover {
 	gap: 3px !important;
+}
+
+/* Reka filters non-matching ComboboxItem elements out of the DOM itself, so once every
+   option is filtered out, the options-list div is left empty; collapse the content
+   container's border/shadow too instead of showing them around nothing. */
+.combobox-content:empty,
+.combobox-content:has(> .options-list:only-child:empty) {
+	border: none;
+	box-shadow: none;
 }
 </style>

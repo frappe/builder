@@ -3,7 +3,7 @@
 		<span
 			class="pointer-events-none fixed z-[1000] flex h-8 items-center justify-center whitespace-nowrap rounded-full bg-gray-600 p-2 text-sm text-white opacity-80"
 			:class="wide ? 'w-20' : 'w-fit'"
-			:style="previewStyle">
+			:style="tooltipStyle">
 			<slot />
 		</span>
 	</Teleport>
@@ -17,7 +17,7 @@ const props = defineProps<{
 	wide?: boolean;
 }>();
 
-const previewStyle = computed(() => ({
+const tooltipStyle = computed(() => ({
 	left: `${props.position.x + 12}px`,
 	top: `${props.position.y + 12}px`,
 }));

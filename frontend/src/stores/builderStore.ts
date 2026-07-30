@@ -13,6 +13,7 @@ const { capture } = useTelemetry();
 declare global {
 	interface Window {
 		is_fc_site?: boolean | string;
+		is_read_only_mode?: boolean | string;
 	}
 }
 
@@ -39,6 +40,8 @@ const useBuilderStore = defineStore("builderStore", {
 		showDataScriptDialog: <"page" | null>null,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
+		// site-level maintenance/migration state, not the editor's edit lock
+		isSiteInReadOnlyMode: window.is_read_only_mode === "True",
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),

@@ -52,6 +52,7 @@ import GlobalCode from "./Settings/GlobalCode.vue";
 import GlobalDeveloper from "./Settings/GlobalDeveloper.vue";
 import GlobalDomains from "./Settings/GlobalDomains.vue";
 import GlobalGeneral from "./Settings/GlobalGeneral.vue";
+import GlobalUsers from "./Settings/GlobalUsers.vue";
 import PageAnalytics from "./Settings/PageAnalytics.vue";
 import PageGeneral from "./Settings/PageGeneral.vue";
 import PageMeta from "./Settings/PageMeta.vue";
@@ -132,6 +133,13 @@ const globalSettings = {
 			title: "General",
 			icon: "lucide-settings",
 			disabled: false,
+		},
+		{
+			label: "Users",
+			value: "global_users",
+			component: GlobalUsers,
+			title: "Users",
+			icon: "lucide-users",
 		},
 		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: "lucide-code" },
 		{
