@@ -5,6 +5,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, fontListItems, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
@@ -44,41 +45,23 @@ const typographySectionProperties = [
 				propertyKey: "fontFamily",
 				getOptions: async (filterString: string) => {
 					await loadFontList();
-					const fontOptions = [] as { label: string; value: string }[];
-					userFonts.data?.forEach((font: UserFont) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						const fontName = font.font_name as string;
-						if (fontName.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: fontName,
-								value: fontName,
-							});
-						}
-					});
-					if (fontOptions.length) {
-						fontOptions.unshift({
-							label: "Custom",
-							value: "_separator_1",
-						});
-						fontOptions.push({
-							label: "Default",
-							value: "_separator_2",
-						});
-					}
-					fontListItems.value.forEach((font) => {
-						if (fontOptions.length >= 20) {
-							return;
-						}
-						if (font.family.toLowerCase().includes(filterString.toLowerCase()) || !filterString) {
-							fontOptions.push({
-								label: font.family,
-								value: font.family,
-							});
-						}
-					});
-					return fontOptions;
+					const toOption = (family: string) => ({ label: family, value: family });
+					const userFontOptions = filterOptions(
+						(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
+						filterString,
+					);
+					const defaultFontOptions = filterOptions(
+						fontListItems.value.map((font) => toOption(font.family)),
+						filterString,
+					);
+
+					if (!userFontOptions.length) return defaultFontOptions;
+					return [
+						{ label: "Custom", value: "_separator_1" },
+						...userFontOptions,
+						{ label: "Default", value: "_separator_2" },
+						...defaultFontOptions,
+					];
 				},
 				actionButton: {
 					component: FontUploader,
