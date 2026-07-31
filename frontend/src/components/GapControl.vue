@@ -28,34 +28,34 @@ const isColumnDirection = computed(() =>
 const splits = computed(() => isColumnDirection.value ? [{ label: "H" }, { label: "V" }] : [{ label: "V" }, { label: "H" }]);
 
 const getBlockGap = (block: Block): [string, string] => {
-	const [exR, exC] = expandGapShorthand(block.getNativeStyle("gap"));
-	return [String(block.getNativeStyle("rowGap") ?? "").trim() || exR, String(block.getNativeStyle("columnGap") ?? "").trim() || exC];
+	const [existingRow, existingColumn] = expandGapShorthand(block.getNativeStyle("gap"));
+	return [String(block.getNativeStyle("rowGap") ?? "").trim() || existingRow, String(block.getNativeStyle("columnGap") ?? "").trim() || existingColumn];
 };
 
 const getEffectiveGap = (): [string, string] => {
 	const blocks = blockController.getSelectedBlocks();
 	if (!blocks.length) return ["", ""];
-	let [r, c] = getBlockGap(blocks[0]);
+	let [row, column] = getBlockGap(blocks[0]);
 	for (let i = 1; i < blocks.length; i++) {
-		const [bR, bC] = getBlockGap(blocks[i]);
-		if (r !== bR) r = "Mixed";
-		if (c !== bC) c = "Mixed";
+		const [blockRow, blockColumn] = getBlockGap(blocks[i]);
+		if (row !== blockRow) row = "Mixed";
+		if (column !== blockColumn) column = "Mixed";
 	}
-	return [r, c];
+	return [row, column];
 };
 
 const readValue = (state: string | null = null) => {
 	if (state) return String(blockController.getNativeStyle(`${state}:gap`) ?? "");
-	const [r, c] = getEffectiveGap();
-	if (r === "Mixed" || c === "Mixed") return r === "Mixed" && c === "Mixed" ? "Mixed" : collapseGapShorthand([r, c]);
-	return !r && !c ? "" : r === c ? r : collapseGapShorthand([r, c]);
+	const [row, column] = getEffectiveGap();
+	if (row === "Mixed" || column === "Mixed") return row === "Mixed" && column === "Mixed" ? "Mixed" : collapseGapShorthand([row, column]);
+	return !row && !column ? "" : row === column ? row : collapseGapShorthand([row, column]);
 };
 
 const getPlaceholder = () => String(blockController.getCascadingStyle("gap") ?? "unset");
 
 const toControlValues = (value: unknown) => {
-	const [r, c] = typeof value === "string" && value.includes("Mixed") ? getEffectiveGap() : expandGapShorthand(value);
-	return isColumnDirection.value ? [c, r] : [r, c];
+	const [row, column] = typeof value === "string" && value.includes("Mixed") ? getEffectiveGap() : expandGapShorthand(value);
+	return isColumnDirection.value ? [column, row] : [row, column];
 };
 
 const toModelValue = (parts: StyleValue[], changedIndex?: number) => ({
@@ -78,20 +78,20 @@ const setModelValue = (val: unknown) => {
 
 	blockController.getSelectedBlocks().forEach((block) => {
 		if (payload) {
-			const [exR, exC] = getBlockGap(block);
-			let r = (payload.changedAxis === "columnGap" ? exR : String(payload.rowGap ?? "").trim());
-			let c = (payload.changedAxis === "rowGap" ? exC : String(payload.colGap ?? "").trim());
-			r = r === "Mixed" ? "" : r;
-			c = c === "Mixed" ? "" : c;
+			const [existingRow, existingColumn] = getBlockGap(block);
+			let row = (payload.changedAxis === "columnGap" ? existingRow : String(payload.rowGap ?? "").trim());
+			let column = (payload.changedAxis === "rowGap" ? existingColumn : String(payload.colGap ?? "").trim());
+			row = row === "Mixed" ? "" : row;
+			column = column === "Mixed" ? "" : column;
 
 			block.setStyle("gap", null);
-			if (r && c && r === c) {
+			if (row && column && row === column) {
 				block.setStyle("rowGap", null);
 				block.setStyle("columnGap", null);
-				block.setStyle("gap", r);
+				block.setStyle("gap", row);
 			} else {
-				block.setStyle("rowGap", r || null);
-				block.setStyle("columnGap", c || null);
+				block.setStyle("rowGap", row || null);
+				block.setStyle("columnGap", column || null);
 			}
 		} else {
 			const value = String(val ?? "").trim();
