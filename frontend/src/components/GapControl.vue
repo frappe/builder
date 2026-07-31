@@ -1,35 +1,25 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<StylePropertyControl
+		<SplitPropertyControl
 			propertyKey="gap"
-			:component="SplitModeInput"
 			label="Gap"
-			:unitOptions="BOX_UNIT_OPTIONS"
-			:enableStates="true"
-			:enableSlider="true"
 			:splits="splits"
 			:toControlValues="toControlValues"
 			:toModelValue="toModelValue"
-			:normalizeValue="normalize"
-			:inputAttrs="{ min: 0 }"
 			:getModelValue="readValue"
 			:getPlaceholder="getPlaceholder"
-			:getVariantValue="readValue"
 			:getMergedValue="getMergedValue"
-			:setModelValue="setModelValue"
-			:getControlAttrs="getControlAttrs" />
+			:splitOptions="SPLIT_OPTIONS"
+			:setModelValue="setModelValue" />
 	</div>
 </template>
 
 <script lang="ts" setup>
-import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
-import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import type Block from "@/block";
 import blockController from "@/utils/blockController";
-import { collapseGapShorthand, expandGapShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
-import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
+import { collapseGapShorthand, expandGapShorthand } from "@/utils/cssUtils";
 import { computed } from "vue";
-import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 const isColumnDirection = computed(() =>
 	String(blockController.getNativeStyle("flexDirection") || blockController.getCascadingStyle("flexDirection") || "").startsWith("column"),
@@ -68,22 +58,19 @@ const toControlValues = (value: unknown) => {
 	return isColumnDirection.value ? [c, r] : [r, c];
 };
 
-const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
-
-const toModelValue = (parts: SplitValue[], changedIndex?: number) => ({
+const toModelValue = (parts: StyleValue[], changedIndex?: number) => ({
 	type: "gap-split",
 	rowGap: isColumnDirection.value ? parts[1] : parts[0],
 	colGap: isColumnDirection.value ? parts[0] : parts[1],
 	changedAxis: changedIndex !== undefined ? ((isColumnDirection.value ? changedIndex === 0 : changedIndex === 1) ? "columnGap" : "rowGap") : null,
 });
 
-const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue, {
-	splitOptions: [
-		{ label: "Use for all", value: false, icon: "lucide-square", tooltip: "Use for all" },
-		{ label: "Set separately", value: true, icon: "lucide-layout-grid", tooltip: "Set separately" },
-	],
-	getMergedValue: (parts) => parts.find((p) => p && String(p) !== "Mixed") ?? 0,
-});
+const SPLIT_OPTIONS = [
+	{ label: "Use for all", value: false, icon: "lucide-square", tooltip: "Use for all" },
+	{ label: "Set separately", value: true, icon: "lucide-layout-grid", tooltip: "Set separately" },
+];
+
+const getMergedValue = (parts: StyleValue[]) => parts.find((part) => part && String(part) !== "Mixed") ?? 0;
 
 const setModelValue = (val: unknown) => {
 	if (typeof val === "boolean") return;

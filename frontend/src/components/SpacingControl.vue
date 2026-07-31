@@ -1,34 +1,21 @@
 <template>
 	<div class="flex w-full flex-col gap-2">
-		<StylePropertyControl
+		<SplitPropertyControl
 			:propertyKey="type"
-			:component="SplitModeInput"
 			:label="label"
-			:unitOptions="BOX_UNIT_OPTIONS"
-			:enableStates="true"
-			:enableSlider="true"
 			:splits="SPLITS"
-			:toControlValues
-			:toModelValue
-			:normalizeValue="normalize"
 			:inputAttrs="type === 'margin' ? {} : { min: 0 }"
 			:getModelValue="readValue"
-			:getPlaceholder="getPlaceholder"
-			:getVariantValue="readValue"
+			:getPlaceholder
 			:getMergedValue
-			:setModelValue
-			:getControlAttrs="getControlAttrs" />
+			:setModelValue />
 	</div>
 </template>
 
 <script lang="ts" setup>
-import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
-import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { collapseBoxShorthand, expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
-import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed } from "vue";
-import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 type SpacingType = "margin" | "padding";
 
@@ -49,12 +36,7 @@ const readValue = (state: string | null = null) =>
 
 const getPlaceholder = () => String(getBaseValue(true));
 
-const toControlValues = (value: unknown) => expandBoxShorthand(value);
-const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: SplitValue[]) => collapseBoxShorthand(parts);
-const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue, {
-	getMergedValue: (parts) => parts[0] ?? 0,
-});
+const getMergedValue = (parts: StyleValue[]) => parts[0] ?? 0;
 
 const setModelValue = (val: string | boolean | number) => {
 	if (typeof val == "boolean") return;

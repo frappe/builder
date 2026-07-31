@@ -9,23 +9,14 @@
 			:events="colorEvents" />
 
 		<!-- Border Width (with Split Mode Input) -->
-		<StylePropertyControl
+		<SplitPropertyControl
 			v-if="hasColor"
 			label="Border Width"
 			propertyKey="borderWidth"
-			:component="SplitModeInput"
 			:unitOptions="BORDER_UNIT_OPTIONS"
-			:enableStates="true"
-			:enableSlider="true"
 			:splits="SPLITS"
-			:toControlValues="toControlValues"
 			:toModelValue="toModelValue"
-			:normalizeValue="normalize"
-			:inputAttrs="{ min: 0 }"
-			:getModelValue="readValue"
-			:getVariantValue="readValue"
-			:getControlAttrs="getControlAttrs"
-			:getMergedValue="getMergedValue" />
+			:getModelValue="readValue" />
 
 		<!-- Border Style -->
 		<StylePropertyControl
@@ -42,14 +33,12 @@
 </template>
 
 <script lang="ts" setup>
-import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import blockController from "@/utils/blockController";
-import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { BORDER_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed } from "vue";
-import { useSplitControl, type SplitValue } from "@/composables/useSplitControl";
 
 const SPLITS = ["T", "R", "B", "L"];
 
@@ -59,10 +48,7 @@ const readValue = (state: string | null = null) => {
 	return String(blockController.getStyle(key) || "");
 };
 
-const toControlValues = (value: unknown) => expandBoxShorthand(value);
-const normalize = (value: SplitValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: SplitValue[]) => parts.join(" ");
-const { getControlAttrs, getMergedValue } = useSplitControl(toControlValues, readValue);
+const toModelValue = (parts: StyleValue[]) => parts.join(" ");
 
 const hasColor = computed(() => {
 	return Boolean(

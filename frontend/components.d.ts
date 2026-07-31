@@ -142,6 +142,7 @@ declare module 'vue' {
     SpacingControl: typeof import('./src/components/SpacingControl.vue')['default']
     SplitInput: typeof import('./src/components/Controls/SplitInput.vue')['default']
     SplitModeInput: typeof import('./src/components/Controls/SplitModeInput.vue')['default']
+    SplitPropertyControl: typeof import('./src/components/Controls/SplitPropertyControl.vue')['default']
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']
     TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
