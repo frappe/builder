@@ -245,7 +245,12 @@ function getBoxSpacing(
 	const sRight = String(right);
 	const sBottom = String(bottom);
 	const sLeft = String(left);
-	if (sTop === baseParts[0] && sRight === baseParts[1] && sBottom === baseParts[2] && sLeft === baseParts[3]) {
+	if (
+		sTop === baseParts[0] &&
+		sRight === baseParts[1] &&
+		sBottom === baseParts[2] &&
+		sLeft === baseParts[3]
+	) {
 		return base;
 	}
 	// A side left unset while others are set falls back to an empty base; treat it as 0
@@ -293,10 +298,7 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
 		.join("");
 }
 
-/**
- * Splits a CSS value list on whitespace, ignoring whitespace inside
- * parentheses so functional values like `calc(10px + 5%)` stay intact.
- */
+// Splits on whitespace outside parentheses, so `calc(10px + 5%)` stays one part.
 function splitCssValueList(value: string): string[] {
 	const parts: string[] = [];
 	let current = "";
@@ -315,75 +317,51 @@ function splitCssValueList(value: string): string[] {
 	return parts;
 }
 
-/**
- * Expands a CSS shorthand value into the given number of component slots
- * following CSS conventions:
- *   - 2 slots: `a` → `[a,a]`, `a b` → `[a,b]`
- *   - 4 slots: `a` → `[a,a,a,a]`, `a b` → `[a,b,a,b]`,
- *              `a b c` → `[a,b,c,b]`, `a b c d` → `[a,b,c,d]`
- * @param value - Shorthand value string
- * @param slots - Number of component slots (2 or 4)
- * @returns Array of exactly `slots` values
- */
+// 2 slots for gap (row, column), 4 for the box sides (top, right, bottom, left).
 type ShorthandSlots = 2 | 4;
 
+// `a` → every slot, `a b` → [a,b,a,b], `a b c` → [a,b,c,b].
 function expandShorthand(value: unknown, slots: ShorthandSlots): string[] {
-	const str = String(value ?? "").trim();
-	if (!str || str === "Mixed" || str === "unset") return Array(slots).fill("");
-	const parts = splitCssValueList(str).filter((p) => p !== "Mixed" && p !== "unset");
-	const n = parts.length;
-	if (n === 0) return Array(slots).fill("");
-	if (n === 1) return Array(slots).fill(parts[0]);
-	if (n >= slots) return parts.slice(0, slots);
-	// CSS box shorthand: 2 values → T/B + R/L, 3 values → T + R/L + B
-	if (n === 2) return [parts[0], parts[1], parts[0], parts[1]];
-	return [parts[0], parts[1], parts[2], parts[1]];
+	const parts = splitCssValueList(String(value ?? "").trim()).filter(
+		(part: string) => part !== "" && part !== "Mixed" && part !== "unset",
+	);
+	if (!parts.length) return Array(slots).fill("");
+	if (parts.length >= slots) return parts.slice(0, slots);
+	if (parts.length === 1) return Array(slots).fill(parts[0]);
+	return [parts[0], parts[1], parts[2] ?? parts[0], parts[1]];
 }
 
-/**
- * Expands a CSS box shorthand (margin, padding, border-radius) into its four
- * component values following the standard 1/2/3/4-value rules.
- * @param value - Shorthand value string
- * @returns Array of exactly four side values
- */
+// Inverse of expandShorthand: drops every trailing value that CSS can infer.
+function collapseShorthand(parts: unknown[], slots: ShorthandSlots): string {
+	const values = Array.from({ length: slots }, (_, index) => String(parts[index] ?? ""));
+	while (values.length > 2 && values[values.length - 1] === values[values.length - 3]) values.pop();
+	if (values.length === 2 && values[0] === values[1]) values.pop();
+	return values.join(" ");
+}
+
 function expandBoxShorthand(value: unknown): string[] {
 	return expandShorthand(value, 4);
 }
 
-/**
- * Collapses four side values into the shortest shorthand that expands back to them.
- * @param parts - Four side values, in the order expandBoxShorthand returns
- * @returns Shorthand value string
- */
 function collapseBoxShorthand(parts: unknown[]): string {
-	const [top, right, bottom, left] = parts.map((part) => String(part ?? ""));
-	if (top === right && top === bottom && top === left) return top;
-	if (top === bottom && right === left) return `${top} ${right}`;
-	if (right === left) return `${top} ${right} ${bottom}`;
-	return [top, right, bottom, left].join(" ");
+	return collapseShorthand(parts, 4);
 }
 
-/**
- * Expands a CSS gap shorthand into its two component values (row-gap, column-gap).
- * @param value - Gap shorthand value string
- * @returns Array of exactly two values: [row-gap, column-gap]
- */
 function expandGapShorthand(value: unknown): [string, string] {
 	return expandShorthand(value, 2) as [string, string];
 }
 
-/**
- * Collapses two gap values (row-gap, column-gap) into the shortest shorthand.
- * @param parts - Two gap values in [row-gap, column-gap] order
- * @returns Gap shorthand value string
- */
 function collapseGapShorthand(parts: unknown[]): string {
-	const [rowGap, colGap] = parts.map((part) => {
-		const str = String(part ?? "").trim();
-		return !str || str === "Mixed" || str === "unset" ? "0px" : str;
+	// An unset axis has to become 0px, otherwise the pair reads as a single value.
+	const axes = parts.map((part) => {
+		const value = String(part ?? "").trim();
+		if (value !== "" && value !== "Mixed" && value !== "unset") {
+			return value;
+		} else {
+			return "0px";
+		}
 	});
-	if (rowGap === colGap) return rowGap;
-	return `${rowGap} ${colGap}`;
+	return collapseShorthand(axes, 2);
 }
 
 /**
