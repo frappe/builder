@@ -90,13 +90,6 @@ declare interface StyleCopy {
 	style: BlockStyleObjects;
 }
 
-declare interface ContextMenuOption {
-	label: string;
-	action: CallableFunction;
-	condition?: () => boolean;
-	disabled?: () => boolean;
-}
-
 declare interface ComponentData {
 	name: string;
 	doctype?: string;

@@ -1,9 +1,9 @@
 <template>
 	<div>
-		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
+		<ContextMenu ref="contextMenu" :options="contextMenuOptions" :context="menuContext" />
 		<NewBlockTemplate
-			v-if="block"
-			:block="block"
+			v-if="menuContext"
+			:block="menuContext.block"
 			v-model="builderStore.showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
 </template>
@@ -11,6 +11,7 @@
 import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
+import type { BlockMenuContext, ContextMenuOption } from "@/types/blockContextMenu";
 import { promptCreateComponent } from "@/utils/dialogs";
 import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
@@ -28,112 +29,117 @@ const canvasStore = useCanvasStore();
 const aiStore = useAIStore();
 
 const contextMenu = ref(null) as unknown as Ref<InstanceType<typeof ContextMenu>>;
-const triggeredFromLayersPanel = ref(false);
-
-const block = ref(null) as unknown as Ref<Block>;
-
-const target = ref(null) as unknown as Ref<HTMLElement>;
+const menuContext = ref(null) as unknown as Ref<BlockMenuContext>;
 
 const showContextMenu = (event: MouseEvent, refBlock: Block) => {
-	block.value = refBlock;
-	// check if the event is triggered from layers panel
-	target.value = event.target as HTMLElement;
-	const layersPanel = target.value.closest(".block-layers");
-	triggeredFromLayersPanel.value = Boolean(layersPanel);
-	if (block.value.isRoot()) return;
+	const target = event.target as HTMLElement;
+	menuContext.value = {
+		block: refBlock,
+		target,
+		fromLayersPanel: Boolean(target.closest(".block-layers")),
+	};
+	if (refBlock.isRoot()) return;
 	contextMenu.value?.show(event);
 };
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
-const copyStyle = () => {
-	copiedStyle.value = {
-		blockId: block.value.blockId,
-		style: block.value.getStylesCopy(),
-	};
-};
-
-const pasteStyle = () => {
-	block.value.updateStyles(copiedStyle.value?.style as BlockStyleObjects);
-};
-
-const duplicateBlock = () => {
-	block.value.duplicateBlock();
-};
-
 const contextMenuOptions: ContextMenuOption[] = [
 	{
+		name: "edit-with-ai",
 		label: "Edit with AI",
-		action: () => {
-			aiStore.editWithAI(block.value);
-		},
-		condition: () => builderStore.isAIEnabled && !block.value.isRoot(),
+		rank: 10,
+		action: ({ block }) => aiStore.editWithAI(block),
+		condition: ({ block }) => builderStore.isAIEnabled && !block.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "rewrite-ai",
 		label: "Rewrite (AI)",
-		action: () => {
-			aiStore.runDirectAI(block.value, "rewrite_text", "Rewrite the content");
-		},
-		condition: () => builderStore.isAIEnabled && block.value.isText() && !block.value.isRoot(),
+		rank: 20,
+		action: ({ block }) => aiStore.runDirectAI(block, "rewrite_text", "Rewrite the content"),
+		condition: ({ block }) => builderStore.isAIEnabled && block.isText() && !block.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "replace-image-ai",
 		label: "Replace Image (AI)",
-		action: () => {
-			aiStore.runDirectAI(block.value, "replace_image", "Replace image");
-		},
-		condition: () => builderStore.isAIEnabled && block.value.isImage() && !block.value.isRoot(),
+		rank: 30,
+		action: ({ block }) => aiStore.runDirectAI(block, "replace_image", "Replace image"),
+		condition: ({ block }) => builderStore.isAIEnabled && block.isImage() && !block.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "edit-html",
 		label: "Edit HTML",
-		action: () => {
-			canvasStore.editHTML(block.value);
+		rank: 40,
+		action: ({ block }) => canvasStore.editHTML(block),
+		condition: ({ block }) => block.isHTML(),
+	},
+	{
+		name: "copy",
+		label: "Copy",
+		rank: 50,
+		action: () => triggerCopyEvent(),
+	},
+	{
+		name: "copy-style",
+		label: "Copy Style",
+		rank: 60,
+		action: ({ block }) => {
+			copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 		},
-		condition: () => block.value.isHTML(),
 	},
-	{ label: "Copy", action: () => triggerCopyEvent() },
-	{ label: "Copy Style", action: copyStyle },
 	{
+		name: "paste-style",
 		label: "Paste Style",
-		action: pasteStyle,
-		condition: () => Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.value.blockId),
+		rank: 70,
+		action: ({ block }) => block.updateStyles(copiedStyle.value?.style as BlockStyleObjects),
+		condition: ({ block }) =>
+			Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.blockId),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "duplicate",
 		label: "Duplicate",
-		action: duplicateBlock,
+		rank: 80,
+		action: ({ block }) => block.duplicateBlock(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "convert-to-collection",
 		label: "Convert To Collection",
-		action: () => {
-			block.value.isRepeaterBlock = true;
+		rank: 90,
+		action: ({ block }) => {
+			block.isRepeaterBlock = true;
 			toast.warning("Please select a collection");
 		},
-		condition: () =>
-			block.value.isContainer() &&
-			!block.value.isRoot() &&
-			!block.value.isRepeater() &&
-			!block.value.isChildOfComponentBlock() &&
-			!block.value.isExtendedFromComponent(),
+		condition: ({ block }) =>
+			block.isContainer() &&
+			!block.isRoot() &&
+			!block.isRepeater() &&
+			!block.isChildOfComponentBlock() &&
+			!block.isExtendedFromComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "remove-collection",
 		label: "Remove Collection",
-		action: () => {
-			block.value.isRepeaterBlock = false;
-			block.value.dataKey = {};
+		rank: 100,
+		action: ({ block }) => {
+			block.isRepeaterBlock = false;
+			block.dataKey = {};
 		},
-		condition: () => block.value.isRepeater(),
+		condition: ({ block }) => block.isRepeater(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "wrap-in-container",
 		label: "Wrap In Container",
-		action: () => {
+		rank: 110,
+		action: ({ block }) => {
 			const newBlockObj = getBlockTemplate("fit-container");
-			const parentBlock = block.value.getParentBlock();
+			const parentBlock = block.getParentBlock();
 			if (!parentBlock) return;
 
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
@@ -144,11 +150,11 @@ const contextMenuOptions: ContextMenuOption[] = [
 			// move selected blocks to newBlock
 			selectedBlocks
 				.sort((a: Block, b: Block) => parentBlock.getChildIndex(a) - parentBlock.getChildIndex(b))
-				.forEach((block: Block) => {
-					parentBlock?.removeChild(block);
-					newBlock?.addChild(block);
+				.forEach((selectedBlock: Block) => {
+					parentBlock?.removeChild(selectedBlock);
+					newBlock?.addChild(selectedBlock);
 					if (!width) {
-						const blockWidth = block.getStyle("width") as string | undefined;
+						const blockWidth = selectedBlock.getStyle("width") as string | undefined;
 						if (blockWidth && (blockWidth == "auto" || blockWidth.endsWith("%"))) {
 							width = "100%";
 						}
@@ -165,158 +171,169 @@ const contextMenuOptions: ContextMenuOption[] = [
 				}
 			});
 		},
-		condition: () => {
-			if (block.value.isRoot()) return false;
+		condition: ({ block }) => {
+			if (block.isRoot()) return false;
 			if (canvasStore.activeCanvas?.selectedBlocks.length === 1) return true;
 			// check if all selected blocks are siblings
-			const parentBlock = block.value.getParentBlock();
+			const parentBlock = block.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
-			return selectedBlocks.every((block: Block) => block.getParentBlock() === parentBlock);
+			return selectedBlocks.every((selectedBlock: Block) => selectedBlock.getParentBlock() === parentBlock);
 		},
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "repeat-block",
 		label: "Repeat Block",
-		action: () => {
+		rank: 120,
+		action: ({ block }) => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
-			const parentBlock = block.value.getParentBlock();
+			const parentBlock = block.getParentBlock();
 			if (!parentBlock) return;
-			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(block.value));
-			repeaterBlock.addChild(getBlockCopy(block.value));
-			parentBlock.removeChild(block.value);
+			const repeaterBlock = parentBlock.addChild(repeaterBlockObj, parentBlock.getChildIndex(block));
+			repeaterBlock.addChild(getBlockCopy(block));
+			parentBlock.removeChild(block);
 			repeaterBlock.selectBlock();
 			toast.warning("Please select a collection");
 		},
-		condition: () =>
-			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
+		condition: ({ block }) => !block.isRoot() && !block.isRepeater() && !block.isChildOfComponentBlock(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "reset-overrides",
 		label: "Reset Overrides",
+		rank: 130,
+		action: ({ block }) => block.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
-		disabled: () =>
+		disabled: ({ block }) =>
 			builderStore.readOnlyMode ||
-			!block.value?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
-		action: () => {
-			block.value.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop");
-		},
+			!block?.hasOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 	},
 	{
+		name: "reset-changes",
 		label: "Reset Changes",
-		action: () => {
-			if (block.value.hasChildren()) {
+		rank: 140,
+		action: ({ block }) => {
+			if (block.hasChildren()) {
 				confirm("Reset changes in child blocks as well?").then((confirmed) => {
-					block.value.resetChanges(confirmed);
+					block.resetChanges(confirmed);
 				});
 			} else {
-				block.value.resetChanges();
+				block.resetChanges();
 			}
 		},
-		condition: () => block.value.isExtendedFromComponent(),
+		condition: ({ block }) => block.isExtendedFromComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "sync-component",
 		label: "Sync Component",
-		condition: () => Boolean(block.value.extendedFromComponent),
-		action: () => {
-			block.value.syncWithComponent();
-		},
+		rank: 150,
+		action: ({ block }) => block.syncWithComponent(),
+		condition: ({ block }) => Boolean(block.extendedFromComponent),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "reset-component",
 		label: "Reset Component",
-		condition: () => Boolean(block.value.extendedFromComponent),
-		action: () => {
+		rank: 160,
+		action: ({ block }) => {
 			confirm("Are you sure you want to reset?").then((confirmed) => {
 				if (confirmed) {
-					block.value.resetWithComponent();
+					block.resetWithComponent();
 				}
 			});
 		},
+		condition: ({ block }) => Boolean(block.extendedFromComponent),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "update-component",
 		label: "Update to Latest Component",
-		action: () => {
-			componentStore.updatePinnedComponent(block.value);
-		},
-		condition: () =>
-			componentStore.isPinOutdated(block.value.extendedFromComponent, block.value.componentVersion),
+		rank: 170,
+		action: ({ block }) => componentStore.updatePinnedComponent(block),
+		condition: ({ block }) =>
+			componentStore.isPinOutdated(block.extendedFromComponent, block.componentVersion),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "edit-component",
 		label: "Edit Component",
-		action: () => {
-			componentStore.editComponent(block.value);
-		},
-		condition: () => block.value.isExtendedFromComponent(),
+		rank: 180,
+		action: ({ block }) => componentStore.editComponent(block),
+		condition: ({ block }) => block.isExtendedFromComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "save-block-template",
 		label: "Save as Block Template",
+		rank: 190,
 		action: () => {
 			builderStore.showBlockTemplateDialog = true;
 		},
-		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
+		condition: ({ block }) => !block.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "save-component",
 		label: "Save As Component",
-		action: () => promptCreateComponent(block.value),
-		condition: () => !block.value.isExtendedFromComponent(),
+		rank: 200,
+		action: ({ block }) => promptCreateComponent(block),
+		condition: ({ block }) => !block.isExtendedFromComponent(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "detach-component",
 		label: "Detach Component",
-		action: () => {
-			const newBlock = detachBlockFromComponent(block.value, null);
+		rank: 210,
+		action: ({ block }) => {
+			const newBlock = detachBlockFromComponent(block, null);
 			if (newBlock) {
 				newBlock.selectBlock();
 			}
-			block.value.getParentBlock()?.replaceChild(block.value, newBlock);
+			block.getParentBlock()?.replaceChild(block, newBlock);
 		},
-		condition: () => Boolean(block.value.extendedFromComponent),
+		condition: ({ block }) => Boolean(block.extendedFromComponent),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "rename",
 		label: "Rename",
-		action: () => {
-			const layerLabel = target.value?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
-			if (layerLabel) {
-				layerLabel.dispatchEvent(new Event("dblclick"));
-				nextTick(() => {
-					// selct all text in the layerLabel
-					const range = document.createRange();
-					range.selectNodeContents(layerLabel);
-					const selection = window.getSelection();
-					if (selection) {
-						selection.removeAllRanges();
-						selection.addRange(range);
-					}
-				});
-			}
+		rank: 220,
+		action: ({ target }) => {
+			const layerLabel = target?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
+			if (!layerLabel) return;
+			layerLabel.dispatchEvent(new Event("dblclick"));
+			nextTick(() => {
+				// selct all text in the layerLabel
+				const range = document.createRange();
+				range.selectNodeContents(layerLabel);
+				const selection = window.getSelection();
+				if (selection) {
+					selection.removeAllRanges();
+					selection.addRange(range);
+				}
+			});
 		},
-		condition: () =>
-			!block.value.isRoot() && !block.value.isChildOfComponentBlock() && triggeredFromLayersPanel.value,
+		condition: ({ block, fromLayersPanel }) =>
+			!block.isRoot() && !block.isChildOfComponentBlock() && fromLayersPanel,
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
+		name: "delete",
 		label: "Delete",
+		rank: 230,
 		action: () => {
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			selectedBlocks.forEach((selectedBlock: Block) => {
 				canvasStore.activeCanvas?.removeBlock(selectedBlock);
 			});
 		},
-		condition: () => {
-			return (
-				!block.value.isRoot() &&
-				!block.value.isChildOfComponentBlock() &&
-				block.value.isVisible() &&
-				Boolean(block.value.getParentBlock())
-			);
-		},
+		condition: ({ block }) =>
+			!block.isRoot() &&
+			!block.isChildOfComponentBlock() &&
+			block.isVisible() &&
+			Boolean(block.getParentBlock()),
 		disabled: () => builderStore.readOnlyMode,
 	},
 ];
