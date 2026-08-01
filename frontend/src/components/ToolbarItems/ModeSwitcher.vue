@@ -1,0 +1,25 @@
+<template>
+	<div class="flex gap-2">
+		<Button
+			v-for="mode in modes"
+			:key="mode.mode"
+			:variant="builderStore.mode === mode.mode ? 'subtle' : 'ghost'"
+			:tooltip="mode.description"
+			:icon="mode.icon"
+			@click="() => (builderStore.mode = mode.mode as BuilderMode)"
+			:active="builderStore.mode === mode.mode"></Button>
+	</div>
+</template>
+<script setup lang="ts">
+import useBuilderStore from "@/stores/builderStore";
+
+const builderStore = useBuilderStore();
+
+// one item, not four: they are a tight visual group
+const modes = [
+	{ mode: "select", icon: "lucide-mouse-pointer", description: "Select (v)" },
+	{ mode: "container", icon: "lucide-square", description: "Container (c)" },
+	{ mode: "text", icon: "lucide-type", description: "Text (t)" },
+	{ mode: "image", icon: "lucide-image", description: "Image (i)" },
+];
+</script>
