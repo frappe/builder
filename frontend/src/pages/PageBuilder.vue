@@ -99,11 +99,11 @@
 		</template>
 	</Dialog>
 	<AIPageGeneratorModal
-		v-model="showAIGeneratorDialog"
+		v-model="aiStore.showGeneratorDialog"
 		v-if="builderStore.isAIEnabled"
 		:pageId="route.params.pageId as string"
-		:mode="aiMode"
-		:blockContext="modifyBlockContext"
+		:mode="aiStore.mode"
+		:blockContext="aiStore.modifyBlockContext"
 		@generated="handleGeneratedBlocks"
 		@streaming="handleStreamingBlocks"
 		@modified="handleModifiedBlocks"
@@ -112,7 +112,7 @@
 		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
+	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
 </template>
 
@@ -130,6 +130,7 @@ import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
+import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -137,7 +138,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController.js";
-import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
+import { getBlockInstance, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
@@ -157,39 +158,14 @@ const router = useRouter();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
+const aiStore = useAIStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
-const showAIGeneratorDialog = ref(false);
-const aiMode = ref<"generate" | "modify">("generate");
-const modifyBlockContext = ref<Record<string, any> | null>(null);
-const modifyBlockId = ref<string | null>(null);
 const isAIGenerating = ref(false);
 
-provide("showAIGenerator", () => {
-	aiMode.value = "generate";
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	showAIGeneratorDialog.value = true;
-});
-
-const editWithAIFn = (block: Block) => {
-	aiMode.value = "modify";
-	modifyBlockContext.value = getBlockObject(block);
-	modifyBlockId.value = block.blockId;
-	showAIGeneratorDialog.value = true;
-};
-provide("editWithAI", editWithAIFn);
-
-const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
-	const blockObj = getBlockObject(block);
-	aiMode.value = "modify";
-	modifyBlockId.value = block.blockId;
-	modifyBlockContext.value = blockObj;
-	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
-};
-provide("runDirectAI", runDirectAI);
+watchEffect(() => (aiStore.generatorModal = aiGeneratorModal.value));
 
 const handleGeneratedBlocks = () => {
 	pageStore.savePage();
@@ -236,13 +212,11 @@ const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOpt
 
 const handleModifiedBlocks = () => {
 	pageStore.savePage();
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	aiMode.value = "generate";
+	aiStore.endModify();
 };
 
 const handleModifyStreamingBlocks = (block: BlockOptions) => {
-	const targetId = block?.blockId || modifyBlockId.value;
+	const targetId = block?.blockId || aiStore.modifyBlockId;
 	if (!block || !targetId) return;
 
 	try {
@@ -292,12 +266,6 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModalOpen = ref(false);
-
-provide("showShortcuts", () => {
-	shortcutsModalOpen.value = true;
-});
-
 useShortcut([
 	{
 		key: " ",
@@ -315,7 +283,7 @@ useShortcut([
 		description: "Show keyboard shortcuts",
 		group: "General",
 		handler: () => {
-			shortcutsModalOpen.value = true;
+			builderStore.shortcutsModalOpen = true;
 		},
 	},
 	{
@@ -331,7 +299,7 @@ useShortcut([
 		handler: () => {
 			const block = blockController.getSelectedBlocks()[0];
 			if (block) {
-				editWithAIFn?.(block);
+				aiStore.editWithAI(block);
 			}
 		},
 	},

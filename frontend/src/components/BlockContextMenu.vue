@@ -1,7 +1,10 @@
 <template>
 	<div>
 		<ContextMenu ref="contextMenu" :options="contextMenuOptions" />
-		<NewBlockTemplate v-if="block" :block="block" v-model="showBlockTemplateDialog"></NewBlockTemplate>
+		<NewBlockTemplate
+			v-if="block"
+			:block="block"
+			v-model="builderStore.showBlockTemplateDialog"></NewBlockTemplate>
 	</div>
 </template>
 <script setup lang="ts">
@@ -9,25 +12,26 @@ import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import { promptCreateComponent } from "@/utils/dialogs";
+import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
-import { Ref, inject, nextTick, ref } from "vue";
+import { Ref, nextTick, ref } from "vue";
 import { toast } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 const componentStore = useComponentStore();
 const canvasStore = useCanvasStore();
+const aiStore = useAIStore();
 
 const contextMenu = ref(null) as unknown as Ref<InstanceType<typeof ContextMenu>>;
 const triggeredFromLayersPanel = ref(false);
 
 const block = ref(null) as unknown as Ref<Block>;
 
-const showBlockTemplateDialog = ref(false);
 const target = ref(null) as unknown as Ref<HTMLElement>;
 
 const showContextMenu = (event: MouseEvent, refBlock: Block) => {
@@ -41,11 +45,6 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 };
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
-
-const editWithAIFn = inject<((block: Block) => void) | undefined>("editWithAI", undefined);
-const runDirectAI = inject<
-	((block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => void) | undefined
->("runDirectAI", undefined);
 
 const copyStyle = () => {
 	copiedStyle.value = {
@@ -66,29 +65,25 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Edit with AI",
 		action: () => {
-			if (editWithAIFn) {
-				editWithAIFn(block.value);
-			}
+			aiStore.editWithAI(block.value);
 		},
-		condition: () => builderStore.isAIEnabled && Boolean(editWithAIFn) && !block.value.isRoot(),
+		condition: () => builderStore.isAIEnabled && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Rewrite (AI)",
 		action: () => {
-			runDirectAI?.(block.value, "rewrite_text", "Rewrite the content");
+			aiStore.runDirectAI(block.value, "rewrite_text", "Rewrite the content");
 		},
-		condition: () =>
-			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isText() && !block.value.isRoot(),
+		condition: () => builderStore.isAIEnabled && block.value.isText() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
 		label: "Replace Image (AI)",
 		action: () => {
-			runDirectAI?.(block.value, "replace_image", "Replace image");
+			aiStore.runDirectAI(block.value, "replace_image", "Replace image");
 		},
-		condition: () =>
-			builderStore.isAIEnabled && Boolean(runDirectAI) && block.value.isImage() && !block.value.isRoot(),
+		condition: () => builderStore.isAIEnabled && block.value.isImage() && !block.value.isRoot(),
 		disabled: () => builderStore.readOnlyMode,
 	},
 	{
@@ -261,7 +256,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 	{
 		label: "Save as Block Template",
 		action: () => {
-			showBlockTemplateDialog.value = true;
+			builderStore.showBlockTemplateDialog = true;
 		},
 		condition: () => !block.value.isExtendedFromComponent() && Boolean(window.is_developer_mode),
 		disabled: () => builderStore.readOnlyMode,

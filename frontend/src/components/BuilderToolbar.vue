@@ -166,6 +166,7 @@ import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
+import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -173,7 +174,7 @@ import { getTextContent } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import { Badge, createResource, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
-import { computed, defineAsyncComponent, inject, ref } from "vue";
+import { computed, defineAsyncComponent, ref } from "vue";
 import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
@@ -187,19 +188,17 @@ const isDark = useDark({
 const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const aiStore = useAIStore();
 
 const showInfoDialog = ref(false);
-const showShortcuts = inject<() => void>("showShortcuts", () => {});
 
-const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
+const showShortcuts = () => {
+	builderStore.shortcutsModalOpen = true;
+};
 
 const openAIGenerator = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	if (openAIGeneratorFn) {
-		openAIGeneratorFn();
-	} else {
-		toast.error("AI Generator is not available");
-	}
+	aiStore.showGenerator();
 };
 
 const openSettings = (e: MouseEvent) => {

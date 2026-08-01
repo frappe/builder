@@ -18,7 +18,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { useDark, useToggle, watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
-import { computed, inject, nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
 import CommandPalette from "./CommandPalette.vue";
@@ -32,7 +32,9 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const route = useRoute();
 const router = useRouter();
-const showShortcuts = inject<() => void>("showShortcuts", () => {});
+const showShortcuts = () => {
+	builderStore.shortcutsModalOpen = true;
+};
 
 const isBuilderRoute = computed(() => route.name === "builder");
 
