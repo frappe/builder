@@ -33,7 +33,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "edit-with-ai",
 			label: "Edit with AI",
-			rank: 10,
 			action: ({ block }) => aiStore.editWithAI(block),
 			condition: ({ block }) => builderStore.isAIEnabled && !block.isRoot(),
 			disabled: readOnly,
@@ -41,7 +40,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "rewrite-ai",
 			label: "Rewrite (AI)",
-			rank: 20,
 			action: ({ block }) => aiStore.runDirectAI(block, "rewrite_text", "Rewrite the content"),
 			condition: ({ block }) => builderStore.isAIEnabled && block.isText() && !block.isRoot(),
 			disabled: readOnly,
@@ -49,7 +47,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "replace-image-ai",
 			label: "Replace Image (AI)",
-			rank: 30,
 			action: ({ block }) => aiStore.runDirectAI(block, "replace_image", "Replace image"),
 			condition: ({ block }) => builderStore.isAIEnabled && block.isImage() && !block.isRoot(),
 			disabled: readOnly,
@@ -57,20 +54,17 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "edit-html",
 			label: "Edit HTML",
-			rank: 40,
 			action: ({ block }) => canvasStore.editHTML(block),
 			condition: ({ block }) => block.isHTML(),
 		},
 		{
 			name: "copy",
 			label: "Copy",
-			rank: 50,
 			action: () => triggerCopyEvent(),
 		},
 		{
 			name: "copy-style",
 			label: "Copy Style",
-			rank: 60,
 			action: ({ block }) => {
 				copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 			},
@@ -78,7 +72,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "paste-style",
 			label: "Paste Style",
-			rank: 70,
 			action: ({ block }) => block.updateStyles(copiedStyle.value?.style as BlockStyleObjects),
 			condition: ({ block }) =>
 				Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.blockId),
@@ -87,14 +80,12 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "duplicate",
 			label: "Duplicate",
-			rank: 80,
 			action: ({ block }) => block.duplicateBlock(),
 			disabled: readOnly,
 		},
 		{
 			name: "convert-to-collection",
 			label: "Convert To Collection",
-			rank: 90,
 			action: ({ block }) => {
 				block.isRepeaterBlock = true;
 				toast.warning("Please select a collection");
@@ -110,7 +101,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "remove-collection",
 			label: "Remove Collection",
-			rank: 100,
 			action: ({ block }) => {
 				block.isRepeaterBlock = false;
 				block.dataKey = {};
@@ -121,7 +111,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "wrap-in-container",
 			label: "Wrap In Container",
-			rank: 110,
 			action: ({ block }) => {
 				const newBlockObj = getBlockTemplate("fit-container");
 				const parentBlock = block.getParentBlock();
@@ -172,7 +161,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "repeat-block",
 			label: "Repeat Block",
-			rank: 120,
 			action: ({ block }) => {
 				const repeaterBlockObj = getBlockTemplate("repeater");
 				const parentBlock = block.getParentBlock();
@@ -189,7 +177,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "reset-overrides",
 			label: "Reset Overrides",
-			rank: 130,
 			action: ({ block }) => block.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 			condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
 			disabled: ({ block }) =>
@@ -199,7 +186,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "reset-changes",
 			label: "Reset Changes",
-			rank: 140,
 			action: ({ block }) => {
 				if (block.hasChildren()) {
 					confirm("Reset changes in child blocks as well?").then((confirmed) => {
@@ -215,7 +201,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "sync-component",
 			label: "Sync Component",
-			rank: 150,
 			action: ({ block }) => block.syncWithComponent(),
 			condition: ({ block }) => Boolean(block.extendedFromComponent),
 			disabled: readOnly,
@@ -223,7 +208,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "reset-component",
 			label: "Reset Component",
-			rank: 160,
 			action: ({ block }) => {
 				confirm("Are you sure you want to reset?").then((confirmed) => {
 					if (confirmed) {
@@ -237,7 +221,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "update-component",
 			label: "Update to Latest Component",
-			rank: 170,
 			action: ({ block }) => componentStore.updatePinnedComponent(block),
 			condition: ({ block }) =>
 				componentStore.isPinOutdated(block.extendedFromComponent, block.componentVersion),
@@ -246,7 +229,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "edit-component",
 			label: "Edit Component",
-			rank: 180,
 			action: ({ block }) => componentStore.editComponent(block),
 			condition: ({ block }) => block.isExtendedFromComponent(),
 			disabled: readOnly,
@@ -254,7 +236,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "save-block-template",
 			label: "Save as Block Template",
-			rank: 190,
 			action: () => {
 				builderStore.showBlockTemplateDialog = true;
 			},
@@ -264,7 +245,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "save-component",
 			label: "Save As Component",
-			rank: 200,
 			action: ({ block }) => promptCreateComponent(block),
 			condition: ({ block }) => !block.isExtendedFromComponent(),
 			disabled: readOnly,
@@ -272,7 +252,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "detach-component",
 			label: "Detach Component",
-			rank: 210,
 			action: ({ block }) => {
 				const newBlock = detachBlockFromComponent(block, null);
 				if (newBlock) {
@@ -286,7 +265,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "rename",
 			label: "Rename",
-			rank: 220,
 			action: ({ target }) => {
 				const layerLabel = target?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
 				if (!layerLabel) return;
@@ -309,7 +287,6 @@ export function registerBuiltInContextMenuOptions() {
 		{
 			name: "delete",
 			label: "Delete",
-			rank: 230,
 			action: () => {
 				const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 				selectedBlocks.forEach((selectedBlock: Block) => {

@@ -33,7 +33,6 @@ export function registerBuiltInLeftPanelTabs() {
 		name: "Blocks",
 		label: "Insert",
 		icon: "lucide-plus",
-		rank: 10,
 		component: BlocksTab,
 	});
 
@@ -41,7 +40,6 @@ export function registerBuiltInLeftPanelTabs() {
 		name: "Layers",
 		label: "Layers",
 		icon: LayersIcon,
-		rank: 20,
 		component: LayersTab,
 	});
 
@@ -49,7 +47,6 @@ export function registerBuiltInLeftPanelTabs() {
 		name: "Assets",
 		label: "Components",
 		icon: "lucide-box",
-		rank: 30,
 		component: AssetsTab,
 	});
 
@@ -57,7 +54,6 @@ export function registerBuiltInLeftPanelTabs() {
 		name: "Code",
 		label: "Code",
 		icon: "lucide-code",
-		rank: 40,
 		component: CodeTab,
 		// PageScript mounts a CodeMirror instance, so defer it until first open
 		lazy: true,
@@ -70,7 +66,6 @@ export function registerBuiltInLeftPanelTabs() {
 		name: "variables",
 		label: "Variables",
 		icon: "lucide-aperture",
-		rank: 50,
 		action: () => (builderStore.showVariableManager = !builderStore.showVariableManager),
 		isActive: () => builderStore.showVariableManager,
 	});

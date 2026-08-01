@@ -24,13 +24,29 @@ describe("createRegistry", () => {
 		expect(names(registry.visible.value)).toEqual(["first", "second"]);
 	});
 
-	it("gives an item with no rank the default rank", () => {
+	it("keeps registration order for unranked items", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "ranked-after", rank: 200 });
-		registry.register({ name: "unranked" });
-		registry.register({ name: "ranked-before", rank: 10 });
+		registry.register({ name: "first" });
+		registry.register({ name: "second" });
+		registry.register({ name: "third" });
 
-		expect(names(registry.visible.value)).toEqual(["ranked-before", "unranked", "ranked-after"]);
+		expect(names(registry.visible.value)).toEqual(["first", "second", "third"]);
+	});
+
+	it("lets an explicit rank jump an item ahead of unranked items registered earlier", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "unranked-first" });
+		registry.register({ name: "jumps-to-front", rank: 1 });
+
+		expect(names(registry.visible.value)).toEqual(["jumps-to-front", "unranked-first"]);
+	});
+
+	it("keeps later unranked items after an explicit rank set earlier", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "ranked", rank: 200 });
+		registry.register({ name: "unranked" });
+
+		expect(names(registry.visible.value)).toEqual(["ranked", "unranked"]);
 	});
 
 	it("hides an item whose condition is false", () => {

@@ -90,7 +90,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-layout-dashboard",
 		description: "Navigate",
 		group: "Navigate",
-		rank: 10,
 		condition: isBuilderRoute,
 		action: () => router.push({ name: "home" }),
 	});
@@ -101,7 +100,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-play",
 		description: "Page",
 		group: "Page",
-		rank: 20,
 		condition: isBuilderRoute,
 		keys: { key: "p", ctrl: true, description: "Preview" },
 		action: () => {
@@ -116,7 +114,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-globe",
 		description: "Page",
 		group: "Page",
-		rank: 30,
 		condition: isBuilderRoute,
 		action: () => pageStore.publishPage(),
 	});
@@ -127,7 +124,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-copy-plus",
 		description: "Page",
 		group: "Page",
-		rank: 40,
 		condition: isBuilderRoute,
 		action: () => {
 			if (pageStore.activePage) {
@@ -142,7 +138,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-chevrons-up-down",
 		description: "Layers",
 		group: "Layers",
-		rank: 50,
 		condition: isBuilderRoute,
 		action: async () => {
 			await setLayersTab();
@@ -156,7 +151,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-chevrons-down-up",
 		description: "Layers",
 		group: "Layers",
-		rank: 60,
 		condition: isBuilderRoute,
 		action: async () => {
 			await setLayersTab();
@@ -170,7 +164,6 @@ export function registerBuiltInCommands() {
 		icon: () => (builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open"),
 		description: "View",
 		group: "View",
-		rank: 70,
 		condition: isBuilderRoute,
 		keys: { key: "\\", ctrl: true, shift: true, description: "Toggle left panel" },
 		action: () => (builderStore.showLeftPanel = !builderStore.showLeftPanel),
@@ -182,7 +175,6 @@ export function registerBuiltInCommands() {
 		icon: () => (builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open"),
 		description: "View",
 		group: "View",
-		rank: 80,
 		condition: isBuilderRoute,
 		action: () => (builderStore.showRightPanel = !builderStore.showRightPanel),
 	});
@@ -193,7 +185,6 @@ export function registerBuiltInCommands() {
 		icon: () => (isDark.value ? "lucide-sun" : "lucide-moon"),
 		description: "View",
 		group: "View",
-		rank: 90,
 		action: transitionTheme,
 	});
 
@@ -203,7 +194,6 @@ export function registerBuiltInCommands() {
 		icon: "lucide-command",
 		description: "General",
 		group: "General",
-		rank: 100,
 		condition: isBuilderRoute,
 		keys: { key: "?", description: "Show keyboard shortcuts" },
 		action: () => (builderStore.shortcutsModalOpen = true),
@@ -216,7 +206,6 @@ export function registerBuiltInCommands() {
 		title: "Toggle Panels",
 		icon: "lucide-panels-left-bottom",
 		group: "View",
-		rank: 110,
 		inPalette: false,
 		keys: { key: "\\", ctrl: true, description: "Toggle panels" },
 		action: () => {
@@ -230,7 +219,6 @@ export function registerBuiltInCommands() {
 		title: "Toggle Canvas Dark Mode",
 		icon: "lucide-moon",
 		group: "View",
-		rank: 120,
 		inPalette: false,
 		keys: { key: "d", ctrl: true, shift: true, description: "Toggle canvas dark mode" },
 		action: () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode),
@@ -241,7 +229,6 @@ export function registerBuiltInCommands() {
 		title: "Search Blocks",
 		icon: "lucide-search",
 		group: "General",
-		rank: 130,
 		inPalette: false,
 		keys: { key: "f", ctrl: true, shift: true, description: "Search blocks" },
 		action: () => (builderStore.showSearchBlock = true),
@@ -252,7 +239,6 @@ export function registerBuiltInCommands() {
 		title: "Focus Property Search",
 		icon: "lucide-search",
 		group: "General",
-		rank: 140,
 		inPalette: false,
 		keys: { key: "f", ctrl: true, allowInInput: true, description: "Focus property search" },
 		action: () => {
@@ -265,7 +251,6 @@ export function registerBuiltInCommands() {
 		title: "Copy Block Styles",
 		icon: "lucide-clipboard-copy",
 		group: "Edit",
-		rank: 150,
 		inPalette: false,
 		keys: { key: "c", ctrl: true, shift: true, description: "Copy block styles" },
 		action: () => {
@@ -285,7 +270,6 @@ export function registerBuiltInCommands() {
 		title: "Duplicate Block",
 		icon: "lucide-copy",
 		group: "Edit",
-		rank: 160,
 		inPalette: false,
 		keys: { key: "d", ctrl: true, description: "Duplicate block" },
 		action: () => {
@@ -300,7 +284,6 @@ export function registerBuiltInCommands() {
 		title: "Edit Block with AI",
 		icon: "lucide-sparkles",
 		group: "Edit",
-		rank: 170,
 		inPalette: false,
 		keys: { key: "i", ctrl: true, description: "Edit block with AI" },
 		condition: () =>
@@ -321,7 +304,6 @@ export function registerBuiltInCommands() {
 		title: "Undo",
 		icon: "lucide-undo-2",
 		group: "Edit",
-		rank: 175,
 		inPalette: false,
 		keys: { key: "z", ctrl: true, description: "Undo" },
 		action: () => {
@@ -335,7 +317,6 @@ export function registerBuiltInCommands() {
 		title: "Redo",
 		icon: "lucide-redo-2",
 		group: "Edit",
-		rank: 176,
 		inPalette: false,
 		keys: { key: "z", ctrl: true, shift: true, description: "Redo" },
 		action: () => {
@@ -349,7 +330,6 @@ export function registerBuiltInCommands() {
 		title: "Delete Page",
 		icon: "lucide-trash-2",
 		group: "General",
-		rank: 180,
 		inPalette: false,
 		// same binding as toggle-canvas-dark-mode, as it was before this registry
 		keys: { key: "d", ctrl: true, shift: true, description: "Delete Page" },

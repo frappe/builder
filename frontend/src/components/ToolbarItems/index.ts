@@ -26,14 +26,13 @@ export function registerBuiltInToolbarItems() {
 	const builderStore = useBuilderStore();
 	const pageStore = usePageStore();
 
-	registerToolbarItem({ name: "menu", region: "left", rank: 10, component: MainMenu });
-	registerToolbarItem({ name: "modes", region: "left", rank: 20, component: ModeSwitcher });
-	registerToolbarItem({ name: "page", region: "center", rank: 10, component: PageTitlePopover });
+	registerToolbarItem({ name: "menu", region: "left", component: MainMenu });
+	registerToolbarItem({ name: "modes", region: "left", component: ModeSwitcher });
+	registerToolbarItem({ name: "page", region: "center", component: PageTitlePopover });
 
 	registerToolbarItem({
 		name: "viewers",
 		region: "right",
-		rank: 10,
 		component: ViewerAvatars,
 		condition: () => builderStore.viewers.length > 0,
 	});
@@ -41,18 +40,16 @@ export function registerBuiltInToolbarItems() {
 	registerToolbarItem({
 		name: "read-only",
 		region: "right",
-		rank: 20,
 		component: ReadOnlyBadge,
 		condition: () => builderStore.readOnlyMode,
 	});
 
 	// one item, not five: the icons share a gap-2 group inside a gap-4 region
-	registerToolbarItem({ name: "actions", region: "right", rank: 30, component: ToolbarActions });
+	registerToolbarItem({ name: "actions", region: "right", component: ToolbarActions });
 
 	registerToolbarItem({
 		name: "publish",
 		region: "right",
-		rank: 40,
 		component: PublishButton,
 		props: () => ({ disabled: builderStore.readOnlyMode }),
 		condition: () => !(builderStore.readOnlyMode && pageStore.activePage?.is_template),

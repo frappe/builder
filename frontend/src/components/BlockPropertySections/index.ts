@@ -64,9 +64,6 @@ export const builtInSections = [
 	moreStylesSection,
 ] as PropertySection[];
 
-// ranks step by 10 so an extension can sit between two built-in sections
 export function registerBuiltInPropertySections() {
-	builtInSections.forEach((section, index) =>
-		registerPropertySection({ ...section, rank: (index + 1) * 10 }),
-	);
+	builtInSections.forEach((section) => registerPropertySection(section));
 }
