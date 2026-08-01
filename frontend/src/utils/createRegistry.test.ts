@@ -41,6 +41,22 @@ describe("createRegistry", () => {
 		expect(names(registry.visible.value)).toEqual(["shown"]);
 	});
 
+	it("keeps a condition-hidden item in all, so a surface can apply its own filter", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "shown", rank: 10 });
+		registry.register({ name: "hidden", rank: 20, condition: () => false });
+
+		expect(names(registry.all.value)).toEqual(["shown", "hidden"]);
+	});
+
+	it("sorts all by rank, like visible", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "late", rank: 30 });
+		registry.register({ name: "early", rank: 10 });
+
+		expect(names(registry.all.value)).toEqual(["early", "late"]);
+	});
+
 	// visible is a computed, so a condition has to read reactive state to re-run
 	it("re-runs the condition when the reactive state it reads changes", () => {
 		const registry = createRegistry<TestItem>();
