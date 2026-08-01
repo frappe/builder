@@ -1,4 +1,4 @@
-import { sections, type PropertySection } from "@/components/BlockPropertySections";
+import { builtInSections, type PropertySection } from "@/components/BlockPropertySections";
 import { isValidCSSPropertyName } from "@/utils/cssMetadata";
 import { stripStatePrefix, toCSSProperty } from "@/utils/helpers";
 
@@ -26,7 +26,9 @@ let cachedStyleProperties: Set<string> | null = null;
 const getStylePropertiesWithControls = () => {
 	if (!cachedStyleProperties) {
 		cachedStyleProperties = new Set();
-		sections.forEach((section) => addSectionProperties(section, cachedStyleProperties as Set<string>));
+		builtInSections.forEach((section) =>
+			addSectionProperties(section, cachedStyleProperties as Set<string>),
+		);
 	}
 	return cachedStyleProperties;
 };

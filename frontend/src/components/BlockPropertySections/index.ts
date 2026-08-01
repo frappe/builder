@@ -18,7 +18,8 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import type { Component } from "vue";
+import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
+import type { Component, ComputedRef } from "vue";
 
 export type BlockProperty = {
 	component: Component;
@@ -30,14 +31,17 @@ export type BlockProperty = {
 	usedStyleProperties?: string[];
 };
 
-export type PropertySection = {
-	name: string;
+export type PropertySection = RegistryItem & {
 	properties: BlockProperty[] | (() => BlockProperty[]);
-	condition?: () => boolean;
-	collapsed?: boolean;
+	collapsed?: boolean | ComputedRef<boolean>;
 };
 
-export const sections = [
+export const propertySections = createRegistry<PropertySection>();
+export const registerPropertySection = propertySections.register;
+
+// exported for stylePropertiesWithControls, which needs every built-in section
+// regardless of condition and runs before the panel mounts
+export const builtInSections = [
 	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
@@ -59,3 +63,10 @@ export const sections = [
 	editorConfigSection,
 	moreStylesSection,
 ] as PropertySection[];
+
+// ranks step by 10 so an extension can sit between two built-in sections
+export function registerBuiltInPropertySections() {
+	builtInSections.forEach((section, index) =>
+		registerPropertySection({ ...section, rank: (index + 1) * 10 }),
+	);
+}
