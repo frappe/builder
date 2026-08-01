@@ -43,6 +43,21 @@ export function runCommand(name: string) {
 	commands.all.value.find((command) => command.name === name)?.action();
 }
 
+/**
+ * Every command that declares a binding, shaped for useShortcut. Read once at
+ * setup, so a command registered later gets no binding until the next reload.
+ */
+export function commandShortcuts() {
+	return commands.all.value
+		.filter((command) => command.keys)
+		.map((command) => ({
+			...command.keys!,
+			group: command.group,
+			condition: command.condition,
+			handler: command.action,
+		}));
+}
+
 const isBuilderRoute = () => router.currentRoute.value.name === "builder";
 
 const isDark = useDark({ attribute: "data-theme" });

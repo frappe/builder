@@ -278,46 +278,6 @@ useShortcut([
 		},
 		preventDefault: true,
 	},
-	{
-		key: "?",
-		description: "Show keyboard shortcuts",
-		group: "General",
-		handler: () => {
-			builderStore.shortcutsModalOpen = true;
-		},
-	},
-	{
-		key: "i",
-		ctrl: true,
-		description: "Edit block with AI",
-		group: "Edit",
-		condition: () =>
-			builderStore.isAIEnabled &&
-			!blockController.isRoot() &&
-			!blockController.multipleBlocksSelected() &&
-			!builderStore.readOnlyMode,
-		handler: () => {
-			const block = blockController.getSelectedBlocks()[0];
-			if (block) {
-				aiStore.editWithAI(block);
-			}
-		},
-	},
-	{
-		key: "d",
-		ctrl: true,
-		shift: true,
-		description: "Delete Page",
-		group: "General",
-		handler: () => {
-			if (pageStore.activePage && !pageStore.activePage.is_standard) {
-				pageStore.deletePage(pageStore.activePage).then(() => {
-					router.push({ name: "home" });
-				});
-			}
-		},
-		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
-	},
 ]);
 
 // When space is released, revert back to last mode
