@@ -46,6 +46,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { elementFromPoint } from "@/utils/canvasShadowDom";
 import { addPxToNumber } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
@@ -240,11 +241,11 @@ const handleClick = (ev: MouseEvent) => {
 
 	const editorWrapper = editor.value;
 	editorWrapper.classList.add("pointer-events-none");
-	let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+	let element = elementFromPoint(ev.x, ev.y) as HTMLElement;
 	if (element.classList.contains("editor")) {
 		element.classList.remove("pointer-events-auto");
 		element.classList.add("pointer-events-none");
-		element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+		element = elementFromPoint(ev.x, ev.y) as HTMLElement;
 	}
 	if (element.classList.contains("__builder_component__")) {
 		element.dispatchEvent(new MouseEvent("click", ev));

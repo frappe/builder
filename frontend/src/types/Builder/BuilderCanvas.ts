@@ -20,6 +20,7 @@ export interface CanvasProps {
 	scaling: boolean;
 	panning: boolean;
 	breakpoints: BreakpointConfig[];
+	scriptsRunning: boolean;
 }
 
 export type CanvasHistory = Ref<ReturnType<typeof useCanvasHistory>>;

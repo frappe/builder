@@ -1,6 +1,12 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import {
+	closestAcrossShadow,
+	elementFromPoint,
+	getEventBlockElement,
+	queryCanvas,
+} from "@/utils/canvasShadowDom";
+import {
 	clusterLines,
 	collectChildRects,
 	computeDropIndicator,
@@ -39,16 +45,15 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 	// measure the wrong layout when dragging on, e.g., the mobile canvas.
 	const dragBreakpoint =
 		breakpoint ||
-		((event.target as HTMLElement)?.closest?.(".__builder_component__") as HTMLElement | null)?.dataset
-			.breakpoint ||
+		getEventBlockElement(event)?.dataset.breakpoint ||
 		canvasStore.activeCanvas?.activeBreakpoint ||
 		canvasStore.activeCanvas?.hoveredBreakpoint ||
 		"desktop";
 
 	const getContainerEl = (target: Block): HTMLElement | null =>
-		document.querySelector(
+		queryCanvas(
 			`.__builder_component__[data-block-id="${target.blockId}"][data-breakpoint="${dragBreakpoint}"]`,
-		) as HTMLElement | null;
+		);
 
 	const sourceEl = getContainerEl(block);
 	if (!sourceEl) return;
@@ -163,8 +168,8 @@ export function startBlockReorder(event: MouseEvent, block: Block, breakpoint?: 
 	//  - a gap between items → elementFromPoint already returns the parent
 	// Returns the resolved block AND its element so the caller doesn't re-query.
 	const resolveTargetContainer = (clientX: number, clientY: number) => {
-		const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
-		const hovered = el?.closest(".__builder_component__") as HTMLElement | null;
+		const el = elementFromPoint(clientX, clientY);
+		const hovered = closestAcrossShadow(el, ".__builder_component__");
 		let raw: Block | null = (hovered?.dataset.blockId && findBlock(hovered.dataset.blockId)) || null;
 
 		while (raw && isSelfOrInsideDragged(raw)) raw = raw.getParentBlock();

@@ -50,6 +50,8 @@ import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
+import { blockSelector, toStateStyleRules } from "@/utils/blockStateStyles";
+import type { BlockStateStyleRegistrar } from "@/utils/blockStateStyles";
 import { extractComponentId } from "@/utils/helpers";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
@@ -245,6 +247,7 @@ const emulateBlockClientScript = inject<BlockClientScriptEmulator>(
 	"emulateBlockClientScript",
 	() => () => {},
 );
+const registerBlockStateStyles = inject<BlockStateStyleRegistrar>("registerBlockStateStyles", () => () => {});
 
 const target = computed(() => {
 	if (!component.value) return null;
@@ -288,21 +291,27 @@ const styles = computed(() => {
 		styleMap.fontFamily = (styleMap.fontFamily as string).replace(/ /g, "\\ ");
 	}
 
+	// state styles are not valid inline properties; stateStyleRules emits them
+	// as real rules into the canvas stylesheet instead
 	Object.keys(styleMap).forEach((key) => {
-		if (key.startsWith("hover:")) {
-			// state style preview on hover
-			// if (!isHovered.value) {
-			// 	delete styleMap[key];
-			// } else {
-			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
-			// 	delete styleMap[key];
-			// }
-			delete styleMap[key];
-		}
+		if (key.includes(":")) delete styleMap[key];
 	});
 
 	return styleMap;
 });
+
+const stateStyleRules = computed(() =>
+	toStateStyleRules(props.block.getStyles(props.breakpoint), blockSelector(uidToUse, props.breakpoint)),
+);
+
+watch(
+	stateStyleRules,
+	(rules, _, onCleanup) => {
+		if (!rules) return;
+		onCleanup(registerBlockStateStyles(uidToUse, props.breakpoint, rules));
+	},
+	{ immediate: true },
+);
 
 const loadEditor = computed(() => {
 	return (
@@ -415,9 +424,14 @@ watch(
 		allResolvedProps,
 		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
+		() => canvasProps?.scriptsRunning,
 		componentDataReady,
 	],
-	([element, clientScript, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+	(
+		[element, clientScript, componentData, resolvedProps, , settingPage, scriptsRunning, dataReady],
+		_,
+		onCleanup,
+	) => {
 		if (!element || !clientScript) return;
 		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
 		const cleanup = emulateBlockClientScript({
@@ -426,7 +440,7 @@ watch(
 			breakpoint: props.breakpoint,
 			css: clientScript.css ?? "",
 			javascript:
-				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
+				!scriptsRunning || settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
 					: clientScript.javascript ?? "",
 			componentData: componentData ?? {},

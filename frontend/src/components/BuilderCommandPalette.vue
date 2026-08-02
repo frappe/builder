@@ -14,10 +14,11 @@
 <script setup lang="ts">
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { useDark, useToggle, watchDebounced } from "@vueuse/core";
-import { useShortcut } from "frappe-ui";
+import { toast, useShortcut } from "frappe-ui";
 import { computed, inject, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
@@ -30,6 +31,7 @@ const activeStep = ref<{ id: string; label: string; placeholder: string; hint: s
 
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
+const canvasStore = useCanvasStore();
 const route = useRoute();
 const router = useRouter();
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
@@ -44,6 +46,42 @@ useShortcut({
 	allowInInput: true,
 	handler: () => {
 		show.value = true;
+	},
+});
+
+// Preview leaves no lasting mark on the canvas, so say which way it just went.
+// Only the deliberate toggle announces itself; a hold is self-evident.
+function toggleClientScripts() {
+	const canvasProps = canvasStore.activeCanvas?.canvasProps;
+	if (!canvasProps) return;
+	canvasProps.scriptsRunning = !canvasProps.scriptsRunning;
+	toast.info(canvasProps.scriptsRunning ? "Canvas preview on" : "Canvas preview off");
+}
+
+// Remembers the Run/Stop state from before a preview hold, so releasing the
+// key restores it instead of always landing on Stop.
+let scriptsRunningBeforeHold = false;
+
+// One combo, two outcomes: a tap toggles Run/Stop, a hold previews with
+// scripts on and restores the prior state on release.
+useShortcut({
+	key: "p",
+	ctrl: true,
+	shift: true,
+	description: "Toggle Client Scripts (hold to preview)",
+	group: "Page",
+	triggeredOn: "hold",
+	condition: () => isBuilderRoute.value,
+	handler: toggleClientScripts,
+	onHold: () => {
+		const canvasProps = canvasStore.activeCanvas?.canvasProps;
+		if (!canvasProps) return;
+		scriptsRunningBeforeHold = canvasProps.scriptsRunning;
+		canvasProps.scriptsRunning = true;
+	},
+	onRelease: () => {
+		const canvasProps = canvasStore.activeCanvas?.canvasProps;
+		if (canvasProps) canvasProps.scriptsRunning = scriptsRunningBeforeHold;
 	},
 });
 
@@ -103,7 +141,7 @@ const staticCommands = computed<Command[]>(() => {
 						group: "Navigate",
 						action: () => router.push({ name: "home" }),
 					},
-				]
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -139,7 +177,15 @@ const staticCommands = computed<Command[]>(() => {
 							}
 						},
 					},
-				]
+					{
+						name: "toggle-client-scripts",
+						title: `${canvasStore.activeCanvas?.canvasProps.scriptsRunning ? "Stop" : "Run"} Client Scripts`,
+						icon: canvasStore.activeCanvas?.canvasProps.scriptsRunning ? "lucide-square" : "lucide-play",
+						description: "Page",
+						group: "Page",
+						action: toggleClientScripts,
+					},
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -169,7 +215,7 @@ const staticCommands = computed<Command[]>(() => {
 							builderStore.activeLayers?.collapseAll();
 						},
 					},
-				]
+			  ]
 			: []),
 		...(isBuilder
 			? [
@@ -193,7 +239,7 @@ const staticCommands = computed<Command[]>(() => {
 							builderStore.showRightPanel = !builderStore.showRightPanel;
 						},
 					},
-				]
+			  ]
 			: []),
 		{
 			name: "toggle-theme",
@@ -213,7 +259,7 @@ const staticCommands = computed<Command[]>(() => {
 						group: "General",
 						action: () => showShortcuts(),
 					},
-				]
+			  ]
 			: []),
 		{
 			name: "settings",
@@ -443,7 +489,7 @@ const commandGroups = computed(() => {
 		const items = q
 			? settingsCommands.value.filter(
 					(s) => s.title.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q),
-				)
+			  )
 			: settingsCommands.value;
 		const pageItems = items.filter((s) => (s as SettingsCommand).section === "page");
 		const globalItems = items.filter((s) => (s as SettingsCommand).section === "global");
@@ -469,7 +515,7 @@ const commandGroups = computed(() => {
 							component: CommandPaletteItem,
 							items: pageSearchResults.value,
 						},
-					]
+				  ]
 				: [];
 		}
 		return recentPages.value.length
@@ -481,7 +527,7 @@ const commandGroups = computed(() => {
 						component: CommandPaletteItem,
 						items: recentPages.value,
 					},
-				]
+			  ]
 			: [];
 	}
 

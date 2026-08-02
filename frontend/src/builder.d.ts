@@ -132,6 +132,7 @@ declare interface CanvasProps {
 	settingCanvas: boolean;
 	overlayElement: HTMLElement | null;
 	breakpoints: Breakpoint[];
+	scriptsRunning: boolean;
 }
 
 declare type EditingMode = "page" | "fragment";

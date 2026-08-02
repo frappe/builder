@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
+import { queryCanvas } from "@/utils/canvasShadowDom";
 import type { IndicatorGeometry } from "@/utils/dropGeometry";
 import { getVersionedDoc } from "@/data/snapshot";
 import { confirm, getBlockCopy, getBlockInstance } from "@/utils/helpers";
@@ -275,7 +276,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			let element = document.createElement("div");
 			element.id = "placeholder";
 
-			const root = document.querySelector(".__builder_component__[data-block-id='root']");
+			const root = queryCanvas(".__builder_component__[data-block-id='root']");
 			if (root) {
 				this.dropTarget.placeholder = root.appendChild(element);
 			}
@@ -283,10 +284,7 @@ const useCanvasStore = defineStore("canvasStore", {
 		},
 
 		removeDropPlaceholder() {
-			const placeholder = document.getElementById("placeholder");
-			if (placeholder) {
-				placeholder.remove();
-			}
+			queryCanvas("#placeholder")?.remove();
 		},
 
 		clearReorderTarget() {

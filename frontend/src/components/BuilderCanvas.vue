@@ -4,7 +4,6 @@
 		:data-builder-canvas="canvasId"
 		@click="handleClick"
 		@mousedown="handleMarqueeStart">
-		<component :is="'style'" v-if="blockClientStyles" v-text="blockClientStyles" />
 		<Transition name="fade">
 			<div
 				class="absolute bottom-0 left-0 right-0 top-0 grid w-full place-items-center bg-surface-gray-1 p-10 text-ink-gray-5"
@@ -75,15 +74,23 @@
 					@click="activeBreakpoint = breakpoint.device">
 					{{ breakpoint.displayName }}
 				</div>
-				<BuilderBlock
-					class="h-full min-h-[inherit]"
-					:block="block"
-					:style="variables"
-					:key="block.blockId"
-					:readonly="builderStore.readOnlyMode"
-					v-if="showBlocks"
-					:breakpoint="breakpoint.device"
-					:data="pageStore.pageData" />
+				<BuilderCanvasShadowRoot
+					@ready="(root) => registerCanvasRoot(breakpoint, root)"
+					@teardown="releaseCanvasRoot(breakpoint)">
+					<component
+						:is="'style'"
+						v-if="blockStylesByBreakpoint.get(breakpoint.device)"
+						v-text="blockStylesByBreakpoint.get(breakpoint.device)" />
+					<BuilderBlock
+						class="h-full min-h-[inherit]"
+						:block="block"
+						:style="variables"
+						:key="`${block.blockId}-${canvasProps.pageRestoreNonce}`"
+						:readonly="builderStore.readOnlyMode"
+						v-if="showBlocks"
+						:breakpoint="breakpoint.device"
+						:data="pageStore.pageData" />
+				</BuilderCanvasShadowRoot>
 			</div>
 		</div>
 		<div
@@ -127,7 +134,10 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
+import { blockSelector } from "@/utils/blockStateStyles";
+import { elementFromPoint, getShadowRootOf } from "@/utils/canvasShadowDom";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { PageScriptRuntime } from "@/utils/pageScriptEmulation";
 import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
@@ -141,10 +151,11 @@ import { useCanvasEvents } from "@/utils/useCanvasEvents";
 import { useCanvasMarqueeSelection } from "@/utils/useCanvasMarqueeSelection";
 import { useCanvasUtils } from "@/utils/useCanvasUtils";
 import { Tooltip } from "frappe-ui";
-import { Ref, computed, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
+import { Ref, computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, useId, watch } from "vue";
 import setPanAndZoom from "../utils/panAndZoom";
 import BlockSnapGuides from "./BlockSnapGuides.vue";
 import BuilderBlock from "./BuilderBlock.vue";
+import BuilderCanvasShadowRoot from "./BuilderCanvasShadowRoot.vue";
 import DropIndicator from "./DropIndicator.vue";
 import FitScreenIcon from "./Icons/FitScreen.vue";
 
@@ -167,7 +178,9 @@ const canvasContainer = ref(null) as Ref<HTMLElement | null>;
 const canvas = ref(null);
 const showBlocks = ref(false);
 const overlay = ref(null);
-const blockStyles = reactive(new Map<string, string>());
+type BreakpointStyles = { breakpoint: string; css: string };
+const blockStyles = reactive(new Map<string, BreakpointStyles>());
+const blockStateStyles = reactive(new Map<string, BreakpointStyles>());
 
 const props = withDefaults(
 	defineProps<{
@@ -181,12 +194,27 @@ const props = withDefaults(
 
 const block = ref(props.blockData) as Ref<Block>;
 const history = ref(null) as Ref<null> | CanvasHistory;
-const blockClientStyles = computed(() => Array.from(blockStyles.values()).join("\n"));
+// State styles resolve only while previewing. Editing means hovering blocks to
+// select them, and a block that restyles itself under the pointer is unusable.
+const previewingStates = computed(() => canvasProps.scriptsRunning);
+
+// grouped by breakpoint so each shadow root only gets the CSS for blocks it actually contains
+const blockStylesByBreakpoint = computed(() => {
+	const grouped = new Map<string, string>();
+	const append = ({ breakpoint, css }: BreakpointStyles) => {
+		if (!css) return;
+		grouped.set(breakpoint, grouped.has(breakpoint) ? `${grouped.get(breakpoint)}\n${css}` : css);
+	};
+	blockStyles.forEach(append);
+	if (previewingStates.value) blockStateStyles.forEach(append);
+	return grouped;
+});
 
 const activeBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBreakpoint = ref("desktop") as Ref<string | null>;
 const hoveredBlock = ref(null) as Ref<string | null>;
 const setCanvasZoom = ref<(scale: number, pinchPoint: { x: number; y: number } | "center") => void>();
+let cleanupShadowCanvasEvents = () => {};
 
 const {
 	clearSelection,
@@ -206,6 +234,12 @@ const canvasProps = reactive({
 	settingCanvas: true,
 	scaling: false,
 	panning: false,
+	// Scripts are opt-in per session. They share the editor's own realm, so an
+	// open editor should not run arbitrary page or block JavaScript unless asked.
+	scriptsRunning: false,
+	// bumped on Stop to force the block tree to remount, undoing any raw DOM
+	// mutation a script made (e.g. document.body.innerHTML = ...)
+	pageRestoreNonce: 0,
 	breakpoints: [
 		{
 			icon: "lucide-monitor",
@@ -282,7 +316,7 @@ onMounted(() => {
 		(readOnly) => (readOnly ? history.value?.disable() : history.value?.enable()),
 		{ immediate: true },
 	);
-	useCanvasEvents(
+	cleanupShadowCanvasEvents = useCanvasEvents(
 		canvasContainer as unknown as Ref<HTMLElement>,
 		canvasProps,
 		history as CanvasHistory,
@@ -297,6 +331,9 @@ onMounted(() => {
 
 onUnmounted(() => {
 	cleanupMarqueeListeners();
+	cleanupShadowCanvasEvents();
+	pageScriptRuntimes.forEach((runtime) => runtime.destroy());
+	pageScriptRuntimes.clear();
 });
 
 const handleClick = (ev: MouseEvent) => {
@@ -305,7 +342,7 @@ const handleClick = (ev: MouseEvent) => {
 		return;
 	}
 
-	const target = document.elementFromPoint(ev.clientX, ev.clientY);
+	const target = elementFromPoint(ev.clientX, ev.clientY);
 	// hack to ensure if click is on canvas-container
 	// TODO: Still clears selection if space handlers are dragged over canvas-container
 	if (target?.classList.contains("canvas-container")) {
@@ -382,6 +419,7 @@ watch(
 
 provide("canvasProps", canvasProps);
 provide("emulateBlockClientScript", emulateBlockClientScript);
+provide("registerBlockStateStyles", registerBlockStateStyles);
 
 defineExpose({
 	setScaleAndTranslate,
@@ -448,28 +486,41 @@ function selectBreakpoint(ev: MouseEvent, breakpoint: BreakpointConfig) {
 	}
 }
 
-function escapeAttributeValue(value: string) {
-	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+// Registered whatever the mode, so toggling preview flips one computed here
+// rather than re-running every block's watcher.
+function registerBlockStateStyles(uid: string, breakpoint: string, css: string) {
+	const registrationKey = `${uid}:${breakpoint}`;
+	blockStateStyles.set(registrationKey, { breakpoint, css });
+	return () => blockStateStyles.delete(registrationKey);
 }
 
 function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const registrationKey = `${script.key}:${script.breakpoint}`;
-	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
-		script.key,
-	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
-
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	// CSS runs alongside the JavaScript, under the same Run/Stop and mode gate,
+	// not on its own
+	const scriptsActive = canvasProps.scriptsRunning && mode !== "Don't Execute";
+
+	// each breakpoint's shadow root already scopes its own styles to one canvas
+	const selector = blockSelector(script.key, script.breakpoint);
+	const css = scriptsActive ? script.css : "";
+	blockStyles.set(registrationKey, {
+		breakpoint: script.breakpoint,
+		css: css ? `${selector} { ${css} }` : "",
+	});
+
 	let cleanup = () => {};
-	if (mode !== "Don't Execute" && script.javascript.trim()) {
+	if (scriptsActive && script.javascript.trim()) {
 		const context = {
 			componentData: script.componentData,
 			props: script.props,
 		};
+		// the block's own shadow root is a tighter sandbox than the whole canvas
+		const sandboxRoot = getShadowRootOf(script.element) ?? canvasContainer.value;
 		cleanup =
 			mode === "Unrestricted"
 				? executeClientScriptUnrestricted(script.element, script.javascript, context)
-				: executeClientScriptRestricted(script.element, canvasContainer.value, script.javascript, context);
+				: executeClientScriptRestricted(script.element, sandboxRoot, script.javascript, context);
 	}
 
 	return () => {
@@ -482,6 +533,52 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 }
 
 const renderedBreakpoints = computed(() => canvasProps.breakpoints.filter((bp) => bp.renderedOnce));
+
+// Page client scripts run once per breakpoint, against that breakpoint's shadow root.
+const pageScriptRuntimes = new Map<string, PageScriptRuntime>();
+
+function registerCanvasRoot(breakpoint: BreakpointConfig, root: ShadowRoot) {
+	pageScriptRuntimes.set(breakpoint.device, new PageScriptRuntime(root, breakpoint.width));
+	// the shadow root exists before Vue teleports the block tree into it,
+	// so a script run now finds no root block
+	nextTick(applyPageClientScripts);
+}
+
+function releaseCanvasRoot(breakpoint: BreakpointConfig) {
+	pageScriptRuntimes.get(breakpoint.device)?.destroy();
+	pageScriptRuntimes.delete(breakpoint.device);
+}
+
+function applyPageClientScripts() {
+	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	const runScripts = canvasProps.scriptsRunning && mode !== "Don't Execute";
+	pageScriptRuntimes.forEach((runtime) =>
+		runtime.apply(pageStore.activePageScripts, runScripts, pageStore.pageData),
+	);
+}
+
+watch(
+	[
+		() => pageStore.activePageScripts,
+		() => pageStore.pageData,
+		() => builderSettings.doc?.execute_block_scripts_in_editor,
+		() => pageStore.settingPage,
+		() => canvasProps.scriptsRunning,
+	],
+	applyPageClientScripts,
+	{ deep: true },
+);
+
+// Stopping cleans up listeners and timers only. A script can also mutate the
+// DOM directly, such as document.body.innerHTML = ... Vue has no way to detect
+// or undo that on its own. So this remounts the block tree from the Block
+// model to bring the page back.
+watch(
+	() => canvasProps.scriptsRunning,
+	(running, wasRunning) => {
+		if (!running && wasRunning) canvasProps.pageRestoreNonce++;
+	},
+);
 </script>
 <style>
 .fade-enter-active,

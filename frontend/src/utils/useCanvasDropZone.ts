@@ -3,6 +3,7 @@ import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import { closestAcrossShadow, elementFromPoint, queryCanvas } from "@/utils/canvasShadowDom";
 import { getLayoutDirection, type LayoutDirection } from "@/utils/dropGeometry";
 import {
 	getBlockCopy,
@@ -68,8 +69,8 @@ export function useCanvasDropZone(
 	});
 
 	const getInitialParentBlock = (ev: DragEvent) => {
-		const element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
-		const targetElement = element.closest(".__builder_component__") as HTMLElement;
+		const element = elementFromPoint(ev.x, ev.y) as HTMLElement;
+		const targetElement = closestAcrossShadow(element, ".__builder_component__") as HTMLElement;
 
 		// set the hoveredBreakpoint from the target element to show placeholder at the correct breakpoint canvas
 		const breakpoint =
@@ -96,7 +97,7 @@ export function useCanvasDropZone(
 	const getBlockElement = (block: Block) => {
 		const breakpoint =
 			canvasStore.activeCanvas?.hoveredBreakpoint || canvasStore.activeCanvas?.activeBreakpoint;
-		return document.querySelector(
+		return queryCanvas(
 			`.__builder_component__[data-block-id="${block.blockId}"][data-breakpoint="${breakpoint}"]`,
 		) as HTMLElement;
 	};

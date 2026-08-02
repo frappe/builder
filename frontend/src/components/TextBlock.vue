@@ -33,6 +33,7 @@ import type Block from "@/block";
 import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { closestAcrossShadow, getEventTarget } from "@/utils/canvasShadowDom";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import { setFontFromHTML } from "@/utils/fontManager";
 import type { PauseId } from "@/utils/useCanvasHistory";
@@ -318,7 +319,7 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	if (closestAcrossShadow(getEventTarget(e), ".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };

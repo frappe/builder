@@ -3,6 +3,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { addShadowRootListener, elementFromPoint, queryCanvas } from "@/utils/canvasShadowDom";
 import {
 	addPxToNumber,
 	getBlock,
@@ -38,7 +39,7 @@ export function useCanvasEvents(
 			if (builderStore.readOnlyMode) return;
 			const pauseId = canvasHistory.value?.pause();
 			ev.stopPropagation();
-			let element = document.elementFromPoint(ev.x, ev.y) as HTMLElement;
+			let element = elementFromPoint(ev.x, ev.y) as HTMLElement;
 			let block = getRootBlock();
 			if (element) {
 				if (element.dataset.blockId) {
@@ -53,8 +54,8 @@ export function useCanvasEvents(
 				}
 			}
 			const child = getBlockTemplate(builderStore.mode);
-			const parentElement = document.body.querySelector(
-				`.canvas [data-block-id="${parentBlock.blockId}"]`,
+			const parentElement = queryCanvas(
+				`.__builder_component__[data-block-id="${parentBlock.blockId}"]`,
 			) as HTMLElement;
 			const parentOldPosition = parentBlock.getStyle("position");
 			if (parentOldPosition === "static" || parentOldPosition === "inherit" || !parentOldPosition) {
@@ -233,6 +234,9 @@ export function useCanvasEvents(
 	});
 
 	useEventListener(container, "mouseover", handleMouseOver);
+	// a container listener only sees the pointer enter the canvas, never a move
+	// between two blocks inside it
+	return addShadowRootListener("mouseover", handleMouseOver as EventListener);
 }
 
 function handleMouseOver(e: MouseEvent) {
