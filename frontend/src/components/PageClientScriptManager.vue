@@ -124,7 +124,10 @@
 				@save="updateScript"
 				:show-line-numbers="true">
 				<template #label-suffix>
-					<a @click="pageListDialog = true" class="ml-1 cursor-pointer text-p-sm text-ink-gray-4 underline">
+					<a
+						v-if="!scriptUsageResource.loading"
+						@click="pageListDialog = true"
+						class="ml-1 cursor-pointer text-p-sm text-ink-gray-4 underline">
 						{{ usageMessage }}
 					</a>
 				</template>
@@ -210,7 +213,7 @@ const pageListDialog = ref(false);
 const scriptUsageResource = createListResource({
 	doctype: "Builder Page",
 	fields: ["name", "page_title", "route", "preview"],
-	pageLength: 1000,
+	pageLength: 10000,
 });
 
 const scriptUsedInPages = computed<BuilderPage[]>(() => scriptUsageResource.data ?? []);
