@@ -127,7 +127,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController.js";
-import { getRootBlockTemplate } from "@/utils/helpers";
+import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
@@ -157,6 +157,7 @@ watch(
 		() => pageStore.activePage?.is_standard,
 		() => pageStore.activePage?.is_template,
 		() => canvasStore.versionPreviewBlock,
+		() => builderStore.isSiteInReadOnlyMode,
 	],
 	() => {
 		const previewing = Boolean(canvasStore.versionPreviewBlock);
@@ -164,8 +165,12 @@ watch(
 			(Boolean(pageStore.activePage?.is_standard) ||
 				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
 			!window.is_developer_mode;
-		builderStore.toggleReadOnlyMode(canvasStore.editingMode === "page" && (previewing || isProtected));
+		builderStore.toggleReadOnlyMode(
+			builderStore.isSiteInReadOnlyMode ||
+				(canvasStore.editingMode === "page" && (previewing || isProtected)),
+		);
 	},
+	{ immediate: true },
 );
 
 declare global {
@@ -349,15 +354,7 @@ watchEffect(() => {
 
 const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
 
-const usageMessage = computed(() => {
-	if (usageCount.value === 0) {
-		return "not used in any pages";
-	}
-	if (usageCount.value === 1) {
-		return "used in 1 page";
-	}
-	return `used in ${usageCount.value} pages`;
-});
+const usageMessage = computed(() => getPageUsageMessage(usageCount.value));
 
 watch(
 	() => pageCanvas.value?.block,

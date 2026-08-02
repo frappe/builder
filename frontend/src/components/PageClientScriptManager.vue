@@ -118,16 +118,28 @@
 				:autofocus="false"
 				:show-save-button="true"
 				@save="updateScript"
-				:show-line-numbers="true"></CodeEditor>
+				:show-line-numbers="true">
+				<template #label-suffix>
+					<a
+						v-if="!scriptUsageResource.loading"
+						@click="pageListDialog = true"
+						class="ml-1 cursor-pointer text-p-sm text-ink-gray-4 underline">
+						{{ usageMessage }}
+					</a>
+				</template>
+			</CodeEditor>
 		</div>
+		<PageListModal v-model="pageListDialog" :pages="scriptUsedInPages"></PageListModal>
 	</div>
 </template>
 
 <script setup lang="ts">
 import EditableSpan from "@/components/EditableSpan.vue";
+import PageListModal from "@/components/Modals/PageListModal.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
+import { getPageUsageMessage } from "@/utils/helpers";
 import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, ref, watch } from "vue";
@@ -201,8 +213,26 @@ const clientScriptResource = createListResource({
 	auto: true,
 });
 
+const pageListDialog = ref(false);
+
+const usagePageLimit = 100;
+
+const scriptUsageResource = createListResource({
+	doctype: "Builder Page",
+	fields: ["name", "page_title", "route", "preview"],
+	pageLength: usagePageLimit,
+});
+
+const scriptUsedInPages = computed<BuilderPage[]>(() => scriptUsageResource.data ?? []);
+const usageMessage = computed(() => {
+	const count = scriptUsedInPages.value.length;
+	return count === usagePageLimit ? `used in ${usagePageLimit - 1}+ pages` : getPageUsageMessage(count);
+});
+
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
+	scriptUsageResource.filters = [["Builder Page Client Script", "builder_script", "=", script.script_name]];
+	scriptUsageResource.reload();
 	nextTick(() => {
 		scriptEditor.value?.resetEditor(true);
 	});

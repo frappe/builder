@@ -281,6 +281,8 @@ const isDirty = computed(() => {
 	return false;
 });
 
+// immediate: the request may have arrived before this component mounted,
+// since the left panel mounts it lazily
 watch(
 	() => builderStore.showDataScriptDialog,
 	() => {
@@ -289,6 +291,7 @@ watch(
 			builderStore.showDataScriptDialog = null;
 		}
 	},
+	{ immediate: true },
 );
 
 watch(

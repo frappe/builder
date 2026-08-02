@@ -25,7 +25,7 @@
 import SplitModeInput from "@/components/Controls/SplitModeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
+import { collapseBoxShorthand, expandBoxShorthand, normalizeValueWithUnits } from "@/utils/cssUtils";
 import { RADIUS_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { ref, watch } from "vue";
 
@@ -51,7 +51,7 @@ const ensureRoundedContentIsClipped = (value: BoxValue) => {
 
 const toControlValues = (value: unknown) => expandBoxShorthand(value);
 const normalize = (value: BoxValue) => normalizeValueWithUnits(String(value || "0"), "px");
-const toModelValue = (parts: BoxValue[]) => parts.join(" ");
+const toModelValue = (parts: BoxValue[]) => collapseBoxShorthand(parts);
 const getMergedValue = (parts: BoxValue[]) => parts[0] ?? "0px";
 const getControlAttrs = (variant: string | null) => {
 	const key = variant ?? "main";

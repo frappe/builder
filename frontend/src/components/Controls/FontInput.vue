@@ -29,7 +29,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import FontInputActions from "@/components/Controls/FontInputActions.vue";
 import userFonts from "@/data/userFonts";
 import { UserFont } from "@/types/doctypes";
-import { fontList } from "@/utils/fontManager";
+import { fontListItems, loadFontList } from "@/utils/fontManager";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -115,7 +115,8 @@ const getOptions = async (filterString: string) => {
 	if (options.length) {
 		options.push({ label: "Default", value: "_separator_2" });
 	}
-	fontList.items.forEach((font) => {
+	await loadFontList();
+	fontListItems.value.forEach((font) => {
 		if (options.length >= 20) return;
 		if (!query || font.family.toLowerCase().includes(query)) {
 			options.push({ label: font.family, value: font.family });

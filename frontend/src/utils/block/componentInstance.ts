@@ -133,7 +133,6 @@ function rebuildComponentChildren(
 
 function copyUserOverrides(src: Block, dst: Block, oldComponentChild: Block) {
 	mergeOverrideMap(src.baseStyles, oldComponentChild.baseStyles, dst.baseStyles);
-	mergeOverrideMap(src.rawStyles, oldComponentChild.rawStyles, dst.rawStyles);
 	mergeOverrideMap(src.mobileStyles, oldComponentChild.mobileStyles, dst.mobileStyles);
 	mergeOverrideMap(src.tabletStyles, oldComponentChild.tabletStyles, dst.tabletStyles);
 	mergeOverrideMap(src.attributes, oldComponentChild.attributes, dst.attributes);

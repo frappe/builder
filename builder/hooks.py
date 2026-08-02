@@ -97,6 +97,14 @@ after_app_install = "builder.install.after_app_install"
 # "Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
+user_invitation = {
+	"allowed_roles": {
+		"System Manager": ["Website Manager"],
+		"Website Manager": ["Website Manager"],
+	},
+	"after_accept": ["builder.user_invitation.after_accept"],
+}
+
 # DocType Class
 # ---------------
 # Override standard doctype classes
@@ -109,13 +117,11 @@ after_app_install = "builder.install.after_app_install"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# "*": {
-# "on_update": "method",
-# "on_cancel": "method",
-# "on_trash": "method"
-# }
-# }
+doc_events = {
+	"User Invitation": {
+		"after_insert": "builder.user_invitation.capture_user_invited",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

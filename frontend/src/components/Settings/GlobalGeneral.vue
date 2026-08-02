@@ -1,30 +1,27 @@
 <template>
 	<div class="flex flex-col gap-5">
-		<div class="flex flex-col gap-3">
-			<InlineInput
-				type="autocomplete"
+		<div class="flex gap-3">
+			<Input
 				label="Homepage"
-				:showInputAsOption="true"
-				class="w-1/2"
-				:modelValue="builderSettings.doc?.home_page"
-				@update:modelValue="
-					(val) => {
+				:show-input-as-option="true"
+				:model-value="builderSettings.doc?.home_page"
+				:options="routeOptions"
+				@update:model-value="
+					(val: string) => {
 						builderStore.updateBuilderSettings('home_page', val);
 					}
-				"
-				:options="routeOptions"></InlineInput>
-			<InlineInput
+				"></Input>
+			<Input
 				type="text"
 				label="Language"
 				description="Default HTML lang code (e.g., en, es, fr)"
-				class="w-1/2"
 				placeholder="en"
-				:modelValue="builderSettings.doc?.default_language || 'en'"
-				@update:modelValue="
-					(val) => {
+				:model-value="builderSettings.doc?.default_language || 'en'"
+				@update:model-value="
+					(val: string) => {
 						builderStore.updateBuilderSettings('default_language', val);
 					}
-				"></InlineInput>
+				"></Input>
 		</div>
 		<hr class="w-full border-outline-gray-2" />
 		<div class="flex flex-col justify-between gap-5">
@@ -55,8 +52,8 @@
 			size="sm"
 			label="Enable View Tracking"
 			description="Track the number of views on each page of your website"
-			:modelValue="Boolean(websiteSettings.doc?.enable_view_tracking)"
-			@update:modelValue="
+			:model-value="Boolean(websiteSettings.doc?.enable_view_tracking)"
+			@update:model-value="
 				(val: Boolean) => {
 					websiteSettings.setValue.submit({
 						enable_view_tracking: val,
@@ -67,22 +64,21 @@
 			size="sm"
 			label="Auto convert images to WebP"
 			description="All the images uploaded via Builder will be converted to WebP for better page performance"
-			:modelValue="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
-			@update:modelValue="
+			:model-value="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
+			@update:model-value="
 				(val: Boolean) => builderStore.updateBuilderSettings('auto_convert_images_to_webp', val)
 			" />
 		<Switch
 			size="sm"
 			label="Disable Auto Dark Mode"
 			description="Prevent the site from automatically switching to dark mode"
-			:modelValue="Boolean(builderSettings.doc?.disable_auto_dark_mode)"
-			@update:modelValue="
+			:model-value="Boolean(builderSettings.doc?.disable_auto_dark_mode)"
+			@update:model-value="
 				(val: Boolean) => builderStore.updateBuilderSettings('disable_auto_dark_mode', val)
 			" />
 	</div>
 </template>
 <script setup lang="ts">
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import { allWebPages } from "@/data/allWebPages";
 import { builderSettings } from "@/data/builderSettings";
 import { websiteSettings } from "@/data/websiteSettings";

@@ -13,6 +13,7 @@ const { capture } = useTelemetry();
 declare global {
 	interface Window {
 		is_fc_site?: boolean | string;
+		is_read_only_mode?: boolean | string;
 	}
 }
 
@@ -49,6 +50,8 @@ const useBuilderStore = defineStore("builderStore", {
 		// Bumped once each time a build settles — the overlay watches it to fire a
 		// one-shot "done" flourish on the canvas.
 		aiBuildDoneTick: 0,
+		// site-level maintenance/migration state, not the editor's edit lock
+		isSiteInReadOnlyMode: window.is_read_only_mode === "True",
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),
