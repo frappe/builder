@@ -23,6 +23,11 @@ from builder.builder.doctype.builder_snapshot import builder_snapshot
 from builder.utils import compact_json, has_page_read, has_page_write
 
 
+@frappe.whitelist(methods=["GET"])
+def get_translations() -> dict[str, str]:
+	return frappe.translate.get_all_translations(frappe.translate.get_user_lang())
+
+
 @frappe.whitelist()
 def get_versioned_doc(snapshot: str) -> dict:
 	return builder_snapshot.get_versioned_doc(snapshot).as_dict()

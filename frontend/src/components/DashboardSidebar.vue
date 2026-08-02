@@ -88,7 +88,7 @@
 						!builderStore.activeFolder,
 				}">
 				<FilesIcon class="size-4"></FilesIcon>
-				<span>All Pages</span>
+				<span>{{ __("All Pages") }}</span>
 			</span>
 			<span
 				class="flex cursor-pointer gap-2 p-2 text-base text-ink-gray-6"

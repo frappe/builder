@@ -24,15 +24,12 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 Cypress.Commands.add("login", (email, password) => {
-	if (!email) {
-		email = Cypress.config("testUser") || "Administrator";
-	}
-	if (!password) {
-		password = Cypress.config("adminPassword");
-	}
+	const username = email || Cypress.config("testUser") || "Administrator";
+	const userPassword = password || Cypress.env("adminPassword");
+
 	cy.request({
 		url: "/api/method/login",
 		method: "POST",
-		body: { usr: email, pwd: password },
+		body: { usr: username, pwd: userPassword },
 	});
 });

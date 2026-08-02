@@ -109,6 +109,10 @@ jobs:
           bench --site builder.test execute frappe.utils.install.complete_setup_wizard
           bench --site builder.test execute frappe.tests.ui_test_helpers.create_test_user
 
+      - name: Translation Tests
+        working-directory: /home/runner/frappe-bench/apps/builder/frontend
+        run: yarn test:translation
+
       - name: UI Tests
         run: cd ~/frappe-bench/apps/builder/frontend && yarn test
 

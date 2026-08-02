@@ -4,6 +4,8 @@ export default defineConfig({
 	projectId: "jvejd7",
 	e2e: {
 		baseUrl: "http://builder.test:8000",
+	},
+	env: {
 		adminPassword: "admin",
 	},
 	retries: {

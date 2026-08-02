@@ -1,7 +1,7 @@
 <template>
 	<div class="m-auto flex w-3/4 max-w-6xl items-center justify-between bg-surface-base px-3.5 py-5 pt-8">
 		<h1 class="text-2xl-semibold text-ink-gray-9">
-			{{ builderStore.activeFolder || "All Pages" }}
+			{{ builderStore.activeFolder || __("All Pages") }}
 		</h1>
 		<div class="flex gap-2">
 			<div>
