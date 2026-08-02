@@ -210,14 +210,19 @@ const clientScriptResource = createListResource({
 
 const pageListDialog = ref(false);
 
+const usagePageLimit = 100;
+
 const scriptUsageResource = createListResource({
 	doctype: "Builder Page",
 	fields: ["name", "page_title", "route", "preview"],
-	pageLength: 10000,
+	pageLength: usagePageLimit,
 });
 
 const scriptUsedInPages = computed<BuilderPage[]>(() => scriptUsageResource.data ?? []);
-const usageMessage = computed(() => getPageUsageMessage(scriptUsedInPages.value.length));
+const usageMessage = computed(() => {
+	const count = scriptUsedInPages.value.length;
+	return count === usagePageLimit ? `used in ${usagePageLimit - 1}+ pages` : getPageUsageMessage(count);
+});
 
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
