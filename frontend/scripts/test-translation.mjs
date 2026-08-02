@@ -108,6 +108,29 @@ const tests = [
 		},
 	],
 	[
+		"keeps English fallback without AbortController",
+		async () => {
+			const warningCount = warnings.length;
+			const nativeAbortController = context.AbortController;
+			let requestCount = 0;
+
+			setTranslations({ Existing: "Vorhanden" });
+			context.AbortController = undefined;
+			try {
+				await loadTranslations(async () => {
+					requestCount += 1;
+					return { Existing: "Übersetzt" };
+				});
+			} finally {
+				context.AbortController = nativeAbortController;
+			}
+
+			assert.equal(__("Existing"), "Existing");
+			assert.equal(warnings.length, warningCount + 1);
+			assert.equal(requestCount, 0);
+		},
+	],
+	[
 		"times out, aborts, and ignores a late response",
 		async () => {
 			const warningCount = warnings.length;

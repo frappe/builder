@@ -36,10 +36,10 @@ export async function loadTranslations(
 	request: TranslationRequest = requestTranslations,
 	timeoutMs = TRANSLATION_REQUEST_TIMEOUT,
 ) {
-	const controller = new AbortController();
 	let timeout: ReturnType<typeof setTimeout> | undefined;
 
 	try {
+		const controller = new AbortController();
 		const dictionary = await Promise.race([
 			request({
 				url: "builder.api.get_translations",
