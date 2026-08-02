@@ -68,7 +68,7 @@
 								:time="pageStore.activePage.published_at">
 								{{ timeAgo }}
 							</UseTimeAgo>
-							<template v-else>Live on your site</template>
+							<template v-else>Currently live</template>
 						</span>
 					</div>
 					<Button
