@@ -144,7 +144,6 @@ declare module 'vue' {
     SplitModeInput: typeof import('./src/components/Controls/SplitModeInput.vue')['default']
     StringOptions: typeof import('./src/components/PropsOptions/StringOptions.vue')['default']
     StylePropertyControl: typeof import('./src/components/Controls/StylePropertyControl.vue')['default']
-    TabButtons: typeof import('./src/components/Controls/TabButtons.vue')['default']
     TemplateGallery: typeof import('./src/components/Templates/TemplateGallery.vue')['default']
     TemplateGroupCard: typeof import('./src/components/Templates/TemplateGroupCard.vue')['default']
     TemplatePageCard: typeof import('./src/components/Templates/TemplatePageCard.vue')['default']
