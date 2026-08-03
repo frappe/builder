@@ -42,7 +42,7 @@
 						{ label: '', value: 'gradient', icon: 'lucide-aperture' },
 					]"
 					v-model="activeTab"
-					class="mb-3" />
+					:class="['mb-3 w-full', STRETCH_TABS]" />
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
@@ -139,6 +139,7 @@ import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderToken } from "@/utils/useBuilderToken";
+import { STRETCH_TABS } from "@/utils/tabButtons";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
 import { computed, defineComponent, h, ref, watch } from "vue";
 

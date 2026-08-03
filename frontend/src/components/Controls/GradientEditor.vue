@@ -9,7 +9,7 @@
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
-				class="flex-1" />
+				:class="['flex-1', STRETCH_TABS]" />
 		</div>
 
 		<div class="flex items-center gap-4">
@@ -92,6 +92,7 @@
 <script setup lang="ts">
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
 import { useMouseInElement, useMousePressed } from "@vueuse/core";
+import { STRETCH_TABS } from "@/utils/tabButtons";
 import { Popover, TabButtons } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";

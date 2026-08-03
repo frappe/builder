@@ -45,7 +45,7 @@
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
 						:options="blockClientScriptTabs"
-						class="w-48" />
+						:class="['w-48', STRETCH_TABS]" />
 				</div>
 			</template>
 			<template #default>
@@ -153,6 +153,7 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
+import { STRETCH_TABS } from "@/utils/tabButtons";
 import { TabButtons, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";

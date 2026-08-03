@@ -2,7 +2,7 @@
 	<div class="flex flex-col gap-2">
 		<!-- Category Filter -->
 		<div class="pb-2 pt-0.5">
-			<TabButtons v-model="selectedCategory" :options="CATEGORIES" />
+			<TabButtons v-model="selectedCategory" :options="CATEGORIES" :class="['w-full', STRETCH_TABS]" />
 		</div>
 
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -446,6 +446,7 @@ const PRESETS: Preset[] = [
 	},
 ];
 
+import { STRETCH_TABS } from "@/utils/tabButtons";
 import { TabButtons } from "frappe-ui";
 import { computed, ref } from "vue";
 
