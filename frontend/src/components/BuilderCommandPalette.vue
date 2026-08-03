@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { commands, registerBuiltInCommands, registerCommand, resolveText } from "@/components/Commands";
-import { settingsPanes } from "@/components/Settings/panes";
+import { registerBuiltInSettingsItems, settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -55,6 +55,9 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 };
 
 registerBuiltInCommands();
+// register is keyed by name, so the settings dialog registering the same items
+// replaces rather than duplicates
+registerBuiltInSettingsItems();
 
 registerCommand({
 	name: "search-page",
@@ -111,18 +114,19 @@ function openSettings(tab: string) {
 	builderStore.showSettingsDialog = true;
 }
 
-// derived from the settings metadata, so the two lists cannot drift
+// read from the same registry the settings dialog renders, so a pane registered
+// by an extension shows up here too
 const settingsCommands = computed<PaletteItem[]>(() =>
-	settingsPanes
-		.filter((pane) => pane.condition?.() ?? true)
-		.filter((pane) => isBuilderRoute.value || pane.group === "Global")
-		.map((pane) => ({
-			name: pane.name,
-			title: pane.title,
+	settingsItems.visible.value
+		.filter((item) => !item.disabled)
+		.filter((item) => isBuilderRoute.value || item.group === "Global")
+		.map((item) => ({
+			name: item.name,
+			title: item.title,
 			description: "Settings",
-			icon: pane.icon,
-			section: pane.group === "Current Page" ? "page" : "global",
-			action: () => openSettings(pane.name),
+			icon: item.icon,
+			section: item.group === "Current Page" ? "page" : "global",
+			action: () => openSettings(item.name),
 		})),
 );
 

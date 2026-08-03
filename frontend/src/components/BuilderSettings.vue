@@ -78,8 +78,7 @@ onMounted(async () => {
 	settingsLoaded.value = true;
 });
 
-// registering here keeps the settings panes in this async chunk. register is
-// keyed by name, so a second mount replaces rather than duplicates.
+// the dialog can open without the palette ever mounting, so it registers too
 registerBuiltInSettingsItems();
 
 const visibleGroups = computed(() =>
