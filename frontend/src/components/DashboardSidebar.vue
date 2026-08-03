@@ -1,5 +1,5 @@
 <template>
-	<Sidebar>
+	<Sidebar class="border-r border-outline-gray-1">
 		<SidebarHeader title="Builder" :logo="builderLogo" :menuItems="appMenuItems" />
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
@@ -12,7 +12,7 @@
 				</SidebarItem>
 			</nav>
 
-			<div class="flex h-7 items-center justify-between">
+			<div class="mt-5 flex h-7 items-center justify-between">
 				<SidebarLabel>Folders</SidebarLabel>
 				<Button
 					variant="ghost"
