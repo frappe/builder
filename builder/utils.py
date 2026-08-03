@@ -11,7 +11,12 @@ from urllib.parse import unquote, urlparse
 import frappe
 import yaml
 from frappe.model.document import Document
-from frappe.modules.import_file import import_doc, import_file_by_path, update_modified
+from frappe.modules.import_file import (
+	import_doc,
+	import_file_by_path,
+	read_doc_from_file,
+	update_modified,
+)
 from frappe.utils import get_datetime, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
@@ -358,8 +363,14 @@ def make_records(path):
 
 def import_fixture_record(fpath):
 	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
-	with open(fpath, encoding="utf-8") as f:
-		docdict = frappe.parse_json(f.read())
+	try:
+		docdict = read_doc_from_file(fpath)
+	except OSError:
+		print(f"{fpath} missing")
+		return
+	if not isinstance(docdict, dict):
+		import_file_by_path(fpath)
+		return
 	old_doctype = docdict.get("doctype")
 	normalize_renamed_doc(docdict)
 	if docdict.get("doctype") == old_doctype:
