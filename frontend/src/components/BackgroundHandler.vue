@@ -36,13 +36,13 @@
 			<div
 				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
-					:buttons="[
+					:options="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
 						{ label: '', value: 'image', icon: 'lucide-image' },
 						{ label: '', value: 'gradient', icon: 'lucide-aperture' },
 					]"
 					v-model="activeTab"
-					class="mb-3" />
+					:class="['mb-3 w-full', STRETCH_TABS]" />
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
@@ -134,17 +134,17 @@ import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import TabButtons from "@/components/Controls/TabButtons.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { FileUploader, Popover, Switch } from "frappe-ui";
+import { useBuilderToken } from "@/utils/useBuilderToken";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
 import { computed, defineComponent, h, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
-const { getVariableName, resolveVariableValue, variables } = useBuilderVariable();
+const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
 
 // wraps Input to style the value like ColorInput does when it displays a variable name
 const BackgroundInput = defineComponent({
@@ -155,7 +155,7 @@ const BackgroundInput = defineComponent({
 		const showsVariableName = computed(() => {
 			return (
 				!!props.modelValue &&
-				variables.value.some((builderVariable) => builderVariable.variable_name === props.modelValue)
+				variables.value.some((builderToken) => builderToken.token_name === props.modelValue)
 			);
 		});
 		return () =>

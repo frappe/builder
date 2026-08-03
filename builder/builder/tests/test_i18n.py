@@ -48,10 +48,13 @@ class TestI18n(FrappeAPITestCase):
 		get_user_lang.assert_called_once_with()
 		get_all_translations.assert_called_once_with("de")
 
-	def test_get_translations_is_authenticated_and_get_only(self):
+	def test_get_translations_is_authenticated_and_read_only(self):
 		self.assertIn(get_translations, frappe.whitelisted)
 		self.assertNotIn(get_translations, frappe.guest_methods)
-		self.assertEqual(frappe.allowed_http_methods_for_whitelisted_func[get_translations], ["GET"])
+		self.assertEqual(
+			frappe.allowed_http_methods_for_whitelisted_func[get_translations],
+			("GET", "QUERY"),
+		)
 
 	def test_authenticated_get_returns_translation_dictionary(self):
 		with (

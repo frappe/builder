@@ -20,7 +20,7 @@ from werkzeug.wrappers import Response
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 from builder.builder.doctype.builder_snapshot import builder_snapshot
-from builder.utils import compact_json, has_page_read, has_page_write
+from builder.utils import compact_json, has_page_read, has_page_write, normalize_renamed_doc
 
 
 @frappe.whitelist(methods=["GET"])
@@ -345,7 +345,8 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 	for font in bundle.get("fonts") or []:
 		import_doc(docdict=font)
 	for var in bundle.get("variables") or []:
-		import_doc(docdict=var)
+		# a hub still on the pre-rename schema sends Builder Variable docs
+		import_doc(docdict=normalize_renamed_doc(var))
 	for comp in bundle.get("components") or []:
 		import_doc(docdict=comp)
 

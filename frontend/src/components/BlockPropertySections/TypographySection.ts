@@ -1,13 +1,10 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
-import FontUploader from "@/components/Controls/FontUploader.vue";
+import FontInput from "@/components/Controls/FontInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/doctypes";
-import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, fontListItems, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
+import { setFont as _setFont, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
@@ -41,31 +38,8 @@ const typographySectionProperties = [
 		getProps: () => {
 			return {
 				label: "Family",
-				component: Autocomplete,
+				component: FontInput,
 				propertyKey: "fontFamily",
-				getOptions: async (filterString: string) => {
-					await loadFontList();
-					const toOption = (family: string) => ({ label: family, value: family });
-					const userFontOptions = filterOptions(
-						(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
-						filterString,
-					);
-					const defaultFontOptions = filterOptions(
-						fontListItems.value.map((font) => toOption(font.family)),
-						filterString,
-					);
-
-					if (!userFontOptions.length) return defaultFontOptions;
-					return [
-						{ label: "Custom", value: "_separator_1" },
-						...userFontOptions,
-						{ label: "Default", value: "_separator_2" },
-						...defaultFontOptions,
-					];
-				},
-				actionButton: {
-					component: FontUploader,
-				},
 				getModelValue: () => blockController.getFontFamily(),
 				setModelValue: (val: string) => setFont(val),
 			};

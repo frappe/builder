@@ -1,11 +1,11 @@
 <template>
-	<div>
+	<div v-if="loading || rows?.length">
 		<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Referrers</h3>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			Loading...
 		</div>
 		<ListView
-			v-else-if="rows?.length"
+			v-else
 			class="!w-auto"
 			:columns="[
 				{
@@ -31,12 +31,10 @@
 			:options="{ selectable: false, emptyState: {} }"
 			:rows="rows"
 			row-key="domain" />
-		<AnalyticsEmptyState v-else title="No referrers yet" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import { ListView } from "frappe-ui";
 import { h } from "vue";
 

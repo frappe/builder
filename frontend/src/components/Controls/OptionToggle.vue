@@ -2,19 +2,19 @@
 	<div class="flex w-full items-center justify-between">
 		<InputLabel v-if="label">{{ label }}</InputLabel>
 		<TabButtons
-			class="w-full min-w-[150px] [&>div>button[aria-checked='true']]:dark:!bg-surface-gray-4 [&>div>button]:items-center"
-			:buttons="options"
+			:class="['w-full min-w-[150px]', STRETCH_TABS]"
+			:options="tabOptions"
 			:modelValue="modelValue"
-			:defaultValue="defaultValue"
-			@update:modelValue="$emit('update:modelValue', $event)"></TabButtons>
+			@update:modelValue="$emit('update:modelValue', $event)" />
 	</div>
 </template>
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import TabButtons from "@/components/Controls/TabButtons.vue";
-import type { Component } from "vue";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { TabButtons } from "frappe-ui";
+import { computed, type Component } from "vue";
 
-withDefaults(
+const props = withDefaults(
 	defineProps<{
 		modelValue?: string | number | boolean;
 		options?: {
@@ -33,5 +33,23 @@ withDefaults(
 	},
 );
 
-const emit = defineEmits(["update:modelValue"]);
+defineEmits(["update:modelValue"]);
+
+// the value a block inherits when it doesn't set the property itself is outlined
+// rather than selected, so the panel never claims a style that isn't there
+const INHERITED_OUTLINE = "outline-dashed outline-1 -outline-offset-1 outline-[color:var(--outline-gray-3)]";
+
+const isSet = computed(
+	() => props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "",
+);
+
+const tabOptions = computed(() =>
+	props.options.map(({ label, value, icon, hideLabel, showTooltip }) => ({
+		value,
+		// frappe-ui reads `icon` as icon-only, `iconLeft` as an accent beside the label
+		...(hideLabel ? { icon } : { label, iconLeft: icon }),
+		tooltip: hideLabel || showTooltip ? label : undefined,
+		class: !isSet.value && (value ?? label) === props.defaultValue ? INHERITED_OUTLINE : undefined,
+	})),
+);
 </script>

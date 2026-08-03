@@ -8,9 +8,7 @@
 			:allowArbitraryValue="true"
 			:showInputAsOption="true"
 			class="w-44" />
-		<div class="w-32">
-			<Select size="sm" v-model="modelRange" :options="rangeOptions" />
-		</div>
+		<Select size="sm" v-model="modelRange" :options="rangeOptions" />
 		<DateRangePicker
 			v-if="modelRange === 'custom'"
 			v-model="customDateRangeValue"

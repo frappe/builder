@@ -12,31 +12,41 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		action-label="Add Variable"
+		action-label="Add Token"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-lg-semibold py-2">Manage Variables</h2></template>
+		<template #header><h2 class="text-lg-semibold py-2">Design Tokens</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
+				<div class="mb-2">
+					<TabButtons
+						:modelValue="activeType"
+						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
+						:options="typeTabOptions" />
+				</div>
 				<div class="mb-3">
 					<BuilderInput
 						:modelValue="searchQuery"
 						@input="(val: string) => (searchQuery = val)"
 						@update:modelValue="(val: string) => (searchQuery = val)"
 						type="text"
-						placeholder="Search variables"
+						placeholder="Search tokens"
 						class="w-full"
 						icon-left="search" />
 				</div>
 
-				<div class="max-h-[60vh] overflow-y-auto">
+				<!-- a floor under the list so a short tab does not shrink the whole panel -->
+				<div class="max-h-[60vh] min-h-64 overflow-y-auto">
 					<!-- Header row -->
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
 						<div class="pl-2">Name</div>
-						<div class="border-l border-outline-gray-1 pl-2">Light</div>
-						<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+						<template v-if="isColorType">
+							<div class="border-l border-outline-gray-1 pl-2">Light</div>
+							<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+						</template>
+						<div v-else class="border-l border-outline-gray-1 pl-2">Value</div>
 					</div>
 
 					<template v-for="group in displayGroups" :key="group.group ?? '__flat__'">
@@ -56,27 +66,29 @@
 									data-row
 									class="rounded py-2"
 									:class="rowGridClass"
-									@focusout="(e) => handleNewRowFocusOut(e, row)">
+									@keydown.esc.stop.prevent="() => (newVariable = null)"
+									@focusout="(e) => handleNewRowFocusOut(e, row)"
+									@contextmenu="handleNewRowContextMenu">
 									<input
 										type="text"
-										:value="row.variable_name"
-										placeholder="Variable name"
+										:value="row.token_name"
+										placeholder="Token name"
 										:class="[cellBoxClass, editableInputClass]"
 										data-new-name
 										@mousedown.stop
-										@input="(e) => (row.variable_name = inputValue(e))"
-										@keydown.enter.prevent="() => createVariable(row)"
-										@keydown.esc.stop.prevent="() => (newVariable = null)" />
+										@input="(e) => (row.token_name = inputValue(e))"
+										@keydown.enter.prevent="() => createVariable(row)" />
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'light')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -92,18 +104,34 @@
 											placeholder="#ffffff"
 											:class="colorValueInputClass"
 											@mousedown.stop
-											@input="(e) => updateColor(row, inputValue(e), 'light')" />
+											@input="(e) => updateRowValue(row, inputValue(e), 'light')" />
 									</div>
 									<div
+										v-else
 										:class="[
 											colorCellBoxClass,
-											'rounded-l-none border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+										]">
+										<input
+											type="text"
+											:value="row.value"
+											:placeholder="VALUE_PLACEHOLDERS[activeType]"
+											:class="colorValueInputClass"
+											@mousedown.stop
+											@input="(e) => updateRowValue(row, inputValue(e), 'light')"
+											@keydown.enter.prevent="() => createVariable(row)" />
+									</div>
+									<div
+										v-if="isColorType"
+										:class="[
+											colorCellBoxClass,
+											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'dark')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -121,7 +149,7 @@
 											:placeholder="row.value || '#000000'"
 											:class="colorValueInputClass"
 											@mousedown.stop
-											@input="(e) => updateColor(row, inputValue(e), 'dark')" />
+											@input="(e) => updateRowValue(row, inputValue(e), 'dark')" />
 									</div>
 								</div>
 
@@ -153,25 +181,69 @@
 												aria-hidden="true" />
 										</Tooltip>
 										<input
-											v-if="isEditing(row, 'variable_name')"
+											v-if="isEditing(row, 'token_name')"
 											type="text"
-											:value="row.variable_name"
+											:value="row.token_name"
 											:class="[cellBoxClass, editableInputClass]"
 											:ref="focusEditInput"
 											@mousedown.stop
-											@blur="(e) => commitEdit(row, 'variable_name', e)"
-											@keydown.enter.prevent="(e) => commitEdit(row, 'variable_name', e)"
+											@blur="(e) => commitEdit(row, 'token_name', e)"
+											@keydown.enter.prevent="(e) => commitEdit(row, 'token_name', e)"
 											@keydown.esc.stop.prevent="() => cancelEdit(row)"
-											@keydown.tab.prevent="(e) => commitAndEditNext(row, 'variable_name', e)" />
+											@keydown.tab.prevent="(e) => commitAndEditNext(row, 'token_name', e)" />
 										<div
 											v-else
-											:class="[cellBoxClass, cellTextClass(row), row.variable_name ? '' : 'text-ink-gray-4']"
-											@dblclick="startEdit(row, 'variable_name')">
-											{{ row.variable_name || "unnamed" }}
+											:class="[cellBoxClass, cellTextClass(row), row.token_name ? '' : 'text-ink-gray-4']"
+											@dblclick="startEdit(row, 'token_name')">
+											{{ row.token_name || "unnamed" }}
 										</div>
+										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
+										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
+											<div
+												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												:class="{ '!visible': copiedId === row.id }">
+												<Button
+													variant="ghost"
+													size="xs"
+													:icon="copiedId === row.id ? 'lucide-check' : 'lucide-copy'"
+													:class="{ '!text-ink-green-6': copiedId === row.id }"
+													@mousedown.stop
+													@click.stop="copyHandle(row)" />
+											</div>
+										</Tooltip>
+									</div>
+									<!-- Value (Font/Dimension): plain text cell, dblclick to edit -->
+									<div
+										v-if="!isColorType"
+										:class="[
+											colorCellBoxClass,
+											'rounded-l-none border-l border-outline-gray-1',
+											isEditing(row, 'value')
+												? 'bg-surface-base ring-2 ring-outline-gray-3'
+												: cellTextClass(row),
+										]"
+										@dblclick="startEdit(row, 'value')">
+										<input
+											v-if="isEditing(row, 'value')"
+											type="text"
+											:value="row.value"
+											:placeholder="VALUE_PLACEHOLDERS[activeType]"
+											:class="colorValueInputClass"
+											:ref="focusEditInput"
+											@mousedown.stop
+											@blur="(e) => commitEdit(row, 'value', e)"
+											@keydown.enter.prevent="(e) => commitEdit(row, 'value', e)"
+											@keydown.esc.stop.prevent="() => cancelEdit(row)" />
+										<span
+											v-else
+											class="truncate"
+											:style="activeType === 'Font' && row.value ? { fontFamily: row.value } : {}">
+											{{ row.value }}
+										</span>
 									</div>
 									<!-- Light -->
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
@@ -185,7 +257,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'light')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -215,6 +287,7 @@
 									</div>
 									<!-- Dark -->
 									<div
+										v-if="isColorType"
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
@@ -228,7 +301,7 @@
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
-											@update:modelValue="(value: string | null) => updateColor(row, value, 'dark')">
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
 											<template #target="{ togglePopover }">
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
@@ -269,13 +342,13 @@
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
 						<div class="text-base-medium text-ink-gray-7">
-							{{ searchQuery.trim() ? "No Variables Found" : "No Variables" }}
+							{{ searchQuery.trim() ? "No tokens found" : `No ${activeType.toLowerCase()} tokens yet` }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
 								searchQuery.trim()
-									? `No variables match "${searchQuery}". Try a different search term.`
-									: "No variables found. Click 'Add Variable' to create your first one."
+									? `No tokens match "${searchQuery}". Try a different search term.`
+									: "Click 'Add Token' to create your first one."
 							}}
 						</div>
 					</div>
@@ -319,11 +392,11 @@ import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
-import { BuilderVariable } from "@/types/doctypes";
+import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
-import { Button, Dialog, toast, Tooltip } from "frappe-ui";
+import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
 
 defineProps<{
@@ -341,9 +414,45 @@ const {
 	updateVariable,
 	deleteVariable,
 	variables,
-} = useBuilderVariable();
+} = useBuilderToken();
 
 const csvFileInput = ref<HTMLInputElement>();
+const activeType = ref<"Color" | "Font" | "Dimension">("Color");
+const isColorType = computed(() => activeType.value === "Color");
+
+// Copy a token's CSS handle — var(--<doc-id>) — for pasting into any style field.
+const copiedId = ref<string | null>(null);
+const copyHandle = async (row: Row) => {
+	if (!row.name) return;
+	const handle = `var(--${row.name})`;
+	try {
+		await navigator.clipboard.writeText(handle);
+		copiedId.value = row.id;
+		setTimeout(() => (copiedId.value = null), 1200);
+	} catch {
+		toast.error("Couldn't copy to clipboard");
+	}
+};
+// Total tokens per type — shown as a count pill on each tab (search-independent
+// so the numbers stay stable while filtering within a tab).
+const tokenCounts = computed<Record<string, number>>(() => {
+	const counts: Record<string, number> = { Color: 0, Font: 0, Dimension: 0 };
+	for (const variable of variables.value) counts[tokenType(variable)]++;
+	return counts;
+});
+const TYPE_TABS = [
+	{ label: "Colors", value: "Color" },
+	{ label: "Fonts", value: "Font" },
+	{ label: "Dimensions", value: "Dimension" },
+] as const;
+const typeTabOptions = computed(() =>
+	TYPE_TABS.map((tab) => ({
+		value: tab.value,
+		label: tokenCounts.value[tab.value] ? `${tab.label} · ${tokenCounts.value[tab.value]}` : tab.label,
+	})),
+);
+const NEW_VALUE_DEFAULTS = { Color: "#ffffff", Font: "", Dimension: "" } as const;
+const VALUE_PLACEHOLDERS = { Color: "#ffffff", Font: "e.g. Fraunces", Dimension: "e.g. 24px" } as const;
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
 const nextNewId = ref(1);
 const newVariable = ref<Row | null>(null);
@@ -351,7 +460,11 @@ const searchQuery = ref("");
 const isCreating = ref(false);
 
 // shared column template so the header and every row stay aligned
-const rowGridClass = "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1";
+const rowGridClass = computed(() =>
+	isColorType.value
+		? "grid grid-cols-[minmax(0,1fr)_128px_128px] items-center gap-x-2 px-1"
+		: "grid grid-cols-[minmax(0,1fr)_200px] items-center gap-x-2 px-1",
+);
 
 const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
@@ -364,16 +477,16 @@ const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-sm p
 const colorValueInputClass =
 	"w-full min-w-0 border-none bg-transparent p-0 text-sm text-ink-gray-8 outline-none placeholder:text-ink-gray-4 focus:outline-none focus:ring-0";
 
-type Row = Partial<BuilderVariable> & { id: string; isNew: boolean };
+type Row = Partial<BuilderToken> & { id: string; isNew: boolean };
 type RowGroup = { group: string | null; open: boolean; rows: Row[] };
-type EditableField = "variable_name" | "group" | "value" | "dark_value";
+type EditableField = "token_name" | "group" | "value" | "dark_value";
 
 const UNGROUPED_LABEL = "Ungrouped";
 
 // row objects are reused across recomputes so that an open cell editor is never
 // rebuilt or stomped by a save round-trip
 const rowObjects = new Map<string, Row>();
-const getRowObject = (variable: BuilderVariable) => {
+const getRowObject = (variable: BuilderToken) => {
 	let row = rowObjects.get(variable.name);
 	if (!row) {
 		row = reactive({ ...variable, id: variable.name, isNew: false });
@@ -395,13 +508,12 @@ const getGroupObject = (groupName: string) => {
 const flatGroup = reactive({ group: null, open: true, rows: [] }) as RowGroup;
 
 const displayGroups = computed<RowGroup[]>(() => {
-	let filteredVariables = variables.value;
+	let filteredVariables = variables.value.filter((variable) => tokenType(variable) === activeType.value);
 	if (searchQuery.value.trim()) {
 		const query = searchQuery.value.toLowerCase().trim();
-		filteredVariables = variables.value.filter(
+		filteredVariables = filteredVariables.filter(
 			(variable) =>
-				variable.variable_name?.toLowerCase().includes(query) ||
-				variable.group?.toLowerCase().includes(query),
+				variable.token_name?.toLowerCase().includes(query) || variable.group?.toLowerCase().includes(query),
 		);
 	}
 
@@ -445,7 +557,7 @@ const hasRows = computed(() => displayGroups.value.some((group) => group.rows.le
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
 // --- cell editing: double-click to edit, Enter/blur commits, Esc cancels ---
-const EDIT_ORDER: EditableField[] = ["variable_name", "group", "value", "dark_value"];
+const EDIT_ORDER: EditableField[] = ["token_name", "group", "value", "dark_value"];
 const editingCell = ref<{ rowId: string; field: EditableField } | null>(null);
 
 const isEditing = (row: Row, field: EditableField) =>
@@ -552,10 +664,18 @@ const handleRowMouseDown = (e: MouseEvent, row: Row) => {
 
 const handleRowContextMenu = (e: MouseEvent, row: Row) => {
 	if (row.isNew || row.is_standard) return;
+	isNewRowContextMenu.value = false;
 	if (!selectedIds.value.has(row.id)) {
 		selectedIds.value = new Set([row.id]);
 		anchorId.value = row.id;
 	}
+	contextMenu.value?.show(e);
+};
+
+// right-clicking the not-yet-created row offers a way out other than Esc or reload
+const isNewRowContextMenu = ref(false);
+const handleNewRowContextMenu = (e: MouseEvent) => {
+	isNewRowContextMenu.value = true;
 	contextMenu.value?.show(e);
 };
 
@@ -594,12 +714,12 @@ const moveSelectedToGroup = async (group: string) => {
 		await saveVariable(row);
 	}
 	toast.success(
-		group ? `Moved ${rows.length} variable(s) to "${group}"` : `Ungrouped ${rows.length} variable(s)`,
+		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
 	);
 };
 
 const uniqueCopyName = (name: string) => {
-	const names = new Set(variables.value.map((variable) => variable.variable_name));
+	const names = new Set(variables.value.map((variable) => variable.token_name));
 	let copyName = `${name} copy`;
 	let counter = 2;
 	while (names.has(copyName)) copyName = `${name} copy ${counter++}`;
@@ -609,7 +729,7 @@ const uniqueCopyName = (name: string) => {
 const deleteSelected = async () => {
 	const rows = selectedRows();
 	if (!rows.length) return;
-	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} variable(s)?`);
+	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} token(s)?`);
 	if (!confirmed) return;
 
 	let deleted = 0;
@@ -619,14 +739,17 @@ const deleteSelected = async () => {
 			rowObjects.delete(row.name!);
 			deleted++;
 		} catch (error) {
-			toast.error(`Failed to delete "${row.variable_name}"`);
+			toast.error(`Failed to delete "${row.token_name}"`);
 		}
 	}
-	if (deleted) toast.success(`Deleted ${deleted} variable(s)`);
+	if (deleted) toast.success(`Deleted ${deleted} token(s)`);
 	clearSelection();
 };
 
 const contextMenuOptions = computed(() => {
+	if (isNewRowContextMenu.value) {
+		return [{ label: "Remove", action: () => (newVariable.value = null) }];
+	}
 	const count = selectedIds.value.size;
 	const suffix = count > 1 ? ` ${count} variables` : " variable";
 	return [
@@ -646,11 +769,11 @@ const addNewVariable = async () => {
 	newVariable.value = reactive({
 		id: `new-${nextNewId.value}`,
 		isNew: true,
-		variable_name: "",
-		value: "#ffffff",
+		token_name: "",
+		value: NEW_VALUE_DEFAULTS[activeType.value],
 		dark_value: "",
 		group: "",
-		type: "Color" as const,
+		type: activeType.value,
 	});
 	await nextTick();
 	document.querySelector<HTMLInputElement>("input[data-new-name]")?.focus();
@@ -663,8 +786,8 @@ const syncStoreColors = (row: Row) => {
 	);
 };
 
-// live color updates from the pickers (and the new row's inputs)
-const updateColor = async (row: Row, value: string | null, mode: "light" | "dark") => {
+// live value updates from the color pickers and the new row's inputs (any token type)
+const updateRowValue = async (row: Row, value: string | null, mode: "light" | "dark") => {
 	if (mode === "light") {
 		row.value = value || "";
 	} else {
@@ -672,42 +795,36 @@ const updateColor = async (row: Row, value: string | null, mode: "light" | "dark
 	}
 	syncStoreColors(row);
 
-	if (row.isNew) {
-		if (row.variable_name?.trim()) {
-			debouncedSaveVariable(row);
-		}
-	} else if (row.name) {
+	// new rows are only committed by Enter or handleNewRowFocusOut (leaving the whole row);
+	// debouncing a save here would fire mid-keystroke and delete the still-focused input
+	if (!row.isNew && row.name) {
 		debouncedSaveVariable(row);
 	}
 };
 
 const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
 	try {
-		if (row.isNew) {
-			await createVariable(row);
-		} else {
-			await saveVariable(row);
-		}
+		await saveVariable(row);
 	} catch (error) {
 		console.error("Failed to update variable:", error);
 	}
 }, 300);
 
 const createVariable = async (row: Row) => {
-	if (!row.isNew || !row.variable_name?.trim() || isCreating.value) return;
+	if (!row.isNew || !row.token_name?.trim() || isCreating.value) return;
 
 	isCreating.value = true;
 	try {
 		const createdVariable = await createVar({
-			variable_name: row.variable_name!,
-			value: row.value || "#ffffff",
+			token_name: row.token_name!,
+			value: row.value || NEW_VALUE_DEFAULTS[row.type || "Color"],
 			dark_value: row.dark_value || undefined,
 			group: row.group || undefined,
 			type: row.type || "Color",
 		});
 		newVariable.value = null;
 		await nextTick();
-		toast.success("Variable created successfully");
+		toast.success("Token created");
 		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
@@ -722,7 +839,7 @@ const saveVariable = async (row: Row) => {
 	try {
 		await updateVariable({
 			name: row.name,
-			variable_name: row.variable_name!,
+			token_name: row.token_name!,
 			value: row.value!,
 			dark_value: row.dark_value || undefined,
 			group: row.group || "",
@@ -764,14 +881,15 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	const lightIndex = headers.findIndex((h) => h.includes("light") || h.includes("value"));
 	const darkIndex = headers.findIndex((h) => h.includes("dark"));
 	const groupIndex = headers.findIndex((h) => h.includes("group"));
+	const typeIndex = headers.findIndex((h) => h.includes("type"));
 
 	if (nameIndex === -1 || lightIndex === -1) {
-		toast.error("CSV must contain 'Variable Name' and 'Light Mode' columns");
+		toast.error("CSV must contain 'Token Name' and 'Light Mode' columns");
 		return;
 	}
 
-	const newVariables: Partial<BuilderVariable>[] = [];
-	const updateVariables: Partial<BuilderVariable & { name?: string }>[] = [];
+	const newVariables: Partial<BuilderToken>[] = [];
+	const updateVariables: Partial<BuilderToken & { name?: string }>[] = [];
 	let invalidCount = 0;
 	let standardCount = 0;
 
@@ -784,15 +902,19 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		// a present-but-blank cell clears the group explicitly
 		const groupValue = groupIndex !== -1 ? values[groupIndex] : undefined;
 
+		const rawType = (typeIndex !== -1 && values[typeIndex]) || "";
+		const typeValue = (["Color", "Font", "Dimension"].find(
+			(t) => t.toLowerCase() === rawType.toLowerCase(),
+		) || "Color") as BuilderToken["type"];
 		if (variableName && lightValue) {
-			const existing = variables.value.find((v) => v.variable_name === variableName);
+			const existing = variables.value.find((v) => v.token_name === variableName);
 			if (!existing) {
 				newVariables.push({
-					variable_name: variableName,
+					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					group: groupValue,
-					type: "Color",
+					type: typeValue,
 				});
 			} else if (existing.is_standard) {
 				// standard variables are read-only in the manager; skip them here too
@@ -800,7 +922,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			} else {
 				updateVariables.push({
 					name: existing.name,
-					variable_name: variableName,
+					token_name: variableName,
 					value: lightValue,
 					dark_value: darkValue,
 					group: groupValue,
@@ -821,14 +943,14 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// Warn user that existing variables will be updated
 	const skippedNotes = [
 		invalidCount > 0 ? `${invalidCount} invalid entries skipped` : "",
-		standardCount > 0 ? `${standardCount} standard variable(s) skipped` : "",
+		standardCount > 0 ? `${standardCount} standard token(s) skipped` : "",
 	]
 		.filter(Boolean)
 		.join(", ");
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new variable(s) and update ${
+		`Create ${newVariables.length} new token(s) and update ${
 			updateVariables.length
-		} existing variable(s)?${
+		} existing token(s)?${
 			skippedNotes ? ` (${skippedNotes})` : ""
 		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);
@@ -847,7 +969,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		try {
 			await updateVariable({
 				name: variable.name!,
-				variable_name: variable.variable_name!,
+				token_name: variable.token_name!,
 				value: variable.value!,
 				dark_value: variable.dark_value || undefined,
 				group: variable.group,
@@ -855,7 +977,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			});
 			updatedCount++;
 		} catch (error) {
-			console.error("Failed to update variable:", variable.variable_name, error);
+			console.error("Failed to update variable:", variable.token_name, error);
 			updateErrors++;
 		}
 	}
@@ -863,7 +985,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	for (const variable of newVariables) {
 		try {
 			await createVar({
-				variable_name: variable.variable_name!,
+				token_name: variable.token_name!,
 				value: variable.value!,
 				dark_value: variable.dark_value || undefined,
 				group: variable.group || undefined,
@@ -871,7 +993,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 			});
 			createdCount++;
 		} catch (error) {
-			console.error("Failed to create variable:", variable.variable_name, error);
+			console.error("Failed to create variable:", variable.token_name, error);
 			createErrors++;
 		}
 	}
@@ -879,23 +1001,25 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
-	if (createdCount > 0) toast.success(`Successfully created ${createdCount} variable(s)`);
-	if (updatedCount > 0) toast.success(`Successfully updated ${updatedCount} variable(s)`);
-	if (createErrors > 0) toast.error(`Failed to create ${createErrors} variable(s)`);
-	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} variable(s)`);
+	if (createdCount > 0) toast.success(`Created ${createdCount} token(s)`);
+	if (updatedCount > 0) toast.success(`Updated ${updatedCount} token(s)`);
+	if (createErrors > 0) toast.error(`Failed to create ${createErrors} token(s)`);
+	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} token(s)`);
 	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
-	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard variable(s) (read-only)`);
+	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard token(s) (read-only)`);
 
 	if (csvFileInput.value) csvFileInput.value.value = "";
 };
 
 const downloadSampleCSV = () => {
 	const sampleData = [
-		["Variable Name", "Light Mode", "Dark Mode", "Group"],
-		["primary-color", "#3b82f6", "#60a5fa", "Brand"],
-		["secondary-color", "#10b981", "#34d399", "Brand"],
-		["background-color", "#ffffff", "#1f2937", "Surface"],
-		["text-color", "#111827", "#f9fafb", ""],
+		["Token Name", "Light Mode", "Dark Mode", "Group", "Type"],
+		["primary-color", "#3b82f6", "#60a5fa", "Brand", "Color"],
+		["secondary-color", "#10b981", "#34d399", "Brand", "Color"],
+		["background-color", "#ffffff", "#1f2937", "Surface", "Color"],
+		["text-color", "#111827", "#f9fafb", "", "Color"],
+		["heading-font", "Fraunces", "", "Brand", "Font"],
+		["section-gap", "96px", "", "Layout", "Dimension"],
 	];
 
 	const csvContent = sampleData.map((row) => row.join(",")).join("\n");
