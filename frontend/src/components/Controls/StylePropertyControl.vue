@@ -77,7 +77,7 @@ const getVariantValue = (variantName: string): string | number | boolean => {
 		return blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) ?? "";
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	return property ? blockController.getNativeStyle(property) ?? "" : "";
+	return property ? (blockController.getNativeStyle(property) ?? "") : "";
 };
 
 const setVariantValue = (variantName: string, value: string | number | boolean | null) => {

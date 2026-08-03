@@ -60,11 +60,10 @@ onMounted(() => {
 });
 
 // `rotation` also projects the resize axes, so pointer movement follows the rotated edges
-const { rotation, horizontalCursor, verticalCursor, cornerCursorNWSE, cornerCursorNESW } =
-	useRotatedCursors(
-		() => props.target as Element,
-		() => props.targetBlock,
-	);
+const { rotation, horizontalCursor, verticalCursor, cornerCursorNWSE, cornerCursorNESW } = useRotatedCursors(
+	() => props.target as Element,
+	() => props.targetBlock,
+);
 
 const resizeDirections = {
 	left: { horizontal: "left" },

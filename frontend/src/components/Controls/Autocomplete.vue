@@ -262,9 +262,7 @@ const submitArbitraryValue = (inputValue: string) => {
 
 // the input still shows the current selection, i.e. nothing was typed over it
 const isUntouched = (inputValue: string) =>
-	!inputValue ||
-	inputValue === getDisplayValue(props.modelValue) ||
-	inputValue === (props.modelValue ?? "");
+	!inputValue || inputValue === getDisplayValue(props.modelValue) || inputValue === (props.modelValue ?? "");
 
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
