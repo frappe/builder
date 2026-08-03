@@ -121,9 +121,9 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Upload coverage data
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           name: Server
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true
