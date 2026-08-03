@@ -35,7 +35,8 @@
 						icon-left="search" />
 				</div>
 
-				<div class="max-h-[60vh] overflow-y-auto">
+				<!-- a floor under the list so a short tab does not shrink the whole panel -->
+				<div class="max-h-[60vh] min-h-64 overflow-y-auto">
 					<!-- Header row -->
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
