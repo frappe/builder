@@ -27,7 +27,7 @@
 								ref="colorInput"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="togglePopover"
+								@focus="() => !isCssVariable && togglePopover()"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
