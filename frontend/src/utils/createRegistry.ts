@@ -1,13 +1,13 @@
 import { computed, reactive } from "vue";
 
 /** Every registry item needs a stable identity and a sort position. */
-export type Identified = {
+export type RegistryEntry = {
 	name: string;
 	rank?: number;
 };
 
 /** The common case: the surface itself decides whether an item shows. */
-export type RegistryItem = Identified & {
+export type RegistryItem = RegistryEntry & {
 	condition?: () => boolean;
 };
 
@@ -24,7 +24,7 @@ const RANK_STEP = 10;
  * Read `visible` when an item decides its own visibility. Read `all` when the
  * surface passes an argument to condition, as the block context menu does.
  */
-export function createRegistry<T extends Identified>() {
+export function createRegistry<T extends RegistryEntry>() {
 	const items = reactive(new Map<string, T>()) as Map<string, T>;
 	let nextAutoRank = RANK_STEP;
 
