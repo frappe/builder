@@ -151,6 +151,9 @@ interface Props {
 	options?: Option[];
 	getOptions?: (query: string) => Promise<Option[]>;
 	modelValue?: string | null;
+	// what to show for the current value when it reads badly on its own, e.g. a
+	// token's name instead of var(--id); the combobox still selects by value
+	displayValue?: string | null;
 	placeholder?: string;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
@@ -232,6 +235,7 @@ const selectedValue = computed({
 
 const getDisplayValue = (item: any): string => {
 	if (typeof item === "object") return item?.label || item?.value || "";
+	if (props.displayValue != null && item === props.modelValue) return props.displayValue;
 	const found = allOptions.value.find((opt) => opt.value === item);
 	return found?.label || item || "";
 };

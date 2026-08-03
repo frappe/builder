@@ -29,7 +29,8 @@
 								@keydown.enter="handleEnter"
 								@focus="togglePopover"
 								:placeholder="displayPlaceholder"
-								:modelValue="displayValue"
+								:modelValue="modelValue"
+								:displayValue="displayValue"
 								:getOptions="getOptions"
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions

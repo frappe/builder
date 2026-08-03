@@ -77,7 +77,6 @@ declare module 'vue' {
     Files: typeof import('./src/components/Icons/Files.vue')['default']
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']
     FontInput: typeof import('./src/components/Controls/FontInput.vue')['default']
-    FontInputActions: typeof import('./src/components/Controls/FontInputActions.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
     GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']

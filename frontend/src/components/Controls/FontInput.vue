@@ -7,10 +7,11 @@
 				:class="{
 					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
 				}"
-				:modelValue="displayValue"
+				:modelValue="modelValue"
+				:displayValue="displayValue"
 				:placeholder="displayPlaceholder"
 				:getOptions="getOptions"
-				:actionButton="{ component: FontInputActions }"
+				:actionButton="{ component: FontUploader }"
 				@update:modelValue="handleUpdate">
 				<template #prefix>
 					<div
@@ -26,7 +27,7 @@
 
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import FontInputActions from "@/components/Controls/FontInputActions.vue";
+import FontUploader from "@/components/Controls/FontUploader.vue";
 import userFonts from "@/data/userFonts";
 import { BuilderToken, UserFont } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
@@ -115,10 +116,11 @@ const getOptions = async (filterString: string) => {
 	if (userFontOptions.length) {
 		options.push({ label: "Custom", value: "_separator_1" }, ...userFontOptions);
 	}
-	if (options.length) {
-		options.push({ label: "Default", value: "_separator_2" });
+	if (defaultFontOptions.length) {
+		// the heading only earns its place once something sits under it
+		if (options.length) options.push({ label: "Default", value: "_separator_2" });
+		options.push(...defaultFontOptions);
 	}
-	options.push(...defaultFontOptions);
 	return options;
 };
 
