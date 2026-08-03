@@ -2,7 +2,7 @@
 	<Sidebar>
 		<SidebarHeader title="Builder" :logo="builderLogo" :menuItems="appMenuItems" />
 
-		<div class="flex-1 overflow-y-auto overflow-x-hidden">
+		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<SidebarItem
 				label="All Pages"
 				:active="!builderStore.activeFolder"
@@ -13,16 +13,17 @@
 				<template #prefix><SettingsIcon class="size-4" /></template>
 			</SidebarItem>
 
-			<div class="flex items-center justify-between pr-1">
+			<div class="flex h-7 items-center justify-between">
 				<SidebarLabel>Folders</SidebarLabel>
 				<Button
 					variant="ghost"
-					icon="lucide-plus"
-					class="size-4 cursor-pointer hover:text-ink-gray-8"
+					size="sm"
+					icon="lucide-plus text-ink-gray-5"
+					label="New folder"
 					@click="promptCreateFolder()" />
 			</div>
 
-			<p v-if="!builderProjectFolder.data?.length" class="p-2 text-sm text-ink-gray-5">
+			<p v-if="!builderProjectFolder.data?.length" class="pl-2 text-sm text-ink-gray-5">
 				No folders yet
 			</p>
 			<SidebarItem
@@ -77,7 +78,7 @@
 					</Dropdown>
 				</template>
 			</SidebarItem>
-		</div>
+		</ScrollArea>
 
 		<div class="mt-auto">
 			<p class="p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
@@ -110,6 +111,7 @@ import {
 	createResource,
 	Dialog,
 	Dropdown,
+	ScrollArea,
 	Sidebar,
 	SidebarHeader,
 	SidebarHeaderProps,
