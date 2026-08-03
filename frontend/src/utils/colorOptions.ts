@@ -16,6 +16,10 @@ export function getColorVariableOptions(
 		.replace(/\)\s*$/, "")
 		.trim();
 
+	// a colour literal is the current value, not a token search: it can never match a
+	// token name, and filtering by it would leave nothing to pick from
+	if (/^(#|rgba?\(|hsla?\()/i.test(processedQuery)) processedQuery = "";
+
 	const colorTokens = variables.filter((builderToken) => tokenType(builderToken) === "Color");
 
 	const searchableLabel = (builderToken: BuilderToken) =>

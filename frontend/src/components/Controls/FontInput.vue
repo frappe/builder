@@ -85,6 +85,9 @@ const handleUpdate = (val: string | null) => emit("update:modelValue", val);
 const getOptions = async (filterString: string) => {
 	await loadFontList();
 	const toOption = (family: string) => ({ label: family, value: family });
+	// a token's name is what the field shows when one is picked, and it matches no
+	// family: filtering the font lists by it would leave only the token to choose from
+	const fontQuery = isCssVariable.value && filterString === displayValue.value ? "" : filterString;
 
 	// Font design tokens first: picking one stores var(--id), so retheming the
 	// token updates every block bound to it. The family is part of the label, so
@@ -98,11 +101,11 @@ const getOptions = async (filterString: string) => {
 	);
 	const userFontOptions = filterOptions(
 		(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
-		filterString,
+		fontQuery,
 	);
 	const defaultFontOptions = filterOptions(
 		fontListItems.value.map((font) => toOption(font.family)),
-		filterString,
+		fontQuery,
 	);
 
 	const options = [] as { label: string; value: string }[];

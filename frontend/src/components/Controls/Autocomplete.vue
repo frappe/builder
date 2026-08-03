@@ -256,17 +256,22 @@ const submitArbitraryValue = (inputValue: string) => {
 	isOpen.value = false;
 };
 
+// the input still shows the current selection, i.e. nothing was typed over it
+const isUntouched = (inputValue: string) =>
+	!inputValue ||
+	inputValue === getDisplayValue(props.modelValue) ||
+	inputValue === (props.modelValue ?? "");
+
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
 	const highlightedItem = containerRef.value?.querySelector("[data-highlighted]");
 	const inputValue = getInputValue(event);
-	// If there's a highlighted item and user hasn't typed anything different, let the combobox handle it
-	if (highlightedItem && !inputValue) return;
-	// If user typed something, check if it matches the highlighted item's value
+	// let the combobox commit what is highlighted: nothing was typed over the
+	// current value (arrowing through the list), or what was typed is that option
+	if (highlightedItem && isUntouched(inputValue)) return;
 	if (highlightedItem && inputValue) {
 		const highlightedValue = highlightedItem.getAttribute("data-value");
 		const matchingOption = allOptions.value.find((opt) => opt.value === highlightedValue);
-		// If input matches highlighted item's label, let combobox handle it
 		if (matchingOption && matchingOption.label.toLowerCase() === inputValue.toLowerCase()) return;
 	}
 	event.preventDefault();
@@ -291,9 +296,15 @@ const handleBlur = (event: FocusEvent) => {
 
 watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
 watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
+// seed the search term with the option's label, not the raw value: it is what the
+// input shows, what filterOptions windows the list around, and what Enter compares
+// against (a value like "700" would otherwise read as text typed over "Bold")
 watch(
-	() => props.modelValue,
-	(val) => (searchQuery.value = val ?? ""),
+	[() => props.modelValue, allOptions],
+	() => {
+		if (isOpen.value) return;
+		searchQuery.value = getDisplayValue(props.modelValue);
+	},
 	{ immediate: true },
 );
 
