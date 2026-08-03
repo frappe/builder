@@ -11,8 +11,13 @@ from urllib.parse import unquote, urlparse
 import frappe
 import yaml
 from frappe.model.document import Document
-from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_url
+from frappe.modules.import_file import (
+	import_doc,
+	import_file_by_path,
+	read_doc_from_file,
+	update_modified,
+)
+from frappe.utils import get_datetime, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -319,9 +324,33 @@ def sync_block_templates():
 
 
 def sync_builder_tokens():
-	print("Syncing Builder Builder Tokens")
+	print("Syncing Builder Tokens")
 	builder_token_path = frappe.get_module_path("builder", "builder_token")
 	make_records(builder_token_path)
+
+
+# Compat alias, external scripts may still call the old name
+sync_builder_variables = sync_builder_tokens
+
+
+# Fixture exports and template bundles made before the Builder Token rename still
+# say Builder Variable, and carry the pre-rename fieldname
+RENAMED_FIXTURE_DOCTYPES = {"Builder Variable": "Builder Token"}
+RENAMED_FIXTURE_FIELDS = {"Builder Token": {"variable_name": "token_name"}}
+
+
+def normalize_renamed_doc(docdict):
+	"""Rewrite a doc exported under a doctype's old name so it can be imported.
+
+	A no-op while the old doctype is still around, i.e. before the rename patch runs."""
+	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
+	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+		return docdict
+	docdict["doctype"] = new_doctype
+	for old_field, new_field in RENAMED_FIXTURE_FIELDS[new_doctype].items():
+		if old_field in docdict:
+			docdict.setdefault(new_field, docdict.pop(old_field))
+	return docdict
 
 
 def make_records(path):
@@ -329,7 +358,30 @@ def make_records(path):
 		return
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
-			import_file_by_path(f"{path}/{fname}/{fname}.json")
+			import_fixture_record(f"{path}/{fname}/{fname}.json")
+
+
+def import_fixture_record(fpath):
+	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
+	try:
+		docdict = read_doc_from_file(fpath)
+	except OSError:
+		print(f"{fpath} missing")
+		return
+	if not isinstance(docdict, dict):
+		import_file_by_path(fpath)
+		return
+	old_doctype = docdict.get("doctype")
+	normalize_renamed_doc(docdict)
+	if docdict.get("doctype") == old_doctype:
+		import_file_by_path(fpath)
+		return
+	db_modified = frappe.db.get_value(docdict["doctype"], docdict.get("name"), "modified")
+	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
+		return
+	import_doc(docdict)
+	if docdict.get("modified"):
+		update_modified(docdict["modified"], docdict)
 
 
 def copy_img_to_asset_folder(block, page_doc, app=None):

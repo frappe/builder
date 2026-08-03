@@ -7,10 +7,11 @@
 				:class="{
 					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
 				}"
-				:modelValue="displayValue"
+				:modelValue="modelValue"
+				:displayValue="displayValue"
 				:placeholder="displayPlaceholder"
 				:getOptions="getOptions"
-				:actionButton="{ component: FontInputActions }"
+				:actionButton="{ component: FontUploader }"
 				@update:modelValue="handleUpdate">
 				<template #prefix>
 					<div
@@ -26,9 +27,10 @@
 
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import FontInputActions from "@/components/Controls/FontInputActions.vue";
+import FontUploader from "@/components/Controls/FontUploader.vue";
 import userFonts from "@/data/userFonts";
-import { UserFont } from "@/types/doctypes";
+import { BuilderToken, UserFont } from "@/types/doctypes";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import { fontListItems, loadFontList } from "@/utils/fontManager";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Tooltip } from "frappe-ui";
@@ -82,46 +84,43 @@ const displayPlaceholder = computed(() => {
 const handleUpdate = (val: string | null) => emit("update:modelValue", val);
 
 const getOptions = async (filterString: string) => {
-	const query = (filterString || "").toLowerCase();
-	const options = [] as { label: string; value: string }[];
+	await loadFontList();
+	const toOption = (family: string) => ({ label: family, value: family });
+	// a token's name is what the field shows when one is picked, and it matches no
+	// family: filtering the font lists by it would leave only the token to choose from
+	const fontQuery = isCssVariable.value && filterString === displayValue.value ? "" : filterString;
 
 	// Font design tokens first: picking one stores var(--id), so retheming the
-	// token updates every block bound to it.
-	const matchingTokens = fontTokens.value.filter(
-		(t: any) =>
-			!query ||
-			(t.token_name || t.value).toLowerCase().includes(query) ||
-			t.value.toLowerCase().includes(query),
+	// token updates every block bound to it. The family is part of the label, so
+	// it stays searchable.
+	const tokenOptions = filterOptions(
+		fontTokens.value.map((token: BuilderToken) => ({
+			label: `${token.token_name || token.value} (${token.value})`,
+			value: `var(--${token.name})`,
+		})),
+		filterString,
 	);
-	if (matchingTokens.length) {
-		options.push({ label: "Design tokens", value: "_separator_0" });
-		matchingTokens.forEach((t: any) =>
-			options.push({ label: `${t.token_name || t.value} (${t.value})`, value: `var(--${t.name})` }),
-		);
-	}
+	const userFontOptions = filterOptions(
+		(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
+		fontQuery,
+	);
+	const defaultFontOptions = filterOptions(
+		fontListItems.value.map((font) => toOption(font.family)),
+		fontQuery,
+	);
 
-	const customStart = options.length;
-	userFonts.data.forEach((font: UserFont) => {
-		if (options.length >= 20) return;
-		const fontName = font.font_name as string;
-		if (!query || fontName.toLowerCase().includes(query)) {
-			options.push({ label: fontName, value: fontName });
-		}
-	});
-	if (options.length > customStart) {
-		options.splice(customStart, 0, { label: "Custom", value: "_separator_1" });
+	const options = [] as { label: string; value: string }[];
+	if (tokenOptions.length) {
+		options.push({ label: "Design tokens", value: "_separator_0" }, ...tokenOptions);
 	}
-
-	if (options.length) {
-		options.push({ label: "Default", value: "_separator_2" });
+	if (userFontOptions.length) {
+		options.push({ label: "Custom", value: "_separator_1" }, ...userFontOptions);
 	}
-	await loadFontList();
-	fontListItems.value.forEach((font) => {
-		if (options.length >= 20) return;
-		if (!query || font.family.toLowerCase().includes(query)) {
-			options.push({ label: font.family, value: font.family });
-		}
-	});
+	if (defaultFontOptions.length) {
+		// the heading only earns its place once something sits under it
+		if (options.length) options.push({ label: "Default", value: "_separator_2" });
+		options.push(...defaultFontOptions);
+	}
 	return options;
 };
 

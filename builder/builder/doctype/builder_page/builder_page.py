@@ -1435,9 +1435,11 @@ def resolve_font_token(font: str) -> str:
 	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
 	if not match:
 		return font
-	token_id = match.group(1)[2:]
-	value = frappe.db.get_value("Builder Token", token_id, "value")
-	return value or ""
+	from builder.builder.doctype.builder_token.builder_token import get_css_variables
+
+	# the cached token map, so a page full of tokenized fonts is not a query each
+	css_variables, _ = get_css_variables()
+	return css_variables.get(match.group(1), "")
 
 
 def set_fonts(styles, font_map, inherited_font=None):

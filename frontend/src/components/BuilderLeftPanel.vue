@@ -154,7 +154,7 @@ const leftPanelOptions = [
 		shortcut: { key: "k", ctrl: true, shift: true },
 	},
 	{
-		label: "Design System",
+		label: "Design Tokens",
 		value: "variables",
 		icon: "lucide-aperture",
 		shortcut: { key: "v", ctrl: true, shift: true },

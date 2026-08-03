@@ -27,14 +27,15 @@
 								ref="colorInput"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="togglePopover"
+								@focus="() => !isCssVariable && togglePopover()"
 								:placeholder="displayPlaceholder"
-								:modelValue="displayValue"
+								:modelValue="modelValue"
+								:displayValue="displayValue"
 								:getOptions="getOptions"
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
-												label: 'Save as Variable',
+												label: 'Save as Token',
 												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}

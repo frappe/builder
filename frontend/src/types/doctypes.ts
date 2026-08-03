@@ -55,18 +55,18 @@ export interface UserFont extends DocType {
 
 // Last updated: 2026-05-24 12:00:00.000000
 export interface BuilderToken extends DocType {
-	/** Type: Select */
-	type?: "Color" | "Dimension" | "Font";
-	/** Value: Data */
-	value: string;
-	/** Variable Name: Data */
-	token_name: string;
-	/** Is Standard: Check */
-	is_standard: 0 | 1;
-	/** Dark Value: Data */
-	dark_value?: string;
-	/** Group: Data */
-	group?: string;
+  /** Type: Select */
+  type?: 'Color' | 'Dimension' | 'Font';
+  /** Value: Data */
+  value: string;
+  /** Token Name: Data */
+  token_name: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
+  /** Dark Value: Data */
+  dark_value?: string;
+  /** Group: Data */
+  group?: string;
 }
 
 // Last updated: 2026-07-01 12:00:00.000000

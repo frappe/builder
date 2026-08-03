@@ -1,5 +1,6 @@
 import { BuilderToken } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
+import { tokenType } from "@/utils/useBuilderToken";
 import { defineComponent, h, shallowRef } from "vue";
 
 export function getColorVariableOptions(
@@ -15,11 +16,17 @@ export function getColorVariableOptions(
 		.replace(/\)\s*$/, "")
 		.trim();
 
+	// a colour literal is the current value, not a token search: it can never match a
+	// token name, and filtering by it would leave nothing to pick from
+	if (/^(#|rgba?\(|hsla?\()/i.test(processedQuery)) processedQuery = "";
+
+	const colorTokens = variables.filter((builderToken) => tokenType(builderToken) === "Color");
+
 	const searchableLabel = (builderToken: BuilderToken) =>
 		`${builderToken.token_name || ""} ${builderToken.group || ""}`;
 
 	// the group name is searchable along with the token name
-	const searchableOptions = variables
+	const searchableOptions = colorTokens
 		.map((builderToken: BuilderToken) => ({
 			label: searchableLabel(builderToken),
 			variable: builderToken,
@@ -31,10 +38,10 @@ export function getColorVariableOptions(
 	// token's display name (what ColorInput shows on focus): use its full
 	// label so filterOptions windows the list around it
 	const normalizedQuery = processedQuery.toLowerCase();
-	const selectedVariable = variables.find(
-		(v) => query.trim() === `var(--${v.name})` || (v.token_name || "").toLowerCase() === normalizedQuery,
+	const selectedToken = colorTokens.find(
+		(t) => query.trim() === `var(--${t.name})` || (t.token_name || "").toLowerCase() === normalizedQuery,
 	);
-	if (selectedVariable) processedQuery = searchableLabel(selectedVariable);
+	if (selectedToken) processedQuery = searchableLabel(selectedToken);
 
 	return filterOptions(searchableOptions, processedQuery).map(({ variable: builderToken }) => {
 		const varName = `var(--${builderToken.name})`;

@@ -4,7 +4,7 @@ import FontInput from "@/components/Controls/FontInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { setFont as _setFont, getFontWeightOptions } from "@/utils/fontManager";
+import { setFont as _setFont, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 const setFont = (font: string) => {
@@ -54,7 +54,13 @@ const typographySectionProperties = [
 				label: "Weight",
 				propertyKey: "fontWeight",
 				component: Autocomplete,
-				options: getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string),
+				// static options were never query-filtered, so ignore the search
+				// string; awaiting the list keeps all weights of a preselected
+				// font available on first open
+				getOptions: async () => {
+					await loadFontList();
+					return getFontWeightOptions((blockController.getStyle("fontFamily") || "Inter") as string);
+				},
 				step: 100,
 				min: 100,
 				max: 900,

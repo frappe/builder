@@ -10,6 +10,14 @@ export const defaultBuilderToken = {
 	group: undefined as string | undefined,
 };
 
+// legacy rows can carry a blank or lower-cased type; everything reads it through here
+export const tokenType = (token: Partial<BuilderToken>): NonNullable<BuilderToken["type"]> => {
+	const type = (token.type || "Color").toLowerCase();
+	if (type === "font") return "Font";
+	if (type === "dimension") return "Dimension";
+	return "Color";
+};
+
 let instance: ReturnType<typeof builderTokenComposable> | null = null;
 
 function builderTokenComposable() {
@@ -100,7 +108,7 @@ function builderTokenComposable() {
 	};
 
 	const fontTokens = computed(() =>
-		(builderTokenStore.data || []).filter((t: BuilderToken) => t.type === "Font" && t.value),
+		(builderTokenStore.data || []).filter((t: BuilderToken) => tokenType(t) === "Font" && t.value),
 	);
 
 	return {

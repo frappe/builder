@@ -2,7 +2,7 @@
 	<Dialog
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
-		:title="dialogMode === 'edit' ? 'Edit Variable' : 'New Variable'"
+		:title="dialogMode === 'edit' ? 'Edit Token' : 'New Token'"
 		size="sm"
 		:actions="[
 			{
@@ -17,7 +17,7 @@
 					type="text"
 					v-model="activeBuilderToken.token_name"
 					@input="(val: string) => (activeBuilderToken.token_name = val)"
-					label="Variable Name"
+					label="Token Name"
 					required
 					:autofocus="true"
 					placeholder="e.g., primary, accent, background"
@@ -86,16 +86,16 @@ const handleSave = async () => {
 		let savedVariable;
 		if (dialogMode.value === "edit") {
 			savedVariable = await updateVariable(activeBuilderToken.value);
-			toast.success("Variable updated");
+			toast.success("Token updated");
 		} else {
 			savedVariable = await createVariable(activeBuilderToken.value);
-			toast.success("New Variable created");
+			toast.success("New token created");
 		}
 		emit("success", savedVariable);
 		emit("update:modelValue", false);
 	} catch (error) {
 		console.error("Failed to save variable:", error);
-		toast.error((error as Error).message || `Failed to ${dialogMode.value} Variable`);
+		toast.error((error as Error).message || `Failed to ${dialogMode.value} token`);
 	}
 };
 </script>

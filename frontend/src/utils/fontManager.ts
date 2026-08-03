@@ -90,14 +90,20 @@ function loadGoogleFont(font: string, weight?: string): Promise<string> {
 	});
 }
 
+// A Font design token (fontFamily: var(--id)) stands in for its family, so every
+// caller can work with the family without knowing whether a style is tokenized.
+function resolveFontToken(font: string): string {
+	if (!font.includes("var(")) return font;
+	const { resolveVariableValue } = useBuilderToken();
+	const resolved = resolveVariableValue(font);
+	return resolved === font ? "" : resolved; // unknown token: no family to work with
+}
+
 export function setFont(font: string | null, weight?: string): Promise<string> {
 	if (!font) return Promise.resolve("");
-	// A Font design token (fontFamily: var(--id)) resolves to its family before
-	// loading — no caller needs to know whether a style is tokenized.
 	if (font.includes("var(")) {
-		const { resolveVariableValue } = useBuilderToken();
-		const resolved = resolveVariableValue(font);
-		if (resolved === font) return Promise.resolve(font); // unknown token: nothing to load
+		const resolved = resolveFontToken(font);
+		if (!resolved) return Promise.resolve(font);
 		font = resolved;
 	}
 	const cacheKey = weight ? `${font}:${weight}` : font;
@@ -125,7 +131,8 @@ export function setFontFromHTML(html: string): void {
 
 export function getFontWeightOptions(font: string): WeightOption[] {
 	loadFontList();
-	const fontObj = font && fontListItems.value.find((f) => f.family === font);
+	const family = font ? resolveFontToken(font) : font;
+	const fontObj = family && fontListItems.value.find((f) => f.family === family);
 	if (!fontObj) return [{ value: "400", label: "Regular" }];
 
 	return fontObj.variants
