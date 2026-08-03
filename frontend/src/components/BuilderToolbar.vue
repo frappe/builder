@@ -13,10 +13,10 @@
 			<div class="flex gap-2">
 				<Button
 					v-for="mode in [
-						{ mode: 'select', icon: 'lucide-mouse-pointer', description: 'Select (v)' },
-						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
-						{ mode: 'text', icon: 'lucide-type', description: 'Text (t)' },
-						{ mode: 'image', icon: 'lucide-image', description: 'Image (i)' },
+						{ mode: 'select', icon: 'lucide-mouse-pointer', description: '选择 (v)' },
+						{ mode: 'container', icon: 'lucide-square', description: '容器 (c)' },
+						{ mode: 'text', icon: 'lucide-type', description: '文本 (t)' },
+						{ mode: 'image', icon: 'lucide-image', description: '图片 (i)' },
 					]"
 					:variant="builderStore.mode === mode.mode ? 'subtle' : 'ghost'"
 					:tooltip="mode.description"
@@ -30,24 +30,24 @@
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
-							Loading...
+							加载中...
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
-							<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
+							<Tooltip text="这是您站点的主页" :hoverDelay="0.6">
 								<span
 									class="lucide-home h-[14px] w-4"
 									aria-hidden="true"
 									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
-							<Tooltip text="This page has limited access" :hoverDelay="0.6">
+							<Tooltip text="此页面访问受限" :hoverDelay="0.6">
 								<span
 									class="lucide-shield-user size-4 text-ink-amber-6"
 									v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 							</Tooltip>
 							<span
 								class="max-w-48 truncate text-base text-ink-gray-8"
-								:title="pageStore?.activePage?.page_title || 'My Page'">
-								{{ pageStore?.activePage?.page_title || "My Page" }}
+								:title="pageStore?.activePage?.page_title || '我的页面'">
+								{{ pageStore?.activePage?.page_title || "我的页面" }}
 							</span>
 							-
 							<span
@@ -93,18 +93,18 @@
 			</div>
 			<div class="flex items-center gap-2" v-if="builderStore.readOnlyMode">
 				<Badge variant="subtle" theme="orange">
-					{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+					{{ pageStore.activePage?.is_template ? "模板" : "只读" }}
 				</Badge>
 				<Button
 					v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"
 					size="sm"
 					variant="subtle"
 					@click="duplicateToEdit">
-					Duplicate to edit
+					复制以编辑
 				</Button>
 			</div>
 			<div class="flex items-center gap-2">
-				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip v-if="builderStore.isAIEnabled" text="使用 AI 生成" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="openAIGenerator"
@@ -120,14 +120,14 @@
 				<span
 					class="text-sm text-ink-gray-3"
 					v-if="pageStore.savingPage && pageStore.activePage?.is_template">
-					Saving template
+					正在保存模板
 				</span>
 				<ComponentUpdates />
-				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip text="设置" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
-				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
-					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
+				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="预览">
+					<Tooltip text="预览" :hoverDelay="0.6" arrow-class="mb-3">
 						<Button variant="ghost" :icon="PlayIcon"></Button>
 					</Tooltip>
 				</router-link>
@@ -136,7 +136,7 @@
 				v-if="!(builderStore.readOnlyMode && pageStore.activePage?.is_template)"
 				:disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
-		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
+		<Dialog title="快速上手" size="4xl" v-model="showInfoDialog">
 			<template #default>
 				<iframe
 					class="h-[60vh] w-full rounded-sm"
@@ -148,9 +148,9 @@
 		</Dialog>
 		<Dialog v-model="builderStore.showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
-				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
+				<DialogTitle class="sr-only">Builder 设置</DialogTitle>
 				<DialogDescription class="sr-only">
-					Configure page and global settings for this project.
+					配置此项目的页面设置和全局设置。
 				</DialogDescription>
 				<BuilderSettings
 					:initial-tab="builderStore.settingsActiveTab"
@@ -198,7 +198,7 @@ const openAIGenerator = (e: MouseEvent) => {
 	if (openAIGeneratorFn) {
 		openAIGeneratorFn();
 	} else {
-		toast.error("AI Generator is not available");
+		toast.error("AI 生成器不可用");
 	}
 };
 
@@ -215,9 +215,9 @@ const currentlyViewedByText = computed(() => {
 	} else if (count === 1) {
 		return `${names[0]}`;
 	} else if (count === 2) {
-		return `${names.join(" & ")}`;
+		return `${names.join(" 和 ")}`;
 	} else {
-		return `${names.slice(0, 2).join(", ")} & ${count - 2} others`;
+		return `${names.slice(0, 2).join("、")} 等 ${count} 人`;
 	}
 });
 
@@ -271,9 +271,9 @@ const duplicateToEdit = async () => {
 				pageStore.setPage(newPageName);
 			}),
 		{
-			loading: "Creating an editable copy...",
-			success: () => "Page created",
-			error: () => "Could not create page from template",
+			loading: "正在创建可编辑副本...",
+			success: () => "页面已创建",
+			error: () => "无法从模板创建页面",
 		},
 	);
 };

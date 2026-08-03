@@ -26,7 +26,7 @@
 				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-md bg-surface-base px-3">
-				<Tooltip text="Toggle Canvas Dark Mode (⌘⇧D)" :hoverDelay="0.6">
+				<Tooltip text="切换画布深色模式 (⌘⇧D)" :hoverDelay="0.6">
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
 						class="w-auto cursor-pointer p-2"
@@ -110,7 +110,7 @@
 			placement="top-right"
 			:placementOffset="20"
 			v-if="builderStore.showSearchBlock">
-			<template #header>Search Block</template>
+			<template #header>搜索区块</template>
 			<template #content>
 				<SearchBlock></SearchBlock>
 			</template>
@@ -210,7 +210,7 @@ const canvasProps = reactive({
 		{
 			icon: "lucide-monitor",
 			device: "desktop",
-			displayName: "Desktop",
+			displayName: "桌面端",
 			width: 1400,
 			visible: true,
 			renderedOnce: true,
@@ -218,14 +218,14 @@ const canvasProps = reactive({
 		{
 			icon: "lucide-tablet",
 			device: "tablet",
-			displayName: "Tablet",
+			displayName: "平板端",
 			width: 800,
 			visible: false,
 		},
 		{
 			icon: "lucide-smartphone",
 			device: "mobile",
-			displayName: "Mobile",
+			displayName: "移动端",
 			width: 420,
 			visible: false,
 		},

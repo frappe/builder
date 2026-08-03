@@ -1,10 +1,10 @@
 <template>
 	<Dialog
-		title="Save as Block Template"
+		title="保存为区块模板"
 		size="sm"
 		:actions="[
 			{
-				label: 'Save',
+				label: '保存',
 				variant: 'solid',
 				onClick: (close: () => void) => {
 					blockTemplateStore.saveBlockTemplate(
@@ -23,20 +23,20 @@
 				<BuilderInput
 					type="text"
 					v-model="blockTemplateProperties.templateName"
-					label="Template Name"
+					label="模板名称"
 					required
 					:hideClearButton="true" />
 				<BuilderInput
 					type="select"
 					v-model="blockTemplateProperties.category"
-					label="Category"
+					label="分类"
 					:options="blockTemplateStore.blockTemplateCategoryOptions"
 					:hideClearButton="true" />
 				<div class="relative">
 					<BuilderInput
 						type="text"
 						v-model="blockTemplateProperties.previewImage"
-						label="Preview Image"
+						label="预览图片"
 						:hideClearButton="true" />
 					<FileUploader
 						file-types="image/*"
@@ -47,7 +47,7 @@
 						">
 						<template v-slot="{ openFileSelector }">
 							<div class="absolute bottom-0 right-0 place-items-center">
-								<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+								<Button size="sm" @click="openFileSelector" class="text-sm">上传</Button>
 							</div>
 						</template>
 					</FileUploader>

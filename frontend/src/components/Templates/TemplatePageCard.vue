@@ -10,8 +10,8 @@
 				class="aspect-video w-full rounded-md bg-surface-gray-1 object-cover object-top" />
 			<div
 				class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-				<Button size="sm" variant="solid" @click.stop="$emit('select', page)">Use template</Button>
-				<Button size="sm" variant="subtle" @click.stop="$emit('preview', page)">Preview</Button>
+				<Button size="sm" variant="solid" @click.stop="$emit('select', page)">使用模板</Button>
+				<Button size="sm" variant="subtle" @click.stop="$emit('preview', page)">预览</Button>
 			</div>
 		</div>
 		<div class="flex items-center justify-between gap-2 px-[2px]">
@@ -23,7 +23,7 @@
 				size="sm"
 				variant="ghost"
 				icon="lucide-pencil"
-				title="Edit template"
+				title="编辑模板"
 				class="shrink-0 !text-ink-gray-5 hover:!text-ink-gray-9"
 				@click.stop="$emit('edit', page)"></Button>
 		</div>

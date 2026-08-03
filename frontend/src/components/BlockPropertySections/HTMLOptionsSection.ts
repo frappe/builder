@@ -20,7 +20,7 @@ const HTMLOptionsSectionProperties = [
 				setModelValue: (val: string) => blockController.setInnerHTML(val),
 				allowDynamicValue: true,
 				actionButton: {
-					label: "Expand",
+					label: "展开",
 					icon: "lucide-maximize-2",
 					handler: () => {
 						useCanvasStore().editHTML(blockController.getSelectedBlocks()[0]);
@@ -35,7 +35,7 @@ const HTMLOptionsSectionProperties = [
 ];
 
 export default {
-	name: "HTML Options",
+	name: "HTML 选项",
 	properties: HTMLOptionsSectionProperties,
 	condition: () => blockController.isHTML() || (blockController.getInnerHTML() && !blockController.isText()),
 };

@@ -12,15 +12,15 @@ const layoutSectionProperties = [
 			return {
 				propertyKey: "display",
 				component: OptionToggle,
-				label: "Type",
+				label: "类型",
 				enableStates: false,
 				options: [
 					{
-						label: "Stack",
+						label: "堆叠",
 						value: "flex",
 					},
 					{
-						label: "Grid",
+						label: "网格",
 						value: "grid",
 					},
 				],
@@ -101,7 +101,7 @@ const layoutSectionProperties = [
 ];
 
 export default {
-	name: "Layout",
+	name: "布局",
 	properties: layoutSectionProperties,
 	condition: () => !blockController.multipleBlocksSelected() && !blockController.isHTML(),
 };

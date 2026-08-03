@@ -11,7 +11,7 @@
 								hideLabel: true,
 								items: [
 									{
-										label: 'New Page',
+										label: '新建页面',
 										onClick: () => (showTemplatesDialog = true),
 										icon: 'lucide-plus',
 									},
@@ -22,17 +22,17 @@
 								hideLabel: true,
 								items: [
 									{
-										label: 'Apps',
+										label: '应用',
 										icon: 'lucide-grid',
 										submenu: appsSubmenu,
 									},
 									{
-										label: 'Toggle Theme',
+										label: '切换主题',
 										onClick: () => toggleDark(),
 										icon: isDark ? 'lucide-sun' : 'lucide-moon',
 									},
 									{
-										label: 'Settings',
+										label: '设置',
 										onClick: () => (showSettingsDialog = true),
 										icon: 'lucide-settings',
 									},
@@ -43,7 +43,7 @@
 								hideLabel: true,
 								items: [
 									{
-										label: 'Help',
+										label: '帮助',
 										onClick: () => {
 											// @ts-ignore
 											window.open('https://t.me/frappebuilder');
@@ -88,16 +88,16 @@
 						!builderStore.activeFolder,
 				}">
 				<FilesIcon class="size-4"></FilesIcon>
-				<span>All Pages</span>
+				<span>全部页面</span>
 			</span>
 			<span
 				class="flex cursor-pointer gap-2 p-2 text-base text-ink-gray-6"
 				@click="showSettingsDialog = true">
 				<SettingsIcon class="size-4"></SettingsIcon>
-				<span>Settings</span>
+				<span>设置</span>
 			</span>
 			<div class="flex items-center justify-between p-2 pr-0 text-base text-ink-gray-6">
-				<span>Folders</span>
+				<span>文件夹</span>
 				<Button
 					variant="ghost"
 					icon="lucide-plus"
@@ -105,7 +105,7 @@
 					@click="promptCreateFolder()"></Button>
 			</div>
 			<div class="flex p-2" v-show="!builderProjectFolder.data?.length">
-				<p class="text-sm text-ink-gray-5">No folders yet</p>
+				<p class="text-sm text-ink-gray-5">暂无文件夹</p>
 			</div>
 			<span
 				class="flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded p-2 py-1 pr-0 text-base text-ink-gray-6"
@@ -138,21 +138,21 @@
 					size="sm"
 					icon="lucide-info"
 					disabled
-					tooltip="System generated folder cannot be edited or deleted"
+					tooltip="系统生成的文件夹无法编辑或删除"
 					class="cursor-pointer" />
 				<Dropdown
 					placement="right"
 					v-else-if="isFolderActive(project.folder_name)"
 					:options="[
 						{
-							label: 'Rename',
+							label: '重命名',
 							onClick: () => {
 								renamingFolder = project.folder_name;
 							},
 							icon: 'lucide-edit',
 						},
 						{
-							label: 'Delete Folder',
+							label: '删除文件夹',
 							onClick: () => deleteFolder(project.folder_name),
 							icon: 'lucide-trash',
 						},
@@ -163,14 +163,14 @@
 				</Dropdown>
 			</span>
 		</div>
-		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
+		<p class="mt-2 p-2 text-center text-sm text-ink-gray-4">版本：{{ builderVersion }}</p>
 		<TrialBanner v-if="builderStore.isFCSite"></TrialBanner>
 	</section>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 		<template #default>
-			<DialogTitle class="sr-only">Global Builder Settings</DialogTitle>
+			<DialogTitle class="sr-only">全局 Builder 设置</DialogTitle>
 			<DialogDescription class="sr-only">
-				Configure global settings for this builder project.
+				配置此 Builder 项目的全局设置。
 			</DialogDescription>
 			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
 		</template>
@@ -245,7 +245,7 @@ const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectF
 
 const deleteFolder = async (folderName: string) => {
 	const confirmed = await confirm(
-		'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
+		'确定要删除此文件夹吗？该文件夹下的所有页面将显示在"全部页面"中',
 	);
 	if (!confirmed) return;
 	await createResource({

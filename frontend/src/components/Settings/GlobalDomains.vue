@@ -1,8 +1,8 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<!-- Domain list -->
-		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">Loading domains…</div>
-		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
+		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">正在加载域名…</div>
+		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">尚未添加自定义域名。</div>
 		<div v-else class="mb-2 flex flex-col gap-2">
 			<div
 				v-for="d in sortedDomains"
@@ -12,8 +12,8 @@
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
 						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
-						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
-						<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">重定向到主域名</p>
+						<Badge v-if="d.primary" size="sm" theme="green" label="主域名" />
 						<Badge
 							v-else-if="d.status !== 'Active'"
 							:label="d.status"
@@ -33,8 +33,8 @@
 		<!-- Add domain form -->
 		<form @submit.prevent="handleAdd" class="flex flex-col gap-3">
 			<FormControl
-				label="Enter your domain"
-				placeholder="e.g. yourdomain.com"
+				label="输入您的域名"
+				placeholder="例如 yourdomain.com"
 				v-model="newDomain"
 				autocomplete="off" />
 
@@ -43,13 +43,13 @@
 				<template v-for="(rec, i) in dnsRecords" :key="rec.type">
 					<div v-if="i > 0" class="flex items-center gap-3 px-3">
 						<div class="bg-outline-gray-2 h-px flex-1"></div>
-						<span class="text-p-xs text-ink-gray-4">or</span>
+						<span class="text-p-xs text-ink-gray-4">或</span>
 						<div class="bg-outline-gray-2 h-px flex-1"></div>
 					</div>
 					<div class="flex items-center gap-2 px-3 py-2.5">
 						<div class="min-w-0 flex-1">
 							<div class="flex items-baseline gap-1.5">
-								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ rec.type }} record</span>
+								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ rec.type }} 记录</span>
 								<span class="font-mono text-p-xs">
 									<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">{{ rec.host }}</span>
 									<span class="px-1 text-ink-gray-4">→</span>
@@ -71,7 +71,7 @@
 			<ErrorMessage v-if="addError" :message="addError" />
 			<div class="flex gap-2">
 				<Button type="submit" :disabled="submitting || !newDomain" variant="subtle" :loading="submitting">
-					Add Domain
+					添加域名
 				</Button>
 			</div>
 		</form>
@@ -150,39 +150,39 @@ const dnsRecords = computed(() => {
 			value: currentSite,
 			copyValue: currentSite,
 			recommended: true,
-			hint: "Automatically follows server IP changes. Best choice for subdomains.",
+			hint: "自动跟随服务器 IP 变化。子域名的最佳选择。",
 		});
 	}
 	records.push({
 		type: "A",
 		host: isSubdomain.value ? host : "@",
-		value: serverIP.value ?? "loading…",
+		value: serverIP.value ?? "加载中…",
 		copyValue: serverIP.value ?? "",
 		recommended: !isSubdomain.value,
 		hint: isSubdomain.value
-			? "Use this if your DNS provider doesn't support CNAME for subdomains."
-			: "Points your root domain directly to the server. Use @ as the host name.",
+			? "如果您的 DNS 服务商不支持子域名的 CNAME 记录，请使用此项。"
+			: "将您的根域名直接指向服务器。使用 @ 作为主机名。",
 	});
 	return records;
 });
 
 function brokenReason(d: any): string {
-	if (!d.dns_response) return "Domain setup failed. Please retry or contact support.";
+	if (!d.dns_response) return "域名设置失败。请重试或联系技术支持。";
 	try {
 		const parsed = JSON.parse(d.dns_response);
 		if (parsed.exc_message) return parsed.exc_message.replace(/<[^>]*>/g, "").trim();
 		const cname = parsed.CNAME;
 		const a = parsed.A;
 		if (cname?.exists && !cname?.matched)
-			return `CNAME record points to wrong destination: ${cname.answer?.trim() || "unknown"}`;
-		if (a?.exists && !a?.matched) return `A record points to wrong IP: ${a.answer?.trim() || "unknown"}`;
-		if (!cname?.exists && !a?.exists) return "No DNS record found for this domain.";
+			return `CNAME 记录指向了错误的目标：${cname.answer?.trim() || "未知"}`;
+		if (a?.exists && !a?.matched) return `A 记录指向了错误的 IP：${a.answer?.trim() || "未知"}`;
+		if (!cname?.exists && !a?.exists) return "未找到该域名的 DNS 记录。";
 		if (parsed.matched || parsed.valid)
-			return "DNS is verified but SSL certificate provisioning failed. Please retry.";
+			return "DNS 已验证，但 SSL 证书签发失败。请重试。";
 	} catch {
 		// ignore parse errors
 	}
-	return "Domain setup failed. Please retry or contact support.";
+	return "域名设置失败。请重试或联系技术支持。";
 }
 
 function statusTheme(status: string) {
@@ -199,9 +199,9 @@ async function copyToClipboard(text: string) {
 	if (!text) return;
 	try {
 		await navigator.clipboard.writeText(text);
-		toast.success("Copied to clipboard");
+		toast.success("已复制到剪贴板");
 	} catch {
-		toast.error("Failed to copy");
+		toast.error("复制失败");
 	}
 }
 
@@ -227,19 +227,19 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "lucide-star", onClick: () => setHostName(d.domain) });
+		actions.push({ label: "设为主域名", icon: "lucide-star", onClick: () => setHostName(d.domain) });
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
-			label: "Redirect to Primary",
+			label: "重定向到主域名",
 			icon: "lucide-corner-right-up",
 			onClick: () => setRedirect(d.domain),
 		});
 	if (d.redirect_to_primary)
-		actions.push({ label: "Disable Redirect", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
+		actions.push({ label: "禁用重定向", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
 	if (d.status === "Broken")
-		actions.push({ label: "Retry", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
+		actions.push({ label: "重试", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
 	if (!d.primary)
-		actions.push({ label: "Remove Domain", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
+		actions.push({ label: "移除域名", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

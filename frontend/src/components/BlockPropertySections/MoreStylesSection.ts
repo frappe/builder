@@ -11,7 +11,7 @@ const moreStylesSectionProperties = [
 ];
 
 export default {
-	name: "More Styles",
+	name: "更多样式",
 	properties: moreStylesSectionProperties,
 	collapsed: computed(() => {
 		const block = blockController.getFirstSelectedBlock();

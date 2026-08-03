@@ -10,23 +10,23 @@ import BorderControl from "@/components/BorderControl.vue";
 
 const overflowOptions = [
 	{
-		label: "Unset",
+		label: "未设置",
 		value: "unset",
 	},
 	{
-		label: "Auto",
+		label: "自动",
 		value: "auto",
 	},
 	{
-		label: "Visible",
+		label: "可见",
 		value: "visible",
 	},
 	{
-		label: "Hidden",
+		label: "隐藏",
 		value: "hidden",
 	},
 	{
-		label: "Scroll",
+		label: "滚动",
 		value: "scroll",
 	},
 ];
@@ -36,7 +36,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Opacity",
+				label: "不透明度",
 				propertyKey: "opacity",
 				enableSlider: false,
 				component: RangeInput,
@@ -75,7 +75,7 @@ const styleSectionProperties = [
 			return {
 				propertyKey: "color",
 				component: ColorInput,
-				label: "Text Color",
+				label: "文字颜色",
 				popoverOffset: 120,
 			};
 		},
@@ -111,7 +111,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Z-Index",
+				label: "Z 轴层级",
 				propertyKey: "zIndex",
 			};
 		},
@@ -125,7 +125,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Overflow X",
+				label: "横向溢出",
 				type: "select",
 				propertyKey: "overflowX",
 				options: overflowOptions,
@@ -144,7 +144,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Overflow Y",
+				label: "纵向溢出",
 				propertyKey: "overflowY",
 				type: "select",
 				options: overflowOptions,
@@ -163,16 +163,16 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Cursor",
+				label: "光标",
 				propertyKey: "cursor",
 				type: "select",
 				options: [
-					{ value: null, label: "Default" },
-					{ value: "pointer", label: "Pointer" },
-					{ value: "move", label: "Move" },
-					{ value: "text", label: "Text" },
-					{ value: "crosshair", label: "Crosshair" },
-					{ value: "not-allowed", label: "Not Allowed" },
+					{ value: null, label: "默认" },
+					{ value: "pointer", label: "指针" },
+					{ value: "move", label: "移动" },
+					{ value: "text", label: "文本" },
+					{ value: "crosshair", label: "十字光标" },
+					{ value: "not-allowed", label: "禁止" },
 				],
 			};
 		},
@@ -182,7 +182,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Rotation",
+				label: "旋转",
 				propertyKey: "rotate",
 				enableSlider: true,
 				unitOptions: ROTATION_UNIT_OPTIONS,
@@ -197,6 +197,6 @@ const styleSectionProperties = [
 ];
 
 export default {
-	name: "Style",
+	name: "样式",
 	properties: styleSectionProperties,
 };

@@ -12,11 +12,11 @@ const imageOptionsSectionProperties = [
 			return {
 				component: ImageUploadInput,
 				propertyKey: "src",
-				label: "Image URL",
+				label: "图片 URL",
 				allowDynamicValue: true,
 				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
-				variants: [{ name: "dark", property: "darkSrc", label: "Dark Mode" }],
+				variants: [{ name: "dark", property: "darkSrc", label: "暗色模式" }],
 			};
 		},
 		events: {
@@ -67,7 +67,7 @@ const imageOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				propertyKey: "alt",
-				label: "Alt Text",
+				label: "替代文本",
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("alt") || "",
 				setModelValue: (val: string) => blockController.setAttribute("alt", val),
@@ -79,7 +79,7 @@ const imageOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Image Options",
+	name: "图片选项",
 	properties: imageOptionsSectionProperties,
 	condition: () => blockController.isImage(),
 };

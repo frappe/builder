@@ -22,26 +22,26 @@
 							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-4 bg-surface-blue-1/60">
 							<div class="text-xs-medium flex items-center gap-1.5 text-ink-blue-8">
 								<span class="lucide-image h-3.5 w-3.5" aria-hidden="true" />
-								Drop image to attach
+								拖放图片以添加
 							</div>
 						</div>
 					</Transition>
 					<span
 						v-if="isVisionModel && !imagePreviewUrl && !isDragging"
 						class="pointer-events-none absolute bottom-2 right-2 select-none text-[10px] text-ink-gray-4">
-						Paste or drop image
+						粘贴或拖放图片
 					</span>
 				</div>
 				<Transition name="fade">
 					<div
 						v-if="imagePreviewUrl"
 						class="flex items-center gap-2 rounded-md border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
-						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="Reference image" />
+						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="参考图片" />
 						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
 						<button
 							type="button"
 							class="flex items-center rounded text-ink-gray-5 hover:text-ink-red-7"
-							title="Remove image"
+							title="移除图片"
 							@click="clearImage">
 							<span class="lucide-x h-3.5 w-3.5" aria-hidden="true" />
 						</button>
@@ -60,7 +60,7 @@
 						<Dropdown
 							:options="[
 								{
-									label: 'Select Model',
+									label: '选择模型',
 									disabled: true,
 								},
 								...modelOptions.map((m) => ({
@@ -71,14 +71,14 @@
 							<Button
 								variant="ghost"
 								icon-right="chevron-up"
-								:label="modelOptions.find((m) => m.value === selectedModel)?.label || 'Model'" />
+								:label="modelOptions.find((m) => m.value === selectedModel)?.label || '模型'" />
 						</Dropdown>
 						<Popover v-if="mode === 'generate'" placement="top" :offset="10">
 							<template #target="{ togglePopover }">
 								<Button
 									variant="ghost"
 									icon-right="chevron-up"
-									:label="selectedPreset?.name || 'No Style'"
+									:label="selectedPreset?.name || '无风格'"
 									:class="{
 										'!text-ink-gray-4': !selectedPreset,
 									}"
@@ -87,7 +87,7 @@
 							<template #body-main="{ close }">
 								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-base p-2 shadow-2xl">
 									<div class="flex items-center justify-between p-1 px-2">
-										<div class="text-sm text-ink-gray-4">Styles</div>
+										<div class="text-sm text-ink-gray-4">风格</div>
 										<Button
 											v-if="selectedPreset"
 											class="text-sm text-ink-gray-5 hover:text-ink-gray-7"
@@ -95,7 +95,7 @@
 												selectedPreset = null;
 												close();
 											">
-											Clear Selection
+											清除选择
 										</Button>
 									</div>
 									<div class="max-h-[350px] overflow-y-auto p-2">
@@ -118,7 +118,7 @@
 						@click="handleSubmit"
 						:disabled="!canGenerate"
 						:loading="generating"
-						:label="mode === 'modify' ? 'Modify' : 'Generate'"
+						:label="mode === 'modify' ? '修改' : '生成'"
 						icon-right="arrow-up" />
 				</div>
 			</div>
@@ -141,7 +141,7 @@
 						]"
 						aria-hidden="true" />
 					<span class="text-sm-medium text-ink-gray-9">
-						{{ progressMessage || (mode === "modify" ? "Modifying section…" : "Generating page…") }}
+						{{ progressMessage || (mode === "modify" ? "正在修改区块…" : "正在生成页面…") }}
 					</span>
 				</div>
 			</div>
@@ -153,6 +153,7 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";
+import { builderSettings } from "@/data/builderSettings";
 import { useLocalStorage, useThrottleFn } from "@vueuse/core";
 import { Button, createResource, Dropdown, Popover, Textarea } from "frappe-ui";
 // @ts-ignore
@@ -252,7 +253,8 @@ const imagePreviewUrl = ref<string | null>(null);
 const imageFileName = ref("");
 const isDragging = ref(false);
 const currentProviderModels = computed(() => {
-	const found = availableModels.value.find((p) => p.provider === "openrouter");
+	const provider = builderSettings.doc?.ai_provider || "openrouter";
+	const found = availableModels.value.find((p) => p.provider === provider);
 	return found ? found.models : [];
 });
 
@@ -286,13 +288,13 @@ const canGenerate = computed(
 );
 
 const title = computed(() => {
-	if (props.mode === "generate") return "Generate with AI";
-	return "Modify with AI";
+	if (props.mode === "generate") return "使用 AI 生成";
+	return "使用 AI 修改";
 });
 
 const placeholder = computed(() => {
-	if (props.mode === "generate") return "Describe the page you want to create…";
-	return "Describe how you want to modify this section…";
+	if (props.mode === "generate") return "描述您想要创建的页面…";
+	return "描述您想如何修改此区块…";
 });
 
 function buildPrompt(base: string) {
@@ -309,11 +311,11 @@ function clearImage() {
 
 function attachImageFile(file: File) {
 	if (!file.type.startsWith("image/")) {
-		errorMessage.value = "Please paste a valid image.";
+		errorMessage.value = "请粘贴有效的图片。";
 		return;
 	}
 	if (file.size > 5 * 1024 * 1024) {
-		errorMessage.value = "Image must be smaller than 5 MB.";
+		errorMessage.value = "图片大小不能超过 5 MB。";
 		return;
 	}
 	imageFileName.value = file.name || "pasted-image.png";
@@ -393,7 +395,7 @@ function parseBlock(raw: string): BlockOptions | null {
 function resetState() {
 	generating.value = true;
 	errorMessage.value = "";
-	progressMessage.value = "Initializing…";
+	progressMessage.value = "正在初始化…";
 	streamingContent.value = "";
 	showDialog.value = false;
 }
@@ -422,7 +424,7 @@ async function runTask(type: "generate" | "modify", customParams: Record<string,
 			}),
 		}).submit();
 	} catch (e) {
-		handleError(e, `An error occurred while ${isModify ? "modifying" : "generating"}`);
+		handleError(e, `${isModify ? "修改" : "生成"}时发生错误`);
 	}
 }
 
@@ -506,7 +508,7 @@ function makeHandlers(isModify: boolean) {
 
 	const onComplete = (data: CompleteData) => {
 		generating.value = false;
-		progressMessage.value = data.message || "Operation completed";
+		progressMessage.value = data.message || "操作已完成";
 		setTimeout(() => (progressMessage.value = ""), 2000);
 		if (isModify) {
 			processModifyStreaming();
@@ -525,7 +527,7 @@ function makeHandlers(isModify: boolean) {
 		progressMessage.value = "";
 		showDialog.value = true;
 		errorMessage.value =
-			data.message || `An error occurred while ${isModify ? "modifying the section" : "generating the page"}`;
+			data.message || `${isModify ? "修改区块" : "生成页面"}时发生错误`;
 		remoteTaskType.value = null;
 		remoteBlockId.value = null;
 	};

@@ -11,7 +11,7 @@ const videoOptionsSectionProperties = [
 			return {
 				component: InlineInput,
 				propertyKey: "src",
-				label: "Video URL",
+				label: "视频 URL",
 				allowDynamicValue: true,
 				dynamicValueFilterOptions: {
 					excludeOwnProps: true,
@@ -26,7 +26,7 @@ const videoOptionsSectionProperties = [
 			return {
 				component: ImageUploadInput,
 				propertyKey: "poster",
-				label: "Poster",
+				label: "封面",
 			};
 		},
 		searchKeyWords: "Poster, Image, Thumbnail, Preview",
@@ -37,10 +37,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "controls",
-				label: "Controls",
+				label: "控件",
 				options: [
-					{ label: "Show", value: "true" },
-					{ label: "Hide", value: "false" },
+					{ label: "显示", value: "true" },
+					{ label: "隐藏", value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("controls") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("controls"),
@@ -54,10 +54,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "autoplay",
-				label: "Autoplay",
+				label: "自动播放",
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: "是", value: "true" },
+					{ label: "否", value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("autoplay") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("autoplay"),
@@ -71,10 +71,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "muted",
-				label: "Muted",
+				label: "静音",
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: "是", value: "true" },
+					{ label: "否", value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("muted") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("muted"),
@@ -88,10 +88,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "loop",
-				label: "Loop",
+				label: "循环",
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: "是", value: "true" },
+					{ label: "否", value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("loop") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("loop"),
@@ -102,7 +102,7 @@ const videoOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Video Options",
+	name: "视频选项",
 	properties: videoOptionsSectionProperties,
 	condition: () => blockController.isVideo(),
 };

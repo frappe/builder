@@ -17,18 +17,18 @@
 				</template>
 			</AnalyticsOverview>
 			<div class="mt-8">
-				<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Pages</h3>
+				<h3 class="text-lg-medium mb-4 text-ink-gray-7">热门页面</h3>
 				<div
 					v-if="analytics.loading"
 					class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-					Loading...
+					加载中...
 				</div>
 				<ListView
 					class="!w-auto"
 					v-else-if="processedAnalyticsData.top_pages?.length"
 					:columns="[
-						{ label: 'Route', key: 'route', width: '60%' },
-						{ label: 'Views', key: 'view_count', align: 'right' },
+						{ label: '路径', key: 'route', width: '60%' },
+						{ label: '浏览量', key: 'view_count', align: 'right' },
 					]"
 					:options="{
 						selectable: false,
@@ -38,7 +38,7 @@
 					}"
 					:rows="processedAnalyticsData.top_pages"
 					row-key="route" />
-				<AnalyticsEmptyState v-else title="No page views yet" />
+				<AnalyticsEmptyState v-else title="暂无页面浏览量" />
 			</div>
 			<div class="mt-8">
 				<TopReferrersList :rows="processedAnalyticsData.top_referrers" :loading="analytics.loading" />

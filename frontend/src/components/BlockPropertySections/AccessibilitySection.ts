@@ -7,7 +7,7 @@ const accessibilitySectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Tag",
+				label: "标签",
 				type: "select",
 				options: [
 					"aside",
@@ -45,7 +45,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Aria Label",
+			label: "Aria 标签",
 			modelValue: blockController.getAttribute("aria-label"),
 		}),
 		searchKeyWords: "AriaLabel, Aria Label, Label, Accessibility Label, Aria",
@@ -59,7 +59,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Role",
+			label: "角色",
 			type: "select",
 			options: [
 				"button",
@@ -92,7 +92,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Tab Index",
+			label: "Tab 索引",
 			type: "number",
 			min: -1,
 			modelValue: blockController.getAttribute("tabindex"),
@@ -105,7 +105,7 @@ const accessibilitySectionProperties = [
 ];
 
 export default {
-	name: "Accessibility",
+	name: "无障碍",
 	properties: accessibilitySectionProperties,
 	collapsed: computed(
 		() =>

@@ -15,8 +15,8 @@
 				height="100%"
 				label="robot.txt"
 				:showSaveButton="true"
-				description='Specify rules to control how search engines interact with your site.
-				For more details, visit <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt">Robots.txt Guide.</a>'
+				description='指定控制搜索引擎如何与您的站点交互的规则。
+				了解更多详情，请访问 <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt">Robots.txt 指南。</a>'
 				:show-line-numbers="true"></CodeEditor>
 		</div>
 	</div>

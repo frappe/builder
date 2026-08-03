@@ -43,6 +43,12 @@ export interface BuilderSettings extends DocType {
   restrict_click_handlers: 0 | 1;
   /** AI API Key: Password */
   ai_api_key?: string;
+  /** AI Provider: Select */
+  ai_provider?: 'openrouter' | 'openai_compatible';
+  /** Model Name: Data */
+  ai_model?: string;
+  /** API Base URL: Data */
+  ai_api_base?: string;
   /** Persona Survey Done: Check */
   persona_survey_done: 0 | 1;
 }

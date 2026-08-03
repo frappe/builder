@@ -122,27 +122,27 @@ const route = useRoute();
 
 const leftPanelOptions = [
 	{
-		label: "Insert",
+		label: "插入",
 		value: "Blocks",
 		icon: "lucide-plus",
 	},
 	{
-		label: "Layers",
+		label: "图层",
 		value: "Layers",
 		icon: LayersIcon,
 	},
 	{
-		label: "Components",
+		label: "组件",
 		value: "Assets",
 		icon: "lucide-box",
 	},
 	{
-		label: "Code",
+		label: "代码",
 		value: "Code",
 		icon: "lucide-code",
 	},
 	{
-		label: "Variables",
+		label: "变量",
 		value: "variables",
 		icon: "lucide-aperture",
 	},

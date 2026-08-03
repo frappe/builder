@@ -6,16 +6,16 @@ const transitionSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Speed",
+				label: "速度",
 				propertyKey: "transitionDuration",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: null, label: "None" },
-					{ value: "150ms", label: "Fast" },
-					{ value: "300ms", label: "Normal" },
-					{ value: "500ms", label: "Slow" },
-					{ value: "1000ms", label: "Very Slow" },
+					{ value: null, label: "无" },
+					{ value: "150ms", label: "快" },
+					{ value: "300ms", label: "正常" },
+					{ value: "500ms", label: "慢" },
+					{ value: "1000ms", label: "非常慢" },
 				],
 				setModelValue: (val: string | null) => {
 					if (val === "None") {
@@ -42,16 +42,16 @@ const transitionSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Timing",
+				label: "缓动",
 				propertyKey: "transitionTimingFunction",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: "ease", label: "Smooth" },
-					{ value: "linear", label: "Linear" },
-					{ value: "ease-in", label: "Ease In" },
-					{ value: "ease-out", label: "Ease Out" },
-					{ value: "ease-in-out", label: "Ease In Out" },
+					{ value: "ease", label: "平滑" },
+					{ value: "linear", label: "线性" },
+					{ value: "ease-in", label: "渐入" },
+					{ value: "ease-out", label: "渐出" },
+					{ value: "ease-in-out", label: "渐入渐出" },
 				],
 			};
 		},
@@ -62,16 +62,16 @@ const transitionSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Properties",
+				label: "属性",
 				propertyKey: "transitionProperty",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: "all", label: "All Properties" },
-					{ value: "transform", label: "Transform Only" },
-					{ value: "opacity", label: "Opacity Only" },
-					{ value: "background", label: "Background Only" },
-					{ value: "colors", label: "Colors Only" },
+					{ value: "all", label: "所有属性" },
+					{ value: "transform", label: "仅变换" },
+					{ value: "opacity", label: "仅不透明度" },
+					{ value: "background", label: "仅背景" },
+					{ value: "colors", label: "仅颜色" },
 				],
 			};
 		},
@@ -81,7 +81,7 @@ const transitionSectionProperties = [
 ];
 
 export default {
-	name: "Transition",
+	name: "过渡",
 	properties: transitionSectionProperties,
 	collapsed: true,
 	condition: () => !blockController.multipleBlocksSelected(),

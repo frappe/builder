@@ -143,7 +143,7 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: "Block Options",
+	name: "区块选项",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
 	condition: () =>

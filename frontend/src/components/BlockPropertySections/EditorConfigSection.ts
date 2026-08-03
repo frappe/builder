@@ -18,9 +18,9 @@ const editorConfigSectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Layer Icon",
+			label: "图层图标",
 			modelValue: getEditorConfig().icon || "",
-			placeholder: "e.g. play-circle",
+			placeholder: "例如 play-circle",
 		}),
 		events: {
 			"update:modelValue": (val: string) => setEditorConfig({ icon: val || undefined }),
@@ -31,12 +31,12 @@ const editorConfigSectionProperties = [
 		component: BasePropertyControl,
 		getProps: () => ({
 			propertyKey: "showChildrenInEditor",
-			label: "Show Children",
+			label: "显示子元素",
 			component: OptionToggle,
 			enableStates: false,
 			options: [
-				{ label: "Show", value: true },
-				{ label: "Hide", value: false },
+				{ label: "显示", value: true },
+				{ label: "隐藏", value: false },
 			],
 			getModelValue: () => {
 				const val = getEditorConfig().showChildrenInEditor;
@@ -49,7 +49,7 @@ const editorConfigSectionProperties = [
 ];
 
 export default {
-	name: "Editor Config",
+	name: "编辑器配置",
 	properties: editorConfigSectionProperties,
 	collapsed: true,
 	condition: () => {

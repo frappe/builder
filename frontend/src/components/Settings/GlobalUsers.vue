@@ -4,17 +4,17 @@
 			<BuilderInput
 				type="text"
 				class="w-72"
-				placeholder="Search by name or email"
+				placeholder="按姓名或邮箱搜索"
 				icon-left="search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
-			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">邀请</Button>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
 			<div v-if="filteredInvites.length" class="mb-6 flex flex-col">
 				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
-					Pending Invites ({{ filteredInvites.length }})
+					待处理邀请 ({{ filteredInvites.length }})
 				</span>
 				<div
 					v-for="invite in filteredInvites"
@@ -26,18 +26,18 @@
 							<span class="truncate text-p-sm text-ink-gray-8">{{ invite.email }}</span>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="invite.creation">
 								<span class="truncate text-p-xs text-ink-gray-5">
-									Invited {{ timeAgo }}{{ invite.invited_by_name ? ` by ${invite.invited_by_name}` : "" }}
+									已邀请 {{ timeAgo }}{{ invite.invited_by_name ? ` 由 ${invite.invited_by_name}` : "" }}
 								</span>
 							</UseTimeAgo>
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-1">
-						<Button variant="subtle" size="sm" @click="resendInvite(invite)">Resend</Button>
+						<Button variant="subtle" size="sm" @click="resendInvite(invite)">重新发送</Button>
 						<Button
 							variant="subtle"
 							size="sm"
 							icon="lucide-x"
-							title="Cancel invitation"
+							title="取消邀请"
 							@click="cancelInvite(invite)" />
 					</div>
 				</div>
@@ -45,7 +45,7 @@
 
 			<div class="flex flex-col">
 				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
-					Members ({{ filteredMembers.length }})
+					成员 ({{ filteredMembers.length }})
 				</span>
 				<div
 					v-for="user in filteredMembers"
@@ -55,28 +55,28 @@
 					<div class="flex min-w-0 flex-col">
 						<span class="truncate text-p-sm text-ink-gray-8">
 							{{ user.full_name }}
-							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
+							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">你</Badge>
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">管理员</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
-					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
-					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
+					<template v-if="searchQuery.trim()">没有成员匹配“{{ searchQuery }}”</template>
+					<template v-else>暂无成员。邀请他人以授予其访问 Builder 的权限。</template>
 				</div>
 			</div>
 		</div>
 
 		<Dialog
 			v-model="showInviteDialog"
-			title="Invite Users"
-			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			title="邀请用户"
+			:actions="[{ label: '发送邀请', variant: 'solid', onClick: sendInvites }]">
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"
 					type="textarea"
-					label="Email addresses"
+					label="邮箱地址"
 					placeholder="jane@example.com, john@example.com"
 					:hideClearButton="true"
 					:modelValue="inviteEmails"
@@ -172,16 +172,16 @@ const sendInvites = async () => {
 			app_name: "builder",
 		});
 		if (res.invited_emails.length) {
-			toast.success(`Invitation sent to ${res.invited_emails.join(", ")}`);
+			toast.success(`已向 ${res.invited_emails.join(", ")} 发送邀请`);
 		}
 		if (res.pending_invite_emails.length) {
-			toast.info(`Already invited: ${res.pending_invite_emails.join(", ")}`);
+			toast.info(`已邀请过：${res.pending_invite_emails.join(", ")}`);
 		}
 		if (res.accepted_invite_emails.length) {
-			toast.info(`Already a member: ${res.accepted_invite_emails.join(", ")}`);
+			toast.info(`已是成员：${res.accepted_invite_emails.join(", ")}`);
 		}
 		if (res.disabled_user_emails.length) {
-			toast.error(`User is disabled: ${res.disabled_user_emails.join(", ")}`);
+			toast.error(`用户已禁用：${res.disabled_user_emails.join(", ")}`);
 		}
 		showInviteDialog.value = false;
 		inviteEmails.value = "";
@@ -194,17 +194,17 @@ const sendInvites = async () => {
 const resendInvite = async (invite: PendingInvite) => {
 	try {
 		await resendResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success(`Invitation resent to ${invite.email}`);
+		toast.success(`已重新向 ${invite.email} 发送邀请`);
 	} catch (error) {
 		toast.error(errorMessage(error));
 	}
 };
 
 const cancelInvite = async (invite: PendingInvite) => {
-	if (!(await confirm(`Are you sure you want to cancel the invitation to ${invite.email}?`))) return;
-	try {
-		await cancelResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success("Invitation cancelled");
+	if (!(await confirm(`确定要取消向 ${invite.email} 发出的邀请吗？`))) return;
+		try {
+			await cancelResource.submit({ name: invite.name, app_name: "builder" });
+			toast.success("邀请已取消");
 		pendingInvites.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));

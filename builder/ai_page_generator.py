@@ -247,7 +247,15 @@ def build_user_message(
 	return text
 
 
-def call_llm(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
+def call_llm(
+	model: str,
+	messages: list,
+	params: dict,
+	*,
+	stream: bool,
+	api_key: str | None = None,
+	api_base: str | None = None,
+):
 	"""Call litellm. Returns chunk iterator (stream=True) or string (stream=False)."""
 	if model.startswith("gemini-"):
 		model = f"gemini/{model}"
@@ -256,7 +264,9 @@ def call_llm(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		for m in messages:
 			if m["role"] == "system" and isinstance(m.get("content"), str):
 				m["content"] = [{"type": "text", "text": m["content"]}]
-	resp = litellm.completion(model=model, messages=messages, stream=stream, api_key=api_key, **params)
+	resp = litellm.completion(
+		model=model, messages=messages, stream=stream, api_key=api_key, api_base=api_base, **params
+	)
 	return resp if stream else (resp.choices[0].message.content or "")
 
 
@@ -295,6 +305,8 @@ def run_llm_job(
 	block_context: str | None = None,
 	task_type: str | None = None,
 	image_url: str | None = None,
+	api_base: str | None = None,
+	provider: str = "openrouter",
 ):
 	user = user or frappe.session.user
 
@@ -317,7 +329,7 @@ def run_llm_job(
 		frappe.cache().set_value(cache_key, {"content": "", "task_type": task_type}, expires_in_sec=600)
 
 	if task_tier == "simple":
-		model = get_simple_model(model)
+		model = get_simple_model(model, provider)
 
 	action = "Modifying" if is_modify else "Generating"
 	model_label = get_model_label(model)
@@ -360,7 +372,7 @@ def run_llm_job(
 	content = ""
 	try:
 		last_stage = None
-		for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
+		for chunk in call_llm(model, messages, params, stream=True, api_key=api_key, api_base=api_base):
 			if delta := chunk.choices[0].delta.content:
 				if not content:
 					emit("progress", message="Building...")
@@ -412,6 +424,8 @@ def generate_page_blocks(
 	user: str | None = None,
 	page_id: str | None = None,
 	image_url: str | None = None,
+	api_base: str | None = None,
+	provider: str = "openrouter",
 ):
 	run_llm_job(
 		prompt,
@@ -422,6 +436,8 @@ def generate_page_blocks(
 		user=user,
 		page_id=page_id,
 		image_url=image_url,
+		api_base=api_base,
+		provider=provider,
 	)
 
 
@@ -434,6 +450,8 @@ def modify_section_blocks(
 	page_id: str | None = None,
 	task_type: str | None = None,
 	image_url: str | None = None,
+	api_base: str | None = None,
+	provider: str = "openrouter",
 ):
 	run_llm_job(
 		prompt,
@@ -446,6 +464,8 @@ def modify_section_blocks(
 		block_context=block_context,
 		task_type=task_type,
 		image_url=image_url,
+		api_base=api_base,
+		provider=provider,
 	)
 
 
@@ -453,20 +473,33 @@ def enqueue_ai_job(fn, model=None, **kwargs):
 	if not frappe.has_permission("Builder Page", ptype="write"):
 		frappe.throw(_("You do not have permission to modify pages"))
 	settings = frappe.get_single("Builder Settings")
+	provider = (settings.ai_provider or "openrouter").lower()
 
 	if not model:
-		model = "openrouter"
+		model = provider
 
-	model = get_default_model(model)
+	resolved_provider = detect_provider(model) or provider
+
+	api_base = None
+	if resolved_provider == "openai_compatible":
+		configured_model = settings.ai_model
+		if not configured_model:
+			frappe.throw(_("Please set the Model Name in Settings → AI for the OpenAI Compatible provider"))
+		model = configured_model
+		api_base = settings.get_password("ai_api_base", raise_exception=False)
+	else:
+		model = get_default_model(model)
 
 	api_key = settings.get_password("ai_api_key", raise_exception=False)
 	if not api_key:
-		frappe.throw(_("Please configure an OpenRouter API key in Settings → AI"))
+		frappe.throw(_("Please configure an API key in Settings → AI"))
 
 	frappe.enqueue(
 		fn,
 		model=model,
 		api_key=api_key,
+		api_base=api_base,
+		provider=resolved_provider,
 		user=frappe.session.user,
 		now=True,
 		**kwargs,
@@ -581,13 +614,12 @@ def detect_provider(model: str) -> str | None:
 	return None
 
 
-def get_simple_model(model: str) -> str:
-	provider = detect_provider(model)
-	if provider is None:
-		if model in PROVIDER_SIMPLE_MODEL:
-			return PROVIDER_SIMPLE_MODEL[model]
+def get_simple_model(model: str, provider: str = "openrouter") -> str:
+	if provider == "openai_compatible":
 		return model
-	return PROVIDER_SIMPLE_MODEL.get(provider, model)
+	if provider in PROVIDER_SIMPLE_MODEL:
+		return PROVIDER_SIMPLE_MODEL[provider]
+	return model
 
 
 def get_default_model(model_or_provider: str) -> str:
@@ -598,6 +630,22 @@ def get_default_model(model_or_provider: str) -> str:
 
 @frappe.whitelist()
 def get_ai_models():
+	settings = frappe.get_single("Builder Settings")
+	provider = (settings.ai_provider or "openrouter").lower()
+	if provider == "openai_compatible" and settings.ai_model:
+		return [
+			{
+				"provider": "openai_compatible",
+				"models": [
+					{
+						"name": settings.ai_model,
+						"label": settings.ai_model,
+						"max_tokens": 200000,
+						"vision": False,
+					}
+				],
+			}
+		]
 	return AVAILABLE_MODELS
 
 
@@ -653,17 +701,25 @@ def get_ai_streaming_content(page_id: str):
 @has_page_write()
 def test_api_key():
 	settings = frappe.get_single("Builder Settings")
-	model = settings.get("ai_model") or "openrouter"
+	provider = (settings.ai_provider or "openrouter").lower()
+	api_base = (
+		settings.get_password("ai_api_base", raise_exception=False) if provider == "openai_compatible" else None
+	)
 	api_key = settings.get_password("ai_api_key", raise_exception=False)
 	if not api_key:
-		return {"success": False, "message": _("Please set an OpenRouter API key")}
+		return {"success": False, "message": _("Please set an API key in Settings → AI")}
 
-	actual_model = get_default_model(model)
+	if provider == "openai_compatible":
+		actual_model = settings.ai_model or "gpt-4o"
+	else:
+		actual_model = get_default_model(settings.ai_model or "openrouter")
+
 	if actual_model.startswith("gemini-"):
 		actual_model = f"gemini/{actual_model}"
 	try:
 		litellm.completion(
 			model=actual_model,
+			api_base=api_base,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
 			api_key=api_key,

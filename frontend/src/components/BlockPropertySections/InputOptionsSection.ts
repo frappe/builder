@@ -7,7 +7,7 @@ const inputOptionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Type",
+				label: "类型",
 				type: "select",
 				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color", "radio"],
 				modelValue: blockController.getAttribute("type") || "text",
@@ -23,7 +23,7 @@ const inputOptionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Placeholder",
+				label: "占位符",
 				modelValue: blockController.getAttribute("placeholder"),
 			};
 		},
@@ -38,10 +38,10 @@ const inputOptionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Name",
+				label: "名称",
 				modelValue: blockController.getAttribute("name") || "",
 				description:
-					"Group name for this radio button. Radio buttons with the same name are grouped together.",
+					"该单选按钮的分组名称。具有相同名称的单选按钮会被归为一组。",
 			};
 		},
 		searchKeyWords: "Radio, Name, Group, RadioName, Radio Name, Group Name, input, radio button",
@@ -54,9 +54,9 @@ const inputOptionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Value",
+				label: "值",
 				modelValue: blockController.getAttribute("value") || "",
-				description: "Value submitted with the form when this radio button is selected.",
+				description: "选中此单选按钮时随表单提交的值。",
 			};
 		},
 		searchKeyWords: "Radio, Value, RadioValue, Radio Value, input, radio button",
@@ -69,10 +69,10 @@ const inputOptionsSectionProperties = [
 		component: OptionToggle,
 		getProps: () => {
 			return {
-				label: "Checked",
+				label: "已选中",
 				options: [
-					{ label: "Yes", value: true },
-					{ label: "No", value: false },
+					{ label: "是", value: true },
+					{ label: "否", value: false },
 				],
 				modelValue:
 					blockController.getAttribute("checked") === "" || blockController.getAttribute("checked") === "checked",
@@ -93,7 +93,7 @@ const inputOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Input Options",
+	name: "输入选项",
 	properties: inputOptionsSectionProperties,
 	condition: () => blockController.isInput(),
 };

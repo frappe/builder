@@ -6,13 +6,13 @@
 				<div class="flex flex-1 flex-col gap-4">
 					<BuilderInput
 						type="text"
-						label="Title"
+						label="标题"
 						:modelValue="pageStore.activePage?.page_title"
 						@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 					<BuilderInput
 						class="[&>div>textarea]:h-28"
 						type="textarea"
-						label="Description"
+						label="描述"
 						:modelValue="pageStore.activePage?.meta_description"
 						:hideClearButton="true"
 						@update:modelValue="(val: string) => pageStore.updateActivePage('meta_description', val)" />
@@ -20,8 +20,8 @@
 				<div class="flex flex-1 flex-col justify-between gap-2">
 					<ImageUploadInput
 						:modelValue="pageStore.activePage?.meta_image"
-						label="Meta Image"
-						placeholder="Upload Meta Image"
+						label="社交分享图片"
+						placeholder="上传社交分享图片"
 						labelPosition="top"
 						@update:modelValue="
 							(url: string) => pageStore.updateActivePage('meta_image', url)
@@ -30,7 +30,7 @@
 			</div>
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
-				<span class="text-sm text-ink-gray-7">Social Preview</span>
+				<span class="text-sm text-ink-gray-7">社交预览</span>
 				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
 					<img
 						:src="pageStore.activePage?.meta_image || pageStore.activePage?.preview"
@@ -52,16 +52,16 @@
 		<div class="flex w-full flex-col gap-5">
 			<BuilderInput
 				type="text"
-				label="Canonical URL"
-				description="Optional. Set this to specify a preferred version of this page for search engines."
+				label="规范 URL"
+				description="可选。设置此项以向搜索引擎指定此页面的首选版本。"
 				placeholder="https://example.com/preferred-page-url"
 				:modelValue="pageStore.activePage?.canonical_url"
 				:hideClearButton="true"
 				@update:modelValue="(val: string) => pageStore.updateActivePage('canonical_url', val)" />
 			<BuilderInput
 				type="text"
-				label="Language"
-				description="Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
+				label="语言"
+				description="HTML 的语言代码（例如 en, es, fr, de）。未设置时使用默认值。"
 				placeholder="en"
 				:modelValue="pageStore.activePage?.language"
 				:hideClearButton="true"

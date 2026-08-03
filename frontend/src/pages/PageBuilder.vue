@@ -2,8 +2,8 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-3xl-semibold">Screen too small</h1>
-			<p class="text-p-base">Please switch to a larger screen to edit</p>
+			<h1 class="text-p-3xl-semibold">屏幕太小</h1>
+			<p class="text-p-base">请切换到更大的屏幕进行编辑</p>
 		</div>
 	</div>
 	<div v-show="!isSmallScreen" class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
@@ -30,7 +30,7 @@
 			<template v-slot:header>
 				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
-						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
+						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">页面</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">
 							{{ canvasStore.fragmentData.fragmentName }}
@@ -43,7 +43,7 @@
 						</span>
 					</div>
 					<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
-						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
+						{{ canvasStore.fragmentData.saveActionLabel || "保存" }}
 					</Button>
 				</div>
 			</template>
@@ -301,7 +301,7 @@ provide("showShortcuts", () => {
 useShortcut([
 	{
 		key: " ",
-		description: "Hold for move mode",
+		description: "按住进入移动模式",
 		group: "Tools",
 		handler: () => {
 			if (!canvasStore.editableBlock) {
@@ -312,7 +312,7 @@ useShortcut([
 	},
 	{
 		key: "?",
-		description: "Show keyboard shortcuts",
+		description: "显示键盘快捷键",
 		group: "General",
 		handler: () => {
 			shortcutsModalOpen.value = true;
@@ -321,7 +321,7 @@ useShortcut([
 	{
 		key: "i",
 		ctrl: true,
-		description: "Edit block with AI",
+		description: "使用 AI 编辑区块",
 		group: "Edit",
 		condition: () =>
 			builderStore.isAIEnabled &&
@@ -339,7 +339,7 @@ useShortcut([
 		key: "d",
 		ctrl: true,
 		shift: true,
-		description: "Delete Page",
+		description: "删除页面",
 		group: "General",
 		handler: () => {
 			if (pageStore.activePage && !pageStore.activePage.is_standard) {
@@ -373,14 +373,14 @@ let expandedEditorOptions = computed(() => {
 	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
 	if (canvasStore.editingContentType === "html") {
 		title = "HTML";
-		label = "Edit HTML";
+		label = "编辑 HTML";
 	} else if (canvasStore.editingContentType === "js") {
-		title = "Block Client Script";
-		label = "Edit Block Client Script";
+		title = "区块客户端脚本";
+		label = "编辑区块客户端脚本";
 		type = "JavaScript";
 	} else if (canvasStore.editingContentType === "css") {
 		title = "CSS";
-		label = "Edit CSS";
+		label = "编辑 CSS";
 		type = "CSS";
 	}
 	return { title, label, type };
@@ -423,7 +423,7 @@ watch(
 	(to, from) => {
 		if (to.name === "builder" && to.params.pageId === "new") {
 			const pageInfo = {
-				page_title: "My Page",
+				page_title: "我的页面",
 				draft_blocks: [getRootBlockTemplate()],
 			} as BuilderPage;
 			if (builderStore.activeFolder) {
@@ -461,12 +461,12 @@ const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
 
 const usageMessage = computed(() => {
 	if (usageCount.value === 0) {
-		return "not used in any pages";
+		return "未被任何页面使用";
 	}
 	if (usageCount.value === 1) {
-		return "used in 1 page";
+		return "被 1 个页面使用";
 	}
-	return `used in ${usageCount.value} pages`;
+	return `被 ${usageCount.value} 个页面使用`;
 });
 
 watch(

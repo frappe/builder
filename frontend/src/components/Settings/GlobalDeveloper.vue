@@ -2,7 +2,7 @@
 	<div class="flex flex-col gap-5">
 		<div class="flex justify-between">
 			<label class="text-p-base-medium w-fit shrink-0 text-ink-gray-8">
-				Execute Block Client Scripts in Editor
+				在编辑器中执行区块客户端脚本
 			</label>
 			<Select
 				class="!w-[200px]"
@@ -11,15 +11,15 @@
 					(value) => builderStore.updateBuilderSettings('execute_block_scripts_in_editor', value)
 				"
 				:options="[
-					{ label: 'Don\'t Execute', value: 'Don\'t Execute' },
-					{ label: 'Restricted', value: 'Restricted' },
-					{ label: 'Unrestricted', value: 'Unrestricted' },
+					{ label: '不执行', value: 'Don\'t Execute' },
+					{ label: '受限', value: 'Restricted' },
+					{ label: '不受限', value: 'Unrestricted' },
 				]" />
 		</div>
 		<Switch
 			size="sm"
-			label="Prevent Click Emulation"
-			description="Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
+			label="阻止点击模拟"
+			description="阻止编辑器为带有区块客户端脚本的区块模拟点击事件。"
 			:modelValue="Boolean(builderSettings.doc?.restrict_click_handlers)"
 			@update:modelValue="
 				(val: Boolean) => {
@@ -28,8 +28,7 @@
 			" />
 		<div class="flex flex-col gap-2">
 			<p class="text-p-sm text-ink-gray-7">
-				Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not
-				perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.
+				注意：区块脚本在沙箱环境中执行。可能存在限制，且无法完全还原线上站点的行为。执行不受信任的脚本可能存在安全风险。
 			</p>
 		</div>
 	</div>

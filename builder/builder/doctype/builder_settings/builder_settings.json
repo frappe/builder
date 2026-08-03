@@ -22,6 +22,9 @@
   "restrict_click_handlers",
   "ai_section",
   "ai_api_key",
+  "ai_provider",
+  "ai_model",
+  "ai_api_base",
   "persona_survey_done"
  ],
  "fields": [
@@ -128,6 +131,26 @@
    "fieldname": "ai_api_key",
    "fieldtype": "Password",
    "label": "AI API Key"
+  },
+  {
+   "default": "openrouter",
+   "description": "Which AI provider to route requests to",
+   "fieldname": "ai_provider",
+   "fieldtype": "Select",
+   "label": "AI Provider",
+   "options": "openrouter\nopenai_compatible"
+  },
+  {
+   "description": "Model name for the selected provider. Required for OpenAI Compatible (e.g. gpt-4o, deepseek-chat).",
+   "fieldname": "ai_model",
+   "fieldtype": "Data",
+   "label": "Model Name"
+  },
+  {
+   "description": "Base URL for OpenAI Compatible providers (e.g. https://api.openai.com/v1, https://api.deepseek.com).",
+   "fieldname": "ai_api_base",
+   "fieldtype": "Data",
+   "label": "API Base URL"
   },
   {
    "default": "0",

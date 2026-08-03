@@ -7,7 +7,7 @@ const dataKeySectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Key",
+				label: "键",
 				modelValue: blockController.getDataKey("key"),
 			};
 		},
@@ -21,7 +21,7 @@ const dataKeySectionProperties = [
 		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
-				label: "Type",
+				label: "类型",
 				modelValue: blockController.getDataKey("type"),
 			};
 		},
@@ -35,7 +35,7 @@ const dataKeySectionProperties = [
 		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
-				label: "Property",
+				label: "属性",
 				modelValue: blockController.getDataKey("property"),
 			};
 		},
@@ -47,7 +47,7 @@ const dataKeySectionProperties = [
 ];
 
 export default {
-	name: "Data Key",
+	name: "数据键",
 	properties: dataKeySectionProperties,
 	collapsed: computed(() => {
 		return !blockController.getDataKey("key") && !blockController.isRepeater();

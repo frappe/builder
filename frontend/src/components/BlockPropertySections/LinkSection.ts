@@ -8,7 +8,7 @@ const linkSectionProperties = [
 		component: AttributePropertyControl,
 		getProps: () => {
 			return {
-				label: "Link To",
+				label: "链接到",
 				propertyKey: "href",
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("href"),
@@ -42,7 +42,7 @@ const linkSectionProperties = [
 		component: AttributePropertyControl,
 		getProps: () => {
 			return {
-				label: "Opens in",
+				label: "打开方式",
 				type: "select",
 				propertyKey: "target",
 				allowDynamicValue: false,
@@ -57,11 +57,11 @@ const linkSectionProperties = [
 				options: [
 					{
 						value: "_self",
-						label: "Same Tab",
+						label: "当前标签",
 					},
 					{
 						value: "_blank",
-						label: "New Tab",
+						label: "新标签页",
 					},
 				],
 			};
@@ -73,7 +73,7 @@ const linkSectionProperties = [
 		component: Switch,
 		getProps: () => {
 			return {
-				label: "Track Clicks",
+				label: "跟踪点击",
 				size: "sm",
 				class: "[&_label]:text-xs [&_label]:text-ink-gray-6 [&_label]:font-normal",
 				modelValue: blockController.isClickTrackingEnabled(),
@@ -87,7 +87,7 @@ const linkSectionProperties = [
 ];
 
 export default {
-	name: "Link",
+	name: "链接",
 	properties: linkSectionProperties,
 	collapsed: computed(() => !blockController.isLink()),
 	condition: () =>

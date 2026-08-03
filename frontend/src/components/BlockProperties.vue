@@ -4,7 +4,7 @@
 			<BuilderInput
 				ref="searchInput"
 				type="text"
-				placeholder="Search properties"
+				placeholder="搜索属性"
 				v-model="builderStore.propertyFilter"
 				@input="
 					(value: string) => {
@@ -28,7 +28,7 @@
 		</div>
 	</div>
 	<div v-else>
-		<p class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit properties</p>
+		<p class="mt-2 text-center text-sm text-ink-gray-6">选择一个区块以编辑属性</p>
 	</div>
 </template>
 <script setup lang="ts">

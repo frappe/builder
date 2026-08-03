@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="text-lg-semibold px-2 text-ink-gray-9">Settings</span>
+			<span class="text-lg-semibold px-2 text-ink-gray-9">设置</span>
 			<div class="flex flex-col gap-0.5" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
@@ -31,7 +31,7 @@
 				<component :is="selectedItemDoc?.component" class="pb-16" />
 			</KeepAlive>
 			<div v-else class="flex items-center justify-center">
-				<span class="text-ink-gray-5">Loading...</span>
+				<span class="text-ink-gray-5">加载中...</span>
 			</div>
 		</div>
 	</div>
@@ -96,57 +96,57 @@ const selectedItemDoc = computed(() => {
 });
 
 const pageSettings = {
-	title: "Current Page",
+	title: "当前页面",
 	items: [
 		{
-			label: "General",
+			label: "常规",
 			value: "page_general",
 			component: PageGeneral,
-			title: "General",
+			title: "常规",
 			icon: "lucide-settings",
 		},
-		{ label: "Code", value: "page_code", component: PageCode, title: "Page Code", icon: "lucide-code" },
+		{ label: "代码", value: "page_code", component: PageCode, title: "页面代码", icon: "lucide-code" },
 		{
-			label: "Meta",
+			label: "元数据",
 			value: "page_meta",
 			component: PageMeta,
-			title: "Meta",
+			title: "元数据",
 			icon: "lucide-square-dashed-bottom-code",
 		},
 		{
-			label: "Analytics",
+			label: "分析",
 			value: "page_analytics",
 			component: PageAnalytics,
-			title: "Page Analytics",
+			title: "页面分析",
 			icon: "lucide-chart-bar",
 		},
 	],
 };
 
 const globalSettings = {
-	title: "Global",
+	title: "全局",
 	items: [
 		{
-			label: "General",
+			label: "常规",
 			value: "global_general",
 			component: GlobalGeneral,
-			title: "General",
+			title: "常规",
 			icon: "lucide-settings",
 			disabled: false,
 		},
 		{
-			label: "Users",
+			label: "用户",
 			value: "global_users",
 			component: GlobalUsers,
-			title: "Users",
+			title: "用户",
 			icon: "lucide-users",
 		},
-		{ label: "Code", value: "global_code", component: GlobalCode, title: "Global Code", icon: "lucide-code" },
+		{ label: "代码", value: "global_code", component: GlobalCode, title: "全局代码", icon: "lucide-code" },
 		{
-			label: "Redirects",
+			label: "重定向",
 			value: "global_redirects",
 			component: GlobalRedirects,
-			title: "Redirects",
+			title: "重定向",
 			icon: "lucide-shuffle",
 		},
 		{
@@ -159,33 +159,33 @@ const globalSettings = {
 		...(window.is_fc_site || window.is_developer_mode
 			? [
 					{
-						label: "Domains",
+						label: "域名",
 						value: "global_domains",
 						component: GlobalDomains,
-						title: "Custom Domains",
+						title: "自定义域名",
 						icon: "lucide-globe",
 					},
 				]
 			: []),
 		{
-			label: "Analytics",
+			label: "分析",
 			value: "global_analytics",
 			component: GlobalAnalytics,
-			title: "Site Analytics",
+			title: "站点分析",
 			icon: "lucide-chart-bar",
 		},
 		{
-			label: "Developer",
+			label: "开发者",
 			value: "global_developer",
 			component: GlobalDeveloper,
-			title: "Developer Settings",
+			title: "开发者设置",
 			icon: "lucide-terminal",
 		},
 		{
 			label: "AI",
 			value: "global_ai",
 			component: GlobalAI,
-			title: "AI Settings",
+			title: "AI 设置",
 			icon: "lucide-sparkles",
 		},
 	],

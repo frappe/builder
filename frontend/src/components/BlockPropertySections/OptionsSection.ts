@@ -12,7 +12,7 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Class",
+				label: "类",
 				modelValue: blockController.getClasses().join(", "),
 			};
 		},
@@ -26,14 +26,14 @@ const optionsSectionProperties = [
 		component: VisibilityInput,
 		getProps: () => {
 			return {
-				label: "Condition",
+				label: "条件",
 				property: "visibilityCondition",
 				getModelValue: () => (blockController.getKeyValue("visibilityCondition") as BlockVisibilityCondition).key,
 				setModelValue: (val: BlockVisibilityCondition) => {
 					blockController.setKeyValue("visibilityCondition", val);
 				},
 				description:
-					"Visibility condition to show/hide the block based on a condition. Pass a boolean variable created in your Data Script.<br><b>Note:</b> This is only evaluated in the preview mode.",
+					"根据条件显示/隐藏该区块的可见性条件。传入在「数据脚本」中创建的布尔变量。<br><b>注意：</b> 该条件仅在预览模式下生效。",
 			};
 		},
 		searchKeyWords:
@@ -43,6 +43,6 @@ const optionsSectionProperties = [
 ];
 
 export default {
-	name: "Options",
+	name: "选项",
 	properties: optionsSectionProperties,
 };

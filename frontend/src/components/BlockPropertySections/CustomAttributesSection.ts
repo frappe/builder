@@ -19,7 +19,7 @@ const customAttributesSectionProperties = [
 ];
 
 export default {
-	name: "HTML Attributes",
+	name: "HTML 属性",
 	properties: customAttributesSectionProperties,
 	collapsed: computed(() => {
 		return Object.keys(blockController.getCustomAttributes()).length === 0;

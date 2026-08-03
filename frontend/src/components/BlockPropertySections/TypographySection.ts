@@ -20,7 +20,7 @@ const typographySectionProperties = [
 		component: BasePropertyControl,
 		getProps: () => {
 			return {
-				label: "Content",
+				label: "内容",
 				propertyKey: "innerHTML",
 				controlType: "key",
 				// @ts-ignore
@@ -39,7 +39,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Family",
+				label: "字体",
 				component: Autocomplete,
 				propertyKey: "fontFamily",
 				getOptions: async (filterString: string) => {
@@ -59,11 +59,11 @@ const typographySectionProperties = [
 					});
 					if (fontOptions.length) {
 						fontOptions.unshift({
-							label: "Custom",
+							label: "自定义",
 							value: "_separator_1",
 						});
 						fontOptions.push({
-							label: "Default",
+							label: "默认",
 							value: "_separator_2",
 						});
 					}
@@ -94,7 +94,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Weight",
+				label: "字重",
 				propertyKey: "fontWeight",
 				component: Autocomplete,
 				// static options were never query-filtered, so ignore the search
@@ -115,7 +115,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Size",
+				label: "字号",
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
@@ -129,7 +129,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Height",
+				label: "行高",
 				propertyKey: "lineHeight",
 				enableSlider: true,
 			};
@@ -141,7 +141,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Letter",
+				label: "字间距",
 				propertyKey: "letterSpacing",
 				enableSlider: true,
 			};
@@ -153,25 +153,25 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Transform",
+				label: "文字转换",
 				propertyKey: "textTransform",
 				type: "select",
 				options: [
 					{
 						value: "unset",
-						label: "Unset",
+						label: "未设置",
 					},
 					{
 						value: "uppercase",
-						label: "Uppercase",
+						label: "大写",
 					},
 					{
 						value: "lowercase",
-						label: "Lowercase",
+						label: "小写",
 					},
 					{
 						value: "capitalize",
-						label: "Capitalize",
+						label: "首字母大写",
 					},
 				],
 				setModelValue: (val: string) => {
@@ -187,30 +187,30 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Align",
+				label: "对齐",
 				propertyKey: "textAlign",
 				component: OptionToggle,
 				options: [
 					{
-						label: "Left",
+						label: "左",
 						value: "left",
 						icon: "lucide-align-left",
 						hideLabel: true,
 					},
 					{
-						label: "Center",
+						label: "居中",
 						value: "center",
 						icon: "lucide-align-center",
 						hideLabel: true,
 					},
 					{
-						label: "Right",
+						label: "右",
 						value: "right",
 						icon: "lucide-align-right",
 						hideLabel: true,
 					},
 					{
-						label: "Justify",
+						label: "两端对齐",
 						value: "justify",
 						icon: "lucide-align-justify",
 						hideLabel: true,
@@ -225,7 +225,7 @@ const typographySectionProperties = [
 ];
 
 export default {
-	name: "Typography",
+	name: "排版",
 	properties: typographySectionProperties,
 	condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
 };

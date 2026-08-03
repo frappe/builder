@@ -13,7 +13,7 @@ const positionSectionProperties = [
 ];
 
 export default {
-	name: "Position",
+	name: "定位",
 	properties: positionSectionProperties,
 	condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
 	collapsed: computed(() => {

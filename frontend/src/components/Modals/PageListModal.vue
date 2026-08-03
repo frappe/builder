@@ -1,5 +1,5 @@
 <template>
-	<Dialog class="overscroll-none" v-model="showModel" title="Used in following pages" size="xl">
+	<Dialog class="overscroll-none" v-model="showModel" title="用于以下页面" size="xl">
 		<template #default>
 			<div class="max-h-[80vh] overflow-y-auto">
 				<div v-for="page in pages">

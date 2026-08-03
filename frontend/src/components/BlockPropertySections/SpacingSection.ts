@@ -18,6 +18,6 @@ const spacingSectionProperties = [
 ];
 
 export default {
-	name: "Spacing",
+	name: "间距",
 	properties: spacingSectionProperties,
 };
