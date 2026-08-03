@@ -2,10 +2,10 @@ import BackgroundHandler from "@/components/BackgroundHandler.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { BORDER_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions";
+import { BORDER_UNIT_OPTIONS, RADIUS_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions";
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
-import BorderRadiusControl from "@/components/BorderRadiusControl.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import BorderControl from "@/components/BorderControl.vue";
 
 const overflowOptions = [
@@ -96,8 +96,26 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: BorderRadiusControl,
-		getProps: () => {},
+		component: SplitPropertyControl,
+		getProps: () => {
+			return {
+				label: "Radius",
+				placeholder: "None",
+				propertyKey: "borderRadius",
+				unitOptions: RADIUS_UNIT_OPTIONS,
+				splits: ["TL", "TR", "BR", "BL"],
+				getModelValue: (state: string | null = null) =>
+					String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || ""),
+			};
+		},
+		events: {
+			// rounded corners only show if the content is clipped
+			"update:modelValue": (value: StyleValue) => {
+				if (!value) return;
+				if (!blockController.getStyle("overflowX")) blockController.setStyle("overflowX", "hidden");
+				if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
+			},
+		},
 		usedStyleProperties: [
 			"border-bottom-left-radius",
 			"border-bottom-right-radius",
