@@ -31,9 +31,3 @@ export interface AffectedScript {
 	script_name: string;
 	changedProps: string[];
 }
-
-/** One client-side operation emitted by the agent's `ai_chat_tool_batch` event. */
-export interface ToolOperation {
-	tool_name: string;
-	args: Record<string, any>;
-}

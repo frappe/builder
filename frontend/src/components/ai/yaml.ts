@@ -23,7 +23,7 @@ export function buildLocalMessage(
 
 /** Parse possibly-incomplete YAML (a stream in progress), trimming trailing lines
  * until it parses. Tolerates markdown fences. */
-export function getValidPartialYAML(yamlStr: string): any {
+function getValidPartialYAML(yamlStr: string): any {
 	let cleaned = yamlStr.trim();
 	if (cleaned.startsWith("```")) {
 		const lines = cleaned.split("\n");

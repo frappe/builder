@@ -68,7 +68,7 @@ def set_batch_status(batch_id: str, status: str) -> None:
 	frappe.db.commit()
 
 
-def update_batch_task(batch_id: str, task_row: str, **fields) -> None:
+def update_batch_task(task_row: str, **fields) -> None:
 	frappe.db.set_value(TASK_DOCTYPE, task_row, fields, update_modified=False)
 	frappe.db.commit()
 
@@ -206,7 +206,7 @@ def run_subagent_task(
 			logger.warning("run_subagent_task: %s already locked, skipping", task_row)
 			return  # duplicate execution — the other holder settles this task
 		try:
-			update_batch_task(batch_id, task_row, status="running")
+			update_batch_task(task_row, status="running")
 			emit(
 				parent_channel,
 				user,
@@ -218,7 +218,7 @@ def run_subagent_task(
 			)
 
 			session = AISession.create_subagent_session(user=user, model=model)
-			update_batch_task(batch_id, task_row, subagent_session=session.name)
+			update_batch_task(task_row, subagent_session=session.name)
 
 			from builder.ai.agent.loop import AgentRunner
 			from builder.ai.agent.registry import build_subagent_registry
@@ -242,7 +242,7 @@ def run_subagent_task(
 			if page_id and not page_has_blocks(page_id):
 				raise ValueError("sub-agent produced no page content")
 
-			update_batch_task(batch_id, task_row, status="done")
+			update_batch_task(task_row, status="done")
 			bump_batch_counter(batch_id, "completed_tasks")
 			emit(
 				parent_channel,
@@ -262,7 +262,7 @@ def run_subagent_task(
 
 
 def fail_task(batch_id, task_row, title, error, parent_channel, user) -> None:
-	update_batch_task(batch_id, task_row, status="failed", error=error)
+	update_batch_task(task_row, status="failed", error=error)
 	bump_batch_counter(batch_id, "failed_tasks")
 	emit(
 		parent_channel,

@@ -8,8 +8,6 @@ exists in the sub-agent registry — a sub-agent cannot spawn (recursion guard) 
 it expected to author shared components (the parent lays those down first).
 """
 
-import frappe
-
 from builder.ai import orchestration
 from builder.ai.agent.registry import Tool
 

@@ -1,7 +1,7 @@
 import type Block from "@/block";
 import type useCanvasStore from "@/stores/canvasStore";
 import type usePageStore from "@/stores/pageStore";
-import type { BuilderClientScript } from "@/types/Builder/BuilderClientScript";
+import type { BuilderClientScript } from "@/types/doctypes";
 import { getBlockInstance } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import { ref } from "vue";

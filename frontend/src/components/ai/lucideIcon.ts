@@ -20,10 +20,6 @@ function toPascalCase(name: string): string {
 		.join("");
 }
 
-export function isLucideIcon(name: string): boolean {
-	return Boolean(name && typeof iconSet[toPascalCase(name)] === "string");
-}
-
 /** Build an inline Lucide SVG string. The svg is sized to FILL its wrapper
  * (width/height 100%, viewBox preserved so it scales), so the icon's size is
  * driven by the wrapper block's width/height — editable later, not baked in.

@@ -149,32 +149,6 @@ def ensure_session_owner(session_id: str) -> None:
 		frappe.throw(_("This chat belongs to another user"), frappe.PermissionError)
 
 
-@frappe.whitelist()
-@has_page_write()
-def revert_ai_turn(session_id: str, message_id: str):
-	"""Server-side revert (no canvas to restore through): put every
-	page the turn touched back to its pre-edit snapshot, then rewind the conversation
-	— this turn and everything after it."""
-	ensure_session_owner(session_id)
-	meta = AISession.load_metadata(
-		frappe.db.get_value(
-			AISession.MESSAGE_DOCTYPE, {"name": message_id, "session": session_id}, "metadata_json"
-		)
-	)
-	# A multi-page turn carries one snapshot per page in revertSnapshots; a
-	# single-page turn just revertSnapshot.
-	snapshots = list((meta.get("revertSnapshots") or {}).values()) or [meta.get("revertSnapshot")]
-	snapshots = [s for s in snapshots if s and frappe.db.exists("Builder Snapshot", s)]
-	if not snapshots:
-		frappe.throw(_("This turn has no revert snapshot"))
-	for snapshot in snapshots:
-		page = frappe.db.get_value("Builder Snapshot", snapshot, "reference_name")
-		frappe.get_doc("Builder Page", page).restore_snapshot(snapshot)
-	session = AISession.get(session_id)
-	session.truncate_from_turn(message_id)
-	return {"messages": session.get_messages()}
-
-
 def get_owned_batch(batch_id: str):
 	"""Load a Builder AI Batch, asserting the caller owns it (or is a System Manager)."""
 	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
@@ -239,7 +213,7 @@ def publish_site_batch(batch_id: str):
 
 
 @frappe.whitelist()
-def confirm_pending_settings(message_id: str, decision: str = "apply", session_id: str | None = None):
+def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
 	HERE, on this user-triggered call — never inside the model's turn. Reads the stored
 	payload off the pending-action message and dispatches to apply_pending_action."""
@@ -475,17 +449,6 @@ def delete_ai_session(session_id: str):
 	AISession.get(session_id).clear()  # messages first (separate doctype)
 	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
 	return {"status": "ok"}
-
-
-@frappe.whitelist()
-@has_page_write()
-def clear_ai_session(page_id: str):
-	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
-		return {"session_id": "", "messages": []}
-
-	session = AISession.get_or_create(page_id)
-	session.clear()
-	return {"session_id": session.name, "messages": []}
 
 
 @frappe.whitelist()
