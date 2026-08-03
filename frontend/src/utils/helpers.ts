@@ -888,6 +888,13 @@ function isDialogOpen() {
 	return !!document.querySelector("[role='dialog']");
 }
 
+function getPageUsageMessage(count: number) {
+	if (!count) {
+		return "not used in any pages";
+	}
+	return count === 1 ? "used in 1 page" : `used in ${count} pages`;
+}
+
 function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
 	if (value === undefined || value === null || value === "") {
 		return fallback;
@@ -926,6 +933,7 @@ export {
 	getDefaultPropsList,
 	getImageBlock,
 	getNumberFromPx,
+	getPageUsageMessage,
 	getParentProps,
 	getPropValue,
 	getRepeaterScopedData,

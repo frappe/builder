@@ -58,7 +58,7 @@
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
 					ref="contentRef"
-					class="z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
+					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
 					:class="[
 						referenceElementSelector ? 'fixed' : 'absolute',
 						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
@@ -67,7 +67,7 @@
 					:style="fixedPositionStyles"
 					@after-enter="updateOptionsPosition"
 					@after-leave="fixedPositionStyles = {}">
-					<div class="overflow-y-auto p-1">
+					<div class="options-list overflow-y-auto p-1 empty:p-0">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
 							<ComboboxSeparator
 								v-if="option.value.startsWith('_separator_line')"
@@ -353,5 +353,14 @@ defineExpose({
 <style scoped>
 .can-show-arrows:hover {
 	gap: 3px !important;
+}
+
+/* Reka filters non-matching ComboboxItem elements out of the DOM itself, so once every
+   option is filtered out, the options-list div is left empty; collapse the content
+   container's border/shadow too instead of showing them around nothing. */
+.combobox-content:empty,
+.combobox-content:has(> .options-list:only-child:empty) {
+	border: none;
+	box-shadow: none;
 }
 </style>
