@@ -6,7 +6,9 @@ import { BORDER_UNIT_OPTIONS, RADIUS_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from 
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
 import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
-import BorderControl from "@/components/BorderControl.vue";
+
+const hasBorder = () =>
+	Boolean(blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"));
 
 const overflowOptions = [
 	{
@@ -82,12 +84,64 @@ const styleSectionProperties = [
 		searchKeyWords: "Text, Color, TextColor, Text Color",
 	},
 	{
-		component: BorderControl,
+		component: StylePropertyControl,
 		getProps: () => {
-			return {};
+			return {
+				label: "Border Color",
+				propertyKey: "borderColor",
+				component: ColorInput,
+				popoverOffset: 120,
+				events: {
+					// a border only shows up once it has a width and a style
+					"update:modelValue": (value: StyleValue) => {
+						if (!value) {
+							blockController.setStyle("borderWidth", null);
+							blockController.setStyle("borderStyle", null);
+						} else if (!blockController.getStyle("borderWidth")) {
+							blockController.setStyle("borderWidth", "1px");
+							blockController.setStyle("borderStyle", "solid");
+						}
+					},
+				},
+			};
 		},
-		usedStyleProperties: ["border", "border-color", "border-style", "border-width"],
-		searchKeyWords: "Border, Color, Width, Style, BorderColor, BorderWidth, BorderStyle",
+		usedStyleProperties: ["border", "border-color"],
+		searchKeyWords: "Border, Color, BorderColor, Border Color",
+	},
+	{
+		component: SplitPropertyControl,
+		getProps: () => {
+			return {
+				label: "Border Width",
+				propertyKey: "borderWidth",
+				unitOptions: BORDER_UNIT_OPTIONS,
+				splits: ["T", "R", "B", "L"],
+				toModelValue: (parts: StyleValue[]) => parts.join(" "),
+				getModelValue: (state: string | null = null) =>
+					String(blockController.getStyle(state ? `${state}:borderWidth` : "borderWidth") || ""),
+			};
+		},
+		usedStyleProperties: ["border-width"],
+		searchKeyWords: "Border, Width, BorderWidth, Border Width",
+		condition: () => hasBorder(),
+	},
+	{
+		component: StylePropertyControl,
+		getProps: () => {
+			return {
+				label: "Border Style",
+				propertyKey: "borderStyle",
+				type: "select",
+				options: [
+					{ value: "solid", label: "Solid" },
+					{ value: "dashed", label: "Dashed" },
+					{ value: "dotted", label: "Dotted" },
+				],
+			};
+		},
+		usedStyleProperties: ["border-style"],
+		searchKeyWords: "Border, Style, BorderStyle, Border Style",
+		condition: () => hasBorder(),
 	},
 	{
 		component: ShadowHandler,
