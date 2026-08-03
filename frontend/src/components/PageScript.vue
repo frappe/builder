@@ -44,7 +44,7 @@
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
-						:buttons="blockClientScriptTabs"
+						:options="blockClientScriptTabs"
 						class="w-48" />
 				</div>
 			</template>
@@ -153,11 +153,10 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
-import { toast } from "frappe-ui";
+import { TabButtons, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
 
