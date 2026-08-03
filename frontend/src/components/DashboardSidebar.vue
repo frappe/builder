@@ -3,15 +3,14 @@
 		<SidebarHeader title="Builder" :logo="builderLogo" :menuItems="appMenuItems" />
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
-			<SidebarItem
-				label="All Pages"
-				:active="!builderStore.activeFolder"
-				@click="setFolderActive('')">
-				<template #prefix><FilesIcon class="size-4" /></template>
-			</SidebarItem>
-			<SidebarItem label="Settings" @click="showSettingsDialog = true">
-				<template #prefix><SettingsIcon class="size-4" /></template>
-			</SidebarItem>
+			<nav class="space-y-0.5">
+				<SidebarItem label="All Pages" :active="!builderStore.activeFolder" @click="setFolderActive('')">
+					<template #prefix><FilesIcon class="size-4" /></template>
+				</SidebarItem>
+				<SidebarItem label="Settings" @click="showSettingsDialog = true">
+					<template #prefix><SettingsIcon class="size-4" /></template>
+				</SidebarItem>
+			</nav>
 
 			<div class="flex h-7 items-center justify-between">
 				<SidebarLabel>Folders</SidebarLabel>
@@ -23,61 +22,61 @@
 					@click="promptCreateFolder()" />
 			</div>
 
-			<p v-if="!builderProjectFolder.data?.length" class="pl-2 text-sm text-ink-gray-5">
-				No folders yet
-			</p>
-			<SidebarItem
-				v-for="project in builderProjectFolder.data"
-				:key="project.folder_name"
-				icon="lucide-folder"
-				:label="project.folder_name"
-				:active="isFolderActive(project.folder_name)"
-				@click="setFolderActive(project.folder_name)">
-				<EditableSpan
-					v-model="project.folder_name"
-					:editable="renamingFolder === project.folder_name"
-					:onChange="
-						async (newName) => {
-							await renameFolder(newName, project);
-							renamingFolder = '';
-						}
-					"
-					@blur="renamingFolder = ''"
-					class="w-full truncate text-sm capitalize">
-					{{ project.folder_name }}
-				</EditableSpan>
-				<template #suffix>
-					<Button
-						v-if="isFolderActive(project.folder_name) && project.is_standard"
-						variant="ghost"
-						size="sm"
-						icon="lucide-info"
-						disabled
-						tooltip="System generated folder cannot be edited or deleted"
-						class="cursor-pointer" />
-					<Dropdown
-						v-else-if="isFolderActive(project.folder_name)"
-						placement="right"
-						:options="[
-							{
-								label: 'Rename',
-								onClick: () => {
-									renamingFolder = project.folder_name;
+			<p v-if="!builderProjectFolder.data?.length" class="pl-2 text-sm text-ink-gray-5">No folders yet</p>
+			<nav class="mt-0.5 space-y-0.5">
+				<SidebarItem
+					v-for="project in builderProjectFolder.data"
+					:key="project.folder_name"
+					icon="lucide-folder"
+					:label="project.folder_name"
+					:active="isFolderActive(project.folder_name)"
+					@click="setFolderActive(project.folder_name)">
+					<EditableSpan
+						v-model="project.folder_name"
+						:editable="renamingFolder === project.folder_name"
+						:onChange="
+							async (newName) => {
+								await renameFolder(newName, project);
+								renamingFolder = '';
+							}
+						"
+						@blur="renamingFolder = ''"
+						class="w-full truncate text-sm capitalize">
+						{{ project.folder_name }}
+					</EditableSpan>
+					<template #suffix>
+						<Button
+							v-if="isFolderActive(project.folder_name) && project.is_standard"
+							variant="ghost"
+							size="sm"
+							icon="lucide-info"
+							disabled
+							tooltip="System generated folder cannot be edited or deleted"
+							class="cursor-pointer" />
+						<Dropdown
+							v-else-if="isFolderActive(project.folder_name)"
+							placement="right"
+							:options="[
+								{
+									label: 'Rename',
+									onClick: () => {
+										renamingFolder = project.folder_name;
+									},
+									icon: 'lucide-edit',
 								},
-								icon: 'lucide-edit',
-							},
-							{
-								label: 'Delete Folder',
-								onClick: () => deleteFolder(project.folder_name),
-								icon: 'lucide-trash',
-							},
-						]">
-						<template v-slot="{ open }">
-							<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open" />
-						</template>
-					</Dropdown>
-				</template>
-			</SidebarItem>
+								{
+									label: 'Delete Folder',
+									onClick: () => deleteFolder(project.folder_name),
+									icon: 'lucide-trash',
+								},
+							]">
+							<template v-slot="{ open }">
+								<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open" />
+							</template>
+						</Dropdown>
+					</template>
+				</SidebarItem>
+			</nav>
 		</ScrollArea>
 
 		<div class="mt-auto">
@@ -147,51 +146,54 @@ const appsSubmenu = computed(() => {
 
 // grouped options render fine (the header hands them to Dropdown), but its prop
 // type only describes a flat list
-const appMenuItems = computed(() => [
-	{
-		group: "Builder",
-		hideLabel: true,
-		items: [
+const appMenuItems = computed(
+	() =>
+		[
 			{
-				label: "New Page",
-				onClick: () => (showTemplatesDialog.value = true),
-				icon: "lucide-plus",
-			},
-		],
-	},
-	{
-		group: "Options",
-		hideLabel: true,
-		items: [
-			{
-				label: "Apps",
-				icon: "lucide-grid",
-				submenu: appsSubmenu.value,
+				group: "Builder",
+				hideLabel: true,
+				items: [
+					{
+						label: "New Page",
+						onClick: () => (showTemplatesDialog.value = true),
+						icon: "lucide-plus",
+					},
+				],
 			},
 			{
-				label: "Toggle Theme",
-				onClick: () => toggleDark(),
-				icon: isDark.value ? "lucide-sun" : "lucide-moon",
+				group: "Options",
+				hideLabel: true,
+				items: [
+					{
+						label: "Apps",
+						icon: "lucide-grid",
+						submenu: appsSubmenu.value,
+					},
+					{
+						label: "Toggle Theme",
+						onClick: () => toggleDark(),
+						icon: isDark.value ? "lucide-sun" : "lucide-moon",
+					},
+					{
+						label: "Settings",
+						onClick: () => (showSettingsDialog.value = true),
+						icon: "lucide-settings",
+					},
+				],
 			},
 			{
-				label: "Settings",
-				onClick: () => (showSettingsDialog.value = true),
-				icon: "lucide-settings",
+				group: "Help",
+				hideLabel: true,
+				items: [
+					{
+						label: "Help",
+						onClick: () => window.open("https://t.me/frappebuilder"),
+						icon: "lucide-info",
+					},
+				],
 			},
-		],
-	},
-	{
-		group: "Help",
-		hideLabel: true,
-		items: [
-			{
-				label: "Help",
-				onClick: () => window.open("https://t.me/frappebuilder"),
-				icon: "lucide-info",
-			},
-		],
-	},
-] as unknown as SidebarHeaderProps["menuItems"]);
+		] as unknown as SidebarHeaderProps["menuItems"],
+);
 
 const isFolderActive = (folderName: string) => {
 	return builderStore.activeFolder === folderName;
