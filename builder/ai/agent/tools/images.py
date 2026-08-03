@@ -149,12 +149,13 @@ def search_pexels_videos(query: str, orientation: str | None, key: str) -> list[
 		link = pick_video_file(v.get("video_files") or [])
 		if not link:
 			continue
+		author = (v.get("user") or {}).get("name")
 		out.append(
 			{
 				"url": link,
 				"thumb": v.get("image") or "",
-				"description": (v.get("user") or {}).get("name") and f"clip by {v['user']['name']}" or "",
-				"credit": (v.get("user") or {}).get("name") or "Pexels",
+				"description": f"clip by {author}" if author else "",
+				"credit": author or "Pexels",
 				"size": f"{v.get('width')}x{v.get('height')}, {v.get('duration')}s",
 			}
 		)
