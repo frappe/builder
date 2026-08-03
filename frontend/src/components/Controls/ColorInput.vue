@@ -35,7 +35,7 @@
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
-												label: 'Save as Variable',
+												label: 'Save as Token',
 												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}

@@ -15,7 +15,7 @@
 		action-label="Add Token"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-lg-semibold py-2">Design System</h2></template>
+		<template #header><h2 class="text-lg-semibold py-2">Design Tokens</h2></template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
 				<div class="mb-2">
@@ -35,7 +35,8 @@
 						icon-left="search" />
 				</div>
 
-				<div class="max-h-[60vh] overflow-y-auto">
+				<!-- a floor under the list so a short tab does not shrink the whole panel -->
+				<div class="max-h-[60vh] min-h-64 overflow-y-auto">
 					<!-- Header row -->
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
@@ -65,6 +66,7 @@
 									data-row
 									class="rounded py-2"
 									:class="rowGridClass"
+									@keydown.esc.stop.prevent="() => (newVariable = null)"
 									@focusout="(e) => handleNewRowFocusOut(e, row)"
 									@contextmenu="handleNewRowContextMenu">
 									<input
@@ -75,8 +77,7 @@
 										data-new-name
 										@mousedown.stop
 										@input="(e) => (row.token_name = inputValue(e))"
-										@keydown.enter.prevent="() => createVariable(row)"
-										@keydown.esc.stop.prevent="() => (newVariable = null)" />
+										@keydown.enter.prevent="() => createVariable(row)" />
 									<div
 										v-if="isColorType"
 										:class="[
