@@ -139,12 +139,12 @@ import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { FileUploader, Popover, Switch } from "frappe-ui";
 import { computed, defineComponent, h, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
-const { getVariableName, resolveVariableValue, variables } = useBuilderVariable();
+const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
 
 // wraps Input to style the value like ColorInput does when it displays a variable name
 const BackgroundInput = defineComponent({
@@ -155,7 +155,7 @@ const BackgroundInput = defineComponent({
 		const showsVariableName = computed(() => {
 			return (
 				!!props.modelValue &&
-				variables.value.some((builderVariable) => builderVariable.variable_name === props.modelValue)
+				variables.value.some((builderToken) => builderToken.token_name === props.modelValue)
 			);
 		});
 		return () =>

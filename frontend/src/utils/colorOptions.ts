@@ -1,13 +1,14 @@
-import { BuilderVariable } from "@/types/doctypes";
+import { BuilderToken } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
+import { tokenType } from "@/utils/useBuilderToken";
 import { defineComponent, h, shallowRef } from "vue";
 
 export function getColorVariableOptions(
 	query: string,
-	variables: BuilderVariable[],
+	variables: BuilderToken[],
 	resolveVariableValue: (val: string, dark?: boolean) => string,
 	isDark: boolean,
-	onEdit?: (variable: BuilderVariable) => void,
+	onEdit?: (variable: BuilderToken) => void,
 ) {
 	// strip var(--...) syntax, keep the rest of the query as typed
 	let processedQuery = query
@@ -15,35 +16,40 @@ export function getColorVariableOptions(
 		.replace(/\)\s*$/, "")
 		.trim();
 
-	const searchableLabel = (builderVariable: BuilderVariable) =>
-		`${builderVariable.variable_name || ""} ${builderVariable.group || ""}`;
+	// a colour literal is the current value, not a token search: it can never match a
+	// token name, and filtering by it would leave nothing to pick from
+	if (/^(#|rgba?\(|hsla?\()/i.test(processedQuery)) processedQuery = "";
 
-	// the group name is searchable along with the variable name
-	const searchableOptions = variables
-		.map((builderVariable: BuilderVariable) => ({
-			label: searchableLabel(builderVariable),
-			variable: builderVariable,
+	const colorTokens = variables.filter((builderToken) => tokenType(builderToken) === "Color");
+
+	const searchableLabel = (builderToken: BuilderToken) =>
+		`${builderToken.token_name || ""} ${builderToken.group || ""}`;
+
+	// the group name is searchable along with the token name
+	const searchableOptions = colorTokens
+		.map((builderToken: BuilderToken) => ({
+			label: searchableLabel(builderToken),
+			variable: builderToken,
 		}))
 		// alphabetical, so the options around a match are related ones
-		.sort((a, b) => (a.variable.variable_name || "").localeCompare(b.variable.variable_name || ""));
+		.sort((a, b) => (a.variable.token_name || "").localeCompare(b.variable.token_name || ""));
 
 	// the query is the current selection when it is the var() value or the
-	// variable's display name (what ColorInput shows on focus): use its full
+	// token's display name (what ColorInput shows on focus): use its full
 	// label so filterOptions windows the list around it
 	const normalizedQuery = processedQuery.toLowerCase();
-	const selectedVariable = variables.find(
-		(v) =>
-			query.trim() === `var(--${v.name})` || (v.variable_name || "").toLowerCase() === normalizedQuery,
+	const selectedToken = colorTokens.find(
+		(t) => query.trim() === `var(--${t.name})` || (t.token_name || "").toLowerCase() === normalizedQuery,
 	);
-	if (selectedVariable) processedQuery = searchableLabel(selectedVariable);
+	if (selectedToken) processedQuery = searchableLabel(selectedToken);
 
-	return filterOptions(searchableOptions, processedQuery).map(({ variable: builderVariable }) => {
-		const varName = `var(--${builderVariable.name})`;
+	return filterOptions(searchableOptions, processedQuery).map(({ variable: builderToken }) => {
+		const varName = `var(--${builderToken.name})`;
 		const resolvedLightColor = resolveVariableValue(varName);
 		const resolvedDarkColor = resolveVariableValue(varName, true);
 
 		return {
-			label: `${builderVariable.variable_name || ""}`,
+			label: `${builderToken.token_name || ""}`,
 			value: varName,
 			prefix: shallowRef(
 				defineComponent({
@@ -57,7 +63,7 @@ export function getColorVariableOptions(
 				}),
 			),
 			suffix:
-				!builderVariable.is_standard && onEdit
+				!builderToken.is_standard && onEdit
 					? shallowRef(
 							defineComponent({
 								setup() {
@@ -67,7 +73,7 @@ export function getColorVariableOptions(
 											{
 												class: "hidden group-hover:inline-block",
 												onClick: (e: Event) => {
-													onEdit(builderVariable);
+													onEdit(builderToken);
 												},
 											},
 											"Edit",

@@ -27,9 +27,10 @@
 								ref="colorInput"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="togglePopover"
+								@focus="() => !isCssVariable && togglePopover()"
 								:placeholder="displayPlaceholder"
-								:modelValue="displayValue"
+								:modelValue="modelValue"
+								:displayValue="displayValue"
 								:getOptions="getOptions"
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
@@ -57,17 +58,17 @@
 				</div>
 			</template>
 		</ColorPicker>
-		<NewBuilderVariable v-model="showVariableDialog" :variable="newVariable" @success="handleVariableSaved" />
+		<NewBuilderToken v-model="showVariableDialog" :variable="newVariable" @success="handleVariableSaved" />
 	</div>
 </template>
 <script setup lang="ts">
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
-import NewBuilderVariable from "@/components/Modals/NewBuilderVariable.vue";
+import NewBuilderToken from "@/components/Modals/NewBuilderToken.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { BuilderVariable } from "@/types/doctypes";
+import { BuilderToken } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { getRGB } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Tooltip } from "frappe-ui";
 import { computed, ComputedRef, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
@@ -83,8 +84,8 @@ const events = Object.fromEntries(
 const colorInput = ref<typeof Autocomplete | null>(null);
 const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const showVariableDialog = ref(false);
-const newVariable = ref<Partial<BuilderVariable> | null>(null);
-const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
+const newVariable = ref<Partial<BuilderToken> | null>(null);
+const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
 
 const handleEnter = () => {
 	const val = props.modelValue;
@@ -235,7 +236,7 @@ const openVariableDialog = () => {
 	showVariableDialog.value = true;
 };
 
-const handleVariableSaved = (savedVariable: BuilderVariable) => {
+const handleVariableSaved = (savedVariable: BuilderToken) => {
 	emit("update:modelValue", `var(--${savedVariable.name})`);
 };
 
@@ -249,9 +250,9 @@ const getOptions = async (query: string) => {
 		variables.value,
 		resolveVariableValue,
 		builderStore.canvasDarkMode,
-		(builderVariable) => {
+		(builderToken) => {
 			colorPickerRef.value?.togglePopover(false);
-			newVariable.value = { ...builderVariable };
+			newVariable.value = { ...builderToken };
 			showVariableDialog.value = true;
 		},
 	);
