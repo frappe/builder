@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col gap-3">
+	<div class="flex h-full min-h-0 flex-col gap-3">
 		<div class="flex items-center justify-between">
 			<div class="flex flex-col">
 				<h3 class="text-base font-medium text-ink-gray-9">Models</h3>
@@ -15,68 +15,70 @@
 			</div>
 		</div>
 
-		<div v-if="loadError" class="rounded bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
-			Could not load models: {{ loadError }}
-		</div>
-		<div
-			v-else-if="!grouped.length"
-			class="flex flex-col items-center gap-1 rounded border border-dashed border-outline-gray-2 py-8">
-			<p class="text-p-sm text-ink-gray-7">No providers yet</p>
-			<p class="text-p-xs text-ink-gray-5">
-				Run bench migrate to get the shipped shortlist, or add a provider.
-			</p>
-		</div>
-
-		<div v-for="group in grouped" :key="group.provider" class="flex flex-col">
-			<button
-				class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
-				@click="editProvider(group.provider)">
-				<span
-					class="text-p-sm font-medium"
-					:class="group.enabled ? 'text-ink-gray-7' : 'text-ink-gray-4 line-through'">
-					{{ group.label }}
-				</span>
-				<span class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
-				<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
-			</button>
-
+		<div class="min-h-0 flex-1 overflow-y-auto pb-16">
+			<div v-if="loadError" class="rounded bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
+				Could not load models: {{ loadError }}
+			</div>
 			<div
-				v-for="row in group.models"
-				:key="row.name"
-				class="group/row flex items-center gap-3 border-b border-outline-gray-1 py-2">
-				<Switch
-					size="sm"
-					:modelValue="Boolean(row.enabled)"
-					@update:modelValue="(value: boolean) => toggle(row, value)" />
-				<button class="flex min-w-0 flex-1 flex-col text-left" @click="editModel(row)">
-					<span class="flex items-center gap-1.5">
-						<span class="truncate text-p-sm text-ink-gray-8">{{ row.label }}</span>
-						<Badge v-if="row.is_default" theme="green" size="sm">Default</Badge>
-						<Badge v-else-if="row.is_simple" theme="blue" size="sm">Light loop</Badge>
-						<span
-							v-if="row.supports_vision"
-							class="lucide-eye size-3.5 text-ink-gray-4"
-							title="Accepts images" />
+				v-else-if="!grouped.length"
+				class="flex flex-col items-center gap-1 rounded border border-dashed border-outline-gray-2 py-8">
+				<p class="text-p-sm text-ink-gray-7">No providers yet</p>
+				<p class="text-p-xs text-ink-gray-5">
+					Run bench migrate to get the shipped shortlist, or add a provider.
+				</p>
+			</div>
+
+			<div v-for="group in grouped" :key="group.provider" class="flex flex-col">
+				<button
+					class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
+					@click="editProvider(group.provider)">
+					<span
+						class="text-p-sm font-medium"
+						:class="group.enabled ? 'text-ink-gray-7' : 'text-ink-gray-4 line-through'">
+						{{ group.label }}
 					</span>
-					<span class="truncate text-p-xs text-ink-gray-5">{{ row.name }}</span>
+					<span class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
+					<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
 				</button>
-				<span class="shrink-0 text-p-xs tabular-nums text-ink-gray-5">
-					{{ formatPrice(row.input_price) }} / {{ formatPrice(row.output_price) }}
-				</span>
-				<Button
-					v-if="!row.is_default && row.enabled"
-					size="sm"
-					variant="ghost"
-					class="opacity-0 group-hover/row:opacity-100"
-					@click="makeDefault(row)">
-					Make default
-				</Button>
-				<Button
-					size="sm"
-					variant="ghost"
-					icon="lucide-trash-2"
-					class="opacity-0 group-hover/row:opacity-100"
-					@click="remove(row)" />
+
+				<div
+					v-for="row in group.models"
+					:key="row.name"
+					class="group/row flex items-center gap-3 border-b border-outline-gray-1 py-2">
+					<Switch
+						size="sm"
+						:modelValue="Boolean(row.enabled)"
+						@update:modelValue="(value: boolean) => toggle(row, value)" />
+					<button class="flex min-w-0 flex-1 flex-col text-left" @click="editModel(row)">
+						<span class="flex items-center gap-1.5">
+							<span class="truncate text-p-sm text-ink-gray-8">{{ row.label }}</span>
+							<Badge v-if="row.is_default" theme="green" size="sm">Default</Badge>
+							<Badge v-else-if="row.is_simple" theme="blue" size="sm">Light loop</Badge>
+							<span
+								v-if="row.supports_vision"
+								class="lucide-eye size-3.5 text-ink-gray-4"
+								title="Accepts images" />
+						</span>
+						<span class="truncate text-p-xs text-ink-gray-5">{{ row.name }}</span>
+					</button>
+					<span class="shrink-0 text-p-xs tabular-nums text-ink-gray-5">
+						{{ formatPrice(row.input_price) }} / {{ formatPrice(row.output_price) }}
+					</span>
+					<Button
+						v-if="!row.is_default && row.enabled"
+						size="sm"
+						variant="ghost"
+						class="opacity-0 group-hover/row:opacity-100"
+						@click="makeDefault(row)">
+						Make default
+					</Button>
+					<Button
+						size="sm"
+						variant="ghost"
+						icon="lucide-trash-2"
+						class="opacity-0 group-hover/row:opacity-100"
+						@click="remove(row)" />
+				</div>
 			</div>
 		</div>
 

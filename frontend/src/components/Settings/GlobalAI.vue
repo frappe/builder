@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col gap-5">
+	<div class="flex h-full min-h-0 flex-col">
 		<AIModelList />
 	</div>
 </template>
