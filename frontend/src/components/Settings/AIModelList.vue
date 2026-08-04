@@ -1,0 +1,128 @@
+<template>
+	<div class="flex flex-col gap-3">
+		<div class="flex items-center justify-between">
+			<div class="flex flex-col">
+				<h3 class="text-base font-medium text-ink-gray-9">Models</h3>
+				<p class="text-p-xs text-ink-gray-5">
+					The picker offers every enabled model. New chats start on the default.
+				</p>
+			</div>
+			<div class="flex gap-2">
+				<Button size="sm" variant="subtle" iconLeft="lucide-server" @click="editProvider(null)">
+					Add provider
+				</Button>
+				<Button size="sm" variant="solid" iconLeft="lucide-plus" @click="editModel(null)">Add model</Button>
+			</div>
+		</div>
+
+		<div v-for="group in grouped" :key="group.provider" class="flex flex-col">
+			<button
+				class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
+				@click="editProvider(group.provider)">
+				<span class="text-p-sm font-medium text-ink-gray-7">{{ group.label }}</span>
+				<span class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
+				<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
+			</button>
+
+			<div
+				v-for="row in group.models"
+				:key="row.name"
+				class="group/row flex items-center gap-3 border-b border-outline-gray-1 py-2">
+				<Switch
+					size="sm"
+					:modelValue="Boolean(row.enabled)"
+					@update:modelValue="(value: boolean) => toggle(row, value)" />
+				<button class="flex min-w-0 flex-1 flex-col text-left" @click="editModel(row)">
+					<span class="flex items-center gap-1.5">
+						<span class="truncate text-p-sm text-ink-gray-8">{{ row.label }}</span>
+						<Badge v-if="row.is_default" theme="green" size="sm">Default</Badge>
+						<Badge v-else-if="row.is_simple" theme="blue" size="sm">Light loop</Badge>
+						<span
+							v-if="row.supports_vision"
+							class="lucide-eye size-3.5 text-ink-gray-4"
+							title="Accepts images" />
+					</span>
+					<span class="truncate text-p-xs text-ink-gray-5">{{ row.name }}</span>
+				</button>
+				<span class="shrink-0 text-p-xs tabular-nums text-ink-gray-5">
+					{{ formatPrice(row.input_price) }} / {{ formatPrice(row.output_price) }}
+				</span>
+				<Button
+					v-if="!row.is_default && row.enabled"
+					size="sm"
+					variant="ghost"
+					class="opacity-0 group-hover/row:opacity-100"
+					@click="makeDefault(row)">
+					Make default
+				</Button>
+				<Button
+					size="sm"
+					variant="ghost"
+					icon="lucide-trash-2"
+					class="opacity-0 group-hover/row:opacity-100"
+					@click="remove(row)" />
+			</div>
+		</div>
+
+		<AIModelDialog v-model="showModelDialog" :model="activeModel" @saved="reload" />
+		<AIProviderDialog v-model="showProviderDialog" :providerName="activeProvider" @saved="reload" />
+	</div>
+</template>
+
+<script setup lang="ts">
+import AIModelDialog from "@/components/Modals/AIModelDialog.vue";
+import AIProviderDialog from "@/components/Modals/AIProviderDialog.vue";
+import { aiModels, aiProviders, formatPrice, reloadAIRegistry } from "@/data/aiModels";
+import { BuilderAIModel } from "@/types/doctypes";
+import { Badge, Button, Switch, toast } from "frappe-ui";
+import { computed, onMounted, ref } from "vue";
+
+const showModelDialog = ref(false);
+const showProviderDialog = ref(false);
+const activeModel = ref<BuilderAIModel | null>(null);
+const activeProvider = ref<string | null>(null);
+
+const grouped = computed(() =>
+	(aiProviders.data || []).map((provider: any) => ({
+		provider: provider.name,
+		label: provider.provider_name,
+		hint: provider.api_base || provider.litellm_provider,
+		models: (aiModels.data || []).filter((m: any) => m.provider === provider.name),
+	})),
+);
+
+const editModel = (row: BuilderAIModel | null) => {
+	activeModel.value = row;
+	showModelDialog.value = true;
+};
+
+const editProvider = (name: string | null) => {
+	activeProvider.value = name;
+	showProviderDialog.value = true;
+};
+
+const reload = () => reloadAIRegistry();
+
+const toggle = async (row: BuilderAIModel, enabled: boolean) => {
+	await aiModels.setValue.submit({ name: row.name, enabled: enabled ? 1 : 0 });
+	reload();
+};
+
+const makeDefault = async (row: BuilderAIModel) => {
+	// The server clears the flag on whichever row held it.
+	await aiModels.setValue.submit({ name: row.name, is_default: 1 });
+	reload();
+	toast.success(`New chats will start on ${row.label}`);
+};
+
+const remove = async (row: BuilderAIModel) => {
+	if (row.is_default) {
+		toast.error("Make another model the default first");
+		return;
+	}
+	await aiModels.delete.submit(row.name);
+	reload();
+};
+
+onMounted(reload);
+</script>

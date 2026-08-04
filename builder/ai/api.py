@@ -338,6 +338,53 @@ def revert_to_message(session_id: str, message_id: str):
 	return {"messages": session.get_messages()}
 
 
+PROVIDER_FIELDS = (
+	"provider_name",
+	"route_prefix",
+	"litellm_provider",
+	"api_base",
+	"extra_headers",
+	"extra_body",
+	"enabled",
+)
+
+
+@frappe.whitelist()
+def save_ai_provider(provider: dict, name: str | None = None) -> str:
+	"""Create or update a provider from the settings UI.
+
+	Keys are merged BY NAME rather than replaced: the client never receives a
+	stored key (they live in __Auth), so a row it sends back without a value means
+	"keep the one you have". Without this merge, editing the api_base would wipe
+	every key on the provider.
+	"""
+	if not frappe.has_permission("Builder AI Provider", "write"):
+		frappe.throw(_("You are not permitted to manage AI providers"), frappe.PermissionError)
+
+	doc = (
+		frappe.get_doc("Builder AI Provider", name)
+		if name and frappe.db.exists("Builder AI Provider", name)
+		else frappe.new_doc("Builder AI Provider")
+	)
+	for field in PROVIDER_FIELDS:
+		if field in provider:
+			doc.set(field, provider[field])
+
+	stored = {row.key_name: row for row in doc.keys}
+	doc.set("keys", [])
+	for row in provider.get("keys") or []:
+		key_name = (row.get("key_name") or "").strip()
+		value = row.get("api_key") or None
+		if not value and key_name in stored:
+			value = stored[key_name].get_password("api_key", raise_exception=False)
+		if not key_name or not value:
+			continue
+		doc.append("keys", {"key_name": key_name, "api_key": value, "is_active": row.get("is_active") or 0})
+
+	doc.save()
+	return doc.name
+
+
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():

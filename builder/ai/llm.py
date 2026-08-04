@@ -151,15 +151,15 @@ def route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
 
 
 def provider_api_key(info: dict) -> str | None:
-	"""The provider's own key, when it has one. Providers without a key fall back
-	to the caller's (Builder Settings), so OpenRouter needs no duplicate entry."""
+	"""The provider's ACTIVE key, when it has one. A provider can hold several
+	(personal, work, a free tier) and the active one is a checkbox, so switching
+	costs a click rather than a re-paste. No key here falls back to the caller's
+	(Builder Settings), so OpenRouter needs no duplicate entry."""
 	provider = info.get("provider")
 	if not provider:
 		return None
 	try:
-		return frappe.get_cached_doc("Builder AI Provider", provider).get_password(
-			"api_key", raise_exception=False
-		)
+		return frappe.get_cached_doc("Builder AI Provider", provider).active_key()
 	except Exception:
 		return None
 

@@ -28,9 +28,12 @@
 		<div v-if="statusMessage" class="rounded-lg p-3 text-sm" :class="statusClass">
 			{{ statusMessage }}
 		</div>
+		<hr class="border-outline-gray-1" />
+		<AIModelList />
 	</div>
 </template>
 <script setup lang="ts">
+import AIModelList from "@/components/Settings/AIModelList.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { createResource, FormControl } from "frappe-ui";

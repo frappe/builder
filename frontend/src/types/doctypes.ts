@@ -1,18 +1,18 @@
 interface DocType {
-	name: string;
-	creation: string;
-	modified: string;
-	owner: string;
-	modified_by: string;
-}
+    name: string;
+    creation: string;
+    modified: string;
+    owner: string;
+    modified_by: string;
+  }
 
-interface ChildDocType extends DocType {
-	parent?: string;
-	parentfield?: string;
-	parenttype?: string;
-	idx?: number;
-}
-
+  interface ChildDocType extends DocType {
+    parent?: string;
+    parentfield?: string;
+    parenttype?: string;
+    idx?: number;
+  }
+  
 // Last updated: 2026-06-05 16:00:00.000000
 export interface BuilderSettings extends DocType {
 	/** Script: Code */
@@ -211,4 +211,52 @@ export interface BuilderComponent extends DocType {
 	component_id?: string;
 	/** Component Data Script: Code */
 	component_data_script?: string;
+}
+
+// Last updated: 2026-08-04 10:00:00.000000
+export interface BuilderAIProvider extends DocType {
+  /** Provider Name: Data */
+  provider_name: string;
+  /** Enabled: Check */
+  enabled: 0 | 1;
+  /** Route Prefix: Data */
+  route_prefix: string;
+  /** LiteLLM Provider: Data */
+  litellm_provider: string;
+  /** API Base: Data */
+  api_base?: string;
+  /** API Key: Password */
+  api_key?: string;
+  /** Extra Headers: Code */
+  extra_headers?: string;
+  /** Extra Body: Code */
+  extra_body?: string;
+}
+
+// Last updated: 2026-08-04 10:00:00.000000
+export interface BuilderAIModel extends DocType {
+  /** Label: Data */
+  label: string;
+  /** Provider: Link (Builder AI Provider) */
+  provider: string;
+  /** Model ID: Data */
+  model_id: string;
+  /** Enabled: Check */
+  enabled: 0 | 1;
+  /** Default Model: Check */
+  is_default: 0 | 1;
+  /** Lightweight Loop Model: Check */
+  is_simple: 0 | 1;
+  /** Supports Vision: Check */
+  supports_vision: 0 | 1;
+  /** Context Window: Int */
+  max_tokens?: number;
+  /** Temperature Override: Float */
+  temperature?: number;
+  /** Input Price: Float */
+  input_price?: number;
+  /** Output Price: Float */
+  output_price?: number;
+  /** Cache Read Price: Float */
+  cache_read_price?: number;
 }

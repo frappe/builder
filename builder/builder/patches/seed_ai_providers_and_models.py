@@ -167,7 +167,7 @@ def create_provider(spec: dict) -> None:
 	doc = frappe.get_doc({"doctype": "Builder AI Provider", "enabled": 1, **spec})
 	# Both OpenCode gateways shared one site_config key before this was configurable.
 	if spec["route_prefix"].startswith("opencode") and (key := frappe.conf.get("zen_api_key")):
-		doc.api_key = key
+		doc.append("keys", {"key_name": "site_config zen_api_key", "api_key": key, "is_active": 1})
 	doc.insert(ignore_permissions=True)
 
 

@@ -15,10 +15,11 @@
   "litellm_provider",
   "connection_section",
   "api_base",
-  "api_key",
   "column_break_conn",
   "extra_headers",
-  "extra_body"
+  "extra_body",
+  "keys_section",
+  "keys"
  ],
  "fields": [
   {
@@ -68,12 +69,6 @@
    "label": "API Base"
   },
   {
-   "description": "Leave empty to fall back to the OpenRouter key in Builder Settings.",
-   "fieldname": "api_key",
-   "fieldtype": "Password",
-   "label": "API Key"
-  },
-  {
    "fieldname": "column_break_conn",
    "fieldtype": "Column Break"
   },
@@ -90,6 +85,18 @@
    "fieldtype": "Code",
    "label": "Extra Body",
    "options": "JSON"
+  },
+  {
+   "fieldname": "keys_section",
+   "fieldtype": "Section Break",
+   "label": "API Keys"
+  },
+  {
+   "description": "Add as many keys as you like and tick one Active. Switching keys is a click, not a re-paste. With no key here, the OpenRouter key from Builder Settings is used.",
+   "fieldname": "keys",
+   "fieldtype": "Table",
+   "label": "Keys",
+   "options": "Builder AI Provider Key"
   }
  ],
  "grid_page_length": 50,
