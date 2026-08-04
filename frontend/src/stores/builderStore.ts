@@ -102,8 +102,11 @@ const useBuilderStore = defineStore("builderStore", {
 					builderSettings.reload();
 				});
 		},
-		openBuilderSettings() {
-			window.open("/app/builder-settings", "_blank");
+		openBuilderSettings(tab?: string) {
+			if (tab) {
+				this.settingsActiveTab = tab;
+			}
+			this.showSettingsDialog = true;
 		},
 	},
 });

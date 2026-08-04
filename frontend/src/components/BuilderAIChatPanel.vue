@@ -50,7 +50,10 @@
 
 		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
 			<p class="text-sm text-ink-gray-6">Configure an AI API key in Builder Settings to use chat.</p>
-			<Button variant="solid" label="Open Settings" @click="builderStore.openBuilderSettings" />
+			<Button
+				variant="solid"
+				label="Open Settings"
+				@click="builderStore.openBuilderSettings('global_ai')" />
 		</div>
 
 		<template v-else>
