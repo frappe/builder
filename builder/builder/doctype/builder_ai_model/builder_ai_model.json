@@ -87,10 +87,10 @@
    "label": "Supports Vision"
   },
   {
-   "default": "200000",
    "fieldname": "max_tokens",
    "fieldtype": "Int",
-   "label": "Context Window"
+   "label": "Context Window",
+   "description": "Detected automatically. 200,000 is assumed when unknown."
   },
   {
    "fieldname": "column_break_cap",

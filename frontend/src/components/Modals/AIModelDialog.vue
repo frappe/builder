@@ -38,48 +38,10 @@
 						placeholder="Claude Sonnet 5"
 						:hideClearButton="true" />
 				</div>
-				<div class="grid grid-cols-3 gap-4">
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Context Window</InputLabel>
-						<BuilderInput
-							type="number"
-							:modelValue="model.max_tokens"
-							@update:modelValue="(value: string) => (model.max_tokens = Number(value))"
-							:hideClearButton="true" />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Input $ / 1M</InputLabel>
-						<BuilderInput
-							type="number"
-							:modelValue="model.input_price"
-							@update:modelValue="(value: string) => (model.input_price = Number(value))"
-							:hideClearButton="true" />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Output $ / 1M</InputLabel>
-						<BuilderInput
-							type="number"
-							:modelValue="model.output_price"
-							@update:modelValue="(value: string) => (model.output_price = Number(value))"
-							:hideClearButton="true" />
-					</div>
-				</div>
 				<p class="text-p-xs text-ink-gray-5">
-					OpenRouter models take their live pricing and context window from OpenRouter; these are the
-					fallback.
+					Context window, pricing and image support are detected automatically. Edit them on the model in the
+					desk UI if a provider is not recognised.
 				</p>
-				<div class="flex flex-col gap-2">
-					<label class="flex items-center gap-2 text-p-sm text-ink-gray-8">
-						<Switch
-							size="sm"
-							:modelValue="Boolean(model.supports_vision)"
-							@update:modelValue="(value: boolean) => (model.supports_vision = value ? 1 : 0)" />
-						Accepts images
-					</label>
-					<p class="text-p-xs text-ink-gray-5">
-						Leave off unless the model takes image input: sending one to a text-only model fails the turn.
-					</p>
-				</div>
 			</div>
 		</template>
 	</Dialog>
@@ -90,7 +52,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { aiModels, aiProviders, defaultModel } from "@/data/aiModels";
 import { BuilderAIModel } from "@/types/doctypes";
-import { Dialog, Switch, toast } from "frappe-ui";
+import { Dialog, toast } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{ modelValue: boolean; model?: BuilderAIModel | null }>();
@@ -121,7 +83,7 @@ const save = async () => {
 		toast.error("Provider and model id are required");
 		return;
 	}
-	const values = { ...model.value, label: model.value.label || model.value.model_id };
+	const values = { ...model.value };
 	try {
 		if (isEdit.value) {
 			await aiModels.setValue.submit({ name: props.model!.name, ...values });

@@ -61,7 +61,7 @@ def fetch_openrouter_catalog() -> dict:
 
 		def per_million(key: str) -> float | None:
 			try:
-				return float(pricing[key]) * 1_000_000
+				return round(float(pricing[key]) * 1_000_000, 6)  # 0.1, not 0.09999999999999999
 			except (KeyError, TypeError, ValueError):
 				return None
 
@@ -144,6 +144,43 @@ def load_models() -> list[dict]:
 			}
 		)
 	return models or [dict(FALLBACK_MODEL)]
+
+
+def lookup_metadata(qualified_name: str, model_id: str) -> dict:
+	"""Context window, prices (USD per 1M) and vision support for a model, so
+	nobody has to type them in. OpenRouter models come from its catalog; everything
+	else from litellm's own model map, which knows the mainstream hosted models.
+	An unknown model returns {} and keeps whatever defaults it was given."""
+	if qualified_name.startswith("openrouter/"):
+		try:
+			if found := fetch_openrouter_catalog().get(qualified_name):
+				return {k: v for k, v in found.items() if v is not None}
+		except Exception as e:
+			logger.warning(f"OpenRouter lookup failed for {qualified_name}: {e}")
+
+	try:
+		import litellm
+
+		# the cost map directly: get_model_info raises (and logs a provider list) for
+		# every model it does not know, which is the normal case for a custom gateway
+		info = litellm.model_cost.get(model_id) or litellm.model_cost.get(model_id.split("/")[-1])
+	except Exception:
+		info = None
+	if not info:
+		return {}
+
+	def per_million(key: str) -> float | None:
+		value = info.get(key)
+		return round(value * 1_000_000, 6) if isinstance(value, int | float) else None
+
+	found = {
+		"max_tokens": info.get("max_input_tokens") or info.get("max_tokens"),
+		"input_price": per_million("input_cost_per_token"),
+		"output_price": per_million("output_cost_per_token"),
+		"cache_read_price": per_million("cache_read_input_token_cost"),
+		"vision": info.get("supports_vision"),
+	}
+	return {k: v for k, v in found.items() if v is not None}
 
 
 class ModelRegistry:

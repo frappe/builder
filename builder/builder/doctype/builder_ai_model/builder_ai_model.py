@@ -21,10 +21,33 @@ class BuilderAIModel(Document):
 		self.model_id = (self.model_id or "").strip().strip("/")
 		if not self.model_id:
 			frappe.throw(_("Model ID is required"))
+		self.label = (self.label or "").strip() or self.model_id
+		self.detect_metadata()
 		if not self.is_new() and self.name != self.qualified_name():
 			frappe.rename_doc(self.doctype, self.name, self.qualified_name(), force=True)
 		self.enforce_single_flag("is_default", _("default model"))
 		self.enforce_single_flag("is_simple", _("lightweight loop model"))
+
+	def detect_metadata(self) -> None:
+		"""Fill in what can be looked up — context window, prices, vision — so adding
+		a model only asks for its id. OpenRouter answers for its own models, litellm's
+		model map for the rest. Anything already filled in is left alone, so an edit
+		(or a model nobody knows) stands."""
+		from builder.ai.models import lookup_metadata
+
+		found = lookup_metadata(self.qualified_name(), self.model_id)
+		if not found:
+			return
+		for field, key in (
+			("max_tokens", "max_tokens"),
+			("input_price", "input_price"),
+			("output_price", "output_price"),
+			("cache_read_price", "cache_read_price"),
+		):
+			if not self.get(field) and found.get(key) is not None:
+				self.set(field, found[key])
+		if not self.supports_vision and found.get("vision"):
+			self.supports_vision = 1
 
 	def enforce_single_flag(self, fieldname: str, description: str) -> None:
 		"""Only one model can be the default (or the lightweight one) — set the flag
