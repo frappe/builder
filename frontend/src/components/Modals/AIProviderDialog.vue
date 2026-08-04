@@ -40,6 +40,14 @@
 							:placeholder="hasStoredKey ? 'Stored — type to replace' : 'sk-…'"
 							:hideClearButton="true" />
 						<Button v-if="isEdit" variant="subtle" :loading="testing" @click="test">Test</Button>
+						<Button
+							v-if="isEdit && provider.api_base"
+							variant="subtle"
+							:loading="importing"
+							title="Ask this provider which models it serves"
+							@click="importModels">
+							Import models
+						</Button>
 					</div>
 					<p v-if="testResult" class="text-p-xs" :class="testClass">{{ testResult }}</p>
 					<p v-else class="text-p-xs text-ink-gray-5">
@@ -121,6 +129,7 @@ const provider = ref<Partial<BuilderAIProvider>>(defaultProvider());
 const apiKey = ref("");
 const hasStoredKey = ref(false);
 const testing = ref(false);
+const importing = ref(false);
 const testResult = ref("");
 const testOk = ref(false);
 
@@ -191,6 +200,24 @@ const test = async () => {
 		testResult.value = (error as Error).message || "Could not reach the provider";
 	} finally {
 		testing.value = false;
+	}
+};
+
+const importModels = async () => {
+	importing.value = true;
+	try {
+		const result = (await createResource({ url: "builder.ai.api.import_provider_models" }).submit({
+			provider: props.providerName,
+		})) as { added: string[]; skipped: string[]; found: number };
+		const parts = [`Added ${result.added.length} of ${result.found}`];
+		// embeddings and rerankers answer /v1/models too; say so rather than silently dropping them
+		if (result.skipped.length) parts.push(`skipped ${result.skipped.length} non-chat`);
+		toast.success(parts.join(", "));
+		emit("saved");
+	} catch (error) {
+		toast.error((error as Error).message || "Could not import models");
+	} finally {
+		importing.value = false;
 	}
 };
 

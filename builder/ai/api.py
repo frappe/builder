@@ -371,6 +371,56 @@ def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	return doc.name
 
 
+# Embeddings and rerankers answer /v1/models too, and fail as chat models.
+NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts", "moderation")
+
+
+@frappe.whitelist()
+def import_provider_models(provider: str) -> dict:
+	"""Add every chat model an OpenAI-compatible provider advertises at /models.
+
+	Saves typing model ids by hand, and is the only way to discover what a private
+	or self-hosted gateway actually serves. Existing rows are left alone, so this
+	is safe to re-run when a provider adds a model."""
+	if not frappe.has_permission("Builder AI Model", "create"):
+		frappe.throw(_("You are not permitted to manage AI models"), frappe.PermissionError)
+
+	doc = frappe.get_doc("Builder AI Provider", provider)
+	if not doc.api_base:
+		frappe.throw(_("This provider has no API Base to ask"))
+
+	import requests
+
+	url = f"{doc.api_base.rstrip('/')}/models"
+	headers = {"Content-Type": "application/json", **doc.parsed("extra_headers")}
+	if key := (doc.resolved_key() or resolve_api_key()):
+		headers["Authorization"] = f"Bearer {key}"
+	try:
+		response = requests.get(url, headers=headers, timeout=20)
+		response.raise_for_status()
+		listed = response.json().get("data") or []
+	except Exception as e:
+		logger.warning(f"import_provider_models failed for {provider}: {e}")
+		frappe.throw(_("Could not reach {0}: {1}").format(url, str(e)[:200]))
+
+	added, skipped = [], []
+	for entry in listed:
+		model_id = (entry or {}).get("id")
+		if not model_id:
+			continue
+		if any(marker in model_id.lower() for marker in NON_CHAT_MARKERS):
+			skipped.append(model_id)
+			continue
+		if frappe.db.exists("Builder AI Model", f"{doc.route_prefix}/{model_id}"):
+			continue
+		frappe.get_doc(
+			{"doctype": "Builder AI Model", "provider": provider, "model_id": model_id, "enabled": 1}
+		).insert()
+		added.append(model_id)
+
+	return {"added": added, "skipped": skipped, "found": len(listed)}
+
+
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
