@@ -15,11 +15,10 @@
   "litellm_provider",
   "connection_section",
   "api_base",
+  "api_key",
   "column_break_conn",
   "extra_headers",
-  "extra_body",
-  "keys_section",
-  "keys"
+  "extra_body"
  ],
  "fields": [
   {
@@ -42,20 +41,18 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Changing it renames every model under it.",
+   "description": "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty.",
    "fieldname": "route_prefix",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Route Prefix",
-   "reqd": 1,
    "unique": 1
   },
   {
-   "description": "The provider litellm should call. <code>openrouter</code> for OpenRouter, <code>openai</code> for any OpenAI-compatible gateway (OpenCode, Ollama, vLLM, LM Studio).",
+   "description": "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>.",
    "fieldname": "litellm_provider",
    "fieldtype": "Data",
-   "label": "LiteLLM Provider",
-   "reqd": 1
+   "label": "LiteLLM Provider"
   },
   {
    "fieldname": "connection_section",
@@ -67,6 +64,12 @@
    "fieldname": "api_base",
    "fieldtype": "Data",
    "label": "API Base"
+  },
+  {
+   "description": "Leave empty to fall back to the OpenRouter key in Builder Settings.",
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API Key"
   },
   {
    "fieldname": "column_break_conn",
@@ -85,18 +88,6 @@
    "fieldtype": "Code",
    "label": "Extra Body",
    "options": "JSON"
-  },
-  {
-   "fieldname": "keys_section",
-   "fieldtype": "Section Break",
-   "label": "API Keys"
-  },
-  {
-   "description": "Add as many keys as you like and tick one Active. Switching keys is a click, not a re-paste. With no key here, the OpenRouter key from Builder Settings is used.",
-   "fieldname": "keys",
-   "fieldtype": "Table",
-   "label": "Keys",
-   "options": "Builder AI Provider Key"
   }
  ],
  "grid_page_length": 50,

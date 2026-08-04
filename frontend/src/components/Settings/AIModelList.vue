@@ -15,11 +15,27 @@
 			</div>
 		</div>
 
+		<div v-if="loadError" class="rounded bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
+			Could not load models: {{ loadError }}
+		</div>
+		<div
+			v-else-if="!grouped.length"
+			class="flex flex-col items-center gap-1 rounded border border-dashed border-outline-gray-2 py-8">
+			<p class="text-p-sm text-ink-gray-7">No providers yet</p>
+			<p class="text-p-xs text-ink-gray-5">
+				Run bench migrate to get the shipped shortlist, or add a provider.
+			</p>
+		</div>
+
 		<div v-for="group in grouped" :key="group.provider" class="flex flex-col">
 			<button
 				class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
 				@click="editProvider(group.provider)">
-				<span class="text-p-sm font-medium text-ink-gray-7">{{ group.label }}</span>
+				<span
+					class="text-p-sm font-medium"
+					:class="group.enabled ? 'text-ink-gray-7' : 'text-ink-gray-4 line-through'">
+					{{ group.label }}
+				</span>
 				<span class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
 				<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
 			</button>
@@ -86,6 +102,7 @@ const grouped = computed(() =>
 	(aiProviders.data || []).map((provider: any) => ({
 		provider: provider.name,
 		label: provider.provider_name,
+		enabled: provider.enabled,
 		hint: provider.api_base || provider.litellm_provider,
 		models: (aiModels.data || []).filter((m: any) => m.provider === provider.name),
 	})),
@@ -101,7 +118,17 @@ const editProvider = (name: string | null) => {
 	showProviderDialog.value = true;
 };
 
-const reload = () => reloadAIRegistry();
+const loadError = ref("");
+
+const reload = async () => {
+	try {
+		await reloadAIRegistry();
+		loadError.value = "";
+	} catch (error) {
+		// An unmigrated site has no doctypes: say so instead of showing an empty list.
+		loadError.value = (error as Error).message || "unknown error";
+	}
+};
 
 const toggle = async (row: BuilderAIModel, enabled: boolean) => {
 	await aiModels.setValue.submit({ name: row.name, enabled: enabled ? 1 : 0 });

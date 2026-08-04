@@ -351,13 +351,9 @@ PROVIDER_FIELDS = (
 
 @frappe.whitelist()
 def save_ai_provider(provider: dict, name: str | None = None) -> str:
-	"""Create or update a provider from the settings UI.
-
-	Keys are merged BY NAME rather than replaced: the client never receives a
-	stored key (they live in __Auth), so a row it sends back without a value means
-	"keep the one you have". Without this merge, editing the api_base would wipe
-	every key on the provider.
-	"""
+	"""Create or update a provider from the settings UI. An omitted api_key keeps
+	the stored one: the client never receives it (keys live in __Auth), so without
+	this, editing the API base would wipe the key."""
 	if not frappe.has_permission("Builder AI Provider", "write"):
 		frappe.throw(_("You are not permitted to manage AI providers"), frappe.PermissionError)
 
@@ -369,18 +365,8 @@ def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	for field in PROVIDER_FIELDS:
 		if field in provider:
 			doc.set(field, provider[field])
-
-	stored = {row.key_name: row for row in doc.keys}
-	doc.set("keys", [])
-	for row in provider.get("keys") or []:
-		key_name = (row.get("key_name") or "").strip()
-		value = row.get("api_key") or None
-		if not value and key_name in stored:
-			value = stored[key_name].get_password("api_key", raise_exception=False)
-		if not key_name or not value:
-			continue
-		doc.append("keys", {"key_name": key_name, "api_key": value, "is_active": row.get("is_active") or 0})
-
+	if provider.get("api_key"):
+		doc.api_key = provider["api_key"]
 	doc.save()
 	return doc.name
 
@@ -527,18 +513,29 @@ def update_session_message_metadata(session_id: str, metadata: dict):
 
 @frappe.whitelist()
 @has_page_write()
-def test_api_key():
-	settings = frappe.get_single("Builder Settings")
-	model = settings.get("ai_model") or "openrouter"
-	api_key = settings.get_password("ai_api_key", raise_exception=False)
-	if not api_key:
-		return {"success": False, "message": _("Please set an OpenRouter API key")}
+def test_api_key(provider: str | None = None):
+	"""Call the cheapest model this key can reach and report what happened. With a
+	provider, tests THAT provider's key and one of its models; without, the
+	OpenRouter key in Builder Settings."""
+	if provider:
+		model = frappe.db.get_value("Builder AI Model", {"provider": provider, "enabled": 1}, "name")
+		if not model:
+			return {"success": False, "message": _("Add a model to this provider first")}
+		actual_model = model
+		api_key = resolve_api_key(model)
+	else:
+		api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+		if not api_key:
+			return {"success": False, "message": _("Please set an OpenRouter API key")}
+		actual_model = ModelRegistry.get_default("openrouter")
 
-	actual_model = ModelRegistry.get_default(model)
+	from builder.ai.llm import route
 
+	call_model, overrides, api_key = route(actual_model, api_key)
 	try:
 		litellm.completion(
-			model=actual_model,
+			model=call_model,
+			**overrides,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
 			api_key=api_key,

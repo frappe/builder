@@ -3,111 +3,102 @@
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
 		:title="isEdit ? provider.provider_name || 'Edit Provider' : 'New Provider'"
-		size="xl"
-		:actions="[{ label: isEdit ? 'Update' : 'Create', variant: 'solid', onClick: save }]">
+		size="lg"
+		:actions="dialogActions">
 		<template #default>
 			<div class="flex flex-col gap-4">
-				<div class="grid grid-cols-2 gap-4">
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Name</InputLabel>
-						<BuilderInput
-							type="text"
-							:autofocus="true"
-							:modelValue="provider.provider_name"
-							@update:modelValue="(value: string) => (provider.provider_name = value)"
-							placeholder="Local Ollama"
-							:hideClearButton="true" />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>Route Prefix</InputLabel>
-						<BuilderInput
-							type="text"
-							:modelValue="provider.route_prefix"
-							@update:modelValue="(value: string) => (provider.route_prefix = value)"
-							placeholder="ollama-local"
-							:hideClearButton="true" />
-						<p class="text-p-xs text-ink-gray-5">Namespaces this provider's model names.</p>
-					</div>
-				</div>
-				<div class="grid grid-cols-2 gap-4">
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>LiteLLM Provider</InputLabel>
-						<Autocomplete
-							:options="LITELLM_PROVIDERS"
-							:modelValue="provider.litellm_provider"
-							@update:modelValue="(value: string | null) => (provider.litellm_provider = value || '')"
-							placeholder="openai" />
-						<p class="text-p-xs text-ink-gray-5">Use openai for any OpenAI-compatible endpoint.</p>
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<InputLabel>API Base</InputLabel>
-						<BuilderInput
-							type="text"
-							:modelValue="provider.api_base"
-							@update:modelValue="(value: string) => (provider.api_base = value)"
-							placeholder="http://localhost:11434/v1"
-							:hideClearButton="true" />
-						<p class="text-p-xs text-ink-gray-5">Leave empty for OpenRouter.</p>
-					</div>
+				<div class="flex flex-col gap-1.5">
+					<InputLabel>Name</InputLabel>
+					<BuilderInput
+						type="text"
+						:autofocus="true"
+						:modelValue="provider.provider_name"
+						@update:modelValue="(value: string) => (provider.provider_name = value)"
+						placeholder="Local Ollama"
+						:hideClearButton="true" />
 				</div>
 
-				<div class="flex flex-col gap-2">
-					<div class="flex items-center justify-between">
-						<InputLabel>API Keys</InputLabel>
-						<Button size="sm" variant="ghost" iconLeft="lucide-plus" @click="addKey">Add key</Button>
-					</div>
-					<p v-if="!keys.length" class="text-p-xs text-ink-gray-5">
-						No keys: this provider uses the OpenRouter key from Settings.
-					</p>
-					<div
-						v-for="(key, index) in keys"
-						:key="index"
-						class="flex items-center gap-2 rounded border border-outline-gray-1 p-2">
-						<BuilderInput
-							type="text"
-							class="w-32"
-							:modelValue="key.key_name"
-							@update:modelValue="(value: string) => (key.key_name = value)"
-							placeholder="personal"
-							:hideClearButton="true" />
+				<div class="flex flex-col gap-1.5">
+					<InputLabel>API Base</InputLabel>
+					<BuilderInput
+						type="text"
+						:modelValue="provider.api_base"
+						@update:modelValue="(value: string) => (provider.api_base = value)"
+						placeholder="http://localhost:11434/v1"
+						:hideClearButton="true" />
+					<p class="text-p-xs text-ink-gray-5">Any OpenAI-compatible endpoint. Leave empty for OpenRouter.</p>
+				</div>
+
+				<div class="flex flex-col gap-1.5">
+					<InputLabel>API Key</InputLabel>
+					<div class="flex items-center gap-2">
 						<BuilderInput
 							type="password"
 							class="flex-1"
-							:modelValue="key.api_key"
-							@update:modelValue="(value: string) => (key.api_key = value)"
-							:placeholder="key.__saved ? 'Stored — type to replace' : 'sk-…'"
+							:modelValue="apiKey"
+							@update:modelValue="(value: string) => (apiKey = value)"
+							:placeholder="hasStoredKey ? 'Stored — type to replace' : 'sk-…'"
 							:hideClearButton="true" />
-						<Button
-							:variant="key.is_active ? 'solid' : 'subtle'"
-							size="sm"
-							:title="key.is_active ? 'In use' : 'Use this key'"
-							@click="activate(index)">
-							{{ key.is_active ? "Active" : "Use" }}
-						</Button>
-						<Button variant="ghost" size="sm" icon="lucide-trash-2" @click="keys.splice(index, 1)" />
+						<Button v-if="isEdit" variant="subtle" :loading="testing" @click="test">Test</Button>
 					</div>
+					<p v-if="testResult" class="text-p-xs" :class="testClass">{{ testResult }}</p>
+					<p v-else class="text-p-xs text-ink-gray-5">
+						Leave empty to use the OpenRouter key from Builder Settings.
+					</p>
 				</div>
 
+				<label class="flex items-center gap-2 text-p-sm text-ink-gray-8">
+					<Switch
+						size="sm"
+						:modelValue="Boolean(provider.enabled)"
+						@update:modelValue="(value: boolean) => (provider.enabled = value ? 1 : 0)" />
+					Enabled
+					<span class="text-p-xs text-ink-gray-5">(off hides this provider's models)</span>
+				</label>
+
 				<details class="text-p-sm text-ink-gray-7">
-					<summary class="cursor-pointer select-none">Advanced</summary>
-					<div class="mt-3 grid grid-cols-2 gap-4">
-						<div class="flex flex-col gap-1.5">
-							<InputLabel>Extra Headers</InputLabel>
-							<BuilderInput
-								type="textarea"
-								:modelValue="provider.extra_headers"
-								@update:modelValue="(value: string) => (provider.extra_headers = value)"
-								placeholder='{"User-Agent": "…"}'
-								:hideClearButton="true" />
+					<summary class="cursor-pointer select-none text-ink-gray-6">Advanced</summary>
+					<div class="mt-3 flex flex-col gap-4">
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex flex-col gap-1.5">
+								<InputLabel>Route Prefix</InputLabel>
+								<BuilderInput
+									type="text"
+									:modelValue="provider.route_prefix"
+									@update:modelValue="(value: string) => (provider.route_prefix = value)"
+									:placeholder="derivedPrefix"
+									:hideClearButton="true" />
+								<p class="text-p-xs text-ink-gray-5">Namespaces this provider's model names.</p>
+							</div>
+							<div class="flex flex-col gap-1.5">
+								<InputLabel>LiteLLM Provider</InputLabel>
+								<BuilderInput
+									type="text"
+									:modelValue="provider.litellm_provider"
+									@update:modelValue="(value: string) => (provider.litellm_provider = value)"
+									:placeholder="provider.api_base ? 'openai' : 'openrouter'"
+									:hideClearButton="true" />
+							</div>
 						</div>
-						<div class="flex flex-col gap-1.5">
-							<InputLabel>Extra Body</InputLabel>
-							<BuilderInput
-								type="textarea"
-								:modelValue="provider.extra_body"
-								@update:modelValue="(value: string) => (provider.extra_body = value)"
-								placeholder='{"provider": {"order": ["anthropic"]}}'
-								:hideClearButton="true" />
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex flex-col gap-1.5">
+								<InputLabel>Extra Headers</InputLabel>
+								<BuilderInput
+									type="textarea"
+									:modelValue="provider.extra_headers"
+									@update:modelValue="(value: string) => (provider.extra_headers = value)"
+									placeholder='{"User-Agent": "…"}'
+									:hideClearButton="true" />
+							</div>
+							<div class="flex flex-col gap-1.5">
+								<InputLabel>Extra Body</InputLabel>
+								<BuilderInput
+									type="textarea"
+									:modelValue="provider.extra_body"
+									@update:modelValue="(value: string) => (provider.extra_body = value)"
+									placeholder='{"provider": {"order": ["anthropic"]}}'
+									:hideClearButton="true" />
+							</div>
 						</div>
 					</div>
 				</details>
@@ -117,37 +108,45 @@
 </template>
 
 <script setup lang="ts">
-import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { defaultProvider } from "@/data/aiModels";
 import { BuilderAIProvider } from "@/types/doctypes";
-import { Button, createResource, Dialog, toast } from "frappe-ui";
+import { Button, createResource, Dialog, Switch, toast } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-
-type ProviderKey = { key_name: string; api_key: string; is_active: 0 | 1; __saved?: boolean };
 
 const props = defineProps<{ modelValue: boolean; providerName?: string | null }>();
 const emit = defineEmits(["update:modelValue", "saved"]);
 
-const LITELLM_PROVIDERS = [
-	{ label: "openai (any OpenAI-compatible endpoint)", value: "openai" },
-	{ label: "openrouter", value: "openrouter" },
-	{ label: "anthropic", value: "anthropic" },
-	{ label: "gemini", value: "gemini" },
-	{ label: "ollama", value: "ollama" },
-];
-
 const provider = ref<Partial<BuilderAIProvider>>(defaultProvider());
-const keys = ref<ProviderKey[]>([]);
+const apiKey = ref("");
+const hasStoredKey = ref(false);
+const testing = ref(false);
+const testResult = ref("");
+const testOk = ref(false);
+
 const isEdit = computed(() => Boolean(props.providerName));
+const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
+const derivedPrefix = computed(() =>
+	(provider.value.provider_name || "provider")
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-|-$/g, ""),
+);
+
+const dialogActions = computed(() => [
+	...(isEdit.value ? [{ label: "Delete", theme: "red" as const, onClick: remove }] : []),
+	{ label: isEdit.value ? "Update" : "Create", variant: "solid" as const, onClick: save },
+]);
 
 watch(
 	() => props.modelValue,
 	async (open) => {
 		if (!open) return;
-		keys.value = [];
+		apiKey.value = "";
+		testResult.value = "";
 		if (!props.providerName) {
 			provider.value = defaultProvider();
+			hasStoredKey.value = false;
 			return;
 		}
 		const doc = await createResource({ url: "frappe.client.get" }).submit({
@@ -155,45 +154,19 @@ watch(
 			name: props.providerName,
 		});
 		provider.value = { ...doc };
-		// Stored keys come back masked; an untouched value means "keep it".
-		keys.value = (doc.keys || []).map((row: any) => ({
-			key_name: row.key_name,
-			api_key: "",
-			is_active: row.is_active,
-			__saved: true,
-		}));
+		// Stored keys never come back to the client; an empty box means "keep it".
+		hasStoredKey.value = Boolean(doc.api_key);
 	},
 );
 
-const addKey = () => {
-	keys.value.push({ key_name: "", api_key: "", is_active: keys.value.length ? 0 : 1 });
-};
-
-const activate = (index: number) => {
-	keys.value.forEach((key, i) => (key.is_active = i === index ? 1 : 0));
-};
-
 const save = async () => {
-	if (!provider.value.provider_name || !provider.value.route_prefix) {
-		toast.error("Name and route prefix are required");
+	if (!provider.value.provider_name) {
+		toast.error("Name is required");
 		return;
 	}
-	if (keys.value.some((key) => !key.key_name || (!key.api_key && !key.__saved))) {
-		toast.error("Every key needs a name and a value");
-		return;
-	}
-	const payload = {
-		...provider.value,
-		keys: keys.value.map((key) => ({
-			key_name: key.key_name,
-			is_active: key.is_active,
-			// omitted on purpose when untouched: the server keeps the stored key
-			...(key.api_key ? { api_key: key.api_key } : {}),
-		})),
-	};
 	try {
 		await createResource({ url: "builder.ai.api.save_ai_provider" }).submit({
-			provider: payload,
+			provider: { ...provider.value, ...(apiKey.value ? { api_key: apiKey.value } : {}) },
 			name: props.providerName || null,
 		});
 		toast.success(isEdit.value ? "Provider updated" : "Provider created");
@@ -201,6 +174,37 @@ const save = async () => {
 		emit("update:modelValue", false);
 	} catch (error) {
 		toast.error((error as Error).message || "Could not save the provider");
+	}
+};
+
+const test = async () => {
+	testing.value = true;
+	testResult.value = "";
+	try {
+		const result = (await createResource({ url: "builder.ai.api.test_api_key" }).submit({
+			provider: props.providerName,
+		})) as { success: boolean; message?: string };
+		testOk.value = result.success;
+		testResult.value = result.message || (result.success ? "Key works" : "Key failed");
+	} catch (error) {
+		testOk.value = false;
+		testResult.value = (error as Error).message || "Could not reach the provider";
+	} finally {
+		testing.value = false;
+	}
+};
+
+const remove = async () => {
+	try {
+		await createResource({ url: "frappe.client.delete" }).submit({
+			doctype: "Builder AI Provider",
+			name: props.providerName,
+		});
+		toast.success("Provider deleted");
+		emit("saved");
+		emit("update:modelValue", false);
+	} catch (error) {
+		toast.error((error as Error).message || "Could not delete the provider");
 	}
 };
 </script>

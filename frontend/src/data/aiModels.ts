@@ -50,8 +50,6 @@ export const reloadAIRegistry = async () => {
 export const defaultProvider = (): Partial<BuilderAIProvider> => ({
 	provider_name: "",
 	enabled: 1,
-	route_prefix: "",
-	litellm_provider: "openai",
 	api_base: "",
 });
 
