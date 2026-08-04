@@ -63,10 +63,10 @@ export function registerBuiltInLeftPanelTabs() {
 
 	// not a tab. It toggles a modal, so it declares an action and its own active state
 	registerLeftPanelTab({
-		name: "variables",
-		label: "Variables",
+		name: "tokens",
+		label: "Design Tokens",
 		icon: "lucide-aperture",
-		action: () => (builderStore.showVariableManager = !builderStore.showVariableManager),
-		isActive: () => builderStore.showVariableManager,
+		action: () => (builderStore.showTokenManager = !builderStore.showTokenManager),
+		isActive: () => builderStore.showTokenManager,
 	});
 }

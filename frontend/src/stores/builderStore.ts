@@ -39,7 +39,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showHTMLDialog: false,
 		showDataScriptDialog: <"page" | null>null,
 		showBlockTemplateDialog: false,
-		showVariableManager: false,
+		showTokenManager: false,
 		shortcutsModalOpen: false,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,

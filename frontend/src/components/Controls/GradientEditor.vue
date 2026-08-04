@@ -3,13 +3,13 @@
 		<!-- Type & Angle -->
 		<div class="flex items-center gap-3">
 			<TabButtons
-				:buttons="[
+				:options="[
 					{ label: 'Linear', value: 'linear-gradient' },
 					{ label: 'Radial', value: 'radial-gradient' },
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
-				class="flex-1" />
+				:class="['flex-1', STRETCH_TABS]" />
 		</div>
 
 		<div class="flex items-center gap-4">
@@ -92,12 +92,12 @@
 <script setup lang="ts">
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
 import { useMouseInElement, useMousePressed } from "@vueuse/core";
-import { Popover } from "frappe-ui";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { Popover, TabButtons } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
-import TabButtons from "./TabButtons.vue";
 
 const props = defineProps<{
 	modelValue: string | null;

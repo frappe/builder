@@ -138,7 +138,7 @@ import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
 import componentController from "@/utils/componentController.js";
-import { getBlockInstance, getRootBlockTemplate } from "@/utils/helpers";
+import { getBlockInstance, getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
@@ -387,15 +387,7 @@ watchEffect(() => {
 
 const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
 
-const usageMessage = computed(() => {
-	if (usageCount.value === 0) {
-		return "not used in any pages";
-	}
-	if (usageCount.value === 1) {
-		return "used in 1 page";
-	}
-	return `used in ${usageCount.value} pages`;
-});
+const usageMessage = computed(() => getPageUsageMessage(usageCount.value));
 
 watch(
 	() => pageCanvas.value?.block,

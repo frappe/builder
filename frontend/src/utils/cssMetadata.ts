@@ -2,6 +2,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import RangeInput from "@/components/Controls/RangeInput.vue";
 import cssPropertyMetadata from "@/data/cssPropertyMetadata.json";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import {
 	BORDER_UNIT_OPTIONS,
 	BOX_UNIT_OPTIONS,
@@ -149,10 +150,7 @@ const getCSSPropertyOptions = (query: string, excludedProperties = new Set<strin
 };
 
 const getCSSValueOptions = (property: string, query: string) => {
-	const normalizedQuery = query.toLowerCase();
-	return getKeywordOptions(property)
-		.filter((option) => !normalizedQuery || option.label.toLowerCase().includes(normalizedQuery))
-		.slice(0, MAX_SEARCH_RESULTS);
+	return filterOptions(getKeywordOptions(property), query, MAX_SEARCH_RESULTS);
 };
 
 export type { StyleControlConfig };

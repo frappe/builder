@@ -21,11 +21,15 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-[-16px] [&>div]:h-[250px] [&>div]:!min-h-[200px]">
+	<div class="mx-[-16px]">
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			Loading...
 		</div>
-		<AxisChart v-else-if="data.data && data.data.length" :config="chartConfigData" :events="chartEvents" />
+		<AxisChart
+			v-else-if="data.data && data.data.length"
+			class="!h-[250px] !min-h-[200px]"
+			:config="chartConfigData"
+			:events="chartEvents" />
 		<AnalyticsEmptyState
 			v-else
 			title="No views in this period"

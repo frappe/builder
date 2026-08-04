@@ -3,6 +3,7 @@
 		<span class="text-p-sm-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
+			<slot name="label-suffix"></slot>
 		</span>
 		<div
 			:style="{

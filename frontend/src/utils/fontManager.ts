@@ -1,4 +1,5 @@
 import userFont from "@/data/userFonts";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { shallowRef } from "vue";
 
 interface FontListItem {
@@ -56,30 +57,55 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 }
 
 function loadGoogleFont(font: string, weight?: string): Promise<string> {
-	const familyParam = weight ? `${encodeURIComponent(font)}:wght@${weight}` : encodeURIComponent(font);
-
 	return new Promise<string>((resolve) => {
-		const id = `gf-${font.replace(/\s+/g, "-")}${weight ? `-${weight}` : ""}`;
-		const link = document.createElement("link");
-		link.id = id;
-		link.rel = "stylesheet";
-		link.crossOrigin = "anonymous";
-		link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
-		link.addEventListener("load", () => resolve(font), { once: true });
-		link.addEventListener(
-			"error",
-			() => {
-				console.warn(`Failed to load font: ${font}`);
-				resolve(font);
-			},
-			{ once: true },
-		);
-		document.head.appendChild(link);
+		const attempt = (withWeight: boolean) => {
+			const familyParam = withWeight
+				? `${encodeURIComponent(font)}:wght@${weight}`
+				: encodeURIComponent(font);
+			const link = document.createElement("link");
+			link.id = `gf-${font.replace(/\s+/g, "-")}${withWeight ? `-${weight}` : ""}`;
+			link.rel = "stylesheet";
+			link.crossOrigin = "anonymous";
+			link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
+			link.addEventListener("load", () => resolve(font), { once: true });
+			link.addEventListener(
+				"error",
+				() => {
+					link.remove();
+					if (withWeight) {
+						// Single-weight faces (Italiana, Young Serif, Caprasimo…) 400 on ANY
+						// wght@ request — the css2 API rejects weights a family doesn't carry.
+						// Retry the family default; the browser synthesises the bold.
+						attempt(false);
+						return;
+					}
+					console.warn(`Failed to load font: ${font}`);
+					resolve(font);
+				},
+				{ once: true },
+			);
+			document.head.appendChild(link);
+		};
+		attempt(!!weight);
 	});
+}
+
+// A Font design token (fontFamily: var(--id)) stands in for its family, so every
+// caller can work with the family without knowing whether a style is tokenized.
+function resolveFontToken(font: string): string {
+	if (!font.includes("var(")) return font;
+	const { resolveVariableValue } = useBuilderToken();
+	const resolved = resolveVariableValue(font);
+	return resolved === font ? "" : resolved; // unknown token: no family to work with
 }
 
 export function setFont(font: string | null, weight?: string): Promise<string> {
 	if (!font) return Promise.resolve("");
+	if (font.includes("var(")) {
+		const resolved = resolveFontToken(font);
+		if (!resolved) return Promise.resolve(font);
+		font = resolved;
+	}
 	const cacheKey = weight ? `${font}:${weight}` : font;
 	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
@@ -105,7 +131,8 @@ export function setFontFromHTML(html: string): void {
 
 export function getFontWeightOptions(font: string): WeightOption[] {
 	loadFontList();
-	const fontObj = font && fontListItems.value.find((f) => f.family === font);
+	const family = font ? resolveFontToken(font) : font;
+	const fontObj = family && fontListItems.value.find((f) => f.family === family);
 	if (!fontObj) return [{ value: "400", label: "Regular" }];
 
 	return fontObj.variants

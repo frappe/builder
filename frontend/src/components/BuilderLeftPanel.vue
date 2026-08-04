@@ -33,7 +33,7 @@
 			</template>
 		</div>
 
-		<VariableManager v-model="builderStore.showVariableManager" :container="miniSidebar" />
+		<TokenManager v-model="builderStore.showTokenManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -42,7 +42,7 @@ import {
 	registerBuiltInLeftPanelTabs,
 	type LeftPanelTab,
 } from "@/components/LeftPanelTabs";
-import VariableManager from "@/components/Modals/VariableManager.vue";
+import TokenManager from "@/components/Modals/TokenManager.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { Tooltip } from "frappe-ui";
 import { reactive, Ref, ref, watch, watchEffect } from "vue";
@@ -64,7 +64,7 @@ const isActive = (tab: LeftPanelTab) =>
 const select = (tab: LeftPanelTab) => {
 	if (tab.action) return tab.action();
 	builderStore.leftPanelActiveTab = tab.name;
-	builderStore.showVariableManager = false;
+	builderStore.showTokenManager = false;
 };
 
 // a non-lazy tab mounts as soon as it registers, a lazy one on first open
@@ -80,7 +80,7 @@ watchEffect(() => {
 watch(
 	() => route.fullPath,
 	() => {
-		builderStore.showVariableManager = false;
+		builderStore.showTokenManager = false;
 	},
 );
 </script>
