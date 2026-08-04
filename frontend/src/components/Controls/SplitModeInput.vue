@@ -4,7 +4,7 @@
 			<Input
 				class="min-w-0 flex-1"
 				:modelValue="displayValue"
-				:placeholder="split && splitCount && !displayValue ? 'Mixed' : placeholder"
+				:placeholder="split && splitCount && !displayValue && modelValue ? 'Mixed' : placeholder"
 				:type="type"
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
