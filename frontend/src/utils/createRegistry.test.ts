@@ -113,4 +113,14 @@ describe("createRegistry", () => {
 		expect(registry.visible.value).toHaveLength(1);
 		expect(registry.visible.value[0].label).toBe("new");
 	});
+
+	it("keeps a replacement when the replaced registration unregisters", () => {
+		const registry = createRegistry<TestItem>();
+		const removeOld = registry.register({ name: "tab", label: "old" });
+		registry.register({ name: "tab", label: "new" });
+
+		removeOld();
+		expect(names(registry.visible.value)).toEqual(["tab"]);
+		expect(registry.visible.value[0].label).toBe("new");
+	});
 });

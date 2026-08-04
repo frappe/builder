@@ -1,4 +1,4 @@
-import { computed, reactive } from "vue";
+import { computed, reactive, toRaw } from "vue";
 
 /** Every registry item needs a stable identity and a sort position. */
 export type RegistryEntry = {
@@ -32,8 +32,12 @@ export function createRegistry<T extends RegistryEntry>() {
 	const register = (item: T) => {
 		const rank = item.rank ?? nextAutoRank;
 		nextAutoRank = Math.max(nextAutoRank, rank + RANK_STEP);
-		items.set(item.name, { ...item, rank });
-		return () => items.delete(item.name);
+		const registered = { ...item, rank };
+		items.set(item.name, registered);
+		// a later registration under the same name owns the entry, so this must not delete it
+		return () => {
+			if (toRaw(items.get(item.name)) === registered) items.delete(item.name);
+		};
 	};
 
 	const unregister = (name: string) => items.delete(name);
