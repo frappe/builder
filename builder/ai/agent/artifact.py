@@ -246,7 +246,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		# (the parse error itself is logged by parse_generation_yaml with line info).
 		dump = frappe.get_site_path("private", "files", f"ai-failed-generation-{ctx.page_id}.yaml")
 		try:
-			with open(dump, "w") as f:
+			with open(dump, "w") as f:  # nosemgrep
 				f.write(yaml_text)
 		except OSError:
 			dump = "<unwritable>"

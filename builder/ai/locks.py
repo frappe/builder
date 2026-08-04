@@ -49,7 +49,9 @@ def session_key(session_id: str) -> str:
 def acquire(key: str, ttl: int) -> str | None:
 	"""Atomically acquire `key`. Returns the release token, or None if already held."""
 	token = secrets.token_hex(8)
-	cache = frappe.cache()
+	# make_key scopes the key to the current site, so this is multi-tenant safe; the
+	# raw client is required because set_value has no NX flag (see module docstring).
+	cache = frappe.cache()  # nosemgrep
 	return token if cache.set(cache.make_key(key), token, nx=True, ex=ttl) else None
 
 

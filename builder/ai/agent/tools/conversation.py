@@ -118,7 +118,8 @@ def sanitize_ui(raw) -> list[dict]:
 	elements = elements[:MAX_ELEMENTS]
 	for el in elements:
 		if el.get("kind") == "choices":
-			el["options"] = [o for o in map(sanitize_option, el.get("options") or []) if o]
+			sanitized = (sanitize_option(o) for o in el.get("options") or [])
+			el["options"] = [o for o in sanitized if o]
 		elif el.get("kind") == "color_input":
 			el["colors"] = sanitize_color_slots(el.get("colors"))
 	while elements and len(json.dumps(elements)) > MAX_UI_JSON:

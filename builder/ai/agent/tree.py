@@ -22,8 +22,8 @@ from builder.ai.block_codec import STANDARD_ATTRS
 BIND_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
 
 
-def bad_bind_keys(args: dict) -> list[str]:
-	bind = args.get("bind")
+def bad_bind_keys(op: dict) -> list[str]:
+	bind = op.get("bind")
 	if not isinstance(bind, dict):
 		return []
 	from builder.ai.page_writer import strip_binding_prefix
@@ -47,8 +47,8 @@ REPEATER_BIND_HINT = (
 )
 
 
-def repeater_bind_props(args: dict) -> list[str]:
-	bind = args.get("bind")
+def repeater_bind_props(op: dict) -> list[str]:
+	bind = op.get("bind")
 	if not isinstance(bind, dict):
 		return []
 	return [p for p in bind if p.lower() in REPEATER_BIND_PROPS]
@@ -65,18 +65,16 @@ MOUSTACHE_HINT = (
 )
 
 
-def moustache_fields(args: dict) -> list[str]:
+def moustache_fields(op: dict) -> list[str]:
 	"""Fields of an update/add payload carrying moustache text."""
 	hits = []
 	for field in ("inner_text", "inner_html"):
-		if MOUSTACHE_RE.search(str(args.get(field) or "")):
+		if MOUSTACHE_RE.search(str(op.get(field) or "")):
 			hits.append(field)
-	for key, value in (
-		(args.get("attributes") or {}).items() if isinstance(args.get("attributes"), dict) else []
-	):
+	for key, value in (op.get("attributes") or {}).items() if isinstance(op.get("attributes"), dict) else []:
 		if MOUSTACHE_RE.search(str(value or "")):
 			hits.append(f"attributes.{key}")
-	if "block" in args and MOUSTACHE_RE.search(json_dumps_safe(args.get("block"))):
+	if "block" in op and MOUSTACHE_RE.search(json_dumps_safe(op.get("block"))):
 		hits.append("block")
 	return hits
 
@@ -131,11 +129,11 @@ STYLE_INJECTION_MARKERS = (
 )
 
 
-def validate_script(args: dict) -> str:
+def validate_script(op: dict) -> str:
 	"""Script ops are otherwise free-form; the one hard rule is separation: CSS lives
 	in a script_type='CSS' script, never injected into the DOM from JavaScript."""
-	if (args.get("script_type") or "JavaScript") == "JavaScript":
-		src = args.get("script") or ""
+	if (op.get("script_type") or "JavaScript") == "JavaScript":
+		src = op.get("script") or ""
 		if any(marker in src for marker in STYLE_INJECTION_MARKERS):
 			return (
 				"FAILED: this JavaScript script injects CSS (a <style> tag). Split it into TWO "

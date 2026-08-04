@@ -67,7 +67,7 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 
 def apply_home_page(payload: dict) -> str:
 	route = (payload.get("route") or "").strip().lstrip("/")
-	frappe.db.set_value("Builder Settings", None, "home_page", route)
+	frappe.db.set_single_value("Builder Settings", "home_page", route)
 	return frappe._("Home page set to /{0}").format(route)
 
 

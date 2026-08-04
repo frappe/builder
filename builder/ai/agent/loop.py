@@ -341,21 +341,23 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 	return render_skeleton_context(root, selected_block_ids)
 
 
+OUTLINE_PREAMBLE = (
+	"This page is large, so you're given a compact OUTLINE (one line per block: "
+	"indentation = nesting, then ref, element, optional name, and a short text "
+	"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
+	"edit it. To see a block's full styles/attributes/text before editing, call "
+	"read_block(ref); to act on many blocks at once, call query_blocks then "
+	"update_blocks, or run_python (refs are blockIds in the `page` dict it sees)."
+)
+
+
 def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -> str:
 	"""Outline + full detail for any blocks the user has selected (so the common
 	targeted-edit case needs no read_block round-trip)."""
 	from builder.ai.agent.selectors import find_block, render_skeleton
 
 	outline = render_skeleton(root)
-	parts = [
-		"This page is large, so you're given a compact OUTLINE (one line per block: "
-		"indentation = nesting, then ref, element, optional name, and a short text "
-		"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
-		"edit it. To see a block's full styles/attributes/text before editing, call "
-		"read_block(ref); to act on many blocks at once, call query_blocks then "
-		"update_blocks, or run_python (refs are blockIds in the `page` dict it sees).",
-		outline,
-	]
+	parts = [OUTLINE_PREAMBLE, outline]
 	for ref in selected_block_ids:
 		block = find_block(root, ref)
 		if block is None:
@@ -675,12 +677,13 @@ class AgentRunner:
 		)
 		if not rows:
 			return "This site has no pages yet."
-		lines = [
-			f"- {r.name} | /{(r.route or '').lstrip('/')} | {r.page_title or ''}"
-			f" | {'published' if r.published else 'draft'}"
-			+ (f" | folder: {r.project_folder}" if r.project_folder else "")
-			for r in rows
-		]
+		lines = []
+		for r in rows:
+			line = f"- {r.name} | /{(r.route or '').lstrip('/')} | {r.page_title or ''}"
+			line += f" | {'published' if r.published else 'draft'}"
+			if r.project_folder:
+				line += f" | folder: {r.project_folder}"
+			lines.append(line)
 		return "Pages on this site (id | route | title | status):\n" + "\n".join(lines)
 
 	def build_memory_context(self) -> str:
@@ -707,7 +710,8 @@ class AgentRunner:
 		# (read_page/open_page/manage_pages) without spending a discovery round-trip.
 		page_context = self.build_page_context()
 		site_context = self.build_site_context()
-		context = "\n\n".join(filter(None, [page_context, site_context, self.build_memory_context()]))
+		blocks = [page_context, site_context, self.build_memory_context()]
+		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
 			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
@@ -1379,7 +1383,7 @@ class AgentRunner:
 		and messages written in rounds 1-6. It is also what lets the editor and the
 		chat, both separate requests, see a long turn progress instead of nothing
 		until it ends. One commit per round: individual tools never commit."""
-		frappe.db.commit()  # nosemgrep: see docstring — per-round durability for a multi-minute job
+		frappe.db.commit()  # nosemgrep
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: recover stray output, guard hallucinated

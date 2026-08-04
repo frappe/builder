@@ -43,7 +43,9 @@ def run_python(ctx, args: dict) -> str:
 	}
 	try:
 		with time_limit(TIMEOUT_SECONDS):
-			exec_globals, _ = safe_exec(
+			# safe_exec IS the framework's sandbox (the same one client scripts run in),
+			# with commit/rollback further restricted below.
+			exec_globals, _ = safe_exec(  # nosemgrep
 				script,
 				_globals=script_globals,
 				restrict_commit_rollback=True,

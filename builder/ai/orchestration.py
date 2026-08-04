@@ -71,12 +71,12 @@ def emit(channel: str | None, user: str, suffix: str, **payload) -> None:
 
 def set_batch_status(batch_id: str, status: str) -> None:
 	frappe.db.set_value(BATCH_DOCTYPE, batch_id, "status", status, update_modified=False)
-	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
+	frappe.db.commit()  # nosemgrep
 
 
 def update_batch_task(task_row: str, **fields) -> None:
 	frappe.db.set_value(TASK_DOCTYPE, task_row, fields, update_modified=False)
-	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
+	frappe.db.commit()  # nosemgrep
 
 
 def bump_batch_counter(batch_id: str, field: str) -> None:
@@ -84,11 +84,13 @@ def bump_batch_counter(batch_id: str, field: str) -> None:
 	set_value would). `field` is from a fixed whitelist — never user input."""
 	if field not in COUNTER_FIELDS:
 		return
-	frappe.db.sql(
+	# The column is interpolated, never the value: `field` is checked against
+	# COUNTER_FIELDS above, and batch_id is bound as a parameter.
+	frappe.db.sql(  # nosemgrep
 		f"UPDATE `tab{BATCH_DOCTYPE}` SET `{field}` = `{field}` + 1 WHERE name = %s",
 		batch_id,
 	)
-	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
+	frappe.db.commit()  # nosemgrep
 
 
 # --- cancellation -------------------------------------------------------
