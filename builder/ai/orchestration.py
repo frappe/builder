@@ -431,7 +431,7 @@ def resume_parent_chat(batch_id: str, summary: str) -> None:
 	from builder.ai.models import ModelRegistry
 
 	try:
-		api_key = resolve_api_key()
+		api_key = resolve_api_key(ModelRegistry.get_default(batch.model or "openrouter"))
 	except Exception:
 		# The outcome message above is the durable record; a continuation without a
 		# key (removed mid-flight) would only crash the settling child's job.

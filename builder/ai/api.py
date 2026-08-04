@@ -22,10 +22,23 @@ logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
 
 
-def resolve_api_key() -> str:
+def resolve_api_key(model: str | None = None) -> str:
+	"""The key to call `model` with: its provider's own key when it has one (a
+	local or self-hosted gateway needs no OpenRouter account at all), otherwise
+	the OpenRouter key from Builder Settings."""
+	if model:
+		from builder.ai.llm import provider_api_key
+
+		info = ModelRegistry.find(model)
+		if info and (key := provider_api_key(info)):
+			return key
 	api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
 	if not api_key:
-		frappe.throw(_("Please configure an OpenRouter API key in Settings → AI"))
+		frappe.throw(
+			_(
+				"Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
+			)
+		)
 	return api_key
 
 
@@ -107,7 +120,7 @@ def run(
 				resolved_model
 			)
 		)
-	api_key = resolve_api_key()
+	api_key = resolve_api_key(resolved_model)
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
 	# Resolve inline @page references into a hint the agent can act on (stored session
@@ -277,8 +290,8 @@ def resume_agent_after_decision(session_id: str, decision: str, result: str) -> 
 		queue="default",
 		timeout=600,
 		prompt=prompt,
-		model=ModelRegistry.get_default(row.selected_model or "openrouter"),
-		api_key=resolve_api_key(),
+		model=(resumed_model := ModelRegistry.get_default(row.selected_model or "openrouter")),
+		api_key=resolve_api_key(resumed_model),
 		user=frappe.session.user,
 		page_id=None,
 		session_id=session_id,

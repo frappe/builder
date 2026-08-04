@@ -175,8 +175,11 @@ export class AIChatController {
 
 	readonly pageId = computed(() => this.route.params.pageId as string);
 	readonly isUnsavedPage = computed(() => !this.pageId.value || this.pageId.value === "new");
-	readonly currentProviderModels = computed(
-		() => this.availableModels.value.find((p) => p.provider === "openrouter")?.models || [],
+	// Every enabled provider's models, in the order the registry returns them —
+	// which providers exist is site configuration (Builder AI Provider), not a
+	// fixed list, so the picker must not name one.
+	readonly currentProviderModels = computed(() =>
+		this.availableModels.value.flatMap((p) => p.models || []),
 	);
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],

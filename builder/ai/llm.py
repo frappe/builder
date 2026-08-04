@@ -10,6 +10,8 @@ import logging
 import frappe
 import litellm
 
+from builder.ai.models import ModelRegistry
+
 litellm.drop_params = True
 
 logger = frappe.logger("builder.ai.llm")
@@ -110,47 +112,73 @@ def provider_kwargs(model: str) -> dict:
 	return {}
 
 
-# --- OpenCode (Zen + Go) ------------------------------------------------------
-# opencode.ai fronts two OpenAI-compatible gateways with native tool calling
-# (both verified): Zen (`opencode/<id>`, has a free tier) and Go (`opencode-go/
-# <id>`, a low-cost coding subscription). Selections are routed to litellm's
-# openai provider against the matching base. Both share ONE site_config key
-# (`zen_api_key`, workspace-scoped), so Builder Settings' key stays OpenRouter's.
-ZEN_API_BASE = "https://opencode.ai/zen/v1"
-# Cloudflare fronts opencode.ai and rejects default httpx/urllib agents (error 1010).
-ZEN_HEADERS = {"User-Agent": "opencode/1.18.3"}
-# provider prefix -> base URL; `opencode-go/` is checked before `opencode/`.
-OPENCODE_BASES = {"opencode-go/": "https://opencode.ai/zen/go/v1", "opencode/": ZEN_API_BASE}
+# --- provider routing --------------------------------------------------------
 
 
-def zen_route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
-	"""Rewrite an `opencode/<id>` (Zen) or `opencode-go/<id>` (Go) selection into an
-	openai-provider call against the matching base, using the shared `zen_api_key`.
-	Returns (model, litellm overrides, api_key) unchanged for other models."""
-	for prefix, base in OPENCODE_BASES.items():
-		if model.startswith(prefix):
-			return (
-				f"openai/{model[len(prefix) :]}",
-				{"api_base": base, "extra_headers": ZEN_HEADERS},
-				frappe.conf.get("zen_api_key") or api_key,
-			)
-	return model, {}, api_key
+def provider_overrides(info: dict) -> dict:
+	"""api_base / headers / body configured on the model's Builder AI Provider."""
+	overrides = {}
+	if info.get("api_base"):
+		overrides["api_base"] = info["api_base"]
+	for field, key in (("extra_headers", "extra_headers"), ("extra_body", "extra_body")):
+		raw = (info.get(field) or "").strip() if isinstance(info.get(field), str) else None
+		if not raw:
+			continue
+		try:
+			overrides[key] = json.loads(raw)
+		except ValueError:
+			logger.warning(f"Ignoring invalid JSON in {field} of provider {info.get('provider')}")
+	return overrides
+
+
+def route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
+	"""Rewrite a registry model name into the call litellm should make.
+
+	The name is `<route prefix>/<model id>`; the provider says which litellm
+	provider to hand it to and where. OpenRouter maps to itself; any
+	OpenAI-compatible gateway (OpenCode, Ollama, vLLM, a private proxy) maps to
+	`openai/<id>` against the provider's api_base. Unknown models pass through
+	untouched, so a hand-typed name still reaches litellm.
+	"""
+	info = ModelRegistry.find(model)
+	if not info:
+		return model, {}, api_key
+	prefix = info.get("route_prefix") or ""
+	model_id = model[len(prefix) + 1 :] if prefix and model.startswith(f"{prefix}/") else model
+	litellm_provider = info.get("litellm_provider") or prefix
+	overrides = provider_overrides(info)
+	return f"{litellm_provider}/{model_id}", overrides, provider_api_key(info) or api_key
+
+
+def provider_api_key(info: dict) -> str | None:
+	"""The provider's own key, when it has one. Providers without a key fall back
+	to the caller's (Builder Settings), so OpenRouter needs no duplicate entry."""
+	provider = info.get("provider")
+	if not provider:
+		return None
+	try:
+		return frappe.get_cached_doc("Builder AI Provider", provider).get_password(
+			"api_key", raise_exception=False
+		)
+	except Exception:
+		return None
 
 
 def patch_params_for_provider(model: str, params: dict) -> dict:
-	"""Provider-specific param fixups. Moonshot's Kimi models (via OpenCode Go)
-	reject any temperature other than 1 with a 400, so the agent tier's 0.7 must be
-	coerced. Returns a new dict; the input is left untouched."""
-	if "kimi" in model and params.get("temperature") not in (None, 1):
-		return {**params, "temperature": 1}
-	return params
+	"""Apply the model's temperature override, if it declares one. Some models
+	(Moonshot's Kimi, for instance) reject any temperature but 1 with a 400.
+	Returns a new dict; the input is left untouched."""
+	override = ModelRegistry.temperature_override(model)
+	if override is None or params.get("temperature") in (None, override):
+		return params
+	return {**params, "temperature": override}
 
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
 	"""Plain completion. Returns the response iterator when streaming, else the
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
-	model, zen_overrides, api_key = zen_route(model, api_key)
+	model, overrides, api_key = route(model, api_key)
 	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
@@ -171,7 +199,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		# turn (dropped automatically for providers that don't support it).
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**provider_kwargs(model),
-		**zen_overrides,
+		**overrides,
 		**params,
 	)
 	if not stream:
@@ -191,7 +219,7 @@ def complete_with_tools(
 	stream: bool = False,
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
-	model, zen_overrides, api_key = zen_route(model, api_key)
+	model, overrides, api_key = route(model, api_key)
 	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
@@ -209,7 +237,7 @@ def complete_with_tools(
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**provider_kwargs(model),
-		**zen_overrides,
+		**overrides,
 		**params,
 	)
 	return resp

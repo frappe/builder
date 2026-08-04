@@ -1,15 +1,18 @@
-"""The model registry: a small CURATED allowlist + live metadata.
+"""The model registry: Builder AI Provider / Builder AI Model rows + live metadata.
 
-Which models are offered is a hand-picked QUALITY judgment — only models that
-reliably produce well-designed pages (plus one fast/cheap model for the
-lightweight conversational loop). Everything factual about them — context
-window, pricing (incl. cache-read), vision support — is fetched from
-OpenRouter's public models API and cached, so it never goes stale in code.
-The static values on each curated entry are only the offline fallback.
+Which models are offered is a configuration decision, not a code one. Providers
+and models are DocTypes, so a new gateway (OpenRouter, any OpenAI-compatible
+endpoint, a local Ollama) or a new model is added from the desk UI without a
+deploy; `builder.builder.patches.seed_ai_providers_and_models` seeds the shipped
+shortlist on migrate.
+
+Everything factual about an OpenRouter model — context window, pricing (incl.
+cache-read), vision support — is still fetched from OpenRouter's public models
+API and cached, so it never goes stale. The values stored on the row are the
+offline fallback, and the only source for every other provider.
 """
 
 import logging
-from typing import ClassVar
 
 import frappe
 import requests
@@ -19,7 +22,30 @@ logger = frappe.logger("builder.ai.models")
 logger.setLevel(logging.INFO)
 
 CATALOG_TTL = 6 * 3600
+ROWS_TTL = 3600
 FETCH_TIMEOUT = 10
+DEFAULT_CONTEXT_WINDOW = 200_000
+
+# Used only when the rows are unreachable (install/migrate ordering) or all gone,
+# so the agent still has something to call.
+FALLBACK_MODEL = {
+	"name": "openrouter/anthropic/claude-sonnet-5",
+	"label": "Claude Sonnet 5",
+	"provider": "OpenRouter",
+	"route_prefix": "openrouter",
+	"litellm_provider": "openrouter",
+	"api_base": None,
+	"extra_headers": None,
+	"extra_body": None,
+	"max_tokens": 1_000_000,
+	"input_price": 2.0,
+	"output_price": 10.0,
+	"cache_read_price": None,
+	"temperature": None,
+	"vision": True,
+	"is_default": 1,
+	"is_simple": 0,
+}
 
 
 @redis_cache(ttl=CATALOG_TTL)
@@ -49,148 +75,104 @@ def fetch_openrouter_catalog() -> dict:
 	return catalog
 
 
+@redis_cache(ttl=ROWS_TTL)
+def load_models() -> list[dict]:
+	"""Every enabled model, flattened with its provider's routing fields. Cached
+	because the loop asks for model facts many times per turn; both doctypes clear
+	it on update."""
+	try:
+		providers = {
+			p.name: p
+			for p in frappe.get_all(
+				"Builder AI Provider",
+				filters={"enabled": 1},
+				fields=[
+					"name",
+					"route_prefix",
+					"litellm_provider",
+					"api_base",
+					"extra_headers",
+					"extra_body",
+				],
+			)
+		}
+		rows = frappe.get_all(
+			"Builder AI Model",
+			filters={"enabled": 1},
+			fields=[
+				"name",
+				"label",
+				"provider",
+				"supports_vision",
+				"max_tokens",
+				"temperature",
+				"input_price",
+				"output_price",
+				"cache_read_price",
+				"is_default",
+				"is_simple",
+			],
+			order_by="creation asc",
+		)
+	except Exception as e:
+		logger.warning(f"AI model rows unavailable, using the built-in fallback: {e}")
+		return [dict(FALLBACK_MODEL)]
+
+	models = []
+	for row in rows:
+		provider = providers.get(row.provider)
+		if not provider:
+			continue  # a disabled provider takes its models with it
+		models.append(
+			{
+				"name": row.name,
+				"label": row.label or row.name,
+				"provider": provider.name,
+				"route_prefix": provider.route_prefix,
+				"litellm_provider": provider.litellm_provider,
+				"api_base": provider.api_base or None,
+				"extra_headers": provider.extra_headers or None,
+				"extra_body": provider.extra_body or None,
+				"max_tokens": row.max_tokens or DEFAULT_CONTEXT_WINDOW,
+				"input_price": row.input_price,
+				"output_price": row.output_price,
+				"cache_read_price": row.cache_read_price or None,
+				"temperature": row.temperature or None,
+				"vision": bool(row.supports_vision),
+				"is_default": row.is_default,
+				"is_simple": row.is_simple,
+			}
+		)
+	return models or [dict(FALLBACK_MODEL)]
+
+
 class ModelRegistry:
-	# The quality gate: models trusted to design good pages, in display order.
-	# Gemini 3.5 Flash stays as the cheap conversational-loop model (see
-	# PROVIDER_SIMPLE). Static fields are offline fallbacks — live OpenRouter
-	# data overrides them (see catalog()).
-	CURATED: ClassVar[list] = [
-		{
-			"name": "openrouter/anthropic/claude-sonnet-5",
-			"label": "Claude Sonnet 5",
-			"max_tokens": 1_000_000,
-			"input_price": 2.0,
-			"output_price": 10.0,
-			"vision": True,
-		},
-		{
-			"name": "openrouter/anthropic/claude-opus-4.8",
-			"label": "Claude Opus 4.8",
-			"max_tokens": 1_000_000,
-			"input_price": 5.0,
-			"output_price": 25.0,
-			"vision": True,
-		},
-		{
-			"name": "openrouter/anthropic/claude-fable-5",
-			"label": "Claude Fable 5",
-			"max_tokens": 1_000_000,
-			"input_price": 10.0,
-			"output_price": 50.0,
-			"vision": True,
-		},
-		{
-			"name": "openrouter/openai/gpt-5.5",
-			"label": "GPT-5.5",
-			"max_tokens": 1_050_000,
-			"input_price": 5.0,
-			"output_price": 30.0,
-			"vision": True,
-		},
-		{
-			"name": "openrouter/google/gemini-3.1-pro-preview",
-			"label": "Gemini 3.1 Pro",
-			"max_tokens": 1_048_576,
-			"input_price": 2.0,
-			"output_price": 12.0,
-			"vision": True,
-		},
-		{
-			"name": "openrouter/google/gemini-3.5-flash",
-			"label": "Gemini 3.5 Flash",
-			"max_tokens": 1_048_576,
-			"input_price": 1.5,
-			"output_price": 9.0,
-			"vision": True,
-		},
-		{
-			# OpenCode Go — a low-cost coding subscription, same zen_route path as Zen
-			# but against the /zen/go/v1 base (see llm.OPENCODE_BASES). Covered by the
-			# workspace subscription behind `zen_api_key`; prices below are the per-1M
-			# upper bound (overage rate) so cost estimates never understate.
-			"name": "opencode-go/kimi-k2.7-code",
-			"label": "Kimi K2.7 Code (OpenCode Go)",
-			"max_tokens": 256_000,
-			"input_price": 0.95,
-			"output_price": 4.0,
-			"vision": False,
-		},
-		{
-			"name": "opencode-go/kimi-k2.6",
-			"label": "Kimi K2.6 (OpenCode Go)",
-			"max_tokens": 256_000,
-			"input_price": 0.95,
-			"output_price": 4.0,
-			"vision": False,
-		},
-		{
-			# OpenCode Zen free tier — an OpenAI-compatible gateway with native tool
-			# calling (see llm.zen_route). Key is site_config `zen_api_key`, so these
-			# work alongside the OpenRouter models rather than replacing them.
-			# NOTE: Zen states free-tier data may be used to improve the model.
-			"name": "opencode/nemotron-3-ultra-free",
-			"label": "Nemotron 3 Ultra (OpenCode, Free)",
-			"max_tokens": 1_000_000,
-			"input_price": 0.0,
-			"output_price": 0.0,
-			"vision": False,
-		},
-		{
-			"name": "opencode/deepseek-v4-flash-free",
-			"label": "DeepSeek V4 Flash (OpenCode, Free)",
-			"max_tokens": 200_000,
-			"input_price": 0.0,
-			"output_price": 0.0,
-			"vision": False,
-		},
-		{
-			"name": "opencode/north-mini-code-free",
-			"label": "North Mini Code (OpenCode, Free)",
-			"max_tokens": 256_000,
-			"input_price": 0.0,
-			"output_price": 0.0,
-			"vision": False,
-		},
-		{
-			# Free OpenRouter tier for local testing — native tool calling, zero cost.
-			# 0.0 prices keep the whole loop (incl. the lightweight clarify/plan rounds)
-			# on this model rather than falling back to paid Gemini via PROVIDER_SIMPLE.
-			# Text-only: vision False, or an image input kills the turn.
-			"name": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
-			"label": "Nemotron 3 Ultra (Free)",
-			"max_tokens": 1_000_000,
-			"input_price": 0.0,
-			"output_price": 0.0,
-			"vision": False,
-		},
-	]
-
-	PROVIDER_DEFAULT: ClassVar[dict[str, str]] = {
-		"openrouter": "openrouter/anthropic/claude-sonnet-5",
-	}
-
-	PROVIDER_SIMPLE: ClassVar[dict[str, str]] = {
-		"openrouter": "openrouter/google/gemini-3.5-flash",
-	}
+	@classmethod
+	def clear_cache(cls) -> None:
+		load_models.clear_cache()
 
 	@classmethod
 	def catalog(cls) -> list[dict]:
-		"""The curated models with live metadata merged over the static fallbacks.
-		A failed/unreachable fetch degrades to the fallbacks, never to an error."""
+		"""The configured models with live OpenRouter metadata merged over the
+		stored values. A failed/unreachable fetch degrades to the stored values,
+		never to an error."""
 		live = {}
 		try:
 			live = fetch_openrouter_catalog()
 		except Exception as e:
-			logger.warning(f"OpenRouter catalog fetch failed, using static fallbacks: {e}")
+			logger.warning(f"OpenRouter catalog fetch failed, using stored values: {e}")
 		return [
 			{**m, **{k: v for k, v in (live.get(m["name"]) or {}).items() if v is not None}}
-			for m in cls.CURATED
+			for m in load_models()
 		]
 
 	@classmethod
 	def available(cls) -> list[dict]:
 		"""Provider-grouped catalog — the shape the model picker consumes."""
-		return [{"provider": "openrouter", "models": cls.catalog()}]
+		grouped: dict[str, list] = {}
+		for m in cls.catalog():
+			grouped.setdefault(m["provider"], []).append(m)
+		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
 	@classmethod
 	def find(cls, model_name: str) -> dict | None:
@@ -204,20 +186,21 @@ class ModelRegistry:
 		m = cls.find(model_name)
 		if m:
 			return m["label"]
-		return model_name.removeprefix("openrouter/").replace("/", " ").replace("-", " ").title()
+		return model_name.split("/", 1)[-1].replace("/", " ").replace("-", " ").title()
 
 	@classmethod
 	def detect_provider(cls, model: str) -> str | None:
-		if model.lower().startswith("openrouter/"):
-			return "openrouter"
-		return None
+		m = cls.find(model)
+		return m["provider"] if m else None
 
 	@classmethod
 	def input_price(cls, model_name: str) -> float:
 		"""Input price (USD per 1M tokens) for cost comparison. Unknown models are
 		treated as expensive (inf) so the loop safely downgrades to the cheap model."""
 		m = cls.find(model_name)
-		return m.get("input_price", float("inf")) if m else float("inf")
+		if not m or m.get("input_price") is None:
+			return float("inf")
+		return m["input_price"]
 
 	@classmethod
 	def output_price(cls, model_name: str) -> float | None:
@@ -229,7 +212,13 @@ class ModelRegistry:
 	@classmethod
 	def context_window(cls, model_name: str) -> int:
 		m = cls.find(model_name)
-		return int((m or {}).get("max_tokens") or 200_000)
+		return int((m or {}).get("max_tokens") or DEFAULT_CONTEXT_WINDOW)
+
+	@classmethod
+	def temperature_override(cls, model_name: str) -> float | None:
+		"""The temperature a model insists on, when it rejects the agent tier's."""
+		m = cls.find(model_name)
+		return m.get("temperature") if m else None
 
 	@classmethod
 	def estimate_cost(cls, model_name: str, prompt: int, completion: int, cached: int = 0) -> float | None:
@@ -247,15 +236,18 @@ class ModelRegistry:
 		return (fresh * inp + cached * cache_read + completion * outp) / 1_000_000
 
 	@classmethod
+	def simple_model(cls) -> str | None:
+		return next((m["name"] for m in cls.catalog() if m.get("is_simple")), None)
+
+	@classmethod
 	def get_simple(cls, model: str) -> str:
 		"""The model to run the lightweight conversational loop (clarify / plan /
 		targeted edits) on. Only downgrade to the cheap loop model when the
 		selected model is PRICIER than it — if the user already picked something
 		as cheap or cheaper, keep their model rather than forcing a swap."""
-		provider = cls.detect_provider(model)
-		if provider is None:
-			return cls.PROVIDER_SIMPLE.get(model, model)
-		simple = cls.PROVIDER_SIMPLE.get(provider, model)
+		simple = cls.simple_model()
+		if not simple or simple == model:
+			return model
 		if cls.input_price(model) <= cls.input_price(simple):
 			return model
 		return simple
@@ -270,7 +262,13 @@ class ModelRegistry:
 
 	@classmethod
 	def get_default(cls, model_or_provider: str) -> str:
-		return cls.PROVIDER_DEFAULT.get(model_or_provider, model_or_provider)
+		"""Resolve a selection to a model name. A known model passes through;
+		anything else (a provider name, or the legacy "openrouter" sentinel the
+		frontend still sends) resolves to the model flagged as default."""
+		if cls.find(model_or_provider):
+			return model_or_provider
+		default = next((m["name"] for m in cls.catalog() if m.get("is_default")), None)
+		return default or model_or_provider
 
 	@classmethod
 	def is_known_model(cls, model: str) -> bool:

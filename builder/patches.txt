@@ -14,5 +14,6 @@ builder.builder.patches.add_composite_index_to_web_page_view
 builder.builder.patches.migrate_ai_session_messages_to_doctype
 builder.builder.patches.refactor_builder_variables
 builder.builder.patches.reset_builder_page_clicks
+builder.builder.patches.seed_ai_providers_and_models
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
