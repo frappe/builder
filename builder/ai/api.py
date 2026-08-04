@@ -129,6 +129,7 @@ def run(
 		user=frappe.session.user,
 		page_id=page_id,
 		session_id=session_id,
+		enqueue_after_commit=True,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
 	)
@@ -236,7 +237,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		AISession.try_append_message(
 			msg.session, "assistant", "Skipped — nothing was changed.", message_type="status"
 		)
-		frappe.db.commit()
 		resumed = resume_agent_after_decision(msg.session, "skip", "")
 		return {"status": "skipped", "resumed": resumed}
 
@@ -246,7 +246,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
-	frappe.db.commit()
 	resumed = resume_agent_after_decision(msg.session, "apply", result)
 	return {"status": "applied", "message": result, "resumed": resumed}
 
@@ -283,6 +282,7 @@ def resume_agent_after_decision(session_id: str, decision: str, result: str) -> 
 		user=frappe.session.user,
 		page_id=None,
 		session_id=session_id,
+		enqueue_after_commit=True,
 	)
 	return True
 

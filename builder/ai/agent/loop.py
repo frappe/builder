@@ -557,17 +557,25 @@ class AgentRunner:
 
 	# --- realtime ---------------------------------------------------------
 
-	def emit(self, suffix: str, **kwargs):
+	def emit(self, suffix: str, *, after_commit: bool = False, **kwargs):
 		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
 		# chat + sub-agent progress). Fixed at construction — see self.channel.
+		#
+		# after_commit=True for any event whose handler READS what this turn just wrote
+		# (a reload, a refetch, the final transcript): frappe holds the emit until the
+		# transaction lands and drops it on rollback, so the client can never fetch
+		# state that doesn't exist yet. Live narration (stream/progress) emits at once.
 		event = f"{EVENT_PREFIX}_{suffix}"
 		if self.channel:
 			event = f"{event}_{self.channel}"
 		frappe.publish_realtime(
-			event, {"page_id": self.page_id, "session_id": self.session_id, **kwargs}, user=self.user
+			event,
+			{"page_id": self.page_id, "session_id": self.session_id, **kwargs},
+			user=self.user,
+			after_commit=after_commit,
 		)
 
-	def emit_page(self, suffix: str, **kwargs):
+	def emit_page(self, suffix: str, *, after_commit: bool = False, **kwargs):
 		"""Emit on the FOCUSED PAGE's channel (regardless of self.channel) so any open
 		editor acts as a live viewport on a headless build — the user can click through
 		from the chat and watch the page assemble. origin_page names the page whose
@@ -583,6 +591,7 @@ class AgentRunner:
 				**kwargs,
 			},
 			user=self.user,
+			after_commit=after_commit,
 		)
 
 	def ensure_revert_snapshot(self) -> None:
@@ -1239,16 +1248,14 @@ class AgentRunner:
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
 		)
-		frappe.db.commit()
-		self.emit("complete", message=msg)
+		self.emit("complete", message=msg, after_commit=True)
 
 	def fail_turn(self, message: str) -> None:
 		"""End the turn with a persisted error message + error event."""
 		AISession.try_append_message(
 			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
 		)
-		frappe.db.commit()  # commit before emit so the client's reload sees it
-		self.emit("error", message=message)
+		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
 		# Clear any stale cancel flag from a previous turn before starting.
@@ -1346,6 +1353,7 @@ class AgentRunner:
 				if turn_over:
 					return
 				self.flush_pending_images(messages)
+				self.checkpoint()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
 				# bulk edit or a stuck loop. The work done so far still applies.
@@ -1363,6 +1371,15 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def checkpoint(self) -> None:
+		"""Make this round's work durable. A turn runs as a background job, and a job
+		that raises rolls the WHOLE transaction back (background_jobs.execute_job) —
+		without this, a provider timeout in round 7 would discard the pages, scripts
+		and messages written in rounds 1-6. It is also what lets the editor and the
+		chat, both separate requests, see a long turn progress instead of nothing
+		until it ends. One commit per round: individual tools never commit."""
+		frappe.db.commit()  # nosemgrep: see docstring — per-round durability for a multi-minute job
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: recover stray output, guard hallucinated
@@ -1413,8 +1430,7 @@ class AgentRunner:
 			AISession.try_append_message(
 				self.session_id, "assistant", note, message_type="status", metadata=metadata
 			)
-			frappe.db.commit()
-			self.emit("error", message=note, warning=True)
+			self.emit("error", message=note, warning=True, after_commit=True)
 			return
 
 		# Backstop: the model still claims an edit it never made (no ops applied, no
@@ -1538,8 +1554,7 @@ class AgentRunner:
 			metadata=final_metadata,
 		)
 		self.maybe_name_session()
-		frappe.db.commit()  # commit before emit so the client's reload sees the final turn
-		self.emit("complete", message=summary_text or "Done")
+		self.emit("complete", message=summary_text or "Done", after_commit=True)
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads

@@ -378,7 +378,6 @@ class AISession:
 		)
 		cutoff = user_creation or target
 		frappe.db.delete(self.MESSAGE_DOCTYPE, {"session": self._doc.name, "creation": [">=", cutoff]})
-		frappe.db.commit()
 
 	def clear(self):
 		"""Wipe all messages for this session and reset transient state."""
@@ -392,4 +391,3 @@ class AISession:
 			},
 			update_modified=False,
 		)
-		frappe.db.commit()

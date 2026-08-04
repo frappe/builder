@@ -63,14 +63,20 @@ def emit(channel: str | None, user: str, suffix: str, **payload) -> None:
 # --- batch bookkeeping --------------------------------------------------
 
 
+# The three writers below are the ONLY committing calls left outside the loop's
+# per-round checkpoint: a fan-out's progress is read by sibling worker jobs and by
+# the polling task-group card WHILE this job still runs, so each update has to land
+# in its own transaction rather than at job end.
+
+
 def set_batch_status(batch_id: str, status: str) -> None:
 	frappe.db.set_value(BATCH_DOCTYPE, batch_id, "status", status, update_modified=False)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
 
 
 def update_batch_task(task_row: str, **fields) -> None:
 	frappe.db.set_value(TASK_DOCTYPE, task_row, fields, update_modified=False)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
 
 
 def bump_batch_counter(batch_id: str, field: str) -> None:
@@ -82,7 +88,7 @@ def bump_batch_counter(batch_id: str, field: str) -> None:
 		f"UPDATE `tab{BATCH_DOCTYPE}` SET `{field}` = `{field}` + 1 WHERE name = %s",
 		batch_id,
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: cross-job progress, see note above
 
 
 # --- cancellation -------------------------------------------------------
@@ -257,7 +263,6 @@ def run_subagent_task(
 		except Exception as e:
 			logger.error("run_subagent_task failed (task=%s): %s", task_row, e, exc_info=True)
 			fail_task(batch_id, task_row, title, str(e)[:500], parent_channel, user)
-	frappe.db.commit()
 	maybe_finalize_batch(batch_id)
 
 
@@ -360,7 +365,6 @@ def spawn_parallel_agents(ctx, args: dict) -> str | None:
 			# session, the session id for a page-less one (see AgentRunner.channel).
 			parent_channel=ctx.channel,
 		)
-	frappe.db.commit()  # fires the after-commit enqueues
 
 	# The turn ends here (terminal): persist the hand-off so it survives a reload —
 	# the batchId rehydrates the task-group card — then emit it. The results arrive
@@ -372,9 +376,9 @@ def spawn_parallel_agents(ctx, args: dict) -> str | None:
 	AISession.try_append_message(
 		ctx.session_id, "assistant", message, message_type="chat", task_type="agent", metadata=metadata
 	)
-	frappe.db.commit()
 	ctx.emit(
 		"task_group",
+		after_commit=True,
 		batch_id=batch.name,
 		total=len(prepared),
 		tasks=[{"row": r, "title": t, "page": p, "status": "queued"} for r, t, _, p in prepared],
@@ -418,7 +422,6 @@ def resume_parent_chat(batch_id: str, summary: str) -> None:
 	if not batch or not batch.session:
 		return
 	AISession.try_append_message(batch.session, "assistant", summary, message_type="status")
-	frappe.db.commit()
 	if AISession.is_session_running(batch.session):
 		return
 	from builder.ai.agent.loop import run_agent_job
@@ -445,6 +448,7 @@ def resume_parent_chat(batch_id: str, summary: str) -> None:
 		run_agent_job,
 		queue="default",
 		timeout=600,
+		enqueue_after_commit=True,  # the continuation must see the outcome message above
 		prompt=prompt,
 		model=ModelRegistry.get_default(batch.model or "openrouter"),
 		api_key=api_key,

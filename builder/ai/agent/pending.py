@@ -38,13 +38,13 @@ def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 		task_type="agent",
 		metadata={"status": "pending_action", "kind": kind, "payload": payload},
 	)
-	frappe.db.commit()
 	ctx.emit(
 		"clarify",
 		question=summary,
 		options=["Apply", "Skip"],
 		pending_action={"kind": kind, "payload": payload},
 		message_id=message_id,
+		after_commit=True,
 	)
 
 
@@ -248,8 +248,6 @@ def apply_connect_form(payload: dict) -> str:
 	if page_id and frappe.db.exists("Builder Page", page_id):
 		ordered_fieldnames = [f["fieldname"] for f in fields]
 		attach_form_script(page_id, doctype, wf_name, selector, ordered_fieldnames)
-
-	frappe.db.commit()
 	slug = desk_slug(doctype)
 	return frappe._(
 		"Form connected — submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"

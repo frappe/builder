@@ -49,7 +49,6 @@ def set_page_settings(ctx, args: dict) -> str:
 		doc.save()
 	else:
 		frappe.db.set_value("Builder Page", ctx.page_id, updates)
-	frappe.db.commit()
 	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}."
 
@@ -60,7 +59,9 @@ def emit_refetch(ctx, *resources: str) -> None:
 	canvas loads these once at editor start and would otherwise show stale state
 	until a manual refresh."""
 	if ctx is not None and hasattr(ctx, "emit"):
-		ctx.emit("refetch", resources=list(resources))
+		# after_commit: the client re-READS these rows, so the emit must not outrun
+		# the round's commit (AgentRunner.checkpoint).
+		ctx.emit("refetch", resources=list(resources), after_commit=True)
 
 
 def clean_variable_id(raw: str) -> str:
@@ -102,7 +103,6 @@ def set_design_token(ctx, args: dict) -> str:
 		doc.update(fields)
 		# Full save (not db.set_value) so on_update busts the rendered-CSS cache.
 		doc.save(ignore_permissions=True)
-		frappe.db.commit()
 		emit_refetch(ctx, "variables")
 		return f"Updated theme variable '{doc.token_name}' — reference it in styles as var(--{doc.name})."
 	doc = frappe.get_doc(
@@ -110,7 +110,6 @@ def set_design_token(ctx, args: dict) -> str:
 		# set_name survives naming (insert clears doc.name before autoname runs),
 		# so the caller can know the var(--<id>) handle before the doc exists.
 	).insert(ignore_permissions=True, set_name=wanted_id or None)
-	frappe.db.commit()
 	emit_refetch(ctx, "variables")
 	return (
 		f"Created theme variable '{label}'. Reference it in styles EXACTLY as var(--{doc.name}) — "

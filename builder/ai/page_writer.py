@@ -496,12 +496,11 @@ def load_page_root(page_id: str) -> dict | None:
 
 def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	"""Persist an edited block tree back to draft_blocks (same shape persist_page
-	writes). Used by the headless loop after each round of applied block ops, so a
-	cancelled or crashed turn keeps the work done so far."""
+	writes). Used by the headless loop after each round of applied block ops; the
+	round's checkpoint commit is what makes a cancelled or crashed turn keep it."""
 	frappe.db.set_value(
 		"Builder Page", page_id, "draft_blocks", compact_json([root_block]), update_modified=True
 	)
-	frappe.db.commit()
 
 
 def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
@@ -519,5 +518,4 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	# arbitrarily often (a single retry was observed losing twice within 200ms). The
 	# generated result is authoritative and must land regardless.
 	frappe.db.set_value("Builder Page", page_id, updates, update_modified=True)
-	frappe.db.commit()
 	return blocks[0], data_script

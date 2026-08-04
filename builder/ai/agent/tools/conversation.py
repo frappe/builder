@@ -62,8 +62,8 @@ def run_present_ui(ctx, args: dict) -> str | None:
 	metadata = {"status": "ui", "text": text, "ui": ui}
 	if ctx.activity:
 		metadata["activity"] = ctx.activity  # research done before asking survives a reload
-	# Persist + commit BEFORE emitting: the realtime event triggers a session
-	# reload on the client, which must see this message already in the DB.
+	# after_commit: the event triggers a session reload on the client, which must
+	# see this message already in the DB.
 	AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
@@ -72,8 +72,7 @@ def run_present_ui(ctx, args: dict) -> str | None:
 		task_type="agent",
 		metadata=metadata,
 	)
-	frappe.db.commit()
-	ctx.emit("clarify", question=text, ui=ui)
+	ctx.emit("clarify", question=text, ui=ui, after_commit=True)
 
 
 def decline_design_card(ctx, args: dict, ui: list[dict]) -> str | None:

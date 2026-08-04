@@ -168,7 +168,6 @@ def write_page_data_script(ctx, args: dict) -> str:
 			"Rewrite without imports."
 		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
-	frappe.db.commit()
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")

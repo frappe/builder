@@ -156,7 +156,6 @@ def run_copy_page_design(ctx, args: dict) -> str:
 		ctx.page_id,
 		{"draft_blocks": compact_json([root]), "page_data_script": data_script or ""},
 	)
-	frappe.db.commit()
 	ctx.tree = WorkingTree(root)
 	return (
 		f"Copied the full design of {source} into this page — components, theme tokens, and "
