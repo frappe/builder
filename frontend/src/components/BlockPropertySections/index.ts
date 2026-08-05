@@ -37,11 +37,8 @@ export type PropertySection = RegistryItem & {
 };
 
 export const propertySections = createRegistry<PropertySection>();
-export const registerPropertySection = propertySections.register;
 
-// exported for stylePropertiesWithControls, which needs every built-in section
-// regardless of condition and runs before the panel mounts
-export const builtInSections = [
+const sections = [
 	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
@@ -64,6 +61,6 @@ export const builtInSections = [
 	moreStylesSection,
 ] as PropertySection[];
 
-export function registerBuiltInPropertySections() {
-	builtInSections.forEach((section) => registerPropertySection(section));
-}
+// registered at module load: stylePropertiesWithControls reads the registry
+// before the property panel mounts
+sections.forEach(propertySections.register);

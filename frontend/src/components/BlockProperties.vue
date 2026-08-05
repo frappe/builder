@@ -32,11 +32,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import {
-	propertySections,
-	registerBuiltInPropertySections,
-	type PropertySection,
-} from "@/components/BlockPropertySections";
+import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { toValue } from "@vueuse/core";
@@ -45,9 +41,6 @@ import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
 
-// registering here keeps the sections in the lazy PageBuilder chunk. register is
-// keyed by name, so a second mount replaces rather than duplicates.
-registerBuiltInPropertySections();
 const sections = propertySections.visible;
 
 const searchInput = ref(null) as Ref<HTMLElement | null>;
