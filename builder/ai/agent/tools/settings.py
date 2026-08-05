@@ -131,26 +131,6 @@ def request_edit_global_settings(ctx, args: dict) -> None:
 	pending.request_confirmation(ctx, "global_settings", summary, payload)
 
 
-def request_publish_site(ctx, args: dict) -> None:
-	folder = None
-	if ctx.page_id:
-		folder = frappe.db.get_value("Builder Page", ctx.page_id, "project_folder")
-	if not folder:
-		# fall back to a folder passed explicitly (site flow)
-		folder = (args.get("folder") or "").strip()
-	if not folder:
-		ctx.emit(
-			"clarify",
-			question="This page isn't part of a site folder, so there's nothing to publish as a site.",
-			options=[],
-		)
-		return
-	count = frappe.db.count("Builder Page", {"project_folder": folder})
-	pending.request_confirmation(
-		ctx, "publish_site", f"Publish all {count} page(s) in this site?", {"folder": folder}
-	)
-
-
 set_page_settings_tool = Tool(
 	name="set_page_settings",
 	side="server",
@@ -241,18 +221,9 @@ edit_global_settings_tool = Tool(
 	handler=request_edit_global_settings,
 )
 
-publish_site_tool = Tool(
-	name="publish_site",
-	side="terminal",
-	description="Propose publishing every page in this site (makes them live). SENSITIVE — ends your turn and asks the user to confirm.",
-	parameters={"type": "object", "properties": {}, "required": []},
-	handler=request_publish_site,
-)
-
 TOOLS = [
 	set_page_settings_tool,
 	set_design_token_tool,
 	set_home_page_tool,
 	edit_global_settings_tool,
-	publish_site_tool,
 ]

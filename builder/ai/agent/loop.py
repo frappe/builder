@@ -286,7 +286,7 @@ FULL_CONTEXT_LIMIT = 9000
 
 # Tools that already surface as their own card in the chat (clarify question, plan,
 # task group) — no activity line for them.
-ACTIVITY_SILENT = frozenset({"present_ui", "spawn_parallel_agents"})
+ACTIVITY_SILENT = frozenset({"present_ui"})
 
 # Server tools that only READ. Everything else that runs server-side (settings, theme,
 # data scripts, page creation, generation…) mutates real state — the no-op-claim guards
@@ -294,8 +294,6 @@ ACTIVITY_SILENT = frozenset({"present_ui", "spawn_parallel_agents"})
 # dashboard's normal mode) gets its truthful summary replaced with "I didn't apply it".
 READ_ONLY_SERVER_TOOLS = frozenset(
 	{
-		"read_page",
-		"open_page",
 		"query_blocks",
 		"read_block",
 		"get_document",
@@ -327,7 +325,7 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 	"""Render a page's block tree as model-readable context: the full compact YAML
 	for a normal page, or an outline (+ full detail for selected blocks) past
 	FULL_CONTEXT_LIMIT. Shared by the turn's page-context message and the page
-	tools (open_page / create_page / read_page)."""
+	tools."""
 	if root is None:
 		return ""
 	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
@@ -368,11 +366,8 @@ def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -
 
 
 def activity_summary(tool_name: str, args: dict, tree=None) -> str:
-	"""A short human line for the chat's live activity feed ("Read page: Home")."""
+	"""A short human line for the chat's live activity feed ("Read block: Hero")."""
 	args = args or {}
-
-	def page_title(page_id: str | None) -> str:
-		return (page_id and frappe.db.get_value("Builder Page", page_id, "page_title")) or page_id or "…"
 
 	def block_label(ref: str | None) -> str:
 		block = tree.resolve(ref) if (tree and ref) else None
@@ -380,16 +375,6 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 			return block.get("blockName") or f"<{block.get('element') or 'div'}>"
 		return ref or ""
 
-	if tool_name in ("read_page", "open_page"):
-		verb = "Read" if tool_name == "read_page" else "Opened"
-		line = f"{verb} page: {page_title(args.get('page_id'))}"
-		if args.get("block_id"):
-			line += " — one block"
-		return line
-	if tool_name == "create_page":
-		return f"Created page: {args.get('page_title') or ''}".strip()
-	if tool_name == "copy_page_design":
-		return f"Copied design from {page_title(args.get('source_page_id'))}"
 	if tool_name == "generate_page":
 		return "Building the page"
 	if tool_name == "preview_page":
@@ -425,7 +410,6 @@ class AgentRunner:
 		image_url: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
-		headless: bool = False,
 	):
 		self.prompt = prompt
 		self.model = model
@@ -433,18 +417,8 @@ class AgentRunner:
 		self.user = user or frappe.session.user
 		self.page_id = page_id
 		self.session_id = session_id
-		# Headless = no browser/canvas listening (dashboard chat + fan-out sub-agents):
-		# no page-YAML streaming, and client tools with a server twin (page scripts)
-		# apply via their handlers. Block edits are server-applied in BOTH modes.
-		self.headless = headless or not page_id
-		# The realtime channel is fixed at construction: focus_page() may change
-		# self.page_id mid-turn (the agent opening another page), and the chat that
-		# started the turn must keep receiving events on the channel it subscribed to.
+		# The realtime channel: the page the chat is attached to.
 		self.channel = page_id or session_id
-		# The page the user's editor canvas is showing (None headless). When focus
-		# moves to ANOTHER page mid-turn, client tools with a server twin must apply
-		# server-side — the canvas can't apply ops for a page it isn't showing.
-		self.canvas_page_id = page_id if not self.headless else None
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.registry = registry or build_default_registry()
@@ -453,10 +427,9 @@ class AgentRunner:
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
 			"{BUILDER_PATH}", frappe.conf.builder_path or "builder"
 		)
-		# The authoritative working tree — loaded from the DB by focus_page (in run(),
-		# or mid-turn when the dashboard agent opens/creates a page).
+		# The authoritative working tree — loaded from the DB by load_page in run().
 		self.tree: WorkingTree | None = None
-		# Page locks acquired via focus_page this turn ((key, token) pairs, token-fenced);
+		# Page locks acquired this turn ((key, token) pairs, token-fenced);
 		# released in run()'s finally.
 		self.held_locks: list[tuple[str, str]] = []
 		# Images a server tool wants shown to the model (e.g. a preview_page screenshot).
@@ -474,11 +447,10 @@ class AgentRunner:
 		self.server_mutations = 0
 		# Every client op the tree accepted this turn (block edits, scripts, generation).
 		self.applied_operations: list[dict] = []
-		# Revert bookkeeping: pending_state is the focused page's pre-turn state, not yet
-		# snapshotted; revert_snapshots maps each mutated page to its snapshot doc, so a
-		# multi-page dashboard turn reverts EVERY page it touched (not just the last).
+		# Revert bookkeeping: pending_state is the page's pre-turn state, not yet
+		# snapshotted; revert_snapshot is its snapshot doc once the turn mutates.
 		self.pending_state: dict | None = None
-		self.revert_snapshots: dict[str, str] = {}
+		self.revert_snapshot: str | None = None
 		# Per-turn debug trace (one entry per round) + why the turn ended. Persisted on
 		# the assistant message so the agent debugger can explain what the model did and
 		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
@@ -577,34 +549,15 @@ class AgentRunner:
 			after_commit=after_commit,
 		)
 
-	def emit_page(self, suffix: str, *, after_commit: bool = False, **kwargs):
-		"""Emit on the FOCUSED PAGE's channel (regardless of self.channel) so any open
-		editor acts as a live viewport on a headless build — the user can click through
-		from the chat and watch the page assemble. origin_page names the page whose
-		chat is driving this build, so the watching editor can link back to it."""
-		if not self.page_id:
-			return
-		frappe.publish_realtime(
-			f"{EVENT_PREFIX}_{suffix}_{self.page_id}",
-			{
-				"page_id": self.page_id,
-				"session_id": self.session_id,
-				"origin_page": self.canvas_page_id,
-				**kwargs,
-			},
-			user=self.user,
-			after_commit=after_commit,
-		)
-
 	def ensure_revert_snapshot(self) -> None:
-		"""Snapshot the focused page's pre-turn state the first time the turn mutates it
-		— before the mutation lands, so even a cancelled multi-round edit stays
-		revertable. One snapshot per focused page per turn (focus_page arms the next)."""
+		"""Snapshot the page's pre-turn state the first time the turn mutates it —
+		before the mutation lands, so even a cancelled multi-round edit stays
+		revertable. One snapshot per turn."""
 		if self.pending_state is None or not self.page_id:
 			return
 		state, self.pending_state = self.pending_state, None
 		if snapshot := save_revert_snapshot(self.page_id, state):
-			self.revert_snapshots[self.page_id] = snapshot
+			self.revert_snapshot = snapshot
 
 	@staticmethod
 	def cached_prompt_tokens(usage) -> int:
@@ -665,27 +618,6 @@ class AgentRunner:
 	def build_page_context(self) -> str:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
-	def build_site_context(self) -> str:
-		"""A compact inventory of the site's pages, so the agent starts every turn
-		knowing what exists instead of spending a query_records round-trip (or
-		guessing) to find out."""
-		rows = frappe.get_all(
-			"Builder Page",
-			fields=["name", "route", "page_title", "published", "project_folder"],
-			order_by="modified desc",
-			limit=100,
-		)
-		if not rows:
-			return "This site has no pages yet."
-		lines = []
-		for r in rows:
-			line = f"- {r.name} | /{(r.route or '').lstrip('/')} | {r.page_title or ''}"
-			line += f" | {'published' if r.published else 'draft'}"
-			if r.project_folder:
-				line += f" | folder: {r.project_folder}"
-			lines.append(line)
-		return "Pages on this site (id | route | title | status):\n" + "\n".join(lines)
-
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
 		the cached context block, so remembering costs nothing per-round."""
@@ -703,14 +635,10 @@ class AgentRunner:
 		messages.extend(AISession.build_context_messages_from_id(self.session_id))
 		self.history_end_index = len(messages) - 1
 
-		# The page structure plus the site inventory (page-less turns get just the
-		# inventory). It's resent on every round of a multi-round turn, so a cache
-		# marker on the prompt right after it cuts both latency and input cost
-		# across the loop. The inventory is what lets the agent act on OTHER pages
-		# (read_page/open_page/manage_pages) without spending a discovery round-trip.
-		page_context = self.build_page_context()
-		site_context = self.build_site_context()
-		blocks = [page_context, site_context, self.build_memory_context()]
+		# The page structure. It's resent on every round of a multi-round turn, so a
+		# cache marker on the prompt right after it cuts both latency and input cost
+		# across the loop.
+		blocks = [self.build_page_context(), self.build_memory_context()]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -936,8 +864,6 @@ class AgentRunner:
 				self.tree.root = op["args"]["blocks"]
 		self.applied_operations.extend(ops)
 		self.emit("tool_batch", operations=ops)
-		if self.channel != self.page_id:
-			self.emit_page("tool_batch", operations=ops)
 		if self.page_id and self.tree and self.tree.root:
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return ops
@@ -948,47 +874,24 @@ class AgentRunner:
 		valid across rounds."""
 		return self.tree.root if self.tree else None
 
-	def focus_page(self, page_id: str, *, lock: bool = True) -> str:
-		"""Point the turn at a page: load its blocks from the DB into the working tree
-		(context, query tools, and block edits all read/write it), and capture the
-		pre-edit state so the turn stays revertable. With lock=True the page lock is
-		held for the rest of the turn so parallel AI tasks can't fight over one page
-		(sub-agents pass lock=False — their task runner already holds it).
-		Returns the rendered page context — the tool result for open_page/create_page."""
+	def load_page(self, page_id: str) -> str:
+		"""Load the turn's page into the working tree (context, query tools and block
+		edits all read/write it), take the page lock for the rest of the turn so two
+		AI turns can't fight over one page, and capture the pre-edit state so the turn
+		stays revertable. Returns "" on success, or a FAILED reason."""
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
-		if lock and key not in (k for k, _ in self.held_locks):
-			token = locks.acquire(key, locks.PAGE_LOCK_TTL)
-			if token is None:
-				return (
-					f"FAILED: page {page_id} is being edited by another AI task right now — "
-					"try again in a moment."
-				)
-			self.held_locks.append((key, token))
-		root = page_writer.load_page_root(page_id)
-		# A focus move away from the page the user is looking at must be VISIBLE —
-		# ops there won't show on their canvas, and a silent switch reads as the
-		# agent lying about what it built.
-		if self.page_id and page_id != self.page_id:
-			title = frappe.db.get_value("Builder Page", page_id, "page_title") or page_id
-			self.emit("progress", message=f"Now editing another page: '{title}'")
-		# Let the origin editor's pill survive navigation/reload: record that this
-		# chat's run is working on an off-canvas page (cleared when the run ends).
-		if not self.headless and self.canvas_page_id and page_id != self.canvas_page_id:
-			frappe.cache().set_value(
-				f"builder_ai_offpage_build:{self.canvas_page_id}",
-				{"target": page_id, "session_id": self.session_id},
-				expires_in_sec=locks.PAGE_LOCK_TTL,
+		token = locks.acquire(key, locks.PAGE_LOCK_TTL)
+		if token is None:
+			return (
+				f"FAILED: page {page_id} is being edited by another AI task right now — "
+				"try again in a moment."
 			)
-		self.page_id = page_id
-		self.tree = WorkingTree(root)
-		# Arm the revert snapshot — unless this page was already snapshotted this turn
-		# (a refocus must keep its original pre-turn state).
-		self.pending_state = None if page_id in self.revert_snapshots else capture_page_state(page_id)
-		if root is None:
-			return f"Opened page {page_id} — it is empty. Build it with generate_page."
-		return f"Opened page {page_id}.\n{render_page_context(root, self.selected_block_ids)}"
+		self.held_locks.append((key, token))
+		self.tree = WorkingTree(page_writer.load_page_root(page_id))
+		self.pending_state = capture_page_state(page_id)
+		return ""
 
 	# --- live activity feed ------------------------------------------------
 
@@ -1001,10 +904,8 @@ class AgentRunner:
 				"summary": activity_summary(tool_name, args, self.tree),
 				"status": "running",
 			}
-			# Working-page tools carry the page id so the chat can offer an "Open"
-			# link on the line (create_page fills it in from its handler).
-			if tool_name in ("open_page", "generate_page", "preview_page", "copy_page_design"):
-				entry["page"] = (args or {}).get("page_id") or self.page_id
+			if tool_name in ("generate_page", "preview_page"):
+				entry["page"] = self.page_id
 			self.activity.append(entry)
 			self.current_activity = entry
 			self.emit("tool_activity", **entry)
@@ -1066,16 +967,14 @@ class AgentRunner:
 		"""How the loop must handle one tool call: "artifact" (streamed generation),
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
 		(apply to the working tree + mirror to the canvas). A client tool with a
-		server twin (page scripts) runs as a server op when there is no canvas to
-		apply it — headless, or the agent focused a page the canvas isn't showing."""
+		server twin (page scripts) always runs as a server op — see
+		SCRIPT_TWIN_TOOLS."""
 		tool = self.registry.get(op["tool_name"])
 		if tool and tool.artifact:
 			return "artifact"
 		side = tool.side if tool else "client"
-		off_canvas = self.headless or self.page_id != self.canvas_page_id
-		if side == "client" and tool and tool.handler:
-			if off_canvas or op["tool_name"] in SCRIPT_TWIN_TOOLS:
-				return "server"
+		if side == "client" and tool and tool.handler and op["tool_name"] in SCRIPT_TWIN_TOOLS:
+			return "server"
 		return side
 
 	def apply_client_ops(self, ops: list[dict]) -> tuple[dict[int, str], list[dict]]:
@@ -1100,11 +999,6 @@ class AgentRunner:
 		if applied:
 			self.applied_operations.extend(applied)
 			self.emit("tool_batch", operations=applied)
-			# When the focused page isn't the channel's page (headless session chat, or
-			# an editor agent that opened another page), mirror accepted ops to the
-			# focused page's channel too, so an editor open on it updates live.
-			if self.channel != self.page_id:
-				self.emit_page("tool_batch", operations=applied)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
 
@@ -1127,22 +1021,15 @@ class AgentRunner:
 			# continues. None = the card was emitted and the turn is over.
 			return self.handle_terminal(op)
 		if kind == "artifact":
-			# Generation is a STEP of the turn in both modes: the generator streams
-			# YAML live (canvas preview in the editor), persists the page, and the
-			# loop continues — so the model can add scripts, verify, and refine in
-			# the same turn.
+			# Generation is a STEP of the turn: the generator streams YAML live (the
+			# canvas preview), persists the page, and the loop continues — so the model
+			# can add scripts, verify, and refine in the same turn.
 			content, ops = self.run_generation_step(tool, op)
 			self.applied_operations.extend(ops)
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
 				# the server's block tree (shared ids).
 				self.emit("tool_batch", operations=ops)
-				if self.channel != self.page_id:
-					# Mirror to any editor watching the focused page (headless build,
-					# or an editor agent that opened another page); the complete
-					# resets that watcher's "working" state.
-					self.emit_page("tool_batch", operations=ops)
-					self.emit_page("complete", message="Page generated — the agent may keep refining it.")
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		if op["tool_name"] in SNAPSHOT_TOOLS:
@@ -1152,14 +1039,12 @@ class AgentRunner:
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
 			self.server_mutations += 1
-			if op["tool_name"] in SCRIPT_TWIN_TOOLS and not self.headless:
+			if op["tool_name"] in SCRIPT_TWIN_TOOLS:
 				# Mirror the server-applied script op so the open editor updates its
 				# script list / undo tracking — flagged so the canvas does NO DB work.
 				op["args"]["server_applied"] = True
 				self.applied_operations.append(op)
 				self.emit("tool_batch", operations=[op])
-				if self.channel != self.page_id:
-					self.emit_page("tool_batch", operations=[op])
 		return content
 
 	def emit_round_note(self, text: str, applied: list[dict]) -> None:
@@ -1285,8 +1170,6 @@ class AgentRunner:
 			self.run_turn(started)
 		finally:
 			self.clear_cancel_flag()
-			if self.canvas_page_id:
-				frappe.cache().delete_value(f"builder_ai_offpage_build:{self.canvas_page_id}")
 			for key, token in self.held_locks:
 				locks.release(key, token)
 			self.held_locks = []
@@ -1294,27 +1177,21 @@ class AgentRunner:
 				AISession.end_run(self.session_id, self.run_token)
 
 	def run_turn(self, started: float):
-		# Load the page into the authoritative working tree. Editor turns take the
-		# page lock (a dashboard task could otherwise edit the same page mid-turn);
-		# sub-agents arrive with the lock already held by their task runner.
+		# Load the page into the authoritative working tree, under the page lock.
 		if self.page_id and self.tree is None:
-			focused = self.focus_page(self.page_id, lock=not self.headless)
-			if focused.startswith("FAILED"):
-				self.fail_turn(focused)
+			if (failure := self.load_page(self.page_id)).startswith("FAILED"):
+				self.fail_turn(failure)
 				return
 		if self.tree is None:
 			self.tree = WorkingTree(None)
 
 		# Editing an existing page runs the loop on the user's CHOSEN model — edit
 		# taste matters as much as generation taste, and silently downgrading a
-		# deliberately-picked heavy model is the surest way to degrade output.
-		# Headless turns (dashboard orchestrator + sub-agents) always use the chosen
-		# model too. Only the editor's lightweight empty-page conversation
-		# (clarify/plan) drops to the cheap model.
+		# deliberately-picked heavy model is the surest way to degrade output. Only
+		# the lightweight empty-page conversation (clarify/plan) drops to the cheap
+		# model.
 		has_content = self.page_root() is not None
-		self.loop_model = (
-			self.model if (has_content or self.headless) else ModelRegistry.get_simple(self.model)
-		)
+		self.loop_model = self.model if has_content else ModelRegistry.get_simple(self.model)
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 
@@ -1472,23 +1349,6 @@ class AgentRunner:
 			summary_text = self.describe_operations(self.applied_operations)
 			self.emit("stream", chunk=summary_text)
 
-		# The turn built/edited a DIFFERENT page than the one on the user's canvas:
-		# the editor link is their only path to the result, and models (especially
-		# cheap ones) skip the prompt rule — append it deterministically.
-		if (
-			not self.headless
-			and self.applied_operations
-			and self.page_id
-			and self.canvas_page_id
-			and self.page_id != self.canvas_page_id
-			and f"/page/{self.page_id}" not in summary_text
-		):
-			title = frappe.db.get_value("Builder Page", self.page_id, "page_title") or self.page_id
-			builder_path = frappe.conf.builder_path or "builder"
-			link_note = f"\n\nOpen the page: [{title}](/{builder_path}/page/{self.page_id})"
-			summary_text += link_note
-			self.emit("stream", chunk=link_note)
-
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
 		# doesn't look finished; the user can reply "continue" to resume from here.
 		if self.stop_reason == "max_rounds":
@@ -1538,13 +1398,8 @@ class AgentRunner:
 				"trace": self.trace,
 			},
 		}
-		# Revert handles: one snapshot per page the turn mutated. revertSnapshot (the
-		# most recent) keeps the existing frontend contract; revertSnapshots carries
-		# the full set so a multi-page dashboard turn reverts every page it touched.
-		if self.revert_snapshots:
-			final_metadata["revertSnapshot"] = next(reversed(self.revert_snapshots.values()))
-			if len(self.revert_snapshots) > 1:
-				final_metadata["revertSnapshots"] = self.revert_snapshots
+		if self.revert_snapshot:
+			final_metadata["revertSnapshot"] = self.revert_snapshot
 		if self.activity:
 			# The chat's activity feed (tool lines + screenshots) — rendered live from
 			# tool_activity events, rehydrated from here on a session reload.
@@ -1608,12 +1463,11 @@ class AgentRunner:
 		return None
 
 	def run_generation_step(self, tool, op: dict) -> tuple[str, list[dict]]:
-		"""Run generate_page as one STEP of the turn (editor and headless alike). The
-		generator persists the page server-side; point the working tree at the result
-		so the model can read back — and build on — what it just made (scripts,
-		surgical fixes, one verify pass)."""
+		"""Run generate_page as one STEP of the turn. The generator persists the page
+		server-side; point the working tree at the result so the model can read back —
+		and build on — what it just made (scripts, surgical fixes, one verify pass)."""
 		if not self.page_id:
-			return ("FAILED: no page is open — call create_page or open_page first, then generate.", [])
+			return ("FAILED: no page is open.", [])
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])
@@ -1684,18 +1538,4 @@ class AgentRunner:
 
 
 def run_agent_job(prompt: str, model: str, api_key: str, **kwargs):
-	# A page-less turn is the dashboard orchestrator: no canvas, so it uses the
-	# orchestrator registry (server tools + parallel fan-out) and its own system prompt.
-	# The registry is built HERE (in the worker) rather than pickled through enqueue.
-	if not kwargs.get("page_id") and not kwargs.get("registry"):
-		from builder.ai.agent.registry import build_orchestrator_registry
-
-		kwargs["registry"] = build_orchestrator_registry()
-		# The editor's URL prefix is site-configurable — resolve it here so the
-		# links the agent writes actually work on this site.
-		builder_path = frappe.conf.builder_path or "builder"
-		kwargs.setdefault(
-			"system_prompt", Prompts.ORCHESTRATOR_SYSTEM.replace("{BUILDER_PATH}", builder_path)
-		)
-		kwargs["headless"] = True
 	AgentRunner(prompt, model, api_key, **kwargs).run()

@@ -56,8 +56,6 @@ def run_present_ui(ctx, args: dict) -> str | None:
 			"cannot answer. Every option must be an object like {label, description?, font?, "
 			"svg?, colors?}. Call present_ui again with real options."
 		)
-	if decline := decline_design_card(ctx, args, ui):
-		return decline
 	content = render_ui_text(text, ui)
 	metadata = {"status": "ui", "text": text, "ui": ui}
 	if ctx.activity:
@@ -73,40 +71,6 @@ def run_present_ui(ctx, args: dict) -> str | None:
 		metadata=metadata,
 	)
 	ctx.emit("clarify", question=text, ui=ui, after_commit=True)
-
-
-def decline_design_card(ctx, args: dict, ui: list[dict]) -> str | None:
-	"""An existing site's design direction is settled — a design-direction card
-	(options carrying layout sketches or font specimens) for an ADDITIONAL page
-	re-opens it, and weaker loop models do exactly that despite the system
-	prompt. Detect the card structurally and bounce it back with the tokens the
-	build must inherit. `redesign=true` is the explicit escape hatch."""
-	if args.get("redesign"):
-		return None
-	is_design_card = any(
-		option.get("svg") or option.get("font")
-		for el in ui
-		if el.get("kind") == "choices"
-		for option in el.get("options") or []
-	)
-	if not is_design_card:
-		return None
-	from builder.ai.agent.tools.pages import sibling_design_summary
-	from builder.ai.orchestration import page_has_blocks
-
-	canvas = getattr(ctx, "canvas_page_id", None)
-	if not canvas or not page_has_blocks(canvas):
-		return None
-	summary = sibling_design_summary(canvas)
-	return (
-		"DECLINED: this site's design direction is already decided by its existing page — do not ask "
-		"layout/typography questions for an additional page; it must read as the SAME site. Proceed "
-		f"directly (create_page, then a generate_page brief written from {canvas}'s system: same nav and "
-		f"footer structure, and exactly these tokens):\n{summary}\n"
-		"You may still present ONE details form about the new page's CONTENT (no design choices). "
-		"Only if the user explicitly asked to redesign the site's look, call present_ui again with "
-		"redesign=true."
-	)
 
 
 def sanitize_ui(raw) -> list[dict]:
@@ -270,7 +234,7 @@ present_ui = Tool(
 		"an 'actions' button (always add one when using them). Keep cards focused — one "
 		"decision per card. Only ask when you are genuinely blocked — never when the request "
 		"references an existing page, image, or brand you can read: study the reference "
-		"(read_page / theme variables / source) and derive the answer instead. Never "
+		"(theme variables / source) and derive the answer instead. Never "
 		"re-present a plan the user already approved — build."
 	),
 	parameters={
@@ -333,14 +297,6 @@ present_ui = Tool(
 					"{kind:'divider'}"
 				),
 				"items": {"type": "object"},
-			},
-			"redesign": {
-				"type": "boolean",
-				"description": (
-					"Set true ONLY when the user explicitly asked to redesign an existing site's "
-					"look — it permits design-direction options (layout sketches / font specimens) "
-					"on a site that already has a designed page."
-				),
 			},
 		},
 		"required": ["text"],

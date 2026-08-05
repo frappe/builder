@@ -116,9 +116,7 @@ def save_stream_buffer(ctx, yaml_content: str) -> None:
 	refreshes) mid-build can replay the preview instead of showing a stale draft."""
 	frappe.cache().set_value(
 		stream_buffer_key(ctx.page_id),
-		frappe.as_json(
-			{"yaml": yaml_content, "session_id": ctx.session_id, "origin_page": ctx.canvas_page_id}
-		),
+		frappe.as_json({"yaml": yaml_content, "session_id": ctx.session_id}),
 		expires_in_sec=600,
 	)
 
@@ -211,16 +209,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 				# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
 				offset = len(yaml_content)
 				yaml_content += delta
-				# Every event names its TARGET page (ctx.page_id): the canvas renders the
-				# stream only when it is showing that page — an off-canvas build must
-				# never paint (and get autosaved) over a page it wasn't meant for.
-				if not ctx.headless:
-					ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset)
-				if ctx.headless or ctx.page_id != ctx.canvas_page_id:
-					# An editor open on the target page is the live viewport ("watch it
-					# build") — headless chats have no canvas, editor chats may have
-					# focused a different page than the one on their canvas.
-					ctx.emit_page("stream", chunk=delta, kind="page_yaml", offset=offset)
+				ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset)
 				if len(yaml_content) - buffered_at >= 512:
 					buffered_at = len(yaml_content)
 					save_stream_buffer(ctx, yaml_content)

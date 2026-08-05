@@ -20,8 +20,6 @@ KINDS = {
 	"global_settings",
 	"create_doctype",
 	"seed_sample_data",
-	"publish_site",
-	"manage_pages",
 	"connect_form",
 }
 
@@ -59,8 +57,6 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 		"global_settings": apply_global_settings,
 		"create_doctype": apply_create_doctype,
 		"seed_sample_data": apply_seed_sample_data,
-		"publish_site": apply_publish_site,
-		"manage_pages": apply_manage_pages,
 		"connect_form": apply_connect_form,
 	}[kind](payload)
 
@@ -139,49 +135,6 @@ def apply_seed_sample_data(payload: dict) -> str:
 		frappe.get_doc({"doctype": doctype, **row}).insert(ignore_permissions=True)
 		created += 1
 	return frappe._("Seeded {0} sample record(s) into {1}").format(created, doctype)
-
-
-MANAGE_PAGE_ACTIONS = {"publish", "unpublish", "delete"}
-
-
-def apply_manage_pages(payload: dict) -> str:
-	"""Page lifecycle, user-confirmed: publish / unpublish / delete. Runs WITHOUT
-	ignore_permissions — the confirming user's own rights decide."""
-	action = (payload.get("action") or "").strip()
-	if action not in MANAGE_PAGE_ACTIONS:
-		frappe.throw(frappe._("Unknown page action: {0}").format(action))
-	titles = []
-	for page_id in payload.get("page_ids") or []:
-		if not frappe.db.exists("Builder Page", page_id):
-			continue
-		doc = frappe.get_doc("Builder Page", page_id)
-		titles.append(doc.page_title or page_id)
-		if action == "delete":
-			frappe.delete_doc("Builder Page", page_id)
-		elif action == "unpublish":
-			doc.unpublish()
-		else:
-			doc.publish()
-	if not titles:
-		frappe.throw(frappe._("No matching pages"))
-	verb = {"publish": "Published", "unpublish": "Unpublished", "delete": "Deleted"}[action]
-	return frappe._("{0} {1} page(s): {2}").format(verb, len(titles), ", ".join(titles))
-
-
-def apply_publish_site(payload: dict) -> str:
-	folder = (payload.get("folder") or "").strip()
-	if not folder:
-		frappe.throw(frappe._("Folder is required to publish a site"))
-	pages = frappe.get_all("Builder Page", filters={"project_folder": folder}, pluck="name")
-	published = 0
-	for name in pages:
-		doc = frappe.get_doc("Builder Page", name)
-		doc.publish()
-		published += 1
-	frappe.db.set_value(
-		"Builder Project Folder", folder, "generation_status", "Published", update_modified=False
-	)
-	return frappe._("Published {0} page(s)").format(published)
 
 
 def apply_connect_form(payload: dict) -> str:

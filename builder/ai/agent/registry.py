@@ -82,12 +82,6 @@ class ToolRegistry:
 		return list(self._tools)
 
 
-def pick(tools: list[Tool], names: set[str]) -> list[Tool]:
-	"""Select tools by name — used to compose the headless registries from the same
-	module TOOLS lists as the interactive one, without duplicating tool definitions."""
-	return [t for t in tools if t.name in names]
-
-
 def build_default_registry() -> ToolRegistry:
 	"""Assemble the registry from the tool modules. Imported lazily to avoid
 	import cycles (tool handlers reference the agent context type)."""
@@ -101,8 +95,6 @@ def build_default_registry() -> ToolRegistry:
 		generate,
 		images,
 		memory,
-		orchestrate,
-		pages,
 		preview,
 		query,
 		sandbox,
@@ -121,109 +113,11 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(forms.TOOLS)
 	registry.extend(settings.TOOLS)
 	registry.extend(images.TOOLS)
-	# Whole-site capabilities in the editor: focus/create/manage other pages,
-	# screenshot self-review, and parallel fan-out for multi-page builds.
-	registry.extend(pages.TOOLS)
 	registry.extend(preview.TOOLS)
-	registry.extend(orchestrate.TOOLS)
 	registry.extend(components.TOOLS)
 	# Primitives from the codebase-context experiment: run_python covers bulk or
 	# unusual page mutations the block tools don't express well, and source access
 	# lets the model check Builder mechanics instead of guessing.
 	registry.extend(codebase.TOOLS)
 	registry.extend(sandbox.TOOLS)
-	return registry
-
-
-def headless_page_tools() -> list[Tool]:
-	"""The page capabilities every HEADLESS agent gets: focus a page (open/create),
-	read any page, generate a full page, edit it surgically with the block tools
-	(applied server-side by the mutating WorkingTree), query its structure, find
-	real photos for it, and screenshot it for a self-review pass."""
-	from builder.ai.agent.tools import blocks, generate, images, pages, preview, query
-
-	return [*pages.TOOLS, *generate.TOOLS, *blocks.TOOLS, *query.TOOLS, *preview.TOOLS, *images.TOOLS]
-
-
-def build_orchestrator_registry() -> ToolRegistry:
-	"""The page-less dashboard chat — the full builder. It reads/creates/edits/
-	generates single pages inline (headless page tools) and reserves
-	`spawn_parallel_agents` for genuinely parallel multi-page work, after laying
-	down shared assets (theme variables, header/footer components). Site-wide +
-	data-model changes stay confirm-gated."""
-	from builder.ai.agent.tools import (
-		components,
-		conversation,
-		data,
-		forms,
-		memory,
-		orchestrate,
-		scripts,
-		settings,
-	)
-
-	registry = ToolRegistry()
-	registry.extend(conversation.TOOLS)  # present_ui
-	registry.extend(memory.TOOLS)
-	registry.extend(components.TOOLS)
-	registry.extend(headless_page_tools())
-	registry.extend(forms.TOOLS)  # connect_form (confirm-gated)
-	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
-	registry.extend(
-		pick(
-			data.TOOLS,
-			{
-				"list_doctypes",
-				"get_doctype_schema",
-				"query_records",
-				"get_document",
-				"write_page_data_script",
-				"create_doctype",
-				"seed_sample_data",
-			},
-		)
-	)
-	registry.extend(
-		pick(
-			settings.TOOLS,
-			{
-				"set_design_token",
-				"set_page_settings",
-				"set_home_page",
-				"edit_global_settings",
-				"publish_site",
-			},
-		)
-	)
-	registry.extend(orchestrate.TOOLS)  # spawn_parallel_agents, create_component
-	return registry
-
-
-def build_subagent_registry() -> ToolRegistry:
-	"""One headless page builder in a fan-out. Same page capabilities as the
-	orchestrator minus focus-switching (open_page/create_page — a child stays on its
-	assigned page; read_page covers references), with NO `spawn_parallel_agents`
-	(recursion guard) and NO confirm-gated terminal tools (no user to confirm in a
-	worker)."""
-	from builder.ai.agent.tools import data, scripts, settings
-
-	registry = ToolRegistry()
-	# No focus-switching, and no confirm-gated lifecycle (nobody to confirm in a worker).
-	registry.extend(
-		[t for t in headless_page_tools() if t.name not in {"open_page", "create_page", "manage_pages"}]
-	)
-	registry.extend(
-		pick(
-			data.TOOLS,
-			{
-				"list_doctypes",
-				"get_doctype_schema",
-				"query_records",
-				"get_document",
-				"write_page_data_script",
-			},
-		)
-	)
-	registry.extend(pick(settings.TOOLS, {"set_page_settings", "set_design_token"}))
-	registry.extend(scripts.TOOLS)  # set/update apply via their headless handlers
 	return registry

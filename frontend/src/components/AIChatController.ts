@@ -1,5 +1,4 @@
 import type Block from "@/block";
-import { BatchTracker } from "@/components/ai/batches";
 import { setCostCurrency } from "@/components/ai/format";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
@@ -13,7 +12,6 @@ import { confirm } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
-import router from "@/router";
 import { useRoute } from "vue-router";
 
 // Re-exported for components that still import these from here.
@@ -49,27 +47,6 @@ export class AIChatController {
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
 
-	// spawn_parallel_agents fan-outs this session — the task-group card's state.
-	readonly batchTracker = new BatchTracker();
-	readonly batches = this.batchTracker.batches;
-	readonly publishingBatch = ref(false);
-
-	// Floating build indicator. originPage: a build driven from ANOTHER chat is
-	// writing to THIS page (watch-live) — link back to that chat. targetPage: this
-	// chat's agent is building a DIFFERENT page — link there to watch it live.
-	readonly foreignBuild = ref<{ originPage: string | null; targetPage: string | null } | null>(null);
-	private foreignBuildTimer: ReturnType<typeof setTimeout> | null = null;
-
-	private noteForeignBuild(originPage?: string | null, targetPage?: string | null) {
-		this.foreignBuild.value = { originPage: originPage || null, targetPage: targetPage || null };
-		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
-		// No completion event is guaranteed to reach us; fade the pill out once the
-		// build goes quiet. Generous window: a build's quiet gaps (scripts round,
-		// preview screenshot) run well past a few seconds, and losing the pill also
-		// loses the user's only way back to the driving chat.
-		this.foreignBuildTimer = setTimeout(() => (this.foreignBuild.value = null), 30000);
-	}
-
 	/** While a build stream owns this page's canvas, the editor's autosave stands
 	 * down — persisting the partial preview is how a mid-build refresh (or an
 	 * off-target render) corrupts the draft. The server saves the real result. */
@@ -98,19 +75,9 @@ export class AIChatController {
 		}
 	}
 
-	/** Accept one page_yaml chunk for the canvas. Drops chunks meant for another
-	 * page (pill instead of paint), dedupes replayed chunks by stream offset, and
-	 * refetches the server buffer when a gap shows we missed some. */
-	private acceptPageYamlChunk(data: {
-		chunk?: string;
-		page_id?: string;
-		offset?: number;
-		origin_page?: string;
-	}): void {
-		if (data.page_id && data.page_id !== this.pageId.value) {
-			this.noteForeignBuild(null, data.page_id);
-			return;
-		}
+	/** Accept one page_yaml chunk for the canvas. Dedupes replayed chunks by stream
+	 * offset, and refetches the server buffer when a gap shows we missed some. */
+	private acceptPageYamlChunk(data: { chunk?: string; offset?: number }): void {
 		if (typeof data.offset === "number") {
 			const have = this.pageStreamContent.value.length;
 			if (data.offset < have) return;
@@ -127,8 +94,6 @@ export class AIChatController {
 
 	/** A mid-build page load: replay the in-flight generation stream from the
 	 * server's buffer so the canvas shows the live build, not the stale draft. */
-	private syncTimer: ReturnType<typeof setTimeout> | null = null;
-
 	private async syncActiveBuild() {
 		const pid = this.pageId.value;
 		if (!pid || pid === "new") return;
@@ -136,20 +101,10 @@ export class AIChatController {
 			.submit({ page_id: pid })
 			.catch(() => null);
 		if (this.pageId.value !== pid) return;
-		// This page's own chat is building ANOTHER page: show the pill (with the
-		// target link) and keep it alive by re-checking while the run lasts.
-		if (build?.building_page && build.building_page !== pid) {
-			this.noteForeignBuild(null, build.building_page);
-			if (this.syncTimer) clearTimeout(this.syncTimer);
-			this.syncTimer = setTimeout(() => this.syncActiveBuild(), 15000);
-		}
 		if (!build?.yaml) return;
 		if (build.yaml.length <= this.pageStreamContent.value.length) return;
 		this.beginCanvasBuild();
 		this.pageStreamContent.value = build.yaml;
-		if (build.origin_page && build.origin_page !== pid) {
-			this.noteForeignBuild(build.origin_page);
-		}
 		this.scheduleStreamRender();
 	}
 
@@ -244,7 +199,6 @@ export class AIChatController {
 			onComplete: this.onComplete,
 			onError: this.onError,
 			onToolActivity: this.onToolActivity,
-			onTaskGroup: this.onTaskGroup,
 			onRefetch: this.onRefetch,
 		};
 	}
@@ -252,10 +206,6 @@ export class AIChatController {
 	resetTransientState() {
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild();
-		// A pill carried across a page switch shows the WRONG flavor ("from another
-		// chat" on the chat that drives the build) — re-derived by syncActiveBuild.
-		this.foreignBuild.value = null;
-		if (this.foreignBuildTimer) clearTimeout(this.foreignBuildTimer);
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
@@ -331,12 +281,6 @@ export class AIChatController {
 		this.messages.value = (session.messages || []).map(
 			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 		);
-		// Rehydrate task-group cards: fetch each batch's durable state (polling
-		// stops by itself once the batch settles).
-		for (const m of this.messages.value) {
-			const batchId = (m.metadata as any)?.batchId;
-			if (batchId) this.batchTracker.track(batchId);
-		}
 		this.loadSessions();
 	}
 
@@ -436,25 +380,12 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
-	onStream = (data: {
-		chunk?: string;
-		kind?: string;
-		session_id?: string;
-		origin_page?: string;
-		page_id?: string;
-		offset?: number;
-	}) => {
+	onStream = (data: { chunk?: string; kind?: string; session_id?: string; offset?: number }) => {
 		if (!data.chunk) return;
 		if (this.isForeignSession(data)) {
-			// A build driven from ANOTHER chat is streaming onto this page (watch-live).
-			// The canvas is page-level: apply the preview, and surface the floating
-			// "building live" indicator — but keep chat-text chunks out of this session.
-			if (data.kind === "page_yaml") {
-				if (!data.page_id || data.page_id === this.pageId.value) {
-					this.noteForeignBuild(data.origin_page);
-				}
-				this.acceptPageYamlChunk(data);
-			}
+			// Another chat on this page is generating: the canvas is page-level, so
+			// paint its preview, but keep its chat text out of this session.
+			if (data.kind === "page_yaml") this.acceptPageYamlChunk(data);
 			return;
 		}
 		this.isSubmitting.value = true;
@@ -465,22 +396,6 @@ export class AIChatController {
 			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
 			this.scrollToBottom();
 		}
-	};
-
-	/** The agent fanned out parallel page builds (spawn_parallel_agents ends the
-	 * turn). Track the batch so the panel's task-group card shows live progress;
-	 * the reload on complete picks up the persisted message carrying batchId. */
-	onTaskGroup = (data: {
-		batch_id?: string;
-		total?: number;
-		tasks?: Array<Record<string, any>>;
-		session_id?: string;
-	}) => {
-		if (!data.batch_id || this.isForeignSession(data)) return;
-		this.batchTracker.track(data.batch_id, {
-			total: data.total || data.tasks?.length || 0,
-			tasks: (data.tasks || []).map((t: any) => ({ ...t })),
-		});
 	};
 
 	/** A server tool changed state the canvas only loads at editor start. Refetch
@@ -502,37 +417,14 @@ export class AIChatController {
 		}
 	};
 
-	cancelBatch = (batchId: string) => this.batchTracker.cancel(batchId);
-
-	publishBatch = async (batchId: string) => {
-		this.publishingBatch.value = true;
-		try {
-			const res: any = await this.batchTracker.publish(batchId);
-			toast.success(res?.message || "Published");
-		} catch (e: any) {
-			toast.error(e?.messages?.[0] || "Could not publish");
-		} finally {
-			this.publishingBatch.value = false;
-		}
-	};
-
 	onToolBatch = (data: {
-		page_id?: string;
 		session_id?: string;
-		origin_page?: string;
 		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
 	}) => {
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
 		if (!data.operations?.length) return;
-		if (this.isForeignSession(data)) this.noteForeignBuild(data.origin_page);
-		// The agent may focus another page mid-turn (open_page/create_page): its ops
-		// are applied server-side; the canvas only mirrors ops for the page it shows.
-		if (data.page_id && data.page_id !== this.pageId.value) {
-			if (!this.isForeignSession(data)) this.noteForeignBuild(null, data.page_id);
-			return;
-		}
 		this.previewUnconfirmed = false;
 		for (const op of data.operations) {
 			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
@@ -552,7 +444,6 @@ export class AIChatController {
 		if (this.isForeignSession(data)) {
 			// The other chat's build on this page finished; the authoritative
 			// tool_batch already replaced the streamed preview.
-			this.foreignBuild.value = null;
 			this.endCanvasBuild();
 			return;
 		}
@@ -852,32 +743,10 @@ export class AIChatController {
 		// daily rate); until this resolves they show as USD.
 		createResource({ url: "builder.ai.api.get_ai_cost_currency", auto: true, onSuccess: setCostCurrency });
 		await this.loadSession();
-		await this.maybeRunInitialPrompt();
-	}
-
-	/** Auto-run a prompt handed off from the dashboard chat (an @page mention:
-	 * "change the hero on @Home" navigates here with ?ai_prompt=…). Opens the chat
-	 * tab, submits once a model is available, and strips the query so a refresh
-	 * doesn't resubmit. */
-	private async maybeRunInitialPrompt() {
-		const initial = this.route.query.ai_prompt as string | undefined;
-		if (!initial || this.isUnsavedPage.value) return;
-		this.builderStore.leftPanelActiveTab = "Chat";
-		const { ai_prompt, ...rest } = this.route.query;
-		router.replace({ query: rest });
-		// Wait briefly for the model list (mount fetches it async); bail if none.
-		for (let i = 0; i < 40 && !this.selectedModel.value; i++) {
-			await new Promise((r) => setTimeout(r, 100));
-		}
-		if (!this.selectedModel.value) return;
-		this.prompt.value = initial;
-		await nextTick();
-		this.submitPrompt();
 	}
 
 	unmount() {
 		if (this.pageId.value)
 			detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
-		this.batchTracker.stopAll();
 	}
 }

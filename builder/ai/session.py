@@ -56,32 +56,6 @@ class AISession:
 		return cls.find_or_create({"page": page_id, "session_user": user or frappe.session.user}, model)
 
 	@classmethod
-	def get_or_create_general(cls, user: str | None = None, model: str | None = None):
-		"""The page-less dashboard chat session (session_kind='general'). One active
-		general session per user, reused across turns so the conversation continues."""
-		return cls.find_or_create(
-			{"session_kind": "general", "session_user": user or frappe.session.user}, model
-		)
-
-	@classmethod
-	def create_subagent_session(cls, user: str | None = None, model: str | None = None):
-		"""A fresh, isolated session for one fan-out sub-agent. Always a NEW row (never
-		reused) and page-less, so a sub-agent's internal turns never pollute the parent
-		chat nor the editor's per-page session — even when it builds a specific page
-		(the page_id is passed to the runner directly, not via the session)."""
-		doc = frappe.get_doc(
-			{
-				"doctype": cls.DOCTYPE,
-				"session_kind": "general",
-				"session_user": user or frappe.session.user,
-				"status": "Active",
-				"selected_model": model or "",
-				"last_interaction_on": frappe.utils.now_datetime(),
-			}
-		).insert(ignore_permissions=True)
-		return cls(doc)
-
-	@classmethod
 	def get(cls, session_id: str, page_id: str | None = None, user: str | None = None):
 		user = user or frappe.session.user
 		if not frappe.db.exists(cls.DOCTYPE, session_id):

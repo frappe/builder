@@ -55,7 +55,7 @@ def apply_set_page_script(ctx, args: dict) -> str:
 	from builder.ai.agent.tree import validate_script
 
 	if not ctx.page_id:
-		return "FAILED: no page is open — open_page or create_page first."
+		return "FAILED: no page is open."
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
 	script_type = args.get("script_type") or "JavaScript"

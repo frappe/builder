@@ -1,7 +1,6 @@
 """Reusable components — promote what's already built into a Builder Component.
 
-`create_component` (orchestrate.py) GENERATES a fresh component from a brief;
-`extract_component` promotes an already-designed block on the focused page. No
+`extract_component` promotes an already-designed block on the open page. No
 LLM call — the copy is pixel-exact, which is the point: shared chrome (header,
 footer, CTA banner) must be identical on every page, and after extraction it
 lives in ONE place every page embeds."""
@@ -23,7 +22,7 @@ def run_extract_component(ctx, args: dict) -> str:
 		return "FAILED: pass block_id (the block's ref) and component_name."
 	root = ctx.tree.root if (getattr(ctx, "tree", None) and ctx.tree.root) else None
 	if not isinstance(root, dict):
-		return "FAILED: no page in focus — open_page first."
+		return "FAILED: no page is open."
 	tree = copy.deepcopy(root)
 	view = WorkingTree(tree)
 	target = view.resolve(block_id)

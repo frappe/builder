@@ -110,7 +110,7 @@ def get_document(ctx, args: dict) -> str:
 	if dt == "Builder Page":
 		for key in ("blocks", "draft_blocks"):
 			if data.get(key):
-				data[key] = f"<use read_page('{doc.name}') to see the page structure>"
+				data[key] = "<a Builder Page block tree; not shown here>"
 	# Bound long values (e.g. a raw HTML blob) so a read never blows the context.
 	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
 	return frappe.as_json(data)
@@ -148,8 +148,8 @@ def write_page_data_script(ctx, args: dict) -> str:
 	if any(token in script for token in DATA_SCRIPT_FORBIDDEN):
 		return (
 			"FAILED: a page data script only READS data into `data` for bindings — it runs on "
-			"every page render and must never save/insert/delete documents. To publish, "
-			"unpublish, or delete pages use manage_pages; for settings use the settings tools."
+			"every page render and must never save/insert/delete documents. For settings use "
+			"the settings tools."
 		)
 	if match := RESERVED_DATA_KEYS_RE.search(script):
 		return (

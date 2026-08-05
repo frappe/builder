@@ -1,33 +1,4 @@
 <template>
-	<!-- Floating status: a build is streaming somewhere the user isn't looking —
-	     another chat writing to THIS page (watch-live), or this chat's agent
-	     building a DIFFERENT page. Teleported so it shows whichever tab is open. -->
-	<!-- Top-center, solid dark: bottom-center is the canvas zoom pill's spot,
-	     and a build indicator must not be missable. -->
-	<Teleport to="body">
-		<div
-			v-if="foreignBuild"
-			class="fixed left-1/2 top-14 z-50 flex -translate-x-1/2 items-center gap-2.5 rounded-full bg-zinc-900 px-4 py-2.5 text-p-sm font-medium text-white shadow-xl ring-1 ring-white/10">
-			<span class="size-2 animate-pulse rounded-full bg-surface-amber-4" />
-			<template v-if="foreignBuild.targetPage">
-				Bob is building another page
-				<router-link
-					:to="{ name: 'builder', params: { pageId: foreignBuild.targetPage } }"
-					class="text-white underline underline-offset-2">
-					View
-				</router-link>
-			</template>
-			<template v-else>
-				Building this page from another chat
-				<router-link
-					v-if="foreignBuild.originPage"
-					:to="{ name: 'builder', params: { pageId: foreignBuild.originPage } }"
-					class="text-white underline underline-offset-2">
-					Go back to that chat
-				</router-link>
-			</template>
-		</div>
-	</Teleport>
 	<div class="bg-surface-white flex h-full min-h-full flex-col">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
@@ -50,10 +21,7 @@
 
 		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
 			<p class="text-sm text-ink-gray-6">Configure an AI API key in Builder Settings to use chat.</p>
-			<Button
-				variant="solid"
-				label="Open Settings"
-				@click="builderStore.openBuilderSettings('global_ai')" />
+			<Button variant="solid" label="Open Settings" @click="builderStore.openBuilderSettings('global_ai')" />
 		</div>
 
 		<template v-else>
@@ -196,13 +164,6 @@
 							:interactive="message.id === lastMessageId"
 							:disabled="isSubmitting"
 							@submit="selectOption" />
-						<!-- Parallel page-build progress (spawn_parallel_agents) -->
-						<AITaskGroupCard
-							v-if="message.metadata?.batchId && batches[message.metadata.batchId]"
-							:batch="batches[message.metadata.batchId]"
-							:publishing="publishingBatch"
-							@cancel="cancelBatch"
-							@publish="publishBatch" />
 					</div>
 					<!-- Block + image chips below the bubble -->
 					<div
@@ -350,7 +311,6 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
-import AITaskGroupCard from "@/components/ai/AITaskGroupCard.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
@@ -399,9 +359,6 @@ const { selectBlockById, openScriptByName } = chat;
 const { selectedBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
-const { batches, publishingBatch } = chat;
-const { cancelBatch, publishBatch } = chat;
-const { foreignBuild } = chat;
 
 const confirmingAction = ref(false);
 async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {
@@ -429,8 +386,6 @@ function pendingPreview(m: Record<string, any>): string {
 			return `Update site-wide settings (${Object.keys(p).join(", ")}). These load on every page.`;
 		case "home_page":
 			return `Set the site home page to “${p.route}”.`;
-		case "publish_site":
-			return "Publish all pages in this site.";
 		default:
 			return "Confirm this change?";
 	}

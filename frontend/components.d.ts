@@ -17,7 +17,6 @@ declare module 'vue' {
     AIModelDialog: typeof import('./src/components/Modals/AIModelDialog.vue')['default']
     AIModelList: typeof import('./src/components/Settings/AIModelList.vue')['default']
     AIProviderDialog: typeof import('./src/components/Modals/AIProviderDialog.vue')['default']
-    AITaskGroupCard: typeof import('./src/components/ai/AITaskGroupCard.vue')['default']
     AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
     AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']

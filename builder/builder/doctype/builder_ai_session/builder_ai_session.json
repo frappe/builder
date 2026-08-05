@@ -7,10 +7,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "session_kind",
   "title",
   "page",
-  "project_folder",
   "session_user",
   "status",
   "selected_model",
@@ -20,31 +18,16 @@
  ],
  "fields": [
   {
-   "default": "page",
-   "fieldname": "session_kind",
-   "fieldtype": "Select",
-   "label": "Session Kind",
-   "options": "page\nsite\ngeneral"
-  },
-  {
    "fieldname": "title",
    "fieldtype": "Data",
    "label": "Title"
   },
   {
-   "depends_on": "eval:doc.session_kind==='page'",
    "fieldname": "page",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Page",
    "options": "Builder Page"
-  },
-  {
-   "depends_on": "eval:doc.session_kind==='site'",
-   "fieldname": "project_folder",
-   "fieldtype": "Link",
-   "label": "Project Folder",
-   "options": "Builder Project Folder"
   },
   {
    "fieldname": "session_user",

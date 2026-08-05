@@ -5,7 +5,6 @@ everything (generation, editing, scripts, clarification). The remaining
 endpoints are flow-agnostic session/model helpers.
 """
 
-import json
 import logging
 
 import frappe
@@ -42,60 +41,28 @@ def resolve_api_key(model: str | None = None) -> str:
 	return api_key
 
 
-def build_mention_hint(mentioned_pages: list | str | None) -> str:
-	"""Turn inline @page references into a compact resolution hint appended to the turn,
-	so the agent maps each "@Title" to the exact page id + route."""
-	if isinstance(mentioned_pages, str):
-		try:
-			mentioned_pages = json.loads(mentioned_pages)
-		except (json.JSONDecodeError, TypeError):
-			return ""
-	if not isinstance(mentioned_pages, list) or not mentioned_pages:
-		return ""
-	lines = []
-	for p in mentioned_pages:
-		if not isinstance(p, dict) or not p.get("name"):
-			continue
-		route = (p.get("route") or "").lstrip("/")
-		# Key on the exact token in the text — titles can collide across pages, so the
-		# token (disambiguated with the route when needed) is what maps to a single id.
-		label = p.get("token") or f"@{p.get('title') or p['name']}"
-		lines.append(f"- {label} → page id={p['name']}, route=/{route}")
-	if not lines:
-		return ""
-	return "\n\n[Referenced pages — resolve the @mentions above to these exact ids/routes]\n" + "\n".join(
-		lines
-	)
-
-
 @frappe.whitelist()
 @has_page_write()
 def run(
 	prompt: str,
-	page_id: str | None = None,
+	page_id: str,
 	model: str | None = None,
 	session_id: str | None = None,
 	selected_block_ids: list | None = None,
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
-	mentioned_pages: list | str | None = None,
 	display_text: str | None = None,
 ):
-	"""Single entry point: run the agent for one user turn.
+	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
-	Two modes, one loop: WITH a page_id it's the in-editor chat (the server edits the
-	page authoritatively from draft_blocks and mirrors accepted ops to the canvas);
-	WITHOUT one it's the page-less dashboard chat, which orchestrates via server tools
-	+ parallel sub-agents (see run_agent_job / build_orchestrator_registry).
-
-	`mentioned_pages` carries inline @page references from the dashboard chat so the agent
-	can resolve "@My Page" to the exact page id/route.
+	The server edits the page authoritatively from draft_blocks and mirrors the
+	accepted ops to the canvas.
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	# Append the user turn + guard concurrency for any established session (page or
-	# page-less). AISession.get tolerates page_id=None. The worker takes the atomic
-	# run lock; this check just gives a fast 429 instead of a queued rejection.
+	# Append the user turn + guard concurrency for an established session. The worker
+	# takes the atomic run lock; this check just gives a fast 429 instead of a queued
+	# rejection.
 	if session_id:
 		if AISession.is_session_running(session_id):
 			frappe.local.response.http_status_code = 429
@@ -123,20 +90,15 @@ def run(
 	api_key = resolve_api_key(resolved_model)
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
-	# Resolve inline @page references into a hint the agent can act on (stored session
-	# message keeps the user's original "@Title" text; only the enqueued turn is augmented).
-	agent_prompt = prompt + build_mention_hint(mentioned_pages)
-
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
 	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
-	# of which process runs the job. A fan-out ends the turn (spawn is terminal), so no
-	# turn needs a long-join timeout anymore.
+	# of which process runs the job.
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
 		timeout=600,
-		prompt=agent_prompt,
+		prompt=prompt,
 		model=resolved_model,
 		api_key=api_key,
 		user=frappe.session.user,
@@ -150,80 +112,12 @@ def run(
 	return {"status": "accepted", "session_id": session_id}
 
 
-def ensure_site_permission():
-	if not frappe.has_permission("Builder Page", "create"):
-		frappe.throw(_("You do not have permission to build sites"), frappe.PermissionError)
-
-
 def ensure_session_owner(session_id: str) -> None:
 	owner = frappe.db.get_value(AISession.DOCTYPE, session_id, "session_user")
 	if not owner:
 		frappe.throw(_("Session not found"))
 	if owner != frappe.session.user and "System Manager" not in frappe.get_roles():
 		frappe.throw(_("This chat belongs to another user"), frappe.PermissionError)
-
-
-def get_owned_batch(batch_id: str):
-	"""Load a Builder AI Batch, asserting the caller owns it (or is a System Manager)."""
-	if not batch_id or not frappe.db.exists("Builder AI Batch", batch_id):
-		frappe.throw(_("Batch not found"))
-	batch = frappe.get_doc("Builder AI Batch", batch_id)
-	if batch.created_by_user != frappe.session.user and "System Manager" not in frappe.get_roles():
-		frappe.throw(_("This batch belongs to another user"), frappe.PermissionError)
-	return batch
-
-
-@frappe.whitelist()
-@has_page_write()
-def get_ai_batch_status(batch_id: str):
-	"""Live progress of a parallel sub-agent fan-out: batch status + per-task rows. The
-	chat's task-group card polls this alongside the realtime nudges."""
-	batch = get_owned_batch(batch_id)
-	return {
-		"batch_id": batch.batch_id,
-		"status": batch.status,
-		"project_folder": batch.project_folder,
-		"total_tasks": batch.total_tasks,
-		"completed_tasks": batch.completed_tasks,
-		"failed_tasks": batch.failed_tasks,
-		"tasks": [
-			{
-				"row": t.name,
-				"title": t.title,
-				"page": t.page,
-				"status": t.status,
-				"error": t.error,
-				# Sub-agents screenshot their page via preview_page — thumbnail for the card.
-				"preview": frappe.db.get_value("Builder Page", t.page, "preview") if t.page else None,
-			}
-			for t in batch.tasks
-		],
-	}
-
-
-@frappe.whitelist()
-@has_page_write()
-def cancel_ai_batch(batch_id: str):
-	"""Stop a running fan-out: queued tasks abort at entry, running sub-agents abort at
-	their next stream chunk. The last one to settle finalizes the batch as cancelled
-	(without waking the agent to discuss it)."""
-	from builder.ai.orchestration import cancel_batch
-
-	batch = get_owned_batch(batch_id)
-	cancel_batch(batch.name)
-	return {"status": "cancelling"}
-
-
-@frappe.whitelist()
-def publish_site_batch(batch_id: str):
-	"""Publish every page in a generated site (a batch's project folder)."""
-	from builder.ai.agent.pending import apply_publish_site
-
-	ensure_site_permission()
-	batch = get_owned_batch(batch_id)
-	if not batch.project_folder:
-		frappe.throw(_("This batch has no site to publish"))
-	return {"status": "published", "message": apply_publish_site({"folder": batch.project_folder})}
 
 
 @frappe.whitelist()
@@ -250,8 +144,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		AISession.try_append_message(
 			msg.session, "assistant", "Skipped — nothing was changed.", message_type="status"
 		)
-		resumed = resume_agent_after_decision(msg.session, "skip", "")
-		return {"status": "skipped", "resumed": resumed}
+		return {"status": "skipped"}
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
@@ -259,45 +152,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
-	resumed = resume_agent_after_decision(msg.session, "apply", result)
-	return {"status": "applied", "message": result, "resumed": resumed}
-
-
-def resume_agent_after_decision(session_id: str, decision: str, result: str) -> bool:
-	"""A confirm-gated step ENDS the agent's turn — so once the user decides, the
-	bigger task must continue without another prod ("create a merch store" should
-	not stall after each approved doctype/seed step). Dashboard (general) sessions
-	only: editor turns are canvas-bound. The continuation instruction rides only
-	this enqueued turn — it is never persisted, so no fake user bubble appears; the
-	durable outcome message above is what future context sees."""
-	row = frappe.db.get_value(AISession.DOCTYPE, session_id, ["session_kind", "selected_model"], as_dict=True)
-	if not row or row.session_kind != "general" or AISession.is_session_running(session_id):
-		return False
-	if decision == "apply":
-		prompt = (
-			f"[The user APPROVED the pending action and it was applied: {result}] "
-			"Continue the task from where you left off — do NOT redo or re-propose that step. "
-			"If nothing remains, wrap up with a 1-2 sentence summary."
-		)
-	else:
-		prompt = (
-			"[The user SKIPPED the pending action — it was NOT applied.] "
-			"Continue the task without that step, adapting where needed; if it can't proceed "
-			"without it, say so briefly."
-		)
-	frappe.enqueue(
-		run_agent_job,
-		queue="default",
-		timeout=600,
-		prompt=prompt,
-		model=(resumed_model := ModelRegistry.get_default(row.selected_model or "openrouter")),
-		api_key=resolve_api_key(resumed_model),
-		user=frappe.session.user,
-		page_id=None,
-		session_id=session_id,
-		enqueue_after_commit=True,
-	)
-	return True
+	return {"status": "applied", "message": result}
 
 
 @frappe.whitelist()
@@ -599,17 +454,9 @@ def test_api_key(provider: str | None = None):
 @frappe.whitelist()
 @has_page_write()
 def get_active_build(page_id: str):
-	"""Build state relevant to an editor loading this page: the in-flight
-	generation stream to replay (mid-build refresh / watch-live), and whether
-	this page's own chat is currently building a DIFFERENT page (drives the
-	"building another page — View" pill across navigation)."""
+	"""The in-flight generation stream for this page, so an editor that loads (or
+	refreshes) mid-build replays the live preview instead of the stale draft."""
 	from builder.ai.agent.artifact import stream_buffer_key
 
-	out = {}
 	raw = frappe.cache().get_value(stream_buffer_key(page_id))
-	if raw:
-		out.update(frappe.parse_json(raw))
-	offpage = frappe.cache().get_value(f"builder_ai_offpage_build:{page_id}")
-	if isinstance(offpage, dict) and offpage.get("target"):
-		out["building_page"] = offpage["target"]
-	return out or None
+	return frappe.parse_json(raw) if raw else None
