@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import {
 	leftPanelTabs,
-	registerBuiltInLeftPanelTabs,
+	registerLeftPanelTabs,
 	type LeftPanelTab,
 } from "@/components/LeftPanelTabs";
 import TokenManager from "@/components/Modals/TokenManager.vue";
@@ -52,7 +52,7 @@ import PanelResizer from "./PanelResizer.vue";
 const builderStore = useBuilderStore();
 const route = useRoute();
 
-registerBuiltInLeftPanelTabs();
+registerLeftPanelTabs();
 const tabs = leftPanelTabs.visible;
 
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;

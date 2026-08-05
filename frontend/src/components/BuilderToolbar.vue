@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import {
-	registerBuiltInToolbarItems,
+	registerToolbarItems,
 	toolbarItems,
 	type ToolbarRegion,
 } from "@/components/ToolbarItems";
@@ -62,7 +62,7 @@ const BuilderSettings = defineAsyncComponent(() => import("./BuilderSettings.vue
 
 const builderStore = useBuilderStore();
 
-registerBuiltInToolbarItems();
+registerToolbarItems();
 const itemsIn = (region: ToolbarRegion) =>
 	toolbarItems.visible.value.filter((item) => item.region === region);
 

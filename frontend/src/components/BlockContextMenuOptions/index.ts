@@ -13,7 +13,6 @@ import { toast } from "frappe-ui";
 import { nextTick, type Ref } from "vue";
 
 export const blockContextMenuOptions = createRegistry<ContextMenuOption>();
-export const registerContextMenuOption = blockContextMenuOptions.register;
 
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
@@ -21,7 +20,7 @@ const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessio
  * Call from a component setup. The closures read stores when they run, but the
  * store lookups below need an active pinia.
  */
-export function registerBuiltInContextMenuOptions() {
+export function registerContextMenuOptions() {
 	const builderStore = useBuilderStore();
 	const canvasStore = useCanvasStore();
 	const componentStore = useComponentStore();
@@ -302,5 +301,5 @@ export function registerBuiltInContextMenuOptions() {
 		},
 	];
 
-	options.forEach(registerContextMenuOption);
+	options.forEach(blockContextMenuOptions.register);
 }

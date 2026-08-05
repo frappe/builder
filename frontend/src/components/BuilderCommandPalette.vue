@@ -12,8 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { commands, registerBuiltInCommands, registerCommand, resolveText } from "@/components/Commands";
-import { registerSettingsItems, settingsItems } from "@/components/Settings";
+import { commands, registerCommands, resolveText } from "@/components/Commands";
+import { settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -54,12 +54,9 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 	searchQuery.value = "";
 };
 
-registerBuiltInCommands();
-// register is keyed by name, so the settings dialog registering the same items
-// replaces rather than duplicates
-registerSettingsItems();
+registerCommands();
 
-registerCommand({
+commands.register({
 	name: "search-page",
 	title: "Search Page",
 	icon: "lucide-file-search",
@@ -76,7 +73,7 @@ registerCommand({
 		}),
 });
 
-registerCommand({
+commands.register({
 	name: "settings",
 	title: "Settings",
 	icon: "lucide-settings-2",

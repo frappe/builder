@@ -19,25 +19,24 @@ export type ToolbarItem = RegistryItem & {
 };
 
 export const toolbarItems = createRegistry<ToolbarItem>();
-export const registerToolbarItem = toolbarItems.register;
 
 /** Call from a component setup. The store lookups below need an active pinia. */
-export function registerBuiltInToolbarItems() {
+export function registerToolbarItems() {
 	const builderStore = useBuilderStore();
 	const pageStore = usePageStore();
 
-	registerToolbarItem({ name: "menu", region: "left", component: MainMenu });
-	registerToolbarItem({ name: "modes", region: "left", component: ModeSwitcher });
-	registerToolbarItem({ name: "page", region: "center", component: PageTitlePopover });
+	toolbarItems.register({ name: "menu", region: "left", component: MainMenu });
+	toolbarItems.register({ name: "modes", region: "left", component: ModeSwitcher });
+	toolbarItems.register({ name: "page", region: "center", component: PageTitlePopover });
 
-	registerToolbarItem({
+	toolbarItems.register({
 		name: "viewers",
 		region: "right",
 		component: ViewerAvatars,
 		condition: () => builderStore.viewers.length > 0,
 	});
 
-	registerToolbarItem({
+	toolbarItems.register({
 		name: "read-only",
 		region: "right",
 		component: ReadOnlyBadge,
@@ -45,9 +44,9 @@ export function registerBuiltInToolbarItems() {
 	});
 
 	// one item, not five: the icons share a gap-2 group inside a gap-4 region
-	registerToolbarItem({ name: "actions", region: "right", component: ToolbarActions });
+	toolbarItems.register({ name: "actions", region: "right", component: ToolbarActions });
 
-	registerToolbarItem({
+	toolbarItems.register({
 		name: "publish",
 		region: "right",
 		component: PublishButton,

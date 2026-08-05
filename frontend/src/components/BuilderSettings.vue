@@ -38,7 +38,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { registerSettingsItems, settingsGroups, settingsItems } from "@/components/Settings";
+import { settingsGroups, settingsItems } from "@/components/Settings";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
@@ -73,9 +73,6 @@ onMounted(async () => {
 	await Promise.all(promises);
 	settingsLoaded.value = true;
 });
-
-// the dialog can open without the palette ever mounting, so it registers too
-registerSettingsItems();
 
 const visibleGroups = computed(() =>
 	settingsGroups

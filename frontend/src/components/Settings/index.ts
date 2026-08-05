@@ -18,8 +18,9 @@ export const settingsGroups: SettingsGroup[] = ["Current Page", "Global"];
 export const settingsItems = createRegistry<SettingsItem>();
 
 /**
- * The panes load on demand, so a surface that only reads the metadata, as the
- * command palette does, never pulls them into its chunk.
+ * Registered at module load, so every surface reads the same list however it
+ * opens. The panes load on demand, so a surface that only reads the metadata,
+ * as the command palette does, never pulls them into its chunk.
  *
  * A name doubles as the persisted settingsActiveTab value, so it must not change.
  */
@@ -131,6 +132,4 @@ const items: SettingsItem[] = [
 	},
 ];
 
-export function registerSettingsItems() {
-	items.forEach(settingsItems.register);
-}
+items.forEach(settingsItems.register);

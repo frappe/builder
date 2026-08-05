@@ -23,34 +23,33 @@ export type LeftPanelTab = RegistryItem & {
 };
 
 export const leftPanelTabs = createRegistry<LeftPanelTab>();
-export const registerLeftPanelTab = leftPanelTabs.register;
 
 /** Call from a component setup. The store lookup below needs an active pinia. */
-export function registerBuiltInLeftPanelTabs() {
+export function registerLeftPanelTabs() {
 	const builderStore = useBuilderStore();
 
-	registerLeftPanelTab({
+	leftPanelTabs.register({
 		name: "Blocks",
 		label: "Insert",
 		icon: "lucide-plus",
 		component: BlocksTab,
 	});
 
-	registerLeftPanelTab({
+	leftPanelTabs.register({
 		name: "Layers",
 		label: "Layers",
 		icon: LayersIcon,
 		component: LayersTab,
 	});
 
-	registerLeftPanelTab({
+	leftPanelTabs.register({
 		name: "Assets",
 		label: "Components",
 		icon: "lucide-box",
 		component: AssetsTab,
 	});
 
-	registerLeftPanelTab({
+	leftPanelTabs.register({
 		name: "Code",
 		label: "Code",
 		icon: "lucide-code",
@@ -62,7 +61,7 @@ export function registerBuiltInLeftPanelTabs() {
 	});
 
 	// not a tab. It toggles a modal, so it declares an action and its own active state
-	registerLeftPanelTab({
+	leftPanelTabs.register({
 		name: "tokens",
 		label: "Design Tokens",
 		icon: "lucide-aperture",
