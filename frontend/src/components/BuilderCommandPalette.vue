@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { commands, registerCommands, resolveText } from "@/components/Commands";
+import { commands, resolveText } from "@/components/Commands";
 import { settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -54,7 +54,6 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 	searchQuery.value = "";
 };
 
-registerCommands();
 
 commands.register({
 	name: "search-page",

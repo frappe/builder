@@ -21,7 +21,7 @@ import {
 	uploadBuilderAsset,
 } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
-import { commandShortcuts, registerCommands } from "@/components/Commands";
+import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -214,8 +214,6 @@ export function useBuilderEvents(
 			return;
 		}
 	});
-
-	registerCommands();
 
 	// a command that declares keys owns its binding; what is left needs the
 	// keyboard event or a canvas ref, so it stays a plain shortcut

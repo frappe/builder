@@ -9,10 +9,7 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import {
-	blockContextMenuOptions,
-	registerContextMenuOptions,
-} from "@/components/BlockContextMenuOptions";
+import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -21,7 +18,6 @@ import { Ref, ref } from "vue";
 
 const builderStore = useBuilderStore();
 
-registerContextMenuOptions();
 // read all, not visible: each item applies its own condition to the context
 const contextMenuOptions = blockContextMenuOptions.all;
 

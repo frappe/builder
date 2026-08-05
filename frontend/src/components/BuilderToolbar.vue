@@ -49,11 +49,7 @@
 </template>
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import {
-	registerToolbarItems,
-	toolbarItems,
-	type ToolbarRegion,
-} from "@/components/ToolbarItems";
+import { toolbarItems, type ToolbarRegion } from "@/components/ToolbarItems";
 import useBuilderStore from "@/stores/builderStore";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { defineAsyncComponent, ref } from "vue";
@@ -62,7 +58,6 @@ const BuilderSettings = defineAsyncComponent(() => import("./BuilderSettings.vue
 
 const builderStore = useBuilderStore();
 
-registerToolbarItems();
 const itemsIn = (region: ToolbarRegion) =>
 	toolbarItems.visible.value.filter((item) => item.region === region);
 
