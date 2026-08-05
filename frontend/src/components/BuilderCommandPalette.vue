@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { commands, registerBuiltInCommands, registerCommand, resolveText } from "@/components/Commands";
-import { registerBuiltInSettingsItems, settingsItems } from "@/components/Settings";
+import { registerSettingsItems, settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -57,7 +57,7 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 registerBuiltInCommands();
 // register is keyed by name, so the settings dialog registering the same items
 // replaces rather than duplicates
-registerBuiltInSettingsItems();
+registerSettingsItems();
 
 registerCommand({
 	name: "search-page",

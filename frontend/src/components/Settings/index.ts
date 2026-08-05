@@ -16,7 +16,6 @@ export type SettingsItem = RegistryItem & {
 export const settingsGroups: SettingsGroup[] = ["Current Page", "Global"];
 
 export const settingsItems = createRegistry<SettingsItem>();
-export const registerSettingsItem = settingsItems.register;
 
 /**
  * The panes load on demand, so a surface that only reads the metadata, as the
@@ -24,7 +23,7 @@ export const registerSettingsItem = settingsItems.register;
  *
  * A name doubles as the persisted settingsActiveTab value, so it must not change.
  */
-const builtInSettingsItems: SettingsItem[] = [
+const items: SettingsItem[] = [
 	{
 		name: "page_general",
 		label: "General",
@@ -132,6 +131,6 @@ const builtInSettingsItems: SettingsItem[] = [
 	},
 ];
 
-export function registerBuiltInSettingsItems() {
-	builtInSettingsItems.forEach(registerSettingsItem);
+export function registerSettingsItems() {
+	items.forEach(settingsItems.register);
 }
