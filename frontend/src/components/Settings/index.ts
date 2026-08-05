@@ -10,7 +10,12 @@ export type SettingsItem = RegistryItem & {
 	group: SettingsGroup;
 	component: Component;
 	disabled?: boolean;
+	/** an async pane exposes its loader, so prefetch can warm it while the editor idles */
+	load?: () => Promise<unknown>;
 };
+
+/** a pane declares the loader once: register builds the component from it */
+type SettingsPane = Omit<SettingsItem, "component"> & { load: () => Promise<{ default: Component }> };
 
 // the sidebar renders groups in this order
 export const settingsGroups: SettingsGroup[] = ["Current Page", "Global"];
@@ -24,14 +29,14 @@ export const settingsItems = createRegistry<SettingsItem>();
  *
  * A name doubles as the persisted settingsActiveTab value, so it must not change.
  */
-const items: SettingsItem[] = [
+const panes: SettingsPane[] = [
 	{
 		name: "page_general",
 		label: "General",
 		title: "General",
 		icon: "lucide-settings",
 		group: "Current Page",
-		component: defineAsyncComponent(() => import("@/components/Settings/PageGeneral.vue")),
+		load: () => import("@/components/Settings/PageGeneral.vue"),
 	},
 	{
 		name: "page_code",
@@ -39,7 +44,7 @@ const items: SettingsItem[] = [
 		title: "Page Code",
 		icon: "lucide-code",
 		group: "Current Page",
-		component: defineAsyncComponent(() => import("@/components/Settings/PageCode.vue")),
+		load: () => import("@/components/Settings/PageCode.vue"),
 	},
 	{
 		name: "page_meta",
@@ -47,7 +52,7 @@ const items: SettingsItem[] = [
 		title: "Meta",
 		icon: "lucide-square-dashed-bottom-code",
 		group: "Current Page",
-		component: defineAsyncComponent(() => import("@/components/Settings/PageMeta.vue")),
+		load: () => import("@/components/Settings/PageMeta.vue"),
 	},
 	{
 		name: "page_analytics",
@@ -55,7 +60,7 @@ const items: SettingsItem[] = [
 		title: "Page Analytics",
 		icon: "lucide-chart-bar",
 		group: "Current Page",
-		component: defineAsyncComponent(() => import("@/components/Settings/PageAnalytics.vue")),
+		load: () => import("@/components/Settings/PageAnalytics.vue"),
 	},
 	{
 		name: "global_general",
@@ -63,7 +68,7 @@ const items: SettingsItem[] = [
 		title: "General",
 		icon: "lucide-settings",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalGeneral.vue")),
+		load: () => import("@/components/Settings/GlobalGeneral.vue"),
 	},
 	{
 		name: "global_users",
@@ -71,7 +76,7 @@ const items: SettingsItem[] = [
 		title: "Users",
 		icon: "lucide-users",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalUsers.vue")),
+		load: () => import("@/components/Settings/GlobalUsers.vue"),
 	},
 	{
 		name: "global_code",
@@ -79,7 +84,7 @@ const items: SettingsItem[] = [
 		title: "Global Code",
 		icon: "lucide-code",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalCode.vue")),
+		load: () => import("@/components/Settings/GlobalCode.vue"),
 	},
 	{
 		name: "global_redirects",
@@ -87,7 +92,7 @@ const items: SettingsItem[] = [
 		title: "Redirects",
 		icon: "lucide-shuffle",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalRedirects.vue")),
+		load: () => import("@/components/Settings/GlobalRedirects.vue"),
 	},
 	{
 		name: "global_robots",
@@ -95,7 +100,7 @@ const items: SettingsItem[] = [
 		title: "Robots.txt",
 		icon: "lucide-bot",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/PageRobots.vue")),
+		load: () => import("@/components/Settings/PageRobots.vue"),
 	},
 	{
 		name: "global_domains",
@@ -103,7 +108,7 @@ const items: SettingsItem[] = [
 		title: "Custom Domains",
 		icon: "lucide-globe",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalDomains.vue")),
+		load: () => import("@/components/Settings/GlobalDomains.vue"),
 		condition: () => Boolean(window.is_fc_site || window.is_developer_mode),
 	},
 	{
@@ -112,7 +117,7 @@ const items: SettingsItem[] = [
 		title: "Site Analytics",
 		icon: "lucide-chart-bar",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalAnalytics.vue")),
+		load: () => import("@/components/Settings/GlobalAnalytics.vue"),
 	},
 	{
 		name: "global_developer",
@@ -120,7 +125,7 @@ const items: SettingsItem[] = [
 		title: "Developer Settings",
 		icon: "lucide-terminal",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalDeveloper.vue")),
+		load: () => import("@/components/Settings/GlobalDeveloper.vue"),
 	},
 	{
 		name: "global_ai",
@@ -128,8 +133,14 @@ const items: SettingsItem[] = [
 		title: "AI Settings",
 		icon: "lucide-sparkles",
 		group: "Global",
-		component: defineAsyncComponent(() => import("@/components/Settings/GlobalAI.vue")),
+		load: () => import("@/components/Settings/GlobalAI.vue"),
 	},
 ];
 
-items.forEach(settingsItems.register);
+panes.forEach((pane) =>
+	settingsItems.register({ ...pane, component: defineAsyncComponent(pane.load) }),
+);
+
+// warmed on idle by prefetchBuilderSettings, so the first open never waits on a chunk
+export const preloadSettingsPanes = () =>
+	settingsItems.visible.value.forEach((item) => item.load?.());
