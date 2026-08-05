@@ -16,9 +16,7 @@
   "connection_section",
   "api_base",
   "api_key",
-  "column_break_conn",
-  "extra_headers",
-  "extra_body"
+  "column_break_conn"
  ],
  "fields": [
   {
@@ -74,20 +72,6 @@
   {
    "fieldname": "column_break_conn",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "JSON object sent as extra HTTP headers, e.g. <code>{\"User-Agent\": \"opencode/1.18.3\"}</code>.",
-   "fieldname": "extra_headers",
-   "fieldtype": "Code",
-   "label": "Extra Headers",
-   "options": "JSON"
-  },
-  {
-   "description": "JSON merged into the request body, e.g. an OpenRouter routing pin: <code>{\"provider\": {\"order\": [\"anthropic\"], \"allow_fallbacks\": false}}</code>.",
-   "fieldname": "extra_body",
-   "fieldtype": "Code",
-   "label": "Extra Body",
-   "options": "JSON"
   }
  ],
  "grid_page_length": 50,

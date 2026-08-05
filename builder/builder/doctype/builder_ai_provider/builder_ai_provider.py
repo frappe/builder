@@ -1,7 +1,6 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-import json
 import re
 
 import frappe
@@ -12,8 +11,6 @@ from frappe.model.document import Document
 class BuilderAIProvider(Document):
 	def validate(self):
 		self.derive_routing()
-		self.validate_json("extra_headers")
-		self.validate_json("extra_body")
 
 	def derive_routing(self):
 		"""Only the name and (for a custom endpoint) the API base are worth asking
@@ -32,17 +29,6 @@ class BuilderAIProvider(Document):
 			prefix, suffix = f"{base}-{suffix}", suffix + 1
 		return prefix
 
-	def validate_json(self, fieldname: str) -> None:
-		raw = (self.get(fieldname) or "").strip()
-		if not raw:
-			return
-		try:
-			parsed = json.loads(raw)
-		except ValueError as e:
-			frappe.throw(_("{0} is not valid JSON: {1}").format(_(self.meta.get_label(fieldname)), str(e)))
-		if not isinstance(parsed, dict):
-			frappe.throw(_("{0} must be a JSON object").format(_(self.meta.get_label(fieldname))))
-
 	def resolved_key(self) -> str | None:
 		"""This provider's key, or None to fall back to the caller's."""
 		return self.get_password("api_key", raise_exception=False)
@@ -56,10 +42,6 @@ class BuilderAIProvider(Document):
 				_("{0} models still use this provider: {1}").format(len(models), ", ".join(models[:5]))
 			)
 		clear_registry_cache()
-
-	def parsed(self, fieldname: str) -> dict:
-		raw = (self.get(fieldname) or "").strip()
-		return json.loads(raw) if raw else {}
 
 
 def slugify(value: str) -> str:

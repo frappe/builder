@@ -35,16 +35,12 @@ FALLBACK_MODEL = {
 	"route_prefix": "openrouter",
 	"litellm_provider": "openrouter",
 	"api_base": None,
-	"extra_headers": None,
-	"extra_body": None,
 	"max_tokens": 1_000_000,
 	"input_price": 2.0,
 	"output_price": 10.0,
 	"cache_read_price": None,
-	"temperature": None,
 	"vision": True,
 	"is_default": 1,
-	"is_simple": 0,
 }
 
 
@@ -91,8 +87,6 @@ def load_models() -> list[dict]:
 					"route_prefix",
 					"litellm_provider",
 					"api_base",
-					"extra_headers",
-					"extra_body",
 				],
 			)
 		}
@@ -105,12 +99,10 @@ def load_models() -> list[dict]:
 				"provider",
 				"supports_vision",
 				"max_tokens",
-				"temperature",
 				"input_price",
 				"output_price",
 				"cache_read_price",
 				"is_default",
-				"is_simple",
 			],
 			order_by="creation asc",
 		)
@@ -131,16 +123,12 @@ def load_models() -> list[dict]:
 				"route_prefix": provider.route_prefix,
 				"litellm_provider": provider.litellm_provider,
 				"api_base": provider.api_base or None,
-				"extra_headers": provider.extra_headers or None,
-				"extra_body": provider.extra_body or None,
 				"max_tokens": row.max_tokens or DEFAULT_CONTEXT_WINDOW,
 				"input_price": row.input_price,
 				"output_price": row.output_price,
 				"cache_read_price": row.cache_read_price or None,
-				"temperature": row.temperature or None,
 				"vision": bool(row.supports_vision),
 				"is_default": row.is_default,
-				"is_simple": row.is_simple,
 			}
 		)
 	return models or [dict(FALLBACK_MODEL)]
@@ -231,15 +219,6 @@ class ModelRegistry:
 		return m["provider"] if m else None
 
 	@classmethod
-	def input_price(cls, model_name: str) -> float:
-		"""Input price (USD per 1M tokens) for cost comparison. Unknown models are
-		treated as expensive (inf) so the loop safely downgrades to the cheap model."""
-		m = cls.find(model_name)
-		if not m or m.get("input_price") is None:
-			return float("inf")
-		return m["input_price"]
-
-	@classmethod
 	def output_price(cls, model_name: str) -> float | None:
 		"""Output price (USD per 1M tokens); None for unknown models (cost then
 		reads as unavailable rather than a wrong number)."""
@@ -250,12 +229,6 @@ class ModelRegistry:
 	def context_window(cls, model_name: str) -> int:
 		m = cls.find(model_name)
 		return int((m or {}).get("max_tokens") or DEFAULT_CONTEXT_WINDOW)
-
-	@classmethod
-	def temperature_override(cls, model_name: str) -> float | None:
-		"""The temperature a model insists on, when it rejects the agent tier's."""
-		m = cls.find(model_name)
-		return m.get("temperature") if m else None
 
 	@classmethod
 	def estimate_cost(cls, model_name: str, prompt: int, completion: int, cached: int = 0) -> float | None:
@@ -271,23 +244,6 @@ class ModelRegistry:
 			cache_read = inp * (0.1 if "/anthropic/" in model_name else 0.25)
 		fresh = max(prompt - cached, 0)
 		return (fresh * inp + cached * cache_read + completion * outp) / 1_000_000
-
-	@classmethod
-	def simple_model(cls) -> str | None:
-		return next((m["name"] for m in cls.catalog() if m.get("is_simple")), None)
-
-	@classmethod
-	def get_simple(cls, model: str) -> str:
-		"""The model to run the lightweight conversational loop (clarify / plan /
-		targeted edits) on. Only downgrade to the cheap loop model when the
-		selected model is PRICIER than it — if the user already picked something
-		as cheap or cheaper, keep their model rather than forcing a swap."""
-		simple = cls.simple_model()
-		if not simple or simple == model:
-			return model
-		if cls.input_price(model) <= cls.input_price(simple):
-			return model
-		return simple
 
 	@classmethod
 	def supports_vision(cls, model_name: str) -> bool:

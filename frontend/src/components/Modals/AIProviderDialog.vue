@@ -63,53 +63,6 @@
 					Enabled
 					<span class="text-p-xs text-ink-gray-5">(off hides this provider's models)</span>
 				</label>
-
-				<details class="text-p-sm text-ink-gray-7">
-					<summary class="cursor-pointer select-none text-ink-gray-6">Advanced</summary>
-					<div class="mt-3 flex flex-col gap-4">
-						<div class="grid grid-cols-2 gap-4">
-							<div class="flex flex-col gap-1.5">
-								<InputLabel>Route Prefix</InputLabel>
-								<BuilderInput
-									type="text"
-									:modelValue="provider.route_prefix"
-									@update:modelValue="(value: string) => (provider.route_prefix = value)"
-									:placeholder="derivedPrefix"
-									:hideClearButton="true" />
-								<p class="text-p-xs text-ink-gray-5">Namespaces this provider's model names.</p>
-							</div>
-							<div class="flex flex-col gap-1.5">
-								<InputLabel>LiteLLM Provider</InputLabel>
-								<BuilderInput
-									type="text"
-									:modelValue="provider.litellm_provider"
-									@update:modelValue="(value: string) => (provider.litellm_provider = value)"
-									:placeholder="provider.api_base ? 'openai' : 'openrouter'"
-									:hideClearButton="true" />
-							</div>
-						</div>
-						<div class="grid grid-cols-2 gap-4">
-							<div class="flex flex-col gap-1.5">
-								<InputLabel>Extra Headers</InputLabel>
-								<BuilderInput
-									type="textarea"
-									:modelValue="provider.extra_headers"
-									@update:modelValue="(value: string) => (provider.extra_headers = value)"
-									placeholder='{"User-Agent": "…"}'
-									:hideClearButton="true" />
-							</div>
-							<div class="flex flex-col gap-1.5">
-								<InputLabel>Extra Body</InputLabel>
-								<BuilderInput
-									type="textarea"
-									:modelValue="provider.extra_body"
-									@update:modelValue="(value: string) => (provider.extra_body = value)"
-									placeholder='{"provider": {"order": ["anthropic"]}}'
-									:hideClearButton="true" />
-							</div>
-						</div>
-					</div>
-				</details>
 			</div>
 		</template>
 	</Dialog>
@@ -135,12 +88,6 @@ const testOk = ref(false);
 
 const isEdit = computed(() => Boolean(props.providerName));
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
-const derivedPrefix = computed(() =>
-	(provider.value.provider_name || "provider")
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, ""),
-);
 
 const dialogActions = computed(() => [
 	...(isEdit.value ? [{ label: "Delete", theme: "red" as const, onClick: remove }] : []),

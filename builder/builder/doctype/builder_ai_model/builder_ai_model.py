@@ -26,7 +26,6 @@ class BuilderAIModel(Document):
 		if not self.is_new() and self.name != self.qualified_name():
 			frappe.rename_doc(self.doctype, self.name, self.qualified_name(), force=True)
 		self.enforce_single_flag("is_default", _("default model"))
-		self.enforce_single_flag("is_simple", _("lightweight loop model"))
 
 	def detect_metadata(self) -> None:
 		"""Fill in what can be looked up — context window, prices, vision — so adding

@@ -7,16 +7,9 @@ import { createListResource } from "frappe-ui";
 
 export const aiProviders = createListResource({
 	doctype: "Builder AI Provider",
-	fields: [
-		"name",
-		"provider_name",
-		"enabled",
-		"route_prefix",
-		"litellm_provider",
-		"api_base",
-		"extra_headers",
-		"extra_body",
-	],
+	// route_prefix is read-only here: the server derives it, and the model dialog
+	// previews the qualified name (<prefix>/<model id>) it will produce.
+	fields: ["name", "provider_name", "enabled", "route_prefix", "api_base"],
 	orderBy: "creation asc",
 	pageLength: 100,
 	auto: false,
@@ -31,10 +24,7 @@ export const aiModels = createListResource({
 		"model_id",
 		"enabled",
 		"is_default",
-		"is_simple",
 		"supports_vision",
-		"max_tokens",
-		"temperature",
 		"input_price",
 		"output_price",
 	],
@@ -53,13 +43,12 @@ export const defaultProvider = (): Partial<BuilderAIProvider> => ({
 	api_base: "",
 });
 
+// Context window, pricing and vision are filled in by the model's detect_metadata.
 export const defaultModel = (provider: string): Partial<BuilderAIModel> => ({
 	provider,
 	model_id: "",
 	label: "",
 	enabled: 1,
-	supports_vision: 0,
-	max_tokens: 200000,
 });
 
 /** USD per 1M tokens, or "free"/"—" so a price column never reads as a bug. */

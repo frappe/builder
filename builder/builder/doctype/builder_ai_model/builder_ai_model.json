@@ -14,12 +14,10 @@
   "column_break_head",
   "enabled",
   "is_default",
-  "is_simple",
   "capability_section",
   "supports_vision",
   "max_tokens",
   "column_break_cap",
-  "temperature",
   "pricing_section",
   "input_price",
   "output_price",
@@ -70,12 +68,6 @@
    "label": "Default Model"
   },
   {
-   "description": "The cheap model for lightweight conversational rounds. The loop only downgrades to it when the selected model is pricier. Only one model can hold this.",
-   "fieldname": "is_simple",
-   "fieldtype": "Check",
-   "label": "Lightweight Loop Model"
-  },
-  {
    "fieldname": "capability_section",
    "fieldtype": "Section Break",
    "label": "Capabilities"
@@ -95,13 +87,6 @@
   {
    "fieldname": "column_break_cap",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "Overrides the temperature the agent would otherwise use. Some models reject anything but 1.",
-   "fieldname": "temperature",
-   "fieldtype": "Float",
-   "label": "Temperature Override",
-   "precision": "2"
   },
   {
    "fieldname": "pricing_section",

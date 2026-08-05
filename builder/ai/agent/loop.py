@@ -1184,13 +1184,10 @@ class AgentRunner:
 		if self.tree is None:
 			self.tree = WorkingTree(None)
 
-		# Editing an existing page runs the loop on the user's CHOSEN model — edit
-		# taste matters as much as generation taste, and silently downgrading a
-		# deliberately-picked heavy model is the surest way to degrade output. Only
-		# the lightweight empty-page conversation (clarify/plan) drops to the cheap
-		# model.
-		has_content = self.page_root() is not None
-		self.loop_model = self.model if has_content else ModelRegistry.get_simple(self.model)
+		# Every turn runs on the model the user picked: edit taste matters as much as
+		# generation taste, and silently swapping a deliberately-picked model is the
+		# surest way to degrade output.
+		self.loop_model = self.model
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 
@@ -1430,7 +1427,7 @@ class AgentRunner:
 			return
 		try:
 			title = llm.complete(
-				ModelRegistry.get_simple(self.model),
+				self.model,
 				[
 					{
 						"role": "user",

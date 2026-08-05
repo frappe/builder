@@ -18,29 +18,9 @@ PROVIDERS = [
 		"litellm_provider": "openrouter",
 		"api_base": None,
 	},
-	{
-		# opencode.ai fronts two OpenAI-compatible gateways with native tool calling.
-		# Cloudflare rejects default httpx/urllib agents (error 1010), hence the UA.
-		"provider_name": "OpenCode Zen",
-		"route_prefix": "opencode",
-		"litellm_provider": "openai",
-		"api_base": "https://opencode.ai/zen/v1",
-		"extra_headers": '{"User-Agent": "opencode/1.18.3"}',
-	},
-	{
-		"provider_name": "OpenCode Go",
-		"route_prefix": "opencode-go",
-		"litellm_provider": "openai",
-		"api_base": "https://opencode.ai/zen/go/v1",
-		"extra_headers": '{"User-Agent": "opencode/1.18.3"}',
-	},
 ]
 
 DEFAULT_MODEL = "openrouter/anthropic/claude-sonnet-5"
-SIMPLE_MODEL = "openrouter/google/gemini-3.5-flash"
-
-# Moonshot rejects any temperature but 1 with a 400.
-TEMPERATURE_OVERRIDES = {"opencode-go/kimi-k2.7-code": 1.0, "opencode-go/kimi-k2.6": 1.0}
 
 MODELS = [
 	{
@@ -98,51 +78,6 @@ MODELS = [
 		"supports_vision": 1,
 	},
 	{
-		"provider": "OpenCode Go",
-		"model_id": "kimi-k2.7-code",
-		"label": "Kimi K2.7 Code (OpenCode Go)",
-		"max_tokens": 256000,
-		"input_price": 0.95,
-		"output_price": 4.0,
-		"supports_vision": 0,
-	},
-	{
-		"provider": "OpenCode Go",
-		"model_id": "kimi-k2.6",
-		"label": "Kimi K2.6 (OpenCode Go)",
-		"max_tokens": 256000,
-		"input_price": 0.95,
-		"output_price": 4.0,
-		"supports_vision": 0,
-	},
-	{
-		"provider": "OpenCode Zen",
-		"model_id": "nemotron-3-ultra-free",
-		"label": "Nemotron 3 Ultra (OpenCode, Free)",
-		"max_tokens": 1000000,
-		"input_price": 0.0,
-		"output_price": 0.0,
-		"supports_vision": 0,
-	},
-	{
-		"provider": "OpenCode Zen",
-		"model_id": "deepseek-v4-flash-free",
-		"label": "DeepSeek V4 Flash (OpenCode, Free)",
-		"max_tokens": 200000,
-		"input_price": 0.0,
-		"output_price": 0.0,
-		"supports_vision": 0,
-	},
-	{
-		"provider": "OpenCode Zen",
-		"model_id": "north-mini-code-free",
-		"label": "North Mini Code (OpenCode, Free)",
-		"max_tokens": 256000,
-		"input_price": 0.0,
-		"output_price": 0.0,
-		"supports_vision": 0,
-	},
-	{
 		"provider": "OpenRouter",
 		"model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
 		"label": "Nemotron 3 Ultra (Free)",
@@ -178,8 +113,6 @@ def create_model(spec: dict) -> None:
 			"doctype": "Builder AI Model",
 			"enabled": 1,
 			"is_default": int(name == DEFAULT_MODEL),
-			"is_simple": int(name == SIMPLE_MODEL),
-			"temperature": TEMPERATURE_OVERRIDES.get(name),
 			**spec,
 		}
 	).insert(ignore_permissions=True)

@@ -116,19 +116,8 @@ def provider_kwargs(model: str) -> dict:
 
 
 def provider_overrides(info: dict) -> dict:
-	"""api_base / headers / body configured on the model's Builder AI Provider."""
-	overrides = {}
-	if info.get("api_base"):
-		overrides["api_base"] = info["api_base"]
-	for field, key in (("extra_headers", "extra_headers"), ("extra_body", "extra_body")):
-		raw = (info.get(field) or "").strip() if isinstance(info.get(field), str) else None
-		if not raw:
-			continue
-		try:
-			overrides[key] = json.loads(raw)
-		except ValueError:
-			logger.warning(f"Ignoring invalid JSON in {field} of provider {info.get('provider')}")
-	return overrides
+	"""The api_base configured on the model's Builder AI Provider, if any."""
+	return {"api_base": info["api_base"]} if info.get("api_base") else {}
 
 
 def route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
@@ -162,22 +151,11 @@ def provider_api_key(info: dict) -> str | None:
 		return None
 
 
-def patch_params_for_provider(model: str, params: dict) -> dict:
-	"""Apply the model's temperature override, if it declares one. Some models
-	(Moonshot's Kimi, for instance) reject any temperature but 1 with a 400.
-	Returns a new dict; the input is left untouched."""
-	override = ModelRegistry.temperature_override(model)
-	if override is None or params.get("temperature") in (None, override):
-		return params
-	return {**params, "temperature": override}
-
-
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
 	"""Plain completion. Returns the response iterator when streaming, else the
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
 	model, overrides, api_key = route(model, api_key)
-	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM | model={model} stream={stream} params={params}\n"
@@ -218,7 +196,6 @@ def complete_with_tools(
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
 	model, overrides, api_key = route(model, api_key)
-	params = patch_params_for_provider(model, params)
 	patch_messages_for_provider(model, messages)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"

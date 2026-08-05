@@ -207,10 +207,6 @@ export interface BuilderAIProvider extends DocType {
   api_base?: string;
   /** API Key: Password */
   api_key?: string;
-  /** Extra Headers: Code */
-  extra_headers?: string;
-  /** Extra Body: Code */
-  extra_body?: string;
 }
 
 // Last updated: 2026-08-04 10:00:00.000000
@@ -225,14 +221,10 @@ export interface BuilderAIModel extends DocType {
   enabled: 0 | 1;
   /** Default Model: Check */
   is_default: 0 | 1;
-  /** Lightweight Loop Model: Check */
-  is_simple: 0 | 1;
   /** Supports Vision: Check */
   supports_vision: 0 | 1;
   /** Context Window: Int */
   max_tokens?: number;
-  /** Temperature Override: Float */
-  temperature?: number;
   /** Input Price: Float */
   input_price?: number;
   /** Output Price: Float */

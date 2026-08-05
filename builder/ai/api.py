@@ -198,8 +198,6 @@ PROVIDER_FIELDS = (
 	"route_prefix",
 	"litellm_provider",
 	"api_base",
-	"extra_headers",
-	"extra_body",
 	"enabled",
 )
 
@@ -247,7 +245,7 @@ def import_provider_models(provider: str) -> dict:
 	import requests
 
 	url = f"{doc.api_base.rstrip('/')}/models"
-	headers = {"Content-Type": "application/json", **doc.parsed("extra_headers")}
+	headers = {"Content-Type": "application/json"}
 	if key := (doc.resolved_key() or resolve_api_key()):
 		headers["Authorization"] = f"Bearer {key}"
 	try:

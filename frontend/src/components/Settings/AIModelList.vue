@@ -53,7 +53,6 @@
 						<span class="flex items-center gap-1.5">
 							<span class="truncate text-p-sm text-ink-gray-8">{{ row.label }}</span>
 							<Badge v-if="row.is_default" theme="green" size="sm">Default</Badge>
-							<Badge v-else-if="row.is_simple" theme="blue" size="sm">Light loop</Badge>
 							<span
 								v-if="row.supports_vision"
 								class="lucide-eye size-3.5 text-ink-gray-4"
@@ -105,7 +104,7 @@ const grouped = computed(() =>
 		provider: provider.name,
 		label: provider.provider_name,
 		enabled: provider.enabled,
-		hint: provider.api_base || provider.litellm_provider,
+		hint: provider.api_base || provider.route_prefix,
 		models: (aiModels.data || []).filter((m: any) => m.provider === provider.name),
 	})),
 );
