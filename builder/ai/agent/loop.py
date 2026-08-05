@@ -488,16 +488,14 @@ class AgentRunner:
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
 		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
 		# logged so the selector/tiered-context changes can be measured against baseline.
-		# `cached_tokens` is the cache-read slice of prompt_tokens (cheap, ~10% price);
-		# `per_call` keeps each call's split so a turn's cost can be read round by round.
+		# `cached_tokens` is the cache-read slice of prompt_tokens; `per_call` keeps
+		# each call's split so a turn can be read round by round.
 		self.usage = {
 			"prompt_tokens": 0,
 			"completion_tokens": 0,
 			"total_tokens": 0,
 			"cached_tokens": 0,
 			"calls": 0,
-			# Approximate USD, from the registry's per-1M prices (None-cost calls skipped).
-			"cost": 0.0,
 			"per_call": [],
 		}
 
@@ -571,8 +569,8 @@ class AgentRunner:
 	def record_usage(self, chunk, model: str | None = None) -> None:
 		"""Add a streamed chunk's usage to the per-turn tally. Only the final chunk of
 		a stream (stream_options.include_usage) carries usage; the rest are None.
-		`model` is the model that produced this stream (the generation stream runs on
-		self.model; loop rounds on self.loop_model) — it prices the call."""
+		`model` is unused now that only token counts are tallied; kept so callers can
+		keep naming the model that produced the stream."""
 		usage = getattr(chunk, "usage", None)
 		if not usage:
 			return
@@ -580,17 +578,12 @@ class AgentRunner:
 		completion = getattr(usage, "completion_tokens", 0) or 0
 		total = getattr(usage, "total_tokens", 0) or 0
 		cached = self.cached_prompt_tokens(usage)
-		cost = ModelRegistry.estimate_cost(model or self.loop_model, prompt, completion, cached)
 		self.usage["prompt_tokens"] += prompt
 		self.usage["completion_tokens"] += completion
 		self.usage["total_tokens"] += total
 		self.usage["cached_tokens"] += cached
 		self.usage["calls"] += 1
-		if cost is not None:
-			self.usage["cost"] = round((self.usage.get("cost") or 0) + cost, 6)
-		self.usage["per_call"].append(
-			{"prompt": prompt, "completion": completion, "cached": cached, "cost": cost}
-		)
+		self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -1385,7 +1378,6 @@ class AgentRunner:
 				"finishReasons": self.finish_reasons,
 				"toolFailures": self.tool_failures,
 				"streamRetries": self.stream_retries,
-				# Per-turn cost signal for the selector/tiered-context experiment.
 				"tokens": self.usage,
 				# How much room the conversation has: the loop model's window; the
 				# latest call's prompt_tokens (per_call) is the current context size.

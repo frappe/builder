@@ -4,9 +4,9 @@
 """Seed the shipped provider/model shortlist into Builder AI Provider and
 Builder AI Model.
 
-Only ever creates what is missing, so a site that has edited prices, disabled a
-model or added its own keeps them. A patch runs once per site, so a row deleted
-afterwards stays deleted.
+Only ever creates what is missing, so a site that has renamed, disabled or added
+models keeps them. A patch runs once per site, so a row deleted afterwards stays
+deleted. The chat's picker starts on the first model here.
 """
 
 import frappe
@@ -20,16 +20,12 @@ PROVIDERS = [
 	},
 ]
 
-DEFAULT_MODEL = "openrouter/anthropic/claude-sonnet-5"
-
 MODELS = [
 	{
 		"provider": "OpenRouter",
 		"model_id": "anthropic/claude-sonnet-5",
 		"label": "Claude Sonnet 5",
 		"max_tokens": 1000000,
-		"input_price": 2.0,
-		"output_price": 10.0,
 		"supports_vision": 1,
 	},
 	{
@@ -37,8 +33,6 @@ MODELS = [
 		"model_id": "anthropic/claude-opus-4.8",
 		"label": "Claude Opus 4.8",
 		"max_tokens": 1000000,
-		"input_price": 5.0,
-		"output_price": 25.0,
 		"supports_vision": 1,
 	},
 	{
@@ -46,8 +40,6 @@ MODELS = [
 		"model_id": "anthropic/claude-fable-5",
 		"label": "Claude Fable 5",
 		"max_tokens": 1000000,
-		"input_price": 10.0,
-		"output_price": 50.0,
 		"supports_vision": 1,
 	},
 	{
@@ -55,8 +47,6 @@ MODELS = [
 		"model_id": "openai/gpt-5.5",
 		"label": "GPT-5.5",
 		"max_tokens": 1050000,
-		"input_price": 5.0,
-		"output_price": 30.0,
 		"supports_vision": 1,
 	},
 	{
@@ -64,8 +54,6 @@ MODELS = [
 		"model_id": "google/gemini-3.1-pro-preview",
 		"label": "Gemini 3.1 Pro",
 		"max_tokens": 1048576,
-		"input_price": 2.0,
-		"output_price": 12.0,
 		"supports_vision": 1,
 	},
 	{
@@ -73,8 +61,6 @@ MODELS = [
 		"model_id": "google/gemini-3.5-flash",
 		"label": "Gemini 3.5 Flash",
 		"max_tokens": 1048576,
-		"input_price": 1.5,
-		"output_price": 9.0,
 		"supports_vision": 1,
 	},
 	{
@@ -82,8 +68,6 @@ MODELS = [
 		"model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
 		"label": "Nemotron 3 Ultra (Free)",
 		"max_tokens": 1000000,
-		"input_price": 0.0,
-		"output_price": 0.0,
 		"supports_vision": 0,
 	},
 ]
@@ -112,7 +96,6 @@ def create_model(spec: dict) -> None:
 		{
 			"doctype": "Builder AI Model",
 			"enabled": 1,
-			"is_default": int(name == DEFAULT_MODEL),
 			**spec,
 		}
 	).insert(ignore_permissions=True)

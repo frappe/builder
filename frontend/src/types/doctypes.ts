@@ -219,16 +219,8 @@ export interface BuilderAIModel extends DocType {
   model_id: string;
   /** Enabled: Check */
   enabled: 0 | 1;
-  /** Default Model: Check */
-  is_default: 0 | 1;
   /** Supports Vision: Check */
   supports_vision: 0 | 1;
   /** Context Window: Int */
   max_tokens?: number;
-  /** Input Price: Float */
-  input_price?: number;
-  /** Output Price: Float */
-  output_price?: number;
-  /** Cache Read Price: Float */
-  cache_read_price?: number;
 }

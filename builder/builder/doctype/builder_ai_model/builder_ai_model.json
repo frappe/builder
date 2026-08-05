@@ -13,17 +13,10 @@
   "model_id",
   "column_break_head",
   "enabled",
-  "is_default",
   "capability_section",
   "supports_vision",
   "max_tokens",
-  "column_break_cap",
-  "pricing_section",
-  "input_price",
-  "output_price",
-  "column_break_price",
-  "cache_read_price",
-  "pricing_note"
+  "column_break_cap"
  ],
  "fields": [
   {
@@ -62,12 +55,6 @@
    "label": "Enabled"
   },
   {
-   "description": "The model new chats start on. Only one model can hold this.",
-   "fieldname": "is_default",
-   "fieldtype": "Check",
-   "label": "Default Model"
-  },
-  {
    "fieldname": "capability_section",
    "fieldtype": "Section Break",
    "label": "Capabilities"
@@ -87,39 +74,6 @@
   {
    "fieldname": "column_break_cap",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "pricing_section",
-   "fieldtype": "Section Break",
-   "label": "Pricing"
-  },
-  {
-   "fieldname": "input_price",
-   "fieldtype": "Float",
-   "label": "Input Price",
-   "precision": "4"
-  },
-  {
-   "fieldname": "output_price",
-   "fieldtype": "Float",
-   "label": "Output Price",
-   "precision": "4"
-  },
-  {
-   "fieldname": "column_break_price",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "cache_read_price",
-   "fieldtype": "Float",
-   "label": "Cache Read Price",
-   "precision": "4"
-  },
-  {
-   "fieldname": "pricing_note",
-   "fieldtype": "HTML",
-   "label": "Pricing Note",
-   "options": "<p class=\"text-muted small\">USD per 1M tokens. For OpenRouter models these are only a fallback: live pricing is fetched from OpenRouter and takes precedence.</p>"
   }
  ],
  "grid_page_length": 50,

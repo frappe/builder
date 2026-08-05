@@ -1,5 +1,4 @@
 import type Block from "@/block";
-import { setCostCurrency } from "@/components/ai/format";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
@@ -739,9 +738,6 @@ export class AIChatController {
 				this.availableModels.value = data;
 			},
 		});
-		// Costs display in the site's currency (converted from USD at a cached
-		// daily rate); until this resolves they show as USD.
-		createResource({ url: "builder.ai.api.get_ai_cost_currency", auto: true, onSuccess: setCostCurrency });
 		await this.loadSession();
 	}
 

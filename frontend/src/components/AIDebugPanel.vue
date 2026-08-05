@@ -135,7 +135,6 @@
 						{{ fmt(c.prompt) }} prompt
 						<span v-if="c.cached" class="text-ink-green-6">({{ fmt(c.cached) }} cached)</span>
 						· {{ fmt(c.completion) }} completion
-						<span v-if="c.cost">· {{ formatCost(c.cost) }}</span>
 					</div>
 				</div>
 			</details>
@@ -162,7 +161,6 @@
 </template>
 
 <script setup lang="ts">
-import { formatCost } from "@/components/ai/format";
 import { computed, ref } from "vue";
 
 const props = defineProps<{ debug: Record<string, any> | null }>();
@@ -195,7 +193,7 @@ const stopPill = computed(() => {
 	return { label: meta.label, text: map.text, dot: map.dot };
 });
 
-// The four headline tiles: cost (credits), tokens (+ cache read), latency, rounds.
+// The headline tiles: tokens (+ cache read), latency, rounds.
 const primaryStats = computed(() => {
 	const d = props.debug || {};
 	const t = tokens.value;
@@ -203,7 +201,6 @@ const primaryStats = computed(() => {
 	const cachePct =
 		t.prompt_tokens && t.cached_tokens ? Math.round((t.cached_tokens / t.prompt_tokens) * 100) : 0;
 	return [
-		{ label: "Cost", value: t.cost ? formatCost(t.cost) : "—" },
 		{
 			label: "Tokens",
 			value: fmt(t.total_tokens),

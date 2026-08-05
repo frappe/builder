@@ -25,11 +25,10 @@ class BuilderAIModel(Document):
 		self.detect_metadata()
 		if not self.is_new() and self.name != self.qualified_name():
 			frappe.rename_doc(self.doctype, self.name, self.qualified_name(), force=True)
-		self.enforce_single_flag("is_default", _("default model"))
 
 	def detect_metadata(self) -> None:
-		"""Fill in what can be looked up — context window, prices, vision — so adding
-		a model only asks for its id. OpenRouter answers for its own models, litellm's
+		"""Fill in what can be looked up — context window and vision — so adding a
+		model only asks for its id. OpenRouter answers for its own models, litellm's
 		model map for the rest. Anything already filled in is left alone, so an edit
 		(or a model nobody knows) stands."""
 		from builder.ai.models import lookup_metadata
@@ -37,32 +36,10 @@ class BuilderAIModel(Document):
 		found = lookup_metadata(self.qualified_name(), self.model_id)
 		if not found:
 			return
-		for field, key in (
-			("max_tokens", "max_tokens"),
-			("input_price", "input_price"),
-			("output_price", "output_price"),
-			("cache_read_price", "cache_read_price"),
-		):
-			if not self.get(field) and found.get(key) is not None:
-				self.set(field, found[key])
+		if not self.max_tokens and found.get("max_tokens"):
+			self.max_tokens = found["max_tokens"]
 		if not self.supports_vision and found.get("vision"):
 			self.supports_vision = 1
-
-	def enforce_single_flag(self, fieldname: str, description: str) -> None:
-		"""Only one model can be the default (or the lightweight one) — set the flag
-		here and it clears everywhere else, rather than erroring and making the user
-		go find the other row."""
-		if not self.get(fieldname):
-			return
-		others = frappe.get_all(self.doctype, filters={fieldname: 1, "name": ["!=", self.name]}, pluck="name")
-		for other in others:
-			frappe.db.set_value(self.doctype, other, fieldname, 0)
-		if others:
-			frappe.msgprint(
-				_("{0} is now the {1} (was {2})").format(self.label or self.name, description, others[0]),
-				indicator="green",
-				alert=True,
-			)
 
 	def on_update(self):
 		self.clear_registry_cache()

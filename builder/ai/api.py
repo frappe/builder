@@ -310,54 +310,6 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 
 @frappe.whitelist()
 @has_page_write()
-def get_ai_cost_currency():
-	"""The currency AI costs display in — the site's currency (System Settings, or
-	its country's) — with the cached daily USD rate. Falls back to USD whenever the
-	currency or rate is unknowable, so cost display never breaks on FX problems."""
-	currency = site_display_currency()
-	if currency == "USD":
-		return {"currency": "USD", "rate": 1}
-	rate = usd_rate(currency)
-	return {"currency": currency, "rate": rate} if rate else {"currency": "USD", "rate": 1}
-
-
-def site_display_currency() -> str:
-	settings = frappe.get_cached_doc("System Settings")
-	if settings.get("currency"):
-		return settings.get("currency")
-	if settings.get("country"):
-		from frappe.geo.country_info import get_country_info
-
-		return (get_country_info(settings.get("country")) or {}).get("currency") or "USD"
-	return "USD"
-
-
-def usd_rate(currency: str) -> float | None:
-	"""USD → currency, from the ECB daily fixing (frankfurter.app, keyless).
-	Cached for a day, but only on success — redis_cache would memoize a None from
-	a transient network failure and strand cost display on USD for 24h."""
-	key = f"builder_usd_rate::{currency}"
-	cached = frappe.cache.get_value(key)
-	if cached:
-		return float(cached)
-
-	import requests
-
-	try:
-		r = requests.get(
-			"https://api.frankfurter.app/latest", params={"from": "USD", "to": currency}, timeout=8
-		)
-		r.raise_for_status()
-		rate = float(r.json()["rates"][currency])
-	except Exception:
-		return None
-
-	frappe.cache.set_value(key, rate, expires_in_sec=24 * 3600)
-	return rate
-
-
-@frappe.whitelist()
-@has_page_write()
 def new_ai_session(page_id: str, model: str | None = None):
 	"""Start a fresh chat session on this page — existing sessions stay untouched
 	and switchable (VS Code-style parallel chats)."""

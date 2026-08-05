@@ -17,17 +17,7 @@ export const aiProviders = createListResource({
 
 export const aiModels = createListResource({
 	doctype: "Builder AI Model",
-	fields: [
-		"name",
-		"label",
-		"provider",
-		"model_id",
-		"enabled",
-		"is_default",
-		"supports_vision",
-		"input_price",
-		"output_price",
-	],
+	fields: ["name", "label", "provider", "model_id", "enabled", "supports_vision"],
 	orderBy: "creation asc",
 	pageLength: 200,
 	auto: false,
@@ -43,17 +33,10 @@ export const defaultProvider = (): Partial<BuilderAIProvider> => ({
 	api_base: "",
 });
 
-// Context window, pricing and vision are filled in by the model's detect_metadata.
+// Context window and vision are filled in by the model's detect_metadata.
 export const defaultModel = (provider: string): Partial<BuilderAIModel> => ({
 	provider,
 	model_id: "",
 	label: "",
 	enabled: 1,
 });
-
-/** USD per 1M tokens, or "free"/"—" so a price column never reads as a bug. */
-export const formatPrice = (value?: number): string => {
-	if (value === undefined || value === null) return "—";
-	if (!value) return "free";
-	return `$${value % 1 === 0 ? value : value.toFixed(2)}`;
-};

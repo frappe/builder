@@ -36,36 +36,20 @@ FALLBACK_MODEL = {
 	"litellm_provider": "openrouter",
 	"api_base": None,
 	"max_tokens": 1_000_000,
-	"input_price": 2.0,
-	"output_price": 10.0,
-	"cache_read_price": None,
 	"vision": True,
-	"is_default": 1,
 }
 
 
 @redis_cache(ttl=CATALOG_TTL)
 def fetch_openrouter_catalog() -> dict:
-	"""Live metadata for every OpenRouter model, keyed by our litellm-prefixed
-	name. Prices normalised to USD per 1M tokens."""
+	"""Live metadata for every OpenRouter model, keyed by our litellm-prefixed name."""
 	r = requests.get("https://openrouter.ai/api/v1/models", timeout=FETCH_TIMEOUT)
 	r.raise_for_status()
 	catalog = {}
 	for m in r.json().get("data", []):
-		pricing = m.get("pricing") or {}
 		modalities = (m.get("architecture") or {}).get("input_modalities") or []
-
-		def per_million(key: str) -> float | None:
-			try:
-				return round(float(pricing[key]) * 1_000_000, 6)  # 0.1, not 0.09999999999999999
-			except (KeyError, TypeError, ValueError):
-				return None
-
 		catalog[f"openrouter/{m['id']}"] = {
 			"max_tokens": m.get("context_length"),
-			"input_price": per_million("prompt"),
-			"output_price": per_million("completion"),
-			"cache_read_price": per_million("input_cache_read"),
 			"vision": "image" in modalities,
 		}
 	return catalog
@@ -99,10 +83,6 @@ def load_models() -> list[dict]:
 				"provider",
 				"supports_vision",
 				"max_tokens",
-				"input_price",
-				"output_price",
-				"cache_read_price",
-				"is_default",
 			],
 			order_by="creation asc",
 		)
@@ -124,21 +104,17 @@ def load_models() -> list[dict]:
 				"litellm_provider": provider.litellm_provider,
 				"api_base": provider.api_base or None,
 				"max_tokens": row.max_tokens or DEFAULT_CONTEXT_WINDOW,
-				"input_price": row.input_price,
-				"output_price": row.output_price,
-				"cache_read_price": row.cache_read_price or None,
 				"vision": bool(row.supports_vision),
-				"is_default": row.is_default,
 			}
 		)
 	return models or [dict(FALLBACK_MODEL)]
 
 
 def lookup_metadata(qualified_name: str, model_id: str) -> dict:
-	"""Context window, prices (USD per 1M) and vision support for a model, so
-	nobody has to type them in. OpenRouter models come from its catalog; everything
-	else from litellm's own model map, which knows the mainstream hosted models.
-	An unknown model returns {} and keeps whatever defaults it was given."""
+	"""Context window and vision support for a model, so nobody has to type them in.
+	OpenRouter models come from its catalog; everything else from litellm's own model
+	map, which knows the mainstream hosted models. An unknown model returns {} and
+	keeps whatever defaults it was given."""
 	if qualified_name.startswith("openrouter/"):
 		try:
 			if found := fetch_openrouter_catalog().get(qualified_name):
@@ -156,16 +132,8 @@ def lookup_metadata(qualified_name: str, model_id: str) -> dict:
 		info = None
 	if not info:
 		return {}
-
-	def per_million(key: str) -> float | None:
-		value = info.get(key)
-		return round(value * 1_000_000, 6) if isinstance(value, int | float) else None
-
 	found = {
 		"max_tokens": info.get("max_input_tokens") or info.get("max_tokens"),
-		"input_price": per_million("input_cost_per_token"),
-		"output_price": per_million("output_cost_per_token"),
-		"cache_read_price": per_million("cache_read_input_token_cost"),
 		"vision": info.get("supports_vision"),
 	}
 	return {k: v for k, v in found.items() if v is not None}
@@ -219,31 +187,9 @@ class ModelRegistry:
 		return m["provider"] if m else None
 
 	@classmethod
-	def output_price(cls, model_name: str) -> float | None:
-		"""Output price (USD per 1M tokens); None for unknown models (cost then
-		reads as unavailable rather than a wrong number)."""
-		m = cls.find(model_name)
-		return m.get("output_price") if m else None
-
-	@classmethod
 	def context_window(cls, model_name: str) -> int:
 		m = cls.find(model_name)
 		return int((m or {}).get("max_tokens") or DEFAULT_CONTEXT_WINDOW)
-
-	@classmethod
-	def estimate_cost(cls, model_name: str, prompt: int, completion: int, cached: int = 0) -> float | None:
-		"""Approximate USD cost of one call. Uses the provider's exact cache-read
-		price when the live catalog has it; otherwise a discount heuristic
-		(~10% Anthropic, ~25% elsewhere)."""
-		m = cls.find(model_name)
-		if not m or m.get("output_price") is None or m.get("input_price") is None:
-			return None
-		inp, outp = m["input_price"], m["output_price"]
-		cache_read = m.get("cache_read_price")
-		if cache_read is None:
-			cache_read = inp * (0.1 if "/anthropic/" in model_name else 0.25)
-		fresh = max(prompt - cached, 0)
-		return (fresh * inp + cached * cache_read + completion * outp) / 1_000_000
 
 	@classmethod
 	def supports_vision(cls, model_name: str) -> bool:
@@ -257,11 +203,11 @@ class ModelRegistry:
 	def get_default(cls, model_or_provider: str) -> str:
 		"""Resolve a selection to a model name. A known model passes through;
 		anything else (a provider name, or the legacy "openrouter" sentinel the
-		frontend still sends) resolves to the model flagged as default."""
+		frontend still sends) falls back to the first configured model."""
 		if cls.find(model_or_provider):
 			return model_or_provider
-		default = next((m["name"] for m in cls.catalog() if m.get("is_default")), None)
-		return default or model_or_provider
+		catalog = cls.catalog()
+		return catalog[0]["name"] if catalog else model_or_provider
 
 	@classmethod
 	def is_known_model(cls, model: str) -> bool:
