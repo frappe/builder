@@ -56,7 +56,7 @@ def run_extract_component(ctx, args: dict) -> str:
 	return (
 		f"Extracted '{name}' as Builder Component {component_id}; the block is now an instance of it. "
 		f"Embed it on any page as a block {{el: div, component: {component_id}}} — its inner blocks are "
-		f"no longer page blocks, so later changes to it go through the component (run_python on the "
+		f"no longer page blocks, so later changes to it go through the component (edit the "
 		f"Builder Component doc), not block edits."
 	)
 

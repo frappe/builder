@@ -87,7 +87,6 @@ def build_default_registry() -> ToolRegistry:
 	import cycles (tool handlers reference the agent context type)."""
 	from builder.ai.agent.tools import (
 		blocks,
-		codebase,
 		components,
 		conversation,
 		data,
@@ -97,7 +96,6 @@ def build_default_registry() -> ToolRegistry:
 		memory,
 		preview,
 		query,
-		sandbox,
 		scripts,
 		settings,
 	)
@@ -115,9 +113,4 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(images.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
-	# Primitives from the codebase-context experiment: run_python covers bulk or
-	# unusual page mutations the block tools don't express well, and source access
-	# lets the model check Builder mechanics instead of guessing.
-	registry.extend(codebase.TOOLS)
-	registry.extend(sandbox.TOOLS)
 	return registry

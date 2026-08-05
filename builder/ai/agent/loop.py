@@ -122,7 +122,7 @@ ACTION_CLAIM_RE = re.compile(
 NOOP_CORRECTION = (
 	"You wrote a summary describing changes, but you called no tools — so NOTHING was "
 	"applied to the page. If the request needs a change, call the appropriate tool(s) now "
-	"(update_block/add_block for targeted edits, run_python for bulk mutations, "
+	"(update_block/add_block for targeted edits, query_blocks + update_blocks for bulk ones, "
 	"set_page_script, generate_page, …) and actually do the work. If no change is genuinely "
 	"needed, or you were only answering a question, reply plainly and do NOT claim you "
 	"changed anything."
@@ -344,8 +344,7 @@ OUTLINE_PREAMBLE = (
 	"indentation = nesting, then ref, element, optional name, and a short text "
 	"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
 	"edit it. To see a block's full styles/attributes/text before editing, call "
-	"read_block(ref); to act on many blocks at once, call query_blocks then "
-	"update_blocks, or run_python (refs are blockIds in the `page` dict it sees)."
+	"read_block(ref); to act on many blocks at once, call query_blocks then update_blocks."
 )
 
 
@@ -476,8 +475,8 @@ class AgentRunner:
 		# Surfaced like args_repaired so a flaky provider shows up in the data, not as a
 		# silent turn failure.
 		self.stream_retries = 0
-		# Client ops a server tool queued mid-call (run_python mutating the page).
-		# Drained right after the handler returns — see drain_queued_ops.
+		# Client ops a server tool queued mid-call (extract_component rewriting the
+		# page). Drained right after the handler returns — see drain_queued_ops.
 		self.pending_client_ops: list[dict] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
@@ -841,14 +840,14 @@ class AgentRunner:
 		return tool_operations, content, raw_tool_calls
 
 	def queue_client_op(self, op: dict) -> None:
-		"""Called by a server tool mid-handler to emit a client op (run_python queues
-		the mutated page tree here). Drained by the loop right after the handler."""
+		"""Called by a server tool mid-handler to emit a client op (extract_component
+		queues the rewritten page tree here). Drained right after the handler."""
 		self.pending_client_ops.append(op)
 
 	def drain_queued_ops(self) -> list[dict]:
 		"""Snapshot, sync the working tree, persist, and emit ops a server tool queued
-		mid-handler (run_python queues the mutated page as set_page_blocks), so the
-		canvas updates live and a later run_python sees the tree it already mutated."""
+		mid-handler (extract_component queues the rewritten page as set_page_blocks),
+		so the canvas updates live and later tools see the tree they already changed."""
 		from builder.ai import page_writer
 
 		ops, self.pending_client_ops = self.pending_client_ops, []
@@ -858,8 +857,8 @@ class AgentRunner:
 			self.ensure_revert_snapshot()
 		for op in ops:
 			if op["tool_name"] == "set_page_blocks":
-				# run_python lets the model hand-build component instances; repair
-				# childless ones or they render as nothing (editor + published alike).
+				# Repair childless component instances or they render as nothing
+				# (editor + published alike).
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
 		self.applied_operations.extend(ops)

@@ -235,7 +235,7 @@ export class ToolDispatcher {
 				return;
 			}
 			case "set_page_blocks": {
-				// run_python mutated the tree server-side; replace it wholesale. Blocks keep
+				// A server tool rewrote the tree; replace it wholesale. Blocks keep
 				// their blockIds, so refs/selection stay valid — unlike generate_page.
 				const root = args.blocks as Record<string, any>;
 				if (!root) return;

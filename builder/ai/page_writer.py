@@ -325,14 +325,14 @@ def normalize_component_instances(root: dict | None) -> dict | None:
 	published renderer both render an instance through the PAGE block's children
 	(matched to the component via referenceBlockId) — an instance with no children
 	shows NOTHING. add_block and generation attach the skeleton at conversion, but
-	run_python lets the model hand-build `{extendedFromComponent: id}` dicts, so
+	The model can hand-build `{extendedFromComponent: id}` dicts, so
 	every tree that reaches the WorkingTree passes through here. Mutates in place."""
 	if not isinstance(root, dict):
 		return root
 	stack = [root]
 	while stack:
 		block = stack.pop()
-		# run_python-built (or weaker-model) blocks sometimes carry text in a bare
+		# Weaker models sometimes carry text in a bare
 		# `text` field — the format generate_page/add_block use — but Builder renders
 		# from innerHTML, so the block would show empty. Promote it here (the one path
 		# every hand-built tree passes through) rather than in each edit tool.

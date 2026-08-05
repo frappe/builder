@@ -106,8 +106,8 @@ set_page_script = Tool(
 		"'JavaScript' one — never inject a <style> tag from JS "
 		"(document.createElement('style') is always wrong; make two calls instead). "
 		"To target an element, in the SAME turn give it a hook — a class (preferred) in "
-		"'classes', or attrs.id for a single unique element — via update_block or "
-		"run_python, and select that. Do NOT select by a block's 'ref'/blockId "
+		"'classes', or attrs.id for a single unique element — via update_block, and "
+		"select that. Do NOT select by a block's 'ref'/blockId "
 		"(editor handle): it is not in the published DOM and matches nothing on the live page."
 	),
 	parameters={
@@ -138,13 +138,13 @@ set_page_script = Tool(
 update_script = Tool(
 	name="update_script",
 	side="client",
-	handler=apply_update_script,  # used by HEADLESS turns only; the editor applies client-side
+	handler=apply_update_script,  # the loop applies script ops server-side
 	description=(
 		"Replace the source code of an existing page script. "
 		"You MUST call get_page_scripts first and copy the exact 'script_name' value "
 		"from that response — do not guess or invent a name. "
 		"Same targeting rule as set_page_script: select by a class/attrs.id hook you add "
-		"via update_block or run_python, never by a block's 'ref'/blockId (not in the "
+		"via update_block, never by a block's 'ref'/blockId (not in the "
 		"published DOM)."
 	),
 	parameters={
