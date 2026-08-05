@@ -65,7 +65,7 @@ registerCommand({
 	icon: "lucide-file-search",
 	description: "Navigate",
 	group: "Navigate",
-	rank: 5,
+	before: "go-to-dashboard",
 	keepOpen: true,
 	action: () =>
 		openStep({
@@ -82,7 +82,7 @@ registerCommand({
 	icon: "lucide-settings-2",
 	description: "General",
 	group: "General",
-	rank: 105,
+	after: "shortcuts",
 	keepOpen: true,
 	action: () =>
 		openStep({

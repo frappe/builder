@@ -7,24 +7,7 @@ type TestItem = RegistryItem & { label?: string };
 const names = (items: readonly TestItem[]) => items.map((item) => item.name);
 
 describe("createRegistry", () => {
-	it("sorts by rank", () => {
-		const registry = createRegistry<TestItem>();
-		registry.register({ name: "c", rank: 30 });
-		registry.register({ name: "a", rank: 10 });
-		registry.register({ name: "b", rank: 20 });
-
-		expect(names(registry.visible.value)).toEqual(["a", "b", "c"]);
-	});
-
-	it("keeps registration order when ranks tie", () => {
-		const registry = createRegistry<TestItem>();
-		registry.register({ name: "first", rank: 10 });
-		registry.register({ name: "second", rank: 10 });
-
-		expect(names(registry.visible.value)).toEqual(["first", "second"]);
-	});
-
-	it("keeps registration order for unranked items", () => {
+	it("keeps registration order for items with no anchor", () => {
 		const registry = createRegistry<TestItem>();
 		registry.register({ name: "first" });
 		registry.register({ name: "second" });
@@ -33,42 +16,62 @@ describe("createRegistry", () => {
 		expect(names(registry.visible.value)).toEqual(["first", "second", "third"]);
 	});
 
-	it("lets an explicit rank jump an item ahead of unranked items registered earlier", () => {
+	it("inserts before a registered name", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "unranked-first" });
-		registry.register({ name: "jumps-to-front", rank: 1 });
+		registry.register({ name: "a" });
+		registry.register({ name: "c" });
+		registry.register({ name: "b", before: "c" });
 
-		expect(names(registry.visible.value)).toEqual(["jumps-to-front", "unranked-first"]);
+		expect(names(registry.visible.value)).toEqual(["a", "b", "c"]);
 	});
 
-	it("keeps later unranked items after an explicit rank set earlier", () => {
+	it("inserts after a registered name", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "ranked", rank: 200 });
-		registry.register({ name: "unranked" });
+		registry.register({ name: "a" });
+		registry.register({ name: "c" });
+		registry.register({ name: "b", after: "a" });
 
-		expect(names(registry.visible.value)).toEqual(["ranked", "unranked"]);
+		expect(names(registry.visible.value)).toEqual(["a", "b", "c"]);
+	});
+
+	it("puts an item first when its before name is not registered", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "a" });
+		registry.register({ name: "b" });
+		registry.register({ name: "orphan", before: "missing" });
+
+		expect(names(registry.visible.value)).toEqual(["orphan", "a", "b"]);
+	});
+
+	it("puts an item last when its after name is not registered", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "a" });
+		registry.register({ name: "b" });
+		registry.register({ name: "orphan", after: "missing" });
+
+		expect(names(registry.visible.value)).toEqual(["a", "b", "orphan"]);
 	});
 
 	it("hides an item whose condition is false", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "shown", rank: 10 });
-		registry.register({ name: "hidden", rank: 20, condition: () => false });
+		registry.register({ name: "shown" });
+		registry.register({ name: "hidden", condition: () => false });
 
 		expect(names(registry.visible.value)).toEqual(["shown"]);
 	});
 
 	it("keeps a condition-hidden item in all, so a surface can apply its own filter", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "shown", rank: 10 });
-		registry.register({ name: "hidden", rank: 20, condition: () => false });
+		registry.register({ name: "shown" });
+		registry.register({ name: "hidden", condition: () => false });
 
 		expect(names(registry.all.value)).toEqual(["shown", "hidden"]);
 	});
 
-	it("sorts all by rank, like visible", () => {
+	it("orders all the same way as visible", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "late", rank: 30 });
-		registry.register({ name: "early", rank: 10 });
+		registry.register({ name: "late" });
+		registry.register({ name: "early", before: "late" });
 
 		expect(names(registry.all.value)).toEqual(["early", "late"]);
 	});
@@ -97,8 +100,8 @@ describe("createRegistry", () => {
 
 	it("unregisters by name", () => {
 		const registry = createRegistry<TestItem>();
-		registry.register({ name: "keep", rank: 10 });
-		registry.register({ name: "drop", rank: 20 });
+		registry.register({ name: "keep" });
+		registry.register({ name: "drop" });
 
 		expect(registry.unregister("drop")).toBe(true);
 		expect(registry.unregister("never-registered")).toBe(false);
@@ -112,6 +115,28 @@ describe("createRegistry", () => {
 
 		expect(registry.visible.value).toHaveLength(1);
 		expect(registry.visible.value[0].label).toBe("new");
+	});
+
+	// two surfaces install the same built-in set, so this must not reshuffle
+	it("keeps an item in its slot when the same set registers twice", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "a" });
+		registry.register({ name: "b" });
+		registry.register({ name: "extension" });
+
+		registry.register({ name: "a" });
+		registry.register({ name: "b" });
+
+		expect(names(registry.visible.value)).toEqual(["a", "b", "extension"]);
+	});
+
+	it("moves an item when it registers again with an anchor", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "a" });
+		registry.register({ name: "b" });
+		registry.register({ name: "b", before: "a" });
+
+		expect(names(registry.visible.value)).toEqual(["b", "a"]);
 	});
 
 	it("keeps a replacement when the replaced registration unregisters", () => {
