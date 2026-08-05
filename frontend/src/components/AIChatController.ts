@@ -66,9 +66,6 @@ export class AIChatController {
 		}
 		if (!this.builderStore.aiBuildingCanvas) return;
 		this.builderStore.aiBuildingCanvas = false;
-		this.builderStore.aiBuildStatus = "";
-		// One-shot signal for the canvas to celebrate the finished build.
-		this.builderStore.aiBuildDoneTick++;
 		if (resyncDraft && this.pageId.value && this.pageId.value !== "new") {
 			this.pageStore.setPage(this.pageId.value, false);
 		}
@@ -356,8 +353,6 @@ export class AIChatController {
 		if (this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
-		// Narrate the canvas build overlay with Bob's own words for this round.
-		if (data.message) this.builderStore.aiBuildStatus = data.message;
 		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
 		this.scrollToBottom();
 	};
@@ -371,7 +366,6 @@ export class AIChatController {
 		if (!data.summary || (data.status && data.status !== "running")) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.summary;
-		this.builderStore.aiBuildStatus = data.summary;
 		// Don't clobber the model's answer text once it has started streaming.
 		if (!this.summaryContent.value) {
 			this.replacePendingAssistant(data.summary, { status: "running" });

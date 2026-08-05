@@ -12,7 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
-    AIBuildOverlay: typeof import('./src/components/ai/AIBuildOverlay.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
     AIModelDialog: typeof import('./src/components/Modals/AIModelDialog.vue')['default']
     AIModelList: typeof import('./src/components/Settings/AIModelList.vue')['default']
