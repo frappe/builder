@@ -158,10 +158,6 @@ const props = defineProps<{
 	isEditable: boolean;
 }>();
 
-// Frames to wait after a canvas gesture before showing the menu again. The menu
-// and the picker settle on different frames, so one is not enough.
-const REVEAL_FRAMES = 3;
-
 const settingLink = ref(false);
 const repositioning = ref(false);
 const textLink = ref("");
@@ -300,21 +296,16 @@ watch(
 	{ immediate: true },
 );
 
-const afterFrames = (count: number, callback: () => void) => {
-	if (count <= 0) return callback();
-	requestAnimationFrame(() => afterFrames(count - 1, callback));
-};
-
-// Stay hidden until the new position has painted. Revealing the menu the instant
-// the gesture ends shows it at its stale anchor for a frame, and the picker
-// trails it by another frame — together they read as jitter.
 debouncedWatch(
 	() => [props.canvasProps?.panning, props.canvasProps?.scaling],
 	() => {
 		repositioning.value = true;
 		nextTick(() => {
 			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
-			afterFrames(REVEAL_FRAMES, () => (repositioning.value = false));
+			setTimeout(async () => {
+				await nextTick();
+				repositioning.value = false;
+			}, 10);
 		});
 	},
 );
