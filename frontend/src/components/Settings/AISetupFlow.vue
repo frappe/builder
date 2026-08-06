@@ -97,8 +97,11 @@
 					@update:modelValue="(v: string) => (apiKey = v)"
 					:placeholder="active.key_prefix ? `${active.key_prefix}…` : 'Leave empty if not required'"
 					:hideClearButton="true" />
-				<p v-if="result" class="text-p-xs" :class="result.success ? 'text-ink-green-6' : 'text-ink-red-6'">
+				<p v-if="result" class="text-p-xs" :class="resultClass">
 					{{ result.message }}
+					<template v-if="result.severity === 'warn'">
+						You can finish setting up and sort that out later.
+					</template>
 				</p>
 				<p v-else-if="!active.custom" class="text-p-xs text-ink-gray-5">
 					Stored on this site and never shown again.
@@ -152,6 +155,15 @@
 				<Button v-if="canSkipSetup" size="sm" variant="ghost" @click="$emit('done')">
 					I'll do this later
 				</Button>
+				<!-- Never a dead end: a rejected key can still be saved and fixed later,
+				     it just shouldn't be the button your eye lands on. -->
+				<Button
+					v-if="step === 1 && result && result.severity === 'error'"
+					size="sm"
+					variant="ghost"
+					@click="proceed">
+					Continue anyway
+				</Button>
 				<Button
 					v-if="step === 1"
 					size="sm"
@@ -159,7 +171,7 @@
 					:loading="busy"
 					:disabled="!canContinue"
 					@click="verify">
-					{{ result?.success ? "Continue" : "Test connection" }}
+					{{ continueLabel }}
 				</Button>
 				<Button
 					v-else-if="step === 2"
@@ -209,10 +221,27 @@ const apiBase = ref("");
 const apiKey = ref("");
 const customModels = ref("");
 const selected = ref<string[]>([]);
-const result = ref<{ success: boolean; message: string } | null>(null);
+type Result = { success: boolean; severity: "ok" | "warn" | "error"; message: string };
+
+const result = ref<Result | null>(null);
 const busy = ref(false);
 const loading = ref(true);
 const loadError = ref("");
+
+const resultClass = computed(() =>
+	result.value?.success
+		? "text-ink-green-6"
+		: result.value?.severity === "warn"
+			? "text-ink-amber-6"
+			: "text-ink-red-6",
+);
+
+const continueLabel = computed(() => {
+	if (!result.value) return "Test connection";
+	if (result.value.success) return "Continue";
+	// The credentials checked out; the account just needs attention elsewhere.
+	return result.value.severity === "warn" ? "Continue" : "Test again";
+});
 
 const customModelIds = computed(() =>
 	customModels.value
@@ -265,11 +294,16 @@ const back = () => {
 	step.value -= 1;
 };
 
+const proceed = () => {
+	if (active.value.custom) selected.value = customModelIds.value;
+	step.value = 2;
+};
+
 const verify = async () => {
-	// A second press on a green result is "continue" — no point re-billing the call.
-	if (result.value?.success) {
-		if (active.value.custom) selected.value = customModelIds.value;
-		step.value = 2;
+	// Pressing again on a result that already cleared just moves on — a good key
+	// shouldn't be re-billed, and a valid-but-broke account has nothing to retry.
+	if (result.value && (result.value.success || result.value.severity === "warn")) {
+		proceed();
 		return;
 	}
 	busy.value = true;
@@ -279,9 +313,13 @@ const verify = async () => {
 			api_key: apiKey.value,
 			api_base: apiBase.value,
 			model_id: active.value.custom ? customModelIds.value[0] : "",
-		})) as { success: boolean; message: string };
+		})) as Result;
 	} catch (error) {
-		result.value = { success: false, message: (error as Error).message || "Could not reach the provider" };
+		result.value = {
+			success: false,
+			severity: "error",
+			message: (error as Error).message || "Could not reach the provider",
+		};
 	} finally {
 		busy.value = false;
 	}

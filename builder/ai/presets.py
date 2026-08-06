@@ -221,20 +221,33 @@ def verify_key(preset: dict, api_key: str, api_base: str, model_id: str) -> dict
 			max_tokens=5,
 			api_key=api_key or "not-needed",
 		)
-		return {"success": True, "message": _("Connected")}
+		return {"success": True, "severity": "ok", "message": _("Connected")}
 	except Exception as e:
-		return {"success": False, "message": readable_error(str(e))}
+		message, severity = readable_error(str(e))
+		return {"success": False, "severity": severity, "message": message}
 
 
-def readable_error(raw: str) -> str:
-	"""Provider errors arrive as a wall of JSON. Say what to actually do about it."""
+def readable_error(raw: str) -> tuple[str, str]:
+	"""Provider errors arrive as a wall of JSON. Say what to actually do about it,
+	and how much it matters.
+
+	"warn" means the credentials are FINE and something else is in the way — an
+	empty balance, a rate limit, a model this account can't see. Setup should not
+	dead-end on those: the key is right, and topping up an account is a thing you
+	go and do elsewhere, later. Only "error" means it cannot work as entered."""
 	low = raw.lower()
 	if "authentication" in low or ("invalid" in low and "key" in low) or "401" in low:
-		return _("That key was rejected. Check you copied all of it, and that it hasn't been revoked.")
+		return (
+			_("That key was rejected. Check you copied all of it, and that it hasn't been revoked."),
+			"error",
+		)
 	if "credit" in low or "quota" in low or "billing" in low or "429" in low:
-		return _("The key works, but the account is out of credit or rate limited.")
+		return (
+			_("The key is valid, but the account has no credit or is rate limited right now."),
+			"warn",
+		)
 	if "not found" in low or "404" in low or "does not exist" in low:
-		return _("That model isn't available on this account. Try a different one.")
+		return (_("The key is valid, but that model isn't available on this account."), "warn")
 	if "connection" in low or "timeout" in low or "refused" in low:
-		return _("Couldn't reach the server. Check the address is right and that it's running.")
-	return raw[:300]
+		return (_("Couldn't reach the server. Check the address is right and that it's running."), "error")
+	return (raw[:300], "error")
