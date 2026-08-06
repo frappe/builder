@@ -79,7 +79,14 @@ def set_design_token(ctx, args: dict) -> str:
 	value = (args.get("value") or "").strip()
 	if not label or not value:
 		return "token_name and value are required."
-	token_type = args.get("type") if args.get("type") in ("Color", "Dimension", "Font") else "Color"
+	requested_type = (args.get("type") or "").strip()
+	if requested_type == "Dimension":
+		# Coercing to Color would quietly file '96px' in the palette.
+		return (
+			"FAILED: spacing, sizes and radii are not tokens. Set the value literally on the "
+			"block instead (padding: '96px 24px'). Only Color and Font are tokens."
+		)
+	token_type = requested_type if requested_type in ("Color", "Font") else "Color"
 	if token_type == "Font":
 		# A Font token's value is a bare family name — a stack or var() here would
 		# break resolution at every font-loading site.
@@ -161,12 +168,13 @@ set_design_token_tool = Tool(
 	side="server",
 	description=(
 		"Create or update a design token (Builder Token) — the site's design system. "
-		"Colors, font families, and dimensions (spacing/radius) all restyle the whole "
-		"site from one place. The result names the exact CSS handle to use in styles — "
-		"var(--<id>). Pass an explicit `id` (e.g. 'acme-ink', 'acme-font-heading', "
-		"'acme-space-section') to CHOOSE that handle upfront, so you can write "
-		"var(--acme-ink) in briefs and styles you compose in the same turn. type is "
-		"Color, Font (value = bare family name), or Dimension; give a dark_value for colours."
+		"Colors and font families restyle the whole site from one place. The result "
+		"names the exact CSS handle to use in styles — var(--<id>). Pass an explicit "
+		"`id` (e.g. 'acme-ink', 'acme-font-heading') to CHOOSE that handle upfront, so "
+		"you can write var(--acme-ink) in briefs and styles you compose in the same "
+		"turn. type is Color or Font (value = bare family name); give a dark_value for "
+		"colours. Spacing, sizes and radii are NOT tokens — set them as literal values "
+		"on the block."
 	),
 	parameters={
 		"type": "object",
@@ -185,7 +193,7 @@ set_design_token_tool = Tool(
 			},
 			"value": {"type": "string"},
 			"dark_value": {"type": "string"},
-			"type": {"type": "string", "enum": ["Color", "Dimension", "Font"]},
+			"type": {"type": "string", "enum": ["Color", "Font"]},
 		},
 		"required": ["token_name", "value"],
 	},
