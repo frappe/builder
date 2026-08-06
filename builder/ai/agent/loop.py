@@ -281,12 +281,12 @@ def looks_like_json_card(text: str) -> bool:
 
 # Above this many chars of compact-YAML page structure, switch the page context
 # from the full tree to a compact outline (read_block pulls detail on demand).
-# A generated page measures 21-25k chars, so the old 9k threshold skeletonised
-# every one of them: the model was handed a styles-stripped outline of the page it
-# had just written and had to spend rounds reading its own work back. 30k ships
-# those whole for ~7k tokens that sit behind a cache marker, and still degrades
-# genuinely huge pages.
-FULL_CONTEXT_LIMIT = 30_000
+# Skeletonising a page the model just wrote costs whole rounds re-reading its own
+# work, so the threshold has to clear a real generated page. Measured across four
+# models: eleven landed between 15.4k and 30.9k chars, one ran to 48.6k. 45k keeps
+# the normal spread whole (~11k tokens, once per turn, behind a cache marker) and
+# still lets a runaway page fall back to the outline, which is what it is for.
+FULL_CONTEXT_LIMIT = 45_000
 
 # Tools that already surface as their own card in the chat (clarify question, plan,
 # task group) — no activity line for them.
