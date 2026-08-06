@@ -56,6 +56,15 @@ def run_present_ui(ctx, args: dict) -> str | None:
 			"cannot answer. Every option must be an object like {label, description?, font?, "
 			"svg?, colors?}. Call present_ui again with real options."
 		)
+	# Same dead end, reached the other way: everything sanitized away (unknown
+	# kinds, or an oversized card trimmed to nothing). present_ui ends the turn,
+	# so a card with no controls strands the user just as badly.
+	if not ui:
+		return (
+			"FAILED: the card has no elements, so it renders as a question the user cannot "
+			"answer. `ui` must be an ARRAY of element objects, e.g. "
+			"[{'kind': 'choices', 'options': [...]}]. Call present_ui again with real elements."
+		)
 	content = render_ui_text(text, ui)
 	metadata = {"status": "ui", "text": text, "ui": ui}
 	if ctx.activity:
@@ -76,6 +85,11 @@ def run_present_ui(ctx, args: dict) -> str | None:
 def sanitize_ui(raw) -> list[dict]:
 	"""Keep only dict elements with a known kind, capped in count and size —
 	the renderer skips anything else anyway; this keeps garbage out of the DB."""
+	# A single-element card often arrives as the bare element instead of a
+	# one-item array (seen live: a fully-formed font-pairing choices group that
+	# was dropped whole, leaving a question with nothing to tap).
+	if isinstance(raw, dict):
+		raw = [raw]
 	if not isinstance(raw, list):
 		return []
 	elements = [e for e in raw if isinstance(e, dict) and e.get("kind") in ELEMENT_KINDS]
