@@ -22,7 +22,11 @@
 					@click="promptCreateFolder()" />
 			</div>
 
-			<p v-if="!builderProjectFolder.data?.length" class="pl-2 text-sm text-ink-gray-5">No folders yet</p>
+			<p
+				v-if="!builderProjectFolder.data?.length"
+				class="mt-0.5 flex h-7 items-center pl-2 text-sm text-ink-gray-5">
+				No folders yet
+			</p>
 			<nav class="mt-0.5 space-y-0.5">
 				<SidebarItem
 					v-for="project in builderProjectFolder.data"
