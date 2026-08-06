@@ -52,6 +52,7 @@ const props = withDefaults(
 		placeholder?: string | number | boolean;
 		uniformTitle?: string;
 		splitTitle?: string;
+		splitIcon?: string;
 		splitOptions?: SplitOption[];
 		splits?: number | SplitConfig[];
 		toControlValues?: (value: unknown, count: number) => InputValue[];
@@ -67,6 +68,7 @@ const props = withDefaults(
 		placeholder: "",
 		uniformTitle: "Use for all",
 		splitTitle: "Set separately",
+		splitIcon: "lucide-scan",
 		splits: 0,
 		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
 		toModelValue: (values: InputValue[]) => values,
@@ -117,7 +119,7 @@ const defaultSplitOptions = computed<SplitOption[]>(() => [
 	{
 		label: props.splitTitle,
 		value: true,
-		icon: "lucide-scan",
+		icon: props.splitIcon,
 		tooltip: props.splitTitle,
 	},
 ]);

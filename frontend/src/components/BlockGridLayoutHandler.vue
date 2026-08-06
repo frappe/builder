@@ -48,7 +48,7 @@
 		type="text"
 		:modelValue="height"
 		@update:modelValue="setHeight" />
-	<GapControl v-if="blockController.isGrid()" />
+	<SplitPropertyControl v-if="blockController.isGrid()" v-bind="gapProps" />
 	<!-- <InlineInput
 		label="Align"
 		v-if="blockController.isGrid()"
@@ -210,11 +210,13 @@
 <script lang="ts" setup>
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import GapControl from "@/components/GapControl.vue";
 import blockController from "@/utils/blockController";
 import { GRID_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed } from "vue";
+
+defineProps<{ gapProps: InstanceType<typeof SplitPropertyControl>["$props"] }>();
 
 const getGridType = () => {
 	return isFixed.value ? "fixed" : "auto";

@@ -18,12 +18,13 @@ const spacingSectionProperties = [
 				getModelValue: (state: string | null = null) =>
 					state
 						? String(blockController.getNativeStyle(`${state}:margin`) ?? "")
-						: String(blockController.getMargin({ nativeOnly: true, cascading: false })),
-				getPlaceholder: () => String(blockController.getMargin({ nativeOnly: false, cascading: true })),
+						: String(blockController.getSpacing("margin", { nativeOnly: true, cascading: false })),
+				getPlaceholder: () =>
+					String(blockController.getSpacing("margin", { nativeOnly: false, cascading: true })),
 				getMergedValue,
 				setModelValue: (value: string | boolean | number) => {
 					if (typeof value === "boolean") return;
-					blockController.setMargin(String(value));
+					blockController.setSpacing("margin", String(value));
 				},
 			};
 		},
@@ -42,12 +43,13 @@ const spacingSectionProperties = [
 				getModelValue: (state: string | null = null) =>
 					state
 						? String(blockController.getNativeStyle(`${state}:padding`) ?? "")
-						: String(blockController.getPadding({ nativeOnly: true, cascading: false })),
-				getPlaceholder: () => String(blockController.getPadding({ nativeOnly: false, cascading: true })),
+						: String(blockController.getSpacing("padding", { nativeOnly: true, cascading: false })),
+				getPlaceholder: () =>
+					String(blockController.getSpacing("padding", { nativeOnly: false, cascading: true })),
 				getMergedValue,
 				setModelValue: (value: string | boolean | number) => {
 					if (typeof value === "boolean") return;
-					blockController.setPadding(String(value));
+					blockController.setSpacing("padding", String(value));
 				},
 			};
 		},

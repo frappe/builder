@@ -25,7 +25,7 @@
 			{ label: 'Space Around', value: 'space-around' },
 			{ label: 'Space Evenly', value: 'space-evenly' },
 		]" />
-	<GapControl v-if="blockController.isFlex()" />
+	<SplitPropertyControl v-if="blockController.isFlex()" v-bind="gapProps" />
 	<StylePropertyControl
 		propertyKey="flexWrap"
 		:component="OptionToggle"
@@ -67,8 +67,10 @@
 </template>
 <script lang="ts" setup>
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
-import GapControl from "@/components/GapControl.vue";
 import blockController from "@/utils/blockController";
 import PlacementControl from "./PlacementControl.vue";
+
+defineProps<{ gapProps: InstanceType<typeof SplitPropertyControl>["$props"] }>();
 </script>
