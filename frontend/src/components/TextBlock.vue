@@ -40,6 +40,7 @@ import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
+import { Selection } from "@tiptap/extensions";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
@@ -273,6 +274,8 @@ if (!props.preview) {
 						FontFamily,
 						FontFamilyPasteRule,
 						Underline,
+						// keeps the selection visible when focus moves to menu controls
+						Selection,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
@@ -342,6 +345,26 @@ defineExpose({
 }
 :is(span, a, b, i, em, strong, cite, label).__text_block__ :deep(.ProseMirror p) {
 	display: inline;
+}
+
+/* the browser hides the native highlight when the editor loses focus, e.g. to the
+   color picker, so paint the range the Selection extension marks. Matches the
+   `selection:bg-gray-500/30` that index.html sets for native selection. */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) .selection) {
+	background-color: theme("colors.gray.500 / 30%");
+	/* an inline background only covers the font's content area (~1.25em), while the
+	   native highlight fills the line box — pad the difference so both match.
+	   Padding on an inline box overflows, so this shifts nothing. */
+	padding-block: calc((1lh - 1.25em) / 2);
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+/* the Selection extension ships this rule, but injects it only when injectCSS is
+   on, and this editor sets injectCSS: false. Safari and Firefox keep painting a
+   grey inactive selection, which would sit on top of the one above. */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) *::selection) {
+	background: transparent;
 }
 
 .__text_block__ :deep([contenteditable="true"]) {
