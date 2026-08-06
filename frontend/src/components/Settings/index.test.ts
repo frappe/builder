@@ -14,4 +14,11 @@ describe("settings registry", () => {
 	it("builds a component from the loader", () => {
 		settingsItems.all.value.forEach((item) => expect(item.component).toBeTruthy());
 	});
+
+	// the analytics panes share the largest chunk we ship, so the idle prefetch skips them
+	it("keeps the analytics panes out of the prefetch", () => {
+		const skipped = settingsItems.all.value.filter((item) => item.preload === false);
+
+		expect(skipped.map((item) => item.name)).toEqual(["page_analytics", "global_analytics"]);
+	});
 });

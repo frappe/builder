@@ -12,6 +12,8 @@ export type SettingsItem = RegistryItem & {
 	disabled?: boolean;
 	/** an async pane exposes its loader, so prefetch can warm it while the editor idles */
 	load?: () => Promise<unknown>;
+	/** false keeps a heavy pane out of the idle prefetch: it loads on first open */
+	preload?: boolean;
 };
 
 /** a pane declares the loader once: register builds the component from it */
@@ -61,6 +63,8 @@ const panes: SettingsPane[] = [
 		icon: "lucide-chart-bar",
 		group: "Current Page",
 		load: () => import("@/components/Settings/PageAnalytics.vue"),
+		// the charting library behind both analytics panes is the largest chunk we ship
+		preload: false,
 	},
 	{
 		name: "global_general",
@@ -118,6 +122,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-chart-bar",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalAnalytics.vue"),
+		preload: false,
 	},
 	{
 		name: "global_developer",
@@ -143,4 +148,6 @@ panes.forEach((pane) =>
 
 // warmed on idle by prefetchBuilderSettings, so the first open never waits on a chunk
 export const preloadSettingsPanes = () =>
-	settingsItems.visible.value.forEach((item) => item.load?.());
+	settingsItems.visible.value
+		.filter((item) => item.preload !== false)
+		.forEach((item) => item.load?.());
