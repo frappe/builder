@@ -69,12 +69,12 @@ export interface BuilderToken extends DocType {
   group?: string;
 }
 
-// Last updated: 2026-07-01 12:00:00.000000
+// Last updated: 2025-11-11 11:51:16.422175
 export interface BuilderProjectFolder extends DocType {
-	/** Folder Name: Data */
-	folder_name?: string;
-	/** Is Standard: Check */
-	is_standard: 0 | 1;
+  /** Folder Name: Data */
+  folder_name?: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
 }
 
 // Last updated: 2024-09-19 13:07:00.935349
