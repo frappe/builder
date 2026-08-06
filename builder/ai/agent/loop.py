@@ -281,8 +281,12 @@ def looks_like_json_card(text: str) -> bool:
 
 # Above this many chars of compact-YAML page structure, switch the page context
 # from the full tree to a compact outline (read_block pulls detail on demand).
-# Tuned so a typical multi-section page still ships in full; only big pages skeletonise.
-FULL_CONTEXT_LIMIT = 9000
+# A generated page measures 21-25k chars, so the old 9k threshold skeletonised
+# every one of them: the model was handed a styles-stripped outline of the page it
+# had just written and had to spend rounds reading its own work back. 30k ships
+# those whole for ~7k tokens that sit behind a cache marker, and still degrades
+# genuinely huge pages.
+FULL_CONTEXT_LIMIT = 30_000
 
 # Tools that already surface as their own card in the chat (clarify question, plan,
 # task group) — no activity line for them.
@@ -329,7 +333,7 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 	if root is None:
 		return ""
 	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
-	# Small pages: ship the full structure — cheapest path is no extra read_block
+	# Most pages: ship the full structure — cheapest path is no extra read_block
 	# round-trips, and the model can match existing styles directly. Big pages: ship
 	# a compact outline instead (styles/attrs omitted) and let the model pull detail
 	# on demand with read_block. The threshold is on the full serialisation length,
