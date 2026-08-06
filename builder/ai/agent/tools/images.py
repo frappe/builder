@@ -105,11 +105,28 @@ def run_search_images(ctx, args: dict) -> str:
 			frappe.logger("builder.ai").warning(f"search_images via {name} failed: {e}")
 			continue
 		if results:
+			# Hand the generator the results directly (see artifact.generate_page_yaml).
+			# Copying urls into the brief by hand is how photos went missing — and how
+			# one arrived with two digits transposed, 404ing the whole turn.
+			remember_for_generation(ctx, query, results)
 			return render_results(name, results)
 	return (
 		f"No images found for '{query}'. Try a simpler, more visual query (subject + setting, "
 		"e.g. 'running shoe studio'), or fall back to a CSS composition."
 	)
+
+
+MAX_REMEMBERED_IMAGES = 24
+
+
+def remember_for_generation(ctx, query: str, results: list[dict]) -> None:
+	found = getattr(ctx, "found_images", None)
+	if found is None:
+		return
+	for r in results:
+		if len(found) >= MAX_REMEMBERED_IMAGES:
+			return
+		found.append({**r, "query": query})
 
 
 def render_results(provider: str, results: list[dict]) -> str:

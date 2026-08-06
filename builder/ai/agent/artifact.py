@@ -98,6 +98,26 @@ def read_site_image(file_url: str) -> str | None:
 		return None
 
 
+def found_photo_list(ctx) -> str:
+	"""The turn's search_images results, as an inventory the generator can draw on.
+
+	Every url here came back from a provider, so it resolves — unlike one the model
+	retyped from memory. Copy them EXACTLY."""
+	found = getattr(ctx, "found_images", None) or []
+	if not found:
+		return ""
+	lines = [
+		"PHOTOS AVAILABLE for this page — real results already searched for you. Use these "
+		"EXACT urls in img src (copy character for character, never retype or guess one), and "
+		"give every section that wants a photo one of them rather than falling back to a CSS "
+		"composition. Unused ones are fine to ignore.",
+	]
+	for i, p in enumerate(found, 1):
+		desc = (p.get("description") or "").strip()[:100] or p.get("query") or "photo"
+		lines.append(f"{i}. [{p.get('query')}] {desc} — {p.get('size')}\n   {p.get('url')}")
+	return "\n".join(lines)
+
+
 def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
 	"""Make the generation path debuggable: log model, finish_reason, YAML size, parse
 	result, and top-level section count. A thin/broken page shows up here as a 'length'
@@ -186,6 +206,12 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 				"rhythm, not the literal shapes):\n" + "\n".join(svgs),
 			}
 		)
+	# The photos this turn actually found. Without them the generator can only use
+	# urls the model retyped into the brief, which is why pages came back with one
+	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.
+	if photos := found_photo_list(ctx):
+		messages.append({"role": "user", "content": photos})
+
 	if brief:
 		build_text = f"Build this page now:\n{brief}"
 		# Vision models get the reference/hero images themselves, not just their

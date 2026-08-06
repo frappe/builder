@@ -439,6 +439,9 @@ class AgentRunner:
 		# Drained after each round as a follow-up user message — OpenAI-shape tool
 		# results can't reliably carry image parts through OpenRouter.
 		self.pending_images: list[dict] = []
+		# Every photo search_images turned up this turn, handed to the generation step
+		# so the page can use any of them without the model retyping urls into a brief.
+		self.found_images: list[dict] = []
 		# Live activity feed: one entry per server-tool call, streamed to the chat as
 		# ai_chat_tool_activity events and persisted on the final message metadata.
 		self.activity: list[dict] = []
