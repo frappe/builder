@@ -79,13 +79,6 @@ MODELS = [
 	},
 	{
 		"provider": "OpenRouter",
-		"model_id": "minimax/minimax-m3",
-		"label": "MiniMax M3",
-		"max_tokens": 1048576,
-		"supports_vision": 1,
-	},
-	{
-		"provider": "OpenRouter",
 		"model_id": "xiaomi/mimo-v2.5",
 		"label": "MiMo V2.5",
 		"max_tokens": 1050000,
