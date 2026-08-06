@@ -95,13 +95,16 @@
 					:autofocus="!active.needs_name"
 					:modelValue="apiKey"
 					@update:modelValue="(v: string) => (apiKey = v)"
-					:placeholder="active.key_prefix ? `${active.key_prefix}…` : 'Leave empty if not required'"
+					:placeholder="keyPlaceholder"
 					:hideClearButton="true" />
 				<p v-if="result" class="text-p-xs" :class="resultClass">
 					{{ result.message }}
 					<template v-if="result.severity === 'warn'">
 						You can finish setting up and sort that out later.
 					</template>
+				</p>
+				<p v-else-if="active.has_key" class="text-p-xs text-ink-gray-5">
+					Already connected. Leave this blank to keep the stored key, or paste a new one to replace it.
 				</p>
 				<p v-else-if="!active.custom" class="text-p-xs text-ink-gray-5">
 					Stored on this site and never shown again.
@@ -206,6 +209,7 @@ type Preset = {
 	key_steps: string[];
 	api_base: string | null;
 	custom: boolean;
+	has_key: boolean;
 	needs_name: boolean;
 	needs_api_base: boolean;
 	configured: boolean;
@@ -236,6 +240,11 @@ const resultClass = computed(() =>
 			: "text-ink-red-6",
 );
 
+const keyPlaceholder = computed(() => {
+	if (active.value.has_key) return "Stored — leave blank to keep it";
+	return active.value.key_prefix ? `${active.value.key_prefix}…` : "Leave empty if not required";
+});
+
 const continueLabel = computed(() => {
 	if (!result.value) return "Test connection";
 	if (result.value.success) return "Continue";
@@ -254,7 +263,9 @@ const canContinue = computed(() => {
 	if (active.value.needs_name && !providerName.value.trim()) return false;
 	if (active.value.needs_api_base && !apiBase.value.trim()) return false;
 	if (active.value.custom) return customModelIds.value.length > 0;
-	return !!apiKey.value.trim();
+	// An already-connected provider has a key the site can use but can't show, so
+	// an empty box means "keep it" rather than "nothing entered".
+	return !!apiKey.value.trim() || active.value.has_key;
 });
 
 const load = async () => {

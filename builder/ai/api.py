@@ -317,7 +317,12 @@ def verify_ai_key(preset: str, api_key: str = "", api_base: str = "", model_id: 
 		frappe.throw(_("Unknown provider: {0}").format(preset))
 	model = model_id or next((m[0] for m in found["models"] if m[3]), "")
 	if not model:
-		return {"success": False, "message": _("Enter a model id to test the connection with")}
+		return {"success": False, "severity": "error", "message": _("Enter a model id to test with")}
+	# Re-entering setup for a provider that's already connected shows an empty key
+	# box, because a stored key is never sent back. Test the stored one rather than
+	# making someone dig out a key the site already has.
+	if not api_key and found["name"] and frappe.db.exists("Builder AI Provider", found["name"]):
+		api_key = frappe.get_cached_doc("Builder AI Provider", found["name"]).resolved_key() or ""
 	return presets.verify_key(found, api_key, api_base, model)
 
 

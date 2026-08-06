@@ -51,7 +51,11 @@
 					</div>
 					<p v-if="testResult" class="text-p-xs" :class="testClass">{{ testResult }}</p>
 					<p v-else class="text-p-xs text-ink-gray-5">
-						Leave empty to use the OpenRouter key from Builder Settings.
+						{{
+							hasStoredKey
+								? "Leave empty to keep the stored key."
+								: "Leave empty to fall back to the OpenRouter key in Builder Settings."
+						}}
 					</p>
 				</div>
 
@@ -178,7 +182,17 @@ const remove = async () => {
 		emit("saved");
 		emit("update:modelValue", false);
 	} catch (error) {
-		toast.error((error as Error).message || "Could not delete the provider");
+		// The server's reason is in `messages` / `exc`; the Error's own message is
+		// just the class name, so deleting a provider that still has models used to
+		// surface as a bare "ValidationError".
+		toast.error(serverMessage(error) || "Could not delete the provider");
 	}
 };
+
+function serverMessage(error: unknown): string {
+	const e = error as { messages?: string[]; exc?: string; message?: string };
+	const raw = e?.messages?.[0] || e?.exc?.split("\n").filter(Boolean).slice(-1)[0] || e?.message || "";
+	// Server messages can carry markup (doc links) — show the text.
+	return raw.replace(/<[^>]+>/g, "").trim();
+}
 </script>

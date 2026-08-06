@@ -125,7 +125,11 @@ def find_preset(preset_id: str) -> dict | None:
 def public_preset(preset: dict) -> dict:
 	"""The shape the setup flow renders — routing internals stay server-side."""
 	custom = preset.get("custom", False)
+	existing = preset["name"] and frappe.db.exists("Builder AI Provider", preset["name"])
 	return {
+		# A stored key is never sent back, so the flow has to be told one exists —
+		# otherwise re-entering setup looks identical to having no key at all.
+		"has_key": bool(existing and frappe.get_cached_doc("Builder AI Provider", existing).resolved_key()),
 		"id": preset["id"],
 		"name": preset["name"],
 		"tagline": preset["tagline"],
@@ -139,7 +143,7 @@ def public_preset(preset: dict) -> dict:
 		# ever needs the key, and often already exists from a previous setup.
 		"needs_name": custom,
 		"needs_api_base": custom,
-		"configured": bool(preset["name"] and frappe.db.exists("Builder AI Provider", preset["name"])),
+		"configured": bool(existing),
 		"models": [
 			{"model_id": mid, "label": label, "note": note, "recommended": rec}
 			for mid, label, note, rec in preset["models"]
