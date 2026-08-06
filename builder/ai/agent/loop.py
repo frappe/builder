@@ -1003,6 +1003,26 @@ class AgentRunner:
 				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return results, applied
 
+	def run_handler(self, tool, op: dict) -> str:
+		"""Run a server tool's handler, turning a crash into a tool result.
+
+		An unguarded handler takes the whole turn down: the exception unwinds to
+		run_turn, which can only apologise and abandon everything else the turn was
+		going to do. Seen live from a duplicate token id and from an image URL the
+		provider could not fetch. Reported as FAILED instead, which the tools already
+		use for expected failures, so the model can adjust and carry on. The savepoint
+		keeps a half-applied write from riding along."""
+		savepoint = f"tool_{self.server_mutations}"
+		frappe.db.savepoint(savepoint)
+		try:
+			return tool.handler(self, op["args"])
+		except CancelledError:
+			raise
+		except Exception as e:
+			frappe.db.rollback(save_point=savepoint)
+			logger.warning(f"tool {op['tool_name']} raised: {e}", exc_info=True)
+			return f"FAILED: {op['tool_name']} errored ({type(e).__name__}: {e}). Adjust and try again."
+
 	def run_op(self, op: dict, client_results: dict[int, str]) -> str | None:
 		"""Produce one tool call's result string. Client ops were already applied by
 		apply_client_ops; server ops run their handler here. Returns None when a
@@ -1030,7 +1050,7 @@ class AgentRunner:
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		if op["tool_name"] in SNAPSHOT_TOOLS:
 			self.ensure_revert_snapshot()
-		content = tool.handler(self, op["args"])
+		content = self.run_handler(tool, op)
 		self.end_activity(entry)
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
