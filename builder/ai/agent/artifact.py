@@ -18,6 +18,7 @@ import logging
 import re
 
 import frappe
+import requests
 
 from builder.ai import llm
 from builder.ai.block_codec import BlockCodec
@@ -33,6 +34,27 @@ logger.setLevel(logging.INFO)
 IMAGE_MARKER_RE = re.compile(r"(?:REFERENCE|HERO) IMAGE:\s*(\S+)", re.IGNORECASE)
 MAX_ATTACHED_IMAGES = 2
 MAX_IMAGE_BYTES = 3 * 1024 * 1024
+IMAGE_CHECK_TIMEOUT = 5
+
+
+def image_url_resolves(url: str) -> bool:
+	"""Whether the provider will be able to fetch this image.
+
+	An attached URL is downloaded by the provider, and one it cannot reach fails
+	the ENTIRE completion (OpenRouter: 400 "Error while downloading file. Upstream
+	status code: 404"), which the user sees as "Something went wrong". Models
+	retype these URLs out of search results and transpose digits, so a cheap HEAD
+	is worth it before betting the turn on one.
+	"""
+	try:
+		r = requests.head(url, timeout=IMAGE_CHECK_TIMEOUT, allow_redirects=True)
+		if r.status_code in (403, 405):  # some CDNs only answer GET
+			r = requests.get(url, timeout=IMAGE_CHECK_TIMEOUT, stream=True)
+			r.close()
+		return r.ok
+	except Exception as e:
+		logger.warning(f"brief image {url} unreachable: {e}")
+		return False
 
 
 def brief_image_parts(brief: str) -> list[dict]:
@@ -45,6 +67,9 @@ def brief_image_parts(brief: str) -> list[dict]:
 		if len(parts) >= MAX_ATTACHED_IMAGES:
 			break
 		if url.startswith("https://"):
+			if not image_url_resolves(url):
+				logger.warning(f"skipping unreachable brief image: {url}")
+				continue
 			parts.append({"type": "image_url", "image_url": {"url": url}})
 		elif url.startswith("/files/"):
 			data_url = read_site_image(url)
