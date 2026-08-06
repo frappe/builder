@@ -338,7 +338,9 @@ const finish = async () => {
 			preset: active.value.id,
 			api_key: apiKey.value,
 			api_base: apiBase.value,
-			models: selected.value,
+			// Sent as JSON, not a bare array: form encoding keeps only the first value,
+			// which silently dropped every model after the one at the top of the list.
+			models: JSON.stringify(selected.value),
 			provider_name: providerName.value,
 		});
 		await reloadAIRegistry();

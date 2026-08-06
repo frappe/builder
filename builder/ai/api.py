@@ -6,6 +6,7 @@ endpoints are flow-agnostic session/model helpers.
 """
 
 import logging
+import re
 
 import frappe
 import litellm
@@ -326,7 +327,7 @@ def setup_ai_provider(
 	preset: str,
 	api_key: str = "",
 	api_base: str = "",
-	models: list | None = None,
+	models: list | str | None = None,
 	provider_name: str = "",
 ):
 	"""Finish setup: save the provider and switch on the chosen models."""
@@ -335,11 +336,43 @@ def setup_ai_provider(
 	found = presets.find_preset(preset)
 	if not found:
 		frappe.throw(_("Unknown provider: {0}").format(preset))
-	chosen = [str(m) for m in (models or []) if str(m).strip()]
+	chosen = parse_model_ids(models)
 	if not chosen:
 		frappe.throw(_("Pick at least one model"))
 	name = presets.install_preset(found, api_key, api_base, chosen, provider_name)
 	return {"provider": name, "models": frappe.db.count("Builder AI Model", {"enabled": 1})}
+
+
+def parse_model_ids(models) -> list[str]:
+	"""Take the selected ids in whatever shape they survived the request in.
+
+	A list does not cross the wire intact: form encoding collapses it to its first
+	value, and a JSON body can hand back the raw string. Both used to be iterated
+	as-is, so three ticked models became one, and a JSON string became one model
+	per CHARACTER ('anthropic/[', 'anthropic/"', …)."""
+	if not models:
+		return []
+	if isinstance(models, str):
+		text = models.strip()
+		try:
+			parsed = frappe.parse_json(text)
+		except Exception:
+			parsed = None
+		if isinstance(parsed, list):
+			models = parsed
+		elif isinstance(parsed, str):
+			models = [parsed]
+		else:
+			models = re.split(r"[,\n]", text)
+	if not isinstance(models, list | tuple):
+		models = [models]
+	seen, out = set(), []
+	for m in models:
+		mid = str(m).strip()
+		if mid and mid not in seen:
+			seen.add(mid)
+			out.append(mid)
+	return out
 
 
 @frappe.whitelist()
