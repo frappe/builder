@@ -21,7 +21,11 @@
 					Builder needs somewhere to send its requests. Pick who you already have an account with.
 				</p>
 			</div>
-			<div class="grid min-h-0 flex-1 grid-cols-2 gap-2.5 overflow-y-auto pb-2">
+			<div v-if="loadError" class="rounded-lg bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
+				{{ loadError }}
+			</div>
+			<p v-else-if="loading" class="text-p-sm text-ink-gray-5">Loading providers…</p>
+			<div v-else class="grid min-h-0 flex-1 grid-cols-2 gap-2.5 overflow-y-auto pb-2">
 				<button
 					v-for="preset in presets"
 					:key="preset.id"
@@ -207,6 +211,8 @@ const customModels = ref("");
 const selected = ref<string[]>([]);
 const result = ref<{ success: boolean; message: string } | null>(null);
 const busy = ref(false);
+const loading = ref(true);
+const loadError = ref("");
 
 const customModelIds = computed(() =>
 	customModels.value
@@ -223,8 +229,22 @@ const canContinue = computed(() => {
 });
 
 const load = async () => {
-	const state: any = await createResource({ url: "builder.ai.api.ai_setup_state" }).submit();
-	presets.value = state.presets;
+	loading.value = true;
+	try {
+		const state: any = await createResource({ url: "builder.ai.api.ai_setup_state" }).submit();
+		presets.value = state.presets || [];
+		if (state.needs_migrate) {
+			loadError.value = "This site is missing Builder's AI tables. Run bench migrate on it, then reopen.";
+		} else if (!presets.value.length) {
+			loadError.value = "No providers came back from the server.";
+		}
+	} catch (error) {
+		// Without this the screen renders its heading over an empty grid and says
+		// nothing, which reads as "there are no providers" rather than "it broke".
+		loadError.value = (error as Error).message || "Could not load the provider list.";
+	} finally {
+		loading.value = false;
+	}
 };
 
 const choose = (preset: Preset) => {

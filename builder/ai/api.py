@@ -287,6 +287,11 @@ def ai_setup_state():
 	and whether anything usable is already configured. Never returns a key."""
 	from builder.ai import presets
 
+	# An install that hasn't migrated has no provider table at all. Say so plainly
+	# rather than raising behind a screen that then renders empty.
+	if not frappe.db.exists("DocType", "Builder AI Provider"):
+		return {"configured": False, "models": 0, "providers": 0, "needs_migrate": True, "presets": []}
+
 	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, fields=["name", "api_key"])
 	settings_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
 	# A provider carrying its own key is enough on its own — a self-hosted gateway
