@@ -87,8 +87,7 @@ const {
 	update: updateAlphaMapBounds,
 } = useElementBounding(alphaMap);
 
-// Canvas zoom/pan moves the popover without a resize or scroll, so the cached
-// bounds go stale and the drag surface stays at its old screen position.
+// zoom/pan moves the popover without a resize or scroll, so cached bounds go stale
 const syncMapBounds = () => {
 	updateColorMapBounds();
 	updateHueMapBounds();

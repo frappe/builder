@@ -292,9 +292,7 @@ watch(
 );
 
 const scheduleFixedPositionUpdate = () => {
-	// nextTick only guarantees the DOM is updated, not that the browser has
-	// laid it out yet — the popover's own anchored position can still be
-	// mid-flight, so wait a frame for layout to actually settle.
+	// nextTick flushes the DOM but not layout; the anchored position can still move
 	nextTick(() => {
 		requestAnimationFrame(() => {
 			updateOptionsPosition();
@@ -350,8 +348,7 @@ const getFixedPositionStyles = (): Record<string, string> => {
 	};
 };
 
-// The options are teleported to <body>, so a caller that moves or hides this
-// control has to close them — they cannot see it happen.
+// options are teleported to <body>; a caller that moves or hides this must close them
 const hideOptions = () => (isOpen.value = false);
 
 defineExpose({

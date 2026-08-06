@@ -234,8 +234,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		const target = ev.target as HTMLElement | null;
 		if (!target) return false;
 
-		// #overlay holds builder chrome (bubble menu, block handles). Dragging inside
-		// it — a color picker slider, say — must not clear the block selection.
+		// #overlay is builder chrome; dragging in it must not clear the block selection
 		if (target.closest("input, textarea, select, button, a, [contenteditable='true'], #overlay")) {
 			return false;
 		}

@@ -347,22 +347,16 @@ defineExpose({
 	display: inline;
 }
 
-/* the browser hides the native highlight when the editor loses focus, e.g. to the
-   color picker, so paint the range the Selection extension marks. Matches the
-   `selection:bg-gray-500/30` that index.html sets for native selection. */
+/* the native highlight is hidden while unfocused; matches index.html's selection color */
 .__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) .selection) {
 	background-color: theme("colors.gray.500 / 30%");
-	/* an inline background only covers the font's content area (~1.25em), while the
-	   native highlight fills the line box — pad the difference so both match.
-	   Padding on an inline box overflows, so this shifts nothing. */
+	/* an inline background covers ~1.25em, not the line box; padding overflows, so nothing shifts */
 	padding-block: calc((1lh - 1.25em) / 2);
 	box-decoration-break: clone;
 	-webkit-box-decoration-break: clone;
 }
 
-/* the Selection extension ships this rule, but injects it only when injectCSS is
-   on, and this editor sets injectCSS: false. Safari and Firefox keep painting a
-   grey inactive selection, which would sit on top of the one above. */
+/* the extension injects this only when injectCSS is on; without it Safari/Firefox double up */
 .__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) *::selection) {
 	background: transparent;
 }

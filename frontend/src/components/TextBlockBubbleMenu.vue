@@ -1,6 +1,5 @@
 <template>
-	<!-- Hidden by opacity, not v-show: display:none blurs the color picker inside
-	     the menu, and tiptap then hides the menu for lack of focus. -->
+	<!-- opacity, not v-show: display:none blurs the picker and tiptap then hides the menu -->
 	<bubble-menu
 		ref="menu"
 		:editor="editor"
@@ -166,20 +165,17 @@ const linkInput = ref(null) as Ref<typeof Input | null>;
 const menu = ref(null) as Ref<{ $el: HTMLElement } | null>;
 const colorPicker = ref(null) as Ref<InstanceType<typeof ColorPicker> | null>;
 
-// Keep the picker popover inside the menu so tiptap's default shouldShow, which
-// hides the menu unless focus stays within it, leaves the menu alone.
+// popover lives inside the menu so tiptap's focus check keeps the menu open
 const menuElement = computed(() => menu.value?.$el);
 
 const isRepositioning = computed(
 	() => props.canvasProps?.panning || props.canvasProps?.scaling || repositioning.value,
 );
 
-// The picker's option list is teleported to <body>, so it cannot follow the menu
-// out of sight — close it when a canvas gesture starts moving things.
+// the option list is teleported to <body> and cannot follow the menu out of sight
 watch(isRepositioning, (moving) => moving && colorPicker.value?.hideOptions());
 
-// Opening the popover focuses its input, which auto-opens the option list. Wait
-// for that focus to land, then close it — the picker should open on the swatches.
+// opening the popover focuses its input, which auto-opens the option list
 const openColorPicker = (togglePopover: () => void) => {
 	togglePopover();
 	nextTick(() => requestAnimationFrame(() => colorPicker.value?.hideOptions()));
@@ -302,10 +298,11 @@ debouncedWatch(
 		repositioning.value = true;
 		nextTick(() => {
 			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
+			// avoid jitter for ColorPicker position movement - wait a while before showing again
 			setTimeout(async () => {
 				await nextTick();
 				repositioning.value = false;
-			}, 10);
+			}, 20);
 		});
 	},
 );
