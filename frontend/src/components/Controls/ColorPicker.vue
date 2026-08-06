@@ -4,6 +4,7 @@
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		:offset="offset"
+		:portal-to="portalTo"
 		@update:open="isOpen = $event"
 		class="!block w-full">
 		<template #target="{ togglePopover, isOpen }">
@@ -60,6 +61,7 @@ const props = withDefaults(
 			| "left";
 		renderMode?: "popover" | "inline";
 		offset?: number;
+		portalTo?: string | HTMLElement;
 	}>(),
 	{ modelValue: null, showInput: false, placement: "left-start", renderMode: "popover", offset: 10 },
 );
@@ -77,5 +79,9 @@ function togglePopover(open?: boolean) {
 	}
 }
 
-defineExpose({ togglePopover, isOpen });
+defineExpose({
+	togglePopover,
+	isOpen,
+	hideOptions: () => contentRef.value?.hideOptions(),
+});
 </script>

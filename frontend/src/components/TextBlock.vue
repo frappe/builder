@@ -318,7 +318,10 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	const target = e.target as HTMLElement;
+	// #overlay holds builder chrome (bubble menu). Using it is not leaving the block.
+	if (target.closest("#overlay")) return;
+	if (target.closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };

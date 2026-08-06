@@ -350,9 +350,14 @@ const getFixedPositionStyles = (): Record<string, string> => {
 	};
 };
 
+// The options are teleported to <body>, so a caller that moves or hides this
+// control has to close them — they cannot see it happen.
+const hideOptions = () => (isOpen.value = false);
+
 defineExpose({
 	refreshOptions,
 	clearSelection,
+	hideOptions,
 });
 </script>
 <style scoped>
