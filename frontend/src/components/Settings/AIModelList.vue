@@ -6,7 +6,7 @@
 				<p class="text-p-xs text-ink-gray-5">The chat's model picker offers every enabled model.</p>
 			</div>
 			<div class="flex gap-2">
-				<Button size="sm" variant="subtle" iconLeft="lucide-server" @click="editProvider(null)">
+				<Button size="sm" variant="subtle" iconLeft="lucide-server" @click="$emit('add-provider')">
 					Add provider
 				</Button>
 				<Button size="sm" variant="solid" iconLeft="lucide-plus" @click="editModel(null)">Add model</Button>
@@ -79,6 +79,8 @@ import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import { BuilderAIModel } from "@/types/doctypes";
 import { Button, Switch } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
+
+defineEmits(["add-provider"]);
 
 const showModelDialog = ref(false);
 const showProviderDialog = ref(false);

@@ -3,7 +3,7 @@ import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { useDark, useStorage } from "@vueuse/core";
-import { toast } from "frappe-ui";
+import { createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import BlockLayers from "./components/BlockLayers.vue";
@@ -57,13 +57,23 @@ const useBuilderStore = defineStore("builderStore", {
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,
+		// Set from ai_setup_state: a provider carrying its own key (Anthropic, a
+		// self-hosted gateway) is enough on its own, and the shared OpenRouter key in
+		// Builder Settings is the only thing the client can see for itself.
+		aiConfigured: false,
 	}),
 	getters: {
 		isAIEnabled(): boolean {
-			return !!builderSettings.doc?.ai_api_key;
+			return this.aiConfigured || !!builderSettings.doc?.ai_api_key;
 		},
 	},
 	actions: {
+		async refreshAIState() {
+			const state = (await createResource({ url: "builder.ai.api.ai_setup_state" })
+				.submit()
+				.catch(() => null)) as { configured?: boolean } | null;
+			this.aiConfigured = !!state?.configured;
+		},
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;
 		},

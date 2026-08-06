@@ -282,6 +282,63 @@ def get_ai_models():
 
 @frappe.whitelist()
 @has_page_write()
+def ai_setup_state():
+	"""What the setup flow needs to decide whether to run: the provider catalogue,
+	and whether anything usable is already configured. Never returns a key."""
+	from builder.ai import presets
+
+	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, fields=["name", "api_key"])
+	settings_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+	# A provider carrying its own key is enough on its own — a self-hosted gateway
+	# never needs the shared OpenRouter one.
+	has_key = bool(settings_key) or any(p.api_key for p in providers)
+	return {
+		"configured": has_key and bool(frappe.db.count("Builder AI Model", {"enabled": 1})),
+		"models": frappe.db.count("Builder AI Model", {"enabled": 1}),
+		"providers": len(providers),
+		"presets": [presets.public_preset(p) for p in presets.PRESETS],
+	}
+
+
+@frappe.whitelist()
+@has_page_write()
+def verify_ai_key(preset: str, api_key: str = "", api_base: str = "", model_id: str = ""):
+	"""Make one small real call so a bad key fails here, not on the first build."""
+	from builder.ai import presets
+
+	found = presets.find_preset(preset)
+	if not found:
+		frappe.throw(_("Unknown provider: {0}").format(preset))
+	model = model_id or next((m[0] for m in found["models"] if m[3]), "")
+	if not model:
+		return {"success": False, "message": _("Enter a model id to test the connection with")}
+	return presets.verify_key(found, api_key, api_base, model)
+
+
+@frappe.whitelist()
+@has_page_write()
+def setup_ai_provider(
+	preset: str,
+	api_key: str = "",
+	api_base: str = "",
+	models: list | None = None,
+	provider_name: str = "",
+):
+	"""Finish setup: save the provider and switch on the chosen models."""
+	from builder.ai import presets
+
+	found = presets.find_preset(preset)
+	if not found:
+		frappe.throw(_("Unknown provider: {0}").format(preset))
+	chosen = [str(m) for m in (models or []) if str(m).strip()]
+	if not chosen:
+		frappe.throw(_("Pick at least one model"))
+	name = presets.install_preset(found, api_key, api_base, chosen, provider_name)
+	return {"provider": name, "models": frappe.db.count("Builder AI Model", {"enabled": 1})}
+
+
+@frappe.whitelist()
+@has_page_write()
 def get_ai_session(page_id: str, model: str | None = None, session_id: str | None = None):
 	"""One page can hold several parallel chat sessions. With `session_id` this loads
 	that specific session; without it, the page's most recently used one (creating

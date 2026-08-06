@@ -19,9 +19,20 @@
 			</div>
 		</div>
 
-		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-start gap-3 p-4">
-			<p class="text-sm text-ink-gray-6">Configure an AI API key in Builder Settings to use chat.</p>
-			<Button variant="solid" label="Open Settings" @click="builderStore.openBuilderSettings('global_ai')" />
+		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+			<span class="bob-hero-orb">
+				<BobOrb class="bob-orb-aura" />
+				<SparklesIcon class="bob-orb-spark relative z-10 size-7 text-ink-gray-8" />
+			</span>
+			<div class="flex flex-col items-center gap-1 text-center">
+				<p class="text-sm font-medium text-ink-gray-8">Build pages by describing them</p>
+				<p class="text-p-xs text-ink-gray-5">
+					Connect a model first. Takes a minute if you already have an API key.
+				</p>
+			</div>
+			<Button variant="solid" size="sm" @click="builderStore.openBuilderSettings('global_ai')">
+				Set up AI
+			</Button>
 		</div>
 
 		<template v-else>
@@ -564,7 +575,12 @@ watch(
 	{ immediate: true },
 );
 
-onMounted(() => chat.mount());
+onMounted(() => {
+	chat.mount();
+	// A key on a provider is invisible to the client, so ask the server whether AI
+	// is actually usable rather than inferring it from Builder Settings alone.
+	builderStore.refreshAIState();
+});
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {
