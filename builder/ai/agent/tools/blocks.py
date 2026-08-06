@@ -72,8 +72,15 @@ add_block = Tool(
 	name="add_block",
 	side="client",
 	description=(
-		"Insert a new block as a child of an existing block. "
+		"Insert a new block, and everything beneath it, as a child of an existing block. "
 		"Use this to add sections, components, or elements anywhere in the page tree. "
+		"`block.c` nests children recursively, so a whole section — its wrapper, heading, "
+		"copy, cards and everything inside them — goes in ONE call. Never walk a subtree "
+		"adding one element per call: each call costs a full model round, so a section "
+		"built that way takes dozens of them and runs the turn out of steps before it "
+		"finishes. To add several SIBLINGS, pass them as `c` of one new parent, or make "
+		"all the calls in a single round using `index` for position (`after_block_id` "
+		"cannot reference a block created in the same round, since it has no ref yet). "
 		"NOT for JavaScript or CSS: never add a <script> or <style> block, and never put "
 		"code in the block's text/innerHTML — use set_page_script for that. A script added "
 		"as a block does not execute in the editor and bypasses the page's script system."
