@@ -1,20 +1,13 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col gap-5">
-		<!-- shrink-0: as a flex child of a min-h-0 column this row was compressible,
-		     which cropped the text. Every step keeps font-medium and the marker keeps
-		     a fixed width, so neither the active step moving nor a number turning
-		     into a tick reflows the row. -->
-		<div class="flex shrink-0 items-center gap-2 leading-5">
-			<template v-for="(s, i) in stepLabels" :key="s">
-				<span
-					class="flex items-center gap-1.5 text-p-xs font-medium"
-					:class="i === step ? 'text-ink-gray-8' : i < step ? 'text-ink-gray-6' : 'text-ink-gray-4'">
-					<span class="w-3 shrink-0 text-center">{{ i < step ? "✓" : i + 1 }}</span>
-					<span>{{ s }}</span>
-				</span>
-				<span v-if="i < stepLabels.length - 1" class="bg-outline-gray-2 h-px w-4 shrink-0" />
-			</template>
-		</div>
+		<!-- Steps you've already cleared stay clickable, so this doubles as the way
+		     back; the ones ahead are disabled because they need this one answered. -->
+		<TabButtons
+			class="shrink-0"
+			type="underline"
+			:modelValue="step"
+			:options="stepOptions"
+			@update:modelValue="goToStep" />
 
 		<!-- 1 · pick a provider -->
 		<div v-if="step === 0" class="flex min-h-0 flex-1 flex-col gap-3">
@@ -189,7 +182,7 @@
 
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
-import { Badge, Button, Checkbox, createResource, FormControl, toast } from "frappe-ui";
+import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
@@ -214,6 +207,9 @@ type Preset = {
 
 const stepLabels = ["Provider", "Connect", "Models"];
 const step = ref(0);
+// How far the flow has been taken, so stepping back doesn't lock the later steps
+// away again.
+const reached = ref(0);
 const presets = ref<Preset[]>([]);
 const active = ref<Preset>({} as Preset);
 const providerName = ref("");
@@ -234,6 +230,10 @@ const resultClass = computed(() =>
 		: result.value?.severity === "warn"
 			? "text-ink-amber-6"
 			: "text-ink-red-6",
+);
+
+const stepOptions = computed(() =>
+	stepLabels.map((label, i) => ({ label, value: i, disabled: i > reached.value })),
 );
 
 const keyPlaceholder = computed(() => {
@@ -293,7 +293,22 @@ const choose = (preset: Preset) => {
 	// Recommended models come pre-ticked so a known provider is two clicks and a
 	// paste: the point of the presets is that nothing else needs deciding.
 	selected.value = preset.models.filter((m) => m.recommended).map((m) => m.model_id);
-	step.value = 1;
+	// A different provider invalidates everything chosen after it.
+	reached.value = 1;
+	goTo(1);
+};
+
+const goTo = (n: number) => {
+	step.value = n;
+	reached.value = Math.max(reached.value, n);
+};
+
+const goToStep = (value: unknown) => {
+	const n = Number(value);
+	if (n <= reached.value) {
+		result.value = null;
+		step.value = n;
+	}
 };
 
 const back = () => {
@@ -303,7 +318,7 @@ const back = () => {
 
 const proceed = () => {
 	if (active.value.custom) selected.value = customModelIds.value;
-	step.value = 2;
+	goTo(2);
 };
 
 const verify = async () => {
