@@ -126,7 +126,7 @@
 				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="cursor-pointer rounded-lg border p-3 transition-colors"
+					class="ai-model-row cursor-pointer rounded-lg border p-3 transition-colors"
 					:class="
 						selected.includes(m.model_id)
 							? 'border-outline-gray-4 bg-surface-gray-2'
@@ -399,3 +399,15 @@ const finish = async () => {
 
 onMounted(load);
 </script>
+
+<style>
+/* frappe-ui's Checkbox draws its tick as an SVG with fill #0F0F0F, sized for a
+   light box. In dark mode the box stays dark too, so it's a near-black tick on a
+   near-black square and a ticked model looks unticked. Lifting the checked
+   background to ink-gray-9 (near-white in dark) gives that tick something to sit
+   on. Light mode already works, so it is left alone. */
+[data-theme="dark"] .ai-model-row input[type="checkbox"]:checked {
+	background-color: var(--ink-gray-9);
+	border-color: var(--ink-gray-9);
+}
+</style>
