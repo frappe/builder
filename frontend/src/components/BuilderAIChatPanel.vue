@@ -26,7 +26,11 @@
 			</div>
 		</div>
 
-		<div v-if="!builderStore.isAIEnabled" class="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
+		     full-height panel leaves it stranded low with nothing beneath it. -->
+		<div
+			v-if="!builderStore.isAIEnabled"
+			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
 				<SparklesIcon class="bob-orb-spark relative z-10 size-7 text-ink-gray-8" />
