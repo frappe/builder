@@ -3,8 +3,19 @@
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
 		:title="isEdit ? provider.provider_name || 'Edit Provider' : 'New Provider'"
-		size="lg"
-		:actions="dialogActions">
+		size="lg">
+		<!-- Rendered here rather than through the actions prop: it lays every action
+		     out in one right-aligned row, which puts a destructive button against the
+		     one people mean to press. Delete belongs on the far side of the footer. -->
+		<template #actions>
+			<div class="flex items-center justify-between">
+				<Button v-if="isEdit" variant="ghost" theme="red" class="!text-ink-red-8" @click="remove">
+					Delete
+				</Button>
+				<span v-else />
+				<Button variant="solid" @click="save">{{ isEdit ? "Update" : "Create" }}</Button>
+			</div>
+		</template>
 		<template #default>
 			<div class="flex flex-col gap-4">
 				<div class="flex flex-col gap-1.5">
@@ -92,25 +103,6 @@ const testOk = ref(false);
 
 const isEdit = computed(() => Boolean(props.providerName));
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
-
-const dialogActions = computed(() => [
-	// Every red Button variant in frappe-ui hard-codes text-red-700, a raw palette
-	// value that stays the same dark red in both themes; subtle then sits it on a
-	// red fill that is also dark in dark mode, so the label all but disappears.
-	// ink-red-8 is the token that actually inverts (dark on light, light on dark).
-	...(isEdit.value
-		? [
-				{
-					label: "Delete",
-					theme: "red" as const,
-					variant: "ghost" as const,
-					class: "!text-ink-red-8",
-					onClick: remove,
-				},
-			]
-		: []),
-	{ label: isEdit.value ? "Update" : "Create", variant: "solid" as const, onClick: save },
-]);
 
 watch(
 	() => props.modelValue,
