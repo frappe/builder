@@ -57,6 +57,7 @@ const props = withDefaults(
 		modelValue?: string | number | boolean | null;
 		type?: string;
 		hideClearButton?: boolean;
+		hideArrows?: boolean;
 		autofocus?: boolean;
 		disabled?: boolean;
 		selectOnFocus?: boolean;
@@ -111,7 +112,7 @@ onMounted(() => {
 });
 
 const canShowArrows = computed(
-	() => !props.disabled && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,
+	() => !props.disabled && !props.hideArrows && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,
 );
 
 const hasClearButton = computed(
