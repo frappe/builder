@@ -60,7 +60,7 @@ watch(
 	() => blockController.getSelectedBlocks(),
 	() => {
 		splitModes.value = {};
-	}
+	},
 );
 
 const readValue = (state: string | null = null) => {
@@ -83,10 +83,7 @@ const getControlAttrs = (variant: string | null) => {
 };
 
 const hasColor = computed(() => {
-	return Boolean(
-		blockController.getStyle("borderColor") ||
-		blockController.getStyle("borderWidth")
-	);
+	return Boolean(blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"));
 });
 
 const colorEvents = {
@@ -100,6 +97,6 @@ const colorEvents = {
 			blockController.setStyle("borderWidth", null);
 			blockController.setStyle("borderStyle", null);
 		}
-	}
+	},
 };
 </script>

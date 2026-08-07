@@ -37,14 +37,11 @@
 			size="sm"
 			class="flex-1 [&>div>div>div]:w-full"
 			placement="right">
-			<template v-slot="{ open }">
-				<Button
-					variant="solid"
-					@click="open"
-					:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
-					icon="lucide-chevron-down"
-					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
-			</template>
+			<Button
+				variant="solid"
+				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
+				icon="lucide-chevron-down"
+				class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 		</Dropdown>
 	</div>
 </template>

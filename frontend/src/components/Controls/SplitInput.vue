@@ -4,7 +4,7 @@
 			<Input
 				v-for="(split, index) in splits"
 				:key="`input-${index}`"
-				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center"
+				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-center *:text-xs"
 				:class="{
 					'*:rounded-l': index == 0,
 					'*:rounded-r': index == splits.length - 1,

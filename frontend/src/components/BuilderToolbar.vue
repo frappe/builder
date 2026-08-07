@@ -160,10 +160,10 @@
 	</div>
 </template>
 <script setup lang="ts">
+import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
-import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
@@ -174,7 +174,6 @@ import { useDark, useToggle } from "@vueuse/core";
 import { Badge, createResource, Popover, toast, Tooltip } from "frappe-ui";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, inject, ref } from "vue";
-import SparklesIcon from "~icons/lucide/sparkles";
 import MainMenu from "./MainMenu.vue";
 import PageOptions from "./PageOptions.vue";
 
@@ -190,17 +189,6 @@ const pageStore = usePageStore();
 
 const showInfoDialog = ref(false);
 const showShortcuts = inject<() => void>("showShortcuts", () => {});
-
-const openAIGeneratorFn = inject<(() => void) | undefined>("showAIGenerator", undefined);
-
-const openAIGenerator = (e: MouseEvent) => {
-	(e.currentTarget as HTMLElement)?.blur();
-	if (openAIGeneratorFn) {
-		openAIGeneratorFn();
-	} else {
-		toast.error("AI Generator is not available");
-	}
-};
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();

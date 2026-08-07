@@ -15,7 +15,7 @@
 							<img
 								:src="page.preview"
 								:alt="page.page_title"
-								class="w-26 h-16 rounded-lg border border-outline-gray-1" />
+								class="h-16 w-26 rounded-lg border border-outline-gray-1" />
 							<div>
 								<div class="font-bold text-ink-gray-8">{{ page.page_title }}</div>
 								<div class="text-sm text-gray-500">{{ page.route }}</div>

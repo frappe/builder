@@ -18,6 +18,7 @@ import {
 	getNumberFromPx,
 	getTextContent,
 	handleBase64Attribute,
+	isHTMLString,
 	kebabToCamelCase,
 	parseAndSetBackground,
 	setBoxSpacing,
@@ -46,6 +47,7 @@ const TEXT_ELEMENTS = new Set([
 	"em",
 	"i",
 	"blockquote",
+	"summary",
 ]);
 
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
@@ -752,7 +754,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isHTML() {
-		return this.originalElement === "__raw_html__";
+		return this.originalElement === "__raw_html__" || (isHTMLString(this.getInnerHTML()) && !this.isText());
 	}
 	isIframe() {
 		return this.innerHTML?.startsWith("<iframe");

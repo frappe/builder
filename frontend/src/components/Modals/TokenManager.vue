@@ -21,7 +21,9 @@
 				<div class="mb-2">
 					<TabButtons
 						:modelValue="activeType"
-						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
+						@update:modelValue="
+							(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))
+						"
 						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
@@ -200,7 +202,7 @@
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
 										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
 											<div
-												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
@@ -713,9 +715,7 @@ const moveSelectedToGroup = async (group: string) => {
 		row.group = group;
 		await saveVariable(row);
 	}
-	toast.success(
-		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
-	);
+	toast.success(group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`);
 };
 
 const uniqueCopyName = (name: string) => {
@@ -948,9 +948,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		.filter(Boolean)
 		.join(", ");
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new token(s) and update ${
-			updateVariables.length
-		} existing token(s)?${
+		`Create ${newVariables.length} new token(s) and update ${updateVariables.length} existing token(s)?${
 			skippedNotes ? ` (${skippedNotes})` : ""
 		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);

@@ -53,12 +53,10 @@
 					size="sm"
 					:title="`Created by ${owner.fullname}`" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
-					<template v-slot="{ open }">
-						<span
-							class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
-							aria-hidden="true"
-							@click="open" />
-					</template>
+					<span
+						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
+						aria-hidden="true"
+						@click.stop />
 				</PageActionsDropdown>
 			</div>
 		</div>

@@ -293,4 +293,14 @@ watch(
 	},
 	{ immediate: true },
 );
+
+watch(
+	() => builderStore.openClientScript,
+	(scriptName) => {
+		if (!scriptName) return;
+		currentScriptEditor.value = "client";
+		showDialog.value = true;
+		// PageClientScriptManager will handle actual selection once it mounts and loads data
+	},
+);
 </script>
