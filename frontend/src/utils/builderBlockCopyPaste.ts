@@ -5,6 +5,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderToken } from "@/types/doctypes";
 
 import builderTokens from "@/data/builderToken";
+import { collectRemoteAssets, importRemoteAssets } from "@/utils/importRemoteAssets";
 import {
 	copyToClipboard,
 	detachBlockFromComponent,
@@ -154,20 +155,68 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 	if (clipboardData.pageDoc) {
 		await handlePagePaste(clipboardData, crossSitePaste, currentSiteURL);
 	} else {
-		if (clipboardData.components.length || clipboardData.variables?.length) {
+		const hasDependencies = Boolean(clipboardData.components?.length || clipboardData.variables?.length);
+		if (hasDependencies) {
 			toast.loading("Pasting...", {
 				id: "paste-blocks",
 			});
-			await handleComponents(clipboardData, crossSitePaste);
-			if (clipboardData.variables?.length) {
-				await handleVariables(clipboardData, crossSitePaste);
-			}
+			await handleDependencies(clipboardData, crossSitePaste);
 		}
 		await insertBlocks(clipboardData.blocks);
-		(clipboardData.components.length || clipboardData.variables?.length) &&
+		hasDependencies &&
 			toast.success("Done", {
 				id: "paste-blocks",
 			});
+		offerRemoteAssetImport(crossSitePaste);
+	}
+}
+
+const PENDING_ASSET_IMPORT = "builder:pending-asset-import";
+
+// Pasting a whole page reloads the editor on the new page, so the offer is left
+// behind for the editor to pick up once it has the page open.
+export function offerPendingAssetImport(pageName: string) {
+	if (sessionStorage.getItem(PENDING_ASSET_IMPORT) !== pageName) return;
+	sessionStorage.removeItem(PENDING_ASSET_IMPORT);
+	offerRemoteAssetImport(true);
+}
+
+// Images in a cross-site paste still load from the site they came from. Pasting
+// stays fast by leaving them alone, and the import is offered right after so the
+// page can be made self contained in one click.
+function offerRemoteAssetImport(crossSitePaste: boolean) {
+	if (!crossSitePaste) return;
+	const canvasStore = useCanvasStore();
+	const pageStore = usePageStore();
+	const root = canvasStore.activeCanvas?.getRootBlock();
+	if (!root) return;
+
+	const urls = collectRemoteAssets([root]);
+	if (!urls.length) return;
+
+	toast.info(`${urls.length} ${urls.length === 1 ? "image loads" : "images load"} from the original site`, {
+		duration: 15000,
+		action: {
+			label: "Import to this site",
+			onClick: async () => {
+				await importRemoteAssets([root], urls);
+				pageStore.savePage();
+			},
+		},
+	});
+}
+
+// Tokens first: their ids are rewritten inside the blocks and inside the component
+// blocks that are about to be saved, so a cross-site paste keeps its var() refs alive.
+async function handleDependencies(
+	clipboardData: BuilderClipboardData,
+	crossSitePaste: boolean,
+): Promise<void> {
+	if (clipboardData.variables?.length) {
+		await handleVariables(clipboardData, crossSitePaste);
+	}
+	if (clipboardData.components?.length) {
+		await handleComponents(clipboardData, crossSitePaste);
 	}
 }
 
@@ -189,12 +238,15 @@ async function handlePagePaste(
 				variant: "solid",
 				async onClick() {
 					toast.loading("Pasting...", { id: "paste-page" });
-					await handleComponents(clipboardData, crossSitePaste);
+					await handleDependencies(clipboardData, crossSitePaste);
 					await handlePageScripts(clipboardData, currentURL || "");
 					if (clipboardData.pageDoc) {
 						clipboardData.pageDoc.blocks = clipboardData.blocks.map((block) => getCopyWithoutParent(block));
 					}
 					const newPage = await webPages.insert.submit(clipboardData.pageDoc);
+					if (crossSitePaste) {
+						sessionStorage.setItem(PENDING_ASSET_IMPORT, newPage.name);
+					}
 					window.location.href = `/builder/page/${encodeURIComponent(newPage.name)}`;
 					await pageStore.setPage(newPage.name);
 					toast.success("Done", { id: "paste-page" });
@@ -205,7 +257,7 @@ async function handlePagePaste(
 				variant: "subtle",
 				async onClick() {
 					toast.loading("Pasting...", { id: "paste-page" });
-					await handleComponents(clipboardData, crossSitePaste);
+					await handleDependencies(clipboardData, crossSitePaste);
 					await handlePageScripts(clipboardData, currentURL || "");
 					const currentPage = pageStore.activePage as BuilderPage;
 					await webPages.setValue.submit({
@@ -216,6 +268,7 @@ async function handlePagePaste(
 					nextTick(() => {
 						canvasStore.pushBlocks(clipboardData.blocks, false);
 						pageStore.savePage();
+						offerRemoteAssetImport(crossSitePaste);
 					});
 					toast.success("Done", { id: "paste-page" });
 				},
@@ -271,7 +324,23 @@ async function handleVariables(clipboardData: BuilderClipboardData, crossSitePas
 	}
 	if (crossSitePaste && idMap.size) {
 		clipboardData.blocks.forEach((block) => rewriteVariableRefsInBlock(block as BlockOptions, idMap));
+		clipboardData.components?.forEach((component) => rewriteVariableRefsInComponent(component, idMap));
 	}
+}
+
+// A component travels with its own copy of its block tree, so the token ids inside
+// it need the same rewrite the pasted blocks get.
+function rewriteVariableRefsInComponent(component: BuilderComponent, idMap: Map<string, string>) {
+	if (!component.block) return;
+	const isString = typeof component.block === "string";
+	let block: BlockOptions;
+	try {
+		block = isString ? JSON.parse(component.block as string) : component.block;
+	} catch (error) {
+		return;
+	}
+	rewriteVariableRefsInBlock(block, idMap);
+	component.block = isString ? JSON.stringify(block) : block;
 }
 
 function rewriteVariableRefsInBlock(block: BlockOptions, idMap: Map<string, string>) {

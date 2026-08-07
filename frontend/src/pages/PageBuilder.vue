@@ -122,6 +122,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
+import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
@@ -289,7 +290,8 @@ onActivated(async () => {
 		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
-		pageStore.setPage(route.params.pageId as string, true, route.query);
+		await pageStore.setPage(route.params.pageId as string, true, route.query);
+		offerPendingAssetImport(route.params.pageId as string);
 	}
 });
 

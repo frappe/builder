@@ -247,7 +247,7 @@ const stepOptions = computed(() =>
 );
 
 const keyPlaceholder = computed(() => {
-	if (active.value.has_key) return "Stored — leave blank to keep it";
+	if (active.value.has_key) return "Stored, leave blank to keep it";
 	return active.value.key_prefix ? `${active.value.key_prefix}…` : "Leave empty if not required";
 });
 
@@ -387,7 +387,7 @@ const finish = async () => {
 		if (installed < selected.value.length) {
 			toast.error(`Only ${installed} of ${selected.value.length} models were saved. Reload and retry.`);
 		} else {
-			toast.success(`Ready — ${installed} model${installed === 1 ? "" : "s"} connected`);
+			toast.success(`${installed} model${installed === 1 ? "" : "s"} connected`);
 		}
 		emit("done");
 	} catch (error) {

@@ -10,6 +10,7 @@ import { findBlockInTree, resetBlock } from "@/utils/block/tree";
 import {
 	addPxToNumber,
 	cssUrl,
+	dataURLFileName,
 	dataURLtoFile,
 	generateId,
 	getBlockCopy,
@@ -212,8 +213,8 @@ class Block implements BlockOptions {
 		parseAndSetBackground(this.tabletStyles);
 
 		if (this.isImage()) {
-			handleBase64Attribute(this, "src", "image.png");
-			handleBase64Attribute(this, "darkSrc", "image-dark.png");
+			handleBase64Attribute(this, "src", "image");
+			handleBase64Attribute(this, "darkSrc", "image-dark");
 		}
 
 		const bgImage = this.getStyle("backgroundImage") as string;
@@ -221,7 +222,7 @@ class Block implements BlockOptions {
 			let bgImage = this.getStyle("backgroundImage") as string;
 			const dataURL = bgImage.match(/url\(['"]?(.*?)['"]?\)/)?.[1];
 
-			const file = dataURLtoFile(dataURL as string, "image.png");
+			const file = dataURLtoFile(dataURL as string, dataURLFileName(dataURL as string, "background"));
 
 			if (file) {
 				this.setStyle("backgroundImage", "");
