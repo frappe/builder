@@ -132,14 +132,18 @@
 				</p>
 			</div>
 			<div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-				<label
+				<!-- A div, not a label: a label wrapping a checkbox forwards the click to
+				     the input as well as firing its own, so one tap can toggle twice and
+				     land back where it started. -->
+				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="flex cursor-pointer items-start gap-3 rounded-lg border border-outline-gray-2 p-3">
+					class="flex cursor-pointer items-start gap-3 rounded-lg border border-outline-gray-2 p-3"
+					@click="toggle(m.model_id)">
 					<Checkbox
-						class="mt-0.5"
+						class="pointer-events-none mt-0.5"
 						:modelValue="selected.includes(m.model_id)"
-						@update:modelValue="() => toggle(m.model_id)" />
+						@update:modelValue="() => {}" />
 					<span class="flex min-w-0 flex-col">
 						<span class="flex items-center gap-1.5">
 							<span class="text-p-sm font-medium text-ink-gray-8">{{ m.label }}</span>
@@ -147,7 +151,7 @@
 						</span>
 						<span class="text-p-xs text-ink-gray-5">{{ m.note }}</span>
 					</span>
-				</label>
+				</div>
 			</div>
 		</div>
 
@@ -355,7 +359,14 @@ const finish = async () => {
 			provider_name: providerName.value,
 		});
 		await reloadAIRegistry();
-		toast.success(`Ready — ${res.models} model${res.models === 1 ? "" : "s"} available`);
+		// If the server switched on fewer than were ticked, the selection didn't
+		// survive the trip. Say that rather than reporting success over it.
+		const installed = (res.installed || []).length;
+		if (installed < selected.value.length) {
+			toast.error(`Only ${installed} of ${selected.value.length} models were saved. Reload and retry.`);
+		} else {
+			toast.success(`Ready — ${installed} model${installed === 1 ? "" : "s"} connected`);
+		}
 		emit("done");
 	} catch (error) {
 		toast.error((error as Error).message || "Could not save the provider");

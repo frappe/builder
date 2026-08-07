@@ -345,7 +345,14 @@ def setup_ai_provider(
 	if not chosen:
 		frappe.throw(_("Pick at least one model"))
 	name = presets.install_preset(found, api_key, api_base, chosen, provider_name)
-	return {"provider": name, "models": frappe.db.count("Builder AI Model", {"enabled": 1})}
+	# `installed` is what THIS call switched on, not the site total: when the two
+	# disagree with what was ticked, the client can say so instead of reporting
+	# success over a selection that never arrived.
+	return {
+		"provider": name,
+		"installed": chosen,
+		"models": frappe.db.count("Builder AI Model", {"enabled": 1}),
+	}
 
 
 def parse_model_ids(models) -> list[str]:
