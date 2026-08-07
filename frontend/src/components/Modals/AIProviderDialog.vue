@@ -94,7 +94,12 @@ const isEdit = computed(() => Boolean(props.providerName));
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
 
 const dialogActions = computed(() => [
-	...(isEdit.value ? [{ label: "Delete", theme: "red" as const, onClick: remove }] : []),
+	// ghost, not the default subtle: subtle pairs red ink with a red fill, and in
+	// dark mode both land dark enough that the label nearly disappears. It also
+	// keeps Delete from competing with the primary action beside it.
+	...(isEdit.value
+		? [{ label: "Delete", theme: "red" as const, variant: "ghost" as const, onClick: remove }]
+		: []),
 	{ label: isEdit.value ? "Update" : "Create", variant: "solid" as const, onClick: save },
 ]);
 

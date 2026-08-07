@@ -120,16 +120,29 @@
 			<div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
 				<!-- A div, not a label: a label wrapping a checkbox forwards the click to
 				     the input as well as firing its own, so one tap can toggle twice and
-				     land back where it started. -->
+				     land back where it started. Selection shows on the card and in a box
+				     drawn here, rather than through a native checkbox whose checked fill
+				     comes from text-ink-gray-9 while it also carries bg-surface-base —
+				     in dark mode those cancel out and the tick vanishes. -->
 				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="flex cursor-pointer items-start gap-3 rounded-lg border border-outline-gray-2 p-3"
+					class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors"
+					:class="
+						selected.includes(m.model_id)
+							? 'border-outline-gray-4 bg-surface-gray-2'
+							: 'border-outline-gray-2 hover:border-outline-gray-3'
+					"
 					@click="toggle(m.model_id)">
-					<Checkbox
-						class="pointer-events-none mt-0.5"
-						:modelValue="selected.includes(m.model_id)"
-						@update:modelValue="() => {}" />
+					<span
+						class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border"
+						:class="
+							selected.includes(m.model_id)
+								? 'border-outline-gray-5 text-ink-gray-8'
+								: 'border-outline-gray-4'
+						">
+						<span v-if="selected.includes(m.model_id)" class="lucide-check size-3" />
+					</span>
 					<span class="flex min-w-0 flex-col">
 						<span class="flex items-center gap-1.5">
 							<span class="text-p-sm font-medium text-ink-gray-8">{{ m.label }}</span>
@@ -142,12 +155,11 @@
 		</div>
 
 		<div class="flex items-center justify-between border-t border-outline-gray-1 pt-3">
-			<Button v-if="step > 0" size="sm" variant="ghost" @click="back">Back</Button>
+			<!-- On step 0 there's no earlier step, but there IS somewhere to go back to
+			     when the flow was opened from the model list to add another provider. -->
+			<Button v-if="step > 0 || canSkipSetup" size="sm" variant="ghost" @click="back">Back</Button>
 			<span v-else />
 			<div class="flex items-center gap-2">
-				<Button v-if="canSkipSetup" size="sm" variant="ghost" @click="$emit('done')">
-					I'll do this later
-				</Button>
 				<!-- Never a dead end: a rejected key can still be saved and fixed later,
 				     it just shouldn't be the button your eye lands on. -->
 				<Button
@@ -182,7 +194,7 @@
 
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
-import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
+import { Badge, Button, createResource, FormControl, TabButtons, toast } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
@@ -232,8 +244,11 @@ const resultClass = computed(() =>
 			: "text-ink-red-6",
 );
 
+// Numbered because the steps are gated, not browsable: the count tells you how
+// far this goes and which one you're on. The label is fixed, so unlike the tick
+// it used to swap in, nothing about it moves between steps.
 const stepOptions = computed(() =>
-	stepLabels.map((label, i) => ({ label, value: i, disabled: i > reached.value })),
+	stepLabels.map((label, i) => ({ label: `${i + 1}. ${label}`, value: i, disabled: i > reached.value })),
 );
 
 const keyPlaceholder = computed(() => {
@@ -313,6 +328,11 @@ const goToStep = (value: unknown) => {
 
 const back = () => {
 	result.value = null;
+	// Back off step 0 leaves the flow entirely, returning to the model list.
+	if (step.value === 0) {
+		emit("done");
+		return;
+	}
 	step.value -= 1;
 };
 

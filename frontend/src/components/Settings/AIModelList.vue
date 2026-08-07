@@ -1,9 +1,9 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col gap-3">
 		<div class="flex items-center justify-between">
-			<div class="flex flex-col">
-				<h3 class="text-base font-medium text-ink-gray-9">Models</h3>
-				<p class="text-p-xs text-ink-gray-5">The chat's model picker offers every enabled model.</p>
+			<div class="flex flex-col gap-1">
+				<h3 class="text-p-base font-medium text-ink-gray-9">Models</h3>
+				<p class="text-p-sm text-ink-gray-5">The chat's model picker offers every enabled model.</p>
 			</div>
 			<div class="flex gap-2">
 				<Button size="sm" variant="subtle" iconLeft="lucide-server" @click="$emit('add-provider')">
@@ -35,7 +35,7 @@
 						:class="group.enabled ? 'text-ink-gray-7' : 'text-ink-gray-4 line-through'">
 						{{ group.label }}
 					</span>
-					<span class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
+					<span v-if="group.hint" class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
 					<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
 				</button>
 
@@ -92,7 +92,9 @@ const grouped = computed(() =>
 		provider: provider.name,
 		label: provider.provider_name,
 		enabled: provider.enabled,
-		hint: provider.api_base || provider.route_prefix,
+		// Only the base URL says anything the name doesn't: route_prefix is a slug of
+		// that same name, so it rendered as "OpenRouter openrouter".
+		hint: provider.api_base,
 		models: (aiModels.data || []).filter((m: any) => m.provider === provider.name),
 	})),
 );
