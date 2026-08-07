@@ -118,22 +118,25 @@
 				</p>
 			</div>
 			<div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-				<!-- Checkbox draws its own label and description, so the row is the
-				     component plus a card around it for the selected state. No wrapping
-				     label and no row-level click handler: either would fire alongside the
-				     input's own and toggle twice. -->
+				<!-- Checkbox draws its own label and description; the card around it
+				     carries the selected state and is clickable too, since a row that
+				     looks pressable but only responds on the box itself reads as broken.
+				     click.stop on the Checkbox keeps its own toggle from also bubbling to
+				     the card and cancelling itself out. -->
 				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="rounded-lg border p-3 transition-colors"
+					class="cursor-pointer rounded-lg border p-3 transition-colors"
 					:class="
 						selected.includes(m.model_id)
 							? 'border-outline-gray-4 bg-surface-gray-2'
 							: 'border-outline-gray-2 hover:border-outline-gray-3'
-					">
+					"
+					@click="toggle(m.model_id)">
 					<Checkbox
 						:modelValue="selected.includes(m.model_id)"
 						:description="m.note"
+						@click.stop
 						@update:modelValue="() => toggle(m.model_id)">
 						<template #label>
 							<span class="flex items-center gap-1.5">

@@ -608,6 +608,19 @@ onMounted(() => {
 	// is actually usable rather than inferring it from Builder Settings alone.
 	builderStore.refreshAIState();
 });
+
+// Providers and models are configured in Settings, so the picker is stale the
+// moment that dialog closes. Refetch then rather than making every screen in
+// there remember to signal this one.
+watch(
+	() => builderStore.showSettingsDialog,
+	(open, wasOpen) => {
+		if (wasOpen && !open) {
+			chat.loadModels();
+			builderStore.refreshAIState();
+		}
+	},
+);
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {

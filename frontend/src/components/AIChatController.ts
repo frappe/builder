@@ -733,9 +733,10 @@ export class AIChatController {
 		this.builderStore.openClientScript = scriptName;
 	};
 
-	async mount() {
-		if (this.pageId.value)
-			attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+	/** Refetch the picker's models. Called on mount and again whenever Settings
+	 * closes: connecting a provider or enabling a model happens over there, and
+	 * without this the picker keeps whatever list it was given at mount. */
+	loadModels() {
 		createResource({
 			url: "builder.ai.api.get_ai_models",
 			auto: true,
@@ -743,6 +744,12 @@ export class AIChatController {
 				this.availableModels.value = data;
 			},
 		});
+	}
+
+	async mount() {
+		if (this.pageId.value)
+			attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		this.loadModels();
 		await this.loadSession();
 	}
 
