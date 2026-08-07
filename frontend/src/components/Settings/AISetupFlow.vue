@@ -25,7 +25,11 @@
 				{{ loadError }}
 			</div>
 			<p v-else-if="loading" class="text-p-sm text-ink-gray-5">Loading providers…</p>
-			<div v-else class="grid min-h-0 flex-1 grid-cols-2 gap-2.5 overflow-y-auto pb-2">
+			<!-- content-start + auto-rows-min: a grid defaults to align-content stretch,
+			     so the rows grew to fill the panel and each card became a tall slab. -->
+			<div
+				v-else
+				class="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-2.5 overflow-y-auto pb-2">
 				<button
 					v-for="preset in presets"
 					:key="preset.id"
@@ -66,37 +70,25 @@
 				<Button size="sm" variant="subtle" iconRight="lucide-external-link">Open key page</Button>
 			</a>
 
-			<div v-if="active.needs_name" class="flex flex-col gap-1.5">
-				<InputLabel>Provider name</InputLabel>
-				<BuilderInput
-					type="text"
-					:autofocus="true"
-					:modelValue="providerName"
-					@update:modelValue="(v: string) => (providerName = v)"
-					placeholder="Frappe AI"
-					:hideClearButton="true" />
-			</div>
+			<FormControl
+				v-if="active.needs_name"
+				v-model="providerName"
+				label="Provider name"
+				placeholder="Frappe AI"
+				autocomplete="off" />
 
 			<div v-if="active.needs_api_base" class="flex flex-col gap-1.5">
-				<InputLabel>Base URL</InputLabel>
-				<BuilderInput
-					type="text"
-					:modelValue="apiBase"
-					@update:modelValue="(v: string) => (apiBase = v)"
-					placeholder="http://localhost:11434/v1"
-					:hideClearButton="true" />
+				<FormControl v-model="apiBase" label="Base URL" placeholder="http://localhost:11434/v1" />
 				<p class="text-p-xs text-ink-gray-5">Anything that speaks the OpenAI API.</p>
 			</div>
 
 			<div class="flex flex-col gap-1.5">
-				<InputLabel>API key{{ active.custom ? " (if it needs one)" : "" }}</InputLabel>
-				<BuilderInput
+				<FormControl
+					v-model="apiKey"
 					type="password"
-					:autofocus="!active.needs_name"
-					:modelValue="apiKey"
-					@update:modelValue="(v: string) => (apiKey = v)"
+					:label="`API key${active.custom ? ' (if it needs one)' : ''}`"
 					:placeholder="keyPlaceholder"
-					:hideClearButton="true" />
+					autocomplete="off" />
 				<p v-if="result" class="text-p-xs" :class="resultClass">
 					{{ result.message }}
 					<template v-if="result.severity === 'warn'">
@@ -112,13 +104,12 @@
 			</div>
 
 			<div v-if="active.custom" class="flex flex-col gap-1.5">
-				<InputLabel>Models</InputLabel>
-				<BuilderInput
+				<FormControl
+					v-model="customModels"
 					type="textarea"
-					:modelValue="customModels"
-					@update:modelValue="(v: string) => (customModels = v)"
-					placeholder="laguna-s-2.1&#10;deepseek-v4-flash"
-					:hideClearButton="true" />
+					label="Models"
+					:rows="3"
+					placeholder="laguna-s-2.1&#10;deepseek-v4-flash" />
 				<p class="text-p-xs text-ink-gray-5">One model id per line, exactly as the endpoint names them.</p>
 			</div>
 		</div>
@@ -195,9 +186,8 @@
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
 import { reloadAIRegistry } from "@/data/aiModels";
-import { Badge, Button, Checkbox, createResource, toast } from "frappe-ui";
+import { Badge, Button, Checkbox, createResource, FormControl, toast } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
