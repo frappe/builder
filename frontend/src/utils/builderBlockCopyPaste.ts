@@ -163,6 +163,7 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 			await handleDependencies(clipboardData, crossSitePaste);
 		}
 		await insertBlocks(clipboardData.blocks);
+		await handlePageScripts(clipboardData, currentSiteURL);
 		hasDependencies &&
 			toast.success("Done", {
 				id: "paste-blocks",
@@ -416,11 +417,13 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 }
 
 async function handlePageScripts(clipboardData: BuilderClipboardData, currentSiteURL: string): Promise<void> {
-	if (!clipboardData.pageDoc || !clipboardData.sourceURL || clipboardData.sourceURL === currentSiteURL) {
+	if (!clipboardData.sourceURL || clipboardData.sourceURL === currentSiteURL) {
 		return;
 	}
+	if (!clipboardData.pageScripts?.length) return;
 
 	const pageScriptIdMap = new Map<string, string>();
+	const insertedScripts: BuilderClientScriptDocument[] = [];
 	for (const script of clipboardData.pageScripts || []) {
 		const newScriptId = generateHash(script.name, clipboardData.sourceURL, true);
 		pageScriptIdMap.set(script.name, newScriptId);
@@ -429,6 +432,7 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 			...script,
 			name: newScriptId,
 		};
+		insertedScripts.push(scriptDoc);
 
 		const clientScriptResource = createListResource({
 			doctype: "Builder Client Script",
@@ -445,11 +449,39 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 			// pass
 		}
 
-		const clientScript = clipboardData.pageDoc.client_scripts?.find((s) => s.builder_script === script.name);
+		const clientScript = clipboardData.pageDoc?.client_scripts?.find((s) => s.builder_script === script.name);
 		if (clientScript) {
 			clientScript.builder_script = newScriptId;
 		}
 	}
+
+	// Pasting blocks rather than a whole page still needs somewhere for the styles
+	// they depend on to live, so they attach to the page being pasted into.
+	if (!clipboardData.pageDoc) {
+		await attachScriptsToCurrentPage(insertedScripts);
+	}
+}
+
+async function attachScriptsToCurrentPage(scripts: BuilderClientScriptDocument[]): Promise<void> {
+	const pageStore = usePageStore();
+	const currentPage = pageStore.activePage as BuilderPage;
+	if (!currentPage || !scripts.length) return;
+
+	const existing = (currentPage.client_scripts || []).map((script) => script.builder_script);
+	const missing = scripts.filter((script) => script.name && !existing.includes(script.name));
+	if (!missing.length) return;
+
+	const clientScripts = [...existing, ...missing.map((script) => script.name as string)].map((id) => ({
+		builder_script: id,
+	}));
+	await webPages.setValue.submit({ name: currentPage.name, client_scripts: clientScripts });
+
+	// keep the open editor in step without reloading the page and losing the paste
+	currentPage.client_scripts = clientScripts as BuilderPage["client_scripts"];
+	pageStore.activePageScripts = [
+		...pageStore.activePageScripts,
+		...(missing as BuilderClientScript[]),
+	];
 }
 
 function updateBlockComponentReferences(block: BlockOptions, componentIdMap: Map<string, string>): void {

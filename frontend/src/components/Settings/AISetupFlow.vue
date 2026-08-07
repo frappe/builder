@@ -133,11 +133,15 @@
 							: 'border-outline-gray-2 hover:border-outline-gray-3'
 					"
 					@click="toggle(m.model_id)">
+					<!-- The ROW is the control and `selected` is the only state; the
+					     checkbox just displays it. Letting the input take clicks too meant
+					     two owners: a click on the label flipped the DOM checkbox without
+					     the emit reaching us, so the box looked ticked while the model was
+					     never actually selected, and Finish saved fewer than were showing. -->
 					<Checkbox
+						class="pointer-events-none"
 						:modelValue="selected.includes(m.model_id)"
-						:description="m.note"
-						@click.stop
-						@update:modelValue="() => toggle(m.model_id)">
+						:description="m.note">
 						<template #label>
 							<span class="flex items-center gap-1.5">
 								<span class="text-p-sm font-medium text-ink-gray-8">{{ m.label }}</span>
