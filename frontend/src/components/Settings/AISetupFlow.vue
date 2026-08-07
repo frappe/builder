@@ -18,8 +18,8 @@
 
 		<!-- 1 · pick a provider -->
 		<div v-if="step === 0" class="flex min-h-0 flex-1 flex-col gap-3">
-			<div class="flex flex-col">
-				<h3 class="text-base font-medium text-ink-gray-9">Connect a model</h3>
+			<div class="flex flex-col gap-1">
+				<h3 class="text-p-base font-medium text-ink-gray-9">Connect a model</h3>
 				<p class="text-p-sm text-ink-gray-6">
 					Builder needs somewhere to send its requests. Pick who you already have an account with.
 				</p>
@@ -56,8 +56,8 @@
 
 		<!-- 2 · credentials -->
 		<div v-else-if="step === 1" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-			<div class="flex flex-col">
-				<h3 class="text-base font-medium text-ink-gray-9">
+			<div class="flex flex-col gap-1">
+				<h3 class="text-p-base font-medium text-ink-gray-9">
 					{{ active.custom ? "Describe your endpoint" : `Connect ${active.name}` }}
 				</h3>
 				<p class="text-p-sm text-ink-gray-6">{{ active.blurb }}</p>
@@ -118,8 +118,8 @@
 
 		<!-- 3 · models -->
 		<div v-else class="flex min-h-0 flex-1 flex-col gap-3">
-			<div class="flex flex-col">
-				<h3 class="text-base font-medium text-ink-gray-9">Choose models</h3>
+			<div class="flex flex-col gap-1">
+				<h3 class="text-p-base font-medium text-ink-gray-9">Choose models</h3>
 				<p class="text-p-sm text-ink-gray-6">
 					These appear in the chat's model picker. You can change them any time.
 				</p>
