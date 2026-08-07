@@ -149,8 +149,19 @@ export class AIChatController {
 	readonly isVisionModel = computed(
 		() => this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false,
 	);
+	/** The picked model has no key behind it, so sending would only produce a server
+	 * error. Per-model, not per-site: with two providers configured, one can be
+	 * keyless while the site as a whole looks set up. */
+	readonly selectedModelUnusable = computed(() => {
+		const model = this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value);
+		return !!model && model.ready === false;
+	});
 	readonly canSubmit = computed(
-		() => !!this.prompt.value.trim() && !this.isSubmitting.value && !!this.selectedModel.value,
+		() =>
+			!!this.prompt.value.trim() &&
+			!this.isSubmitting.value &&
+			!!this.selectedModel.value &&
+			!this.selectedModelUnusable.value,
 	);
 
 	constructor() {

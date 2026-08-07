@@ -2,6 +2,8 @@ export interface AIModel {
 	name: string;
 	label: string;
 	vision?: boolean;
+	/** Has a usable key — its provider's own, or the shared one in Builder Settings. */
+	ready?: boolean;
 }
 
 export interface AIProvider {

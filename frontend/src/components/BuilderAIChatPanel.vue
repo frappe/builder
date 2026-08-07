@@ -1,5 +1,5 @@
 <template>
-	<div class="bg-surface-white flex h-full min-h-full flex-col">
+	<div class="flex h-full min-h-full flex-col bg-surface-base">
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
@@ -16,6 +16,13 @@
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
 					<Button variant="ghost" size="sm" icon="lucide-history" title="Chats on this page" />
 				</Dropdown>
+				<Tooltip text="AI settings">
+					<Button
+						variant="ghost"
+						size="sm"
+						icon="lucide-settings-2"
+						@click="builderStore.openBuilderSettings('global_ai')" />
+				</Tooltip>
 			</div>
 		</div>
 
@@ -235,6 +242,18 @@
 						</span>
 					</div>
 				</Transition>
+				<!-- Say it before a prompt is typed, not after the send fails on the server. -->
+				<div
+					v-if="selectedModelUnusable"
+					class="mb-2 flex items-center gap-2 rounded-md bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
+					<span class="lucide-key-round size-3.5 shrink-0" />
+					<span class="flex-1">{{ modelLabel }} has no API key.</span>
+					<button
+						class="shrink-0 font-medium underline underline-offset-2"
+						@click="builderStore.openBuilderSettings('global_ai')">
+						Add one
+					</button>
+				</div>
 				<div
 					class="relative"
 					@paste.stop="handlePaste"
@@ -245,7 +264,7 @@
 						ref="promptInput"
 						v-model="prompt"
 						rows="4"
-						class="hover:border-outline-gray-modals focus:bg-surface-white w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
 						placeholder="Ask to create or edit this page..."
 						@keydown.meta.enter="submitPrompt"
@@ -287,7 +306,10 @@
 								</Tooltip>
 							</template>
 							<template #body>
-								<div class="bg-surface-white w-96 rounded-lg border border-outline-gray-2 p-3 shadow-lg">
+								<!-- Sized to the panel, not past it: w-96 overhung the chat panel and
+								     spilled over the canvas. -->
+								<div
+									class="w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-lg">
 									<WebPagePresetPicker v-model="selectedPreset" />
 								</div>
 							</template>
@@ -335,6 +357,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
