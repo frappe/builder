@@ -33,9 +33,10 @@ PRESETS = [
 		"models": [
 			("anthropic/claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
 			("openai/gpt-5.6-luna", "GPT-5.6 Luna", "Fastest and cheapest of the good ones", True),
-			("anthropic/claude-opus-4.8", "Claude Opus 4.8", "Strongest, slowest, priciest", False),
+			("anthropic/claude-opus-5", "Claude Opus 5", "Strongest, slowest, priciest", False),
+			("anthropic/claude-fable-5", "Claude Fable 5", "Tuned for writing and design taste", False),
 			("openai/gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier from OpenAI", False),
-			("google/gemini-3.5-flash", "Gemini 3.5 Flash", "Quick and inexpensive", False),
+			("google/gemini-3.6-flash", "Gemini 3.6 Flash", "Google's latest, fast", False),
 			("nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra", "Free, no credit needed", False),
 		],
 	},
@@ -58,6 +59,7 @@ PRESETS = [
 			("claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
 			("claude-opus-5", "Claude Opus 5", "Strongest, for the hardest builds", False),
 			("claude-fable-5", "Claude Fable 5", "Tuned for writing and design taste", False),
+			("claude-haiku-4.5", "Claude Haiku 4.5", "Fastest and cheapest Claude", False),
 		],
 	},
 	{
@@ -76,9 +78,10 @@ PRESETS = [
 			"Copy it before closing the dialog",
 		],
 		"models": [
-			("gpt-5.5", "GPT-5.5", "Solid all-rounder", True),
-			("gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier", False),
-			("gpt-5.6-luna", "GPT-5.6 Luna", "Fast and cheap", False),
+			("gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier, best value of these", True),
+			("gpt-5.6-luna", "GPT-5.6 Luna", "Fastest and cheapest", False),
+			("gpt-5.6-sol", "GPT-5.6 Sol", "Top of the 5.6 line", False),
+			("gpt-5.5", "GPT-5.5", "Previous generation", False),
 		],
 	},
 	{
@@ -97,8 +100,9 @@ PRESETS = [
 			"Create a key in a new or existing project",
 		],
 		"models": [
-			("gemini-3.1-pro-preview", "Gemini 3.1 Pro", "Best Gemini for building", True),
-			("gemini-3.5-flash", "Gemini 3.5 Flash", "Quick and inexpensive", False),
+			("gemini-3.6-flash", "Gemini 3.6 Flash", "Latest, fast, good value", True),
+			("gemini-3.1-pro-preview", "Gemini 3.1 Pro", "Strongest Gemini for building", False),
+			("gemini-3.1-flash-lite", "Gemini 3.1 Flash Lite", "Cheapest of these", False),
 		],
 	},
 	{

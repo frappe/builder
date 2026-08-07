@@ -118,38 +118,30 @@
 				</p>
 			</div>
 			<div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-				<!-- A div, not a label: a label wrapping a checkbox forwards the click to
-				     the input as well as firing its own, so one tap can toggle twice and
-				     land back where it started. Selection shows on the card and in a box
-				     drawn here, rather than through a native checkbox whose checked fill
-				     comes from text-ink-gray-9 while it also carries bg-surface-base —
-				     in dark mode those cancel out and the tick vanishes. -->
+				<!-- Checkbox draws its own label and description, so the row is the
+				     component plus a card around it for the selected state. No wrapping
+				     label and no row-level click handler: either would fire alongside the
+				     input's own and toggle twice. -->
 				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors"
+					class="rounded-lg border p-3 transition-colors"
 					:class="
 						selected.includes(m.model_id)
 							? 'border-outline-gray-4 bg-surface-gray-2'
 							: 'border-outline-gray-2 hover:border-outline-gray-3'
-					"
-					@click="toggle(m.model_id)">
-					<span
-						class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border"
-						:class="
-							selected.includes(m.model_id)
-								? 'border-outline-gray-5 text-ink-gray-8'
-								: 'border-outline-gray-4'
-						">
-						<span v-if="selected.includes(m.model_id)" class="lucide-check size-3" />
-					</span>
-					<span class="flex min-w-0 flex-col">
-						<span class="flex items-center gap-1.5">
-							<span class="text-p-sm font-medium text-ink-gray-8">{{ m.label }}</span>
-							<Badge v-if="m.recommended" theme="blue" size="sm" label="Recommended" />
-						</span>
-						<span class="text-p-xs text-ink-gray-5">{{ m.note }}</span>
-					</span>
+					">
+					<Checkbox
+						:modelValue="selected.includes(m.model_id)"
+						:description="m.note"
+						@update:modelValue="() => toggle(m.model_id)">
+						<template #label>
+							<span class="flex items-center gap-1.5">
+								<span class="text-p-sm font-medium text-ink-gray-8">{{ m.label }}</span>
+								<Badge v-if="m.recommended" theme="blue" size="sm" label="Recommended" />
+							</span>
+						</template>
+					</Checkbox>
 				</div>
 			</div>
 		</div>
@@ -194,7 +186,7 @@
 
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
-import { Badge, Button, createResource, FormControl, TabButtons, toast } from "frappe-ui";
+import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
