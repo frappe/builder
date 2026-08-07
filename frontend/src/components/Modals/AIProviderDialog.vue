@@ -94,11 +94,20 @@ const isEdit = computed(() => Boolean(props.providerName));
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
 
 const dialogActions = computed(() => [
-	// ghost, not the default subtle: subtle pairs red ink with a red fill, and in
-	// dark mode both land dark enough that the label nearly disappears. It also
-	// keeps Delete from competing with the primary action beside it.
+	// Every red Button variant in frappe-ui hard-codes text-red-700, a raw palette
+	// value that stays the same dark red in both themes; subtle then sits it on a
+	// red fill that is also dark in dark mode, so the label all but disappears.
+	// ink-red-8 is the token that actually inverts (dark on light, light on dark).
 	...(isEdit.value
-		? [{ label: "Delete", theme: "red" as const, variant: "ghost" as const, onClick: remove }]
+		? [
+				{
+					label: "Delete",
+					theme: "red" as const,
+					variant: "ghost" as const,
+					class: "!text-ink-red-8",
+					onClick: remove,
+				},
+			]
 		: []),
 	{ label: isEdit.value ? "Update" : "Create", variant: "solid" as const, onClick: save },
 ]);
