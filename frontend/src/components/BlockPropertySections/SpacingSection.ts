@@ -3,8 +3,6 @@ import blockController from "@/utils/blockController";
 
 const SPLITS = ["T", "R", "B", "L"];
 
-const getMergedValue = (parts: StyleValue[]) => parts[0] ?? 0;
-
 const spacingSectionProperties = [
 	{
 		component: SplitPropertyControl,
@@ -21,7 +19,6 @@ const spacingSectionProperties = [
 						: String(blockController.getSpacing("margin", { nativeOnly: true, cascading: false })),
 				getPlaceholder: () =>
 					String(blockController.getSpacing("margin", { nativeOnly: false, cascading: true })),
-				getMergedValue,
 				setModelValue: (value: string | boolean | number) => {
 					if (typeof value === "boolean") return;
 					blockController.setSpacing("margin", String(value));
@@ -46,7 +43,6 @@ const spacingSectionProperties = [
 						: String(blockController.getSpacing("padding", { nativeOnly: true, cascading: false })),
 				getPlaceholder: () =>
 					String(blockController.getSpacing("padding", { nativeOnly: false, cascading: true })),
-				getMergedValue,
 				setModelValue: (value: string | boolean | number) => {
 					if (typeof value === "boolean") return;
 					blockController.setSpacing("padding", String(value));

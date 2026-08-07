@@ -5,41 +5,24 @@ import blockController from "@/utils/blockController";
 import { collapseGapShorthand, expandGapShorthand } from "@/utils/cssUtils";
 import StylePropertyControl from "../Controls/StylePropertyControl.vue";
 
-const GAP_SPLITS = [{ label: "V" }, { label: "H" }];
-const GAP_SPLITS_COLUMN = [{ label: "H" }, { label: "V" }];
+const SPLITS = ["V", "H"];
 
-// Gap is a spacing shorthand like margin and padding, but it renders here because it only exists
-// on flex/grid containers. The splits lead with the axis items actually flow along, hence the
-// flex-direction check; grid has none, which leaves it at vertical-then-horizontal.
-const getGapProps = () => {
-	const isColumnDirection = String(
-		blockController.getNativeStyle("flexDirection") ||
-			blockController.getCascadingStyle("flexDirection") ||
-			"",
-	).startsWith("column");
-	return {
-		label: "Gap",
-		propertyKey: "gap",
-		splitIcon: "lucide-layout-grid",
-		splits: isColumnDirection ? GAP_SPLITS_COLUMN : GAP_SPLITS,
-		toControlValues: (value: unknown) => {
-			const [row, column] = expandGapShorthand(value);
-			return isColumnDirection ? [column, row] : [row, column];
-		},
-		toModelValue: (parts: StyleValue[]) =>
-			collapseGapShorthand(isColumnDirection ? [parts[1], parts[0]] : parts),
-		getModelValue: (state: string | null = null) =>
-			state
-				? String(blockController.getNativeStyle(`${state}:gap`) ?? "")
-				: String(blockController.getSpacing("gap", { nativeOnly: true, cascading: false })),
-		getPlaceholder: () =>
-			String(blockController.getSpacing("gap", { nativeOnly: false, cascading: true })),
-		getMergedValue: (parts: StyleValue[]) => parts[0] ?? 0,
-		setModelValue: (value: string | boolean | number) => {
-			if (typeof value === "boolean") return;
-			blockController.setSpacing("gap", String(value));
-		},
-	};
+const gapProps = {
+	label: "Gap",
+	propertyKey: "gap",
+	splits: SPLITS,
+	toControlValues: (value: unknown) => expandGapShorthand(value),
+	toModelValue: (parts: StyleValue[]) => collapseGapShorthand(parts),
+	getModelValue: (state: string | null = null) =>
+		state
+			? String(blockController.getNativeStyle(`${state}:gap`) ?? "")
+			: String(blockController.getSpacing("gap", { nativeOnly: true, cascading: false })),
+	getPlaceholder: () =>
+		String(blockController.getSpacing("gap", { nativeOnly: false, cascading: true })),
+	setModelValue: (value: string | boolean | number) => {
+		if (typeof value === "boolean") return;
+		blockController.setSpacing("gap", String(value));
+	},
 };
 
 const layoutSectionProperties = [
@@ -87,7 +70,7 @@ const layoutSectionProperties = [
 	{
 		component: BlockGridLayoutHandler,
 		condition: () => blockController.isGrid() || Boolean(blockController.getParentBlock()?.isGrid()),
-		getProps: () => ({ gapProps: getGapProps() }),
+		getProps: () => ({ gapProps }),
 		usedStyleProperties: [
 			"column-gap",
 			"gap",
@@ -116,7 +99,7 @@ const layoutSectionProperties = [
 	{
 		component: BlockFlexLayoutHandler,
 		condition: () => blockController.isFlex() || Boolean(blockController.getParentBlock()?.isFlex()),
-		getProps: () => ({ gapProps: getGapProps() }),
+		getProps: () => ({ gapProps }),
 		usedStyleProperties: [
 			"align-content",
 			"align-items",
