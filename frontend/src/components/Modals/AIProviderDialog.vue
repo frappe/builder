@@ -4,9 +4,6 @@
 		@update:modelValue="$emit('update:modelValue', $event)"
 		:title="isEdit ? provider.provider_name || 'Edit Provider' : 'New Provider'"
 		size="lg">
-		<!-- Rendered here rather than through the actions prop: it lays every action
-		     out in one right-aligned row, which puts a destructive button against the
-		     one people mean to press. Delete belongs on the far side of the footer. -->
 		<template #actions>
 			<div class="flex items-center justify-between">
 				<Button v-if="isEdit" variant="ghost" theme="red" class="!text-ink-red-8" @click="remove">
@@ -48,7 +45,7 @@
 							class="flex-1"
 							:modelValue="apiKey"
 							@update:modelValue="(value: string) => (apiKey = value)"
-							:placeholder="hasStoredKey ? 'Stored — type to replace' : 'sk-…'"
+							placeholder="sk-…"
 							:hideClearButton="true" />
 						<Button v-if="isEdit" variant="subtle" :loading="testing" @click="test">Test</Button>
 						<Button
@@ -64,7 +61,7 @@
 					<p v-else class="text-p-xs text-ink-gray-5">
 						{{
 							hasStoredKey
-								? "Leave empty to keep the stored key."
+								? "Type over it to replace, or clear it to remove the key."
 								: "Leave empty to fall back to the OpenRouter key in Builder Settings."
 						}}
 					</p>
@@ -104,6 +101,11 @@ const testOk = ref(false);
 const isEdit = computed(() => Boolean(props.providerName));
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
 
+/** The framework's dummy password: all asterisks, meaning "unchanged". Mirrors
+ * base_document.is_dummy_password so an untouched field is never saved back as
+ * the literal asterisks. */
+const isDummyKey = (value?: string) => !!value && /^\*+$/.test(value);
+
 watch(
 	() => props.modelValue,
 	async (open) => {
@@ -120,8 +122,12 @@ watch(
 			name: props.providerName,
 		});
 		provider.value = { ...doc };
-		// Stored keys never come back to the client; an empty box means "keep it".
-		hasStoredKey.value = Boolean(doc.api_key);
+		// A Password field comes back as the framework's dummy — one '*' per
+		// character of the real key, never the key itself (base_document
+		// _save_passwords). Showing it is what Desk does, and it reads as "something
+		// is set here" far better than a placeholder does.
+		apiKey.value = doc.api_key || "";
+		hasStoredKey.value = isDummyKey(doc.api_key);
 	},
 );
 
@@ -132,7 +138,10 @@ const save = async () => {
 	}
 	try {
 		await createResource({ url: "builder.ai.api.save_ai_provider" }).submit({
-			provider: { ...provider.value, ...(apiKey.value ? { api_key: apiKey.value } : {}) },
+			provider: {
+				...provider.value,
+				...(apiKey.value && !isDummyKey(apiKey.value) ? { api_key: apiKey.value } : {}),
+			},
 			name: props.providerName || null,
 		});
 		toast.success(isEdit.value ? "Provider updated" : "Provider created");
