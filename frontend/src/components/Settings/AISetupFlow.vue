@@ -1,15 +1,18 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col gap-5">
-		<div class="flex items-center gap-2">
+		<!-- shrink-0: as a flex child of a min-h-0 column this row was compressible,
+		     which cropped the text. Every step keeps font-medium and the marker keeps
+		     a fixed width, so neither the active step moving nor a number turning
+		     into a tick reflows the row. -->
+		<div class="flex shrink-0 items-center gap-2 leading-5">
 			<template v-for="(s, i) in stepLabels" :key="s">
 				<span
-					class="text-p-xs"
-					:class="
-						i === step ? 'font-medium text-ink-gray-8' : i < step ? 'text-ink-gray-6' : 'text-ink-gray-4'
-					">
-					{{ i < step ? "✓" : i + 1 }}. {{ s }}
+					class="flex items-center gap-1.5 text-p-xs font-medium"
+					:class="i === step ? 'text-ink-gray-8' : i < step ? 'text-ink-gray-6' : 'text-ink-gray-4'">
+					<span class="w-3 shrink-0 text-center">{{ i < step ? "✓" : i + 1 }}</span>
+					<span>{{ s }}</span>
 				</span>
-				<span v-if="i < stepLabels.length - 1" class="bg-outline-gray-2 h-px w-4" />
+				<span v-if="i < stepLabels.length - 1" class="bg-outline-gray-2 h-px w-4 shrink-0" />
 			</template>
 		</div>
 
@@ -95,11 +98,10 @@
 						You can finish setting up and sort that out later.
 					</template>
 				</p>
+				<!-- Only the connected case needs a note: the placeholder already tells a
+				     first-time user what shape of key goes here. -->
 				<p v-else-if="active.has_key" class="text-p-xs text-ink-gray-5">
-					Already connected. Leave this blank to keep the stored key, or paste a new one to replace it.
-				</p>
-				<p v-else-if="!active.custom" class="text-p-xs text-ink-gray-5">
-					Stored on this site and never shown again.
+					Leave blank to keep the stored key.
 				</p>
 			</div>
 
