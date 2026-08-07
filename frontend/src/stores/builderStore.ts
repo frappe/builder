@@ -38,6 +38,9 @@ const useBuilderStore = defineStore("builderStore", {
 		showVersionHistory: <boolean>false,
 		showHTMLDialog: false,
 		showDataScriptDialog: <"page" | null>null,
+		showBlockTemplateDialog: false,
+		showTokenManager: false,
+		shortcutsModalOpen: false,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
 		// site-level maintenance/migration state, not the editor's edit lock

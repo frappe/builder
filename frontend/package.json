@@ -10,6 +10,7 @@
     "generate:css-metadata": "node ./scripts/generate-css-property-metadata.mjs",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.ts,.vue",
+    "test:unit": "vitest --run",
     "test-local": "cypress open --e2e --browser chrome",
     "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
   },
@@ -67,6 +68,7 @@
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.2.8",
     "tslib": "^2.5.0",
+    "vitest": "^3.2.4",
     "web-features": "3.34.1"
   },
   "peerDependencies": {}
