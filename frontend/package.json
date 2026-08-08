@@ -10,7 +10,6 @@
     "generate:css-metadata": "node ./scripts/generate-css-property-metadata.mjs",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.ts,.vue",
-    "test:translation": "node scripts/test-translation.mjs",
     "test-local": "cypress open --e2e --browser chrome",
     "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
   },

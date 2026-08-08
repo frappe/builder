@@ -6,33 +6,28 @@ import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
-import translationPlugin, { loadTranslations } from "./translation";
+import translationPlugin from "./translation";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 
+const app = createApp(App);
+const pinia = createPinia();
+
+app.use(router);
+app.use(FrappeUI);
+app.use(pinia);
+app.use(telemetryPlugin, { app_name: "builder" });
+app.use(translationPlugin);
+
 window.name = "frappe-builder";
+app.config.globalProperties.window = window;
 
-async function bootstrap() {
-	await loadTranslations();
+app.component("Button", Button);
+app.component("FormControl", FormControl);
+app.component("BuilderInput", Input);
 
-	const app = createApp(App);
-	const pinia = createPinia();
-
-	app.use(router);
-	app.use(FrappeUI);
-	app.use(pinia);
-	app.use(telemetryPlugin, { app_name: "builder" });
-	app.use(translationPlugin);
-
-	app.config.globalProperties.window = window;
-	app.component("Button", Button);
-	app.component("FormControl", FormControl);
-	app.component("BuilderInput", Input);
-	app.mount("#app");
-}
-
-bootstrap();
+app.mount("#app");
 
 declare global {
 	interface Window {

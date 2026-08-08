@@ -1,15 +1,18 @@
+import os
 from unittest.mock import patch
 
 import frappe
-from frappe.gettext.translate import generate_pot
-from frappe.tests.test_api import FrappeAPITestCase, make_request
-from frappe.utils import get_test_client
+from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
+from frappe.gettext.translate import get_method_map
+from frappe.tests.utils import FrappeTestCase
 
-from builder.api import get_translations
+from builder.www._builder import get_boot
+
+FRONTEND_SRC = os.path.join("frontend", "src")
 
 
-class TestI18n(FrappeAPITestCase):
-	def test_generate_pot_includes_frontend_translations(self):
+class TestI18n(FrappeTestCase):
+	def test_frontend_strings_are_extractable(self):
 		expected_locations = {
 			"You do not have permission to access this page": {"frontend/src/router.ts"},
 			"All Pages": {
@@ -22,68 +25,35 @@ class TestI18n(FrappeAPITestCase):
 			},
 		}
 
-		with patch("frappe.gettext.translate.write_catalog") as write_catalog:
-			generate_pot("builder")
+		for message, locations in self.extract_frontend_messages().items():
+			if message in expected_locations:
+				self.assertEqual(locations, expected_locations.pop(message), message)
 
-		write_catalog.assert_called_once()
-		app, catalog = write_catalog.call_args.args
-		self.assertEqual(app, "builder")
+		self.assertFalse(expected_locations, f"Not extracted: {sorted(expected_locations)}")
 
-		for message, locations in expected_locations.items():
-			catalog_message = catalog.get(message)
-			self.assertIsNotNone(catalog_message, f"Missing message: {message}")
-			actual_locations = {filename.replace("\\", "/") for filename, _ in catalog_message.locations}
-			self.assertEqual(actual_locations, locations, message)
+	def extract_frontend_messages(self) -> dict[str, set[str]]:
+		"""Run the POT extractors over frontend/src only, the way generate_pot does."""
+		app_path = frappe.get_pymodule_path("builder", "..")
+		keywords = DEFAULT_KEYWORDS.copy()
+		keywords["_lt"] = None
 
-	def test_get_translations_uses_current_user_language(self):
-		with (
-			patch("frappe.translate.get_user_lang", return_value="de") as get_user_lang,
-			patch(
-				"frappe.translate.get_all_translations",
-				return_value={"All Pages": "Alle Seiten"},
-			) as get_all_translations,
+		def is_frontend_src(dirpath) -> bool:
+			relative = os.path.relpath(dirpath, app_path)
+			return relative == "." or FRONTEND_SRC.startswith(relative) or relative.startswith(FRONTEND_SRC)
+
+		messages = {}
+		for filename, _, message, _, _ in extract_from_dir(
+			app_path,
+			get_method_map("builder") + get_method_map("frappe"),
+			directory_filter=is_frontend_src,
+			keywords=keywords,
 		):
-			self.assertEqual(get_translations(), {"All Pages": "Alle Seiten"})
+			if message:
+				messages.setdefault(message, set()).add(filename.replace("\\", "/"))
+		return messages
 
-		get_user_lang.assert_called_once_with()
-		get_all_translations.assert_called_once_with("de")
+	def test_boot_carries_only_builder_translations(self):
+		with patch("builder.www._builder.get_translations_from_apps", return_value={}) as from_apps:
+			get_boot()
 
-	def test_get_translations_is_authenticated_and_read_only(self):
-		self.assertIn(get_translations, frappe.whitelisted)
-		self.assertNotIn(get_translations, frappe.guest_methods)
-		self.assertEqual(
-			frappe.allowed_http_methods_for_whitelisted_func[get_translations],
-			("GET", "QUERY"),
-		)
-
-	def test_authenticated_get_returns_translation_dictionary(self):
-		with (
-			patch("frappe.translate.get_user_lang", return_value="de"),
-			patch(
-				"frappe.translate.get_all_translations",
-				return_value={"All Pages": "Alle Seiten"},
-			),
-		):
-			response = self.get(
-				self.method("builder.api.get_translations"),
-				{"sid": self.sid},
-			)
-
-		self.assertEqual(response.status_code, 200)
-		self.assertEqual(response.json["message"], {"All Pages": "Alle Seiten"})
-
-	def test_guest_get_is_rejected(self):
-		response = make_request(
-			target=get_test_client(use_cookies=False).get,
-			args=(self.method("builder.api.get_translations"),),
-		)
-
-		self.assertEqual(response.status_code, 403)
-
-	def test_authenticated_post_is_rejected(self):
-		response = self.post(
-			self.method("builder.api.get_translations"),
-			{"sid": self.sid},
-		)
-
-		self.assertEqual(response.status_code, 403)
+		from_apps.assert_called_once_with(frappe.local.lang, ["builder"])
