@@ -5,7 +5,7 @@ msgstr ""
 "POT-Creation-Date: 2026-08-08 18:22+0553\n"
 "PO-Revision-Date: 2026-08-08 13:03\n"
 "Last-Translator: suraj@frappe.io\n"
-"Language-Team: Chinese Traditional\n"
+"Language-Team: Chinese Simplified\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13,10 +13,10 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Crowdin-Project: frappe\n"
 "X-Crowdin-Project-ID: 639578\n"
-"X-Crowdin-Language: zh-TW\n"
+"X-Crowdin-Language: zh-CN\n"
 "X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
 "X-Crowdin-File-ID: 177\n"
-"Language: zh_TW\n"
+"Language: zh_CN\n"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -46,7 +46,7 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Advanced"
-msgstr ""
+msgstr "高级"
 
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:7
@@ -74,7 +74,7 @@ msgstr ""
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "App"
-msgstr ""
+msgstr "应用"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:74
 msgid "Are you sure you want to replace {0} with {1}?"
@@ -97,12 +97,12 @@ msgstr ""
 
 #: builder/www/404.html:27
 msgid "Back to Home"
-msgstr ""
+msgstr "返回首页"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic"
-msgstr ""
+msgstr "基本工资"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -192,7 +192,7 @@ msgstr ""
 #. Label of the category (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Category"
-msgstr ""
+msgstr "类别"
 
 #. Label of the client_scripts (Table MultiSelect) field in DocType 'Builder
 #. Page'
@@ -203,7 +203,7 @@ msgstr ""
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Color"
-msgstr ""
+msgstr "颜色"
 
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
@@ -219,7 +219,7 @@ msgstr ""
 #. Label of the component_name (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Component Name"
-msgstr ""
+msgstr "组件名称"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:88
 msgid "Component replaced successfully"
@@ -232,7 +232,7 @@ msgstr ""
 #. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Content"
-msgstr ""
+msgstr "内容"
 
 #: builder/api.py:430
 msgid "Could not import any pages from this template group."
@@ -250,7 +250,7 @@ msgstr ""
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Data"
-msgstr ""
+msgstr "数据"
 
 #. Description of the 'Default Language' (Data) field in DocType 'Builder
 #. Settings'
@@ -266,7 +266,7 @@ msgstr ""
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
@@ -310,7 +310,7 @@ msgstr ""
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Dynamic Route"
-msgstr ""
+msgstr "动态路由"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -328,17 +328,17 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Favicon"
-msgstr ""
+msgstr "网站图标"
 
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Folder Name"
-msgstr ""
+msgstr "目录名"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
-msgstr ""
+msgstr "字体"
 
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
@@ -378,7 +378,7 @@ msgstr ""
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Group"
-msgstr ""
+msgstr "组"
 
 #. Label of the head_html (Code) field in DocType 'Builder Page'
 #. Label of the head_html (Code) field in DocType 'Builder Settings'
@@ -390,12 +390,12 @@ msgstr ""
 #. Label of the home_page (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Home Page"
-msgstr ""
+msgstr "主页"
 
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Image"
-msgstr ""
+msgstr "图片"
 
 #: builder/ai_page_generator.py:221
 msgid "Image is too large. Please use an image smaller than 5 MB."
@@ -426,33 +426,33 @@ msgstr ""
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Is Standard"
-msgstr ""
+msgstr "系统自带"
 
 #. Label of the is_template (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Is Template"
-msgstr ""
+msgstr "是模板"
 
 #. Label of the is_unique (Check) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Is Unique"
-msgstr ""
+msgstr "唯一性"
 
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Label"
-msgstr ""
+msgstr "标签"
 
 #. Label of the landing_page_section (Section Break) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Landing Page"
-msgstr ""
+msgstr "登录页面"
 
 #. Label of the language (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Language"
-msgstr ""
+msgstr "语言"
 
 #. Description of the 'Language' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -472,12 +472,12 @@ msgstr ""
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Meta"
-msgstr ""
+msgstr "元数据"
 
 #. Label of the meta_column (Column Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Meta Tags"
-msgstr ""
+msgstr "元标记"
 
 #: builder/api.py:415
 msgid "No pages found in this template group."
@@ -485,7 +485,7 @@ msgstr ""
 
 #: builder/www/404.html:6
 msgid "Not Found"
-msgstr ""
+msgstr "未找到"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
@@ -509,7 +509,7 @@ msgstr ""
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Options"
-msgstr ""
+msgstr "选项"
 
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -519,7 +519,7 @@ msgstr ""
 #. Label of the page_name (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Name"
-msgstr ""
+msgstr "网页名称"
 
 #. Label of the preview (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -528,12 +528,12 @@ msgstr ""
 
 #: builder/www/404.html:25
 msgid "Page not found"
-msgstr ""
+msgstr "找不到网页"
 
 #. Label of the path (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Path"
-msgstr ""
+msgstr "网址路径"
 
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -557,7 +557,7 @@ msgstr ""
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview"
-msgstr ""
+msgstr "预览"
 
 #. Label of the preview_height (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -586,7 +586,7 @@ msgstr ""
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published"
-msgstr ""
+msgstr "已发"
 
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -596,16 +596,16 @@ msgstr ""
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Doctype"
-msgstr ""
+msgstr "源单据类型"
 
 #. Label of the reference_name (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Name"
-msgstr ""
+msgstr "源单据"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:72
 msgid "Replace"
-msgstr ""
+msgstr "替换"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
@@ -626,19 +626,19 @@ msgstr ""
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Restricted"
-msgstr ""
+msgstr "受限"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Route"
-msgstr ""
+msgstr "网址路径"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script"
-msgstr ""
+msgstr "脚本"
 
 #. Label of the script_public_url (Read Only) field in DocType 'Builder
 #. Settings'
@@ -650,12 +650,12 @@ msgstr ""
 #. Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Script Type"
-msgstr ""
+msgstr "脚本类型"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Scripting"
-msgstr ""
+msgstr "脚本"
 
 #: frontend/src/components/BuilderToolbar.vue:16
 msgid "Select (v)"
@@ -679,7 +679,7 @@ msgstr ""
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Sort Order"
-msgstr ""
+msgstr "排序"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
 msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
@@ -698,7 +698,7 @@ msgstr ""
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Style"
-msgstr ""
+msgstr "风格"
 
 #. Label of the style_public_url (Read Only) field in DocType 'Builder
 #. Settings'
@@ -718,7 +718,7 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: builder/builder/doctype/user_font/user_font.json
 msgid "System Manager"
-msgstr ""
+msgstr "系统管理员"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
 msgid "Target Component"
@@ -732,7 +732,7 @@ msgstr ""
 #. Label of the template_name (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Template Name"
-msgstr ""
+msgstr "模板名称"
 
 #: builder/api.py:411
 msgid "Template group not found."
@@ -749,7 +749,7 @@ msgstr ""
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Text"
-msgstr ""
+msgstr "文本"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
@@ -777,7 +777,7 @@ msgstr ""
 #. Label of the page_title (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Title"
-msgstr ""
+msgstr "标题"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -787,7 +787,7 @@ msgstr ""
 #. Label of the type (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Type"
-msgstr ""
+msgstr "类型"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -820,12 +820,12 @@ msgstr ""
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Value"
-msgstr ""
+msgstr "值"
 
 #. Label of the visitor_id (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Visitor ID"
-msgstr ""
+msgstr "访问者ID"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
@@ -839,7 +839,7 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Website Manager"
-msgstr ""
+msgstr "网站管理员"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
