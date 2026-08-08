@@ -1,13 +1,14 @@
 <template>
+	<!-- opacity, not v-show: display:none blurs the picker and tiptap then hides the menu -->
 	<bubble-menu
 		ref="menu"
 		:editor="editor"
 		:append-to="overlayElement"
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		:plugin-key="bubbleMenuPluginKey"
-		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl">
+		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl"
+		:class="{ 'pointer-events-none !opacity-0': isRepositioning }">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -106,17 +107,15 @@
 					:modelValue="selectedColor"
 					@update:modelValue="setTextColor"
 					:show-input="true"
+					ref="colorPicker"
+					:portal-to="menuElement"
 					placement="top">
 					<template #target="{ togglePopover, isOpen }">
 						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
 									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
+									@click="() => openColorPicker(togglePopover)"
 									:style="{
 										background:
 											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
@@ -148,7 +147,7 @@ import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
 import { debouncedWatch } from "@vueuse/core";
 import { debounce, toast } from "frappe-ui";
-import { computed, nextTick, ref, watch, type Ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch, type Ref } from "vue";
 
 const props = defineProps<{
 	block: Block;
@@ -159,9 +158,28 @@ const props = defineProps<{
 }>();
 
 const settingLink = ref(false);
+const repositioning = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
+const menu = ref(null) as Ref<{ $el: HTMLElement } | null>;
+const colorPicker = ref(null) as Ref<InstanceType<typeof ColorPicker> | null>;
+
+// popover lives inside the menu so tiptap's focus check keeps the menu open
+const menuElement = computed(() => menu.value?.$el);
+
+const isRepositioning = computed(
+	() => props.canvasProps?.panning || props.canvasProps?.scaling || repositioning.value,
+);
+
+// the option list is teleported to <body> and cannot follow the menu out of sight
+watch(isRepositioning, (moving) => moving && colorPicker.value?.hideOptions());
+
+// opening the popover focuses its input, which auto-opens the option list
+const openColorPicker = (togglePopover: () => void) => {
+	togglePopover();
+	nextTick(() => requestAnimationFrame(() => colorPicker.value?.hideOptions()));
+};
 
 const editorRef = computed(() => props.editor);
 const bubbleMenuPluginKey = "bubbleMenu";
@@ -228,24 +246,16 @@ const setHeading = (level: 1 | 2 | 3) => {
 const isEntireTextSelected = () => {
 	if (!props.editor) return false;
 	const { from, to } = props.editor.state.selection;
-	const textContent = props.editor.state.doc.textContent;
-	const textLength = textContent.length;
-	return from === 0 && to >= textLength;
+	return from === 0 && to >= props.editor.state.doc.textContent.length;
 };
 
 const setTextColor = debounce((color: string | undefined) => {
-	const colorValue = color as string;
-	if (!colorValue) {
-		props.editor?.chain().focus().setColor(colorValue).run();
-		if (isEntireTextSelected()) {
-			props.block.setStyle("color", "");
-		}
-		return;
-	}
-
-	props.editor?.chain().focus().setColor(colorValue).run();
+	props.editor
+		?.chain()
+		.setColor(color as string)
+		.run();
 	if (isEntireTextSelected()) {
-		props.block.setStyle("color", colorValue);
+		props.block.setStyle("color", color || "");
 	}
 }, 50);
 
@@ -285,8 +295,14 @@ watch(
 debouncedWatch(
 	() => [props.canvasProps?.panning, props.canvasProps?.scaling],
 	() => {
+		repositioning.value = true;
 		nextTick(() => {
 			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
+			// avoid jitter for ColorPicker position movement - wait a while before showing again
+			setTimeout(async () => {
+				await nextTick();
+				repositioning.value = false;
+			}, 20);
 		});
 	},
 );
