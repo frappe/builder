@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Frappe Builder VERSION\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-08 20:46+0553\n"
-"PO-Revision-Date: 2026-08-08 20:46+0553\n"
+"POT-Creation-Date: 2026-08-08 21:21+0553\n"
+"PO-Revision-Date: 2026-08-08 21:21+0553\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: suraj@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -242,6 +242,14 @@ msgstr ""
 msgid "Builder Token"
 msgstr ""
 
+#: builder/ai_page_generator.py:564
+msgid "Building {0}"
+msgstr ""
+
+#: builder/ai_page_generator.py:366
+msgid "Building..."
+msgstr ""
+
 #: frontend/src/components/Modals/TokenManager.vue:888
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
 msgstr ""
@@ -343,11 +351,11 @@ msgstr ""
 msgid "Copied to clipboard"
 msgstr ""
 
-#: builder/api.py:431
+#: builder/api.py:433
 msgid "Could not import any pages from this template group."
 msgstr ""
 
-#: builder/api.py:399
+#: builder/api.py:401
 msgid "Could not load the selected template. Please try again."
 msgstr ""
 
@@ -537,6 +545,10 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:205
 msgid "Failed to copy"
+msgstr ""
+
+#: builder/ai_page_generator.py:385
+msgid "Failed to parse AI response. The model returned invalid YAML."
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:867
@@ -862,7 +874,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: builder/api.py:416
+#: builder/api.py:418
 msgid "No pages found in this template group."
 msgstr ""
 
@@ -1132,7 +1144,7 @@ msgstr ""
 msgid "Replace with..."
 msgstr ""
 
-#: builder/api.py:187
+#: builder/api.py:188
 msgid "Requests to private or internal addresses are not allowed."
 msgstr ""
 
@@ -1400,7 +1412,7 @@ msgstr ""
 msgid "Template Name"
 msgstr ""
 
-#: builder/api.py:412
+#: builder/api.py:414
 msgid "Template group not found."
 msgstr ""
 
