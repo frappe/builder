@@ -26,12 +26,8 @@ def get_context(context):
 
 
 def get_boot() -> dict:
-	return {"translated_messages": get_translations()}
-
-
-def get_translations() -> dict[str, str]:
 	# only Builder's own catalog, the editor never looks up another app's strings
 	lang = frappe.local.lang
 	messages = get_translations_from_apps(lang, ["builder"])
 	messages.update(get_user_translations(lang) or {})
-	return messages
+	return {"translated_messages": messages}

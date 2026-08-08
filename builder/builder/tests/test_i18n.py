@@ -20,7 +20,7 @@ class TestI18n(FrappeTestCase):
 				"frontend/src/components/DashboardSidebar.vue",
 			},
 			"Select (v)": {"frontend/src/components/BuilderToolbar.vue"},
-			"Are you sure you want to unpublish {0}? It will no longer be accessible on the website.": {
+			'Are you sure you want to unpublish "{0}"? It will no longer be accessible on the website.': {
 				"frontend/src/stores/pageStore.ts"
 			},
 		}

@@ -240,7 +240,7 @@ const usePageStore = defineStore("pageStore", {
 			const targetName = page?.name || this.selectedPage;
 			const targetTitle = page?.page_title || page?.page_name || "this page";
 			const confirmed = await confirm(
-				__("Are you sure you want to unpublish {0}? It will no longer be accessible on the website.", [
+				__('Are you sure you want to unpublish "{0}"? It will no longer be accessible on the website.', [
 					targetTitle,
 				]),
 			);

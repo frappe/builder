@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Frappe Builder VERSION\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-08 17:17+0553\n"
-"PO-Revision-Date: 2026-08-08 17:17+0553\n"
+"POT-Creation-Date: 2026-08-08 18:22+0553\n"
+"PO-Revision-Date: 2026-08-08 18:22+0553\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: suraj@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -80,7 +80,7 @@ msgid "Are you sure you want to replace {0} with {1}?"
 msgstr ""
 
 #: frontend/src/stores/pageStore.ts:243
-msgid "Are you sure you want to unpublish {0}? It will no longer be accessible on the website."
+msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr ""
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
@@ -757,10 +757,6 @@ msgstr ""
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
-msgstr ""
-
-#: builder/www/_builder.py:37
-msgid "This method is only meant for developer mode"
 msgstr ""
 
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
