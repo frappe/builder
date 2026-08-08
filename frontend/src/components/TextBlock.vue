@@ -139,6 +139,9 @@ onBeforeMount(() => {
 });
 
 let pauseId: PauseId | undefined = undefined;
+// The creating click also fires a native click event before the block renders.
+// vOnClickOutside reads that as an outside click and ends edit mode. This flag skips it once.
+let skipNextClickOutside = false;
 
 watch(
 	() => isEditable.value,
@@ -291,6 +294,12 @@ if (!props.preview) {
 
 				props.block.setEditor(editor.value);
 				editor.value?.setEditable(isEditable.value);
+				// A block can already be editable at mount, before editor.value exists.
+				// The isEditable watch above then misses the focus call. This catches up now.
+				if (isEditable.value) {
+					editor.value?.commands.focus("all");
+					skipNextClickOutside = true;
+				}
 			} else {
 				destroyEditor();
 			}
@@ -318,6 +327,10 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
+	if (skipNextClickOutside) {
+		skipNextClickOutside = false;
+		return;
+	}
 	if ((e.target as HTMLElement).closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
