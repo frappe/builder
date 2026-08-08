@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-08 18:22+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03\n"
+"PO-Revision-Date: 2026-08-08 13:35\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -626,7 +626,7 @@ msgstr ""
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Restricted"
-msgstr ""
+msgstr "Eingeschränkt"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -843,7 +843,7 @@ msgstr "Webseiten-Administrator"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
-msgstr ""
+msgstr "Sie haben keine Berechtigung zum Zugriff auf diese Seite"
 
 #: builder/ai_page_generator.py:454 builder/utils.py:54
 msgid "You do not have permission to modify pages"
