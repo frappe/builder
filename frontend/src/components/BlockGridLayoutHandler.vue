@@ -50,7 +50,7 @@
 		@update:modelValue="setHeight" />
 	<SplitPropertyControl v-if="blockController.isGrid()" v-bind="gapProps" />
 	<!-- <InlineInput
-		:label="__('Align')"
+		label="Align"
 		v-if="blockController.isGrid()"
 		type="select"
 		:modelValue="blockController.getStyle('justifyItems') || 'stretch'"
@@ -74,7 +74,7 @@
 		]"
 		@update:modelValue="(val: string) => blockController.setStyle('justifyItems', val)" /> -->
 	<!-- <InlineInput
-		:label="__('Flow')"
+		label="Flow"
 		v-if="blockController.isGrid()"
 		type="select"
 		:modelValue="blockController.getStyle('gridAutoFlow') || 'row'"
@@ -100,7 +100,7 @@
 
 	<!-- place items -->
 	<!-- <InlineInput
-		:label="__('Place Items')"
+		label="Place Items"
 		v-if="blockController.isGrid()"
 		type="select"
 		:modelValue="blockController.getStyle('placeItems') || 'stretch'"
@@ -163,7 +163,7 @@
 
 	<!-- place self -->
 	<!-- <InlineInput
-		:label="__('Place Self')"
+		label="Place Self"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="select"
 		:modelValue="blockController.getStyle('placeSelf') || 'stretch'"

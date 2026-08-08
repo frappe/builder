@@ -115,7 +115,7 @@
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
 				</Tooltip>
-				<!-- <Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="0.6" arrow-class="mb-3">
+				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"

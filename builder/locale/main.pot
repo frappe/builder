@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Frappe Builder VERSION\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-08 19:13+0553\n"
-"PO-Revision-Date: 2026-08-08 19:13+0553\n"
+"POT-Creation-Date: 2026-08-08 20:46+0553\n"
+"PO-Revision-Date: 2026-08-08 20:46+0553\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: suraj@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 msgid "AI API Key"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:204
+#: frontend/src/components/BuilderToolbar.vue:208
 msgid "AI Generator is not available"
 msgstr ""
 
@@ -60,10 +60,6 @@ msgstr ""
 msgid "Advanced"
 msgstr ""
 
-#: frontend/src/components/BlockGridLayoutHandler.vue:53
-msgid "Align"
-msgstr ""
-
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
@@ -91,6 +87,10 @@ msgstr ""
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "App"
+msgstr ""
+
+#: builder/export_import_standard_page.py:28
+msgid "App {0} not found"
 msgstr ""
 
 #: frontend/src/stores/canvasStore.ts:198
@@ -343,12 +343,16 @@ msgstr ""
 msgid "Copied to clipboard"
 msgstr ""
 
-#: builder/api.py:430
+#: builder/api.py:431
 msgid "Could not import any pages from this template group."
 msgstr ""
 
-#: builder/api.py:398
+#: builder/api.py:399
 msgid "Could not load the selected template. Please try again."
+msgstr ""
+
+#: builder/api.py:183
+msgid "Could not resolve hostname: {0}"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:436
@@ -580,10 +584,6 @@ msgstr ""
 msgid "Find Previous (Shift+Enter)"
 msgstr ""
 
-#: frontend/src/components/BlockGridLayoutHandler.vue:77
-msgid "Flow"
-msgstr ""
-
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Folder Name"
@@ -623,15 +623,15 @@ msgstr ""
 msgid "Frappe Builder"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:146
+#: frontend/src/components/BuilderToolbar.vue:150
 msgid "Frappe Builder - Get Started"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:107
+#: frontend/src/components/BuilderToolbar.vue:109
 msgid "Generate with AI"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:141
+#: frontend/src/components/BuilderToolbar.vue:145
 msgid "Get Started"
 msgstr ""
 
@@ -699,6 +699,10 @@ msgstr ""
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
+msgstr ""
+
+#: builder/api.py:179
+msgid "Invalid URL: missing hostname."
 msgstr ""
 
 #: builder/ai_page_generator.py:631
@@ -858,8 +862,12 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: builder/api.py:415
+#: builder/api.py:416
 msgid "No pages found in this template group."
+msgstr ""
+
+#: builder/api.py:40
+msgid "No permission to preview this page"
 msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:370
@@ -885,6 +893,10 @@ msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
+msgstr ""
+
+#: builder/api.py:176
+msgid "Only HTTP/HTTPS URLs are allowed for external images."
 msgstr ""
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
@@ -968,14 +980,6 @@ msgstr ""
 msgid "Pick color"
 msgstr ""
 
-#: frontend/src/components/BlockGridLayoutHandler.vue:103
-msgid "Place Items"
-msgstr ""
-
-#: frontend/src/components/BlockGridLayoutHandler.vue:166
-msgid "Place Self"
-msgstr ""
-
 #: frontend/src/components/BlockFlexLayoutHandler.vue:14
 msgid "Placement"
 msgstr ""
@@ -1017,8 +1021,8 @@ msgstr ""
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/BuilderToolbar.vue:131
-#: frontend/src/components/BuilderToolbar.vue:132
+#: frontend/src/components/BuilderToolbar.vue:135
+#: frontend/src/components/BuilderToolbar.vue:136
 msgid "Preview"
 msgstr ""
 
@@ -1126,6 +1130,10 @@ msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:76
 msgid "Replace with..."
+msgstr ""
+
+#: builder/api.py:187
+msgid "Requests to private or internal addresses are not allowed."
 msgstr ""
 
 #: frontend/src/components/BlockContextMenu.vue:215
@@ -1286,7 +1294,7 @@ msgstr ""
 msgid "Set Color"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:126
+#: frontend/src/components/BuilderToolbar.vue:130
 #: frontend/src/components/DashboardSidebar.vue:13
 msgid "Settings"
 msgstr ""
@@ -1392,7 +1400,7 @@ msgstr ""
 msgid "Template Name"
 msgstr ""
 
-#: builder/api.py:411
+#: builder/api.py:412
 msgid "Template group not found."
 msgstr ""
 
@@ -1459,7 +1467,6 @@ msgstr ""
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
 msgstr ""
 
-#: frontend/src/components/BuilderToolbar.vue:114
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
 msgstr ""

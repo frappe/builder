@@ -8,6 +8,7 @@ from urllib.parse import unquote, urlparse
 
 import frappe
 import requests
+from frappe import _
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
@@ -36,7 +37,7 @@ def is_site_read_only() -> bool:
 @frappe.whitelist()
 def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
-		frappe.throw("No permission to preview this page")
+		frappe.throw(_("No permission to preview this page"))
 
 	# to load preview without publishing
 	frappe.form_dict.update(kwargs)
@@ -172,18 +173,20 @@ def assert_not_private_url(url: str) -> None:
 	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard)."""
 	parsed = urlparse(url)
 	if parsed.scheme not in ("http", "https"):
-		frappe.throw("Only HTTP/HTTPS URLs are allowed for external images.", frappe.PermissionError)
+		frappe.throw(_("Only HTTP/HTTPS URLs are allowed for external images."), frappe.PermissionError)
 	hostname = parsed.hostname
 	if not hostname:
-		frappe.throw("Invalid URL: missing hostname.", frappe.ValidationError)
+		frappe.throw(_("Invalid URL: missing hostname."), frappe.ValidationError)
 	try:
 		addr_infos = socket.getaddrinfo(hostname, None)
 	except socket.gaierror:
-		frappe.throw(f"Could not resolve hostname: {hostname}", frappe.ValidationError)
+		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
 	for addr_info in addr_infos:
 		ip = ipaddress.ip_address(addr_info[4][0])
 		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
-			frappe.throw("Requests to private or internal addresses are not allowed.", frappe.PermissionError)
+			frappe.throw(
+				_("Requests to private or internal addresses are not allowed."), frappe.PermissionError
+			)
 
 
 def check_app_permission():

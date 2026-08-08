@@ -3,6 +3,7 @@ import re
 import shutil
 
 import frappe
+from frappe import _
 from frappe.modules.export_file import strip_default_fields
 
 from builder.utils import (
@@ -24,7 +25,7 @@ def export_page_as_standard(page_name, target_app):
 
 	app_path = frappe.get_app_path(target_app)
 	if not app_path:
-		frappe.throw(f"App '{target_app}' not found")
+		frappe.throw(_("App {0} not found").format(target_app))
 
 	paths = create_export_directories(app_path, export_name)
 
