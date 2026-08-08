@@ -61,7 +61,7 @@
 									'!grid': !currentImageURL,
 									'group-hover:grid': currentImageURL,
 								}">
-								<Button variant="subtle" @click="openFileSelector">Upload</Button>
+								<Button variant="subtle" @click="openFileSelector">{{ __("Upload") }}</Button>
 							</div>
 						</div>
 						<InlineInput

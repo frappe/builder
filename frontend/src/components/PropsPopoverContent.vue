@@ -30,7 +30,7 @@
 		</div>
 		<!-- Disabled for now -->
 		<div v-if="false" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Is Required</InputLabel>
+			<InputLabel class="w-[88px] shrink-0">{{ __("Is Required") }}</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="String(standardPropOptions.isRequired)"

@@ -8,7 +8,7 @@
 				icon-left="search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
-			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">{{ __("Invite") }}</Button>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
@@ -32,7 +32,7 @@
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-1">
-						<Button variant="subtle" size="sm" @click="resendInvite(invite)">Resend</Button>
+						<Button variant="subtle" size="sm" @click="resendInvite(invite)">{{ __("Resend") }}</Button>
 						<Button
 							variant="subtle"
 							size="sm"
@@ -59,11 +59,13 @@
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">{{ __("Admin") }}</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
-					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
+					<template v-else>
+						{{ __("No members yet. Invite someone to give them access to Builder.") }}
+					</template>
 				</div>
 			</div>
 		</div>

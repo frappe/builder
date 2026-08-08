@@ -87,7 +87,7 @@
 							<template #body-main="{ close }">
 								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-base p-2 shadow-2xl">
 									<div class="flex items-center justify-between p-1 px-2">
-										<div class="text-sm text-ink-gray-4">Styles</div>
+										<div class="text-sm text-ink-gray-4">{{ __("Styles") }}</div>
 										<Button
 											v-if="selectedPreset"
 											class="text-sm text-ink-gray-5 hover:text-ink-gray-7"

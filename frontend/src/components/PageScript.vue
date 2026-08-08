@@ -2,7 +2,7 @@
 	<div class="flex h-full flex-col justify-between">
 		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2">
-				<Button @click="showClientScriptEditor()" class="flex-1">Client Script</Button>
+				<Button @click="showClientScriptEditor()" class="flex-1">{{ __("Client Script") }}</Button>
 				<Button v-if="mode != 'blockTemplate'" @click="showServerScriptEditor()" class="flex-1">
 					Data Script
 				</Button>
@@ -77,7 +77,7 @@
 								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
-								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
+								<b>{{ __("Example:") }}</b> data.events = frappe.get_list("Event")<br><br>
 								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
 								:readonly="true"></CodeEditor>
@@ -135,7 +135,7 @@
 								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
-								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
+								<b>{{ __("Example:") }}</b> data.items = frappe.get_list("Item")<br><br>
 								Props are accessible via the <b>props</b> object.'
 								:readonly="true"></CodeEditor>
 						</div>

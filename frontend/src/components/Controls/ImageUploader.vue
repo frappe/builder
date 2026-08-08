@@ -12,7 +12,7 @@
 				<Button @click="openFileSelector">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
 				</Button>
-				<Button v-if="image_url" @click="$emit('remove')">Remove</Button>
+				<Button v-if="image_url" @click="$emit('remove')">{{ __("Remove") }}</Button>
 			</div>
 		</template>
 	</FileUploader>

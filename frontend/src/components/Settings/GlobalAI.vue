@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-5">
 		<div class="flex flex-col gap-2">
-			<label class="text-sm text-ink-gray-9">OpenRouter API Key</label>
+			<label class="text-sm text-ink-gray-9">{{ __("OpenRouter API Key") }}</label>
 			<div class="flex items-center gap-2">
 				<FormControl
 					type="password"

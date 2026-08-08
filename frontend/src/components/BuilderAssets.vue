@@ -16,7 +16,9 @@
 			:class="{
 				'pt-2': !showSearchInput,
 			}">
-			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
+			<div v-show="!components.length" class="text-base italic text-gray-600">
+				{{ __("No components saved") }}
+			</div>
 			<div v-for="component in components" :key="component.name" class="group flex w-full">
 				<ItemListRow
 					class="user-component w-full cursor-pointer bg-surface-base"

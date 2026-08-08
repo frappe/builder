@@ -80,7 +80,7 @@
 							size="sm"
 							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button class="w-full text-xs" @click="open">New Script</Button>
+								<Button class="w-full text-xs" @click="open">{{ __("New Script") }}</Button>
 							</template>
 						</Dropdown>
 
@@ -90,14 +90,14 @@
 							:placeholder="__('Attach Script')"
 							@update:modelValue="(value: string | null) => value && attachScript(value)">
 							<template #trigger>
-								<Button class="w-full text-xs">Attach Script</Button>
+								<Button class="w-full text-xs">{{ __("Attach Script") }}</Button>
 							</template>
 						</Combobox>
 					</div>
 				</div>
 
 				<div class="text-xs leading-4 text-ink-gray-6">
-					<b>Note:</b>
+					<b>{{ __("Note:") }}</b>
 					All client scripts are executed in preview mode and on published pages.
 				</div>
 			</div>

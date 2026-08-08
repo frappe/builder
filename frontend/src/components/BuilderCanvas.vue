@@ -110,7 +110,7 @@
 			placement="top-right"
 			:placementOffset="20"
 			v-if="builderStore.showSearchBlock">
-			<template #header>Search Block</template>
+			<template #header>{{ __("Search Block") }}</template>
 			<template #content>
 				<SearchBlock></SearchBlock>
 			</template>

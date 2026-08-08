@@ -30,7 +30,7 @@
 			</div>
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
-				<span class="text-sm text-ink-gray-7">Social Preview</span>
+				<span class="text-sm text-ink-gray-7">{{ __("Social Preview") }}</span>
 				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
 					<img
 						:src="pageStore.activePage?.meta_image || pageStore.activePage?.preview"

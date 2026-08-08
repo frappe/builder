@@ -25,7 +25,7 @@
 						</a>
 					</div>
 					<div class="flex items-center">
-						<span class="w-20 text-ink-gray-6">Status</span>
+						<span class="w-20 text-ink-gray-6">{{ __("Status") }}</span>
 						<div class="flex items-center gap-2">
 							<span class="flex items-center gap-2 text-base text-ink-gray-9">
 								<span
@@ -62,7 +62,7 @@
 				<hr class="w-full border-outline-gray-2" />
 
 				<div class="flex flex-col justify-between gap-5">
-					<span class="text-lg-semibold text-ink-gray-9">Favicon</span>
+					<span class="text-lg-semibold text-ink-gray-9">{{ __("Favicon") }}</span>
 					<div class="flex flex-1 gap-5">
 						<div
 							class="flex items-center justify-center rounded border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
@@ -93,8 +93,8 @@
 					<!-- homepage -->
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
-							<span class="text-base-medium text-ink-gray-9">Homepage</span>
-							<p class="text-base text-ink-gray-5">Set current page as Homepage</p>
+							<span class="text-base-medium text-ink-gray-9">{{ __("Homepage") }}</span>
+							<p class="text-base text-ink-gray-5">{{ __("Set current page as Homepage") }}</p>
 						</div>
 						<Button
 							variant="subtle"
@@ -138,7 +138,9 @@
 						<div v-if="pageStore.activePage?.is_standard" class="flex items-center justify-between">
 							<div class="flex flex-col gap-2">
 								<span class="text-base-medium text-ink-gray-9">App</span>
-								<p class="max-w-xs text-p-sm text-ink-gray-7">Select the app for this standard page</p>
+								<p class="max-w-xs text-p-sm text-ink-gray-7">
+									{{ __("Select the app for this standard page") }}
+								</p>
 							</div>
 							<div>
 								<BuilderInput
@@ -154,8 +156,8 @@
 					<hr class="w-full border-outline-gray-2" v-if="!pageStore.activePage?.is_standard" />
 					<div class="flex items-center justify-between" v-if="!pageStore.activePage?.is_standard">
 						<div class="flex flex-col gap-2">
-							<span class="text-base-medium text-ink-gray-9">Folder</span>
-							<p class="max-w-xs text-p-sm text-ink-gray-7">Set folder to organize your page</p>
+							<span class="text-base-medium text-ink-gray-9">{{ __("Folder") }}</span>
+							<p class="max-w-xs text-p-sm text-ink-gray-7">{{ __("Set folder to organize your page") }}</p>
 						</div>
 						<div>
 							<BuilderInput

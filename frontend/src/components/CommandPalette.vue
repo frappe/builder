@@ -6,7 +6,7 @@
 				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-md bg-surface-base shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
 				@open-auto-focus.prevent
 				@escape-key-down.prevent="onEscapeKey">
-				<DialogTitle class="sr-only">Command Palette</DialogTitle>
+				<DialogTitle class="sr-only">{{ __("Command Palette") }}</DialogTitle>
 
 				<!-- Search bar -->
 				<div class="flex items-center border-b border-outline-gray-1 px-1">
@@ -71,7 +71,7 @@
 							]"
 							aria-hidden="true" />
 						<span class="text-base">
-							<template v-if="loading">Searching...</template>
+							<template v-if="loading">{{ __("Searching...") }}</template>
 							<template v-else-if="localQuery">No results for "{{ localQuery }}"</template>
 							<template v-else>{{ hint || "No commands found" }}</template>
 						</span>

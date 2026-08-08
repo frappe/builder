@@ -16,7 +16,7 @@
 			:placeholder="__('Enter max number of items')"></InlineInput>
 	</div>
 	<div class="flex flex-col gap-3">
-		<InputLabel class="w-[88px] shrink-0">Default Items</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">{{ __("Default Items") }}</InputLabel>
 		<ObjectEditor :obj="obj" @update:obj="handleObjChange" />
 	</div>
 </template>

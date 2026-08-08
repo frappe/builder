@@ -16,7 +16,7 @@
 		<template #body="{ close }">
 			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
 				<div class="mb-2 flex items-center justify-between">
-					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
+					<span class="text-sm font-medium text-ink-gray-8">{{ __("Component updates") }}</span>
 					<Button
 						variant="subtle"
 						size="sm"

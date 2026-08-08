@@ -16,7 +16,7 @@
 			</nav>
 
 			<div class="mt-5 flex h-7 items-center justify-between">
-				<SidebarLabel>Folders</SidebarLabel>
+				<SidebarLabel>{{ __("Folders") }}</SidebarLabel>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -93,7 +93,7 @@
 	</Sidebar>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 		<template #default>
-			<DialogTitle class="sr-only">Global Builder Settings</DialogTitle>
+			<DialogTitle class="sr-only">{{ __("Global Builder Settings") }}</DialogTitle>
 			<DialogDescription class="sr-only">
 				Configure global settings for this builder project.
 			</DialogDescription>

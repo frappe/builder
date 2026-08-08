@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Frappe Builder VERSION\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-08 21:21+0553\n"
-"PO-Revision-Date: 2026-08-08 21:21+0553\n"
+"POT-Creation-Date: 2026-08-08 21:53+0553\n"
+"PO-Revision-Date: 2026-08-08 21:53+0553\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: suraj@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -53,6 +53,10 @@ msgstr ""
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:62
+msgid "Admin"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
@@ -109,7 +113,12 @@ msgstr ""
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr ""
 
+#: frontend/src/components/ArrayInput.vue:20
+msgid "Array Items:"
+msgstr ""
+
 #: frontend/src/components/PageClientScriptManager.vue:90
+#: frontend/src/components/PageClientScriptManager.vue:93
 msgid "Attach Script"
 msgstr ""
 
@@ -229,6 +238,7 @@ msgstr ""
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/BuilderToolbar.vue:157
 msgid "Builder Settings"
 msgstr ""
 
@@ -274,6 +284,15 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
+#: frontend/src/components/Controls/SearchBlock.vue:58
+msgid "Clear all filters"
+msgstr ""
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:20
+msgid "Click-through Rate"
+msgstr ""
+
+#: frontend/src/components/PageScript.vue:5
 #: frontend/src/components/Settings/GlobalCode.vue:22
 msgid "Client Script"
 msgstr ""
@@ -282,6 +301,10 @@ msgstr ""
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Client Scripts"
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:123
+msgid "Clip Background to Text"
 msgstr ""
 
 #: frontend/src/components/CommandPalette.vue:33
@@ -303,6 +326,10 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:17
 msgid "Columns"
+msgstr ""
+
+#: frontend/src/components/CommandPalette.vue:9
+msgid "Command Palette"
 msgstr ""
 
 #: frontend/src/components/PageScript.vue:23
@@ -332,6 +359,10 @@ msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:88
 msgid "Component replaced successfully"
+msgstr ""
+
+#: frontend/src/components/ComponentUpdates.vue:19
+msgid "Component updates"
 msgstr ""
 
 #: frontend/src/components/ComponentUpdates.vue:4
@@ -367,6 +398,26 @@ msgstr ""
 msgid "Couldn't copy to clipboard"
 msgstr ""
 
+#: frontend/src/components/Templates/TemplatesDialog.vue:4
+msgid "Create a new page"
+msgstr ""
+
+#: frontend/src/components/VersionHistory.vue:46
+msgid "Current version"
+msgstr ""
+
+#: frontend/src/components/VersionHistory.vue:71
+msgid "Currently live"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:49
+msgid "Dark"
+msgstr ""
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:34
+msgid "Dark Mode Color"
+msgstr ""
+
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
@@ -391,6 +442,11 @@ msgstr ""
 msgid "Default HTML lang code (e.g., en, es, fr)"
 msgstr ""
 
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:19
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:19
+msgid "Default Items"
+msgstr ""
+
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default Language"
@@ -410,6 +466,10 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:15
 msgid "Description"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:18
+msgid "Design Tokens"
 msgstr ""
 
 #. Label of the developer_options_section (Section Break) field in DocType
@@ -537,6 +597,15 @@ msgstr ""
 msgid "Enter your domain"
 msgstr ""
 
+#: frontend/src/components/PageScript.vue:80
+#: frontend/src/components/PageScript.vue:138
+msgid "Example:"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:112
+msgid "Examples"
+msgstr ""
+
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -567,7 +636,9 @@ msgstr ""
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:28
 #: frontend/src/components/Settings/GlobalGeneral.vue:39
+#: frontend/src/components/Settings/PageGeneral.vue:65
 #: frontend/src/components/Settings/PageGeneral.vue:80
 msgid "Favicon"
 msgstr ""
@@ -578,6 +649,10 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:16
 msgid "Filter by title or route"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:44
+msgid "Filter search results by:"
 msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:27
@@ -596,9 +671,17 @@ msgstr ""
 msgid "Find Previous (Shift+Enter)"
 msgstr ""
 
+#: frontend/src/components/Settings/PageGeneral.vue:157
+msgid "Folder"
+msgstr ""
+
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Folder Name"
+msgstr ""
+
+#: frontend/src/components/DashboardSidebar.vue:19
+msgid "Folders"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
@@ -647,6 +730,10 @@ msgstr ""
 msgid "Get Started"
 msgstr ""
 
+#: frontend/src/components/DashboardSidebar.vue:96
+msgid "Global Builder Settings"
+msgstr ""
+
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global script that will be loaded with every page built with Frappe Builder"
@@ -687,6 +774,7 @@ msgid "Home page"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
+#: frontend/src/components/Settings/PageGeneral.vue:96
 msgid "Homepage"
 msgstr ""
 
@@ -741,8 +829,16 @@ msgstr ""
 msgid "Invitation cancelled"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:11
+msgid "Invite"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalUsers.vue:73
 msgid "Invite Users"
+msgstr ""
+
+#: frontend/src/components/PropsPopoverContent.vue:33
+msgid "Is Required"
 msgstr ""
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
@@ -800,8 +896,24 @@ msgstr ""
 msgid "Left"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:48
+msgid "Light"
+msgstr ""
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:27
+msgid "Light Mode Color"
+msgstr ""
+
 #: frontend/src/components/PageListItem.vue:26
 msgid "Limited access"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:4
+msgid "Loading domains…"
+msgstr ""
+
+#: frontend/src/components/BuilderSettings.vue:34
+msgid "Loading..."
 msgstr ""
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
@@ -858,8 +970,16 @@ msgstr ""
 msgid "Move to group"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:46
+msgid "Name"
+msgstr ""
+
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
+msgstr ""
+
+#: frontend/src/components/PageClientScriptManager.vue:83
+msgid "New Script"
 msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:24
@@ -874,6 +994,22 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+#: frontend/src/components/BuilderAssets.vue:19
+msgid "No components saved"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:5
+msgid "No custom domains added yet."
+msgstr ""
+
+#: frontend/src/components/DashboardContent.vue:12
+msgid "No matching pages found."
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:66
+msgid "No members yet. Invite someone to give them access to Builder."
+msgstr ""
+
 #: builder/api.py:418
 msgid "No pages found in this template group."
 msgstr ""
@@ -885,6 +1021,10 @@ msgstr ""
 #: frontend/src/components/Controls/SearchBlock.vue:370
 #: frontend/src/components/Controls/SearchBlock.vue:392
 msgid "No replacements made"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:135
+msgid "No results found"
 msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:35
@@ -907,6 +1047,14 @@ msgstr ""
 msgid "Not used in any page"
 msgstr ""
 
+#: frontend/src/components/PageClientScriptManager.vue:100
+msgid "Note:"
+msgstr ""
+
+#: frontend/src/components/ObjectInput.vue:20
+msgid "Object Items:"
+msgstr ""
+
 #: builder/api.py:176
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
 msgstr ""
@@ -922,17 +1070,34 @@ msgstr ""
 msgid "Open <strong>Frappe Builder</strong>"
 msgstr ""
 
+#: frontend/src/components/Controls/DynamicValueHandler.vue:63
+msgid "Open Code Tab"
+msgstr ""
+
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalAI.vue:4
+msgid "OpenRouter API Key"
+msgstr ""
+
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/PropsOptions/SelectOptions.vue:3
 msgid "Options"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:59
 msgid "Order"
+msgstr ""
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:4
+msgid "Overview"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:33
+msgid "Page"
 msgstr ""
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:145
@@ -1013,6 +1178,10 @@ msgstr ""
 msgid "Please set an OpenRouter API key"
 msgstr ""
 
+#: frontend/src/pages/PageBuilder.vue:6
+msgid "Please switch to a larger screen to edit"
+msgstr ""
+
 #: frontend/src/components/BackgroundHandler.vue:89
 msgid "Position"
 msgstr ""
@@ -1035,6 +1204,7 @@ msgstr ""
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BuilderToolbar.vue:135
 #: frontend/src/components/BuilderToolbar.vue:136
+#: frontend/src/components/Templates/TemplatePageCard.vue:14
 msgid "Preview"
 msgstr ""
 
@@ -1092,8 +1262,16 @@ msgstr ""
 msgid "Published At"
 msgstr ""
 
+#: frontend/src/components/VersionHistory.vue:63
+msgid "Published version"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:15
+msgid "Redirects to primary"
 msgstr ""
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
@@ -1104,6 +1282,10 @@ msgstr ""
 #. Label of the reference_name (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Name"
+msgstr ""
+
+#: frontend/src/components/Controls/ImageUploader.vue:15
+msgid "Remove"
 msgstr ""
 
 #: frontend/src/components/Controls/GradientEditor.vue:45
@@ -1148,6 +1330,10 @@ msgstr ""
 msgid "Requests to private or internal addresses are not allowed."
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:35
+msgid "Resend"
+msgstr ""
+
 #: frontend/src/components/BlockContextMenu.vue:215
 msgid "Reset changes in child blocks as well?"
 msgstr ""
@@ -1171,6 +1357,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPositionHandler.vue:52
 msgid "Right"
+msgstr ""
+
+#: frontend/src/components/Settings/PageRobots.vue:19
+msgid "Robots.txt Guide."
 msgstr ""
 
 #. Label of the route (Data) field in DocType 'Builder Page'
@@ -1206,6 +1396,10 @@ msgstr ""
 
 #: frontend/src/components/VersionHistory.vue:14
 msgid "Save current version"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:5
+msgid "Screen too small"
 msgstr ""
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
@@ -1244,6 +1438,10 @@ msgstr ""
 msgid "Scripting"
 msgstr ""
 
+#: frontend/src/components/BuilderCanvas.vue:113
+msgid "Search Block"
+msgstr ""
+
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
 msgstr ""
@@ -1254,6 +1452,10 @@ msgstr ""
 
 #: frontend/src/components/BuilderAssets.vue:6
 msgid "Search component"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:68
+msgid "Search inside selected block only"
 msgstr ""
 
 #: frontend/src/components/BlockProperties.vue:7
@@ -1268,8 +1470,16 @@ msgstr ""
 msgid "Search tokens"
 msgstr ""
 
+#: frontend/src/components/Controls/SearchBlock.vue:102
+msgid "Search your blocks"
+msgstr ""
+
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
+msgstr ""
+
+#: frontend/src/components/CommandPalette.vue:74
+msgid "Searching..."
 msgstr ""
 
 #: frontend/src/components/BuilderToolbar.vue:16
@@ -1278,6 +1488,14 @@ msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
 msgid "Select All Matches (Alt+Enter)"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:12
+msgid "Select Template"
+msgstr ""
+
+#: frontend/src/components/BlockProperties.vue:31
+msgid "Select a block to edit properties"
 msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:15
@@ -1290,6 +1508,10 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:370
 msgid "Select or type a group name"
+msgstr ""
+
+#: frontend/src/components/Settings/PageGeneral.vue:141
+msgid "Select the app for this standard page"
 msgstr ""
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
@@ -1306,6 +1528,19 @@ msgstr ""
 msgid "Set Color"
 msgstr ""
 
+#: frontend/src/components/Controls/BasePropertyControl.vue:34
+msgid "Set Dynamic Value"
+msgstr ""
+
+#: frontend/src/components/Settings/PageGeneral.vue:97
+msgid "Set current page as Homepage"
+msgstr ""
+
+#: frontend/src/components/Settings/PageGeneral.vue:158
+msgid "Set folder to organize your page"
+msgstr ""
+
+#: frontend/src/components/BuilderSettings.vue:4
 #: frontend/src/components/BuilderToolbar.vue:130
 #: frontend/src/components/DashboardSidebar.vue:13
 msgid "Settings"
@@ -1340,9 +1575,17 @@ msgstr ""
 msgid "Snapshot does not belong to this page"
 msgstr ""
 
+#: frontend/src/components/Settings/PageMeta.vue:33
+msgid "Social Preview"
+msgstr ""
+
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Sort Order"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:18
+msgid "Source"
 msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:132
@@ -1362,6 +1605,10 @@ msgstr ""
 msgid "Start from scratch"
 msgstr ""
 
+#: frontend/src/components/Settings/PageGeneral.vue:28
+msgid "Status"
+msgstr ""
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Structure"
@@ -1377,6 +1624,10 @@ msgstr ""
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Style Public URL"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:90
+msgid "Styles"
 msgstr ""
 
 #. Name of a role
@@ -1395,6 +1646,10 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:61
 msgid "System generated folder cannot be edited or deleted"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:19
+msgid "Target"
 msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
@@ -1505,8 +1760,28 @@ msgstr ""
 msgid "Top"
 msgstr ""
 
+#: frontend/src/components/Settings/TopClicksList.vue:3
+msgid "Top Clicks"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalAnalytics.vue:21
+msgid "Top Pages"
+msgstr ""
+
+#: frontend/src/components/Settings/TopReferrersList.vue:3
+msgid "Top Referrers"
+msgstr ""
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:16
+msgid "Total Pageviews"
+msgstr ""
+
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:4
 msgid "True Label"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:136
+msgid "Try different keywords or adjust your filters"
 msgstr ""
 
 #. Label of the type (Select) field in DocType 'Builder Token'
@@ -1518,6 +1793,10 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Typography"
+msgstr ""
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:12
+msgid "Unique Visitors"
 msgstr ""
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
@@ -1538,12 +1817,23 @@ msgstr ""
 msgid "Update all"
 msgstr ""
 
+#: frontend/src/components/BackgroundHandler.vue:76
+#: frontend/src/components/ImageUploadInput.vue:64
+#: frontend/src/components/Modals/NewBlockTemplate.vue:50
+msgid "Upload"
+msgstr ""
+
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
 msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
 msgid "Use Regular Expression"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplatePageCard.vue:13
+#: frontend/src/components/Templates/TemplatePreview.vue:20
+msgid "Use template"
 msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:44
@@ -1566,8 +1856,13 @@ msgstr ""
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/DynamicValueDropdown.vue:6
+#: frontend/src/components/Modals/TokenManager.vue:51
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
+msgstr ""
+
+#: frontend/src/components/VersionHistory.vue:7
+msgid "Version History"
 msgstr ""
 
 #: frontend/src/stores/pageStore.ts:236
@@ -1576,6 +1871,10 @@ msgstr ""
 
 #: frontend/src/components/VersionHistory.vue:229
 msgid "Version saved"
+msgstr ""
+
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
+msgid "View tracking is off"
 msgstr ""
 
 #. Label of the visitor_id (Data) field in DocType 'Builder Page Click'
@@ -1595,6 +1894,10 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Website Manager"
+msgstr ""
+
+#: frontend/src/components/VersionHistory.vue:47
+msgid "Working draft · unpublished changes"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:32

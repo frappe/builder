@@ -154,7 +154,7 @@
 		</Dialog>
 		<Dialog v-model="builderStore.showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
-				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
+				<DialogTitle class="sr-only">{{ __("Builder Settings") }}</DialogTitle>
 				<DialogDescription class="sr-only">
 					Configure page and global settings for this project.
 				</DialogDescription>

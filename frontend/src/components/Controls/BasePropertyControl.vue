@@ -31,7 +31,7 @@
 				:clickOutsideToClose="false"
 				:placementOffset="20"
 				v-if="showDynamicValueModal">
-				<template #header>Set Dynamic Value</template>
+				<template #header>{{ __("Set Dynamic Value") }}</template>
 				<template #content>
 					<DynamicValueHandler @setDynamicValue="updateDynamicValue" :selectedValue="dynamicValue" />
 				</template>

@@ -1,8 +1,12 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<!-- Domain list -->
-		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">Loading domains…</div>
-		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
+		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">
+			{{ __("Loading domains…") }}
+		</div>
+		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">
+			{{ __("No custom domains added yet.") }}
+		</div>
 		<div v-else class="mb-2 flex flex-col gap-2">
 			<div
 				v-for="d in sortedDomains"
@@ -12,7 +16,9 @@
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
 						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
-						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
+						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">
+							{{ __("Redirects to primary") }}
+						</p>
 						<Badge v-if="d.primary" size="sm" theme="green" :label="__('Primary')" />
 						<Badge
 							v-else-if="d.status !== 'Active'"

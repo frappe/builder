@@ -47,7 +47,7 @@
 						">
 						<template v-slot="{ openFileSelector }">
 							<div class="absolute bottom-0 right-0 place-items-center">
-								<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+								<Button size="sm" @click="openFileSelector" class="text-sm">{{ __("Upload") }}</Button>
 							</div>
 						</template>
 					</FileUploader>

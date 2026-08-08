@@ -28,7 +28,7 @@
 		</div>
 	</div>
 	<div v-else>
-		<p class="mt-2 text-center text-sm text-ink-gray-6">Select a block to edit properties</p>
+		<p class="mt-2 text-center text-sm text-ink-gray-6">{{ __("Select a block to edit properties") }}</p>
 	</div>
 </template>
 <script setup lang="ts">

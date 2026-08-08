@@ -24,14 +24,14 @@
 					:hideClearButton="true" />
 				<div v-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
-						<InputLabel>Light Mode Color</InputLabel>
+						<InputLabel>{{ __("Light Mode Color") }}</InputLabel>
 						<ColorInput
 							v-model="activeBuilderToken.value"
 							class="relative"
 							:show-color-variable-options="false" />
 					</div>
 					<div class="flex flex-col gap-1.5">
-						<InputLabel>Dark Mode Color</InputLabel>
+						<InputLabel>{{ __("Dark Mode Color") }}</InputLabel>
 						<ColorInput
 							:modelValue="activeBuilderToken.dark_value || activeBuilderToken.value"
 							:show-color-variable-options="false"

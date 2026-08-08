@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="text-lg-semibold px-2 text-ink-gray-9">Settings</span>
+			<span class="text-lg-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
 			<div class="flex flex-col gap-0.5" v-for="(item, index) in settingsSidebarItems" :key="index">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ item.title }}
@@ -31,7 +31,7 @@
 				<component :is="selectedItemDoc?.component" class="pb-16" />
 			</KeepAlive>
 			<div v-else class="flex items-center justify-center">
-				<span class="text-ink-gray-5">Loading...</span>
+				<span class="text-ink-gray-5">{{ __("Loading...") }}</span>
 			</div>
 		</div>
 	</div>

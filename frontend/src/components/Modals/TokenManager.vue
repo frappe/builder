@@ -15,7 +15,9 @@
 		action-label="Add Token"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-lg-semibold py-2">Design Tokens</h2></template>
+		<template #header>
+			<h2 class="text-lg-semibold py-2">{{ __("Design Tokens") }}</h2>
+		</template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
 				<div class="mb-2">
@@ -43,12 +45,12 @@
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
-						<div class="pl-2">Name</div>
+						<div class="pl-2">{{ __("Name") }}</div>
 						<template v-if="isColorType">
-							<div class="border-l border-outline-gray-1 pl-2">Light</div>
-							<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+							<div class="border-l border-outline-gray-1 pl-2">{{ __("Light") }}</div>
+							<div class="border-l border-outline-gray-1 pl-2">{{ __("Dark") }}</div>
 						</template>
-						<div v-else class="border-l border-outline-gray-1 pl-2">Value</div>
+						<div v-else class="border-l border-outline-gray-1 pl-2">{{ __("Value") }}</div>
 					</div>
 
 					<template v-for="group in displayGroups" :key="group.group ?? '__flat__'">

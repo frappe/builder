@@ -73,7 +73,7 @@
 										'!grid': !backgroundImageURL,
 										'group-hover:grid': backgroundImageURL,
 									}">
-									<Button @click="openFileSelector">Upload</Button>
+									<Button @click="openFileSelector">{{ __("Upload") }}</Button>
 								</div>
 							</template>
 						</FileUploader>
@@ -120,7 +120,7 @@
 					:class="{
 						'px-0.5': activeTab !== 'image',
 					}">
-					<InputLabel class="flex-1">Clip Background to Text</InputLabel>
+					<InputLabel class="flex-1">{{ __("Clip Background to Text") }}</InputLabel>
 					<Switch size="sm" :modelValue="backgroundClip === 'text'" @update:modelValue="setBGClip" />
 				</div>
 			</div>
