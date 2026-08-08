@@ -6,7 +6,7 @@
 				v-model="searchQuery"
 				@input="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search..." />
+				:placeholder="__('Search...')" />
 			<div class="max-h-[60vh] overflow-y-auto">
 				<ul class="m-0 list-none p-0">
 					<li
@@ -60,7 +60,9 @@
 			class="flex items-center justify-end gap-2"
 			v-if="filteredItems.length !== 0 && builderStore.leftPanelActiveTab !== 'Code'">
 			<div class="flex gap-2">
-				<Button variant="subtle" @click="builderStore.leftPanelActiveTab = 'Code'">Open Code Tab</Button>
+				<Button variant="subtle" @click="builderStore.leftPanelActiveTab = 'Code'">
+					{{ __("Open Code Tab") }}
+				</Button>
 			</div>
 		</div>
 	</div>

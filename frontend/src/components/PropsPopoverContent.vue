@@ -5,23 +5,23 @@
 		class="props-popover-content flex max-h-80 w-80 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
 		<div class="flex items-center justify-between gap-2">
 			<InlineInput
-				label="Label"
+				:label="__('Label')"
 				class="w-full"
 				:modelValue="label"
 				@update:modelValue="(val) => (label = val)"
-				placeholder="Enter prop label" />
+				:placeholder="__('Enter prop label')" />
 		</div>
 		<div class="flex items-center justify-between gap-2">
 			<InlineInput
-				label="Key"
+				:label="__('Key')"
 				class="w-full"
 				:modelValue="computedKey"
 				@update:modelValue="(val) => (computedKey = val)"
-				placeholder="Enter prop key" />
+				:placeholder="__('Enter prop key')" />
 		</div>
 		<div class="flex items-center justify-between gap-2">
 			<InlineInput
-				label="Type"
+				:label="__('Type')"
 				class="w-full"
 				type="select"
 				:modelValue="standardPropOptions.type"
@@ -30,7 +30,7 @@
 		</div>
 		<!-- Disabled for now -->
 		<div v-if="false" class="flex items-center justify-between">
-			<InputLabel class="w-[88px] shrink-0">Is Required</InputLabel>
+			<InputLabel class="w-[88px] shrink-0">{{ __("Is Required") }}</InputLabel>
 			<OptionToggle
 				:options="toggleOptions"
 				:model-value="String(standardPropOptions.isRequired)"
@@ -43,7 +43,7 @@
 			@update:options="updateStandardPropOptions" />
 		<Button
 			:disabled="!key.trim().length && !label.trim().length"
-			label="Save"
+			:label="__('Save')"
 			variant="subtle"
 			class="w-full flex-shrink-0"
 			@click="save" />

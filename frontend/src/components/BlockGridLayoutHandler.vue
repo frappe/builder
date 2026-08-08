@@ -3,7 +3,7 @@
 		propertyKey="gridTemplateColumns"
 		:component="OptionToggle"
 		class="w-full"
-		label="Grid Type"
+		:label="__('Grid Type')"
 		v-if="blockController.isGrid()"
 		:getModelValue="getGridType"
 		:setModelValue="setGridType"
@@ -14,7 +14,7 @@
 		]" />
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
-		label="Columns"
+		:label="__('Columns')"
 		:modelValue="columns"
 		:enableSlider="true"
 		:changeFactor="0.08"
@@ -23,7 +23,7 @@
 		@update:modelValue="setColumns" />
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
-		label="Rows"
+		:label="__('Rows')"
 		:modelValue="rows"
 		:enableSlider="true"
 		:changeFactor="0.08"
@@ -31,7 +31,7 @@
 		:maxValue="20"
 		@update:modelValue="setRows" />
 	<InlineInput
-		label="Item Width"
+		:label="__('Item Width')"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(columns as string)"
 		type="text"
@@ -40,7 +40,7 @@
 		:unitOptions="GRID_UNIT_OPTIONS"
 		@update:modelValue="setWidth" />
 	<InlineInput
-		label="Row Height"
+		:label="__('Row Height')"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(rows as string)"
 		:enableSlider="true"
@@ -145,7 +145,7 @@
 		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" /> -->
 
 	<InlineInput
-		label="Col Span"
+		:label="__('Col Span')"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="text"
 		:enableSlider="true"
@@ -153,7 +153,7 @@
 		:modelValue="columnSpan"
 		@update:modelValue="setColumnSpan" />
 	<InlineInput
-		label="Row Span"
+		:label="__('Row Span')"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="text"
 		:enableSlider="true"

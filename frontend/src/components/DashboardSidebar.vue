@@ -4,21 +4,24 @@
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<nav class="space-y-0.5">
-				<SidebarItem :label="__('All Pages')" :active="!builderStore.activeFolder" @click="setFolderActive('')">
+				<SidebarItem
+					:label="__('All Pages')"
+					:active="!builderStore.activeFolder"
+					@click="setFolderActive('')">
 					<template #prefix><FilesIcon class="size-4" /></template>
 				</SidebarItem>
-				<SidebarItem label="Settings" @click="showSettingsDialog = true">
+				<SidebarItem :label="__('Settings')" @click="showSettingsDialog = true">
 					<template #prefix><SettingsIcon class="size-4" /></template>
 				</SidebarItem>
 			</nav>
 
 			<div class="mt-5 flex h-7 items-center justify-between">
-				<SidebarLabel>Folders</SidebarLabel>
+				<SidebarLabel>{{ __("Folders") }}</SidebarLabel>
 				<Button
 					variant="ghost"
 					size="sm"
 					icon="lucide-plus text-ink-gray-5"
-					label="New folder"
+					:label="__('New folder')"
 					@click="promptCreateFolder()" />
 			</div>
 
@@ -55,7 +58,7 @@
 							size="sm"
 							icon="lucide-info"
 							disabled
-							tooltip="System generated folder cannot be edited or deleted"
+							:tooltip="__('System generated folder cannot be edited or deleted')"
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
@@ -90,7 +93,7 @@
 	</Sidebar>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 		<template #default>
-			<DialogTitle class="sr-only">Global Builder Settings</DialogTitle>
+			<DialogTitle class="sr-only">{{ __("Global Builder Settings") }}</DialogTitle>
 			<DialogDescription class="sr-only">
 				Configure global settings for this builder project.
 			</DialogDescription>

@@ -16,7 +16,7 @@
 				label="robot.txt"
 				:showSaveButton="true"
 				description='Specify rules to control how search engines interact with your site.
-				For more details, visit <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt">Robots.txt Guide.</a>'
+				For more details, visit <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt">{{ __("Robots.txt Guide.") }}</a>'
 				:show-line-numbers="true"></CodeEditor>
 		</div>
 	</div>

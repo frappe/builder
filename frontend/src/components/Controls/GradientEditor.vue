@@ -42,7 +42,7 @@
 								<div class="mt-2 flex items-center gap-2">
 									<Button
 										variant="subtle"
-										label="Remove Stop"
+										:label="__('Remove Stop')"
 										class="w-full"
 										:disabled="gradient.stops.length <= 2"
 										@click="

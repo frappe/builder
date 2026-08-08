@@ -5,10 +5,10 @@
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
-					label="Shadow"
+					:label="__('Shadow')"
 					:enableStates="true"
 					:allowDynamicValue="true"
-					placeholder="None"
+					:placeholder="__('None')"
 					@focus="togglePopover"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
@@ -54,7 +54,7 @@
 						:modelValue="currentPreset"
 						:options="presetOptions"
 						@update:modelValue="applyPreset"
-						placeholder="Presets" />
+						:placeholder="__('Presets')" />
 				</div>
 
 				<div class="space-y-4">
@@ -121,7 +121,7 @@
 									@update:modelValue="(val: any) => updateShadow(index, 'inset', val)" />
 							</Tooltip>
 							<div class="flex-1">
-								<Tooltip text="Shadow Color">
+								<Tooltip :text="__('Shadow Color')">
 									<ColorInput
 										:modelValue="shadow.color"
 										@update:modelValue="(val: any) => updateShadow(index, 'color', val)" />

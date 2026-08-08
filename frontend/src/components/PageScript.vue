@@ -2,7 +2,7 @@
 	<div class="flex h-full flex-col justify-between">
 		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2">
-				<Button @click="showClientScriptEditor()" class="flex-1">Client Script</Button>
+				<Button @click="showClientScriptEditor()" class="flex-1">{{ __("Client Script") }}</Button>
 				<Button v-if="mode != 'blockTemplate'" @click="showServerScriptEditor()" class="flex-1">
 					Data Script
 				</Button>
@@ -12,7 +12,7 @@
 				<CodeEditor
 					v-model="pageStore.pageData"
 					type="JSON"
-					label="Page Data Preview"
+					:label="__('Page Data Preview')"
 					:autofocus="false"
 					:readonly="true" />
 			</div>
@@ -20,7 +20,7 @@
 				<CodeEditor
 					v-model="componentDataPreview"
 					type="JSON"
-					label="Component Data Preview"
+					:label="__('Component Data Preview')"
 					:autofocus="false"
 					:readonly="true" />
 			</div>
@@ -72,12 +72,12 @@
 							<CodeEditor
 								v-model="pageStore.pageData"
 								type="JSON"
-								label="Data Preview"
+								:label="__('Data Preview')"
 								:showLineNumbers="true"
 								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
-								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
+								<b>{{ __("Example:") }}</b> data.events = frappe.get_list("Event")<br><br>
 								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
 								:readonly="true"></CodeEditor>
@@ -92,7 +92,7 @@
 								ref="blockJavaScriptEditor"
 								:modelValue="blockJavaScript"
 								type="JavaScript"
-								label="Block JavaScript"
+								:label="__('Block JavaScript')"
 								height="60vh"
 								:readonly="builderStore.readOnlyMode"
 								:autofocus="true"
@@ -104,7 +104,7 @@
 								ref="blockCSSEditor"
 								:modelValue="blockCSS"
 								type="CSS"
-								label="Block CSS"
+								:label="__('Block CSS')"
 								height="60vh"
 								:readonly="builderStore.readOnlyMode"
 								:autofocus="false"
@@ -130,12 +130,12 @@
 							<CodeEditor
 								v-model="componentDataPreview"
 								type="JSON"
-								label="Component Data Preview"
+								:label="__('Component Data Preview')"
 								:showLineNumbers="true"
 								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
-								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
+								<b>{{ __("Example:") }}</b> data.items = frappe.get_list("Item")<br><br>
 								Props are accessible via the <b>props</b> object.'
 								:readonly="true"></CodeEditor>
 						</div>
@@ -146,6 +146,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -218,7 +219,7 @@ const savePageDataScript = (value: string) => {
 			capture("builder_page_data_script_saved");
 			props.page.page_data_script = value;
 			pageStore.setPageData(props.page);
-			toast.success("Data script saved");
+			toast.success(__("Data script saved"));
 		})
 		.catch((e: { message: string; exc: string; messages: [string] }) => {
 			let errorMessage = e.exc?.split("\n").slice(-2)[0];

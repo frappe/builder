@@ -17,7 +17,7 @@
 					@click="activeBreakpoint = breakpoint.device" />
 			</div>
 			<div class="flex flex-1 justify-end">
-				<Button variant="solid" @click="$emit('select', page)">Use template</Button>
+				<Button variant="solid" @click="$emit('select', page)">{{ __("Use template") }}</Button>
 			</div>
 		</div>
 		<div class="flex min-h-0 flex-1 flex-col px-8 pb-8">

@@ -1,7 +1,7 @@
 <template>
 	<Dialog v-model="showTemplatesDialog" size="5xl" bare>
 		<template #default>
-			<DialogTitle class="sr-only">Create a new page</DialogTitle>
+			<DialogTitle class="sr-only">{{ __("Create a new page") }}</DialogTitle>
 			<DialogDescription class="sr-only">
 				Start from a blank page or pick a page from a template.
 			</DialogDescription>

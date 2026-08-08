@@ -26,7 +26,7 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-4">
-				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+				<Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="0.6">
 					<Button
 						variant="ghost"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"

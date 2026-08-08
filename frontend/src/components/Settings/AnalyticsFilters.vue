@@ -2,7 +2,7 @@
 	<div class="flex flex-wrap gap-2">
 		<Autocomplete
 			size="sm"
-			placeholder="Filter by route"
+			:placeholder="__('Filter by route')"
 			v-model="modelRoute"
 			:getOptions="getRouteOptions"
 			:allowArbitraryValue="true"
@@ -12,7 +12,7 @@
 		<DateRangePicker
 			v-if="modelRange === 'custom'"
 			v-model="customDateRangeValue"
-			placeholder="Select date range"
+			:placeholder="__('Select date range')"
 			format="MMM D, YYYY"
 			size="sm"
 			class="!w-56" />

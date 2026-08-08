@@ -19,7 +19,7 @@
 		<Combobox
 			ref="propertyCombobox"
 			:options="propertyOptions"
-			placeholder="Add CSS property"
+			:placeholder="__('Add CSS property')"
 			empty-text="No matching properties"
 			open-on-focus
 			@update:query="propertySearch = $event"
@@ -67,7 +67,12 @@ import {
 	getStylePropertiesWithoutControls,
 	isStylePropertyWithControls,
 } from "@/utils/stylePropertiesWithControls";
-import { isInteractiveControl, normalizeCSSPropertyName, toStyleProperty, toTitleCase } from "@/utils/helpers";
+import {
+	isInteractiveControl,
+	normalizeCSSPropertyName,
+	toStyleProperty,
+	toTitleCase,
+} from "@/utils/helpers";
 import { Combobox } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 

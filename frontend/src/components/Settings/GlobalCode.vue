@@ -19,7 +19,7 @@
 			@update:modelValue="builderStore.updateBuilderSettings('body_html', $event)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
-			label="Client Script"
+			:label="__('Client Script')"
 			type="JavaScript"
 			description="This script will be executed on all the pages of your website."
 			:modelValue="builderSettings.doc?.script"
@@ -28,7 +28,7 @@
 			@update:modelValue="(code) => builderStore.updateBuilderSettings('script', code)"
 			:showLineNumbers="true"></CodeEditor>
 		<CodeEditor
-			label="Style"
+			:label="__('Style')"
 			type="CSS"
 			description="Applies to all pages"
 			:modelValue="builderSettings.doc?.style"

@@ -80,24 +80,24 @@
 							size="sm"
 							class="[&>div>div>div]:w-full">
 							<template v-slot="{ open }">
-								<Button class="w-full text-xs" @click="open">New Script</Button>
+								<Button class="w-full text-xs" @click="open">{{ __("New Script") }}</Button>
 							</template>
 						</Dropdown>
 
 						<Combobox
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
-							placeholder="Attach Script"
+							:placeholder="__('Attach Script')"
 							@update:modelValue="(value: string | null) => value && attachScript(value)">
 							<template #trigger>
-								<Button class="w-full text-xs">Attach Script</Button>
+								<Button class="w-full text-xs">{{ __("Attach Script") }}</Button>
 							</template>
 						</Combobox>
 					</div>
 				</div>
 
 				<div class="text-xs leading-4 text-ink-gray-6">
-					<b>Note:</b>
+					<b>{{ __("Note:") }}</b>
 					All client scripts are executed in preview mode and on published pages.
 				</div>
 			</div>
@@ -138,6 +138,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import EditableSpan from "@/components/EditableSpan.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -237,7 +238,7 @@ const updateScript = (value: string) => {
 	if (!activeScript.value || builderStore.readOnlyMode) return;
 
 	if (!value || !value.trim()) {
-		toast.warning("Script cannot be empty");
+		toast.warning(__("Script cannot be empty"));
 		return;
 	}
 
@@ -260,7 +261,7 @@ const updateScript = (value: string) => {
 					activeScript.value = script;
 				}
 			});
-			toast.success("Script saved successfully");
+			toast.success(__("Script saved successfully"));
 		})
 		.catch((e: { message: string; exc: string }) => {
 			const error_message = e.exc.split("\n").slice(-2)[0];
@@ -380,7 +381,7 @@ const onScriptReorder = () => {
 			script_order: scriptOrder,
 		})
 		.then(() => {
-			toast.success("Script order updated");
+			toast.success(__("Script order updated"));
 		})
 		.catch((e: { message: string; exc: string }) => {
 			const error_message = e.exc.split("\n").slice(-2)[0];

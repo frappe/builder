@@ -61,11 +61,11 @@
 									'!grid': !currentImageURL,
 									'group-hover:grid': currentImageURL,
 								}">
-								<Button variant="subtle" @click="openFileSelector">Upload</Button>
+								<Button variant="subtle" @click="openFileSelector">{{ __("Upload") }}</Button>
 							</div>
 						</div>
 						<InlineInput
-							label="Image Fit"
+							:label="__('Image Fit')"
 							class="mt-4"
 							:modelValue="imageFit"
 							type="select"

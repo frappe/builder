@@ -44,7 +44,7 @@
 			v-if="showInput"
 			:modelValue="displayValue"
 			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
-			placeholder="Set Color"
+			:placeholder="__('Set Color')"
 			:getOptions="getOptions"
 			referenceElementSelector=".color-picker-container"
 			@update:modelValue="handleInputChange" />

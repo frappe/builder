@@ -24,7 +24,7 @@
 					variant="ghost"
 					class="absolute -left-11 top-0"
 					:class="{ invisible: isFirst }"
-					label="Back"
+					:label="__('Back')"
 					@click="goBack">
 					<template #icon>
 						<LucideChevronLeft class="size-4" />
@@ -68,12 +68,12 @@
 				variant="solid"
 				size="md"
 				class="w-full"
-				label="Next"
+				:label="__('Next')"
 				:disabled="!answers[activeQuestion.key]"
 				@click="goNext" />
 		</div>
 
-		<Button variant="ghost" label="Skip for now" class="fixed bottom-8" @click="skip" />
+		<Button variant="ghost" :label="__('Skip for now')" class="fixed bottom-8" @click="skip" />
 	</div>
 </template>
 

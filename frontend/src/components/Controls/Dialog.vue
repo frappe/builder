@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { confirm } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
@@ -52,7 +53,7 @@ useEventListener("beforeunload", (e) => {
 const showConfirmationDialog = async () => {
 	waitingForResponse = true;
 	if (attrs.isDirty) {
-		return await confirm("You have unsaved changes. Are you sure you want to leave?").then((res) => {
+		return await confirm(__("You have unsaved changes. Are you sure you want to leave?")).then((res) => {
 			if (res) {
 				emit("update:modelValue", false);
 			}

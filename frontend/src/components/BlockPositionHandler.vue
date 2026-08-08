@@ -20,7 +20,7 @@
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
 				<InlineInput
-					placeholder="Top"
+					:placeholder="__('Top')"
 					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="blockController.getStyle('top') as string"
@@ -28,7 +28,7 @@
 			</div>
 			<div class="col-span-1 col-start-1 w-16 self-center">
 				<InlineInput
-					placeholder="Left"
+					:placeholder="__('Left')"
 					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="blockController.getStyle('left') as string"
@@ -49,7 +49,7 @@
 			<div class="col-span-1 col-start-3 w-16 self-center">
 				<!-- prettier-ignore -->
 				<InlineInput
-					placeholder="Right"
+					:placeholder="__('Right')"
 					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="(blockController.getStyle('right') as string)"
@@ -58,7 +58,7 @@
 			<div class="col-span-1 col-start-2 w-16 self-center">
 				<!-- prettier-ignore -->
 				<InlineInput
-					placeholder="Bottom"
+					:placeholder="__('Bottom')"
 					:unitOptions="POSITION_UNIT_OPTIONS"
 					:hideClearButton="true"
 					:modelValue="(blockController.getStyle('bottom') as string)"

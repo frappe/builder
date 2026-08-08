@@ -23,10 +23,10 @@
 							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
 								<div v-show="page.published">
 									<span
-										title="Limited access"
+										:title="__('Limited access')"
 										class="lucide-shield-user size-4 text-ink-amber-6"
 										v-if="page.authenticated_access" />
-									<span class="lucide-globe size-4" title="Publicly accessible" v-else />
+									<span class="lucide-globe size-4" :title="__('Publicly accessible')" v-else />
 								</div>
 								<p class="max-w-[90%] truncate text-sm">
 									{{ page.route }}

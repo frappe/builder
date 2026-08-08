@@ -6,7 +6,7 @@
 				@input="(val: string) => (searchQuery = val)"
 				@update:modelValue="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search redirects"
+				:placeholder="__('Search redirects')"
 				class="w-full"
 				icon-left="search" />
 		</div>
@@ -15,8 +15,8 @@
 			<div
 				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 				:class="rowGridClass">
-				<div class="pl-2">Source</div>
-				<div class="border-l border-outline-gray-1 pl-2">Target</div>
+				<div class="pl-2">{{ __("Source") }}</div>
+				<div class="border-l border-outline-gray-1 pl-2">{{ __("Target") }}</div>
 				<div></div>
 			</div>
 
@@ -95,13 +95,13 @@
 						<FormControl
 							type="select"
 							size="sm"
-							label="Redirect status"
+							:label="__('Redirect status')"
 							:options="statusOptions"
 							:modelValue="draft.status"
 							@update:modelValue="(val: string) => (draft.status = val)" />
 						<Switch
 							size="sm"
-							label="Forward query parameters"
+							:label="__('Forward query parameters')"
 							description="Append the original query string to the target URL"
 							class="mt-2"
 							:modelValue="draft.forward"
@@ -109,7 +109,7 @@
 					</template>
 
 					<div v-if="!editingId" class="mt-3 text-xs">
-						<p class="mb-2 text-ink-gray-5">Examples</p>
+						<p class="mb-2 text-ink-gray-5">{{ __("Examples") }}</p>
 						<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
 							<template v-for="example in examples" :key="example.label">
 								<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
