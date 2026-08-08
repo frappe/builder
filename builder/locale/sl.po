@@ -1,0 +1,862 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: frappe\n"
+"Report-Msgid-Bugs-To: suraj@frappe.io\n"
+"POT-Creation-Date: 2026-08-08 18:22+0553\n"
+"PO-Revision-Date: 2026-08-08 13:03\n"
+"Last-Translator: suraj@frappe.io\n"
+"Language-Team: Slovenian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+"Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3;\n"
+"X-Crowdin-Project: frappe\n"
+"X-Crowdin-Project-ID: 639578\n"
+"X-Crowdin-Language: sl\n"
+"X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
+"X-Crowdin-File-ID: 177\n"
+"Language: sl_SI\n"
+
+#. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "AI API Key"
+msgstr ""
+
+#. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "AI Settings"
+msgstr ""
+
+#. Description of the 'AI API Key' (Password) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "API key for the selected AI model provider"
+msgstr ""
+
+#: builder/ai_page_generator.py:671
+msgid "API key is valid"
+msgstr ""
+
+#. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Add Custom Meta Tags"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Advanced"
+msgstr "Napredno"
+
+#: frontend/src/components/DashboardHead.vue:4
+#: frontend/src/components/DashboardSidebar.vue:7
+msgid "All Pages"
+msgstr ""
+
+#. Description of the 'Auto convert images to WebP' (Check) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "All the images uploaded to Canvas will be auto converted to WebP for better page performance."
+msgstr ""
+
+#. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
+"You can generate using favicon-generator.org"
+msgstr ""
+
+#. Description of the 'Favicon' (Attach Image) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
+msgstr ""
+
+#. Label of the app (Select) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "App"
+msgstr "Aplikacija"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:74
+msgid "Are you sure you want to replace {0} with {1}?"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:243
+msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
+msgstr ""
+
+#. Label of the authenticated_access (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Authenticated Access"
+msgstr ""
+
+#. Label of the auto_convert_images_to_webp (Check) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Auto convert images to WebP"
+msgstr ""
+
+#: builder/www/404.html:27
+msgid "Back to Home"
+msgstr "Nazaj na Dom"
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Basic"
+msgstr "Osnovno"
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Basic Forms"
+msgstr ""
+
+#. Label of the block (JSON) field in DocType 'Block Template'
+#. Label of the block (JSON) field in DocType 'Builder Component'
+#: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Block"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Block Template"
+msgstr ""
+
+#. Label of the blocks (Long Text) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Blocks"
+msgstr ""
+
+#. Label of the body_html (Code) field in DocType 'Builder Page'
+#. Label of the body_html (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Body HTML"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+msgid "Builder Client Script"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Builder Component"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Builder Page"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Builder Page Click"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
+msgid "Builder Page Client Script"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+msgid "Builder Project Folder"
+msgstr ""
+
+#. Label of the builder_script (Link) field in DocType 'Builder Page Client
+#. Script'
+#: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
+msgid "Builder Script"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Builder Settings"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Builder Snapshot"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Builder Token"
+msgstr ""
+
+#. Label of the canonical_url (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Canonical URL"
+msgstr ""
+
+#. Label of the category (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Category"
+msgstr "Kategorija"
+
+#. Label of the client_scripts (Table MultiSelect) field in DocType 'Builder
+#. Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Client Scripts"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Color"
+msgstr "Barva"
+
+#. Label of the component_data_script (Code) field in DocType 'Builder
+#. Component'
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Component Data Script"
+msgstr ""
+
+#. Label of the component_id (Data) field in DocType 'Builder Component'
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Component ID"
+msgstr ""
+
+#. Label of the component_name (Data) field in DocType 'Builder Component'
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Component Name"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:88
+msgid "Component replaced successfully"
+msgstr ""
+
+#: builder/builder/component_versions.py:236
+msgid "Component {0} was deleted and will not render"
+msgstr ""
+
+#. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Content"
+msgstr "Vsebina"
+
+#: builder/api.py:430
+msgid "Could not import any pages from this template group."
+msgstr ""
+
+#: builder/api.py:398
+msgid "Could not load the selected template. Please try again."
+msgstr ""
+
+#. Label of the dark_value (Data) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Dark Value"
+msgstr ""
+
+#. Label of the data (Code) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Data"
+msgstr "Podatki"
+
+#. Description of the 'Default Language' (Data) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Default HTML lang code (e.g., en, es, fr)"
+msgstr ""
+
+#. Label of the default_language (Data) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Default Language"
+msgstr ""
+
+#. Label of the meta_description (Small Text) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Description"
+msgstr "Opis"
+
+#. Label of the developer_options_section (Section Break) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Developer Options"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Dimension"
+msgstr ""
+
+#. Label of the disable_auto_dark_mode (Check) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Disable Auto Dark Mode"
+msgstr ""
+
+#. Label of the disable_indexing (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Disable Indexing"
+msgstr ""
+
+#. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
+msgstr ""
+
+#. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Don't Execute"
+msgstr ""
+
+#. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Draft Blocks"
+msgstr ""
+
+#. Label of the dynamic_route (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Dynamic Route"
+msgstr "Dinamična pot"
+
+#. Label of the element (Data) field in DocType 'Builder Page Click'
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Element"
+msgstr ""
+
+#. Label of the execute_block_scripts_in_editor (Select) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Execute Block Scripts in Editor"
+msgstr ""
+
+#. Label of the favicon (Attach Image) field in DocType 'Builder Page'
+#. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Favicon"
+msgstr ""
+
+#. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+msgid "Folder Name"
+msgstr "Ime Mape"
+
+#. Option for the 'Type' (Select) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Font"
+msgstr "Pisava"
+
+#. Label of the font_file (Attach) field in DocType 'User Font'
+#: builder/builder/doctype/user_font/user_font.json
+msgid "Font File"
+msgstr ""
+
+#. Label of the font_name (Data) field in DocType 'User Font'
+#: builder/builder/doctype/user_font/user_font.json
+msgid "Font Name"
+msgstr ""
+
+#. Label of the for_web_page (Link) field in DocType 'Builder Component'
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "For Web Page"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Form parts"
+msgstr ""
+
+#. Name of a Workspace
+#: builder/builder/workspace/frappe_builder/frappe_builder.json
+msgid "Frappe Builder"
+msgstr ""
+
+#. Description of the 'Script' (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Global script that will be loaded with every page built with Frappe Builder"
+msgstr ""
+
+#. Description of the 'Style' (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Global style that will be loaded with every page built with Frappe Builder"
+msgstr ""
+
+#. Label of the group (Data) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Group"
+msgstr "Skupina"
+
+#. Label of the head_html (Code) field in DocType 'Builder Page'
+#. Label of the head_html (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Head HTML"
+msgstr ""
+
+#. Label of the home_page (Data) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Home Page"
+msgstr "Domača stran"
+
+#. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Image"
+msgstr "Slika"
+
+#: builder/ai_page_generator.py:221
+msgid "Image is too large. Please use an image smaller than 5 MB."
+msgstr ""
+
+#. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
+msgstr ""
+
+#: builder/ai_page_generator.py:631
+msgid "Invalid block context JSON"
+msgstr ""
+
+#: builder/ai_page_generator.py:218
+msgid "Invalid image data: must be a base64-encoded data URL"
+msgstr ""
+
+#: builder/ai_page_generator.py:216
+msgid "Invalid image data: must be a base64-encoded image data URL"
+msgstr ""
+
+#. Label of the is_standard (Check) field in DocType 'Builder Page'
+#. Label of the is_standard (Check) field in DocType 'Builder Project Folder'
+#. Label of the is_standard (Check) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Is Standard"
+msgstr "Je Standard"
+
+#. Label of the is_template (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Is Template"
+msgstr ""
+
+#. Label of the is_unique (Check) field in DocType 'Builder Page Click'
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Is Unique"
+msgstr "Je Edinstven"
+
+#. Label of the label (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Label"
+msgstr "Oznaka"
+
+#. Label of the landing_page_section (Section Break) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Landing Page"
+msgstr "Ciljna stran"
+
+#. Label of the language (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Language"
+msgstr "Jezik"
+
+#. Description of the 'Language' (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
+msgstr ""
+
+#. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Map route parameters into form variables. Example <code>/profile/:user</code>"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Media"
+msgstr ""
+
+#. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Meta"
+msgstr ""
+
+#. Label of the meta_column (Column Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Meta Tags"
+msgstr "Meta oznake"
+
+#: builder/api.py:415
+msgid "No pages found in this template group."
+msgstr ""
+
+#: builder/www/404.html:6
+msgid "Not Found"
+msgstr "Ni najdeno"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:42
+msgid "Not used in any page"
+msgstr ""
+
+#. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
+#. Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Only allow logged-in users to view this page."
+msgstr ""
+
+#. Label of a shortcut in the Frappe Builder Workspace
+#: builder/builder/workspace/frappe_builder/frappe_builder.json
+msgid "Open <strong>Frappe Builder</strong>"
+msgstr ""
+
+#: builder/builder/doctype/builder_page/builder_page.js:9
+msgid "Open in Builder"
+msgstr ""
+
+#. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Options"
+msgstr "Možnosti"
+
+#. Label of the page_data_script (Code) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Page Data Script"
+msgstr ""
+
+#. Label of the page_name (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Page Name"
+msgstr "Ime strani"
+
+#. Label of the preview (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Page Preview"
+msgstr ""
+
+#: builder/www/404.html:25
+msgid "Page not found"
+msgstr "Stran ni najdena"
+
+#. Label of the path (Data) field in DocType 'Builder Page Click'
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Path"
+msgstr "Pot"
+
+#. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Persona Survey Done"
+msgstr ""
+
+#: builder/ai_page_generator.py:464
+msgid "Please configure an OpenRouter API key in Settings → AI"
+msgstr ""
+
+#: builder/ai_page_generator.py:659
+msgid "Please set an OpenRouter API key"
+msgstr ""
+
+#. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
+#. Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Prevent search engines from indexing this page"
+msgstr ""
+
+#. Label of the preview (Data) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Preview"
+msgstr "Predogled"
+
+#. Label of the preview_height (Int) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Preview Height"
+msgstr ""
+
+#: builder/builder/doctype/block_template/block_template.py:20
+msgid "Preview Image is mandatory"
+msgstr ""
+
+#. Label of the preview_width (Int) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Preview Width"
+msgstr ""
+
+#. Label of the project_folder (Link) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Project Folder"
+msgstr ""
+
+#. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+msgid "Public URL"
+msgstr ""
+
+#. Label of the published (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Published"
+msgstr "Objavljeno"
+
+#. Label of the published_at (Datetime) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Published At"
+msgstr ""
+
+#. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Reference Doctype"
+msgstr "Referenčni DocType"
+
+#. Label of the reference_name (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Reference Name"
+msgstr "Referenčno ime"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:72
+msgid "Replace"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:6
+#: builder/builder/doctype/builder_settings/builder_settings.js:15
+msgid "Replace Component"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:53
+msgid "Replace With"
+msgstr ""
+
+#. Label of the restrict_click_handlers (Check) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Restrict Click Handlers"
+msgstr ""
+
+#. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Restricted"
+msgstr ""
+
+#. Label of the route (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Route"
+msgstr "Pot"
+
+#. Label of the script (Code) field in DocType 'Builder Client Script'
+#. Label of the script (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Script"
+msgstr "Skript"
+
+#. Label of the script_public_url (Read Only) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Script Public URL"
+msgstr ""
+
+#. Label of the script_type (Autocomplete) field in DocType 'Builder Client
+#. Script'
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+msgid "Script Type"
+msgstr "Vrsta skripta"
+
+#. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Scripting"
+msgstr "Skriptiranje"
+
+#: frontend/src/components/BuilderToolbar.vue:16
+msgid "Select (v)"
+msgstr ""
+
+#. Description of the 'Component Data Script' (Code) field in DocType 'Builder
+#. Component'
+#: builder/builder/doctype/builder_component/builder_component.json
+msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
+msgstr ""
+
+#. Label of the snapshot_type (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+msgid "Snapshot Type"
+msgstr ""
+
+#: builder/builder/doctype/builder_page/builder_page.py:322
+msgid "Snapshot does not belong to this page"
+msgstr ""
+
+#. Label of the sort_order (Int) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Sort Order"
+msgstr "Vrstni red razvrščanja"
+
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
+msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
+msgstr ""
+
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.js:13
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.py:26
+msgid "Standard folders cannot be modified. Please enable developer mode to edit standard folders."
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Structure"
+msgstr ""
+
+#. Label of the style (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Style"
+msgstr "Slog"
+
+#. Label of the style_public_url (Read Only) field in DocType 'Builder
+#. Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Style Public URL"
+msgstr ""
+
+#. Name of a role
+#: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+#: builder/builder/doctype/builder_component/builder_component.json
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: builder/builder/doctype/builder_token/builder_token.json
+#: builder/builder/doctype/user_font/user_font.json
+msgid "System Manager"
+msgstr "Voditelj Sistema"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:25
+msgid "Target Component"
+msgstr ""
+
+#. Label of the template_group (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Template Group"
+msgstr ""
+
+#. Label of the template_name (Data) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Template Name"
+msgstr "Ime Predloge"
+
+#: builder/api.py:411
+msgid "Template group not found."
+msgstr ""
+
+#: builder/builder/doctype/builder_page/builder_page.py:248
+msgid "Template pages can only be deleted in developer mode."
+msgstr ""
+
+#: builder/builder/doctype/builder_page/builder_page.py:196
+msgid "Template pages can only be modified in developer mode."
+msgstr ""
+
+#. Label of the text (Data) field in DocType 'Builder Page Click'
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Text"
+msgstr "Besedilo"
+
+#: builder/builder/doctype/builder_settings/builder_settings.py:98
+msgid "The component you are trying to replace with does not exist"
+msgstr ""
+
+#. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
+msgstr ""
+
+#. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
+#. Description of the 'Body HTML' (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "This will be appended at the end of the &lt;body&gt;"
+msgstr ""
+
+#. Description of the 'Head HTML' (Code) field in DocType 'Builder Page'
+#. Description of the 'Head HTML' (Code) field in DocType 'Builder Settings'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "This will be appended at the end of the &lt;head&gt;"
+msgstr ""
+
+#. Label of the page_title (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Title"
+msgstr "Naslov"
+
+#. Label of the token_name (Data) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Token Name"
+msgstr ""
+
+#. Label of the type (Select) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Type"
+msgstr "Vrsta"
+
+#. Option for the 'Category' (Select) field in DocType 'Block Template'
+#: builder/builder/doctype/block_template/block_template.json
+msgid "Typography"
+msgstr ""
+
+#. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
+#. 'Builder Settings'
+#: builder/builder/doctype/builder_settings/builder_settings.json
+msgid "Unrestricted"
+msgstr ""
+
+#: builder/template_sync.py:55
+msgid "Unsafe template fixture name: {0}"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:44
+msgid "Used in 1 page"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:45
+msgid "Used in {0} pages"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/user_font/user_font.json
+msgid "User Font"
+msgstr ""
+
+#. Label of the value (Data) field in DocType 'Builder Token'
+#: builder/builder/doctype/builder_token/builder_token.json
+msgid "Value"
+msgstr "Vrednost"
+
+#. Label of the visitor_id (Data) field in DocType 'Builder Page Click'
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+msgid "Visitor ID"
+msgstr "ID obiskovalca"
+
+#. Name of a role
+#: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_client_script/builder_client_script.json
+#: builder/builder/doctype/builder_component/builder_component.json
+#: builder/builder/doctype/builder_page/builder_page.json
+#: builder/builder/doctype/builder_page_click/builder_page_click.json
+#: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+#: builder/builder/doctype/builder_settings/builder_settings.json
+#: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: builder/builder/doctype/builder_token/builder_token.json
+#: builder/builder/doctype/user_font/user_font.json
+msgid "Website Manager"
+msgstr "Upravitelj spletnega mesta"
+
+#: frontend/src/router.ts:13
+msgid "You do not have permission to access this page"
+msgstr ""
+
+#: builder/ai_page_generator.py:454 builder/utils.py:54
+msgid "You do not have permission to modify pages"
+msgstr ""
+
+#: builder/utils.py:56
+msgid "You do not have permission to read pages"
+msgstr ""
+
+#. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "data.events = frappe.get_list(\"Event\")\n"
+"<br>\n"
+"<b>Note:</b> Each key value of data should be a list."
+msgstr ""
+
