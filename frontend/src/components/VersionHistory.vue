@@ -11,7 +11,7 @@
 				size="sm"
 				icon="lucide-bookmark-plus"
 				:loading="saving"
-				tooltip="Save current version"
+				:tooltip="__('Save current version')"
 				@click="toggleSaveRow" />
 		</div>
 
@@ -21,10 +21,10 @@
 				ref="labelInput"
 				v-model="newLabel"
 				type="text"
-				placeholder="Name this version (optional)"
+				:placeholder="__('Name this version (optional)')"
 				class="flex-1"
 				@keydown.enter="saveVersion" />
-			<Button variant="solid" size="sm" :loading="saving" label="Save" @click="saveVersion" />
+			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveVersion" />
 		</div>
 
 		<!-- list -->
@@ -77,7 +77,7 @@
 						variant="subtle"
 						size="sm"
 						icon="lucide-rotate-ccw"
-						tooltip="Restore this version as your draft"
+						:tooltip="__('Restore this version as your draft')"
 						:loading="restoringName === PUBLISHED_VERSION"
 						@click.stop="restorePublished" />
 				</button>
@@ -114,7 +114,7 @@
 						variant="subtle"
 						size="sm"
 						icon="lucide-rotate-ccw"
-						tooltip="Restore this version as your draft"
+						:tooltip="__('Restore this version as your draft')"
 						:loading="restoringName === snapshot.name"
 						@click.stop="restore(snapshot)" />
 					<Avatar
@@ -131,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -225,7 +226,7 @@ async function saveVersion() {
 		newLabel.value = "";
 		showSaveRow.value = false;
 		await snapshots.reload();
-		toast.success("Version saved");
+		toast.success(__("Version saved"));
 	} finally {
 		saving.value = false;
 	}

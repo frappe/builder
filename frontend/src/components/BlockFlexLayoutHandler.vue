@@ -3,7 +3,7 @@
 		propertyKey="flexDirection"
 		defaultValue="row"
 		:component="OptionToggle"
-		label="Direction"
+		:label="__('Direction')"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'Horizontal', value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
@@ -11,7 +11,7 @@
 		]"></StylePropertyControl>
 	<StylePropertyControl
 		propertyKey="alignItems"
-		label="Placement"
+		:label="__('Placement')"
 		:enableStates="false"
 		v-if="blockController.isFlex()"
 		:component="PlacementControl"></StylePropertyControl>
@@ -19,7 +19,7 @@
 		v-if="blockController.isFlex()"
 		propertyKey="justifyContent"
 		type="select"
-		label="Distribution"
+		:label="__('Distribution')"
 		:options="[
 			{ label: 'Space Between', value: 'space-between' },
 			{ label: 'Space Around', value: 'space-around' },
@@ -29,7 +29,7 @@
 	<StylePropertyControl
 		propertyKey="flexWrap"
 		:component="OptionToggle"
-		label="Wrap"
+		:label="__('Wrap')"
 		v-if="blockController.isFlex()"
 		:options="[
 			{ label: 'No Wrap', value: 'nowrap' },
@@ -38,7 +38,7 @@
 		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
 		<StylePropertyControl
-			label="Grow"
+			:label="__('Grow')"
 			propertyKey="flexGrow"
 			:component="OptionToggle"
 			:options="[
@@ -47,7 +47,7 @@
 			]"
 			:defaultValue="0" />
 		<StylePropertyControl
-			label="Shrink"
+			:label="__('Shrink')"
 			propertyKey="flexShrink"
 			:component="OptionToggle"
 			:options="[
@@ -56,7 +56,7 @@
 			]"
 			:defaultValue="1" />
 		<StylePropertyControl
-			label="Order"
+			:label="__('Order')"
 			propertyKey="order"
 			:enableSlider="true"
 			:min="-99"

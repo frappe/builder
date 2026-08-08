@@ -6,7 +6,7 @@
 				v-model="searchQuery"
 				@input="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search..." />
+				:placeholder="__('Search...')" />
 			<div class="max-h-[60vh] overflow-y-auto">
 				<ul class="m-0 list-none p-0">
 					<li

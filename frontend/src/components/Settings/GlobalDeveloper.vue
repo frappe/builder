@@ -18,7 +18,7 @@
 		</div>
 		<Switch
 			size="sm"
-			label="Prevent Click Emulation"
+			:label="__('Prevent Click Emulation')"
 			description="Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
 			:modelValue="Boolean(builderSettings.doc?.restrict_click_handlers)"
 			@update:modelValue="

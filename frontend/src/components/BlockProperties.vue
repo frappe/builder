@@ -4,7 +4,7 @@
 			<BuilderInput
 				ref="searchInput"
 				type="text"
-				placeholder="Search properties"
+				:placeholder="__('Search properties')"
 				v-model="builderStore.propertyFilter"
 				@input="
 					(value: string) => {

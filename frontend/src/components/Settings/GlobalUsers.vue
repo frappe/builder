@@ -4,7 +4,7 @@
 			<BuilderInput
 				type="text"
 				class="w-72"
-				placeholder="Search by name or email"
+				:placeholder="__('Search by name or email')"
 				icon-left="search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
@@ -37,7 +37,7 @@
 							variant="subtle"
 							size="sm"
 							icon="lucide-x"
-							title="Cancel invitation"
+							:title="__('Cancel invitation')"
 							@click="cancelInvite(invite)" />
 					</div>
 				</div>
@@ -70,13 +70,13 @@
 
 		<Dialog
 			v-model="showInviteDialog"
-			title="Invite Users"
+			:title="__('Invite Users')"
 			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"
 					type="textarea"
-					label="Email addresses"
+					:label="__('Email addresses')"
 					placeholder="jane@example.com, john@example.com"
 					:hideClearButton="true"
 					:modelValue="inviteEmails"
@@ -87,6 +87,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import router, { sessionUser } from "@/router";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
@@ -204,7 +205,7 @@ const cancelInvite = async (invite: PendingInvite) => {
 	if (!(await confirm(`Are you sure you want to cancel the invitation to ${invite.email}?`))) return;
 	try {
 		await cancelResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success("Invitation cancelled");
+		toast.success(__("Invitation cancelled"));
 		pendingInvites.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));

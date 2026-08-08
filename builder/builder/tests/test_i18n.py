@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import frappe
@@ -51,6 +52,17 @@ class TestI18n(FrappeTestCase):
 			if message:
 				messages.setdefault(message, set()).add(filename.replace("\\", "/"))
 		return messages
+
+	def test_catalogs_carry_no_in_context_placeholders(self):
+		"""Crowdin's in-context pseudo language exports `crwdns...` ids instead of translations.
+
+		They score as fully translated, so nothing upstream rejects them, and compiling one
+		shows those ids across the whole editor.
+		"""
+		locale_dir = Path(frappe.get_app_path("builder")) / "locale"
+		polluted = [po.name for po in locale_dir.glob("*.po") if "crwdns" in po.read_text(encoding="utf-8")]
+
+		self.assertEqual(polluted, [], f"Crowdin in-context placeholders found in: {polluted}")
 
 	def test_boot_carries_only_builder_translations(self):
 		with patch("builder.www._builder.get_translations_from_apps", return_value={}) as from_apps:

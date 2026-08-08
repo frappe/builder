@@ -32,7 +32,7 @@
 			:events="chartEvents" />
 		<AnalyticsEmptyState
 			v-else
-			title="No views in this period"
+			:title="__('No views in this period')"
 			hint="Pick a wider date range, or share your page to start collecting data." />
 	</div>
 </template>

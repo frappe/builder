@@ -13,7 +13,7 @@
 						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
 						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
 						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
-						<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+						<Badge v-if="d.primary" size="sm" theme="green" :label="__('Primary')" />
 						<Badge
 							v-else-if="d.status !== 'Active'"
 							:label="d.status"
@@ -33,7 +33,7 @@
 		<!-- Add domain form -->
 		<form @submit.prevent="handleAdd" class="flex flex-col gap-3">
 			<FormControl
-				label="Enter your domain"
+				:label="__('Enter your domain')"
 				placeholder="e.g. yourdomain.com"
 				v-model="newDomain"
 				autocomplete="off" />
@@ -79,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDomains } from "@/data/domains";
 import { useIntervalFn } from "@vueuse/core";
 import { Badge, Dropdown, ErrorMessage, FormControl, toast } from "frappe-ui";
@@ -199,9 +200,9 @@ async function copyToClipboard(text: string) {
 	if (!text) return;
 	try {
 		await navigator.clipboard.writeText(text);
-		toast.success("Copied to clipboard");
+		toast.success(__("Copied to clipboard"));
 	} catch {
-		toast.error("Failed to copy");
+		toast.error(__("Failed to copy"));
 	}
 }
 

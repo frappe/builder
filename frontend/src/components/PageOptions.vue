@@ -2,7 +2,7 @@
 	<div>
 		<div class="flex flex-row flex-wrap gap-4">
 			<BuilderInput
-				label="Page Title"
+				:label="__('Page Title')"
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px]"
 				:modelValue="pageStore.activePage?.page_title"
@@ -11,7 +11,7 @@
 			<BuilderInput
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px] [&>p]:text-p-xs"
-				label="Route"
+				:label="__('Route')"
 				description="The URL path for this page. For variables, use colon (e.g. /users/:id)"
 				:modelValue="pageStore.activePage?.route"
 				:disabled="builderStore.readOnlyMode"

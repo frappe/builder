@@ -67,7 +67,7 @@
 							@click="selectedCategory = category" />
 					</div>
 					<div class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
-						<BlankPageCard label="Start from scratch" @click="createBlankPage('gallery')" />
+						<BlankPageCard :label="__('Start from scratch')" @click="createBlankPage('gallery')" />
 						<TemplateGroupCard
 							v-for="group in filteredGroups"
 							:key="group.name"

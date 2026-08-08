@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import { useLatestRequest } from "@/composables/useLatestRequest";
 import { getVersionedDoc } from "@/data/snapshot";
@@ -135,7 +136,7 @@ const useComponentStore = defineStore("componentStore", {
 					});
 				})
 				.catch((error: any) => {
-					toast.error("Failed to save component");
+					toast.error(__("Failed to save component"));
 					throw error;
 				});
 		},
@@ -435,7 +436,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async deleteComponent(component: Pick<BuilderComponent, "name" | "component_name">) {
 			if (this.isComponentUsed(component.name)) {
-				alert("Component is used in current page. You cannot delete it.");
+				alert(__("Component is used in current page. You cannot delete it."));
 			} else {
 				const confirmed = await confirm(
 					`Are you sure you want to delete component: ${component.component_name}?`,

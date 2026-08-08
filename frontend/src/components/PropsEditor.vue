@@ -84,7 +84,7 @@
 				<Button
 					class="w-full"
 					variant="subtle"
-					label="Add"
+					:label="__('Add')"
 					@click="
 						() => {
 							popoverContentAddRef?.reset({

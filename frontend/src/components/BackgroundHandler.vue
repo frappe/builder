@@ -5,10 +5,10 @@
 				<StylePropertyControl
 					propertyKey="background"
 					:component="BackgroundInput"
-					label="Background"
+					:label="__('Background')"
 					:enableStates="true"
 					:allowDynamicValue="true"
-					placeholder="Set Background"
+					:placeholder="__('Set Background')"
 					readonly
 					:selectOnFocus="false"
 					class="[&_input]:cursor-pointer"
@@ -80,19 +80,19 @@
 					</div>
 					<div class="space-y-2">
 						<InlineInput
-							label="Size"
+							:label="__('Size')"
 							:modelValue="backgroundSize"
 							type="select"
 							:options="sizeOptions"
 							@update:modelValue="setBGSize" />
 						<InlineInput
-							label="Position"
+							:label="__('Position')"
 							:modelValue="backgroundPosition"
 							type="select"
 							:options="positionOptions"
 							@update:modelValue="setBGPosition" />
 						<InlineInput
-							label="Repeat"
+							:label="__('Repeat')"
 							:modelValue="backgroundRepeat"
 							type="select"
 							:options="repeatOptions"

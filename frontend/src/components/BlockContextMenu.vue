@@ -5,6 +5,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import ContextMenu from "@/components/ContextMenu.vue";
 import NewBlockTemplate from "@/components/Modals/NewBlockTemplate.vue";
@@ -115,7 +116,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Convert To Collection",
 		action: () => {
 			block.value.isRepeaterBlock = true;
-			toast.warning("Please select a collection");
+			toast.warning(__("Please select a collection"));
 		},
 		condition: () =>
 			block.value.isContainer() &&
@@ -191,7 +192,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block.value));
 			parentBlock.removeChild(block.value);
 			repeaterBlock.selectBlock();
-			toast.warning("Please select a collection");
+			toast.warning(__("Please select a collection"));
 		},
 		condition: () =>
 			!block.value.isRoot() && !block.value.isRepeater() && !block.value.isChildOfComponentBlock(),
@@ -211,7 +212,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Reset Changes",
 		action: () => {
 			if (block.value.hasChildren()) {
-				confirm("Reset changes in child blocks as well?").then((confirmed) => {
+				confirm(__("Reset changes in child blocks as well?")).then((confirmed) => {
 					block.value.resetChanges(confirmed);
 				});
 			} else {
@@ -233,7 +234,7 @@ const contextMenuOptions: ContextMenuOption[] = [
 		label: "Reset Component",
 		condition: () => Boolean(block.value.extendedFromComponent),
 		action: () => {
-			confirm("Are you sure you want to reset?").then((confirmed) => {
+			confirm(__("Are you sure you want to reset?")).then((confirmed) => {
 				if (confirmed) {
 					block.value.resetWithComponent();
 				}

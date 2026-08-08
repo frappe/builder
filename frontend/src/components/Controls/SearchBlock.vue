@@ -24,7 +24,7 @@
 					<Button
 						@click="togglePopover"
 						icon="lucide-filter"
-						label="Filters"
+						:label="__('Filters')"
 						:class="[
 							'flex items-center gap-2 text-sm',
 							selectedFiltersCount > 0 ? 'border-ink-gray-6 bg-ink-gray-1' : '',
@@ -73,7 +73,7 @@
 			<BuilderInput
 				class="w-full"
 				type="text"
-				placeholder="Replace with..."
+				:placeholder="__('Replace with...')"
 				v-model="replaceQuery"
 				@keydown.enter="handlePrimaryAction" />
 		</div>
@@ -139,6 +139,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
@@ -366,7 +367,7 @@ const replaceInBlock = (block: Block, index: number) => {
 		results.value.splice(index, 1);
 		toast.success(`Replaced in ${block.getBlockDescription()}`);
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 
@@ -388,7 +389,7 @@ const replaceAll = () => {
 		toast.success(`Made ${totalReplacements} replacements across ${totalReplacements} blocks`);
 		performSearch();
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 

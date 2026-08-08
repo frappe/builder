@@ -21,7 +21,9 @@
 				<div class="mb-2">
 					<TabButtons
 						:modelValue="activeType"
-						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
+						@update:modelValue="
+							(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))
+						"
 						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
@@ -30,7 +32,7 @@
 						@input="(val: string) => (searchQuery = val)"
 						@update:modelValue="(val: string) => (searchQuery = val)"
 						type="text"
-						placeholder="Search tokens"
+						:placeholder="__('Search tokens')"
 						class="w-full"
 						icon-left="search" />
 				</div>
@@ -72,7 +74,7 @@
 									<input
 										type="text"
 										:value="row.token_name"
-										placeholder="Token name"
+										:placeholder="__('Token name')"
 										:class="[cellBoxClass, editableInputClass]"
 										data-new-name
 										@mousedown.stop
@@ -93,7 +95,7 @@
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@click="togglePopover"></button>
 											</template>
@@ -138,7 +140,7 @@
 													:style="{
 														backgroundColor: resolveVariableValue(row.dark_value || row.value || ''),
 													}"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@click="togglePopover"></button>
 											</template>
@@ -174,7 +176,7 @@
 									<div class="flex min-w-0 items-center gap-1.5">
 										<Tooltip
 											v-if="row.is_standard"
-											text="This is a standard variable. It cannot be modified or deleted."
+											:text="__('This is a standard variable. It cannot be modified or deleted.')"
 											placement="top">
 											<span
 												class="lucide-info ml-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
@@ -200,7 +202,7 @@
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
 										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
 											<div
-												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
@@ -262,7 +264,7 @@
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@dblclick.stop
 													@click="togglePopover"></button>
@@ -308,7 +310,7 @@
 													:style="{
 														backgroundColor: resolveVariableValue(row.dark_value || row.value || ''),
 													}"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@dblclick.stop
 													@click="togglePopover"></button>
@@ -358,14 +360,14 @@
 
 				<Dialog
 					v-model="showGroupDialog"
-					title="Move to group"
+					:title="__('Move to group')"
 					size="sm"
 					:actions="[{ label: 'Move', variant: 'solid', onClick: confirmGroupDialog }]">
 					<template #default>
 						<Autocomplete
 							:modelValue="moveTargetGroup"
 							:options="groupOptions"
-							placeholder="Select or type a group name"
+							:placeholder="__('Select or type a group name')"
 							@update:modelValue="(val: string | null) => (moveTargetGroup = val || '')" />
 					</template>
 				</Dialog>
@@ -388,6 +390,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
@@ -430,7 +433,7 @@ const copyHandle = async (row: Row) => {
 		copiedId.value = row.id;
 		setTimeout(() => (copiedId.value = null), 1200);
 	} catch {
-		toast.error("Couldn't copy to clipboard");
+		toast.error(__("Couldn't copy to clipboard"));
 	}
 };
 // Total tokens per type — shown as a count pill on each tab (search-independent
@@ -713,9 +716,7 @@ const moveSelectedToGroup = async (group: string) => {
 		row.group = group;
 		await saveVariable(row);
 	}
-	toast.success(
-		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
-	);
+	toast.success(group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`);
 };
 
 const uniqueCopyName = (name: string) => {
@@ -824,7 +825,7 @@ const createVariable = async (row: Row) => {
 		});
 		newVariable.value = null;
 		await nextTick();
-		toast.success("Token created");
+		toast.success(__("Token created"));
 		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
@@ -863,7 +864,7 @@ const handleCSVUpload = (event: Event) => {
 			const csvText = e.target?.result as string;
 			parseCSVAndAddVariables(csvText);
 		} catch (error) {
-			toast.error("Failed to read CSV file");
+			toast.error(__("Failed to read CSV file"));
 		}
 	};
 	reader.readAsText(file);
@@ -872,7 +873,7 @@ const handleCSVUpload = (event: Event) => {
 const parseCSVAndAddVariables = async (csvText: string) => {
 	const lines = csvText.trim().split("\n");
 	if (lines.length < 2) {
-		toast.error("CSV must have at least a header row and one data row");
+		toast.error(__("CSV must have at least a header row and one data row"));
 		return;
 	}
 
@@ -884,7 +885,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	const typeIndex = headers.findIndex((h) => h.includes("type"));
 
 	if (nameIndex === -1 || lightIndex === -1) {
-		toast.error("CSV must contain 'Token Name' and 'Light Mode' columns");
+		toast.error(__("CSV must contain 'Token Name' and 'Light Mode' columns"));
 		return;
 	}
 
@@ -948,9 +949,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		.filter(Boolean)
 		.join(", ");
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new token(s) and update ${
-			updateVariables.length
-		} existing token(s)?${
+		`Create ${newVariables.length} new token(s) and update ${updateVariables.length} existing token(s)?${
 			skippedNotes ? ` (${skippedNotes})` : ""
 		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);
@@ -1033,6 +1032,6 @@ const downloadSampleCSV = () => {
 	document.body.appendChild(link);
 	link.click();
 	document.body.removeChild(link);
-	toast.success("Sample CSV downloaded");
+	toast.success(__("Sample CSV downloaded"));
 };
 </script>

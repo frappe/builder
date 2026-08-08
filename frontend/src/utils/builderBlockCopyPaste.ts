@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -141,7 +142,7 @@ export function copyBuilderBlocks(
 		dataToCopy.pageScripts = pageStore.activePageScripts;
 	}
 	copyToClipboard(dataToCopy, e, "builder-copied-blocks");
-	copyEntirePage && toast.success("Page Copied");
+	copyEntirePage && toast.success(__("Page Copied"));
 }
 
 export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: string): Promise<void> {

@@ -41,7 +41,7 @@
 						<button
 							type="button"
 							class="flex items-center rounded text-ink-gray-5 hover:text-ink-red-7"
-							title="Remove image"
+							:title="__('Remove image')"
 							@click="clearImage">
 							<span class="lucide-x h-3.5 w-3.5" aria-hidden="true" />
 						</button>

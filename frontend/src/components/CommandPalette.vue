@@ -30,7 +30,7 @@
 						@keydown="handleKeydown" />
 					<kbd
 						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
-						title="Close">
+						:title="__('Close')">
 						esc
 					</kbd>
 				</div>

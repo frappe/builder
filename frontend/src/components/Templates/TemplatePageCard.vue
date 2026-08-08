@@ -23,7 +23,7 @@
 				size="sm"
 				variant="ghost"
 				icon="lucide-pencil"
-				title="Edit template"
+				:title="__('Edit template')"
 				class="shrink-0 !text-ink-gray-5 hover:!text-ink-gray-9"
 				@click.stop="$emit('edit', page)"></Button>
 		</div>

@@ -5,13 +5,13 @@
 				<div class="flex gap-5">
 					<BuilderInput
 						type="text"
-						label="Page Title"
+						:label="__('Page Title')"
 						:modelValue="pageStore.activePage?.page_title"
 						:hideClearButton="true"
 						@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 					<BuilderInput
 						type="text"
-						label="Page Route"
+						:label="__('Page Route')"
 						class="[&>p]:text-p-xs"
 						:modelValue="pageStore.activePage?.route"
 						:hideClearButton="true"
@@ -77,7 +77,7 @@
 						</div>
 						<div class="flex flex-1 flex-col gap-2">
 							<ImageUploader
-								label="Favicon"
+								:label="__('Favicon')"
 								image_type="image/ico"
 								:image_url="pageStore.activePage?.favicon"
 								@upload="(url: string) => pageStore.updateActivePage('favicon', url)"
@@ -113,7 +113,7 @@
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
-						label="Protected Page"
+						:label="__('Protected Page')"
 						:disabled="pageStore.isHomePage(pageStore.activePage)"
 						description="Only logged-in users can access this page"
 						:modelValue="Boolean(pageStore.activePage?.authenticated_access)"
@@ -121,7 +121,7 @@
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
-						label="Disable Indexing"
+						:label="__('Disable Indexing')"
 						description="Prevent search engines from indexing this page"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
@@ -129,7 +129,7 @@
 						<hr class="w-full border-outline-gray-2" />
 						<Switch
 							size="sm"
-							label="Standard Page"
+							:label="__('Standard Page')"
 							:disabled="!isDeveloperMode && pageStore.activePage?.is_standard"
 							description="Make this page a standard page that can be exported to an app"
 							:modelValue="Boolean(pageStore.activePage?.is_standard)"
@@ -174,6 +174,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
@@ -247,7 +248,7 @@ const notifyStandardPageExport = () => {
 	const activePage = pageStore.activePage;
 
 	if (!activePage?.app && activePage?.is_standard) {
-		toast.warning("Please select an app for this standard page");
+		toast.warning(__("Please select an app for this standard page"));
 		return;
 	}
 

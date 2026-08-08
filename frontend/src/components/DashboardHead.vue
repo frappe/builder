@@ -13,7 +13,7 @@
 				<BuilderInput
 					class="w-48"
 					type="text"
-					placeholder="Filter by title or route"
+					:placeholder="__('Filter by title or route')"
 					v-model="searchFilter"
 					@input="
 						(value: string) => {

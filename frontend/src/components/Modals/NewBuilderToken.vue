@@ -17,7 +17,7 @@
 					type="text"
 					v-model="activeBuilderToken.token_name"
 					@input="(val: string) => (activeBuilderToken.token_name = val)"
-					label="Token Name"
+					:label="__('Token Name')"
 					required
 					:autofocus="true"
 					placeholder="e.g., primary, accent, background"
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { BuilderToken } from "@/types/doctypes";
@@ -86,10 +87,10 @@ const handleSave = async () => {
 		let savedVariable;
 		if (dialogMode.value === "edit") {
 			savedVariable = await updateVariable(activeBuilderToken.value);
-			toast.success("Token updated");
+			toast.success(__("Token updated"));
 		} else {
 			savedVariable = await createVariable(activeBuilderToken.value);
-			toast.success("New token created");
+			toast.success(__("New token created"));
 		}
 		emit("success", savedVariable);
 		emit("update:modelValue", false);

@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import type { IndicatorGeometry } from "@/utils/dropGeometry";
@@ -194,7 +195,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			e?.preventDefault();
 
 			if (this.activeCanvas?.isDirty) {
-				const exit = await confirm("Are you sure you want to exit without saving?");
+				const exit = await confirm(__("Are you sure you want to exit without saving?"));
 				if (!exit) {
 					return;
 				}

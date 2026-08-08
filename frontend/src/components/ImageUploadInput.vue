@@ -65,7 +65,7 @@
 							</div>
 						</div>
 						<InlineInput
-							label="Image Fit"
+							:label="__('Image Fit')"
 							class="mt-4"
 							:modelValue="imageFit"
 							type="select"

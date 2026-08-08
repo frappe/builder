@@ -3,7 +3,7 @@
 		<div v-show="showSearchInput" class="sticky top-0 z-[1] bg-surface-base py-3">
 			<BuilderInput
 				type="text"
-				placeholder="Search component"
+				:placeholder="__('Search component')"
 				v-model="componentFilter"
 				@input="
 					(value: string) => {

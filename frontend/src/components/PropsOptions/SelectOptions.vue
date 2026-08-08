@@ -5,13 +5,13 @@
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="Default Value"
+			:label="__('Default Value')"
 			class="w-full"
 			type="select"
 			:options="optionsAvailable"
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
-			placeholder="Enter default value"></InlineInput>
+			:placeholder="__('Enter default value')"></InlineInput>
 	</div>
 </template>
 

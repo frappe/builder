@@ -6,7 +6,7 @@
 				@input="(val: string) => (searchQuery = val)"
 				@update:modelValue="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search redirects"
+				:placeholder="__('Search redirects')"
 				class="w-full"
 				icon-left="search" />
 		</div>
@@ -95,13 +95,13 @@
 						<FormControl
 							type="select"
 							size="sm"
-							label="Redirect status"
+							:label="__('Redirect status')"
 							:options="statusOptions"
 							:modelValue="draft.status"
 							@update:modelValue="(val: string) => (draft.status = val)" />
 						<Switch
 							size="sm"
-							label="Forward query parameters"
+							:label="__('Forward query parameters')"
 							description="Append the original query string to the target URL"
 							class="mt-2"
 							:modelValue="draft.forward"

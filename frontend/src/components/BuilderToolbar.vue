@@ -33,13 +33,13 @@
 							Loading...
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
-							<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
+							<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
 								<span
 									class="lucide-home h-[14px] w-4"
 									aria-hidden="true"
 									v-if="pageStore.isHomePage(pageStore.activePage)" />
 							</Tooltip>
-							<Tooltip text="This page has limited access" :hoverDelay="0.6">
+							<Tooltip :text="__('This page has limited access')" :hoverDelay="0.6">
 								<span
 									class="lucide-shield-user size-4 text-ink-amber-6"
 									v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
@@ -104,14 +104,18 @@
 				</Button>
 			</div>
 			<div class="flex items-center gap-2">
-				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip
+					v-if="builderStore.isAIEnabled"
+					:text="__('Generate with AI')"
+					:hoverDelay="0.6"
+					arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="openAIGenerator"
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
 				</Tooltip>
-				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+				<!-- <Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
@@ -123,11 +127,13 @@
 					Saving template
 				</span>
 				<ComponentUpdates />
-				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip :text="__('Settings')" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
-				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
-					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
+				<router-link
+					:to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }"
+					:title="__('Preview')">
+					<Tooltip :text="__('Preview')" :hoverDelay="0.6" arrow-class="mb-3">
 						<Button variant="ghost" :icon="PlayIcon"></Button>
 					</Tooltip>
 				</router-link>
@@ -136,12 +142,12 @@
 				v-if="!(builderStore.readOnlyMode && pageStore.activePage?.is_template)"
 				:disabled="builderStore.readOnlyMode"></PublishButton>
 		</div>
-		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
+		<Dialog :title="__('Get Started')" size="4xl" v-model="showInfoDialog">
 			<template #default>
 				<iframe
 					class="h-[60vh] w-full rounded-sm"
 					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
-					title="Frappe Builder - Get Started"
+					:title="__('Frappe Builder - Get Started')"
 					frameborder="0"
 					allowfullscreen></iframe>
 			</template>
@@ -160,6 +166,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
@@ -198,7 +205,7 @@ const openAIGenerator = (e: MouseEvent) => {
 	if (openAIGeneratorFn) {
 		openAIGeneratorFn();
 	} else {
-		toast.error("AI Generator is not available");
+		toast.error(__("AI Generator is not available"));
 	}
 };
 

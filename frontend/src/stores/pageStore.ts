@@ -233,7 +233,7 @@ const usePageStore = defineStore("pageStore", {
 			// router.go(0);
 			// Instead of a hard reload, we could are just re-fetching the page document
 			this.setPage(this.selectedPage as string, false);
-			toast.success("Version restored");
+			toast.success(__("Version restored"));
 		},
 
 		async unpublishPage(page?: BuilderPage) {
@@ -253,7 +253,7 @@ const usePageStore = defineStore("pageStore", {
 					published: false,
 				})
 				.then(() => {
-					toast.success("Page unpublished");
+					toast.success(__("Page unpublished"));
 					if (page) {
 						page.published = 0;
 					} else {
