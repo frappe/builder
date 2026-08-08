@@ -411,16 +411,18 @@ function updateURLsInBlock(block: Block, currentSiteURL: string): void {
 		}
 	}
 
-	// Update background image URLs
-	if (block) {
-		const bgSrc = block.getStyle("backgroundImage");
+	// Update background image URLs (including the dark-mode variant)
+	const absolutizeBackground = (styleKey: string) => {
+		const bgSrc = block.getStyle(styleKey);
 		if (bgSrc && typeof bgSrc === "string" && bgSrc.startsWith("url(")) {
 			const urlMatch = bgSrc.match(/url\(["']?([^"']+)["']?\)/);
 			if (urlMatch && urlMatch[1] && urlMatch[1].startsWith("/")) {
-				block.setStyle("backgroundImage", `url(${currentSiteURL}${urlMatch[1]})`);
+				block.setStyle(styleKey, `url(${currentSiteURL}${urlMatch[1]})`);
 			}
 		}
-	}
+	};
+	absolutizeBackground("backgroundImage");
+	absolutizeBackground("dark:backgroundImage");
 
 	// Update href attributes for links
 	// if (block.isLink()) {

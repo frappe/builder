@@ -1370,8 +1370,27 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 		if ":" in key:
 			state, property = key.split(":", 1)
 			css_property = camel_case_to_kebab_case(property)
-			style_string = f".{style_class}:{state} {{ {css_property}: {value}; }}"
+			declaration = f"{css_property}: {value};"
+			if state == "dark":
+				style_string = dark_mode_style(style_class, declaration)
+			else:
+				style_string = f".{style_class}:{state} {{ {declaration} }}"
 			style_tag.append(wrap_with_media_query(style_string, device))
+
+
+def dark_mode_style(style_class, declaration):
+	"""CSS for a dark-mode-only style (e.g. a dark variant of a background image).
+
+	Dark mode is active for the OS scheme unless the page is manually pinned to
+	light, and for the manual dark toggle — mirroring how Builder scopes dark mode
+	elsewhere via data-theme / data-prefers-color-scheme.
+	"""
+	not_light = ':root:not([data-theme="light"]):not([data-prefers-color-scheme="light"])'
+	forced = f':root[data-theme="dark"] .{style_class}, :root[data-prefers-color-scheme="dark"] .{style_class}'
+	return (
+		f"@media (prefers-color-scheme: dark) {{ {not_light} .{style_class} {{ {declaration} }} }} "
+		f"{forced} {{ {declaration} }}"
+	)
 
 
 def get_font_family(font: str) -> str:
