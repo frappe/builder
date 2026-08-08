@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-08 18:22+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03\n"
+"PO-Revision-Date: 2026-08-08 13:34\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Arabic\n"
 "MIME-Version: 1.0\n"
@@ -843,7 +843,7 @@ msgstr "مدير الموقع"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
-msgstr ""
+msgstr "ليس لديك إذن للوصول إلى هذه الصفحة"
 
 #: builder/ai_page_generator.py:454 builder/utils.py:54
 msgid "You do not have permission to modify pages"
