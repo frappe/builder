@@ -4,8 +4,8 @@
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
-					{ label: 'Search', value: 'search', icon: 'lucide-search' },
-					{ label: 'Find & Replace', value: 'replace', icon: 'lucide-edit-3' },
+					{ label: __('Search'), value: 'search', icon: 'lucide-search' },
+					{ label: __('Find & Replace'), value: 'replace', icon: 'lucide-edit-3' },
 				]" />
 		</div>
 

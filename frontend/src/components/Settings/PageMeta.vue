@@ -53,7 +53,9 @@
 			<BuilderInput
 				type="text"
 				:label="__('Canonical URL')"
-				description="Optional. Set this to specify a preferred version of this page for search engines."
+				:description="
+					__('Optional. Set this to specify a preferred version of this page for search engines.')
+				"
 				placeholder="https://example.com/preferred-page-url"
 				:modelValue="pageStore.activePage?.canonical_url"
 				:hideClearButton="true"
@@ -61,7 +63,7 @@
 			<BuilderInput
 				type="text"
 				:label="__('Language')"
-				description="Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
+				:description="__('Language code for HTML (e.g., en, es, fr, de). Uses default if unset.')"
 				placeholder="en"
 				:modelValue="pageStore.activePage?.language"
 				:hideClearButton="true"

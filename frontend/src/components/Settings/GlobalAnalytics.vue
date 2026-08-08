@@ -28,8 +28,8 @@
 						class="!w-auto"
 						v-else
 						:columns="[
-							{ label: 'Route', key: 'route', width: '60%' },
-							{ label: 'Views', key: 'view_count', align: 'right' },
+							{ label: __('Route'), key: 'route', width: '60%' },
+							{ label: __('Views'), key: 'view_count', align: 'right' },
 						]"
 						:options="{
 							selectable: false,
@@ -50,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import TopReferrersList from "@/components/Settings/TopReferrersList.vue";

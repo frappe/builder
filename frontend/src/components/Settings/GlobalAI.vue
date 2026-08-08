@@ -10,11 +10,11 @@
 					placeholder="sk-or-v1-…"
 					class="flex-1" />
 				<Button v-if="apiKey" variant="subtle" @click="testApiKey" :disabled="testing">
-					{{ testing ? "Testing..." : "Test Key" }}
+					{{ testing ? __("Testing...") : __("Test Key") }}
 				</Button>
 			</div>
 			<p class="text-xs text-ink-gray-6">
-				Get API key from
+				{{ __("Get API key from") }}
 				<a
 					href="https://openrouter.ai/keys"
 					target="_blank"
@@ -31,6 +31,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import { createResource, FormControl } from "frappe-ui";
@@ -67,7 +68,7 @@ const testApiKey = async () => {
 			statusClass.value = "text-ink-red-6 bg-surface-red-1";
 		}
 	} catch (error: unknown) {
-		statusMessage.value = error instanceof Error ? error.message : "Failed to test API key";
+		statusMessage.value = error instanceof Error ? error.message : __("Failed to test API key");
 		statusClass.value = "text-ink-red-6 bg-surface-red-1";
 	} finally {
 		testing.value = false;

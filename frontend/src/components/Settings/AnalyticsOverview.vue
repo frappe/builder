@@ -23,7 +23,7 @@
 	</div>
 	<div class="mx-[-16px]">
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-			Loading...
+			{{ __("Loading...") }}
 		</div>
 		<AxisChart
 			v-else-if="data.data && data.data.length"
@@ -38,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";

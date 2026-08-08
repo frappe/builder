@@ -48,7 +48,7 @@
 													? ["array", "object"].includes(value.propOptions.options.type)
 														? JSON.stringify(value.propOptions?.options?.defaultValue)
 														: value.propOptions?.options?.defaultValue
-													: "No Default Value"
+													: __("No Default Value")
 											}}
 										</p>
 									</div>
@@ -119,6 +119,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { mapToObject, replaceMapKey } from "@/utils/helpers";
 import { ref, useAttrs, watch } from "vue";
 

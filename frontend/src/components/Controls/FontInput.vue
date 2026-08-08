@@ -26,6 +26,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import FontUploader from "@/components/Controls/FontUploader.vue";
 import userFonts from "@/data/userFonts";
@@ -43,7 +44,7 @@ const props = withDefaults(
 	}>(),
 	{
 		modelValue: null,
-		placeholder: "Set Font",
+		placeholder: __("Set Font"),
 	},
 );
 
@@ -111,14 +112,14 @@ const getOptions = async (filterString: string) => {
 
 	const options = [] as { label: string; value: string }[];
 	if (tokenOptions.length) {
-		options.push({ label: "Design tokens", value: "_separator_0" }, ...tokenOptions);
+		options.push({ label: __("Design tokens"), value: "_separator_0" }, ...tokenOptions);
 	}
 	if (userFontOptions.length) {
-		options.push({ label: "Custom", value: "_separator_1" }, ...userFontOptions);
+		options.push({ label: __("Custom"), value: "_separator_1" }, ...userFontOptions);
 	}
 	if (defaultFontOptions.length) {
 		// the heading only earns its place once something sits under it
-		if (options.length) options.push({ label: "Default", value: "_separator_2" });
+		if (options.length) options.push({ label: __("Default"), value: "_separator_2" });
 		options.push(...defaultFontOptions);
 	}
 	return options;

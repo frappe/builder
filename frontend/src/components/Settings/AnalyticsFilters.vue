@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/doctypes";
@@ -49,11 +50,11 @@ const props = defineProps({
 		type: Array as () => SelectOption[],
 		required: false,
 		default: () => [
-			{ label: "Today", value: "today" },
-			{ label: "Last 7 Days", value: "last_7_days" },
-			{ label: "Last 30 Days", value: "last_30_days" },
-			{ label: "This Year", value: "this_year" },
-			{ label: "Custom", value: "custom" },
+			{ label: __("Today"), value: "today" },
+			{ label: __("Last 7 Days"), value: "last_7_days" },
+			{ label: __("Last 30 Days"), value: "last_30_days" },
+			{ label: __("This Year"), value: "this_year" },
+			{ label: __("Custom"), value: "custom" },
 		],
 	},
 });

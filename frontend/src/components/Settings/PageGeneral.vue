@@ -42,9 +42,9 @@
 								{{
 									pageStore.activePage?.published
 										? pageStore.activePage?.authenticated_access
-											? "Published with limited access"
-											: "Published"
-										: "Draft"
+											? __("Published with limited access")
+											: __("Published")
+										: __("Draft")
 								}}
 							</span>
 
@@ -53,7 +53,7 @@
 								@click="
 									pageStore.activePage?.published ? pageStore.unpublishPage() : pageStore.publishPage(false)
 								">
-								{{ pageStore.activePage?.published ? "Unpublish" : "Publish" }}
+								{{ pageStore.activePage?.published ? __("Unpublish") : __("Publish") }}
 							</Button>
 						</div>
 					</div>
@@ -83,7 +83,11 @@
 								@upload="(url: string) => pageStore.updateActivePage('favicon', url)"
 								@remove="() => pageStore.updateActivePage('favicon', '')" />
 							<span class="text-p-sm text-ink-gray-6">
-								Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
+								{{
+									__(
+										"Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO",
+									)
+								}}
 							</span>
 						</div>
 					</div>
@@ -107,7 +111,7 @@
 									}
 								}
 							">
-							{{ pageStore.isHomePage(pageStore.activePage) ? "Unset Homepage" : "Set As Homepage" }}
+							{{ pageStore.isHomePage(pageStore.activePage) ? __("Unset Homepage") : __("Set As Homepage") }}
 						</Button>
 					</div>
 					<hr class="w-full border-outline-gray-2" />
@@ -115,14 +119,14 @@
 						size="sm"
 						:label="__('Protected Page')"
 						:disabled="pageStore.isHomePage(pageStore.activePage)"
-						description="Only logged-in users can access this page"
+						:description="__('Only logged-in users can access this page')"
 						:modelValue="Boolean(pageStore.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('authenticated_access', val)" />
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
 						:label="__('Disable Indexing')"
-						description="Prevent search engines from indexing this page"
+						:description="__('Prevent search engines from indexing this page')"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
 					<template v-if="isDeveloperMode || pageStore.activePage?.is_standard">
@@ -131,7 +135,7 @@
 							size="sm"
 							:label="__('Standard Page')"
 							:disabled="!isDeveloperMode && pageStore.activePage?.is_standard"
-							description="Make this page a standard page that can be exported to an app"
+							:description="__('Make this page a standard page that can be exported to an app')"
 							:modelValue="Boolean(pageStore.activePage?.is_standard)"
 							@update:modelValue="handleStandardPageToggle" />
 						<hr v-if="pageStore.activePage?.is_standard" class="w-full border-outline-gray-2" />
@@ -196,7 +200,7 @@ const fullURL = computed(
 
 const folderOptions = computed(() => {
 	const homeOption = {
-		label: "Home",
+		label: __("Home"),
 		value: "",
 	};
 
@@ -222,7 +226,7 @@ const installedAppsResource = createResource({
 
 const appOptions = computed(() => {
 	const defaultOption = {
-		label: "Select App",
+		label: __("Select App"),
 		value: "",
 	};
 

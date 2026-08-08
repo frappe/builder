@@ -83,7 +83,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			this.activeCanvas.setRootBlock(previewRoot, false, false);
 			this.versionPreviewBlock = previewRoot;
 			this.previewSnapshotName = previewName;
-			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
+			toast.info(__("Read-only preview · Use <b>Restore</b> to load this version."), {
 				id: PREVIEW_TOAST_ID,
 				duration: Infinity,
 				dismissible: false,

@@ -44,14 +44,14 @@
 									v-if="activeScript === script && !builderStore.readOnlyMode"
 									:options="[
 										{
-											label: 'Rename',
+											label: __('Rename'),
 											onClick: () => {
 												script.editable = true;
 											},
 											icon: 'lucide-edit',
 										},
 										{
-											label: 'Remove Script',
+											label: __('Remove Script'),
 											onClick: () => deleteScript(script.name),
 											icon: 'lucide-trash',
 										},
@@ -74,8 +74,8 @@
 						">
 						<Dropdown
 							:options="[
-								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
-								{ label: 'CSS', onClick: () => addScript('CSS') },
+								{ label: __('JavaScript'), onClick: () => addScript('JavaScript') },
+								{ label: __('CSS'), onClick: () => addScript('CSS') },
 							]"
 							size="sm"
 							class="[&>div>div>div]:w-full">
@@ -265,7 +265,7 @@ const updateScript = (value: string) => {
 		})
 		.catch((e: { message: string; exc: string }) => {
 			const error_message = e.exc.split("\n").slice(-2)[0];
-			toast.error("Failed to save script", {
+			toast.error(__("Failed to save script"), {
 				description: error_message,
 			});
 		});
@@ -385,7 +385,7 @@ const onScriptReorder = () => {
 		})
 		.catch((e: { message: string; exc: string }) => {
 			const error_message = e.exc.split("\n").slice(-2)[0];
-			toast.error("Failed to update script order", {
+			toast.error(__("Failed to update script order"), {
 				description: error_message,
 			});
 		});

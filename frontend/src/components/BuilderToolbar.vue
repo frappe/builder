@@ -13,10 +13,10 @@
 			<div class="flex gap-2">
 				<Button
 					v-for="mode in [
-						{ mode: 'select', icon: 'lucide-mouse-pointer', description: __('Select (v)') },
-						{ mode: 'container', icon: 'lucide-square', description: 'Container (c)' },
-						{ mode: 'text', icon: 'lucide-type', description: 'Text (t)' },
-						{ mode: 'image', icon: 'lucide-image', description: 'Image (i)' },
+						{ mode: 'select', icon: 'lucide-mouse-pointer', description: `${__('Select')} (v)` },
+						{ mode: 'container', icon: 'lucide-square', description: `${__('Container')} (c)` },
+						{ mode: 'text', icon: 'lucide-type', description: `${__('Text')} (t)` },
+						{ mode: 'image', icon: 'lucide-image', description: `${__('Image')} (i)` },
 					]"
 					:variant="builderStore.mode === mode.mode ? 'subtle' : 'ghost'"
 					:tooltip="mode.description"
@@ -30,7 +30,7 @@
 				<template #target="{ togglePopover, isOpen }">
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
-							Loading...
+							{{ __("Loading...") }}
 						</div>
 						<div @click="togglePopover" v-else class="flex items-center gap-1">
 							<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
@@ -93,7 +93,7 @@
 			</div>
 			<div class="flex items-center gap-2" v-if="builderStore.readOnlyMode">
 				<Badge variant="subtle" theme="orange">
-					{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+					{{ pageStore.activePage?.is_template ? __("Template") : __("Read Only") }}
 				</Badge>
 				<Button
 					v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"

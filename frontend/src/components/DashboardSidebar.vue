@@ -65,14 +65,14 @@
 							placement="right"
 							:options="[
 								{
-									label: 'Rename',
+									label: __('Rename'),
 									onClick: () => {
 										renamingFolder = project.folder_name;
 									},
 									icon: 'lucide-edit',
 								},
 								{
-									label: 'Delete Folder',
+									label: __('Delete Folder'),
 									onClick: () => deleteFolder(project.folder_name),
 									icon: 'lucide-trash',
 								},
@@ -102,6 +102,7 @@
 	</Dialog>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -161,7 +162,7 @@ const appMenuItems = computed(
 				hideLabel: true,
 				items: [
 					{
-						label: "New Page",
+						label: __("New Page"),
 						onClick: () => (showTemplatesDialog.value = true),
 						icon: "lucide-plus",
 					},
@@ -172,17 +173,17 @@ const appMenuItems = computed(
 				hideLabel: true,
 				items: [
 					{
-						label: "Apps",
+						label: __("Apps"),
 						icon: "lucide-grid",
 						submenu: appsSubmenu.value,
 					},
 					{
-						label: "Toggle Theme",
+						label: __("Toggle Theme"),
 						onClick: () => toggleDark(),
 						icon: isDark.value ? "lucide-sun" : "lucide-moon",
 					},
 					{
-						label: "Settings",
+						label: __("Settings"),
 						onClick: () => (showSettingsDialog.value = true),
 						icon: "lucide-settings",
 					},
@@ -193,7 +194,7 @@ const appMenuItems = computed(
 				hideLabel: true,
 				items: [
 					{
-						label: "Help",
+						label: __("Help"),
 						onClick: () => window.open("https://t.me/frappebuilder"),
 						icon: "lucide-info",
 					},

@@ -22,14 +22,14 @@
 							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-4 bg-surface-blue-1/60">
 							<div class="text-xs-medium flex items-center gap-1.5 text-ink-blue-8">
 								<span class="lucide-image h-3.5 w-3.5" aria-hidden="true" />
-								Drop image to attach
+								{{ __("Drop image to attach") }}
 							</div>
 						</div>
 					</Transition>
 					<span
 						v-if="isVisionModel && !imagePreviewUrl && !isDragging"
 						class="pointer-events-none absolute bottom-2 right-2 select-none text-[10px] text-ink-gray-4">
-						Paste or drop image
+						{{ __("Paste or drop image") }}
 					</span>
 				</div>
 				<Transition name="fade">
@@ -60,7 +60,7 @@
 						<Dropdown
 							:options="[
 								{
-									label: 'Select Model',
+									label: __('Select Model'),
 									disabled: true,
 								},
 								...modelOptions.map((m) => ({
@@ -141,7 +141,7 @@
 						]"
 						aria-hidden="true" />
 					<span class="text-sm-medium text-ink-gray-9">
-						{{ progressMessage || (mode === "modify" ? "Modifying section…" : "Generating page…") }}
+						{{ progressMessage || (mode === "modify" ? __("Modifying section…") : __("Generating page…")) }}
 					</span>
 				</div>
 			</div>
@@ -150,6 +150,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import useBuilderStore from "@/stores/builderStore";

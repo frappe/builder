@@ -167,8 +167,8 @@ const dnsRecords = computed(() => {
 		copyValue: serverIP.value ?? "",
 		recommended: !isSubdomain.value,
 		hint: isSubdomain.value
-			? "Use this if your DNS provider doesn't support CNAME for subdomains."
-			: "Points your root domain directly to the server. Use @ as the host name.",
+			? __("Use this if your DNS provider doesn't support CNAME for subdomains.")
+			: __("Points your root domain directly to the server. Use @ as the host name."),
 	});
 	return records;
 });
@@ -234,19 +234,23 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "lucide-star", onClick: () => setHostName(d.domain) });
+		actions.push({ label: __("Set as Primary"), icon: "lucide-star", onClick: () => setHostName(d.domain) });
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
-			label: "Redirect to Primary",
+			label: __("Redirect to Primary"),
 			icon: "lucide-corner-right-up",
 			onClick: () => setRedirect(d.domain),
 		});
 	if (d.redirect_to_primary)
-		actions.push({ label: "Disable Redirect", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
+		actions.push({
+			label: __("Disable Redirect"),
+			icon: "lucide-slash",
+			onClick: () => unsetRedirect(d.domain),
+		});
 	if (d.status === "Broken")
-		actions.push({ label: "Retry", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
+		actions.push({ label: __("Retry"), icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
 	if (!d.primary)
-		actions.push({ label: "Remove Domain", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
+		actions.push({ label: __("Remove Domain"), icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

@@ -4,7 +4,7 @@
 		size="sm"
 		:actions="[
 			{
-				label: 'Save',
+				label: __('Save'),
 				variant: 'solid',
 				onClick: (close: () => void) => {
 					blockTemplateStore.saveBlockTemplate(
@@ -57,6 +57,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";

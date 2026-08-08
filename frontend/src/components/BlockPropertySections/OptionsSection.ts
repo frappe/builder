@@ -1,6 +1,7 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import VisibilityInput from "@/components/VisibilityInput.vue";
 import blockController from "@/utils/blockController";
+import { __ } from "@/translation";
 
 const setClasses = (val: string) => {
 	const classes = val.split(",").map((c) => c.trim());
@@ -12,7 +13,7 @@ const optionsSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Class",
+				label: __("Class"),
 				modelValue: blockController.getClasses().join(", "),
 			};
 		},
@@ -26,9 +27,10 @@ const optionsSectionProperties = [
 		component: VisibilityInput,
 		getProps: () => {
 			return {
-				label: "Condition",
+				label: __("Condition"),
 				property: "visibilityCondition",
-				getModelValue: () => (blockController.getKeyValue("visibilityCondition") as BlockVisibilityCondition).key,
+				getModelValue: () =>
+					(blockController.getKeyValue("visibilityCondition") as BlockVisibilityCondition).key,
 				setModelValue: (val: BlockVisibilityCondition) => {
 					blockController.setKeyValue("visibilityCondition", val);
 				},
@@ -43,6 +45,6 @@ const optionsSectionProperties = [
 ];
 
 export default {
-	name: "Options",
+	name: __("Options"),
 	properties: optionsSectionProperties,
 };

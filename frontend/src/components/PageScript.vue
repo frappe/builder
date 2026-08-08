@@ -4,7 +4,7 @@
 			<div class="flex gap-2">
 				<Button @click="showClientScriptEditor()" class="flex-1">{{ __("Client Script") }}</Button>
 				<Button v-if="mode != 'blockTemplate'" @click="showServerScriptEditor()" class="flex-1">
-					Data Script
+					{{ __("Data Script") }}
 				</Button>
 			</div>
 
@@ -30,7 +30,7 @@
 				<div class="flex min-h-full w-full flex-col gap-6">
 					<div>
 						<div class="mb-3 mt-4 text-sm text-ink-gray-8">
-							{{ mode == "component" ? "Component Props" : "Block Props" }}
+							{{ mode == "component" ? __("Component Props") : __("Block Props") }}
 						</div>
 						<PropsEditor :obj="fragmentProps" @update:obj="setFragmentProps" />
 					</div>
@@ -190,8 +190,8 @@ const mode = computed<"page" | "component" | "blockTemplate">(() => {
 });
 
 const blockClientScriptTabs = [
-	{ label: "JavaScript", value: "js", icon: "lucide-braces" },
-	{ label: "CSS", value: "css", icon: "lucide-paintbrush" },
+	{ label: __("JavaScript"), value: "js", icon: "lucide-braces" },
+	{ label: __("CSS"), value: "css", icon: "lucide-paintbrush" },
 ];
 
 const blockJavaScript = computed(() => canvasStore.fragmentData.block?.clientScript.js || "");
@@ -226,7 +226,7 @@ const savePageDataScript = (value: string) => {
 			if (!errorMessage) {
 				errorMessage = e.messages[0];
 			}
-			toast.error("Failed to save script", {
+			toast.error(__("Failed to save script"), {
 				description: defineComponent({
 					template: `<div>${errorMessage}</div>`,
 				}),

@@ -5,6 +5,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
+import { __ } from "@/translation";
 import {
 	addPxToNumber,
 	extractNumberAndUnit,
@@ -32,12 +33,12 @@ async function confirm(message: string, title: string = "Confirm"): Promise<bool
 			},
 			actions: [
 				{
-					label: "Cancel",
+					label: __("Cancel"),
 					variant: "subtle",
 					onClick: () => resolve(false),
 				},
 				{
-					label: "Confirm",
+					label: __("Confirm"),
 					theme: "red",
 					onClick: () => resolve(true),
 				},
@@ -50,7 +51,7 @@ async function alert(message: string, title: string = "Alert"): Promise<boolean>
 	await showDialog({
 		title,
 		message,
-		actions: [{ label: "Ok", variant: "solid", onClick: () => {} }],
+		actions: [{ label: __("Ok"), variant: "solid", onClick: () => {} }],
 	});
 	return true;
 }

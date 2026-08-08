@@ -50,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
@@ -164,7 +165,7 @@ const propertyOptions = computed(() => [
 	{
 		type: "custom" as const,
 		key: "add-property",
-		label: "Add property",
+		label: __("Add property"),
 		slot: "add-property",
 		condition: ({ query }: { query: string }) => canAddProperty(query),
 		onClick: ({ query }: { query: string }) => addProperty(query),
@@ -202,7 +203,7 @@ const removeProperty = (property: string) => {
 
 const contextMenuOptions = [
 	{
-		label: "Remove",
+		label: __("Remove"),
 		action: () => contextMenuProperty.value && removeProperty(contextMenuProperty.value),
 	},
 ];

@@ -43,7 +43,7 @@ const usePageStore = defineStore("pageStore", {
 
 			const page = await this.fetchActivePage(pageName);
 			if (!page) {
-				toast.error("Page not found", {
+				toast.error(__("Page not found"), {
 					duration: Infinity,
 				});
 				return;
@@ -343,7 +343,7 @@ const usePageStore = defineStore("pageStore", {
 				})
 				.catch((e: { exc: string | null }) => {
 					const error_message = e.exc?.split("\n").slice(-2)[0];
-					toast.error("There was an error while fetching page data", {
+					toast.error(__("There was an error while fetching page data"), {
 						description: error_message,
 					});
 				});

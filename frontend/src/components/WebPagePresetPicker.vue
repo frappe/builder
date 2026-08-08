@@ -271,6 +271,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 interface PresetPreview {
 	bg: string;
 	accent?: string;
@@ -451,11 +452,11 @@ import { TabButtons } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const CATEGORIES = [
-	{ label: "Minimal", value: "minimal" },
-	{ label: "Technical", value: "tech" },
-	{ label: "Modern", value: "modern" },
-	{ label: "Retro", value: "retro" },
-	{ label: "Other", value: "other" },
+	{ label: __("Minimal"), value: "minimal" },
+	{ label: __("Technical"), value: "tech" },
+	{ label: __("Modern"), value: "modern" },
+	{ label: __("Retro"), value: "retro" },
+	{ label: __("Other"), value: "other" },
 ];
 
 const selectedCategory = ref("minimal");

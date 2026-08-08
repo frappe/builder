@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -39,8 +40,8 @@ const isBuilderRoute = computed(() => route.name === "builder");
 useShortcut({
 	key: "k",
 	ctrl: true,
-	description: "Open Command Palette",
-	group: "General",
+	description: __("Open Command Palette"),
+	group: __("General"),
 	allowInInput: true,
 	handler: () => {
 		show.value = true;
@@ -78,16 +79,16 @@ const staticCommands = computed<Command[]>(() => {
 	return [
 		{
 			name: "search-page",
-			title: "Search Page",
+			title: __("Search Page"),
 			icon: "lucide-file-search",
-			description: "Navigate",
+			description: __("Navigate"),
 			group: "Navigate",
 			keepOpen: true,
 			action: () => {
 				activeStep.value = {
 					id: "search-page",
-					label: "Search Page",
-					placeholder: "Search by name or route...",
+					label: __("Search Page"),
+					placeholder: __("Search by name or route..."),
 					hint: "Start typing to search pages",
 				};
 				searchQuery.value = "";
@@ -97,9 +98,9 @@ const staticCommands = computed<Command[]>(() => {
 			? [
 					{
 						name: "go-to-dashboard",
-						title: "Go to Dashboard",
+						title: __("Go to Dashboard"),
 						icon: "lucide-layout-dashboard",
-						description: "Navigate",
+						description: __("Navigate"),
 						group: "Navigate",
 						action: () => router.push({ name: "home" }),
 					},
@@ -109,9 +110,9 @@ const staticCommands = computed<Command[]>(() => {
 			? [
 					{
 						name: "preview",
-						title: "Preview Page",
+						title: __("Preview Page"),
 						icon: "lucide-play",
-						description: "Page",
+						description: __("Page"),
 						group: "Page",
 						action: () => {
 							if (pageStore.selectedPage) {
@@ -121,17 +122,17 @@ const staticCommands = computed<Command[]>(() => {
 					},
 					{
 						name: "publish",
-						title: "Publish Page",
+						title: __("Publish Page"),
 						icon: "lucide-globe",
-						description: "Page",
+						description: __("Page"),
 						group: "Page",
 						action: () => pageStore.publishPage(),
 					},
 					{
 						name: "duplicate-page",
-						title: "Duplicate Page",
+						title: __("Duplicate Page"),
 						icon: "lucide-copy-plus",
-						description: "Page",
+						description: __("Page"),
 						group: "Page",
 						action: () => {
 							if (pageStore.activePage) {
@@ -145,9 +146,9 @@ const staticCommands = computed<Command[]>(() => {
 			? [
 					{
 						name: "expand-layers",
-						title: "Expand All Layers",
+						title: __("Expand All Layers"),
 						icon: "lucide-chevrons-up-down",
-						description: "Layers",
+						description: __("Layers"),
 						group: "Layers",
 						action: async () => {
 							builderStore.showLeftPanel = true;
@@ -158,9 +159,9 @@ const staticCommands = computed<Command[]>(() => {
 					},
 					{
 						name: "collapse-layers",
-						title: "Collapse All Layers",
+						title: __("Collapse All Layers"),
 						icon: "lucide-chevrons-down-up",
-						description: "Layers",
+						description: __("Layers"),
 						group: "Layers",
 						action: async () => {
 							builderStore.showLeftPanel = true;
@@ -177,7 +178,7 @@ const staticCommands = computed<Command[]>(() => {
 						name: "toggle-left-panel",
 						title: `${builderStore.showLeftPanel ? "Hide" : "Show"} Left Panel`,
 						icon: builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open",
-						description: "View",
+						description: __("View"),
 						group: "View",
 						action: () => {
 							builderStore.showLeftPanel = !builderStore.showLeftPanel;
@@ -187,7 +188,7 @@ const staticCommands = computed<Command[]>(() => {
 						name: "toggle-right-panel",
 						title: `${builderStore.showRightPanel ? "Hide" : "Show"} Right Panel`,
 						icon: builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open",
-						description: "View",
+						description: __("View"),
 						group: "View",
 						action: () => {
 							builderStore.showRightPanel = !builderStore.showRightPanel;
@@ -199,7 +200,7 @@ const staticCommands = computed<Command[]>(() => {
 			name: "toggle-theme",
 			title: `Switch to ${isDark.value ? "Light" : "Dark"} Mode`,
 			icon: isDark.value ? "lucide-sun" : "lucide-moon",
-			description: "View",
+			description: __("View"),
 			group: "View",
 			action: () => transitionTheme(),
 		},
@@ -207,9 +208,9 @@ const staticCommands = computed<Command[]>(() => {
 			? [
 					{
 						name: "shortcuts",
-						title: "Keyboard Shortcuts",
+						title: __("Keyboard Shortcuts"),
 						icon: "lucide-command",
-						description: "General",
+						description: __("General"),
 						group: "General",
 						action: () => showShortcuts(),
 					},
@@ -217,16 +218,16 @@ const staticCommands = computed<Command[]>(() => {
 			: []),
 		{
 			name: "settings",
-			title: "Settings",
+			title: __("Settings"),
 			icon: "lucide-settings-2",
-			description: "General",
+			description: __("General"),
 			group: "General",
 			keepOpen: true,
 			action: () => {
 				activeStep.value = {
 					id: "settings",
-					label: "Settings",
-					placeholder: "Search settings...",
+					label: __("Settings"),
+					placeholder: __("Search settings..."),
 					hint: "Browse all settings",
 				};
 				searchQuery.value = "";
@@ -238,32 +239,32 @@ const staticCommands = computed<Command[]>(() => {
 const allSettingsCommands: SettingsCommand[] = [
 	{
 		name: "page_general",
-		title: "General",
-		description: "Settings",
+		title: __("General"),
+		description: __("Settings"),
 		icon: "lucide-settings",
 		section: "page",
 		action: () => openSettings("page_general"),
 	},
 	{
 		name: "page_code",
-		title: "Page Code",
-		description: "Settings",
+		title: __("Page Code"),
+		description: __("Settings"),
 		icon: "lucide-code",
 		section: "page",
 		action: () => openSettings("page_code"),
 	},
 	{
 		name: "page_meta",
-		title: "Meta",
-		description: "Settings",
+		title: __("Meta"),
+		description: __("Settings"),
 		icon: "lucide-square-dashed-bottom-code",
 		section: "page",
 		action: () => openSettings("page_meta"),
 	},
 	{
 		name: "page_analytics",
-		title: "Analytics",
-		description: "Settings",
+		title: __("Analytics"),
+		description: __("Settings"),
 		icon: "lucide-chart-bar",
 		section: "page",
 		action: () => openSettings("page_analytics"),
@@ -271,48 +272,48 @@ const allSettingsCommands: SettingsCommand[] = [
 	// Global settings
 	{
 		name: "global_general",
-		title: "General",
-		description: "Settings",
+		title: __("General"),
+		description: __("Settings"),
 		icon: "lucide-settings",
 		section: "global",
 		action: () => openSettings("global_general"),
 	},
 	{
 		name: "global_code",
-		title: "Global Code",
-		description: "Settings",
+		title: __("Global Code"),
+		description: __("Settings"),
 		icon: "lucide-code",
 		section: "global",
 		action: () => openSettings("global_code"),
 	},
 	{
 		name: "global_redirects",
-		title: "Redirects",
-		description: "Settings",
+		title: __("Redirects"),
+		description: __("Settings"),
 		icon: "lucide-shuffle",
 		section: "global",
 		action: () => openSettings("global_redirects"),
 	},
 	{
 		name: "global_analytics",
-		title: "Site Analytics",
-		description: "Settings",
+		title: __("Site Analytics"),
+		description: __("Settings"),
 		icon: "lucide-chart-bar",
 		section: "global",
 		action: () => openSettings("global_analytics"),
 	},
 	{
 		name: "global_developer",
-		title: "Developer",
-		description: "Settings",
+		title: __("Developer"),
+		description: __("Settings"),
 		icon: "lucide-terminal",
 		section: "global",
 		action: () => openSettings("global_developer"),
 	},
 	{
 		name: "global_ai",
-		title: "AI",
-		description: "Settings",
+		title: __("AI"),
+		description: __("Settings"),
 		icon: "lucide-sparkles",
 		section: "global",
 		action: () => openSettings("global_ai"),
@@ -449,10 +450,15 @@ const commandGroups = computed(() => {
 		const globalItems = items.filter((s) => (s as SettingsCommand).section === "global");
 		const groups = [];
 		if (pageItems.length) {
-			groups.push({ title: "Page", hideTitle: false, component: CommandPaletteItem, items: pageItems });
+			groups.push({ title: __("Page"), hideTitle: false, component: CommandPaletteItem, items: pageItems });
 		}
 		if (globalItems.length) {
-			groups.push({ title: "Global", hideTitle: false, component: CommandPaletteItem, items: globalItems });
+			groups.push({
+				title: __("Global"),
+				hideTitle: false,
+				component: CommandPaletteItem,
+				items: globalItems,
+			});
 		}
 		return groups;
 	}
@@ -463,7 +469,7 @@ const commandGroups = computed(() => {
 			return pageSearchResults.value.length
 				? [
 						{
-							title: "Pages",
+							title: __("Pages"),
 							hideTitle: true,
 							showDescription: true,
 							component: CommandPaletteItem,
@@ -475,7 +481,7 @@ const commandGroups = computed(() => {
 		return recentPages.value.length
 			? [
 					{
-						title: "Recent",
+						title: __("Recent"),
 						hideTitle: false,
 						showDescription: true,
 						component: CommandPaletteItem,
@@ -504,7 +510,7 @@ const commandGroups = computed(() => {
 		const groups = [];
 		if (matchedCommands.length) {
 			groups.push({
-				title: "Commands",
+				title: __("Commands"),
 				hideTitle: matchedSettings.length === 0,
 				showDescription: true,
 				component: CommandPaletteItem,
@@ -513,7 +519,7 @@ const commandGroups = computed(() => {
 		}
 		if (matchedSettings.length) {
 			groups.push({
-				title: "Settings",
+				title: __("Settings"),
 				hideTitle: matchedCommands.length === 0,
 				component: CommandPaletteItem,
 				items: matchedSettings,
@@ -523,11 +529,11 @@ const commandGroups = computed(() => {
 	}
 
 	const groupDefs: { key: string; title: string }[] = [
-		{ key: "Navigate", title: "Navigate" },
-		{ key: "Page", title: "Page" },
-		{ key: "Layers", title: "Layers" },
-		{ key: "View", title: "View" },
-		{ key: "General", title: "General" },
+		{ key: "Navigate", title: __("Navigate") },
+		{ key: "Page", title: __("Page") },
+		{ key: "Layers", title: __("Layers") },
+		{ key: "View", title: __("View") },
+		{ key: "General", title: __("General") },
 	];
 	const grouped = groupDefs
 		.map(({ key, title }) => ({
@@ -540,7 +546,7 @@ const commandGroups = computed(() => {
 	if (recentCommands.value.length) {
 		return [
 			{
-				title: "Recent",
+				title: __("Recent"),
 				hideTitle: false,
 				showDescription: true,
 				component: CommandPaletteItem,

@@ -8,14 +8,14 @@
 			defaultValue="static"
 			:enableStates="false"
 			:options="[
-				{ label: 'Auto', value: 'static' },
-				{ label: 'Free', value: 'absolute' },
-				{ label: 'Relative', value: 'relative' },
+				{ label: __('Auto'), value: 'static' },
+				{ label: __('Free'), value: 'absolute' },
+				{ label: __('Relative'), value: 'relative' },
 				{
-					label: 'Fixed',
+					label: __('Fixed'),
 					value: 'fixed',
 				},
-				{ label: 'Sticky', value: 'sticky' },
+				{ label: __('Sticky'), value: 'sticky' },
 			]"></StylePropertyControl>
 		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
 			<div class="col-span-1 col-start-2 w-16 self-center">
@@ -68,6 +68,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";

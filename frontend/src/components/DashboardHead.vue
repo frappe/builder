@@ -6,7 +6,7 @@
 		<div class="flex gap-2">
 			<div>
 				<Button variant="solid" v-if="selectionMode && selectedPages.size" @click="promptSelectFolder()">
-					Move To Folder
+					{{ __("Move To Folder") }}
 				</Button>
 			</div>
 			<div class="relative flex" v-show="!selectionMode">
@@ -29,11 +29,11 @@
 				<Select
 					v-model="typeFilter"
 					:options="[
-						{ label: 'Type', value: '', disabled: true },
-						{ label: 'All', value: 'all' },
-						{ label: 'Draft', value: 'draft' },
-						{ label: 'Published', value: 'published' },
-						{ label: 'Unpublished', value: 'unpublished' },
+						{ label: __('Type'), value: '', disabled: true },
+						{ label: __('All'), value: 'all' },
+						{ label: __('Draft'), value: 'draft' },
+						{ label: __('Published'), value: 'published' },
+						{ label: __('Unpublished'), value: 'unpublished' },
 					]" />
 			</div>
 			<div v-if="displayType === 'tree' && !selectionMode">
@@ -46,22 +46,22 @@
 							? (collapseTreeFn?.(), (treeExpanded = false))
 							: (expandTreeFn?.(), (treeExpanded = true))
 					">
-					{{ treeExpanded ? "Collapse" : "Expand" }}
+					{{ treeExpanded ? __("Collapse") : __("Expand") }}
 				</Button>
 			</div>
 			<div class="max-sm:hidden" v-show="displayType !== 'tree' && !selectionMode">
 				<Select
 					v-model="orderBy"
 					:options="[
-						{ label: 'Sort', value: '', disabled: true },
-						{ label: 'Last Created', value: 'creation' },
-						{ label: 'Last Modified', value: 'modified' },
+						{ label: __('Sort'), value: '', disabled: true },
+						{ label: __('Last Created'), value: 'creation' },
+						{ label: __('Last Modified'), value: 'modified' },
 						{
-							label: 'Alphabetically (A-Z)',
+							label: __('Alphabetically (A-Z)'),
 							value: 'alphabetically_a_z',
 						},
 						{
-							label: 'Alphabetically (Z-A)',
+							label: __('Alphabetically (Z-A)'),
 							value: 'alphabetically_z_a',
 						},
 					]" />
@@ -71,19 +71,19 @@
 					class="[&>div]:min-w-0"
 					:options="[
 						{
-							label: 'Grid',
+							label: __('Grid'),
 							value: 'grid',
 							icon: 'lucide-grid-2x2',
 							hideLabel: true,
 						},
 						{
-							label: 'List',
+							label: __('List'),
 							value: 'list',
 							icon: 'lucide-list',
 							hideLabel: true,
 						},
 						{
-							label: 'Route Tree',
+							label: __('Route Tree'),
 							value: 'tree',
 							icon: ListTreeIcon,
 							hideLabel: true,
@@ -97,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";

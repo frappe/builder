@@ -32,7 +32,11 @@
 			<div
 				v-if="!snapshots.data?.length && !snapshots.loading && !showPublishedVersion"
 				class="px-2 pt-10 text-center text-p-sm text-ink-gray-4">
-				No saved versions yet. A version is captured every time you publish, or when you save one manually.
+				{{
+					__(
+						"No saved versions yet. A version is captured every time you publish, or when you save one manually.",
+					)
+				}}
 			</div>
 
 			<template v-else>

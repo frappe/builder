@@ -13,7 +13,7 @@
 					{{ __("Select Template") }}
 				</Button>
 				<Button v-if="previewPage" size="sm" variant="subtle" @click.stop="$emit('preview', previewPage)">
-					Preview
+					{{ __("Preview") }}
 				</Button>
 			</div>
 		</div>
@@ -28,6 +28,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { TemplateGroup } from "@/types/template";
 import { computed } from "vue";
 

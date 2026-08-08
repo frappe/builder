@@ -15,7 +15,7 @@
 					variant="ghost"
 					class="-ml-3 mb-5"
 					@click="selectedGroup = ''">
-					Back to all templates
+					{{ __("Back to all templates") }}
 				</Button>
 				<div class="mb-2 flex flex-col gap-2">
 					<div class="flex items-center justify-between">
@@ -82,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { templateGroups, webPages } from "@/data/webPage";
 import router from "@/router";

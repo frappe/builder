@@ -95,8 +95,8 @@ const useComponentStore = defineStore("componentStore", {
 			const pageStore = usePageStore();
 			const doc = this.getComponentDraft(componentName);
 			if (!doc) {
-				toast.error("Failed to save component", {
-					description: "Component draft is unavailable.",
+				toast.error(__("Failed to save component"), {
+					description: __("Component draft is unavailable."),
 				});
 				throw new Error(`Missing draft for component ${componentName}`);
 			}
@@ -108,10 +108,10 @@ const useComponentStore = defineStore("componentStore", {
 				})
 				.then(async (data: BuilderComponent) => {
 					this.setComponentMap(data);
-					toast.success("Component saved!", {
+					toast.success(__("Component saved!"), {
 						duration: 5000,
 						action: {
-							label: "Sync in all pages",
+							label: __("Sync in all pages"),
 							onClick: async () => {
 								const componentResource = createResource({
 									url: "builder.api.sync_component",

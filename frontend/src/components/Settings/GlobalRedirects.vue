@@ -25,7 +25,7 @@
 				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
 				@click="openAdd">
 				<span class="lucide-plus size-4" aria-hidden="true" />
-				Add Redirect
+				{{ __("Add Redirect") }}
 			</button>
 
 			<div
@@ -89,7 +89,7 @@
 							class="size-3.5"
 							:class="advancedOpen ? 'lucide-chevron-down' : 'lucide-chevron-right'"
 							aria-hidden="true" />
-						Advanced
+						{{ __("Advanced") }}
 					</button>
 					<template v-if="advancedOpen">
 						<FormControl
@@ -102,7 +102,7 @@
 						<Switch
 							size="sm"
 							:label="__('Forward query parameters')"
-							description="Append the original query string to the target URL"
+							:description="__('Append the original query string to the target URL')"
 							class="mt-2"
 							:modelValue="draft.forward"
 							@update:modelValue="(val: boolean) => (draft.forward = val)" />
@@ -125,6 +125,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
 import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
@@ -150,9 +151,9 @@ const highlight = (field: Field, value: string) =>
 	field === "to" ? highlightTarget(value) : highlightSource(value);
 
 const examples = [
-	{ from: "/old-page", to: "/new-page", label: "Exact path" },
-	{ from: "/docs", to: "https://example.com/docs", label: "External URL" },
-	{ from: "/blog/(.*)", to: "/news/\\1", label: "Regex capture" },
+	{ from: "/old-page", to: "/new-page", label: __("Exact path") },
+	{ from: "/docs", to: "https://example.com/docs", label: __("External URL") },
+	{ from: "/blog/(.*)", to: "/news/\\1", label: __("Regex capture") },
 ];
 
 const searchQuery = ref("");
@@ -268,7 +269,7 @@ const deleteRedirect = async (id: string) => {
 	const row = rows.value.find((r) => r.id === id);
 	const message = row
 		? `Are you sure you want to delete the redirect from "${row.from}" to "${row.to}"?`
-		: "Are you sure you want to delete this redirect?";
+		: __("Are you sure you want to delete this redirect?");
 	if (!(await confirm(message))) return;
 
 	const index = findIndex(id);

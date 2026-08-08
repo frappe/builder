@@ -6,8 +6,8 @@
 		:label="__('Direction')"
 		v-if="blockController.isFlex()"
 		:options="[
-			{ label: 'Horizontal', value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
-			{ label: 'Vertical', value: 'column', icon: 'lucide-arrow-down', hideLabel: true },
+			{ label: __('Horizontal'), value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
+			{ label: __('Vertical'), value: 'column', icon: 'lucide-arrow-down', hideLabel: true },
 		]"></StylePropertyControl>
 	<StylePropertyControl
 		propertyKey="alignItems"
@@ -21,9 +21,9 @@
 		type="select"
 		:label="__('Distribution')"
 		:options="[
-			{ label: 'Space Between', value: 'space-between' },
-			{ label: 'Space Around', value: 'space-around' },
-			{ label: 'Space Evenly', value: 'space-evenly' },
+			{ label: __('Space Between'), value: 'space-between' },
+			{ label: __('Space Around'), value: 'space-around' },
+			{ label: __('Space Evenly'), value: 'space-evenly' },
 		]" />
 	<SplitPropertyControl v-if="blockController.isFlex()" v-bind="gapProps" />
 	<StylePropertyControl
@@ -32,8 +32,8 @@
 		:label="__('Wrap')"
 		v-if="blockController.isFlex()"
 		:options="[
-			{ label: 'No Wrap', value: 'nowrap' },
-			{ label: 'Wrap', value: 'wrap' },
+			{ label: __('No Wrap'), value: 'nowrap' },
+			{ label: __('Wrap'), value: 'wrap' },
 		]"
 		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
@@ -42,8 +42,8 @@
 			propertyKey="flexGrow"
 			:component="OptionToggle"
 			:options="[
-				{ label: 'Yes', value: 1 },
-				{ label: 'No', value: 0 },
+				{ label: __('Yes'), value: 1 },
+				{ label: __('No'), value: 0 },
 			]"
 			:defaultValue="0" />
 		<StylePropertyControl
@@ -51,8 +51,8 @@
 			propertyKey="flexShrink"
 			:component="OptionToggle"
 			:options="[
-				{ label: 'Yes', value: 1 },
-				{ label: 'No', value: 0 },
+				{ label: __('Yes'), value: 1 },
+				{ label: __('No'), value: 0 },
 			]"
 			:defaultValue="1" />
 		<StylePropertyControl
@@ -66,6 +66,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";

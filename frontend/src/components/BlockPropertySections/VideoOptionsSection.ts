@@ -3,6 +3,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
+import { __ } from "@/translation";
 
 const videoOptionsSectionProperties = [
 	{
@@ -11,7 +12,7 @@ const videoOptionsSectionProperties = [
 			return {
 				component: InlineInput,
 				propertyKey: "src",
-				label: "Video URL",
+				label: __("Video URL"),
 				allowDynamicValue: true,
 				dynamicValueFilterOptions: {
 					excludeOwnProps: true,
@@ -26,7 +27,7 @@ const videoOptionsSectionProperties = [
 			return {
 				component: ImageUploadInput,
 				propertyKey: "poster",
-				label: "Poster",
+				label: __("Poster"),
 			};
 		},
 		searchKeyWords: "Poster, Image, Thumbnail, Preview",
@@ -37,10 +38,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "controls",
-				label: "Controls",
+				label: __("Controls"),
 				options: [
-					{ label: "Show", value: "true" },
-					{ label: "Hide", value: "false" },
+					{ label: __("Show"), value: "true" },
+					{ label: __("Hide"), value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("controls") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("controls"),
@@ -54,10 +55,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "autoplay",
-				label: "Autoplay",
+				label: __("Autoplay"),
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: __("Yes"), value: "true" },
+					{ label: __("No"), value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("autoplay") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("autoplay"),
@@ -71,10 +72,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "muted",
-				label: "Muted",
+				label: __("Muted"),
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: __("Yes"), value: "true" },
+					{ label: __("No"), value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("muted") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("muted"),
@@ -88,10 +89,10 @@ const videoOptionsSectionProperties = [
 			return {
 				component: OptionToggle,
 				propertyKey: "loop",
-				label: "Loop",
+				label: __("Loop"),
 				options: [
-					{ label: "Yes", value: "true" },
-					{ label: "No", value: "false" },
+					{ label: __("Yes"), value: "true" },
+					{ label: __("No"), value: "false" },
 				],
 				getModelValue: () => (blockController.getAttribute("loop") === "" ? "true" : "false"),
 				setModelValue: () => blockController.toggleAttribute("loop"),
@@ -102,7 +103,7 @@ const videoOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Video Options",
+	name: __("Video Options"),
 	properties: videoOptionsSectionProperties,
 	condition: () => blockController.isVideo(),
 };

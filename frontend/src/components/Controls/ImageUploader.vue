@@ -10,7 +10,7 @@
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
 			<div class="flex items-end gap-2">
 				<Button @click="openFileSelector">
-					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
+					{{ uploading ? `Uploading ${progress}%` : image_url ? __("Change") : __("Upload") }}
 				</Button>
 				<Button v-if="image_url" @click="$emit('remove')">{{ __("Remove") }}</Button>
 			</div>
@@ -18,6 +18,7 @@
 	</FileUploader>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { FileUploader } from "frappe-ui";
 const prop = withDefaults(
 	defineProps<{

@@ -51,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 
@@ -102,8 +103,8 @@ const COMPONENT_MAPPING = {
 } as const;
 
 const TOGGLE_OPTIONS: { label: string; value: string }[] = [
-	{ label: "Yes", value: "true" },
-	{ label: "No", value: "false" },
+	{ label: __("Yes"), value: "true" },
+	{ label: __("No"), value: "false" },
 ];
 
 const label = ref(props.propDetails?.label ?? "");
@@ -163,14 +164,14 @@ function getInitialDependencies() {
 
 function getStandardPropTypes() {
 	return [
-		{ label: "String", value: "string" },
-		{ label: "Number", value: "number" },
-		{ label: "Boolean", value: "boolean" },
-		{ label: "Select", value: "select" },
-		{ label: "Array", value: "array" },
-		{ label: "Object", value: "object" },
-		{ label: "Image", value: "image" },
-		{ label: "Color", value: "color" },
+		{ label: __("String"), value: "string" },
+		{ label: __("Number"), value: "number" },
+		{ label: __("Boolean"), value: "boolean" },
+		{ label: __("Select"), value: "select" },
+		{ label: __("Array"), value: "array" },
+		{ label: __("Object"), value: "object" },
+		{ label: __("Image"), value: "image" },
+		{ label: __("Color"), value: "color" },
 	];
 }
 

@@ -43,7 +43,7 @@
 			</div>
 			<div class="flex gap-2">
 				<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
-					Published
+					{{ __("Published") }}
 				</Badge>
 				<Avatar
 					:shape="'circle'"
@@ -66,6 +66,7 @@
 	</router-link>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";

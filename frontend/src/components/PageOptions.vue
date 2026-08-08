@@ -12,7 +12,7 @@
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px] [&>p]:text-p-xs"
 				:label="__('Route')"
-				description="The URL path for this page. For variables, use colon (e.g. /users/:id)"
+				:description="__('The URL path for this page. For variables, use colon (e.g. /users/:id)')"
 				:modelValue="pageStore.activePage?.route"
 				:disabled="builderStore.readOnlyMode"
 				:hideClearButton="true"

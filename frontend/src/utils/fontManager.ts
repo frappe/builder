@@ -1,6 +1,7 @@
 import userFont from "@/data/userFonts";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { shallowRef } from "vue";
+import { __ } from "@/translation";
 
 interface FontListItem {
 	family: string;
@@ -133,7 +134,7 @@ export function getFontWeightOptions(font: string): WeightOption[] {
 	loadFontList();
 	const family = font ? resolveFontToken(font) : font;
 	const fontObj = family && fontListItems.value.find((f) => f.family === family);
-	if (!fontObj) return [{ value: "400", label: "Regular" }];
+	if (!fontObj) return [{ value: "400", label: __("Regular") }];
 
 	return fontObj.variants
 		.filter((v) => !v.includes("italic"))

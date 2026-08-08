@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
@@ -301,8 +302,8 @@ provide("showShortcuts", () => {
 useShortcut([
 	{
 		key: " ",
-		description: "Hold for move mode",
-		group: "Tools",
+		description: __("Hold for move mode"),
+		group: __("Tools"),
 		handler: () => {
 			if (!canvasStore.editableBlock) {
 				builderStore.mode = "move";
@@ -312,8 +313,8 @@ useShortcut([
 	},
 	{
 		key: "?",
-		description: "Show keyboard shortcuts",
-		group: "General",
+		description: __("Show keyboard shortcuts"),
+		group: __("General"),
 		handler: () => {
 			shortcutsModalOpen.value = true;
 		},
@@ -321,8 +322,8 @@ useShortcut([
 	{
 		key: "i",
 		ctrl: true,
-		description: "Edit block with AI",
-		group: "Edit",
+		description: __("Edit block with AI"),
+		group: __("Edit"),
 		condition: () =>
 			builderStore.isAIEnabled &&
 			!blockController.isRoot() &&
@@ -339,8 +340,8 @@ useShortcut([
 		key: "d",
 		ctrl: true,
 		shift: true,
-		description: "Delete Page",
-		group: "General",
+		description: __("Delete Page"),
+		group: __("General"),
 		handler: () => {
 			if (pageStore.activePage && !pageStore.activePage.is_standard) {
 				pageStore.deletePage(pageStore.activePage).then(() => {

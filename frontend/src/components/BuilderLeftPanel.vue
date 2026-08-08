@@ -81,6 +81,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import TokenManager from "@/components/Modals/TokenManager.vue";
@@ -122,27 +123,27 @@ const route = useRoute();
 
 const leftPanelOptions = [
 	{
-		label: "Insert",
+		label: __("Insert"),
 		value: "Blocks",
 		icon: "lucide-plus",
 	},
 	{
-		label: "Layers",
+		label: __("Layers"),
 		value: "Layers",
 		icon: LayersIcon,
 	},
 	{
-		label: "Components",
+		label: __("Components"),
 		value: "Assets",
 		icon: "lucide-box",
 	},
 	{
-		label: "Code",
+		label: __("Code"),
 		value: "Code",
 		icon: "lucide-code",
 	},
 	{
-		label: "Design Tokens",
+		label: __("Design Tokens"),
 		value: "variables",
 		icon: "lucide-aperture",
 	},

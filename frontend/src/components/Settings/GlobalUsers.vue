@@ -73,7 +73,7 @@
 		<Dialog
 			v-model="showInviteDialog"
 			:title="__('Invite Users')"
-			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			:actions="[{ label: __('Send Invitation'), variant: 'solid', onClick: sendInvites }]">
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"

@@ -14,7 +14,7 @@
 			<Input
 				type="text"
 				:label="__('Language')"
-				description="Default HTML lang code (e.g., en, es, fr)"
+				:description="__('Default HTML lang code (e.g., en, es, fr)')"
 				placeholder="en"
 				:model-value="builderSettings.doc?.default_language || 'en'"
 				@update:model-value="
@@ -42,7 +42,9 @@
 						@upload="(url: string) => builderStore.updateBuilderSettings('favicon', url)"
 						@remove="() => builderStore.updateBuilderSettings('favicon', '')" />
 					<span class="text-p-sm text-ink-gray-6">
-						Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
+						{{
+							__("Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO")
+						}}
 					</span>
 				</div>
 			</div>
@@ -51,7 +53,7 @@
 		<Switch
 			size="sm"
 			:label="__('Enable View Tracking')"
-			description="Track the number of views on each page of your website"
+			:description="__('Track the number of views on each page of your website')"
 			:model-value="Boolean(websiteSettings.doc?.enable_view_tracking)"
 			@update:model-value="
 				(val: Boolean) => {
@@ -63,7 +65,9 @@
 		<Switch
 			size="sm"
 			:label="__('Auto convert images to WebP')"
-			description="All the images uploaded via Builder will be converted to WebP for better page performance"
+			:description="
+				__('All the images uploaded via Builder will be converted to WebP for better page performance')
+			"
 			:model-value="Boolean(builderSettings.doc?.auto_convert_images_to_webp)"
 			@update:model-value="
 				(val: Boolean) => builderStore.updateBuilderSettings('auto_convert_images_to_webp', val)
@@ -71,7 +75,7 @@
 		<Switch
 			size="sm"
 			:label="__('Disable Auto Dark Mode')"
-			description="Prevent the site from automatically switching to dark mode"
+			:description="__('Prevent the site from automatically switching to dark mode')"
 			:model-value="Boolean(builderSettings.doc?.disable_auto_dark_mode)"
 			@update:model-value="
 				(val: Boolean) => builderStore.updateBuilderSettings('disable_auto_dark_mode', val)
@@ -79,6 +83,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { allWebPages } from "@/data/allWebPages";
 import { builderSettings } from "@/data/builderSettings";
 import { websiteSettings } from "@/data/websiteSettings";

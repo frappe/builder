@@ -2,15 +2,15 @@
 	<div v-if="loading || rows.length">
 		<h3 class="text-lg-medium mb-4 text-ink-gray-7">{{ __("Top Clicks") }}</h3>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-			Loading...
+			{{ __("Loading...") }}
 		</div>
 		<ListView
 			v-else
 			class="!w-auto"
 			:columns="[
-				{ label: 'Target', key: 'label', width: '50%' },
-				{ label: 'Clicks', key: 'clicks', align: 'right' },
-				{ label: 'CTR', key: 'ctr_label', align: 'right' },
+				{ label: __('Target'), key: 'label', width: '50%' },
+				{ label: __('Clicks'), key: 'clicks', align: 'right' },
+				{ label: __('CTR'), key: 'ctr_label', align: 'right' },
 			]"
 			:options="{ selectable: false, emptyState: {}, showTooltip: false, onRowClick: highlightBlock }"
 			:rows="rows"
@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { findBlockInTree } from "@/utils/block/tree";
 import type { CTRElement } from "@/composables/useAnalytics";
 import useBuilderStore from "@/stores/builderStore";

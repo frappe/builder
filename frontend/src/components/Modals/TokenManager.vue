@@ -346,13 +346,13 @@
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
 						<div class="text-base-medium text-ink-gray-7">
-							{{ searchQuery.trim() ? "No tokens found" : `No ${activeType.toLowerCase()} tokens yet` }}
+							{{ searchQuery.trim() ? __("No tokens found") : `No ${activeType.toLowerCase()} tokens yet` }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
 								searchQuery.trim()
 									? `No tokens match "${searchQuery}". Try a different search term.`
-									: "Click 'Add Token' to create your first one."
+									: __("Click 'Add Token' to create your first one.")
 							}}
 						</div>
 					</div>
@@ -364,7 +364,7 @@
 					v-model="showGroupDialog"
 					:title="__('Move to group')"
 					size="sm"
-					:actions="[{ label: 'Move', variant: 'solid', onClick: confirmGroupDialog }]">
+					:actions="[{ label: __('Move'), variant: 'solid', onClick: confirmGroupDialog }]">
 					<template #default>
 						<Autocomplete
 							:modelValue="moveTargetGroup"
@@ -446,9 +446,9 @@ const tokenCounts = computed<Record<string, number>>(() => {
 	return counts;
 });
 const TYPE_TABS = [
-	{ label: "Colors", value: "Color" },
-	{ label: "Fonts", value: "Font" },
-	{ label: "Dimensions", value: "Dimension" },
+	{ label: __("Colors"), value: "Color" },
+	{ label: __("Fonts"), value: "Font" },
+	{ label: __("Dimensions"), value: "Dimension" },
 ] as const;
 const typeTabOptions = computed(() =>
 	TYPE_TABS.map((tab) => ({
@@ -751,14 +751,14 @@ const deleteSelected = async () => {
 
 const contextMenuOptions = computed(() => {
 	if (isNewRowContextMenu.value) {
-		return [{ label: "Remove", action: () => (newVariable.value = null) }];
+		return [{ label: __("Remove"), action: () => (newVariable.value = null) }];
 	}
 	const count = selectedIds.value.size;
 	const suffix = count > 1 ? ` ${count} variables` : " variable";
 	return [
-		{ label: "Move to group", action: openGroupDialog },
+		{ label: __("Move to group"), action: openGroupDialog },
 		{
-			label: "Remove from group",
+			label: __("Remove from group"),
 			action: () => moveSelectedToGroup(""),
 			condition: () => selectedRows().some((row) => row.group),
 		},

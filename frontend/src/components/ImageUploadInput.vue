@@ -70,10 +70,10 @@
 							:modelValue="imageFit"
 							type="select"
 							:options="[
-								{ label: 'Fit Inside', value: 'contain' },
-								{ label: 'Fill & Crop', value: 'cover' },
-								{ label: 'Stretch', value: 'fill' },
-								{ label: 'Original Size', value: 'none' },
+								{ label: __('Fit Inside'), value: 'contain' },
+								{ label: __('Fill & Crop'), value: 'cover' },
+								{ label: __('Stretch'), value: 'fill' },
+								{ label: __('Original Size'), value: 'none' },
 							]"
 							@update:modelValue="setImageFit" />
 					</div>
@@ -83,6 +83,7 @@
 	</FileUploader>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
@@ -103,7 +104,7 @@ const props = withDefaults(
 	}>(),
 	{
 		labelPosition: "left",
-		placeholder: "Set Image",
+		placeholder: __("Set Image"),
 		imageFit: "contain",
 		popoverOffset: 10,
 	},
