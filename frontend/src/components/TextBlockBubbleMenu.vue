@@ -145,9 +145,9 @@ import Input from "@/components/Controls/Input.vue";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
-import { debouncedWatch } from "@vueuse/core";
+import { useTimeoutFn } from "@vueuse/core";
 import { debounce, toast } from "frappe-ui";
-import { computed, nextTick, onMounted, ref, watch, type Ref } from "vue";
+import { computed, nextTick, ref, watch, type Ref } from "vue";
 
 const props = defineProps<{
 	block: Block;
@@ -158,7 +158,7 @@ const props = defineProps<{
 }>();
 
 const settingLink = ref(false);
-const repositioning = ref(false);
+const isRepositioning = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
@@ -168,12 +168,10 @@ const colorPicker = ref(null) as Ref<InstanceType<typeof ColorPicker> | null>;
 // popover lives inside the menu so tiptap's focus check keeps the menu open
 const menuElement = computed(() => menu.value?.$el);
 
-const isRepositioning = computed(
-	() => props.canvasProps?.panning || props.canvasProps?.scaling || repositioning.value,
-);
+const isCanvasMoving = computed(() => Boolean(props.canvasProps?.panning || props.canvasProps?.scaling));
 
 // the option list is teleported to <body> and cannot follow the menu out of sight
-watch(isRepositioning, (moving) => moving && colorPicker.value?.hideOptions());
+watch(isRepositioning, (hidden) => hidden && colorPicker.value?.hideOptions());
 
 // opening the popover focuses its input, which auto-opens the option list
 const openColorPicker = () => {
@@ -292,20 +290,24 @@ watch(
 	{ immediate: true },
 );
 
-debouncedWatch(
-	() => [props.canvasProps?.panning, props.canvasProps?.scaling],
-	() => {
-		repositioning.value = true;
-		nextTick(() => {
-			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
-			// avoid jitter for ColorPicker position movement - wait a while before showing again
-			setTimeout(async () => {
-				await nextTick();
-				repositioning.value = false;
-			}, 20);
-		});
-	},
+const { start: scheduleShowMenu, stop: cancelShowMenu } = useTimeoutFn(
+	() => (isRepositioning.value = false),
+	20,
 );
+
+const hideMenu = () => {
+	cancelShowMenu();
+	isRepositioning.value = true;
+};
+
+const showMenuAtNewPosition = () => {
+	nextTick(() => {
+		props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
+		scheduleShowMenu();
+	});
+};
+
+watch(isCanvasMoving, (moving) => (moving ? hideMenu() : showMenuAtNewPosition()));
 
 defineExpose({
 	handleKeydown,
