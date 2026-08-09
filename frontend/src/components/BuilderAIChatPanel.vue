@@ -267,11 +267,15 @@
 					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
 					@dragleave="isDragging = false"
 					@drop.prevent="handleDrop">
+					<!-- Grows with the prompt (see autoGrow) between min-h and max-h; past
+					     that it scrolls. The suggestion pills prefill a paragraph, so a
+					     fixed four rows meant the brief you're about to send was mostly
+					     out of sight. -->
 					<textarea
 						ref="promptInput"
 						v-model="prompt"
-						rows="4"
-						class="w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						rows="1"
+						class="no-scrollbar max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
 						placeholder="Ask to create or edit this page..."
 						@keydown.meta.enter="submitPrompt"
@@ -362,7 +366,7 @@ import { renderMarkdown } from "@/components/ai/markdown";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
@@ -564,6 +568,18 @@ function useSuggestion(suggestion: Suggestion) {
 	prompt.value = suggestion.prompt;
 	promptInput.value?.focus();
 }
+
+/** Size the box to its content. Reset to auto first — scrollHeight only ever
+ * grows while an explicit height is set, so without it the box could never
+ * shrink back after the prompt is sent or cleared. The min/max come from the
+ * element's own classes, so the clamp lives in one place. */
+function autoGrow() {
+	const el = promptInput.value;
+	if (!el) return;
+	el.style.height = "auto";
+	el.style.height = `${el.scrollHeight}px`;
+}
+watch(prompt, () => nextTick(autoGrow), { immediate: true });
 
 // --- Turn debugger ---------------------------------------------------------
 const debugOpen = ref(false);
