@@ -56,7 +56,20 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 		});
 }
 
-function loadGoogleFont(font: string, weight?: string): Promise<string> {
+/** Does this family actually carry the weight? The css2 API answers a wght@ it
+ * doesn't have with a 400 — which the browser then reports as a CORS failure,
+ * since an error response carries no allow-origin header. Asking the catalogue
+ * first turns a guaranteed round trip plus retry into a lookup. */
+async function carriesWeight(font: string, weight: string): Promise<boolean> {
+	const items = fontListItems.value.length ? fontListItems.value : await loadFontList().catch(() => []);
+	const entry = items.find((item) => item.family === font);
+	// Unknown family: let the request decide, the retry below still covers it.
+	if (!entry) return true;
+	return entry.variants.includes(weight) || (weight === "400" && entry.variants.includes("regular"));
+}
+
+async function loadGoogleFont(font: string, weight?: string): Promise<string> {
+	if (weight && !(await carriesWeight(font, weight))) weight = undefined;
 	return new Promise<string>((resolve) => {
 		const attempt = (withWeight: boolean) => {
 			const familyParam = withWeight
