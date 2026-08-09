@@ -126,6 +126,24 @@ class TestBuilderPage(FrappeTestCase):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
 
+	def test_blocks_can_be_saved_as_a_list(self):
+		"""Callers that hand over a block tree (paste, AI writes, the API) pass a list.
+		Only insert used to compact it, so updating a page threw "cannot be a list"."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "List Blocks",
+				"blocks": [{"element": "div", "originalElement": "body", "blockId": "root"}],
+			}
+		).insert()
+		self.assertIsInstance(page.blocks, str)
+
+		page.blocks = [{"element": "section", "blockId": "updated"}]
+		page.save()
+		self.assertIsInstance(page.reload().blocks, str)
+		self.assertIn("section", page.blocks)
+		page.delete()
+
 	def test_dynamic_route(self):
 		from frappe.utils import get_html_for_route
 

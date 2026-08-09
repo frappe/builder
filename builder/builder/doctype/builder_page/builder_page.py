@@ -161,6 +161,12 @@ class BuilderPage(WebsiteGenerator):
 		self.set_default_values()
 		capture("builder_page_created", "builder")
 
+	# every write path, not just insert: callers that hand over a block tree
+	# (paste, AI writes, the API) would otherwise fail on update with
+	# "Value for Blocks cannot be a list"
+	def before_save(self):
+		self.process_blocks()
+
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
 			if isinstance(getattr(self, block_type), list):
