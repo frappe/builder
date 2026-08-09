@@ -104,13 +104,6 @@
 				</Button>
 			</div>
 			<div class="flex items-center gap-2">
-				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
-					<Button
-						variant="ghost"
-						@click="openAIGenerator"
-						:icon="SparklesIcon"
-						:disabled="builderStore.readOnlyMode"></Button>
-				</Tooltip>
 				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
 					<Button
 						variant="ghost"
