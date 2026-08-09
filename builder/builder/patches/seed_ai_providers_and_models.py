@@ -30,20 +30,6 @@ MODELS = [
 	},
 	{
 		"provider": "OpenRouter",
-		"model_id": "anthropic/claude-opus-4.8",
-		"label": "Claude Opus 4.8",
-		"max_tokens": 1000000,
-		"supports_vision": 1,
-	},
-	{
-		"provider": "OpenRouter",
-		"model_id": "anthropic/claude-fable-5",
-		"label": "Claude Fable 5",
-		"max_tokens": 1000000,
-		"supports_vision": 1,
-	},
-	{
-		"provider": "OpenRouter",
 		"model_id": "openai/gpt-5.5",
 		"label": "GPT-5.5",
 		"max_tokens": 1050000,

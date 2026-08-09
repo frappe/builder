@@ -33,8 +33,6 @@ PRESETS = [
 		"models": [
 			("anthropic/claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
 			("openai/gpt-5.6-luna", "GPT-5.6 Luna", "Fastest and cheapest of the good ones", True),
-			("anthropic/claude-opus-5", "Claude Opus 5", "Strongest, slowest, priciest", False),
-			("anthropic/claude-fable-5", "Claude Fable 5", "Tuned for writing and design taste", False),
 			("openai/gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier from OpenAI", False),
 			("google/gemini-3.6-flash", "Gemini 3.6 Flash", "Google's latest, fast", False),
 			("nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra", "Free, no credit needed", False),
@@ -57,8 +55,6 @@ PRESETS = [
 		],
 		"models": [
 			("claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
-			("claude-opus-5", "Claude Opus 5", "Strongest, for the hardest builds", False),
-			("claude-fable-5", "Claude Fable 5", "Tuned for writing and design taste", False),
 			("claude-haiku-4.5", "Claude Haiku 4.5", "Fastest and cheapest Claude", False),
 		],
 	},
