@@ -1,7 +1,11 @@
 import type Block from "@/block";
+import userFont from "@/data/userFonts";
+import { registerCustomFont } from "@/utils/fontManager";
 import { call, toast } from "frappe-ui";
 
 const REMOTE_URL = /^https?:\/\//;
+
+export type RemoteFont = { family: string; url: string; weight?: string; style?: string };
 
 /**
  * Blocks pasted from another site keep pointing at that site's images. Pulling them
@@ -30,6 +34,56 @@ export async function importRemoteAssets(blocks: (Block | BlockOptions)[], urls:
 		});
 		return {};
 	}
+}
+
+/**
+ * A webfont left pointing at the site it came from is the asset most likely to fail
+ * outright, since self hosted fonts are rarely served with the CORS headers a cross
+ * origin font needs. Recreating each family as a User Font also puts it in Builder's
+ * font picker. Builder stores one file per family, so only the most ordinary face of
+ * each family comes across and other weights are synthesised.
+ */
+export async function importRemoteFonts(fonts: RemoteFont[]) {
+	if (!fonts.length) return {};
+	toast.loading(`Importing ${fonts.length} fonts...`, { id: "import-fonts" });
+	try {
+		const map = (await call("builder.api.import_remote_fonts", { fonts })) as Record<string, string>;
+		await Promise.all(Object.entries(map).map(([family, url]) => registerCustomFont(family, url)));
+		await userFont.fetch();
+		toast.success(`Imported ${Object.keys(map).length} of ${fonts.length} fonts`, { id: "import-fonts" });
+		return map;
+	} catch (error: any) {
+		toast.error("Could not import fonts", { id: "import-fonts", description: error?.message || "" });
+		return {};
+	}
+}
+
+/**
+ * The copied page carries the original @font-face rules in its head so it renders
+ * before anything is imported. Once a family is a User Font those rules would win on
+ * the published page, since head HTML is written after Builder's own font styles.
+ */
+export function dropImportedFontFaces(headHtml: string, families: string[]): string {
+	if (!headHtml || !families.length) return headHtml;
+	const lower = families.map((family) => family.toLowerCase());
+
+	let html = headHtml.replace(/@font-face\s*{[^}]*}/gi, (rule) => {
+		const family = rule.match(/font-family\s*:\s*["']?([^;"'}]+)/i)?.[1]?.trim().toLowerCase();
+		return family && lower.includes(family) ? "" : rule;
+	});
+
+	// a Google Fonts link for a family that now lives here is just a request to a
+	// third party for a file the site already has
+	html = html.replace(/<link\b[^>]*fonts\.googleapis\.com[^>]*>/gi, (link) => {
+		const families = [...link.matchAll(/family=([^&"'>]+)/gi)].map((match) =>
+			decodeURIComponent(match[1]).split(":")[0].replace(/\+/g, " ").toLowerCase(),
+		);
+		return families.length && families.every((family) => lower.includes(family)) ? "" : link;
+	});
+
+	// whatever is left of a style element that held nothing but those faces
+	html = html.replace(/<style>\s*<\/style>/gi, "");
+	return html.replace(/\n{2,}/g, "\n").trim();
 }
 
 function walk(block: BlockOptions, urls: Set<string>) {

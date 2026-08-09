@@ -134,6 +134,20 @@ export function setFont(font: string | null, weight?: string): Promise<string> {
 	return promise;
 }
 
+/**
+ * Makes a family that has just become a User Font usable straight away. Whatever the
+ * family resolved to before (usually a failed Google Fonts lookup) is cached, so the
+ * old answer has to be dropped or the canvas keeps showing the fallback until reload.
+ */
+export function registerCustomFont(font: string, url: string): Promise<string> {
+	for (const key of [...fontCache.keys()]) {
+		if (key === font || key.startsWith(`${font}:`)) fontCache.delete(key);
+	}
+	const promise = loadCustomFont(font, url);
+	fontCache.set(font, promise);
+	return promise;
+}
+
 export function setFontFromHTML(html: string): void {
 	const matches = html.match(/font-family:\s*([^;"]+)[";]/g) ?? [];
 	matches

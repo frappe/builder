@@ -5,7 +5,13 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderToken } from "@/types/doctypes";
 
 import builderTokens from "@/data/builderToken";
-import { collectRemoteAssets, importRemoteAssets } from "@/utils/importRemoteAssets";
+import {
+	collectRemoteAssets,
+	dropImportedFontFaces,
+	importRemoteAssets,
+	importRemoteFonts,
+	type RemoteFont,
+} from "@/utils/importRemoteAssets";
 import {
 	copyToClipboard,
 	detachBlockFromComponent,
@@ -51,6 +57,7 @@ interface BuilderClipboardData {
 	sourceURL?: string;
 	pageDoc?: BuilderPageSettings;
 	pageScripts?: BuilderClientScript[];
+	fonts?: RemoteFont[];
 }
 
 type BuilderClientScriptDocument = Partial<BuilderClientScript>;
@@ -145,6 +152,12 @@ export function copyBuilderBlocks(
 	copyEntirePage && toast.success("Page Copied");
 }
 
+/**
+ * The "builder-copied-blocks" clipboard type and the shape below are a public
+ * contract: the Copy to Frappe Builder browser extension writes this payload from
+ * any web page (github.com/surajshetty3416/copy-to-builder, see its CONTRACT.md).
+ * Adding keys is safe, renaming or removing the ones it writes is not.
+ */
 export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: string): Promise<void> {
 	const data = e.clipboardData?.getData("builder-copied-blocks") as string;
 	if (!data || !isJSONString(data)) return;
@@ -168,7 +181,7 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 			toast.success("Done", {
 				id: "paste-blocks",
 			});
-		offerRemoteAssetImport(crossSitePaste);
+		offerRemoteAssetImport(crossSitePaste, clipboardData.fonts || []);
 	}
 }
 
@@ -177,15 +190,20 @@ const PENDING_ASSET_IMPORT = "builder:pending-asset-import";
 // Pasting a whole page reloads the editor on the new page, so the offer is left
 // behind for the editor to pick up once it has the page open.
 export function offerPendingAssetImport(pageName: string) {
-	if (sessionStorage.getItem(PENDING_ASSET_IMPORT) !== pageName) return;
+	const pending = sessionStorage.getItem(PENDING_ASSET_IMPORT);
+	if (!pending) return;
 	sessionStorage.removeItem(PENDING_ASSET_IMPORT);
-	offerRemoteAssetImport(true);
+	if (!isJSONString(pending)) return;
+
+	const { page, fonts } = JSON.parse(pending) as { page: string; fonts: RemoteFont[] };
+	if (page !== pageName) return;
+	offerRemoteAssetImport(true, fonts);
 }
 
-// Images in a cross-site paste still load from the site they came from. Pasting
-// stays fast by leaving them alone, and the import is offered right after so the
-// page can be made self contained in one click.
-function offerRemoteAssetImport(crossSitePaste: boolean) {
+// Images and webfonts in a cross-site paste still load from the site they came from.
+// Pasting stays fast by leaving them alone, and the import is offered right after so
+// the page can be made self contained in one click.
+function offerRemoteAssetImport(crossSitePaste: boolean, fonts: RemoteFont[] = []) {
 	if (!crossSitePaste) return;
 	const canvasStore = useCanvasStore();
 	const pageStore = usePageStore();
@@ -193,18 +211,37 @@ function offerRemoteAssetImport(crossSitePaste: boolean) {
 	if (!root) return;
 
 	const urls = collectRemoteAssets([root]);
-	if (!urls.length) return;
+	if (!urls.length && !fonts.length) return;
 
-	toast.info(`${urls.length} ${urls.length === 1 ? "image loads" : "images load"} from the original site`, {
+	const parts = [];
+	if (urls.length) parts.push(`${urls.length} ${urls.length === 1 ? "image" : "images"}`);
+	if (fonts.length) parts.push(`${fonts.length} ${fonts.length === 1 ? "font" : "fonts"}`);
+
+	toast.info(`${parts.join(" and ")} still load from the original site`, {
 		duration: 15000,
 		action: {
 			label: "Import to this site",
 			onClick: async () => {
-				await importRemoteAssets([root], urls);
+				if (urls.length) await importRemoteAssets([root], urls);
+				const imported = fonts.length ? await importRemoteFonts(fonts) : {};
+				await dropRemoteFontFaces(Object.keys(imported));
 				pageStore.savePage();
 			},
 		},
 	});
+}
+
+// With the families now living here, the copied @font-face rules in the page head
+// would override them once published.
+async function dropRemoteFontFaces(families: string[]) {
+	const pageStore = usePageStore();
+	const page = pageStore.activePage as BuilderPage;
+	if (!families.length || !page?.head_html) return;
+
+	const headHtml = dropImportedFontFaces(page.head_html, families);
+	if (headHtml === page.head_html) return;
+	await webPages.setValue.submit({ name: page.name, head_html: headHtml });
+	page.head_html = headHtml;
 }
 
 // Tokens first: their ids are rewritten inside the blocks and inside the component
@@ -246,7 +283,10 @@ async function handlePagePaste(
 					}
 					const newPage = await webPages.insert.submit(clipboardData.pageDoc);
 					if (crossSitePaste) {
-						sessionStorage.setItem(PENDING_ASSET_IMPORT, newPage.name);
+						sessionStorage.setItem(
+							PENDING_ASSET_IMPORT,
+							JSON.stringify({ page: newPage.name, fonts: clipboardData.fonts || [] }),
+						);
 					}
 					window.location.href = `/builder/page/${encodeURIComponent(newPage.name)}`;
 					await pageStore.setPage(newPage.name);
@@ -269,7 +309,7 @@ async function handlePagePaste(
 					nextTick(() => {
 						canvasStore.pushBlocks(clipboardData.blocks, false);
 						pageStore.savePage();
-						offerRemoteAssetImport(crossSitePaste);
+						offerRemoteAssetImport(crossSitePaste, clipboardData.fonts || []);
 					});
 					toast.success("Done", { id: "paste-page" });
 				},
