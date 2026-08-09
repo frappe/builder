@@ -202,6 +202,18 @@ export class AIChatController {
 			// or a refresh mid-generation): replay the buffered stream as live preview.
 			this.syncActiveBuild();
 		});
+
+		// loadSession stands down until AI is known to be on — but that answer only
+		// arrives once ai_setup_state (and Builder Settings) resolve, which is AFTER
+		// mount runs. Without this retry the very first load bails and never comes
+		// back, so the panel settles on an empty "New chat" with the real
+		// conversation still sitting in the database and no history to switch to.
+		watch(
+			() => this.builderStore.isAIEnabled,
+			(enabled) => {
+				if (enabled && !this.sessionId.value) this.loadSession();
+			},
+		);
 	}
 
 	private get handlers(): AIChatHandlers {
