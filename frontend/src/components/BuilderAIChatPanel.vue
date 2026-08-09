@@ -82,27 +82,28 @@
 					class="flex flex-col"
 					:class="message.role === 'user' ? 'items-end' : 'items-start'">
 					<div
-						class="w-fit text-p-sm"
-						:class="[
+						class="w-fit text-p-sm text-ink-gray-8"
+						:class="
 							message.role === 'user'
-								? 'max-w-[88%] rounded-md border px-3 py-2 text-ink-gray-8 shadow-sm'
-								: 'max-w-full',
-							message.role === 'assistant' && message.metadata?.status === 'running'
-								? 'animate-shine'
-								: 'text-ink-gray-8',
-						]">
+								? 'max-w-[88%] rounded-md border px-3 py-2 shadow-sm'
+								: 'w-full max-w-full'
+						">
 						<!-- ui-card messages persist the full card as text (for model replay);
 						     the bubble shows only the short lead-in — the card renders the rest -->
-						<div
-							v-if="message.role === 'assistant'"
-							class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
-							v-html="
-								renderMarkdown(
-									message.metadata?.status === 'ui'
-										? (message.metadata?.text ?? message.content)
-										: message.content,
-								)
-							" />
+						<template v-if="message.role === 'assistant'">
+							<!-- What Bob thought, ran and said on the way to this answer. It
+							     carries the "still working" signal, so the answer text below
+							     never shimmers while it's being read. -->
+							<AITurnTimeline
+								v-if="message.metadata?.steps?.length"
+								:steps="message.metadata.steps"
+								class="mb-2" />
+							<div v-else-if="message.metadata?.status === 'running'" class="animate-shine">Thinking</div>
+							<div
+								v-if="assistantText(message)"
+								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
+								v-html="renderMarkdown(assistantText(message))" />
+						</template>
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
 							     the chat shows only the compact display line. -->
@@ -182,6 +183,8 @@
 							:ui="message.metadata.ui"
 							:interactive="message.id === lastMessageId"
 							:disabled="isSubmitting"
+							:answered-with="replyTo(message)"
+							:lead="message.metadata.text"
 							@submit="selectOption" />
 					</div>
 					<!-- Block + image chips below the bubble -->
@@ -345,6 +348,7 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController, type ChatMessage } from "@/components/AIChatController";
@@ -428,6 +432,21 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
+
+/** The answer itself, without the timeline that led to it. A card message persists
+ * its whole card as text so the model sees it on replay — the chat shows only the
+ * lead-in and lets AIUISpec draw the rest. */
+function assistantText(message: ChatMessage): string {
+	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
+}
+
+/** The reply a card was answered with: the user message right after it. That
+ * message IS the answer (the card submits as an ordinary chat reply), so an
+ * answered card can show what was chosen without storing it twice. */
+function replyTo(message: ChatMessage): string | undefined {
+	const next = messages.value[messages.value.findIndex((m) => m.id === message.id) + 1];
+	return next?.role === "user" ? next.content : undefined;
+}
 
 // --- Empty-state suggestions -------------------------------------------------
 // Fresh page → describe the site to build; page with content → describe a change.

@@ -11,6 +11,20 @@ export interface AIProvider {
 	models: AIModel[];
 }
 
+/** One entry of a turn's timeline (see the event contract in agent/loop.py):
+ * the model thinking, a tool running, or narration it wrote between rounds. */
+export interface AITurnStep {
+	id: number;
+	kind: "thinking" | "tool" | "text";
+	status?: "running" | "done";
+	/** Tool steps: the human line ("Read block: Hero"). */
+	summary?: string;
+	/** Narration, or the model's reasoning when the provider streams it. */
+	text?: string;
+	tool?: string;
+	ms?: number;
+}
+
 export interface ChatMessage {
 	id: string;
 	role: "user" | "assistant";

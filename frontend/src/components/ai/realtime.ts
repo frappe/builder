@@ -10,9 +10,9 @@ export interface AIChatHandlers {
 	onClarify: Handler;
 	onComplete: Handler;
 	onError: Handler;
-	/** Per-tool live activity ({tool, summary, status}) — drives the "what Bob is
-	 * doing right now" status while a round runs its tool calls. */
-	onToolActivity?: Handler;
+	/** One entry of the turn's timeline ({id, kind, status, …}), upserted by id —
+	 * what Bob thought about, ran, and said, in the order it happened. */
+	onStep?: Handler;
 	/** A server tool changed state the canvas loads once at editor start
 	 * (theme variables, page data, page doc) — refetch the named resources. */
 	onRefetch?: Handler;
@@ -32,7 +32,7 @@ function listenerMap(h: AIChatHandlers): Record<string, Handler> {
 		ai_chat_complete: h.onComplete,
 		ai_chat_error: h.onError,
 	};
-	if (h.onToolActivity) map.ai_chat_tool_activity = h.onToolActivity;
+	if (h.onStep) map.ai_chat_step = h.onStep;
 	if (h.onRefetch) map.ai_chat_refetch = h.onRefetch;
 	return map;
 }

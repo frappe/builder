@@ -1,10 +1,42 @@
 <template>
+	<!-- Answered: the card collapses to what was asked and what was chosen. Replaying
+	     a dead form of greyed-out controls tells the user nothing. -->
+	<div
+		v-if="answers.length"
+		class="mt-2 w-full divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+		<div v-for="(item, i) in answers" :key="i" class="px-3 py-2">
+			<p class="text-p-xs leading-snug text-ink-gray-5">{{ item.question }}</p>
+			<p class="mt-0.5 text-p-sm font-medium leading-snug text-ink-gray-8">{{ item.answer }}</p>
+		</div>
+	</div>
+
 	<!-- A card that is ONLY tappable options renders flat: the option tiles are
 	     cards already, and a second wrapper reads as a box-in-a-box. -->
 	<div
+		v-else
 		class="mt-2 w-full space-y-2.5"
 		:class="{ 'rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3': hasChrome }">
-		<template v-for="(el, i) in elements" :key="i">
+		<!-- Several questions in one card walk one at a time: the whole set is asked
+		     in a single turn, and the user still meets them one decision at a time. -->
+		<div v-if="isStepped" class="flex items-center justify-between">
+			<span class="text-p-xs font-medium text-ink-gray-5">{{ stepIndex + 1 }} of {{ steps.length }}</span>
+			<div class="flex items-center gap-1">
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-chevron-left"
+					:disabled="stepIndex === 0 || !interactive || disabled"
+					@click="goBack" />
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-chevron-right"
+					:disabled="isLastStep || !interactive || disabled"
+					@click="goNext" />
+			</div>
+		</div>
+
+		<template v-for="{ el, i } in visibleElements" :key="i">
 			<!-- heading -->
 			<p v-if="el.kind === 'heading'" class="text-p-sm font-semibold leading-snug text-ink-gray-8">
 				{{ el.text }}
@@ -48,42 +80,6 @@
 				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
 			</figure>
 
-			<!-- inline svg figure. Fixed height, not max-height: tall figures (plan
-			     wireframes) scale down to fit instead of being cropped mid-page. -->
-			<figure v-else-if="el.kind === 'svg' && el.svg" class="m-0">
-				<div
-					class="ai-sketch h-64 w-full overflow-hidden rounded border border-outline-gray-2"
-					v-html="sanitizeSvg(el.svg)" />
-				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
-			</figure>
-
-			<!-- mock: a deterministic mini-page rendered from plan data (sections,
-			     palette, fonts) — replaces the model-drawn SVG strip AND the section
-			     list on plan cards. Real fonts, real colors, readable section names. -->
-			<div
-				v-else-if="el.kind === 'mock' && el.sections?.length"
-				class="w-full overflow-hidden rounded-md border border-outline-gray-2">
-				<div
-					v-for="(section, j) in el.sections.slice(0, 8)"
-					:key="j"
-					class="px-3"
-					:class="j === 0 ? 'py-5' : 'py-2.5'"
-					:style="{ backgroundColor: safeColor(section.bg), color: safeColor(section.ink) }">
-					<p
-						class="m-0 truncate leading-tight"
-						:class="j === 0 ? 'text-base font-bold' : 'text-xs font-semibold'"
-						:style="{ fontFamily: el.fonts?.heading }">
-						{{ section.headline || section.name }}
-					</p>
-					<p
-						v-if="section.detail"
-						class="m-0 mt-0.5 truncate text-[11px] leading-snug opacity-75"
-						:style="{ fontFamily: el.fonts?.body }">
-						{{ section.detail }}
-					</p>
-				</div>
-			</div>
-
 			<!-- divider -->
 			<hr v-else-if="el.kind === 'divider'" class="border-outline-gray-1" />
 
@@ -114,14 +110,8 @@
 							class="h-24 w-full rounded border border-black/10 object-cover"
 							loading="lazy"
 							alt="" />
-						<!-- minimal layout sketch: the model draws an abstract wireframe SVG.
-						     The sketch already carries the option's palette, so no swatch strip. -->
 						<span
-							v-else-if="option.svg"
-							class="ai-sketch h-20 w-full overflow-hidden rounded border border-black/10"
-							v-html="sanitizeSvg(option.svg)" />
-						<span
-							v-else-if="option.colors?.length && !option.font"
+							v-else-if="option.colors?.length"
 							class="flex shrink-0 overflow-hidden rounded border border-black/10">
 							<span
 								v-for="color in option.colors.slice(0, 5)"
@@ -129,37 +119,10 @@
 								class="size-3.5"
 								:style="{ backgroundColor: color }" />
 						</span>
-						<!-- Full type specimen (loaded on render via fontManager). On a pure
-						     typography option the fonts speak for themselves; when the model
-						     mixes a specimen onto a visual option, the label must survive. -->
-						<template v-if="option.font?.heading">
-							<span
-								v-if="option.label && (option.svg || option.image)"
-								class="text-p-sm font-medium leading-snug text-ink-gray-8">
-								{{ option.label }}
-							</span>
-							<span
-								class="text-2xl leading-tight text-ink-gray-9"
-								:style="{ fontFamily: option.font.heading, fontWeight: 700 }">
-								{{ option.font.heading }}
-							</span>
-							<span
-								v-if="option.font.body"
-								class="text-p-sm leading-snug text-ink-gray-7"
-								:style="{ fontFamily: option.font.body }">
-								{{ option.font.body }} · The quick brown fox jumps over the lazy dog. 0123456789
-							</span>
-						</template>
-						<template v-else>
-							<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
-							<!-- A sketch option is chosen on looks — the description only reaches
-							     the model (spec + tap reply), not the eye. -->
-							<span
-								v-if="option.description && !option.svg"
-								class="line-clamp-3 text-xs leading-snug text-ink-gray-5">
-								{{ option.description }}
-							</span>
-						</template>
+						<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
+						<span v-if="option.description" class="line-clamp-3 text-p-xs leading-snug text-ink-gray-5">
+							{{ option.description }}
+						</span>
 					</button>
 				</div>
 			</div>
@@ -242,14 +205,23 @@
 				</Button>
 			</div>
 		</template>
-		<!-- A waiting card with nothing tappable strands the user (e.g. a plan the
+		<!-- Stepping forward is the only control a mid-card step needs; the model's
+		     own actions row belongs to the last step and renders in the loop above. -->
+		<Button
+			v-if="isStepped && !isLastStep"
+			variant="subtle"
+			:disabled="!interactive || disabled"
+			@click="goNext">
+			Next
+		</Button>
+		<!-- A waiting card with nothing tappable strands the user (e.g. a form the
 		     model forgot to put buttons on) — give it a default way forward. -->
 		<div v-if="interactive && !hasInteractiveAtoms" class="flex gap-2 pt-0.5">
 			<Button size="xs" variant="solid" :disabled="disabled" @click="submitCollected('Looks good, go ahead')">
 				Looks good, go ahead
 			</Button>
 		</div>
-		<p v-if="interactive && hasChoices" class="text-xs text-ink-gray-4">
+		<p v-if="interactive && hasChoices && !isStepped" class="text-xs text-ink-gray-4">
 			Or describe something different below
 		</p>
 	</div>
@@ -257,10 +229,8 @@
 
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
-import { setFont } from "@/utils/fontManager";
-import DOMPurify from "dompurify";
 import { Button, FileUploader, FormControl } from "frappe-ui";
-import { computed, reactive, watchEffect } from "vue";
+import { computed, reactive, ref, watchEffect } from "vue";
 
 /** Generic renderer for the agent's `present_ui` cards. The agent composes a
  * card from atoms (heading/text/list/swatches/image/choices/input/actions);
@@ -274,6 +244,13 @@ const props = defineProps<{
 	ui: UIElement[];
 	interactive: boolean;
 	disabled?: boolean;
+	/** The reply this card was answered with, once it has been. submitCollected
+	 * writes "Question: answer" lines, so the card can show what was chosen
+	 * without the answers needing to be stored a second time. */
+	answeredWith?: string;
+	/** The card's lead-in — the question the model wrote above the controls. It
+	 * names the first question when that atom carries no label of its own. */
+	lead?: string;
 }>();
 
 /** `reply` is the full text the model receives; `display` is the compact line
@@ -287,7 +264,94 @@ const hasChoices = computed(() => elements.value.some((el) => el.kind === "choic
 // Only choice-less cards (pure forms, plans) get the wrapper box.
 const hasChrome = computed(() => !hasChoices.value);
 
+// --- steps -------------------------------------------------------------------
+// The agent asks everything it needs in ONE card (one turn instead of four), and
+// the card walks the user through it a question at a time.
+
+// What starts a new step. `upload` never does: it arrives as the "or your own"
+// escape hatch beneath a choices group and belongs to that same question.
+const QUESTION_KINDS = new Set(["choices", "input", "color_input"]);
+
+/** Element indices grouped into steps. Each step is one question plus whatever
+ * introduces or decorates it; anything trailing the last question (the actions
+ * row) joins the final step, so the card always ends on its submit button. */
+const steps = computed<number[][]>(() => {
+	const out: number[][] = [];
+	let pending: number[] = [];
+	elements.value.forEach((el, i) => {
+		pending.push(i);
+		// An unlabelled input straight after a question is that question's escape
+		// hatch ("or paste a link"), not a question of its own.
+		const escapeHatch = el.kind === "input" && !el.label && !consumedAsLabel(i - 1);
+		if (QUESTION_KINDS.has(el.kind) && !(escapeHatch && out.length)) {
+			out.push(pending);
+			pending = [];
+		}
+	});
+	if (pending.length) {
+		if (out.length) out[out.length - 1].push(...pending);
+		else out.push(pending);
+	}
+	return out;
+});
+
+const stepIndex = ref(0);
+const isStepped = computed(() => steps.value.length > 1 && props.interactive && !props.answeredWith);
+const isLastStep = computed(() => stepIndex.value >= steps.value.length - 1);
+
+/** The atoms on screen right now — every atom when the card isn't stepped. */
+const visibleElements = computed(() => {
+	const indices = isStepped.value
+		? steps.value[Math.min(stepIndex.value, steps.value.length - 1)] || []
+		: elements.value.map((_, i) => i);
+	return indices.map((i) => ({ el: elements.value[i], i }));
+});
+
+function goNext() {
+	if (isLastStep.value) return;
+	stepIndex.value += 1;
+}
+
+function goBack() {
+	if (stepIndex.value > 0) stepIndex.value -= 1;
+}
+
 const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions", "color_input"]);
+
+/** What was asked and what came back, once the card is answered. The reply was
+ * built from the same labels the card renders, so pairing them up is a lookup —
+ * there is no second copy of the answers to keep in sync, and it survives a
+ * reload because the reply is just the next message in the chat. */
+const answers = computed<{ question: string; answer: string }[]>(() => {
+	const reply = props.answeredWith?.trim();
+	if (!reply) return [];
+	const questions = elements.value
+		.map((el, i) => ({ el, i }))
+		.filter(({ el }) => INTERACTIVE_KINDS.has(el.kind) && el.kind !== "actions");
+	const replied = new Map<string, string>();
+	for (const line of reply.split("\n")) {
+		const at = line.indexOf(":");
+		if (at > 0) replied.set(line.slice(0, at).trim(), line.slice(at + 1).trim());
+	}
+	const out = questions
+		.map(({ el, i }) => ({
+			question: atomLabel(i, el),
+			// "(suggested)" marks a preset the user left alone — it tells the model how
+			// much latitude it has, and means nothing to the person reading it back.
+			answer: (replied.get(atomLabel(i, el)) || "").replace(/\s*\(suggested\)/g, ""),
+		}))
+		.filter((item) => item.question && item.answer);
+	if (out.length) return out;
+	// A lone tappable question submits the option itself ("Poster Wall: bold…"),
+	// not a labelled line — the answer is what comes before the colon.
+	if (questions.length === 1) {
+		const first = reply.split("\n")[0];
+		const answer = (first.includes(":") ? first.slice(0, first.indexOf(":")) : first).trim();
+		const question = atomLabel(questions[0].i, questions[0].el);
+		if (question && answer) return [{ question, answer }];
+	}
+	return [];
+});
 // A choices group with zero options renders nothing tappable — it must not
 // count as interactive, or it suppresses the fallback button and dead-ends the card.
 const interactiveAtoms = computed(() =>
@@ -323,23 +387,6 @@ function controlLabel(i: number, el: UIElement): string {
 	if (el.label) return String(el.label);
 	return consumedAsLabel(i - 1) ? String(elements.value[i - 1].text || "") : "";
 }
-
-// Load the Google Fonts referenced by option specimens and plan mocks (cached
-// in fontManager, so re-renders are free). Heading fonts also need their bold face.
-watchEffect(() => {
-	for (const el of elements.value) {
-		if (el.kind === "mock") {
-			if (el.fonts?.heading) setFont(el.fonts.heading, "700");
-			if (el.fonts?.body) setFont(el.fonts.body);
-			continue;
-		}
-		if (el.kind !== "choices") continue;
-		for (const option of el.options || []) {
-			if (option?.font?.heading) setFont(option.font.heading, "700");
-			if (option?.font?.body) setFont(option.font.body);
-		}
-	}
-});
 
 /** Only plain CSS color literals reach inline styles — a url(...) or var() from
  * the model must not become a style injection vector. */
@@ -419,6 +466,9 @@ function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option:
 		// Submitting on tap here silently threw away every other answer on the card.
 		selections[elIndex].clear();
 		selections[elIndex].add(optIndex);
+		// Picking IS the answer to a stepped question, so move straight on rather
+		// than making the user confirm a choice they can still step back and change.
+		if (isStepped.value && !isLastStep.value) goNext();
 		return;
 	}
 	selections[elIndex].has(optIndex)
@@ -427,12 +477,17 @@ function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option:
 }
 
 /** The question a choices/input atom answers: its own label, or the text atom
- * right above it (the model often writes the question as a separate line). */
+ * right above it (the model often writes the question as a separate line), or —
+ * for the first question on the card — the lead-in the model wrote above it.
+ * Every answer is keyed by this, so a question with no name anywhere can't be
+ * paired with its answer and won't appear in the answered summary. */
 function atomLabel(i: number, el: UIElement): string {
 	const label = controlLabel(i, el);
 	if (label) return label;
 	const prev = elements.value[i - 1];
-	return prev?.kind === "text" || prev?.kind === "heading" ? String(prev.text || "") : "";
+	if (prev?.kind === "text" || prev?.kind === "heading") return String(prev.text || "");
+	const first = elements.value.findIndex((e) => INTERACTIVE_KINDS.has(e.kind) && e.kind !== "actions");
+	return i === first ? String(props.lead || "") : "";
 }
 
 /** Compose one plain-text reply from the clicked action + everything collected.
@@ -475,8 +530,11 @@ function submitCollected(actionLabel?: string) {
 				// meant it (never a random spread): "Brand: #C4552D, Background: #F4EFE8".
 				// Untouched presets carry "(suggested)" so the model keeps creative
 				// latitude on them while treating user-picked slots as law.
+				// "<question>: Brand: #C4552D, Background: #F4EFE8" — the leading label
+				// keys it to its question (everything after the FIRST colon is the
+				// answer), and the role→hex pairs read the same to the model as ever.
 				lines.push(
-					`Colours — ${picked
+					`${atomLabel(i, el) || "Colours"}: ${picked
 						.map((s) => `${s.label}: ${s.hex}${s.suggested ? " (suggested)" : ""}`)
 						.join(", ")}`,
 				);
@@ -493,19 +551,4 @@ function safeSrc(src: unknown): boolean {
 	if (typeof src !== "string" || !src) return false;
 	return src.startsWith("/") || src.startsWith("https://");
 }
-
-/** Model-drawn sketches are untrusted markup: strip everything but plain SVG. */
-function sanitizeSvg(svg: unknown): string {
-	if (typeof svg !== "string") return "";
-	return DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
-}
 </script>
-
-<style scoped>
-/* Sketch SVGs arrive with a viewBox but arbitrary width/height — scale to the box. */
-.ai-sketch :deep(svg) {
-	display: block;
-	width: 100%;
-	height: 100%;
-}
-</style>

@@ -195,17 +195,6 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	]
 	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
 	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))
-	# The approved wireframes (plan strip + chosen layout sketch) as plain SVG text.
-	# Cards replay as text where svg degrades to '[sketch]', so without this the
-	# generator never sees the composition the user actually approved.
-	if svgs := AISession.collect_design_svgs(ctx.session_id):
-		messages.append(
-			{
-				"role": "user",
-				"content": "Approved wireframes (abstract layout sketches — match this composition and "
-				"rhythm, not the literal shapes):\n" + "\n".join(svgs),
-			}
-		)
 	# The photos this turn actually found. Without them the generator can only use
 	# urls the model retyped into the brief, which is why pages came back with one
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.

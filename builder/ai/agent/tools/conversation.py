@@ -27,8 +27,6 @@ ELEMENT_KINDS = frozenset(
 		"list",
 		"swatches",
 		"image",
-		"svg",
-		"mock",
 		"choices",
 		"input",
 		"upload",
@@ -67,8 +65,8 @@ def run_present_ui(ctx, args: dict) -> str | None:
 		)
 	content = render_ui_text(text, ui)
 	metadata = {"status": "ui", "text": text, "ui": ui}
-	if ctx.activity:
-		metadata["activity"] = ctx.activity  # research done before asking survives a reload
+	if timeline := ctx.timeline():
+		metadata["steps"] = timeline  # research done before asking survives a reload
 	# after_commit: the event triggers a session reload on the client, which must
 	# see this message already in the DB.
 	AISession.try_append_message(
@@ -127,46 +125,17 @@ def sanitize_color_slots(colors) -> list[dict]:
 
 def sanitize_option(option) -> dict | None:
 	"""Normalize decorations to the shapes the renderer expects, dropping what
-	can't be salvaged (models emit font as a dict, a 'Heading + Body' string, or
-	even a bare number — be liberal in what we accept). A bare-string option
-	becomes a plain labelled chip — dropping it would strand the card."""
+	can't be salvaged. A bare-string option becomes a plain labelled chip —
+	dropping it would strand the card."""
 	if isinstance(option, str) and option.strip():
 		return {"label": option.strip()[:120]}
 	if not isinstance(option, dict):
 		return None
-	if "font" in option:
-		font = coerce_font(option.pop("font"))
-		if font:
-			option["font"] = font
-	# A font option without a label (models lean on the specimen) would submit
-	# an empty tap-reply — name it after its pairing.
-	if not option.get("label") and isinstance(option.get("font"), dict):
-		option["label"] = " + ".join(
-			v for v in (option["font"].get("heading"), option["font"].get("body")) if v
-		)
 	if option.get("colors") is not None and not isinstance(option["colors"], list):
 		option.pop("colors")
-	if option.get("svg") is not None and not isinstance(option["svg"], str):
-		option.pop("svg")
 	if option.get("image") is not None and not isinstance(option["image"], str):
 		option.pop("image")
 	return option
-
-
-def coerce_font(font) -> dict | None:
-	"""Accept {heading, body} or a 'Heading + Body' string; None for anything else."""
-	if isinstance(font, dict):
-		pair = {k: font[k] for k in ("heading", "body") if isinstance(font.get(k), str) and font[k].strip()}
-		return pair or None
-	if isinstance(font, str):
-		parts = [p.strip() for p in re.split(r"\s*[+/|]\s*", font) if p.strip()]
-		if not parts:
-			return None
-		pair = {"heading": parts[0]}
-		if len(parts) > 1:
-			pair["body"] = parts[1]
-		return pair
-	return None
 
 
 def render_ui_text(text: str, ui: list[dict]) -> str:
@@ -191,18 +160,6 @@ def render_element_text(el: dict) -> list[str]:
 		return [f"[palette: {colors}]"] if colors else []
 	if kind == "image":
 		return [f"[image: {el.get('src') or ''}]"]
-	if kind == "svg":
-		return [f"[sketch: {el.get('caption')}]"] if el.get("caption") else ["[sketch]"]
-	if kind == "mock":
-		lines = []
-		for section in el.get("sections") or []:
-			name = section.get("headline") or section.get("name") or ""
-			detail = section.get("detail") or ""
-			lines.append(f"- {name} — {detail}" if detail else f"- {name}")
-		fonts = el.get("fonts") or {}
-		if fonts.get("heading") or fonts.get("body"):
-			lines.append(f"[fonts: {fonts.get('heading') or '—'} + {fonts.get('body') or '—'}]")
-		return lines
 	if kind == "choices":
 		return [option_text(o) for o in el.get("options") or []]
 	if kind == "input":
@@ -225,9 +182,6 @@ def option_text(option) -> str:
 	label = option.get("label") or option.get("value") or ""
 	desc = option.get("description") or ""
 	line = f"* {label} — {desc}" if desc else f"* {label}"
-	font = option.get("font")
-	if isinstance(font, dict) and (font.get("heading") or font.get("body")):
-		line += f" [fonts: {font.get('heading') or '—'} + {font.get('body') or '—'}]"
 	if option.get("image"):
 		line += f" [image: {option['image']}]"
 	return line
@@ -261,34 +215,25 @@ present_ui = Tool(
 			"ui": {
 				"type": "array",
 				"description": (
-					"UI elements, rendered in order. The card must be COMPACT: `text` already "
-					"renders above it — never repeat the question as a heading or a choices "
-					"label. Kinds:\n"
+					"UI elements, rendered in order. A card with more than ONE question renders "
+					"as a MULTI-STEP form — one question per step — so give EVERY question atom "
+					"(choices/input/color_input/upload) its own short `label`: it is that step's "
+					"question, and it is what names the answer in the user's reply. The one "
+					"exception is the FIRST question, which `text` already asks. Otherwise keep "
+					"the card COMPACT: `text` renders above it, so never repeat the question as "
+					"a heading. Kinds:\n"
 					"{kind:'heading', text} — bold card heading (for plan titles etc., NEVER a "
 					"restatement of `text`)\n"
 					"{kind:'text', text} — paragraph (line breaks preserved)\n"
 					"{kind:'list', items:[str]} — bulleted list (e.g. plan sections)\n"
 					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
-					"{kind:'svg', svg, caption?} — small inline-SVG figure (sanitized; no scripts)\n"
-					"{kind:'mock', fonts:{heading, body}, sections:[{name, detail?, bg:'#hex', "
-					"ink:'#hex', headline?}]} — a rendered mini-page preview: one band per section "
-					"in its actual background/ink colours, the name (or the first section's real "
-					"headline) set in the real heading font, detail in the body font. THE preview "
-					"for plan cards — it IS the palette, typography and section list in one atom, "
-					"so never pair it with an svg wireframe, swatches, or a duplicate section list\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"svg:'<svg…>'?, font:'Fraunces + DM Sans'?, image:'https://…'?}]} — tappable option cards; "
-					"single-select submits immediately, multi collects. An option's `svg` is a "
-					"MINIMAL layout sketch: abstract wireframe of flat rects/lines in that option's "
-					"palette on its background colour, viewBox='0 0 120 80', no words, <15 shapes — it "
-					"must make the layout difference between options visible at a glance. An option's "
-					"`font` is a STRING: the exact Google Font names of that option's heading and body "
-					"faces joined by ' + ' — the card renders a live type specimen in the real fonts, "
-					"so the user sees the typography they're picking. An option's `image` is a "
-					"photo thumbnail URL (use the `thumb` from search_images) — for letting the "
-					"user pick a hero/section photo; the chosen option's image URL comes back in "
-					"their reply\n"
+					"image:'https://…'?}]} — tappable option cards; single-select submits immediately, "
+					"multi collects. An option's `colors` renders as a small palette strip. An "
+					"option's `image` is a photo thumbnail URL (use the `thumb` from search_images) — "
+					"for letting the user pick a hero/section photo; the chosen option's image URL "
+					"comes back in their reply\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "

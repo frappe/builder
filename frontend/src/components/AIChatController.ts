@@ -2,7 +2,7 @@ import type Block from "@/block";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { ToolDispatcher } from "@/components/ai/toolDispatch";
-import type { AIProvider, ChatMessage } from "@/components/ai/types";
+import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/yaml";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -14,7 +14,14 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 // Re-exported for components that still import these from here.
-export type { AffectedBlock, AffectedScript, AIModel, AIProvider, ChatMessage } from "@/components/ai/types";
+export type {
+	AffectedBlock,
+	AffectedScript,
+	AIModel,
+	AIProvider,
+	AITurnStep,
+	ChatMessage,
+} from "@/components/ai/types";
 
 /**
  * Orchestrates the Builder AI chat: holds UI state, sends each user turn to the
@@ -115,6 +122,8 @@ export class AIChatController {
 	// cancel), the preview is dead weight and the canvas must resync to the draft.
 	private previewUnconfirmed = false;
 	private readonly summaryContent = ref(""); // accumulates summary chunks
+	/** The in-flight turn's timeline, mirrored onto the pending message as it grows. */
+	private readonly liveSteps = ref<AITurnStep[]>([]);
 	private readonly pendingAssistantId = ref<string | null>(null);
 	private submittedForPageId: string | null = null;
 	// Streaming re-render is throttled: re-parsing + rebuilding the whole block tree
@@ -129,9 +138,7 @@ export class AIChatController {
 	// Every enabled provider's models, in the order the registry returns them —
 	// which providers exist is site configuration (Builder AI Provider), not a
 	// fixed list, so the picker must not name one.
-	readonly currentProviderModels = computed(() =>
-		this.availableModels.value.flatMap((p) => p.models || []),
-	);
+	readonly currentProviderModels = computed(() => this.availableModels.value.flatMap((p) => p.models || []));
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
 	);
@@ -205,7 +212,7 @@ export class AIChatController {
 			onClarify: this.onClarify,
 			onComplete: this.onComplete,
 			onError: this.onError,
-			onToolActivity: this.onToolActivity,
+			onStep: this.onStep,
 			onRefetch: this.onRefetch,
 		};
 	}
@@ -216,6 +223,7 @@ export class AIChatController {
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
+		this.liveSteps.value = [];
 		this.pendingAssistantId.value = null;
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
@@ -286,7 +294,7 @@ export class AIChatController {
 		const session = result as { session_id: string; messages: ChatMessage[] };
 		this.sessionId.value = session.session_id;
 		this.messages.value = (session.messages || []).map(
-			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
+			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
 		);
 		this.loadSessions();
 	}
@@ -321,8 +329,7 @@ export class AIChatController {
 
 	deleteSession = async () => {
 		if (!this.sessionId.value) return;
-		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched.")))
-			return;
+		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
 		await createResource({ url: "builder.ai.api.delete_ai_session" })
 			.submit({ session_id: this.sessionId.value })
 			.catch(() => null);
@@ -360,32 +367,52 @@ export class AIChatController {
 		return !!(data.session_id && this.sessionId.value && data.session_id !== this.sessionId.value);
 	}
 
+	/** The turn's headline status ("Thinking with Claude Sonnet 5"), for the panel
+	 * header only. What the turn is DOING belongs to the timeline now — writing it
+	 * into the bubble as well just says the same thing twice. */
 	onProgress = (data: { message?: string; session_id?: string }) => {
 		if (this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
-		this.replacePendingAssistant(this.progressMessage.value || "Working...", { status: "running" });
-		this.scrollToBottom();
 	};
 
-	/** Live per-tool status: each tool call announces itself ("Set --color-primary",
-	 * "Read block: Hero") as it starts, so a long tool-calling round shows real
-	 * progress instead of a frozen "Thinking…". Only the "running" edge is shown; the
-	 * model's streamed answer, once it begins, takes over the bubble. */
-	onToolActivity = (data: { tool?: string; summary?: string; status?: string; session_id?: string }) => {
-		if (this.isForeignSession(data)) return;
-		if (!data.summary || (data.status && data.status !== "running")) return;
+	/** One timeline entry, upserted by id: the model thinking, a tool running, or the
+	 * narration it wrote before moving on. A "text" step is also the signal that the
+	 * round is over — whatever has been streaming becomes part of the timeline and the
+	 * live answer resets for the next round. */
+	onStep = (data: AITurnStep & { session_id?: string }) => {
+		if (this.isForeignSession(data) || typeof data.id !== "number") return;
 		this.isSubmitting.value = true;
-		this.progressMessage.value = data.summary;
-		// Don't clobber the model's answer text once it has started streaming.
-		if (!this.summaryContent.value) {
-			this.replacePendingAssistant(data.summary, { status: "running" });
+		const { session_id, page_id, ...step } = data as Record<string, any>;
+		if (step.kind === "text") this.summaryContent.value = "";
+		const index = this.liveSteps.value.findIndex((s) => s.id === step.id);
+		if (index === -1) this.liveSteps.value.push(step as AITurnStep);
+		else this.liveSteps.value[index] = { ...this.liveSteps.value[index], ...step };
+		if (step.kind === "tool" && step.summary && step.status === "running") {
+			this.progressMessage.value = step.summary;
 		}
+		this.syncPendingSteps();
 		this.scrollToBottom();
 	};
 
-	onStream = (data: { chunk?: string; kind?: string; session_id?: string; offset?: number }) => {
-		if (!data.chunk) return;
+	/** Mirror the live timeline (and whatever is streaming) onto the pending message,
+	 * so the renderer only ever reads a message — live and reloaded turns take the
+	 * exact same path. */
+	private syncPendingSteps() {
+		this.replacePendingAssistant(this.summaryContent.value || "", {
+			status: "running",
+			steps: [...this.liveSteps.value],
+		});
+	}
+
+	onStream = (data: {
+		chunk?: string;
+		kind?: string;
+		session_id?: string;
+		offset?: number;
+		replace?: boolean;
+	}) => {
+		if (!data.chunk && !data.replace) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
 			// paint its preview, but keep its chat text out of this session.
@@ -395,11 +422,19 @@ export class AIChatController {
 		this.isSubmitting.value = true;
 		if (data.kind === "page_yaml") {
 			this.acceptPageYamlChunk(data);
-		} else {
-			this.summaryContent.value += data.chunk;
-			this.replacePendingAssistant(this.summaryContent.value, { status: "running" });
-			this.scrollToBottom();
+			return;
 		}
+		if (data.kind === "reasoning") {
+			// Reasoning belongs to the thinking step that is currently open.
+			const thinking = [...this.liveSteps.value].reverse().find((s) => s.kind === "thinking");
+			if (thinking) thinking.text = (thinking.text || "") + data.chunk;
+			return;
+		}
+		// `replace` means the server is correcting what it already sent (a guard
+		// rewrote the summary, or a retry is re-sending the round).
+		this.summaryContent.value = data.replace ? data.chunk || "" : this.summaryContent.value + data.chunk;
+		this.syncPendingSteps();
+		this.scrollToBottom();
 	};
 
 	/** A server tool changed state the canvas only loads at editor start. Refetch
@@ -484,6 +519,7 @@ export class AIChatController {
 		this.replacePendingAssistant(this.progressMessage.value, meta);
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
+		this.liveSteps.value = [];
 		this.dispatcher.reset();
 
 		const localMeta = { ...meta };
@@ -532,6 +568,7 @@ export class AIChatController {
 		this.replacePendingAssistant(data.message || "Request failed", { status: "error" });
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
+		this.liveSteps.value = [];
 		await this.loadSession();
 		this.pendingAssistantId.value = null;
 	};
@@ -554,6 +591,7 @@ export class AIChatController {
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
+		this.liveSteps.value = [];
 
 		if (data.pending_action) {
 			this.replacePendingAssistant(data.question || "Confirm this change?", {
@@ -601,7 +639,6 @@ export class AIChatController {
 			toast.error(e?.messages?.[0] || "Could not apply the change");
 		}
 	};
-
 
 	/** Ask the backend to abort the in-flight turn at its next stream chunk.
 	 * Anthropic/OpenRouter stop billing once the stream is closed. The backend's
@@ -664,12 +701,15 @@ export class AIChatController {
 		if (displayText) contextMeta.displayText = displayText;
 
 		const userMessage = buildLocalMessage("user", userText, contextMeta);
-		const assistantMessage = buildLocalMessage("assistant", "Thinking...", { status: "running" });
+		// Empty on purpose: the panel shows a "Thinking" shimmer for a running turn
+		// with no timeline yet, and the first step replaces it a moment later.
+		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
 		this.scrollToBottom();
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
+		this.liveSteps.value = [];
 		this.dispatcher.reset();
 		this.isSubmitting.value = true;
 

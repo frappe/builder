@@ -15,14 +15,22 @@ suffixed with the CHANNEL — the page id for the in-editor chat, or the session
 id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`:
 
     ai_chat_progress       {message}
-    ai_chat_stream         {chunk, kind?}   kind="page_yaml" → live canvas preview;
-                                            absent/"summary" → append to chat text
+    ai_chat_stream         {chunk, kind?, replace?}  kind="page_yaml" → live canvas
+                                            preview; kind="reasoning" → append to the
+                                            open thinking step; absent → append to the
+                                            live answer text. replace=True means this
+                                            chunk REPLACES the live answer (a guard
+                                            rewrote it, or a retry is re-sending).
     ai_chat_tool_batch     {operations: [{tool_name, args}]}
                            (generate_page args carry the expanded {blocks, data_script};
                            add_block args carry block_json — the canvas applies those
                            verbatim so both sides share block ids)
-    ai_chat_tool_activity  {id, tool, summary, status: "running"|"done", image_url?}
-                           (same id emitted twice — running then done; upsert by id)
+    ai_chat_step           {id, kind: "thinking"|"tool"|"text", status: "running"|"done",
+                            summary?, text?, ms?, tool?}
+                           One entry of the turn's timeline; the same id is emitted
+                           twice (running then done), so upsert by id. A "text" step
+                           commits the narration the client has been streaming live
+                           and tells it to clear the live buffer for the next round.
     ai_chat_clarify        {question, ui: [element]}   generic card the agent
                            composed (present_ui); renderer skips unknown element
                            kinds. Confirm-gated actions add {pending_action}.
@@ -442,10 +450,17 @@ class AgentRunner:
 		# Every photo search_images turned up this turn, handed to the generation step
 		# so the page can use any of them without the model retyping urls into a brief.
 		self.found_images: list[dict] = []
-		# Live activity feed: one entry per server-tool call, streamed to the chat as
-		# ai_chat_tool_activity events and persisted on the final message metadata.
-		self.activity: list[dict] = []
-		self.current_activity: dict | None = None
+		# The turn's timeline, streamed to the chat as ai_chat_step events and persisted
+		# on the final message: what the model thought about, the tools it ran, and the
+		# narration it wrote between rounds — in the order they happened.
+		self.steps: list[dict] = []
+		# step id -> monotonic start, so a step can be timed without the clock riding
+		# along into the emitted event and the persisted metadata.
+		self.step_starts: dict[int, float] = {}
+		# What the chat is currently showing as the live answer: the text streamed
+		# since the last round was committed. finish_turn compares against it so a
+		# summary already on screen isn't said twice.
+		self.live_text = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
@@ -716,8 +731,9 @@ class AgentRunner:
 
 	def stream_tool_round(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
 		"""Stream one tool-calling completion. Returns (tool_operations,
-		text_content, raw_tool_calls). Side-effect-free until it returns (see
-		call_tool_llm) — accumulates into locals only, so it is safe to re-run.
+		text_content, raw_tool_calls). Applies nothing (see call_tool_llm) —
+		accumulates into locals only, so it is safe to re-run; the narration it
+		emits is only ever shown, never state a retry could corrupt.
 
 		Tool-call arguments are accumulated by index across chunks.
 		`raw_tool_calls` reconstruct the assistant turn for a follow-up round.
@@ -738,33 +754,61 @@ class AgentRunner:
 		# index -> {"id", "name", "args"}; preserves call order across chunks.
 		acc: dict[int, dict] = {}
 		finish_reason = None
+		# The model is thinking until it emits its first output of any kind. Providers
+		# that stream reasoning fill this step with it; the rest leave it holding just
+		# the latency, which is still the honest answer to "what is it doing?".
+		# A retry re-issues the identical completion, so whatever the failed attempt
+		# streamed has to come off the screen first or the answer arrives doubled.
+		if self.live_text:
+			self.live_text = ""
+			self.emit("stream", chunk="", replace=True)
+		thinking = self.add_step("thinking", status="running")
+		thinking_since: float | None = time.monotonic()
 
-		for chunk in stream:
-			if self.is_cancelled():
-				try:
-					stream.close()
-				except Exception:
-					pass
-				raise CancelledError
-			self.record_usage(chunk)
-			# The final include_usage chunk carries usage but no choices.
-			if not chunk.choices:
-				continue
-			if fr := chunk.choices[0].finish_reason:
-				finish_reason = fr
-			delta = chunk.choices[0].delta
-			if getattr(delta, "content", None):
-				content_parts.append(delta.content)
-			for tc in getattr(delta, "tool_calls", None) or []:
-				idx = tc.index if tc.index is not None else 0
-				entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
-				if tc.id:
-					entry["id"] = tc.id
-				fn = getattr(tc, "function", None)
-				if fn and fn.name:
-					entry["name"] = fn.name
-				if fn and fn.arguments:
-					entry["args"] += fn.arguments
+		try:
+			for chunk in stream:
+				if self.is_cancelled():
+					try:
+						stream.close()
+					except Exception:
+						pass
+					raise CancelledError
+				self.record_usage(chunk)
+				# The final include_usage chunk carries usage but no choices.
+				if not chunk.choices:
+					continue
+				if fr := chunk.choices[0].finish_reason:
+					finish_reason = fr
+				delta = chunk.choices[0].delta
+				content = getattr(delta, "content", None)
+				tool_calls = getattr(delta, "tool_calls", None)
+				if reasoning := getattr(delta, "reasoning_content", None):
+					thinking["text"] = (thinking.get("text") or "") + reasoning
+					self.emit("stream", chunk=reasoning, kind="reasoning")
+				if thinking_since is not None and (content or tool_calls):
+					self.finish_step(thinking, started=thinking_since)
+					thinking_since = None
+				if content:
+					content_parts.append(content)
+					# Stream the model's words as it writes them. A round that turns out
+					# to have called tools commits this as a narration step below; the
+					# last round's text is the turn's answer and stays as the content.
+					self.live_text += content
+					self.emit("stream", chunk=content)
+				for tc in tool_calls or []:
+					idx = tc.index if tc.index is not None else 0
+					entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
+					if tc.id:
+						entry["id"] = tc.id
+					fn = getattr(tc, "function", None)
+					if fn and fn.name:
+						entry["name"] = fn.name
+					if fn and fn.arguments:
+						entry["args"] += fn.arguments
+		finally:
+			# A cancel or a dropped stream must not leave the spinner running forever.
+			if thinking_since is not None:
+				self.finish_step(thinking, started=thinking_since)
 
 		tool_operations: list[dict] = []
 		raw_tool_calls: list[dict] = []
@@ -892,30 +936,56 @@ class AgentRunner:
 		self.pending_state = capture_page_state(page_id)
 		return ""
 
-	# --- live activity feed ------------------------------------------------
+	# --- turn timeline ------------------------------------------------------
+
+	def add_step(self, kind: str, **fields) -> dict:
+		"""Append one timeline entry and stream it. Steps are upserted client-side by
+		id, so a running step is finished by re-emitting the same entry."""
+		step = {"id": len(self.steps), "kind": kind, **fields}
+		self.steps.append(step)
+		self.emit("step", **step)
+		return step
+
+	def finish_step(self, step: dict | None, started: float | None = None, **fields) -> None:
+		if step is None:
+			return
+		step["status"] = "done"
+		if started is not None:
+			step["ms"] = round((time.monotonic() - started) * 1000)
+		step.update(fields)
+		self.emit("step", **step)
+
+	def tool_steps(self) -> list[dict]:
+		return [s for s in self.steps if s.get("kind") == "tool"]
+
+	def timeline(self) -> list[dict]:
+		"""The steps worth keeping on the message. Empty narration steps exist only to
+		tell the client to drop what it streamed, and a thinking step with no reasoning
+		behind it is not worth replaying — on reload it would read as a stall."""
+		return [
+			s
+			for s in self.steps
+			if (s.get("kind") == "tool")
+			or (s.get("kind") == "text" and s.get("text"))
+			or (s.get("kind") == "thinking" and s.get("text"))
+		]
 
 	def begin_activity(self, tool_name: str, args: dict) -> dict | None:
-		entry = None
-		if tool_name not in ACTIVITY_SILENT:
-			entry = {
-				"id": len(self.activity),
-				"tool": tool_name,
-				"summary": activity_summary(tool_name, args, self.tree),
-				"status": "running",
-			}
-			if tool_name in ("generate_page", "preview_page"):
-				entry["page"] = self.page_id
-			self.activity.append(entry)
-			self.current_activity = entry
-			self.emit("tool_activity", **entry)
+		if tool_name in ACTIVITY_SILENT:
+			return None
+		entry = self.add_step(
+			"tool",
+			tool=tool_name,
+			summary=activity_summary(tool_name, args, self.tree),
+			status="running",
+		)
+		self.step_starts[entry["id"]] = time.monotonic()
 		return entry
 
 	def end_activity(self, entry: dict | None) -> None:
 		if entry is None:
 			return
-		entry["status"] = "done"
-		self.current_activity = None
-		self.emit("tool_activity", **entry)
+		self.finish_step(entry, started=self.step_starts.pop(entry["id"], None))
 
 	@staticmethod
 	def describe_operations(operations: list[dict]) -> str:
@@ -1066,16 +1136,20 @@ class AgentRunner:
 				self.emit("tool_batch", operations=[op])
 		return content
 
-	def emit_round_note(self, text: str, applied: list[dict]) -> None:
-		"""Live narration: surface what the model said / did this round, so a long
-		multi-round turn shows real progress instead of a frozen "Applying…"."""
+	def commit_round_text(self, text: str, applied: list[dict]) -> None:
+		"""Close off a tool-calling round's narration. The words were already streamed
+		as they were written; this fixes them in the timeline so the next round starts
+		with a clean slate, and stands in with a description of the ops when the model
+		called tools without saying anything. Emitted even when there is nothing to
+		show — that is what tells the client to drop what it has been streaming (a
+		round whose text turned out to be leaked tool syntax)."""
 		note = (text or "").strip()
 		if looks_like_tool_syntax(note):
 			note = ""
 		if not note and applied:
 			note = self.describe_operations(applied)
-		if note:
-			self.emit("progress", message=note)
+		self.live_text = ""
+		self.add_step("text", status="done", text=note)
 
 	def correction_for(self, summary_text: str) -> str | None:
 		"""A no-tool round that should have been a tool call gets EXACTLY ONE
@@ -1233,9 +1307,10 @@ class AgentRunner:
 				client_ops = [op for op in tool_operations if self.op_kind(op) == "client"]
 				client_results, applied = self.apply_client_ops(client_ops)
 
-				has_terminal = any(self.op_kind(op) == "terminal" for op in tool_operations)
-				if not has_terminal:
-					self.emit_round_note(summary_text, applied)
+				# Committed for a terminal round too: the sentence the model writes
+				# before a card ("I'll settle the direction first…") is part of the
+				# conversation, and present_ui persists the timeline with the card.
+				self.commit_round_text(summary_text, applied)
 
 				messages.append(
 					{"role": "assistant", "content": summary_text or None, "tool_calls": raw_tool_calls}
@@ -1312,18 +1387,18 @@ class AgentRunner:
 			# A soft miss, not a failure: the model may have done real tool work (reads)
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
 			# vanish on reload.
-			logger.warning("Agent returned empty response (no text; activity=%d)", len(self.activity))
+			logger.warning("Agent returned empty response (no text; tools=%d)", len(self.tool_steps()))
 			if self.server_mutations:
 				note = "Done — the steps above were applied (I skipped the write-up)."
-			elif self.activity:
+			elif self.tool_steps():
 				note = (
 					"I gathered that information but didn't write up a reply — ask me again and I'll answer."
 				)
 			else:
 				note = "I came back empty on that one — try rephrasing your request."
 			metadata = {"status": "warning"}
-			if self.activity:
-				metadata["activity"] = self.activity
+			if timeline := self.timeline():
+				metadata["steps"] = timeline
 			AISession.try_append_message(
 				self.session_id, "assistant", note, message_type="status", metadata=metadata
 			)
@@ -1347,23 +1422,21 @@ class AgentRunner:
 		# Block/script edits and generation ops were already emitted incrementally inside
 		# the loop (live canvas progress); nothing more to emit here.
 		generated = any(op["tool_name"] == "generate_page" for op in self.applied_operations)
-		if summary_text:
-			# The model wrote a summary alongside its tool calls — richest, and
-			# free (no extra round trip). Prefer it whenever present.
-			self.emit("stream", chunk=summary_text)
-		elif generated:
-			# Skip a summary call after generation (the YAML arg would bloat its
-			# context); send a fixed nudge instead.
-			summary_text = (
-				"Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
-			)
-			self.emit("stream", chunk=summary_text)
-		else:
-			# Block/script edits with no model text: synthesise the summary from
-			# the ops rather than making a second LLM call. The canvas already
-			# updated from the tool_batch above; this just ends the turn sooner.
-			summary_text = self.describe_operations(self.applied_operations)
-			self.emit("stream", chunk=summary_text)
+		if not summary_text:
+			if generated:
+				# Skip a summary call after generation (the YAML arg would bloat its
+				# context); send a fixed nudge instead.
+				summary_text = "Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
+			else:
+				# Block/script edits with no model text: synthesise the summary from
+				# the ops rather than making a second LLM call. The canvas already
+				# updated from the tool_batch above; this just ends the turn sooner.
+				summary_text = self.describe_operations(self.applied_operations)
+		# The final round's words already reached the chat as they were written. Only
+		# say it again when it is NOT what the user is looking at — a synthesised
+		# summary, or one of the guards above having replaced what the model wrote.
+		if summary_text != self.live_text:
+			self.emit("stream", chunk=summary_text, replace=True)
 
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
 		# doesn't look finished; the user can reply "continue" to resume from here.
@@ -1415,10 +1488,10 @@ class AgentRunner:
 		}
 		if self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
-		if self.activity:
-			# The chat's activity feed (tool lines + screenshots) — rendered live from
-			# tool_activity events, rehydrated from here on a session reload.
-			final_metadata["activity"] = self.activity
+		if timeline := self.timeline():
+			# The turn's timeline — rendered live from step events, rehydrated from
+			# here on a session reload.
+			final_metadata["steps"] = timeline
 		AISession.try_append_message(
 			self.session_id,
 			"assistant",
