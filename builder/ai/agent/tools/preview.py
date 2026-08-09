@@ -20,13 +20,64 @@ logger.setLevel(logging.INFO)
 MAX_PREVIEWS_PER_TURN = 2  # hard cost bound — a screenshot loop can't run away
 MAX_IMAGE_BYTES = 3 * 1024 * 1024  # mirrors BlockCodec.validate_image_data's cap
 PREVIEW_WIDTH = 1280
-PREVIEW_HEIGHT = 2000  # tall enough to review several sections, not just the hero
+# The viewport we capture into. Chromium screenshots the viewport, not the
+# document, so this has to clear a whole generated page — they run 2500-6000px.
+# Whatever the page doesn't fill is blank, and gets trimmed off below.
+CAPTURE_HEIGHT = 8000
+# One attached image per this many pixels of page. NOT one tall image: a vision
+# model shrinks an image to fit its longest edge (~1568px), so a single
+# 1280x6000 capture reaches the model at ~250px wide with every label
+# illegible — which is exactly how a page gets reviewed without being read.
+# At this height a tile lands near 1:1 and the copy stays readable.
+TILE_HEIGHT = 2000
+MAX_TILES = 3
 
 
 def render_page_image(page) -> bytes:
 	from builder.html_preview_image import render
 
-	return render(page.get_preview_html(), width=PREVIEW_WIDTH, height=PREVIEW_HEIGHT)
+	return render(page.get_preview_html(), width=PREVIEW_WIDTH, height=CAPTURE_HEIGHT)
+
+
+# How far a pixel may drift from the background before it counts as content. The
+# tail of a webp capture is NOT one flat colour — lossy compression leaves a
+# couple of levels of drift across a blank band (measured: 245,222,194 at the
+# edge against 243,223,196 across), so an exact match finds "content" everywhere
+# and trims nothing.
+BLANK_TOLERANCE = 16
+
+
+def content_height(im) -> int:
+	"""Where the page actually ends. Everything below is the blank tail of an
+	oversized viewport; measuring it beats guessing a height that either crops a
+	page or pads it with emptiness. A whole-image diff against the trailing
+	background colour, which is a C-speed operation."""
+	from PIL import Image, ImageChops
+
+	background = Image.new("RGB", im.size, im.getpixel((im.width // 2, im.height - 1)))
+	drift = ImageChops.difference(im, background).convert("L")
+	bbox = drift.point(lambda level: 255 if level > BLANK_TOLERANCE else 0).getbbox()
+	return bbox[3] if bbox else im.height
+
+
+def tile_screenshot(image: bytes) -> tuple[list[bytes], bool]:
+	"""Trim the blank tail, then slice the page into readable screenfuls.
+	Returns (tiles, complete) — complete is False when the page ran past
+	MAX_TILES, so the model can be told it hasn't seen the whole thing."""
+	from io import BytesIO
+
+	from PIL import Image
+
+	im = Image.open(BytesIO(image)).convert("RGB")
+	im = im.crop((0, 0, im.width, max(content_height(im), 1)))
+	tiles = []
+	for top in range(0, im.height, TILE_HEIGHT):
+		buffer = BytesIO()
+		im.crop((0, top, im.width, min(top + TILE_HEIGHT, im.height))).save(buffer, "WEBP", quality=80)
+		tiles.append(buffer.getvalue())
+		if len(tiles) == MAX_TILES:
+			break
+	return tiles, len(tiles) * TILE_HEIGHT >= im.height
 
 
 def refresh_page_thumbnail(page) -> None:
@@ -42,13 +93,28 @@ def refresh_page_thumbnail(page) -> None:
 	)
 
 
-def attach_to_model(ctx, page, image: bytes) -> bool:
-	if len(image) > MAX_IMAGE_BYTES:
-		return False
-	data_url = "data:image/webp;base64," + base64.b64encode(image).decode()
-	caption = f"Screenshot of draft page '{page.page_title or page.name}':"
-	ctx.pending_images.append({"caption": caption, "data_url": data_url})
-	return True
+def attach_to_model(ctx, page, image: bytes) -> tuple[int, bool]:
+	"""Attach the page as a run of readable screenfuls, top to bottom. Returns
+	(tiles attached, whether they cover the whole page)."""
+	try:
+		tiles, complete = tile_screenshot(image)
+	except Exception:
+		logger.warning("preview_page: tiling failed, attaching the raw capture", exc_info=True)
+		tiles, complete = [image], True
+	title = page.page_title or page.name
+	attached = 0
+	for index, tile in enumerate(tiles, start=1):
+		if len(tile) > MAX_IMAGE_BYTES:
+			continue
+		where = f" — part {index} of {len(tiles)}, top to bottom" if len(tiles) > 1 else ""
+		ctx.pending_images.append(
+			{
+				"caption": f"Screenshot of draft page '{title}'{where}:",
+				"data_url": "data:image/webp;base64," + base64.b64encode(tile).decode(),
+			}
+		)
+		attached += 1
+	return attached, complete and attached == len(tiles)
 
 
 def run_preview_page(ctx, args: dict) -> str:
@@ -78,11 +144,18 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Screenshot saved as the page's thumbnail, but your selected model can't view "
 			"images — skip the visual check and continue."
 		)
-	attached = attach_to_model(ctx, page, image)
+	attached, complete = attach_to_model(ctx, page, image)
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
+	extent = (
+		f"The page is attached below as {attached} images, top to bottom — review ALL of them."
+		if attached > 1
+		else "Screenshot attached below."
+	)
+	if not complete:
+		extent += " They stop before the end of the page; anything past that you have NOT seen."
 	return (
-		"Screenshot attached below — for YOUR eyes only (the user doesn't see it). Review in "
+		f"{extent} For YOUR eyes only (the user doesn't see it). Review in "
 		"two passes, then act:\n"
 		"1. BREAKAGE: unreadable contrast, accidental overlap, empty sections, a layout that "
 		"clearly collapses.\n"
