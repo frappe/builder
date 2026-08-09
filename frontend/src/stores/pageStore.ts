@@ -5,6 +5,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
+import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
@@ -245,7 +246,9 @@ const usePageStore = defineStore("pageStore", {
 			const targetName = page?.name || this.selectedPage;
 			const targetTitle = page?.page_title || page?.page_name || "this page";
 			const confirmed = await confirm(
-				`Are you sure you want to unpublish "${targetTitle}"? It will no longer be accessible on the website.`,
+				__('Are you sure you want to unpublish "{0}"? It will no longer be accessible on the website.', [
+					targetTitle,
+				]),
 			);
 			if (!confirmed) {
 				return;

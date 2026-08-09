@@ -4,7 +4,7 @@
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<nav class="space-y-0.5">
-				<SidebarItem label="All Pages" :active="!builderStore.activeFolder" @click="setFolderActive('')">
+				<SidebarItem :label="__('All Pages')" :active="!builderStore.activeFolder" @click="setFolderActive('')">
 					<template #prefix><FilesIcon class="size-4" /></template>
 				</SidebarItem>
 				<SidebarItem label="Settings" @click="showSettingsDialog = true">

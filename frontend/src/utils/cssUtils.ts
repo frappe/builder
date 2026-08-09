@@ -220,38 +220,48 @@ function shortenNumber(num: number): string {
 	return shortNum % 1 === 0 ? shortNum.toFixed(0) + unitname : shortNum.toFixed(1) + unitname;
 }
 
-function setBoxSpacing(block: Block, type: "padding" | "margin", value: string) {
-	const props = [type, `${type}Top`, `${type}Right`, `${type}Bottom`, `${type}Left`];
+// Every spacing property is a shorthand backed by longhands that override it per slot.
+// The slots differ (4 box sides vs 2 gap axes) and so do the longhand names, but the
+// read/write logic is identical, so each type just declares its shape here.
+export type SpacingType = "margin" | "padding" | "gap";
+
+const SPACING_PROPERTIES: Record<SpacingType, { longhands: styleProperty[]; slots: ShorthandSlots }> = {
+	margin: { longhands: ["marginTop", "marginRight", "marginBottom", "marginLeft"], slots: 4 },
+	padding: { longhands: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"], slots: 4 },
+	gap: { longhands: ["rowGap", "columnGap"], slots: 2 },
+};
+
+function setSpacing(block: Block, type: SpacingType, value: string) {
+	const { longhands } = SPACING_PROPERTIES[type];
+	const props: styleProperty[] = [type, ...longhands];
 	props.forEach((prop) => block.setStyle(prop, null));
 	const shorthand = value.trim();
 	if (shorthand) block.setStyle(type, shorthand);
 }
 
-function getBoxSpacing(
+function getSpacing(
 	block: Block,
-	type: "padding" | "margin",
+	type: SpacingType,
 	opts?: { nativeOnly?: boolean; cascading?: boolean },
 ): string {
+	const { longhands, slots } = SPACING_PROPERTIES[type];
 	const nativeOnly = opts?.nativeOnly ?? false;
 	const cascading = opts?.cascading ?? false;
 	const baseValue = block.getStyle(type, undefined, nativeOnly, cascading);
 	const base = String(baseValue ?? (nativeOnly && !cascading ? "" : "unset"));
-	const baseParts = expandBoxShorthand(base, base);
-	const top = block.getStyle(`${type}Top`, undefined, nativeOnly, cascading) ?? baseParts[0];
-	const right = block.getStyle(`${type}Right`, undefined, nativeOnly, cascading) ?? baseParts[1];
-	const bottom = block.getStyle(`${type}Bottom`, undefined, nativeOnly, cascading) ?? baseParts[2];
-	const left = block.getStyle(`${type}Left`, undefined, nativeOnly, cascading) ?? baseParts[3];
-	const sTop = String(top);
-	const sRight = String(right);
-	const sBottom = String(bottom);
-	const sLeft = String(left);
-	if (sTop === baseParts[0] && sRight === baseParts[1] && sBottom === baseParts[2] && sLeft === baseParts[3]) {
+	const baseParts = expandShorthand(base, slots);
+	const values = longhands.map((prop, index) =>
+		String(block.getStyle(prop, undefined, nativeOnly, cascading) ?? baseParts[index]),
+	);
+	if (values.every((value, index) => value === baseParts[index])) {
 		return base;
 	}
-	// A side left unset while others are set falls back to an empty base; treat it as 0
-	// so the reconstructed shorthand stays well-formed and expands to the right corners.
-	const fill = (value: string) => value || "0px";
-	return collapseBoxShorthand([fill(sTop), fill(sRight), fill(sBottom), fill(sLeft)]);
+	// A slot left unset while others are set falls back to an empty base; treat it as 0
+	// so the reconstructed shorthand stays well-formed and expands back to the same slots.
+	return collapseShorthand(
+		values.map((value) => value || "0px"),
+		slots,
+	);
 }
 
 /**
@@ -293,10 +303,7 @@ function removeDefaultUnit(value: string, defaultUnit: string): string {
 		.join("");
 }
 
-/**
- * Splits a CSS value list on whitespace, ignoring whitespace inside
- * parentheses so functional values like `calc(10px + 5%)` stay intact.
- */
+// Splits on whitespace outside parentheses, so `calc(10px + 5%)` stays one part.
 function splitCssValueList(value: string): string[] {
 	const parts: string[] = [];
 	let current = "";
@@ -315,33 +322,51 @@ function splitCssValueList(value: string): string[] {
 	return parts;
 }
 
-/**
- * Expands a CSS box shorthand (margin, padding, border-radius) into its four
- * component values following the standard 1/2/3/4-value rules.
- * @param value - Shorthand value string
- * @param fallback - Value used for every side when the shorthand is empty
- * @returns Array of exactly four side values
- */
-function expandBoxShorthand(value: unknown, fallback = "0"): string[] {
-	const parts = splitCssValueList(String(value ?? "").trim());
-	if (!parts.length) return Array(4).fill(fallback);
-	if (parts.length === 1) return Array(4).fill(parts[0]);
-	if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
-	if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
-	return parts.slice(0, 4);
+// 2 slots for gap (row, column), 4 for the box sides (top, right, bottom, left).
+type ShorthandSlots = 2 | 4;
+
+// `a` → every slot, `a b` → [a,b,a,b], `a b c` → [a,b,c,b].
+function expandShorthand(value: unknown, slots: ShorthandSlots): string[] {
+	const parts = splitCssValueList(String(value ?? "").trim()).filter(
+		(part: string) => part !== "" && part !== "Mixed" && part !== "unset",
+	);
+	if (!parts.length) return Array(slots).fill("");
+	if (parts.length >= slots) return parts.slice(0, slots);
+	if (parts.length === 1) return Array(slots).fill(parts[0]);
+	return [parts[0], parts[1], parts[2] ?? parts[0], parts[1]];
 }
 
-/**
- * Collapses four side values into the shortest shorthand that expands back to them.
- * @param parts - Four side values, in the order expandBoxShorthand returns
- * @returns Shorthand value string
- */
+// Inverse of expandShorthand: drops every trailing value that CSS can infer.
+function collapseShorthand(parts: unknown[], slots: ShorthandSlots): string {
+	const values = Array.from({ length: slots }, (_, index) => String(parts[index] ?? ""));
+	while (values.length > 2 && values[values.length - 1] === values[values.length - 3]) values.pop();
+	if (values.length === 2 && values[0] === values[1]) values.pop();
+	return values.join(" ");
+}
+
+function expandBoxShorthand(value: unknown): string[] {
+	return expandShorthand(value, 4);
+}
+
 function collapseBoxShorthand(parts: unknown[]): string {
-	const [top, right, bottom, left] = parts.map((part) => String(part ?? ""));
-	if (top === right && top === bottom && top === left) return top;
-	if (top === bottom && right === left) return `${top} ${right}`;
-	if (right === left) return `${top} ${right} ${bottom}`;
-	return [top, right, bottom, left].join(" ");
+	return collapseShorthand(parts, 4);
+}
+
+function expandGapShorthand(value: unknown): [string, string] {
+	return expandShorthand(value, 2) as [string, string];
+}
+
+function collapseGapShorthand(parts: unknown[]): string {
+	// An unset axis has to become 0px, otherwise the pair reads as a single value.
+	const axes = parts.map((part) => {
+		const value = String(part ?? "").trim();
+		if (value !== "" && value !== "Mixed" && value !== "unset") {
+			return value;
+		} else {
+			return "0px";
+		}
+	});
+	return collapseShorthand(axes, 2);
 }
 
 /**
@@ -362,13 +387,15 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 export {
 	addPxToNumber,
 	collapseBoxShorthand,
+	collapseGapShorthand,
 	expandBoxShorthand,
+	expandGapShorthand,
 	extractNumberAndUnit,
-	getBoxSpacing,
 	getNumberFromPx,
+	getSpacing,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
 	removeDefaultUnit,
-	setBoxSpacing,
+	setSpacing,
 	shortenNumber,
 };

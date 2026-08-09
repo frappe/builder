@@ -75,7 +75,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	// then collapse every update back into the single shorthand style.
 	const getSpacingParts = (property: SpacingProperty) => {
 		const styles = blockStyles.value;
-		const parts = expandBoxShorthand(styles[property] ?? "", "0px");
+		const parts = expandBoxShorthand(styles[property] ?? "");
 		allSides.forEach((side) => {
 			const sideValue = styles[styleKey(property, side)];
 			if (sideValue) parts[sides[side].index] = String(sideValue);
