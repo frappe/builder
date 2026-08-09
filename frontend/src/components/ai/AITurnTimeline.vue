@@ -1,6 +1,6 @@
 <template>
 	<div v-if="steps.length" class="flex w-full flex-col gap-1.5">
-		<template v-for="step in steps" :key="step.id">
+		<template v-for="step in rows" :key="step.id">
 			<!-- thinking: collapsed to a single line. Only expandable when the provider
 			     actually streamed reasoning — an empty disclosure is a dead affordance,
 			     and once it's over with nothing to show it isn't worth a row at all
@@ -22,7 +22,7 @@
 				<span :class="running(step) && 'animate-shine'">
 					{{ running(step) ? "Thinking" : "Thought" }}
 				</span>
-				<span v-if="step.ms" class="tabular-nums text-ink-gray-4">{{ duration(step.ms) }}</span>
+				<span v-if="duration(step.ms)" class="tabular-nums text-ink-gray-4">{{ duration(step.ms) }}</span>
 			</button>
 			<p
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
@@ -36,7 +36,8 @@
 				<span class="min-w-0 truncate text-ink-gray-7" :class="running(step) && 'animate-shine'">
 					{{ step.summary }}
 				</span>
-				<span v-if="step.ms" class="ml-auto shrink-0 tabular-nums text-ink-gray-4">
+				<span v-if="step.repeats" class="shrink-0 tabular-nums text-ink-gray-4">×{{ step.repeats }}</span>
+				<span v-if="duration(step.ms)" class="ml-auto shrink-0 tabular-nums text-ink-gray-4">
 					{{ duration(step.ms) }}
 				</span>
 			</div>
@@ -53,12 +54,30 @@
 <script setup lang="ts">
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep } from "@/components/ai/types";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 /** The steps of one assistant turn, in the order they happened. Fed live from
  * `ai_chat_step` events and rehydrated from message metadata on reload, so a
  * turn reads the same whether you watched it or came back to it. */
-defineProps<{ steps: AITurnStep[] }>();
+const props = defineProps<{ steps: AITurnStep[] }>();
+
+/** A run of the same tool collapses to one row with a count. Minting six design
+ * tokens is one action to the reader, not six lines of "Set theme variable", and
+ * the repetition drowns out the steps that actually differ. Times are summed. */
+const rows = computed<(AITurnStep & { repeats?: number })[]>(() => {
+	const out: (AITurnStep & { repeats?: number })[] = [];
+	for (const step of props.steps) {
+		const last = out[out.length - 1];
+		if (last && step.kind === "tool" && last.kind === "tool" && last.summary === step.summary) {
+			last.repeats = (last.repeats || 1) + 1;
+			last.ms = (last.ms || 0) + (step.ms || 0);
+			last.status = step.status;
+			continue;
+		}
+		out.push({ ...step });
+	}
+	return out;
+});
 
 const expanded = ref(new Set<number>());
 
@@ -70,8 +89,11 @@ function toggle(id: number) {
 
 const running = (step: AITurnStep) => step.status === "running";
 
-/** Short and honest: tenths under a minute (most steps land there), m/s above. */
-function duration(ms: number): string {
+/** Short and honest: tenths under a minute (most steps land there), m/s above.
+ * Anything under 100ms reads as "0.0s", which is noise pretending to be data —
+ * a local write that took no time gets no timing at all. */
+function duration(ms?: number): string {
+	if (!ms || ms < 100) return "";
 	if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
 	const secs = Math.round(ms / 1000);
 	return secs % 60 ? `${Math.floor(secs / 60)}m ${secs % 60}s` : `${Math.floor(secs / 60)}m`;

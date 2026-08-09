@@ -395,7 +395,10 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 	if tool_name == "query_blocks":
 		return "Searched blocks"
 	if tool_name == "set_design_token":
-		return f"Set --{args['name']}" if args.get("name") else "Set theme variable"
+		# The tool's argument is token_name; reading `name` meant every token in the
+		# chat read "Set theme variable" no matter which one it was.
+		label = args.get("token_name") or args.get("id")
+		return f"Set token: {label}" if label else "Set theme variable"
 	if tool_name == "set_page_script":
 		return f"Added script: {args.get('name') or ''}".rstrip(": ")
 	if tool_name == "update_script":
