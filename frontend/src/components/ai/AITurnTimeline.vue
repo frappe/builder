@@ -24,11 +24,13 @@
 				</span>
 				<span v-if="duration(step.ms)" class="tabular-nums text-ink-gray-4">{{ duration(step.ms) }}</span>
 			</button>
-			<p
+			<!-- Reasoning arrives as markdown ("**Sorting visual elements**"), so render
+			     it — as raw text the asterisks were on show. Muted and tight: it is an
+			     aside you opened, not the answer. -->
+			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="whitespace-pre-line border-l border-outline-gray-2 pl-3 text-p-xs leading-relaxed text-ink-gray-5">
-				{{ step.text }}
-			</p>
+				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
 			<div v-else-if="step.kind === 'tool'" class="flex items-center gap-2 text-p-xs">
@@ -120,3 +122,29 @@ const TOOL_ICONS: Record<string, string> = {
 
 const toolIcon = (tool?: string) => TOOL_ICONS[tool || ""] || "lucide-wrench";
 </script>
+
+<style scoped>
+/* An opened thought is an aside, not the answer: prose's heading scale and
+ * paragraph rhythm would give it more weight than the reply it led to. Flatten
+ * everything to the muted size the row itself uses, keeping only emphasis and
+ * list structure. */
+.ai-thought :deep(*) {
+	font-size: inherit;
+	font-weight: inherit;
+	color: inherit;
+	line-height: 1.55;
+}
+.ai-thought :deep(strong) {
+	font-weight: 600;
+	color: var(--ink-gray-6);
+}
+.ai-thought :deep(p),
+.ai-thought :deep(ul),
+.ai-thought :deep(ol),
+.ai-thought :deep(pre) {
+	margin: 0 0 0.6em;
+}
+.ai-thought :deep(> *:last-child) {
+	margin-bottom: 0;
+}
+</style>
