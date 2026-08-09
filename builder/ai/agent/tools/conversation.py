@@ -37,8 +37,8 @@ ELEMENT_KINDS = frozenset(
 	}
 )
 MAX_ELEMENTS = 30
-# Roomy enough for a few small inline-SVG layout sketches; the tool description
-# tells the model to keep sketches tiny.
+# A card is text, options and colours now, so this is a sanity bound rather than a
+# real constraint — big enough that no honest multi-step card ever hits it.
 MAX_UI_JSON = 24000
 
 

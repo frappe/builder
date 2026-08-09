@@ -149,7 +149,7 @@ def claims_unbacked_action(summary_text: str) -> bool:
 # replay vocabulary AND the schema vocabulary (a model can leak either: Kimi wrote
 # "[actions: Continue]", blending the schema's kind name into the replay format).
 CARD_TEXT_RE = re.compile(
-	r"\[\s*(?:input|choices|buttons|upload|swatches|sketch|actions|color_input)\s*:"
+	r"\[\s*(?:input|choices|buttons|upload|swatches|actions|color_input)\s*:"
 	r"|\[\s*colou?r picker\b",
 	re.IGNORECASE,
 )
@@ -177,31 +177,32 @@ ASKS_CHOICE_RE = re.compile(
 	r"(?mi)^\s*(?:choose|pick|select|which|what(?:'s| is)? your|would you (?:like|prefer)|let me know which|"
 	r"here are|let's (?:explore|look at)|consider (?:these|the following)|a few (?:more )?options)\b"
 )
-# Option-DECORATION markers (fonts/palette/layout/image) are the exact format
-# option_text() replays a card in — a model writing "[fonts: Fraunces + Albert Sans]"
-# in a bullet is mimicking a past card as prose, whatever the lead-in reads like.
-# Control-atom markers (actions/buttons/input/…) count the same way: a bulleted
-# question that leaks ANY card notation is a card written as text.
+# Option-DECORATION markers (palette/image) are the exact format option_text()
+# replays a card in — a model writing "[palette: #C4552D, …]" in a bullet is
+# mimicking a past card as prose, whatever the lead-in reads like. Control-atom
+# markers (actions/buttons/input/…) count the same way: a bulleted question that
+# leaks ANY card notation is a card written as text.
 OPTION_MARKER_RE = re.compile(
-	r"\[\s*(?:fonts?|palette|layout|image|actions|buttons|input|choices|upload|swatches)\s*:",
+	r"\[\s*(?:palette|image|actions|buttons|input|choices|upload|swatches)\s*:",
 	re.IGNORECASE,
 )
 
 BUILD_INCOMPLETE_CORRECTION = (
-	"You set up the design system (tokens, scripts, page settings) but NEVER built the page — "
-	"it is still EMPTY. Call generate_page NOW with a full brief: the chosen layout SYSTEM and "
-	"its signature move, the font pairing, the palette and spacing as the exact var(--<id>) token "
-	"handles you just minted, every section with real copy, and the class hooks your scripts "
-	"target. The turn is NOT done until the page has content."
+	"You set up the design system (tokens, page settings) but NEVER built the page — it is "
+	"still EMPTY. Call generate_page NOW with a full brief: the chosen layout SYSTEM and its "
+	"signature move, the font pairing, the palette and spacing as the exact var(--<id>) token "
+	"handles you just minted, every section with real copy, and — if the user asked for "
+	"movement — the class hooks your scripts will target. The turn is NOT done until the page "
+	"has content."
 )
 
 OPTIONS_AS_TEXT_CORRECTION = (
 	"You ended your turn by asking a question with a LIST OF OPTIONS as plain text — text "
 	"renders no controls, so the user has nothing to tap. Ask it again as ONE present_ui "
 	"call: a single short lead-in `text` atom, then a `choices` group with one option per "
-	"item (label + short description; include `font` for font pairings and `svg`+`colors` "
-	"for layout directions so previews render). A single-question card needs no extra "
-	"button. Do NOT repeat the options in your message text."
+	"item (label + short description, plus `colors` on a layout direction so its palette "
+	"shows). A card that is one tappable question needs no extra button. Do NOT repeat the "
+	"options in your message text."
 )
 
 
