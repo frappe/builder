@@ -91,18 +91,22 @@
 						<!-- ui-card messages persist the full card as text (for model replay);
 						     the bubble shows only the short lead-in — the card renders the rest -->
 						<template v-if="message.role === 'assistant'">
-							<!-- What Bob thought, ran and said on the way to this answer. It
-							     carries the "still working" signal, so the answer text below
-							     never shimmers while it's being read. -->
+							<!-- What Bob thought, ran and said on the way to this answer. Steps
+							     carry their own running state; the row below covers the stretches
+							     where no step is on the clock. -->
 							<AITurnTimeline
 								v-if="message.metadata?.steps?.length"
 								:steps="message.metadata.steps"
 								class="mb-2" />
-							<div v-else-if="message.metadata?.status === 'running'" class="animate-shine">Thinking</div>
 							<div
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
+							<!-- Turn running, nothing on the clock: the model is streaming a tool
+							     call's arguments (a page-sized edit takes a while) or opening the
+							     next round. Sits below the answer so it reads as the turn's own
+							     status, never as the reply shimmering while it's being read. -->
+							<div v-if="stillWorking(message)" class="animate-shine mt-1 w-fit text-p-xs">Working</div>
 						</template>
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
@@ -366,6 +370,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
+import type { AITurnStep } from "@/components/ai/types";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
@@ -465,6 +470,18 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
  * lead-in and lets AIUISpec draw the rest. */
 function assistantText(message: ChatMessage): string {
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
+}
+
+/** Whether the turn is running with nothing to show for it. Every step it finishes
+ * (a thought, a tool) states its own time and then goes quiet, so the long stretches
+ * (a tool call whose arguments are still streaming, the wait for the next round)
+ * left the chat looking like it had died mid-turn. */
+function stillWorking(message: ChatMessage): boolean {
+	// Only the turn this tab is running: a turn that died mid-flight is persisted
+	// as "running" too, and on reload that would shimmer forever.
+	if (!isSubmitting.value || message.id !== lastMessageId.value) return false;
+	if (message.metadata?.status !== "running") return false;
+	return !(message.metadata.steps || []).some((step: AITurnStep) => step.status === "running");
 }
 
 /** The reply a card was answered with: the user message right after it. That
