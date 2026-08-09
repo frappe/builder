@@ -115,10 +115,17 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 // PageScript mounts a CodeMirror instance; defer it until the Code tab is
-// first opened (or a data-script dialog is requested), then keep it alive
+// first opened (or a script is asked for), then keep it alive. Asking for a
+// script counts: the watchers that open the editor live INSIDE PageScript, so
+// until something mounts it, a chat script pill sets a flag nobody is listening
+// to — and it only appeared to work once the Code tab had been opened by hand.
 const pageScriptMounted = ref(false);
 watchEffect(() => {
-	if (builderStore.leftPanelActiveTab === "Code" || builderStore.showDataScriptDialog !== null) {
+	if (
+		builderStore.leftPanelActiveTab === "Code" ||
+		builderStore.showDataScriptDialog !== null ||
+		builderStore.openClientScript !== null
+	) {
 		pageScriptMounted.value = true;
 	}
 });

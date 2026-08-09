@@ -302,5 +302,9 @@ watch(
 		showDialog.value = true;
 		// PageClientScriptManager will handle actual selection once it mounts and loads data
 	},
+	// immediate: the request usually arrives BEFORE this component exists (asking
+	// for a script is what mounts it), so there is no change left to react to by
+	// the time the watcher is registered.
+	{ immediate: true },
 );
 </script>
