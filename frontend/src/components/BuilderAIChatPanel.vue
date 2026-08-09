@@ -275,15 +275,18 @@
 						ref="promptInput"
 						v-model="prompt"
 						rows="1"
-						class="no-scrollbar max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
 						placeholder="Ask to create or edit this page..."
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
 					<Transition name="fade">
+						<!-- inset-0 covers the wrapper, so the textarea has to fill it exactly:
+						     as an inline-block it left a few px of line-box gap underneath and
+						     the target hung past the field. Same radius as the field, too. -->
 						<div
 							v-if="isDragging"
-							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
+							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 								<span class="lucide-image h-3.5 w-3.5" />
 								Drop image to attach
