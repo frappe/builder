@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import frappe
 from frappe.model.document import Document
 
 
@@ -22,3 +23,11 @@ class BuilderAISession(Document):
 		session_user: DF.Link
 		status: DF.Literal["Active", "Archived"]
 	# end: auto-generated types
+
+	def on_trash(self):
+		"""A session owns its messages. They live in their own doctype with a Link
+		back here, so unless they go first the link guard refuses the delete — and
+		since a page deletes its sessions, that made a chat the user had once opened
+		enough to block deleting the page itself. on_trash runs before the link
+		check, so clearing them here is what lets both deletes through."""
+		frappe.db.delete("Builder AI Message", {"session": self.name})

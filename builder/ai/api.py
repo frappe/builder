@@ -454,7 +454,7 @@ def list_page_ai_sessions(page_id: str, limit: int = 20):
 @has_page_write()
 def delete_ai_session(session_id: str):
 	ensure_session_owner(session_id)
-	AISession.get(session_id).clear()  # messages first (separate doctype)
+	# The session's on_trash takes its messages with it.
 	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
 	return {"status": "ok"}
 
