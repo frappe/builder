@@ -376,8 +376,51 @@ def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -
 	return "\n\n".join(parts)
 
 
+# The DocTypes the agent reads to understand the site it's working in. These are
+# Frappe's internal names — "Read Builder Token" means nothing to someone who just
+# asked for a ramen page, so say what was actually looked at. A DocType that isn't
+# here belongs to the user's own data, where the name IS the friendly word (Event,
+# Product), so it passes through.
+BUILDER_DOCTYPE_LABELS = {
+	"Builder Token": "the design tokens",
+	"Builder Component": "the components",
+	"Builder Page": "the pages",
+	"Builder Client Script": "the page scripts",
+	"Builder Settings": "the site settings",
+	"Builder Variable": "the variables",
+}
+
+# Plain-English name for each tool, for tools whose line needs no arguments. The
+# derived fallback (tool_name.replace("_", " ")) leaks the vocabulary of the tool
+# API — "Get doctype schema", "Seed sample data" — which is ours, not the user's.
+TOOL_LABELS = {
+	"generate_page": "Building the page",
+	"preview_page": "Checked how it looks",
+	"query_blocks": "Searched the page",
+	"search_images": "Searched for photos",
+	"extract_component": "Made a reusable component",
+	"write_page_data_script": "Connected the page to data",
+	"list_doctypes": "Looked for existing data",
+	"get_page_scripts": "Read the page scripts",
+	"set_page_settings": "Updated page settings",
+	"remember": "Saved a note for next time",
+	"seed_sample_data": "Added sample records",
+	"create_doctype": "Created a place to store data",
+	"connect_form": "Connected the form",
+	"edit_global_settings": "Updated site settings",
+	"set_home_page": "Set the home page",
+}
+
+
+def readable_doctype(doctype: str | None) -> str:
+	if not doctype:
+		return "records"
+	return BUILDER_DOCTYPE_LABELS.get(doctype) or f"{doctype} records"
+
+
 def activity_summary(tool_name: str, args: dict, tree=None) -> str:
-	"""A short human line for the chat's live activity feed ("Read block: Hero")."""
+	"""A short human line for the chat's timeline ("Read block: Hero"). Written for
+	someone who asked for a web page, not someone who knows the tool API."""
 	args = args or {}
 
 	def block_label(ref: str | None) -> str:
@@ -386,14 +429,10 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 			return block.get("blockName") or f"<{block.get('element') or 'div'}>"
 		return ref or ""
 
-	if tool_name == "generate_page":
-		return "Building the page"
-	if tool_name == "preview_page":
-		return "Screenshot"
+	if label := TOOL_LABELS.get(tool_name):
+		return label
 	if tool_name == "read_block":
 		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
-	if tool_name == "query_blocks":
-		return "Searched blocks"
 	if tool_name == "set_design_token":
 		# The tool's argument is token_name; reading `name` meant every token in the
 		# chat read "Set theme variable" no matter which one it was.
@@ -405,8 +444,10 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 		return f"Updated script: {args.get('script_name') or ''}".rstrip(": ")
 	if tool_name == "create_component":
 		return f"Created component: {args.get('name') or ''}".strip()
-	if tool_name in ("get_document", "query_records", "get_doctype_schema"):
-		return f"Read {args.get('doctype') or 'records'}"
+	if tool_name == "get_doctype_schema":
+		return f"Checked the {args['doctype']} fields" if args.get("doctype") else "Checked the data fields"
+	if tool_name in ("get_document", "query_records"):
+		return f"Read {readable_doctype(args.get('doctype'))}"
 	return tool_name.replace("_", " ").capitalize()
 
 
