@@ -65,7 +65,7 @@
 						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
 					]"
 					:style="fixedPositionStyles"
-					@after-enter="scheduleFixedPositionUpdate"
+					@after-enter="setOptionsPosition"
 					@after-leave="fixedPositionStyles = {}">
 					<div class="overflow-y-auto p-1">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
@@ -291,7 +291,7 @@ watch(
 	{ immediate: true },
 );
 
-const scheduleFixedPositionUpdate = () => {
+const setOptionsPosition = () => {
 	// nextTick flushes the DOM but not layout; the anchored position can still move
 	nextTick(() => {
 		requestAnimationFrame(() => {
@@ -301,7 +301,7 @@ const scheduleFixedPositionUpdate = () => {
 };
 
 watch(isOpen, (val) => {
-	if (val) scheduleFixedPositionUpdate();
+	if (val) setOptionsPosition();
 });
 
 watch(displayOptions, () => {
