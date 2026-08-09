@@ -419,9 +419,17 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 @has_page_write()
 def new_ai_session(page_id: str, model: str | None = None):
 	"""Start a fresh chat session on this page — existing sessions stay untouched
-	and switchable (VS Code-style parallel chats)."""
+	and switchable (VS Code-style parallel chats). An empty session the user never
+	used IS a fresh chat, so hand that back rather than stacking up another: a few
+	taps of New chat otherwise fill the switcher with identical blank entries."""
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
 		frappe.throw(_("Save the page before starting a chat session"))
+	filters = {"page": page_id, "session_user": frappe.session.user}
+	blank = frappe.db.get_value(
+		AISession.DOCTYPE, {**filters, "status": "Active", "title": ["is", "not set"]}, "name"
+	)
+	if blank and not frappe.db.count(AISession.MESSAGE_DOCTYPE, {"session": blank}):
+		return {"session_id": blank, "messages": []}
 	session = AISession.create({"page": page_id}, model)
 	return {"session_id": session.name, "messages": []}
 

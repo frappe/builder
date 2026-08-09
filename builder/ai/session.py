@@ -5,6 +5,10 @@ from frappe import _
 
 from builder.ai import locks
 
+# How far back to look for a session worth reopening. Deep enough to see past a
+# run of empty "New chat" sessions, shallow enough to stay one small query.
+RECENT_SESSION_SCAN = 20
+
 
 class AISession:
 	DOCTYPE = "Builder AI Session"
@@ -18,15 +22,10 @@ class AISession:
 
 	@classmethod
 	def find_or_create(cls, filters: dict, model: str | None = None):
-		"""Return the most recently used Active session matching `filters` (a page can
-		hold several parallel sessions), or insert one with those values. A late model
-		pick is saved onto a session created without one."""
-		name = frappe.db.get_value(
-			cls.DOCTYPE,
-			{**filters, "status": "Active"},
-			"name",
-			order_by="last_interaction_on desc, modified desc",
-		)
+		"""Return the session to reopen for `filters` (a page can hold several
+		parallel sessions), or insert one. A late model pick is saved onto a session
+		created without one."""
+		name = cls.last_used(filters)
 		if name:
 			doc = frappe.get_doc(cls.DOCTYPE, str(name))
 			if model and not doc.selected_model:
@@ -34,6 +33,30 @@ class AISession:
 				doc.save(ignore_permissions=True)
 			return cls(doc)
 		return cls.create({**filters}, model)
+
+	@classmethod
+	def last_used(cls, filters: dict) -> str | None:
+		"""The most recent session that was actually TALKED to, else the most recent
+		one at all. A session is stamped with last_interaction_on the moment it is
+		created, so an untouched 'New chat' outranks the conversation it was opened
+		beside — and reopening the page landed on the empty one, with the real chat
+		looking lost. Having messages is what makes a session worth returning to."""
+		recent = frappe.db.get_all(
+			cls.DOCTYPE,
+			{**filters, "status": "Active"},
+			"name",
+			order_by="last_interaction_on desc, modified desc",
+			limit=RECENT_SESSION_SCAN,
+			pluck="name",
+		)
+		if not recent:
+			return None
+		spoken = set(
+			frappe.db.get_all(
+				cls.MESSAGE_DOCTYPE, {"session": ["in", recent]}, "session", distinct=True, pluck="session"
+			)
+		)
+		return next((name for name in recent if name in spoken), recent[0])
 
 	@classmethod
 	def create(cls, values: dict, model: str | None = None):

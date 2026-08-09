@@ -390,13 +390,31 @@ const truncateTitle = (title: string, max = 44) =>
 
 const sessionOptions = computed(() => {
 	if (!sessions.value.length) return [];
+	// Delete sits in its own group so it reads as an action on the current chat
+	// rather than a fifth chat to switch to — frappe-ui draws the divider.
 	return [
-		...sessions.value.map((s) => ({
-			label: truncateTitle(s.title || "New chat"),
-			icon: s.name === sessionId.value ? "lucide-check" : "lucide-message-circle",
-			onClick: () => switchSession(s.name),
-		})),
-		{ label: "Delete current chat", icon: "lucide-trash-2", onClick: deleteSession },
+		{
+			group: "Chats",
+			hideLabel: true,
+			options: sessions.value.map((s) => ({
+				label: truncateTitle(s.title || "New chat"),
+				icon: s.name === sessionId.value ? "lucide-check" : "lucide-message-circle",
+				onClick: () => switchSession(s.name),
+			})),
+		},
+		{
+			group: "Manage",
+			hideLabel: true,
+			// theme belongs on the item — a group-level one isn't inherited.
+			options: [
+				{
+					label: "Delete current chat",
+					icon: "lucide-trash-2",
+					theme: "red",
+					onClick: deleteSession,
+				},
+			],
+		},
 	];
 });
 const { selectBlockById, openScriptByName } = chat;
