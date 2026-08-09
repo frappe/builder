@@ -286,8 +286,10 @@
 							</div>
 						</div>
 					</Transition>
+					<!-- Only on an empty box: it sits over the textarea, so once there's a
+					     prompt long enough to reach it the hint lands on the user's words. -->
 					<span
-						v-if="isVisionModel && !imagePreviewUrl && !isDragging"
+						v-if="isVisionModel && !prompt && !imagePreviewUrl && !isDragging"
 						class="pointer-events-none absolute bottom-3 right-2 select-none text-[10px] text-ink-gray-4">
 						Paste or drop image
 					</span>
