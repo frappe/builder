@@ -752,13 +752,24 @@ function toggleChips(messageId: string) {
 		background-position: -200% center;
 	}
 }
+/* The travelling band has to move AWAY from the page, not toward it. On dark
+ * that means brightening to near-white, which reads as a glint. Light mode ran
+ * the same direction — mid-grey darkening to near-black — so the text only got
+ * inkier for a moment and the motion didn't register. There it needs the
+ * opposite: dark text with a pale sheen passing over it. */
 .animate-shine {
-	background: linear-gradient(120deg, var(--ink-gray-6) 20%, var(--ink-gray-9) 50%, var(--ink-gray-6) 80%);
+	--shine-base: var(--ink-gray-8);
+	--shine-peak: var(--ink-gray-4);
+	background: linear-gradient(120deg, var(--shine-base) 20%, var(--shine-peak) 50%, var(--shine-base) 80%);
 	background-size: 200% auto;
 	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
 	animation: shine 2.5s linear infinite;
+}
+[data-theme="dark"] .animate-shine {
+	--shine-base: var(--ink-gray-6);
+	--shine-peak: var(--ink-gray-9);
 }
 
 /* Empty-state hero: a living aurora of drifting color blobs behind the sparkle.
