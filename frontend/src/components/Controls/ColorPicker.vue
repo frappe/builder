@@ -7,16 +7,8 @@
 		:portal-to="portalTo"
 		@update:open="isOpen = $event"
 		class="!block w-full">
-		<template #target="{ togglePopover, isOpen }">
-			<slot
-				name="target"
-				:togglePopover="
-					() => {
-						togglePopover();
-						contentRef?.syncPositions();
-					}
-				"
-				:isOpen="isOpen"></slot>
+		<template #target>
+			<slot name="target" :togglePopover="togglePopover" :isOpen="isOpen"></slot>
 		</template>
 		<template #body>
 			<ColorPickerContent
@@ -71,12 +63,16 @@ const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
 const isOpen = ref(false);
 
-function togglePopover(open?: boolean) {
-	if (open === undefined || open) {
+// event handlers bind this directly, so drop the event they pass
+function togglePopover(open?: boolean | Event) {
+	if (open instanceof Event) open = undefined;
+	if (open == null) open = !isOpen.value;
+	if (open) {
 		colorPickerPopover.value?.open();
 	} else {
 		colorPickerPopover.value?.close();
 	}
+	contentRef.value?.syncPositions();
 }
 
 defineExpose({

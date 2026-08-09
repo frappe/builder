@@ -110,12 +110,12 @@
 					ref="colorPicker"
 					:portal-to="menuElement"
 					placement="top">
-					<template #target="{ togglePopover, isOpen }">
+					<template #target>
 						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
 									class="h-4 w-4 rounded shadow-sm"
-									@click="() => openColorPicker(togglePopover)"
+									@click="openColorPicker"
 									:style="{
 										background:
 											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
@@ -176,8 +176,8 @@ const isRepositioning = computed(
 watch(isRepositioning, (moving) => moving && colorPicker.value?.hideOptions());
 
 // opening the popover focuses its input, which auto-opens the option list
-const openColorPicker = (togglePopover: () => void) => {
-	togglePopover();
+const openColorPicker = () => {
+	colorPicker.value?.togglePopover();
 	nextTick(() => requestAnimationFrame(() => colorPicker.value?.hideOptions()));
 };
 
