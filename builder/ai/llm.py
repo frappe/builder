@@ -112,6 +112,14 @@ def provider_kwargs(model: str) -> dict:
 	return {}
 
 
+def patch_params_for_provider(model: str, params: dict) -> dict:
+	"""Moonshot's Kimi rejects every temperature but 1, so coerce it instead of
+	failing the whole turn over a tuning knob."""
+	if "kimi" in model and params.get("temperature") not in (None, 1):
+		return {**params, "temperature": 1}
+	return params
+
+
 # --- provider routing --------------------------------------------------------
 
 
@@ -157,6 +165,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
+	params = patch_params_for_provider(model, params)
 	logger.info(
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
@@ -197,6 +206,7 @@ def complete_with_tools(
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
+	params = patch_params_for_provider(model, params)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
