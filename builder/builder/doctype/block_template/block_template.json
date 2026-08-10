@@ -25,7 +25,7 @@
   },
   {
    "fieldname": "block",
-   "fieldtype": "JSON",
+   "fieldtype": "Long Text",
    "label": "Block",
    "reqd": 1
   },
@@ -66,7 +66,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-19 13:07:00.935349",
+ "modified": "2026-08-10 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Block Template",
