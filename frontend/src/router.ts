@@ -1,6 +1,7 @@
 import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
+import { __ } from "./translation";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -9,7 +10,7 @@ function validatePermission(next: NavigationGuardNext) {
 	if (hasPermission) {
 		next();
 	} else {
-		alert("You do not have permission to access this page");
+		alert(__("You do not have permission to access this page"));
 		if (isUserLoggedIn()) {
 			window.location.href = "/app";
 		} else {

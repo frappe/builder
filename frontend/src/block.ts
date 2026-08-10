@@ -7,6 +7,7 @@ import {
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import type { SpacingType } from "@/utils/cssUtils";
 import {
 	addPxToNumber,
 	cssUrl,
@@ -14,13 +15,13 @@ import {
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
-	getBoxSpacing,
 	getNumberFromPx,
+	getSpacing,
 	getTextContent,
 	handleBase64Attribute,
 	kebabToCamelCase,
 	parseAndSetBackground,
-	setBoxSpacing,
+	setSpacing,
 	toStyleProperty,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
@@ -1011,17 +1012,11 @@ class Block implements BlockOptions {
 			}
 		});
 	}
-	setPadding(padding: string) {
-		setBoxSpacing(this, "padding", padding);
+	setSpacing(type: SpacingType, value: string) {
+		setSpacing(this, type, value);
 	}
-	getPadding(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
-		return getBoxSpacing(this, "padding", opts);
-	}
-	setMargin(margin: string) {
-		setBoxSpacing(this, "margin", margin);
-	}
-	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
-		return getBoxSpacing(this, "margin", opts);
+	getSpacing(type: SpacingType, opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getSpacing(this, type, opts);
 	}
 	getDynamicValues() {
 		const dynamicValues = [...this.dynamicValues];

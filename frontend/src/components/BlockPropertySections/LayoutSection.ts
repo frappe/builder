@@ -2,7 +2,28 @@ import BlockFlexLayoutHandler from "@/components/BlockFlexLayoutHandler.vue";
 import BlockGridLayoutHandler from "@/components/BlockGridLayoutHandler.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
+import { collapseGapShorthand, expandGapShorthand } from "@/utils/cssUtils";
 import StylePropertyControl from "../Controls/StylePropertyControl.vue";
+
+const SPLITS = ["V", "H"];
+
+const gapProps = {
+	label: "Gap",
+	propertyKey: "gap",
+	splits: SPLITS,
+	toControlValues: (value: unknown) => expandGapShorthand(value),
+	toModelValue: (parts: StyleValue[]) => collapseGapShorthand(parts),
+	getModelValue: (state: string | null = null) =>
+		state
+			? String(blockController.getNativeStyle(`${state}:gap`) ?? "")
+			: String(blockController.getSpacing("gap", { nativeOnly: true, cascading: false })),
+	getPlaceholder: () =>
+		String(blockController.getSpacing("gap", { nativeOnly: false, cascading: true })),
+	setModelValue: (value: string | boolean | number) => {
+		if (typeof value === "boolean") return;
+		blockController.setSpacing("gap", String(value));
+	},
+};
 
 const layoutSectionProperties = [
 	{
@@ -49,7 +70,7 @@ const layoutSectionProperties = [
 	{
 		component: BlockGridLayoutHandler,
 		condition: () => blockController.isGrid() || Boolean(blockController.getParentBlock()?.isGrid()),
-		getProps: () => {},
+		getProps: () => ({ gapProps }),
 		usedStyleProperties: [
 			"column-gap",
 			"gap",
@@ -78,7 +99,7 @@ const layoutSectionProperties = [
 	{
 		component: BlockFlexLayoutHandler,
 		condition: () => blockController.isFlex() || Boolean(blockController.getParentBlock()?.isFlex()),
-		getProps: () => {},
+		getProps: () => ({ gapProps }),
 		usedStyleProperties: [
 			"align-content",
 			"align-items",

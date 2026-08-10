@@ -6,6 +6,7 @@ import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
+import translationPlugin from "./translation";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
@@ -19,6 +20,7 @@ app.use(pinia);
 app.use(router);
 app.use(FrappeUI);
 app.use(telemetryPlugin, { app_name: "builder" });
+app.use(translationPlugin);
 
 window.name = "frappe-builder";
 app.config.globalProperties.window = window;
