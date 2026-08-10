@@ -647,9 +647,24 @@ export class AIChatController {
 			}).submit({ message_id: message.id, decision });
 			await this.loadSession();
 			if (decision === "apply") toast.success(res?.message || "Applied");
+			if (res?.resumed) this.beginResumedTurn();
 		} catch (e: any) {
 			toast.error(e?.messages?.[0] || "Could not apply the change");
 		}
+	};
+
+	/** Running state for a turn the server started itself, after a confirmed action.
+	 * Must run after loadSession, which would drop the placeholder. */
+	beginResumedTurn = () => {
+		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
+		this.messages.value.push(assistantMessage);
+		this.pendingAssistantId.value = assistantMessage.id;
+		this.pageStreamContent.value = "";
+		this.summaryContent.value = "";
+		this.liveSteps.value = [];
+		this.dispatcher.reset();
+		this.isSubmitting.value = true;
+		this.scrollToBottom();
 	};
 
 	/** Ask the backend to abort the in-flight turn at its next stream chunk.

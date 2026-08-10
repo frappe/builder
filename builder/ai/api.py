@@ -142,10 +142,10 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
-		AISession.try_append_message(
-			msg.session, "assistant", "Skipped — nothing was changed.", message_type="status"
-		)
-		return {"status": "skipped"}
+		outcome = "Skipped — nothing was changed."
+		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
+		resumed = resume_after_action(msg.session, outcome)
+		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
@@ -153,7 +153,41 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
-	return {"status": "applied", "message": result}
+	resumed = resume_after_action(msg.session, result)
+	return {"status": "applied", "message": result, "resumed": resumed}
+
+
+def resume_after_action(session_id: str, outcome: str) -> bool:
+	"""Carry on with the plan once a confirm-gated action has been decided.
+
+	A confirm card authorises a step, it does not change the plan, so ending the turn
+	there left the user typing "continue" to re-trigger the job. Best effort: the
+	action is already applied and must not be undone by a queue failure.
+	"""
+	if AISession.is_session_running(session_id):
+		return False
+	try:
+		page_id, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
+		if not page_id:
+			return False
+		resolved_model = ModelRegistry.get_default(model or "openrouter")
+		frappe.enqueue(
+			run_agent_job,
+			queue="default",
+			timeout=600,
+			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
+			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
+			model=resolved_model,
+			api_key=resolve_api_key(resolved_model),
+			user=frappe.session.user,
+			page_id=page_id,
+			session_id=session_id,
+			enqueue_after_commit=True,
+		)
+		return True
+	except Exception:
+		logger.warning(f"could not resume session {session_id} after a confirmed action", exc_info=True)
+		return False
 
 
 @frappe.whitelist()
