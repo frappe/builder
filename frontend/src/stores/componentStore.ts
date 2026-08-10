@@ -8,7 +8,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
-import { createDocumentResource, createResource, toast } from "frappe-ui";
+import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
 import { ComponentDocDraft } from "@/utils/componentController";
@@ -190,6 +190,21 @@ const useComponentStore = defineStore("componentStore", {
 						this.fetchingComponent.delete(componentName);
 					});
 			}
+		},
+		// seed the doc map for many components with one request, so callers like
+		// paste can tell which components already exist without probing inserts
+		async loadComponentDocs(componentNames: string[]) {
+			const missing = componentNames.filter((name) => !this.componentDocMap.has(name));
+			if (!missing.length) return;
+			const components = createListResource({
+				doctype: "Builder Component",
+				fields: ["name", "component_name", "component_id", "block", "component_data_script"],
+				filters: [["name", "in", missing]],
+				pageLength: missing.length,
+				auto: true,
+			});
+			await components.list.promise;
+			(components.data || []).forEach((doc: BuilderComponent) => this.setComponentMap(doc));
 		},
 		setComponentMap(componentDoc: BuilderComponent) {
 			this.componentDocMap.set(componentDoc.name, componentDoc);

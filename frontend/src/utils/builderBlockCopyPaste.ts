@@ -314,10 +314,14 @@ async function handleComponents(clipboardData: BuilderClipboardData, crossSitePa
 			componentIdMap.set(originalId, newId);
 			component.name = newId;
 			component.component_id = newId;
-			await componentStore.createComponent(component, true);
-		} else {
-			await componentStore.createComponent(component, false);
 		}
+	}
+
+	// one lookup upfront so a re-paste skips or updates existing components
+	// instead of firing inserts that fail with 409
+	await componentStore.loadComponentDocs(clipboardData.components.map((component) => component.name));
+	for (const component of clipboardData.components) {
+		await componentStore.createComponent(component, crossSitePaste);
 	}
 
 	if (crossSitePaste) {
@@ -351,29 +355,33 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 		return;
 	}
 
-	const pageScriptIdMap = new Map<string, string>();
-	for (const script of clipboardData.pageScripts || []) {
-		const newScriptId = generateHash(script.name, clipboardData.sourceURL, true);
-		pageScriptIdMap.set(script.name, newScriptId);
+	const scripts = clipboardData.pageScripts || [];
+	if (!scripts.length) {
+		return;
+	}
 
+	const clientScriptResource = createListResource({
+		doctype: "Builder Client Script",
+	});
+	const existingScriptIds = await fetchExistingScriptIds(
+		scripts.map((script) => generateHash(script.name, clipboardData.sourceURL as string, true)),
+	);
+
+	for (const script of scripts) {
+		const newScriptId = generateHash(script.name, clipboardData.sourceURL, true);
 		const scriptDoc: BuilderClientScriptDocument = {
 			...script,
 			name: newScriptId,
 		};
 
-		const clientScriptResource = createListResource({
-			doctype: "Builder Client Script",
-		});
 		try {
-			await clientScriptResource.insert.submit(scriptDoc);
-		} catch (error: { response?: { status: number } } | any) {
-			if (error?.response?.status === 409) {
-				// If script already exists, update it
+			if (existingScriptIds.has(newScriptId)) {
 				await clientScriptResource.setValue.submit(scriptDoc);
 			} else {
-				console.error("Error inserting client script:", error);
+				await clientScriptResource.insert.submit(scriptDoc);
 			}
-			// pass
+		} catch (error) {
+			console.error("Error saving client script:", error);
 		}
 
 		const clientScript = clipboardData.pageDoc.client_scripts?.find((s) => s.builder_script === script.name);
@@ -381,6 +389,18 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 			clientScript.builder_script = newScriptId;
 		}
 	}
+}
+
+async function fetchExistingScriptIds(scriptIds: string[]): Promise<Set<string>> {
+	const existingScripts = createListResource({
+		doctype: "Builder Client Script",
+		fields: ["name"],
+		filters: [["name", "in", scriptIds]],
+		pageLength: scriptIds.length,
+		auto: true,
+	});
+	await existingScripts.list.promise;
+	return new Set((existingScripts.data || []).map((script: BuilderClientScript) => script.name));
 }
 
 function updateBlockComponentReferences(block: BlockOptions, componentIdMap: Map<string, string>): void {
