@@ -14,9 +14,11 @@ import Input from "@/components/Controls/Input.vue";
 const app = createApp(App);
 const pinia = createPinia();
 
+// pinia first: installing the router starts the first navigation, and a route
+// chunk looks up stores as it loads
+app.use(pinia);
 app.use(router);
 app.use(FrappeUI);
-app.use(pinia);
 app.use(telemetryPlugin, { app_name: "builder" });
 app.use(translationPlugin);
 

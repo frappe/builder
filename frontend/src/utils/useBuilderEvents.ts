@@ -20,7 +20,8 @@ import {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
-import { useEventListener, useStorage } from "@vueuse/core";
+import { useEventListener } from "@vueuse/core";
+import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -214,37 +215,10 @@ export function useBuilderEvents(
 		}
 	});
 
+	// a command that declares keys owns its binding; what is left needs the
+	// keyboard event or a canvas ref, so it stays a plain shortcut
 	useShortcut([
-		{
-			key: "\\",
-			ctrl: true,
-			description: "Toggle panels",
-			group: "View",
-			handler: (e) => {
-				builderStore.showRightPanel = !builderStore.showRightPanel;
-				builderStore.showLeftPanel = builderStore.showRightPanel;
-			},
-		},
-		{
-			key: "\\",
-			ctrl: true,
-			shift: true,
-			description: "Toggle left panel",
-			group: "View",
-			handler: () => {
-				builderStore.showLeftPanel = !builderStore.showLeftPanel;
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			shift: true,
-			description: "Toggle canvas dark mode",
-			group: "View",
-			handler: () => {
-				builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
-			},
-		},
+		...commandShortcuts(),
 		{
 			key: "s",
 			ctrl: true,
@@ -255,75 +229,6 @@ export function useBuilderEvents(
 				if (canvasStore.editingMode === "fragment") {
 					saveAndExitFragmentMode(e);
 					e.stopPropagation();
-				}
-			},
-		},
-		{
-			key: "p",
-			ctrl: true,
-			description: "Preview",
-			group: "General",
-			handler: () => {
-				pageStore.savePage();
-				router.push({
-					name: "preview",
-					params: {
-						pageId: pageStore.selectedPage as string,
-					},
-				});
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			shift: true,
-			description: "Search blocks",
-			group: "General",
-			handler: () => {
-				builderStore.showSearchBlock = true;
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			description: "Focus property search",
-			group: "General",
-			allowInInput: true,
-			handler: () => {
-				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
-			},
-		},
-		{
-			key: "c",
-			ctrl: true,
-			shift: true,
-			description: "Copy block styles",
-			group: "Edit",
-			handler: () => {
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					const copiedStyle = useStorage(
-						"copiedStyle",
-						{ blockId: "", style: {} },
-						sessionStorage,
-					) as Ref<StyleCopy>;
-					copiedStyle.value = {
-						blockId: block.blockId,
-						style: block.getStylesCopy(),
-					};
-				}
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			description: "Duplicate block",
-			group: "Edit",
-			handler: () => {
-				if (builderStore.readOnlyMode) return;
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					block.duplicateBlock();
 				}
 			},
 		},
@@ -364,29 +269,6 @@ export function useBuilderEvents(
 				canvasStore.exitFragmentMode(e);
 			},
 			preventDefault: false,
-		},
-		{
-			key: "z",
-			ctrl: true,
-			description: "Undo",
-			group: "Edit",
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canUndo) {
-					canvasStore.activeCanvas?.history.undo();
-				}
-			},
-		},
-		{
-			key: "z",
-			ctrl: true,
-			shift: true,
-			description: "Redo",
-			group: "Edit",
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canRedo) {
-					canvasStore.activeCanvas?.history.redo();
-				}
-			},
 		},
 		{
 			key: "0",
