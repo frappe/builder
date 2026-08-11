@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -32,8 +33,8 @@ const isDark = useDark({
 const router = useRouter();
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
-
-const emit = defineEmits(["showSettings", "showShortcuts"]);
+// a registry item has no parent to emit to, so write the store directly
+const builderStore = useBuilderStore();
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
@@ -96,8 +97,16 @@ const mainMenuOptions = [
 				onClick: () => toggleDark(),
 				icon: isDark ? "lucide-sun" : "lucide-moon",
 			},
-			{ label: __("Settings"), onClick: () => emit("showSettings"), icon: "lucide-settings" },
-			{ label: __("Shortcuts"), onClick: () => emit("showShortcuts"), icon: "lucide-command" },
+			{
+				label: __("Settings"),
+				onClick: () => (builderStore.showSettingsDialog = true),
+				icon: "lucide-settings",
+			},
+			{
+				label: __("Shortcuts"),
+				onClick: () => (builderStore.shortcutsModalOpen = true),
+				icon: "lucide-command",
+			},
 			{
 				label: __("Help"),
 				onClick: () => {

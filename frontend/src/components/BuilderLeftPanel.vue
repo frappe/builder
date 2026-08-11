@@ -9,197 +9,72 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
+			<Tooltip v-for="tab of tabs" :key="tab.name" :text="tab.label" placement="right">
 				<Button
-					:icon="option.icon"
-					:class="{
-						'!text-ink-gray-6': builderStore.leftPanelActiveTab !== option.value,
-					}"
+					:icon="tab.icon"
 					size="md"
-					:variant="
-						builderStore.leftPanelActiveTab === option.value ||
-						(showTokenManager && option.value === 'variables')
-							? 'subtle'
-							: 'ghost'
-					"
-					@click.stop="setActiveTab(option.value as LeftSidebarTabOption)"></Button>
+					:class="{ '!text-ink-gray-6': !isActive(tab) }"
+					:variant="isActive(tab) ? 'subtle' : 'ghost'"
+					@click.stop="select(tab)"></Button>
 			</Tooltip>
 		</div>
 		<div
 			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
 				width: `${builderStore.builderLayout.leftPanelWidth}px`,
-			}"
-			@click.stop="
-				builderStore.leftPanelActiveTab === 'Layers' && canvasStore.activeCanvas?.clearSelection()
-			">
-			<div v-show="builderStore.leftPanelActiveTab === 'Blocks'">
-				<BuilderBlockTemplates class="px-3 pb-3" />
-			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Assets'">
-				<BuilderAssets class="px-3 pb-3" />
-			</div>
-			<div v-show="builderStore.leftPanelActiveTab === 'Layers'" class="p-3 pr-0">
-				<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
-					<span
-						:class="[
-							canvasStore.activeCanvas?.canvasProps.breakpoints.find(
-								(b) => b.device === canvasStore.activeCanvas?.activeBreakpoint,
-							)?.icon || 'lucide-monitor',
-							'size-3',
-						]"
-						aria-hidden="true" />
-					{{ canvasStore.activeCanvas?.activeBreakpoint }}
-				</span>
-				<BlockLayers
-					class="block-layers w-fit min-w-full pr-3"
-					v-if="pageCanvas"
-					:disable-draggable="true"
-					:readonly="builderStore.readOnlyMode"
-					ref="pageLayers"
-					:blocks="[pageCanvas?.getRootBlock() as Block]"
-					v-show="canvasStore.editingMode == 'page'" />
-				<BlockLayers
-					class="block-layers w-fit min-w-full pr-3"
-					ref="componentLayers"
-					:disable-draggable="true"
-					:readonly="builderStore.readOnlyMode"
-					:blocks="[fragmentCanvas?.getRootBlock()]"
-					:indent="5"
-					:adjustForRoot="false"
-					v-if="canvasStore.editingMode === 'fragment' && fragmentCanvas" />
-			</div>
-			<div class="h-full" v-show="builderStore.leftPanelActiveTab === 'Code'">
-				<PageScript
-					:key="pageStore.selectedPage"
-					v-if="pageScriptMounted && pageStore.selectedPage && pageStore.activePage"
-					:page="pageStore.activePage" />
-			</div>
+			}">
+			<template v-for="tab of tabs" :key="tab.name">
+				<div
+					v-if="tab.component && mountedTabs.has(tab.name)"
+					v-show="builderStore.leftPanelActiveTab === tab.name"
+					class="h-full">
+					<component :is="tab.component" v-bind="tab.props?.()" />
+				</div>
+			</template>
 		</div>
 
-		<TokenManager v-model="showTokenManager" :container="miniSidebar" />
+		<TokenManager v-model="builderStore.showTokenManager" :container="miniSidebar" />
 	</div>
 </template>
 <script setup lang="ts">
-import { __ } from "@/translation";
-import type Block from "@/block";
-import LayersIcon from "@/components/Icons/Layers.vue";
+import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
 import TokenManager from "@/components/Modals/TokenManager.vue";
-import PageScript from "@/components/PageScript.vue";
 import useBuilderStore from "@/stores/builderStore";
-import useCanvasStore from "@/stores/canvasStore";
-import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
-import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
+import { reactive, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
-import BlockLayers from "./BlockLayers.vue";
-import BuilderAssets from "./BuilderAssets.vue";
-import BuilderBlockTemplates from "./BuilderBlockTemplates.vue";
-import BuilderCanvas from "./BuilderCanvas.vue";
 import PanelResizer from "./PanelResizer.vue";
 
-const showTokenManager = ref(false);
-const miniSidebar = ref(null) as Ref<HTMLElement | null>;
-const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
-const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
-
-const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
-const pageStore = usePageStore();
-
-// PageScript mounts a CodeMirror instance; defer it until the Code tab is
-// first opened (or a data-script dialog is requested), then keep it alive
-const pageScriptMounted = ref(false);
-watchEffect(() => {
-	if (builderStore.leftPanelActiveTab === "Code" || builderStore.showDataScriptDialog !== null) {
-		pageScriptMounted.value = true;
-	}
-});
-
-const pageCanvas = inject("pageCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
-const fragmentCanvas = inject("fragmentCanvas") as Ref<InstanceType<typeof BuilderCanvas> | null>;
-
 const route = useRoute();
 
-const leftPanelOptions = [
-	{
-		label: __("Insert"),
-		value: "Blocks",
-		icon: "lucide-plus",
-	},
-	{
-		label: __("Layers"),
-		value: "Layers",
-		icon: LayersIcon,
-	},
-	{
-		label: __("Components"),
-		value: "Assets",
-		icon: "lucide-box",
-	},
-	{
-		label: __("Code"),
-		value: "Code",
-		icon: "lucide-code",
-	},
-	{
-		label: __("Design Tokens"),
-		value: "variables",
-		icon: "lucide-aperture",
-	},
-];
+const tabs = leftPanelTabs.visible;
 
-const setActiveTab = (tab: LeftSidebarTabOption) => {
-	if (tab === "variables") {
-		showTokenManager.value = !showTokenManager.value;
-	} else {
-		builderStore.leftPanelActiveTab = tab;
-		showTokenManager.value = false;
-	}
+const miniSidebar = ref(null) as Ref<HTMLElement | null>;
+const mountedTabs = reactive(new Set<string>());
+
+const isActive = (tab: LeftPanelTab) => tab.isActive?.() ?? builderStore.leftPanelActiveTab === tab.name;
+
+const select = (tab: LeftPanelTab) => {
+	if (tab.action) return tab.action();
+	builderStore.leftPanelActiveTab = tab.name;
+	builderStore.showTokenManager = false;
 };
 
+// a non-lazy tab mounts as soon as it registers, a lazy one on first open
 watchEffect(() => {
-	if (pageLayers.value) {
-		builderStore.activeLayers = pageLayers.value;
-	} else if (componentLayers.value) {
-		builderStore.activeLayers = componentLayers.value;
-	}
+	tabs.value.forEach((tab) => {
+		if (!tab.component) return;
+		if (!tab.lazy || builderStore.leftPanelActiveTab === tab.name || tab.preload?.()) {
+			mountedTabs.add(tab.name);
+		}
+	});
 });
 
 watch(
 	() => route.fullPath,
 	() => {
-		showTokenManager.value = false;
+		builderStore.showTokenManager = false;
 	},
-);
-
-// moved out of BlockLayers for performance
-// TODO: Find a better way to do this
-watch(
-	() => canvasStore.activeCanvas?.hoveredBlock,
-	() => {
-		document.querySelectorAll(`[data-block-layer-id].hovered-block`).forEach((el) => {
-			el.classList.remove("hovered-block");
-		});
-		if (canvasStore.activeCanvas?.hoveredBlock) {
-			document
-				.querySelector(`[data-block-layer-id="${canvasStore.activeCanvas.hoveredBlock}"]`)
-				?.classList.add("hovered-block");
-		}
-	},
-);
-
-watch(
-	() => canvasStore.activeCanvas?.selectedBlockIds,
-	async () => {
-		await nextTick();
-		const selectedBlocks = document.querySelectorAll(`[data-block-layer-id].block-selected`);
-		selectedBlocks.forEach((el) => el.classList.remove("block-selected"));
-		Array.from(canvasStore.activeCanvas?.selectedBlockIds || new Set([])).forEach((blockId: string) => {
-			const blockElement = document.querySelector(`[data-block-layer-id="${blockId}"]`);
-			blockElement?.classList.add("block-selected");
-		});
-	},
-	{ deep: true },
 );
 </script>

@@ -74,6 +74,10 @@ def upload_builder_asset():
 	return image_file
 
 
+# the canvas never draws more than a couple of thousand pixels across, even at 2x
+MAX_IMAGE_EDGE = 2048
+
+
 @frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
 	"""
@@ -92,6 +96,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		return filename.split(".")[-1].lower() if "." in filename else ""
 
 	def save_as_webp(image, path: str) -> None:
+		# a 5000px original costs ~100MB decoded and thrashes the browser's image cache,
+		# so the canvas re-decodes it on every pan; thumbnail() only ever shrinks
+		image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE))
 		image.save(path, "WEBP")
 
 	def to_webp_url(url: str, extn: str) -> str:

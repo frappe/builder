@@ -20,7 +20,7 @@ export function promptCreateFolder() {
 	dialog.prompt({
 		title: __("Create New Folder"),
 		size: "sm",
-		confirmLabel: "Create Folder",
+		confirmLabel: __("Create Folder"),
 		fields: [{ name: "folder_name", label: __("Folder Name"), required: true }],
 		onConfirm: async ({ values }) => {
 			await builderProjectFolder.insert.submit({ folder_name: values.folder_name });
@@ -35,7 +35,7 @@ export function promptCreateComponent(block: Block) {
 	dialog.prompt({
 		title: __("New Component"),
 		size: "sm",
-		confirmLabel: "Save",
+		confirmLabel: __("Save"),
 		fields: [
 			{
 				name: "componentName",

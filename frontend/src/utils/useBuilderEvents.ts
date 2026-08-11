@@ -20,7 +20,8 @@ import {
 	triggerCopyEvent,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
-import { useEventListener, useStorage } from "@vueuse/core";
+import { useEventListener } from "@vueuse/core";
+import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -217,42 +218,15 @@ export function useBuilderEvents(
 		}
 	});
 
+	// a command that declares keys owns its binding; what is left needs the
+	// keyboard event or a canvas ref, so it stays a plain shortcut
 	useShortcut([
-		{
-			key: "\\",
-			ctrl: true,
-			description: __("Toggle panels"),
-			group: __("View"),
-			handler: (e) => {
-				builderStore.showRightPanel = !builderStore.showRightPanel;
-				builderStore.showLeftPanel = builderStore.showRightPanel;
-			},
-		},
-		{
-			key: "\\",
-			ctrl: true,
-			shift: true,
-			description: __("Toggle left panel"),
-			group: __("View"),
-			handler: () => {
-				builderStore.showLeftPanel = !builderStore.showLeftPanel;
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			shift: true,
-			description: __("Toggle canvas dark mode"),
-			group: __("View"),
-			handler: () => {
-				builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
-			},
-		},
+		...commandShortcuts(),
 		{
 			key: "s",
 			ctrl: true,
 			description: __("Save page / component"),
-			group: __("General"),
+			group: "General",
 			allowInInput: true,
 			handler: (e) => {
 				if (canvasStore.editingMode === "fragment") {
@@ -262,78 +236,9 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "p",
-			ctrl: true,
-			description: __("Preview"),
-			group: __("General"),
-			handler: () => {
-				pageStore.savePage();
-				router.push({
-					name: "preview",
-					params: {
-						pageId: pageStore.selectedPage as string,
-					},
-				});
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			shift: true,
-			description: __("Search blocks"),
-			group: __("General"),
-			handler: () => {
-				builderStore.showSearchBlock = true;
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			description: __("Focus property search"),
-			group: __("General"),
-			allowInInput: true,
-			handler: () => {
-				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
-			},
-		},
-		{
-			key: "c",
-			ctrl: true,
-			shift: true,
-			description: __("Copy block styles"),
-			group: __("Edit"),
-			handler: () => {
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					const copiedStyle = useStorage(
-						"copiedStyle",
-						{ blockId: "", style: {} },
-						sessionStorage,
-					) as Ref<StyleCopy>;
-					copiedStyle.value = {
-						blockId: block.blockId,
-						style: block.getStylesCopy(),
-					};
-				}
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			description: __("Duplicate block"),
-			group: __("Edit"),
-			handler: () => {
-				if (builderStore.readOnlyMode) return;
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					block.duplicateBlock();
-				}
-			},
-		},
-		{
 			key: "Backspace",
 			description: __("Delete selected blocks"),
-			group: __("Edit"),
+			group: "Edit",
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -347,7 +252,7 @@ export function useBuilderEvents(
 		{
 			key: "Delete",
 			description: __("Delete selected blocks"),
-			group: __("Edit"),
+			group: "Edit",
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -361,7 +266,7 @@ export function useBuilderEvents(
 		{
 			key: "Escape",
 			description: __("Exit current mode"),
-			group: __("General"),
+			group: "General",
 			condition: () => canvasStore.editingMode !== "page",
 			handler: (e) => {
 				canvasStore.exitFragmentMode(e);
@@ -369,33 +274,10 @@ export function useBuilderEvents(
 			preventDefault: false,
 		},
 		{
-			key: "z",
-			ctrl: true,
-			description: __("Undo"),
-			group: __("Edit"),
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canUndo) {
-					canvasStore.activeCanvas?.history.undo();
-				}
-			},
-		},
-		{
-			key: "z",
-			ctrl: true,
-			shift: true,
-			description: __("Redo"),
-			group: __("Edit"),
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canRedo) {
-					canvasStore.activeCanvas?.history.redo();
-				}
-			},
-		},
-		{
 			key: "0",
 			ctrl: true,
 			description: __("Reset canvas zoom"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setCanvasZoom?.(1, "center");
@@ -407,7 +289,7 @@ export function useBuilderEvents(
 			ctrl: true,
 			shift: true,
 			description: __("Fit canvas to screen"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setScaleAndTranslate();
@@ -417,7 +299,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowRight",
 			description: __("Pan canvas right"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("right");
@@ -428,7 +310,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowLeft",
 			description: __("Pan canvas left"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("left");
@@ -439,7 +321,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowUp",
 			description: __("Pan canvas up"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("up");
@@ -450,7 +332,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowDown",
 			description: __("Pan canvas down"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("down");
@@ -462,7 +344,7 @@ export function useBuilderEvents(
 			key: "=",
 			ctrl: true,
 			description: __("Zoom in"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomIn();
@@ -473,7 +355,7 @@ export function useBuilderEvents(
 			key: "-",
 			ctrl: true,
 			description: __("Zoom out"),
-			group: __("Canvas"),
+			group: "Canvas",
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomOut();
@@ -483,7 +365,7 @@ export function useBuilderEvents(
 		{
 			key: "c",
 			description: __("Container mode"),
-			group: __("Tools"),
+			group: "Tools",
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "container";
@@ -492,7 +374,7 @@ export function useBuilderEvents(
 		{
 			key: "i",
 			description: __("Image mode"),
-			group: __("Tools"),
+			group: "Tools",
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "image";
@@ -501,7 +383,7 @@ export function useBuilderEvents(
 		{
 			key: "t",
 			description: __("Text mode"),
-			group: __("Tools"),
+			group: "Tools",
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "text";
@@ -510,7 +392,7 @@ export function useBuilderEvents(
 		{
 			key: "v",
 			description: __("Select mode"),
-			group: __("Tools"),
+			group: "Tools",
 			handler: () => {
 				builderStore.mode = "select";
 			},
@@ -518,7 +400,7 @@ export function useBuilderEvents(
 		{
 			key: "h",
 			description: __("Move / hand mode"),
-			group: __("Tools"),
+			group: "Tools",
 			handler: () => {
 				builderStore.mode = "move";
 			},
@@ -529,7 +411,7 @@ export function useBuilderEvents(
 			shift: true,
 			triggeredOn: "hold",
 			description: __("Highlight Blocks with Client Scripts"),
-			group: __("View"),
+			group: "View",
 			onHold: () => {
 				builderStore.highlightBlocksWithClientScripts = true;
 			},
@@ -589,7 +471,7 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 		// Handle dialog first and wait for response
 		showDialog({
 			title: __("Copy entire page?"),
-			message: "Do you want to copy the entire page including settings and scripts?",
+			message: __("Do you want to copy the entire page including settings and scripts?"),
 			actions: [
 				{
 					label: __("No, just blocks"),

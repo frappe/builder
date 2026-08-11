@@ -65,7 +65,7 @@
 						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
 					]"
 					:style="fixedPositionStyles"
-					@after-enter="updateOptionsPosition"
+					@after-enter="setOptionsPosition"
 					@after-leave="fixedPositionStyles = {}">
 					<div class="options-list overflow-y-auto p-1 empty:p-0">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
@@ -311,8 +311,17 @@ watch(
 	{ immediate: true },
 );
 
+const setOptionsPosition = () => {
+	// nextTick flushes the DOM but not layout; the anchored position can still move
+	nextTick(() => {
+		requestAnimationFrame(() => {
+			updateOptionsPosition();
+		});
+	});
+};
+
 watch(isOpen, (val) => {
-	if (val) nextTick(updateOptionsPosition);
+	if (val) setOptionsPosition();
 });
 
 watch(displayOptions, () => {
@@ -359,9 +368,13 @@ const getFixedPositionStyles = (): Record<string, string> => {
 	};
 };
 
+// options are teleported to <body>; a caller that moves or hides this must close them
+const hideOptions = () => (isOpen.value = false);
+
 defineExpose({
 	refreshOptions,
 	clearSelection,
+	hideOptions,
 });
 </script>
 <style scoped>
