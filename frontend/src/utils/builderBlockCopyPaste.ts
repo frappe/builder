@@ -186,7 +186,7 @@ async function handlePagePaste(
 		actions: [
 			{
 				label: "Create New Page",
-				variant: "solid",
+				variant: "subtle",
 				async onClick() {
 					toast.loading("Pasting...", { id: "paste-page" });
 					await handleComponents(clipboardData, crossSitePaste);
@@ -202,7 +202,7 @@ async function handlePagePaste(
 			},
 			{
 				label: "Update Current Page",
-				variant: "subtle",
+				variant: "solid",
 				async onClick() {
 					toast.loading("Pasting...", { id: "paste-page" });
 					await handleComponents(clipboardData, crossSitePaste);
