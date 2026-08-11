@@ -152,6 +152,8 @@ export function setFontFromHTML(html: string): void {
 	const matches = html.match(/font-family:\s*([^;"]+)[";]/g) ?? [];
 	matches
 		.map((m) => m.replace(/font-family:\s*([^;"]+)[";]/, "$1").trim())
+		// an inline style may carry a whole stack; only the first family is loadable
+		.map((stack) => (stack.split(",")[0] || "").trim().replace(/^['"]|['"]$/g, ""))
 		.filter(Boolean)
 		.forEach((font) => setFont(font));
 }

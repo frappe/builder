@@ -67,10 +67,14 @@ export function dropImportedFontFaces(headHtml: string, families: string[]): str
 	if (!headHtml || !families.length) return headHtml;
 	const lower = families.map((family) => family.toLowerCase());
 
-	let html = headHtml.replace(/@font-face\s*{[^}]*}/gi, (rule) => {
-		const family = rule.match(/font-family\s*:\s*["']?([^;"'}]+)/i)?.[1]?.trim().toLowerCase();
-		return family && lower.includes(family) ? "" : rule;
-	});
+	// rewrite only inside complete <style> pairs: on malformed input an unbounded
+	// @font-face match can run across </style> and take the tag with it
+	let html = headHtml.replace(/<style>[\s\S]*?<\/style>/gi, (styleBlock) =>
+		styleBlock.replace(/@font-face\s*{[^}]*}/gi, (rule) => {
+			const family = rule.match(/font-family\s*:\s*["']?([^;"'}]+)/i)?.[1]?.trim().toLowerCase();
+			return family && lower.includes(family) ? "" : rule;
+		}),
+	);
 
 	// a Google Fonts link for a family that now lives here is just a request to a
 	// third party for a file the site already has

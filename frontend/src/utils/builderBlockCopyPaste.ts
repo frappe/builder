@@ -331,39 +331,31 @@ function normalizeLegacyToken(variable: LegacyAwareToken): BuilderToken {
 async function handleVariables(clipboardData: BuilderClipboardData, crossSitePaste: boolean) {
 	const idMap = new Map<string, string>();
 	for (const variable of (clipboardData.variables || []).map(normalizeLegacyToken)) {
-		if (crossSitePaste) {
-			const originalName = variable.name;
-			// a token id is assigned by the server, so reuse an equivalent token when
-			// there is one and otherwise map the refs to the id we actually get back
-			const twin = builderTokens.data?.find(
-				(v: BuilderToken) =>
-					v.token_name === variable.token_name && v.value === variable.value && v.type === variable.type,
-			);
-			let newName = twin?.name;
-			if (!newName) {
-				try {
-					newName = (await builderTokens.insert.submit(variable))?.name;
-				} catch (error: any) {
-					console.error("Error inserting token:", error);
-				}
-			}
-			if (newName && newName !== originalName) {
-				idMap.set(originalName, newName);
-			}
-		} else {
-			const existing = builderTokens.data?.find((v: BuilderToken) => v.name === variable.name);
-			if (!existing) {
-				try {
-					await builderTokens.insert.submit(variable);
-				} catch (error: any) {
-					if (error?.response?.status !== 409) {
-						console.error("Error inserting variable:", error);
-					}
-				}
+		const originalName = variable.name;
+		// a same-site copy normally carries tokens that already live here; anything
+		// missing (an extension payload invents its ids) is created like a cross-site one
+		if (!crossSitePaste && builderTokens.data?.find((v: BuilderToken) => v.name === originalName)) {
+			continue;
+		}
+		// a token id is assigned by the server, so reuse an equivalent token when
+		// there is one and otherwise map the refs to the id we actually get back
+		const twin = builderTokens.data?.find(
+			(v: BuilderToken) =>
+				v.token_name === variable.token_name && v.value === variable.value && v.type === variable.type,
+		);
+		let newName = twin?.name;
+		if (!newName) {
+			try {
+				newName = (await builderTokens.insert.submit(variable))?.name;
+			} catch (error: any) {
+				console.error("Error inserting token:", error);
 			}
 		}
+		if (newName && newName !== originalName) {
+			idMap.set(originalName, newName);
+		}
 	}
-	if (crossSitePaste && idMap.size) {
+	if (idMap.size) {
 		clipboardData.blocks.forEach((block) => rewriteVariableRefsInBlock(block as BlockOptions, idMap));
 		clipboardData.components?.forEach((component) => rewriteVariableRefsInComponent(component, idMap));
 	}
@@ -457,38 +449,41 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 }
 
 async function handlePageScripts(clipboardData: BuilderClipboardData, currentSiteURL: string): Promise<void> {
-	if (!clipboardData.sourceURL || clipboardData.sourceURL === currentSiteURL) {
-		return;
-	}
-	if (!clipboardData.pageScripts?.length) return;
+	const scripts = clipboardData.pageScripts || [];
+	if (!scripts.length) return;
+	const crossSitePaste = Boolean(clipboardData.sourceURL && clipboardData.sourceURL !== currentSiteURL);
 
-	const pageScriptIdMap = new Map<string, string>();
+	// same-site ids are authoritative (the scripts usually live here already, but an
+	// extension payload invents ids that still need creating); cross-site ones are
+	// rehashed so they cannot collide
+	const scriptId = (script: BuilderClientScript) =>
+		crossSitePaste ? generateHash(script.name, clipboardData.sourceURL as string, true) : script.name;
+
 	const insertedScripts: BuilderClientScriptDocument[] = [];
-	for (const script of clipboardData.pageScripts || []) {
-		const newScriptId = generateHash(script.name, clipboardData.sourceURL, true);
-		pageScriptIdMap.set(script.name, newScriptId);
+	const clientScriptResource = createListResource({
+		doctype: "Builder Client Script",
+	});
+	const existingScriptIds = await fetchExistingScriptIds(scripts.map(scriptId));
 
+	for (const script of scripts) {
+		const newScriptId = scriptId(script);
 		const scriptDoc: BuilderClientScriptDocument = {
 			...script,
 			name: newScriptId,
 		};
 		insertedScripts.push(scriptDoc);
 
-		const clientScriptResource = createListResource({
-			doctype: "Builder Client Script",
-		});
 		try {
-			await clientScriptResource.insert.submit(scriptDoc);
-		} catch (error: { response?: { status: number } } | any) {
-			if (error?.response?.status === 409) {
-				// If script already exists, update it
+			if (!existingScriptIds.has(newScriptId)) {
+				await clientScriptResource.insert.submit(scriptDoc);
+			} else if (crossSitePaste) {
 				await clientScriptResource.setValue.submit(scriptDoc);
-			} else {
-				console.error("Error inserting client script:", error);
 			}
-			// pass
+		} catch (error) {
+			console.error("Error saving client script:", error);
 		}
 
+		if (newScriptId === script.name) continue;
 		const clientScript = clipboardData.pageDoc?.client_scripts?.find((s) => s.builder_script === script.name);
 		if (clientScript) {
 			clientScript.builder_script = newScriptId;
@@ -500,6 +495,18 @@ async function handlePageScripts(clipboardData: BuilderClipboardData, currentSit
 	if (!clipboardData.pageDoc) {
 		await attachScriptsToCurrentPage(insertedScripts);
 	}
+}
+
+async function fetchExistingScriptIds(scriptIds: string[]): Promise<Set<string>> {
+	const existingScripts = createListResource({
+		doctype: "Builder Client Script",
+		fields: ["name"],
+		filters: [["name", "in", scriptIds]],
+		pageLength: scriptIds.length,
+		auto: true,
+	});
+	await existingScripts.list.promise;
+	return new Set((existingScripts.data || []).map((script: BuilderClientScript) => script.name));
 }
 
 async function attachScriptsToCurrentPage(scripts: BuilderClientScriptDocument[]): Promise<void> {
