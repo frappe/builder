@@ -77,7 +77,7 @@
 					</div>
 				</div>
 				<div
-					v-for="message in messages"
+					v-for="message in visibleMessages"
 					:key="message.id"
 					class="flex flex-col"
 					:class="message.role === 'user' ? 'items-end' : 'items-start'">
@@ -369,6 +369,7 @@ import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
+import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep } from "@/components/ai/types";
 import useBuilderStore from "@/stores/builderStore";
@@ -491,6 +492,19 @@ function replyTo(message: ChatMessage): string | undefined {
 	const next = messages.value[messages.value.findIndex((m) => m.id === message.id) + 1];
 	return next?.role === "user" ? next.content : undefined;
 }
+
+/** A card that reads back every answer makes the bubble under it a second copy
+ * of itself, so the card is the record and the reply drops out of the chat.
+ * Only when the card actually paired them: a reply it can't show (an action
+ * button, an unlabelled question) is left to speak for itself. */
+const visibleMessages = computed(() =>
+	messages.value.filter((message, i) => {
+		if (message.role !== "user") return true;
+		const card = messages.value[i - 1]?.metadata;
+		if (card?.status !== "ui" || !card?.ui?.length) return true;
+		return !cardAnswers(card.ui, message.content, card.text).length;
+	}),
+);
 
 // --- Empty-state suggestions -------------------------------------------------
 // Fresh page → describe the site to build; page with content → describe a change.

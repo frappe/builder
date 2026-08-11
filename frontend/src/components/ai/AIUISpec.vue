@@ -84,12 +84,9 @@
 			<hr v-else-if="el.kind === 'divider'" class="border-outline-gray-1" />
 
 			<!-- choices -->
-			<div
-				v-else-if="el.kind === 'choices'"
-				class="w-full"
-				:class="{ '!mt-4': i > 0 && controlLabel(i, el) }">
-				<p v-if="controlLabel(i, el)" class="mb-1.5 text-xs font-medium text-ink-gray-6">
-					{{ controlLabel(i, el) }}
+			<div v-else-if="el.kind === 'choices'" class="w-full" :class="{ '!mt-4': i > 0 && controlLabel(i) }">
+				<p v-if="controlLabel(i)" class="mb-1.5 text-xs font-medium text-ink-gray-6">
+					{{ controlLabel(i) }}
 				</p>
 				<div class="flex w-full flex-wrap gap-2">
 					<button
@@ -132,8 +129,8 @@
 				v-else-if="el.kind === 'input'"
 				v-model="inputs[i]"
 				type="text"
-				:class="{ '!mt-4': i > 0 && controlLabel(i, el) }"
-				:label="controlLabel(i, el)"
+				:class="{ '!mt-4': i > 0 && controlLabel(i) }"
+				:label="controlLabel(i)"
 				:placeholder="el.placeholder || ''"
 				:disabled="!interactive || disabled"
 				autocomplete="off"
@@ -141,8 +138,8 @@
 
 			<!-- upload: the user's own image (logo, photo); URL rides the reply -->
 			<div v-else-if="el.kind === 'upload'" class="w-full">
-				<span v-if="controlLabel(i, el)" class="mb-1 block text-p-xs text-ink-gray-5">
-					{{ controlLabel(i, el) }}
+				<span v-if="controlLabel(i)" class="mb-1 block text-p-xs text-ink-gray-5">
+					{{ controlLabel(i) }}
 				</span>
 				<FileUploader
 					fileTypes="image/*"
@@ -175,8 +172,8 @@
 			     defines, each a Builder ColorInput — so the reply says which colour goes
 			     WHERE, not a random pile of swatches. Every slot is optional. -->
 			<div v-else-if="el.kind === 'color_input'" class="w-full">
-				<span v-if="controlLabel(i, el)" class="mb-1.5 block text-p-xs font-medium text-ink-gray-5">
-					{{ controlLabel(i, el) }}
+				<span v-if="controlLabel(i)" class="mb-1.5 block text-p-xs font-medium text-ink-gray-5">
+					{{ controlLabel(i) }}
 				</span>
 				<div class="flex flex-col gap-2.5">
 					<div v-for="(slot, k) in colorSlotDefs(el)" :key="k" class="flex flex-col gap-1">
@@ -231,14 +228,20 @@
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import { Button, FileUploader, FormControl } from "frappe-ui";
 import { computed, reactive, ref, watchEffect } from "vue";
+import {
+	INTERACTIVE_KINDS,
+	cardAnswers,
+	isControlLabel,
+	labelOfControl,
+	labelOfQuestion,
+	type UIElement,
+} from "./cardAnswers";
 
 /** Generic renderer for the agent's `present_ui` cards. The agent composes a
  * card from atoms (heading/text/list/swatches/image/choices/input/actions);
  * this component renders them and turns the user's interaction into one plain
  * chat reply. Unknown element kinds are skipped, so the agent can be ahead of
  * the renderer without breaking. */
-
-type UIElement = Record<string, any>;
 
 const props = defineProps<{
 	ui: UIElement[];
@@ -316,42 +319,7 @@ function goBack() {
 	if (stepIndex.value > 0) stepIndex.value -= 1;
 }
 
-const INTERACTIVE_KINDS = new Set(["choices", "input", "upload", "actions", "color_input"]);
-
-/** What was asked and what came back, once the card is answered. The reply was
- * built from the same labels the card renders, so pairing them up is a lookup —
- * there is no second copy of the answers to keep in sync, and it survives a
- * reload because the reply is just the next message in the chat. */
-const answers = computed<{ question: string; answer: string }[]>(() => {
-	const reply = props.answeredWith?.trim();
-	if (!reply) return [];
-	const questions = elements.value
-		.map((el, i) => ({ el, i }))
-		.filter(({ el }) => INTERACTIVE_KINDS.has(el.kind) && el.kind !== "actions");
-	const replied = new Map<string, string>();
-	for (const line of reply.split("\n")) {
-		const at = line.indexOf(":");
-		if (at > 0) replied.set(line.slice(0, at).trim(), line.slice(at + 1).trim());
-	}
-	const out = questions
-		.map(({ el, i }) => ({
-			question: atomLabel(i, el),
-			// "(suggested)" marks a preset the user left alone — it tells the model how
-			// much latitude it has, and means nothing to the person reading it back.
-			answer: (replied.get(atomLabel(i, el)) || "").replace(/\s*\(suggested\)/g, ""),
-		}))
-		.filter((item) => item.question && item.answer);
-	if (out.length) return out;
-	// A lone tappable question submits the option itself ("Poster Wall: bold…"),
-	// not a labelled line — the answer is what comes before the colon.
-	if (questions.length === 1) {
-		const first = reply.split("\n")[0];
-		const answer = (first.includes(":") ? first.slice(0, first.indexOf(":")) : first).trim();
-		const question = atomLabel(questions[0].i, questions[0].el);
-		if (question && answer) return [{ question, answer }];
-	}
-	return [];
-});
+const answers = computed(() => cardAnswers(elements.value, props.answeredWith, props.lead));
 // A choices group with zero options renders nothing tappable — it must not
 // count as interactive, or it suppresses the fallback button and dead-ends the card.
 const interactiveAtoms = computed(() =>
@@ -367,26 +335,9 @@ const isSingleQuestion = computed(
 	() => interactiveAtoms.value.length === 1 && interactiveAtoms.value[0].kind === "choices",
 );
 
-const LABELLABLE = new Set(["input", "choices", "upload"]);
-
-/** A text atom right before an unlabelled control is that control's question —
- * the control renders it as its form label, so it must not render twice. */
-function consumedAsLabel(i: number): boolean {
-	const el = elements.value[i];
-	const next = elements.value[i + 1];
-	return (
-		el?.kind === "text" &&
-		!!next &&
-		LABELLABLE.has(next.kind) &&
-		!next.label &&
-		!!String(el.text || "").trim()
-	);
-}
-
-function controlLabel(i: number, el: UIElement): string {
-	if (el.label) return String(el.label);
-	return consumedAsLabel(i - 1) ? String(elements.value[i - 1].text || "") : "";
-}
+const consumedAsLabel = (i: number) => isControlLabel(elements.value, i);
+const controlLabel = (i: number) => labelOfControl(elements.value, i);
+const atomLabel = (i: number) => labelOfQuestion(elements.value, i, props.lead);
 
 /** Only plain CSS color literals reach inline styles — a url(...) or var() from
  * the model must not become a style injection vector. */
@@ -476,20 +427,6 @@ function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option:
 		: selections[elIndex].add(optIndex);
 }
 
-/** The question a choices/input atom answers: its own label, or the text atom
- * right above it (the model often writes the question as a separate line), or —
- * for the first question on the card — the lead-in the model wrote above it.
- * Every answer is keyed by this, so a question with no name anywhere can't be
- * paired with its answer and won't appear in the answered summary. */
-function atomLabel(i: number, el: UIElement): string {
-	const label = controlLabel(i, el);
-	if (label) return label;
-	const prev = elements.value[i - 1];
-	if (prev?.kind === "text" || prev?.kind === "heading") return String(prev.text || "");
-	const first = elements.value.findIndex((e) => INTERACTIVE_KINDS.has(e.kind) && e.kind !== "actions");
-	return i === first ? String(props.lead || "") : "";
-}
-
 /** Compose one plain-text reply from the clicked action + everything collected.
  * Reads like a normal user message, so the model needs no special parsing. The
  * labelled long form goes to the model; the chat shows just the values. */
@@ -502,12 +439,12 @@ function submitCollected(actionLabel?: string) {
 				.map((j) => (el.options?.[j] ? el.options[j].label : ""))
 				.filter(Boolean);
 			if (picked.length) {
-				lines.push(`${atomLabel(i, el) || "Selected"}: ${picked.join(", ")}`);
+				lines.push(`${atomLabel(i) || "Selected"}: ${picked.join(", ")}`);
 				values.push(picked.join(", "));
 			}
 		}
 		if (el.kind === "input" && inputs[i]?.trim()) {
-			const label = atomLabel(i, el);
+			const label = atomLabel(i);
 			lines.push(label ? `${label}: ${inputs[i].trim()}` : inputs[i].trim());
 			values.push(inputs[i].trim());
 		}
@@ -534,7 +471,7 @@ function submitCollected(actionLabel?: string) {
 				// keys it to its question (everything after the FIRST colon is the
 				// answer), and the role→hex pairs read the same to the model as ever.
 				lines.push(
-					`${atomLabel(i, el) || "Colours"}: ${picked
+					`${atomLabel(i) || "Colours"}: ${picked
 						.map((s) => `${s.label}: ${s.hex}${s.suggested ? " (suggested)" : ""}`)
 						.join(", ")}`,
 				);
