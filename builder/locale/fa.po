@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-08 18:22+0553\n"
-"PO-Revision-Date: 2026-08-11 11:18\n"
+"PO-Revision-Date: 2026-08-11 12:23\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -114,12 +114,12 @@ msgstr ""
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
-msgstr ""
+msgstr "بلوک"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
-msgstr ""
+msgstr "الگوی بلوک"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -131,7 +131,7 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Body HTML"
-msgstr ""
+msgstr "بدنه HTML"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -245,7 +245,7 @@ msgstr ""
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
-msgstr ""
+msgstr "مقدار تاریک"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -256,7 +256,7 @@ msgstr "داده‌ها"
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default HTML lang code (e.g., en, es, fr)"
-msgstr ""
+msgstr "کد زبان پیش فرض HTML (به عنوان مثال، en، es، fr)"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -581,7 +581,7 @@ msgstr ""
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Public URL"
-msgstr ""
+msgstr "URL عمومی"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -591,7 +591,7 @@ msgstr "منتشر شده"
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published At"
-msgstr ""
+msgstr "منتشر شده در"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
