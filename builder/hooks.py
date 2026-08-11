@@ -202,7 +202,10 @@ website_route_rules = [
 ]
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
-page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
+page_renderer = [
+	"builder.ai.mcp.http.McpPageRenderer",
+	"builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer",
+]
 
 get_web_pages_with_dynamic_routes = (
 	"builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"
