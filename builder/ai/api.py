@@ -362,6 +362,40 @@ def verify_ai_key(preset: str, api_key: str = "", api_base: str = "", model_id: 
 
 @frappe.whitelist()
 @has_page_write()
+def start_codex_login():
+	"""Begin a ChatGPT browser sign-in: the URL to open, the state to poll on,
+	and whether the localhost redirect can be captured from here."""
+	from builder.ai import codex_login
+
+	return codex_login.start()
+
+
+@frappe.whitelist()
+@has_page_write()
+def poll_codex_login(state: str):
+	"""Where a started sign-in stands: pending, connected, failed or expired.
+	Connecting installs the ChatGPT provider; models come from setup_ai_provider."""
+	from builder.ai import codex_login
+
+	return codex_login.poll(state)
+
+
+@frappe.whitelist()
+@has_page_write()
+def finish_codex_login(redirect_url: str):
+	"""Complete a sign-in from the pasted redirect URL, for when the localhost
+	listener couldn't see it (remote server, port in use)."""
+	from builder.ai import codex_login
+	from builder.ai.codex import CodexError
+
+	try:
+		return codex_login.finish(redirect_url)
+	except CodexError as e:
+		return {"status": "failed", "message": str(e)}
+
+
+@frappe.whitelist()
+@has_page_write()
 def setup_ai_provider(
 	preset: str,
 	api_key: str = "",

@@ -81,6 +81,28 @@ PRESETS = [
 		],
 	},
 	{
+		"id": "codex",
+		"name": "ChatGPT",
+		"tagline": "Included with ChatGPT Plus/Pro",
+		"blurb": "OpenAI's models through the ChatGPT subscription you already pay for. No API credits or per-token billing, just sign in with your ChatGPT account.",
+		"route_prefix": "codex",
+		"litellm_provider": "codex",
+		"api_base": None,
+		"oauth": True,
+		"key_url": "",
+		"key_prefix": "",
+		"key_steps": [
+			"Click Sign in with ChatGPT and approve in the tab that opens",
+			"You'll be connected automatically when the sign-in completes",
+		],
+		"models": [
+			("gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier, best for building", True),
+			("gpt-5.6-luna", "GPT-5.6 Luna", "Fastest of the 5.6 line", False),
+			("gpt-5.3-codex", "GPT-5.3 Codex", "Code-tuned, largest context", False),
+			("gpt-5.5", "GPT-5.5", "Previous generation", False),
+		],
+	},
+	{
 		"id": "google",
 		"name": "Google Gemini",
 		"tagline": "Gemini, direct",
@@ -139,6 +161,8 @@ def public_preset(preset: dict) -> dict:
 		"key_steps": preset["key_steps"],
 		"api_base": preset["api_base"],
 		"custom": custom,
+		# OAuth providers sign in with a browser round-trip instead of a key.
+		"oauth": preset.get("oauth", False),
 		# A custom endpoint is named and addressed by the user; a known one only
 		# ever needs the key, and often already exists from a previous setup.
 		"needs_name": custom,
@@ -209,6 +233,10 @@ def verify_key(preset: dict, api_key: str, api_base: str, model_id: str) -> dict
 	"""Make the smallest real call this provider will accept, so a key that looks
 	right but is revoked, out of credit or scoped wrong fails HERE rather than
 	three screens later on the user's first build."""
+	if preset["id"] == "codex":
+		from builder.ai import codex
+
+		return codex.verify_credential(api_key)
 	import litellm
 
 	base = api_base or preset["api_base"]

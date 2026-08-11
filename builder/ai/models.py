@@ -115,6 +115,11 @@ def lookup_metadata(qualified_name: str, model_id: str) -> dict:
 	OpenRouter models come from its catalog; everything else from litellm's own model
 	map, which knows the mainstream hosted models. An unknown model returns {} and
 	keeps whatever defaults it was given."""
+	if qualified_name.startswith("codex/"):
+		from builder.ai.codex import model_metadata
+
+		if found := model_metadata(model_id):
+			return found
 	if qualified_name.startswith("openrouter/"):
 		try:
 			if found := fetch_openrouter_catalog().get(qualified_name):

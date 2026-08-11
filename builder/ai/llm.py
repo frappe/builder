@@ -147,6 +147,18 @@ def route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
 	return f"{litellm_provider}/{model_id}", overrides, provider_api_key(info) or api_key
 
 
+def codex_route(model: str) -> tuple[str, str] | None:
+	"""(provider row, remote model id) when this model rides the ChatGPT Codex
+	backend. That backend is OAuth plus Responses SSE, which litellm cannot
+	speak, so complete()/complete_with_tools() hand these to builder.ai.codex."""
+	info = ModelRegistry.find(model)
+	if not info or (info.get("litellm_provider") or "").lower() != "codex":
+		return None
+	prefix = info.get("route_prefix") or ""
+	model_id = model[len(prefix) + 1 :] if prefix and model.startswith(f"{prefix}/") else model
+	return info["provider"], model_id
+
+
 def provider_api_key(info: dict) -> str | None:
 	"""The provider's own key, when it has one. Without one it falls back to the
 	caller's (the OpenRouter key in Builder Settings)."""
@@ -163,6 +175,10 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	"""Plain completion. Returns the response iterator when streaming, else the
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
+	if target := codex_route(model):
+		from builder.ai import codex
+
+		return codex.complete(target[1], messages, params, provider=target[0], stream=stream)
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)
@@ -204,6 +220,10 @@ def complete_with_tools(
 	stream: bool = False,
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
+	if target := codex_route(model):
+		from builder.ai import codex
+
+		return codex.complete(target[1], messages, params, provider=target[0], tools=tools, stream=stream)
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)

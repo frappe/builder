@@ -78,7 +78,49 @@
 				<p class="text-p-xs text-ink-gray-5">Anything that speaks the OpenAI API.</p>
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<!-- An OAuth provider signs in with a browser round-trip; there is no key
+			     to paste. The tokens stay server-side, the UI only polls for the outcome. -->
+			<div v-if="active.oauth" class="flex flex-col gap-3">
+				<div class="flex items-center gap-2">
+					<Button size="sm" variant="solid" :loading="oauthStatus === 'waiting'" @click="signIn">
+						{{ oauthStatus === "waiting" ? "Waiting for sign-in" : "Sign in with ChatGPT" }}
+					</Button>
+					<Badge v-if="oauthStatus === 'connected'" theme="green" size="sm" label="Connected" />
+					<Badge
+						v-else-if="active.has_key && oauthStatus === 'idle'"
+						theme="green"
+						size="sm"
+						label="Already connected" />
+				</div>
+				<p v-if="active.has_key && oauthStatus === 'idle'" class="text-p-xs text-ink-gray-5">
+					Sign in again to switch accounts, or continue with the stored one.
+				</p>
+				<!-- The redirect goes to localhost:1455. When this server can't be there to
+				     catch it, the browser strands on a dead page whose address still carries
+				     the sign-in code, so pasting that address completes the same login. -->
+				<div v-if="oauthStatus === 'waiting'" class="flex flex-col gap-1.5">
+					<FormControl
+						v-model="pasteUrl"
+						label="Didn't connect on its own?"
+						placeholder="http://localhost:1455/auth/callback?code=…"
+						autocomplete="off" />
+					<p class="text-p-xs text-ink-gray-5">
+						If the sign-in tab ends on a localhost page that can't load, paste that page's address here.
+					</p>
+					<Button
+						v-if="pasteUrl.trim()"
+						size="sm"
+						variant="subtle"
+						class="w-fit"
+						:loading="busy"
+						@click="connectPasted">
+						Connect
+					</Button>
+				</div>
+				<p v-if="result" class="text-p-xs" :class="resultClass">{{ result.message }}</p>
+			</div>
+
+			<div v-else class="flex flex-col gap-1.5">
 				<FormControl
 					v-model="apiKey"
 					type="password"
@@ -194,7 +236,7 @@
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
 import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
 const emit = defineEmits(["done"]);
@@ -209,6 +251,7 @@ type Preset = {
 	key_steps: string[];
 	api_base: string | null;
 	custom: boolean;
+	oauth: boolean;
 	has_key: boolean;
 	needs_name: boolean;
 	needs_api_base: boolean;
@@ -234,6 +277,14 @@ const result = ref<Result | null>(null);
 const busy = ref(false);
 const loading = ref(true);
 const loadError = ref("");
+
+// The browser sign-in for OAuth providers: idle until the button starts one,
+// waiting while the tab is out, then connected or failed. `loginState` pairs
+// the polls with the attempt they belong to.
+const oauthStatus = ref<"idle" | "waiting" | "connected" | "failed">("idle");
+const pasteUrl = ref("");
+let loginState = "";
+let pollTimer: number | undefined;
 
 const resultClass = computed(() =>
 	result.value?.success
@@ -270,6 +321,7 @@ const customModelIds = computed(() =>
 );
 
 const canContinue = computed(() => {
+	if (active.value.oauth) return oauthStatus.value === "connected" || active.value.has_key;
 	if (active.value.needs_name && !providerName.value.trim()) return false;
 	if (active.value.needs_api_base && !apiBase.value.trim()) return false;
 	if (active.value.custom) return customModelIds.value.length > 0;
@@ -304,6 +356,9 @@ const choose = (preset: Preset) => {
 	apiKey.value = "";
 	customModels.value = "";
 	result.value = null;
+	stopPolling();
+	oauthStatus.value = "idle";
+	pasteUrl.value = "";
 	// Recommended models come pre-ticked so a known provider is two clicks and a
 	// paste: the point of the presets is that nothing else needs deciding.
 	selected.value = preset.models.filter((m) => m.recommended).map((m) => m.model_id);
@@ -366,6 +421,67 @@ const verify = async () => {
 	}
 };
 
+const signIn = async () => {
+	result.value = null;
+	try {
+		const res: any = await createResource({ url: "builder.ai.api.start_codex_login" }).submit();
+		loginState = res.state;
+		window.open(res.url, "_blank", "noopener");
+		oauthStatus.value = "waiting";
+		pollTimer = window.setInterval(pollLogin, 2500);
+	} catch (error) {
+		loginFailed((error as Error).message || "Could not start the sign-in");
+	}
+};
+
+const pollLogin = async () => {
+	try {
+		const res: any = await createResource({ url: "builder.ai.api.poll_codex_login" }).submit({
+			state: loginState,
+		});
+		if (res.status === "connected") loginDone();
+		else if (res.status === "failed") loginFailed(res.message);
+		else if (res.status === "expired") loginFailed("The sign-in expired. Try again.");
+	} catch {
+		// a dropped poll is not a failed login; the next tick retries
+	}
+};
+
+const connectPasted = async () => {
+	busy.value = true;
+	try {
+		const res: any = await createResource({ url: "builder.ai.api.finish_codex_login" }).submit({
+			redirect_url: pasteUrl.value.trim(),
+		});
+		if (res.status === "connected") loginDone();
+		else loginFailed(res.message || "Could not complete the sign-in");
+	} catch (error) {
+		loginFailed((error as Error).message || "Could not complete the sign-in");
+	} finally {
+		busy.value = false;
+	}
+};
+
+const loginDone = () => {
+	stopPolling();
+	oauthStatus.value = "connected";
+	// The provider row now holds the credential, which is exactly what has_key
+	// reports after a reload; keep the local copy truthful too.
+	active.value.has_key = true;
+	result.value = { success: true, severity: "ok", message: "Signed in with ChatGPT" };
+};
+
+const loginFailed = (message: string) => {
+	stopPolling();
+	oauthStatus.value = "failed";
+	result.value = { success: false, severity: "error", message: message || "Sign-in failed" };
+};
+
+const stopPolling = () => {
+	if (pollTimer) window.clearInterval(pollTimer);
+	pollTimer = undefined;
+};
+
 const toggle = (id: string) => {
 	const at = selected.value.indexOf(id);
 	if (at === -1) selected.value.push(id);
@@ -402,6 +518,7 @@ const finish = async () => {
 };
 
 onMounted(load);
+onUnmounted(stopPolling);
 </script>
 
 <style>
