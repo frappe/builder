@@ -12,12 +12,13 @@
 </template>
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
+import { __ } from "@/translation";
 
 const builderStore = useBuilderStore();
 
 // one item, not four: they are a tight visual group
 const modes = [
-	{ mode: "select", icon: "lucide-mouse-pointer", description: "Select (v)" },
+	{ mode: "select", icon: "lucide-mouse-pointer", description: __("Select (v)") },
 	{ mode: "container", icon: "lucide-square", description: "Container (c)" },
 	{ mode: "text", icon: "lucide-type", description: "Text (t)" },
 	{ mode: "image", icon: "lucide-image", description: "Image (i)" },
