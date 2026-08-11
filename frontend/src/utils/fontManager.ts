@@ -35,10 +35,15 @@ const fontCache = new Map<string, Promise<string>>();
 const PREVIEW_PREFIX = "__builder_preview_";
 // the picker re-queries on every keystroke, so batch the resulting loads
 const PREVIEW_DEBOUNCE = 120;
+// a builder session runs for hours: without a ceiling, browsing the picker would leave
+// the whole catalog resident. Well above the ~20 rows on screen, so nothing visible goes.
+const PREVIEW_FACE_LIMIT = 150;
 
 const previewRequests = new Map<string, Promise<void>>();
 // family -> the family its preview renders with; reactive so pickers restyle on arrival
 const previewFamilies = shallowRef(new Map<string, string>());
+// only subset faces, in insertion order — real faces belong to blocks and are never evicted
+const previewFaces = new Map<string, FontFace>();
 
 // the Google Fonts catalog is ~110KB, so it stays out of the main bundle
 // and loads on first use (font pickers read the reactive ref)
@@ -148,8 +153,26 @@ async function loadSubsetFace(font: string): Promise<string> {
 	if (!url) throw new Error(`No font file in the stylesheet for ${font}`);
 
 	const previewFamily = `${PREVIEW_PREFIX}${font}`;
-	document.fonts.add(await new FontFace(previewFamily, `url("${url}")`).load());
+	const face = await new FontFace(previewFamily, `url("${url}")`).load();
+	document.fonts.add(face);
+	previewFaces.set(font, face);
+	evictOldestPreviews();
 	return previewFamily;
+}
+
+function evictOldestPreviews() {
+	if (previewFaces.size <= PREVIEW_FACE_LIMIT) return;
+
+	const families = new Map(previewFamilies.value);
+	while (previewFaces.size > PREVIEW_FACE_LIMIT) {
+		const [oldest, face] = previewFaces.entries().next().value!;
+		document.fonts.delete(face);
+		previewFaces.delete(oldest);
+		// drop the request too, so the font can be previewed again if it comes back
+		previewRequests.delete(oldest);
+		families.delete(oldest);
+	}
+	previewFamilies.value = families;
 }
 
 function resolvePreviewFace(font: string): Promise<string> {
@@ -175,23 +198,22 @@ export function loadFontPreview(font: string): Promise<void> {
 	return request;
 }
 
-const queuedPreviews = new Set<string>();
+let queuedPreviews: string[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
 
 function flushPreviewQueue() {
 	flushTimer = undefined;
 	queuedPreviews.forEach(loadFontPreview);
-	queuedPreviews.clear();
+	queuedPreviews = [];
 }
 
 /** Queues previews for the currently visible options, coalescing bursts of keystrokes. */
 export function schedulePreviewLoad(fonts: string[]): void {
-	fonts.forEach((font) => {
-		if (!previewRequests.has(font)) queuedPreviews.add(font);
-	});
-	// the window runs from the first queued font rather than the last, so previews still
-	// arrive while someone is typing
-	if (queuedPreviews.size && !flushTimer) flushTimer = setTimeout(flushPreviewQueue, PREVIEW_DEBOUNCE);
+	// every keystroke supersedes the last, so the pending set is replaced rather than
+	// accumulated: typing "rob" must not leave the matches for "r" in flight
+	queuedPreviews = fonts.filter((font) => !previewRequests.has(font));
+	if (flushTimer) clearTimeout(flushTimer);
+	if (queuedPreviews.length) flushTimer = setTimeout(flushPreviewQueue, PREVIEW_DEBOUNCE);
 }
 
 /**
