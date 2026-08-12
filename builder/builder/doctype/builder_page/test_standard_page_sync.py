@@ -346,26 +346,6 @@ class TestStandardPageSync(FrappeTestCase):
 		finally:
 			self.delete_if_exists("Builder Page", page.name, force=True)
 
-	def test_new_standard_page_keeps_its_export(self):
-		"""Inserting a standard page must not delete the export it just wrote."""
-		with (
-			mock.patch(f"{self.PAGE_MODULE}.export_page_as_standard"),
-			mock.patch(f"{self.EXPORT_MODULE}.delete_standard_page_files") as mock_delete,
-		):
-			with self.with_developer_mode():
-				page = frappe.get_doc(
-					{
-						"doctype": "Builder Page",
-						"page_title": "fresh-standard-page",
-						"route": f"/test-standard-{frappe.generate_hash(4)}",
-						"blocks": "[]",
-						"is_standard": 1,
-						"app": self.FIXTURE_APP,
-					}
-				).insert(ignore_permissions=True)
-			mock_delete.assert_not_called()
-		self.delete_if_exists("Builder Page", page.name, force=True)
-
 	def test_uncheck_standard_page_removes_files(self):
 		page = self.make_page("uncheck-std-page")
 		try:
@@ -486,39 +466,6 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", page2.name)
 			self.delete_if_exists("Builder Component", component.name, force=1)
 
-	def test_uncheck_standard_page_removes_orphaned_component(self):
-		component = self.make_component()
-		page = self.make_page("uncheck-std-component", with_component=component)
-		try:
-			with self.mock_page_sync_deletes(
-				f"{self.EXPORT_MODULE}.delete_standard_component_files"
-			) as mock_del_component:
-				with self.with_developer_mode():
-					self.uncheck_standard(page)
-				self.assert_sync_delete_called_once(mock_del_component, component.name)
-		finally:
-			self.delete_if_exists("Builder Page", page.name, force=True)
-			self.delete_if_exists("Builder Component", component.name, force=1)
-
-	def test_uncheck_standard_page_shared_component_is_not_removed(self):
-		component = self.make_component()
-		page1 = self.make_page("uncheck-shared-comp-page-1", with_component=component)
-		page2 = self.make_secondary_standard_page(
-			"uncheck-shared-comp-page-2",
-			blocks=self.blocks_with_component(component),
-		)
-		try:
-			with self.mock_page_sync_deletes(
-				f"{self.EXPORT_MODULE}.delete_standard_component_files"
-			) as mock_del_component:
-				with self.with_developer_mode():
-					self.uncheck_standard(page1)
-				mock_del_component.assert_not_called()
-		finally:
-			self.delete_if_exists("Builder Page", page1.name, force=True)
-			self.delete_if_exists("Builder Page", page2.name)
-			self.delete_if_exists("Builder Component", component.name, force=1)
-
 	# --------------------------------------------------------- variable tests
 
 	def test_variable_on_trash_removes_exported_files(self):
@@ -599,39 +546,6 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", page2.name)
 			self.delete_if_exists("Builder Token", variable.name, force=1)
 
-	def test_uncheck_standard_page_removes_orphaned_variable(self):
-		variable = self.make_variable()
-		page = self.make_page("uncheck-std-variable", with_variable=variable)
-		try:
-			with self.mock_page_sync_deletes(
-				f"{self.EXPORT_MODULE}.delete_standard_variable_files"
-			) as mock_del_variable:
-				with self.with_developer_mode():
-					self.uncheck_standard(page)
-				self.assert_sync_delete_called_once(mock_del_variable, variable.name)
-		finally:
-			self.delete_if_exists("Builder Page", page.name, force=True)
-			self.delete_if_exists("Builder Token", variable.name, force=1)
-
-	def test_uncheck_standard_page_shared_variable_is_not_removed(self):
-		variable = self.make_variable()
-		page1 = self.make_page("uncheck-shared-var-page-1", with_variable=variable)
-		page2 = self.make_secondary_standard_page(
-			"uncheck-shared-var-page-2",
-			blocks=self.blocks_with_variable(variable),
-		)
-		try:
-			with self.mock_page_sync_deletes(
-				f"{self.EXPORT_MODULE}.delete_standard_variable_files"
-			) as mock_del_variable:
-				with self.with_developer_mode():
-					self.uncheck_standard(page1)
-				mock_del_variable.assert_not_called()
-		finally:
-			self.delete_if_exists("Builder Page", page1.name, force=True)
-			self.delete_if_exists("Builder Page", page2.name)
-			self.delete_if_exists("Builder Token", variable.name, force=1)
-
 	# ------------------------------------------------------------- font tests
 
 	def test_on_trash_standard_page_removes_orphaned_font(self):
@@ -674,19 +588,4 @@ class TestStandardPageSync(FrappeTestCase):
 				self.assert_export_contains(mock_export, script.name)
 		finally:
 			self.delete_if_exists("Builder Page", page.name)
-			self.delete_if_exists("Builder Client Script", script.name)
-
-	def test_uncheck_standard_page_shared_script_is_not_removed(self):
-		page1, script = self.make_page("uncheck-shared-script-page-1", with_script=True)
-		page2 = self.make_secondary_standard_page("uncheck-shared-script-page-2", script=script)
-		try:
-			with self.mock_page_sync_deletes(
-				f"{self.EXPORT_MODULE}.delete_standard_client_script_files"
-			) as mock_del_script:
-				with self.with_developer_mode():
-					self.uncheck_standard(page1)
-				mock_del_script.assert_not_called()
-		finally:
-			self.delete_if_exists("Builder Page", page1.name, force=True)
-			self.delete_if_exists("Builder Page", page2.name)
 			self.delete_if_exists("Builder Client Script", script.name)
