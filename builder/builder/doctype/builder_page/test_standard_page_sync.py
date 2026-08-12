@@ -79,10 +79,11 @@ class TestStandardPageSync(FrappeTestCase):
 		self.assertEqual(args[0], resource_name)
 		self.assertEqual(args[1], self.FIXTURE_APP)
 
-	def assert_sync_delete_called(self, mock_delete, resource_name: str):
+	def assert_builder_files_deleted(self, mock_delete, name: str, subdir: str):
+		"""The record sweeps every installed app, so assert it reached the fixture app."""
 		mock_delete.assert_called()
 		calls = [call[0] for call in mock_delete.call_args_list]
-		self.assertIn((resource_name, self.FIXTURE_APP), calls)
+		self.assertIn((name, self.FIXTURE_APP, subdir), calls)
 
 	def assert_export_contains(self, mock_export, item):
 		mock_export.assert_called()
@@ -391,11 +392,11 @@ class TestStandardPageSync(FrappeTestCase):
 	def test_client_script_on_trash_removes_directory(self):
 		page, script = self.make_page("cs-trash-page", with_script=True)
 		try:
-			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_client_script_files") as mock_del:
+			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_del:
 				with self.with_developer_mode():
 					script_name = script.name
 					frappe.delete_doc("Builder Client Script", script_name, force=1)
-				self.assert_sync_delete_called_once(mock_del, script_name)
+				self.assert_builder_files_deleted(mock_del, script_name, "client_scripts")
 		finally:
 			self.delete_if_exists("Builder Page", page.name)
 
@@ -406,12 +407,12 @@ class TestStandardPageSync(FrappeTestCase):
 		new_script_name = f"renamed-{frappe.generate_hash(4)}"
 		try:
 			with (
-				mock.patch(f"{self.EXPORT_MODULE}.delete_standard_client_script_files") as mock_delete,
+				mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_delete,
 				mock.patch(f"{self.EXPORT_MODULE}.export_client_scripts") as mock_export,
 			):
 				with self.with_developer_mode():
 					frappe.rename_doc("Builder Client Script", old_script_name, new_script_name, force=True)
-				self.assert_sync_delete_called_once(mock_delete, old_script_name)
+				self.assert_builder_files_deleted(mock_delete, old_script_name, "client_scripts")
 				self.assert_export_contains(mock_export, new_script_name)
 		finally:
 			self.delete_renamed_if_exists("Builder Client Script", old_script_name, new_script_name, force=1)
@@ -421,20 +422,20 @@ class TestStandardPageSync(FrappeTestCase):
 
 	def test_component_on_trash_removes_exported_files(self):
 		component = self.make_component()
-		with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_component_files") as mock_delete:
+		with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_delete:
 			with self.with_developer_mode():
 				frappe.delete_doc("Builder Component", component.name, force=1)
-			self.assert_sync_delete_called(mock_delete, component.name)
+			self.assert_builder_files_deleted(mock_delete, component.name, "components")
 
 	def test_component_after_rename_removes_old_exported_files(self):
 		component = self.make_component()
 		old_name = component.name
 		new_name = f"renamed-comp-{frappe.generate_hash(4)}"
 		try:
-			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_component_files") as mock_delete:
+			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_delete:
 				with self.with_developer_mode():
 					frappe.rename_doc("Builder Component", old_name, new_name, force=True)
-				self.assert_sync_delete_called(mock_delete, old_name)
+				self.assert_builder_files_deleted(mock_delete, old_name, "components")
 		finally:
 			self.delete_renamed_if_exists("Builder Component", old_name, new_name, force=1)
 
@@ -522,20 +523,20 @@ class TestStandardPageSync(FrappeTestCase):
 
 	def test_variable_on_trash_removes_exported_files(self):
 		variable = self.make_variable()
-		with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_variable_files") as mock_delete:
+		with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_delete:
 			with self.with_developer_mode():
 				frappe.delete_doc("Builder Token", variable.name, force=1)
-			self.assert_sync_delete_called(mock_delete, variable.name)
+			self.assert_builder_files_deleted(mock_delete, variable.name, "variables")
 
 	def test_variable_after_rename_removes_old_exported_files(self):
 		variable = self.make_variable()
 		old_name = variable.name
 		new_name = f"renamed-var-{frappe.generate_hash(4)}"
 		try:
-			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_variable_files") as mock_delete:
+			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_builder_files") as mock_delete:
 				with self.with_developer_mode():
 					frappe.rename_doc("Builder Token", old_name, new_name, force=True)
-				self.assert_sync_delete_called(mock_delete, old_name)
+				self.assert_builder_files_deleted(mock_delete, old_name, "variables")
 		finally:
 			self.delete_renamed_if_exists("Builder Token", old_name, new_name, force=1)
 

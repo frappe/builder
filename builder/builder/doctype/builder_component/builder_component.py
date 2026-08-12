@@ -11,10 +11,12 @@ from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
 from builder.builder.component_versions import ensure_component_version
+from builder.export_import_standard_page import StandardFileSync
 from builder.utils import Block, compact_json, execute_script, is_bulk_import
 
 
-class BuilderComponent(Document):
+class BuilderComponent(StandardFileSync, Document):
+	export_subdir = "components"
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -51,18 +53,6 @@ class BuilderComponent(Document):
 
 	def on_trash(self):
 		self.delete_standard_exported_files()
-
-	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		# rename_doc skips on_update, and the exported JSON holds the old name
-		self.delete_standard_exported_files(old)
-		self.export_standard_files()
-
-	@property
-	def referencing_apps(self) -> list[str]:
-		"""Apps whose standard pages use this component."""
-		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
-		installed = frappe.get_installed_apps()
-		return [page.app for page in pages if page.app in installed]
 
 	def export_standard_files(self) -> None:
 		if not frappe.conf.developer_mode or is_bulk_import():
@@ -119,14 +109,6 @@ class BuilderComponent(Document):
 			},
 		)
 		return pages
-
-	def delete_standard_exported_files(self, old_name: str | None = None):
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import delete_standard_component_files
-
-			all_installed_apps = frappe.get_installed_apps()
-			for app in all_installed_apps:
-				delete_standard_component_files(old_name or self.name, app)
 
 	def update_exported_component(self):
 		if not frappe.conf.developer_mode:

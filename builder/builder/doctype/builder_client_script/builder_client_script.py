@@ -11,10 +11,12 @@ from frappe.utils import get_files_path
 from frappe.utils.telemetry import capture
 from jsmin import jsmin
 
+from builder.export_import_standard_page import StandardFileSync
 from builder.utils import is_bulk_import
 
 
-class BuilderClientScript(Document):
+class BuilderClientScript(StandardFileSync, Document):
+	export_subdir = "client_scripts"
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -43,18 +45,6 @@ class BuilderClientScript(Document):
 		self.delete_script_file()
 		self.delete_standard_exported_files()
 
-	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		# rename_doc skips on_update, and the exported JSON holds the old name
-		self.delete_standard_exported_files(old)
-		self.export_standard_files()
-
-	@property
-	def referencing_apps(self) -> list[str]:
-		"""Apps whose standard pages use this script."""
-		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
-		installed = frappe.get_installed_apps()
-		return [page.app for page in pages if page.app in installed]
-
 	def export_standard_files(self) -> None:
 		if not frappe.conf.developer_mode or is_bulk_import():
 			return
@@ -63,14 +53,6 @@ class BuilderClientScript(Document):
 		for app in self.referencing_apps:
 			client_scripts_path = os.path.join(frappe.get_app_path(app), "builder_files", "client_scripts")
 			export_client_scripts([self.name], client_scripts_path)
-
-	def delete_standard_exported_files(self, old_name: str | None = None) -> None:
-		if not frappe.conf.developer_mode:
-			return
-		from builder.export_import_standard_page import delete_standard_client_script_files
-
-		for app in self.referencing_apps:
-			delete_standard_client_script_files(old_name or self.name, app)
 
 	def get_referencing_pages(
 		self, filters: dict | None = None, fields: list[str] | None = None

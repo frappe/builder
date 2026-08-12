@@ -297,6 +297,35 @@ def export_variables(variables, builder_files_path):
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
 
 
+class StandardFileSync:
+	"""Keeps a record's builder_files export in step with the database.
+
+	The doctype sets export_subdir and writes export_standard_files. It also
+	needs get_referencing_pages, which each doctype answers its own way.
+	"""
+
+	export_subdir: str = ""
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		# rename_doc skips on_update, and the exported JSON holds the old name
+		self.delete_standard_exported_files(old)
+		self.export_standard_files()
+
+	@property
+	def referencing_apps(self) -> list[str]:
+		"""Installed apps whose standard pages use this record."""
+		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+		installed = frappe.get_installed_apps()
+		return [page.app for page in pages if page.app in installed]
+
+	def delete_standard_exported_files(self, old_name: str | None = None) -> None:
+		# sweep every app: after a rename no page references the old name any more
+		if not frappe.conf.developer_mode:
+			return
+		for app in frappe.get_installed_apps():
+			delete_standard_builder_files(old_name or self.name, app, self.export_subdir)
+
+
 def delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None:
 	"""Remove an exported builder_files directory from the target app's source code."""
 	app_path = get_installed_app_path(app_name)

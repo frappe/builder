@@ -10,10 +10,12 @@ from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.website.utils import delete_page_cache
 
+from builder.export_import_standard_page import StandardFileSync
 from builder.utils import is_bulk_import
 
 
-class BuilderToken(Document):
+class BuilderToken(StandardFileSync, Document):
+	export_subdir = "variables"
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -55,18 +57,6 @@ class BuilderToken(Document):
 			delete_folder("builder", "builder_token", self.name)
 		self.delete_standard_exported_files()
 
-	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		# rename_doc skips on_update, and the exported JSON holds the old name
-		self.delete_standard_exported_files(old)
-		self.export_standard_files()
-
-	@property
-	def referencing_apps(self) -> list[str]:
-		"""Apps whose standard pages use this token."""
-		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
-		installed = frappe.get_installed_apps()
-		return [page.app for page in pages if page.app in installed]
-
 	def export_standard_files(self) -> None:
 		if not frappe.conf.developer_mode or is_bulk_import():
 			return
@@ -89,14 +79,6 @@ class BuilderToken(Document):
 			},
 		)
 		return pages
-
-	def delete_standard_exported_files(self, old_name: str | None = None):
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import delete_standard_variable_files
-
-			all_installed_apps = frappe.get_installed_apps()
-			for app in all_installed_apps:
-				delete_standard_variable_files(old_name or self.name, app)
 
 
 @redis_cache(ttl=10 * 24 * 3600)
