@@ -114,6 +114,19 @@ class TestStandardPageSync(FrappeTestCase):
 				component.insert(ignore_permissions=True)
 			return component
 
+	def make_font(self):
+		with self.without_developer_mode():
+			return frappe.get_doc(
+				{
+					"doctype": "User Font",
+					"font_name": f"Test Font {frappe.generate_hash(4)}",
+				}
+			).insert(ignore_permissions=True)
+
+	def blocks_with_font(self, font):
+		page_block = Block(element="div", baseStyles={"fontFamily": font.font_name})
+		return frappe.as_json([page_block.as_dict()])
+
 	def make_variable(self, variable_name: str | None = None):
 		variable_name = variable_name or f"test-var-{frappe.generate_hash(4)}"
 		with self.without_developer_mode():
@@ -537,6 +550,36 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", page1.name, force=True)
 			self.delete_if_exists("Builder Page", page2.name)
 			self.delete_if_exists("Builder Token", variable.name, force=1)
+
+	# ------------------------------------------------------------- font tests
+
+	def test_on_trash_standard_page_removes_orphaned_font(self):
+		font = self.make_font()
+		page = self.make_secondary_standard_page("trash-font-page", blocks=self.blocks_with_font(font))
+		try:
+			with self.mock_page_sync_deletes(
+				f"{self.EXPORT_MODULE}.delete_standard_font_files"
+			) as mock_del_font:
+				with self.with_developer_mode():
+					page.delete(ignore_permissions=True)
+				self.assert_sync_delete_called_once(mock_del_font, font.font_name)
+		finally:
+			self.delete_if_exists("User Font", font.name, force=1)
+
+	def test_on_trash_shared_font_is_not_removed(self):
+		font = self.make_font()
+		page1 = self.make_secondary_standard_page("trash-shared-font-1", blocks=self.blocks_with_font(font))
+		page2 = self.make_secondary_standard_page("trash-shared-font-2", blocks=self.blocks_with_font(font))
+		try:
+			with self.mock_page_sync_deletes(
+				f"{self.EXPORT_MODULE}.delete_standard_font_files"
+			) as mock_del_font:
+				with self.with_developer_mode():
+					page1.delete(ignore_permissions=True)
+				mock_del_font.assert_not_called()
+		finally:
+			self.delete_if_exists("Builder Page", page2.name)
+			self.delete_if_exists("User Font", font.name, force=1)
 
 	# -------------------------------------------------- client script tests
 
