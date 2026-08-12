@@ -19,7 +19,7 @@ class TestI18n(FrappeTestCase):
 				"frontend/src/components/DashboardHead.vue",
 				"frontend/src/components/DashboardSidebar.vue",
 			},
-			"Select (v)": {"frontend/src/components/BuilderToolbar.vue"},
+			"Select (v)": {"frontend/src/components/ToolbarItems/ModeSwitcher.vue"},
 			'Are you sure you want to unpublish "{0}"? It will no longer be accessible on the website.': {
 				"frontend/src/stores/pageStore.ts"
 			},

@@ -100,7 +100,7 @@
 	</Dialog>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
+	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
 </template>
 
@@ -185,12 +185,6 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModalOpen = ref(false);
-
-provide("showShortcuts", () => {
-	shortcutsModalOpen.value = true;
-});
-
 useShortcut([
 	{
 		key: " ",
@@ -202,29 +196,6 @@ useShortcut([
 			}
 		},
 		preventDefault: true,
-	},
-	{
-		key: "?",
-		description: "Show keyboard shortcuts",
-		group: "General",
-		handler: () => {
-			shortcutsModalOpen.value = true;
-		},
-	},
-	{
-		key: "d",
-		ctrl: true,
-		shift: true,
-		description: "Delete Page",
-		group: "General",
-		handler: () => {
-			if (pageStore.activePage && !pageStore.activePage.is_standard) {
-				pageStore.deletePage(pageStore.activePage).then(() => {
-					router.push({ name: "home" });
-				});
-			}
-		},
-		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
 	},
 ]);
 

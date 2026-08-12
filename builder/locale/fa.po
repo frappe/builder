@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-08 18:22+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03\n"
+"PO-Revision-Date: 2026-08-11 12:23\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -21,27 +21,27 @@ msgstr ""
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI API Key"
-msgstr ""
+msgstr "کلید API هوش مصنوعی"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI Settings"
-msgstr ""
+msgstr "تنظیمات هوش مصنوعی"
 
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
-msgstr ""
+msgstr "کلید API برای ارائه‌دهنده مدل هوش مصنوعی انتخاب‌شده"
 
 #: builder/ai_page_generator.py:671
 msgid "API key is valid"
-msgstr ""
+msgstr "کلید API معتبر است"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
-msgstr ""
+msgstr "افزودن متا تگ‌های سفارشی"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -51,7 +51,7 @@ msgstr "پیشرفته"
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:7
 msgid "All Pages"
-msgstr ""
+msgstr "تمام صفحه‌ها"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
@@ -114,12 +114,12 @@ msgstr ""
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
-msgstr ""
+msgstr "بلوک"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
-msgstr ""
+msgstr "الگوی بلوک"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -131,7 +131,7 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Body HTML"
-msgstr ""
+msgstr "بدنه HTML"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -167,12 +167,12 @@ msgstr ""
 #. Script'
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Script"
-msgstr ""
+msgstr "اسکریپت Builder"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Builder Settings"
-msgstr ""
+msgstr "تنظیمات Builder"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -182,7 +182,7 @@ msgstr ""
 #. Name of a DocType
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Builder Token"
-msgstr ""
+msgstr "توکن Builder"
 
 #. Label of the canonical_url (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -198,7 +198,7 @@ msgstr "دسته‌بندی"
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Client Scripts"
-msgstr ""
+msgstr "اسکریپت‌های کلاینت"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -245,7 +245,7 @@ msgstr ""
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
-msgstr ""
+msgstr "مقدار تاریک"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -256,12 +256,12 @@ msgstr "داده‌ها"
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default HTML lang code (e.g., en, es, fr)"
-msgstr ""
+msgstr "کد زبان پیش فرض HTML (به عنوان مثال، en، es، fr)"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default Language"
-msgstr ""
+msgstr "زبان پیش فرض"
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -272,23 +272,23 @@ msgstr "شرح"
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Developer Options"
-msgstr ""
+msgstr "گزینه‌های توسعه‌دهنده"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dimension"
-msgstr ""
+msgstr "ابعاد"
 
 #. Label of the disable_auto_dark_mode (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Disable Auto Dark Mode"
-msgstr ""
+msgstr "غیرفعال کردن حالت تاریک خودکار"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Disable Indexing"
-msgstr ""
+msgstr "غیرفعال کردن ایندکس گذاری"
 
 #. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
 #. 'Builder Settings'
@@ -300,12 +300,12 @@ msgstr ""
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Don't Execute"
-msgstr ""
+msgstr "اجرا نکنید"
 
 #. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Draft Blocks"
-msgstr ""
+msgstr "بلوک‌های پیش‌نویس"
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -315,13 +315,13 @@ msgstr "مسیر پویا"
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Element"
-msgstr ""
+msgstr "عنصر"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Execute Block Scripts in Editor"
-msgstr ""
+msgstr "اجرای اسکریپت‌های بلوک در ویرایشگر"
 
 #. Label of the favicon (Attach Image) field in DocType 'Builder Page'
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
@@ -343,37 +343,37 @@ msgstr "فونت"
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font File"
-msgstr ""
+msgstr "فایل فونت"
 
 #. Label of the font_name (Data) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font Name"
-msgstr ""
+msgstr "نام فونت"
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "For Web Page"
-msgstr ""
+msgstr "برای صفحه وب"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Form parts"
-msgstr ""
+msgstr "قطعات فرم"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Frappe Builder"
-msgstr ""
+msgstr "Frappe Builder"
 
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global script that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "اسکریپت سراسری که با هر صفحه ساخته شده با Frappe Builder بارگذاری می‌شود"
 
 #. Description of the 'Style' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global style that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "سبک سراسری که با هر صفحه ساخته شده با Frappe Builder بارگذاری می‌شود"
 
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -385,7 +385,7 @@ msgstr "گروه"
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Head HTML"
-msgstr ""
+msgstr "سربرگ HTML"
 
 #. Label of the home_page (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -467,7 +467,7 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Media"
-msgstr ""
+msgstr "رسانه"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -524,7 +524,7 @@ msgstr "نام صفحه"
 #. Label of the preview (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Preview"
-msgstr ""
+msgstr "پیش‌نمایش صفحه"
 
 #: builder/www/404.html:25
 msgid "Page not found"
@@ -562,7 +562,7 @@ msgstr "پیش‌نمایش"
 #. Label of the preview_height (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Height"
-msgstr ""
+msgstr "ارتفاع پیش نمایش"
 
 #: builder/builder/doctype/block_template/block_template.py:20
 msgid "Preview Image is mandatory"
@@ -581,7 +581,7 @@ msgstr ""
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Public URL"
-msgstr ""
+msgstr "URL عمومی"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -591,7 +591,7 @@ msgstr "منتشر شده"
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published At"
-msgstr ""
+msgstr "منتشر شده در"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json

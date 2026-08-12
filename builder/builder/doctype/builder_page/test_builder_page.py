@@ -338,6 +338,34 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_repeater_block_with_empty_data_key(self):
+		"""A repeater with an empty data key must render as a plain container.
+		An empty key compiles to `{% for key_ in ( or {}) %}`, a Jinja syntax
+		error that 417s the whole page."""
+		body = Block(element="div", originalElement="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True)
+		heading = Block(element="h2", innerHTML="Static child")
+
+		repeater_block.attach_data_key("", "dataKey")
+		repeater_block.attach_children(heading)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Empty Repeater Test",
+				"published": 1,
+				"route": "/empty-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/empty-repeater-test")
+			self.assertTrue("Static child" in get_html_for(content, "tag", "h2"))
+		finally:
+			page.delete()
+
 	def test_duplicate_binding_does_not_leak_jinja(self):
 		"""A block recording the same binding in BOTH dataKey and dynamicValues must not
 		wrap the placeholder twice. Double-wrapping nests the expression inside its own

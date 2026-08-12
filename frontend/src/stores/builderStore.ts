@@ -39,6 +39,9 @@ const useBuilderStore = defineStore("builderStore", {
 		showHTMLDialog: false,
 		openClientScript: <string | null>null,
 		showDataScriptDialog: <"page" | null>null,
+		showBlockTemplateDialog: false,
+		showTokenManager: false,
+		shortcutsModalOpen: false,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
 		// An AI build is streaming onto the canvas: the server owns the draft, so the

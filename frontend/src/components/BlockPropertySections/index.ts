@@ -18,7 +18,8 @@ import styleSection from "@/components/BlockPropertySections/StyleSection";
 import transitionSection from "@/components/BlockPropertySections/TransitionSection";
 import typographySection from "@/components/BlockPropertySections/TypographySection";
 import videoOptionsSection from "@/components/BlockPropertySections/VideoOptionsSection";
-import type { Component } from "vue";
+import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
+import type { Component, ComputedRef } from "vue";
 
 export type BlockProperty = {
 	component: Component;
@@ -30,14 +31,14 @@ export type BlockProperty = {
 	usedStyleProperties?: string[];
 };
 
-export type PropertySection = {
-	name: string;
+export type PropertySection = RegistryItem & {
 	properties: BlockProperty[] | (() => BlockProperty[]);
-	condition?: () => boolean;
-	collapsed?: boolean;
+	collapsed?: boolean | ComputedRef<boolean>;
 };
 
-export const sections = [
+export const propertySections = createRegistry<PropertySection>();
+
+const sections = [
 	standardPropsInputSection,
 	collectionOptionsSection,
 	linkSection,
@@ -59,3 +60,7 @@ export const sections = [
 	editorConfigSection,
 	moreStylesSection,
 ] as PropertySection[];
+
+// registered at module load: stylePropertiesWithControls reads the registry
+// before the property panel mounts
+sections.forEach(propertySections.register);
