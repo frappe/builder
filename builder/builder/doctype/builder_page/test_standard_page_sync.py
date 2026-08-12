@@ -2,6 +2,9 @@
 # See license.txt
 
 import contextlib
+import os
+import shutil
+import tempfile
 import unittest.mock as mock
 
 import frappe
@@ -189,6 +192,26 @@ class TestStandardPageSync(FrappeTestCase):
 		return doc
 
 	# ------------------------------------------------------------------ tests
+
+	def test_export_page_without_data_script(self):
+		"""A page with no data script exports an empty data_script.py."""
+		from builder.export_import_standard_page import export_page_as_standard
+
+		page = self.make_secondary_standard_page("export-without-data-script")
+		export_root = tempfile.mkdtemp()
+		try:
+			with mock.patch.object(frappe, "get_app_path", return_value=export_root):
+				export_page_as_standard(page.name, target_app=self.FIXTURE_APP)
+
+			data_script_path = os.path.join(
+				export_root, "builder_files", "pages", frappe.scrub(page.page_name), "data_script.py"
+			)
+			self.assertTrue(os.path.isfile(data_script_path))
+			with open(data_script_path) as f:
+				self.assertEqual(f.read(), "")
+		finally:
+			shutil.rmtree(export_root, ignore_errors=True)
+			self.delete_if_exists("Builder Page", page.name, force=True)
 
 	def test_on_trash_standard_page_removes_directory(self):
 		page = self.make_page("trash-sync-page")

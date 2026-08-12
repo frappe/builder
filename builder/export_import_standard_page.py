@@ -49,8 +49,8 @@ def export_page_as_standard(page_name, target_app):
 
 	page_config["project_folder"] = target_app
 
-	if page_config["page_data_script"]:
-		data_script = page_config["page_data_script"]
+	# no_nulls drops the key when the page has no data script
+	data_script = page_config.get("page_data_script") or ""
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
 	with open(config_file_path, "w", encoding="utf-8") as f:
