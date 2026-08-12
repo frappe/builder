@@ -9,7 +9,7 @@
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
 		}"
 		:style="handlerPosition"
-		@mousedown.stop="handleRounded" />
+		@mousedown.stop.prevent="handleRounded" />
 </template>
 
 <script setup lang="ts">

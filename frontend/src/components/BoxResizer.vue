@@ -7,19 +7,19 @@
 	<div
 		class="left-handle pointer-events-auto absolute bottom-0 left-[-6px] top-0 w-3 border-none bg-transparent"
 		:style="{ cursor: horizontalCursor }"
-		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.left)" />
+		@mousedown.stop.prevent="(ev) => handleResize(ev, resizeDirections.left)" />
 	<div
 		class="right-handle pointer-events-auto absolute bottom-0 right-[-6px] top-0 w-3 border-none bg-transparent"
 		:style="{ cursor: horizontalCursor }"
-		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.right)" />
+		@mousedown.stop.prevent="(ev) => handleResize(ev, resizeDirections.right)" />
 	<div
 		class="top-handle pointer-events-auto absolute left-0 right-0 top-[-6px] h-3 border-none bg-transparent"
 		:style="{ cursor: verticalCursor }"
-		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.top)" />
+		@mousedown.stop.prevent="(ev) => handleResize(ev, resizeDirections.top)" />
 	<div
 		class="bottom-handle pointer-events-auto absolute bottom-[-6px] left-0 right-0 h-3 border-none bg-transparent"
 		:style="{ cursor: verticalCursor }"
-		@mousedown.stop="(ev) => handleResize(ev, resizeDirections.bottom)" />
+		@mousedown.stop.prevent="(ev) => handleResize(ev, resizeDirections.bottom)" />
 	<div
 		v-for="corner in visibleCorners"
 		:key="corner.name"
