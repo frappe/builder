@@ -11,6 +11,7 @@ from builder.utils import (
 	create_export_directories,
 	export_client_scripts,
 	export_components,
+	export_dir_name,
 	extract_components_from_blocks,
 	make_records,
 	normalize_legacy_raw_styles,
@@ -20,7 +21,7 @@ from builder.utils import (
 def export_page_as_standard(page_name, target_app):
 	"""Export a builder page as standard files to the specified app"""
 	page_doc = frappe.get_doc("Builder Page", page_name)
-	export_name = frappe.scrub(page_doc.page_name)
+	export_name = export_dir_name(page_doc.page_name)
 
 	app_path = frappe.get_app_path(target_app)
 	if not app_path:
@@ -230,7 +231,7 @@ def export_fonts(fonts, builder_files_path, assets_path, target_app="builder"):
 				"font_file": font_doc.get("font_file"),
 			}
 
-			safe_font_name = frappe.scrub(font_name)
+			safe_font_name = export_dir_name(font_name)
 			font_dir = os.path.join(fonts_path, safe_font_name)
 			os.makedirs(font_dir, exist_ok=True)
 			font_file_path = os.path.join(font_dir, f"{safe_font_name}.json")
@@ -286,7 +287,7 @@ def export_variables(variables, builder_files_path):
 			var_doc = frappe.get_doc("Builder Token", var_name).as_dict()
 
 			var_doc["doctype"] = "Builder Token"
-			safe_var_name = frappe.scrub(var_doc.name)
+			safe_var_name = export_dir_name(var_doc.name)
 			var_dir = os.path.join(variables_path, safe_var_name)
 			os.makedirs(var_dir, exist_ok=True)
 			var_file_path = os.path.join(var_dir, f"{safe_var_name}.json")
@@ -303,7 +304,7 @@ def delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None
 	app_path = frappe.get_app_path(app_name)
 	if not app_path:
 		return
-	export_path = os.path.join(app_path, "builder_files", subdir, frappe.scrub(name))
+	export_path = os.path.join(app_path, "builder_files", subdir, export_dir_name(name))
 	if os.path.isdir(export_path):
 		shutil.rmtree(export_path, ignore_errors=True)
 
@@ -331,35 +332,6 @@ def delete_standard_variable_files(variable_name: str, app_name: str) -> None:
 def delete_standard_font_files(font_name: str, app_name: str) -> None:
 	"""Remove the exported directory for a font from the target app's source code."""
 	delete_standard_builder_files(font_name, app_name, "fonts")
-
-
-def rename_standard_builder_files(old: str, new: str, app_name: str, subdir: str) -> None:
-	"""Rename an exported builder_files directory and its JSON config."""
-	app_path = frappe.get_app_path(app_name)
-	if not app_path:
-		return
-	old_export_name = frappe.scrub(old)
-	new_export_name = frappe.scrub(new)
-	old_path = os.path.join(app_path, "builder_files", subdir, old_export_name)
-	new_path = os.path.join(app_path, "builder_files", subdir, new_export_name)
-	if os.path.isdir(old_path):
-		if os.path.isdir(new_path):
-			shutil.rmtree(new_path, ignore_errors=True)
-		os.rename(old_path, new_path)
-		old_json = os.path.join(new_path, f"{old_export_name}.json")
-		new_json = os.path.join(new_path, f"{new_export_name}.json")
-		if os.path.exists(old_json):
-			os.rename(old_json, new_json)
-
-
-def rename_standard_page_files(old: str, new: str, app_name: str) -> None:
-	"""Rename the builder_files directory for a standard page."""
-	rename_standard_builder_files(old, new, app_name, "pages")
-
-
-def rename_standard_client_script_files(old: str, new: str, app_name: str) -> None:
-	"""Rename the exported directory for a client script inside the target app's source code."""
-	rename_standard_builder_files(old, new, app_name, "client_scripts")
 
 
 def import_fonts(fonts_path):

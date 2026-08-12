@@ -37,6 +37,16 @@ def compact_json(obj) -> str:
 	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
+def export_dir_name(name) -> str:
+	"""Name of the directory and JSON file that hold an exported record.
+
+	Every exporter and the delete helpers share this so that a record always
+	lands where the cleanup looks for it. frappe.scrub keeps a slash, which
+	would otherwise export into a nested directory.
+	"""
+	return frappe.scrub(str(name)).replace("/", "_")
+
+
 def has_page_permission(ptype: str = "write", message: str | None = None):
 	"""Decorator to check if user has the given permission on Builder Page.
 
@@ -707,7 +717,7 @@ def export_client_scripts(client_scripts, client_scripts_path):
 		script_config = script_doc.as_dict(no_nulls=True)
 		script = script_config["script"]
 		script_config = strip_default_fields(script_doc, script_config)
-		fname = frappe.scrub(str(script_doc.name))
+		fname = export_dir_name(script_doc.name)
 		# ensure the target directory exists before writing the file
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
@@ -731,7 +741,7 @@ def export_components(components, components_path, assets_path, target_app="buil
 			component_doc.block = frappe.as_json(component_blocks)
 
 			# Replace forward slashes with underscores to create valid directory names
-			safe_component_id = frappe.scrub(component_doc.component_id).replace("/", "_")
+			safe_component_id = export_dir_name(component_doc.component_id)
 			component_dir = os.path.join(components_path, safe_component_id)
 			os.makedirs(component_dir, exist_ok=True)
 			component_file_path = os.path.join(component_dir, f"{safe_component_id}.json")

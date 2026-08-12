@@ -35,41 +35,40 @@ class BuilderClientScript(Document):
 	def on_update(self):
 		self.update_script_file()
 		self.update_exported_script()
-
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import export_client_scripts
-
-			referencing_standard_pages = self.get_referencing_pages(
-				filters={"is_standard": 1}, fields=["app"]
-			)
-			referencing_apps = [page.app for page in referencing_standard_pages]
-			for app in referencing_apps:
-				app_path = frappe.get_app_path(app)
-				builder_files_path = os.path.join(app_path, "builder_files")
-				client_scripts_path = os.path.join(builder_files_path, "client_scripts")
-				export_client_scripts([self.name], client_scripts_path)
+		self.export_standard_files()
 
 	def on_trash(self):
 		self.delete_script_file()
-
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import delete_standard_client_script_files
-
-			referencing_standard_pages = self.get_referencing_pages(
-				filters={"is_standard": 1}, fields=["app"]
-			)
-			for page in referencing_standard_pages:
-				delete_standard_client_script_files(self.name, page.app)
+		self.delete_standard_exported_files()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import rename_standard_client_script_files
+		# the exported JSON carries the old name, and rename_doc does not run on_update,
+		# so drop the old export and write a new one
+		self.delete_standard_exported_files(old)
+		self.export_standard_files()
 
-			referencing_standard_pages = self.get_referencing_pages(
-				filters={"is_standard": 1}, fields=["app"]
-			)
-			for page in referencing_standard_pages:
-				rename_standard_client_script_files(old, new, page.app)
+	@property
+	def referencing_apps(self) -> list[str]:
+		"""Apps whose standard pages use this script."""
+		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+		return [page.app for page in pages]
+
+	def export_standard_files(self) -> None:
+		if not frappe.conf.developer_mode:
+			return
+		from builder.export_import_standard_page import export_client_scripts
+
+		for app in self.referencing_apps:
+			client_scripts_path = os.path.join(frappe.get_app_path(app), "builder_files", "client_scripts")
+			export_client_scripts([self.name], client_scripts_path)
+
+	def delete_standard_exported_files(self, old_name: str | None = None) -> None:
+		if not frappe.conf.developer_mode:
+			return
+		from builder.export_import_standard_page import delete_standard_client_script_files
+
+		for app in self.referencing_apps:
+			delete_standard_client_script_files(old_name or self.name, app)
 
 	def get_referencing_pages(
 		self, filters: dict | None = None, fields: list[str] | None = None

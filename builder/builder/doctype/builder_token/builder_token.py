@@ -45,17 +45,7 @@ class BuilderToken(Document):
 		if self.has_value_changed("is_standard") and not self.is_standard:
 			delete_folder("builder", "builder_token", self.name)
 
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import export_variables
-
-			referencing_standard_pages = self.get_referencing_pages(
-				filters={"is_standard": 1}, fields=["app"]
-			)
-			referencing_apps = [page.app for page in referencing_standard_pages]
-			for app in referencing_apps:
-				app_path = frappe.get_app_path(app)
-				builder_files_path = os.path.join(app_path, "builder_files")
-				export_variables([self.name], builder_files_path)
+		self.export_standard_files()
 
 	def on_trash(self):
 		clear_builder_token_cache()
@@ -64,7 +54,24 @@ class BuilderToken(Document):
 		self.delete_standard_exported_files()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		# the exported JSON carries the old name, and rename_doc does not run on_update,
+		# so drop the old export and write a new one
 		self.delete_standard_exported_files(old)
+		self.export_standard_files()
+
+	@property
+	def referencing_apps(self) -> list[str]:
+		"""Apps whose standard pages use this token."""
+		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+		return [page.app for page in pages]
+
+	def export_standard_files(self) -> None:
+		if not frappe.conf.developer_mode:
+			return
+		from builder.export_import_standard_page import export_variables
+
+		for app in self.referencing_apps:
+			export_variables([self.name], os.path.join(frappe.get_app_path(app), "builder_files"))
 
 	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None):
 		filters = filters or {}

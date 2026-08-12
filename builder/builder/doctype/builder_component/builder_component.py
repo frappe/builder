@@ -52,24 +52,36 @@ class BuilderComponent(Document):
 			self.queue_action("clear_page_cache")
 			ensure_component_version(self.name)
 		self.update_exported_component()
-		if frappe.conf.developer_mode:
-			from builder.export_import_standard_page import export_components
-
-			referencing_standard_pages = self.get_referencing_pages(
-				filters={"is_standard": 1}, fields=["app"]
-			)
-			for page in referencing_standard_pages:
-				app_path = frappe.get_app_path(page.app)
-				builder_files_path = os.path.join(app_path, "builder_files")
-				public_builder_files_path = os.path.join(app_path, "public", "builder_assets")
-				components_path = os.path.join(builder_files_path, "components")
-				export_components([self.component_id], components_path, public_builder_files_path, page.app)
+		self.export_standard_files()
 
 	def on_trash(self):
 		self.delete_standard_exported_files()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		# the exported JSON carries the old name, and rename_doc does not run on_update,
+		# so drop the old export and write a new one
 		self.delete_standard_exported_files(old)
+		self.export_standard_files()
+
+	@property
+	def referencing_apps(self) -> list[str]:
+		"""Apps whose standard pages use this component."""
+		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+		return [page.app for page in pages]
+
+	def export_standard_files(self) -> None:
+		if not frappe.conf.developer_mode:
+			return
+		from builder.export_import_standard_page import export_components
+
+		for app in self.referencing_apps:
+			app_path = frappe.get_app_path(app)
+			export_components(
+				[self.component_id],
+				os.path.join(app_path, "builder_files", "components"),
+				os.path.join(app_path, "public", "builder_assets"),
+				app,
+			)
 
 	def clear_page_cache(self):
 		pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name"])

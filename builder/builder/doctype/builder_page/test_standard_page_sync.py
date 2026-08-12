@@ -25,6 +25,8 @@ class TestStandardPageSync(FrappeTestCase):
 	# succeeds.  We use the builder app itself since it is always available.
 	FIXTURE_APP = "builder"
 	EXPORT_MODULE = "builder.export_import_standard_page"
+	# builder_page imports export_page_as_standard at module level, so patch it there
+	PAGE_MODULE = "builder.builder.doctype.builder_page.builder_page"
 
 	# ------------------------------------------------------------------ helpers
 
@@ -83,13 +85,6 @@ class TestStandardPageSync(FrappeTestCase):
 		mock_delete.assert_called()
 		calls = [call[0] for call in mock_delete.call_args_list]
 		self.assertIn((resource_name, self.FIXTURE_APP), calls)
-
-	def assert_rename_called_once(self, mock_rename, old_name: str, new_name: str):
-		mock_rename.assert_called_once()
-		args = mock_rename.call_args[0]
-		self.assertEqual(args[0], old_name)
-		self.assertEqual(args[1], new_name)
-		self.assertEqual(args[2], self.FIXTURE_APP)
 
 	def assert_export_contains(self, mock_export, item):
 		mock_export.assert_called()
@@ -278,14 +273,19 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", page2.name)
 			self.delete_if_exists("Builder Client Script", script.name)
 
-	def test_after_rename_standard_page_renames_directory(self):
+	def test_after_rename_standard_page_reexports(self):
+		"""A rename drops the old export and writes a new one, so the JSON holds the new name."""
 		page = self.make_page("rename-sync-page-old")
 		new_name = f"rename-sync-page-new-{frappe.generate_hash(4)}"
 		try:
-			with mock.patch(f"{self.EXPORT_MODULE}.rename_standard_page_files") as mock_rename:
+			with (
+				mock.patch(f"{self.EXPORT_MODULE}.delete_standard_page_files") as mock_delete,
+				mock.patch(f"{self.PAGE_MODULE}.export_page_as_standard") as mock_export,
+			):
 				with self.with_developer_mode():
 					frappe.rename_doc("Builder Page", page.name, new_name, force=True)
-				self.assert_rename_called_once(mock_rename, page.name, new_name)
+				self.assert_sync_delete_called_once(mock_delete, page.name)
+				mock_export.assert_called_once_with(new_name, target_app=self.FIXTURE_APP)
 		finally:
 			self.delete_if_exists("Builder Page", new_name)
 			self.delete_if_exists("Builder Page", page.name)
@@ -324,15 +324,20 @@ class TestStandardPageSync(FrappeTestCase):
 		finally:
 			self.delete_if_exists("Builder Page", page.name)
 
-	def test_client_script_after_rename_renames_directory(self):
+	def test_client_script_after_rename_reexports(self):
+		"""A rename drops the old export and writes a new one, so the JSON holds the new name."""
 		page, script = self.make_page("cs-rename-page", with_script=True)
 		old_script_name = script.name
 		new_script_name = f"renamed-{frappe.generate_hash(4)}"
 		try:
-			with mock.patch(f"{self.EXPORT_MODULE}.rename_standard_client_script_files") as mock_rename:
+			with (
+				mock.patch(f"{self.EXPORT_MODULE}.delete_standard_client_script_files") as mock_delete,
+				mock.patch(f"{self.EXPORT_MODULE}.export_client_scripts") as mock_export,
+			):
 				with self.with_developer_mode():
 					frappe.rename_doc("Builder Client Script", old_script_name, new_script_name, force=True)
-				self.assert_rename_called_once(mock_rename, old_script_name, new_script_name)
+				self.assert_sync_delete_called_once(mock_delete, old_script_name)
+				self.assert_export_contains(mock_export, new_script_name)
 		finally:
 			self.delete_renamed_if_exists("Builder Client Script", old_script_name, new_script_name, force=1)
 			self.delete_if_exists("Builder Page", page.name)
