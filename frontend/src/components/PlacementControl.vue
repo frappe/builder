@@ -17,26 +17,26 @@
 					@click="setAlignment(option)"
 					@dblclick="setAlignment(option, true)">
 					<div
-						class="flex size-1 items-center justify-center rounded-full bg-surface-gray-5 opacity-50"
+						class="flex size-1 items-center justify-center rounded-full bg-surface-gray-8 opacity-50"
 						:class="{ 'group-hover/option:hidden': !isDistributed }"></div>
 					<div
 						v-if="!isDistributed"
 						class="hidden w-5 gap-[2px] hover:opacity-100 group-hover/option:flex"
 						:style="previewStyle(option)">
 						<div
-							class="rounded-sm bg-surface-gray-5"
+							class="rounded-sm bg-surface-gray-8"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-surface-gray-5"
+							class="rounded-sm bg-surface-gray-8"
 							:class="{
 								'h-3 w-1': direction === 'row',
 								'h-1 w-3': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-surface-gray-5"
+							class="rounded-sm bg-surface-gray-8"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
@@ -48,19 +48,19 @@
 				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5"
 				:style="selectedOverlayStyle">
 				<div
-					class="rounded-sm bg-surface-gray-6"
+					class="rounded-sm bg-surface-gray-9"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-6"
+					class="rounded-sm bg-surface-gray-9"
 					:class="{
 						'h-1 w-3': direction === 'column',
 						'h-3 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-6"
+					class="rounded-sm bg-surface-gray-9"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
@@ -71,19 +71,19 @@
 				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5 opacity-40"
 				:style="hoverOverlayStyle">
 				<div
-					class="rounded-sm bg-surface-gray-5"
+					class="rounded-sm bg-surface-gray-8"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-5"
+					class="rounded-sm bg-surface-gray-8"
 					:class="{
 						'h-1 w-3': direction === 'column',
 						'h-3 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-5"
+					class="rounded-sm bg-surface-gray-8"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',

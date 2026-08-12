@@ -101,10 +101,6 @@ function HSVToHex(h: number, s: number, v: number, a: number = 100): HashString 
 	return hex;
 }
 
-function getRandomColor() {
-	return HSVToHex(Math.random() * 360, 25, 100);
-}
-
 function RGBToHex(rgb: RGBString): HashString {
 	const [r, g, b] = rgb
 		.replace("rgb(", "")
@@ -138,4 +134,4 @@ function getRGB(color: HashString | RGBString | string | null): HashString | nul
 	return color as HashString;
 }
 
-export { HexToHSV, HSVToHex, getRandomColor, getRGB };
+export { HexToHSV, HSVToHex, getRGB };

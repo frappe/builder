@@ -13,6 +13,7 @@ const { capture } = useTelemetry();
 declare global {
 	interface Window {
 		is_fc_site?: boolean | string;
+		is_read_only_mode?: boolean | string;
 	}
 }
 
@@ -32,13 +33,18 @@ const useBuilderStore = defineStore("builderStore", {
 			optionsPanelWidth: 57,
 		},
 		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
-		rightPanelActiveTab: <RightSidebarTabOption>"Properties",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
+		showVersionHistory: <boolean>false,
 		showHTMLDialog: false,
-		showDataScriptDialog: <"block" | "page" | null>null,
+		showDataScriptDialog: <"page" | null>null,
+		showBlockTemplateDialog: false,
+		showTokenManager: false,
+		shortcutsModalOpen: false,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
+		// site-level maintenance/migration state, not the editor's edit lock
+		isSiteInReadOnlyMode: window.is_read_only_mode === "True",
 		viewers: <UserInfo[]>[],
 		isFCSite: window.is_fc_site === "True" ? true : false,
 		activeFolder: useStorage("activeFolder", ""),
@@ -46,10 +52,10 @@ const useBuilderStore = defineStore("builderStore", {
 			attribute: "data-theme",
 		}),
 		canvasDarkMode: useStorage("canvasDarkMode", false),
-		highlightBlocksWithDataScripts: false,
 		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
-		settingsActiveTab: <string>"page_general",
+		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
+		openImageUpload: false,
 	}),
 	getters: {
 		isAIEnabled(): boolean {

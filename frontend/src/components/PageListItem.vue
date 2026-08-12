@@ -1,7 +1,7 @@
 <template>
-	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }" class="h-fit w-full">
+	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }" class="group block h-fit w-full">
 		<div
-			class="group relative flex w-full justify-between overflow-hidden rounded-2xl border-b-[1px] border-outline-gray-1 p-3 hover:cursor-pointer hover:bg-surface-gray-1"
+			class="group relative flex w-full justify-between overflow-hidden rounded-2xl p-3 hover:cursor-pointer hover:bg-surface-gray-1"
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
@@ -22,11 +22,11 @@
 							</div>
 							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
 								<div v-show="page.published">
-									<AuthenticatedUserIcon
+									<span
 										title="Limited access"
-										class="size-4 text-ink-amber-3"
+										class="lucide-shield-user size-4 text-ink-amber-6"
 										v-if="page.authenticated_access" />
-									<GlobeIcon class="size-4" title="Publicly accessible" v-else />
+									<span class="lucide-globe size-4" title="Publicly accessible" v-else />
 								</div>
 								<p class="max-w-[90%] truncate text-sm">
 									{{ page.route }}
@@ -62,11 +62,10 @@
 				</PageActionsDropdown>
 			</div>
 		</div>
+		<div class="mx-4 border-b border-outline-gray-1 group-last:hidden"></div>
 	</router-link>
 </template>
 <script setup lang="ts">
-import AuthenticatedUserIcon from "@/components/Icons/AuthenticatedUser.vue";
-import GlobeIcon from "@/components/Icons/Globe.vue";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";

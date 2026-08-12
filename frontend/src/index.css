@@ -62,8 +62,14 @@ p:empty::before {
 	filter: revert;
 }
 
-[role='dialog'].bg-surface-modal, [role='dialog'] .bg-surface-modal {
-	background-color: var(--surface-white);
+[role='dialog'].bg-surface-elevation-2, [role='dialog'] .bg-surface-elevation-2 {
+	background-color: var(--surface-base);
+}
+
+/* surface-base resolves to dark-gray-950 (#171717); pin it to the deeper
+   gray-950 (#0f0f0f) in dark mode for a darker base/page background. */
+[data-theme='dark'] .bg-surface-base {
+	background-color: var(--gray-950);
 }
 
 [contenteditable=true]:focus-visible {
@@ -76,4 +82,10 @@ p:empty::before {
    DraggablePopup (z-20) so e.g. color pickers opened from within popups stay visible */
 .PopoverContent {
 	z-index: 30;
+}
+
+/* frappe-ui v1.0.0-beta.21 dimmed Switch labels to the shared InputLabel default
+   (ink-gray-5); restore the old emphasis since the label acts as the row title */
+div:has(> [role='switch']) label[data-slot='label'] {
+	@apply font-medium text-ink-gray-8;
 }

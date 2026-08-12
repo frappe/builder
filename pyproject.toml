@@ -6,13 +6,15 @@ authors = [
 description = "Modern website builder for modern web pages"
 requires-python = ">=3.10"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 dynamic = ["version"]
 dependencies = [
     "jsmin>=3.0.1",
     "csscompressor>=0.9.5",
     "pandas (>=2.3.2,<3.0.0)",
     "duckdb==1.4.3",
-    "litellm==1.83.7",
+    "litellm==1.95.0",
 ]
 
 [project.urls]

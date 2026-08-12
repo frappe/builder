@@ -21,7 +21,8 @@
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
   "ai_section",
-  "ai_api_key"
+  "ai_api_key",
+  "persona_survey_done"
  ],
  "fields": [
   {
@@ -127,13 +128,21 @@
    "fieldname": "ai_api_key",
    "fieldtype": "Password",
    "label": "AI API Key"
+  },
+  {
+   "default": "0",
+   "description": "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites.",
+   "fieldname": "persona_survey_done",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Persona Survey Done"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-24 12:49:59.610151",
+ "modified": "2026-06-05 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

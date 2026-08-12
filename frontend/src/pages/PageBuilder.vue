@@ -2,7 +2,7 @@
 	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-2xl font-semibold">Screen too small</h1>
+			<h1 class="text-p-3xl-semibold">Screen too small</h1>
 			<p class="text-p-base">Please switch to a larger screen to edit</p>
 		</div>
 	</div>
@@ -28,7 +28,7 @@
 			}"
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
-				<div class="flex items-center justify-between bg-surface-white p-2 text-sm text-ink-gray-8 shadow-sm">
+				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
@@ -70,10 +70,10 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
-			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-white"></BuilderLeftPanel>
+			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
-			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
+			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
@@ -99,11 +99,11 @@
 		</template>
 	</Dialog>
 	<AIPageGeneratorModal
-		v-model="showAIGeneratorDialog"
+		v-model="aiStore.showGeneratorDialog"
 		v-if="builderStore.isAIEnabled"
 		:pageId="route.params.pageId as string"
-		:mode="aiMode"
-		:blockContext="modifyBlockContext"
+		:mode="aiStore.mode"
+		:blockContext="aiStore.modifyBlockContext"
 		@generated="handleGeneratedBlocks"
 		@streaming="handleStreamingBlocks"
 		@modified="handleModifiedBlocks"
@@ -112,7 +112,8 @@
 		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
+	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
+	<TemplatesDialog />
 </template>
 
 <script setup lang="ts">
@@ -126,21 +127,25 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
+import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
+import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
-import { getBlockInstance, getBlockObject, getRootBlockTemplate } from "@/utils/helpers";
+import componentController from "@/utils/componentController.js";
+import { getBlockInstance, getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
+import { prefetchBuilderSettings } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
@@ -153,39 +158,14 @@ const router = useRouter();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
+const aiStore = useAIStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
-const showAIGeneratorDialog = ref(false);
-const aiMode = ref<"generate" | "modify">("generate");
-const modifyBlockContext = ref<Record<string, any> | null>(null);
-const modifyBlockId = ref<string | null>(null);
 const isAIGenerating = ref(false);
 
-provide("showAIGenerator", () => {
-	aiMode.value = "generate";
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	showAIGeneratorDialog.value = true;
-});
-
-const editWithAIFn = (block: Block) => {
-	aiMode.value = "modify";
-	modifyBlockContext.value = getBlockObject(block);
-	modifyBlockId.value = block.blockId;
-	showAIGeneratorDialog.value = true;
-};
-provide("editWithAI", editWithAIFn);
-
-const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
-	const blockObj = getBlockObject(block);
-	aiMode.value = "modify";
-	modifyBlockId.value = block.blockId;
-	modifyBlockContext.value = blockObj;
-	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
-};
-provide("runDirectAI", runDirectAI);
+watchEffect(() => (aiStore.generatorModal = aiGeneratorModal.value));
 
 const handleGeneratedBlocks = () => {
 	pageStore.savePage();
@@ -232,13 +212,11 @@ const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOpt
 
 const handleModifiedBlocks = () => {
 	pageStore.savePage();
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	aiMode.value = "generate";
+	aiStore.endModify();
 };
 
 const handleModifyStreamingBlocks = (block: BlockOptions) => {
-	const targetId = block?.blockId || modifyBlockId.value;
+	const targetId = block?.blockId || aiStore.modifyBlockId;
 	if (!block || !targetId) return;
 
 	try {
@@ -251,13 +229,27 @@ const handleModifyStreamingBlocks = (block: BlockOptions) => {
 	}
 };
 
-watch([() => canvasStore.editableBlock, () => pageStore.activePage?.is_standard], () => {
-	builderStore.toggleReadOnlyMode(
-		canvasStore.editingMode === "page" &&
-			Boolean(pageStore.activePage?.is_standard) &&
-			!window.is_developer_mode,
-	);
-});
+watch(
+	[
+		() => canvasStore.editableBlock,
+		() => pageStore.activePage?.is_standard,
+		() => pageStore.activePage?.is_template,
+		() => canvasStore.versionPreviewBlock,
+		() => builderStore.isSiteInReadOnlyMode,
+	],
+	() => {
+		const previewing = Boolean(canvasStore.versionPreviewBlock);
+		const isProtected =
+			(Boolean(pageStore.activePage?.is_standard) ||
+				Boolean(pageStore.activePage?.is_template && pageStore.activePage?.template_group)) &&
+			!window.is_developer_mode;
+		builderStore.toggleReadOnlyMode(
+			builderStore.isSiteInReadOnlyMode ||
+				(canvasStore.editingMode === "page" && (previewing || isProtected)),
+		);
+	},
+	{ immediate: true },
+);
 
 declare global {
 	interface Window {
@@ -274,12 +266,6 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModalOpen = ref(false);
-
-provide("showShortcuts", () => {
-	shortcutsModalOpen.value = true;
-});
-
 useShortcut([
 	{
 		key: " ",
@@ -292,46 +278,6 @@ useShortcut([
 		},
 		preventDefault: true,
 	},
-	{
-		key: "?",
-		description: "Show keyboard shortcuts",
-		group: "General",
-		handler: () => {
-			shortcutsModalOpen.value = true;
-		},
-	},
-	{
-		key: "i",
-		ctrl: true,
-		description: "Edit block with AI",
-		group: "Edit",
-		condition: () =>
-			builderStore.isAIEnabled &&
-			!blockController.isRoot() &&
-			!blockController.multipleBlocksSelected() &&
-			!builderStore.readOnlyMode,
-		handler: () => {
-			const block = blockController.getSelectedBlocks()[0];
-			if (block) {
-				editWithAIFn?.(block);
-			}
-		},
-	},
-	{
-		key: "d",
-		ctrl: true,
-		shift: true,
-		description: "Delete Page",
-		group: "General",
-		handler: () => {
-			if (pageStore.activePage && !pageStore.activePage.is_standard) {
-				pageStore.deletePage(pageStore.activePage).then(() => {
-					router.push({ name: "home" });
-				});
-			}
-		},
-		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
-	},
 ]);
 
 // When space is released, revert back to last mode
@@ -342,6 +288,9 @@ useEventListener(document, "keyup", (e) => {
 });
 
 async function saveAndExitFragmentMode(e: Event) {
+	if (canvasStore.fragmentData.fragmentType === "component") {
+		componentController.applyComponentDoc();
+	}
 	await canvasStore.fragmentData.saveAction?.(fragmentCanvas.value?.getRootBlock());
 	fragmentCanvas.value?.toggleDirty(false);
 	canvasStore.exitFragmentMode(e);
@@ -349,7 +298,7 @@ async function saveAndExitFragmentMode(e: Event) {
 
 let expandedEditorOptions = computed(() => {
 	let title, label;
-	let type: "HTML" | "JavaScript" | "CSS" | "Python" = "HTML";
+	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
 	if (canvasStore.editingContentType === "html") {
 		title = "HTML";
 		label = "Edit HTML";
@@ -361,10 +310,6 @@ let expandedEditorOptions = computed(() => {
 		title = "CSS";
 		label = "Edit CSS";
 		type = "CSS";
-	} else if (canvasStore.editingContentType === "python") {
-		title = "Block Data Script";
-		label = "Edit Block Data Script";
-		type = "Python";
 	}
 	return { title, label, type };
 });
@@ -372,20 +317,12 @@ let expandedEditorOptions = computed(() => {
 function getExpandedEditorContent() {
 	if (canvasStore.editingContentType === "html") {
 		return canvasStore.editableBlock?.getInnerHTML();
-	} else if (canvasStore.editingContentType === "js") {
-		return canvasStore.editableBlock?.getBlockClientScript();
-	} else if (canvasStore.editingContentType === "python") {
-		return canvasStore.editableBlock?.getBlockDataScript();
 	}
 }
 
 async function saveExpandedEditorContent(val: string) {
 	if (canvasStore.editingContentType === "html") {
 		canvasStore.editableBlock?.setInnerHTML(val);
-	} else if (canvasStore.editingContentType === "js") {
-		canvasStore.editableBlock?.setBlockClientScript(val);
-	} else if (canvasStore.editingContentType === "python") {
-		canvasStore.editableBlock?.setBlockDataScript(val);
 	}
 	canvasStore.showEditorDialog = false;
 }
@@ -437,6 +374,7 @@ onDeactivated(() => {
 
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
+	prefetchBuilderSettings();
 });
 
 watchEffect(() => {
@@ -449,15 +387,7 @@ watchEffect(() => {
 
 const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
 
-const usageMessage = computed(() => {
-	if (usageCount.value === 0) {
-		return "not used in any pages";
-	}
-	if (usageCount.value === 1) {
-		return "used in 1 page";
-	}
-	return `used in ${usageCount.value} pages`;
-});
+const usageMessage = computed(() => getPageUsageMessage(usageCount.value));
 
 watch(
 	() => pageCanvas.value?.block,
@@ -466,6 +396,7 @@ watch(
 			pageStore.selectedPage &&
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
+			!builderStore.readOnlyMode &&
 			!pageCanvas.value?.canvasProps?.settingCanvas &&
 			!isAIGenerating.value
 		) {
@@ -499,7 +430,7 @@ watch(
 				},
 				auto: true,
 			});
-			usageCountResource.promise.then((res: { count: number; pages: BuilderPage[] }) => {
+			usageCountResource.promise?.then((res: { count: number; pages: BuilderPage[] }) => {
 				usageCount.value = res.count;
 				componentUsedInPages.value = res.pages;
 			});

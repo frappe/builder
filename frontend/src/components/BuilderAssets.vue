@@ -1,6 +1,6 @@
 <template>
 	<div class="isolate flex flex-col">
-		<div v-show="showSearchInput" class="sticky top-0 z-[1] bg-surface-white py-3">
+		<div v-show="showSearchInput" class="sticky top-0 z-[1] bg-surface-base py-3">
 			<BuilderInput
 				type="text"
 				placeholder="Search component"
@@ -19,7 +19,7 @@
 			<div v-show="!components.length" class="text-base italic text-gray-600">No components saved</div>
 			<div v-for="component in components" :key="component.name" class="group flex w-full">
 				<ItemListRow
-					class="user-component w-full cursor-pointer bg-surface-white"
+					class="user-component w-full cursor-pointer bg-surface-base"
 					:class="{
 						'!bg-surface-gray-3': canvasStore.fragmentData.fragmentId === component.name,
 					}"

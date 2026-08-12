@@ -114,18 +114,14 @@ class TestStandardPageSync(FrappeTestCase):
 	def make_variable(self, variable_name: str | None = None):
 		variable_name = variable_name or f"test-var-{frappe.generate_hash(4)}"
 		with self.without_developer_mode():
-			variable = frappe.get_doc(
+			return frappe.get_doc(
 				{
-					"doctype": "Builder Variable",
-					"variable_name": variable_name,
+					"doctype": "Builder Token",
+					"token_name": variable_name,
 					"type": "Color",
 					"value": "#ff0000",
 				}
 			).insert(ignore_permissions=True)
-			# Page cleanup looks up variables by the identifier extracted from blocks.
-			variable.variable_name = variable.name
-			variable.db_set("variable_name", variable.name, update_modified=False)
-			return variable
 
 	def blocks_with_component(self, component):
 		page_block = Block(extendedFromComponent=component.name)
@@ -393,7 +389,7 @@ class TestStandardPageSync(FrappeTestCase):
 		variable = self.make_variable()
 		with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_variable_files") as mock_delete:
 			with self.with_developer_mode():
-				frappe.delete_doc("Builder Variable", variable.name, force=1)
+				frappe.delete_doc("Builder Token", variable.name, force=1)
 			self.assert_sync_delete_called(mock_delete, variable.name)
 
 	def test_variable_after_rename_removes_old_exported_files(self):
@@ -403,10 +399,10 @@ class TestStandardPageSync(FrappeTestCase):
 		try:
 			with mock.patch(f"{self.EXPORT_MODULE}.delete_standard_variable_files") as mock_delete:
 				with self.with_developer_mode():
-					frappe.rename_doc("Builder Variable", old_name, new_name, force=True)
+					frappe.rename_doc("Builder Token", old_name, new_name, force=True)
 				self.assert_sync_delete_called(mock_delete, old_name)
 		finally:
-			self.delete_renamed_if_exists("Builder Variable", old_name, new_name, force=1)
+			self.delete_renamed_if_exists("Builder Token", old_name, new_name, force=1)
 
 	def test_variable_on_update_exports_to_referencing_standard_pages(self):
 		variable = self.make_variable()
@@ -419,7 +415,7 @@ class TestStandardPageSync(FrappeTestCase):
 				self.assert_export_contains(mock_export, variable.name)
 		finally:
 			self.delete_if_exists("Builder Page", page.name)
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	def test_variable_uncheck_is_standard_removes_module_export(self):
 		variable = self.make_variable()
@@ -427,14 +423,14 @@ class TestStandardPageSync(FrappeTestCase):
 		variable.save(ignore_permissions=True)
 		try:
 			with mock.patch(
-				"builder.builder.doctype.builder_variable.builder_variable.delete_folder"
+				"builder.builder.doctype.builder_token.builder_token.delete_folder"
 			) as mock_delete_folder:
 				with self.with_developer_mode():
 					variable.is_standard = 0
 					variable.save(ignore_permissions=True)
-				mock_delete_folder.assert_called_once_with("builder", "builder_variable", variable.name)
+				mock_delete_folder.assert_called_once_with("builder", "builder_token", variable.name)
 		finally:
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	def test_on_trash_standard_page_removes_orphaned_variable(self):
 		variable = self.make_variable()
@@ -447,7 +443,7 @@ class TestStandardPageSync(FrappeTestCase):
 					page.delete(ignore_permissions=True)
 				self.assert_sync_delete_called_once(mock_del_variable, variable.name)
 		finally:
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	def test_on_trash_shared_variable_is_not_removed(self):
 		variable = self.make_variable()
@@ -465,7 +461,7 @@ class TestStandardPageSync(FrappeTestCase):
 				mock_del_variable.assert_not_called()
 		finally:
 			self.delete_if_exists("Builder Page", page2.name)
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	def test_uncheck_standard_page_removes_orphaned_variable(self):
 		variable = self.make_variable()
@@ -479,7 +475,7 @@ class TestStandardPageSync(FrappeTestCase):
 				self.assert_sync_delete_called_once(mock_del_variable, variable.name)
 		finally:
 			self.delete_if_exists("Builder Page", page.name, force=True)
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	def test_uncheck_standard_page_shared_variable_is_not_removed(self):
 		variable = self.make_variable()
@@ -498,7 +494,7 @@ class TestStandardPageSync(FrappeTestCase):
 		finally:
 			self.delete_if_exists("Builder Page", page1.name, force=True)
 			self.delete_if_exists("Builder Page", page2.name)
-			self.delete_if_exists("Builder Variable", variable.name, force=1)
+			self.delete_if_exists("Builder Token", variable.name, force=1)
 
 	# -------------------------------------------------- client script tests
 

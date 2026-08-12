@@ -4,10 +4,10 @@
 		ref="dialRef">
 		<!-- Degrees indicator -->
 		<div
-			class="absolute left-1/2 top-1/2 h-1/2 w-0.5 origin-top -translate-x-1/2 bg-surface-gray-7 pt-1"
+			class="absolute left-1/2 top-1/2 h-1/2 w-0.5 origin-top -translate-x-1/2 bg-surface-gray-10 pt-1"
 			:style="{ transform: `translateX(-50%) rotate(${modelValue + 180}deg)` }">
 			<div
-				class="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rounded-full border border-outline-gray-3 bg-surface-gray-7 shadow-sm" />
+				class="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rounded-full border border-outline-gray-3 bg-surface-gray-10 shadow-sm" />
 		</div>
 		<!-- Center point -->
 		<div

@@ -14,6 +14,8 @@
 [![codecov](https://codecov.io/github/frappe/builder/branch/develop/graph/badge.svg)](https://codecov.io/github/frappe/builder)
 [![unittests](https://github.com/frappe/builder/actions/workflows/server-tests.yml/badge.svg)](https://github.com/frappe/builder/actions/workflows/server-tests.yml)
 
+<a href="https://trendshift.io/repositories/17380?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-17380" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/17380/daily" alt="frappe%2Fbuilder | Trendshift" width="250" height="55"/></a>
+
 <div>
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/7b013cc1-fe40-4b3c-a765-d8c3697bf81e">
@@ -154,6 +156,7 @@ yarn dev --host
 - [Documentation](https://docs.frappe.io/builder)
 - [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 - [Frappe Script Editor](https://github.com/frappe/frappe-script-editor)
+- [Translations](https://crowdin.com/project/frappe)
 
 <br>
 <br>

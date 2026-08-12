@@ -16,7 +16,6 @@ const BOOST_INDEX = 99;
 export default function customPythonCompletions(
 	context: any,
 	customCompletions: any,
-	mode: "block" | "page" = "page",
 	blockProps: Record<string, any> = {},
 ) {
 	let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
@@ -61,7 +60,6 @@ export default function customPythonCompletions(
 			if (variableName === "props") {
 				let isBracket = nodeBefore.name === "[";
 				if (!hasProps || !isBracket) return null;
-				console.log(variableName, blockProps, isBracket);
 				return propCompletions;
 			}
 
@@ -90,16 +88,8 @@ export default function customPythonCompletions(
 		return {
 			from: nodeBefore.from,
 			options: [
-				...(mode == "block"
-					? [
-							{ label: "block", type: "class", boost: BOOST_INDEX },
-							{ label: "prev_blocks", type: "class", boost: BOOST_INDEX },
-							{ label: "props", type: "class", boost: BOOST_INDEX },
-					  ]
-					: [
-							{ label: "data", type: "class", boost: BOOST_INDEX },
-							{ label: "page", type: "class", boost: BOOST_INDEX },
-					  ]),
+				{ label: "data", type: "class", boost: BOOST_INDEX },
+				{ label: "page", type: "class", boost: BOOST_INDEX },
 				...Object.keys(customCompletions).map((item) => {
 					return { label: item, type: "class" };
 				}),
@@ -110,15 +100,8 @@ export default function customPythonCompletions(
 		return {
 			from: nodeBefore.from,
 			options: [
-				...(mode == "block"
-					? [
-							{ label: "block", type: "class", boost: BOOST_INDEX },
-							{ label: "props", type: "class", boost: BOOST_INDEX },
-					  ]
-					: [
-							{ label: "data", type: "class", boost: BOOST_INDEX },
-							{ label: "page", type: "class", boost: BOOST_INDEX },
-					  ]),
+				{ label: "data", type: "class", boost: BOOST_INDEX },
+				{ label: "page", type: "class", boost: BOOST_INDEX },
 				...Object.keys(customCompletions).map((item) => {
 					return { label: item, type: "class" };
 				}),

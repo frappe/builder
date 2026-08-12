@@ -61,15 +61,15 @@ watch(() => props.modelValue, updatePercent);
 	@apply h-0.5 rounded-full;
 	background: linear-gradient(
 		to right,
-		var(--surface-gray-7) 0%,
-		var(--surface-gray-7) calc(var(--percent, 0%) + 0.1%),
+		var(--surface-gray-10) 0%,
+		var(--surface-gray-10) calc(var(--percent, 0%) + 0.1%),
 		var(--surface-gray-4) calc(var(--percent, 0%) + 0.1%),
 		var(--surface-gray-4) 100%
 	);
 }
 
 .range-input::-webkit-slider-thumb {
-	@apply h-[14px] w-[14px] appearance-none rounded-full border-none bg-surface-gray-7 shadow-md;
+	@apply h-[14px] w-[14px] appearance-none rounded-full border-none bg-surface-gray-10 shadow-md;
 	@apply -mt-[6px];
 	transition: box-shadow 0.2s;
 }
@@ -86,10 +86,10 @@ watch(() => props.modelValue, updatePercent);
 	@apply h-0.5 rounded-full bg-surface-gray-2;
 }
 .range-input::-moz-range-progress {
-	@apply h-0.5 rounded-full bg-surface-gray-7;
+	@apply h-0.5 rounded-full bg-surface-gray-10;
 }
 .range-input::-moz-range-thumb {
-	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-7 shadow-sm;
+	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-10 shadow-sm;
 	transition: box-shadow 0.2s;
 }
 .range-input:active::-moz-range-thumb {
@@ -99,13 +99,13 @@ watch(() => props.modelValue, updatePercent);
 
 /* IE/Edge */
 .range-input::-ms-fill-lower {
-	@apply rounded-full bg-surface-gray-7;
+	@apply rounded-full bg-surface-gray-10;
 }
 .range-input::-ms-fill-upper {
 	@apply rounded-full bg-surface-gray-2;
 }
 .range-input::-ms-thumb {
-	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-7 shadow-sm;
+	@apply h-[14px] w-[14px] rounded-full border-none bg-surface-gray-10 shadow-sm;
 	transition: box-shadow 0.2s;
 }
 .range-input:active::-ms-thumb {

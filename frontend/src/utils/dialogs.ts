@@ -57,6 +57,10 @@ export function promptCreateComponent(block: Block) {
 			componentStore.setComponentMap(componentData);
 			const updatedBlock = canvasStore.activeCanvas?.findBlock(block.blockId);
 			updatedBlock?.extendFromComponent(componentData.name);
+			if (updatedBlock) {
+				await componentStore.pinComponentInstance(updatedBlock, componentData.name);
+				pageStore.savePage();
+			}
 		},
 	});
 }
@@ -67,8 +71,8 @@ export function promptSelectFolder() {
 	const options = [
 		{ label: "Home", value: "" },
 		...(builderProjectFolder.data || []).map((p: BuilderProjectFolder) => ({
-			label: p.folder_name,
-			value: p.folder_name,
+			label: p.folder_name as string,
+			value: p.folder_name as string,
 		})),
 	];
 	dialog.prompt({

@@ -1,4 +1,6 @@
+import { websiteSettings } from "@/data/websiteSettings";
 import { shortenNumber } from "@/utils/helpers";
+import { useStorage } from "@vueuse/core";
 import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -17,6 +19,23 @@ export interface AnalyticsResponse {
 	}>;
 }
 
+export interface CTRElement {
+	label: string;
+	blockId: string;
+	route: string;
+	clicks: number;
+	unique_clicks: number;
+	views: number;
+	ctr: number;
+}
+
+export interface CTRResponse {
+	total_views: number;
+	total_clicks: number;
+	ctr: number;
+	elements: CTRElement[];
+}
+
 export interface CustomDateRange {
 	from_date: string;
 	to_date: string;
@@ -31,26 +50,37 @@ export interface RouteFilter {
 
 export function useAnalytics({
 	apiUrl,
+	ctrApiUrl,
 	initialRange = "last_30_days",
-	initialInterval = "daily",
+	initialInterval = "",
 	initialRoute = "",
 	initialRouteFilterType = "wildcard",
+	routePersistKey,
 	extraParams = {},
 	onSuccess,
 }: {
 	apiUrl: string;
+	ctrApiUrl?: string;
 	initialRange?: string;
 	initialInterval?: string;
 	initialRoute?: string;
 	initialRouteFilterType?: RouteFilterType;
+	routePersistKey?: string;
 	extraParams?: Record<string, any>;
 	onSuccess?: (res: AnalyticsResponse) => void;
 }) {
-	const range = ref(initialRange);
+	// undefined while settings load, so callers can avoid flashing the "tracking disabled" notice prematurely
+	const trackingEnabled = computed(() =>
+		websiteSettings.doc ? Boolean(websiteSettings.doc.enable_view_tracking) : undefined,
+	);
+
+	// range/customDateRange are page-independent, so they share one key across page & global analytics.
+	// route is intrinsic to the page in page analytics, so it only persists when a caller (global) opts in.
+	const range = useStorage("builderAnalyticsRange", initialRange);
 	const interval = ref(initialInterval);
-	const route = ref(initialRoute);
+	const route = routePersistKey ? useStorage(routePersistKey, initialRoute) : ref(initialRoute);
 	const routeFilterType = ref<RouteFilterType>(initialRouteFilterType);
-	const customDateRange = ref<string>("");
+	const customDateRange = useStorage("builderAnalyticsCustomDateRange", "");
 	const analyticsData = ref<AnalyticsResponse>({
 		total_unique_views: 0,
 		total_views: 0,
@@ -64,7 +94,7 @@ export function useAnalytics({
 		axisLineColor: "var(--ink-gray-4)",
 		gridLineColor: "var(--outline-gray-1)",
 		backgroundColor: "transparent",
-		tooltipBg: "var(--surface-white)",
+		tooltipBg: "var(--surface-base)",
 		tooltipBorder: "var(--outline-gray-1)",
 		tooltipText: "var(--ink-gray-7)",
 	};
@@ -337,8 +367,28 @@ export function useAnalytics({
 		},
 	});
 
+	const ctrData = ref<CTRResponse>({
+		total_views: 0,
+		total_clicks: 0,
+		ctr: 0,
+		elements: [],
+	});
+
+	const ctr = ctrApiUrl
+		? createResource({
+				method: "POST",
+				url: ctrApiUrl,
+				params: getParams(),
+				auto: true,
+				onSuccess(res: CTRResponse) {
+					ctrData.value = res;
+				},
+			})
+		: null;
+
 	const debouncedSubmit = debounce(() => {
 		analytics.submit(getParams());
+		ctr?.submit(getParams());
 	}, 100);
 
 	watch(
@@ -357,10 +407,13 @@ export function useAnalytics({
 		interval,
 		route,
 		customDateRange,
+		trackingEnabled,
 		analyticsData,
 		chartConfigWithEvents,
 		processedAnalyticsData,
 		analytics,
+		ctr,
+		ctrData,
 		onPageRowClick,
 	};
 }

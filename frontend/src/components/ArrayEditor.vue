@@ -11,7 +11,7 @@
 				icon="lucide-x"
 				@click="deleteItem(index)"></Button>
 		</div>
-		<Button variant="subtle" class="w-full" label="Add" @click="addItem"></Button>
+		<Button variant="outline" class="w-full" label="Add" @click="addItem"></Button>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>

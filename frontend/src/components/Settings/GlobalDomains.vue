@@ -10,7 +10,7 @@
 				class="flex flex-col gap-1 rounded-md border border-outline-gray-1 px-3 py-2.5">
 				<div class="flex items-center gap-2">
 					<div class="flex min-w-0 flex-1 items-center gap-2">
-						<p class="truncate text-p-sm font-medium leading-6 text-ink-gray-9">{{ d.domain }}</p>
+						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
 						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
 						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
 						<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
@@ -24,7 +24,7 @@
 						<Button variant="ghost" icon="lucide-more-horizontal" />
 					</Dropdown>
 				</div>
-				<p v-if="d.status === 'Broken'" class="text-p-xs text-ink-red-4">
+				<p v-if="d.status === 'Broken'" class="text-p-xs text-ink-red-8">
 					{{ brokenReason(d) }}
 				</p>
 			</div>
@@ -49,7 +49,7 @@
 					<div class="flex items-center gap-2 px-3 py-2.5">
 						<div class="min-w-0 flex-1">
 							<div class="flex items-baseline gap-1.5">
-								<span class="text-p-sm font-semibold leading-6 text-ink-gray-8">{{ rec.type }} record</span>
+								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ rec.type }} record</span>
 								<span class="font-mono text-p-xs">
 									<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">{{ rec.host }}</span>
 									<span class="px-1 text-ink-gray-4">→</span>
@@ -81,9 +81,8 @@
 <script setup lang="ts">
 import { useDomains } from "@/data/domains";
 import { useIntervalFn } from "@vueuse/core";
-import { Badge, Dropdown, ErrorMessage, FormControl } from "frappe-ui";
-import { computed, onMounted, ref, watch } from "vue";
-import { toast } from "frappe-ui";
+import { Badge, Dropdown, ErrorMessage, FormControl, toast } from "frappe-ui";
+import { computed, onActivated, onDeactivated, onMounted, ref, watch } from "vue";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
 
@@ -126,6 +125,11 @@ const { pause: stopPolling, resume: startPolling } = useIntervalFn(
 );
 
 watch(hasPendingDomains, (val) => (val ? startPolling() : stopPolling()));
+
+onDeactivated(stopPolling);
+onActivated(() => {
+	if (hasPendingDomains.value) startPolling();
+});
 
 onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
 
@@ -182,11 +186,13 @@ function brokenReason(d: any): string {
 }
 
 function statusTheme(status: string) {
-	return (
-		({ Active: "green", Broken: "red", Pending: "orange", "In Progress": "blue" } as Record<string, string>)[
-			status
-		] ?? "gray"
-	);
+	const themes: Record<string, "green" | "red" | "orange" | "blue"> = {
+		Active: "green",
+		Broken: "red",
+		Pending: "orange",
+		"In Progress": "blue",
+	};
+	return themes[status] ?? "gray";
 }
 
 async function copyToClipboard(text: string) {

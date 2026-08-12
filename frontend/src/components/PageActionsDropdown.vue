@@ -19,7 +19,7 @@
 					{
 						label: 'Unpublish',
 						onClick: () => pageStore.unpublishPage(props.page),
-						icon: GlobeOffIcon,
+						icon: 'lucide-globe-x',
 						condition: () => Boolean(props.page.published),
 					},
 					{
@@ -45,7 +45,6 @@
 </template>
 
 <script setup lang="ts">
-import GlobeOffIcon from "@/components/Icons/GlobeOff.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { openInDesk } from "@/utils/helpers";

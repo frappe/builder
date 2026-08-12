@@ -5,7 +5,7 @@ app_title = "Frappe Builder"
 app_publisher = "Frappe Technologies Pvt Ltd"
 app_description = "An easier way to build web pages for your needs!"
 app_email = "suraj@frappe.io"
-app_license = "GNU Affero General Public License v3.0"
+app_license = "MIT"
 
 # Includes in <head>
 # ------------------
@@ -55,9 +55,11 @@ website_generators = ["Builder Page"]
 
 # add methods and filters to jinja environment
 jinja = {
+	"methods": [
+		"builder.builder.doctype.builder_component.builder_component.get_component_data",
+	],
 	"filters": [
 		"builder.utils.combine",
-		"builder.utils.execute_script_and_combine",
 		"builder.utils.hash",
 		"builder.utils.to_safe_json",
 	],
@@ -95,6 +97,14 @@ after_app_install = "builder.install.after_app_install"
 # "Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
+user_invitation = {
+	"allowed_roles": {
+		"System Manager": ["Website Manager"],
+		"Website Manager": ["Website Manager"],
+	},
+	"after_accept": ["builder.user_invitation.after_accept"],
+}
+
 # DocType Class
 # ---------------
 # Override standard doctype classes
@@ -107,13 +117,11 @@ after_app_install = "builder.install.after_app_install"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# "*": {
-# "on_update": "method",
-# "on_cancel": "method",
-# "on_trash": "method"
-# }
-# }
+doc_events = {
+	"User Invitation": {
+		"after_insert": "builder.user_invitation.capture_user_invited",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
@@ -122,6 +130,7 @@ scheduler_events = {
 	"cron": {
 		"*/10 * * * *": [
 			"builder.builder_analytics.ingest_web_page_views_to_duckdb",
+			"builder.builder_analytics.ingest_clicks_to_duckdb",
 		],
 	}
 }

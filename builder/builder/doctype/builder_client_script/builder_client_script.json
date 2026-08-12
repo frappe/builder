@@ -37,9 +37,13 @@
    "link_doctype": "Builder Page",
    "link_fieldname": "builder_script",
    "table_fieldname": "client_scripts"
+  },
+  {
+   "link_doctype": "Builder Component",
+   "link_fieldname": "builder_script"
   }
  ],
- "modified": "2024-11-13 20:08:54.615438",
+ "modified": "2026-06-10 10:55:22.349246",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",
@@ -71,6 +75,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

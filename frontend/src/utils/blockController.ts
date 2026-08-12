@@ -1,6 +1,8 @@
 import type { default as Block, default as BlockDataKey } from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
+import componentController from "./componentController";
+import type { SpacingType } from "./cssUtils";
 
 const canvasStore = useCanvasStore();
 
@@ -118,9 +120,10 @@ const blockController = {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+				let blockKey = block[key] ?? block.referenceComponent?.[key];
 				if (keyValue === "__initial__") {
-					keyValue = block[key];
-				} else if (keyValue !== block[key]) {
+					keyValue = blockKey;
+				} else if (keyValue !== blockKey) {
 					keyValue = "Mixed";
 				}
 			});
@@ -128,7 +131,7 @@ const blockController = {
 		} else {
 			// TODO: handle it better
 			let key: string | undefined = "__initial__";
-			let comesFrom: "props" | "dataScript" | "blockDataScript" | undefined = undefined;
+			let comesFrom: "props" | "dataScript" | "componentData" | undefined = undefined;
 			canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 				const condition: BlockVisibilityCondition | undefined = block.getVisibilityCondition();
 				if (key === "__initial__") {
@@ -168,30 +171,32 @@ const blockController = {
 		if (!block) return;
 		block.classes = classes;
 	},
-	getRawStyles: () => {
-		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getRawStyles();
-	},
-	setRawStyles: (rawStyles: BlockStyleMap) => {
-		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			Object.keys(block.rawStyles).forEach((key) => {
-				if (!rawStyles[key]) {
-					delete block.rawStyles[key];
-				}
-			});
-			Object.assign(block.rawStyles, rawStyles);
-		});
-	},
 	getCustomAttributes: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
 	},
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			Object.keys(block.customAttributes).forEach((key) => {
-				if (!customAttributes[key]) {
+				if (!(key in customAttributes)) {
 					delete block.customAttributes[key];
+					block.removeDynamicValue(key, "attribute");
 				}
 			});
 			Object.assign(block.customAttributes, customAttributes);
+		});
+	},
+	isClickTrackingEnabled: () => {
+		return Boolean(blockController.getCustomAttributes()?.["data-track"]);
+	},
+	toggleClickTracking: (enabled: boolean) => {
+		// Store a marker only; the live blockId is stamped onto data-track at render time.
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (enabled) {
+				block.customAttributes["data-track"] = "true";
+			} else {
+				delete block.customAttributes["data-track"];
+				block.removeDynamicValue("data-track", "attribute");
+			}
 		});
 	},
 	getParentBlock: () => {
@@ -260,38 +265,21 @@ const blockController = {
 	isRepeater: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRepeater();
 	},
-	getPadding: (opts?: { nativeOnly?: boolean; cascading?: boolean }) => {
-		let padding = "__initial__" as StyleValue;
+	getSpacing: (type: SpacingType, opts?: { nativeOnly?: boolean; cascading?: boolean }) => {
+		let spacing = "__initial__" as StyleValue;
 		blockController.getSelectedBlocks().forEach((block) => {
-			const val = block.getPadding(opts);
-			if (padding === "__initial__") {
-				padding = val;
-			} else if (padding !== val) {
-				padding = "Mixed";
+			const val = block.getSpacing(type, opts);
+			if (spacing === "__initial__") {
+				spacing = val;
+			} else if (spacing !== val) {
+				spacing = "Mixed";
 			}
 		});
-		return padding;
+		return spacing;
 	},
-	setPadding: (value: string) => {
+	setSpacing: (type: SpacingType, value: string) => {
 		blockController.getSelectedBlocks().forEach((block) => {
-			block.setPadding(value);
-		});
-	},
-	getMargin: (opts?: { nativeOnly?: boolean; cascading?: boolean }) => {
-		let margin = "__initial__" as StyleValue;
-		blockController.getSelectedBlocks().forEach((block) => {
-			const val = block.getMargin(opts);
-			if (margin === "__initial__") {
-				margin = val;
-			} else if (margin !== val) {
-				margin = "Mixed";
-			}
-		});
-		return margin;
-	},
-	setMargin: (value: string) => {
-		blockController.getSelectedBlocks().forEach((block) => {
-			block.setMargin(value);
+			block.setSpacing(type, value);
 		});
 	},
 	toggleAttribute: (attribute: string) => {
@@ -328,35 +316,6 @@ const blockController = {
 			block.unsetLink();
 		});
 	},
-	getComponentRootBlock: (block?: Block): Block => {
-		if (!block) {
-			block = blockController.getFirstSelectedBlock();
-		}
-		const editingMode = canvasStore.editingMode;
-
-		while (block && block.isExtendedFromComponent()) {
-			if (block.extendedFromComponent) break;
-			block = block.getParentBlock()!;
-		}
-		if (editingMode == "fragment") {
-			while (block && !block.isExtendedFromComponent() && block.getParentBlock()) {
-				block = block.getParentBlock()!;
-			}
-		}
-		return block;
-	},
-	getBlockClientScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockClientScript();
-	},
-	setBlockClientScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockClientScript(script);
-	},
-	getBlockDataScript: () => {
-		return blockController.getFirstSelectedBlock()?.getBlockDataScript();
-	},
-	setBlockDataScript: (script: string) => {
-		blockController.getFirstSelectedBlock()?.setBlockDataScript(script);
-	},
 	getBlockProps: () => {
 		return blockController.getFirstSelectedBlock()?.getBlockProps();
 	},
@@ -374,15 +333,8 @@ const blockController = {
 	},
 	setBlockProps: (props: BlockProps) => {
 		const block = blockController.getFirstSelectedBlock();
-		if (!block.props) {
-			block.props = {};
-		}
-		Object.keys(block.props).forEach((key) => {
-			if (!props[key]) {
-				delete block.props?.[key];
-			}
-		});
-		Object.assign(block.props, props);
+		if (!block) return;
+		block.setBlockProps(props);
 	},
 };
 

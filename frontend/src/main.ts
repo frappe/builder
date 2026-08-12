@@ -6,6 +6,7 @@ import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
+import translationPlugin from "./translation";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
@@ -13,10 +14,13 @@ import Input from "@/components/Controls/Input.vue";
 const app = createApp(App);
 const pinia = createPinia();
 
+// pinia first: installing the router starts the first navigation, and a route
+// chunk looks up stores as it loads
+app.use(pinia);
 app.use(router);
 app.use(FrappeUI);
-app.use(pinia);
 app.use(telemetryPlugin, { app_name: "builder" });
+app.use(translationPlugin);
 
 window.name = "frappe-builder";
 app.config.globalProperties.window = window;

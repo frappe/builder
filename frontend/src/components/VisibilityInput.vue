@@ -9,9 +9,12 @@
 </template>
 <script setup lang="ts">
 import InlineInput from "@/components/Controls/InlineInput.vue";
-import { useBlockDataStore } from "@/stores/blockStore";
+import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
-import { getDataArray, getDefaultPropsList, getParentProps } from "@/utils/helpers";
+import componentController from "@/utils/componentController";
+import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
@@ -20,85 +23,63 @@ const props = defineProps<{
 	setModelValue: (value: BlockVisibilityCondition) => void;
 }>();
 
-const blockDataStore = useBlockDataStore();
+const pageStore = usePageStore();
+const canvasStore = useCanvasStore();
 
+const currentBlock = computed(() => blockController.getFirstSelectedBlock());
 const autocompleteRef = ref<InstanceType<typeof InlineInput> | null>(null);
 
 const pageDataArray = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return getDataArray(blockDataStore.getPageData(currentBlock.blockId) || {});
+	return getDataArray(getRepeaterScopedData(currentBlock.value, pageStore.pageData));
 });
-const blockDataArray = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+
+let componentData = {};
+if (canvasStore.editingMode == "fragment") {
+	componentData = componentController.getComponentDataPreview();
+}
+
+const componentDataArray = computed(() => {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return getDataArray(blockDataStore.getBlockData(currentBlock.blockId) || {});
+	return getDataArray(getRepeaterScopedData(currentBlock.value, componentData));
 });
+
 const ownProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(currentBlock.getBlockProps());
+	return Object.keys(currentBlock.value.getBlockProps());
 });
 const parentProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(getParentProps(currentBlock));
+	return Object.keys(getParentProps(currentBlock.value));
 });
+
 const defaultProps = computed(() => {
-	const currentBlock = blockController.getFirstSelectedBlock();
-	if (!currentBlock) {
+	if (!currentBlock.value) {
 		return [];
 	}
-	return Object.keys(getDefaultPropsList(currentBlock, blockController));
+	return Object.keys(getDefaultPropsList(currentBlock.value));
 });
-const getOptions = async (query: string) => {
-	let options: { label: string; value: string }[] = [];
+const visibilityOptions = computed(() => {
+	const toOptions = (props: string[], comesFrom: string) =>
+		props.map((prop) => ({ label: prop, value: `${prop}--${comesFrom}` }));
+	const propsList = [...new Set([...ownProps.value, ...parentProps.value, ...defaultProps.value])];
 
-	pageDataArray.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--dataScript`,
-			});
-		}
-	});
-	blockDataArray.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--blockDataScript`,
-			});
-		}
-	});
-	const combinedProps = [...new Set([...ownProps.value, ...parentProps.value])];
+	return [
+		...toOptions(pageDataArray.value, "dataScript"),
+		...toOptions(componentDataArray.value, "componentData"),
+		...toOptions(propsList, "props"),
+	];
+});
 
-	combinedProps.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
-	defaultProps.value.map((prop) => {
-		if (query.trim() == "" || prop.toLowerCase().includes(query.toLowerCase())) {
-			options.push({
-				label: prop,
-				value: `${prop}--props`,
-			});
-		}
-	});
-
-	return options;
-};
+const getOptions = async (query: string) => filterOptions(visibilityOptions.value, query);
 
 const handleModelValueUpdate = (value: string | null) => {
 	if (value == null) {
@@ -111,7 +92,7 @@ const handleModelValueUpdate = (value: string | null) => {
 };
 
 watch(
-	[pageDataArray, blockDataArray, ownProps, parentProps, defaultProps],
+	[pageDataArray, ownProps, parentProps, defaultProps],
 	() => {
 		autocompleteRef.value?.refreshOptions();
 	},

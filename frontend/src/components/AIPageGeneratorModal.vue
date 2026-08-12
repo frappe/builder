@@ -19,8 +19,8 @@
 					<Transition name="fade">
 						<div
 							v-if="isDragging"
-							class="border-outline-blue-3 pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed bg-surface-blue-1/60">
-							<div class="text-ink-blue-4 flex items-center gap-1.5 text-xs font-medium">
+							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-4 bg-surface-blue-1/60">
+							<div class="text-xs-medium flex items-center gap-1.5 text-ink-blue-8">
 								<span class="lucide-image h-3.5 w-3.5" aria-hidden="true" />
 								Drop image to attach
 							</div>
@@ -40,7 +40,7 @@
 						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
 						<button
 							type="button"
-							class="hover:text-ink-red-7 flex items-center rounded text-ink-gray-5"
+							class="flex items-center rounded text-ink-gray-5 hover:text-ink-red-7"
 							title="Remove image"
 							@click="clearImage">
 							<span class="lucide-x h-3.5 w-3.5" aria-hidden="true" />
@@ -50,7 +50,7 @@
 				<Transition name="fade">
 					<div
 						v-if="errorMessage"
-						class="text-ink-red-9 flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs">
+						class="flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs text-ink-red-9">
 						<span class="lucide-alert-circle h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 						{{ errorMessage }}
 					</div>
@@ -85,7 +85,7 @@
 									@click="togglePopover" />
 							</template>
 							<template #body-main="{ close }">
-								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-white p-2 shadow-2xl">
+								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-base p-2 shadow-2xl">
 									<div class="flex items-center justify-between p-1 px-2">
 										<div class="text-sm text-ink-gray-4">Styles</div>
 										<Button
@@ -131,16 +131,16 @@
 				v-if="(generating || progressMessage) && !showDialog"
 				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2">
 				<div
-					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-white px-4 py-2.5 shadow-lg">
+					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-base px-4 py-2.5 shadow-lg">
 					<span
 						:class="[
 							generating
 								? 'lucide-loader animate-spin text-ink-gray-7'
-								: 'lucide-check-circle text-ink-green-3',
+								: 'lucide-check-circle text-ink-green-6',
 							'h-4 w-4',
 						]"
 						aria-hidden="true" />
-					<span class="text-sm font-medium text-ink-gray-9">
+					<span class="text-sm-medium text-ink-gray-9">
 						{{ progressMessage || (mode === "modify" ? "Modifying section…" : "Generating page…") }}
 					</span>
 				</div>

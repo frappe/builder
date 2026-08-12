@@ -27,6 +27,21 @@ export default class RealTimeHandler {
 		this.socket.emit(event, ...args);
 	}
 
+	doctype_subscribe(doctype: string) {
+		if (this.subscribing) {
+			return;
+		}
+		this.subscribing = true;
+		this.emit("doctype_subscribe", doctype);
+		setTimeout(() => {
+			this.subscribing = false;
+		}, 1000);
+	}
+
+	doctype_unsubscribe(doctype: string) {
+		this.emit("doctype_unsubscribe", doctype);
+	}
+
 	doc_subscribe(doctype: string, docname: string) {
 		if (this.subscribing) {
 			return;

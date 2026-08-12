@@ -17,12 +17,12 @@
 		<div class="flex w-full max-w-lg flex-col divide-y divide-outline-gray-2">
 			<!-- Find row -->
 			<div class="flex items-center gap-1.5 px-1.5 py-1">
-				<Input
+				<TextInput
 					v-model="search"
 					ref="inputRef"
 					type="text"
 					placeholder="Find"
-					@input="(val: string) => commit({ searchTerm: val })"
+					@update:modelValue="(val: string) => commit({ searchTerm: val })"
 					@keydown.enter.prevent="enter" />
 				<div class="flex shrink-0 items-center">
 					<Button
@@ -75,11 +75,11 @@
 			</div>
 			<!-- Replace row -->
 			<div v-if="enableReplace && showReplace" class="flex items-center gap-1.5 px-1.5 py-1">
-				<Input
+				<TextInput
 					v-model="replaceWith"
 					type="text"
 					placeholder="Replace"
-					@input="(val: string) => commit({ replaceTerm: val })"
+					@update:modelValue="(val: string) => commit({ replaceTerm: val })"
 					@keydown.enter.prevent="enter" />
 				<div class="flex shrink-0 items-center">
 					<Button
@@ -111,13 +111,13 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { Button, Input } from "frappe-ui";
+import { Button, TextInput } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 
 const view = inject<EditorView>("view")!;
 const enableReplace = inject<boolean>("enableReplace", false);
 
-const inputRef = ref<InstanceType<typeof Input> | null>(null);
+const inputRef = ref<InstanceType<typeof TextInput> | null>(null);
 const search = ref("");
 const replaceWith = ref("");
 const caseSensitive = ref(false);
@@ -170,7 +170,7 @@ function closePanel(e?: KeyboardEvent | Event) {
 
 onMounted(() => {
 	nextTick(() => {
-		inputRef.value?.$el.querySelector("input")?.focus();
+		inputRef.value?.el?.focus();
 	});
 });
 </script>

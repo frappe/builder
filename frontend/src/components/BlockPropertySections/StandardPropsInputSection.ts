@@ -5,6 +5,7 @@ import ColorInput from "../Controls/ColorInput.vue";
 import OptionToggle from "../Controls/OptionToggle.vue";
 import ImageUploadInput from "../ImageUploadInput.vue";
 import ObjectInput from "../ObjectInput.vue";
+import useCanvasStore from "@/stores/canvasStore.js";
 
 const componentMap = {
 	array: ArrayInput,
@@ -55,7 +56,6 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 		allowDynamicValue: true,
 		dynamicValueFilterOptions: {
 			excludeOwnProps: true,
-			excludeOwnBlockData: true,
 		},
 		getDynamicValue: () => {
 			if (propDetails.isDynamic) {
@@ -73,11 +73,11 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			});
 		},
 		setModelValue: (value: any) => {
-			if (value == "") value = null;
+			if (value === "") value = null;
 			blockController.setBlockProp(propName, { value });
 		},
 		getModelValue: () => {
-			const value = blockController.getFirstSelectedBlock().props?.[propName]?.value;
+			const value = blockController.getFirstSelectedBlock().getBlockProps()[propName]?.value;
 			return value;
 		},
 		getPlaceholder: () => {
@@ -146,5 +146,7 @@ export default {
 	name: "Block Options",
 	properties: getStandardPropsInputSection,
 	collapsed: false,
-	condition: () => Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
+	condition: () =>
+		useCanvasStore().editingMode != "fragment" &&
+		Object.keys(getStandardProps(blockController.getBlockProps())).length > 0,
 };

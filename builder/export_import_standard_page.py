@@ -13,6 +13,7 @@ from builder.utils import (
 	export_components,
 	extract_components_from_blocks,
 	make_records,
+	normalize_legacy_raw_styles,
 )
 
 
@@ -124,12 +125,13 @@ def extract_fonts_from_blocks(blocks):
 	fonts = set()
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+	normalize_legacy_raw_styles(blocks)
 
 	for block in blocks:
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in ["baseStyles", "mobileStyles", "tabletStyles", "rawStyles"]:
+		for style_key in ["baseStyles", "mobileStyles", "tabletStyles"]:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				font = styles.get("fontFamily")
@@ -158,6 +160,7 @@ def extract_variables_from_blocks(blocks):
 	variables = set()
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+	normalize_legacy_raw_styles(blocks)
 
 	# Regex to match var(--variable-name, ...) or var(--variable-name)
 	var_pattern = re.compile(r"var\(--([a-zA-Z0-9_-]+)")
@@ -174,7 +177,7 @@ def extract_variables_from_blocks(blocks):
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in ["baseStyles", "mobileStyles", "tabletStyles", "rawStyles"]:
+		for style_key in ["baseStyles", "mobileStyles", "tabletStyles"]:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				for _prop, value in styles.items():
@@ -271,7 +274,7 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 
 
 def export_variables(variables, builder_files_path):
-	"""Export Builder Variable records"""
+	"""Export Builder Token records"""
 	if not variables:
 		return
 
@@ -280,9 +283,9 @@ def export_variables(variables, builder_files_path):
 
 	for var_name in variables:
 		try:
-			var_doc = frappe.get_doc("Builder Variable", var_name).as_dict()
+			var_doc = frappe.get_doc("Builder Token", var_name).as_dict()
 
-			var_doc["doctype"] = "Builder Variable"
+			var_doc["doctype"] = "Builder Token"
 			safe_var_name = frappe.scrub(var_doc.name)
 			var_dir = os.path.join(variables_path, safe_var_name)
 			os.makedirs(var_dir, exist_ok=True)

@@ -11,9 +11,13 @@ from urllib.parse import unquote, urlparse
 import frappe
 import yaml
 from frappe.model.document import Document
-from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_url
-from frappe.utils.html_utils import unescape_html
+from frappe.modules.import_file import (
+	import_doc,
+	import_file_by_path,
+	read_doc_from_file,
+	update_modified,
+)
+from frappe.utils import get_datetime, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -27,6 +31,10 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+
+def compact_json(obj) -> str:
+	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -84,7 +92,6 @@ class Block:
 
 	children: ClassVar[list["Block"]] = []
 	baseStyles: ClassVar[dict] = {}
-	rawStyles: ClassVar[dict] = {}
 	mobileStyles: ClassVar[dict] = {}
 	tabletStyles: ClassVar[dict] = {}
 	attributes: ClassVar[dict] = {}
@@ -96,6 +103,7 @@ class Block:
 	innerText: str | None = None
 	innerHTML: str | None = None
 	extendedFromComponent: str | None = None
+	componentVersion: str | None = None
 	originalElement: str | None = None
 	isChildOfComponent: str | None = None
 	referenceBlockId: str | None = None
@@ -104,11 +112,14 @@ class Block:
 	elementBeforeConversion: str | None = None
 	customAttributes: ClassVar[dict] = {}
 	dynamicValues: ClassVar[list[BlockDataKey]] = []
-	blockClientScript: str = ""
-	blockDataScript: str = ""
 	props: ClassVar[dict] = {}
+	clientScript: ClassVar[dict] = {}
 
 	def __init__(self, **kwargs) -> None:
+		legacy_client_script = kwargs.pop("blockClientScript", None)
+		if "clientScript" not in kwargs and legacy_client_script:
+			kwargs["clientScript"] = {"js": legacy_client_script}
+
 		for key, value in kwargs.items():
 			if key == "children":
 				value = [
@@ -151,7 +162,6 @@ class Block:
 			"blockId": self.blockId,
 			"children": [child.as_dict() for child in self.children] if self.children else None,
 			"baseStyles": self.baseStyles,
-			"rawStyles": self.rawStyles,
 			"mobileStyles": self.mobileStyles,
 			"tabletStyles": self.tabletStyles,
 			"attributes": self.attributes,
@@ -163,6 +173,7 @@ class Block:
 			"innerText": self.innerText,
 			"innerHTML": self.innerHTML,
 			"extendedFromComponent": self.extendedFromComponent,
+			"componentVersion": self.componentVersion,
 			"originalElement": self.originalElement,
 			"isChildOfComponent": self.isChildOfComponent,
 			"referenceBlockId": self.referenceBlockId,
@@ -171,9 +182,8 @@ class Block:
 			"elementBeforeConversion": self.elementBeforeConversion,
 			"customAttributes": self.customAttributes,
 			"dynamicValues": self.dynamicValues,
-			"blockClientScript": self.blockClientScript,
-			"blockDataScript": self.blockDataScript,
 			"props": self.props,
+			"clientScript": self.clientScript,
 		}
 
 	def as_json(self, wrap_in_array=False):
@@ -306,10 +316,6 @@ def sync_page_templates():
 	builder_script_path = frappe.get_module_path("builder", "builder_script")
 	make_records(builder_script_path)
 
-	print("Syncing Builder Page Templates")
-	builder_page_template_path = frappe.get_module_path("builder", "builder_page_template")
-	make_records(builder_page_template_path)
-
 
 def sync_block_templates():
 	print("Syncing Builder Block Templates")
@@ -317,10 +323,34 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
-def sync_builder_variables():
-	print("Syncing Builder Builder Variables")
-	builder_variable_path = frappe.get_module_path("builder", "builder_variable")
-	make_records(builder_variable_path)
+def sync_builder_tokens():
+	print("Syncing Builder Tokens")
+	builder_token_path = frappe.get_module_path("builder", "builder_token")
+	make_records(builder_token_path)
+
+
+# Compat alias, external scripts may still call the old name
+sync_builder_variables = sync_builder_tokens
+
+
+# Fixture exports and template bundles made before the Builder Token rename still
+# say Builder Variable, and carry the pre-rename fieldname
+RENAMED_FIXTURE_DOCTYPES = {"Builder Variable": "Builder Token"}
+RENAMED_FIXTURE_FIELDS = {"Builder Token": {"variable_name": "token_name"}}
+
+
+def normalize_renamed_doc(docdict):
+	"""Rewrite a doc exported under a doctype's old name so it can be imported.
+
+	A no-op while the old doctype is still around, i.e. before the rename patch runs."""
+	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
+	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+		return docdict
+	docdict["doctype"] = new_doctype
+	for old_field, new_field in RENAMED_FIXTURE_FIELDS[new_doctype].items():
+		if old_field in docdict:
+			docdict.setdefault(new_field, docdict.pop(old_field))
+	return docdict
 
 
 def make_records(path):
@@ -328,10 +358,33 @@ def make_records(path):
 		return
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
-			import_file_by_path(f"{path}/{fname}/{fname}.json")
+			import_fixture_record(f"{path}/{fname}/{fname}.json")
 
 
-def copy_img_to_asset_folder(block, page_doc):
+def import_fixture_record(fpath):
+	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
+	try:
+		docdict = read_doc_from_file(fpath)
+	except OSError:
+		print(f"{fpath} missing")
+		return
+	if not isinstance(docdict, dict):
+		import_file_by_path(fpath)
+		return
+	old_doctype = docdict.get("doctype")
+	normalize_renamed_doc(docdict)
+	if docdict.get("doctype") == old_doctype:
+		import_file_by_path(fpath)
+		return
+	db_modified = frappe.db.get_value(docdict["doctype"], docdict.get("name"), "modified")
+	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
+		return
+	import_doc(docdict)
+	if docdict.get("modified"):
+		update_modified(docdict["modified"], docdict)
+
+
+def copy_img_to_asset_folder(block, page_doc, app=None):
 	def safe_get(obj, attr, default=None):
 		if isinstance(obj, dict):
 			return obj.get(attr, default)
@@ -362,10 +415,10 @@ def copy_img_to_asset_folder(block, page_doc):
 			files = frappe.get_all("File", filters={"file_url": src}, fields=["name"])
 			if files:
 				_file = frappe.get_doc("File", files[0].name)
-				assets_folder_path = get_template_assets_folder_path(page_doc)
+				assets_folder_path = get_template_assets_folder_path(page_doc, app=app)
 				shutil.copy(_file.get_full_path(), assets_folder_path)
 
-			new_src = f"/builder_assets/{page_doc.name}/{src.split('/')[-1]}"
+			new_src = f"{get_template_assets_public_path(page_doc)}/{src.split('/')[-1]}"
 			if attributes:
 				if isinstance(attributes, dict):
 					attributes["src"] = new_src
@@ -374,21 +427,51 @@ def copy_img_to_asset_folder(block, page_doc):
 
 	children = safe_get(block, "children", [])
 	for child in children or []:
-		copy_img_to_asset_folder(child, page_doc)
+		copy_img_to_asset_folder(child, page_doc, app=app)
 
 
-def get_template_assets_folder_path(page_doc):
-	path = os.path.join(frappe.get_app_path("builder"), "www", "builder_assets", page_doc.name)
+def get_template_assets_subfolder(page_doc):
+	"""Relative folder under www/builder_assets for a page's exported assets.
+
+	Template-group pages are namespaced under their group folder so multiple
+	templates can ship assets without colliding."""
+	if getattr(page_doc, "is_template", None) and getattr(page_doc, "template_group", None):
+		return os.path.join(frappe.scrub(page_doc.template_group), str(page_doc.name))
+	return str(page_doc.name)
+
+
+def get_template_assets_public_path(page_doc):
+	"""Public URL prefix (no trailing slash) for a page's exported assets.
+
+	App-agnostic: whichever app/site serves the assets does so under
+	/builder_assets/, so only the filesystem write root (below) varies by app."""
+	return f"/builder_assets/{get_template_assets_subfolder(page_doc).replace(os.sep, '/')}"
+
+
+def template_target_app():
+	"""App whose www/builder_assets directory holds exported template assets.
+	Defaults to builder; the hub site sets template_target_app=builder_hub so
+	template authoring on the hub writes assets into the hub app."""
+	return frappe.conf.get("template_target_app") or "builder"
+
+
+def get_template_assets_folder_path(page_doc, app=None):
+	path = os.path.join(
+		frappe.get_app_path(app or template_target_app()),
+		"www",
+		"builder_assets",
+		get_template_assets_subfolder(page_doc),
+	)
 	if not os.path.exists(path):
 		os.makedirs(path)
 	return path
 
 
-def get_builder_page_preview_file_paths(page_doc):
+def get_builder_page_preview_file_paths(page_doc, app=None):
 	public_path, local_path = None, None
 	if page_doc.is_template:
-		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
-		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
+		local_path = os.path.join(get_template_assets_folder_path(page_doc, app=app), "preview.webp")
+		public_path = f"{get_template_assets_public_path(page_doc)}/preview.webp"
 	else:
 		file_name = f"{page_doc.name}-preview.webp"
 		local_path = os.path.join(frappe.local.site_path, "public", "files", file_name)
@@ -429,6 +512,39 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	if remove_spaces:
 		text = text.replace(" ", "")
 	return text
+
+
+def kebab_to_camel_case(text):
+	return re.sub(r"-([a-z])", lambda match: match.group(1).upper(), text)
+
+
+def normalize_legacy_style_key(style):
+	if ":" not in style:
+		return kebab_to_camel_case(style)
+	state, property_name = style.split(":", 1)
+	return f"{state}:{kebab_to_camel_case(property_name)}"
+
+
+def merge_raw_styles_into_base_styles(block):
+	raw_styles = block.pop("rawStyles", None)
+	if not raw_styles:
+		return
+	base_styles = block.setdefault("baseStyles", {})
+	for style, value in raw_styles.items():
+		if value in (None, ""):
+			continue
+		base_styles[normalize_legacy_style_key(style)] = value
+
+
+def normalize_legacy_raw_styles(blocks):
+	# rawStyles were dropped in favour of baseStyles; older blocks still carry them
+	if isinstance(blocks, list):
+		for block in blocks:
+			normalize_legacy_raw_styles(block)
+	elif isinstance(blocks, dict):
+		merge_raw_styles_into_base_styles(blocks)
+		normalize_legacy_raw_styles(blocks.get("children") or [])
+	return blocks
 
 
 def sanitize_style_value(value):
@@ -676,16 +792,7 @@ def hash(s):
 
 
 def to_safe_json(data):
-	return frappe.as_json(data or {})
-
-
-def execute_script_and_combine(prev_block_data, block_data_script, props, block_id):
-	props = frappe._dict(frappe.parse_json(props or "{}"))
-	block_data = frappe._dict()
-	_locals = dict(block=to_dict_with_fallback(prev_block_data or {}), props=props)
-	execute_script(unescape_html(block_data_script), _locals, f"block_script_for_{block_id}")
-	block_data.update(_locals["block"])
-	return combine(prev_block_data, block_data)
+	return frappe.as_json(data or {}).replace("</", r"<\/")
 
 
 class CompactDumper(yaml.Dumper):

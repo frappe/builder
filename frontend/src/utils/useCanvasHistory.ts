@@ -17,6 +17,18 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	const redoStack = ref([]) as Ref<CanvasState[]>;
 	const last = ref(createHistoryRecord());
 	const pauseIdSet = new Set<PauseId>();
+	// when disabled (e.g. the canvas is read-only) history is
+	// fully inert: nothing is recorded and undo/redo are no-ops. Re-enabled by the
+	// caller when the canvas returns to edit mode. Distinct from the transient,
+	// reference-counted pause()/resume() used during drag/resize.
+	const enabled = ref(true);
+
+	function disable() {
+		enabled.value = false;
+	}
+	function enable() {
+		enabled.value = true;
+	}
 
 	const {
 		eventFilter: blockWatcherFilter,
@@ -50,6 +62,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	});
 
 	function commit() {
+		if (!enabled.value) return;
 		undoStack.value.unshift(last.value);
 		last.value = createHistoryRecord();
 		if (undoStack.value.length > CAPACITY) {
@@ -83,7 +96,18 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		last.value = value;
 	}
 
+	// Swap the canvas root without recording it (used for version preview: show a
+	// snapshot, then restore the draft). The undo stack and baseline are left intact,
+	// so undo/redo keep working on the draft once preview ends.
+	function silentSetSource(block: Block) {
+		ignorePrevAsyncBlockUpdates();
+		ignoreBlockUpdates(() => {
+			source.value = block;
+		});
+	}
+
 	function undo() {
+		if (!enabled.value) return;
 		const state = undoStack.value.shift();
 		if (state) {
 			redoStack.value.unshift(last.value);
@@ -92,10 +116,11 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	}
 
 	function canUndo() {
-		return undoStack.value.length > 0;
+		return enabled.value && undoStack.value.length > 0;
 	}
 
 	function redo() {
+		if (!enabled.value) return;
 		const state = redoStack.value.shift();
 		if (state) {
 			undoStack.value.unshift(last.value);
@@ -104,7 +129,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	}
 
 	function canRedo() {
-		return redoStack.value.length > 0;
+		return enabled.value && redoStack.value.length > 0;
 	}
 
 	function stop() {
@@ -164,6 +189,9 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		canUndo,
 		canRedo,
 		dispose,
+		disable,
+		enable,
+		silentSetSource,
 		undoStack,
 		redoStack,
 		isTracking,

@@ -1,6 +1,10 @@
 <template>
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
-		<div v-html="textContent" v-show="!editor && textContent" @click="handleClick"></div>
+		<div
+			class="__text_content__ bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
+			v-html="textContent"
+			v-show="!editor && textContent"
+			@click="handleClick"></div>
 		<TextBlockBubbleMenu
 			v-if="editor"
 			:block="block"
@@ -18,8 +22,7 @@
 			v-on-click-outside="handleClickOutside"
 			@mouseup="selectionTriggered = false"
 			v-if="editor && showEditor"
-			class="bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
-			:style="block.getRawStyles()"
+			class="__text_editor__ bg-clip-[inherit] relative bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
 			@keydown="(e: KeyboardEvent) => bubbleMenu?.handleKeydown(e)" />
 		<slot />
 	</component>
@@ -30,13 +33,14 @@ import type Block from "@/block";
 import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { BlockValueResolver } from "@/utils/blockValueResolver";
 import { setFontFromHTML } from "@/utils/fontManager";
-import { getDataForKey, getPropValue } from "@/utils/helpers";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
+import { Selection } from "@tiptap/extensions";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
@@ -55,17 +59,16 @@ let selectionTriggered = false as boolean;
 const props = withDefaults(
 	defineProps<{
 		block: Block;
-		uid: string;
 		preview?: boolean;
 		data?: Record<string, any>;
-		blockData?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
 		breakpoint?: string;
 	}>(),
 	{
 		preview: false,
 		data: () => ({}),
-		blockData: null,
+		componentData: null,
 		defaultProps: null,
 		breakpoint: "desktop",
 	},
@@ -100,60 +103,24 @@ const FontFamilyPasteRule = Extension.create({
 	},
 });
 
-const hasBlockProps = computed(() => {
-	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+const valueResolver = new BlockValueResolver({
+	block: () => props.block,
+	data: () => props.data ?? null,
+	componentData: () => props.componentData ?? null,
+	defaultProps: () => props.defaultProps ?? null,
 });
 
 const textContent = computed(() => {
 	let innerHTML = props.block.getInnerHTML();
-	if (props.data || props.blockData || hasBlockProps.value) {
-		const dynamicContent = getDynamicContent();
-		if (dynamicContent) {
-			innerHTML = dynamicContent;
-		}
+	const dynamicContent = getDynamicContent();
+	if (dynamicContent) {
+		innerHTML = dynamicContent;
 	}
 	return String(innerHTML ?? "");
 });
 
-const getDataScriptValue = (path: string): any => {
-	return getDataForKey(props.data, path);
-};
-const getBlockDataScriptValue = (path: string): any => {
-	return getDataForKey(props.blockData || {}, path);
-};
-
 const getDynamicContent = () => {
-	let innerHTML = null as string | null;
-
-	if (props.block.getDataKey("property") === "innerHTML") {
-		let value;
-		if (props.block.getDataKey("comesFrom") === "props") {
-			// props are checked first as unavailablity of comesFrom means it comes from dataScript (legacy)
-			value = getPropValue(props.block.getDataKey("key"), props.block, props.uid);
-		} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
-			value = getBlockDataScriptValue(props.block.getDataKey("key"));
-		} else {
-			value = getDataScriptValue(props.block.getDataKey("key"));
-		}
-		innerHTML = value ?? innerHTML;
-	}
-	props.block
-		.getDynamicValues()
-		?.filter((dataKeyObj: BlockDataKey) => {
-			return dataKeyObj.property === "innerHTML" && dataKeyObj.type === "key";
-		})
-		?.forEach((dataKeyObj: BlockDataKey) => {
-			let value;
-			if (dataKeyObj.comesFrom === "props") {
-				value = getPropValue(dataKeyObj.key as string, props.block, props.uid);
-			} else if (dataKeyObj.comesFrom === "blockDataScript") {
-				value = getBlockDataScriptValue(dataKeyObj.key as string);
-			} else {
-				value = getDataScriptValue(dataKeyObj.key as string);
-			}
-			innerHTML = value ?? innerHTML;
-		});
-	return innerHTML;
+	return valueResolver.applyDynamicValues("key", { innerHTML: null }).innerHTML;
 };
 
 const isEditable = computed(() => {
@@ -238,7 +205,24 @@ const getInnerHTML = (editor: Editor | null) => {
 	) {
 		innerHTML = editor?.getText();
 	}
+	// a lone attribute-less <p> wrapper is redundant inside the block's own tag
+	// (and a block box inside inline elements like span/a breaks their layout)
+	const doc = editor.state.doc;
+	const wrapped = innerHTML.match(/^<p>([\s\S]*)<\/p>$/);
+	if (doc.childCount === 1 && doc.firstChild?.type.name === "paragraph" && wrapped) {
+		innerHTML = wrapped[1];
+	}
 	return innerHTML;
+};
+
+const destroyEditor = () => {
+	if (!editor.value) return;
+	// a newer editor may already own the slot; clear only if it's still ours
+	if (props.block.getEditor() === editor.value) {
+		props.block.setEditor(null);
+	}
+	editor.value.destroy();
+	editor.value = null;
 };
 
 if (!props.preview) {
@@ -254,12 +238,20 @@ if (!props.preview) {
 				canvasStore.activeCanvas?.activeBreakpoint === props.breakpoint &&
 				!blockController.multipleBlocksSelected()
 			) {
+				// undo/redo swaps the Block under a reused component, so a live
+				// editor may still exist here; destroy it or it leaks
+				destroyEditor();
 				editor.value = new Editor({
 					content: textContent.value,
 					extensions: [
 						StarterKit.configure({
 							link: { openOnClick: false },
 							underline: false,
+							// Disable the auto-appended trailing paragraph. StarterKit's TrailingNode
+							// extension re-adds an empty <p> after any non-paragraph block (lists,
+							// headings, etc.), which makes the trailing empty line undeletable and
+							// leaks into the saved/rendered innerHTML as a blank line.
+							trailingNode: false,
 						}),
 						TextStyle.extend({
 							addGlobalAttributes() {
@@ -282,6 +274,8 @@ if (!props.preview) {
 						FontFamily,
 						FontFamilyPasteRule,
 						Underline,
+						// keeps the selection visible when focus moves to menu controls
+						Selection,
 					],
 					enablePasteRules: false,
 					onUpdate({ editor }) {
@@ -298,22 +292,16 @@ if (!props.preview) {
 					injectCSS: false,
 				});
 
-				// @ts-ignore
-				props.block.__proto__.editor = editor.value;
+				props.block.setEditor(editor.value);
 				editor.value?.setEditable(isEditable.value);
 			} else {
-				editor.value?.destroy();
-				editor.value = null;
-				// @ts-ignore
-				props.block.__proto__.editor = null;
+				destroyEditor();
 			}
 		},
 		{ immediate: true },
 	);
 
-	onBeforeUnmount(() => {
-		editor.value?.destroy();
-	});
+	onBeforeUnmount(destroyEditor);
 }
 
 const handleClick = (e: MouseEvent) => {
@@ -333,7 +321,10 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	const target = e.target as HTMLElement;
+	// #overlay holds builder chrome (bubble menu). Using it is not leaving the block.
+	if (target.closest("#overlay")) return;
+	if (target.closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };
@@ -343,8 +334,42 @@ defineExpose({
 });
 </script>
 <style scoped>
+/* no box — a block box inside inline tags (span/a) fragments their background/radius */
+.__text_content__ {
+	display: contents;
+}
+
+/* the contenteditable editor root needs a box, so keep it inline-level inside inline tags */
+:is(span, a, b, i, em, strong, cite, label).__text_block__ > .__text_editor__ {
+	display: inline-block;
+}
+:is(span, a, b, i, em, strong, cite, label).__text_block__ :deep(.ProseMirror p) {
+	display: inline;
+}
+
+/* the native highlight is hidden while unfocused; matches index.html's selection color */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) .selection) {
+	background-color: theme("colors.gray.500 / 30%");
+	/* an inline background covers ~1.25em, not the line box; padding overflows, so nothing shifts */
+	padding-block: calc((1lh - 1.25em) / 2);
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+/* the extension injects this only when injectCSS is on; without it Safari/Firefox double up */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) *::selection) {
+	background: transparent;
+}
+
 .__text_block__ :deep([contenteditable="true"]) {
 	caret-color: currentcolor;
+	/* blocks inherit `select-none`; re-enable native text selection while editing */
+	user-select: text;
+	-webkit-user-select: text;
+}
+
+.__text_block__ :deep([contenteditable="true"]):focus-visible {
+	outline: none;
 }
 
 .__text_block__ :deep(.ProseMirror) {

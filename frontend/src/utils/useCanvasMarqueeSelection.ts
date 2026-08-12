@@ -101,10 +101,12 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	};
 
 	const handleMarqueeStart = (ev: MouseEvent) => {
-		ev.preventDefault();
 		if (!shouldStartMarquee(ev)) {
 			return;
 		}
+		// preventDefault only once we're committing to a marquee — calling it
+		// unconditionally swallows native caret placement inside editable text blocks
+		ev.preventDefault();
 
 		marquee.active = true;
 		marquee.visible = false;
@@ -232,7 +234,16 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		const target = ev.target as HTMLElement | null;
 		if (!target) return false;
 
-		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {
+		// #overlay is builder chrome; dragging in it must not clear the block selection
+		if (target.closest("input, textarea, select, button, a, [contenteditable='true'], #overlay")) {
+			return false;
+		}
+
+		// Pressing on an actual block starts a block drag/selection (see
+		// useBlockEventHandlers), not a marquee. The root block (page background)
+		// and truly empty canvas still start a marquee.
+		const blockEl = target.closest(".__builder_component__") as HTMLElement | null;
+		if (blockEl && blockEl.dataset.blockId && blockEl.dataset.blockId !== "root") {
 			return false;
 		}
 

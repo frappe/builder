@@ -19,6 +19,7 @@
   "column_break_ymjg",
   "is_standard",
   "is_template",
+  "template_group",
   "app",
   "section_break_ujsp",
   "blocks",
@@ -174,6 +175,14 @@
    "no_copy": 1
   },
   {
+   "depends_on": "is_template",
+   "fieldname": "template_group",
+   "fieldtype": "Data",
+   "label": "Template Group",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_shab",
    "fieldtype": "Section Break"
   },
@@ -253,7 +262,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-14 22:54:25.353324",
+ "modified": "2026-06-04 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

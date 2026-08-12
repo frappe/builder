@@ -19,6 +19,7 @@ from builder.utils import (
 	get_template_assets_folder_path,
 	is_component_used,
 	make_safe_get_request,
+	normalize_legacy_raw_styles,
 	process_block_assets,
 	remove_unsafe_fields,
 	sanitize_style_value,
@@ -203,6 +204,23 @@ class TestBuilderUtils(FrappeTestCase):
 
 		self.assertEqual(result["regular"], {"color": "red", "margin": "10px"})
 		self.assertEqual(result["state"], {"hover:color": "blue", "focus:border": "1px solid black"})
+
+	def test_normalize_legacy_raw_styles_merges_into_base_styles(self):
+		blocks = [
+			{
+				"baseStyles": {"color": "red", "hover:color": "green"},
+				"rawStyles": {"color": "blue", "hover:background-color": "black", "flex-shrink": "0"},
+				"children": [{"rawStyles": {"text-overflow": "ellipsis"}}],
+			}
+		]
+
+		normalize_legacy_raw_styles(blocks)
+
+		self.assertEqual(blocks[0]["baseStyles"]["color"], "blue")
+		self.assertEqual(blocks[0]["baseStyles"]["hover:backgroundColor"], "black")
+		self.assertEqual(blocks[0]["baseStyles"]["flexShrink"], "0")
+		self.assertEqual(blocks[0]["children"][0]["baseStyles"]["textOverflow"], "ellipsis")
+		self.assertNotIn("rawStyles", blocks[0])
 
 	def test_copy_assets_from_blocks(self):
 		# Create a temporary directory for testing

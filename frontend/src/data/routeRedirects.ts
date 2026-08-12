@@ -4,7 +4,7 @@ const routeRedirects = createListResource({
 	method: "GET",
 	doctype: "Website Route Redirect",
 	parent: "Website Settings",
-	fields: ["source", "target", "redirect_http_status", "name"],
+	fields: ["source", "target", "redirect_http_status", "forward_query_parameters", "name"],
 	orderBy: "idx desc",
 	cache: "routeRedirects",
 	start: 0,

@@ -1,5 +1,6 @@
 import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { Switch } from "frappe-ui";
 import { computed } from "vue";
 
 const linkSectionProperties = [
@@ -67,6 +68,21 @@ const linkSectionProperties = [
 		},
 		searchKeyWords: "Link, Target, Opens in, OpensIn, Opens In, New Tab",
 		condition: () => blockController.getAttribute("href"),
+	},
+	{
+		component: Switch,
+		getProps: () => {
+			return {
+				label: "Track Clicks",
+				size: "sm",
+				class: "[&_label]:text-xs [&_label]:text-ink-gray-6 [&_label]:font-normal",
+				modelValue: blockController.isClickTrackingEnabled(),
+			};
+		},
+		searchKeyWords: "Track, Clicks, Tracking, Analytics, CTR, Click Tracking",
+		events: {
+			"update:modelValue": (val: boolean) => blockController.toggleClickTracking(val),
+		},
 	},
 ];
 

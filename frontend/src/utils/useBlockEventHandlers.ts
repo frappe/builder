@@ -2,6 +2,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
+import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { useEventListener } from "@vueuse/core";
 import { nextTick } from "vue";
 
@@ -9,9 +10,22 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 export function useBlockEventHandlers(target: HTMLElement) {
+	useEventListener(target, "mousedown", handleMouseDown);
 	useEventListener(target, "click", handleClick);
 	useEventListener(target, "dblclick", handleDoubleClick);
 	useEventListener(target, "contextmenu", triggerContextMenu);
+
+	// Press-and-drag any block to reorder it in one gesture (no need to select
+	// first). The threshold inside startBlockReorder means a plain click still
+	// falls through to handleClick for selection.
+	function handleMouseDown(e: MouseEvent) {
+		if (e.button !== 0) return;
+		if (!isBlock(e) || isEditable(e)) return;
+		if (builderStore.mode !== "select" || builderStore.readOnlyMode) return;
+		const block = getBlock(e);
+		if (!block || !isReorderable(block)) return;
+		startBlockReorder(e, block, getBlockInfo(e).breakpoint);
+	}
 
 	function handleClick(e: MouseEvent) {
 		if (!isBlock(e) || isEditable(e)) return;
@@ -31,6 +45,13 @@ export function useBlockEventHandlers(target: HTMLElement) {
 		canvasStore.editableBlock = null;
 		const block = getBlock(e);
 		if (!block) return;
+		if (block.isImage()) {
+			nextTick(() => {
+				builderStore.openImageUpload = true;
+			});
+			e.stopPropagation();
+			return;
+		}
 		if (block.isText() || block.isLink() || block.isButton()) {
 			canvasStore.editableBlock = block;
 			e.stopPropagation();
@@ -94,5 +115,4 @@ const selectBlock = (e: MouseEvent) => {
 	canvasStore.activeCanvas?.setActiveBreakpoint(breakpoint);
 
 	if (builderStore.leftPanelActiveTab !== "Code") builderStore.leftPanelActiveTab = "Layers";
-	builderStore.rightPanelActiveTab = "Properties";
 };

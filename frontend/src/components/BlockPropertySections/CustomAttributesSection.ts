@@ -8,6 +8,7 @@ const customAttributesSectionProperties = [
 		getProps: () => {
 			return {
 				obj: blockController.getCustomAttributes() as Record<string, string>,
+				allowDynamicValues: true,
 			};
 		},
 		searchKeyWords: "Attributes, CustomAttributes, Custom Attributes, HTML Attributes, Data Attributes",

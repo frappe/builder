@@ -8,7 +8,7 @@
 			}
 		">
 		<template v-slot="{ file, progress, uploading, openFileSelector }">
-			<div class="flex items-end">
+			<div class="flex items-end gap-2">
 				<Button @click="openFileSelector">
 					{{ uploading ? `Uploading ${progress}%` : image_url ? "Change" : "Upload" }}
 				</Button>

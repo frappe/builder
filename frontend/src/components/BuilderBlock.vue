@@ -13,7 +13,7 @@
 		ref="component">
 		<BuilderBlock
 			:data="data"
-			:block-data="cumulativeBlockData"
+			:componentData="resolvedComponentData"
 			:defaultProps="defaultProps"
 			:block="child"
 			:breakpoint="breakpoint"
@@ -22,10 +22,11 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
-			:parent-block-uid="uidToUse"
 			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
 	</component>
-	<teleport to="#overlay" v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
+	<teleport
+		:to="canvasProps?.overlayElement"
+		v-if="canvasProps?.overlayElement && !preview && Boolean(canvasProps)">
 		<!-- prettier-ignore -->
 		<BlockEditor
 			ref="editor"
@@ -41,20 +42,16 @@
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import fetchBlockData from "@/data/blockData";
 import { builderSettings } from "@/data/builderSettings";
-import { useBlockDataStore, useBlockUidStore } from "@/stores/blockStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import { BlockValueResolver } from "@/utils/blockValueResolver";
+import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
-import {
-	executeBlockClientScriptRestricted,
-	executeBlockClientScriptUnrestricted,
-	getDataForKey,
-	getParentProps,
-	getPropValue,
-} from "@/utils/helpers";
+import { extractComponentId } from "@/utils/helpers";
+import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
 	computed,
@@ -68,7 +65,6 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
-import { toast } from "frappe-ui";
 import BlockEditor from "./BlockEditor.vue";
 import BlockHTML from "./BlockHTML.vue";
 import DataLoaderBlock from "./DataLoaderBlock.vue";
@@ -76,13 +72,12 @@ import TextBlock from "./TextBlock.vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
+const componentStore = useComponentStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const isMounted = ref(false);
 
 const pageStore = usePageStore();
-const blockDataStore = useBlockDataStore();
-const blockUidStore = useBlockUidStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -92,9 +87,8 @@ const props = withDefaults(
 		preview?: boolean;
 		readonly?: boolean;
 		data?: Record<string, any> | null;
-		blockData?: Record<string, any> | null;
+		componentData?: Record<string, any> | null;
 		defaultProps?: Record<string, any> | null;
-		parentBlockUid?: string | null;
 		repeaterIndex?: string | number | null;
 	}>(),
 	{
@@ -103,11 +97,31 @@ const props = withDefaults(
 		preview: false,
 		readonly: false,
 		data: null,
-		blockData: null,
+		componentData: null,
 		defaultProps: null,
 		repeaterIndex: null,
 	},
 );
+
+const editingComponentId = computed(() =>
+	canvasStore.fragmentData.fragmentType === "component" &&
+	!props.block.getParentBlock() &&
+	props.block === canvasStore.fragmentData.block
+		? canvasStore.fragmentData.fragmentId
+		: null,
+);
+
+const resolvedComponentData = computed(() => {
+	if (editingComponentId.value && !props.block.getParentBlock()) {
+		return componentController.getComponentDataPreview();
+	}
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		return componentStore.getComponentInstanceData(componentId, uidToUse);
+	} else {
+		return props.componentData;
+	}
+});
 
 defineOptions({
 	inheritAttrs: false,
@@ -118,20 +132,28 @@ const draggable = computed(() => {
 	return !props.block.isRoot() && !props.preview && false;
 });
 
-const isHovered = ref(false);
 const isSelected = ref(false);
-const ownBlockData = ref<Record<string, any>>({});
 
-// For repeater items the same Block object is used but Block Data can vary with each item
-// So we need unique identifier for block data store
-// Thus we use blockId for the first index and then generate new IDs for the next items
+const isHovered = computed(() => {
+	return !props.preview && canvasStore.activeCanvas?.hoveredBlock === props.block.blockId;
+});
+
+const selectedInCanvas = computed(() => {
+	return !props.preview && Boolean(canvasStore.activeCanvas?.isSelected(props.block));
+});
+
+// For repeater items the same Block object is rendered multiple times,
+// so we need a unique identifier per rendered instance (used by client scripts)
 const uidToUse = !!props.repeaterIndex
-	? `builder-block-${props.block.blockId}-${props.repeaterIndex}}`
+	? `builder-block-${props.block.blockId}-${props.repeaterIndex}`
 	: props.block.blockId;
 
 const getComponentName = (block: Block) => {
 	if (block.isRepeater()) {
 		return DataLoaderBlock;
+	}
+	if (block.isInlineSVG()) {
+		return BlockHTML;
 	}
 	if (block.isText() || block.isLink() || block.isButton()) {
 		return TextBlock;
@@ -153,23 +175,12 @@ const classes = computed(() => {
 	];
 });
 
-const hasBlockProps = computed(() => {
-	return props.defaultProps || Object.keys(props.block.getBlockProps()).length > 0;
+const valueResolver = new BlockValueResolver({
+	block: () => props.block,
+	data: () => props.data ?? null,
+	componentData: () => resolvedComponentData.value ?? null,
+	defaultProps: () => props.defaultProps ?? null,
 });
-
-const cumulativeBlockData = computed(() => {
-	return {
-		...props.blockData,
-		...ownBlockData.value,
-	};
-});
-
-const getDataScriptValue = (path: string): any => {
-	return getDataForKey(props.data || {}, path);
-};
-const getBlockDataScriptValue = (path: string): any => {
-	return getDataForKey(cumulativeBlockData.value, path);
-};
 
 const attributes = computed(() => {
 	const RESTRICTED_ATTRIBS = ["data-block-id", "data-block-uid", "data-breakpoint"];
@@ -194,11 +205,11 @@ const attributes = computed(() => {
 	};
 
 	if (props.block.isImage() && !props.preview) {
-		if (builderStore.canvasDarkMode && attribs.darkSrc) {
-			attribs.src = attribs.darkSrc;
-		}
-		if (attribs.darkSrc && !attribs.src) {
-			attribs.src = attribs.darkSrc;
+		if (attribs.darkSrc) {
+			if (builderStore.canvasDarkMode || !attribs.src) {
+				attribs.src = attribs.darkSrc;
+			}
+			attribs["data-dark-src"] = "";
 		}
 		delete attribs.darkSrc;
 	}
@@ -206,51 +217,21 @@ const attributes = computed(() => {
 	if (
 		props.block.isText() ||
 		props.block.isHTML() ||
+		props.block.isInlineSVG() ||
 		props.block.isLink() ||
 		props.block.isButton() ||
 		props.block.isRepeater()
 	) {
 		attribs.block = props.block;
-		attribs.uid = uidToUse;
 		attribs.repeaterIndex = props.repeaterIndex;
 		attribs.preview = props.preview;
 		attribs.breakpoint = props.breakpoint;
 		attribs.data = props.data;
-		attribs.blockData = cumulativeBlockData.value;
+		attribs.componentData = resolvedComponentData.value;
 		attribs.defaultProps = props.defaultProps;
 	}
 
-	if (props.data || hasBlockProps.value) {
-		if (props.block.getDataKey("type") === "attribute") {
-			let value;
-			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, uidToUse);
-			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
-				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
-			} else {
-				value = getDataScriptValue(props.block.getDataKey("key") as string);
-			}
-			attribs[props.block.getDataKey("property") as string] =
-				value ?? attribs[props.block.getDataKey("property") as string];
-		}
-		props.block
-			.getDynamicValues()
-			?.filter((dataKeyObj: BlockDataKey) => {
-				return dataKeyObj.type === "attribute";
-			})
-			?.forEach((dataKeyObj: BlockDataKey) => {
-				const property = dataKeyObj.property as string;
-				let value;
-				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, uidToUse);
-				} else if (dataKeyObj.comesFrom === "blockDataScript") {
-					value = getBlockDataScriptValue(dataKeyObj.key as string);
-				} else {
-					value = getDataScriptValue(dataKeyObj.key as string);
-				}
-				attribs[property] = value ?? attribs[property];
-			});
-	}
+	valueResolver.applyDynamicValues("attribute", attribs);
 
 	if (props.block.isInput()) {
 		attribs.readonly = true;
@@ -260,6 +241,10 @@ const attributes = computed(() => {
 });
 
 const canvasProps = !props.preview ? (inject("canvasProps") as CanvasProps) : null;
+const emulateBlockClientScript = inject<BlockClientScriptEmulator>(
+	"emulateBlockClientScript",
+	() => () => {},
+);
 
 const target = computed(() => {
 	if (!component.value) return null;
@@ -271,39 +256,7 @@ const target = computed(() => {
 });
 
 const styles = computed(() => {
-	let dynamicStyles = {} as { [key: string]: string };
-	if (props.data || hasBlockProps.value) {
-		if (props.block.getDataKey("type") === "style") {
-			let value;
-			if (props.block.getDataKey("comesFrom") === "props") {
-				value = getPropValue(props.block.getDataKey("key") as string, props.block, uidToUse);
-			} else if (props.block.getDataKey("comesFrom") === "blockDataScript") {
-				value = getBlockDataScriptValue(props.block.getDataKey("key") as string);
-			} else {
-				value = getDataForKey(props.data as Object, props.block.getDataKey("key") as string);
-			}
-			dynamicStyles = {
-				[props.block.getDataKey("property") as string]: value,
-			};
-		}
-		props.block
-			.getDynamicValues()
-			?.filter((dataKeyObj: BlockDataKey) => {
-				return dataKeyObj.type === "style";
-			})
-			?.forEach((dataKeyObj: BlockDataKey) => {
-				const property = dataKeyObj.property as string;
-				let value;
-				if (dataKeyObj.comesFrom === "props") {
-					value = getPropValue(dataKeyObj.key as string, props.block, uidToUse);
-				} else if (dataKeyObj.comesFrom === "blockDataScript") {
-					value = getBlockDataScriptValue(dataKeyObj.key as string);
-				} else {
-					value = getDataForKey(props.data as Object, dataKeyObj.key as string);
-				}
-				dynamicStyles[property] = value ?? dynamicStyles[property];
-			});
-	}
+	const dynamicStyles = valueResolver.applyDynamicValues("style", {}) as BlockStyleMap;
 
 	const styleMap = {
 		...props.block.getStyles(props.breakpoint),
@@ -392,138 +345,97 @@ onMounted(async () => {
 			reactive({ ghostScale: canvasProps?.scale || 1 }),
 		);
 	}
-	blockUidStore.registerBlockUid(uidToUse, props.block);
-	blockUidStore.setParentUid(uidToUse, props.parentBlockUid || "root");
 	isMounted.value = true;
 });
 
-const allResolvedProps = computed(() => {
-	if (!isMounted.value) {
-		return {};
+onUnmounted(() => {
+	const componentId = extractComponentId(props.block);
+	if (componentId) {
+		componentStore.deleteComponentData(componentId, uidToUse);
 	}
-	const defaultProps = Object.entries(props.defaultProps || {}).reduce(
-		(acc, [key, value]) => {
-			acc[key] = value.value;
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	const blockProps = Object.entries({
-		...props.block.getBlockProps(),
-	}).reduce(
-		(acc, [key]) => {
-			acc[key] = getPropValue(key, props.block, uidToUse);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	const parentProps = Object.entries(getParentProps(props.block, uidToUse)).reduce(
-		(acc, [key, value]) => {
-			acc[key] = getPropValue(key, value.block!, value.blockUid);
-			return acc;
-		},
-		{} as Record<string, any>,
-	);
-
-	return {
-		...parentProps,
-		...blockProps,
-		...defaultProps,
-	};
 });
 
-// Execute client script
+const allResolvedProps = computed(() => {
+	return valueResolver.getResolvedProps();
+});
+
+const fetchingComponentDetails = computed(() => {
+	return (
+		componentStore.fetchingComponentVersion.has(props.block.componentVersion || "") ||
+		componentStore.fetchingComponent.has(props.block.extendedFromComponent || "")
+	);
+});
+const componentDataReady = ref(false);
+
 watch(
 	[
-		component,
+		() => props.block.extendedFromComponent,
+		() => props.block.componentVersion,
+		() => canvasStore.editingMode,
+		() => props.componentData,
+		() => uidToUse,
+		fetchingComponentDetails,
 		allResolvedProps,
-		() => props.block.getBlockClientScript(),
-		() => builderSettings.doc?.execute_block_scripts_in_editor,
-		() => pageStore.settingPage,
 	],
-	() => {
-		if (!isMounted.value) return;
-		if (pageStore.settingPage) return;
-
-		const script = props.block.getBlockClientScript().trim();
-		if (!script) return;
-
-		const mode = builderSettings.doc?.execute_block_scripts_in_editor;
-		if (mode === "Don't Execute") return;
-
-		if (mode === "Restricted")
-			executeBlockClientScriptRestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
-		else executeBlockClientScriptUnrestricted(uidToUse, props.breakpoint, script, allResolvedProps.value);
+	([componentId, , , , , fetchingComponentDetails, allResolvedProps]) => {
+		componentDataReady.value = false;
+		// can use extractComponentId but below code is more efficient
+		if (!componentId) {
+			return;
+		}
+		if (fetchingComponentDetails) {
+			return;
+		}
+		componentStore.setComponentData(componentId, allResolvedProps, uidToUse, props.block.componentVersion);
 	},
 	{ immediate: true },
 );
 
+watch(resolvedComponentData, () => {
+	componentDataReady.value = true;
+});
+
+const blockClientScript = computed(() => {
+	const clientScript = props.block.extendedFromComponent
+		? props.block.referenceComponent?.clientScript
+		: props.block.clientScript;
+	const javascript = clientScript?.js || "";
+	const css = clientScript?.css || "";
+	// null (not an empty object) so scriptless blocks skip canvas registration
+	// and don't churn the shared blockStyles map into a render loop
+	if (!javascript && !css) return null;
+	return { javascript, css };
+});
+
 watch(
 	[
-		component,
+		target,
+		blockClientScript,
+		resolvedComponentData,
 		allResolvedProps,
-		() => props.blockData,
-		() => props.block.getBlockDataScript(),
+		() => builderSettings.doc?.execute_block_scripts_in_editor,
 		() => pageStore.settingPage,
-		() => pageStore.routeVariables,
+		componentDataReady,
 	],
-	(_, __, onCleanup) => {
-		if (!isMounted.value) return;
-		if (pageStore.settingPage) return;
-
-		const script = props.block.getBlockDataScript().trim();
-
-		if (!script) {
-			ownBlockData.value = {};
-			blockDataStore.setBlockData(uidToUse, {}, "own");
-			return;
-		}
-
-		let cancelled = false;
-		onCleanup(() => {
-			cancelled = true;
+	([element, clientScript, componentData, resolvedProps, , settingPage, dataReady], _, onCleanup) => {
+		if (!element || !clientScript) return;
+		const waitsForComponentData = Boolean(props.block.extendedFromComponent);
+		const cleanup = emulateBlockClientScript({
+			key: uidToUse,
+			element: element as HTMLElement,
+			breakpoint: props.breakpoint,
+			css: clientScript.css ?? "",
+			javascript:
+				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
+					? ""
+					: clientScript.javascript ?? "",
+			componentData: componentData ?? {},
+			props: resolvedProps,
 		});
-
-		fetchBlockData
-			.fetch({
-				block_id: uidToUse,
-				block_data_script: script,
-				props: JSON.stringify(allResolvedProps.value),
-				prev_block_data: props.blockData || {},
-				route_variables: pageStore.routeVariables,
-			})
-			.then((res: any) => {
-				if (cancelled) return;
-
-				const data = res || {};
-				ownBlockData.value = data;
-				blockDataStore.setBlockData(uidToUse, data, "own");
-			})
-			.catch((e: { exc: string | null }) => {
-				if (cancelled) return;
-
-				const error_message = e.exc?.split("\n").slice(-2)[0];
-				toast.error("There was an error while fetching page data", {
-					description: error_message,
-				});
-			});
+		onCleanup(cleanup);
 	},
-	{ immediate: true, deep: true },
+	{ immediate: true },
 );
-
-watchEffect(() => {
-	blockDataStore.setBlockData(uidToUse, props.blockData || {}, "passedDown");
-});
-
-watchEffect(() => {
-	blockDataStore.setPageData(uidToUse, props.data || {});
-});
-
-watchEffect(() => {
-	blockDataStore.setBlockDefaultProps(uidToUse, props.defaultProps || {});
-});
 
 const isEditable = computed(() => {
 	// to ensure it is right block and not on different breakpoint
@@ -534,56 +446,25 @@ const isEditable = computed(() => {
 });
 
 const hiddenDueToVisibilityCondition = computed(() => {
-	const visibilityCondition = props.block.getVisibilityCondition();
-	const key = visibilityCondition?.key;
-	const comesFrom = visibilityCondition?.comesFrom || "dataScript";
-	if (!key) return false;
-	if (comesFrom == "blockDataScript") {
-		const value = getBlockDataScriptValue(key as string);
-		return !Boolean(value);
-	} else if (comesFrom == "dataScript") {
-		const value = getDataScriptValue(key as string);
-		return !Boolean(value);
-	} else {
-		const value = getPropValue(key as string, props.block, uidToUse);
-		return !Boolean(value);
-	}
+	return valueResolver.isHiddenByVisibilityCondition();
 });
 
-if (!props.preview) {
-	watch(
-		() => canvasStore.activeCanvas?.hoveredBlock,
-		(newValue, oldValue) => {
-			if (newValue === props.block.blockId) {
-				isHovered.value = true;
-			} else if (oldValue === props.block.blockId) {
-				isHovered.value = false;
-			}
-		},
-	);
-	watch(
-		() => canvasStore.activeCanvas?.selectedBlockIds,
-		() => {
-			if (canvasStore.activeCanvas?.isSelected(props.block)) {
-				isSelected.value = true;
-			} else {
-				isSelected.value = false;
-			}
-		},
-		{
-			deep: true,
-			immediate: true,
-		},
-	);
-}
+watch(
+	selectedInCanvas,
+	(selected, _, onCleanup) => {
+		if (!selected || !props.block.isImage()) {
+			isSelected.value = selected;
+			return;
+		}
 
-onUnmounted(() => {
-	blockDataStore.clearBlockData(uidToUse);
-	blockDataStore.clearPageData(uidToUse);
-	blockDataStore.clearDefaultProps(uidToUse);
-	blockUidStore.unregisterBlockUid(uidToUse);
-	blockUidStore.clearParentUid(uidToUse);
-});
+		// Preserve double-click image uploads before showing the selection editor.
+		const timeout = setTimeout(() => {
+			isSelected.value = true;
+		}, 200);
+		onCleanup(() => clearTimeout(timeout));
+	},
+	{ immediate: true },
+);
 
 // Note: All the block event listeners are delegated to parent for better scalability
 </script>
