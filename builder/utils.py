@@ -38,11 +38,10 @@ def compact_json(obj) -> str:
 
 
 def export_dir_name(name) -> str:
-	"""Name of the directory and JSON file that hold an exported record.
+	"""Directory and JSON file name for an exported record.
 
-	Every exporter and the delete helpers share this so that a record always
-	lands where the cleanup looks for it. frappe.scrub keeps a slash, which
-	would otherwise export into a nested directory.
+	Shared by every exporter and by the delete helpers, so a record always
+	lands where the cleanup looks for it. frappe.scrub keeps a slash.
 	"""
 	return frappe.scrub(str(name)).replace("/", "_")
 
@@ -719,7 +718,6 @@ def export_client_scripts(client_scripts, client_scripts_path):
 		script_content = script_config.get("script") or ""
 		script_config = strip_default_fields(script_doc, script_config)
 		fname = export_dir_name(script_doc.name)
-		# ensure the target directory exists before writing the file
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
 		script_config_path = os.path.join(script_dir, f"{fname}.json")
@@ -742,7 +740,6 @@ def export_components(components, components_path, assets_path, target_app="buil
 			copy_assets_from_blocks(component_blocks, assets_path, target_app)
 			component_doc.block = frappe.as_json(component_blocks)
 
-			# Replace forward slashes with underscores to create valid directory names
 			safe_component_id = export_dir_name(component_doc.component_id)
 			component_dir = os.path.join(components_path, safe_component_id)
 			os.makedirs(component_dir, exist_ok=True)

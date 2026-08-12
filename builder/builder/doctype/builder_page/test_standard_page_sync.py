@@ -16,16 +16,14 @@ from builder.utils import Block
 class TestStandardPageSync(FrappeTestCase):
 	"""Verify that builder_files on disk stay in sync with DB operations.
 
-	Filesystem calls are mocked so the tests remain fast and self-contained; we
-	are testing the *logic* that decides whether and what to delete/rename, not
-	the underlying ``shutil`` behaviour.
+	Filesystem calls are mocked, so these test which files the sync decides to
+	write or delete, not the shutil behaviour underneath.
 	"""
 
-	# The app must be installed on the bench so that ``frappe.get_app_path``
-	# succeeds.  We use the builder app itself since it is always available.
+	# builder is always installed, so frappe.get_app_path succeeds
 	FIXTURE_APP = "builder"
 	EXPORT_MODULE = "builder.export_import_standard_page"
-	# builder_page imports export_page_as_standard at module level, so patch it there
+	# export_page_as_standard is imported into builder_page, so patch it there
 	PAGE_MODULE = "builder.builder.doctype.builder_page.builder_page"
 
 	# ------------------------------------------------------------------ helpers
@@ -139,7 +137,6 @@ class TestStandardPageSync(FrappeTestCase):
 		return frappe.as_json([page_block.as_dict()])
 
 	def blocks_with_variable(self, variable):
-		# Standard page cleanup resolves variables by the name embedded in block CSS.
 		page_block = Block(element="div", baseStyles={"color": f"var(--{variable.name})"})
 		return frappe.as_json([page_block.as_dict()])
 

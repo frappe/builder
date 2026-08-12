@@ -35,9 +35,7 @@ def export_page_as_standard(page_name, target_app):
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
 	data_script_path = os.path.join(paths["page_path"], "data_script.py")
 
-	blocks = frappe.parse_json(
-		page_config.get("draft_blocks") or page_config["blocks"]
-	)  # what if draft and published blocks have different components?
+	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
 	if blocks:
 		copy_assets_from_blocks(blocks, paths["assets_path"], target_app)
 		page_config["blocks"] = blocks
@@ -90,7 +88,6 @@ def sync_standard_builder_pages(app_name=None):
 	apps_to_sync = [app_name] if app_name else frappe.get_installed_apps()
 
 	for app in apps_to_sync:
-		# TODO: already extracted in a function?
 		app_path = frappe.get_app_path(app)
 		pages_path = os.path.join(app_path, "builder_files", "pages")
 		components_path = os.path.join(app_path, "builder_files", "components")

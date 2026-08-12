@@ -262,8 +262,7 @@ class BuilderPage(WebsiteGenerator):
 
 		def delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files) -> None:
 			"""Delete a dependency's exported files unless another standard page in the app still references it."""
-			# blocks name fonts and tokens that have no record (bundled fonts, plain CSS
-			# variables); the export skips those too, so there is nothing to delete
+			# blocks name fonts and tokens with no record; the export skips those too
 			if not frappe.db.exists(doctype, identifier):
 				return
 			referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
@@ -315,8 +314,7 @@ class BuilderPage(WebsiteGenerator):
 			return
 		from builder.export_import_standard_page import delete_standard_page_files
 
-		# the exported JSON carries the old name, and rename_doc does not run on_update,
-		# so drop the old export and write a new one
+		# rename_doc skips on_update, and the exported JSON holds the old name
 		delete_standard_page_files(old, self.app)
 		export_page_as_standard(self.name, target_app=self.app)
 

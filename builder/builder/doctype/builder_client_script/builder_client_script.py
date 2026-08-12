@@ -42,8 +42,7 @@ class BuilderClientScript(Document):
 		self.delete_standard_exported_files()
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
-		# the exported JSON carries the old name, and rename_doc does not run on_update,
-		# so drop the old export and write a new one
+		# rename_doc skips on_update, and the exported JSON holds the old name
 		self.delete_standard_exported_files(old)
 		self.export_standard_files()
 
@@ -85,7 +84,6 @@ class BuilderClientScript(Document):
 			fields=["parent"],
 		)
 
-		# use passed filters and fields if provided
 		filters = filters or {}
 		filters["name"] = ["in", [ref.parent for ref in refs]]
 		fields = fields or ["name"]
