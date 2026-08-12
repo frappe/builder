@@ -11,19 +11,22 @@ from builder.utils import (
 	create_export_directories,
 	export_client_scripts,
 	export_components,
+	export_dir_name,
 	extract_components_from_blocks,
+	get_installed_app_path,
 	make_records,
+	normalize_legacy_raw_styles,
 )
 
 
 def export_page_as_standard(page_name, target_app):
 	"""Export a builder page as standard files to the specified app"""
 	page_doc = frappe.get_doc("Builder Page", page_name)
-	export_name = frappe.scrub(page_doc.page_name)
+	export_name = export_dir_name(page_doc.page_name)
 
-	app_path = frappe.get_app_path(target_app)
+	app_path = get_installed_app_path(target_app)
 	if not app_path:
-		frappe.throw(f"App '{target_app}' not found")
+		frappe.throw(frappe._("App {0} is not installed").format(target_app))
 
 	paths = create_export_directories(app_path, export_name)
 
@@ -31,6 +34,7 @@ def export_page_as_standard(page_name, target_app):
 	page_config = strip_default_fields(page_doc, page_config)
 
 	config_file_path = os.path.join(paths["page_path"], f"{export_name}.json")
+	data_script_path = os.path.join(paths["page_path"], "data_script.py")
 
 	blocks = frappe.parse_json(page_config.get("draft_blocks") or page_config["blocks"])
 	if blocks:
@@ -44,12 +48,19 @@ def export_page_as_standard(page_name, target_app):
 		page_config["meta_image"] = copy_asset_file(page_doc.meta_image, paths["assets_path"], target_app)
 
 	page_config["project_folder"] = target_app
+
+	# no_nulls drops the key when the page has no data script
+	data_script = page_config.get("page_data_script") or ""
 	page_config = frappe.as_json(page_config, ensure_ascii=False)
 
 	with open(config_file_path, "w", encoding="utf-8") as f:
 		f.write(page_config)
 
-	export_client_scripts(page_doc, paths["client_scripts_path"])
+	with open(data_script_path, "w", encoding="utf-8") as f:
+		f.write(data_script)
+
+	client_scripts = [row.builder_script for row in page_doc.client_scripts]
+	export_client_scripts(client_scripts, paths["client_scripts_path"])
 
 	if blocks:
 		components = extract_components_from_blocks(blocks)
@@ -113,12 +124,13 @@ def extract_fonts_from_blocks(blocks):
 	fonts = set()
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+	normalize_legacy_raw_styles(blocks)
 
 	for block in blocks:
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in ["baseStyles", "mobileStyles", "tabletStyles", "rawStyles"]:
+		for style_key in ["baseStyles", "mobileStyles", "tabletStyles"]:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				font = styles.get("fontFamily")
@@ -147,6 +159,7 @@ def extract_variables_from_blocks(blocks):
 	variables = set()
 	if not isinstance(blocks, list):
 		blocks = [blocks]
+	normalize_legacy_raw_styles(blocks)
 
 	# Regex to match var(--variable-name, ...) or var(--variable-name)
 	var_pattern = re.compile(r"var\(--([a-zA-Z0-9_-]+)")
@@ -163,7 +176,7 @@ def extract_variables_from_blocks(blocks):
 		if not isinstance(block, dict):
 			continue
 
-		for style_key in ["baseStyles", "mobileStyles", "tabletStyles", "rawStyles"]:
+		for style_key in ["baseStyles", "mobileStyles", "tabletStyles"]:
 			styles = block.get(style_key, {})
 			if styles and isinstance(styles, dict):
 				for _prop, value in styles.items():
@@ -216,7 +229,7 @@ def export_fonts(fonts, builder_files_path, assets_path, target_app="builder"):
 				"font_file": font_doc.get("font_file"),
 			}
 
-			safe_font_name = frappe.scrub(font_name)
+			safe_font_name = export_dir_name(font_name)
 			font_dir = os.path.join(fonts_path, safe_font_name)
 			os.makedirs(font_dir, exist_ok=True)
 			font_file_path = os.path.join(font_dir, f"{safe_font_name}.json")
@@ -260,7 +273,7 @@ def copy_font_file(file_url, assets_path, target_app="builder"):
 
 
 def export_variables(variables, builder_files_path):
-	"""Export Builder Variable records"""
+	"""Export Builder Token records"""
 	if not variables:
 		return
 
@@ -269,50 +282,83 @@ def export_variables(variables, builder_files_path):
 
 	for var_name in variables:
 		try:
-			# Convert CSS variable name (kebab-case) to possible DB name (snake_case)
-			db_name = var_name.replace("-", "_")
+			var_doc = frappe.get_doc("Builder Token", var_name).as_dict()
 
-			# Try to find the variable by name
-			var_docs = frappe.get_all(
-				"Builder Variable",
-				filters=[
-					["variable_name", "in", [var_name, db_name, var_name.replace("-", " ").title()]],
-				],
-				fields=["name", "variable_name", "type", "value", "dark_value"],
-			)
-
-			if not var_docs:
-				# Also try searching by the scrubbed name
-				var_docs = frappe.get_all(
-					"Builder Variable",
-					filters={"name": db_name},
-					fields=["name", "variable_name", "type", "value", "dark_value"],
-				)
-
-			if not var_docs:
-				continue
-
-			var_doc = var_docs[0]
-
-			var_config = {
-				"doctype": "Builder Variable",
-				"name": var_doc.name,
-				"variable_name": var_doc.variable_name,
-				"type": var_doc.type,
-				"value": var_doc.value,
-				"dark_value": var_doc.dark_value,
-			}
-
-			safe_var_name = frappe.scrub(var_doc.variable_name)
+			var_doc["doctype"] = "Builder Token"
+			safe_var_name = export_dir_name(var_doc.name)
 			var_dir = os.path.join(variables_path, safe_var_name)
 			os.makedirs(var_dir, exist_ok=True)
 			var_file_path = os.path.join(var_dir, f"{safe_var_name}.json")
 
 			with open(var_file_path, "w", encoding="utf-8") as f:
-				f.write(frappe.as_json(var_config, ensure_ascii=False))
+				f.write(frappe.as_json(var_doc, ensure_ascii=False))
 
 		except Exception as e:
 			frappe.log_error(f"Failed to export variable {var_name}: {e!s}")
+
+
+class StandardFileSync:
+	"""Keeps a record's builder_files export in step with the database.
+
+	The doctype sets export_subdir and writes export_standard_files. It also
+	needs get_referencing_pages, which each doctype answers its own way.
+	"""
+
+	export_subdir: str = ""
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		# rename_doc skips on_update, and the exported JSON holds the old name
+		self.delete_standard_exported_files(old)
+		self.export_standard_files()
+
+	@property
+	def referencing_apps(self) -> list[str]:
+		"""Installed apps whose standard pages use this record."""
+		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
+		installed = frappe.get_installed_apps()
+		return [page.app for page in pages if page.app in installed]
+
+	def delete_standard_exported_files(self, old_name: str | None = None) -> None:
+		# sweep every app: after a rename no page references the old name any more
+		if not frappe.conf.developer_mode:
+			return
+		for app in frappe.get_installed_apps():
+			delete_standard_builder_files(old_name or self.name, app, self.export_subdir)
+
+
+def delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None:
+	"""Remove an exported builder_files directory from the target app's source code."""
+	app_path = get_installed_app_path(app_name)
+	if not app_path:
+		return
+	export_path = os.path.join(app_path, "builder_files", subdir, export_dir_name(name))
+	if os.path.isdir(export_path):
+		shutil.rmtree(export_path, ignore_errors=True)
+
+
+def delete_standard_page_files(page_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a standard page from the target app's source code."""
+	delete_standard_builder_files(page_name, app_name, "pages")
+
+
+def delete_standard_client_script_files(script_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a client script from the target app's source code."""
+	delete_standard_builder_files(script_name, app_name, "client_scripts")
+
+
+def delete_standard_component_files(component_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a component from the target app's source code."""
+	delete_standard_builder_files(component_name, app_name, "components")
+
+
+def delete_standard_variable_files(variable_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a variable from the target app's source code."""
+	delete_standard_builder_files(variable_name, app_name, "variables")
+
+
+def delete_standard_font_files(font_name: str, app_name: str) -> None:
+	"""Remove the exported directory for a font from the target app's source code."""
+	delete_standard_builder_files(font_name, app_name, "fonts")
 
 
 def import_fonts(fonts_path):

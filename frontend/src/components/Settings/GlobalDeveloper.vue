@@ -26,12 +26,10 @@
 					builderStore.updateBuilderSettings('restrict_click_handlers', val);
 				}
 			" />
-		<div class="flex flex-col gap-2">
-			<p class="text-p-sm text-ink-gray-7">
-				Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not
-				perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.
-			</p>
-		</div>
+		<p class="text-p-sm text-ink-gray-5">
+			Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not
+			perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.
+		</p>
 	</div>
 </template>
 <script setup lang="ts">

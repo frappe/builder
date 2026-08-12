@@ -234,7 +234,8 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		const target = ev.target as HTMLElement | null;
 		if (!target) return false;
 
-		if (target.closest("input, textarea, select, button, a, [contenteditable='true']")) {
+		// #overlay is builder chrome; dragging in it must not clear the block selection
+		if (target.closest("input, textarea, select, button, a, [contenteditable='true'], #overlay")) {
 			return false;
 		}
 

@@ -11,10 +11,12 @@ from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
 from builder.builder.component_versions import ensure_component_version
-from builder.utils import Block, compact_json, execute_script
+from builder.export_import_standard_page import StandardFileSync
+from builder.utils import Block, compact_json, execute_script, is_bulk_import
 
 
-class BuilderComponent(Document):
+class BuilderComponent(StandardFileSync, Document):
+	export_subdir = "components"
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -43,15 +45,28 @@ class BuilderComponent(Document):
 		# ensure_component_version also walks nested components and prunes, which is
 		# unsafe when not all components are loaded yet. Versions are minted on the
 		# next real edit, so nothing is lost by skipping a fresh import.
-		if not (
-			frappe.flags.in_import
-			or frappe.flags.in_install
-			or frappe.flags.in_migrate
-			or frappe.flags.in_patch
-		):
+		if not is_bulk_import():
 			self.queue_action("clear_page_cache")
 			ensure_component_version(self.name)
 		self.update_exported_component()
+		self.export_standard_files()
+
+	def on_trash(self):
+		self.delete_standard_exported_files()
+
+	def export_standard_files(self) -> None:
+		if not frappe.conf.developer_mode or is_bulk_import():
+			return
+		from builder.export_import_standard_page import export_components
+
+		for app in self.referencing_apps:
+			app_path = frappe.get_app_path(app)
+			export_components(
+				[self.component_id],
+				os.path.join(app_path, "builder_files", "components"),
+				os.path.join(app_path, "public", "builder_assets"),
+				app,
+			)
 
 	def clear_page_cache(self):
 		pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name"])
@@ -76,6 +91,24 @@ class BuilderComponent(Document):
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
 			if page_doc.is_component_used(self.component_id):
 				ComponentSyncer(page_doc).sync_component(self)
+
+	def get_referencing_pages(
+		self, filters: dict | None = None, fields: list[str] | None = None
+	) -> list[dict]:
+		"""Return the pages that use this component."""
+		filters = filters or {}
+		fields = fields or ["name"]
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%{self.component_id}%"],
+				"draft_blocks": ["like", f"%{self.component_id}%"],
+			},
+		)
+		return pages
 
 	def update_exported_component(self):
 		if not frappe.conf.developer_mode:
@@ -166,7 +199,6 @@ def reset_block_styles(block: Block) -> None:
 	block.innerHTML = None
 	block.element = None
 	block.baseStyles = dict()
-	block.rawStyles = dict()
 	block.mobileStyles = dict()
 	block.tabletStyles = dict()
 	block.attributes = dict()

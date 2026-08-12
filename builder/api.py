@@ -20,7 +20,7 @@ from werkzeug.wrappers import Response
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 from builder.builder.doctype.builder_snapshot import builder_snapshot
-from builder.utils import compact_json, has_page_read, has_page_write
+from builder.utils import compact_json, has_page_read, has_page_write, normalize_renamed_doc
 
 
 @frappe.whitelist()
@@ -29,12 +29,17 @@ def get_versioned_doc(snapshot: str) -> dict:
 
 
 @frappe.whitelist()
-def get_page_preview_html(page: str, **kwarg) -> Response:
+def is_site_read_only() -> bool:
+	return bool(frappe.flags.read_only)
+
+
+@frappe.whitelist()
+def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw("No permission to preview this page")
 
 	# to load preview without publishing
-	frappe.form_dict.update(kwarg)
+	frappe.form_dict.update(kwargs)
 	frappe.local.request.for_preview = True
 	renderer = BuilderPageRenderer(path="")
 	renderer.docname = page
@@ -68,6 +73,10 @@ def upload_builder_asset():
 	return image_file
 
 
+# the canvas never draws more than a couple of thousand pixels across, even at 2x
+MAX_IMAGE_EDGE = 2048
+
+
 @frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
 	"""
@@ -86,6 +95,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		return filename.split(".")[-1].lower() if "." in filename else ""
 
 	def save_as_webp(image, path: str) -> None:
+		# a 5000px original costs ~100MB decoded and thrashes the browser's image cache,
+		# so the canvas re-decodes it on every pan; thumbnail() only ever shrinks
+		image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE))
 		image.save(path, "WEBP")
 
 	def to_webp_url(url: str, extn: str) -> str:
@@ -192,6 +204,49 @@ def check_app_permission():
 
 
 @frappe.whitelist()
+def get_pending_invitations() -> list[dict]:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	invitations = frappe.get_all(
+		"User Invitation",
+		filters={"status": "Pending", "app_name": "builder"},
+		fields=["name", "email", "creation", "invited_by"],
+		order_by="creation desc",
+	)
+	for invitation in invitations:
+		invitation.invited_by_name = frappe.db.get_value("User", invitation.invited_by, "full_name")
+	return invitations
+
+
+@frappe.whitelist()
+def get_builder_users() -> list[dict]:
+	from frappe.core.doctype.user_invitation.user_invitation import UserInvitation
+
+	UserInvitation.validate_role("builder")
+	role_rows = frappe.get_all(
+		"Has Role",
+		filters={"role": ["in", ["System Manager", "Website Manager"]], "parenttype": "User"},
+		fields=["parent", "role"],
+	)
+	admins = {row.parent for row in role_rows if row.role == "System Manager"}
+	users = frappe.get_all(
+		"User",
+		filters=[
+			["name", "in", list({row.parent for row in role_rows})],
+			["name", "not in", ["Administrator", "Guest"]],
+			["enabled", "=", 1],
+			["user_type", "=", "System User"],
+		],
+		fields=["name", "full_name", "user_image"],
+		order_by="full_name",
+	)
+	for user in users:
+		user.is_admin = user.name in admins
+	return users
+
+
+@frappe.whitelist()
 @redis_cache()
 def get_apps():
 	apps = get_permitted_apps()
@@ -292,7 +347,8 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 	for font in bundle.get("fonts") or []:
 		import_doc(docdict=font)
 	for var in bundle.get("variables") or []:
-		import_doc(docdict=var)
+		# a hub still on the pre-rename schema sends Builder Variable docs
+		import_doc(docdict=normalize_renamed_doc(var))
 	for comp in bundle.get("components") or []:
 		import_doc(docdict=comp)
 

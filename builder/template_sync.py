@@ -1,7 +1,7 @@
 """Import/export of builder template groups.
 
 A template group is a set of highly-functional pages (landing, contact, ...)
-that share one set of Builder Components and Builder Variables (the variable
+that share one set of Builder Components and Builder Tokens (the variable
 `group` matches the template group). Fixtures live on disk at
 builder/builder/builder_templates/<group>/:
 
@@ -189,7 +189,9 @@ def export_template_group(group, target_app="builder"):
 		blocks = export_template_page(page_doc, paths["pages"], group_folder, target_app=target_app)
 		components.update(extract_components_from_blocks(blocks))
 		fonts.update(extract_fonts_from_blocks(blocks))
-		export_client_scripts(page_doc, paths["client_scripts"])
+		export_client_scripts(
+			[row.builder_script for row in page_doc.client_scripts], paths["client_scripts"]
+		)
 
 	for component_id in components:
 		component_blocks = export_template_component(
@@ -263,14 +265,14 @@ def export_template_variables(group, variables_path):
 	"""Write fixtures for all variables of the group, pinning their uuid names
 	so var(--<uuid>) references in blocks survive the round-trip."""
 	for var in frappe.get_all(
-		"Builder Variable",
+		"Builder Token",
 		filters={"group": group},
-		fields=["name", "variable_name", "type", "value", "dark_value", "group"],
+		fields=["name", "token_name", "type", "value", "dark_value", "group"],
 	):
 		var_config = {
-			"doctype": "Builder Variable",
+			"doctype": "Builder Token",
 			"name": var.name,
-			"variable_name": var.variable_name,
+			"token_name": var.token_name,
 			"type": var.type,
 			"value": var.value,
 			"dark_value": var.dark_value,

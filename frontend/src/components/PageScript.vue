@@ -44,8 +44,8 @@
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
-						:buttons="blockClientScriptTabs"
-						class="w-48" />
+						:options="blockClientScriptTabs"
+						:class="['w-48', STRETCH_TABS]" />
 				</div>
 			</template>
 			<template #default>
@@ -153,11 +153,11 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
-import { toast } from "frappe-ui";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { TabButtons, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
-import TabButtons from "./Controls/TabButtons.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
 
@@ -281,6 +281,8 @@ const isDirty = computed(() => {
 	return false;
 });
 
+// immediate: the request may have arrived before this component mounted,
+// since the left panel mounts it lazily
 watch(
 	() => builderStore.showDataScriptDialog,
 	() => {
@@ -289,5 +291,6 @@ watch(
 			builderStore.showDataScriptDialog = null;
 		}
 	},
+	{ immediate: true },
 );
 </script>

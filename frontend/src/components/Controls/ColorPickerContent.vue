@@ -42,6 +42,7 @@
 		</div>
 		<Autocomplete
 			v-if="showInput"
+			ref="autocompleteRef"
 			:modelValue="displayValue"
 			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
 			placeholder="Set Color"
@@ -57,28 +58,41 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { clamp, useElementBounding, useEyeDropper } from "@vueuse/core";
 import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
+const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const alphaMap = ref(null) as unknown as Ref<HTMLDivElement>;
+const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
 
 const {
 	width: colorMapWidth,
 	height: colorMapHeight,
 	left: colorMapLeft,
 	top: colorMapTop,
+	update: updateColorMapBounds,
 } = useElementBounding(colorMap);
-const { width: hueMapWidth, left: hueMapLeft } = useElementBounding(hueMap);
-const { width: alphaMapWidth, left: alphaMapLeft } = useElementBounding(alphaMap);
+const { width: hueMapWidth, left: hueMapLeft, update: updateHueMapBounds } = useElementBounding(hueMap);
+const {
+	width: alphaMapWidth,
+	left: alphaMapLeft,
+	update: updateAlphaMapBounds,
+} = useElementBounding(alphaMap);
+
+// zoom/pan moves the popover without a resize or scroll, so cached bounds go stale
+const syncMapBounds = () => {
+	updateColorMapBounds();
+	updateHueMapBounds();
+	updateAlphaMapBounds();
+};
 
 const colorSelectorPosition = ref({ x: 0, y: 0 });
 const hueSelectorPosition = ref({ x: 0, y: 0 });
@@ -240,6 +254,7 @@ const setAlphaSelectorPosition = (color: string) => {
 
 function makeDragHandler(setter: (ev: MouseEvent) => void) {
 	return (ev: MouseEvent) => {
+		syncMapBounds();
 		setter(ev);
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const onMove = (e: MouseEvent) => {
@@ -323,5 +338,8 @@ watch(
 	{ immediate: true },
 );
 
-defineExpose({ syncPositions: () => setSelectorPosition(modelColor.value) });
+defineExpose({
+	syncPositions: () => setSelectorPosition(modelColor.value),
+	hideOptions: () => autocompleteRef.value?.hideOptions(),
+});
 </script>

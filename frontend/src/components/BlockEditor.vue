@@ -99,7 +99,7 @@ const rotating = ref(false);
 const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
-const preventCLick = ref(false);
+const preventClick = ref(false);
 const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
 
 const showPaddingHandler = computed(() => {
@@ -152,7 +152,6 @@ watchEffect(() => {
 	props.block.getStyle("bottom");
 	props.block.getStyle("right");
 	props.block.getStyle("position");
-	props.block.rawStyles;
 	const parentBlock = props.block.getParentBlock();
 	parentBlock?.getStyle("display");
 	parentBlock?.getStyle("justifyContent");
@@ -231,8 +230,8 @@ onMounted(() => {
 
 const handleClick = (ev: MouseEvent) => {
 	if (props.editable || props.readonly) return;
-	if (preventCLick.value) {
-		preventCLick.value = false;
+	if (preventClick.value) {
+		preventClick.value = false;
 		return;
 	}
 
@@ -333,7 +332,7 @@ const handleMove = (ev: MouseEvent) => {
 		}
 
 		mouseMoveEvent.preventDefault();
-		preventCLick.value = true;
+		preventClick.value = true;
 	};
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener(

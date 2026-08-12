@@ -69,7 +69,11 @@ const useCanvasStore = defineStore("canvasStore", {
 		// the draft's content or undo stack. We just stash the draft root to restore it.
 		async previewVersion(snapshotName: string) {
 			const doc = await getVersionedDoc(snapshotName);
-			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
+			this.previewVersionBlocks((doc?.draft_blocks || doc?.blocks) as string, snapshotName);
+		},
+		// preview raw blocks JSON under a preview key (e.g. the live published version)
+		previewVersionBlocks(blocksJSON: string, previewName: string) {
+			const blocks = JSON.parse(blocksJSON || "[]");
 			if (!blocks[0] || !this.activeCanvas) return;
 			const previewRoot = getBlockInstance(blocks[0]);
 			if (!this.versionPreviewBlock) {
@@ -77,7 +81,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			}
 			this.activeCanvas.setRootBlock(previewRoot, false, false);
 			this.versionPreviewBlock = previewRoot;
-			this.previewSnapshotName = snapshotName;
+			this.previewSnapshotName = previewName;
 			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
 				id: PREVIEW_TOAST_ID,
 				duration: Infinity,
