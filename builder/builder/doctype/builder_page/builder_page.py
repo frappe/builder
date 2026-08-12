@@ -234,20 +234,20 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.conf.developer_mode and self.is_standard and self.app:
 			export_page_as_standard(self.name, target_app=self.app)
 
-		if self.has_value_changed("is_standard") and not self.is_standard:
-			self.cleanup_standard_page_exports()
+		previous_app = doc_before.app if (doc_before := self.get_doc_before_save()) else None
+		if previous_app and (not self.is_standard or previous_app != self.app):
+			self.cleanup_standard_page_exports(previous_app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
 
-	def cleanup_standard_page_exports(self) -> None:
-		"""Delete exported standard page files. Used when is_standard is unchecked or on trash."""
-		doc_before = self.get_doc_before_save()
-		app = (doc_before.app if doc_before else self.app) or self.app
+	def cleanup_standard_page_exports(self, app: str) -> None:
+		"""Delete this page's exported files, and its orphaned dependencies, from the given app."""
 		if not app or not frappe.conf.developer_mode:
 			return
+		doc_before = self.get_doc_before_save()
 
 		from builder.export_import_standard_page import (
 			delete_standard_client_script_files,
@@ -308,7 +308,7 @@ class BuilderPage(WebsiteGenerator):
 		)
 
 		if self.is_standard and self.app and frappe.conf.developer_mode:
-			self.cleanup_standard_page_exports()
+			self.cleanup_standard_page_exports(self.app)
 
 	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
 		if not (self.is_standard and self.app and frappe.conf.developer_mode):

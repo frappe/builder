@@ -310,6 +310,40 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", new_name)
 			self.delete_if_exists("Builder Page", page.name)
 
+	def test_change_app_removes_export_from_old_app(self):
+		page = self.make_page("app-change-page")
+		try:
+			with (
+				mock.patch(f"{self.PAGE_MODULE}.export_page_as_standard"),
+				mock.patch(f"{self.EXPORT_MODULE}.delete_standard_page_files") as mock_delete,
+			):
+				with self.with_developer_mode():
+					page.app = "frappe"
+					page.save(ignore_permissions=True)
+				self.assert_sync_delete_called_once(mock_delete, page.page_name)
+		finally:
+			self.delete_if_exists("Builder Page", page.name, force=True)
+
+	def test_new_standard_page_keeps_its_export(self):
+		"""Inserting a standard page must not delete the export it just wrote."""
+		with (
+			mock.patch(f"{self.PAGE_MODULE}.export_page_as_standard"),
+			mock.patch(f"{self.EXPORT_MODULE}.delete_standard_page_files") as mock_delete,
+		):
+			with self.with_developer_mode():
+				page = frappe.get_doc(
+					{
+						"doctype": "Builder Page",
+						"page_title": "fresh-standard-page",
+						"route": f"/test-standard-{frappe.generate_hash(4)}",
+						"blocks": "[]",
+						"is_standard": 1,
+						"app": self.FIXTURE_APP,
+					}
+				).insert(ignore_permissions=True)
+			mock_delete.assert_not_called()
+		self.delete_if_exists("Builder Page", page.name, force=True)
+
 	def test_uncheck_standard_page_removes_files(self):
 		page = self.make_page("uncheck-std-page")
 		try:
