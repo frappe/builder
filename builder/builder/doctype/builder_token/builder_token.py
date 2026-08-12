@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import os
 import uuid
 
 import frappe
@@ -9,8 +10,12 @@ from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.website.utils import delete_page_cache
 
+from builder.export_import_standard_page import StandardFileSync
+from builder.utils import is_bulk_import
 
-class BuilderToken(Document):
+
+class BuilderToken(StandardFileSync, Document):
+	export_subdir = "variables"
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -44,10 +49,36 @@ class BuilderToken(Document):
 		if self.has_value_changed("is_standard") and not self.is_standard:
 			delete_folder("builder", "builder_token", self.name)
 
+		self.export_standard_files()
+
 	def on_trash(self):
 		clear_builder_token_cache()
 		if self.is_standard:
 			delete_folder("builder", "builder_token", self.name)
+		self.delete_standard_exported_files()
+
+	def export_standard_files(self) -> None:
+		if not frappe.conf.developer_mode or is_bulk_import():
+			return
+		from builder.export_import_standard_page import export_variables
+
+		for app in self.referencing_apps:
+			export_variables([self.name], os.path.join(frappe.get_app_path(app), "builder_files"))
+
+	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None):
+		filters = filters or {}
+		fields = fields or ["name"]
+
+		pages = frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters={
+				"blocks": ["like", f"%var(--{self.name})%"],
+				"draft_blocks": ["like", f"%var(--{self.name})%"],
+			},
+		)
+		return pages
 
 
 @redis_cache(ttl=10 * 24 * 3600)
