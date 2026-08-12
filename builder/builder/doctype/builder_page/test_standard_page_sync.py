@@ -135,6 +135,14 @@ class TestStandardPageSync(FrappeTestCase):
 		page_block = Block(element="div", baseStyles={"color": f"var(--{variable.name})"})
 		return frappe.as_json([page_block.as_dict()])
 
+	def blocks_with_unrecorded_dependencies(self):
+		"""Blocks naming a bundled font and a plain CSS variable, neither of which has a record."""
+		page_block = Block(
+			element="div",
+			baseStyles={"fontFamily": "Bundled Sans", "color": "var(--tw-ring-color)"},
+		)
+		return frappe.as_json([page_block.as_dict()])
+
 	def make_secondary_standard_page(self, page_title: str, blocks: str = "[]", script=None):
 		"""Create another standard page without triggering export side effects."""
 		with self.without_developer_mode():
@@ -212,6 +220,17 @@ class TestStandardPageSync(FrappeTestCase):
 		finally:
 			shutil.rmtree(export_root, ignore_errors=True)
 			self.delete_if_exists("Builder Page", page.name, force=True)
+
+	def test_on_trash_page_with_unrecorded_dependencies(self):
+		"""A bundled font or plain CSS variable must not block deletion of a standard page."""
+		page = self.make_secondary_standard_page(
+			"trash-unrecorded-deps", blocks=self.blocks_with_unrecorded_dependencies()
+		)
+		with self.mock_page_sync_deletes(f"{self.EXPORT_MODULE}.delete_standard_font_files") as mock_del_font:
+			with self.with_developer_mode():
+				page.delete(ignore_permissions=True)
+			mock_del_font.assert_not_called()
+		self.assertFalse(frappe.db.exists("Builder Page", page.name))
 
 	def test_on_trash_standard_page_removes_directory(self):
 		page = self.make_page("trash-sync-page")
