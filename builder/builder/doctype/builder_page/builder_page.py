@@ -968,7 +968,9 @@ def set_italics_from_html(soup, font_map, ancestor_font: str | None = None):
 
 def is_repeater_block(block: dict) -> bool:
 	"""Check if block is a repeater (loop) block."""
-	return bool(block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"))
+	return bool(
+		block.get("isRepeaterBlock") and block.get("children") and (block.get("dataKey") or {}).get("key")
+	)
 
 
 def render_children(
