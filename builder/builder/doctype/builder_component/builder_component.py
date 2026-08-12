@@ -11,7 +11,7 @@ from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
 from builder.builder.component_versions import ensure_component_version
-from builder.utils import Block, compact_json, execute_script
+from builder.utils import Block, compact_json, execute_script, is_bulk_import
 
 
 class BuilderComponent(Document):
@@ -43,12 +43,7 @@ class BuilderComponent(Document):
 		# ensure_component_version also walks nested components and prunes, which is
 		# unsafe when not all components are loaded yet. Versions are minted on the
 		# next real edit, so nothing is lost by skipping a fresh import.
-		if not (
-			frappe.flags.in_import
-			or frappe.flags.in_install
-			or frappe.flags.in_migrate
-			or frappe.flags.in_patch
-		):
+		if not is_bulk_import():
 			self.queue_action("clear_page_cache")
 			ensure_component_version(self.name)
 		self.update_exported_component()
@@ -69,7 +64,7 @@ class BuilderComponent(Document):
 		return [page.app for page in pages]
 
 	def export_standard_files(self) -> None:
-		if not frappe.conf.developer_mode:
+		if not frappe.conf.developer_mode or is_bulk_import():
 			return
 		from builder.export_import_standard_page import export_components
 

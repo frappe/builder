@@ -45,6 +45,7 @@ from builder.utils import (
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
+	is_bulk_import,
 	is_component_used,
 	merge_raw_styles_into_base_styles,
 	normalize_legacy_raw_styles,
@@ -231,8 +232,7 @@ class BuilderPage(WebsiteGenerator):
 				self.template_group, target_app=frappe.conf.get("template_target_app") or "builder"
 			)
 
-		if frappe.conf.developer_mode and self.is_standard and self.app:
-			export_page_as_standard(self.name, target_app=self.app)
+		self.export_standard_files()
 
 		previous_app = doc_before.app if (doc_before := self.get_doc_before_save()) else None
 		if previous_app and (not self.is_standard or previous_app != self.app):
@@ -316,6 +316,11 @@ class BuilderPage(WebsiteGenerator):
 
 		# rename_doc skips on_update, and the exported JSON holds the old name
 		delete_standard_page_files(old, self.app)
+		self.export_standard_files()
+
+	def export_standard_files(self) -> None:
+		if not (frappe.conf.developer_mode and self.is_standard and self.app) or is_bulk_import():
+			return
 		export_page_as_standard(self.name, target_app=self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):

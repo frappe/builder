@@ -307,6 +307,21 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", new_name)
 			self.delete_if_exists("Builder Page", page.name)
 
+	def test_migrate_does_not_rewrite_exported_files(self):
+		"""Importing a standard page during migrate must not write back to the app source."""
+		page = self.make_page("migrate-noexport-page")
+		try:
+			with mock.patch(f"{self.PAGE_MODULE}.export_page_as_standard") as mock_export:
+				with self.with_developer_mode():
+					frappe.flags.in_migrate = True
+					try:
+						page.save(ignore_permissions=True)
+					finally:
+						frappe.flags.in_migrate = False
+				mock_export.assert_not_called()
+		finally:
+			self.delete_if_exists("Builder Page", page.name, force=True)
+
 	def test_change_app_removes_export_from_old_app(self):
 		page = self.make_page("app-change-page")
 		try:

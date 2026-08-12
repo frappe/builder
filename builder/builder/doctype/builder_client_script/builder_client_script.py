@@ -11,6 +11,8 @@ from frappe.utils import get_files_path
 from frappe.utils.telemetry import capture
 from jsmin import jsmin
 
+from builder.utils import is_bulk_import
+
 
 class BuilderClientScript(Document):
 	# begin: auto-generated types
@@ -53,7 +55,7 @@ class BuilderClientScript(Document):
 		return [page.app for page in pages]
 
 	def export_standard_files(self) -> None:
-		if not frappe.conf.developer_mode:
+		if not frappe.conf.developer_mode or is_bulk_import():
 			return
 		from builder.export_import_standard_page import export_client_scripts
 

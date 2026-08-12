@@ -10,6 +10,8 @@ from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
 from frappe.website.utils import delete_page_cache
 
+from builder.utils import is_bulk_import
+
 
 class BuilderToken(Document):
 	# begin: auto-generated types
@@ -65,7 +67,7 @@ class BuilderToken(Document):
 		return [page.app for page in pages]
 
 	def export_standard_files(self) -> None:
-		if not frappe.conf.developer_mode:
+		if not frappe.conf.developer_mode or is_bulk_import():
 			return
 		from builder.export_import_standard_page import export_variables
 

@@ -37,6 +37,17 @@ def compact_json(obj) -> str:
 	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
+def is_bulk_import() -> bool:
+	"""True while frappe loads records in bulk: install, migrate, patch or import.
+
+	Unlike is_system_activity, a test is not a bulk import, so tests still
+	exercise the export.
+	"""
+	return bool(
+		frappe.flags.in_import or frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch
+	)
+
+
 def export_dir_name(name) -> str:
 	"""Directory and JSON file name for an exported record.
 
