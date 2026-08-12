@@ -208,9 +208,9 @@ function flushPreviewQueue() {
 }
 
 /** Queues previews for the currently visible options, coalescing bursts of keystrokes. */
-export function schedulePreviewLoad(fonts: string[]): void {
+export function enqueuePreviewLoad(fonts: string[]): void {
 	// every keystroke supersedes the last, so the pending set is replaced rather than
-	// accumulated: typing "rob" must not leave the matches for "r" in flight
+	// accumulated: pausing on "rob" should not also fetch what matched "r"
 	queuedPreviews = fonts.filter((font) => !previewRequests.has(font));
 	if (flushTimer) clearTimeout(flushTimer);
 	if (queuedPreviews.length) flushTimer = setTimeout(flushPreviewQueue, PREVIEW_DEBOUNCE);

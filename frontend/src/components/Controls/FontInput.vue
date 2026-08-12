@@ -31,7 +31,7 @@ import FontUploader from "@/components/Controls/FontUploader.vue";
 import userFonts from "@/data/userFonts";
 import { BuilderToken, UserFont } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
-import { fontListItems, loadFontList, previewFontStyle, schedulePreviewLoad } from "@/utils/fontManager";
+import { enqueuePreviewLoad, fontListItems, loadFontList, previewFontStyle } from "@/utils/fontManager";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -136,7 +136,7 @@ const getOptions = async (filterString: string) => {
 
 	// separators and design tokens are the only entries without a preview: a token's
 	// label carries its name too, which the family's own subset cannot render
-	schedulePreviewLoad(options.filter((o) => o.labelStyle).map((o) => o.value));
+	enqueuePreviewLoad(options.filter((o) => o.labelStyle).map((o) => o.value));
 	return options;
 };
 
