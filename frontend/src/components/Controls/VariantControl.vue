@@ -127,8 +127,12 @@ const claimFocus = (framesLeft: number) => {
 };
 
 // Leaving the row ends the preview, so the canvas and the controls read normally again.
+// Focus that goes nowhere is the dropdown closing, not the user leaving. Anything
+// else is a real departure, even while the row is still claiming focus back.
 const handleFocusOut = (event: FocusEvent) => {
-	if (claimingFocus || rowRef.value?.contains(event.relatedTarget as Node)) return;
+	if (rowRef.value?.contains(event.relatedTarget as Node)) return;
+	if (claimingFocus && !event.relatedTarget) return;
+	claimingFocus = false;
 	emit("blur");
 };
 
