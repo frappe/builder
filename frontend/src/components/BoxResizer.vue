@@ -36,7 +36,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { startDrag } from "@/utils/cursor";
 import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
-import { getNumberFromPx } from "@/utils/helpers";
+import { getNumberFromPx, getNumberInUnit } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -54,7 +54,6 @@ const cursorPosition = ref({ x: 0, y: 0 });
 let guides = null as unknown as ReturnType<typeof guidesTracker>;
 
 const canvasProps = inject("canvasProps") as CanvasProps;
-const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
 
 onMounted(() => {
 	guides = guidesTracker(props.target as HTMLElement, canvasProps);
@@ -135,9 +134,10 @@ const targetHeight = computed(() => {
 
 const fontSize = computed(() => {
 	const activeFontSize = props.targetBlock.getActiveStyleValue("fontSize");
-	const fontSize = hasStyleValue(activeFontSize)
-		? getNumberFromPx(activeFontSize)
-		: getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size"));
+	// A non-px font size (em, rem) only resolves through the rendered style.
+	const fontSize =
+		getNumberInUnit(activeFontSize, "px") ??
+		getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size"));
 	return Math.round(fontSize);
 });
 

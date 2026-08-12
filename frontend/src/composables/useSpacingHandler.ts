@@ -2,7 +2,7 @@ import type Block from "@/block";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { collapseBoxShorthand, expandBoxShorthand } from "@/utils/cssUtils";
 import { startDrag } from "@/utils/cursor";
-import { getNumberFromPx } from "@/utils/helpers";
+import { getNumberInUnit } from "@/utils/helpers";
 import { toLocalDelta } from "@/utils/rotation";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref } from "vue";
@@ -35,7 +35,6 @@ const sides = {
 const verticalSides = [Position.Top, Position.Bottom];
 const horizontalSides = [Position.Left, Position.Right];
 const allSides = [...verticalSides, ...horizontalSides];
-const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
 
 // Shared state and drag behaviour for the Margin and Padding handlers. The per-side
 // positioning and value display differ and stay in each component.
@@ -115,7 +114,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a padding
 		const sign = property === "margin" ? outward : -outward;
 		const currentValue = getSpacingValue(property, side);
-		const startValue = hasStyleValue(currentValue) ? getNumberFromPx(currentValue) : fallback;
+		const startValue = getNumberInUnit(currentValue, "px") ?? fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();

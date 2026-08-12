@@ -46,7 +46,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber, getNumberFromPx } from "@/utils/helpers";
+import { addPxToNumber, getNumberInUnit } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -100,8 +100,6 @@ const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventClick = ref(false);
-const hasStyleValue = (value: StyleValue) => value !== null && value !== undefined && value !== "";
-
 const showPaddingHandler = computed(() => {
 	return (
 		builderStore.mode === "select" &&
@@ -296,14 +294,12 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
+	// A non-px position (e.g. a percentage) cannot be read as pixels, so the drag
+	// starts from the rendered offset instead.
 	const activeLeft = props.block.getActiveStyleValue("left");
 	const activeTop = props.block.getActiveStyleValue("top");
-	const startLeft = hasStyleValue(activeLeft)
-		? getNumberFromPx(activeLeft)
-		: (props.target as HTMLElement).offsetLeft || 0;
-	const startTop = hasStyleValue(activeTop)
-		? getNumberFromPx(activeTop)
-		: (props.target as HTMLElement).offsetTop || 0;
+	const startLeft = getNumberInUnit(activeLeft, "px") ?? (props.target as HTMLElement).offsetLeft;
+	const startTop = getNumberInUnit(activeTop, "px") ?? (props.target as HTMLElement).offsetTop;
 
 	moving.value = true;
 	guides.showX();

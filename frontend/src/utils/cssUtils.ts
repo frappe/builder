@@ -290,6 +290,22 @@ function addUnitToNumber(numberStr: string, unit: string): string {
 }
 
 /**
+ * Reads a CSS value as a number in the given unit. A unitless number takes that
+ * unit as its default, the same rule controls use when they write a value.
+ * @returns The number, or null when the value uses another unit or is not a
+ * plain number (`auto`, `calc(...)`, empty).
+ */
+function getNumberInUnit(value: StyleValue, unit: string): number | null {
+	if (typeof value === "number") return value;
+	if (typeof value !== "string") return null;
+	const match = value.trim().match(numericValuePattern);
+	if (!match) return null;
+	const [, number, existingUnit] = match;
+	if (existingUnit && existingUnit.toLowerCase() !== unit.toLowerCase()) return null;
+	return Number(number);
+}
+
+/**
  * Removes the default unit from numeric values for display in controls.
  * Other units remain visible.
  */
@@ -392,6 +408,7 @@ export {
 	expandGapShorthand,
 	extractNumberAndUnit,
 	getNumberFromPx,
+	getNumberInUnit,
 	getSpacing,
 	normalizeValueWithUnits,
 	parseAndSetBackground,
