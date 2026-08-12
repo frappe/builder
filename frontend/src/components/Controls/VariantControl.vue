@@ -1,5 +1,10 @@
 <template>
-	<div v-if="labelPlacement === 'top'" class="flex flex-col gap-1" v-bind="$attrs">
+	<div
+		v-if="labelPlacement === 'top'"
+		ref="rowRef"
+		class="flex flex-col gap-1"
+		v-bind="$attrs"
+		@focusout="handleFocusOut">
 		<InputLabel
 			class="text-sm"
 			:class="{ 'cursor-ns-resize': enableSlider }"
@@ -24,24 +29,33 @@
 			<button
 				type="button"
 				class="absolute right-1 top-1 text-ink-gray-7 hover:text-ink-gray-9"
-				@click="$emit('clear')">
+				@mousedown.stop.prevent
+				@click="emit('clear')">
 				<span class="lucide-x h-3 w-3" aria-hidden="true" />
 			</button>
 		</div>
 	</div>
 
-	<div v-else class="group/variant relative flex items-start justify-between gap-2" v-bind="$attrs">
+	<div
+		v-else
+		ref="rowRef"
+		class="group/variant relative flex items-start justify-between gap-2"
+		v-bind="$attrs"
+		@focusout="handleFocusOut">
 		<span
 			class="pointer-events-none absolute left-[5.5px] top-0 w-px bg-surface-gray-4"
 			:class="isLast ? 'h-3.5' : '-bottom-2'"
 			aria-hidden="true" />
 		<div class="relative flex h-7 w-1/3 min-w-[88px] shrink-0 items-center gap-2">
 			<span class="relative z-[1] flex size-3 shrink-0 items-center justify-center bg-surface-base">
-				<span class="size-1.5 rounded-full bg-surface-gray-4 group-hover/variant:hidden" />
+				<span
+					class="size-1.5 rounded-full group-hover/variant:hidden"
+					:class="isActive ? 'bg-surface-gray-7' : 'bg-surface-gray-4'" />
 				<button
 					type="button"
 					class="invisible absolute inset-0 flex items-center justify-center text-ink-gray-7 hover:text-ink-gray-9 group-hover/variant:visible"
-					@click="$emit('clear')">
+					@mousedown.stop.prevent
+					@click="emit('clear')">
 					<span class="lucide-x size-3" aria-hidden="true" />
 				</button>
 			</span>
@@ -71,8 +85,9 @@
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import type { Component } from "vue";
+import { ref, watch } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	label: string;
 	labelPlacement: "left" | "top";
 	component: Component;
@@ -82,13 +97,50 @@ defineProps<{
 	defaultValue?: string | number | boolean;
 	placeholder?: string | number | boolean;
 	enableSlider?: boolean;
+	isActive?: boolean;
 	isLast?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
 	(e: "update:modelValue", value: any): void;
 	(e: "keydown", event: KeyboardEvent): void;
 	(e: "labelMousedown", event: MouseEvent): void;
 	(e: "clear"): void;
+	(e: "blur"): void;
 }>();
+
+const rowRef = ref<HTMLElement | null>(null);
+
+const holdsFocus = () => !!rowRef.value?.contains(document.activeElement);
+const field = () => rowRef.value?.querySelector<HTMLElement>("input, select");
+
+// The label dropdown hands focus back to its trigger as it closes, a few frames
+// after the row appears. That trigger is a span, so focus lands on <body> and the
+// row loses it. Take it back for as long as nothing else holds it.
+let claimingFocus = false;
+
+const claimFocus = (framesLeft: number) => {
+	claimingFocus = framesLeft > 0 && !!props.isActive;
+	if (!claimingFocus) return;
+	if (document.activeElement === document.body) field()?.focus();
+	requestAnimationFrame(() => claimFocus(framesLeft - 1));
+};
+
+// Leaving the row ends the preview, so the canvas and the controls read normally again.
+const handleFocusOut = (event: FocusEvent) => {
+	if (claimingFocus || rowRef.value?.contains(event.relatedTarget as Node)) return;
+	emit("blur");
+};
+
+// The canvas previews the active state, so put the caret in its field. Focus
+// styling then marks the row, and the value is ready to type.
+watch(
+	() => props.isActive,
+	(isActive) => {
+		if (!isActive || holdsFocus()) return;
+		field()?.focus();
+		claimFocus(20);
+	},
+	{ immediate: true, flush: "post" },
+);
 </script>
