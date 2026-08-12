@@ -52,7 +52,8 @@ class BuilderClientScript(Document):
 	def referencing_apps(self) -> list[str]:
 		"""Apps whose standard pages use this script."""
 		pages = self.get_referencing_pages(filters={"is_standard": 1}, fields=["app"])
-		return [page.app for page in pages]
+		installed = frappe.get_installed_apps()
+		return [page.app for page in pages if page.app in installed]
 
 	def export_standard_files(self) -> None:
 		if not frappe.conf.developer_mode or is_bulk_import():

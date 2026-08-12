@@ -307,6 +307,15 @@ class TestStandardPageSync(FrappeTestCase):
 			self.delete_if_exists("Builder Page", new_name)
 			self.delete_if_exists("Builder Page", page.name)
 
+	def test_uninstalled_app_does_not_block_delete(self):
+		"""app is plain Data, so it can name an app that is gone. Deleting must still work."""
+		page = self.make_secondary_standard_page("uninstalled-app-page")
+		frappe.db.set_value("Builder Page", page.name, "app", "no_such_app", update_modified=False)
+		page.reload()
+		with self.with_developer_mode():
+			page.delete(ignore_permissions=True)
+		self.assertFalse(frappe.db.exists("Builder Page", page.name))
+
 	def test_migrate_does_not_rewrite_exported_files(self):
 		"""Importing a standard page during migrate must not write back to the app source."""
 		page = self.make_page("migrate-noexport-page")

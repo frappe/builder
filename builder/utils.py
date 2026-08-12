@@ -48,6 +48,17 @@ def is_bulk_import() -> bool:
 	)
 
 
+def get_installed_app_path(app_name) -> str | None:
+	"""Path of an installed app, or None if it is unset or not installed.
+
+	frappe.get_app_path raises for both, and page.app is plain Data, so it can
+	name an app that was uninstalled later.
+	"""
+	if not app_name or app_name not in frappe.get_installed_apps():
+		return None
+	return frappe.get_app_path(app_name)
+
+
 def export_dir_name(name) -> str:
 	"""Directory and JSON file name for an exported record.
 

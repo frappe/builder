@@ -13,6 +13,7 @@ from builder.utils import (
 	export_components,
 	export_dir_name,
 	extract_components_from_blocks,
+	get_installed_app_path,
 	make_records,
 	normalize_legacy_raw_styles,
 )
@@ -23,9 +24,9 @@ def export_page_as_standard(page_name, target_app):
 	page_doc = frappe.get_doc("Builder Page", page_name)
 	export_name = export_dir_name(page_doc.page_name)
 
-	app_path = frappe.get_app_path(target_app)
+	app_path = get_installed_app_path(target_app)
 	if not app_path:
-		frappe.throw(f"App '{target_app}' not found")
+		frappe.throw(frappe._("App {0} is not installed").format(target_app))
 
 	paths = create_export_directories(app_path, export_name)
 
@@ -298,7 +299,7 @@ def export_variables(variables, builder_files_path):
 
 def delete_standard_builder_files(name: str, app_name: str, subdir: str) -> None:
 	"""Remove an exported builder_files directory from the target app's source code."""
-	app_path = frappe.get_app_path(app_name)
+	app_path = get_installed_app_path(app_name)
 	if not app_path:
 		return
 	export_path = os.path.join(app_path, "builder_files", subdir, export_dir_name(name))
