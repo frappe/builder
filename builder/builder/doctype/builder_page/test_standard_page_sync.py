@@ -229,6 +229,26 @@ class TestStandardPageSync(FrappeTestCase):
 			shutil.rmtree(export_root, ignore_errors=True)
 			self.delete_if_exists("Builder Page", page.name, force=True)
 
+	def test_export_client_script_without_body(self):
+		"""A script with no body exports, and a CSS script lands in a .css file."""
+		from builder.utils import export_client_scripts
+
+		# script is mandatory, so only a fixture import or ignore_mandatory gets here
+		script = frappe.get_doc(
+			{"doctype": "Builder Client Script", "script_type": "CSS", "script": None}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
+		export_root = tempfile.mkdtemp()
+		try:
+			export_client_scripts([script.name], export_root)
+
+			script_dir = os.path.join(export_root, frappe.scrub(script.name))
+			with open(os.path.join(script_dir, "client_script.css")) as f:
+				self.assertEqual(f.read(), "")
+			self.assertFalse(os.path.exists(os.path.join(script_dir, "client_script.js")))
+		finally:
+			shutil.rmtree(export_root, ignore_errors=True)
+			self.delete_if_exists("Builder Client Script", script.name, force=1)
+
 	def test_on_trash_page_with_unrecorded_dependencies(self):
 		"""A bundled font or plain CSS variable must not block deletion of a standard page."""
 		page = self.make_secondary_standard_page(

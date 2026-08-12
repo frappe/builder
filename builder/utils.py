@@ -712,22 +712,24 @@ def export_client_scripts(client_scripts, client_scripts_path):
 	"""Export client scripts for a page"""
 	from frappe.modules.export_file import strip_default_fields
 
-	for script in client_scripts:
-		script_doc = frappe.get_doc("Builder Client Script", script)
+	for script_name in client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script_name)
 		script_config = script_doc.as_dict(no_nulls=True)
-		script = script_config["script"]
+		# no_nulls drops the key when the script has no body
+		script_content = script_config.get("script") or ""
 		script_config = strip_default_fields(script_doc, script_config)
 		fname = export_dir_name(script_doc.name)
 		# ensure the target directory exists before writing the file
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
 		script_config_path = os.path.join(script_dir, f"{fname}.json")
-		script_path = os.path.join(script_dir, "client_script.js")
+		extension = "js" if script_doc.script_type == "JavaScript" else "css"
+		script_path = os.path.join(script_dir, f"client_script.{extension}")
 
 		with open(script_config_path, "w", encoding="utf-8") as f:
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
 		with open(script_path, "w", encoding="utf-8") as f:
-			f.write(script)
+			f.write(script_content)
 
 
 def export_components(components, components_path, assets_path, target_app="builder"):
