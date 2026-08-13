@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 07:27+0553\n"
+"POT-Creation-Date: 2026-08-13 08:01+0553\n"
 "PO-Revision-Date: 2026-08-08 13:03+0000\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language: hi_IN\n"
@@ -536,6 +536,10 @@ msgstr "बदलें"
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
 msgid "Checked"
 msgstr "चयनित"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:12
+msgid "Choose a template to get a head start, or start from scratch."
+msgstr "तेज़ शुरुआत के लिए कोई टेम्पलेट चुनें, या शुरू से बनाएं।"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
@@ -2206,6 +2210,10 @@ msgstr "अभी कोई फ़ोल्डर नहीं है"
 msgid "No matching pages found."
 msgstr "कोई मेल खाता पेज नहीं मिला।"
 
+#: frontend/src/components/MoreStylesPanel.vue:23
+msgid "No matching properties"
+msgstr "कोई मेल खाती प्रॉपर्टी नहीं"
+
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
 msgstr "अभी तक कोई सदस्य नहीं। बिल्डर तक पहुंच देने के लिए किसी को आमंत्रित करें।"
@@ -2532,6 +2540,10 @@ msgstr "पर्सोना सर्वे पूरा"
 #: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "Pick a starting point"
 msgstr "एक शुरुआती बिंदु चुनें"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:36
+msgid "Pick a wider date range, or share your page to start collecting data."
+msgstr "बड़ी तारीख सीमा चुनें, या डेटा एकत्र करना शुरू करने के लिए अपना पेज साझा करें।"
 
 #: frontend/src/components/Modals/TokenManager.vue:100
 #: frontend/src/components/Modals/TokenManager.vue:145
@@ -2930,9 +2942,9 @@ msgstr "रोबोट्स"
 msgid "Robots.txt"
 msgstr "Robots.txt"
 
-#: frontend/src/components/Settings/PageRobots.vue:19
-msgid "Robots.txt Guide."
-msgstr "Robots.txt गाइड।"
+#: frontend/src/components/Settings/PageRobots.vue:30
+msgid "Robots.txt Guide"
+msgstr "Robots.txt गाइड"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
@@ -3366,6 +3378,10 @@ msgstr "समान जगह"
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:58
 msgid "Spacing"
 msgstr "रिक्ति"
+
+#: frontend/src/components/Settings/PageRobots.vue:31
+msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
+msgstr "सर्च इंजन आपकी साइट के साथ कैसे इंटरैक्ट करते हैं, इसे नियंत्रित करने के लिए नियम निर्धारित करें। अधिक जानकारी के लिए {0} देखें।"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
@@ -4086,6 +4102,10 @@ msgstr "आपके पास अभी कोई पेज नहीं है
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
 msgstr "आपके पास असहेजे परिवर्तन हैं। क्या आप वाकई बाहर जाना चाहते हैं?"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:185
+msgid "You're all set{0}. Pick a starting point"
+msgstr "सब तैयार है{0}। एक शुरुआती बिंदु चुनें"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"

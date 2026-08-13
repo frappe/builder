@@ -20,7 +20,7 @@
 			ref="propertyCombobox"
 			:options="propertyOptions"
 			:placeholder="__('Add CSS property')"
-			empty-text="No matching properties"
+			:empty-text="__('No matching properties')"
 			open-on-focus
 			@update:query="propertySearch = $event"
 			@update:modelValue="addProperty">

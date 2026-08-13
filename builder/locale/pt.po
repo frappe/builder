@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 07:27+0553\n"
+"POT-Creation-Date: 2026-08-13 08:01+0553\n"
 "PO-Revision-Date: 2026-08-08 13:35+0000\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language: pt_PT\n"
@@ -533,6 +533,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
 msgid "Checked"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:12
+msgid "Choose a template to get a head start, or start from scratch."
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
@@ -2204,6 +2208,10 @@ msgstr ""
 msgid "No matching pages found."
 msgstr ""
 
+#: frontend/src/components/MoreStylesPanel.vue:23
+msgid "No matching properties"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
 msgstr ""
@@ -2529,6 +2537,10 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "Pick a starting point"
+msgstr ""
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:36
+msgid "Pick a wider date range, or share your page to start collecting data."
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:100
@@ -2928,8 +2940,8 @@ msgstr ""
 msgid "Robots.txt"
 msgstr ""
 
-#: frontend/src/components/Settings/PageRobots.vue:19
-msgid "Robots.txt Guide."
+#: frontend/src/components/Settings/PageRobots.vue:30
+msgid "Robots.txt Guide"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
@@ -3363,6 +3375,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:58
 msgid "Spacing"
+msgstr ""
+
+#: frontend/src/components/Settings/PageRobots.vue:31
+msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
@@ -4083,6 +4099,10 @@ msgstr ""
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:185
+msgid "You're all set{0}. Pick a starting point"
 msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116

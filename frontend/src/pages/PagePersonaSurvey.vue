@@ -9,7 +9,7 @@
 				class="mx-auto h-full w-full max-w-3xl"
 				:max-groups="8"
 				:heading="templateHeading"
-				subtitle="Choose a template to get a head start, or start from scratch." />
+				:subtitle="__('Choose a template to get a head start, or start from scratch.')" />
 		</div>
 	</div>
 
@@ -182,7 +182,7 @@ const greetingName = computed(() => {
 });
 const templateHeading = computed(() =>
 	greetingName.value
-		? `You're all set${greetingName.value}. Pick a starting point`
+		? __("You're all set{0}. Pick a starting point", [greetingName.value])
 		: __("Pick a starting point"),
 );
 
