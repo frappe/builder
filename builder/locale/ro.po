@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  frappe\n"
+"Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03+0000\n"
+"PO-Revision-Date: 2026-08-13 03:20\n"
 "Last-Translator: suraj@frappe.io\n"
-"Language: ro_RO\n"
 "Language-Team: Romanian\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);\n"
+"X-Crowdin-Project: frappe\n"
+"X-Crowdin-Project-ID: 639578\n"
+"X-Crowdin-Language: ro\n"
+"X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
+"X-Crowdin-File-ID: 177\n"
+"Language: ro_RO\n"
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
@@ -159,8 +163,7 @@ msgstr ""
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"An icon file with .ico extension. Should be 16 x 16 px.\n"
+msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
 msgstr ""
 
@@ -4179,8 +4182,7 @@ msgstr ""
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"data.events = frappe.get_list(\"Event\")\n"
+msgid "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
