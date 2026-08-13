@@ -308,14 +308,15 @@ watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOve
 // seed the search term with the option's label, not the raw value: it is what the
 // input shows, what filterOptions windows the list around, and what Enter compares
 // against (a value like "700" would otherwise read as text typed over "Bold")
-watch(
-	[() => props.modelValue, allOptions],
-	() => {
-		if (isOpen.value) return;
-		searchQuery.value = getDisplayValue(props.modelValue);
-	},
-	{ immediate: true },
-);
+const seedSearchQuery = () => (searchQuery.value = getDisplayValue(props.modelValue));
+
+seedSearchQuery();
+// a value set elsewhere, such as a slider drag, replaces what the input shows
+watch(() => props.modelValue, seedSearchQuery);
+// late options carry the label, but an open list can hold typed text
+watch(allOptions, () => {
+	if (!isOpen.value) seedSearchQuery();
+});
 
 const setOptionsPosition = () => {
 	// nextTick flushes the DOM but not layout; the anchored position can still move
