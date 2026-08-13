@@ -81,11 +81,8 @@ const handleRounded = (ev: MouseEvent) => {
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 	// Native read so Escape can restore the original unit, or its absence when inherited.
-	const startRadiusStyle = props.targetBlock.getStyle(
-		props.targetBlock.getActiveStyleProperty("borderRadius"),
-		null,
-		true,
-	);
+	const radiusStyle = props.targetBlock.getActiveStyleProperty("borderRadius");
+	const startRadiusStyle = props.targetBlock.getStyle(radiusStyle, null, true);
 	const startMinPosition = { ...MIN_POSITION };
 
 	startDrag({
@@ -112,10 +109,7 @@ const handleRounded = (ev: MouseEvent) => {
 			lastY = mouseMoveEvent.clientY;
 		},
 		onCancel: () => {
-			props.targetBlock.setStyle(
-				props.targetBlock.getActiveStyleProperty("borderRadius"),
-				startRadiusStyle ?? null,
-			);
+			props.targetBlock.setStyle(radiusStyle, startRadiusStyle ?? null);
 			// onMove drags this below zero to let the handle sit outside the corner
 			Object.assign(MIN_POSITION, startMinPosition);
 			setHandlerPosition(borderRadius.value);
