@@ -2,7 +2,9 @@
 	<div
 		:class="[
 			'color-picker-container flex flex-col gap-2',
-			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-base p-3 shadow-lg',
+			renderMode === 'inline'
+				? 'w-full'
+				: 'w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
 		]">
 		<div
 			ref="colorMap"
