@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute right-0 top-0 flex rounded-md border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
+		class="rounded-md absolute right-0 top-0 flex border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
 		@keydown.esc.stop="closePanel">
 		<div v-if="enableReplace" class="flex items-center border-r border-outline-gray-2">
 			<Button
@@ -170,7 +170,7 @@ function closePanel(e?: KeyboardEvent | Event) {
 
 onMounted(() => {
 	nextTick(() => {
-		inputRef.value?.el?.focus();
+		inputRef.value?.focus();
 	});
 });
 </script>
