@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  frappe\n"
+"Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03+0000\n"
+"PO-Revision-Date: 2026-08-13 03:19\n"
 "Last-Translator: suraj@frappe.io\n"
-"Language: ko_KR\n"
 "Language-Team: Korean\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: frappe\n"
+"X-Crowdin-Project-ID: 639578\n"
+"X-Crowdin-Language: ko\n"
+"X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
+"X-Crowdin-File-ID: 177\n"
+"Language: ko_KR\n"
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
@@ -159,8 +163,7 @@ msgstr ""
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"An icon file with .ico extension. Should be 16 x 16 px.\n"
+msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
 msgstr ""
 
@@ -736,7 +739,7 @@ msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:47
 msgid "Components"
-msgstr ""
+msgstr "구성 요소"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
@@ -1026,7 +1029,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr ""
+msgstr "디자이너"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:248
 msgid "Detach Component"
@@ -1055,7 +1058,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:451
 msgid "Dimensions"
-msgstr ""
+msgstr "치수"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1319,7 +1322,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:112
 msgid "Examples"
-msgstr ""
+msgstr "예"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:5
 msgid "Execute Block Client Scripts in Editor"
@@ -1468,7 +1471,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "결정된"
 
 #: frontend/src/components/Commands/index.ts:248
 msgid "Focus Property Search"
@@ -1810,7 +1813,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
-msgstr ""
+msgstr "사용자 초대"
 
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
@@ -1889,7 +1892,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "크기가 큰"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -2000,7 +2003,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:13
 msgid "Margin"
-msgstr ""
+msgstr "여유"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Marketer"
@@ -2083,7 +2086,7 @@ msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:74
 msgid "Model"
-msgstr ""
+msgstr "모델"
 
 #: frontend/src/components/WebPagePresetPicker.vue:457
 msgid "Modern"
@@ -2824,7 +2827,7 @@ msgstr ""
 
 #: frontend/src/utils/fontManager.ts:242
 msgid "Regular"
-msgstr ""
+msgstr "정기적인"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
@@ -3162,7 +3165,7 @@ msgstr ""
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
-msgstr ""
+msgstr "속성 검색"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:9
 msgid "Search redirects"
@@ -3369,7 +3372,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "작은"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
@@ -3806,7 +3809,7 @@ msgstr ""
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "총 조회수"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
@@ -3945,7 +3948,7 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "업로드 중..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
@@ -4179,8 +4182,7 @@ msgstr ""
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"data.events = frappe.get_list(\"Event\")\n"
+msgid "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
