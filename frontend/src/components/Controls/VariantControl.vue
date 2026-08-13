@@ -126,11 +126,16 @@ const claimFocus = (framesLeft: number) => {
 	requestAnimationFrame(() => claimFocus(framesLeft - 1));
 };
 
+// A popover holds the focus of the row that opened it. Its panel is portalled out of
+// the row, and a click inside it can also drop focus to the body.
+const popoverIsOpen = () => Boolean(document.querySelector("[data-slot='content']"));
+
 // Leaving the row ends the preview, so the canvas and the controls read normally again.
 // Focus that goes nowhere is the dropdown closing, not the user leaving. Anything
 // else is a real departure, even while the row is still claiming focus back.
 const handleFocusOut = (event: FocusEvent) => {
 	if (rowRef.value?.contains(event.relatedTarget as Node)) return;
+	if (popoverIsOpen()) return;
 	if (claimingFocus && !event.relatedTarget) return;
 	claimingFocus = false;
 	emit("blur");
