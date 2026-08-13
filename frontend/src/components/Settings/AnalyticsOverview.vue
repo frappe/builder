@@ -41,7 +41,7 @@
 import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";
-import { AxisChart } from "frappe-ui";
+import { AxisChart } from "frappe-ui/experimental";
 import { computed } from "vue";
 
 const props = defineProps<{

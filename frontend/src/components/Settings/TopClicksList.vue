@@ -23,7 +23,7 @@ import { findBlockInTree } from "@/utils/block/tree";
 import type { CTRElement } from "@/composables/useAnalytics";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { ListView } from "frappe-ui";
+import { ListView } from "frappe-ui/experimental";
 import { computed } from "vue";
 
 const props = defineProps<{ elements: CTRElement[]; loading?: boolean }>();

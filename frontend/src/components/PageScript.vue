@@ -155,7 +155,7 @@ import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
 import { STRETCH_TABS } from "@/utils/tabButtons";
 import { TabButtons, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";

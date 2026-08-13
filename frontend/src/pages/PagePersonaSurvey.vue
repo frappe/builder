@@ -84,7 +84,7 @@ import { builderSettings } from "@/data/builderSettings";
 import { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
 import { Button, Textarea } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, reactive, ref } from "vue";
 import LucideChevronLeft from "~icons/lucide/chevron-left";
 
@@ -195,7 +195,7 @@ function select(value: string) {
 	// stray double-click can't skip past the following question
 	answers[activeQuestion.value.key] = value;
 	// preventScroll: focusing the still-clipped textarea would scroll-jump the page
-	if (value === "other") nextTick(() => otherInput.value?.el?.focus({ preventScroll: true }));
+	if (value === "other") nextTick(() => otherInput.value?.focus({ preventScroll: true }));
 }
 
 function goBack() {

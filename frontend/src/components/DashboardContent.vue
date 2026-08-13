@@ -63,7 +63,7 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
 import { useShortcut } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();

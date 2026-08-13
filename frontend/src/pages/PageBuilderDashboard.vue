@@ -20,7 +20,7 @@ import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";
 import { prefetchBuilderSettings } from "@/utils/prefetch";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { onMounted, watch } from "vue";
 
 const telemetry = useTelemetry();

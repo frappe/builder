@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ListView } from "frappe-ui";
+import { ListView } from "frappe-ui/experimental";
 import { h } from "vue";
 
 defineProps<{ rows?: Array<{ domain: string; count: number | string }>; loading?: boolean }>();

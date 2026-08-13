@@ -55,7 +55,7 @@ import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import TopReferrersList from "@/components/Settings/TopReferrersList.vue";
 import TrackingDisabledNotice from "@/components/Settings/TrackingDisabledNotice.vue";
 import { useAnalytics } from "@/composables/useAnalytics";
-import { ListView } from "frappe-ui";
+import { ListView } from "frappe-ui/experimental";
 
 const {
 	range,
