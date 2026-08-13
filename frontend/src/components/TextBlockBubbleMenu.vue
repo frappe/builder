@@ -107,16 +107,11 @@
 					@update:modelValue="setTextColor"
 					:show-input="true"
 					placement="top">
-					<template #target="{ togglePopover, isOpen }">
+					<template #trigger>
 						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
-									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
+									class="rounded h-4 w-4 shadow-sm"
 									:style="{
 										background:
 											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
@@ -125,13 +120,6 @@
 									}"></div>
 							</div>
 						</button>
-					</template>
-					<template>
-						<Input
-							type="text"
-							:modelValue="selectedColor"
-							class="!w-32 text-sm"
-							@update:modelValue="setTextColor" />
 					</template>
 				</ColorPicker>
 			</div>

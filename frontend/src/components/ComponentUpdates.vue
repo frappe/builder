@@ -1,10 +1,9 @@
 <template>
-	<Popover v-if="outdated.length" placement="bottom-end">
-		<template #target="{ togglePopover }">
-			<Tooltip text="Component updates available" :hoverDelay="0.6" arrow-class="mb-3">
+	<Popover v-if="outdated.length" side="bottom" align="end" bare>
+		<template #trigger>
+			<Tooltip text="Component updates available" :hoverDelay="0.6" :offset="12">
 				<button
-					class="relative flex h-7 w-7 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-3"
-					@click="togglePopover">
+					class="rounded relative flex h-7 w-7 items-center justify-center text-ink-gray-7 hover:bg-surface-gray-3">
 					<span class="lucide-arrow-up-circle h-4 w-4" aria-hidden="true" />
 					<span
 						class="pointer-events-none absolute -right-0.5 -top-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-amber-100 px-0.5 text-[9px] font-medium text-amber-700">
@@ -13,8 +12,8 @@
 				</button>
 			</Tooltip>
 		</template>
-		<template #body="{ close }">
-			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
+		<template #default>
+			<div class="rounded-lg w-72 bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
 				<div class="mb-2 flex items-center justify-between">
 					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
 					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
@@ -26,7 +25,7 @@
 					<div
 						v-for="item in outdated"
 						:key="item.component_id"
-						class="flex cursor-pointer items-center justify-between gap-2 rounded border-b border-outline-gray-1 px-2 py-2 last:border-b-0 hover:bg-surface-gray-1"
+						class="rounded flex cursor-pointer items-center justify-between gap-2 border-b border-outline-gray-1 px-2 py-2 last:border-b-0 hover:bg-surface-gray-1"
 						@mouseenter="highlight(item.component_id)"
 						@mouseleave="clearHighlight">
 						<div class="flex min-w-0 flex-col">

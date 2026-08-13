@@ -9,7 +9,7 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" placement="right">
+			<Tooltip v-for="option of leftPanelOptions" :key="option.value" :text="option.label" side="right">
 				<Button
 					:icon="option.icon"
 					:class="{

@@ -1,6 +1,6 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
-		<template #target="{ togglePopover }">
+	<Popover side="left" align="center" :offset="25" bare>
+		<template #trigger>
 			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
 				<StylePropertyControl
 					propertyKey="background"
@@ -12,29 +12,23 @@
 					readonly
 					:selectOnFocus="false"
 					class="[&_input]:cursor-pointer"
-					@focus="togglePopover"
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
 						<div
-							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
-							@click="
-								() => {
-									activeState = variant;
-									togglePopover();
-								}
-							"
+							class="rounded absolute left-2 top-[6px] size-4 cursor-pointer shadow-md"
+							@click="activeState = variant"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
 							:style="getPreviewStyle(variant)" />
 					</template>
 				</StylePropertyControl>
 			</div>
 		</template>
-		<template #body>
+		<template #default>
 			<div
-				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+				class="background-popover-body rounded-lg w-64 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
 					:options="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
@@ -56,16 +50,14 @@
 				<!-- Image Tab -->
 				<div v-else-if="activeTab === 'image'" class="space-y-4">
 					<div
-						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
+						class="image-preview rounded group relative h-24 w-full cursor-pointer overflow-hidden bg-surface-gray-3"
 						:style="getPreviewStyle(activeState)">
 						<FileUploader
 							@success="setBGImage"
-							:uploadArgs="{
-								private: false,
-								folder: 'Home/Builder Uploads',
-								optimize: true,
-								upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-							}">
+							:private="false"
+							folder="Home/Builder Uploads"
+							:optimize="true"
+							uploadEndpoint="/api/method/builder.api.upload_builder_asset">
 							<template v-slot="{ openFileSelector }">
 								<div
 									class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"

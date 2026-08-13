@@ -2,23 +2,15 @@
 	<Popover
 		ref="colorPickerPopover"
 		v-if="renderMode === 'popover'"
-		:placement="placement"
+		:side="side"
+		:align="align"
 		:offset="offset"
-		class="!block w-full">
-		<template #target="{ togglePopover, isOpen }">
-			<slot
-				name="target"
-				:togglePopover="
-					() => {
-						togglePopover();
-						contentRef?.syncPositions();
-					}
-				"
-				:isOpen="isOpen"></slot>
+		bare>
+		<template #trigger="slotProps">
+			<slot name="trigger" v-bind="slotProps"></slot>
 		</template>
-		<template #body>
+		<template #default>
 			<ColorPickerContent
-				ref="contentRef"
 				:modelValue="modelValue"
 				:showInput="showInput"
 				renderMode="popover"
@@ -27,7 +19,6 @@
 	</Popover>
 	<ColorPickerContent
 		v-else
-		ref="contentRef"
 		:modelValue="modelValue"
 		:showInput="showInput"
 		renderMode="inline"
@@ -35,7 +26,7 @@
 </template>
 <script setup lang="ts">
 import { Popover } from "frappe-ui";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import ColorPickerContent from "./ColorPickerContent.vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
@@ -65,7 +56,9 @@ const props = withDefaults(
 
 const emit = defineEmits(["update:modelValue"]);
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
-const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
+
+const side = computed(() => props.placement.split("-")[0] as "top" | "bottom" | "left" | "right");
+const align = computed(() => (props.placement.split("-")[1] ?? "center") as "start" | "center" | "end");
 
 function togglePopover(open?: boolean) {
 	if (open === undefined || open) {

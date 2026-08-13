@@ -1,27 +1,25 @@
 <template>
-	<Popover :offset="20" placement="left">
-		<template #target="{ open }">
-			<div class="relative flex w-full gap-2">
-				<div class="flex w-[88px] shrink-0 items-center">
-					<InputLabel class="truncate">
-						{{ label }}
-					</InputLabel>
+	<div class="relative flex w-full gap-2">
+		<div class="flex w-[88px] shrink-0 items-center">
+			<InputLabel class="truncate">
+				{{ label }}
+			</InputLabel>
+		</div>
+		<div class="relative w-full">
+			<Popover :offset="20" side="left" align="center" bare>
+				<template #trigger>
+					<Button class="w-full" variant="subtle" icon="lucide-pencil" />
+				</template>
+				<div
+					@click.stop
+					@mousedown.stop
+					class="rounded-lg flex max-h-60 w-60 flex-col gap-3 overflow-auto bg-surface-base p-4 shadow-lg">
+					<div class="text-sm text-ink-gray-8">Object Items:</div>
+					<ObjectEditor :obj @update:obj="updateModelValue" />
 				</div>
-				<div class="relative w-full">
-					<Button class="w-full" variant="subtle" icon="lucide-pencil" @click.stop="open()" />
-				</div>
-			</div>
-		</template>
-		<template #body="{ open, close }">
-			<div
-				@click.stop
-				@mousedown.stop
-				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
-				<div class="text-sm text-ink-gray-8">Object Items:</div>
-				<ObjectEditor :obj @update:obj="updateModelValue" />
-			</div>
-		</template>
-	</Popover>
+			</Popover>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">

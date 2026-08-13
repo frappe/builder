@@ -26,13 +26,13 @@
 			</div>
 		</div>
 		<div>
-			<Popover placement="bottom" :offset="20">
-				<template #target="{ togglePopover, isOpen }">
+			<Popover side="bottom" align="center" :offset="20" bare>
+				<template #trigger>
 					<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 						<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
 							Loading...
 						</div>
-						<div @click="togglePopover" v-else class="flex items-center gap-1">
+						<div v-else class="flex items-center gap-1">
 							<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
 								<span
 									class="lucide-home h-[14px] w-4"
@@ -59,12 +59,12 @@
 							class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 							aria-hidden="true"
 							v-if="pageStore.activePage && pageStore.activePage.published"
-							@click="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
+							@click.stop="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
 					</div>
 				</template>
-				<template #body="{ close }">
+				<template #default>
 					<div
-						class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg"
+						class="rounded flex w-72 flex-col gap-3 bg-surface-base p-4 shadow-lg"
 						v-if="pageStore.activePage">
 						<PageOptions v-if="pageStore.activePage"></PageOptions>
 					</div>
@@ -74,7 +74,7 @@
 		<div class="absolute right-3 flex items-center gap-4">
 			<div class="group flex hover:gap-1" v-if="builderStore.viewers.length">
 				<div v-for="user in builderStore.viewers">
-					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
+					<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" :offset="12">
 						<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 							<img
 								class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
@@ -104,14 +104,14 @@
 				</Button>
 			</div>
 			<div class="flex items-center gap-2">
-				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip v-if="builderStore.isAIEnabled" text="Generate with AI" :hoverDelay="0.6" :offset="12">
 					<Button
 						variant="ghost"
 						@click="openAIGenerator"
 						:icon="SparklesIcon"
 						:disabled="builderStore.readOnlyMode"></Button>
 				</Tooltip>
-				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" arrow-class="mb-3">
+				<!-- <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6" :offset="12">
 					<Button
 						variant="ghost"
 						@click="() => transitionTheme(toggleDark)"
@@ -123,11 +123,11 @@
 					Saving template
 				</span>
 				<ComponentUpdates />
-				<Tooltip text="Settings" :hoverDelay="0.6" arrow-class="mb-3">
+				<Tooltip text="Settings" :hoverDelay="0.6" :offset="12">
 					<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 				</Tooltip>
 				<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" title="Preview">
-					<Tooltip text="Preview" :hoverDelay="0.6" arrow-class="mb-3">
+					<Tooltip text="Preview" :hoverDelay="0.6" :offset="12">
 						<Button variant="ghost" :icon="PlayIcon"></Button>
 					</Tooltip>
 				</router-link>
@@ -139,7 +139,7 @@
 		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
 			<template #default>
 				<iframe
-					class="h-[60vh] w-full rounded-sm"
+					class="rounded-sm h-[60vh] w-full"
 					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
 					title="Frappe Builder - Get Started"
 					frameborder="0"

@@ -3,17 +3,16 @@
 		ref="fileUploaderRef"
 		@success="(file: FileDoc) => setImageURL(file.file_url)"
 		fileTypes="image/*"
-		:uploadArgs="{
-			private: false,
-			folder: 'Home/Builder Uploads',
-			upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-		}">
+		:private="false"
+		folder="Home/Builder Uploads"
+		uploadEndpoint="/api/method/builder.api.upload_builder_asset">
 		<template #default="{ openFileSelector }">
-			<Popover placement="left" class="!block w-full" :offset="popoverOffset">
-				<template #target="{ togglePopover }">
+			<Popover side="left" align="center" :offset="popoverOffset" bare>
+				<template #trigger="{ toggle }">
 					<div class="flex items-center justify-between">
 						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
-						<div class="relative w-full [&>div>div>div>div]:pe-0">
+						<!-- .stop keeps input clicks from reaching the popover trigger's own toggle -->
+						<div class="relative w-full [&>div>div>div>div]:pe-0" @click.stop>
 							<BuilderInput
 								:class="{
 									'[&>input]:pl-8': labelPosition === 'left',
@@ -37,17 +36,17 @@
 								v-if="labelPosition === 'left'"
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
-								@click="togglePopover"
-								class="absolute bottom-[6px] left-2 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
+								@click="toggle"
+								class="rounded absolute bottom-[6px] left-2 h-4 w-4 border border-outline-gray-3 shadow-sm"
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
 						</div>
 					</div>
 				</template>
-				<template #body>
+				<template #default>
 					<div class="rounded-lg bg-surface-base p-3 shadow-lg">
-						<div class="group relative flex items-center justify-center overflow-hidden rounded">
+						<div class="rounded group relative flex items-center justify-center overflow-hidden">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
@@ -110,14 +109,15 @@ const props = withDefaults(
 );
 
 const builderStore = useBuilderStore();
-const fileUploaderRef = ref<{ inputRef: () => HTMLInputElement } | null>(null);
+// FileUploader no longer exposes its input; reach the hidden file input through the root element
+const fileUploaderRef = ref<{ $el: HTMLElement } | null>(null);
 
 watch(
 	() => builderStore.openImageUpload,
 	(val) => {
 		if (val && props.labelPosition === "left") {
 			builderStore.openImageUpload = false;
-			fileUploaderRef.value?.inputRef()?.click();
+			fileUploaderRef.value?.$el.querySelector<HTMLInputElement>("input[type=file]")?.click();
 		}
 	},
 );

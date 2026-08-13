@@ -21,7 +21,9 @@
 				<div class="mb-2">
 					<TabButtons
 						:modelValue="activeType"
-						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
+						@update:modelValue="
+							(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))
+						"
 						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
@@ -85,17 +87,15 @@
 											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
-											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
 											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
-											<template #target="{ togglePopover }">
+											<template #trigger>
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
 													title="Pick color"
-													@mousedown.stop
-													@click="togglePopover"></button>
+													@mousedown.stop></button>
 											</template>
 										</ColorPicker>
 										<input
@@ -128,19 +128,17 @@
 											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
 										]">
 										<ColorPicker
-											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
 											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
-											<template #target="{ togglePopover }">
+											<template #trigger>
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{
 														backgroundColor: resolveVariableValue(row.dark_value || row.value || ''),
 													}"
 													title="Pick color"
-													@mousedown.stop
-													@click="togglePopover"></button>
+													@mousedown.stop></button>
 											</template>
 										</ColorPicker>
 										<input
@@ -175,7 +173,7 @@
 										<Tooltip
 											v-if="row.is_standard"
 											text="This is a standard variable. It cannot be modified or deleted."
-											placement="top">
+											side="top">
 											<span
 												class="lucide-info ml-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
 												aria-hidden="true" />
@@ -198,9 +196,9 @@
 											{{ row.token_name || "unnamed" }}
 										</div>
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
-										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
+										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" side="top">
 											<div
-												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
@@ -254,18 +252,16 @@
 										@dblclick="startEdit(row, 'value')">
 										<ColorPicker
 											v-if="!row.is_standard"
-											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
 											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')">
-											<template #target="{ togglePopover }">
+											<template #trigger>
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
 													title="Pick color"
 													@mousedown.stop
-													@dblclick.stop
-													@click="togglePopover"></button>
+													@dblclick.stop></button>
 											</template>
 										</ColorPicker>
 										<div
@@ -298,11 +294,10 @@
 										@dblclick="startEdit(row, 'dark_value')">
 										<ColorPicker
 											v-if="!row.is_standard"
-											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
 											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'dark')">
-											<template #target="{ togglePopover }">
+											<template #trigger>
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{
@@ -310,8 +305,7 @@
 													}"
 													title="Pick color"
 													@mousedown.stop
-													@dblclick.stop
-													@click="togglePopover"></button>
+													@dblclick.stop></button>
 											</template>
 										</ColorPicker>
 										<div
@@ -713,9 +707,7 @@ const moveSelectedToGroup = async (group: string) => {
 		row.group = group;
 		await saveVariable(row);
 	}
-	toast.success(
-		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
-	);
+	toast.success(group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`);
 };
 
 const uniqueCopyName = (name: string) => {
@@ -948,9 +940,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		.filter(Boolean)
 		.join(", ");
 	const confirmed = await confirm(
-		`Create ${newVariables.length} new token(s) and update ${
-			updateVariables.length
-		} existing token(s)?${
+		`Create ${newVariables.length} new token(s) and update ${updateVariables.length} existing token(s)?${
 			skippedNotes ? ` (${skippedNotes})` : ""
 		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
 	);

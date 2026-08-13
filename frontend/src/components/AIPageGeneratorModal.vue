@@ -19,7 +19,7 @@
 					<Transition name="fade">
 						<div
 							v-if="isDragging"
-							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-outline-blue-4 bg-surface-blue-1/60">
+							class="rounded-md pointer-events-none absolute inset-0 flex items-center justify-center border-2 border-dashed border-outline-blue-4 bg-surface-blue-1/60">
 							<div class="text-xs-medium flex items-center gap-1.5 text-ink-blue-8">
 								<span class="lucide-image h-3.5 w-3.5" aria-hidden="true" />
 								Drop image to attach
@@ -35,12 +35,12 @@
 				<Transition name="fade">
 					<div
 						v-if="imagePreviewUrl"
-						class="flex items-center gap-2 rounded-md border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
-						<img :src="imagePreviewUrl" class="h-8 w-8 rounded object-cover" alt="Reference image" />
+						class="rounded-md flex items-center gap-2 border border-outline-gray-2 bg-surface-gray-1 p-1.5 pr-2.5">
+						<img :src="imagePreviewUrl" class="rounded h-8 w-8 object-cover" alt="Reference image" />
 						<span class="flex-1 truncate text-xs text-ink-gray-7">{{ imageFileName }}</span>
 						<button
 							type="button"
-							class="flex items-center rounded text-ink-gray-5 hover:text-ink-red-7"
+							class="rounded flex items-center text-ink-gray-5 hover:text-ink-red-7"
 							title="Remove image"
 							@click="clearImage">
 							<span class="lucide-x h-3.5 w-3.5" aria-hidden="true" />
@@ -50,7 +50,7 @@
 				<Transition name="fade">
 					<div
 						v-if="errorMessage"
-						class="flex items-center gap-2 rounded-md bg-surface-red-1 p-2 text-xs text-ink-red-9">
+						class="rounded-md flex items-center gap-2 bg-surface-red-1 p-2 text-xs text-ink-red-9">
 						<span class="lucide-alert-circle h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 						{{ errorMessage }}
 					</div>
@@ -73,19 +73,18 @@
 								icon-right="chevron-up"
 								:label="modelOptions.find((m) => m.value === selectedModel)?.label || 'Model'" />
 						</Dropdown>
-						<Popover v-if="mode === 'generate'" placement="top" :offset="10">
-							<template #target="{ togglePopover }">
+						<Popover v-if="mode === 'generate'" side="top" align="center" :offset="10" bare>
+							<template #trigger>
 								<Button
 									variant="ghost"
 									icon-right="chevron-up"
 									:label="selectedPreset?.name || 'No Style'"
 									:class="{
 										'!text-ink-gray-4': !selectedPreset,
-									}"
-									@click="togglePopover" />
+									}" />
 							</template>
-							<template #body-main="{ close }">
-								<div class="z-[1100] w-[420px] rounded-lg border bg-surface-base p-2 shadow-2xl">
+							<template #default="{ close }">
+								<div class="rounded-lg z-[1100] w-[420px] border bg-surface-base p-2 shadow-2xl">
 									<div class="flex items-center justify-between p-1 px-2">
 										<div class="text-sm text-ink-gray-4">Styles</div>
 										<Button
@@ -131,7 +130,7 @@
 				v-if="(generating || progressMessage) && !showDialog"
 				class="fixed left-1/2 top-16 z-[1000] -translate-x-1/2">
 				<div
-					class="flex items-center gap-3 rounded-lg border border-outline-gray-2 bg-surface-base px-4 py-2.5 shadow-lg">
+					class="rounded-lg flex items-center gap-3 border border-outline-gray-2 bg-surface-base px-4 py-2.5 shadow-lg">
 					<span
 						:class="[
 							generating
@@ -230,10 +229,10 @@ const showDialog = computed({
 	set: (v) => emit("update:modelValue", v),
 });
 
-const promptRef = ref<{ el: HTMLTextAreaElement } | null>(null);
+const promptRef = ref<{ focus: (options?: FocusOptions) => void } | null>(null);
 watch(showDialog, (val) => {
 	if (val) {
-		setTimeout(() => promptRef.value?.el?.focus(), 50);
+		setTimeout(() => promptRef.value?.focus(), 50);
 	}
 });
 

@@ -12,10 +12,11 @@
 					emit('update:modelValue', color);
 				}
 			">
-			<template #target="{ togglePopover, isOpen }">
+			<template #trigger="{ toggle }">
 				<div class="flex items-center justify-between">
 					<InputLabel v-if="label">{{ label }}</InputLabel>
-					<div class="relative w-full">
+					<!-- .stop keeps input clicks from reaching the popover trigger's own toggle -->
+					<div class="relative w-full" @click.stop>
 						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
 							<Autocomplete
 								class="[&>div>input]:pl-8"
@@ -27,7 +28,7 @@
 								ref="colorInput"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="() => !isCssVariable && togglePopover()"
+								@focus="() => !isCssVariable && toggle(true)"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
@@ -44,8 +45,8 @@
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
 									<div
-										class="size-4 cursor-pointer rounded shadow-md"
-										@click="togglePopover"
+										class="rounded size-4 cursor-pointer shadow-md"
+										@click="toggle"
 										:style="{
 											background: modelValue
 												? resolvedColor

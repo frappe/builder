@@ -1,11 +1,11 @@
 <template>
 	<div ref="propsEditor" class="flex flex-col gap-2">
-		<div class="flex flex-col gap-2 rounded-lg">
+		<div class="rounded-lg flex flex-col gap-2">
 			<template v-for="(value, name, index) in props.obj" :key="index">
 				<div
-					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
-					<Popover :offset="32" placement="right">
-						<template #target="{ open }">
+					class="prop-list-item rounded relative flex w-full flex-col bg-surface-gray-1 p-2 text-ink-gray-6">
+					<Popover :offset="32" side="right" align="center" bare>
+						<template #trigger>
 							<div
 								class="flex w-full cursor-pointer items-center justify-between"
 								@click.stop="
@@ -17,7 +17,6 @@
 											keepType: false,
 										});
 										keyBeingEdited = name as string;
-										open();
 									}
 								">
 								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
@@ -53,16 +52,16 @@
 										</p>
 									</div>
 								</div>
-								<div class="flex-shrink-0 gap-1 rounded">
+								<div class="rounded flex-shrink-0 gap-1">
 									<Button
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
 										icon="lucide-x"
-										@click="deleteObjectKey(name as string)" />
+										@click.stop="deleteObjectKey(name as string)" />
 								</div>
 							</div>
 						</template>
-						<template #body="{ open, close }">
+						<template #default="{ close }">
 							<PropsPopoverContent
 								ref="popoverContentItemsRef"
 								mode="edit"
@@ -79,8 +78,8 @@
 				</div>
 			</template>
 		</div>
-		<Popover ref="popOverRef" :offset="24" placement="right">
-			<template #target="{ open }">
+		<Popover ref="popOverRef" :offset="24" side="right" align="center" bare>
+			<template #trigger>
 				<Button
 					class="w-full"
 					variant="subtle"
@@ -94,11 +93,10 @@
 							});
 							keyBeingEdited = null;
 							popupMode = 'add';
-							open();
 						}
 					"></Button>
 			</template>
-			<template #body="{ open, close }">
+			<template #default="{ close }">
 				<PropsPopoverContent
 					ref="popoverContentAddRef"
 					:mode="popupMode"

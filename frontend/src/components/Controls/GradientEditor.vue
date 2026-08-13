@@ -15,7 +15,7 @@
 		<div class="flex items-center gap-4">
 			<!-- Gradient Preview / Stop Bar -->
 			<div
-				class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
+				class="shadow-inner rounded relative h-5 w-full border border-outline-gray-2"
 				:style="barPreviewStyle"
 				ref="barRef">
 				<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
@@ -24,15 +24,18 @@
 					:key="index"
 					class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
 					:style="{ left: stop.position + '%' }">
-					<Popover placement="top" :offset="10">
-						<template #target="{ togglePopover }">
-							<div
-								class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
-								:style="{ backgroundColor: stop.color }"
-								@mousedown="handleStopMouseDown(index, $event)"
-								@click="(e) => !hasMoved && togglePopover()" />
+					<Popover side="top" align="center" :offset="10" bare>
+						<template #trigger="{ toggle }">
+							<div>
+								<!-- .stop bypasses the trigger's own click toggle: a drag must not open the picker -->
+								<div
+									class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
+									:style="{ backgroundColor: stop.color }"
+									@mousedown="handleStopMouseDown(index, $event)"
+									@click.stop="!hasMoved && toggle()" />
+							</div>
 						</template>
-						<template #body="{ close }">
+						<template #default="{ close }">
 							<div class="rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
 									renderMode="inline"
