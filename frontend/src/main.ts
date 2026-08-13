@@ -1,11 +1,12 @@
 import { createApp } from "vue";
 
 import { Button, FormControl, FrappeUI } from "frappe-ui";
-import { telemetryPlugin } from "frappe-ui/frappe";
+import { telemetryPlugin } from "@framework/ui/telemetry";
 import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
 import "./setupFrappeUIResource";
+import { initSocket } from "./socket";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
@@ -20,6 +21,7 @@ app.use(telemetryPlugin, { app_name: "builder" });
 
 window.name = "frappe-builder";
 app.config.globalProperties.window = window;
+app.config.globalProperties.$socket = initSocket();
 
 app.component("Button", Button);
 app.component("FormControl", FormControl);
