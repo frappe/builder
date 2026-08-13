@@ -5,11 +5,11 @@
 			<div>
 				<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
-						You don't have any pages yet. Click on the "+ New" button to create a new page.
+						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
 				</div>
 				<div v-else-if="!webPages.data?.length" class="col-span-full">
-					<p class="px-3 text-base text-gray-500">No matching pages found.</p>
+					<p class="px-3 text-base text-gray-500">{{ __("No matching pages found.") }}</p>
 				</div>
 				<!-- grid -->
 				<div class="grid-col grid gap-3 auto-fill-[210px]" v-if="displayType === 'grid'">
@@ -46,13 +46,14 @@
 				v-if="webPages.data?.length && webPages.hasNextPage && displayType !== 'tree'"
 				variant="subtle"
 				size="sm">
-				Load More
+				{{ __("Load More") }}
 			</Button>
 		</section>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import RouteTreeView from "@/components/RouteTreeView.vue";
@@ -130,8 +131,8 @@ watch(displayType, () => fetchPages());
 // remove selection mode when the escape key is pressed
 useShortcut({
 	key: "Escape",
-	description: "Deselect pages",
-	group: "Dashboard",
+	description: __("Deselect pages"),
+	group: __("Dashboard"),
 	handler: () => {
 		selectedPages.value.clear();
 		selectionMode.value = false;

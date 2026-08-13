@@ -31,7 +31,7 @@
 				:clickOutsideToClose="false"
 				:placementOffset="20"
 				v-if="showDynamicValueModal">
-				<template #header>Set Dynamic Value</template>
+				<template #header>{{ __("Set Dynamic Value") }}</template>
 				<template #content>
 					<DynamicValueHandler @setDynamicValue="updateDynamicValue" :selectedValue="dynamicValue" />
 				</template>
@@ -83,6 +83,7 @@
 </template>
 
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import DynamicValueHandler from "@/components/Controls/DynamicValueHandler.vue";
 import Input from "@/components/Controls/Input.vue";
 import PropertyControlInput from "@/components/Controls/PropertyControlInput.vue";
@@ -257,7 +258,7 @@ const dropdownOptions = computed(() => {
 
 	if (props.allowDynamicValue) {
 		options.unshift({
-			label: "Set Dynamic Value",
+			label: __("Set Dynamic Value"),
 			onClick: () => {
 				showDynamicValueModal.value = true;
 			},

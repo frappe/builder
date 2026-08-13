@@ -13,6 +13,7 @@
 				:aria-label="split.label"
 				:type="type"
 				:hideClearButton="true"
+				:hideArrows="true"
 				v-bind="getInputAttrs(index)"
 				@keydown="(event: KeyboardEvent) => handleKeyDown(event, index)"
 				@update:modelValue="(value) => updateValue(index, value)" />

@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import { BlockTemplate } from "@/types/doctypes";
@@ -90,7 +91,7 @@ const useBlockTemplateStore = defineStore("blockTemplateStore", {
 			this.blockTemplateMap.delete(templateName);
 			await builderBlockTemplate.reload();
 
-			toast.success("Block template saved!");
+			toast.success(__("Block template saved!"));
 		},
 	},
 });

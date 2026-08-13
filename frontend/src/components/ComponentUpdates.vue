@@ -1,7 +1,7 @@
 <template>
 	<Popover v-if="outdated.length" side="bottom" align="end" bare>
 		<template #trigger>
-			<Tooltip text="Component updates available" :hoverDelay="0.6" :offset="12">
+			<Tooltip :text="__('Component updates available')" :hoverDelay="0.6" :offset="12">
 				<button
 					class="rounded relative flex h-7 w-7 items-center justify-center text-ink-gray-7 hover:bg-surface-gray-3">
 					<span class="lucide-arrow-up-circle h-4 w-4" aria-hidden="true" />
@@ -15,11 +15,16 @@
 		<template #default>
 			<div class="rounded-lg w-72 bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
 				<div class="mb-2 flex items-center justify-between">
-					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
-					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
+					<span class="text-sm font-medium text-ink-gray-8">{{ __("Component updates") }}</span>
+					<Button
+						variant="subtle"
+						size="sm"
+						:label="__('Update all')"
+						:loading="updatingAll"
+						@click="updateAll" />
 				</div>
 				<p class="mb-3 text-xs text-ink-gray-5">
-					These components changed since this page was last updated. Update to use the latest.
+					{{ __("These components changed since this page was last updated. Update to use the latest.") }}
 				</p>
 				<div class="flex max-h-72 flex-col overflow-y-auto">
 					<div
@@ -37,7 +42,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							label="Update"
+							:label="__('Update')"
 							:loading="updating === item.component_id"
 							@click="update(item.component_id)" />
 					</div>

@@ -1,15 +1,15 @@
 <template>
 	<div v-if="loading || rows?.length">
-		<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Referrers</h3>
+		<h3 class="text-lg-medium mb-4 text-ink-gray-7">{{ __("Top Referrers") }}</h3>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-			Loading...
+			{{ __("Loading...") }}
 		</div>
 		<ListView
 			v-else
 			class="!w-auto"
 			:columns="[
 				{
-					label: 'Domain',
+					label: __('Domain'),
 					key: 'domain',
 					width: '60%',
 					prefix: ({ row }: { row: any }) => {
@@ -26,7 +26,7 @@
 						});
 					},
 				},
-				{ label: 'Count', key: 'count', align: 'right' },
+				{ label: __('Count'), key: 'count', align: 'right' },
 			]"
 			:options="{ selectable: false, emptyState: {} }"
 			:rows="rows"
@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { ListView } from "frappe-ui/experimental";
 import { h } from "vue";
 

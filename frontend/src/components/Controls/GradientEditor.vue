@@ -4,8 +4,8 @@
 		<div class="flex items-center gap-3">
 			<TabButtons
 				:options="[
-					{ label: 'Linear', value: 'linear-gradient' },
-					{ label: 'Radial', value: 'radial-gradient' },
+					{ label: __('Linear'), value: 'linear-gradient' },
+					{ label: __('Radial'), value: 'radial-gradient' },
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
@@ -45,7 +45,7 @@
 								<div class="mt-2 flex items-center gap-2">
 									<Button
 										variant="subtle"
-										label="Remove Stop"
+										:label="__('Remove Stop')"
 										class="w-full"
 										:disabled="gradient.stops.length <= 2"
 										@click="
@@ -93,6 +93,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
 import { useMouseInElement, useMousePressed } from "@vueuse/core";
 import { STRETCH_TABS } from "@/utils/tabButtons";

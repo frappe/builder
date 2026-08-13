@@ -2,12 +2,12 @@
 	<div class="flex items-center justify-between">
 		<ColorInput
 			class="w-full"
-			label="Default Value"
+			:label="__('Default Value')"
 			anchorSelector=".props-popover-content"
 			placement="right"
 			:model-value="options.defaultValue"
 			@update:model-value="handleDefaultValueChange"
-			placeholder="Select default color"></ColorInput>
+			:placeholder="__('Select default color')"></ColorInput>
 	</div>
 </template>
 

@@ -34,7 +34,7 @@
 		<div v-show="blockTemplates.length > 10 || blockTemplateFilter" class="sticky top-0 bg-surface-base py-3">
 			<BuilderInput
 				type="text"
-				placeholder="Search Template"
+				:placeholder="__('Search Template')"
 				v-model="blockTemplateFilter"
 				@input="
 					(value: string) => {
@@ -45,6 +45,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -93,7 +94,7 @@ const sections = computed(() => {
 	return categories
 		.map((category) => {
 			return {
-				sectionName: category as string,
+				sectionName: __(category),
 				blocks: getFilteredBlockTemplates(category) as BlockTemplate[],
 			};
 		})

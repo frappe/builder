@@ -1,8 +1,10 @@
+import { preloadSettingsPanes } from "@/components/Settings";
 import { builderSettings } from "@/data/builderSettings";
 
 export function prefetchBuilderSettings() {
 	const preloadSettings = () => {
 		import("@/components/BuilderSettings.vue");
+		preloadSettingsPanes();
 		if (!builderSettings.doc) builderSettings.reload();
 	};
 	if (window.requestIdleCallback) {

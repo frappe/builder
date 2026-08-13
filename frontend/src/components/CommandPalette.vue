@@ -6,7 +6,7 @@
 				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-md bg-surface-base shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
 				@open-auto-focus.prevent
 				@escape-key-down.prevent="onEscapeKey">
-				<DialogTitle class="sr-only">Command Palette</DialogTitle>
+				<DialogTitle class="sr-only">{{ __("Command Palette") }}</DialogTitle>
 
 				<!-- Search bar -->
 				<div class="flex items-center border-b border-outline-gray-1 px-1">
@@ -30,7 +30,7 @@
 						@keydown="handleKeydown" />
 					<kbd
 						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
-						title="Close">
+						:title="__('Close')">
 						esc
 					</kbd>
 				</div>
@@ -71,7 +71,7 @@
 							]"
 							aria-hidden="true" />
 						<span class="text-base">
-							<template v-if="loading">Searching...</template>
+							<template v-if="loading">{{ __("Searching...") }}</template>
 							<template v-else-if="localQuery">No results for "{{ localQuery }}"</template>
 							<template v-else>{{ hint || "No commands found" }}</template>
 						</span>
@@ -89,13 +89,13 @@
 								<span class="lucide-arrow-down size-3" />
 							</kbd>
 						</span>
-						Navigate
+						{{ __("Navigate") }}
 					</span>
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
 						<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
 							<span class="lucide-corner-down-left size-3" />
 						</kbd>
-						Select
+						{{ __("Select") }}
 					</span>
 				</div>
 			</DialogContent>

@@ -189,7 +189,9 @@ def export_template_group(group, target_app="builder"):
 		blocks = export_template_page(page_doc, paths["pages"], group_folder, target_app=target_app)
 		components.update(extract_components_from_blocks(blocks))
 		fonts.update(extract_fonts_from_blocks(blocks))
-		export_client_scripts(page_doc, paths["client_scripts"])
+		export_client_scripts(
+			[row.builder_script for row in page_doc.client_scripts], paths["client_scripts"]
+		)
 
 	for component_id in components:
 		component_blocks = export_template_component(

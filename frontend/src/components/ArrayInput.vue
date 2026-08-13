@@ -14,7 +14,7 @@
 					@click.stop
 					@mousedown.stop
 					class="rounded-lg flex max-h-60 w-60 flex-col gap-3 overflow-auto bg-surface-base p-4 shadow-lg">
-					<div class="text-sm text-ink-gray-8">Array Items:</div>
+					<div class="text-sm text-ink-gray-8">{{ __("Array Items:") }}</div>
 					<ArrayEditor :arr @update:arr="updateModelValue" />
 				</div>
 			</Popover>
@@ -23,6 +23,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { Popover } from "frappe-ui";
 import { ref } from "vue";
 import ArrayEditor from "./ArrayEditor.vue";

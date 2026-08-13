@@ -156,6 +156,7 @@ yarn dev --host
 - [Documentation](https://docs.frappe.io/builder)
 - [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 - [Frappe Script Editor](https://github.com/frappe/frappe-script-editor)
+- [Translations](https://crowdin.com/project/frappe)
 
 <br>
 <br>

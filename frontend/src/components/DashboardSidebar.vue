@@ -4,28 +4,31 @@
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<nav class="space-y-0.5">
-				<SidebarItem label="All Pages" :active="!builderStore.activeFolder" @click="setFolderActive('')">
+				<SidebarItem
+					:label="__('All Pages')"
+					:active="!builderStore.activeFolder"
+					@click="setFolderActive('')">
 					<template #prefix><FilesIcon class="size-4" /></template>
 				</SidebarItem>
-				<SidebarItem label="Settings" @click="showSettingsDialog = true">
+				<SidebarItem :label="__('Settings')" @click="showSettingsDialog = true">
 					<template #prefix><SettingsIcon class="size-4" /></template>
 				</SidebarItem>
 			</nav>
 
 			<div class="mt-5 flex h-7 items-center justify-between">
-				<SidebarLabel>Folders</SidebarLabel>
+				<SidebarLabel>{{ __("Folders") }}</SidebarLabel>
 				<Button
 					variant="ghost"
 					size="sm"
 					icon="lucide-plus text-ink-gray-5"
-					label="New folder"
+					:label="__('New folder')"
 					@click="promptCreateFolder()" />
 			</div>
 
 			<p
 				v-if="!builderProjectFolder.data?.length"
 				class="mt-0.5 flex h-7 items-center pl-2 text-sm text-ink-gray-5">
-				No folders yet
+				{{ __("No folders yet") }}
 			</p>
 			<nav class="mt-0.5 space-y-0.5">
 				<SidebarItem
@@ -55,21 +58,21 @@
 							size="sm"
 							icon="lucide-info"
 							disabled
-							tooltip="System generated folder cannot be edited or deleted"
+							:tooltip="__('System generated folder cannot be edited or deleted')"
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
 							align="end"
 							:options="[
 								{
-									label: 'Rename',
+									label: __('Rename'),
 									onClick: () => {
 										renamingFolder = project.folder_name;
 									},
 									icon: 'lucide-edit',
 								},
 								{
-									label: 'Delete Folder',
+									label: __('Delete Folder'),
 									onClick: () => deleteFolder(project.folder_name),
 									icon: 'lucide-trash',
 								},
@@ -84,21 +87,22 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
-			<p class="p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
+			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
 	</Sidebar>
 	<Dialog v-model="showSettingsDialog" :dismissable="false" size="5xl" bare>
 		<template #default>
-			<DialogTitle class="sr-only">Global Builder Settings</DialogTitle>
+			<DialogTitle class="sr-only">{{ __("Global Builder Settings") }}</DialogTitle>
 			<DialogDescription class="sr-only">
-				Configure global settings for this builder project.
+				{{ __("Configure global settings for this builder project.") }}
 			</DialogDescription>
 			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
 		</template>
 	</Dialog>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
@@ -158,7 +162,7 @@ const appMenuItems = computed(
 				hideLabel: true,
 				options: [
 					{
-						label: "New Page",
+						label: __("New Page"),
 						onClick: () => (showTemplatesDialog.value = true),
 						icon: "lucide-plus",
 					},
@@ -169,17 +173,17 @@ const appMenuItems = computed(
 				hideLabel: true,
 				options: [
 					{
-						label: "Apps",
+						label: __("Apps"),
 						icon: "lucide-grid",
 						submenu: appsSubmenu.value,
 					},
 					{
-						label: "Toggle Theme",
+						label: __("Toggle Theme"),
 						onClick: () => toggleDark(),
 						icon: isDark.value ? "lucide-sun" : "lucide-moon",
 					},
 					{
-						label: "Settings",
+						label: __("Settings"),
 						onClick: () => (showSettingsDialog.value = true),
 						icon: "lucide-settings",
 					},
@@ -190,7 +194,7 @@ const appMenuItems = computed(
 				hideLabel: true,
 				options: [
 					{
-						label: "Help",
+						label: __("Help"),
 						onClick: () => window.open("https://t.me/frappebuilder"),
 						icon: "lucide-info",
 					},
@@ -229,7 +233,9 @@ const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectF
 
 const deleteFolder = async (folderName: string) => {
 	const confirmed = await confirm(
-		'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
+		__(
+			'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
+		),
 	);
 	if (!confirmed) return;
 	await createResource({

@@ -26,12 +26,13 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import FontUploader from "@/components/Controls/FontUploader.vue";
 import userFonts from "@/data/userFonts";
 import { BuilderToken, UserFont } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
-import { fontListItems, loadFontList } from "@/utils/fontManager";
+import { enqueuePreviewLoad, fontListItems, loadFontList, previewFontStyle } from "@/utils/fontManager";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -43,11 +44,17 @@ const props = withDefaults(
 	}>(),
 	{
 		modelValue: null,
-		placeholder: "Set Font",
+		placeholder: __("Set Font"),
 	},
 );
 
 const emit = defineEmits(["update:modelValue"]);
+
+type FontOption = {
+	label: string;
+	value: string;
+	labelStyle?: () => { fontFamily: string } | undefined;
+};
 
 const { fontTokens, resolveVariableValue, getVariableName } = useBuilderToken();
 const fontInput = ref<typeof Autocomplete | null>(null);
@@ -85,7 +92,13 @@ const handleUpdate = (val: string | null) => emit("update:modelValue", val);
 
 const getOptions = async (filterString: string) => {
 	await loadFontList();
-	const toOption = (family: string) => ({ label: family, value: family });
+	// each row renders in its own typeface; previewFontStyle stays undefined until that
+	// face is usable, so labels never flash a fallback
+	const toOption = (family: string) => ({
+		label: family,
+		value: family,
+		labelStyle: () => previewFontStyle(family),
+	});
 	// a token's name is what the field shows when one is picked, and it matches no
 	// family: filtering the font lists by it would leave only the token to choose from
 	const fontQuery = isCssVariable.value && filterString === displayValue.value ? "" : filterString;
@@ -109,18 +122,22 @@ const getOptions = async (filterString: string) => {
 		fontQuery,
 	);
 
-	const options = [] as { label: string; value: string }[];
+	const options: FontOption[] = [];
 	if (tokenOptions.length) {
-		options.push({ label: "Design tokens", value: "_separator_0" }, ...tokenOptions);
+		options.push({ label: __("Design tokens"), value: "_separator_0" }, ...tokenOptions);
 	}
 	if (userFontOptions.length) {
-		options.push({ label: "Custom", value: "_separator_1" }, ...userFontOptions);
+		options.push({ label: __("Custom"), value: "_separator_1" }, ...userFontOptions);
 	}
 	if (defaultFontOptions.length) {
 		// the heading only earns its place once something sits under it
-		if (options.length) options.push({ label: "Default", value: "_separator_2" });
+		if (options.length) options.push({ label: __("Default"), value: "_separator_2" });
 		options.push(...defaultFontOptions);
 	}
+
+	// separators and design tokens are the only entries without a preview: a token's
+	// label carries its name too, which the family's own subset cannot render
+	enqueuePreviewLoad(options.filter((o) => o.labelStyle).map((o) => o.value));
 	return options;
 };
 

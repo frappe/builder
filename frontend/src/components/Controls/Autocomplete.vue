@@ -65,7 +65,7 @@
 						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
 					]"
 					:style="fixedPositionStyles"
-					@after-enter="updateOptionsPosition"
+					@after-enter="setOptionsPosition"
 					@after-leave="fixedPositionStyles = {}">
 					<div class="options-list overflow-y-auto p-1 empty:p-0">
 						<template v-for="(option, index) in displayOptions" :key="`${option.value}-${index}`">
@@ -84,7 +84,7 @@
 								@mousedown.prevent
 								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
-								<MiddleTruncate :text="option.label" />
+								<MiddleTruncate :text="option.label" :style="resolveLabelStyle(option)" />
 								<component
 									v-if="option.suffix"
 									:is="option.suffix"
@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useResizeObserver } from "@vueuse/core";
@@ -123,7 +124,7 @@ import {
 	ComboboxRoot,
 	ComboboxSeparator,
 } from "reka-ui";
-import type { Component, ComponentPublicInstance } from "vue";
+import type { Component, ComponentPublicInstance, StyleValue } from "vue";
 import { computed, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import MiddleTruncate from "../MiddleTruncate.vue";
 
@@ -137,6 +138,9 @@ interface Option {
 	prefix?: Component;
 	suffix?: Component;
 	disabled?: boolean;
+	// a getter is resolved during render, so styles backed by a reactive source (such as
+	// a font preview that is still loading) reapply once that source settles
+	labelStyle?: StyleValue | (() => StyleValue | undefined);
 }
 
 interface ActionButton {
@@ -164,7 +168,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
-	placeholder: "Search",
+	placeholder: __("Search"),
 	showInputAsOption: false,
 	allowArbitraryValue: true,
 });
@@ -249,6 +253,9 @@ const refreshOptions = async (query = "") => {
 	}
 };
 
+const resolveLabelStyle = (option: Option): StyleValue | undefined =>
+	typeof option.labelStyle === "function" ? option.labelStyle() : option.labelStyle;
+
 const clearSelection = () => emit("update:modelValue", null);
 
 const getInputValue = (event: Event) => (event.target as HTMLInputElement)?.value?.trim();
@@ -262,9 +269,7 @@ const submitArbitraryValue = (inputValue: string) => {
 
 // the input still shows the current selection, i.e. nothing was typed over it
 const isUntouched = (inputValue: string) =>
-	!inputValue ||
-	inputValue === getDisplayValue(props.modelValue) ||
-	inputValue === (props.modelValue ?? "");
+	!inputValue || inputValue === getDisplayValue(props.modelValue) || inputValue === (props.modelValue ?? "");
 
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
@@ -312,8 +317,17 @@ watch(
 	{ immediate: true },
 );
 
+const setOptionsPosition = () => {
+	// nextTick flushes the DOM but not layout; the anchored position can still move
+	nextTick(() => {
+		requestAnimationFrame(() => {
+			updateOptionsPosition();
+		});
+	});
+};
+
 watch(isOpen, (val) => {
-	if (val) nextTick(updateOptionsPosition);
+	if (val) setOptionsPosition();
 });
 
 watch(displayOptions, () => {
@@ -360,9 +374,13 @@ const getFixedPositionStyles = (): Record<string, string> => {
 	};
 };
 
+// options are teleported to <body>; a caller that moves or hides this must close them
+const hideOptions = () => (isOpen.value = false);
+
 defineExpose({
 	refreshOptions,
 	clearSelection,
+	hideOptions,
 });
 </script>
 <style scoped>

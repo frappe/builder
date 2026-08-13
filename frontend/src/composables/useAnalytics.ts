@@ -3,6 +3,7 @@ import { shortenNumber } from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
 import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
+import { __ } from "@/translation";
 
 export interface AnalyticsResponse {
 	total_unique_views: number;
@@ -114,10 +115,10 @@ export function useAnalytics({
 			type: "category",
 		},
 		yAxis: {
-			title: "Timeline",
+			title: __("Timeline"),
 		},
 		y2Axis: {
-			title: "Total Views",
+			title: __("Total Views"),
 		},
 		series: [
 			{
@@ -383,7 +384,7 @@ export function useAnalytics({
 				onSuccess(res: CTRResponse) {
 					ctrData.value = res;
 				},
-			})
+		  })
 		: null;
 
 	const debouncedSubmit = debounce(() => {

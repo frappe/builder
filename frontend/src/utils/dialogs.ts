@@ -10,6 +10,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { createResource, dialog } from "frappe-ui";
+import { __ } from "@/translation";
 
 // Imperative dialogs that replace single-purpose modal components. Each opens
 // a frappe-ui prompt that auto-closes once `onConfirm` resolves; throwing from
@@ -17,10 +18,10 @@ import { createResource, dialog } from "frappe-ui";
 
 export function promptCreateFolder() {
 	dialog.prompt({
-		title: "Create New Folder",
+		title: __("Create New Folder"),
 		size: "sm",
-		confirmLabel: "Create Folder",
-		fields: [{ name: "folder_name", label: "Folder Name", required: true }],
+		confirmLabel: __("Create Folder"),
+		fields: [{ name: "folder_name", label: __("Folder Name"), required: true }],
 		onConfirm: async ({ values }) => {
 			await builderProjectFolder.insert.submit({ folder_name: values.folder_name });
 		},
@@ -32,17 +33,17 @@ export function promptCreateComponent(block: Block) {
 	const canvasStore = useCanvasStore();
 	const pageStore = usePageStore();
 	dialog.prompt({
-		title: "New Component",
+		title: __("New Component"),
 		size: "sm",
-		confirmLabel: "Save",
+		confirmLabel: __("Save"),
 		fields: [
 			{
 				name: "componentName",
-				label: "Component Name",
+				label: __("Component Name"),
 				required: true,
 				defaultValue: block.blockName || "",
 			},
-			{ name: "isGlobalComponent", type: "checkbox", label: "Global Component" },
+			{ name: "isGlobalComponent", type: "checkbox", label: __("Global Component") },
 		],
 		onConfirm: async ({ values }) => {
 			const blockCopy = getBlockCopy(block, true);
@@ -69,20 +70,20 @@ export function promptSelectFolder() {
 	const { selectedPages, selectionMode } = useDashboardState();
 	const builderStore = useBuilderStore();
 	const options = [
-		{ label: "Home", value: "" },
+		{ label: __("Home"), value: "" },
 		...(builderProjectFolder.data || []).map((p: BuilderProjectFolder) => ({
 			label: p.folder_name as string,
 			value: p.folder_name as string,
 		})),
 	];
 	dialog.prompt({
-		title: "Select Folder",
+		title: __("Select Folder"),
 		size: "sm",
 		fields: [
 			{
 				name: "folder",
 				type: "select",
-				label: "Folder",
+				label: __("Folder"),
 				defaultValue: builderStore.activeFolder || "",
 				options,
 			},

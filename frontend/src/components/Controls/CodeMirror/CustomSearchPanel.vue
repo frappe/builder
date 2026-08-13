@@ -21,7 +21,7 @@
 					v-model="search"
 					ref="inputRef"
 					type="text"
-					placeholder="Find"
+					:placeholder="__('Find')"
 					@update:modelValue="(val: string) => commit({ searchTerm: val })"
 					@keydown.enter.prevent="enter" />
 				<div class="flex shrink-0 items-center">
@@ -29,19 +29,19 @@
 						:variant="caseSensitive ? 'subtle' : 'ghost'"
 						size="sm"
 						icon="lucide-type"
-						tooltip="Match Case"
+						:tooltip="__('Match Case')"
 						@click="toggleCaseSensitive" />
 					<Button
 						:variant="regexp ? 'subtle' : 'ghost'"
 						size="sm"
-						tooltip="Use Regular Expression"
+						:tooltip="__('Use Regular Expression')"
 						@click="toggleIsRegexp">
 						<span class="font-mono text-xs">.*</span>
 					</Button>
 					<Button
 						:variant="wholeWord ? 'subtle' : 'ghost'"
 						size="sm"
-						tooltip="Match Whole Word"
+						:tooltip="__('Match Whole Word')"
 						@click="toggleWholeWord">
 						<span class="font-mono text-xs">Ab</span>
 					</Button>
@@ -51,25 +51,25 @@
 						size="sm"
 						icon="lucide-chevron-up"
 						variant="ghost"
-						tooltip="Find Previous (Shift+Enter)"
+						:tooltip="__('Find Previous (Shift+Enter)')"
 						@click.prevent="findPrevious(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
 						icon="lucide-chevron-down"
-						tooltip="Find Next (Enter)"
+						:tooltip="__('Find Next (Enter)')"
 						@click.prevent="findNext(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
 						icon="lucide-align-justify"
-						tooltip="Select All Matches (Alt+Enter)"
+						:tooltip="__('Select All Matches (Alt+Enter)')"
 						@click.prevent="selectMatches(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
 						icon="lucide-x"
-						tooltip="Close (Esc)"
+						:tooltip="__('Close (Esc)')"
 						@click.prevent="closePanel" />
 				</div>
 			</div>
@@ -78,7 +78,7 @@
 				<TextInput
 					v-model="replaceWith"
 					type="text"
-					placeholder="Replace"
+					:placeholder="__('Replace')"
 					@update:modelValue="(val: string) => commit({ replaceTerm: val })"
 					@keydown.enter.prevent="enter" />
 				<div class="flex shrink-0 items-center">
@@ -86,13 +86,13 @@
 						size="sm"
 						variant="ghost"
 						icon="lucide-corner-down-right"
-						tooltip="Replace Next"
+						:tooltip="__('Replace Next')"
 						@click.prevent="replaceNext(view)" />
 					<Button
 						size="sm"
 						variant="ghost"
 						icon="lucide-copy"
-						tooltip="Replace All"
+						:tooltip="__('Replace All')"
 						@click.prevent="replaceAll(view)" />
 				</div>
 			</div>

@@ -36,7 +36,7 @@
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
-												label: 'Save as Token',
+												label: __('Save as Token'),
 												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}
@@ -63,6 +63,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import NewBuilderToken from "@/components/Modals/NewBuilderToken.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -169,7 +170,7 @@ const props = withDefaults(
 	}>(),
 	{
 		modelValue: null,
-		placeholder: "Set Color",
+		placeholder: __("Set Color"),
 		placement: "left",
 		showColorVariableOptions: true,
 		showPickerOnMount: false,

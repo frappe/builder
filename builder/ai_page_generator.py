@@ -363,7 +363,7 @@ def run_llm_job(
 		for chunk in call_llm(model, messages, params, stream=True, api_key=api_key):
 			if delta := chunk.choices[0].delta.content:
 				if not content:
-					emit("progress", message="Building...")
+					emit("progress", message=_("Building..."))
 					last_stage = "Building..."
 				content += delta
 				if cache_key:
@@ -382,7 +382,7 @@ def run_llm_job(
 		if cache_key:
 			frappe.cache().delete_value(cache_key)
 		frappe.log_error(f"Parse error: {e}\nContent: {content}", f"{event_prefix} parse")
-		emit("error", message="Failed to parse AI response. The model returned invalid YAML.")
+		emit("error", message=_("Failed to parse AI response. The model returned invalid YAML."))
 		return
 
 	except Exception as e:
@@ -561,7 +561,7 @@ def get_progress_stage(content: str) -> str | None:
 		if name_match:
 			block_name = name_match.group(1).strip()
 			if block_name.lower() not in {"body", "root", "container"}:
-				return f"Building {block_name}"
+				return _("Building {0}").format(block_name)
 	return None
 
 

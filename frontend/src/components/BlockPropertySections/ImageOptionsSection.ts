@@ -4,6 +4,7 @@ import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { Button } from "frappe-ui";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const imageOptionsSectionProperties = [
 	{
@@ -12,11 +13,11 @@ const imageOptionsSectionProperties = [
 			return {
 				component: ImageUploadInput,
 				propertyKey: "src",
-				label: "Image URL",
+				label: __("Image URL"),
 				allowDynamicValue: true,
 				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
-				variants: [{ name: "dark", property: "darkSrc", label: "Dark Mode" }],
+				variants: [{ name: "dark", property: "darkSrc", label: __("Dark Mode") }],
 			};
 		},
 		events: {
@@ -67,7 +68,7 @@ const imageOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				propertyKey: "alt",
-				label: "Alt Text",
+				label: __("Alt Text"),
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("alt") || "",
 				setModelValue: (val: string) => blockController.setAttribute("alt", val),
@@ -79,7 +80,7 @@ const imageOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Image Options",
+	name: __("Image Options"),
 	properties: imageOptionsSectionProperties,
 	condition: () => blockController.isImage(),
 };
