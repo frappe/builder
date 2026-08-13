@@ -59,7 +59,7 @@
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
-							placement="right"
+							align="end"
 							:options="[
 								{
 									label: 'Rename',
@@ -74,8 +74,8 @@
 									icon: 'lucide-trash',
 								},
 							]">
-							<template v-slot="{ open }">
-								<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open" />
+							<template v-slot>
+								<Button icon="lucide-more-horizontal" size="sm" variant="ghost" />
 							</template>
 						</Dropdown>
 					</template>
@@ -121,7 +121,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui";
-import { TrialBanner } from "frappe-ui/frappe";
+import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 
@@ -156,7 +156,7 @@ const appMenuItems = computed(
 			{
 				group: "Builder",
 				hideLabel: true,
-				items: [
+				options: [
 					{
 						label: "New Page",
 						onClick: () => (showTemplatesDialog.value = true),
@@ -167,7 +167,7 @@ const appMenuItems = computed(
 			{
 				group: "Options",
 				hideLabel: true,
-				items: [
+				options: [
 					{
 						label: "Apps",
 						icon: "lucide-grid",
@@ -188,7 +188,7 @@ const appMenuItems = computed(
 			{
 				group: "Help",
 				hideLabel: true,
-				items: [
+				options: [
 					{
 						label: "Help",
 						onClick: () => window.open("https://t.me/frappebuilder"),

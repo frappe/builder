@@ -2,7 +2,7 @@
 	<template v-for="node in nodes" :key="node.id">
 		<section class="relative">
 			<div
-				class="group flex cursor-pointer select-none items-center gap-1.5 border-b border-outline-gray-1 px-1 hover:rounded-md hover:bg-surface-gray-1"
+				class="hover:rounded-md group flex cursor-pointer select-none items-center gap-1.5 border-b border-outline-gray-1 px-1 hover:bg-surface-gray-1"
 				:class="[
 					node.hasChildren ? 'sticky bg-surface-base shadow-[0_1px_0_var(--border-color)]' : '',
 					{ 'rounded-md !bg-surface-gray-2': focusedNodeId === node.id },
@@ -58,8 +58,8 @@
 					<span class="font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9">/{{ node.label }}</span>
 				</div>
 
-				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
-					<template v-slot="{ open }">
+				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" align="end">
+					<template v-slot>
 						<Button
 							icon="lucide-more-horizontal"
 							size="sm"

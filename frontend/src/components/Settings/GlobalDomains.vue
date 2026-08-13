@@ -7,7 +7,7 @@
 			<div
 				v-for="d in sortedDomains"
 				:key="d.domain"
-				class="flex flex-col gap-1 rounded-md border border-outline-gray-1 px-3 py-2.5">
+				class="rounded-md flex flex-col gap-1 border border-outline-gray-1 px-3 py-2.5">
 				<div class="flex items-center gap-2">
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
@@ -20,7 +20,7 @@
 							size="sm"
 							:theme="statusTheme(d.status)" />
 					</div>
-					<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" placement="right">
+					<Dropdown v-if="getDomainActions(d).length" :options="getDomainActions(d)" align="end">
 						<Button variant="ghost" icon="lucide-more-horizontal" />
 					</Dropdown>
 				</div>
@@ -39,7 +39,7 @@
 				autocomplete="off" />
 
 			<!-- DNS records -->
-			<div class="overflow-hidden rounded bg-surface-gray-1">
+			<div class="rounded overflow-hidden bg-surface-gray-1">
 				<template v-for="(rec, i) in dnsRecords" :key="rec.type">
 					<div v-if="i > 0" class="flex items-center gap-3 px-3">
 						<div class="bg-outline-gray-2 h-px flex-1"></div>

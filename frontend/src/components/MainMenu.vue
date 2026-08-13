@@ -1,5 +1,5 @@
 <template>
-	<Dropdown :options="mainMenuOptions" size="sm" placement="left" :offset="18">
+	<Dropdown :options="mainMenuOptions" size="sm" :offset="18">
 		<template v-slot="{ open }">
 			<div class="flex cursor-pointer items-center gap-2">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />
@@ -45,14 +45,14 @@ const mainMenuOptions = [
 	{
 		group: "Builder",
 		hideLabel: true,
-		items: [
+		options: [
 			{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "lucide-arrow-left" },
 		],
 	},
 	{
 		group: "Page",
 		hideLabel: true,
-		items: [
+		options: [
 			{
 				label: "New Page",
 				onClick: () => (showTemplatesDialog.value = true),
@@ -85,7 +85,7 @@ const mainMenuOptions = [
 	{
 		group: "Preferences",
 		hideLabel: true,
-		items: [
+		options: [
 			{
 				label: `Toggle Theme`,
 				onClick: () => toggleDark(),

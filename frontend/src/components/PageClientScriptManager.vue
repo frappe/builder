@@ -40,7 +40,7 @@
 
 								<Dropdown
 									class="script-options"
-									placement="right"
+									align="end"
 									v-if="activeScript === script && !builderStore.readOnlyMode"
 									:options="[
 										{
@@ -56,8 +56,8 @@
 											icon: 'lucide-trash',
 										},
 									]">
-									<template v-slot="{ open }">
-										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
+									<template v-slot>
+										<Button icon="lucide-more-horizontal" size="sm" variant="ghost"></Button>
 									</template>
 								</Dropdown>
 							</a>
@@ -77,10 +77,9 @@
 								{ label: 'JavaScript', onClick: () => addScript('JavaScript') },
 								{ label: 'CSS', onClick: () => addScript('CSS') },
 							]"
-							size="sm"
-							class="[&>div>div>div]:w-full">
-							<template v-slot="{ open }">
-								<Button class="w-full text-xs" @click="open">New Script</Button>
+							size="sm">
+							<template v-slot>
+								<Button class="w-full text-xs">New Script</Button>
 							</template>
 						</Dropdown>
 
@@ -104,7 +103,7 @@
 		</div>
 
 		<div
-			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
+			class="rounded flex h-[calc(65vh+68px)] w-full items-center justify-center border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			Add Script
 		</div>
@@ -145,7 +144,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { getPageUsageMessage } from "@/utils/helpers";
 import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import draggable from "vuedraggable";

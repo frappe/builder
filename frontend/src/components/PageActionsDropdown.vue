@@ -4,7 +4,7 @@
 			{
 				group: 'Actions',
 				hideLabel: true,
-				items: [
+				options: [
 					{
 						label: 'Duplicate',
 						onClick: () => pageStore.duplicatePage(props.page),
@@ -37,7 +37,7 @@
 			},
 		]"
 		:size="size"
-		:placement="placement">
+		:align="align">
 		<template v-slot="{ open }">
 			<slot :open="open" />
 		</template>
@@ -56,11 +56,11 @@ const props = withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
-		placement?: "left" | "right" | "top" | "bottom";
+		align?: "start" | "center" | "end";
 	}>(),
 	{
 		size: "md",
-		placement: "bottom",
+		align: "start",
 	},
 );
 </script>
