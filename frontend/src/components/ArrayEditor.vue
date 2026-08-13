@@ -2,7 +2,7 @@
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
 		<div v-for="(item, index) in arr" :key="index" class="flex gap-2">
 			<BuilderInput
-				placeholder="Enter value"
+				:placeholder="__('Enter value')"
 				:modelValue="item"
 				@input="(val: string) => updateItem(index, val)" />
 			<Button
@@ -11,7 +11,7 @@
 				icon="lucide-x"
 				@click="deleteItem(index)"></Button>
 		</div>
-		<Button variant="outline" class="w-full" label="Add" @click="addItem"></Button>
+		<Button variant="outline" class="w-full" :label="__('Add')" @click="addItem"></Button>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>

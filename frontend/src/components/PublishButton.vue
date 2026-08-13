@@ -20,7 +20,7 @@
 			v-if="showDropdown"
 			:options="[
 				{
-					label: 'Version History',
+					label: __('Version History'),
 					onClick: () => {
 						builderStore.showRightPanel = true;
 						builderStore.showVersionHistory = true;
@@ -28,7 +28,7 @@
 					icon: 'lucide-history',
 				},
 				{
-					label: 'Unpublish',
+					label: __('Unpublish'),
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published),
 					icon: 'lucide-cloud-off',
@@ -46,6 +46,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -70,9 +71,9 @@ const publishButtonLabel = computed(() => {
 		(pageStore.activePage?.draft_blocks && !pageStore.activePage?.published) ||
 		!pageStore.activePage?.draft_blocks
 	) {
-		return "Publish";
+		return __("Publish");
 	} else {
-		return "Publish Changes";
+		return __("Publish Changes");
 	}
 });
 </script>

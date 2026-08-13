@@ -38,11 +38,12 @@
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty || readonly">
-			Save
+			{{ __("Save") }}
 		</Button>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
 
 // keeps the CodeMirror stack out of the main editor bundle

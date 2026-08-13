@@ -39,16 +39,16 @@
 						{{ node.page.page_title }}
 					</span>
 					<span class="ml-auto mr-1 flex shrink-0 items-center gap-1">
-						<Tooltip v-if="isHomePage(node.page)" text="Home page" :hoverDelay="0.5">
+						<Tooltip v-if="isHomePage(node.page)" :text="__('Home page')" :hoverDelay="0.5">
 							<HomeIcon class="size-3.5 text-ink-green-6" />
 						</Tooltip>
 						<Tooltip
 							v-if="node.page.authenticated_access"
-							text="This page has limited access"
+							:text="__('This page has limited access')"
 							:hoverDelay="0.5">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
-						<Tooltip v-if="!node.page.published" text="Not published" :hoverDelay="0.5">
+						<Tooltip v-if="!node.page.published" :text="__('Not published')" :hoverDelay="0.5">
 							<span class="lucide-globe-x size-3.5 text-ink-gray-4" />
 						</Tooltip>
 					</span>

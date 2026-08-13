@@ -4,7 +4,7 @@
 		<div class="flex items-center justify-between gap-4 px-8 pb-4 pr-16 pt-5">
 			<div class="flex min-w-0 flex-1 items-center">
 				<Button icon-left="lucide-arrow-left" variant="ghost" class="-ml-3" @click="$emit('close')">
-					Back
+					{{ __("Back") }}
 				</Button>
 			</div>
 			<div class="flex items-center gap-1">
@@ -17,7 +17,7 @@
 					@click="activeBreakpoint = breakpoint.device" />
 			</div>
 			<div class="flex flex-1 justify-end">
-				<Button variant="solid" @click="$emit('select', page)">Use template</Button>
+				<Button variant="solid" @click="$emit('select', page)">{{ __("Use template") }}</Button>
 			</div>
 		</div>
 		<div class="flex min-h-0 flex-1 flex-col px-8 pb-8">
@@ -35,6 +35,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { TemplatePageSummary } from "@/types/template";
 import { useElementSize } from "@vueuse/core";
 import { Button } from "frappe-ui";

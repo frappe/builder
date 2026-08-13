@@ -7,6 +7,7 @@ import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { Component } from "vue";
+import { __ } from "@/translation";
 
 export type LeftPanelTab = RegistryItem & {
 	label: string;
@@ -32,7 +33,7 @@ const builderStore = useBuilderStore();
 
 leftPanelTabs.register({
 	name: "Blocks",
-	label: "Insert",
+	label: __("Insert"),
 	icon: "lucide-plus",
 	component: BlocksTab,
 	shortcut: { key: "i", ctrl: true, shift: true },
@@ -40,7 +41,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Layers",
-	label: "Layers",
+	label: __("Layers"),
 	icon: LayersIcon,
 	component: LayersTab,
 	shortcut: { key: "l", ctrl: true, shift: true },
@@ -48,7 +49,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Assets",
-	label: "Components",
+	label: __("Components"),
 	icon: "lucide-box",
 	component: AssetsTab,
 	shortcut: { key: "a", ctrl: true, shift: true },
@@ -56,7 +57,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Code",
-	label: "Code",
+	label: __("Code"),
 	icon: "lucide-code",
 	component: CodeTab,
 	shortcut: { key: "k", ctrl: true, shift: true },
@@ -73,7 +74,7 @@ leftPanelTabs.register({
 // not a tab. It toggles a modal, so it declares an action and its own active state
 leftPanelTabs.register({
 	name: "tokens",
-	label: "Design Tokens",
+	label: __("Design Tokens"),
 	icon: "lucide-aperture",
 	shortcut: { key: "v", ctrl: true, shift: true },
 	action: () => (builderStore.showTokenManager = !builderStore.showTokenManager),

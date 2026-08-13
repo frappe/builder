@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
@@ -87,7 +88,7 @@ const useBuilderStore = defineStore("builderStore", {
 				})
 				.then(() => {
 					capture("builder_homepage_set");
-					toast.success("Homepage set successfully");
+					toast.success(__("Homepage set successfully"));
 				});
 		},
 		unsetHomePage() {
@@ -97,7 +98,7 @@ const useBuilderStore = defineStore("builderStore", {
 				})
 				.then(() => {
 					capture("builder_homepage_unset");
-					toast.success("This page will no longer be the homepage");
+					toast.success(__("This page will no longer be the homepage"));
 				});
 		},
 		updateBuilderSettings(key: keyof BuilderSettings, value: any) {

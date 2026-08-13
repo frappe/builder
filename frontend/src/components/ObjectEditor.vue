@@ -3,7 +3,7 @@
 		<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
 			<div class="min-w-0 flex-1">
 				<BuilderInput
-					placeholder="Property"
+					:placeholder="__('Property')"
 					:modelValue="key"
 					@update:modelValue="(val: string) => replaceKey(key, val)" />
 			</div>
@@ -17,7 +17,7 @@
 				@clearDynamicValue="() => clearDynamicValueForKey(key)" />
 			<div v-else class="min-w-0 flex-1">
 				<BuilderInput
-					placeholder="Value"
+					:placeholder="__('Value')"
 					:modelValue="value"
 					@update:modelValue="(val: string) => updateObjectValue(key, val)" />
 			</div>
@@ -27,7 +27,7 @@
 				icon="lucide-x"
 				@click="deleteObjectKey(key as string)"></Button>
 		</div>
-		<Button variant="outline" label="Add" @click="addObjectKey"></Button>
+		<Button variant="outline" :label="__('Add')" @click="addObjectKey"></Button>
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>

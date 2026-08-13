@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -76,7 +77,7 @@ export function copyBuilderBlocks(
 	const blocks = (
 		copyEntirePage
 			? [canvasStore.activeCanvas?.getRootBlock()]
-			: canvasStore.activeCanvas?.selectedBlocks ?? []
+			: (canvasStore.activeCanvas?.selectedBlocks ?? [])
 	) as Block[];
 
 	const componentDocuments: BuilderComponent[] = [];
@@ -149,7 +150,7 @@ export function copyBuilderBlocks(
 		dataToCopy.pageScripts = pageStore.activePageScripts;
 	}
 	copyToClipboard(dataToCopy, e, "builder-copied-blocks");
-	copyEntirePage && toast.success("Page Copied");
+	copyEntirePage && toast.success(__("Page Copied"));
 }
 
 /**
@@ -170,7 +171,7 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 	} else {
 		const hasDependencies = Boolean(clipboardData.components?.length || clipboardData.variables?.length);
 		if (hasDependencies) {
-			toast.loading("Pasting...", {
+			toast.loading(__("Pasting..."), {
 				id: "paste-blocks",
 			});
 			await handleDependencies(clipboardData, crossSitePaste);
@@ -178,7 +179,7 @@ export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: stri
 		await insertBlocks(clipboardData.blocks);
 		await handlePageScripts(clipboardData, currentSiteURL);
 		hasDependencies &&
-			toast.success("Done", {
+			toast.success(__("Done"), {
 				id: "paste-blocks",
 			});
 		offerRemoteAssetImport(crossSitePaste, clipboardData.fonts || []);
@@ -267,15 +268,15 @@ async function handlePagePaste(
 	const pageStore = usePageStore();
 
 	await showDialog({
-		title: "Pasting a page!",
+		title: __("Pasting a page!"),
 		message:
 			"You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?",
 		actions: [
 			{
-				label: "Create New Page",
+				label: __("Create New Page"),
 				variant: "subtle",
 				async onClick() {
-					toast.loading("Pasting...", { id: "paste-page" });
+					toast.loading(__("Pasting..."), { id: "paste-page" });
 					await handleDependencies(clipboardData, crossSitePaste);
 					await handlePageScripts(clipboardData, currentURL || "");
 					if (clipboardData.pageDoc) {
@@ -290,14 +291,14 @@ async function handlePagePaste(
 					}
 					window.location.href = `/builder/page/${encodeURIComponent(newPage.name)}`;
 					await pageStore.setPage(newPage.name);
-					toast.success("Done", { id: "paste-page" });
+					toast.success(__("Done"), { id: "paste-page" });
 				},
 			},
 			{
-				label: "Update Current Page",
+				label: __("Update Current Page"),
 				variant: "solid",
 				async onClick() {
-					toast.loading("Pasting...", { id: "paste-page" });
+					toast.loading(__("Pasting..."), { id: "paste-page" });
 					await handleDependencies(clipboardData, crossSitePaste);
 					await handlePageScripts(clipboardData, currentURL || "");
 					const currentPage = pageStore.activePage as BuilderPage;
@@ -311,7 +312,7 @@ async function handlePagePaste(
 						pageStore.savePage();
 						offerRemoteAssetImport(crossSitePaste, clipboardData.fonts || []);
 					});
-					toast.success("Done", { id: "paste-page" });
+					toast.success(__("Done"), { id: "paste-page" });
 				},
 			},
 		],
@@ -518,10 +519,7 @@ async function attachScriptsToCurrentPage(scripts: BuilderClientScriptDocument[]
 
 	// keep the open editor in step without reloading the page and losing the paste
 	currentPage.client_scripts = clientScripts as BuilderPage["client_scripts"];
-	pageStore.activePageScripts = [
-		...pageStore.activePageScripts,
-		...(missing as BuilderClientScript[]),
-	];
+	pageStore.activePageScripts = [...pageStore.activePageScripts, ...(missing as BuilderClientScript[])];
 }
 
 function updateBlockComponentReferences(block: BlockOptions, componentIdMap: Map<string, string>): void {

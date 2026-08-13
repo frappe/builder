@@ -4,8 +4,8 @@
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
-					{ label: 'Search', value: 'search', icon: 'lucide-search' },
-					{ label: 'Find & Replace', value: 'replace', icon: 'lucide-edit-3' },
+					{ label: __('Search'), value: 'search', icon: 'lucide-search' },
+					{ label: __('Find & Replace'), value: 'replace', icon: 'lucide-edit-3' },
 				]" />
 		</div>
 
@@ -24,7 +24,7 @@
 					<Button
 						@click="togglePopover"
 						icon="lucide-filter"
-						label="Filters"
+						:label="__('Filters')"
 						:class="[
 							'flex items-center gap-2 text-sm',
 							selectedFiltersCount > 0 ? 'border-ink-gray-6 bg-ink-gray-1' : '',
@@ -41,7 +41,7 @@
 				</template>
 				<template #body>
 					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
-						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">Filter search results by:</div>
+						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
@@ -55,7 +55,9 @@
 							</label>
 						</div>
 						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
-							<Button @click="clearAllFilters" variant="subtle" class="w-full">Clear all filters</Button>
+							<Button @click="clearAllFilters" variant="subtle" class="w-full">
+								{{ __("Clear all filters") }}
+							</Button>
 						</div>
 					</div>
 				</template>
@@ -65,7 +67,7 @@
 		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
 				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="mr-2" />
-				<span>Search inside selected block only</span>
+				<span>{{ __("Search inside selected block only") }}</span>
 			</label>
 		</div>
 
@@ -73,7 +75,7 @@
 			<BuilderInput
 				class="w-full"
 				type="text"
-				placeholder="Replace with..."
+				:placeholder="__('Replace with...')"
 				v-model="replaceQuery"
 				@keydown.enter="handlePrimaryAction" />
 		</div>
@@ -99,7 +101,7 @@
 				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
 					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
 				</div>
-				<h3 class="text-sm-medium mb-2 text-ink-gray-6">Search your blocks</h3>
+				<h3 class="text-sm-medium mb-2 text-ink-gray-6">{{ __("Search your blocks") }}</h3>
 			</div>
 		</div>
 
@@ -122,7 +124,7 @@
 						variant="subtle"
 						class="ml-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
-						Replace
+						{{ __("Replace") }}
 					</Button>
 				</div>
 			</div>
@@ -132,13 +134,14 @@
 			<!-- No Results State -->
 			<div class="flex flex-col items-center justify-center py-6">
 				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
-				<h3 class="text-sm-medium mb-1 text-ink-gray-6">No results found</h3>
-				<p class="text-xs text-ink-gray-5">Try different keywords or adjust your filters</p>
+				<h3 class="text-sm-medium mb-1 text-ink-gray-6">{{ __("No results found") }}</h3>
+				<p class="text-xs text-ink-gray-5">{{ __("Try different keywords or adjust your filters") }}</p>
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
@@ -366,7 +369,7 @@ const replaceInBlock = (block: Block, index: number) => {
 		results.value.splice(index, 1);
 		toast.success(`Replaced in ${block.getBlockDescription()}`);
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 
@@ -388,7 +391,7 @@ const replaceAll = () => {
 		toast.success(`Made ${totalReplacements} replacements across ${totalReplacements} blocks`);
 		performSearch();
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 

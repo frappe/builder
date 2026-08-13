@@ -1,103 +1,305 @@
+
 msgid ""
 msgstr ""
-"Project-Id-Version: frappe\n"
+"Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-08 18:22+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03\n"
+"POT-Creation-Date: 2026-08-13 08:13+0553\n"
+"PO-Revision-Date: 2026-08-08 13:03+0000\n"
 "Last-Translator: suraj@frappe.io\n"
+"Language: hi_IN\n"
 "Language-Team: Hindi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Crowdin-Project: frappe\n"
-"X-Crowdin-Project-ID: 639578\n"
-"X-Crowdin-Language: hi\n"
-"X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
-"X-Crowdin-File-ID: 177\n"
-"Language: hi_IN\n"
+
+#: frontend/src/components/Settings/index.ts:144
+msgid "AI"
+msgstr "AI"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI API Key"
-msgstr ""
+msgstr "AI API कुंजी"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/index.ts:145
 msgid "AI Settings"
-msgstr ""
+msgstr "AI सेटिंग्स"
 
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
-msgstr ""
+msgstr "चयनित AI मॉडल प्रदाता के लिए API कुंजी"
 
 #: builder/ai_page_generator.py:671
 msgid "API key is valid"
-msgstr ""
+msgstr "API कुंजी मान्य है"
+
+#: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
+msgid "Accessibility"
+msgstr "सुगम्यता"
+
+#: frontend/src/components/ArrayEditor.vue:14
+#: frontend/src/components/MoreStylesPanel.vue:43
+#: frontend/src/components/ObjectEditor.vue:30
+#: frontend/src/components/PropsEditor.vue:87
+msgid "Add"
+msgstr "जोड़ें"
+
+#: frontend/src/components/MoreStylesPanel.vue:22
+msgid "Add CSS property"
+msgstr "CSS प्रॉपर्टी जोड़ें"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
-msgstr ""
+msgstr "कस्टम मेटा टैग जोड़ें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:80
+msgid "Add Domain"
+msgstr "डोमेन जोड़ें"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:28
+msgid "Add Redirect"
+msgstr "रीडायरेक्ट जोड़ें"
+
+#: frontend/src/components/PageClientScriptManager.vue:109
+msgid "Add Script"
+msgstr "स्क्रिप्ट जोड़ें"
+
+#: frontend/src/components/DataLoaderBlock.vue:6
+msgid "Add a block to repeat"
+msgstr "दोहराने के लिए एक ब्लॉक जोड़ें"
+
+#: frontend/src/components/Settings/PageCode.vue:7
+msgid "Add meta tags, styles, and scripts to page head"
+msgstr "पेज हेड में मेटा टैग, शैलियां और स्क्रिप्ट जोड़ें"
+
+#: frontend/src/components/MoreStylesPanel.vue:168
+msgid "Add property"
+msgstr "प्रॉपर्टी जोड़ें"
+
+#: frontend/src/components/Settings/PageCode.vue:17
+msgid "Add scripts to page body"
+msgstr "पेज बॉडी में स्क्रिप्ट जोड़ें"
+
+#: frontend/src/components/Settings/GlobalCode.vue:15
+msgid "Added to end of body. For adding scripts."
+msgstr "बॉडी के अंत में जोड़ा गया। स्क्रिप्ट जोड़ने के लिए।"
+
+#: frontend/src/components/Settings/GlobalCode.vue:6
+msgid "Added to end of head. For meta tags, styles, and scripts."
+msgstr "हेड के अंत में जोड़ा गया। मेटा टैग, शैलियों और स्क्रिप्ट के लिए।"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:62
+msgid "Admin"
+msgstr "व्यवस्थापक"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
+#: frontend/src/components/Settings/GlobalRedirects.vue:92
 msgid "Advanced"
-msgstr "विकसित"
+msgstr "उन्नत"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:133
+msgid "Agency / Freelancer"
+msgstr "एजेंसी / फ्रीलांसर"
+
+#: frontend/src/utils/helpers.ts:50
+msgid "Alert"
+msgstr "चेतावनी"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:148
+msgid "Align"
+msgstr "संरेखण"
+
+#: frontend/src/components/DashboardHead.vue:33
+#: frontend/src/components/Templates/TemplateGallery.vue:65
+msgid "All"
+msgstr "सभी"
 
 #: frontend/src/components/DashboardHead.vue:4
-#: frontend/src/components/DashboardSidebar.vue:7
+#: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
-msgstr ""
+msgstr "सभी पेज"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
+msgid "All Properties"
+msgstr "सभी प्रॉपर्टी"
+
+#: frontend/src/components/PageClientScriptManager.vue:101
+msgid "All client scripts are executed in preview mode and on published pages."
+msgstr "सभी क्लाइंट स्क्रिप्ट पूर्वावलोकन मोड और प्रकाशित पेजों पर चलती हैं।"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "All the images uploaded to Canvas will be auto converted to WebP for better page performance."
-msgstr ""
+msgstr "बेहतर पेज प्रदर्शन के लिए कैनवास पर अपलोड की गई सभी छवियां अपने आप WebP में बदल दी जाएंगी।"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:69
+msgid "All the images uploaded via Builder will be converted to WebP for better page performance"
+msgstr "बेहतर पेज प्रदर्शन के लिए बिल्डर से अपलोड की गई सभी छवियां WebP में बदल दी जाएंगी"
+
+#: frontend/src/components/DashboardHead.vue:60
+msgid "Alphabetically (A-Z)"
+msgstr "वर्णक्रम में (A-Z)"
+
+#: frontend/src/components/DashboardHead.vue:64
+msgid "Alphabetically (Z-A)"
+msgstr "वर्णक्रम में (Z-A)"
+
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
+msgid "Alt Text"
+msgstr "वैकल्पिक टेक्स्ट"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
+msgid ""
+"An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
 msgstr ""
+".ico एक्सटेंशन वाली एक आइकन फ़ाइल। आकार 16 x 16 px होना चाहिए।\n"
+"आप इसे favicon-generator.org से बना सकते हैं"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
-msgstr ""
+msgstr ".ico एक्सटेंशन वाली एक आइकन फ़ाइल। आकार 16 x 16 px होना चाहिए।<br>आप इसे <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a> से बना सकते हैं"
+
+#: frontend/src/components/Settings/index.ts:68
+#: frontend/src/components/Settings/index.ts:127
+msgid "Analytics"
+msgstr "एनालिटिक्स"
 
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "App"
-msgstr ""
+msgstr "ऐप"
+
+#: builder/export_import_standard_page.py:29
+msgid "App {0} is not installed"
+msgstr "ऐप {0} इंस्टॉल नहीं है"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:46
+#: frontend/src/components/Settings/PageGeneral.vue:87
+msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
+msgstr "आपके ब्राउज़र टैब में शीर्षक के बगल में दिखता है। अनुशंसित आकार 32x32 px, PNG या ICO में"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:105
+msgid "Append the original query string to the target URL"
+msgstr "मूल क्वेरी स्ट्रिंग को लक्ष्य URL के अंत में जोड़ें"
+
+#: frontend/src/components/Settings/GlobalCode.vue:33
+msgid "Applies to all pages"
+msgstr "सभी पेजों पर लागू होता है"
+
+#: frontend/src/components/DashboardSidebar.vue:176
+msgid "Apps"
+msgstr "ऐप्स"
+
+#: frontend/src/stores/pageStore.ts:168
+msgid "Are you sure you want to delete page: {0}?"
+msgstr "क्या आप वाकई पेज {0} हटाना चाहते हैं?"
+
+#: frontend/src/components/DashboardSidebar.vue:236
+msgid "Are you sure you want to delete this folder? All the pages under this folder will be visible under \"All Pages\""
+msgstr "क्या आप वाकई यह फ़ोल्डर हटाना चाहते हैं? इस फ़ोल्डर के सभी पेज \"सभी पेज\" के अंतर्गत दिखाई देंगे"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:272
+msgid "Are you sure you want to delete this redirect?"
+msgstr "क्या आप वाकई इस रीडायरेक्ट को हटाना चाहते हैं?"
+
+#: frontend/src/stores/canvasStore.ts:198
+msgid "Are you sure you want to exit without saving?"
+msgstr "क्या आप वाकई बिना सहेजे बाहर निकलना चाहते हैं?"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:74
 msgid "Are you sure you want to replace {0} with {1}?"
-msgstr ""
+msgstr "क्या आप वाकई {0} को {1} से बदलना चाहते हैं?"
 
-#: frontend/src/stores/pageStore.ts:243
+#: frontend/src/components/BlockContextMenuOptions/index.ts:206
+msgid "Are you sure you want to reset?"
+msgstr "क्या आप वाकई रीसेट करना चाहते हैं?"
+
+#: frontend/src/stores/pageStore.ts:245
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
-msgstr ""
+msgstr "क्या आप वाकई \"{0}\" को अप्रकाशित करना चाहते हैं? यह वेबसाइट पर उपलब्ध नहीं रहेगा।"
+
+#: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:49
+msgid "Aria Label"
+msgstr "Aria लेबल"
+
+#: frontend/src/components/PropsPopoverContent.vue:171
+msgid "Array"
+msgstr "ऐरे"
+
+#: frontend/src/components/ArrayInput.vue:20
+msgid "Array Items:"
+msgstr "ऐरे आइटम:"
+
+#: frontend/src/components/PageClientScriptManager.vue:90
+#: frontend/src/components/PageClientScriptManager.vue:93
+msgid "Attach Script"
+msgstr "स्क्रिप्ट संलग्न करें"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Authenticated Access"
-msgstr ""
+msgstr "प्रमाणित पहुंच"
+
+#: frontend/src/components/BackgroundHandler.vue:286
+#: frontend/src/components/BlockGridLayoutHandler.vue:13
+#: frontend/src/components/BlockPositionHandler.vue:11
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:20
+#: frontend/src/components/DimensionInput.vue:9
+msgid "Auto"
+msgstr "स्वचालित"
 
 #. Label of the auto_convert_images_to_webp (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:67
 msgid "Auto convert images to WebP"
-msgstr ""
+msgstr "छवियों को अपने आप WebP में बदलें"
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:58
+msgid "Autoplay"
+msgstr "स्वतः चलाएं"
+
+#: frontend/src/components/Templates/TemplatePreview.vue:7
+#: frontend/src/pages/PagePersonaSurvey.vue:27
+msgid "Back"
+msgstr "वापस"
+
+#: frontend/src/components/MainMenu.vue:52
+msgid "Back to Dashboard"
+msgstr "डैशबोर्ड पर वापस जाएं"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
-msgstr "घर वापिस जा रहा हूँ"
+msgstr "होम पर वापस जाएं"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:18
+msgid "Back to all templates"
+msgstr "सभी टेम्पलेट पर वापस जाएं"
+
+#: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
+msgid "Back to builder"
+msgstr "बिल्डर पर वापस जाएं"
+
+#: frontend/src/components/BackgroundHandler.vue:8
+msgid "Background"
+msgstr "पृष्ठभूमि"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:74
+msgid "Background Only"
+msgstr "केवल पृष्ठभूमि"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -107,317 +309,1514 @@ msgstr "बुनियादी"
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic Forms"
-msgstr ""
+msgstr "बुनियादी फ़ॉर्म"
+
+#: frontend/src/components/Templates/TemplatePageGrid.vue:12
+msgid "Blank Page"
+msgstr "खाली पेज"
 
 #. Label of the block (JSON) field in DocType 'Block Template'
 #. Label of the block (JSON) field in DocType 'Builder Component'
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
-msgstr ""
+msgstr "ब्लॉक"
+
+#: frontend/src/components/PageScript.vue:107
+msgid "Block CSS"
+msgstr "ब्लॉक CSS"
+
+#: frontend/src/pages/PageBuilder.vue:307
+msgid "Block Client Script"
+msgstr "ब्लॉक क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/PageScript.vue:95
+msgid "Block JavaScript"
+msgstr "ब्लॉक JavaScript"
+
+#: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:147
+msgid "Block Options"
+msgstr "ब्लॉक विकल्प"
+
+#: frontend/src/components/PageScript.vue:33
+msgid "Block Props"
+msgstr "ब्लॉक प्रॉप्स"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
-msgstr ""
+msgstr "ब्लॉक टेम्पलेट"
+
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Client Script"
+msgstr "ब्लॉक टेम्पलेट क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Data Script"
+msgstr "ब्लॉक टेम्पलेट डेटा स्क्रिप्ट"
+
+#: frontend/src/stores/blockTemplateStore.ts:94
+msgid "Block template saved!"
+msgstr "ब्लॉक टेम्पलेट सहेजा गया!"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Blocks"
-msgstr ""
+msgstr "ब्लॉक"
+
+#: frontend/src/components/ShadowHandler.vue:155
+msgid "Blur"
+msgstr "धुंधलापन"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Body HTML"
-msgstr ""
+msgstr "बॉडी HTML"
+
+#: frontend/src/components/PropsPopoverContent.vue:169
+msgid "Boolean"
+msgstr "बूलियन"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:91
+msgid "Border Color"
+msgstr "बॉर्डर का रंग"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:133
+msgid "Border Style"
+msgstr "बॉर्डर शैली"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:116
+msgid "Border Width"
+msgstr "बॉर्डर की चौड़ाई"
+
+#: frontend/src/components/BackgroundHandler.vue:292
+#: frontend/src/components/BlockPositionHandler.vue:61
+msgid "Bottom"
+msgstr "नीचे"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:137
+#: frontend/src/components/BlockGridLayoutHandler.vue:200
+msgid "Bottom Center"
+msgstr "नीचे मध्य"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:141
+#: frontend/src/components/BlockGridLayoutHandler.vue:204
+msgid "Bottom Left"
+msgstr "नीचे बाएं"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:133
+#: frontend/src/components/BlockGridLayoutHandler.vue:196
+msgid "Bottom Right"
+msgstr "नीचे दाएं"
+
+#: frontend/src/components/BuilderCommandPalette.vue:88
+msgid "Browse all settings"
+msgstr "सभी सेटिंग्स देखें"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Builder Client Script"
-msgstr ""
+msgstr "बिल्डर क्लाइंट स्क्रिप्ट"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Builder Component"
-msgstr ""
+msgstr "बिल्डर कंपोनेंट"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Builder Page"
-msgstr ""
+msgstr "बिल्डर पेज"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Builder Page Click"
-msgstr ""
+msgstr "बिल्डर पेज क्लिक"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Page Client Script"
-msgstr ""
+msgstr "बिल्डर पेज क्लाइंट स्क्रिप्ट"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Builder Project Folder"
-msgstr ""
+msgstr "बिल्डर प्रोजेक्ट फ़ोल्डर"
 
 #. Label of the builder_script (Link) field in DocType 'Builder Page Client
 #. Script'
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Script"
-msgstr ""
+msgstr "बिल्डर स्क्रिप्ट"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/BuilderToolbar.vue:39
 msgid "Builder Settings"
-msgstr ""
+msgstr "बिल्डर सेटिंग्स"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Builder Snapshot"
-msgstr ""
+msgstr "बिल्डर स्नैपशॉट"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Builder Token"
-msgstr ""
+msgstr "बिल्डर टोकन"
+
+#: builder/ai_page_generator.py:564
+msgid "Building {0}"
+msgstr "{0} बनाया जा रहा है"
+
+#: builder/ai_page_generator.py:366
+msgid "Building..."
+msgstr "बनाया जा रहा है..."
+
+#: frontend/src/components/PageClientScriptManager.vue:78
+#: frontend/src/components/PageScript.vue:194
+#: frontend/src/pages/PageBuilder.vue:311
+msgid "CSS"
+msgstr "CSS"
+
+#: frontend/src/components/Modals/TokenManager.vue:890
+msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
+msgstr "CSV में 'Token Name' और 'Light Mode' कॉलम होने चाहिए"
+
+#: frontend/src/components/Modals/TokenManager.vue:878
+msgid "CSV must have at least a header row and one data row"
+msgstr "CSV में कम से कम एक हेडर पंक्ति और एक डेटा पंक्ति होनी चाहिए"
+
+#: frontend/src/components/Settings/TopClicksList.vue:13
+msgid "CTR"
+msgstr "CTR"
+
+#: frontend/src/utils/helpers.ts:36
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:40
+msgid "Cancel invitation"
+msgstr "निमंत्रण रद्द करें"
+
+#: frontend/src/utils/useCanvasUtils.ts:235
+msgid "Cannot delete root block"
+msgstr "रूट ब्लॉक को हटाया नहीं जा सकता"
 
 #. Label of the canonical_url (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageMeta.vue:55
 msgid "Canonical URL"
-msgstr ""
+msgstr "कैनोनिकल URL"
+
+#: frontend/src/utils/useBuilderEvents.ts:280
+#: frontend/src/utils/useBuilderEvents.ts:292
+#: frontend/src/utils/useBuilderEvents.ts:302
+#: frontend/src/utils/useBuilderEvents.ts:313
+#: frontend/src/utils/useBuilderEvents.ts:324
+#: frontend/src/utils/useBuilderEvents.ts:335
+#: frontend/src/utils/useBuilderEvents.ts:347
+#: frontend/src/utils/useBuilderEvents.ts:358
+msgid "Canvas"
+msgstr "कैनवास"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:132
+msgid "Capitalize"
+msgstr "पहला अक्षर बड़ा"
 
 #. Label of the category (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
+#: frontend/src/components/Modals/NewBlockTemplate.vue:32
 msgid "Category"
-msgstr "वर्ग"
+msgstr "श्रेणी"
+
+#: frontend/src/components/BackgroundHandler.vue:290
+#: frontend/src/components/BlockGridLayoutHandler.vue:67
+#: frontend/src/components/BlockGridLayoutHandler.vue:125
+#: frontend/src/components/BlockGridLayoutHandler.vue:188
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:159
+msgid "Center"
+msgstr "मध्य"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:129
+#: frontend/src/components/BlockGridLayoutHandler.vue:192
+msgid "Center Left"
+msgstr "मध्य बाएं"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:121
+#: frontend/src/components/BlockGridLayoutHandler.vue:184
+msgid "Center Right"
+msgstr "मध्य दाएं"
+
+#: frontend/src/components/Controls/ImageUploader.vue:13
+msgid "Change"
+msgstr "बदलें"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
+msgid "Checked"
+msgstr "चयनित"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:12
+msgid "Choose a template to get a head start, or start from scratch."
+msgstr "तेज़ शुरुआत के लिए कोई टेम्पलेट चुनें, या शुरू से बनाएं।"
+
+#: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
+msgid "Class"
+msgstr "क्लास"
+
+#: frontend/src/components/BackgroundHandler.vue:113
+msgid "Clear Gradient"
+msgstr "ग्रेडिएंट हटाएं"
+
+#: frontend/src/components/BackgroundHandler.vue:105
+msgid "Clear Image"
+msgstr "छवि हटाएं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:98
+msgid "Clear Selection"
+msgstr "चयन हटाएं"
+
+#: frontend/src/components/Controls/SearchBlock.vue:59
+msgid "Clear all filters"
+msgstr "सभी फ़िल्टर हटाएं"
+
+#: frontend/src/components/Modals/TokenManager.vue:355
+msgid "Click 'Add Token' to create your first one."
+msgstr "अपना पहला टोकन बनाने के लिए 'टोकन जोड़ें' पर क्लिक करें।"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:20
+msgid "Click-through Rate"
+msgstr "क्लिक-थ्रू दर"
+
+#: frontend/src/components/Settings/TopClicksList.vue:12
+msgid "Clicks"
+msgstr "क्लिक"
+
+#: frontend/src/components/PageScript.vue:5
+#: frontend/src/components/Settings/GlobalCode.vue:22
+msgid "Client Script"
+msgstr "क्लाइंट स्क्रिप्ट"
 
 #. Label of the client_scripts (Table MultiSelect) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Client Scripts"
-msgstr ""
+msgstr "क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/BackgroundHandler.vue:123
+msgid "Clip Background to Text"
+msgstr "पृष्ठभूमि को टेक्स्ट तक सीमित करें"
+
+#: frontend/src/components/CommandPalette.vue:33
+msgid "Close"
+msgstr "बंद करें"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:72
+msgid "Close (Esc)"
+msgstr "बंद करें (Esc)"
+
+#: frontend/src/components/LeftPanelTabs/index.ts:54
+#: frontend/src/components/Settings/index.ts:52
+#: frontend/src/components/Settings/index.ts:94
+msgid "Code"
+msgstr "कोड"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:148
+msgid "Col Span"
+msgstr "कॉलम विस्तार"
+
+#: frontend/src/components/DashboardHead.vue:49
+msgid "Collapse"
+msgstr "संक्षिप्त करें"
+
+#: frontend/src/components/Commands/index.ts:159
+msgid "Collapse All Layers"
+msgstr "सभी लेयर संक्षिप्त करें"
+
+#: frontend/src/components/RouteTreeView.vue:374
+msgid "Collapse node or move up in page tree"
+msgstr "नोड संक्षिप्त करें या पेज ट्री में ऊपर जाएं"
+
+#: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
+msgid "Collection"
+msgstr "कलेक्शन"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
+#: frontend/src/components/PropsPopoverContent.vue:174
 msgid "Color"
 msgstr "रंग"
+
+#: frontend/src/components/Modals/TokenManager.vue:449
+msgid "Colors"
+msgstr "रंग"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:75
+msgid "Colors Only"
+msgstr "केवल रंग"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:87
+msgid "Column"
+msgstr "कॉलम"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:95
+msgid "Column Dense"
+msgstr "कॉलम सघन"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:17
+msgid "Columns"
+msgstr "कॉलम"
+
+#: frontend/src/components/CommandPalette.vue:9
+msgid "Command Palette"
+msgstr "कमांड पैलेट"
+
+#: frontend/src/components/BuilderCommandPalette.vue:312
+msgid "Commands"
+msgstr "कमांड"
+
+#: frontend/src/components/PageScript.vue:204
+msgid "Component Client Script"
+msgstr "कंपोनेंट क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/PageScript.vue:23
+#: frontend/src/components/PageScript.vue:133
+msgid "Component Data Preview"
+msgstr "कंपोनेंट डेटा पूर्वावलोकन"
 
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
+#: frontend/src/components/PageScript.vue:204
 msgid "Component Data Script"
-msgstr ""
+msgstr "कंपोनेंट डेटा स्क्रिप्ट"
 
 #. Label of the component_id (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Component ID"
-msgstr ""
+msgstr "कंपोनेंट ID"
 
 #. Label of the component_name (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
+#: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr "घटक का नाम"
+msgstr "कंपोनेंट का नाम"
+
+#: frontend/src/components/PageScript.vue:33
+msgid "Component Props"
+msgstr "कंपोनेंट प्रॉप्स"
+
+#: frontend/src/stores/componentStore.ts:99
+msgid "Component draft is unavailable."
+msgstr "कंपोनेंट का मसौदा उपलब्ध नहीं है।"
+
+#: frontend/src/stores/componentStore.ts:439
+msgid "Component is used in current page. You cannot delete it."
+msgstr "यह कंपोनेंट वर्तमान पेज में उपयोग हो रहा है। आप इसे हटा नहीं सकते।"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:88
 msgid "Component replaced successfully"
-msgstr ""
+msgstr "कंपोनेंट सफलतापूर्वक बदला गया"
+
+#: frontend/src/stores/componentStore.ts:111
+msgid "Component saved!"
+msgstr "कंपोनेंट सहेजा गया!"
+
+#: frontend/src/components/ComponentUpdates.vue:19
+msgid "Component updates"
+msgstr "कंपोनेंट अपडेट"
+
+#: frontend/src/components/ComponentUpdates.vue:4
+msgid "Component updates available"
+msgstr "कंपोनेंट अपडेट उपलब्ध हैं"
 
 #: builder/builder/component_versions.py:236
 msgid "Component {0} was deleted and will not render"
-msgstr ""
+msgstr "कंपोनेंट {0} हटा दिया गया था और प्रदर्शित नहीं होगा"
+
+#: frontend/src/components/LeftPanelTabs/index.ts:47
+msgid "Components"
+msgstr "कंपोनेंट"
+
+#: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
+msgid "Condition"
+msgstr "शर्त"
+
+#: frontend/src/components/DashboardSidebar.vue:98
+msgid "Configure global settings for this builder project."
+msgstr "इस बिल्डर प्रोजेक्ट की वैश्विक सेटिंग्स कॉन्फ़िगर करें।"
+
+#: frontend/src/components/BuilderToolbar.vue:41
+msgid "Configure page and global settings for this project."
+msgstr "इस प्रोजेक्ट की पेज और वैश्विक सेटिंग्स कॉन्फ़िगर करें।"
+
+#: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
+msgid "Confirm"
+msgstr "पुष्टि करें"
+
+#: frontend/src/components/BackgroundHandler.vue:284
+msgid "Contain"
+msgstr "समाहित करें"
+
+#: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
+msgid "Container (c)"
+msgstr "कंटेनर (c)"
+
+#: frontend/src/utils/useBuilderEvents.ts:367
+msgid "Container mode"
+msgstr "कंटेनर मोड"
 
 #. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:22
 msgid "Content"
 msgstr "सामग्री"
 
-#: builder/api.py:430
-msgid "Could not import any pages from this template group."
-msgstr ""
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:41
+msgid "Controls"
+msgstr "नियंत्रण"
 
-#: builder/api.py:398
+#: frontend/src/components/BlockContextMenuOptions/index.ts:84
+msgid "Convert To Collection"
+msgstr "कलेक्शन में बदलें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:209
+msgid "Copied to clipboard"
+msgstr "क्लिपबोर्ड पर कॉपी किया गया"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:58
+msgid "Copy"
+msgstr "कॉपी करें"
+
+#: frontend/src/components/Commands/index.ts:260
+msgid "Copy Block Styles"
+msgstr "ब्लॉक की शैलियां कॉपी करें"
+
+#: frontend/src/components/MainMenu.vue:68
+msgid "Copy Page"
+msgstr "पेज कॉपी करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:63
+msgid "Copy Style"
+msgstr "शैली कॉपी करें"
+
+#: frontend/src/components/Commands/index.ts:264
+msgid "Copy block styles"
+msgstr "ब्लॉक की शैलियां कॉपी करें"
+
+#: frontend/src/utils/useBuilderEvents.ts:473
+msgid "Copy entire page?"
+msgstr "पूरा पेज कॉपी करें?"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:210
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
+msgid "Could not create page from template"
+msgstr "टेम्पलेट से पेज नहीं बनाया जा सका"
+
+#: builder/api.py:440
+msgid "Could not import any pages from this template group."
+msgstr "इस टेम्पलेट समूह से कोई पेज आयात नहीं किया जा सका।"
+
+#: builder/api.py:408
 msgid "Could not load the selected template. Please try again."
-msgstr ""
+msgstr "चयनित टेम्पलेट लोड नहीं हो सका। कृपया फिर से प्रयास करें।"
+
+#: builder/api.py:190
+msgid "Could not resolve hostname: {0}"
+msgstr "होस्टनाम हल नहीं हो सका: {0}"
+
+#: frontend/src/components/Modals/TokenManager.vue:438
+msgid "Couldn't copy to clipboard"
+msgstr "क्लिपबोर्ड पर कॉपी नहीं किया जा सका"
+
+#: frontend/src/components/Settings/TopReferrersList.vue:29
+msgid "Count"
+msgstr "गिनती"
+
+#: frontend/src/components/BackgroundHandler.vue:285
+msgid "Cover"
+msgstr "कवर"
+
+#: frontend/src/utils/dialogs.ts:23
+msgid "Create Folder"
+msgstr "फ़ोल्डर बनाएं"
+
+#: frontend/src/utils/dialogs.ts:21
+msgid "Create New Folder"
+msgstr "नया फ़ोल्डर बनाएं"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:189
+msgid "Create New Page"
+msgstr "नया पेज बनाएं"
+
+#: frontend/src/components/Templates/TemplatesDialog.vue:4
+msgid "Create a new page"
+msgstr "एक नया पेज बनाएं"
+
+#: frontend/src/components/PageListItem.vue:56
+msgid "Created by {0}"
+msgstr "{0} द्वारा बनाया गया"
+
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
+msgid "Creating an editable copy..."
+msgstr "संपादन योग्य प्रतिलिपि बनाई जा रही है..."
+
+#: frontend/src/components/Templates/TemplateGallery.vue:208
+msgid "Creating page from template..."
+msgstr "टेम्पलेट से पेज बनाया जा रहा है..."
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:247
+msgid "Crosshair"
+msgstr "क्रॉसहेयर"
+
+#: frontend/src/components/Settings/index.ts:28
+msgid "Current Page"
+msgstr "वर्तमान पेज"
+
+#: frontend/src/components/VersionHistory.vue:50
+msgid "Current version"
+msgstr "वर्तमान संस्करण"
+
+#: frontend/src/components/VersionHistory.vue:77
+msgid "Currently live"
+msgstr "अभी लाइव"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:239
+msgid "Cursor"
+msgstr "कर्सर"
+
+#: frontend/src/components/Controls/FontInput.vue:130
+#: frontend/src/components/Settings/AnalyticsFilters.vue:57
+#: frontend/src/components/ShadowHandler.vue:186
+msgid "Custom"
+msgstr "कस्टम"
+
+#: frontend/src/components/Settings/index.ts:119
+msgid "Custom Domains"
+msgstr "कस्टम डोमेन"
+
+#: frontend/src/components/Modals/TokenManager.vue:51
+msgid "Dark"
+msgstr "गहरा"
+
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
+msgid "Dark Mode"
+msgstr "डार्क मोड"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:34
+msgid "Dark Mode Color"
+msgstr "डार्क मोड रंग"
 
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
-msgstr ""
+msgstr "डार्क मान"
+
+#: frontend/src/components/DashboardContent.vue:135
+msgid "Dashboard"
+msgstr "डैशबोर्ड"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:138
+msgid "Dashed"
+msgstr "धराशायी"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Data"
-msgstr ""
+msgstr "डेटा"
+
+#: frontend/src/components/BlockPropertySections/DataKeySection.ts:51
+msgid "Data Key"
+msgstr "डेटा कुंजी"
+
+#: frontend/src/components/PageScript.vue:75
+msgid "Data Preview"
+msgstr "डेटा पूर्वावलोकन"
+
+#: frontend/src/components/PageScript.vue:7
+msgid "Data Script"
+msgstr "डेटा स्क्रिप्ट"
+
+#: frontend/src/components/PageScript.vue:224
+msgid "Data script saved"
+msgstr "डेटा स्क्रिप्ट सहेजी गई"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:243
+#: frontend/src/components/Controls/FontInput.vue:134
+msgid "Default"
+msgstr "डिफ़ॉल्ट"
 
 #. Description of the 'Default Language' (Data) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:17
 msgid "Default HTML lang code (e.g., en, es, fr)"
-msgstr ""
+msgstr "डिफ़ॉल्ट HTML भाषा कोड (जैसे en, es, fr)"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:19
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:19
+msgid "Default Items"
+msgstr "डिफ़ॉल्ट आइटम"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default Language"
-msgstr ""
+msgstr "डिफ़ॉल्ट भाषा"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:20
+#: frontend/src/components/PropsOptions/ColorOptions.vue:5
+#: frontend/src/components/PropsOptions/ImageOptions.vue:4
+#: frontend/src/components/PropsOptions/NumberOptions.vue:19
+#: frontend/src/components/PropsOptions/NumberOptions.vue:28
+#: frontend/src/components/PropsOptions/SelectOptions.vue:8
+#: frontend/src/components/PropsOptions/StringOptions.vue:4
+msgid "Default Value"
+msgstr "डिफ़ॉल्ट मान"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:283
+#: frontend/src/components/PageActionsDropdown.vue:31
+msgid "Delete"
+msgstr "हटाएं"
+
+#: frontend/src/components/DashboardSidebar.vue:75
+msgid "Delete Folder"
+msgstr "फ़ोल्डर हटाएं"
+
+#: frontend/src/components/Commands/index.ts:339
+#: frontend/src/components/Commands/index.ts:344
+#: frontend/src/components/MainMenu.vue:79
+msgid "Delete Page"
+msgstr "पेज हटाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:240
+#: frontend/src/utils/useBuilderEvents.ts:254
+msgid "Delete selected blocks"
+msgstr "चयनित ब्लॉक हटाएं"
+
+#: frontend/src/stores/pageStore.ts:172
+msgid "Deleting page"
+msgstr "पेज हटाया जा रहा है"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:296
+msgid "Describe how you want to modify this section…"
+msgstr "बताएं कि आप इस सेक्शन को कैसे बदलना चाहते हैं…"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:295
+msgid "Describe the page you want to create…"
+msgstr "बताएं कि आप कैसा पेज बनाना चाहते हैं…"
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageMeta.vue:15
 msgid "Description"
 msgstr "विवरण"
+
+#: frontend/src/components/DashboardContent.vue:134
+msgid "Deselect pages"
+msgstr "पेज का चयन हटाएं"
+
+#: frontend/src/components/LeftPanelTabs/index.ts:66
+#: frontend/src/components/Modals/TokenManager.vue:19
+msgid "Design Tokens"
+msgstr "डिज़ाइन टोकन"
+
+#: frontend/src/components/Controls/FontInput.vue:127
+msgid "Design tokens"
+msgstr "डिज़ाइन टोकन"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:129
+msgid "Designer"
+msgstr "डिज़ाइनर"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:248
+msgid "Detach Component"
+msgstr "कंपोनेंट अलग करें"
+
+#: frontend/src/components/Settings/index.ts:136
+#: frontend/src/pages/PagePersonaSurvey.vue:130
+msgid "Developer"
+msgstr "डेवलपर"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Developer Options"
-msgstr ""
+msgstr "डेवलपर विकल्प"
+
+#: frontend/src/components/Settings/index.ts:137
+msgid "Developer Settings"
+msgstr "डेवलपर सेटिंग्स"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:77
 msgid "Dimension"
-msgstr ""
+msgstr "आयाम"
+
+#: frontend/src/components/Modals/TokenManager.vue:451
+msgid "Dimensions"
+msgstr "आयाम"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:6
+msgid "Direction"
+msgstr "दिशा"
 
 #. Label of the disable_auto_dark_mode (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:77
 msgid "Disable Auto Dark Mode"
-msgstr ""
+msgstr "स्वचालित डार्क मोड बंद करें"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageGeneral.vue:128
 msgid "Disable Indexing"
-msgstr ""
+msgstr "इंडेक्सिंग बंद करें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:246
+msgid "Disable Redirect"
+msgstr "रीडायरेक्ट बंद करें"
 
 #. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
-msgstr ""
+msgstr "सभी पेजों के लिए स्वचालित डार्क मोड रंग समायोजन विश्व स्तर पर बंद करें।"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:22
+msgid "Distribution"
+msgstr "वितरण"
+
+#: frontend/src/utils/useBuilderEvents.ts:474
+msgid "Do you want to copy the entire page including settings and scripts?"
+msgstr "क्या आप सेटिंग्स और स्क्रिप्ट सहित पूरा पेज कॉपी करना चाहते हैं?"
+
+#: frontend/src/utils/helpers.ts:495
+msgid "Do you want to upload the font \"{0}\"?"
+msgstr "क्या आप फ़ॉन्ट \"{0}\" अपलोड करना चाहते हैं?"
+
+#: frontend/src/components/Settings/TopReferrersList.vue:12
+msgid "Domain"
+msgstr "डोमेन"
+
+#: frontend/src/data/domains.ts:54
+msgid "Domain verification failed"
+msgstr "डोमेन सत्यापन विफल"
+
+#: frontend/src/components/Settings/index.ts:118
+msgid "Domains"
+msgstr "डोमेन"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Don't Execute"
-msgstr ""
+msgstr "निष्पादित न करें"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:169
+#: frontend/src/utils/builderBlockCopyPaste.ts:201
+#: frontend/src/utils/builderBlockCopyPaste.ts:221
+msgid "Done"
+msgstr "हो गया"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:139
+msgid "Dotted"
+msgstr "बिंदुदार"
+
+#: frontend/src/components/Modals/TokenManager.vue:386
+msgid "Download sample"
+msgstr "नमूना डाउनलोड करें"
+
+#: frontend/src/components/DashboardHead.vue:34
+#: frontend/src/components/Settings/PageGeneral.vue:47
+msgid "Draft"
+msgstr "मसौदा"
 
 #. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Draft Blocks"
-msgstr ""
+msgstr "मसौदा ब्लॉक"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:25
+msgid "Drop image to attach"
+msgstr "संलग्न करने के लिए छवि छोड़ें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:78
+#: frontend/src/components/PageActionsDropdown.vue:9
+msgid "Duplicate"
+msgstr "प्रतिलिपि बनाएं"
+
+#: frontend/src/components/Commands/index.ts:279
+msgid "Duplicate Block"
+msgstr "ब्लॉक की प्रतिलिपि बनाएं"
+
+#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/components/MainMenu.vue:74
+msgid "Duplicate Page"
+msgstr "पेज की प्रतिलिपि बनाएं"
+
+#: frontend/src/components/Commands/index.ts:283
+msgid "Duplicate block"
+msgstr "ब्लॉक की प्रतिलिपि बनाएं"
+
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
+msgid "Duplicate to edit"
+msgstr "संपादित करने के लिए प्रतिलिपि बनाएं"
+
+#: frontend/src/stores/pageStore.ts:155
+msgid "Duplicating page"
+msgstr "पेज की प्रतिलिपि बनाई जा रही है"
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Dynamic Route"
-msgstr ""
+msgstr "डायनामिक रूट"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:53
+msgid "Ease In"
+msgstr "धीमे शुरू"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:55
+msgid "Ease In Out"
+msgstr "धीमे शुरू और अंत"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:54
+msgid "Ease Out"
+msgstr "धीमे अंत"
+
+#: frontend/src/components/Commands/index.ts:46
+#: frontend/src/utils/useBuilderEvents.ts:241
+#: frontend/src/utils/useBuilderEvents.ts:255
+msgid "Edit"
+msgstr "संपादन"
+
+#: frontend/src/pages/PageBuilder.vue:308
+msgid "Edit Block Client Script"
+msgstr "ब्लॉक क्लाइंट स्क्रिप्ट संपादित करें"
+
+#: frontend/src/components/Commands/index.ts:293
+msgid "Edit Block with AI"
+msgstr "AI से ब्लॉक संपादित करें"
+
+#: frontend/src/pages/PageBuilder.vue:312
+msgid "Edit CSS"
+msgstr "CSS संपादित करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:225
+msgid "Edit Component"
+msgstr "कंपोनेंट संपादित करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:52
+#: frontend/src/pages/PageBuilder.vue:305
+msgid "Edit HTML"
+msgstr "HTML संपादित करें"
+
+#: frontend/src/components/Commands/index.ts:297
+msgid "Edit block with AI"
+msgstr "AI से ब्लॉक संपादित करें"
+
+#: frontend/src/components/Templates/TemplatePageCard.vue:28
+msgid "Edit template"
+msgstr "टेम्पलेट संपादित करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:31
+msgid "Edit with AI"
+msgstr "AI से संपादित करें"
+
+#: frontend/src/components/PageCard.vue:23
+msgid "Edited {0}"
+msgstr "{0} संपादित किया गया"
+
+#: frontend/src/utils/useSiteReadOnlyNotice.ts:19
+msgid "Editing is disabled while the site is being updated. Please try again in a few minutes."
+msgstr "साइट अपडेट होने के दौरान संपादन बंद है। कृपया कुछ मिनट बाद फिर से प्रयास करें।"
+
+#: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:53
+msgid "Editor Config"
+msgstr "एडिटर कॉन्फ़िग"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Element"
-msgstr ""
+msgstr "एलिमेंट"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:81
+msgid "Email addresses"
+msgstr "ईमेल पते"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:55
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:18
+msgid "Enable View Tracking"
+msgstr "व्यू ट्रैकिंग चालू करें"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:71
+msgid "End"
+msgstr "अंत"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:35
+#: frontend/src/components/PropsOptions/NumberOptions.vue:32
+#: frontend/src/components/PropsOptions/SelectOptions.vue:14
+#: frontend/src/components/PropsOptions/StringOptions.vue:8
+msgid "Enter default value"
+msgstr "डिफ़ॉल्ट मान दर्ज करें"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:16
+msgid "Enter false label display"
+msgstr "गलत के लिए प्रदर्शित लेबल दर्ज करें"
+
+#: frontend/src/components/PropsOptions/ImageOptions.vue:6
+msgid "Enter image URL or upload one"
+msgstr "छवि का URL दर्ज करें या एक अपलोड करें"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:16
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:16
+msgid "Enter max number of items"
+msgstr "आइटम की अधिकतम संख्या दर्ज करें"
+
+#: frontend/src/components/PropsOptions/NumberOptions.vue:15
+#: frontend/src/components/PropsOptions/NumberOptions.vue:24
+msgid "Enter max value"
+msgstr "अधिकतम मान दर्ज करें"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:8
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:8
+msgid "Enter min number of items"
+msgstr "आइटम की न्यूनतम संख्या दर्ज करें"
+
+#: frontend/src/components/PropsOptions/NumberOptions.vue:8
+msgid "Enter min value"
+msgstr "न्यूनतम मान दर्ज करें"
+
+#: frontend/src/components/PropsPopoverContent.vue:20
+msgid "Enter prop key"
+msgstr "प्रॉप कुंजी दर्ज करें"
+
+#: frontend/src/components/PropsPopoverContent.vue:12
+msgid "Enter prop label"
+msgstr "प्रॉप लेबल दर्ज करें"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:8
+msgid "Enter true label display"
+msgstr "सही के लिए प्रदर्शित लेबल दर्ज करें"
+
+#: frontend/src/components/ArrayEditor.vue:5
+msgid "Enter value"
+msgstr "मान दर्ज करें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:42
+msgid "Enter your domain"
+msgstr "अपना डोमेन दर्ज करें"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:154
+msgid "Exact path"
+msgstr "सटीक पथ"
+
+#: frontend/src/components/PageScript.vue:80
+#: frontend/src/components/PageScript.vue:138
+msgid "Example:"
+msgstr "उदाहरण:"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:112
+msgid "Examples"
+msgstr "उदाहरण"
+
+#: frontend/src/components/Settings/GlobalDeveloper.vue:5
+msgid "Execute Block Client Scripts in Editor"
+msgstr "एडिटर में ब्लॉक क्लाइंट स्क्रिप्ट चलाएं"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Execute Block Scripts in Editor"
-msgstr ""
+msgstr "एडिटर में ब्लॉक स्क्रिप्ट निष्पादित करें"
+
+#: frontend/src/utils/useBuilderEvents.ts:268
+msgid "Exit current mode"
+msgstr "वर्तमान मोड से बाहर निकलें"
+
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
+#: frontend/src/components/DashboardHead.vue:49
+msgid "Expand"
+msgstr "विस्तृत करें"
+
+#: frontend/src/components/Commands/index.ts:146
+msgid "Expand All Layers"
+msgstr "सभी लेयर विस्तृत करें"
+
+#: frontend/src/components/RouteTreeView.vue:355
+msgid "Expand node or move down in page tree"
+msgstr "नोड विस्तृत करें या पेज ट्री में नीचे जाएं"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:155
+msgid "External URL"
+msgstr "बाहरी URL"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:211
+msgid "Failed to copy"
+msgstr "कॉपी करने में विफल"
+
+#: builder/ai_page_generator.py:385
+msgid "Failed to parse AI response. The model returned invalid YAML."
+msgstr "AI प्रतिक्रिया पढ़ने में विफल। मॉडल ने अमान्य YAML लौटाया।"
+
+#: frontend/src/components/Modals/TokenManager.vue:869
+msgid "Failed to read CSV file"
+msgstr "CSV फ़ाइल पढ़ने में विफल"
+
+#: frontend/src/components/EditableSpan.vue:63
+msgid "Failed to rename"
+msgstr "नाम बदलने में विफल"
+
+#: frontend/src/stores/componentStore.ts:98
+#: frontend/src/stores/componentStore.ts:139
+msgid "Failed to save component"
+msgstr "कंपोनेंट सहेजने में विफल"
+
+#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageScript.vue:231
+msgid "Failed to save script"
+msgstr "स्क्रिप्ट सहेजने में विफल"
+
+#: frontend/src/components/Settings/GlobalAI.vue:71
+msgid "Failed to test API key"
+msgstr "API कुंजी जांचने में विफल"
+
+#: frontend/src/components/PageClientScriptManager.vue:390
+msgid "Failed to update script order"
+msgstr "स्क्रिप्ट का क्रम अपडेट करने में विफल"
+
+#: frontend/src/utils/helpers.ts:376
+msgid "Failed to upload"
+msgstr "अपलोड करने में विफल"
+
+#: frontend/src/utils/helpers.ts:534
+msgid "Failed to upload font"
+msgstr "फ़ॉन्ट अपलोड करने में विफल"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:12
+msgid "False Label"
+msgstr "गलत लेबल"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:41
+msgid "Family"
+msgstr "परिवार"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:16
+msgid "Fast"
+msgstr "तेज़"
 
 #. Label of the favicon (Attach Image) field in DocType 'Builder Page'
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:28
+#: frontend/src/components/Settings/GlobalGeneral.vue:39
+#: frontend/src/components/Settings/PageGeneral.vue:65
+#: frontend/src/components/Settings/PageGeneral.vue:80
 msgid "Favicon"
-msgstr ""
+msgstr "फ़ेविकॉन"
+
+#: frontend/src/components/ImageUploadInput.vue:74
+msgid "Fill & Crop"
+msgstr "भरें और काटें"
+
+#: frontend/src/components/Settings/AnalyticsFilters.vue:5
+msgid "Filter by route"
+msgstr "रूट से फ़िल्टर करें"
+
+#: frontend/src/components/DashboardHead.vue:16
+msgid "Filter by title or route"
+msgstr "शीर्षक या रूट से फ़िल्टर करें"
+
+#: frontend/src/components/Controls/SearchBlock.vue:44
+msgid "Filter search results by:"
+msgstr "खोज परिणाम इससे फ़िल्टर करें:"
+
+#: frontend/src/components/Controls/SearchBlock.vue:27
+msgid "Filters"
+msgstr "फ़िल्टर"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:24
+msgid "Find"
+msgstr "खोजें"
+
+#: frontend/src/components/Controls/SearchBlock.vue:8
+msgid "Find & Replace"
+msgstr "खोजें और बदलें"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:60
+msgid "Find Next (Enter)"
+msgstr "अगला खोजें (Enter)"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:54
+msgid "Find Previous (Shift+Enter)"
+msgstr "पिछला खोजें (Shift+Enter)"
+
+#: frontend/src/components/DimensionInput.vue:13
+msgid "Fit Content"
+msgstr "सामग्री के अनुसार"
+
+#: frontend/src/components/ImageUploadInput.vue:73
+msgid "Fit Inside"
+msgstr "अंदर फ़िट करें"
+
+#: frontend/src/utils/useBuilderEvents.ts:291
+msgid "Fit canvas to screen"
+msgstr "कैनवास को स्क्रीन में फ़िट करें"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:12
+#: frontend/src/components/BlockPositionHandler.vue:15
+msgid "Fixed"
+msgstr "स्थिर"
+
+#: frontend/src/components/Commands/index.ts:248
+msgid "Focus Property Search"
+msgstr "प्रॉपर्टी खोज पर फ़ोकस करें"
+
+#: frontend/src/components/Commands/index.ts:252
+msgid "Focus property search"
+msgstr "प्रॉपर्टी खोज पर फ़ोकस करें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:163
+#: frontend/src/utils/dialogs.ts:86
+msgid "Folder"
+msgstr "फ़ोल्डर"
 
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
+#: frontend/src/utils/dialogs.ts:24
 msgid "Folder Name"
-msgstr ""
+msgstr "फ़ोल्डर का नाम"
+
+#: frontend/src/components/DashboardSidebar.vue:19
+msgid "Folders"
+msgstr "फ़ोल्डर"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
 msgstr "फ़ॉन्ट"
 
+#: frontend/src/utils/helpers.ts:488
+msgid "Font \"{0}\" already exists in the project"
+msgstr "फ़ॉन्ट \"{0}\" प्रोजेक्ट में पहले से मौजूद है"
+
+#: frontend/src/utils/helpers.ts:533
+msgid "Font \"{0}\" uploaded successfully"
+msgstr "फ़ॉन्ट \"{0}\" सफलतापूर्वक अपलोड किया गया"
+
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font File"
-msgstr ""
+msgstr "फ़ॉन्ट फ़ाइल"
 
 #. Label of the font_name (Data) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font Name"
-msgstr ""
+msgstr "फ़ॉन्ट का नाम"
+
+#: frontend/src/components/Modals/TokenManager.vue:450
+msgid "Fonts"
+msgstr "फ़ॉन्ट"
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "For Web Page"
-msgstr ""
+msgstr "वेब पेज के लिए"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Form parts"
-msgstr ""
+msgstr "फ़ॉर्म के भाग"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:104
+msgid "Forward query parameters"
+msgstr "क्वेरी पैरामीटर आगे भेजें"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:131
+msgid "Founder / Business owner"
+msgstr "संस्थापक / व्यवसाय स्वामी"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:118
+msgid "Frappe / ERPNext"
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Frappe Builder"
-msgstr ""
+msgstr "Frappe Builder"
+
+#: frontend/src/components/BuilderToolbar.vue:32
+msgid "Frappe Builder - Get Started"
+msgstr "Frappe Builder - शुरुआत करें"
+
+#: frontend/src/components/BlockPositionHandler.vue:12
+msgid "Free"
+msgstr "मुक्त"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:117
+msgid "Friend / colleague"
+msgstr "मित्र / सहकर्मी"
+
+#: frontend/src/components/BlockPropertySections/LayoutSection.ts:12
+msgid "Gap"
+msgstr "अंतराल"
+
+#: frontend/src/components/BuilderCommandPalette.vue:45
+#: frontend/src/components/BuilderCommandPalette.vue:79
+#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/components/Commands/index.ts:204
+#: frontend/src/components/Settings/index.ts:44
+#: frontend/src/components/Settings/index.ts:45
+#: frontend/src/components/Settings/index.ts:78
+#: frontend/src/components/Settings/index.ts:79
+#: frontend/src/utils/useBuilderEvents.ts:229
+#: frontend/src/utils/useBuilderEvents.ts:269
+msgid "General"
+msgstr "सामान्य"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:121
+msgid "Generate"
+msgstr "बनाएं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:290
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:5
+msgid "Generate with AI"
+msgstr "AI से बनाएं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:144
+msgid "Generating page…"
+msgstr "पेज बनाया जा रहा है…"
+
+#: frontend/src/components/Settings/GlobalAI.vue:17
+msgid "Get API key from"
+msgstr "API कुंजी यहां से लें"
+
+#: frontend/src/components/BuilderToolbar.vue:27
+msgid "Get Started"
+msgstr "शुरुआत करें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:264
+#: frontend/src/components/Settings/index.ts:29
+msgid "Global"
+msgstr "वैश्विक"
+
+#: frontend/src/components/DashboardSidebar.vue:96
+msgid "Global Builder Settings"
+msgstr "वैश्विक बिल्डर सेटिंग्स"
+
+#: frontend/src/components/Settings/index.ts:95
+msgid "Global Code"
+msgstr "वैश्विक कोड"
+
+#: frontend/src/utils/dialogs.ts:46
+msgid "Global Component"
+msgstr "वैश्विक कंपोनेंट"
 
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global script that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "वैश्विक स्क्रिप्ट जो Frappe Builder से बने हर पेज के साथ लोड होगी"
 
 #. Description of the 'Style' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global style that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "वैश्विक शैली जो Frappe Builder से बने हर पेज के साथ लोड होगी"
+
+#: frontend/src/components/Commands/index.ts:98
+msgid "Go to Dashboard"
+msgstr "डैशबोर्ड पर जाएं"
+
+#: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
+#: frontend/src/components/DashboardHead.vue:74
+msgid "Grid"
+msgstr "ग्रिड"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:6
+msgid "Grid Type"
+msgstr "ग्रिड प्रकार"
 
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Group"
 msgstr "समूह"
 
+#: frontend/src/components/BlockFlexLayoutHandler.vue:41
+msgid "Grow"
+msgstr "बढ़ें"
+
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
+#: frontend/src/pages/PageBuilder.vue:304
+msgid "HTML"
+msgstr "HTML"
+
+#: frontend/src/components/BlockPropertySections/CustomAttributesSection.ts:23
+msgid "HTML Attributes"
+msgstr "HTML एट्रिब्यूट"
+
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
+msgid "HTML Options"
+msgstr "HTML विकल्प"
+
 #. Label of the head_html (Code) field in DocType 'Builder Page'
 #. Label of the head_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Head HTML"
-msgstr ""
+msgstr "हेड HTML"
+
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:49
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:90
+msgid "Height"
+msgstr "ऊंचाई"
+
+#: frontend/src/components/DashboardSidebar.vue:197
+#: frontend/src/components/MainMenu.vue:111
+msgid "Help"
+msgstr "सहायता"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:28
+msgid "Hidden"
+msgstr "छिपा हुआ"
+
+#: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:40
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:44
+msgid "Hide"
+msgstr "छिपाएं"
+
+#: frontend/src/components/Commands/index.ts:172
+msgid "Hide Left Panel"
+msgstr "बायां पैनल छिपाएं"
+
+#: frontend/src/components/Commands/index.ts:183
+msgid "Hide Right Panel"
+msgstr "दायां पैनल छिपाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:413
+msgid "Highlight Blocks with Client Scripts"
+msgstr "क्लाइंट स्क्रिप्ट वाले ब्लॉक हाइलाइट करें"
+
+#: frontend/src/pages/PageBuilder.vue:273
+msgid "Hold for move mode"
+msgstr "मूव मोड के लिए दबाए रखें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:204
+#: frontend/src/utils/dialogs.ts:73
+msgid "Home"
+msgstr "होम"
 
 #. Label of the home_page (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Home Page"
 msgstr "होम पेज"
 
+#: frontend/src/components/RouteTreeNode.vue:42
+msgid "Home page"
+msgstr "होम पेज"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:5
+#: frontend/src/components/Settings/PageGeneral.vue:100
+msgid "Homepage"
+msgstr "होमपेज"
+
+#: frontend/src/stores/builderStore.ts:77
+msgid "Homepage set successfully"
+msgstr "होमपेज सफलतापूर्वक सेट किया गया"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:9
+msgid "Horizontal"
+msgstr "क्षैतिज"
+
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
 msgstr "छवि"
 
+#: frontend/src/components/ToolbarItems/ModeSwitcher.vue:24
+msgid "Image (i)"
+msgstr "छवि (i)"
+
+#: frontend/src/components/ImageUploadInput.vue:68
+msgid "Image Fit"
+msgstr "छवि फ़िट"
+
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:83
+msgid "Image Options"
+msgstr "छवि विकल्प"
+
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:16
+msgid "Image URL"
+msgstr "छवि URL"
+
 #: builder/ai_page_generator.py:221
 msgid "Image is too large. Please use an image smaller than 5 MB."
-msgstr ""
+msgstr "छवि बहुत बड़ी है। कृपया 5 MB से छोटी छवि उपयोग करें।"
+
+#: frontend/src/utils/useBuilderEvents.ts:376
+msgid "Image mode"
+msgstr "छवि मोड"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:110
+msgid "Input Options"
+msgstr "इनपुट विकल्प"
+
+#: frontend/src/components/LeftPanelTabs/index.ts:33
+msgid "Insert"
+msgstr "सम्मिलित करें"
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
-msgstr ""
+msgstr "आंतरिक फ़्लैग: पर्सोना ऑनबोर्डिंग सर्वे दिखाए जाने पर सेट होता है। साइट-व्यापी (Builder Settings एक Single है) — एकल-उपयोगकर्ता ट्रायल साइटों पर प्रति-उपयोगकर्ता के लिए स्वीकार्य विकल्प।"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:147
+msgid "Internal tool / dashboard"
+msgstr "आंतरिक टूल / डैशबोर्ड"
+
+#: builder/api.py:186
+msgid "Invalid URL: missing hostname."
+msgstr "अमान्य URL: होस्टनाम नहीं है।"
 
 #: builder/ai_page_generator.py:631
 msgid "Invalid block context JSON"
-msgstr ""
+msgstr "अमान्य ब्लॉक कॉन्टेक्स्ट JSON"
 
 #: builder/ai_page_generator.py:218
 msgid "Invalid image data: must be a base64-encoded data URL"
-msgstr ""
+msgstr "अमान्य छवि डेटा: base64-एन्कोडेड डेटा URL होना चाहिए"
 
 #: builder/ai_page_generator.py:216
 msgid "Invalid image data: must be a base64-encoded image data URL"
-msgstr ""
+msgstr "अमान्य छवि डेटा: base64-एन्कोडेड छवि डेटा URL होना चाहिए"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:111
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:126
+#: frontend/src/components/PropsOptions/NumberOptions.vue:106
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:122
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:137
+msgid "Invalid option configuration!"
+msgstr "अमान्य विकल्प कॉन्फ़िगरेशन!"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:210
+msgid "Invitation cancelled"
+msgstr "निमंत्रण रद्द किया गया"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:11
+msgid "Invite"
+msgstr "आमंत्रित करें"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:75
+msgid "Invite Users"
+msgstr "उपयोगकर्ताओं को आमंत्रित करें"
+
+#: frontend/src/components/PropsPopoverContent.vue:33
+msgid "Is Required"
+msgstr "आवश्यक है"
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
 #. Label of the is_standard (Check) field in DocType 'Builder Project Folder'
@@ -431,15 +1830,43 @@ msgstr "मानक है"
 #. Label of the is_template (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Is Template"
-msgstr ""
+msgstr "टेम्पलेट है"
 
 #. Label of the is_unique (Check) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Is Unique"
-msgstr ""
+msgstr "अद्वितीय है"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:34
+msgid "Item Width"
+msgstr "आइटम की चौड़ाई"
+
+#: frontend/src/components/PageClientScriptManager.vue:77
+#: frontend/src/components/PageScript.vue:193
+msgid "JavaScript"
+msgstr "JavaScript"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:148
+msgid "Just exploring"
+msgstr "बस देख रहे हैं"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:171
+msgid "Justify"
+msgstr "दोनों ओर संरेखित"
+
+#: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:102
+#: frontend/src/components/BlockPropertySections/DataKeySection.ts:11
+#: frontend/src/components/PropsPopoverContent.vue:16
+msgid "Key"
+msgstr "कुंजी"
+
+#: frontend/src/components/Commands/index.ts:202
+msgid "Keyboard Shortcuts"
+msgstr "कीबोर्ड शॉर्टकट"
 
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: frontend/src/components/PropsPopoverContent.vue:8
 msgid "Label"
 msgstr "लेबल"
 
@@ -447,88 +1874,703 @@ msgstr "लेबल"
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Landing Page"
-msgstr "लैंडिंग पृष्ठ"
+msgstr "लैंडिंग पेज"
 
 #. Label of the language (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/GlobalGeneral.vue:16
+#: frontend/src/components/Settings/PageMeta.vue:65
 msgid "Language"
 msgstr "भाषा"
 
 #. Description of the 'Language' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageMeta.vue:66
 msgid "Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
-msgstr ""
+msgstr "HTML के लिए भाषा कोड (जैसे en, es, fr, de)। सेट न होने पर डिफ़ॉल्ट उपयोग होता है।"
+
+#: frontend/src/components/ShadowHandler.vue:185
+msgid "Large"
+msgstr "बड़ा"
+
+#: frontend/src/components/Settings/AnalyticsFilters.vue:55
+msgid "Last 30 Days"
+msgstr "पिछले 30 दिन"
+
+#: frontend/src/components/Settings/AnalyticsFilters.vue:54
+msgid "Last 7 Days"
+msgstr "पिछले 7 दिन"
+
+#: frontend/src/components/DashboardHead.vue:57
+msgid "Last Created"
+msgstr "अंतिम बनाया गया"
+
+#: frontend/src/components/DashboardHead.vue:58
+msgid "Last Modified"
+msgstr "अंतिम संशोधित"
+
+#: frontend/src/components/PageListItem.vue:39
+msgid "Last updated {0} by {1}"
+msgstr "अंतिम अपडेट {0}, {1} द्वारा"
+
+#: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
+msgid "Layer Icon"
+msgstr "लेयर आइकन"
+
+#: frontend/src/components/Commands/index.ts:43
+#: frontend/src/components/Commands/index.ts:148
+#: frontend/src/components/Commands/index.ts:161
+#: frontend/src/components/LeftPanelTabs/index.ts:40
+msgid "Layers"
+msgstr "लेयर"
+
+#: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
+msgid "Layout"
+msgstr "लेआउट"
+
+#: frontend/src/components/BackgroundHandler.vue:293
+#: frontend/src/components/BlockPositionHandler.vue:31
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:153
+msgid "Left"
+msgstr "बाएं"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:102
+msgid "Letter"
+msgstr "अक्षर"
+
+#: frontend/src/components/Modals/TokenManager.vue:50
+msgid "Light"
+msgstr "हल्का"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:27
+msgid "Light Mode Color"
+msgstr "लाइट मोड रंग"
+
+#: frontend/src/components/PageListItem.vue:26
+msgid "Limited access"
+msgstr "सीमित पहुंच"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
+#: frontend/src/components/Controls/GradientEditor.vue:7
+msgid "Linear"
+msgstr "एकसमान"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:91
+msgid "Link"
+msgstr "लिंक"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:12
+msgid "Link To"
+msgstr "इससे जोड़ें"
+
+#: frontend/src/components/DashboardHead.vue:80
+msgid "List"
+msgstr "सूची"
+
+#: frontend/src/components/DashboardContent.vue:49
+msgid "Load More"
+msgstr "और लोड करें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:5
+msgid "Loading domains…"
+msgstr "डोमेन लोड हो रहे हैं…"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:26
+#: frontend/src/components/Settings/GlobalAnalytics.vue:25
+#: frontend/src/components/Settings/TopClicksList.vue:5
+#: frontend/src/components/Settings/TopReferrersList.vue:5
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:6
+msgid "Loading..."
+msgstr "लोड हो रहा है..."
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:92
+msgid "Loop"
+msgstr "दोहराएं"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:128
+msgid "Lowercase"
+msgstr "छोटे अक्षर"
+
+#: frontend/src/components/Settings/PageGeneral.vue:138
+msgid "Make this page a standard page that can be exported to an app"
+msgstr "इस पेज को एक मानक पेज बनाएं जिसे किसी ऐप में निर्यात किया जा सके"
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Map route parameters into form variables. Example <code>/profile/:user</code>"
-msgstr ""
+msgstr "रूट पैरामीटर को फ़ॉर्म वेरिएबल में मैप करें। उदाहरण <code>/profile/:user</code>"
+
+#: frontend/src/components/BlockPropertySections/SpacingSection.ts:13
+msgid "Margin"
+msgstr "मार्जिन"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:132
+msgid "Marketer"
+msgstr "मार्केटर"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:143
+msgid "Marketing / landing site"
+msgstr "मार्केटिंग / लैंडिंग साइट"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
+msgid "Match Case"
+msgstr "अक्षर का आकार मिलाएं"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
+msgid "Match Whole Word"
+msgstr "पूरा शब्द मिलाएं"
+
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
+msgid "Max Height"
+msgstr "अधिकतम ऊंचाई"
+
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:30
+msgid "Max Width"
+msgstr "अधिकतम चौड़ाई"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:12
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:12
+msgid "Max. Items"
+msgstr "अधि. आइटम"
+
+#: frontend/src/components/PropsOptions/NumberOptions.vue:12
+msgid "Max. Value"
+msgstr "अधि. मान"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Media"
-msgstr ""
+msgstr "मीडिया"
+
+#: frontend/src/components/ShadowHandler.vue:184
+msgid "Medium"
+msgstr "मध्यम"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/index.ts:60
+#: frontend/src/components/Settings/index.ts:61
 msgid "Meta"
-msgstr ""
+msgstr "मेटा"
+
+#: frontend/src/components/Settings/PageMeta.vue:23
+msgid "Meta Image"
+msgstr "मेटा छवि"
 
 #. Label of the meta_column (Column Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Meta Tags"
-msgstr ""
+msgstr "मेटा टैग"
 
-#: builder/api.py:415
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:59
+msgid "Min Height"
+msgstr "न्यूनतम ऊंचाई"
+
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:20
+msgid "Min Width"
+msgstr "न्यूनतम चौड़ाई"
+
+#: frontend/src/components/PropsOptions/ArrayOptions.vue:4
+#: frontend/src/components/PropsOptions/ObjectOptions.vue:4
+msgid "Min. Items"
+msgstr "न्यून. आइटम"
+
+#: frontend/src/components/PropsOptions/NumberOptions.vue:4
+msgid "Min. Value"
+msgstr "न्यून. मान"
+
+#: frontend/src/components/WebPagePresetPicker.vue:455
+msgid "Minimal"
+msgstr "मिनिमल"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:74
+msgid "Model"
+msgstr "मॉडल"
+
+#: frontend/src/components/WebPagePresetPicker.vue:457
+msgid "Modern"
+msgstr "आधुनिक"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:121
+msgid "Modify"
+msgstr "बदलें"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:291
+msgid "Modify with AI"
+msgstr "AI से बदलें"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:144
+msgid "Modifying section…"
+msgstr "सेक्शन बदला जा रहा है…"
+
+#: frontend/src/components/BlockPropertySections/MoreStylesSection.ts:15
+msgid "More Styles"
+msgstr "और शैलियां"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:245
+#: frontend/src/components/Modals/TokenManager.vue:367
+msgid "Move"
+msgstr "ले जाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:402
+msgid "Move / hand mode"
+msgstr "मूव / हैंड मोड"
+
+#: frontend/src/components/DashboardHead.vue:9
+msgid "Move To Folder"
+msgstr "फ़ोल्डर में ले जाएं"
+
+#: frontend/src/components/RouteTreeView.vue:335
+msgid "Move down in page tree"
+msgstr "पेज ट्री में नीचे जाएं"
+
+#: frontend/src/components/Modals/TokenManager.vue:365
+#: frontend/src/components/Modals/TokenManager.vue:759
+msgid "Move to group"
+msgstr "समूह में ले जाएं"
+
+#: frontend/src/components/RouteTreeView.vue:345
+msgid "Move up in page tree"
+msgstr "पेज ट्री में ऊपर जाएं"
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:75
+msgid "Muted"
+msgstr "मौन"
+
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
+msgid "My Page"
+msgstr "मेरा पेज"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
+#: frontend/src/components/Modals/TokenManager.vue:48
+msgid "Name"
+msgstr "नाम"
+
+#: frontend/src/components/VersionHistory.vue:24
+msgid "Name this version (optional)"
+msgstr "इस संस्करण को नाम दें (वैकल्पिक)"
+
+#: frontend/src/components/BuilderCommandPalette.vue:62
+#: frontend/src/components/CommandPalette.vue:92
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:100
+msgid "Navigate"
+msgstr "नेविगेट करें"
+
+#: frontend/src/pages/PagePreview.vue:157
+msgid "Navigation"
+msgstr "नेविगेशन"
+
+#: frontend/src/components/DashboardToolbar.vue:10
+msgid "New"
+msgstr "नया"
+
+#: frontend/src/utils/dialogs.ts:36
+msgid "New Component"
+msgstr "नया कंपोनेंट"
+
+#: frontend/src/components/DashboardSidebar.vue:165
+#: frontend/src/components/MainMenu.vue:63
+msgid "New Page"
+msgstr "नया पेज"
+
+#: frontend/src/components/PageClientScriptManager.vue:83
+msgid "New Script"
+msgstr "नई स्क्रिप्ट"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:65
+msgid "New Tab"
+msgstr "नया टैब"
+
+#: frontend/src/components/DashboardSidebar.vue:24
+msgid "New folder"
+msgstr "नया फ़ोल्डर"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:108
+msgid "New page"
+msgstr "नया पेज"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:93
+msgid "New token created"
+msgstr "नया टोकन बनाया गया"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:71
+msgid "Next"
+msgstr "अगला"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:46
+#: frontend/src/components/BlockFlexLayoutHandler.vue:55
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:88
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:61
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:78
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
+#: frontend/src/components/PropsPopoverContent.vue:107
+msgid "No"
+msgstr "नहीं"
+
+#: frontend/src/components/PropsEditor.vue:51
+msgid "No Default Value"
+msgstr "कोई डिफ़ॉल्ट मान नहीं"
+
+#: frontend/src/components/BackgroundHandler.vue:298
+msgid "No Repeat"
+msgstr "दोहराव नहीं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:81
+msgid "No Style"
+msgstr "कोई शैली नहीं"
+
+#: frontend/src/components/Controls/DynamicValueHandler.vue:24
+#: frontend/src/components/Controls/DynamicValueHandler.vue:38
+msgid "No Value Set"
+msgstr "कोई मान सेट नहीं"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:35
+msgid "No Wrap"
+msgstr "रैप नहीं"
+
+#: frontend/src/components/BuilderAssets.vue:20
+msgid "No components saved"
+msgstr "कोई कंपोनेंट सहेजा नहीं गया"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:8
+msgid "No custom domains added yet."
+msgstr "अभी तक कोई कस्टम डोमेन नहीं जोड़ा गया।"
+
+#: frontend/src/components/Controls/DynamicValueHandler.vue:46
+msgid "No dynamic values found. Please add using"
+msgstr "कोई डायनामिक मान नहीं मिला। कृपया इससे जोड़ें"
+
+#: frontend/src/components/DashboardSidebar.vue:31
+msgid "No folders yet"
+msgstr "अभी कोई फ़ोल्डर नहीं है"
+
+#: frontend/src/components/DashboardContent.vue:12
+msgid "No matching pages found."
+msgstr "कोई मेल खाता पेज नहीं मिला।"
+
+#: frontend/src/components/MoreStylesPanel.vue:23
+msgid "No matching properties"
+msgstr "कोई मेल खाती प्रॉपर्टी नहीं"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:67
+msgid "No members yet. Invite someone to give them access to Builder."
+msgstr "अभी तक कोई सदस्य नहीं। बिल्डर तक पहुंच देने के लिए किसी को आमंत्रित करें।"
+
+#: builder/api.py:425
 msgid "No pages found in this template group."
-msgstr ""
+msgstr "इस टेम्पलेट समूह में कोई पेज नहीं मिला।"
+
+#: frontend/src/components/RouteTreeView.vue:9
+msgid "No pages found."
+msgstr "कोई पेज नहीं मिला।"
+
+#: builder/api.py:40
+msgid "No permission to preview this page"
+msgstr "इस पेज का पूर्वावलोकन करने की अनुमति नहीं है"
+
+#: frontend/src/components/Controls/SearchBlock.vue:372
+#: frontend/src/components/Controls/SearchBlock.vue:394
+msgid "No replacements made"
+msgstr "कोई प्रतिस्थापन नहीं किया गया"
+
+#: frontend/src/components/Controls/SearchBlock.vue:137
+msgid "No results found"
+msgstr "कोई परिणाम नहीं मिला"
+
+#: frontend/src/components/VersionHistory.vue:36
+msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
+msgstr "अभी तक कोई सहेजा गया संस्करण नहीं। हर बार प्रकाशित करने पर, या मैन्युअल रूप से सहेजने पर एक संस्करण दर्ज होता है।"
+
+#: frontend/src/components/Modals/TokenManager.vue:349
+msgid "No tokens found"
+msgstr "कोई टोकन नहीं मिला"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:35
+msgid "No views in this period"
+msgstr "इस अवधि में कोई व्यू नहीं"
+
+#: frontend/src/utils/useBuilderEvents.ts:477
+msgid "No, just blocks"
+msgstr "नहीं, केवल ब्लॉक"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:158
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:15
+#: frontend/src/components/ShadowHandler.vue:11
+#: frontend/src/components/ShadowHandler.vue:182
+msgid "None"
+msgstr "कोई नहीं"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:17
+msgid "Normal"
+msgstr "सामान्य"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:248
+msgid "Not Allowed"
+msgstr "अनुमति नहीं है"
 
 #: builder/www/404.html:6
 msgid "Not Found"
 msgstr "नहीं मिला"
 
+#: frontend/src/components/RouteTreeNode.vue:51
+msgid "Not published"
+msgstr "प्रकाशित नहीं"
+
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
-msgstr ""
+msgstr "किसी पेज में उपयोग नहीं हुआ"
+
+#: frontend/src/components/PageClientScriptManager.vue:100
+msgid "Note:"
+msgstr "ध्यान दें:"
+
+#: frontend/src/components/Settings/GlobalDeveloper.vue:33
+msgid "Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe."
+msgstr "ध्यान दें: ब्लॉक स्क्रिप्ट एक सैंडबॉक्स वातावरण में चलती हैं। इसकी कुछ सीमाएं हो सकती हैं और यह लाइव साइट के व्यवहार से पूरी तरह मेल नहीं खा सकता। अविश्वसनीय स्क्रिप्ट चलाना असुरक्षित हो सकता है।"
+
+#: frontend/src/components/PropsPopoverContent.vue:168
+msgid "Number"
+msgstr "संख्या"
+
+#: frontend/src/components/PropsPopoverContent.vue:172
+msgid "Object"
+msgstr "ऑब्जेक्ट"
+
+#: frontend/src/components/ObjectInput.vue:20
+msgid "Object Items:"
+msgstr "ऑब्जेक्ट आइटम:"
+
+#: frontend/src/utils/helpers.ts:54
+msgid "Ok"
+msgstr "ठीक है"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:144
+msgid "Online store / E-commerce"
+msgstr "ऑनलाइन स्टोर / ई-कॉमर्स"
+
+#: builder/api.py:183
+msgid "Only HTTP/HTTPS URLs are allowed for external images."
+msgstr "बाहरी छवियों के लिए केवल HTTP/HTTPS URL की अनुमति है।"
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Only allow logged-in users to view this page."
-msgstr ""
+msgstr "इस पेज को केवल लॉग-इन उपयोगकर्ता ही देख सकें।"
+
+#: frontend/src/components/Settings/PageGeneral.vue:122
+msgid "Only logged-in users can access this page"
+msgstr "केवल लॉग-इन उपयोगकर्ता ही इस पेज तक पहुंच सकते हैं"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:42
+msgid "Opacity"
+msgstr "अपारदर्शिता"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:73
+msgid "Opacity Only"
+msgstr "केवल अपारदर्शिता"
 
 #. Label of a shortcut in the Frappe Builder Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Open <strong>Frappe Builder</strong>"
-msgstr ""
+msgstr "<strong>Frappe Builder</strong> खोलें"
+
+#: frontend/src/components/Controls/DynamicValueHandler.vue:64
+msgid "Open Code Tab"
+msgstr "कोड टैब खोलें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:44
+msgid "Open Command Palette"
+msgstr "कमांड पैलेट खोलें"
+
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:21
+msgid "Open Global Settings"
+msgstr "वैश्विक सेटिंग्स खोलें"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
-msgstr ""
+msgstr "बिल्डर में खोलें"
+
+#: frontend/src/components/RouteTreeView.vue:390
+msgid "Open page or toggle folder in page tree"
+msgstr "पेज खोलें या पेज ट्री में फ़ोल्डर टॉगल करें"
+
+#: frontend/src/components/Settings/GlobalAI.vue:4
+msgid "OpenRouter API Key"
+msgstr "OpenRouter API कुंजी"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:46
+msgid "Opens in"
+msgstr "इसमें खुलता है"
+
+#: frontend/src/components/Settings/PageMeta.vue:57
+msgid "Optional. Set this to specify a preferred version of this page for search engines."
+msgstr "वैकल्पिक। सर्च इंजन के लिए इस पेज का पसंदीदा संस्करण बताने हेतु इसे सेट करें।"
 
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/BlockPropertySections/OptionsSection.ts:48
+#: frontend/src/components/PropsOptions/SelectOptions.vue:3
 msgid "Options"
 msgstr "विकल्प"
 
+#: frontend/src/components/BlockFlexLayoutHandler.vue:59
+msgid "Order"
+msgstr "क्रम"
+
+#: frontend/src/components/ImageUploadInput.vue:76
+msgid "Original Size"
+msgstr "मूल आकार"
+
+#: frontend/src/components/WebPagePresetPicker.vue:459
+#: frontend/src/pages/PagePersonaSurvey.vue:120
+#: frontend/src/pages/PagePersonaSurvey.vue:134
+#: frontend/src/pages/PagePersonaSurvey.vue:149
+msgid "Other"
+msgstr "अन्य"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:201
+msgid "Overflow X"
+msgstr "ओवरफ़्लो X"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:220
+msgid "Overflow Y"
+msgstr "ओवरफ़्लो Y"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:4
+msgid "Overview"
+msgstr "अवलोकन"
+
+#: frontend/src/components/BlockPropertySections/SpacingSection.ts:37
+msgid "Padding"
+msgstr "पैडिंग"
+
+#: frontend/src/components/BuilderCommandPalette.vue:260
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:110
+#: frontend/src/components/Commands/index.ts:124
+#: frontend/src/components/Commands/index.ts:134
+msgid "Page"
+msgstr "पेज"
+
+#: frontend/src/components/Settings/index.ts:69
+msgid "Page Analytics"
+msgstr "पेज एनालिटिक्स"
+
+#: frontend/src/components/PageScript.vue:203
+msgid "Page Client Script"
+msgstr "पेज क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/Settings/index.ts:53
+msgid "Page Code"
+msgstr "पेज कोड"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:145
+msgid "Page Copied"
+msgstr "पेज कॉपी किया गया"
+
+#: frontend/src/components/PageScript.vue:15
+msgid "Page Data Preview"
+msgstr "पेज डेटा पूर्वावलोकन"
+
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Controls/DynamicValueHandler.vue:51
+#: frontend/src/components/PageScript.vue:203
 msgid "Page Data Script"
-msgstr ""
+msgstr "पेज डेटा स्क्रिप्ट"
 
 #. Label of the page_name (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Name"
-msgstr "पृष्ठ का नाम"
+msgstr "पेज का नाम"
 
 #. Label of the preview (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Preview"
-msgstr ""
+msgstr "पेज पूर्वावलोकन"
 
-#: builder/www/404.html:25
+#: frontend/src/components/Settings/PageGeneral.vue:14
+msgid "Page Route"
+msgstr "पेज रूट"
+
+#: frontend/src/components/PageOptions.vue:5
+#: frontend/src/components/Settings/PageGeneral.vue:8
+msgid "Page Title"
+msgstr "पेज शीर्षक"
+
+#: frontend/src/components/RouteTreeView.vue:336
+#: frontend/src/components/RouteTreeView.vue:346
+#: frontend/src/components/RouteTreeView.vue:356
+#: frontend/src/components/RouteTreeView.vue:375
+#: frontend/src/components/RouteTreeView.vue:391
+msgid "Page Tree"
+msgstr "पेज ट्री"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:209
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
+msgid "Page created"
+msgstr "पेज बनाया गया"
+
+#: frontend/src/stores/pageStore.ts:174
+msgid "Page deleted"
+msgstr "पेज हटाया गया"
+
+#: frontend/src/stores/pageStore.ts:177
+msgid "Page deletion failed"
+msgstr "पेज हटाने में विफल"
+
+#: frontend/src/stores/pageStore.ts:161
+msgid "Page duplicated"
+msgstr "पेज की प्रतिलिपि बनाई गई"
+
+#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:46
 msgid "Page not found"
-msgstr "पृष्ठ नहीं मिला"
+msgstr "पेज नहीं मिला"
+
+#: frontend/src/stores/pageStore.ts:258
+msgid "Page unpublished"
+msgstr "पेज अप्रकाशित किया गया"
+
+#: frontend/src/components/BuilderCommandPalette.vue:279
+msgid "Pages"
+msgstr "पेज"
+
+#: frontend/src/utils/useBuilderEvents.ts:334
+msgid "Pan canvas down"
+msgstr "कैनवास नीचे खिसकाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:312
+msgid "Pan canvas left"
+msgstr "कैनवास बाएं खिसकाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:301
+msgid "Pan canvas right"
+msgstr "कैनवास दाएं खिसकाएं"
+
+#: frontend/src/utils/useBuilderEvents.ts:323
+msgid "Pan canvas up"
+msgstr "कैनवास ऊपर खिसकाएं"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:70
+msgid "Paste Style"
+msgstr "शैली चिपकाएं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:32
+msgid "Paste or drop image"
+msgstr "छवि चिपकाएं या छोड़ें"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:184
+msgid "Pasting a page!"
+msgstr "पेज चिपकाया जा रहा है!"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:159
+#: frontend/src/utils/builderBlockCopyPaste.ts:192
+#: frontend/src/utils/builderBlockCopyPaste.ts:208
+msgid "Pasting..."
+msgstr "चिपकाया जा रहा है..."
 
 #. Label of the path (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -538,113 +2580,514 @@ msgstr "पथ"
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Persona Survey Done"
-msgstr ""
+msgstr "पर्सोना सर्वे पूरा"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:186
+msgid "Pick a starting point"
+msgstr "एक शुरुआती बिंदु चुनें"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:36
+msgid "Pick a wider date range, or share your page to start collecting data."
+msgstr "बड़ी तारीख सीमा चुनें, या डेटा एकत्र करना शुरू करने के लिए अपना पेज साझा करें।"
+
+#: frontend/src/components/Modals/TokenManager.vue:100
+#: frontend/src/components/Modals/TokenManager.vue:145
+#: frontend/src/components/Modals/TokenManager.vue:269
+#: frontend/src/components/Modals/TokenManager.vue:315
+msgid "Pick color"
+msgstr "रंग चुनें"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:39
+msgid "Placeholder"
+msgstr "प्लेसहोल्डर"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:14
+msgid "Placement"
+msgstr "स्थान"
 
 #: builder/ai_page_generator.py:464
 msgid "Please configure an OpenRouter API key in Settings → AI"
-msgstr ""
+msgstr "कृपया सेटिंग्स → AI में OpenRouter API कुंजी कॉन्फ़िगर करें"
+
+#: builder/builder/doctype/builder_page/builder_page.py:88
+msgid "Please log in to view this page."
+msgstr "यह पेज देखने के लिए कृपया लॉग इन करें।"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:87
+#: frontend/src/components/BlockContextMenuOptions/index.ts:166
+msgid "Please select a collection"
+msgstr "कृपया एक कलेक्शन चुनें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:258
+msgid "Please select an app for this standard page"
+msgstr "कृपया इस मानक पेज के लिए एक ऐप चुनें"
 
 #: builder/ai_page_generator.py:659
 msgid "Please set an OpenRouter API key"
-msgstr ""
+msgstr "कृपया एक OpenRouter API कुंजी सेट करें"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:244
+msgid "Pointer"
+msgstr "पॉइंटर"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:171
+msgid "Points your root domain directly to the server. Use @ as the host name."
+msgstr "आपके रूट डोमेन को सीधे सर्वर की ओर इंगित करता है। होस्ट नाम के रूप में @ उपयोग करें।"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:145
+msgid "Portfolio / personal site"
+msgstr "पोर्टफ़ोलियो / व्यक्तिगत साइट"
+
+#: frontend/src/components/BackgroundHandler.vue:89
+#: frontend/src/components/BlockPropertySections/PositionSection.ts:17
+msgid "Position"
+msgstr "स्थिति"
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
+msgid "Poster"
+msgstr "पोस्टर"
+
+#: frontend/src/components/ShadowHandler.vue:57
+msgid "Presets"
+msgstr "प्रीसेट"
+
+#: frontend/src/components/Settings/GlobalDeveloper.vue:21
+msgid "Prevent Click Emulation"
+msgstr "क्लिक एमुलेशन रोकें"
 
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageGeneral.vue:129
 msgid "Prevent search engines from indexing this page"
-msgstr ""
+msgstr "सर्च इंजन को इस पेज को इंडेक्स करने से रोकें"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:78
+msgid "Prevent the site from automatically switching to dark mode"
+msgstr "साइट को अपने आप डार्क मोड में जाने से रोकें"
+
+#: frontend/src/components/Settings/GlobalDeveloper.vue:23
+msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
+msgstr "ब्लॉक क्लाइंट स्क्रिप्ट वाले ब्लॉक के लिए एडिटर में क्लिक इवेंट का अनुकरण रोकता है।"
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
+#: frontend/src/components/Commands/index.ts:113
+#: frontend/src/components/Templates/TemplateGroupCard.vue:16
+#: frontend/src/components/Templates/TemplatePageCard.vue:16
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:21
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:22
 msgid "Preview"
-msgstr "पूर्व दर्शन"
+msgstr "पूर्वावलोकन"
 
 #. Label of the preview_height (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Height"
-msgstr ""
+msgstr "पूर्वावलोकन ऊंचाई"
+
+#: frontend/src/components/Modals/NewBlockTemplate.vue:39
+msgid "Preview Image"
+msgstr "पूर्वावलोकन छवि"
 
 #: builder/builder/doctype/block_template/block_template.py:20
 msgid "Preview Image is mandatory"
-msgstr ""
+msgstr "पूर्वावलोकन छवि आवश्यक है"
+
+#: frontend/src/components/Commands/index.ts:108
+msgid "Preview Page"
+msgstr "पेज का पूर्वावलोकन करें"
 
 #. Label of the preview_width (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Width"
-msgstr ""
+msgstr "पूर्वावलोकन चौड़ाई"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:22
+msgid "Primary"
+msgstr "प्राथमिक"
 
 #. Label of the project_folder (Link) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Project Folder"
-msgstr ""
+msgstr "प्रोजेक्ट फ़ोल्डर"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:66
+msgid "Properties"
+msgstr "प्रॉपर्टी"
+
+#: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
+#: frontend/src/components/ObjectEditor.vue:6
+msgid "Property"
+msgstr "प्रॉपर्टी"
+
+#: frontend/src/components/Settings/PageGeneral.vue:120
+msgid "Protected Page"
+msgstr "सुरक्षित पेज"
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Public URL"
-msgstr ""
+msgstr "सार्वजनिक URL"
+
+#: frontend/src/components/PageListItem.vue:29
+msgid "Publicly accessible"
+msgstr "सार्वजनिक रूप से उपलब्ध"
+
+#: frontend/src/components/PublishButton.vue:77
+#: frontend/src/components/Settings/PageGeneral.vue:56
+msgid "Publish"
+msgstr "प्रकाशित करें"
+
+#: frontend/src/components/PublishButton.vue:79
+msgid "Publish Changes"
+msgstr "परिवर्तन प्रकाशित करें"
+
+#: frontend/src/components/Commands/index.ts:122
+msgid "Publish Page"
+msgstr "पेज प्रकाशित करें"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/DashboardHead.vue:35
+#: frontend/src/components/PageListItem.vue:48
+#: frontend/src/components/Settings/PageGeneral.vue:46
 msgid "Published"
 msgstr "प्रकाशित"
 
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published At"
-msgstr ""
+msgstr "प्रकाशित किया गया"
+
+#: frontend/src/components/VersionHistory.vue:69
+msgid "Published version"
+msgstr "प्रकाशित संस्करण"
+
+#: frontend/src/components/Settings/PageGeneral.vue:45
+msgid "Published with limited access"
+msgstr "सीमित पहुंच के साथ प्रकाशित"
+
+#: frontend/src/components/Controls/GradientEditor.vue:8
+msgid "Radial"
+msgstr "त्रिज्यात्मक"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:157
+msgid "Radius"
+msgstr "त्रिज्या"
+
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
+msgid "Read Only"
+msgstr "केवल पढ़ने योग्य"
+
+#: frontend/src/stores/canvasStore.ts:86
+msgid "Read-only preview · Use <b>Restore</b> to load this version."
+msgstr "केवल-पढ़ने योग्य पूर्वावलोकन · यह संस्करण लोड करने के लिए <b>पुनर्स्थापित करें</b> का उपयोग करें।"
+
+#: frontend/src/components/BuilderCommandPalette.vue:291
+#: frontend/src/components/BuilderCommandPalette.vue:342
+msgid "Recent"
+msgstr "हाल के"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:98
+msgid "Redirect status"
+msgstr "रीडायरेक्ट स्थिति"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:240
+msgid "Redirect to Primary"
+msgstr "प्राथमिक पर रीडायरेक्ट करें"
+
+#: frontend/src/components/Settings/index.ts:102
+#: frontend/src/components/Settings/index.ts:103
+msgid "Redirects"
+msgstr "रीडायरेक्ट"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:20
+msgid "Redirects to primary"
+msgstr "प्राथमिक पर रीडायरेक्ट होता है"
+
+#: frontend/src/components/Commands/index.ts:326
+#: frontend/src/components/Commands/index.ts:330
+msgid "Redo"
+msgstr "फिर से करें"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Doctype"
-msgstr "संदर्भ दस्तावेज़ प्रकार"
+msgstr "संदर्भ Doctype"
 
 #. Label of the reference_name (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Name"
 msgstr "संदर्भ नाम"
 
+#: frontend/src/components/Settings/GlobalRedirects.vue:156
+msgid "Regex capture"
+msgstr "Regex कैप्चर"
+
+#: frontend/src/utils/fontManager.ts:242
+msgid "Regular"
+msgstr "सामान्य"
+
+#: frontend/src/components/BlockPositionHandler.vue:13
+msgid "Relative"
+msgstr "सापेक्ष"
+
+#: frontend/src/components/Controls/ImageUploader.vue:15
+#: frontend/src/components/Modals/TokenManager.vue:754
+#: frontend/src/components/MoreStylesPanel.vue:206
+msgid "Remove"
+msgstr "हटाएं"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:99
+msgid "Remove Collection"
+msgstr "कलेक्शन हटाएं"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:253
+msgid "Remove Domain"
+msgstr "डोमेन हटाएं"
+
+#: frontend/src/components/PageClientScriptManager.vue:54
+msgid "Remove Script"
+msgstr "स्क्रिप्ट हटाएं"
+
+#: frontend/src/components/Controls/GradientEditor.vue:45
+msgid "Remove Stop"
+msgstr "स्टॉप हटाएं"
+
+#: frontend/src/components/Modals/TokenManager.vue:761
+msgid "Remove from group"
+msgstr "समूह से हटाएं"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:44
+msgid "Remove image"
+msgstr "छवि हटाएं"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:261
+#: frontend/src/components/DashboardSidebar.vue:68
+#: frontend/src/components/PageClientScriptManager.vue:47
+msgid "Rename"
+msgstr "नाम बदलें"
+
+#: frontend/src/components/BackgroundHandler.vue:95
+#: frontend/src/components/BackgroundHandler.vue:299
+msgid "Repeat"
+msgstr "दोहराएं"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:157
+msgid "Repeat Block"
+msgstr "ब्लॉक दोहराएं"
+
+#: frontend/src/components/BackgroundHandler.vue:300
+msgid "Repeat X"
+msgstr "X पर दोहराएं"
+
+#: frontend/src/components/BackgroundHandler.vue:301
+msgid "Repeat Y"
+msgstr "Y पर दोहराएं"
+
 #: builder/builder/doctype/builder_settings/builder_settings.js:72
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
+#: frontend/src/components/Controls/SearchBlock.vue:127
 msgid "Replace"
-msgstr ""
+msgstr "बदलें"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
+msgid "Replace All"
+msgstr "सभी बदलें"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
 msgid "Replace Component"
-msgstr ""
+msgstr "कंपोनेंट बदलें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:45
+msgid "Replace Image (AI)"
+msgstr "छवि बदलें (AI)"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:89
+msgid "Replace Next"
+msgstr "अगला बदलें"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:53
 msgid "Replace With"
-msgstr ""
+msgstr "इससे बदलें"
+
+#: frontend/src/components/Controls/SearchBlock.vue:78
+msgid "Replace with..."
+msgstr "इससे बदलें..."
+
+#: builder/api.py:195
+msgid "Requests to private or internal addresses are not allowed."
+msgstr "निजी या आंतरिक पतों पर अनुरोध की अनुमति नहीं है।"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:35
+msgid "Resend"
+msgstr "फिर से भेजें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:182
+msgid "Reset Changes"
+msgstr "परिवर्तन रीसेट करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:204
+msgid "Reset Component"
+msgstr "कंपोनेंट रीसेट करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:173
+msgid "Reset Overrides"
+msgstr "ओवरराइड रीसेट करें"
+
+#: frontend/src/utils/useBuilderEvents.ts:279
+msgid "Reset canvas zoom"
+msgstr "कैनवास ज़ूम रीसेट करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:185
+msgid "Reset changes in child blocks as well?"
+msgstr "क्या चाइल्ड ब्लॉक के परिवर्तन भी रीसेट करें?"
+
+#: frontend/src/components/VersionHistory.vue:86
+#: frontend/src/components/VersionHistory.vue:123
+msgid "Restore this version as your draft"
+msgstr "इस संस्करण को अपने मसौदे के रूप में पुनर्स्थापित करें"
 
 #. Label of the restrict_click_handlers (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Restrict Click Handlers"
-msgstr ""
+msgstr "क्लिक हैंडलर सीमित करें"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalDeveloper.vue:15
 msgid "Restricted"
-msgstr ""
+msgstr "प्रतिबंधित"
+
+#: frontend/src/components/WebPagePresetPicker.vue:458
+msgid "Retro"
+msgstr "रेट्रो"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:251
+msgid "Retry"
+msgstr "पुनः प्रयास करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:38
+msgid "Rewrite (AI)"
+msgstr "फिर से लिखें (AI)"
+
+#: frontend/src/components/BackgroundHandler.vue:294
+#: frontend/src/components/BlockPositionHandler.vue:52
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:165
+msgid "Right"
+msgstr "दाएं"
+
+#: frontend/src/components/Settings/index.ts:110
+msgid "Robots"
+msgstr "रोबोट्स"
+
+#: frontend/src/components/Settings/index.ts:111
+msgid "Robots.txt"
+msgstr "Robots.txt"
+
+#: frontend/src/components/Settings/PageRobots.vue:30
+msgid "Robots.txt Guide"
+msgstr "Robots.txt गाइड"
+
+#: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
+msgid "Role"
+msgstr "भूमिका"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:258
+msgid "Rotation"
+msgstr "घुमाव"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/PageOptions.vue:14
+#: frontend/src/components/Settings/GlobalAnalytics.vue:31
 msgid "Route"
-msgstr "मार्ग"
+msgstr "रूट"
+
+#: frontend/src/components/DashboardHead.vue:86
+msgid "Route Tree"
+msgstr "रूट ट्री"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:83
+msgid "Row"
+msgstr "पंक्ति"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:91
+msgid "Row Dense"
+msgstr "पंक्ति सघन"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:43
+msgid "Row Height"
+msgstr "पंक्ति की ऊंचाई"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:156
+msgid "Row Span"
+msgstr "पंक्ति विस्तार"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:26
+msgid "Rows"
+msgstr "पंक्तियां"
+
+#: frontend/src/utils/useBuilderEvents.ts:130
+msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
+msgstr "इनलाइन छवि वाला SVG समर्थित नहीं है। कृपया इसे PNG के रूप में चिपकाएं।"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:61
+msgid "Same Tab"
+msgstr "उसी टैब में"
+
+#: frontend/src/components/Modals/TokenManager.vue:1037
+msgid "Sample CSV downloaded"
+msgstr "नमूना CSV डाउनलोड किया गया"
+
+#: frontend/src/components/Controls/CodeEditor.vue:41
+#: frontend/src/components/Modals/NewBlockTemplate.vue:7
+#: frontend/src/components/PropsPopoverContent.vue:46
+#: frontend/src/components/VersionHistory.vue:27
+#: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
+msgid "Save"
+msgstr "सहेजें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:241
+msgid "Save As Component"
+msgstr "कंपोनेंट के रूप में सहेजें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:232
+#: frontend/src/components/Modals/NewBlockTemplate.vue:3
+msgid "Save as Block Template"
+msgstr "ब्लॉक टेम्पलेट के रूप में सहेजें"
+
+#: frontend/src/components/Controls/ColorInput.vue:38
+msgid "Save as Token"
+msgstr "टोकन के रूप में सहेजें"
+
+#: frontend/src/components/VersionHistory.vue:14
+msgid "Save current version"
+msgstr "वर्तमान संस्करण सहेजें"
+
+#: frontend/src/utils/useBuilderEvents.ts:228
+msgid "Save page / component"
+msgstr "पेज / कंपोनेंट सहेजें"
+
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:15
+msgid "Saving template"
+msgstr "टेम्पलेट सहेजा जा रहा है"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script"
-msgstr "लिखी हुई कहानी"
+msgstr "स्क्रिप्ट"
 
 #. Label of the script_public_url (Read Only) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script Public URL"
-msgstr ""
+msgstr "स्क्रिप्ट का सार्वजनिक URL"
 
 #. Label of the script_type (Autocomplete) field in DocType 'Builder Client
 #. Script'
@@ -652,51 +3095,414 @@ msgstr ""
 msgid "Script Type"
 msgstr "स्क्रिप्ट प्रकार"
 
+#: frontend/src/components/PageClientScriptManager.vue:243
+msgid "Script cannot be empty"
+msgstr "स्क्रिप्ट खाली नहीं हो सकती"
+
+#: frontend/src/components/PageClientScriptManager.vue:386
+msgid "Script order updated"
+msgstr "स्क्रिप्ट का क्रम अपडेट किया गया"
+
+#: frontend/src/components/PageClientScriptManager.vue:266
+msgid "Script saved successfully"
+msgstr "स्क्रिप्ट सफलतापूर्वक सहेजी गई"
+
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Scripting"
-msgstr ""
+msgstr "स्क्रिप्टिंग"
 
-#: frontend/src/components/BuilderToolbar.vue:16
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:32
+msgid "Scroll"
+msgstr "स्क्रॉल"
+
+#: frontend/src/components/Controls/Autocomplete.vue:171
+#: frontend/src/components/Controls/SearchBlock.vue:7
+msgid "Search"
+msgstr "खोजें"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:115
+msgid "Search (Google)"
+msgstr "खोजें (Google)"
+
+#: frontend/src/components/BuilderCanvas.vue:113
+msgid "Search Block"
+msgstr "ब्लॉक खोजें"
+
+#: frontend/src/components/Commands/index.ts:238
+msgid "Search Blocks"
+msgstr "ब्लॉक खोजें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:60
+#: frontend/src/components/BuilderCommandPalette.vue:69
+msgid "Search Page"
+msgstr "पेज खोजें"
+
+#: frontend/src/components/BuilderBlockTemplates.vue:37
+msgid "Search Template"
+msgstr "टेम्पलेट खोजें"
+
+#: frontend/src/components/Commands/index.ts:242
+msgid "Search blocks"
+msgstr "ब्लॉक खोजें"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:7
+msgid "Search by name or email"
+msgstr "नाम या ईमेल से खोजें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:70
+msgid "Search by name or route..."
+msgstr "नाम या रूट से खोजें..."
+
+#: frontend/src/components/BuilderAssets.vue:6
+msgid "Search component"
+msgstr "कंपोनेंट खोजें"
+
+#: frontend/src/components/Controls/SearchBlock.vue:70
+msgid "Search inside selected block only"
+msgstr "केवल चयनित ब्लॉक के अंदर खोजें"
+
+#: frontend/src/components/BlockProperties.vue:7
+msgid "Search properties"
+msgstr "प्रॉपर्टी खोजें"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:9
+msgid "Search redirects"
+msgstr "रीडायरेक्ट खोजें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:87
+msgid "Search settings..."
+msgstr "सेटिंग्स खोजें..."
+
+#: frontend/src/components/Modals/TokenManager.vue:37
+msgid "Search tokens"
+msgstr "टोकन खोजें"
+
+#: frontend/src/components/Controls/SearchBlock.vue:104
+msgid "Search your blocks"
+msgstr "अपने ब्लॉक खोजें"
+
+#: frontend/src/components/Controls/DynamicValueHandler.vue:9
+msgid "Search..."
+msgstr "खोजें..."
+
+#: frontend/src/components/CommandPalette.vue:74
+msgid "Searching..."
+msgstr "खोजा जा रहा है..."
+
+#: frontend/src/components/CommandPalette.vue:98
+#: frontend/src/components/PropsPopoverContent.vue:170
+msgid "Select"
+msgstr "चुनें"
+
+#: frontend/src/components/ToolbarItems/ModeSwitcher.vue:21
 msgid "Select (v)"
-msgstr ""
+msgstr "चुनें (v)"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
+msgid "Select All Matches (Alt+Enter)"
+msgstr "सभी मिलान चुनें (Alt+Enter)"
+
+#: frontend/src/components/Settings/PageGeneral.vue:230
+msgid "Select App"
+msgstr "ऐप चुनें"
+
+#: frontend/src/utils/dialogs.ts:80
+msgid "Select Folder"
+msgstr "फ़ोल्डर चुनें"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:63
+msgid "Select Model"
+msgstr "मॉडल चुनें"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:13
+msgid "Select Template"
+msgstr "टेम्पलेट चुनें"
+
+#: frontend/src/components/BlockProperties.vue:31
+msgid "Select a block to edit properties"
+msgstr "प्रॉपर्टी संपादित करने के लिए एक ब्लॉक चुनें"
+
+#: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:104
+msgid "Select a collection"
+msgstr "एक कलेक्शन चुनें"
+
+#: frontend/src/components/Settings/AnalyticsFilters.vue:15
+msgid "Select date range"
+msgstr "दिनांक सीमा चुनें"
+
+#: frontend/src/components/PropsOptions/ColorOptions.vue:10
+msgid "Select default color"
+msgstr "डिफ़ॉल्ट रंग चुनें"
+
+#: frontend/src/utils/useBuilderEvents.ts:394
+msgid "Select mode"
+msgstr "चयन मोड"
+
+#: frontend/src/components/Modals/TokenManager.vue:372
+msgid "Select or type a group name"
+msgstr "समूह का नाम चुनें या लिखें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:146
+msgid "Select the app for this standard page"
+msgstr "इस मानक पेज के लिए ऐप चुनें"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:76
+msgid "Send Invitation"
+msgstr "निमंत्रण भेजें"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-msgstr ""
+msgstr "सर्वर-साइड Python स्क्रिप्ट जो कंपोनेंट डेटा भरती है। इनपुट के रूप में props लेती है। उपयोग: data.events = frappe.get_list('Event')"
+
+#: frontend/src/components/Settings/PageGeneral.vue:114
+msgid "Set As Homepage"
+msgstr "होमपेज बनाएं"
+
+#: frontend/src/components/BackgroundHandler.vue:11
+msgid "Set Background"
+msgstr "पृष्ठभूमि सेट करें"
+
+#: frontend/src/components/Controls/ColorInput.vue:172
+#: frontend/src/components/Controls/ColorPickerContent.vue:48
+msgid "Set Color"
+msgstr "रंग सेट करें"
+
+#: frontend/src/components/Controls/BasePropertyControl.vue:34
+#: frontend/src/components/Controls/BasePropertyControl.vue:261
+msgid "Set Dynamic Value"
+msgstr "डायनामिक मान सेट करें"
+
+#: frontend/src/components/Controls/FontInput.vue:47
+msgid "Set Font"
+msgstr "फ़ॉन्ट सेट करें"
+
+#: frontend/src/components/ImageUploadInput.vue:107
+msgid "Set Image"
+msgstr "छवि सेट करें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:237
+msgid "Set as Primary"
+msgstr "प्राथमिक के रूप में सेट करें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:101
+msgid "Set current page as Homepage"
+msgstr "वर्तमान पेज को होमपेज बनाएं"
+
+#: frontend/src/components/Settings/PageGeneral.vue:164
+msgid "Set folder to organize your page"
+msgstr "अपने पेज व्यवस्थित करने के लिए फ़ोल्डर सेट करें"
+
+#: frontend/src/components/BuilderCommandPalette.vue:77
+#: frontend/src/components/BuilderCommandPalette.vue:86
+#: frontend/src/components/BuilderCommandPalette.vue:122
+#: frontend/src/components/BuilderCommandPalette.vue:321
+#: frontend/src/components/BuilderSettings.vue:4
+#: frontend/src/components/DashboardSidebar.vue:13
+#: frontend/src/components/DashboardSidebar.vue:186
+#: frontend/src/components/MainMenu.vue:101
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
+msgid "Settings"
+msgstr "सेटिंग्स"
+
+#: frontend/src/components/ShadowHandler.vue:8
+msgid "Shadow"
+msgstr "छाया"
+
+#: frontend/src/components/ShadowHandler.vue:124
+msgid "Shadow Color"
+msgstr "छाया का रंग"
+
+#: frontend/src/components/MainMenu.vue:106
+msgid "Shortcuts"
+msgstr "शॉर्टकट"
+
+#: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:39
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:43
+msgid "Show"
+msgstr "दिखाएं"
+
+#: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
+msgid "Show Children"
+msgstr "चाइल्ड दिखाएं"
+
+#: frontend/src/components/Commands/index.ts:172
+msgid "Show Left Panel"
+msgstr "बायां पैनल दिखाएं"
+
+#: frontend/src/components/Commands/index.ts:183
+msgid "Show Right Panel"
+msgstr "दायां पैनल दिखाएं"
+
+#: frontend/src/components/Commands/index.ts:207
+msgid "Show keyboard shortcuts"
+msgstr "कीबोर्ड शॉर्टकट दिखाएं"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:50
+msgid "Shrink"
+msgstr "सिकोड़ें"
+
+#: frontend/src/components/Settings/index.ts:128
+msgid "Site Analytics"
+msgstr "साइट एनालिटिक्स"
+
+#: frontend/src/utils/useSiteReadOnlyNotice.ts:43
+msgid "Site is back online"
+msgstr "साइट फिर से ऑनलाइन है"
+
+#: frontend/src/utils/useSiteReadOnlyNotice.ts:16
+msgid "Site is in read-only mode"
+msgstr "साइट केवल-पढ़ने योग्य मोड में है"
+
+#: frontend/src/components/BackgroundHandler.vue:83
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:76
+msgid "Size"
+msgstr "आकार"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:76
+msgid "Skip for now"
+msgstr "अभी छोड़ें"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
+msgid "Slow"
+msgstr "धीमा"
+
+#: frontend/src/components/ShadowHandler.vue:183
+msgid "Small"
+msgstr "छोटा"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
+msgid "Smooth"
+msgstr "स्मूद"
 
 #. Label of the snapshot_type (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Snapshot Type"
-msgstr ""
+msgstr "स्नैपशॉट प्रकार"
 
-#: builder/builder/doctype/builder_page/builder_page.py:322
+#: builder/builder/doctype/builder_page/builder_page.py:392
 msgid "Snapshot does not belong to this page"
-msgstr ""
+msgstr "स्नैपशॉट इस पेज का नहीं है"
+
+#: frontend/src/components/Settings/PageMeta.vue:33
+msgid "Social Preview"
+msgstr "सोशल पूर्वावलोकन"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:119
+msgid "Social media"
+msgstr "सोशल मीडिया"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:137
+msgid "Solid"
+msgstr "ठोस"
+
+#: frontend/src/components/DashboardHead.vue:56
+msgid "Sort"
+msgstr "क्रमबद्ध करें"
 
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Sort Order"
-msgstr ""
+msgstr "क्रमबद्ध करने का क्रम"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:18
+msgid "Source"
+msgstr "स्रोत"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:25
+msgid "Space Around"
+msgstr "चारों ओर जगह"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:24
+msgid "Space Between"
+msgstr "बीच में जगह"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:26
+msgid "Space Evenly"
+msgstr "समान जगह"
+
+#: frontend/src/components/BlockPropertySections/SpacingSection.ts:58
+msgid "Spacing"
+msgstr "रिक्ति"
+
+#: frontend/src/components/Settings/PageRobots.vue:31
+msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
+msgstr "सर्च इंजन आपकी साइट के साथ कैसे इंटरैक्ट करते हैं, इसे नियंत्रित करने के लिए नियम निर्धारित करें। अधिक जानकारी के लिए {0} देखें।"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
+msgid "Speed"
+msgstr "गति"
+
+#: frontend/src/components/ShadowHandler.vue:156
+msgid "Spread"
+msgstr "फैलाव"
+
+#: frontend/src/components/BlockPropertySections/LayoutSection.ts:40
+msgid "Stack"
+msgstr "स्टैक"
+
+#: frontend/src/components/Settings/PageGeneral.vue:136
+msgid "Standard Page"
+msgstr "मानक पेज"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
 msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
-msgstr ""
+msgstr "मानक फ़ोल्डर हटाए नहीं जा सकते। मानक फ़ोल्डर हटाने के लिए कृपया डेवलपर मोड चालू करें।"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.js:13
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:26
 msgid "Standard folders cannot be modified. Please enable developer mode to edit standard folders."
-msgstr ""
+msgstr "मानक फ़ोल्डर बदले नहीं जा सकते। मानक फ़ोल्डर संपादित करने के लिए कृपया डेवलपर मोड चालू करें।"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:63
+msgid "Start"
+msgstr "शुरुआत"
+
+#: frontend/src/components/Templates/TemplatesDialog.vue:6
+msgid "Start from a blank page or pick a page from a template."
+msgstr "खाली पेज से शुरू करें या किसी टेम्पलेट से पेज चुनें।"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:109
+msgid "Start from a blank page or pick a template."
+msgstr "खाली पेज से शुरू करें या कोई टेम्पलेट चुनें।"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:70
+msgid "Start from scratch"
+msgstr "शुरू से बनाएं"
+
+#: frontend/src/components/BuilderCommandPalette.vue:71
+msgid "Start typing to search pages"
+msgstr "पेज खोजने के लिए टाइप करना शुरू करें"
+
+#: frontend/src/components/Settings/PageGeneral.vue:28
+msgid "Status"
+msgstr "स्थिति"
+
+#: frontend/src/components/BlockPositionHandler.vue:18
+msgid "Sticky"
+msgstr "चिपका हुआ"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:59
+#: frontend/src/components/DimensionInput.vue:17
+#: frontend/src/components/ImageUploadInput.vue:75
+msgid "Stretch"
+msgstr "खींचें"
+
+#: frontend/src/components/PropsPopoverContent.vue:167
+msgid "String"
+msgstr "स्ट्रिंग"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Structure"
-msgstr ""
+msgstr "संरचना"
 
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:273
+#: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
 msgstr "शैली"
 
@@ -704,7 +3510,27 @@ msgstr "शैली"
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Style Public URL"
-msgstr ""
+msgstr "शैली का सार्वजनिक URL"
+
+#: frontend/src/components/AIPageGeneratorModal.vue:90
+msgid "Styles"
+msgstr "शैलियां"
+
+#: frontend/src/components/Commands/index.ts:193
+msgid "Switch to Dark Mode"
+msgstr "डार्क मोड चालू करें"
+
+#: frontend/src/components/Commands/index.ts:193
+msgid "Switch to Light Mode"
+msgstr "लाइट मोड चालू करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:197
+msgid "Sync Component"
+msgstr "कंपोनेंट सिंक करें"
+
+#: frontend/src/stores/componentStore.ts:114
+msgid "Sync in all pages"
+msgstr "सभी पेजों में सिंक करें"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
@@ -720,112 +3546,540 @@ msgstr ""
 msgid "System Manager"
 msgstr "सिस्टम प्रबंधक"
 
+#: frontend/src/components/DashboardSidebar.vue:61
+msgid "System generated folder cannot be edited or deleted"
+msgstr "सिस्टम द्वारा बनाया गया फ़ोल्डर संपादित या हटाया नहीं जा सकता"
+
+#: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:96
+msgid "Tab Index"
+msgstr "टैब इंडेक्स"
+
+#: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
+msgid "Tag"
+msgstr "टैग"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:19
+#: frontend/src/components/Settings/TopClicksList.vue:11
+msgid "Target"
+msgstr "लक्ष्य"
+
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
 msgid "Target Component"
-msgstr ""
+msgstr "लक्ष्य कंपोनेंट"
+
+#: frontend/src/components/WebPagePresetPicker.vue:456
+msgid "Technical"
+msgstr "तकनीकी"
+
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
+msgid "Template"
+msgstr "टेम्पलेट"
 
 #. Label of the template_group (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Template Group"
-msgstr ""
+msgstr "टेम्पलेट समूह"
 
 #. Label of the template_name (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
+#: frontend/src/components/Modals/NewBlockTemplate.vue:26
 msgid "Template Name"
-msgstr ""
+msgstr "टेम्पलेट का नाम"
 
-#: builder/api.py:411
+#: builder/api.py:421
 msgid "Template group not found."
-msgstr ""
+msgstr "टेम्पलेट समूह नहीं मिला।"
 
-#: builder/builder/doctype/builder_page/builder_page.py:248
+#: builder/builder/doctype/builder_page/builder_page.py:301
 msgid "Template pages can only be deleted in developer mode."
-msgstr ""
+msgstr "टेम्पलेट पेज केवल डेवलपर मोड में हटाए जा सकते हैं।"
 
-#: builder/builder/doctype/builder_page/builder_page.py:196
+#: builder/builder/doctype/builder_page/builder_page.py:197
 msgid "Template pages can only be modified in developer mode."
-msgstr ""
+msgstr "टेम्पलेट पेज केवल डेवलपर मोड में बदले जा सकते हैं।"
+
+#: frontend/src/components/Settings/GlobalAI.vue:13
+msgid "Test Key"
+msgstr "कुंजी जांचें"
+
+#: frontend/src/components/Settings/GlobalAI.vue:13
+msgid "Testing..."
+msgstr "जांचा जा रहा है..."
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:246
 msgid "Text"
-msgstr ""
+msgstr "टेक्स्ट"
+
+#: frontend/src/components/ToolbarItems/ModeSwitcher.vue:23
+msgid "Text (t)"
+msgstr "टेक्स्ट (t)"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:81
+msgid "Text Color"
+msgstr "टेक्स्ट का रंग"
+
+#: frontend/src/utils/useBuilderEvents.ts:385
+msgid "Text mode"
+msgstr "टेक्स्ट मोड"
+
+#: frontend/src/components/PageOptions.vue:15
+msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
+msgstr "इस पेज का URL पथ। वेरिएबल के लिए कोलन उपयोग करें (जैसे /users/:id)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
-msgstr ""
+msgstr "जिस कंपोनेंट से आप बदलना चाहते हैं वह मौजूद नहीं है"
 
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
-msgstr ""
+msgstr "सर्च इंजन के लिए इस पेज का पसंदीदा URL। सेट न होने पर वर्तमान पेज का URL उपयोग होगा।"
+
+#: frontend/src/stores/pageStore.ts:348
+msgid "There was an error while fetching page data"
+msgstr "पेज डेटा लाने में त्रुटि हुई"
+
+#: frontend/src/components/ComponentUpdates.vue:28
+msgid "These components changed since this page was last updated. Update to use the latest."
+msgstr "यह पेज पिछली बार अपडेट होने के बाद ये कंपोनेंट बदल गए हैं। नवीनतम उपयोग करने के लिए अपडेट करें।"
+
+#: frontend/src/components/Settings/AnalyticsFilters.vue:56
+msgid "This Year"
+msgstr "इस वर्ष"
+
+#: frontend/src/components/Modals/TokenManager.vue:181
+msgid "This is a standard variable. It cannot be modified or deleted."
+msgstr "यह एक मानक वेरिएबल है। इसे बदला या हटाया नहीं जा सकता।"
+
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:9
+msgid "This is the homepage for your site"
+msgstr "यह आपकी साइट का होमपेज है"
+
+#: frontend/src/components/RouteTreeNode.vue:47
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
+msgid "This page has limited access"
+msgstr "इस पेज तक सीमित पहुंच है"
+
+#: frontend/src/stores/builderStore.ts:87
+msgid "This page will no longer be the homepage"
+msgstr "यह पेज अब होमपेज नहीं रहेगा"
+
+#: frontend/src/components/Settings/GlobalCode.vue:24
+msgid "This script will be executed on all the pages of your website."
+msgstr "यह स्क्रिप्ट आपकी वेबसाइट के सभी पेजों पर चलेगी।"
 
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;body&gt;"
-msgstr ""
+msgstr "यह &lt;body&gt; के अंत में जोड़ा जाएगा"
 
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;head&gt;"
-msgstr ""
+msgstr "यह &lt;head&gt; के अंत में जोड़ा जाएगा"
+
+#: frontend/src/components/VersionHistory.vue:243
+msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
+msgstr "यह संस्करण एडिटर में आपके वर्तमान मसौदे के रूप में लोड किया जाएगा। प्रकाशित करने तक आपका लाइव पेज नहीं बदलेगा। जारी रखें?"
+
+#: frontend/src/stores/pageStore.ts:202
+msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
+msgstr "इससे पिछले प्रकाशन के बाद पेज में किए गए सभी परिवर्तन पूर्ववत कर दिए जाएंगे। क्या आप वाकई जारी रखना चाहते हैं?"
+
+#: frontend/src/composables/useAnalytics.ts:118
+msgid "Timeline"
+msgstr "टाइमलाइन"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:46
+msgid "Timing"
+msgstr "समय"
 
 #. Label of the page_title (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageMeta.vue:9
 msgid "Title"
 msgstr "शीर्षक"
 
+#: frontend/src/components/Settings/AnalyticsFilters.vue:53
+msgid "Today"
+msgstr "आज"
+
+#: frontend/src/components/Commands/index.ts:228
+msgid "Toggle Canvas Dark Mode"
+msgstr "कैनवास डार्क मोड टॉगल करें"
+
+#: frontend/src/components/BuilderCanvas.vue:29
+msgid "Toggle Canvas Dark Mode (⌘⇧D)"
+msgstr "कैनवास डार्क मोड टॉगल करें (⌘⇧D)"
+
+#: frontend/src/pages/PagePreview.vue:29
+msgid "Toggle Dark Mode"
+msgstr "डार्क मोड टॉगल करें"
+
+#: frontend/src/components/Commands/index.ts:215
+msgid "Toggle Panels"
+msgstr "पैनल टॉगल करें"
+
+#: frontend/src/components/DashboardSidebar.vue:181
+#: frontend/src/components/MainMenu.vue:96
+msgid "Toggle Theme"
+msgstr "थीम टॉगल करें"
+
+#: frontend/src/components/Commands/index.ts:232
+msgid "Toggle canvas dark mode"
+msgstr "कैनवास डार्क मोड टॉगल करें"
+
+#: frontend/src/components/Commands/index.ts:177
+msgid "Toggle left panel"
+msgstr "बायां पैनल टॉगल करें"
+
+#: frontend/src/components/Commands/index.ts:219
+msgid "Toggle panels"
+msgstr "पैनल टॉगल करें"
+
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
+#: frontend/src/components/Modals/NewBuilderToken.vue:20
 msgid "Token Name"
-msgstr ""
+msgstr "टोकन का नाम"
+
+#: frontend/src/components/Modals/TokenManager.vue:830
+msgid "Token created"
+msgstr "टोकन बनाया गया"
+
+#: frontend/src/components/Modals/TokenManager.vue:79
+msgid "Token name"
+msgstr "टोकन का नाम"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:90
+msgid "Token updated"
+msgstr "टोकन अपडेट किया गया"
+
+#: frontend/src/pages/PageBuilder.vue:274
+#: frontend/src/utils/useBuilderEvents.ts:368
+#: frontend/src/utils/useBuilderEvents.ts:377
+#: frontend/src/utils/useBuilderEvents.ts:386
+#: frontend/src/utils/useBuilderEvents.ts:395
+#: frontend/src/utils/useBuilderEvents.ts:403
+msgid "Tools"
+msgstr "टूल"
+
+#: frontend/src/components/BackgroundHandler.vue:291
+#: frontend/src/components/BlockPositionHandler.vue:23
+msgid "Top"
+msgstr "ऊपर"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:113
+#: frontend/src/components/BlockGridLayoutHandler.vue:176
+msgid "Top Center"
+msgstr "ऊपर मध्य"
+
+#: frontend/src/components/Settings/TopClicksList.vue:3
+msgid "Top Clicks"
+msgstr "शीर्ष क्लिक"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:117
+#: frontend/src/components/BlockGridLayoutHandler.vue:180
+msgid "Top Left"
+msgstr "ऊपर बाएं"
+
+#: frontend/src/components/Settings/GlobalAnalytics.vue:21
+msgid "Top Pages"
+msgstr "शीर्ष पेज"
+
+#: frontend/src/components/Settings/TopReferrersList.vue:3
+msgid "Top Referrers"
+msgstr "शीर्ष रेफ़रर"
+
+#: frontend/src/components/BlockGridLayoutHandler.vue:109
+#: frontend/src/components/BlockGridLayoutHandler.vue:172
+msgid "Top Right"
+msgstr "ऊपर दाएं"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:16
+msgid "Total Pageviews"
+msgstr "कुल पेजव्यू"
+
+#: frontend/src/composables/useAnalytics.ts:121
+msgid "Total Views"
+msgstr "कुल व्यू"
+
+#: frontend/src/components/BlockPropertySections/LinkSection.ts:77
+msgid "Track Clicks"
+msgstr "क्लिक ट्रैक करें"
+
+#: frontend/src/components/Settings/GlobalGeneral.vue:56
+msgid "Track the number of views on each page of your website"
+msgstr "अपनी वेबसाइट के हर पेज पर व्यू की संख्या ट्रैक करें"
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:114
+msgid "Transform"
+msgstr "ट्रांसफ़ॉर्म"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:72
+msgid "Transform Only"
+msgstr "केवल ट्रांसफ़ॉर्म"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:85
+msgid "Transition"
+msgstr "ट्रांज़िशन"
+
+#: frontend/src/components/PropsOptions/BooleanOptions.vue:4
+msgid "True Label"
+msgstr "सही लेबल"
+
+#: frontend/src/components/Controls/SearchBlock.vue:138
+msgid "Try different keywords or adjust your filters"
+msgstr "अलग कीवर्ड आज़माएं या अपने फ़िल्टर बदलें"
+
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:10
+msgid "Turn on view tracking to start collecting page views, clicks and click-through rates for your published pages."
+msgstr "अपने प्रकाशित पेजों के लिए पेजव्यू, क्लिक और क्लिक-थ्रू दर एकत्र करना शुरू करने हेतु व्यू ट्रैकिंग चालू करें।"
 
 #. Label of the type (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
+#: frontend/src/components/BlockPropertySections/DataKeySection.ts:25
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:11
+#: frontend/src/components/BlockPropertySections/LayoutSection.ts:36
+#: frontend/src/components/DashboardHead.vue:32
+#: frontend/src/components/PropsPopoverContent.vue:24
 msgid "Type"
 msgstr "प्रकार"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
-msgstr ""
+msgstr "टाइपोग्राफ़ी"
+
+#: frontend/src/components/Commands/index.ts:313
+#: frontend/src/components/Commands/index.ts:317
+msgid "Undo"
+msgstr "पूर्ववत करें"
+
+#: frontend/src/components/Settings/AnalyticsOverview.vue:12
+msgid "Unique Visitors"
+msgstr "अद्वितीय विज़िटर"
+
+#: frontend/src/components/PageActionsDropdown.vue:20
+#: frontend/src/components/PublishButton.vue:31
+#: frontend/src/components/Settings/PageGeneral.vue:56
+msgid "Unpublish"
+msgstr "अप्रकाशित करें"
+
+#: frontend/src/components/DashboardHead.vue:36
+msgid "Unpublished"
+msgstr "अप्रकाशित"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/Settings/GlobalDeveloper.vue:16
 msgid "Unrestricted"
-msgstr ""
+msgstr "अप्रतिबंधित"
 
 #: builder/template_sync.py:55
 msgid "Unsafe template fixture name: {0}"
-msgstr ""
+msgstr "असुरक्षित टेम्पलेट फ़िक्स्चर नाम: {0}"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:16
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:120
+msgid "Unset"
+msgstr "हटाएं"
+
+#: frontend/src/components/Settings/PageGeneral.vue:114
+msgid "Unset Homepage"
+msgstr "होमपेज हटाएं"
+
+#: frontend/src/components/ComponentUpdates.vue:46
+msgid "Update"
+msgstr "अपडेट करें"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:205
+msgid "Update Current Page"
+msgstr "वर्तमान पेज अपडेट करें"
+
+#: frontend/src/components/ComponentUpdates.vue:23
+msgid "Update all"
+msgstr "सभी अपडेट करें"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:217
+msgid "Update to Latest Component"
+msgstr "नवीनतम कंपोनेंट पर अपडेट करें"
+
+#: frontend/src/components/BackgroundHandler.vue:76
+#: frontend/src/components/Controls/ImageUploader.vue:13
+#: frontend/src/components/ImageUploadInput.vue:64
+#: frontend/src/components/Modals/NewBlockTemplate.vue:50
+msgid "Upload"
+msgstr "अपलोड करें"
+
+#: frontend/src/components/Modals/TokenManager.vue:380
+msgid "Upload CSV"
+msgstr "CSV अपलोड करें"
+
+#: frontend/src/components/Controls/FontUploader.vue:6
+#: frontend/src/utils/helpers.ts:496
+msgid "Upload Font"
+msgstr "फ़ॉन्ट अपलोड करें"
+
+#: frontend/src/components/Settings/PageMeta.vue:24
+msgid "Upload Meta Image"
+msgstr "मेटा छवि अपलोड करें"
+
+#: frontend/src/utils/helpers.ts:374
+msgid "Uploaded"
+msgstr "अपलोड किया गया"
+
+#: frontend/src/utils/helpers.ts:532
+msgid "Uploading font..."
+msgstr "फ़ॉन्ट अपलोड हो रहा है..."
+
+#: frontend/src/components/Controls/ImageUploader.vue:13
+msgid "Uploading {0}%"
+msgstr "अपलोड हो रहा है {0}%"
+
+#: frontend/src/utils/helpers.ts:369
+msgid "Uploading..."
+msgstr "अपलोड हो रहा है..."
+
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:124
+msgid "Uppercase"
+msgstr "बड़े अक्षर"
+
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
+msgid "Use Regular Expression"
+msgstr "रेगुलर एक्सप्रेशन उपयोग करें"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:29
+msgid "Use all {0} pages"
+msgstr "सभी {0} पेज उपयोग करें"
+
+#: frontend/src/components/Templates/TemplatePageCard.vue:14
+#: frontend/src/components/Templates/TemplatePreview.vue:20
+msgid "Use template"
+msgstr "टेम्पलेट उपयोग करें"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:170
+msgid "Use this if your DNS provider doesn't support CNAME for subdomains."
+msgstr "इसका उपयोग करें यदि आपका DNS प्रदाता सबडोमेन के लिए CNAME समर्थित नहीं करता।"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:44
 msgid "Used in 1 page"
-msgstr ""
+msgstr "1 पेज में उपयोग हुआ"
+
+#: frontend/src/components/Modals/PageListModal.vue:2
+msgid "Used in following pages"
+msgstr "इन पेजों में उपयोग हुआ"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:45
 msgid "Used in {0} pages"
-msgstr ""
+msgstr "{0} पेजों में उपयोग हुआ"
 
 #. Name of a DocType
 #: builder/builder/doctype/user_font/user_font.json
 msgid "User Font"
-msgstr ""
+msgstr "उपयोगकर्ता फ़ॉन्ट"
+
+#: frontend/src/components/Settings/index.ts:86
+#: frontend/src/components/Settings/index.ts:87
+msgid "Users"
+msgstr "उपयोगकर्ता"
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:70
+#: frontend/src/components/DynamicValueDropdown.vue:6
+#: frontend/src/components/Modals/TokenManager.vue:53
+#: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
-msgstr "कीमत"
+msgstr "मान"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:72
+msgid "Value submitted with the form when this radio button is selected."
+msgstr "यह रेडियो बटन चुने जाने पर फ़ॉर्म के साथ भेजा जाने वाला मान।"
+
+#: frontend/src/components/DashboardSidebar.vue:90
+#: frontend/src/components/VersionHistory.vue:114
+msgid "Version"
+msgstr "संस्करण"
+
+#: frontend/src/components/PublishButton.vue:23
+#: frontend/src/components/VersionHistory.vue:7
+msgid "Version History"
+msgstr "संस्करण इतिहास"
+
+#: frontend/src/stores/pageStore.ts:238
+msgid "Version restored"
+msgstr "संस्करण पुनर्स्थापित किया गया"
+
+#: frontend/src/components/VersionHistory.vue:235
+msgid "Version saved"
+msgstr "संस्करण सहेजा गया"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:10
+msgid "Vertical"
+msgstr "लंबवत"
+
+#: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
+msgid "Very Slow"
+msgstr "बहुत धीमा"
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:106
+msgid "Video Options"
+msgstr "वीडियो विकल्प"
+
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
+msgid "Video URL"
+msgstr "वीडियो URL"
+
+#: frontend/src/components/Commands/index.ts:44
+#: frontend/src/components/Commands/index.ts:174
+#: frontend/src/components/Commands/index.ts:185
+#: frontend/src/components/Commands/index.ts:195
+#: frontend/src/utils/useBuilderEvents.ts:414
+msgid "View"
+msgstr "दृश्य"
+
+#: frontend/src/components/PageActionsDropdown.vue:14
+msgid "View Page"
+msgstr "पेज देखें"
+
+#: frontend/src/components/PageActionsDropdown.vue:26
+msgid "View in Desk"
+msgstr "Desk में देखें"
+
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
+msgid "View tracking is off"
+msgstr "व्यू ट्रैकिंग बंद है"
+
+#: frontend/src/components/Settings/GlobalAnalytics.vue:32
+msgid "Views"
+msgstr "व्यू"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:24
+msgid "Visible"
+msgstr "दृश्यमान"
 
 #. Label of the visitor_id (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Visitor ID"
-msgstr ""
+msgstr "विज़िटर ID"
+
+#: frontend/src/utils/useBuilderEvents.ts:129
+#: frontend/src/utils/useCanvasUtils.ts:234
+msgid "Warning"
+msgstr "चेतावनी"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:146
+msgid "Web app UI"
+msgstr "वेब ऐप UI"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
@@ -841,22 +4095,118 @@ msgstr ""
 msgid "Website Manager"
 msgstr "वेबसाइट प्रबंधक"
 
+#: frontend/src/components/BlockPropertySections/TypographySection.ts:55
+msgid "Weight"
+msgstr "मोटाई"
+
+#: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
+msgid "Width"
+msgstr "चौड़ाई"
+
+#: frontend/src/components/VersionHistory.vue:52
+msgid "Working draft · unpublished changes"
+msgstr "कार्यरत मसौदा · अप्रकाशित परिवर्तन"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:32
+#: frontend/src/components/BlockFlexLayoutHandler.vue:36
+msgid "Wrap"
+msgstr "रैप"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:109
+msgid "Wrap In Container"
+msgstr "कंटेनर में लपेटें"
+
+#: frontend/src/components/ShadowHandler.vue:153
+msgid "X Offset"
+msgstr "X ऑफ़सेट"
+
+#: frontend/src/components/ShadowHandler.vue:154
+msgid "Y Offset"
+msgstr "Y ऑफ़सेट"
+
+#: frontend/src/components/BlockFlexLayoutHandler.vue:45
+#: frontend/src/components/BlockFlexLayoutHandler.vue:54
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:60
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:77
+#: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:94
+#: frontend/src/components/PropsPopoverContent.vue:106
+#: frontend/src/utils/useBuilderEvents.ts:486
+msgid "Yes"
+msgstr "हाँ"
+
+#: frontend/src/utils/useSiteReadOnlyNotice.ts:43
+msgid "You can continue editing."
+msgstr "आप संपादन जारी रख सकते हैं।"
+
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
-msgstr ""
+msgstr "आपके पास इस पेज तक पहुंचने की अनुमति नहीं है"
 
-#: builder/ai_page_generator.py:454 builder/utils.py:54
+#: builder/ai_page_generator.py:454 builder/utils.py:85
 msgid "You do not have permission to modify pages"
-msgstr ""
+msgstr "आपके पास पेज बदलने की अनुमति नहीं है"
 
-#: builder/utils.py:56
+#: builder/utils.py:87
 msgid "You do not have permission to read pages"
-msgstr ""
+msgstr "आपके पास पेज पढ़ने की अनुमति नहीं है"
+
+#: frontend/src/components/DashboardContent.vue:8
+msgid "You don't have any pages yet. Click on the + New button to create a new page."
+msgstr "आपके पास अभी कोई पेज नहीं है। नया पेज बनाने के लिए + नया बटन पर क्लिक करें।"
+
+#: frontend/src/components/Controls/Dialog.vue:56
+msgid "You have unsaved changes. Are you sure you want to leave?"
+msgstr "आपके पास असहेजे परिवर्तन हैं। क्या आप वाकई बाहर जाना चाहते हैं?"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:185
+msgid "You're all set{0}. Pick a starting point"
+msgstr "सब तैयार है{0}। एक शुरुआती बिंदु चुनें"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:116
+msgid "YouTube"
+msgstr "YouTube"
+
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:187
+msgid "Z-Index"
+msgstr "Z-इंडेक्स"
+
+#: frontend/src/utils/useBuilderEvents.ts:346
+msgid "Zoom in"
+msgstr "ज़ूम इन करें"
+
+#: frontend/src/utils/useBuilderEvents.ts:357
+msgid "Zoom out"
+msgstr "ज़ूम आउट करें"
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid "data.events = frappe.get_list(\"Event\")\n"
+msgid ""
+"data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
+"data.events = frappe.get_list(\"Event\")\n"
+"<br>\n"
+"<b>ध्यान दें:</b> data की हर कुंजी का मान एक सूची होनी चाहिए।"
+
+#: frontend/src/utils/helpers.ts:897
+msgid "not used in any pages"
+msgstr "किसी पेज में उपयोग नहीं हुआ"
+
+#: frontend/src/stores/pageStore.ts:243
+msgid "this page"
+msgstr "इस पेज"
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in 1 page"
+msgstr "1 पेज में उपयोग हुआ"
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in {0} pages"
+msgstr "{0} पेजों में उपयोग हुआ"
+
+#: frontend/src/components/PageClientScriptManager.vue:226
+msgid "used in {0}+ pages"
+msgstr "{0}+ पेजों में उपयोग हुआ"
 
