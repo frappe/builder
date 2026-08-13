@@ -156,14 +156,14 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const blockStartHeight = props.targetBlock.getActiveStyleValue("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
-	// pressing `esc` resetsnto startStyles
-	const startStyles = {
-		width: props.targetBlock.getStyle("width", null, true),
-		height: props.targetBlock.getStyle("height", null, true),
-		left: props.targetBlock.getStyle("left", null, true),
-		top: props.targetBlock.getStyle("top", null, true),
-		fontSize: props.targetBlock.getStyle("fontSize", null, true),
-	};
+	// pressing `esc` resets to startStyles. The drag writes to the active state, so read
+	// and restore that same key.
+	const resizedStyles = ["width", "height", "left", "top", "fontSize"] as styleProperty[];
+	const startStyles = new Map(
+		resizedStyles
+			.map((style) => props.targetBlock.getActiveStyleProperty(style))
+			.map((style) => [style, props.targetBlock.getStyle(style, null, true)]),
+	);
 
 	cursorPosition.value = { x: ev.clientX, y: ev.clientY };
 	resizing.value = true;
@@ -215,9 +215,7 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 			}
 		},
 		onCancel: () => {
-			Object.entries(startStyles).forEach(([style, value]) => {
-				props.targetBlock.setStyle(style as styleProperty, value ?? null);
-			});
+			startStyles.forEach((value, style) => props.targetBlock.setStyle(style, value ?? null));
 		},
 		onEnd: () => {
 			resizing.value = false;
