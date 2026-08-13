@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 05:33\n"
+"PO-Revision-Date: 2026-08-13 12:24\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -3257,7 +3257,7 @@ msgstr "Skicka Inbjudan"
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-msgstr "Serversida Python skript som fyller i komponent data. Tar emot props som indata. Använd: data.events = frappe.get_list('Event')"
+msgstr "Serversida Python skript som fyller i komponent data. Tar emot rekvisita som indata. Använd: data.events = frappe.get_list('Event')"
 
 #: frontend/src/components/Settings/PageGeneral.vue:114
 msgid "Set As Homepage"
