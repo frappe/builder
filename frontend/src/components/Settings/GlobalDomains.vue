@@ -77,7 +77,7 @@
 			<ErrorMessage v-if="addError" :message="addError" />
 			<div class="flex gap-2">
 				<Button type="submit" :disabled="submitting || !newDomain" variant="subtle" :loading="submitting">
-					Add Domain
+					{{ __("Add Domain") }}
 				</Button>
 			</div>
 		</form>

@@ -22,7 +22,7 @@
 					<div
 						v-if="analytics.loading"
 						class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-						Loading...
+						{{ __("Loading...") }}
 					</div>
 					<ListView
 						class="!w-auto"

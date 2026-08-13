@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 08:01+0553\n"
+"POT-Creation-Date: 2026-08-13 08:13+0553\n"
 "PO-Revision-Date: 2026-08-08 13:03+0000\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language: hi_IN\n"
@@ -44,6 +44,7 @@ msgid "Accessibility"
 msgstr "सुगम्यता"
 
 #: frontend/src/components/ArrayEditor.vue:14
+#: frontend/src/components/MoreStylesPanel.vue:43
 #: frontend/src/components/ObjectEditor.vue:30
 #: frontend/src/components/PropsEditor.vue:87
 msgid "Add"
@@ -58,9 +59,17 @@ msgstr "CSS प्रॉपर्टी जोड़ें"
 msgid "Add Custom Meta Tags"
 msgstr "कस्टम मेटा टैग जोड़ें"
 
+#: frontend/src/components/Settings/GlobalDomains.vue:80
+msgid "Add Domain"
+msgstr "डोमेन जोड़ें"
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
 msgid "Add Redirect"
 msgstr "रीडायरेक्ट जोड़ें"
+
+#: frontend/src/components/PageClientScriptManager.vue:109
+msgid "Add Script"
+msgstr "स्क्रिप्ट जोड़ें"
 
 #: frontend/src/components/DataLoaderBlock.vue:6
 msgid "Add a block to repeat"
@@ -121,6 +130,10 @@ msgstr "सभी पेज"
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
 msgstr "सभी प्रॉपर्टी"
+
+#: frontend/src/components/PageClientScriptManager.vue:101
+msgid "All client scripts are executed in preview mode and on published pages."
+msgstr "सभी क्लाइंट स्क्रिप्ट पूर्वावलोकन मोड और प्रकाशित पेजों पर चलती हैं।"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
@@ -334,6 +347,14 @@ msgstr "ब्लॉक प्रॉप्स"
 msgid "Block Template"
 msgstr "ब्लॉक टेम्पलेट"
 
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Client Script"
+msgstr "ब्लॉक टेम्पलेट क्लाइंट स्क्रिप्ट"
+
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Data Script"
+msgstr "ब्लॉक टेम्पलेट डेटा स्क्रिप्ट"
+
 #: frontend/src/stores/blockTemplateStore.ts:94
 msgid "Block template saved!"
 msgstr "ब्लॉक टेम्पलेट सहेजा गया!"
@@ -545,6 +566,14 @@ msgstr "तेज़ शुरुआत के लिए कोई टेम्�
 msgid "Class"
 msgstr "क्लास"
 
+#: frontend/src/components/BackgroundHandler.vue:113
+msgid "Clear Gradient"
+msgstr "ग्रेडिएंट हटाएं"
+
+#: frontend/src/components/BackgroundHandler.vue:105
+msgid "Clear Image"
+msgstr "छवि हटाएं"
+
 #: frontend/src/components/AIPageGeneratorModal.vue:98
 msgid "Clear Selection"
 msgstr "चयन हटाएं"
@@ -648,6 +677,10 @@ msgstr "कमांड पैलेट"
 msgid "Commands"
 msgstr "कमांड"
 
+#: frontend/src/components/PageScript.vue:204
+msgid "Component Client Script"
+msgstr "कंपोनेंट क्लाइंट स्क्रिप्ट"
+
 #: frontend/src/components/PageScript.vue:23
 #: frontend/src/components/PageScript.vue:133
 msgid "Component Data Preview"
@@ -656,6 +689,7 @@ msgstr "कंपोनेंट डेटा पूर्वावलोकन"
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
+#: frontend/src/components/PageScript.vue:204
 msgid "Component Data Script"
 msgstr "कंपोनेंट डेटा स्क्रिप्ट"
 
@@ -905,7 +939,7 @@ msgstr "डेटा पूर्वावलोकन"
 msgid "Data Script"
 msgstr "डेटा स्क्रिप्ट"
 
-#: frontend/src/components/PageScript.vue:222
+#: frontend/src/components/PageScript.vue:224
 msgid "Data script saved"
 msgstr "डेटा स्क्रिप्ट सहेजी गई"
 
@@ -1091,6 +1125,10 @@ msgstr "हो गया"
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
 msgstr "बिंदुदार"
+
+#: frontend/src/components/Modals/TokenManager.vue:386
+msgid "Download sample"
+msgstr "नमूना डाउनलोड करें"
 
 #: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:47
@@ -1337,8 +1375,8 @@ msgstr "नाम बदलने में विफल"
 msgid "Failed to save component"
 msgstr "कंपोनेंट सहेजने में विफल"
 
-#: frontend/src/components/PageClientScriptManager.vue:268
-#: frontend/src/components/PageScript.vue:229
+#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
 msgstr "स्क्रिप्ट सहेजने में विफल"
 
@@ -1346,7 +1384,7 @@ msgstr "स्क्रिप्ट सहेजने में विफल"
 msgid "Failed to test API key"
 msgstr "API कुंजी जांचने में विफल"
 
-#: frontend/src/components/PageClientScriptManager.vue:388
+#: frontend/src/components/PageClientScriptManager.vue:390
 msgid "Failed to update script order"
 msgstr "स्क्रिप्ट का क्रम अपडेट करने में विफल"
 
@@ -1938,6 +1976,7 @@ msgid "Loading domains…"
 msgstr "डोमेन लोड हो रहे हैं…"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
+#: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
 #: frontend/src/components/Settings/TopReferrersList.vue:5
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:6
@@ -2113,6 +2152,7 @@ msgid "Name this version (optional)"
 msgstr "इस संस्करण को नाम दें (वैकल्पिक)"
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
+#: frontend/src/components/CommandPalette.vue:92
 #: frontend/src/components/Commands/index.ts:41
 #: frontend/src/components/Commands/index.ts:100
 msgid "Navigate"
@@ -2419,6 +2459,10 @@ msgstr "पेज"
 msgid "Page Analytics"
 msgstr "पेज एनालिटिक्स"
 
+#: frontend/src/components/PageScript.vue:203
+msgid "Page Client Script"
+msgstr "पेज क्लाइंट स्क्रिप्ट"
+
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
 msgstr "पेज कोड"
@@ -2434,6 +2478,7 @@ msgstr "पेज डेटा पूर्वावलोकन"
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Controls/DynamicValueHandler.vue:51
+#: frontend/src/components/PageScript.vue:203
 msgid "Page Data Script"
 msgstr "पेज डेटा स्क्रिप्ट"
 
@@ -2842,6 +2887,7 @@ msgstr "Y पर दोहराएं"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:72
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
+#: frontend/src/components/Controls/SearchBlock.vue:127
 msgid "Replace"
 msgstr "बदलें"
 
@@ -3049,15 +3095,15 @@ msgstr "स्क्रिप्ट का सार्वजनिक URL"
 msgid "Script Type"
 msgstr "स्क्रिप्ट प्रकार"
 
-#: frontend/src/components/PageClientScriptManager.vue:241
+#: frontend/src/components/PageClientScriptManager.vue:243
 msgid "Script cannot be empty"
 msgstr "स्क्रिप्ट खाली नहीं हो सकती"
 
-#: frontend/src/components/PageClientScriptManager.vue:384
+#: frontend/src/components/PageClientScriptManager.vue:386
 msgid "Script order updated"
 msgstr "स्क्रिप्ट का क्रम अपडेट किया गया"
 
-#: frontend/src/components/PageClientScriptManager.vue:264
+#: frontend/src/components/PageClientScriptManager.vue:266
 msgid "Script saved successfully"
 msgstr "स्क्रिप्ट सफलतापूर्वक सहेजी गई"
 
@@ -3144,6 +3190,7 @@ msgstr "खोजें..."
 msgid "Searching..."
 msgstr "खोजा जा रहा है..."
 
+#: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
 msgid "Select"
 msgstr "चुनें"
@@ -3252,6 +3299,7 @@ msgstr "अपने पेज व्यवस्थित करने के �
 #: frontend/src/components/BuilderCommandPalette.vue:86
 #: frontend/src/components/BuilderCommandPalette.vue:122
 #: frontend/src/components/BuilderCommandPalette.vue:321
+#: frontend/src/components/BuilderSettings.vue:4
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
@@ -3593,6 +3641,10 @@ msgstr "सर्च इंजन के लिए इस पेज का प�
 msgid "There was an error while fetching page data"
 msgstr "पेज डेटा लाने में त्रुटि हुई"
 
+#: frontend/src/components/ComponentUpdates.vue:28
+msgid "These components changed since this page was last updated. Update to use the latest."
+msgstr "यह पेज पिछली बार अपडेट होने के बाद ये कंपोनेंट बदल गए हैं। नवीनतम उपयोग करने के लिए अपडेट करें।"
+
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
 msgstr "इस वर्ष"
@@ -3868,6 +3920,10 @@ msgstr "नवीनतम कंपोनेंट पर अपडेट क�
 msgid "Upload"
 msgstr "अपलोड करें"
 
+#: frontend/src/components/Modals/TokenManager.vue:380
+msgid "Upload CSV"
+msgstr "CSV अपलोड करें"
+
 #: frontend/src/components/Controls/FontUploader.vue:6
 #: frontend/src/utils/helpers.ts:496
 msgid "Upload Font"
@@ -4134,7 +4190,23 @@ msgstr ""
 "<br>\n"
 "<b>ध्यान दें:</b> data की हर कुंजी का मान एक सूची होनी चाहिए।"
 
+#: frontend/src/utils/helpers.ts:897
+msgid "not used in any pages"
+msgstr "किसी पेज में उपयोग नहीं हुआ"
+
 #: frontend/src/stores/pageStore.ts:243
 msgid "this page"
 msgstr "इस पेज"
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in 1 page"
+msgstr "1 पेज में उपयोग हुआ"
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in {0} pages"
+msgstr "{0} पेजों में उपयोग हुआ"
+
+#: frontend/src/components/PageClientScriptManager.vue:226
+msgid "used in {0}+ pages"
+msgstr "{0}+ पेजों में उपयोग हुआ"
 

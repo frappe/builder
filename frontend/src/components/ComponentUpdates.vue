@@ -25,7 +25,7 @@
 						@click="updateAll" />
 				</div>
 				<p class="mb-3 text-xs text-ink-gray-5">
-					These components changed since this page was last updated. Update to use the latest.
+					{{ __("These components changed since this page was last updated. Update to use the latest.") }}
 				</p>
 				<div class="flex max-h-72 flex-col overflow-y-auto">
 					<div

@@ -89,13 +89,13 @@
 								<span class="lucide-arrow-down size-3" />
 							</kbd>
 						</span>
-						Navigate
+						{{ __("Navigate") }}
 					</span>
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
 						<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
 							<span class="lucide-corner-down-left size-3" />
 						</kbd>
-						Select
+						{{ __("Select") }}
 					</span>
 				</div>
 			</DialogContent>

@@ -124,7 +124,7 @@
 						variant="subtle"
 						class="ml-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
-						Replace
+						{{ __("Replace") }}
 					</Button>
 				</div>
 			</div>

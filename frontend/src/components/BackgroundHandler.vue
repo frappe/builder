@@ -102,7 +102,7 @@
 						{{ serveLocallyButtonText }}
 					</Button>
 					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
-						Clear Image
+						{{ __("Clear Image") }}
 					</Button>
 				</div>
 
@@ -110,7 +110,7 @@
 				<div v-else class="space-y-4">
 					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
 					<Button :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
-						Clear Gradient
+						{{ __("Clear Gradient") }}
 					</Button>
 				</div>
 

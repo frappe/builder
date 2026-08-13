@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 08:01+0553\n"
+"POT-Creation-Date: 2026-08-13 08:13+0553\n"
 "PO-Revision-Date: 2026-08-08 13:35+0000\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language: ru_RU\n"
@@ -44,6 +44,7 @@ msgid "Accessibility"
 msgstr ""
 
 #: frontend/src/components/ArrayEditor.vue:14
+#: frontend/src/components/MoreStylesPanel.vue:43
 #: frontend/src/components/ObjectEditor.vue:30
 #: frontend/src/components/PropsEditor.vue:87
 msgid "Add"
@@ -58,8 +59,16 @@ msgstr ""
 msgid "Add Custom Meta Tags"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalDomains.vue:80
+msgid "Add Domain"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
 msgid "Add Redirect"
+msgstr ""
+
+#: frontend/src/components/PageClientScriptManager.vue:109
+msgid "Add Script"
 msgstr ""
 
 #: frontend/src/components/DataLoaderBlock.vue:6
@@ -120,6 +129,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
+msgstr ""
+
+#: frontend/src/components/PageClientScriptManager.vue:101
+msgid "All client scripts are executed in preview mode and on published pages."
 msgstr ""
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
@@ -330,6 +343,14 @@ msgstr ""
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
+msgstr ""
+
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Client Script"
+msgstr ""
+
+#: frontend/src/components/PageScript.vue:205
+msgid "Block Template Data Script"
 msgstr ""
 
 #: frontend/src/stores/blockTemplateStore.ts:94
@@ -543,6 +564,14 @@ msgstr ""
 msgid "Class"
 msgstr ""
 
+#: frontend/src/components/BackgroundHandler.vue:113
+msgid "Clear Gradient"
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:105
+msgid "Clear Image"
+msgstr ""
+
 #: frontend/src/components/AIPageGeneratorModal.vue:98
 msgid "Clear Selection"
 msgstr ""
@@ -646,6 +675,10 @@ msgstr ""
 msgid "Commands"
 msgstr ""
 
+#: frontend/src/components/PageScript.vue:204
+msgid "Component Client Script"
+msgstr ""
+
 #: frontend/src/components/PageScript.vue:23
 #: frontend/src/components/PageScript.vue:133
 msgid "Component Data Preview"
@@ -654,6 +687,7 @@ msgstr ""
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
+#: frontend/src/components/PageScript.vue:204
 msgid "Component Data Script"
 msgstr ""
 
@@ -903,7 +937,7 @@ msgstr ""
 msgid "Data Script"
 msgstr ""
 
-#: frontend/src/components/PageScript.vue:222
+#: frontend/src/components/PageScript.vue:224
 msgid "Data script saved"
 msgstr ""
 
@@ -1088,6 +1122,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:386
+msgid "Download sample"
 msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:34
@@ -1335,8 +1373,8 @@ msgstr ""
 msgid "Failed to save component"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:268
-#: frontend/src/components/PageScript.vue:229
+#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
 msgstr ""
 
@@ -1344,7 +1382,7 @@ msgstr ""
 msgid "Failed to test API key"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:388
+#: frontend/src/components/PageClientScriptManager.vue:390
 msgid "Failed to update script order"
 msgstr ""
 
@@ -1936,6 +1974,7 @@ msgid "Loading domains…"
 msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
+#: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
 #: frontend/src/components/Settings/TopReferrersList.vue:5
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:6
@@ -2111,6 +2150,7 @@ msgid "Name this version (optional)"
 msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
+#: frontend/src/components/CommandPalette.vue:92
 #: frontend/src/components/Commands/index.ts:41
 #: frontend/src/components/Commands/index.ts:100
 msgid "Navigate"
@@ -2417,6 +2457,10 @@ msgstr ""
 msgid "Page Analytics"
 msgstr ""
 
+#: frontend/src/components/PageScript.vue:203
+msgid "Page Client Script"
+msgstr ""
+
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
 msgstr ""
@@ -2432,6 +2476,7 @@ msgstr ""
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Controls/DynamicValueHandler.vue:51
+#: frontend/src/components/PageScript.vue:203
 msgid "Page Data Script"
 msgstr ""
 
@@ -2840,6 +2885,7 @@ msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:72
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
+#: frontend/src/components/Controls/SearchBlock.vue:127
 msgid "Replace"
 msgstr "Заменять"
 
@@ -3047,15 +3093,15 @@ msgstr ""
 msgid "Script Type"
 msgstr "Тип сценария"
 
-#: frontend/src/components/PageClientScriptManager.vue:241
+#: frontend/src/components/PageClientScriptManager.vue:243
 msgid "Script cannot be empty"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:384
+#: frontend/src/components/PageClientScriptManager.vue:386
 msgid "Script order updated"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:264
+#: frontend/src/components/PageClientScriptManager.vue:266
 msgid "Script saved successfully"
 msgstr ""
 
@@ -3142,6 +3188,7 @@ msgstr ""
 msgid "Searching..."
 msgstr ""
 
+#: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
 msgid "Select"
 msgstr ""
@@ -3250,6 +3297,7 @@ msgstr ""
 #: frontend/src/components/BuilderCommandPalette.vue:86
 #: frontend/src/components/BuilderCommandPalette.vue:122
 #: frontend/src/components/BuilderCommandPalette.vue:321
+#: frontend/src/components/BuilderSettings.vue:4
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
@@ -3591,6 +3639,10 @@ msgstr ""
 msgid "There was an error while fetching page data"
 msgstr ""
 
+#: frontend/src/components/ComponentUpdates.vue:28
+msgid "These components changed since this page was last updated. Update to use the latest."
+msgstr ""
+
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
 msgstr ""
@@ -3866,6 +3918,10 @@ msgstr ""
 msgid "Upload"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:380
+msgid "Upload CSV"
+msgstr ""
+
 #: frontend/src/components/Controls/FontUploader.vue:6
 #: frontend/src/utils/helpers.ts:496
 msgid "Upload Font"
@@ -4129,7 +4185,23 @@ msgid ""
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
 
+#: frontend/src/utils/helpers.ts:897
+msgid "not used in any pages"
+msgstr ""
+
 #: frontend/src/stores/pageStore.ts:243
 msgid "this page"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in 1 page"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:899
+msgid "used in {0} pages"
+msgstr ""
+
+#: frontend/src/components/PageClientScriptManager.vue:226
+msgid "used in {0}+ pages"
 msgstr ""
 

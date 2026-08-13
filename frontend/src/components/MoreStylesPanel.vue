@@ -40,7 +40,7 @@
 			<template #item-add-property="{ query }">
 				<span class="flex min-w-0 items-center gap-2">
 					<span class="min-w-0 truncate text-sm text-ink-gray-8">
-						Add
+						{{ __("Add") }}
 						<code class="font-mono text-xs text-ink-gray-6">{{ query }}</code>
 					</span>
 				</span>

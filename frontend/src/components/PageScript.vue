@@ -199,15 +199,17 @@ const blockCSS = computed(() => canvasStore.fragmentData.block?.clientScript.css
 const fragmentProps = computed(() => canvasStore.fragmentData.block?.props || {});
 
 const dialogTitle = computed(() => {
-	const modeLabel = mode.value === "blockTemplate" ? "Block Template" : capitalize(mode.value);
-	return currentScriptEditor.value == "data" ? `${modeLabel} Data Script` : `${modeLabel} Client Script`;
+	const titles = {
+		page: { data: __("Page Data Script"), client: __("Page Client Script") },
+		component: { data: __("Component Data Script"), client: __("Component Client Script") },
+		blockTemplate: { data: __("Block Template Data Script"), client: __("Block Template Client Script") },
+	};
+	return titles[mode.value][currentScriptEditor.value == "data" ? "data" : "client"];
 });
 
 const showBlockClientScriptToggle = computed(() => {
 	return mode.value !== "page" && currentScriptEditor.value === "client";
 });
-
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue

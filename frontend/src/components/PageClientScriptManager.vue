@@ -98,7 +98,7 @@
 
 				<div class="text-xs leading-4 text-ink-gray-6">
 					<b>{{ __("Note:") }}</b>
-					All client scripts are executed in preview mode and on published pages.
+					{{ __("All client scripts are executed in preview mode and on published pages.") }}
 				</div>
 			</div>
 		</div>
@@ -106,7 +106,7 @@
 		<div
 			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
-			Add Script
+			{{ __("Add Script") }}
 		</div>
 
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
@@ -222,7 +222,9 @@ const scriptUsageResource = createListResource({
 const scriptUsedInPages = computed<BuilderPage[]>(() => scriptUsageResource.data ?? []);
 const usageMessage = computed(() => {
 	const count = scriptUsedInPages.value.length;
-	return count === usagePageLimit ? `used in ${usagePageLimit - 1}+ pages` : getPageUsageMessage(count);
+	return count === usagePageLimit
+		? __("used in {0}+ pages", [usagePageLimit - 1])
+		: getPageUsageMessage(count);
 });
 
 const selectScript = (script: attachedScript) => {

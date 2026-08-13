@@ -377,13 +377,13 @@
 				<div class="flex items-center pt-4">
 					<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
 					<Button @click="triggerCSVUpload" variant="outline" theme="gray" size="sm" icon-left="upload">
-						Upload CSV
+						{{ __("Upload CSV") }}
 					</Button>
 					<button
 						@click="downloadSampleCSV"
 						variant="subtle"
 						class="ml-2 text-xs text-blue-600 underline hover:text-blue-700">
-						Download sample
+						{{ __("Download sample") }}
 					</button>
 				</div>
 			</div>

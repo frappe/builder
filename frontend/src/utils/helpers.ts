@@ -894,9 +894,9 @@ function isDialogOpen() {
 
 function getPageUsageMessage(count: number) {
 	if (!count) {
-		return "not used in any pages";
+		return __("not used in any pages");
 	}
-	return count === 1 ? "used in 1 page" : `used in ${count} pages`;
+	return count === 1 ? __("used in 1 page") : __("used in {0} pages", [count]);
 }
 
 function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
