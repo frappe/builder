@@ -22,7 +22,12 @@
         "src/*"
       ],
       "tslib" : ["/node_modules/tslib/tslib.d.ts"],
-      "vue": ["../node_modules/vue"]
+      "vue": ["../node_modules/vue"],
+      "@framework/ui/*": ["../../frappe/ui/src/*"],
+      "#components/*": ["../frappe-ui/src/components/*"],
+      "#molecules/*": ["../frappe-ui/src/molecules/*"],
+      "#composables/*": ["../frappe-ui/src/composables/*"],
+      "#utils/*": ["../frappe-ui/src/utils/*"]
     },
     "lib": [
       "esnext",

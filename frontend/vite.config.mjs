@@ -39,9 +39,23 @@ export default defineConfig({
 		target: "es2015",
 	},
 	resolve: {
-		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],
+		// vue/frappe-ui also cover @framework/ui (link:), whose peer deps must
+		// resolve to this app's single copy
+		dedupe: [
+			"vue",
+			"vue-router",
+			"frappe-ui",
+			"@vueuse/core",
+			"prosemirror-model",
+			"prosemirror-view",
+			"prosemirror-state",
+			"prosemirror-transform",
+		],
 		alias: {
 			"@": path.resolve(__dirname, "src"),
+			// @framework/ui's exports map lacks directory-index resolution for
+			// deep imports (telemetry, TrialBanner); alias into its src instead
+			"@framework/ui": path.resolve(__dirname, "../../frappe/ui/src"),
 		},
 	},
 	server: {
@@ -56,6 +70,6 @@ export default defineConfig({
 		},
 	},
 	optimizeDeps: {
-		include: ["frappe-ui > feather-icons", "engine.io-client", "interactjs", "highlight.js/lib/core"],
+		include: ["engine.io-client", "interactjs", "highlight.js/lib/core"],
 	},
 });
