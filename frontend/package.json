@@ -60,7 +60,7 @@
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-vue": "^9.11.0",
+    "eslint-plugin-vue": "^10.10.0",
     "mdn-data": "2.27.1",
     "postcss": "^8.4.5",
     "prettier": "^3.9.6",
