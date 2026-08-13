@@ -1,11 +1,11 @@
 <template>
-	<Popover placement="bottom" :offset="20">
-		<template #target="{ togglePopover }">
+	<Popover side="bottom" align="center" :offset="20" bare>
+		<template #trigger>
 			<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 				<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
 					{{ __("Loading...") }}
 				</div>
-				<div @click="togglePopover" v-else class="flex items-center gap-1">
+				<div v-else class="flex items-center gap-1">
 					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
 						<span
 							class="lucide-home h-[14px] w-4"
@@ -32,11 +32,11 @@
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
 					v-if="pageStore.activePage && pageStore.activePage.published"
-					@click="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
+					@click.stop="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
 			</div>
 		</template>
-		<template #body>
-			<div class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg" v-if="pageStore.activePage">
+		<template #default>
+			<div class="rounded flex w-72 flex-col gap-3 bg-surface-base p-4 shadow-lg" v-if="pageStore.activePage">
 				<PageOptions></PageOptions>
 			</div>
 		</template>

@@ -1,10 +1,6 @@
 <template>
 	<div class="flex items-center gap-2">
-		<Tooltip
-			v-if="builderStore.isAIEnabled"
-			:text="__('Generate with AI')"
-			:hoverDelay="0.6"
-			arrow-class="mb-3">
+		<Tooltip v-if="builderStore.isAIEnabled" :text="__('Generate with AI')" :hoverDelay="0.6" :offset="12">
 			<Button
 				variant="ghost"
 				@click="openAIGenerator"
@@ -15,11 +11,11 @@
 			{{ __("Saving template") }}
 		</span>
 		<ComponentUpdates />
-		<Tooltip :text="__('Settings')" :hoverDelay="0.6" arrow-class="mb-3">
+		<Tooltip :text="__('Settings')" :hoverDelay="0.6" :offset="12">
 			<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 		</Tooltip>
 		<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" :title="__('Preview')">
-			<Tooltip :text="__('Preview')" :hoverDelay="0.6" arrow-class="mb-3">
+			<Tooltip :text="__('Preview')" :hoverDelay="0.6" :offset="12">
 				<Button variant="ghost" :icon="PlayIcon"></Button>
 			</Tooltip>
 		</router-link>
