@@ -221,11 +221,11 @@ const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
 
-	if (bg?.includes("gradient")) return "Gradient";
+	if (bg?.includes("gradient")) return __("Gradient");
 	if (bg) {
 		const url = bg.replace(/^url\(['"]?|['"]?\)$/g, "");
 		const parts = url.split("/");
-		return parts[parts.length - 1] || "Image";
+		return parts[parts.length - 1] || __("Image");
 	}
 	// show the variable's name instead of its raw value e.g. var(--uuid)
 	if (color) return getVariableName(color) ?? color;

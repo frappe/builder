@@ -182,8 +182,7 @@ async function handlePagePaste(
 
 	await showDialog({
 		title: __("Pasting a page!"),
-		message:
-			"You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?",
+		message: __("You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"),
 		actions: [
 			{
 				label: __("Create New Page"),

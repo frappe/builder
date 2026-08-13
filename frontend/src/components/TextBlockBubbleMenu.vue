@@ -36,7 +36,7 @@
 			</div>
 			<Input
 				type="checkbox"
-				:label="'Open in New Tab'"
+				:label="__('Open in New Tab')"
 				class="text-xs"
 				v-model="openInNewTab"
 				@change="() => setLink(textLink, false)"></Input>
@@ -142,6 +142,7 @@
 import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
+import { __ } from "@/translation";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
@@ -263,9 +264,9 @@ const handleKeydown = (e: KeyboardEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
 		const blockWarnings = {
-			isHeader: "You cannot make heading a link",
-			isLink: "You cannot add link inside a link block",
-			isButton: "You cannot add link inside a button block",
+			isHeader: __("You cannot make heading a link"),
+			isLink: __("You cannot add link inside a link block"),
+			isButton: __("You cannot add link inside a button block"),
 		};
 
 		const blockType = Object.entries(blockWarnings).find(([type]) => (props.block as any)[type]());

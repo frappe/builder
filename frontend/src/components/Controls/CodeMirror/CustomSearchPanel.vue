@@ -7,7 +7,7 @@
 				variant="ghost"
 				size="sm"
 				class="h-full rounded-r-none"
-				:tooltip="showReplace ? 'Hide Replace' : 'Show Replace'"
+				:tooltip="showReplace ? __('Hide Replace') : __('Show Replace')"
 				@click="toggleReplace">
 				<span
 					:class="[showReplace ? 'lucide-chevron-down' : 'lucide-chevron-right', 'h-4 w-4']"
@@ -111,6 +111,7 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
+import { __ } from "@/translation";
 import { Button, TextInput } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 

@@ -2,11 +2,11 @@
 	<Dialog
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
-		:title="dialogMode === 'edit' ? 'Edit Token' : 'New Token'"
+		:title="dialogMode === 'edit' ? __('Edit Token') : __('New Token')"
 		size="sm"
 		:actions="[
 			{
-				label: dialogMode === 'edit' ? 'Update' : 'Create',
+				label: dialogMode === 'edit' ? __('Update') : __('Create'),
 				variant: 'solid',
 				onClick: handleSave,
 			},
@@ -20,7 +20,7 @@
 					:label="__('Token Name')"
 					required
 					:autofocus="true"
-					placeholder="e.g., primary, accent, background"
+					:placeholder="__('e.g., primary, accent, background')"
 					:hideClearButton="true" />
 				<div v-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
@@ -96,7 +96,8 @@ const handleSave = async () => {
 		emit("update:modelValue", false);
 	} catch (error) {
 		console.error("Failed to save variable:", error);
-		toast.error((error as Error).message || `Failed to ${dialogMode.value} token`);
+		const fallbackMessage = dialogMode.value === "edit" ? __("Failed to update token") : __("Failed to create token");
+		toast.error((error as Error).message || fallbackMessage);
 	}
 };
 </script>

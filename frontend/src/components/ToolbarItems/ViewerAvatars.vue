@@ -21,6 +21,7 @@
 </template>
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
+import { __ } from "@/translation";
 import { Tooltip } from "frappe-ui";
 import { computed } from "vue";
 
@@ -36,7 +37,7 @@ const currentlyViewedByText = computed(() => {
 	} else if (count === 2) {
 		return `${names.join(" & ")}`;
 	} else {
-		return `${names.slice(0, 2).join(", ")} & ${count - 2} others`;
+		return __("{0} & {1} others", [names.slice(0, 2).join(", "), count - 2]);
 	}
 });
 </script>

@@ -1,7 +1,7 @@
 <template>
 	<div class="isolate">
 		<div v-if="pagesResource.loading && !pages.length" class="px-3 py-6 text-center text-sm text-ink-gray-4">
-			Loading pages…
+			{{ __("Loading pages…") }}
 		</div>
 		<div
 			v-else-if="!pagesResource.loading && !pages.length"
@@ -36,9 +36,9 @@
 					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 					@click="loadMore('__root__', rootLoadMore.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
-					Load {{ Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount) }} more
+					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount)]) }}
 					<span class="ml-0.5 text-ink-gray-3">
-						({{ rootLoadMore.totalCount - rootLoadMore.loadedCount }} remaining)
+						{{ __("({0} remaining)", [rootLoadMore.totalCount - rootLoadMore.loadedCount]) }}
 					</span>
 				</button>
 			</div>
