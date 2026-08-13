@@ -84,6 +84,7 @@
 
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import { useEventListener } from "@vueuse/core";
 import type { Component } from "vue";
 import { ref, watch } from "vue";
 
@@ -128,7 +129,18 @@ const claimFocus = (framesLeft: number) => {
 
 // A popover holds the focus of the row that opened it. Its panel is portalled out of
 // the row, and a click inside it can also drop focus to the body.
-const popoverIsOpen = () => Boolean(document.querySelector("[data-slot='content']"));
+const POPOVER_PANEL = "[data-slot='content']";
+const popoverIsOpen = () => Boolean(document.querySelector(POPOVER_PANEL));
+
+// A click away ends the preview, whatever the focus does after it. A closing popover
+// hands focus back to the row, so focus alone cannot tell the row that it is done.
+useEventListener(document, "pointerdown", (event: PointerEvent) => {
+	if (!props.isActive) return;
+	const target = event.target as HTMLElement | null;
+	if (rowRef.value?.contains(target) || target?.closest(POPOVER_PANEL)) return;
+	claimingFocus = false;
+	emit("blur");
+});
 
 // Leaving the row ends the preview, so the canvas and the controls read normally again.
 // Focus that goes nowhere is the dropdown closing, not the user leaving. Anything
