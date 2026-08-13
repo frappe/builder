@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"PO-Revision-Date: 2026-08-13 05:33\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -326,7 +326,7 @@ msgstr "Block"
 
 #: frontend/src/components/PageScript.vue:107
 msgid "Block CSS"
-msgstr ""
+msgstr "Block CSS"
 
 #: frontend/src/pages/PageBuilder.vue:307
 msgid "Block Client Script"
