@@ -57,7 +57,7 @@
     "@vitejs/plugin-vue": "5",
     "autoprefixer": "^10.4.2",
     "cypress": "^13.3.2",
-    "eslint": "^8.38.0",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-vue": "^9.11.0",
