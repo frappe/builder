@@ -4,24 +4,28 @@
 			<FeatherIcon name="bar-chart-2" class="h-6 w-6 text-ink-gray-5" />
 		</div>
 		<div class="flex flex-col gap-1">
-			<h3 class="text-md-medium text-ink-gray-9">View tracking is off</h3>
+			<h3 class="text-md-medium text-ink-gray-9">{{ __("View tracking is off") }}</h3>
 			<p class="max-w-sm text-p-sm text-ink-gray-6">
-				Turn on view tracking to start collecting page views, clicks and click-through rates for your
-				published pages.
+				{{
+					__(
+						"Turn on view tracking to start collecting page views, clicks and click-through rates for your published pages.",
+					)
+				}}
 			</p>
 		</div>
 		<div class="flex items-center gap-3">
 			<Button variant="solid" :loading="websiteSettings.setValue?.loading" @click="enableTracking">
-				Enable View Tracking
+				{{ __("Enable View Tracking") }}
 			</Button>
 			<Button v-if="selectSettingsTab" variant="ghost" @click="selectSettingsTab('global_general')">
-				Open Global Settings
+				{{ __("Open Global Settings") }}
 			</Button>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { websiteSettings } from "@/data/websiteSettings";
 import { Button, FeatherIcon } from "frappe-ui";
 import { inject } from "vue";

@@ -12,7 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { commands, resolveText } from "@/components/Commands";
+import { __ } from "@/translation";
+import { commandGroupLabels, commands, resolveText } from "@/components/Commands";
 import { settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -40,8 +41,8 @@ const isBuilderRoute = computed(() => route.name === "builder");
 useShortcut({
 	key: "k",
 	ctrl: true,
-	description: "Open Command Palette",
-	group: "General",
+	description: __("Open Command Palette"),
+	group: __("General"),
 	allowInInput: true,
 	handler: () => {
 		show.value = true;
@@ -54,38 +55,37 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 	searchQuery.value = "";
 };
 
-
 commands.register({
 	name: "search-page",
-	title: "Search Page",
+	title: __("Search Page"),
 	icon: "lucide-file-search",
-	description: "Navigate",
+	description: __("Navigate"),
 	group: "Navigate",
 	before: "go-to-dashboard",
 	keepOpen: true,
 	action: () =>
 		openStep({
 			id: "search-page",
-			label: "Search Page",
-			placeholder: "Search by name or route...",
-			hint: "Start typing to search pages",
+			label: __("Search Page"),
+			placeholder: __("Search by name or route..."),
+			hint: __("Start typing to search pages"),
 		}),
 });
 
 commands.register({
 	name: "settings",
-	title: "Settings",
+	title: __("Settings"),
 	icon: "lucide-settings-2",
-	description: "General",
+	description: __("General"),
 	group: "General",
 	after: "shortcuts",
 	keepOpen: true,
 	action: () =>
 		openStep({
 			id: "settings",
-			label: "Settings",
-			placeholder: "Search settings...",
-			hint: "Browse all settings",
+			label: __("Settings"),
+			placeholder: __("Search settings..."),
+			hint: __("Browse all settings"),
 		}),
 });
 
@@ -119,7 +119,7 @@ const settingsCommands = computed<PaletteItem[]>(() =>
 		.map((item) => ({
 			name: item.name,
 			title: item.title,
-			description: "Settings",
+			description: __("Settings"),
 			icon: item.icon,
 			section: item.group === "Current Page" ? "page" : "global",
 			action: () => openSettings(item.name),
@@ -257,10 +257,15 @@ const commandGroups = computed(() => {
 		const globalItems = items.filter((s) => s.section === "global");
 		const groups = [];
 		if (pageItems.length) {
-			groups.push({ title: "Page", hideTitle: false, component: CommandPaletteItem, items: pageItems });
+			groups.push({ title: __("Page"), hideTitle: false, component: CommandPaletteItem, items: pageItems });
 		}
 		if (globalItems.length) {
-			groups.push({ title: "Global", hideTitle: false, component: CommandPaletteItem, items: globalItems });
+			groups.push({
+				title: __("Global"),
+				hideTitle: false,
+				component: CommandPaletteItem,
+				items: globalItems,
+			});
 		}
 		return groups;
 	}
@@ -271,7 +276,7 @@ const commandGroups = computed(() => {
 			return pageSearchResults.value.length
 				? [
 						{
-							title: "Pages",
+							title: __("Pages"),
 							hideTitle: true,
 							showDescription: true,
 							component: CommandPaletteItem,
@@ -283,7 +288,7 @@ const commandGroups = computed(() => {
 		return recentPages.value.length
 			? [
 					{
-						title: "Recent",
+						title: __("Recent"),
 						hideTitle: false,
 						showDescription: true,
 						component: CommandPaletteItem,
@@ -304,7 +309,7 @@ const commandGroups = computed(() => {
 		const groups = [];
 		if (matchedCommands.length) {
 			groups.push({
-				title: "Commands",
+				title: __("Commands"),
 				hideTitle: matchedSettings.length === 0,
 				showDescription: true,
 				component: CommandPaletteItem,
@@ -313,7 +318,7 @@ const commandGroups = computed(() => {
 		}
 		if (matchedSettings.length) {
 			groups.push({
-				title: "Settings",
+				title: __("Settings"),
 				hideTitle: matchedCommands.length === 0,
 				component: CommandPaletteItem,
 				items: matchedSettings,
@@ -324,17 +329,17 @@ const commandGroups = computed(() => {
 
 	const groupDefs = ["Navigate", "Page", "Layers", "View", "General"];
 	const grouped = groupDefs
-		.map((title) => ({
-			title,
+		.map((group) => ({
+			title: commandGroupLabels[group] ?? __(group),
 			hideTitle: false,
 			component: CommandPaletteItem,
-			items: paletteCommands.value.filter((cmd) => cmd.group === title),
+			items: paletteCommands.value.filter((cmd) => cmd.group === group),
 		}))
 		.filter((g) => g.items.length > 0);
 	if (recentCommands.value.length) {
 		return [
 			{
-				title: "Recent",
+				title: __("Recent"),
 				hideTitle: false,
 				showDescription: true,
 				component: CommandPaletteItem,

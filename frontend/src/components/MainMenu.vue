@@ -14,6 +14,7 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -47,7 +48,11 @@ const mainMenuOptions = [
 		group: "Builder",
 		hideLabel: true,
 		items: [
-			{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "lucide-arrow-left" },
+			{
+				label: __("Back to Dashboard"),
+				onClick: () => router.push({ name: "home" }),
+				icon: "lucide-arrow-left",
+			},
 		],
 	},
 	{
@@ -55,23 +60,23 @@ const mainMenuOptions = [
 		hideLabel: true,
 		items: [
 			{
-				label: "New Page",
+				label: __("New Page"),
 				onClick: () => (showTemplatesDialog.value = true),
 				icon: "lucide-plus",
 			},
 			{
-				label: "Copy Page",
+				label: __("Copy Page"),
 				onClick: handleCopyPage,
 				icon: "lucide-clipboard",
 				condition: () => Boolean(pageStore.activePage),
 			},
 			{
-				label: "Duplicate Page",
+				label: __("Duplicate Page"),
 				onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
 				icon: "lucide-copy",
 			},
 			{
-				label: "Delete Page",
+				label: __("Delete Page"),
 				onClick: () => {
 					if (!pageStore.activePage) return;
 					pageStore.deletePage(pageStore.activePage).then(() => {
@@ -88,22 +93,22 @@ const mainMenuOptions = [
 		hideLabel: true,
 		items: [
 			{
-				label: `Toggle Theme`,
+				label: __("Toggle Theme"),
 				onClick: () => toggleDark(),
 				icon: isDark ? "lucide-sun" : "lucide-moon",
 			},
 			{
-				label: "Settings",
+				label: __("Settings"),
 				onClick: () => (builderStore.showSettingsDialog = true),
 				icon: "lucide-settings",
 			},
 			{
-				label: "Shortcuts",
+				label: __("Shortcuts"),
 				onClick: () => (builderStore.shortcutsModalOpen = true),
 				icon: "lucide-command",
 			},
 			{
-				label: "Help",
+				label: __("Help"),
 				onClick: () => {
 					// @ts-ignore
 					window.open("https://t.me/frappebuilder");

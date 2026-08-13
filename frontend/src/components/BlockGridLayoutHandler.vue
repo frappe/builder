@@ -3,18 +3,18 @@
 		propertyKey="gridTemplateColumns"
 		:component="OptionToggle"
 		class="w-full"
-		label="Grid Type"
+		:label="__('Grid Type')"
 		v-if="blockController.isGrid()"
 		:getModelValue="getGridType"
 		:setModelValue="setGridType"
 		:enableStates="false"
 		:options="[
-			{ label: 'Fixed', value: 'fixed' },
-			{ label: 'Auto', value: 'auto' },
+			{ label: __('Fixed'), value: 'fixed' },
+			{ label: __('Auto'), value: 'auto' },
 		]" />
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
-		label="Columns"
+		:label="__('Columns')"
 		:modelValue="columns"
 		:enableSlider="true"
 		:changeFactor="0.08"
@@ -23,7 +23,7 @@
 		@update:modelValue="setColumns" />
 	<InlineInput
 		v-if="blockController.isGrid() && isFixed"
-		label="Rows"
+		:label="__('Rows')"
 		:modelValue="rows"
 		:enableSlider="true"
 		:changeFactor="0.08"
@@ -31,7 +31,7 @@
 		:maxValue="20"
 		@update:modelValue="setRows" />
 	<InlineInput
-		label="Item Width"
+		:label="__('Item Width')"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(columns as string)"
 		type="text"
@@ -40,7 +40,7 @@
 		:unitOptions="GRID_UNIT_OPTIONS"
 		@update:modelValue="setWidth" />
 	<InlineInput
-		label="Row Height"
+		:label="__('Row Height')"
 		v-if="blockController.isGrid()"
 		v-show="['auto-fit', 'auto-fill'].includes(rows as string)"
 		:enableSlider="true"
@@ -56,19 +56,19 @@
 		:modelValue="blockController.getStyle('justifyItems') || 'stretch'"
 		:options="[
 			{
-				label: 'Stretch',
+				label: __('Stretch'),
 				value: 'stretch',
 			},
 			{
-				label: 'Start',
+				label: __('Start'),
 				value: 'start',
 			},
 			{
-				label: 'Center',
+				label: __('Center'),
 				value: 'center',
 			},
 			{
-				label: 'End',
+				label: __('End'),
 				value: 'end',
 			},
 		]"
@@ -80,19 +80,19 @@
 		:modelValue="blockController.getStyle('gridAutoFlow') || 'row'"
 		:options="[
 			{
-				label: 'Row',
+				label: __('Row'),
 				value: 'row',
 			},
 			{
-				label: 'Column',
+				label: __('Column'),
 				value: 'column',
 			},
 			{
-				label: 'Row Dense',
+				label: __('Row Dense'),
 				value: 'row dense',
 			},
 			{
-				label: 'Column Dense',
+				label: __('Column Dense'),
 				value: 'column dense',
 			},
 		]"
@@ -106,46 +106,46 @@
 		:modelValue="blockController.getStyle('placeItems') || 'stretch'"
 		:options="[
 			{
-				label: 'Top Right',
+				label: __('Top Right'),
 				value: 'start end',
 			},
 			{
-				label: 'Top Center',
+				label: __('Top Center'),
 				value: 'start center',
 			},
 			{
-				label: 'Top Left',
+				label: __('Top Left'),
 				value: 'start start',
 			},
 			{
-				label: 'Center Right',
+				label: __('Center Right'),
 				value: 'center end',
 			},
 			{
-				label: 'Center',
+				label: __('Center'),
 				value: 'center center',
 			},
 			{
-				label: 'Center Left',
+				label: __('Center Left'),
 				value: 'center start',
 			},
 			{
-				label: 'Bottom Right',
+				label: __('Bottom Right'),
 				value: 'end end',
 			},
 			{
-				label: 'Bottom Center',
+				label: __('Bottom Center'),
 				value: 'end center',
 			},
 			{
-				label: 'Bottom Left',
+				label: __('Bottom Left'),
 				value: 'end start',
 			},
 		]"
 		@update:modelValue="(val: string) => blockController.setStyle('placeItems', val)" /> -->
 
 	<InlineInput
-		label="Col Span"
+		:label="__('Col Span')"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="text"
 		:enableSlider="true"
@@ -153,7 +153,7 @@
 		:modelValue="columnSpan"
 		@update:modelValue="setColumnSpan" />
 	<InlineInput
-		label="Row Span"
+		:label="__('Row Span')"
 		v-if="blockController.getParentBlock()?.isGrid()"
 		type="text"
 		:enableSlider="true"
@@ -169,45 +169,46 @@
 		:modelValue="blockController.getStyle('placeSelf') || 'stretch'"
 		:options="[
 			{
-				label: 'Top Right',
+				label: __('Top Right'),
 				value: 'start end',
 			},
 			{
-				label: 'Top Center',
+				label: __('Top Center'),
 				value: 'start center',
 			},
 			{
-				label: 'Top Left',
+				label: __('Top Left'),
 				value: 'start start',
 			},
 			{
-				label: 'Center Right',
+				label: __('Center Right'),
 				value: 'center end',
 			},
 			{
-				label: 'Center',
+				label: __('Center'),
 				value: 'center center',
 			},
 			{
-				label: 'Center Left',
+				label: __('Center Left'),
 				value: 'center start',
 			},
 			{
-				label: 'Bottom Right',
+				label: __('Bottom Right'),
 				value: 'end end',
 			},
 			{
-				label: 'Bottom Center',
+				label: __('Bottom Center'),
 				value: 'end center',
 			},
 			{
-				label: 'Bottom Left',
+				label: __('Bottom Left'),
 				value: 'end start',
 			},
 		]"
 		@update:modelValue="(val: string) => blockController.setStyle('placeSelf', val)" /> -->
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";

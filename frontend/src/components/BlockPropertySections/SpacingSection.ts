@@ -1,5 +1,6 @@
 import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { __ } from "@/translation";
 
 const SPLITS = ["T", "R", "B", "L"];
 
@@ -9,7 +10,7 @@ const spacingSectionProperties = [
 		searchKeyWords: "Margin, Top, MarginTop, Margin Top",
 		getProps: () => {
 			return {
-				label: "Margin",
+				label: __("Margin"),
 				propertyKey: "margin",
 				splits: SPLITS,
 				inputAttrs: {},
@@ -33,7 +34,7 @@ const spacingSectionProperties = [
 		searchKeyWords: "Padding, Top, PaddingTop, Padding Top",
 		getProps: () => {
 			return {
-				label: "Padding",
+				label: __("Padding"),
 				propertyKey: "padding",
 				splits: SPLITS,
 				inputAttrs: { min: 0 },
@@ -54,6 +55,6 @@ const spacingSectionProperties = [
 ];
 
 export default {
-	name: "Spacing",
+	name: __("Spacing"),
 	properties: spacingSectionProperties,
 };

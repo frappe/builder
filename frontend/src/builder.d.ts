@@ -104,13 +104,7 @@ declare type HashString = `#${string}`;
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
 // the literals keep autocomplete; the string widens it for extension tabs
-declare type LeftSidebarTabOption =
-	| "Blocks"
-	| "Layers"
-	| "Assets"
-	| "Code"
-	| "variables"
-	| (string & {});
+declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code" | "variables" | (string & {});
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
 

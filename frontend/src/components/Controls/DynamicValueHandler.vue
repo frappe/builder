@@ -6,7 +6,7 @@
 				v-model="searchQuery"
 				@input="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search..." />
+				:placeholder="__('Search...')" />
 			<div class="max-h-[60vh] overflow-y-auto">
 				<ul class="m-0 list-none p-0">
 					<li
@@ -21,7 +21,7 @@
 							@click.stop="selectAndSetItem(selectedItem)">
 							<MiddleTruncate :text="selectedItem.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
-								{{ getValue(selectedItem) == null ? "No Value Set" : getValue(selectedItem) }}
+								{{ getValue(selectedItem) == null ? __("No Value Set") : getValue(selectedItem) }}
 							</p>
 						</div>
 					</li>
@@ -35,7 +35,7 @@
 							@click.stop="selectAndSetItem(item)">
 							<MiddleTruncate :text="item.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(item) == null }">
-								{{ getValue(item) == null ? "No Value Set" : getValue(item) }}
+								{{ getValue(item) == null ? __("No Value Set") : getValue(item) }}
 							</p>
 						</div>
 					</li>
@@ -43,12 +43,12 @@
 						v-if="filteredItems.length === 0 && !selectedItem?.key"
 						class="flex flex-col items-center justify-center p-10 text-center text-sm text-ink-gray-5">
 						<div>
-							No dynamic values found. Please add using
+							{{ __("No dynamic values found. Please add using") }}
 							<a
 								href="#"
 								@click="builderStore.showDataScriptDialog = 'page'"
 								class="text-ink-gray-5 underline hover:text-ink-gray-7">
-								Page Data Script
+								{{ __("Page Data Script") }}
 							</a>
 							.
 						</div>
@@ -60,13 +60,16 @@
 			class="flex items-center justify-end gap-2"
 			v-if="filteredItems.length !== 0 && builderStore.leftPanelActiveTab !== 'Code'">
 			<div class="flex gap-2">
-				<Button variant="subtle" @click="builderStore.leftPanelActiveTab = 'Code'">Open Code Tab</Button>
+				<Button variant="subtle" @click="builderStore.leftPanelActiveTab = 'Code'">
+					{{ __("Open Code Tab") }}
+				</Button>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";

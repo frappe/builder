@@ -6,6 +6,7 @@ import OptionToggle from "../Controls/OptionToggle.vue";
 import ImageUploadInput from "../ImageUploadInput.vue";
 import ObjectInput from "../ObjectInput.vue";
 import useCanvasStore from "@/stores/canvasStore.js";
+import { __ } from "@/translation";
 
 const componentMap = {
 	array: ArrayInput,
@@ -143,7 +144,7 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: "Block Options",
+	name: __("Block Options"),
 	properties: getStandardPropsInputSection,
 	collapsed: false,
 	condition: () =>

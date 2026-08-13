@@ -5,10 +5,10 @@
 				<StylePropertyControl
 					propertyKey="background"
 					:component="BackgroundInput"
-					label="Background"
+					:label="__('Background')"
 					:enableStates="true"
 					:allowDynamicValue="true"
-					placeholder="Set Background"
+					:placeholder="__('Set Background')"
 					readonly
 					:selectOnFocus="false"
 					class="[&_input]:cursor-pointer"
@@ -73,26 +73,26 @@
 										'!grid': !backgroundImageURL,
 										'group-hover:grid': backgroundImageURL,
 									}">
-									<Button @click="openFileSelector">Upload</Button>
+									<Button @click="openFileSelector">{{ __("Upload") }}</Button>
 								</div>
 							</template>
 						</FileUploader>
 					</div>
 					<div class="space-y-2">
 						<InlineInput
-							label="Size"
+							:label="__('Size')"
 							:modelValue="backgroundSize"
 							type="select"
 							:options="sizeOptions"
 							@update:modelValue="setBGSize" />
 						<InlineInput
-							label="Position"
+							:label="__('Position')"
 							:modelValue="backgroundPosition"
 							type="select"
 							:options="positionOptions"
 							@update:modelValue="setBGPosition" />
 						<InlineInput
-							label="Repeat"
+							:label="__('Repeat')"
 							:modelValue="backgroundRepeat"
 							type="select"
 							:options="repeatOptions"
@@ -102,7 +102,7 @@
 						{{ serveLocallyButtonText }}
 					</Button>
 					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
-						Clear Image
+						{{ __("Clear Image") }}
 					</Button>
 				</div>
 
@@ -110,7 +110,7 @@
 				<div v-else class="space-y-4">
 					<GradientEditor :modelValue="rawBackgroundImage" @update:modelValue="setGradient" />
 					<Button :disabled="!isGradient" class="w-full" variant="subtle" @click="clearBGImage">
-						Clear Gradient
+						{{ __("Clear Gradient") }}
 					</Button>
 				</div>
 
@@ -120,7 +120,7 @@
 					:class="{
 						'px-0.5': activeTab !== 'image',
 					}">
-					<InputLabel class="flex-1">Clip Background to Text</InputLabel>
+					<InputLabel class="flex-1">{{ __("Clip Background to Text") }}</InputLabel>
 					<Switch size="sm" :modelValue="backgroundClip === 'text'" @update:modelValue="setBGClip" />
 				</div>
 			</div>
@@ -129,6 +129,7 @@
 </template>
 
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
@@ -280,24 +281,24 @@ const getPreviewStyle = (state: string | null) => {
 };
 
 const sizeOptions = [
-	{ label: "Contain", value: "contain" },
-	{ label: "Cover", value: "cover" },
-	{ label: "Auto", value: "auto" },
+	{ label: __("Contain"), value: "contain" },
+	{ label: __("Cover"), value: "cover" },
+	{ label: __("Auto"), value: "auto" },
 ];
 
 const positionOptions = [
-	{ label: "Center", value: "center" },
-	{ label: "Top", value: "top" },
-	{ label: "Bottom", value: "bottom" },
-	{ label: "Left", value: "left" },
-	{ label: "Right", value: "right" },
+	{ label: __("Center"), value: "center" },
+	{ label: __("Top"), value: "top" },
+	{ label: __("Bottom"), value: "bottom" },
+	{ label: __("Left"), value: "left" },
+	{ label: __("Right"), value: "right" },
 ];
 
 const repeatOptions = [
-	{ label: "No Repeat", value: "no-repeat" },
-	{ label: "Repeat", value: "repeat" },
-	{ label: "Repeat X", value: "repeat-x" },
-	{ label: "Repeat Y", value: "repeat-y" },
+	{ label: __("No Repeat"), value: "no-repeat" },
+	{ label: __("Repeat"), value: "repeat" },
+	{ label: __("Repeat X"), value: "repeat-x" },
+	{ label: __("Repeat Y"), value: "repeat-y" },
 ];
 
 const setBGImage = (file: { file_url: string }) => {

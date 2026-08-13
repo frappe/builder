@@ -17,21 +17,21 @@
 					type="text"
 					v-model="activeBuilderToken.token_name"
 					@input="(val: string) => (activeBuilderToken.token_name = val)"
-					label="Token Name"
+					:label="__('Token Name')"
 					required
 					:autofocus="true"
 					placeholder="e.g., primary, accent, background"
 					:hideClearButton="true" />
 				<div v-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
-						<InputLabel>Light Mode Color</InputLabel>
+						<InputLabel>{{ __("Light Mode Color") }}</InputLabel>
 						<ColorInput
 							v-model="activeBuilderToken.value"
 							class="relative"
 							:show-color-variable-options="false" />
 					</div>
 					<div class="flex flex-col gap-1.5">
-						<InputLabel>Dark Mode Color</InputLabel>
+						<InputLabel>{{ __("Dark Mode Color") }}</InputLabel>
 						<ColorInput
 							:modelValue="activeBuilderToken.dark_value || activeBuilderToken.value"
 							:show-color-variable-options="false"
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { BuilderToken } from "@/types/doctypes";
@@ -86,10 +87,10 @@ const handleSave = async () => {
 		let savedVariable;
 		if (dialogMode.value === "edit") {
 			savedVariable = await updateVariable(activeBuilderToken.value);
-			toast.success("Token updated");
+			toast.success(__("Token updated"));
 		} else {
 			savedVariable = await createVariable(activeBuilderToken.value);
-			toast.success("New token created");
+			toast.success(__("New token created"));
 		}
 		emit("success", savedVariable);
 		emit("update:modelValue", false);

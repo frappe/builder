@@ -1,13 +1,14 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Tag",
+				label: __("Tag"),
 				type: "select",
 				options: [
 					"aside",
@@ -45,7 +46,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Aria Label",
+			label: __("Aria Label"),
 			modelValue: blockController.getAttribute("aria-label"),
 		}),
 		searchKeyWords: "AriaLabel, Aria Label, Label, Accessibility Label, Aria",
@@ -59,7 +60,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Role",
+			label: __("Role"),
 			type: "select",
 			options: [
 				"button",
@@ -92,7 +93,7 @@ const accessibilitySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Tab Index",
+			label: __("Tab Index"),
 			type: "number",
 			min: -1,
 			modelValue: blockController.getAttribute("tabindex"),
@@ -105,7 +106,7 @@ const accessibilitySectionProperties = [
 ];
 
 export default {
-	name: "Accessibility",
+	name: __("Accessibility"),
 	properties: accessibilitySectionProperties,
 	collapsed: computed(
 		() =>

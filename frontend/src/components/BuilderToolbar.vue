@@ -24,21 +24,21 @@
 				v-bind="item.props?.()" />
 		</div>
 
-		<Dialog title="Get Started" size="4xl" v-model="showInfoDialog">
+		<Dialog :title="__('Get Started')" size="4xl" v-model="showInfoDialog">
 			<template #default>
 				<iframe
 					class="h-[60vh] w-full rounded-sm"
 					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
-					title="Frappe Builder - Get Started"
+					:title="__('Frappe Builder - Get Started')"
 					frameborder="0"
 					allowfullscreen></iframe>
 			</template>
 		</Dialog>
 		<Dialog v-model="builderStore.showSettingsDialog" :dismissable="false" size="5xl" bare>
 			<template #default>
-				<DialogTitle class="sr-only">Builder Settings</DialogTitle>
+				<DialogTitle class="sr-only">{{ __("Builder Settings") }}</DialogTitle>
 				<DialogDescription class="sr-only">
-					Configure page and global settings for this project.
+					{{ __("Configure page and global settings for this project.") }}
 				</DialogDescription>
 				<BuilderSettings
 					:initial-tab="builderStore.settingsActiveTab"
@@ -48,6 +48,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import { toolbarItems, type ToolbarRegion } from "@/components/ToolbarItems";
 import useBuilderStore from "@/stores/builderStore";

@@ -4,11 +4,11 @@
 			<BuilderInput
 				type="text"
 				class="w-72"
-				placeholder="Search by name or email"
+				:placeholder="__('Search by name or email')"
 				icon-left="search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
-			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">{{ __("Invite") }}</Button>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
@@ -32,12 +32,12 @@
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-1">
-						<Button variant="subtle" size="sm" @click="resendInvite(invite)">Resend</Button>
+						<Button variant="subtle" size="sm" @click="resendInvite(invite)">{{ __("Resend") }}</Button>
 						<Button
 							variant="subtle"
 							size="sm"
 							icon="lucide-x"
-							title="Cancel invitation"
+							:title="__('Cancel invitation')"
 							@click="cancelInvite(invite)" />
 					</div>
 				</div>
@@ -59,24 +59,26 @@
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">{{ __("Admin") }}</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
-					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
+					<template v-else>
+						{{ __("No members yet. Invite someone to give them access to Builder.") }}
+					</template>
 				</div>
 			</div>
 		</div>
 
 		<Dialog
 			v-model="showInviteDialog"
-			title="Invite Users"
-			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			:title="__('Invite Users')"
+			:actions="[{ label: __('Send Invitation'), variant: 'solid', onClick: sendInvites }]">
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"
 					type="textarea"
-					label="Email addresses"
+					:label="__('Email addresses')"
 					placeholder="jane@example.com, john@example.com"
 					:hideClearButton="true"
 					:modelValue="inviteEmails"
@@ -87,6 +89,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import router, { sessionUser } from "@/router";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
@@ -204,7 +207,7 @@ const cancelInvite = async (invite: PendingInvite) => {
 	if (!(await confirm(`Are you sure you want to cancel the invitation to ${invite.email}?`))) return;
 	try {
 		await cancelResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success("Invitation cancelled");
+		toast.success(__("Invitation cancelled"));
 		pendingInvites.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));

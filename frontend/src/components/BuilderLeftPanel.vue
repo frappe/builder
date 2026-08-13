@@ -53,8 +53,7 @@ const tabs = leftPanelTabs.visible;
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const mountedTabs = reactive(new Set<string>());
 
-const isActive = (tab: LeftPanelTab) =>
-	tab.isActive?.() ?? builderStore.leftPanelActiveTab === tab.name;
+const isActive = (tab: LeftPanelTab) => tab.isActive?.() ?? builderStore.leftPanelActiveTab === tab.name;
 
 const select = (tab: LeftPanelTab) => {
 	if (tab.action) return tab.action();

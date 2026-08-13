@@ -6,7 +6,7 @@
 		<div
 			v-else-if="!pagesResource.loading && !pages.length"
 			class="px-3 py-6 text-center text-sm text-ink-gray-4">
-			No pages found.
+			{{ __("No pages found.") }}
 		</div>
 
 		<div
@@ -47,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 // TODO: Refactor to meke it generic, this has lots of unnecessary coupling, props usage and hacky implementation
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
@@ -331,8 +332,8 @@ const treeActive = () => regularNodes().length > 0;
 useShortcut([
 	{
 		key: "ArrowDown",
-		description: "Move down in page tree",
-		group: "Page Tree",
+		description: __("Move down in page tree"),
+		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
@@ -341,8 +342,8 @@ useShortcut([
 	},
 	{
 		key: "ArrowUp",
-		description: "Move up in page tree",
-		group: "Page Tree",
+		description: __("Move up in page tree"),
+		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
@@ -351,8 +352,8 @@ useShortcut([
 	},
 	{
 		key: "ArrowRight",
-		description: "Expand node or move down in page tree",
-		group: "Page Tree",
+		description: __("Expand node or move down in page tree"),
+		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
@@ -370,8 +371,8 @@ useShortcut([
 	},
 	{
 		key: "ArrowLeft",
-		description: "Collapse node or move up in page tree",
-		group: "Page Tree",
+		description: __("Collapse node or move up in page tree"),
+		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
@@ -386,8 +387,8 @@ useShortcut([
 	},
 	{
 		key: "Enter",
-		description: "Open page or toggle folder in page tree",
-		group: "Page Tree",
+		description: __("Open page or toggle folder in page tree"),
+		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();

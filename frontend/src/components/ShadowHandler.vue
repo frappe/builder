@@ -5,10 +5,10 @@
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
-					label="Shadow"
+					:label="__('Shadow')"
 					:enableStates="true"
 					:allowDynamicValue="true"
-					placeholder="None"
+					:placeholder="__('None')"
 					@focus="togglePopover"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
@@ -54,7 +54,7 @@
 						:modelValue="currentPreset"
 						:options="presetOptions"
 						@update:modelValue="applyPreset"
-						placeholder="Presets" />
+						:placeholder="__('Presets')" />
 				</div>
 
 				<div class="space-y-4">
@@ -121,7 +121,7 @@
 									@update:modelValue="(val: any) => updateShadow(index, 'inset', val)" />
 							</Tooltip>
 							<div class="flex-1">
-								<Tooltip text="Shadow Color">
+								<Tooltip :text="__('Shadow Color')">
 									<ColorInput
 										:modelValue="shadow.color"
 										@update:modelValue="(val: any) => updateShadow(index, 'color', val)" />
@@ -139,6 +139,7 @@
 </template>
 
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
@@ -149,10 +150,10 @@ import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
 
 const SHADOW_CONTROLS = [
-	{ key: "x", label: "X Offset", prefix: "X" },
-	{ key: "y", label: "Y Offset", prefix: "Y" },
-	{ key: "blur", label: "Blur", prefix: "B" },
-	{ key: "spread", label: "Spread", prefix: "S" },
+	{ key: "x", label: __("X Offset"), prefix: "X" },
+	{ key: "y", label: __("Y Offset"), prefix: "Y" },
+	{ key: "blur", label: __("Blur"), prefix: "B" },
+	{ key: "spread", label: __("Spread"), prefix: "S" },
 ] as const;
 
 const activeState = ref<string | null>(null);
@@ -178,11 +179,11 @@ const getBoxShadowValue = (state: string | null) =>
 	(blockController.getStyle(getStyleKey("boxShadow", state)) || "") as string;
 
 const presetOptions = [
-	{ label: "None", value: "none" },
-	{ label: "Small", value: "#0000000d 0px 1px 2px 0px, #0000000d 0px 1px 3px 0px" },
-	{ label: "Medium", value: "#0000001a 0px 10px 15px -3px, #0000001a 0px 4px 6px -4px" },
-	{ label: "Large", value: "#0000001a 0px 20px 25px -5px, #0000001a 0px 10px 10px -5px" },
-	{ label: "Custom", value: "custom" },
+	{ label: __("None"), value: "none" },
+	{ label: __("Small"), value: "#0000000d 0px 1px 2px 0px, #0000000d 0px 1px 3px 0px" },
+	{ label: __("Medium"), value: "#0000001a 0px 10px 15px -3px, #0000001a 0px 4px 6px -4px" },
+	{ label: __("Large"), value: "#0000001a 0px 20px 25px -5px, #0000001a 0px 10px 10px -5px" },
+	{ label: __("Custom"), value: "custom" },
 ];
 
 const currentPreset = computed(() => {
