@@ -206,6 +206,8 @@ const updateValue = (value: string | number | boolean | null | { label: string; 
 // Generic slider handler for both main control and variants
 const handleSliderMouseDown = (e: MouseEvent, variantName?: string) => {
 	if (!props.enableSlider) return;
+	// the state preview lasts while its field has focus, so the drag must keep it
+	if (variantName) e.preventDefault();
 	const currentValue = variantName ? getRawVariantValue(variantName) : rawModelValue.value;
 	const { number } = extractNumberAndUnit(String(currentValue || ""));
 	const startY = e.clientY;
