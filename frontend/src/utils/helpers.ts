@@ -478,7 +478,10 @@ async function getFontNameFromFile(file: File): Promise<string> {
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = await decompressFontIfWoff2(arrayBuffer, file.name.endsWith(".woff2"));
 	const opentype = await import("opentype.js");
-	return opentype.parse(buffer).names.fullName.en;
+	// opentype 2 splits the name table per platform, so there is no flat names.fullName
+	const names = opentype.parse(buffer).names as Record<string, any>;
+	const table = names.windows || names.macintosh || names;
+	return table.fullName?.en || table.fontFamily?.en || file.name.replace(/\.[^.]+$/, "");
 }
 
 type UploadUserFontOptions = {

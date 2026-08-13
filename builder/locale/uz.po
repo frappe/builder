@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  frappe\n"
+"Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-08 13:03+0000\n"
+"PO-Revision-Date: 2026-08-13 03:21\n"
 "Last-Translator: suraj@frappe.io\n"
-"Language: uz_UZ\n"
 "Language-Team: Uzbek\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Crowdin-Project: frappe\n"
+"X-Crowdin-Project-ID: 639578\n"
+"X-Crowdin-Language: uz\n"
+"X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
+"X-Crowdin-File-ID: 177\n"
+"Language: uz_UZ\n"
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
@@ -48,7 +52,7 @@ msgstr ""
 #: frontend/src/components/ObjectEditor.vue:30
 #: frontend/src/components/PropsEditor.vue:87
 msgid "Add"
-msgstr ""
+msgstr "Qo'shish"
 
 #: frontend/src/components/MoreStylesPanel.vue:22
 msgid "Add CSS property"
@@ -97,7 +101,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:62
 msgid "Admin"
-msgstr ""
+msgstr "Administrator"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -111,16 +115,16 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:50
 msgid "Alert"
-msgstr ""
+msgstr "Ogohlantirish"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:148
 msgid "Align"
-msgstr ""
+msgstr "Tekislash"
 
 #: frontend/src/components/DashboardHead.vue:33
 #: frontend/src/components/Templates/TemplateGallery.vue:65
 msgid "All"
-msgstr ""
+msgstr "Hammasi"
 
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:8
@@ -159,8 +163,7 @@ msgstr ""
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"An icon file with .ico extension. Should be 16 x 16 px.\n"
+msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
 msgstr ""
 
@@ -173,7 +176,7 @@ msgstr ""
 #: frontend/src/components/Settings/index.ts:68
 #: frontend/src/components/Settings/index.ts:127
 msgid "Analytics"
-msgstr ""
+msgstr "Tahlil"
 
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -182,12 +185,12 @@ msgstr "Ilova"
 
 #: builder/export_import_standard_page.py:29
 msgid "App {0} is not installed"
-msgstr ""
+msgstr "{0} ilovasi o'rnatilmagan"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
 #: frontend/src/components/Settings/PageGeneral.vue:87
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
-msgstr ""
+msgstr "Brauzeringiz yorlig'ida sarlavha yonida paydo bo'ladi. Tavsiya etilgan o'lcham PNG yoki ICO formatida 32x32 piksel."
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:105
 msgid "Append the original query string to the target URL"
@@ -199,7 +202,7 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:176
 msgid "Apps"
-msgstr ""
+msgstr "Ilovalar"
 
 #: frontend/src/stores/pageStore.ts:168
 msgid "Are you sure you want to delete page: {0}?"
@@ -257,7 +260,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:20
 #: frontend/src/components/DimensionInput.vue:9
 msgid "Auto"
-msgstr ""
+msgstr "Avtomatik"
 
 #. Label of the auto_convert_images_to_webp (Check) field in DocType 'Builder
 #. Settings'
@@ -273,7 +276,7 @@ msgstr ""
 #: frontend/src/components/Templates/TemplatePreview.vue:7
 #: frontend/src/pages/PagePersonaSurvey.vue:27
 msgid "Back"
-msgstr ""
+msgstr "Orqaga"
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
@@ -293,7 +296,7 @@ msgstr ""
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
-msgstr ""
+msgstr "Fon"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:74
 msgid "Background Only"
@@ -392,22 +395,22 @@ msgstr ""
 #: frontend/src/components/BackgroundHandler.vue:292
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
-msgstr ""
+msgstr "Pastki qism"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:137
 #: frontend/src/components/BlockGridLayoutHandler.vue:200
 msgid "Bottom Center"
-msgstr ""
+msgstr "Pastki markaz"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:141
 #: frontend/src/components/BlockGridLayoutHandler.vue:204
 msgid "Bottom Left"
-msgstr ""
+msgstr "Pastki chap"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:133
 #: frontend/src/components/BlockGridLayoutHandler.vue:196
 msgid "Bottom Right"
-msgstr ""
+msgstr "Pastki o'ng"
 
 #: frontend/src/components/BuilderCommandPalette.vue:88
 msgid "Browse all settings"
@@ -477,7 +480,7 @@ msgstr ""
 #: frontend/src/components/PageScript.vue:194
 #: frontend/src/pages/PageBuilder.vue:311
 msgid "CSS"
-msgstr ""
+msgstr "CSS"
 
 #: frontend/src/components/Modals/TokenManager.vue:890
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
@@ -493,7 +496,7 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:36
 msgid "Cancel"
-msgstr ""
+msgstr "Bekor qilish"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:40
 msgid "Cancel invitation"
@@ -518,11 +521,11 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:347
 #: frontend/src/utils/useBuilderEvents.ts:358
 msgid "Canvas"
-msgstr ""
+msgstr "Tuval"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
-msgstr ""
+msgstr "Bosh harflar bilan yozing"
 
 #. Label of the category (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -536,7 +539,7 @@ msgstr "Kategoriya"
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:159
 msgid "Center"
-msgstr ""
+msgstr "Markaz"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:129
 #: frontend/src/components/BlockGridLayoutHandler.vue:192
@@ -550,7 +553,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Change"
-msgstr ""
+msgstr "O'zgarish"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
 msgid "Checked"
@@ -562,7 +565,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
-msgstr ""
+msgstr "Sinf"
 
 #: frontend/src/components/BackgroundHandler.vue:113
 msgid "Clear Gradient"
@@ -578,7 +581,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
 msgid "Clear all filters"
-msgstr ""
+msgstr "Barcha filtrlarni tozalash"
 
 #: frontend/src/components/Modals/TokenManager.vue:355
 msgid "Click 'Add Token' to create your first one."
@@ -595,7 +598,7 @@ msgstr ""
 #: frontend/src/components/PageScript.vue:5
 #: frontend/src/components/Settings/GlobalCode.vue:22
 msgid "Client Script"
-msgstr ""
+msgstr "Mijoz skripti"
 
 #. Label of the client_scripts (Table MultiSelect) field in DocType 'Builder
 #. Page'
@@ -609,7 +612,7 @@ msgstr ""
 
 #: frontend/src/components/CommandPalette.vue:33
 msgid "Close"
-msgstr ""
+msgstr "Yopish"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:72
 msgid "Close (Esc)"
@@ -619,7 +622,7 @@ msgstr ""
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
-msgstr ""
+msgstr "Kod"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:148
 msgid "Col Span"
@@ -627,7 +630,7 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Collapse"
-msgstr ""
+msgstr "Yig'ish"
 
 #: frontend/src/components/Commands/index.ts:159
 msgid "Collapse All Layers"
@@ -657,7 +660,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:87
 msgid "Column"
-msgstr ""
+msgstr "Ustun"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:95
 msgid "Column Dense"
@@ -665,7 +668,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:17
 msgid "Columns"
-msgstr ""
+msgstr "Ustunlar"
 
 #: frontend/src/components/CommandPalette.vue:9
 msgid "Command Palette"
@@ -736,11 +739,11 @@ msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:47
 msgid "Components"
-msgstr ""
+msgstr "Komponentlar"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
-msgstr ""
+msgstr "Ahvoli"
 
 #: frontend/src/components/DashboardSidebar.vue:98
 msgid "Configure global settings for this builder project."
@@ -752,7 +755,7 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
 msgid "Confirm"
-msgstr ""
+msgstr "Tasdiqlash"
 
 #: frontend/src/components/BackgroundHandler.vue:284
 msgid "Contain"
@@ -782,7 +785,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr ""
+msgstr "Buferga nusxalandi"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:58
 msgid "Copy"
@@ -831,7 +834,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/TopReferrersList.vue:29
 msgid "Count"
-msgstr ""
+msgstr "Hisoblash"
 
 #: frontend/src/components/BackgroundHandler.vue:285
 msgid "Cover"
@@ -889,7 +892,7 @@ msgstr ""
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
 #: frontend/src/components/ShadowHandler.vue:186
 msgid "Custom"
-msgstr ""
+msgstr "Maxsus"
 
 #: frontend/src/components/Settings/index.ts:119
 msgid "Custom Domains"
@@ -897,7 +900,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:51
 msgid "Dark"
-msgstr ""
+msgstr "Qorong'u"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
 msgid "Dark Mode"
@@ -914,7 +917,7 @@ msgstr ""
 
 #: frontend/src/components/DashboardContent.vue:135
 msgid "Dashboard"
-msgstr ""
+msgstr "Boshqaruv paneli"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:138
 msgid "Dashed"
@@ -944,7 +947,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:243
 #: frontend/src/components/Controls/FontInput.vue:134
 msgid "Default"
-msgstr ""
+msgstr "Standart"
 
 #. Description of the 'Default Language' (Data) field in DocType 'Builder
 #. Settings'
@@ -971,12 +974,12 @@ msgstr ""
 #: frontend/src/components/PropsOptions/SelectOptions.vue:8
 #: frontend/src/components/PropsOptions/StringOptions.vue:4
 msgid "Default Value"
-msgstr ""
+msgstr "Standart qiymat"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:283
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
-msgstr ""
+msgstr "O'chirish"
 
 #: frontend/src/components/DashboardSidebar.vue:75
 msgid "Delete Folder"
@@ -1026,7 +1029,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr ""
+msgstr "Dizayner"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:248
 msgid "Detach Component"
@@ -1035,7 +1038,7 @@ msgstr ""
 #: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Developer"
-msgstr ""
+msgstr "Dasturchi"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
@@ -1055,7 +1058,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:451
 msgid "Dimensions"
-msgstr ""
+msgstr "Olchamlari"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1098,7 +1101,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
-msgstr ""
+msgstr "Domen"
 
 #: frontend/src/data/domains.ts:54
 msgid "Domain verification failed"
@@ -1118,7 +1121,7 @@ msgstr ""
 #: frontend/src/utils/builderBlockCopyPaste.ts:201
 #: frontend/src/utils/builderBlockCopyPaste.ts:221
 msgid "Done"
-msgstr ""
+msgstr "Bajarildi"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
@@ -1131,7 +1134,7 @@ msgstr ""
 #: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:47
 msgid "Draft"
-msgstr ""
+msgstr "Qoralama"
 
 #. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1145,7 +1148,7 @@ msgstr ""
 #: frontend/src/components/BlockContextMenuOptions/index.ts:78
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
-msgstr ""
+msgstr "Dublikat"
 
 #: frontend/src/components/Commands/index.ts:279
 msgid "Duplicate Block"
@@ -1189,7 +1192,7 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:241
 #: frontend/src/utils/useBuilderEvents.ts:255
 msgid "Edit"
-msgstr ""
+msgstr "Tahrirlash"
 
 #: frontend/src/pages/PageBuilder.vue:308
 msgid "Edit Block Client Script"
@@ -1210,7 +1213,7 @@ msgstr ""
 #: frontend/src/components/BlockContextMenuOptions/index.ts:52
 #: frontend/src/pages/PageBuilder.vue:305
 msgid "Edit HTML"
-msgstr ""
+msgstr "HTMLni tahrirlash"
 
 #: frontend/src/components/Commands/index.ts:297
 msgid "Edit block with AI"
@@ -1252,7 +1255,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:71
 msgid "End"
-msgstr ""
+msgstr "Oxiri"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:35
 #: frontend/src/components/PropsOptions/NumberOptions.vue:32
@@ -1315,7 +1318,7 @@ msgstr ""
 #: frontend/src/components/PageScript.vue:80
 #: frontend/src/components/PageScript.vue:138
 msgid "Example:"
-msgstr ""
+msgstr "Misol:"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:112
 msgid "Examples"
@@ -1338,7 +1341,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Expand"
-msgstr ""
+msgstr "Kengaytirish"
 
 #: frontend/src/components/Commands/index.ts:146
 msgid "Expand All Layers"
@@ -1435,11 +1438,11 @@ msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:27
 msgid "Filters"
-msgstr ""
+msgstr "Filtrlar"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:24
 msgid "Find"
-msgstr ""
+msgstr "Topish"
 
 #: frontend/src/components/Controls/SearchBlock.vue:8
 msgid "Find & Replace"
@@ -1468,7 +1471,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "Tuzatildi"
 
 #: frontend/src/components/Commands/index.ts:248
 msgid "Focus Property Search"
@@ -1481,7 +1484,7 @@ msgstr ""
 #: frontend/src/components/Settings/PageGeneral.vue:163
 #: frontend/src/utils/dialogs.ts:86
 msgid "Folder"
-msgstr ""
+msgstr "Papka"
 
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
@@ -1518,7 +1521,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:450
 msgid "Fonts"
-msgstr ""
+msgstr "Shriftlar"
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
@@ -1553,7 +1556,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPositionHandler.vue:12
 msgid "Free"
-msgstr ""
+msgstr "Bepul"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:117
 msgid "Friend / colleague"
@@ -1561,7 +1564,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:12
 msgid "Gap"
-msgstr ""
+msgstr "Bo'shliq"
 
 #: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
@@ -1574,7 +1577,7 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:229
 #: frontend/src/utils/useBuilderEvents.ts:269
 msgid "General"
-msgstr ""
+msgstr "Umumiy"
 
 #: frontend/src/components/AIPageGeneratorModal.vue:121
 msgid "Generate"
@@ -1595,12 +1598,12 @@ msgstr ""
 
 #: frontend/src/components/BuilderToolbar.vue:27
 msgid "Get Started"
-msgstr ""
+msgstr "Boshlash"
 
 #: frontend/src/components/BuilderCommandPalette.vue:264
 #: frontend/src/components/Settings/index.ts:29
 msgid "Global"
-msgstr ""
+msgstr "Global"
 
 #: frontend/src/components/DashboardSidebar.vue:96
 msgid "Global Builder Settings"
@@ -1649,7 +1652,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
 #: frontend/src/pages/PageBuilder.vue:304
 msgid "HTML"
-msgstr ""
+msgstr "HTML"
 
 #: frontend/src/components/BlockPropertySections/CustomAttributesSection.ts:23
 msgid "HTML Attributes"
@@ -1674,16 +1677,16 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:197
 #: frontend/src/components/MainMenu.vue:111
 msgid "Help"
-msgstr ""
+msgstr "Yordam"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:28
 msgid "Hidden"
-msgstr ""
+msgstr "Yashirin"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:40
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:44
 msgid "Hide"
-msgstr ""
+msgstr "Yashirish"
 
 #: frontend/src/components/Commands/index.ts:172
 msgid "Hide Left Panel"
@@ -1704,7 +1707,7 @@ msgstr ""
 #: frontend/src/components/Settings/PageGeneral.vue:204
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
-msgstr ""
+msgstr "Uy"
 
 #. Label of the home_page (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -1726,7 +1729,7 @@ msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:9
 msgid "Horizontal"
-msgstr ""
+msgstr "Gorizontal"
 
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1764,7 +1767,7 @@ msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:33
 msgid "Insert"
-msgstr ""
+msgstr "Qo'shish"
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
@@ -1806,11 +1809,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
-msgstr ""
+msgstr "Taklif qiling"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
-msgstr ""
+msgstr "Foydalanuvchilarni taklif qiling"
 
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
@@ -1842,7 +1845,7 @@ msgstr ""
 #: frontend/src/components/PageClientScriptManager.vue:77
 #: frontend/src/components/PageScript.vue:193
 msgid "JavaScript"
-msgstr ""
+msgstr "JavaScript"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Just exploring"
@@ -1850,17 +1853,17 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:171
 msgid "Justify"
-msgstr ""
+msgstr "Asoslash"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:102
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:11
 #: frontend/src/components/PropsPopoverContent.vue:16
 msgid "Key"
-msgstr ""
+msgstr "Kalit"
 
 #: frontend/src/components/Commands/index.ts:202
 msgid "Keyboard Shortcuts"
-msgstr ""
+msgstr "Klaviatura yorliqlari"
 
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -1889,15 +1892,15 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "Katta"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
-msgstr ""
+msgstr "Oxirgi 30 kun"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:54
 msgid "Last 7 Days"
-msgstr ""
+msgstr "So'nggi 7 kun"
 
 #: frontend/src/components/DashboardHead.vue:57
 msgid "Last Created"
@@ -1905,7 +1908,7 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
-msgstr ""
+msgstr "Oxirgi marta o'zgartirilgan"
 
 #: frontend/src/components/PageListItem.vue:39
 msgid "Last updated {0} by {1}"
@@ -1924,21 +1927,21 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
-msgstr ""
+msgstr "Joylashtirish"
 
 #: frontend/src/components/BackgroundHandler.vue:293
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
-msgstr ""
+msgstr "Chapga"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:102
 msgid "Letter"
-msgstr ""
+msgstr "Xat"
 
 #: frontend/src/components/Modals/TokenManager.vue:50
 msgid "Light"
-msgstr ""
+msgstr "Yorug'lik"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:27
 msgid "Light Mode Color"
@@ -1955,19 +1958,19 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:91
 msgid "Link"
-msgstr ""
+msgstr "Havola"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:12
 msgid "Link To"
-msgstr ""
+msgstr "Havola"
 
 #: frontend/src/components/DashboardHead.vue:80
 msgid "List"
-msgstr ""
+msgstr "Ro'yxat"
 
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
-msgstr ""
+msgstr "Batafsil yuklash"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:5
 msgid "Loading domains…"
@@ -1979,7 +1982,7 @@ msgstr ""
 #: frontend/src/components/Settings/TopReferrersList.vue:5
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:6
 msgid "Loading..."
-msgstr ""
+msgstr "Yuklanmoqda..."
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:92
 msgid "Loop"
@@ -2000,7 +2003,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:13
 msgid "Margin"
-msgstr ""
+msgstr "Marja"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Marketer"
@@ -2020,7 +2023,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
-msgstr ""
+msgstr "Maksimal balandlik"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:30
 msgid "Max Width"
@@ -2042,7 +2045,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:184
 msgid "Medium"
-msgstr ""
+msgstr "O'rta"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2053,7 +2056,7 @@ msgstr "Meta"
 
 #: frontend/src/components/Settings/PageMeta.vue:23
 msgid "Meta Image"
-msgstr ""
+msgstr "Meta-rasm"
 
 #. Label of the meta_column (Column Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2083,7 +2086,7 @@ msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:74
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: frontend/src/components/WebPagePresetPicker.vue:457
 msgid "Modern"
@@ -2108,7 +2111,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:245
 #: frontend/src/components/Modals/TokenManager.vue:367
 msgid "Move"
-msgstr ""
+msgstr "Ko'chirish"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / hand mode"
@@ -2143,7 +2146,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
 #: frontend/src/components/Modals/TokenManager.vue:48
 msgid "Name"
-msgstr ""
+msgstr "Ism"
 
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
@@ -2158,11 +2161,11 @@ msgstr ""
 
 #: frontend/src/pages/PagePreview.vue:157
 msgid "Navigation"
-msgstr ""
+msgstr "Navigatsiya"
 
 #: frontend/src/components/DashboardToolbar.vue:10
 msgid "New"
-msgstr ""
+msgstr "Yangi"
 
 #: frontend/src/utils/dialogs.ts:36
 msgid "New Component"
@@ -2179,7 +2182,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
-msgstr ""
+msgstr "Yangi yorliq"
 
 #: frontend/src/components/DashboardSidebar.vue:24
 msgid "New folder"
@@ -2195,7 +2198,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:71
 msgid "Next"
-msgstr ""
+msgstr "Keyingisi"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:46
 #: frontend/src/components/BlockFlexLayoutHandler.vue:55
@@ -2205,7 +2208,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
 #: frontend/src/components/PropsPopoverContent.vue:107
 msgid "No"
-msgstr ""
+msgstr "Yo'q"
 
 #: frontend/src/components/PropsEditor.vue:51
 msgid "No Default Value"
@@ -2275,7 +2278,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:137
 msgid "No results found"
-msgstr ""
+msgstr "Hech qanday natija topilmadi"
 
 #: frontend/src/components/VersionHistory.vue:36
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
@@ -2298,15 +2301,15 @@ msgstr ""
 #: frontend/src/components/ShadowHandler.vue:11
 #: frontend/src/components/ShadowHandler.vue:182
 msgid "None"
-msgstr ""
+msgstr "Hech biri"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:17
 msgid "Normal"
-msgstr ""
+msgstr "Oddiy"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:248
 msgid "Not Allowed"
-msgstr ""
+msgstr "Ruxsat berilmagan"
 
 #: builder/www/404.html:6
 msgid "Not Found"
@@ -2322,7 +2325,7 @@ msgstr ""
 
 #: frontend/src/components/PageClientScriptManager.vue:100
 msgid "Note:"
-msgstr ""
+msgstr "Eslatma:"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:33
 msgid "Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe."
@@ -2330,7 +2333,7 @@ msgstr ""
 
 #: frontend/src/components/PropsPopoverContent.vue:168
 msgid "Number"
-msgstr ""
+msgstr "Raqam"
 
 #: frontend/src/components/PropsPopoverContent.vue:172
 msgid "Object"
@@ -2416,7 +2419,7 @@ msgstr "Tanlovlar"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:59
 msgid "Order"
-msgstr ""
+msgstr "Buyurtma"
 
 #: frontend/src/components/ImageUploadInput.vue:76
 msgid "Original Size"
@@ -2427,7 +2430,7 @@ msgstr ""
 #: frontend/src/pages/PagePersonaSurvey.vue:134
 #: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Other"
-msgstr ""
+msgstr "Boshqa"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
@@ -2439,11 +2442,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:4
 msgid "Overview"
-msgstr ""
+msgstr "Umumiy ma'lumot"
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:37
 msgid "Padding"
-msgstr ""
+msgstr "To'ldirish"
 
 #: frontend/src/components/BuilderCommandPalette.vue:260
 #: frontend/src/components/Commands/index.ts:42
@@ -2451,7 +2454,7 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:124
 #: frontend/src/components/Commands/index.ts:134
 msgid "Page"
-msgstr ""
+msgstr "Sahifa"
 
 #: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
@@ -2492,12 +2495,12 @@ msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:14
 msgid "Page Route"
-msgstr ""
+msgstr "Sahifa yo'nalishi"
 
 #: frontend/src/components/PageOptions.vue:5
 #: frontend/src/components/Settings/PageGeneral.vue:8
 msgid "Page Title"
-msgstr ""
+msgstr "Sahifa sarlavhasi"
 
 #: frontend/src/components/RouteTreeView.vue:336
 #: frontend/src/components/RouteTreeView.vue:346
@@ -2534,7 +2537,7 @@ msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:279
 msgid "Pages"
-msgstr ""
+msgstr "Sahifalar"
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
@@ -2597,7 +2600,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:39
 msgid "Placeholder"
-msgstr ""
+msgstr "Joylashtiruvchi"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:14
 msgid "Placement"
@@ -2639,7 +2642,7 @@ msgstr ""
 #: frontend/src/components/BackgroundHandler.vue:89
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
-msgstr ""
+msgstr "Lavozim"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
 msgid "Poster"
@@ -2647,7 +2650,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:57
 msgid "Presets"
-msgstr ""
+msgstr "Oldindan o'rnatilgan sozlamalar"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:21
 msgid "Prevent Click Emulation"
@@ -2685,7 +2688,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/NewBlockTemplate.vue:39
 msgid "Preview Image"
-msgstr ""
+msgstr "Rasmni oldindan ko'rish"
 
 #: builder/builder/doctype/block_template/block_template.py:20
 msgid "Preview Image is mandatory"
@@ -2702,7 +2705,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:22
 msgid "Primary"
-msgstr ""
+msgstr "Asosiy"
 
 #. Label of the project_folder (Link) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2716,7 +2719,7 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
 #: frontend/src/components/ObjectEditor.vue:6
 msgid "Property"
-msgstr ""
+msgstr "Mulk"
 
 #: frontend/src/components/Settings/PageGeneral.vue:120
 msgid "Protected Page"
@@ -2734,7 +2737,7 @@ msgstr ""
 #: frontend/src/components/PublishButton.vue:77
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Publish"
-msgstr ""
+msgstr "Nashr qilish"
 
 #: frontend/src/components/PublishButton.vue:79
 msgid "Publish Changes"
@@ -2775,7 +2778,7 @@ msgstr ""
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Read Only"
-msgstr ""
+msgstr "Faqat o'qish"
 
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
@@ -2784,7 +2787,7 @@ msgstr ""
 #: frontend/src/components/BuilderCommandPalette.vue:291
 #: frontend/src/components/BuilderCommandPalette.vue:342
 msgid "Recent"
-msgstr ""
+msgstr "Yaqinda"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
@@ -2797,7 +2800,7 @@ msgstr ""
 #: frontend/src/components/Settings/index.ts:102
 #: frontend/src/components/Settings/index.ts:103
 msgid "Redirects"
-msgstr ""
+msgstr "Yo'naltirishlar"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:20
 msgid "Redirects to primary"
@@ -2806,7 +2809,7 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:326
 #: frontend/src/components/Commands/index.ts:330
 msgid "Redo"
-msgstr ""
+msgstr "Qayta bajarish"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -2824,17 +2827,17 @@ msgstr ""
 
 #: frontend/src/utils/fontManager.ts:242
 msgid "Regular"
-msgstr ""
+msgstr "Doimiy"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
-msgstr ""
+msgstr "Nisbiy"
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
 #: frontend/src/components/Modals/TokenManager.vue:754
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
-msgstr ""
+msgstr "Olib tashlash"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:99
 msgid "Remove Collection"
@@ -2864,12 +2867,12 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
-msgstr ""
+msgstr "Qayta nomlash"
 
 #: frontend/src/components/BackgroundHandler.vue:95
 #: frontend/src/components/BackgroundHandler.vue:299
 msgid "Repeat"
-msgstr ""
+msgstr "Takrorlang"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:157
 msgid "Repeat Block"
@@ -2920,11 +2923,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:35
 msgid "Resend"
-msgstr ""
+msgstr "Qayta yuborish"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:182
 msgid "Reset Changes"
-msgstr ""
+msgstr "O'zgarishlarni tiklash"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:204
 msgid "Reset Component"
@@ -2966,7 +2969,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
-msgstr ""
+msgstr "Qayta urinish"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:38
 msgid "Rewrite (AI)"
@@ -2976,7 +2979,7 @@ msgstr ""
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
-msgstr ""
+msgstr "O'ng"
 
 #: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
@@ -2984,7 +2987,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
-msgstr ""
+msgstr "Robots.txt"
 
 #: frontend/src/components/Settings/PageRobots.vue:30
 msgid "Robots.txt Guide"
@@ -2992,7 +2995,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
-msgstr ""
+msgstr "Rol"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:258
 msgid "Rotation"
@@ -3011,7 +3014,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:83
 msgid "Row"
-msgstr ""
+msgstr "Qator"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:91
 msgid "Row Dense"
@@ -3027,7 +3030,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:26
 msgid "Rows"
-msgstr ""
+msgstr "Qatorlar"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
@@ -3047,7 +3050,7 @@ msgstr ""
 #: frontend/src/components/VersionHistory.vue:27
 #: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
 msgid "Save"
-msgstr ""
+msgstr "Saqlash"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:241
 msgid "Save As Component"
@@ -3117,7 +3120,7 @@ msgstr ""
 #: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
 msgid "Search"
-msgstr ""
+msgstr "Qidiruv"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:115
 msgid "Search (Google)"
@@ -3138,7 +3141,7 @@ msgstr ""
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
-msgstr ""
+msgstr "Qidiruv shabloni"
 
 #: frontend/src/components/Commands/index.ts:242
 msgid "Search blocks"
@@ -3162,7 +3165,7 @@ msgstr ""
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
-msgstr ""
+msgstr "Xususiyatlarni qidirish"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:9
 msgid "Search redirects"
@@ -3182,16 +3185,16 @@ msgstr ""
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
-msgstr ""
+msgstr "Qidiruv..."
 
 #: frontend/src/components/CommandPalette.vue:74
 msgid "Searching..."
-msgstr ""
+msgstr "Qidirilmoqda..."
 
 #: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
 msgid "Select"
-msgstr ""
+msgstr "Tanlang"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:21
 msgid "Select (v)"
@@ -3247,7 +3250,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
-msgstr ""
+msgstr "Taklifnoma yuborish"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
@@ -3266,7 +3269,7 @@ msgstr ""
 #: frontend/src/components/Controls/ColorInput.vue:172
 #: frontend/src/components/Controls/ColorPickerContent.vue:48
 msgid "Set Color"
-msgstr ""
+msgstr "Rangni o'rnating"
 
 #: frontend/src/components/Controls/BasePropertyControl.vue:34
 #: frontend/src/components/Controls/BasePropertyControl.vue:261
@@ -3303,7 +3306,7 @@ msgstr ""
 #: frontend/src/components/MainMenu.vue:101
 #: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
 msgid "Settings"
-msgstr ""
+msgstr "Sozlamalar"
 
 #: frontend/src/components/ShadowHandler.vue:8
 msgid "Shadow"
@@ -3315,12 +3318,12 @@ msgstr ""
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
-msgstr ""
+msgstr "Yorliqlar"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:39
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:43
 msgid "Show"
-msgstr ""
+msgstr "Shou"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
 msgid "Show Children"
@@ -3336,7 +3339,7 @@ msgstr ""
 
 #: frontend/src/components/Commands/index.ts:207
 msgid "Show keyboard shortcuts"
-msgstr ""
+msgstr "Klaviatura yorliqlarini ko'rsatish"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
@@ -3357,7 +3360,7 @@ msgstr ""
 #: frontend/src/components/BackgroundHandler.vue:83
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
-msgstr ""
+msgstr "Hajmi"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:76
 msgid "Skip for now"
@@ -3369,7 +3372,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "Kichik"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
@@ -3394,11 +3397,11 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:137
 msgid "Solid"
-msgstr ""
+msgstr "Qattiq"
 
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
-msgstr ""
+msgstr "Saralash"
 
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3407,7 +3410,7 @@ msgstr "Saralash tartibi"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:18
 msgid "Source"
-msgstr ""
+msgstr "Manba"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:25
 msgid "Space Around"
@@ -3456,7 +3459,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:63
 msgid "Start"
-msgstr ""
+msgstr "Boshlash"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:6
 msgid "Start from a blank page or pick a page from a template."
@@ -3476,11 +3479,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
-msgstr ""
+msgstr "Holat"
 
 #: frontend/src/components/BlockPositionHandler.vue:18
 msgid "Sticky"
-msgstr ""
+msgstr "Yopishqoq"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:59
 #: frontend/src/components/DimensionInput.vue:17
@@ -3490,7 +3493,7 @@ msgstr ""
 
 #: frontend/src/components/PropsPopoverContent.vue:167
 msgid "String"
-msgstr ""
+msgstr "Tor"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3554,12 +3557,12 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
 msgid "Tag"
-msgstr ""
+msgstr "Teg"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:19
 #: frontend/src/components/Settings/TopClicksList.vue:11
 msgid "Target"
-msgstr ""
+msgstr "Nishon"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
 msgid "Target Component"
@@ -3571,7 +3574,7 @@ msgstr ""
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
-msgstr ""
+msgstr "Andoza"
 
 #. Label of the template_group (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3616,7 +3619,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:81
 msgid "Text Color"
-msgstr ""
+msgstr "Matn rangi"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
 msgid "Text mode"
@@ -3645,7 +3648,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
-msgstr ""
+msgstr "Bu yil"
 
 #: frontend/src/components/Modals/TokenManager.vue:181
 msgid "This is a standard variable. It cannot be modified or deleted."
@@ -3692,11 +3695,11 @@ msgstr ""
 
 #: frontend/src/composables/useAnalytics.ts:118
 msgid "Timeline"
-msgstr ""
+msgstr "Vaqt jadvali"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:46
 msgid "Timing"
-msgstr ""
+msgstr "Vaqt"
 
 #. Label of the page_title (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3706,7 +3709,7 @@ msgstr "Sarlavha"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:53
 msgid "Today"
-msgstr ""
+msgstr "Bugun"
 
 #: frontend/src/components/Commands/index.ts:228
 msgid "Toggle Canvas Dark Mode"
@@ -3727,7 +3730,7 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:181
 #: frontend/src/components/MainMenu.vue:96
 msgid "Toggle Theme"
-msgstr ""
+msgstr "Mavzuni yoqish/o'chirish"
 
 #: frontend/src/components/Commands/index.ts:232
 msgid "Toggle canvas dark mode"
@@ -3766,17 +3769,17 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:395
 #: frontend/src/utils/useBuilderEvents.ts:403
 msgid "Tools"
-msgstr ""
+msgstr "Asboblar"
 
 #: frontend/src/components/BackgroundHandler.vue:291
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
-msgstr ""
+msgstr "Yuqori"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:113
 #: frontend/src/components/BlockGridLayoutHandler.vue:176
 msgid "Top Center"
-msgstr ""
+msgstr "Yuqori markaz"
 
 #: frontend/src/components/Settings/TopClicksList.vue:3
 msgid "Top Clicks"
@@ -3785,7 +3788,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:117
 #: frontend/src/components/BlockGridLayoutHandler.vue:180
 msgid "Top Left"
-msgstr ""
+msgstr "Yuqori chap"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:21
 msgid "Top Pages"
@@ -3798,7 +3801,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:109
 #: frontend/src/components/BlockGridLayoutHandler.vue:172
 msgid "Top Right"
-msgstr ""
+msgstr "Yuqori o'ng"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:16
 msgid "Total Pageviews"
@@ -3806,7 +3809,7 @@ msgstr ""
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "Jami ko'rishlar"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
@@ -3818,7 +3821,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:114
 msgid "Transform"
-msgstr ""
+msgstr "O'zgartirish"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:72
 msgid "Transform Only"
@@ -3859,7 +3862,7 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:313
 #: frontend/src/components/Commands/index.ts:317
 msgid "Undo"
-msgstr ""
+msgstr "Bekor qilish"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
@@ -3869,11 +3872,11 @@ msgstr ""
 #: frontend/src/components/PublishButton.vue:31
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Unpublish"
-msgstr ""
+msgstr "Nashrni bekor qilish"
 
 #: frontend/src/components/DashboardHead.vue:36
 msgid "Unpublished"
-msgstr ""
+msgstr "Nashr qilinmagan"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
@@ -3897,7 +3900,7 @@ msgstr ""
 
 #: frontend/src/components/ComponentUpdates.vue:46
 msgid "Update"
-msgstr ""
+msgstr "Yangilash"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:205
 msgid "Update Current Page"
@@ -3916,7 +3919,7 @@ msgstr ""
 #: frontend/src/components/ImageUploadInput.vue:64
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
 msgid "Upload"
-msgstr ""
+msgstr "Yuklash"
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
@@ -3941,11 +3944,11 @@ msgstr ""
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Uploading {0}%"
-msgstr ""
+msgstr "{0} % yuklanmoqda"
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "Yuklanmoqda..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
@@ -3988,7 +3991,7 @@ msgstr ""
 #: frontend/src/components/Settings/index.ts:86
 #: frontend/src/components/Settings/index.ts:87
 msgid "Users"
-msgstr ""
+msgstr "Foydalanuvchilar"
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -4006,7 +4009,7 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:90
 #: frontend/src/components/VersionHistory.vue:114
 msgid "Version"
-msgstr ""
+msgstr "Versiya"
 
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
@@ -4023,7 +4026,7 @@ msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:10
 msgid "Vertical"
-msgstr ""
+msgstr "Vertikal"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
 msgid "Very Slow"
@@ -4035,7 +4038,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
 msgid "Video URL"
-msgstr ""
+msgstr "Video URL manzili"
 
 #: frontend/src/components/Commands/index.ts:44
 #: frontend/src/components/Commands/index.ts:174
@@ -4043,7 +4046,7 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:195
 #: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
-msgstr ""
+msgstr "Ko'rish"
 
 #: frontend/src/components/PageActionsDropdown.vue:14
 msgid "View Page"
@@ -4059,7 +4062,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
 msgid "Views"
-msgstr ""
+msgstr "Ko'rishlar"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:24
 msgid "Visible"
@@ -4073,7 +4076,7 @@ msgstr "Mehmon identifikatori"
 #: frontend/src/utils/useBuilderEvents.ts:129
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
-msgstr ""
+msgstr "Ogohlantirish"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Web app UI"
@@ -4095,11 +4098,11 @@ msgstr "Veb-sayt menejeri"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:55
 msgid "Weight"
-msgstr ""
+msgstr "Og'irligi"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
-msgstr ""
+msgstr "Kenglik"
 
 #: frontend/src/components/VersionHistory.vue:52
 msgid "Working draft · unpublished changes"
@@ -4131,7 +4134,7 @@ msgstr ""
 #: frontend/src/components/PropsPopoverContent.vue:106
 #: frontend/src/utils/useBuilderEvents.ts:486
 msgid "Yes"
-msgstr ""
+msgstr "Ha"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
@@ -4163,7 +4166,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
@@ -4171,16 +4174,15 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
-msgstr ""
+msgstr "Yaqinlashtirish"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom out"
-msgstr ""
+msgstr "Kattalashtirish"
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-msgid ""
-"data.events = frappe.get_list(\"Event\")\n"
+msgid "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
