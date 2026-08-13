@@ -8,6 +8,18 @@ export function __(source: string, replacements: Replacement[] = [], context?: s
 	return translated.replace(/\{(\d+)\}/g, (match, index) => String(replacements[index] ?? match));
 }
 
+// the vite dev server serves index.html without the boot payload; fetched
+// before mount so module-scope __() calls in route chunks see the catalog
+export async function ensureTranslations() {
+	if (window.translated_messages) return;
+	try {
+		const response = await fetch("/api/method/frappe.translate.get_boot_translations");
+		window.translated_messages = (await response.json()).message || {};
+	} catch {
+		window.translated_messages = {};
+	}
+}
+
 export default {
 	install(app: App) {
 		app.config.globalProperties.__ = __;
