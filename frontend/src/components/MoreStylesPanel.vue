@@ -23,7 +23,7 @@
 			:empty-text="__('No matching properties')"
 			open-on-focus
 			@update:query="propertySearch = String($event)"
-			@update:modelValue="(v: unknown) => addProperty(v as string | null)">
+			@update:modelValue="(v: unknown) => addProperty(typeof v === 'string' ? v : null)">
 			<template #suffix>
 				<span />
 			</template>

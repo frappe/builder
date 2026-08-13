@@ -1,12 +1,11 @@
 <template>
 	<div class="flex w-full items-center justify-between">
 		<InputLabel v-if="label">{{ label }}</InputLabel>
-		<!-- boolean values predate v1's string|number TabValue; matching is by === so they still work -->
 		<TabButtons
 			:class="['w-full min-w-[150px]', STRETCH_TABS]"
-			:options="tabOptions as any"
-			:modelValue="modelValue as any"
-			@update:modelValue="$emit('update:modelValue', $event)" />
+			:options="tabOptions"
+			:modelValue="tabValue"
+			@update:modelValue="selectOption" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -34,7 +33,17 @@ const props = withDefaults(
 	},
 );
 
-defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue"]);
+
+// TabButtons values are string|number only; booleans ride as strings and map back on select
+const toTabValue = (value: string | number | boolean) => (typeof value === "boolean" ? String(value) : value);
+
+const tabValue = computed(() => (props.modelValue === undefined ? undefined : toTabValue(props.modelValue)));
+
+const selectOption = (value: string | number) => {
+	const selected = props.options.find((option) => toTabValue(option.value) === value);
+	emit("update:modelValue", selected ? selected.value : value);
+};
 
 // the value a block inherits when it doesn't set the property itself is outlined
 // rather than selected, so the panel never claims a style that isn't there
@@ -46,7 +55,7 @@ const isSet = computed(
 
 const tabOptions = computed(() =>
 	props.options.map(({ label, value, icon, hideLabel, showTooltip }) => ({
-		value,
+		value: toTabValue(value),
 		// frappe-ui reads `icon` as icon-only, `iconLeft` as an accent beside the label
 		...(hideLabel ? { icon } : { label, iconLeft: icon }),
 		tooltip: hideLabel || showTooltip ? label : undefined,

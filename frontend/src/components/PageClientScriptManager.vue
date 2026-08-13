@@ -87,7 +87,7 @@
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
 							:placeholder="__('Attach Script')"
-							@update:modelValue="(value: unknown) => value && attachScript(value as string)">
+							@update:modelValue="(value: unknown) => typeof value === 'string' && attachScript(value)">
 							<template #trigger>
 								<Button class="w-full text-xs">{{ __("Attach Script") }}</Button>
 							</template>

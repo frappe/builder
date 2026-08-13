@@ -9,11 +9,10 @@
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
 
-			<!-- boolean values predate v1's string|number TabValue; matching is by === so they still work -->
 			<TabButtons
 				class="shrink-0"
-				:modelValue="split as any"
-				:options="resolvedSplitOptions as any"
+				:modelValue="String(split)"
+				:options="tabOptions"
 				@update:modelValue="setSplitValue" />
 		</div>
 
@@ -127,10 +126,16 @@ const defaultSplitOptions = computed<SplitOption[]>(() => [
 
 const resolvedSplitOptions = computed(() => props.splitOptions ?? defaultSplitOptions.value);
 
-const setSplitValue = (value: string | number | boolean | undefined) => {
-	if (typeof value !== "boolean") return;
-	if (!value) emit("update:modelValue", props.getMergedValue(splitValues.value));
-	forceSplit.value = value;
+// TabButtons values are string|number only; the boolean split state rides as a string
+const tabOptions = computed(() =>
+	resolvedSplitOptions.value.map((option) => ({ ...option, value: String(option.value) })),
+);
+
+const setSplitValue = (value: string | number | undefined) => {
+	if (value !== "true" && value !== "false") return;
+	const splitting = value === "true";
+	if (!splitting) emit("update:modelValue", props.getMergedValue(splitValues.value));
+	forceSplit.value = splitting;
 };
 
 const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);
