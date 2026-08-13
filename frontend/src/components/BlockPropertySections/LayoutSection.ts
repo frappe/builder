@@ -4,11 +4,12 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { collapseGapShorthand, expandGapShorthand } from "@/utils/cssUtils";
 import StylePropertyControl from "../Controls/StylePropertyControl.vue";
+import { __ } from "@/translation";
 
 const SPLITS = ["V", "H"];
 
 const gapProps = {
-	label: "Gap",
+	label: __("Gap"),
 	propertyKey: "gap",
 	splits: SPLITS,
 	toControlValues: (value: unknown) => expandGapShorthand(value),
@@ -17,8 +18,7 @@ const gapProps = {
 		state
 			? String(blockController.getNativeStyle(`${state}:gap`) ?? "")
 			: String(blockController.getSpacing("gap", { nativeOnly: true, cascading: false })),
-	getPlaceholder: () =>
-		String(blockController.getSpacing("gap", { nativeOnly: false, cascading: true })),
+	getPlaceholder: () => String(blockController.getSpacing("gap", { nativeOnly: false, cascading: true })),
 	setModelValue: (value: string | boolean | number) => {
 		if (typeof value === "boolean") return;
 		blockController.setSpacing("gap", String(value));
@@ -33,15 +33,15 @@ const layoutSectionProperties = [
 			return {
 				propertyKey: "display",
 				component: OptionToggle,
-				label: "Type",
+				label: __("Type"),
 				enableStates: false,
 				options: [
 					{
-						label: "Stack",
+						label: __("Stack"),
 						value: "flex",
 					},
 					{
-						label: "Grid",
+						label: __("Grid"),
 						value: "grid",
 					},
 				],
@@ -122,7 +122,7 @@ const layoutSectionProperties = [
 ];
 
 export default {
-	name: "Layout",
+	name: __("Layout"),
 	properties: layoutSectionProperties,
 	condition: () => !blockController.multipleBlocksSelected() && !blockController.isHTML(),
 };

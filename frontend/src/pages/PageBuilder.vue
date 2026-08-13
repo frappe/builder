@@ -43,7 +43,7 @@
 						</span>
 					</div>
 					<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
-						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
+						{{ canvasStore.fragmentData.saveActionLabel || __("Save") }}
 					</Button>
 				</div>
 			</template>
@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
@@ -269,8 +270,8 @@ useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, rou
 useShortcut([
 	{
 		key: " ",
-		description: "Hold for move mode",
-		group: "Tools",
+		description: __("Hold for move mode"),
+		group: __("Tools"),
 		handler: () => {
 			if (!canvasStore.editableBlock) {
 				builderStore.mode = "move";
@@ -300,15 +301,15 @@ let expandedEditorOptions = computed(() => {
 	let title, label;
 	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
 	if (canvasStore.editingContentType === "html") {
-		title = "HTML";
-		label = "Edit HTML";
+		title = __("HTML");
+		label = __("Edit HTML");
 	} else if (canvasStore.editingContentType === "js") {
-		title = "Block Client Script";
-		label = "Edit Block Client Script";
+		title = __("Block Client Script");
+		label = __("Edit Block Client Script");
 		type = "JavaScript";
 	} else if (canvasStore.editingContentType === "css") {
-		title = "CSS";
-		label = "Edit CSS";
+		title = __("CSS");
+		label = __("Edit CSS");
 		type = "CSS";
 	}
 	return { title, label, type };

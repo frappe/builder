@@ -1,6 +1,7 @@
 import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { toast } from "frappe-ui";
+import { __ } from "@/translation";
 
 const API = "builder.domain";
 
@@ -50,7 +51,7 @@ export function useDomains() {
 		try {
 			const { matched, error } = await checkDNS(domain);
 			if (!matched) {
-				toast.error("Domain verification failed", { id });
+				toast.error(__("Domain verification failed"), { id });
 				return {
 					ok: false,
 					error: error || "DNS not yet propagated. Make sure the record is set correctly and try again.",

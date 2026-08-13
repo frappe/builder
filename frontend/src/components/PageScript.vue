@@ -2,9 +2,9 @@
 	<div class="flex h-full flex-col justify-between">
 		<div class="flex h-full flex-col gap-4 p-3">
 			<div class="flex gap-2">
-				<Button @click="showClientScriptEditor()" class="flex-1">Client Script</Button>
+				<Button @click="showClientScriptEditor()" class="flex-1">{{ __("Client Script") }}</Button>
 				<Button v-if="mode != 'blockTemplate'" @click="showServerScriptEditor()" class="flex-1">
-					Data Script
+					{{ __("Data Script") }}
 				</Button>
 			</div>
 
@@ -12,7 +12,7 @@
 				<CodeEditor
 					v-model="pageStore.pageData"
 					type="JSON"
-					label="Page Data Preview"
+					:label="__('Page Data Preview')"
 					:autofocus="false"
 					:readonly="true" />
 			</div>
@@ -20,7 +20,7 @@
 				<CodeEditor
 					v-model="componentDataPreview"
 					type="JSON"
-					label="Component Data Preview"
+					:label="__('Component Data Preview')"
 					:autofocus="false"
 					:readonly="true" />
 			</div>
@@ -30,7 +30,7 @@
 				<div class="flex min-h-full w-full flex-col gap-6">
 					<div>
 						<div class="mb-3 mt-4 text-sm text-ink-gray-8">
-							{{ mode == "component" ? "Component Props" : "Block Props" }}
+							{{ mode == "component" ? __("Component Props") : __("Block Props") }}
 						</div>
 						<PropsEditor :obj="fragmentProps" @update:obj="setFragmentProps" />
 					</div>
@@ -72,12 +72,12 @@
 							<CodeEditor
 								v-model="pageStore.pageData"
 								type="JSON"
-								label="Data Preview"
+								:label="__('Data Preview')"
 								:showLineNumbers="true"
 								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
-								<b>Example:</b> data.events = frappe.get_list("Event")<br><br>
+								<b>{{ __("Example:") }}</b> data.events = frappe.get_list("Event")<br><br>
 								For more details on how to write data script, refer to <b><a class="underline" href="https://docs.frappe.io/builder/data-script" target="_blank">this documentation</a></b>.
 								'
 								:readonly="true"></CodeEditor>
@@ -92,7 +92,7 @@
 								ref="blockJavaScriptEditor"
 								:modelValue="blockJavaScript"
 								type="JavaScript"
-								label="Block JavaScript"
+								:label="__('Block JavaScript')"
 								height="60vh"
 								:readonly="builderStore.readOnlyMode"
 								:autofocus="true"
@@ -104,7 +104,7 @@
 								ref="blockCSSEditor"
 								:modelValue="blockCSS"
 								type="CSS"
-								label="Block CSS"
+								:label="__('Block CSS')"
 								height="60vh"
 								:readonly="builderStore.readOnlyMode"
 								:autofocus="false"
@@ -130,12 +130,12 @@
 							<CodeEditor
 								v-model="componentDataPreview"
 								type="JSON"
-								label="Component Data Preview"
+								:label="__('Component Data Preview')"
 								:showLineNumbers="true"
 								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
-								<b>Example:</b> data.items = frappe.get_list("Item")<br><br>
+								<b>{{ __("Example:") }}</b> data.items = frappe.get_list("Item")<br><br>
 								Props are accessible via the <b>props</b> object.'
 								:readonly="true"></CodeEditor>
 						</div>
@@ -146,6 +146,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -189,8 +190,8 @@ const mode = computed<"page" | "component" | "blockTemplate">(() => {
 });
 
 const blockClientScriptTabs = [
-	{ label: "JavaScript", value: "js", icon: "lucide-braces" },
-	{ label: "CSS", value: "css", icon: "lucide-paintbrush" },
+	{ label: __("JavaScript"), value: "js", icon: "lucide-braces" },
+	{ label: __("CSS"), value: "css", icon: "lucide-paintbrush" },
 ];
 
 const blockJavaScript = computed(() => canvasStore.fragmentData.block?.clientScript.js || "");
@@ -198,15 +199,17 @@ const blockCSS = computed(() => canvasStore.fragmentData.block?.clientScript.css
 const fragmentProps = computed(() => canvasStore.fragmentData.block?.props || {});
 
 const dialogTitle = computed(() => {
-	const modeLabel = mode.value === "blockTemplate" ? "Block Template" : capitalize(mode.value);
-	return currentScriptEditor.value == "data" ? `${modeLabel} Data Script` : `${modeLabel} Client Script`;
+	const titles = {
+		page: { data: __("Page Data Script"), client: __("Page Client Script") },
+		component: { data: __("Component Data Script"), client: __("Component Client Script") },
+		blockTemplate: { data: __("Block Template Data Script"), client: __("Block Template Client Script") },
+	};
+	return titles[mode.value][currentScriptEditor.value == "data" ? "data" : "client"];
 });
 
 const showBlockClientScriptToggle = computed(() => {
 	return mode.value !== "page" && currentScriptEditor.value === "client";
 });
-
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 const savePageDataScript = (value: string) => {
 	webPages.setValue
@@ -218,14 +221,14 @@ const savePageDataScript = (value: string) => {
 			capture("builder_page_data_script_saved");
 			props.page.page_data_script = value;
 			pageStore.setPageData(props.page);
-			toast.success("Data script saved");
+			toast.success(__("Data script saved"));
 		})
 		.catch((e: { message: string; exc: string; messages: [string] }) => {
 			let errorMessage = e.exc?.split("\n").slice(-2)[0];
 			if (!errorMessage) {
 				errorMessage = e.messages[0];
 			}
-			toast.error("Failed to save script", {
+			toast.error(__("Failed to save script"), {
 				description: defineComponent({
 					template: `<div>${errorMessage}</div>`,
 				}),

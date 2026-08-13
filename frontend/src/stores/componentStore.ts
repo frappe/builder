@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import { useLatestRequest } from "@/composables/useLatestRequest";
 import { getVersionedDoc } from "@/data/snapshot";
@@ -94,8 +95,8 @@ const useComponentStore = defineStore("componentStore", {
 			const pageStore = usePageStore();
 			const doc = this.getComponentDraft(componentName);
 			if (!doc) {
-				toast.error("Failed to save component", {
-					description: "Component draft is unavailable.",
+				toast.error(__("Failed to save component"), {
+					description: __("Component draft is unavailable."),
 				});
 				throw new Error(`Missing draft for component ${componentName}`);
 			}
@@ -107,10 +108,10 @@ const useComponentStore = defineStore("componentStore", {
 				})
 				.then(async (data: BuilderComponent) => {
 					this.setComponentMap(data);
-					toast.success("Component saved!", {
+					toast.success(__("Component saved!"), {
 						duration: 5000,
 						action: {
-							label: "Sync in all pages",
+							label: __("Sync in all pages"),
 							onClick: async () => {
 								const componentResource = createResource({
 									url: "builder.api.sync_component",
@@ -135,7 +136,7 @@ const useComponentStore = defineStore("componentStore", {
 					});
 				})
 				.catch((error: any) => {
-					toast.error("Failed to save component");
+					toast.error(__("Failed to save component"));
 					throw error;
 				});
 		},
@@ -435,7 +436,7 @@ const useComponentStore = defineStore("componentStore", {
 		},
 		async deleteComponent(component: Pick<BuilderComponent, "name" | "component_name">) {
 			if (this.isComponentUsed(component.name)) {
-				alert("Component is used in current page. You cannot delete it.");
+				alert(__("Component is used in current page. You cannot delete it."));
 			} else {
 				const confirmed = await confirm(
 					`Are you sure you want to delete component: ${component.component_name}?`,

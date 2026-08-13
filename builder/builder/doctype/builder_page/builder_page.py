@@ -85,7 +85,7 @@ class BuilderPageRenderer(DocumentPage):
 		if self.docname:
 			self.doc = frappe.get_cached_doc(self.doctype, self.docname)
 			if self.doc.authenticated_access and frappe.session.user == "Guest":
-				raise frappe.PermissionError("Please log in to view this page.")
+				raise frappe.PermissionError(frappe._("Please log in to view this page."))
 
 	def set_canonical_url(self):
 		if not self.doc:

@@ -3,7 +3,7 @@
 		<Autocomplete
 			ref="autocompleteRef"
 			class="w-full"
-			placeholder="Value"
+			:placeholder="__('Value')"
 			:modelValue="autocompleteValue"
 			:getOptions="getOptions"
 			:showInputAsOption="true"

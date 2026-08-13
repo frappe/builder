@@ -1,13 +1,14 @@
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const dataKeySectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: "Key",
+				label: __("Key"),
 				modelValue: blockController.getDataKey("key"),
 			};
 		},
@@ -21,7 +22,7 @@ const dataKeySectionProperties = [
 		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
-				label: "Type",
+				label: __("Type"),
 				modelValue: blockController.getDataKey("type"),
 			};
 		},
@@ -35,7 +36,7 @@ const dataKeySectionProperties = [
 		condition: () => !blockController.isRepeater(),
 		getProps: () => {
 			return {
-				label: "Property",
+				label: __("Property"),
 				modelValue: blockController.getDataKey("property"),
 			};
 		},
@@ -47,7 +48,7 @@ const dataKeySectionProperties = [
 ];
 
 export default {
-	name: "Data Key",
+	name: __("Data Key"),
 	properties: dataKeySectionProperties,
 	collapsed: computed(() => {
 		return !blockController.getDataKey("key") && !blockController.isRepeater();

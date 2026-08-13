@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useResizeObserver } from "@vueuse/core";
@@ -167,7 +168,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
-	placeholder: "Search",
+	placeholder: __("Search"),
 	showInputAsOption: false,
 	allowArbitraryValue: true,
 });
@@ -268,9 +269,7 @@ const submitArbitraryValue = (inputValue: string) => {
 
 // the input still shows the current selection, i.e. nothing was typed over it
 const isUntouched = (inputValue: string) =>
-	!inputValue ||
-	inputValue === getDisplayValue(props.modelValue) ||
-	inputValue === (props.modelValue ?? "");
+	!inputValue || inputValue === getDisplayValue(props.modelValue) || inputValue === (props.modelValue ?? "");
 
 const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;

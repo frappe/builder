@@ -2,6 +2,7 @@ import MoreStylesPanel from "@/components/MoreStylesPanel.vue";
 import blockController from "@/utils/blockController";
 import { getStylePropertiesWithoutControls } from "@/utils/stylePropertiesWithControls";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const moreStylesSectionProperties = [
 	{
@@ -11,7 +12,7 @@ const moreStylesSectionProperties = [
 ];
 
 export default {
-	name: "More Styles",
+	name: __("More Styles"),
 	properties: moreStylesSectionProperties,
 	collapsed: computed(() => {
 		const block = blockController.getFirstSelectedBlock();
@@ -19,5 +20,5 @@ export default {
 		const styles = { ...block.baseStyles, ...block.tabletStyles, ...block.mobileStyles };
 		return getStylePropertiesWithoutControls(styles).size === 0;
 	}),
-	condition: () => blockController.getSelectedBlocks().length === 1
+	condition: () => blockController.getSelectedBlocks().length === 1,
 };

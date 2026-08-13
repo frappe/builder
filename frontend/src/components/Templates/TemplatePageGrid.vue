@@ -9,7 +9,7 @@
 		</div>
 		<!-- blank page + template pages -->
 		<div v-else class="grid gap-x-4 gap-y-5 auto-fill-[220px]">
-			<BlankPageCard label="Blank Page" @click="$emit('blank')" />
+			<BlankPageCard :label="__('Blank Page')" @click="$emit('blank')" />
 			<TemplatePageCard
 				v-for="page in group?.pages"
 				:key="page.name"

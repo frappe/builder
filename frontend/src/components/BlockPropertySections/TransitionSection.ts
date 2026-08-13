@@ -1,21 +1,22 @@
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { __ } from "@/translation";
 
 const transitionSectionProperties = [
 	{
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Speed",
+				label: __("Speed"),
 				propertyKey: "transitionDuration",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: null, label: "None" },
-					{ value: "150ms", label: "Fast" },
-					{ value: "300ms", label: "Normal" },
-					{ value: "500ms", label: "Slow" },
-					{ value: "1000ms", label: "Very Slow" },
+					{ value: null, label: __("None") },
+					{ value: "150ms", label: __("Fast") },
+					{ value: "300ms", label: __("Normal") },
+					{ value: "500ms", label: __("Slow") },
+					{ value: "1000ms", label: __("Very Slow") },
 				],
 				setModelValue: (val: string | null) => {
 					if (val === "None") {
@@ -42,16 +43,16 @@ const transitionSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Timing",
+				label: __("Timing"),
 				propertyKey: "transitionTimingFunction",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: "ease", label: "Smooth" },
-					{ value: "linear", label: "Linear" },
-					{ value: "ease-in", label: "Ease In" },
-					{ value: "ease-out", label: "Ease Out" },
-					{ value: "ease-in-out", label: "Ease In Out" },
+					{ value: "ease", label: __("Smooth") },
+					{ value: "linear", label: __("Linear") },
+					{ value: "ease-in", label: __("Ease In") },
+					{ value: "ease-out", label: __("Ease Out") },
+					{ value: "ease-in-out", label: __("Ease In Out") },
 				],
 			};
 		},
@@ -62,16 +63,16 @@ const transitionSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Properties",
+				label: __("Properties"),
 				propertyKey: "transitionProperty",
 				type: "select",
 				enableStates: false,
 				options: [
-					{ value: "all", label: "All Properties" },
-					{ value: "transform", label: "Transform Only" },
-					{ value: "opacity", label: "Opacity Only" },
-					{ value: "background", label: "Background Only" },
-					{ value: "colors", label: "Colors Only" },
+					{ value: "all", label: __("All Properties") },
+					{ value: "transform", label: __("Transform Only") },
+					{ value: "opacity", label: __("Opacity Only") },
+					{ value: "background", label: __("Background Only") },
+					{ value: "colors", label: __("Colors Only") },
 				],
 			};
 		},
@@ -81,7 +82,7 @@ const transitionSectionProperties = [
 ];
 
 export default {
-	name: "Transition",
+	name: __("Transition"),
 	properties: transitionSectionProperties,
 	collapsed: true,
 	condition: () => !blockController.multipleBlocksSelected(),

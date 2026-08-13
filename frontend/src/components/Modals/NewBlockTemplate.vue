@@ -1,10 +1,10 @@
 <template>
 	<Dialog
-		title="Save as Block Template"
+		:title="__('Save as Block Template')"
 		size="sm"
 		:actions="[
 			{
-				label: 'Save',
+				label: __('Save'),
 				variant: 'solid',
 				onClick: (close: () => void) => {
 					blockTemplateStore.saveBlockTemplate(
@@ -23,20 +23,20 @@
 				<BuilderInput
 					type="text"
 					v-model="blockTemplateProperties.templateName"
-					label="Template Name"
+					:label="__('Template Name')"
 					required
 					:hideClearButton="true" />
 				<BuilderInput
 					type="select"
 					v-model="blockTemplateProperties.category"
-					label="Category"
+					:label="__('Category')"
 					:options="blockTemplateStore.blockTemplateCategoryOptions"
 					:hideClearButton="true" />
 				<div class="relative">
 					<BuilderInput
 						type="text"
 						v-model="blockTemplateProperties.previewImage"
-						label="Preview Image"
+						:label="__('Preview Image')"
 						:hideClearButton="true" />
 					<FileUploader
 						file-types="image/*"
@@ -47,7 +47,7 @@
 						">
 						<template v-slot="{ openFileSelector }">
 							<div class="absolute bottom-0 right-0 place-items-center">
-								<Button size="sm" @click="openFileSelector" class="text-sm">Upload</Button>
+								<Button size="sm" @click="openFileSelector" class="text-sm">{{ __("Upload") }}</Button>
 							</div>
 						</template>
 					</FileUploader>
@@ -57,6 +57,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import Dialog from "@/components/Controls/Dialog.vue";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";

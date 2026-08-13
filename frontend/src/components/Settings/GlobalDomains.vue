@@ -1,8 +1,12 @@
 <template>
 	<div class="flex flex-col gap-3">
 		<!-- Domain list -->
-		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">Loading domains…</div>
-		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">No custom domains added yet.</div>
+		<div v-if="loading && !domains.length" class="text-p-sm text-ink-gray-5">
+			{{ __("Loading domains…") }}
+		</div>
+		<div v-else-if="!domains.length" class="text-p-sm text-ink-gray-5">
+			{{ __("No custom domains added yet.") }}
+		</div>
 		<div v-else class="mb-2 flex flex-col gap-2">
 			<div
 				v-for="d in sortedDomains"
@@ -12,8 +16,10 @@
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<p class="text-p-sm-medium truncate leading-6 text-ink-gray-9">{{ d.domain }}</p>
 						<Badge v-if="d.dns_type" size="sm" theme="gray" :label="d.dns_type" />
-						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">Redirects to primary</p>
-						<Badge v-if="d.primary" size="sm" theme="green" label="Primary" />
+						<p v-if="d.redirect_to_primary" class="text-p-xs text-ink-gray-5">
+							{{ __("Redirects to primary") }}
+						</p>
+						<Badge v-if="d.primary" size="sm" theme="green" :label="__('Primary')" />
 						<Badge
 							v-else-if="d.status !== 'Active'"
 							:label="d.status"
@@ -33,7 +39,7 @@
 		<!-- Add domain form -->
 		<form @submit.prevent="handleAdd" class="flex flex-col gap-3">
 			<FormControl
-				label="Enter your domain"
+				:label="__('Enter your domain')"
 				placeholder="e.g. yourdomain.com"
 				v-model="newDomain"
 				autocomplete="off" />
@@ -71,7 +77,7 @@
 			<ErrorMessage v-if="addError" :message="addError" />
 			<div class="flex gap-2">
 				<Button type="submit" :disabled="submitting || !newDomain" variant="subtle" :loading="submitting">
-					Add Domain
+					{{ __("Add Domain") }}
 				</Button>
 			</div>
 		</form>
@@ -79,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDomains } from "@/data/domains";
 import { useIntervalFn } from "@vueuse/core";
 import { Badge, Dropdown, ErrorMessage, FormControl, toast } from "frappe-ui";
@@ -160,8 +167,8 @@ const dnsRecords = computed(() => {
 		copyValue: serverIP.value ?? "",
 		recommended: !isSubdomain.value,
 		hint: isSubdomain.value
-			? "Use this if your DNS provider doesn't support CNAME for subdomains."
-			: "Points your root domain directly to the server. Use @ as the host name.",
+			? __("Use this if your DNS provider doesn't support CNAME for subdomains.")
+			: __("Points your root domain directly to the server. Use @ as the host name."),
 	});
 	return records;
 });
@@ -199,9 +206,9 @@ async function copyToClipboard(text: string) {
 	if (!text) return;
 	try {
 		await navigator.clipboard.writeText(text);
-		toast.success("Copied to clipboard");
+		toast.success(__("Copied to clipboard"));
 	} catch {
-		toast.error("Failed to copy");
+		toast.error(__("Failed to copy"));
 	}
 }
 
@@ -227,19 +234,23 @@ async function handleAdd() {
 function getDomainActions(d: any) {
 	const actions: any[] = [];
 	if (d.status === "Active" && !d.primary)
-		actions.push({ label: "Set as Primary", icon: "lucide-star", onClick: () => setHostName(d.domain) });
+		actions.push({ label: __("Set as Primary"), icon: "lucide-star", onClick: () => setHostName(d.domain) });
 	if (!d.primary && !d.redirect_to_primary && d.status === "Active")
 		actions.push({
-			label: "Redirect to Primary",
+			label: __("Redirect to Primary"),
 			icon: "lucide-corner-right-up",
 			onClick: () => setRedirect(d.domain),
 		});
 	if (d.redirect_to_primary)
-		actions.push({ label: "Disable Redirect", icon: "lucide-slash", onClick: () => unsetRedirect(d.domain) });
+		actions.push({
+			label: __("Disable Redirect"),
+			icon: "lucide-slash",
+			onClick: () => unsetRedirect(d.domain),
+		});
 	if (d.status === "Broken")
-		actions.push({ label: "Retry", icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
+		actions.push({ label: __("Retry"), icon: "lucide-refresh-cw", onClick: () => retryDomain(d.domain) });
 	if (!d.primary)
-		actions.push({ label: "Remove Domain", icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
+		actions.push({ label: __("Remove Domain"), icon: "lucide-trash", onClick: () => removeDomain(d.domain) });
 	return actions;
 }
 </script>

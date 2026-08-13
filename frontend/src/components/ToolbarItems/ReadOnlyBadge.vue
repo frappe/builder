@@ -1,18 +1,19 @@
 <template>
 	<div class="flex items-center gap-2">
 		<Badge variant="subtle" theme="orange">
-			{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+			{{ pageStore.activePage?.is_template ? __("Template") : __("Read Only") }}
 		</Badge>
 		<Button
 			v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"
 			size="sm"
 			variant="subtle"
 			@click="duplicateToEdit">
-			Duplicate to edit
+			{{ __("Duplicate to edit") }}
 		</Button>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import router from "@/router";
 import usePageStore from "@/stores/pageStore";
 import { Badge, createResource, toast } from "frappe-ui";
@@ -30,9 +31,9 @@ const duplicateToEdit = async () => {
 				pageStore.setPage(newPageName);
 			}),
 		{
-			loading: "Creating an editable copy...",
-			success: () => "Page created",
-			error: () => "Could not create page from template",
+			loading: __("Creating an editable copy..."),
+			success: () => __("Page created"),
+			error: () => __("Could not create page from template"),
 		},
 	);
 };

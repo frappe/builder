@@ -5,7 +5,7 @@
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
 				class="flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
 				<span class="lucide-arrow-left mr-4 h-4 w-4 cursor-pointer" aria-hidden="true" />
-				Back to builder
+				{{ __("Back to builder") }}
 			</router-link>
 			<div class="flex gap-1">
 				<div
@@ -26,7 +26,7 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-4">
-				<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+				<Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="0.6">
 					<Button
 						variant="ghost"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"
@@ -74,6 +74,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import PanelResizer from "@/components/PanelResizer.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
@@ -152,8 +153,8 @@ const transitionTheme = (toggle: () => void) => {
 
 useShortcut({
 	key: "Escape",
-	description: "Back to builder",
-	group: "Navigation",
+	description: __("Back to builder"),
+	group: __("Navigation"),
 	handler: () => {
 		if (router.currentRoute.value.name === "preview") {
 			history.back();

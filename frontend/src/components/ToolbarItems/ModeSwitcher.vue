@@ -19,8 +19,8 @@ const builderStore = useBuilderStore();
 // one item, not four: they are a tight visual group
 const modes = [
 	{ mode: "select", icon: "lucide-mouse-pointer", description: __("Select (v)") },
-	{ mode: "container", icon: "lucide-square", description: "Container (c)" },
-	{ mode: "text", icon: "lucide-type", description: "Text (t)" },
-	{ mode: "image", icon: "lucide-image", description: "Image (i)" },
+	{ mode: "container", icon: "lucide-square", description: __("Container (c)") },
+	{ mode: "text", icon: "lucide-type", description: __("Text (t)") },
+	{ mode: "image", icon: "lucide-image", description: __("Image (i)") },
 ];
 </script>

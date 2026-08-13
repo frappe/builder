@@ -11,6 +11,7 @@ import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } fro
 import { useStorage } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, type Ref } from "vue";
+import { __ } from "@/translation";
 
 export const blockContextMenuOptions = createRegistry<ContextMenuOption>();
 
@@ -27,46 +28,46 @@ const readOnly = () => builderStore.readOnlyMode;
 const options: ContextMenuOption[] = [
 	{
 		name: "edit-with-ai",
-		label: "Edit with AI",
+		label: __("Edit with AI"),
 		action: ({ block }) => aiStore.editWithAI(block),
 		condition: ({ block }) => builderStore.isAIEnabled && !block.isRoot(),
 		disabled: readOnly,
 	},
 	{
 		name: "rewrite-ai",
-		label: "Rewrite (AI)",
+		label: __("Rewrite (AI)"),
 		action: ({ block }) => aiStore.runDirectAI(block, "rewrite_text", "Rewrite the content"),
 		condition: ({ block }) => builderStore.isAIEnabled && block.isText() && !block.isRoot(),
 		disabled: readOnly,
 	},
 	{
 		name: "replace-image-ai",
-		label: "Replace Image (AI)",
+		label: __("Replace Image (AI)"),
 		action: ({ block }) => aiStore.runDirectAI(block, "replace_image", "Replace image"),
 		condition: ({ block }) => builderStore.isAIEnabled && block.isImage() && !block.isRoot(),
 		disabled: readOnly,
 	},
 	{
 		name: "edit-html",
-		label: "Edit HTML",
+		label: __("Edit HTML"),
 		action: ({ block }) => canvasStore.editHTML(block),
 		condition: ({ block }) => block.isHTML(),
 	},
 	{
 		name: "copy",
-		label: "Copy",
+		label: __("Copy"),
 		action: () => triggerCopyEvent(),
 	},
 	{
 		name: "copy-style",
-		label: "Copy Style",
+		label: __("Copy Style"),
 		action: ({ block }) => {
 			copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 		},
 	},
 	{
 		name: "paste-style",
-		label: "Paste Style",
+		label: __("Paste Style"),
 		action: ({ block }) => block.updateStyles(copiedStyle.value?.style as BlockStyleObjects),
 		condition: ({ block }) =>
 			Boolean(copiedStyle.value.blockId && copiedStyle.value?.blockId !== block.blockId),
@@ -74,16 +75,16 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "duplicate",
-		label: "Duplicate",
+		label: __("Duplicate"),
 		action: ({ block }) => block.duplicateBlock(),
 		disabled: readOnly,
 	},
 	{
 		name: "convert-to-collection",
-		label: "Convert To Collection",
+		label: __("Convert To Collection"),
 		action: ({ block }) => {
 			block.isRepeaterBlock = true;
-			toast.warning("Please select a collection");
+			toast.warning(__("Please select a collection"));
 		},
 		condition: ({ block }) =>
 			block.isContainer() &&
@@ -95,7 +96,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "remove-collection",
-		label: "Remove Collection",
+		label: __("Remove Collection"),
 		action: ({ block }) => {
 			block.isRepeaterBlock = false;
 			block.dataKey = {};
@@ -105,7 +106,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "wrap-in-container",
-		label: "Wrap In Container",
+		label: __("Wrap In Container"),
 		action: ({ block }) => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = block.getParentBlock();
@@ -147,15 +148,13 @@ const options: ContextMenuOption[] = [
 			const parentBlock = block.getParentBlock();
 			if (!parentBlock) return false;
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
-			return selectedBlocks.every(
-				(selectedBlock: Block) => selectedBlock.getParentBlock() === parentBlock,
-			);
+			return selectedBlocks.every((selectedBlock: Block) => selectedBlock.getParentBlock() === parentBlock);
 		},
 		disabled: readOnly,
 	},
 	{
 		name: "repeat-block",
-		label: "Repeat Block",
+		label: __("Repeat Block"),
 		action: ({ block }) => {
 			const repeaterBlockObj = getBlockTemplate("repeater");
 			const parentBlock = block.getParentBlock();
@@ -164,14 +163,14 @@ const options: ContextMenuOption[] = [
 			repeaterBlock.addChild(getBlockCopy(block));
 			parentBlock.removeChild(block);
 			repeaterBlock.selectBlock();
-			toast.warning("Please select a collection");
+			toast.warning(__("Please select a collection"));
 		},
 		condition: ({ block }) => !block.isRoot() && !block.isRepeater() && !block.isChildOfComponentBlock(),
 		disabled: readOnly,
 	},
 	{
 		name: "reset-overrides",
-		label: "Reset Overrides",
+		label: __("Reset Overrides"),
 		action: ({ block }) => block.resetOverrides(canvasStore.activeCanvas?.activeBreakpoint || "desktop"),
 		condition: () => canvasStore.activeCanvas?.activeBreakpoint !== "desktop",
 		disabled: ({ block }) =>
@@ -180,10 +179,10 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "reset-changes",
-		label: "Reset Changes",
+		label: __("Reset Changes"),
 		action: ({ block }) => {
 			if (block.hasChildren()) {
-				confirm("Reset changes in child blocks as well?").then((confirmed) => {
+				confirm(__("Reset changes in child blocks as well?")).then((confirmed) => {
 					block.resetChanges(confirmed);
 				});
 			} else {
@@ -195,16 +194,16 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "sync-component",
-		label: "Sync Component",
+		label: __("Sync Component"),
 		action: ({ block }) => block.syncWithComponent(),
 		condition: ({ block }) => Boolean(block.extendedFromComponent),
 		disabled: readOnly,
 	},
 	{
 		name: "reset-component",
-		label: "Reset Component",
+		label: __("Reset Component"),
 		action: ({ block }) => {
-			confirm("Are you sure you want to reset?").then((confirmed) => {
+			confirm(__("Are you sure you want to reset?")).then((confirmed) => {
 				if (confirmed) {
 					block.resetWithComponent();
 				}
@@ -215,7 +214,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "update-component",
-		label: "Update to Latest Component",
+		label: __("Update to Latest Component"),
 		action: ({ block }) => componentStore.updatePinnedComponent(block),
 		condition: ({ block }) =>
 			componentStore.isPinOutdated(block.extendedFromComponent, block.componentVersion),
@@ -223,14 +222,14 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "edit-component",
-		label: "Edit Component",
+		label: __("Edit Component"),
 		action: ({ block }) => componentStore.editComponent(block),
 		condition: ({ block }) => block.isExtendedFromComponent(),
 		disabled: readOnly,
 	},
 	{
 		name: "save-block-template",
-		label: "Save as Block Template",
+		label: __("Save as Block Template"),
 		action: () => {
 			builderStore.showBlockTemplateDialog = true;
 		},
@@ -239,14 +238,14 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "save-component",
-		label: "Save As Component",
+		label: __("Save As Component"),
 		action: ({ block }) => promptCreateComponent(block),
 		condition: ({ block }) => !block.isExtendedFromComponent(),
 		disabled: readOnly,
 	},
 	{
 		name: "detach-component",
-		label: "Detach Component",
+		label: __("Detach Component"),
 		action: ({ block }) => {
 			const newBlock = detachBlockFromComponent(block, null);
 			if (newBlock) {
@@ -259,7 +258,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "rename",
-		label: "Rename",
+		label: __("Rename"),
 		action: ({ target }) => {
 			const layerLabel = target?.closest("[data-block-layer-id]")?.querySelector(".layer-label");
 			if (!layerLabel) return;
@@ -281,7 +280,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "delete",
-		label: "Delete",
+		label: __("Delete"),
 		action: () => {
 			const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks || [];
 			selectedBlocks.forEach((selectedBlock: Block) => {
