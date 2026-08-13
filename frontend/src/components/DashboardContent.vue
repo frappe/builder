@@ -5,7 +5,7 @@
 			<div>
 				<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
-						You don't have any pages yet. Click on the "+ New" button to create a new page.
+						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
 				</div>
 				<div v-else-if="!webPages.data?.length" class="col-span-full">

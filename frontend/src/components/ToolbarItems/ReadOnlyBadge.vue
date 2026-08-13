@@ -1,7 +1,7 @@
 <template>
 	<div class="flex items-center gap-2">
 		<Badge variant="subtle" theme="orange">
-			{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
+			{{ pageStore.activePage?.is_template ? __("Template") : __("Read Only") }}
 		</Badge>
 		<Button
 			v-if="pageStore.activePage?.is_template && pageStore.activePage?.template_group"
@@ -31,9 +31,9 @@ const duplicateToEdit = async () => {
 				pageStore.setPage(newPageName);
 			}),
 		{
-			loading: "Creating an editable copy...",
-			success: () => "Page created",
-			error: () => "Could not create page from template",
+			loading: __("Creating an editable copy..."),
+			success: () => __("Page created"),
+			error: () => __("Could not create page from template"),
 		},
 	);
 };

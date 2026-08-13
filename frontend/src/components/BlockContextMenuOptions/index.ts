@@ -182,7 +182,7 @@ const options: ContextMenuOption[] = [
 		label: __("Reset Changes"),
 		action: ({ block }) => {
 			if (block.hasChildren()) {
-				confirm("Reset changes in child blocks as well?").then((confirmed) => {
+				confirm(__("Reset changes in child blocks as well?")).then((confirmed) => {
 					block.resetChanges(confirmed);
 				});
 			} else {
@@ -203,7 +203,7 @@ const options: ContextMenuOption[] = [
 		name: "reset-component",
 		label: __("Reset Component"),
 		action: ({ block }) => {
-			confirm("Are you sure you want to reset?").then((confirmed) => {
+			confirm(__("Are you sure you want to reset?")).then((confirmed) => {
 				if (confirmed) {
 					block.resetWithComponent();
 				}

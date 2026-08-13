@@ -35,7 +35,9 @@
 						</div>
 						<div class="flex items-baseline gap-2 text-ink-gray-6">
 							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ modifiedBy.fullname }}</p>
+								<p class="mt-1 block text-sm">
+									{{ __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname]) }}
+								</p>
 							</UseTimeAgo>
 						</div>
 					</span>
@@ -51,7 +53,7 @@
 					:label="owner.fullname"
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
-					:title="`Created by ${owner.fullname}`" />
+					:title="__('Created by {0}', [owner.fullname])" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
 					<template v-slot="{ open }">
 						<span

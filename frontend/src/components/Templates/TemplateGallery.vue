@@ -26,7 +26,7 @@
 							:loading="importingAll"
 							icon-left="lucide-copy-plus"
 							@click="importAll">
-							Use all {{ activeGroup?.pages.length }} pages
+							{{ __("Use all {0} pages", [activeGroup?.pages.length ?? 0]) }}
 						</Button>
 					</div>
 					<p v-if="activeGroup?.description" class="max-w-2xl text-sm leading-relaxed text-ink-gray-5">
@@ -62,7 +62,7 @@
 							v-for="category in ['', ...categories]"
 							:key="category"
 							:variant="selectedCategory === category ? 'subtle' : 'outline'"
-							:label="category || 'All'"
+							:label="category || __('All')"
 							:class="{ 'border border-transparent': selectedCategory === category }"
 							@click="selectedCategory = category" />
 					</div>
@@ -105,8 +105,8 @@ const props = withDefaults(
 		maxGroups?: number;
 	}>(),
 	{
-		heading: "New page",
-		subtitle: "Start from a blank page or pick a template.",
+		heading: __("New page"),
+		subtitle: __("Start from a blank page or pick a template."),
 		maxGroups: 0,
 	},
 );
@@ -205,9 +205,9 @@ const useTemplate = (page: TemplatePageSummary) => {
 			pageStore.setPage(newPageName);
 		});
 	toast.promise(promise, {
-		loading: "Creating page from template...",
-		success: () => "Page created",
-		error: () => "Could not create page from template",
+		loading: __("Creating page from template..."),
+		success: () => __("Page created"),
+		error: () => __("Could not create page from template"),
 	});
 	promise.finally(() => {
 		creatingPage.value = false;

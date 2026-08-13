@@ -226,7 +226,7 @@ export function useBuilderEvents(
 			key: "s",
 			ctrl: true,
 			description: __("Save page / component"),
-			group: "General",
+			group: __("General"),
 			allowInInput: true,
 			handler: (e) => {
 				if (canvasStore.editingMode === "fragment") {
@@ -238,7 +238,7 @@ export function useBuilderEvents(
 		{
 			key: "Backspace",
 			description: __("Delete selected blocks"),
-			group: "Edit",
+			group: __("Edit"),
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -252,7 +252,7 @@ export function useBuilderEvents(
 		{
 			key: "Delete",
 			description: __("Delete selected blocks"),
-			group: "Edit",
+			group: __("Edit"),
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -266,7 +266,7 @@ export function useBuilderEvents(
 		{
 			key: "Escape",
 			description: __("Exit current mode"),
-			group: "General",
+			group: __("General"),
 			condition: () => canvasStore.editingMode !== "page",
 			handler: (e) => {
 				canvasStore.exitFragmentMode(e);
@@ -277,7 +277,7 @@ export function useBuilderEvents(
 			key: "0",
 			ctrl: true,
 			description: __("Reset canvas zoom"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setCanvasZoom?.(1, "center");
@@ -289,7 +289,7 @@ export function useBuilderEvents(
 			ctrl: true,
 			shift: true,
 			description: __("Fit canvas to screen"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setScaleAndTranslate();
@@ -299,7 +299,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowRight",
 			description: __("Pan canvas right"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("right");
@@ -310,7 +310,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowLeft",
 			description: __("Pan canvas left"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("left");
@@ -321,7 +321,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowUp",
 			description: __("Pan canvas up"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("up");
@@ -332,7 +332,7 @@ export function useBuilderEvents(
 		{
 			key: "ArrowDown",
 			description: __("Pan canvas down"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("down");
@@ -344,7 +344,7 @@ export function useBuilderEvents(
 			key: "=",
 			ctrl: true,
 			description: __("Zoom in"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomIn();
@@ -355,7 +355,7 @@ export function useBuilderEvents(
 			key: "-",
 			ctrl: true,
 			description: __("Zoom out"),
-			group: "Canvas",
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomOut();
@@ -365,7 +365,7 @@ export function useBuilderEvents(
 		{
 			key: "c",
 			description: __("Container mode"),
-			group: "Tools",
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "container";
@@ -374,7 +374,7 @@ export function useBuilderEvents(
 		{
 			key: "i",
 			description: __("Image mode"),
-			group: "Tools",
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "image";
@@ -383,7 +383,7 @@ export function useBuilderEvents(
 		{
 			key: "t",
 			description: __("Text mode"),
-			group: "Tools",
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "text";
@@ -392,7 +392,7 @@ export function useBuilderEvents(
 		{
 			key: "v",
 			description: __("Select mode"),
-			group: "Tools",
+			group: __("Tools"),
 			handler: () => {
 				builderStore.mode = "select";
 			},
@@ -400,7 +400,7 @@ export function useBuilderEvents(
 		{
 			key: "h",
 			description: __("Move / hand mode"),
-			group: "Tools",
+			group: __("Tools"),
 			handler: () => {
 				builderStore.mode = "move";
 			},
@@ -411,7 +411,7 @@ export function useBuilderEvents(
 			shift: true,
 			triggeredOn: "hold",
 			description: __("Highlight Blocks with Client Scripts"),
-			group: "View",
+			group: __("View"),
 			onHold: () => {
 				builderStore.highlightBlocksWithClientScripts = true;
 			},

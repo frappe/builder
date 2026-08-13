@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { __ } from "@/translation";
-import { commands, resolveText } from "@/components/Commands";
+import { commandGroupLabels, commands, resolveText } from "@/components/Commands";
 import { settingsItems } from "@/components/Settings";
 import { searchablePages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -42,7 +42,7 @@ useShortcut({
 	key: "k",
 	ctrl: true,
 	description: __("Open Command Palette"),
-	group: "General",
+	group: __("General"),
 	allowInInput: true,
 	handler: () => {
 		show.value = true;
@@ -330,7 +330,7 @@ const commandGroups = computed(() => {
 	const groupDefs = ["Navigate", "Page", "Layers", "View", "General"];
 	const grouped = groupDefs
 		.map((group) => ({
-			title: __(group),
+			title: commandGroupLabels[group] ?? __(group),
 			hideTitle: false,
 			component: CommandPaletteItem,
 			items: paletteCommands.value.filter((cmd) => cmd.group === group),

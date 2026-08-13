@@ -36,6 +36,16 @@ export type Command = RegistryItem & {
 
 export const commands = createRegistry<Command>();
 
+/** raw group keys are matched by the palette; these literals keep the headings extractable */
+export const commandGroupLabels: Record<string, string> = {
+	Navigate: __("Navigate"),
+	Page: __("Page"),
+	Layers: __("Layers"),
+	View: __("View"),
+	General: __("General"),
+	Edit: __("Edit"),
+};
+
 export const resolveText = (value: string | (() => string)) =>
 	typeof value === "function" ? value() : value;
 
@@ -52,7 +62,7 @@ export function commandShortcuts() {
 		.filter((command) => command.keys)
 		.map((command) => ({
 			...command.keys!,
-			group: __(command.group),
+			group: commandGroupLabels[command.group] ?? __(command.group),
 			condition: command.condition,
 			handler: command.action,
 		}));
@@ -159,7 +169,7 @@ commands.register({
 
 commands.register({
 	name: "toggle-left-panel",
-	title: () => `${builderStore.showLeftPanel ? "Hide" : "Show"} Left Panel`,
+	title: () => (builderStore.showLeftPanel ? __("Hide Left Panel") : __("Show Left Panel")),
 	icon: () => (builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open"),
 	description: __("View"),
 	group: "View",
@@ -170,7 +180,7 @@ commands.register({
 
 commands.register({
 	name: "toggle-right-panel",
-	title: () => `${builderStore.showRightPanel ? "Hide" : "Show"} Right Panel`,
+	title: () => (builderStore.showRightPanel ? __("Hide Right Panel") : __("Show Right Panel")),
 	icon: () => (builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open"),
 	description: __("View"),
 	group: "View",
@@ -180,7 +190,7 @@ commands.register({
 
 commands.register({
 	name: "toggle-theme",
-	title: () => `Switch to ${isDark.value ? "Light" : "Dark"} Mode`,
+	title: () => (isDark.value ? __("Switch to Light Mode") : __("Switch to Dark Mode")),
 	icon: () => (isDark.value ? "lucide-sun" : "lucide-moon"),
 	description: __("View"),
 	group: "View",

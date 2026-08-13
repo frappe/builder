@@ -71,14 +71,14 @@
 							<Button
 								variant="ghost"
 								icon-right="chevron-up"
-								:label="modelOptions.find((m) => m.value === selectedModel)?.label || 'Model'" />
+								:label="modelOptions.find((m) => m.value === selectedModel)?.label || __('Model')" />
 						</Dropdown>
 						<Popover v-if="mode === 'generate'" placement="top" :offset="10">
 							<template #target="{ togglePopover }">
 								<Button
 									variant="ghost"
 									icon-right="chevron-up"
-									:label="selectedPreset?.name || 'No Style'"
+									:label="selectedPreset?.name || __('No Style')"
 									:class="{
 										'!text-ink-gray-4': !selectedPreset,
 									}"
@@ -95,7 +95,7 @@
 												selectedPreset = null;
 												close();
 											">
-											Clear Selection
+											{{ __("Clear Selection") }}
 										</Button>
 									</div>
 									<div class="max-h-[350px] overflow-y-auto p-2">
@@ -118,7 +118,7 @@
 						@click="handleSubmit"
 						:disabled="!canGenerate"
 						:loading="generating"
-						:label="mode === 'modify' ? 'Modify' : 'Generate'"
+						:label="mode === 'modify' ? __('Modify') : __('Generate')"
 						icon-right="arrow-up" />
 				</div>
 			</div>
@@ -287,13 +287,13 @@ const canGenerate = computed(
 );
 
 const title = computed(() => {
-	if (props.mode === "generate") return "Generate with AI";
-	return "Modify with AI";
+	if (props.mode === "generate") return __("Generate with AI");
+	return __("Modify with AI");
 });
 
 const placeholder = computed(() => {
-	if (props.mode === "generate") return "Describe the page you want to create…";
-	return "Describe how you want to modify this section…";
+	if (props.mode === "generate") return __("Describe the page you want to create…");
+	return __("Describe how you want to modify this section…");
 });
 
 function buildPrompt(base: string) {

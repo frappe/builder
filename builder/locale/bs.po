@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-11 19:26+0553\n"
+"POT-Creation-Date: 2026-08-13 07:27+0553\n"
 "PO-Revision-Date: 2026-08-09 06:19+0000\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language: bs_BA\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: frontend/src/components/Settings/index.ts:138
+#: frontend/src/components/Settings/index.ts:144
 msgid "AI"
 msgstr ""
 
@@ -25,7 +25,7 @@ msgstr "AI API Ključ"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
-#: frontend/src/components/Settings/index.ts:139
+#: frontend/src/components/Settings/index.ts:145
 msgid "AI Settings"
 msgstr "AI Postavke"
 
@@ -100,11 +100,16 @@ msgstr "Napredno"
 msgid "Agency / Freelancer"
 msgstr ""
 
+#: frontend/src/utils/helpers.ts:50
+msgid "Alert"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:148
 msgid "Align"
 msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:33
+#: frontend/src/components/Templates/TemplateGallery.vue:65
 msgid "All"
 msgstr ""
 
@@ -154,8 +159,8 @@ msgstr ""
 msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
 msgstr "Datoteka ikone s ekstenzijom .ico. Treba biti 16 x 16 px.<br>Možete je izraditi pomoću <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
 
-#: frontend/src/components/Settings/index.ts:62
-#: frontend/src/components/Settings/index.ts:121
+#: frontend/src/components/Settings/index.ts:68
+#: frontend/src/components/Settings/index.ts:127
 msgid "Analytics"
 msgstr ""
 
@@ -164,8 +169,8 @@ msgstr ""
 msgid "App"
 msgstr "Aplikacija"
 
-#: builder/export_import_standard_page.py:28
-msgid "App {0} not found"
+#: builder/export_import_standard_page.py:29
+msgid "App {0} is not installed"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
@@ -185,6 +190,14 @@ msgstr ""
 msgid "Apps"
 msgstr ""
 
+#: frontend/src/stores/pageStore.ts:168
+msgid "Are you sure you want to delete page: {0}?"
+msgstr ""
+
+#: frontend/src/components/DashboardSidebar.vue:236
+msgid "Are you sure you want to delete this folder? All the pages under this folder will be visible under \"All Pages\""
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:272
 msgid "Are you sure you want to delete this redirect?"
 msgstr ""
@@ -197,7 +210,11 @@ msgstr ""
 msgid "Are you sure you want to replace {0} with {1}?"
 msgstr "Jeste li sigurni da želite zamijeniti {0} sa {1}?"
 
-#: frontend/src/stores/pageStore.ts:243
+#: frontend/src/components/BlockContextMenuOptions/index.ts:206
+msgid "Are you sure you want to reset?"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:245
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr "Jeste li sigurni da želite poništiti objavu \"{0}\"? Više neće biti dostupno na web stranici."
 
@@ -294,6 +311,10 @@ msgstr "Blok"
 
 #: frontend/src/components/PageScript.vue:107
 msgid "Block CSS"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:307
+msgid "Block Client Script"
 msgstr ""
 
 #: frontend/src/components/PageScript.vue:95
@@ -411,6 +432,7 @@ msgstr "Skripta"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
+#: frontend/src/components/BuilderToolbar.vue:39
 msgid "Builder Settings"
 msgstr "Postavke"
 
@@ -434,6 +456,7 @@ msgstr ""
 
 #: frontend/src/components/PageClientScriptManager.vue:78
 #: frontend/src/components/PageScript.vue:194
+#: frontend/src/pages/PageBuilder.vue:311
 msgid "CSS"
 msgstr ""
 
@@ -466,6 +489,17 @@ msgstr ""
 #: frontend/src/components/Settings/PageMeta.vue:55
 msgid "Canonical URL"
 msgstr "Kanonski URL"
+
+#: frontend/src/utils/useBuilderEvents.ts:280
+#: frontend/src/utils/useBuilderEvents.ts:292
+#: frontend/src/utils/useBuilderEvents.ts:302
+#: frontend/src/utils/useBuilderEvents.ts:313
+#: frontend/src/utils/useBuilderEvents.ts:324
+#: frontend/src/utils/useBuilderEvents.ts:335
+#: frontend/src/utils/useBuilderEvents.ts:347
+#: frontend/src/utils/useBuilderEvents.ts:358
+msgid "Canvas"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
@@ -505,6 +539,10 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:98
+msgid "Clear Selection"
 msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
@@ -547,8 +585,8 @@ msgid "Close (Esc)"
 msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:54
-#: frontend/src/components/Settings/index.ts:46
-#: frontend/src/components/Settings/index.ts:88
+#: frontend/src/components/Settings/index.ts:52
+#: frontend/src/components/Settings/index.ts:94
 msgid "Code"
 msgstr ""
 
@@ -560,7 +598,7 @@ msgstr ""
 msgid "Collapse"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:149
+#: frontend/src/components/Commands/index.ts:159
 msgid "Collapse All Layers"
 msgstr ""
 
@@ -668,7 +706,15 @@ msgstr ""
 msgid "Condition"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:41
+#: frontend/src/components/DashboardSidebar.vue:98
+msgid "Configure global settings for this builder project."
+msgstr ""
+
+#: frontend/src/components/BuilderToolbar.vue:41
+msgid "Configure page and global settings for this project."
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
 msgid "Confirm"
 msgstr ""
 
@@ -706,7 +752,7 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:250
+#: frontend/src/components/Commands/index.ts:260
 msgid "Copy Block Styles"
 msgstr ""
 
@@ -718,12 +764,17 @@ msgstr ""
 msgid "Copy Style"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:254
+#: frontend/src/components/Commands/index.ts:264
 msgid "Copy block styles"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:210
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
+msgid "Could not create page from template"
 msgstr ""
 
 #: builder/api.py:440
@@ -766,8 +817,24 @@ msgstr ""
 msgid "Create a new page"
 msgstr ""
 
+#: frontend/src/components/PageListItem.vue:56
+msgid "Created by {0}"
+msgstr ""
+
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
+msgid "Creating an editable copy..."
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:208
+msgid "Creating page from template..."
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:247
 msgid "Crosshair"
+msgstr ""
+
+#: frontend/src/components/Settings/index.ts:28
+msgid "Current Page"
 msgstr ""
 
 #: frontend/src/components/VersionHistory.vue:50
@@ -782,13 +849,13 @@ msgstr ""
 msgid "Cursor"
 msgstr ""
 
-#: frontend/src/components/Controls/FontInput.vue:118
+#: frontend/src/components/Controls/FontInput.vue:130
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
 #: frontend/src/components/ShadowHandler.vue:186
 msgid "Custom"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:113
+#: frontend/src/components/Settings/index.ts:119
 msgid "Custom Domains"
 msgstr ""
 
@@ -839,7 +906,7 @@ msgid "Data script saved"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:243
-#: frontend/src/components/Controls/FontInput.vue:122
+#: frontend/src/components/Controls/FontInput.vue:134
 msgid "Default"
 msgstr ""
 
@@ -879,8 +946,8 @@ msgstr ""
 msgid "Delete Folder"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:329
-#: frontend/src/components/Commands/index.ts:334
+#: frontend/src/components/Commands/index.ts:339
+#: frontend/src/components/Commands/index.ts:344
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
 msgstr ""
@@ -888,6 +955,18 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
 msgid "Delete selected blocks"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:172
+msgid "Deleting page"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:296
+msgid "Describe how you want to modify this section…"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:295
+msgid "Describe the page you want to create…"
 msgstr ""
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
@@ -905,7 +984,7 @@ msgstr ""
 msgid "Design Tokens"
 msgstr ""
 
-#: frontend/src/components/Controls/FontInput.vue:115
+#: frontend/src/components/Controls/FontInput.vue:127
 msgid "Design tokens"
 msgstr ""
 
@@ -917,7 +996,7 @@ msgstr ""
 msgid "Detach Component"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:130
+#: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Developer"
 msgstr ""
@@ -928,7 +1007,7 @@ msgstr ""
 msgid "Developer Options"
 msgstr "Opcije Programera"
 
-#: frontend/src/components/Settings/index.ts:131
+#: frontend/src/components/Settings/index.ts:137
 msgid "Developer Settings"
 msgstr ""
 
@@ -977,6 +1056,10 @@ msgstr ""
 msgid "Do you want to copy the entire page including settings and scripts?"
 msgstr ""
 
+#: frontend/src/utils/helpers.ts:495
+msgid "Do you want to upload the font \"{0}\"?"
+msgstr ""
+
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
 msgstr ""
@@ -985,7 +1068,7 @@ msgstr ""
 msgid "Domain verification failed"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:112
+#: frontend/src/components/Settings/index.ts:118
 msgid "Domains"
 msgstr ""
 
@@ -1024,21 +1107,25 @@ msgstr ""
 msgid "Duplicate"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:269
+#: frontend/src/components/Commands/index.ts:279
 msgid "Duplicate Block"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:132
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:273
+#: frontend/src/components/Commands/index.ts:283
 msgid "Duplicate block"
 msgstr ""
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:155
+msgid "Duplicating page"
 msgstr ""
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
@@ -1058,8 +1145,22 @@ msgstr ""
 msgid "Ease Out"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:283
+#: frontend/src/components/Commands/index.ts:46
+#: frontend/src/utils/useBuilderEvents.ts:241
+#: frontend/src/utils/useBuilderEvents.ts:255
+msgid "Edit"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:308
+msgid "Edit Block Client Script"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:293
 msgid "Edit Block with AI"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:312
+msgid "Edit CSS"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:225
@@ -1067,10 +1168,11 @@ msgid "Edit Component"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:52
+#: frontend/src/pages/PageBuilder.vue:305
 msgid "Edit HTML"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:287
+#: frontend/src/components/Commands/index.ts:297
 msgid "Edit block with AI"
 msgstr ""
 
@@ -1080,6 +1182,10 @@ msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:31
 msgid "Edit with AI"
+msgstr ""
+
+#: frontend/src/components/PageCard.vue:23
+msgid "Edited {0}"
 msgstr ""
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:19
@@ -1194,7 +1300,7 @@ msgstr ""
 msgid "Expand"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:136
+#: frontend/src/components/Commands/index.ts:146
 msgid "Expand All Layers"
 msgstr ""
 
@@ -1238,6 +1344,14 @@ msgstr ""
 
 #: frontend/src/components/PageClientScriptManager.vue:388
 msgid "Failed to update script order"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:376
+msgid "Failed to upload"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:534
+msgid "Failed to upload font"
 msgstr ""
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:12
@@ -1316,11 +1430,11 @@ msgstr ""
 msgid "Fixed"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:238
+#: frontend/src/components/Commands/index.ts:248
 msgid "Focus Property Search"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:242
+#: frontend/src/components/Commands/index.ts:252
 msgid "Focus property search"
 msgstr ""
 
@@ -1343,6 +1457,14 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
 msgstr "Font"
+
+#: frontend/src/utils/helpers.ts:488
+msgid "Font \"{0}\" already exists in the project"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:533
+msgid "Font \"{0}\" uploaded successfully"
+msgstr ""
 
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
@@ -1385,6 +1507,10 @@ msgstr ""
 msgid "Frappe Builder"
 msgstr "Frappe Builder"
 
+#: frontend/src/components/BuilderToolbar.vue:32
+msgid "Frappe Builder - Get Started"
+msgstr ""
+
 #: frontend/src/components/BlockPositionHandler.vue:12
 msgid "Free"
 msgstr ""
@@ -1397,13 +1523,26 @@ msgstr ""
 msgid "Gap"
 msgstr ""
 
+#: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
-#: frontend/src/components/Commands/index.ts:194
-#: frontend/src/components/Settings/index.ts:38
-#: frontend/src/components/Settings/index.ts:39
-#: frontend/src/components/Settings/index.ts:72
-#: frontend/src/components/Settings/index.ts:73
+#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/components/Commands/index.ts:204
+#: frontend/src/components/Settings/index.ts:44
+#: frontend/src/components/Settings/index.ts:45
+#: frontend/src/components/Settings/index.ts:78
+#: frontend/src/components/Settings/index.ts:79
+#: frontend/src/utils/useBuilderEvents.ts:229
+#: frontend/src/utils/useBuilderEvents.ts:269
 msgid "General"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:121
+msgid "Generate"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:290
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:5
+msgid "Generate with AI"
 msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:144
@@ -1414,7 +1553,12 @@ msgstr ""
 msgid "Get API key from"
 msgstr ""
 
+#: frontend/src/components/BuilderToolbar.vue:27
+msgid "Get Started"
+msgstr ""
+
 #: frontend/src/components/BuilderCommandPalette.vue:264
+#: frontend/src/components/Settings/index.ts:29
 msgid "Global"
 msgstr ""
 
@@ -1422,7 +1566,7 @@ msgstr ""
 msgid "Global Builder Settings"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:89
+#: frontend/src/components/Settings/index.ts:95
 msgid "Global Code"
 msgstr ""
 
@@ -1440,7 +1584,7 @@ msgstr "Globalni skript koji će se učitati sa svakom stranicom napravljenom po
 msgid "Global style that will be loaded with every page built with Frappe Builder"
 msgstr "Globalni stil koji će se učitati sa svakom stranicom napravljenom pomoću Frappe Buildera"
 
-#: frontend/src/components/Commands/index.ts:88
+#: frontend/src/components/Commands/index.ts:98
 msgid "Go to Dashboard"
 msgstr ""
 
@@ -1463,6 +1607,7 @@ msgid "Grow"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
+#: frontend/src/pages/PageBuilder.vue:304
 msgid "HTML"
 msgstr ""
 
@@ -1500,6 +1645,14 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
+#: frontend/src/components/Commands/index.ts:172
+msgid "Hide Left Panel"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:183
+msgid "Hide Right Panel"
+msgstr ""
+
 #: frontend/src/utils/useBuilderEvents.ts:413
 msgid "Highlight Blocks with Client Scripts"
 msgstr ""
@@ -1508,7 +1661,7 @@ msgstr ""
 msgid "Hold for move mode"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:203
+#: frontend/src/components/Settings/PageGeneral.vue:204
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
 msgstr ""
@@ -1665,7 +1818,7 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:192
+#: frontend/src/components/Commands/index.ts:202
 msgid "Keyboard Shortcuts"
 msgstr ""
 
@@ -1714,12 +1867,17 @@ msgstr ""
 msgid "Last Modified"
 msgstr ""
 
+#: frontend/src/components/PageListItem.vue:39
+msgid "Last updated {0} by {1}"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
 msgid "Layer Icon"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:138
-#: frontend/src/components/Commands/index.ts:151
+#: frontend/src/components/Commands/index.ts:43
+#: frontend/src/components/Commands/index.ts:148
+#: frontend/src/components/Commands/index.ts:161
 #: frontend/src/components/LeftPanelTabs/index.ts:40
 msgid "Layers"
 msgstr ""
@@ -1847,8 +2005,8 @@ msgstr ""
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/index.ts:54
-#: frontend/src/components/Settings/index.ts:55
+#: frontend/src/components/Settings/index.ts:60
+#: frontend/src/components/Settings/index.ts:61
 msgid "Meta"
 msgstr "Meta"
 
@@ -1882,8 +2040,20 @@ msgstr ""
 msgid "Minimal"
 msgstr ""
 
+#: frontend/src/components/AIPageGeneratorModal.vue:74
+msgid "Model"
+msgstr ""
+
 #: frontend/src/components/WebPagePresetPicker.vue:457
 msgid "Modern"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:121
+msgid "Modify"
+msgstr ""
+
+#: frontend/src/components/AIPageGeneratorModal.vue:291
+msgid "Modify with AI"
 msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:144
@@ -1924,6 +2094,11 @@ msgstr ""
 msgid "Muted"
 msgstr ""
 
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
+msgid "My Page"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
 #: frontend/src/components/Modals/TokenManager.vue:48
 msgid "Name"
@@ -1934,12 +2109,17 @@ msgid "Name this version (optional)"
 msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
-#: frontend/src/components/Commands/index.ts:90
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:100
 msgid "Navigate"
 msgstr ""
 
 #: frontend/src/pages/PagePreview.vue:157
 msgid "Navigation"
+msgstr ""
+
+#: frontend/src/components/DashboardToolbar.vue:10
+msgid "New"
 msgstr ""
 
 #: frontend/src/utils/dialogs.ts:36
@@ -1961,6 +2141,10 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:24
 msgid "New folder"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:108
+msgid "New page"
 msgstr ""
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:93
@@ -1989,6 +2173,10 @@ msgstr ""
 msgid "No Repeat"
 msgstr ""
 
+#: frontend/src/components/AIPageGeneratorModal.vue:81
+msgid "No Style"
+msgstr ""
+
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
 #: frontend/src/components/Controls/DynamicValueHandler.vue:38
 msgid "No Value Set"
@@ -2008,6 +2196,10 @@ msgstr ""
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
 msgid "No dynamic values found. Please add using"
+msgstr ""
+
+#: frontend/src/components/DashboardSidebar.vue:31
+msgid "No folders yet"
 msgstr ""
 
 #: frontend/src/components/DashboardContent.vue:12
@@ -2208,17 +2400,18 @@ msgid "Padding"
 msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:260
-#: frontend/src/components/Commands/index.ts:100
-#: frontend/src/components/Commands/index.ts:114
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:110
 #: frontend/src/components/Commands/index.ts:124
+#: frontend/src/components/Commands/index.ts:134
 msgid "Page"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:63
+#: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:47
+#: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
 msgstr ""
 
@@ -2263,11 +2456,28 @@ msgstr ""
 msgid "Page Tree"
 msgstr ""
 
+#: frontend/src/components/Templates/TemplateGallery.vue:209
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
+msgid "Page created"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:174
+msgid "Page deleted"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:177
+msgid "Page deletion failed"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:161
+msgid "Page duplicated"
+msgstr ""
+
 #: builder/www/404.html:25 frontend/src/stores/pageStore.ts:46
 msgid "Page not found"
 msgstr "Stranica nije pronađena"
 
-#: frontend/src/stores/pageStore.ts:256
+#: frontend/src/stores/pageStore.ts:258
 msgid "Page unpublished"
 msgstr ""
 
@@ -2342,7 +2552,7 @@ msgstr ""
 msgid "Please configure an OpenRouter API key in Settings → AI"
 msgstr "Konfiguriraj OpenRouter API ključ u Postavke → AI"
 
-#: builder/builder/doctype/builder_page/builder_page.py:87
+#: builder/builder/doctype/builder_page/builder_page.py:88
 msgid "Please log in to view this page."
 msgstr ""
 
@@ -2351,7 +2561,7 @@ msgstr ""
 msgid "Please select a collection"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:257
+#: frontend/src/components/Settings/PageGeneral.vue:258
 msgid "Please select an app for this standard page"
 msgstr ""
 
@@ -2405,9 +2615,11 @@ msgstr ""
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/Commands/index.ts:103
+#: frontend/src/components/Commands/index.ts:113
 #: frontend/src/components/Templates/TemplateGroupCard.vue:16
 #: frontend/src/components/Templates/TemplatePageCard.vue:16
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:21
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:22
 msgid "Preview"
 msgstr "Pregled"
 
@@ -2424,7 +2636,7 @@ msgstr ""
 msgid "Preview Image is mandatory"
 msgstr "Slika Pregleda je obavezna"
 
-#: frontend/src/components/Commands/index.ts:98
+#: frontend/src/components/Commands/index.ts:108
 msgid "Preview Page"
 msgstr ""
 
@@ -2473,14 +2685,14 @@ msgstr ""
 msgid "Publish Changes"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:112
+#: frontend/src/components/Commands/index.ts:122
 msgid "Publish Page"
 msgstr ""
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/DashboardHead.vue:35
-#: frontend/src/components/PageListItem.vue:46
+#: frontend/src/components/PageListItem.vue:48
 #: frontend/src/components/Settings/PageGeneral.vue:46
 msgid "Published"
 msgstr "Objavljeno"
@@ -2506,6 +2718,10 @@ msgstr ""
 msgid "Radius"
 msgstr ""
 
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
+msgid "Read Only"
+msgstr ""
+
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
 msgstr ""
@@ -2523,8 +2739,8 @@ msgstr ""
 msgid "Redirect to Primary"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:96
-#: frontend/src/components/Settings/index.ts:97
+#: frontend/src/components/Settings/index.ts:102
+#: frontend/src/components/Settings/index.ts:103
 msgid "Redirects"
 msgstr ""
 
@@ -2532,8 +2748,8 @@ msgstr ""
 msgid "Redirects to primary"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:316
-#: frontend/src/components/Commands/index.ts:320
+#: frontend/src/components/Commands/index.ts:326
+#: frontend/src/components/Commands/index.ts:330
 msgid "Redo"
 msgstr ""
 
@@ -2551,7 +2767,7 @@ msgstr "Referentni Naziv"
 msgid "Regex capture"
 msgstr ""
 
-#: frontend/src/utils/fontManager.ts:137
+#: frontend/src/utils/fontManager.ts:242
 msgid "Regular"
 msgstr ""
 
@@ -2666,6 +2882,10 @@ msgstr ""
 msgid "Reset canvas zoom"
 msgstr ""
 
+#: frontend/src/components/BlockContextMenuOptions/index.ts:185
+msgid "Reset changes in child blocks as well?"
+msgstr ""
+
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
 msgid "Restore this version as your draft"
@@ -2702,11 +2922,11 @@ msgstr ""
 msgid "Right"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:104
+#: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:105
+#: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
 msgstr ""
 
@@ -2769,7 +2989,7 @@ msgstr ""
 #: frontend/src/components/Modals/NewBlockTemplate.vue:7
 #: frontend/src/components/PropsPopoverContent.vue:46
 #: frontend/src/components/VersionHistory.vue:27
-#: frontend/src/utils/dialogs.ts:38
+#: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
 msgid "Save"
 msgstr ""
 
@@ -2794,7 +3014,7 @@ msgstr ""
 msgid "Save page / component"
 msgstr ""
 
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:15
 msgid "Saving template"
 msgstr ""
 
@@ -2838,7 +3058,7 @@ msgstr "Skriptiranje"
 msgid "Scroll"
 msgstr ""
 
-#: frontend/src/components/Controls/Autocomplete.vue:168
+#: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
 msgid "Search"
 msgstr ""
@@ -2851,7 +3071,7 @@ msgstr ""
 msgid "Search Block"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:228
+#: frontend/src/components/Commands/index.ts:238
 msgid "Search Blocks"
 msgstr ""
 
@@ -2864,7 +3084,7 @@ msgstr ""
 msgid "Search Template"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:232
+#: frontend/src/components/Commands/index.ts:242
 msgid "Search blocks"
 msgstr ""
 
@@ -2924,7 +3144,7 @@ msgstr "Odaberi (v)"
 msgid "Select All Matches (Alt+Enter)"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:229
+#: frontend/src/components/Settings/PageGeneral.vue:230
 msgid "Select App"
 msgstr ""
 
@@ -3023,6 +3243,7 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
 msgid "Settings"
 msgstr ""
 
@@ -3047,7 +3268,15 @@ msgstr ""
 msgid "Show Children"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:197
+#: frontend/src/components/Commands/index.ts:172
+msgid "Show Left Panel"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:183
+msgid "Show Right Panel"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:207
 msgid "Show keyboard shortcuts"
 msgstr ""
 
@@ -3055,7 +3284,7 @@ msgstr ""
 msgid "Shrink"
 msgstr ""
 
-#: frontend/src/components/Settings/index.ts:122
+#: frontend/src/components/Settings/index.ts:128
 msgid "Site Analytics"
 msgstr ""
 
@@ -3093,7 +3322,7 @@ msgstr ""
 msgid "Snapshot Type"
 msgstr "Tip Snimka"
 
-#: builder/builder/doctype/builder_page/builder_page.py:322
+#: builder/builder/doctype/builder_page/builder_page.py:392
 msgid "Snapshot does not belong to this page"
 msgstr "Snimak ne pripada ovoj stranici"
 
@@ -3171,6 +3400,10 @@ msgstr ""
 msgid "Start from a blank page or pick a page from a template."
 msgstr ""
 
+#: frontend/src/components/Templates/TemplateGallery.vue:109
+msgid "Start from a blank page or pick a template."
+msgstr ""
+
 #: frontend/src/components/Templates/TemplateGallery.vue:70
 msgid "Start from scratch"
 msgstr ""
@@ -3217,6 +3450,14 @@ msgstr "Javni URL Stila"
 
 #: frontend/src/components/AIPageGeneratorModal.vue:90
 msgid "Styles"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:193
+msgid "Switch to Dark Mode"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:193
+msgid "Switch to Light Mode"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:197
@@ -3266,6 +3507,10 @@ msgstr "Ciljna Komponenta"
 msgid "Technical"
 msgstr ""
 
+#: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
+msgid "Template"
+msgstr ""
+
 #. Label of the template_group (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Template Group"
@@ -3281,11 +3526,11 @@ msgstr "Naziv Predloška"
 msgid "Template group not found."
 msgstr "Grupa predložaka nije pronađena."
 
-#: builder/builder/doctype/builder_page/builder_page.py:248
+#: builder/builder/doctype/builder_page/builder_page.py:301
 msgid "Template pages can only be deleted in developer mode."
 msgstr "Stranice predložaka mogu se izbrisati samo u načinu rada za razvojne programere."
 
-#: builder/builder/doctype/builder_page/builder_page.py:196
+#: builder/builder/doctype/builder_page/builder_page.py:197
 msgid "Template pages can only be modified in developer mode."
 msgstr "Stranice predložaka mogu se mijenjati samo u načinu rada za razvojne programere."
 
@@ -3328,7 +3573,7 @@ msgstr "Komponenta kojom pokušavate zamijeniti ne postoji"
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
 msgstr "Preferirana URL verzija ove stranice za pretraživače. Ako nije postavljena, koristit će se trenutni URL stranice."
 
-#: frontend/src/stores/pageStore.ts:346
+#: frontend/src/stores/pageStore.ts:348
 msgid "There was an error while fetching page data"
 msgstr ""
 
@@ -3340,7 +3585,12 @@ msgstr ""
 msgid "This is a standard variable. It cannot be modified or deleted."
 msgstr ""
 
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:9
+msgid "This is the homepage for your site"
+msgstr ""
+
 #: frontend/src/components/RouteTreeNode.vue:47
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
 msgid "This page has limited access"
 msgstr ""
 
@@ -3366,6 +3616,14 @@ msgstr "Ovo će biti dodano na kraj &lt;body&gt;"
 msgid "This will be appended at the end of the &lt;head&gt;"
 msgstr "Ovo će biti dodano na kraj &lt;head&gt;"
 
+#: frontend/src/components/VersionHistory.vue:243
+msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:202
+msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
+msgstr ""
+
 #: frontend/src/composables/useAnalytics.ts:118
 msgid "Timeline"
 msgstr ""
@@ -3384,7 +3642,7 @@ msgstr "Naziv"
 msgid "Today"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:218
+#: frontend/src/components/Commands/index.ts:228
 msgid "Toggle Canvas Dark Mode"
 msgstr ""
 
@@ -3396,7 +3654,7 @@ msgstr ""
 msgid "Toggle Dark Mode"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:205
+#: frontend/src/components/Commands/index.ts:215
 msgid "Toggle Panels"
 msgstr ""
 
@@ -3405,15 +3663,15 @@ msgstr ""
 msgid "Toggle Theme"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:222
+#: frontend/src/components/Commands/index.ts:232
 msgid "Toggle canvas dark mode"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:167
+#: frontend/src/components/Commands/index.ts:177
 msgid "Toggle left panel"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:209
+#: frontend/src/components/Commands/index.ts:219
 msgid "Toggle panels"
 msgstr ""
 
@@ -3433,6 +3691,15 @@ msgstr ""
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:274
+#: frontend/src/utils/useBuilderEvents.ts:368
+#: frontend/src/utils/useBuilderEvents.ts:377
+#: frontend/src/utils/useBuilderEvents.ts:386
+#: frontend/src/utils/useBuilderEvents.ts:395
+#: frontend/src/utils/useBuilderEvents.ts:403
+msgid "Tools"
 msgstr ""
 
 #: frontend/src/components/BackgroundHandler.vue:291
@@ -3523,8 +3790,8 @@ msgstr "Tip"
 msgid "Typography"
 msgstr "Tipografija"
 
-#: frontend/src/components/Commands/index.ts:303
-#: frontend/src/components/Commands/index.ts:307
+#: frontend/src/components/Commands/index.ts:313
+#: frontend/src/components/Commands/index.ts:317
 msgid "Undo"
 msgstr ""
 
@@ -3586,11 +3853,28 @@ msgid "Upload"
 msgstr ""
 
 #: frontend/src/components/Controls/FontUploader.vue:6
+#: frontend/src/utils/helpers.ts:496
 msgid "Upload Font"
 msgstr ""
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:374
+msgid "Uploaded"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:532
+msgid "Uploading font..."
+msgstr ""
+
+#: frontend/src/components/Controls/ImageUploader.vue:13
+msgid "Uploading {0}%"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:369
+msgid "Uploading..."
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
@@ -3599,6 +3883,10 @@ msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
 msgid "Use Regular Expression"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:29
+msgid "Use all {0} pages"
 msgstr ""
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:14
@@ -3627,8 +3915,8 @@ msgstr "Korišteno na {0} stranica"
 msgid "User Font"
 msgstr "Korisnički Font"
 
-#: frontend/src/components/Settings/index.ts:80
-#: frontend/src/components/Settings/index.ts:81
+#: frontend/src/components/Settings/index.ts:86
+#: frontend/src/components/Settings/index.ts:87
 msgid "Users"
 msgstr ""
 
@@ -3645,12 +3933,17 @@ msgstr "Vrijednost"
 msgid "Value submitted with the form when this radio button is selected."
 msgstr ""
 
+#: frontend/src/components/DashboardSidebar.vue:90
+#: frontend/src/components/VersionHistory.vue:114
+msgid "Version"
+msgstr ""
+
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:236
+#: frontend/src/stores/pageStore.ts:238
 msgid "Version restored"
 msgstr ""
 
@@ -3674,9 +3967,11 @@ msgstr ""
 msgid "Video URL"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:164
-#: frontend/src/components/Commands/index.ts:175
+#: frontend/src/components/Commands/index.ts:44
+#: frontend/src/components/Commands/index.ts:174
 #: frontend/src/components/Commands/index.ts:185
+#: frontend/src/components/Commands/index.ts:195
+#: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
 msgstr ""
 
@@ -3776,13 +4071,17 @@ msgstr ""
 msgid "You do not have permission to access this page"
 msgstr "Nemate dozvolu za pristup ovoj stranici"
 
-#: builder/ai_page_generator.py:454 builder/utils.py:54
+#: builder/ai_page_generator.py:454 builder/utils.py:85
 msgid "You do not have permission to modify pages"
 msgstr "Nemate dozvolu za izmjenu stranica"
 
-#: builder/utils.py:56
+#: builder/utils.py:87
 msgid "You do not have permission to read pages"
 msgstr "Nemate dozvolu za čitanje stranica"
+
+#: frontend/src/components/DashboardContent.vue:8
+msgid "You don't have any pages yet. Click on the + New button to create a new page."
+msgstr ""
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
@@ -3814,4 +4113,8 @@ msgstr ""
 "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
+
+#: frontend/src/stores/pageStore.ts:243
+msgid "this page"
+msgstr ""
 

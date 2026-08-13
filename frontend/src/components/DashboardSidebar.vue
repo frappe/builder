@@ -28,7 +28,7 @@
 			<p
 				v-if="!builderProjectFolder.data?.length"
 				class="mt-0.5 flex h-7 items-center pl-2 text-sm text-ink-gray-5">
-				No folders yet
+				{{ __("No folders yet") }}
 			</p>
 			<nav class="mt-0.5 space-y-0.5">
 				<SidebarItem
@@ -87,7 +87,7 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
-			<p class="p-2 text-center text-sm text-ink-gray-4">Version: {{ builderVersion }}</p>
+			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
 	</Sidebar>
@@ -95,7 +95,7 @@
 		<template #default>
 			<DialogTitle class="sr-only">{{ __("Global Builder Settings") }}</DialogTitle>
 			<DialogDescription class="sr-only">
-				Configure global settings for this builder project.
+				{{ __("Configure global settings for this builder project.") }}
 			</DialogDescription>
 			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
 		</template>
@@ -233,7 +233,9 @@ const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectF
 
 const deleteFolder = async (folderName: string) => {
 	const confirmed = await confirm(
-		'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
+		__(
+			'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
+		),
 	);
 	if (!confirmed) return;
 	await createResource({

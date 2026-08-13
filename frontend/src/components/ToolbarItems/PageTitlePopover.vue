@@ -6,21 +6,21 @@
 					{{ __("Loading...") }}
 				</div>
 				<div @click="togglePopover" v-else class="flex items-center gap-1">
-					<Tooltip text="This is the homepage for your site" :hoverDelay="0.6">
+					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
 						<span
 							class="lucide-home h-[14px] w-4"
 							aria-hidden="true"
 							v-if="pageStore.isHomePage(pageStore.activePage)" />
 					</Tooltip>
-					<Tooltip text="This page has limited access" :hoverDelay="0.6">
+					<Tooltip :text="__('This page has limited access')" :hoverDelay="0.6">
 						<span
 							class="lucide-shield-user size-4 text-ink-amber-6"
 							v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 					</Tooltip>
 					<span
 						class="max-w-48 truncate text-base text-ink-gray-8"
-						:title="pageStore?.activePage?.page_title || 'My Page'">
-						{{ pageStore?.activePage?.page_title || "My Page" }}
+						:title="pageStore?.activePage?.page_title || __('My Page')">
+						{{ pageStore?.activePage?.page_title || __("My Page") }}
 					</span>
 					-
 					<span

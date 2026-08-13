@@ -23,6 +23,12 @@ type SettingsPane = Omit<SettingsItem, "component"> & { load: () => Promise<{ de
 // the sidebar renders groups in this order
 export const settingsGroups: SettingsGroup[] = ["Current Page", "Global"];
 
+/** raw group keys are compared throughout; these literals keep the headings extractable */
+export const settingsGroupLabels: Record<SettingsGroup, string> = {
+	"Current Page": __("Current Page"),
+	Global: __("Global"),
+};
+
 export const settingsItems = createRegistry<SettingsItem>();
 
 /**

@@ -111,7 +111,7 @@
 							<UseTimeAgo v-if="snapshot.label" v-slot="{ timeAgo }" :time="snapshot.creation">
 								{{ timeAgo }}
 							</UseTimeAgo>
-							<template v-else>{{ snapshot.snapshot_type || "Version" }}</template>
+							<template v-else>{{ snapshot.snapshot_type || __("Version") }}</template>
 						</span>
 					</div>
 					<Button
@@ -240,7 +240,9 @@ async function saveVersion() {
 
 async function restore(snapshot: BuilderSnapshot) {
 	const confirmed = await confirm(
-		"This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?",
+		__(
+			"This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?",
+		),
 	);
 	if (!confirmed) return;
 	restoringName.value = snapshot.name;

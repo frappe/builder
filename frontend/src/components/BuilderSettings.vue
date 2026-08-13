@@ -38,8 +38,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { __ } from "@/translation";
-import { settingsGroups, settingsItems } from "@/components/Settings";
+import { settingsGroupLabels, settingsGroups, settingsItems } from "@/components/Settings";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
@@ -79,7 +78,7 @@ const visibleGroups = computed(() =>
 	settingsGroups
 		.filter((group) => !(props.onlyGlobal && group === "Current Page"))
 		.map((group) => ({
-			title: __(group),
+			title: settingsGroupLabels[group],
 			items: settingsItems.visible.value.filter((item) => item.group === group),
 		}))
 		.filter((group) => group.items.length),
