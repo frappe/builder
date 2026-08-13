@@ -37,6 +37,37 @@ def compact_json(obj) -> str:
 	return frappe.as_json(obj, indent=None, separators=(",", ":"))
 
 
+def is_bulk_import() -> bool:
+	"""True while frappe loads records in bulk: install, migrate, patch or import.
+
+	Unlike is_system_activity, a test is not a bulk import, so tests still
+	exercise the export.
+	"""
+	return bool(
+		frappe.flags.in_import or frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch
+	)
+
+
+def get_installed_app_path(app_name) -> str | None:
+	"""Path of an installed app, or None if it is unset or not installed.
+
+	frappe.get_app_path raises for both, and page.app is plain Data, so it can
+	name an app that was uninstalled later.
+	"""
+	if not app_name or app_name not in frappe.get_installed_apps():
+		return None
+	return frappe.get_app_path(app_name)
+
+
+def export_dir_name(name) -> str:
+	"""Directory and JSON file name for an exported record.
+
+	Shared by every exporter and by the delete helpers, so a record always
+	lands where the cleanup looks for it. frappe.scrub keeps a slash.
+	"""
+	return frappe.scrub(str(name)).replace("/", "_")
+
+
 def has_page_permission(ptype: str = "write", message: str | None = None):
 	"""Decorator to check if user has the given permission on Builder Page.
 
@@ -698,22 +729,27 @@ def extract_components_from_blocks(blocks):
 	return components
 
 
-def export_client_scripts(page_doc, client_scripts_path):
+def export_client_scripts(client_scripts, client_scripts_path):
 	"""Export client scripts for a page"""
 	from frappe.modules.export_file import strip_default_fields
 
-	for script_row in page_doc.client_scripts:
-		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+	for script_name in client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script_name)
 		script_config = script_doc.as_dict(no_nulls=True)
+		# no_nulls drops the key when the script has no body
+		script_content = script_config.get("script") or ""
 		script_config = strip_default_fields(script_doc, script_config)
-		fname = frappe.scrub(str(script_doc.name))
-		# ensure the target directory exists before writing the file
+		fname = export_dir_name(script_doc.name)
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
-		script_file_path = os.path.join(script_dir, f"{fname}.json")
+		script_config_path = os.path.join(script_dir, f"{fname}.json")
+		extension = "js" if script_doc.script_type == "JavaScript" else "css"
+		script_path = os.path.join(script_dir, f"client_script.{extension}")
 
-		with open(script_file_path, "w", encoding="utf-8") as f:
+		with open(script_config_path, "w", encoding="utf-8") as f:
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
+		with open(script_path, "w", encoding="utf-8") as f:
+			f.write(script_content)
 
 
 def export_components(components, components_path, assets_path, target_app="builder"):
@@ -726,11 +762,10 @@ def export_components(components, components_path, assets_path, target_app="buil
 			copy_assets_from_blocks(component_blocks, assets_path, target_app)
 			component_doc.block = frappe.as_json(component_blocks)
 
-			# Replace forward slashes with underscores to create valid directory names
-			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
-			component_dir = os.path.join(components_path, safe_component_name)
+			safe_component_id = export_dir_name(component_doc.component_id)
+			component_dir = os.path.join(components_path, safe_component_id)
 			os.makedirs(component_dir, exist_ok=True)
-			component_file_path = os.path.join(component_dir, f"{safe_component_name}.json")
+			component_file_path = os.path.join(component_dir, f"{safe_component_id}.json")
 
 			with open(component_file_path, "w") as f:
 				f.write(frappe.as_json(component_doc.as_dict()))
