@@ -139,6 +139,18 @@ class TestBuilderUtils(FrappeTestCase):
 		execute_script("data.sum = a + b", {"data": data, "a": 2, "b": 2}, "test.py")
 		self.assertEqual(data.sum, 4)
 
+	def test_execute_script_can_translate(self):
+		# frappe._(...) can't work in a Page Data Script: it's an attribute
+		# read, and the sandbox's _getattr_ guard rejects any name starting
+		# with "_" before ever getting to what "_" resolves to. "_" has to be
+		# called bare - see get_safer_globals(), and #626.
+		data = frappe._dict({})
+		execute_script('data.text = _("Supplier")', {"data": data}, "test.py")
+		self.assertEqual(data.text, "Supplier")
+
+		with self.assertRaises(Exception):
+			execute_script('data.text = frappe._("Supplier")', {"data": data}, "test.py")
+
 	@patch("builder.utils.is_safe_exec_enabled", return_value=False)
 	@patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=False)
 	def test_execute_script_with_enabled_server_script(self, *args):
