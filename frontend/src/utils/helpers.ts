@@ -608,7 +608,7 @@ interface DialogOptions {
 }
 
 function showDialog(options: DialogOptions): Promise<void> {
-	const appearanceToTheme = { warning: "yellow", info: "blue", danger: "red", success: "green" } as const;
+	const appearanceToTheme = { warning: "amber", info: "blue", danger: "red", success: "green" } as const;
 	return new Promise((resolve) => {
 		dialog.confirm({
 			title: options.title || "",

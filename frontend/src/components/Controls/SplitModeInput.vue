@@ -9,10 +9,11 @@
 				v-bind="controlAttrs"
 				@update:modelValue="setUniformValue" />
 
+			<!-- boolean values predate v1's string|number TabValue; matching is by === so they still work -->
 			<TabButtons
 				class="shrink-0"
-				:modelValue="split"
-				:options="resolvedSplitOptions"
+				:modelValue="split as any"
+				:options="resolvedSplitOptions as any"
 				@update:modelValue="setSplitValue" />
 		</div>
 
@@ -83,7 +84,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style } as HTMLAttributes));
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }) as HTMLAttributes);
 const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );

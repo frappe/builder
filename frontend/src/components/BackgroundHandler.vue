@@ -15,7 +15,7 @@
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
-					:setModelValue="(val: string) => setBGValue(val)">
+					:setModelValue="(val: string | number | boolean) => setBGValue(String(val))">
 					<template #prefix="{ variant }">
 						<div
 							class="rounded absolute left-2 top-[6px] size-4 cursor-pointer shadow-md"

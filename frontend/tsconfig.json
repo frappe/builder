@@ -15,14 +15,17 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "allowJs": true,
     "paths": {
       "@/*": [
         "src/*"
       ],
-      "tslib" : ["/node_modules/tslib/tslib.d.ts"],
+      "tslib" : ["../node_modules/tslib/tslib.d.ts"],
       "vue": ["../node_modules/vue"],
+      "vue-router": ["../node_modules/vue-router"],
+      "frappe-ui": ["../frappe-ui/src/index.ts"],
+      "frappe-ui/icons": ["../frappe-ui/icons/index.ts"],
       "@framework/ui/*": ["../../frappe/ui/src/*"],
       "#components/*": ["../frappe-ui/src/components/*"],
       "#molecules/*": ["../frappe-ui/src/molecules/*"],

@@ -92,7 +92,7 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-2" v-if="builderStore.readOnlyMode">
-				<Badge variant="subtle" theme="orange">
+				<Badge variant="subtle" theme="amber">
 					{{ pageStore.activePage?.is_template ? "Template" : "Read Only" }}
 				</Badge>
 				<Button

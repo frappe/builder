@@ -22,8 +22,8 @@
 			placeholder="Add CSS property"
 			empty-text="No matching properties"
 			open-on-focus
-			@update:query="propertySearch = $event"
-			@update:modelValue="addProperty">
+			@update:query="propertySearch = String($event)"
+			@update:modelValue="(v: unknown) => addProperty(v as string | null)">
 			<template #suffix>
 				<span />
 			</template>
@@ -67,7 +67,12 @@ import {
 	getStylePropertiesWithoutControls,
 	isStylePropertyWithControls,
 } from "@/utils/stylePropertiesWithControls";
-import { isInteractiveControl, normalizeCSSPropertyName, toStyleProperty, toTitleCase } from "@/utils/helpers";
+import {
+	isInteractiveControl,
+	normalizeCSSPropertyName,
+	toStyleProperty,
+	toTitleCase,
+} from "@/utils/helpers";
 import { Combobox } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 

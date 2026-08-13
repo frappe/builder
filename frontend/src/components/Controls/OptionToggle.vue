@@ -1,10 +1,11 @@
 <template>
 	<div class="flex w-full items-center justify-between">
 		<InputLabel v-if="label">{{ label }}</InputLabel>
+		<!-- boolean values predate v1's string|number TabValue; matching is by === so they still work -->
 		<TabButtons
 			:class="['w-full min-w-[150px]', STRETCH_TABS]"
-			:options="tabOptions"
-			:modelValue="modelValue"
+			:options="tabOptions as any"
+			:modelValue="modelValue as any"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 	</div>
 </template>

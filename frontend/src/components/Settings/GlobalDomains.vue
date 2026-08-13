@@ -186,10 +186,10 @@ function brokenReason(d: any): string {
 }
 
 function statusTheme(status: string) {
-	const themes: Record<string, "green" | "red" | "orange" | "blue"> = {
+	const themes: Record<string, "green" | "red" | "amber" | "blue"> = {
 		Active: "green",
 		Broken: "red",
-		Pending: "orange",
+		Pending: "amber",
 		"In Progress": "blue",
 	};
 	return themes[status] ?? "gray";
