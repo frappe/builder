@@ -402,7 +402,7 @@ def responses_input(messages: list) -> tuple[str, list]:
 					"output": content_text(m.get("content")),
 				}
 			)
-	return "\n\n".join(filter(None, instructions)), items
+	return "\n\n".join(text for text in instructions if text), items
 
 
 def assistant_items(message: dict, position: int) -> list:

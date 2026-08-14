@@ -106,12 +106,13 @@ def found_photo_list(ctx) -> str:
 	found = getattr(ctx, "found_images", None) or []
 	if not found:
 		return ""
-	lines = [
+	preamble = (
 		"PHOTOS AVAILABLE for this page — real results already searched for you. Use these "
 		"EXACT urls in img src (copy character for character, never retype or guess one), and "
 		"give every section that wants a photo one of them rather than falling back to a CSS "
-		"composition. Unused ones are fine to ignore.",
-	]
+		"composition. Unused ones are fine to ignore."
+	)
+	lines = [preamble]
 	for i, p in enumerate(found, 1):
 		desc = (p.get("description") or "").strip()[:100] or p.get("query") or "photo"
 		lines.append(f"{i}. [{p.get('query')}] {desc} — {p.get('size')}\n   {p.get('url')}")
