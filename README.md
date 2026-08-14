@@ -140,7 +140,7 @@ bench --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken err
 1. Open a new terminal session and run the following commands:
 ```bash
 cd frappe-bench/apps/builder
-yarn install
+yarn dev-setup
 yarn dev --host
 ```
 1. Now, you can access the site on vite dev server at `http://builder.localhost:8080`

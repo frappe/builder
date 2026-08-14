@@ -61,7 +61,7 @@
 					<div v-for="(shadow, index) in shadowConfigs" :key="index" class="space-y-2 rounded-md">
 						<div class="flex items-center justify-between">
 							<span class="text-[10px] font-bold uppercase tracking-wider text-ink-gray-4">
-								Layer {{ index + 1 }}
+								{{ __("Layer {0}", [index + 1]) }}
 							</span>
 							<Button
 								icon="lucide-x"
@@ -110,7 +110,7 @@
 							</div>
 						</div>
 						<div class="flex items-center gap-2">
-							<Tooltip :text="shadow.inset ? 'Inset Shadow' : 'Outset Shadow'">
+							<Tooltip :text="shadow.inset ? __('Inset Shadow') : __('Outset Shadow')">
 								<OptionToggle
 									class="!w-auto [&>div]:!h-7 [&>div]:min-w-[40px]"
 									:modelValue="shadow.inset"
@@ -131,7 +131,7 @@
 					</div>
 				</div>
 				<div class="mt-3">
-					<Button class="w-full" variant="subtle" @click="addShadow">+ Add Shadow Layer</Button>
+					<Button class="w-full" variant="subtle" @click="addShadow">{{ __("+ Add Shadow Layer") }}</Button>
 				</div>
 			</div>
 		</template>

@@ -8,7 +8,8 @@
     "scripts": {
         "postinstall": "cd frontend && yarn install",
         "dev": "cd frontend && yarn dev",
-        "build": "cd frontend && yarn build"
+        "build": "cd frontend && yarn build",
+        "dev-setup": "git submodule update --init --recursive --verbose --depth 1 && yarn install"
     },
     "version": "0.0.0",
     "license": "MIT",

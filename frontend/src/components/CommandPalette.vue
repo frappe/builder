@@ -23,7 +23,7 @@
 					<input
 						ref="inputRef"
 						v-model="localQuery"
-						:placeholder="placeholder || (stepLabel ? 'Search...' : 'Search commands...')"
+						:placeholder="placeholder || (stepLabel ? __('Search...') : __('Search commands...'))"
 						class="w-full border-none bg-transparent py-3.5 pl-3 pr-4 text-base text-ink-gray-8 placeholder-ink-gray-4 outline-none ring-0 focus:outline-none focus:ring-0"
 						autocomplete="off"
 						spellcheck="false"
@@ -72,8 +72,8 @@
 							aria-hidden="true" />
 						<span class="text-base">
 							<template v-if="loading">{{ __("Searching...") }}</template>
-							<template v-else-if="localQuery">No results for "{{ localQuery }}"</template>
-							<template v-else>{{ hint || "No commands found" }}</template>
+							<template v-else-if="localQuery">{{ __('No results for "{0}"', [localQuery]) }}</template>
+							<template v-else>{{ hint || __("No commands found") }}</template>
 						</span>
 					</div>
 				</div>
@@ -104,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from "reka-ui";
 import { computed, nextTick, ref, watch } from "vue";
 

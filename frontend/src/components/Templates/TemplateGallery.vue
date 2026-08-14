@@ -237,9 +237,9 @@ const importAll = () => {
 			router.push({ name: "home" });
 		});
 	toast.promise(promise, {
-		loading: "Adding all pages...",
-		success: () => "All pages added",
-		error: () => "Could not add pages",
+		loading: __("Adding all pages..."),
+		success: () => __("All pages added"),
+		error: () => __("Could not add pages"),
 	});
 	promise.finally(() => {
 		importingAll.value = false;

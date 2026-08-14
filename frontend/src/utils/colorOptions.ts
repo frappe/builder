@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import { BuilderToken } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
 import { tokenType } from "@/utils/useBuilderToken";
@@ -76,7 +77,7 @@ export function getColorVariableOptions(
 													onEdit(builderToken);
 												},
 											},
-											"Edit",
+											__("Edit"),
 										);
 								},
 							}),

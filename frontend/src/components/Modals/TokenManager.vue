@@ -12,7 +12,7 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		action-label="Add Token"
+		:action-label="__('Add Token')"
 		:action-handler="addNewVariable"
 		placement="top-left">
 		<template #header>
@@ -199,10 +199,10 @@
 											v-else
 											:class="[cellBoxClass, cellTextClass(row), row.token_name ? '' : 'text-ink-gray-4']"
 											@dblclick="startEdit(row, 'token_name')">
-											{{ row.token_name || "unnamed" }}
+											{{ row.token_name || __("unnamed") }}
 										</div>
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
-										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
+										<Tooltip v-if="row.name" :text="__('Copy var(--{0})', [row.name])" placement="top">
 											<div
 												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
@@ -346,12 +346,12 @@
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
 						<div class="text-base-medium text-ink-gray-7">
-							{{ searchQuery.trim() ? __("No tokens found") : `No ${activeType.toLowerCase()} tokens yet` }}
+							{{ searchQuery.trim() ? __("No tokens found") : emptyTypeMessage }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
 								searchQuery.trim()
-									? `No tokens match "${searchQuery}". Try a different search term.`
+									? __('No tokens match "{0}". Try a different search term.', [searchQuery])
 									: __("Click 'Add Token' to create your first one.")
 							}}
 						</div>
@@ -424,6 +424,11 @@ const {
 const csvFileInput = ref<HTMLInputElement>();
 const activeType = ref<"Color" | "Font" | "Dimension">("Color");
 const isColorType = computed(() => activeType.value === "Color");
+const emptyTypeMessage = computed(() => {
+	if (activeType.value === "Color") return __("No color tokens yet");
+	if (activeType.value === "Font") return __("No font tokens yet");
+	return __("No dimension tokens yet");
+});
 
 // Copy a token's CSS handle — var(--<doc-id>) — for pasting into any style field.
 const copiedId = ref<string | null>(null);
@@ -718,7 +723,11 @@ const moveSelectedToGroup = async (group: string) => {
 		row.group = group;
 		await saveVariable(row);
 	}
-	toast.success(group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`);
+	if (group) {
+		toast.success(rows.length === 1 ? __('Moved {0} token to "{1}"', [rows.length, group]) : __('Moved {0} tokens to "{1}"', [rows.length, group]));
+	} else {
+		toast.success(rows.length === 1 ? __("Ungrouped {0} token", [rows.length]) : __("Ungrouped {0} tokens", [rows.length]));
+	}
 };
 
 const uniqueCopyName = (name: string) => {
@@ -732,7 +741,8 @@ const uniqueCopyName = (name: string) => {
 const deleteSelected = async () => {
 	const rows = selectedRows();
 	if (!rows.length) return;
-	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} token(s)?`);
+	const deleteMessage = rows.length === 1 ? __("Are you sure you want to delete {0} token?", [rows.length]) : __("Are you sure you want to delete {0} tokens?", [rows.length]);
+	const confirmed = await confirm(deleteMessage);
 	if (!confirmed) return;
 
 	let deleted = 0;
@@ -742,10 +752,10 @@ const deleteSelected = async () => {
 			rowObjects.delete(row.name!);
 			deleted++;
 		} catch (error) {
-			toast.error(`Failed to delete "${row.token_name}"`);
+			toast.error(__('Failed to delete "{0}"', [row.token_name]));
 		}
 	}
-	if (deleted) toast.success(`Deleted ${deleted} token(s)`);
+	if (deleted) toast.success(deleted === 1 ? __("Deleted {0} token", [deleted]) : __("Deleted {0} tokens", [deleted]));
 	clearSelection();
 };
 
@@ -754,7 +764,7 @@ const contextMenuOptions = computed(() => {
 		return [{ label: __("Remove"), action: () => (newVariable.value = null) }];
 	}
 	const count = selectedIds.value.size;
-	const suffix = count > 1 ? ` ${count} variables` : " variable";
+	const deleteLabel = count > 1 ? __("Delete {0} variables", [count]) : __("Delete variable");
 	return [
 		{ label: __("Move to group"), action: openGroupDialog },
 		{
@@ -762,7 +772,7 @@ const contextMenuOptions = computed(() => {
 			action: () => moveSelectedToGroup(""),
 			condition: () => selectedRows().some((row) => row.group),
 		},
-		{ label: `Delete${suffix}`, action: deleteSelected },
+		{ label: deleteLabel, action: deleteSelected },
 	];
 });
 
@@ -938,23 +948,24 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	if (newVariables.length === 0 && updateVariables.length === 0) {
-		if (invalidCount > 0) toast.error(`${invalidCount} entries were invalid`);
+		if (invalidCount > 0) toast.error(invalidCount === 1 ? __("{0} entry was invalid", [invalidCount]) : __("{0} entries were invalid", [invalidCount]));
 		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
 	// Warn user that existing variables will be updated
-	const skippedNotes = [
-		invalidCount > 0 ? `${invalidCount} invalid entries skipped` : "",
-		standardCount > 0 ? `${standardCount} standard token(s) skipped` : "",
-	]
-		.filter(Boolean)
-		.join(", ");
-	const confirmed = await confirm(
-		`Create ${newVariables.length} new token(s) and update ${updateVariables.length} existing token(s)?${
-			skippedNotes ? ` (${skippedNotes})` : ""
-		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
-	);
+	const createAndUpdateMessage = newVariables.length === 1
+		? updateVariables.length === 1
+			? __("Create {0} new token and update {1} existing token?", [newVariables.length, updateVariables.length])
+			: __("Create {0} new token and update {1} existing tokens?", [newVariables.length, updateVariables.length])
+		: updateVariables.length === 1
+			? __("Create {0} new tokens and update {1} existing token?", [newVariables.length, updateVariables.length])
+			: __("Create {0} new tokens and update {1} existing tokens?", [newVariables.length, updateVariables.length]);
+	const confirmationLines = [createAndUpdateMessage];
+	if (invalidCount > 0) confirmationLines.push(invalidCount === 1 ? __("({0} invalid entry skipped)", [invalidCount]) : __("({0} invalid entries skipped)", [invalidCount]));
+	if (standardCount > 0) confirmationLines.push(standardCount === 1 ? __("({0} standard token skipped)", [standardCount]) : __("({0} standard tokens skipped)", [standardCount]));
+	confirmationLines.push("", __("WARNING: Updating will overwrite the existing values for the listed variables."));
+	const confirmed = await confirm(confirmationLines.join("\n"));
 
 	if (!confirmed) {
 		if (csvFileInput.value) csvFileInput.value.value = "";
@@ -1002,12 +1013,12 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
-	if (createdCount > 0) toast.success(`Created ${createdCount} token(s)`);
-	if (updatedCount > 0) toast.success(`Updated ${updatedCount} token(s)`);
-	if (createErrors > 0) toast.error(`Failed to create ${createErrors} token(s)`);
-	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} token(s)`);
-	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
-	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard token(s) (read-only)`);
+	if (createdCount > 0) toast.success(createdCount === 1 ? __("Created {0} token", [createdCount]) : __("Created {0} tokens", [createdCount]));
+	if (updatedCount > 0) toast.success(updatedCount === 1 ? __("Updated {0} token", [updatedCount]) : __("Updated {0} tokens", [updatedCount]));
+	if (createErrors > 0) toast.error(createErrors === 1 ? __("Failed to create {0} token", [createErrors]) : __("Failed to create {0} tokens", [createErrors]));
+	if (updateErrors > 0) toast.error(updateErrors === 1 ? __("Failed to update {0} token", [updateErrors]) : __("Failed to update {0} tokens", [updateErrors]));
+	if (invalidCount > 0) toast.warning(invalidCount === 1 ? __("Skipped {0} invalid entry", [invalidCount]) : __("Skipped {0} invalid entries", [invalidCount]));
+	if (standardCount > 0) toast.warning(standardCount === 1 ? __("Skipped {0} standard token (read-only)", [standardCount]) : __("Skipped {0} standard tokens (read-only)", [standardCount]));
 
 	if (csvFileInput.value) csvFileInput.value.value = "";
 };
