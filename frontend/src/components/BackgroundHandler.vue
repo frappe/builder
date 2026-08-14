@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
+	<Popover placement="left" class="!block w-full" :offset="25" @update:open="handlePopoverToggle">
 		<template #target="{ togglePopover }">
 			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
 				<StylePropertyControl
@@ -47,6 +47,7 @@
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
 					<ColorPicker
+						ref="colorPickerRef"
 						renderMode="inline"
 						:modelValue="backgroundColor"
 						:showInput="true"
@@ -178,6 +179,12 @@ const BackgroundInput = defineComponent({
 });
 
 const activeState = ref<string | null>(null);
+const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
+
+// the picker renders inline here, so this popover owns the "closed" moment
+const handlePopoverToggle = (open: boolean) => {
+	if (!open) colorPickerRef.value?.commitRecentColor();
+};
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;

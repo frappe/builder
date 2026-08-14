@@ -5,7 +5,7 @@
 		:placement="placement"
 		:offset="offset"
 		:portal-to="portalTo"
-		@update:open="isOpen = $event"
+		@update:open="handleOpenChange"
 		class="!block w-full">
 		<template #target>
 			<slot name="target" :togglePopover="togglePopover" :isOpen="isOpen"></slot>
@@ -63,6 +63,12 @@ const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
 const isOpen = ref(false);
 
+// bank the color the picker closed on into the recently used swatches
+function handleOpenChange(open: boolean) {
+	if (!open) contentRef.value?.commitRecentColor();
+	isOpen.value = open;
+}
+
 // event handlers bind this directly, so drop the event they pass
 function togglePopover(open?: boolean | Event) {
 	if (open instanceof Event) open = undefined;
@@ -79,5 +85,6 @@ defineExpose({
 	togglePopover,
 	isOpen,
 	hideOptions: () => contentRef.value?.hideOptions(),
+	commitRecentColor: () => contentRef.value?.commitRecentColor(),
 });
 </script>
