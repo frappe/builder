@@ -98,18 +98,6 @@
 				required />
 		</template>
 	</Dialog>
-	<AIPageGeneratorModal
-		v-model="aiStore.showGeneratorDialog"
-		v-if="builderStore.isAIEnabled"
-		:pageId="route.params.pageId as string"
-		:mode="aiStore.mode"
-		:blockContext="aiStore.modifyBlockContext"
-		@generated="handleGeneratedBlocks"
-		@streaming="handleStreamingBlocks"
-		@modified="handleModifiedBlocks"
-		@modifyStreaming="handleModifyStreamingBlocks"
-		@generating="isAIGenerating = $event"
-		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
 	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
@@ -118,8 +106,6 @@
 
 <script setup lang="ts">
 import { __ } from "@/translation";
-import type Block from "@/block";
-import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
@@ -131,15 +117,15 @@ import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
 import { sessionUser } from "@/router";
-import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
 import blockController from "@/utils/blockController";
+import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
-import { getBlockInstance, getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
+import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
@@ -149,7 +135,6 @@ import CodeEditor from "../components/Controls/CodeEditor.vue";
 import { prefetchBuilderSettings } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
-const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isSmallScreen = breakpoints.smaller("lg");
@@ -159,76 +144,10 @@ const router = useRouter();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
-const aiStore = useAIStore();
 const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
-const isAIGenerating = ref(false);
-
-watchEffect(() => (aiStore.generatorModal = aiGeneratorModal.value));
-
-const handleGeneratedBlocks = () => {
-	pageStore.savePage();
-};
-
-const handleStreamingBlocks = (block: BlockOptions) => {
-	if (!block) return;
-
-	try {
-		pageStore.pageBlocks = [getBlockInstance(block)];
-		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as Block, false);
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
-
-const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
-	if (!root || !replacement) return false;
-	if (root.blockId === targetId) {
-		root.element = replacement.element || root.element;
-		root.baseStyles = replacement.baseStyles || root.baseStyles;
-		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
-		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
-		root.classes = replacement.classes || root.classes;
-
-		if (replacement.attributes) {
-			root.attributes = { ...root.attributes, ...replacement.attributes };
-		}
-
-		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
-		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
-
-		if (replacement.children) {
-			root.children.splice(
-				0,
-				root.children.length,
-				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
-			);
-		}
-		return true;
-	}
-	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
-};
-
-const handleModifiedBlocks = () => {
-	pageStore.savePage();
-	aiStore.endModify();
-};
-
-const handleModifyStreamingBlocks = (block: BlockOptions) => {
-	const targetId = block?.blockId || aiStore.modifyBlockId;
-	if (!block || !targetId) return;
-
-	try {
-		const rootBlock = pageStore.pageBlocks[0] as Block;
-		if (rootBlock) {
-			replaceBlockInTree(rootBlock, targetId, block);
-		}
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
 
 watch(
 	[
@@ -343,9 +262,26 @@ onActivated(async () => {
 		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
-		pageStore.setPage(route.params.pageId as string, true, route.query);
+		await pageStore.setPage(route.params.pageId as string, true, route.query);
+		offerPendingAssetImport(route.params.pageId as string);
 	}
 });
+
+// In-editor navigation to ANOTHER page (the build pill's "View"/"Go back" links):
+// the component is reused, so onActivated never refires — swap the page here or
+// the URL changes while the canvas keeps showing the previous page.
+watch(
+	() => route.params.pageId,
+	(pageId, oldPageId) => {
+		if (!pageId || pageId === "new" || pageId === pageStore.selectedPage) return;
+		if (oldPageId && oldPageId !== "new") {
+			builderStore.realtime.doc_close("Builder Page", oldPageId as string);
+		}
+		builderStore.realtime.doc_subscribe("Builder Page", pageId as string);
+		builderStore.realtime.doc_open("Builder Page", pageId as string);
+		pageStore.setPage(pageId as string, true, route.query);
+	},
+);
 
 watch(
 	route,
@@ -398,8 +334,8 @@ watch(
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
 			!builderStore.readOnlyMode &&
-			!pageCanvas.value?.canvasProps?.settingCanvas &&
-			!isAIGenerating.value
+			!builderStore.aiBuildingCanvas &&
+			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();

@@ -97,9 +97,7 @@ const handleRounded = (ev: MouseEvent) => {
 				MIN_POSITION.left = -(handleDimensions.width / 2);
 			}
 
-			const radius = Math.round(
-				Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)),
-			);
+			const radius = Math.round(Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)));
 
 			props.targetBlock.setStyle("borderRadius", `${radius}px`);
 			setHandlerPosition(radius);

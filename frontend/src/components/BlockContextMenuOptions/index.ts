@@ -1,5 +1,4 @@
 import type Block from "@/block";
-import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -21,32 +20,10 @@ const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessio
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
-const aiStore = useAIStore();
 
 const readOnly = () => builderStore.readOnlyMode;
 
 const options: ContextMenuOption[] = [
-	{
-		name: "edit-with-ai",
-		label: __("Edit with AI"),
-		action: ({ block }) => aiStore.editWithAI(block),
-		condition: ({ block }) => builderStore.isAIEnabled && !block.isRoot(),
-		disabled: readOnly,
-	},
-	{
-		name: "rewrite-ai",
-		label: __("Rewrite (AI)"),
-		action: ({ block }) => aiStore.runDirectAI(block, "rewrite_text", "Rewrite the content"),
-		condition: ({ block }) => builderStore.isAIEnabled && block.isText() && !block.isRoot(),
-		disabled: readOnly,
-	},
-	{
-		name: "replace-image-ai",
-		label: __("Replace Image (AI)"),
-		action: ({ block }) => aiStore.runDirectAI(block, "replace_image", "Replace image"),
-		condition: ({ block }) => builderStore.isAIEnabled && block.isImage() && !block.isRoot(),
-		disabled: readOnly,
-	},
 	{
 		name: "edit-html",
 		label: __("Edit HTML"),

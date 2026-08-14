@@ -1,5 +1,4 @@
 import router from "@/router";
-import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -85,7 +84,6 @@ const transitionTheme = () => {
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
-const aiStore = useAIStore();
 
 const setLayersTab = async () => {
 	builderStore.showLeftPanel = true;
@@ -285,26 +283,6 @@ commands.register({
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		blockController.getSelectedBlocks()[0].duplicateBlock();
-	},
-});
-
-commands.register({
-	name: "edit-with-ai",
-	title: __("Edit Block with AI"),
-	icon: "lucide-sparkles",
-	group: "Edit",
-	inPalette: false,
-	keys: { key: "i", ctrl: true, description: __("Edit block with AI") },
-	condition: () =>
-		builderStore.isAIEnabled &&
-		!blockController.isRoot() &&
-		!blockController.multipleBlocksSelected() &&
-		!builderStore.readOnlyMode,
-	action: () => {
-		const block = blockController.getSelectedBlocks()[0];
-		if (block) {
-			aiStore.editWithAI(block);
-		}
 	},
 });
 

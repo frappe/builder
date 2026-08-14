@@ -74,8 +74,146 @@ def upload_builder_asset():
 	return image_file
 
 
+@frappe.whitelist()
+@has_page_write("You do not have permission to import assets.")
+def import_remote_assets(urls: list[str] | str) -> dict[str, str]:
+	"""Pull remote images into this site and return {original_url: local_url}.
+
+	A page that arrives from somewhere else (a paste from another site, an import)
+	points at images it does not own. They break when the source moves, cannot be
+	optimised, and leak traffic to a third party. URLs that cannot be fetched are
+	left out so the caller keeps the original.
+	"""
+	if isinstance(urls, str):
+		urls = frappe.parse_json(urls)
+
+	imported = {}
+	for url in list(dict.fromkeys(urls))[:MAX_IMPORTED_ASSETS]:
+		if not isinstance(url, str) or not url.startswith("http"):
+			continue
+		try:
+			imported[url] = import_remote_asset(url)
+		except Exception:
+			frappe.log_error(title="Builder: remote asset import failed", message=frappe.get_traceback())
+	return imported
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to import fonts.")
+def import_remote_fonts(fonts: list[dict] | str) -> dict[str, str]:
+	"""Recreate remote webfonts as User Fonts and return {family: file_url}.
+
+	A font that keeps loading from the site it was copied from is the one asset most
+	likely to fail outright, since a self hosted font is usually served without the
+	CORS headers a cross origin webfont needs. Recreating it here also puts the family
+	in Builder's font picker, so it can be used on blocks that never had it.
+	"""
+	if isinstance(fonts, str):
+		fonts = frappe.parse_json(fonts)
+
+	imported = {}
+	for font in fonts[:MAX_IMPORTED_FONTS]:
+		family = (font or {}).get("family", "").strip()
+		url = (font or {}).get("url", "")
+		if not family or not isinstance(url, str) or not url.startswith("http"):
+			continue
+		try:
+			imported[family] = import_remote_font(family, url)
+		except Exception:
+			frappe.log_error(title="Builder: remote font import failed", message=frappe.get_traceback())
+	return imported
+
+
+MAX_IMPORTED_FONTS = 12
+MAX_FONT_BYTES = 6 * 1024 * 1024
+FONT_EXTENSIONS = ("woff2", "woff", "ttf", "otf")
+
+
+def import_remote_font(family: str, url: str) -> str:
+	existing = frappe.db.get_value("User Font", {"font_name": family}, "font_file")
+	if existing:
+		return existing
+
+	assert_not_private_url(url)
+	extension = next((e for e in FONT_EXTENSIONS if urlparse(url).path.lower().endswith(f".{e}")), None)
+	if not extension:
+		frappe.throw(f"Not a font file: {url}")
+
+	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	if len(response.content) > MAX_FONT_BYTES:
+		frappe.throw(f"Font is larger than {MAX_FONT_BYTES // (1024 * 1024)}MB: {url}")
+
+	file = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{frappe.scrub(family)}.{extension}",
+			"is_private": 0,
+			"folder": "Home/Builder Uploads/Fonts",
+			"content": response.content,
+		}
+	).insert()
+	frappe.get_doc({"doctype": "User Font", "font_name": family, "font_file": file.file_url}).insert()
+	return file.file_url
+
+
+MAX_IMPORTED_ASSETS = 200
+MAX_ASSET_BYTES = 12 * 1024 * 1024
+# formats that lose something on a webp round trip (animation, vector text)
+KEEP_AS_IS = {"image/svg+xml": "svg", "image/gif": "gif"}
 # the canvas never draws more than a couple of thousand pixels across, even at 2x
 MAX_IMAGE_EDGE = 2048
+
+
+def import_remote_asset(url: str) -> str:
+	import hashlib
+
+	assert_not_private_url(url)
+	digest = hashlib.md5(url.encode()).hexdigest()[:10]
+	# the name is derived from the URL, so importing the same asset twice reuses the file
+	stem = f"builder-import-{digest}"
+	existing = frappe.db.get_value("File", {"file_name": ["like", f"{stem}.%"]}, "file_url")
+	if existing:
+		return existing
+
+	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	content = response.content
+	if len(content) > MAX_ASSET_BYTES:
+		frappe.throw(f"Asset is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
+
+	content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+	extension = KEEP_AS_IS.get(content_type) or guess_keep_as_is_extension(url)
+	if extension:
+		return save_imported_asset(f"{stem}.{extension}", content)
+
+	image = Image.open(BytesIO(content))
+	if image.mode not in ("RGB", "RGBA"):
+		image = image.convert("RGBA" if "A" in image.mode else "RGB")
+	buffer = BytesIO()
+	image.save(buffer, "WEBP")
+	return save_imported_asset(f"{stem}.webp", buffer.getvalue())
+
+
+def guess_keep_as_is_extension(url: str) -> str | None:
+	path = urlparse(url).path.lower()
+	for extension in KEEP_AS_IS.values():
+		if path.endswith(f".{extension}"):
+			return extension
+	return None
+
+
+def save_imported_asset(file_name: str, content: bytes) -> str:
+	file = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": file_name,
+			"is_private": 0,
+			"folder": "Home/Builder Uploads",
+			"content": content,
+		}
+	).insert()
+	return file.file_url
 
 
 @frappe.whitelist()

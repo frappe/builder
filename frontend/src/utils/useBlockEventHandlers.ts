@@ -114,5 +114,7 @@ const selectBlock = (e: MouseEvent) => {
 	canvasStore.selectBlock(block, e);
 	canvasStore.activeCanvas?.setActiveBreakpoint(breakpoint);
 
-	if (builderStore.leftPanelActiveTab !== "Code") builderStore.leftPanelActiveTab = "Layers";
+	if (!["Code", "Chat"].includes(builderStore.leftPanelActiveTab)) {
+		builderStore.leftPanelActiveTab = "Layers";
+	}
 };

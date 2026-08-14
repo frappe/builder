@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "autoname": "format:SNAP-{####}",
+ "autoname": "hash",
  "creation": "2026-06-10 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -57,7 +57,7 @@
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Snapshot",
- "naming_rule": "By script",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {

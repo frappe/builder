@@ -384,6 +384,24 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	};
 }
 
+// Naming every data URL image.png makes the server read an SVG or a GIF as a PNG,
+// which fails on upload. The MIME type in the data URL already tells us what it is.
+const DATA_URL_EXTENSIONS: Record<string, string> = {
+	"image/svg+xml": "svg",
+	"image/jpeg": "jpg",
+	"image/jpg": "jpg",
+	"image/webp": "webp",
+	"image/gif": "gif",
+	"image/avif": "avif",
+	"image/png": "png",
+};
+
+function dataURLFileName(dataURL: string, baseName: string) {
+	const mime = dataURL.match(/^data:(.*?)(;|,)/)?.[1] || "";
+	const extension = DATA_URL_EXTENSIONS[mime.toLowerCase()] || "png";
+	return `${baseName.replace(/\.[a-z0-9]+$/i, "")}.${extension}`;
+}
+
 function dataURLtoFile(dataurl: string, filename: string) {
 	try {
 		let arr = dataurl.split(",");
@@ -417,10 +435,10 @@ function dataURLtoFile(dataurl: string, filename: string) {
 	}
 }
 
-function handleBase64Attribute(block: Block, attrName: string, fileName: string) {
+function handleBase64Attribute(block: Block, attrName: string, baseName: string) {
 	const attrValue = block.getAttribute(attrName) as string;
 	if (attrValue?.startsWith("data:image")) {
-		const file = dataURLtoFile(attrValue, fileName);
+		const file = dataURLtoFile(attrValue, dataURLFileName(attrValue, baseName));
 		if (file) {
 			block.setAttribute(attrName, "");
 			uploadBuilderAsset(file, true).then((obj) => {
@@ -460,7 +478,10 @@ async function getFontNameFromFile(file: File): Promise<string> {
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = await decompressFontIfWoff2(arrayBuffer, file.name.endsWith(".woff2"));
 	const opentype = await import("opentype.js");
-	return opentype.parse(buffer).names.fullName.en;
+	// opentype 2 splits the name table per platform, so there is no flat names.fullName
+	const names = opentype.parse(buffer).names as Record<string, any>;
+	const table = names.windows || names.macintosh || names;
+	return table.fullName?.en || table.fontFamily?.en || file.name.replace(/\.[^.]+$/, "");
 }
 
 type UploadUserFontOptions = {
@@ -919,6 +940,7 @@ export {
 	confirm,
 	copyToClipboard,
 	cssUrl,
+	dataURLFileName,
 	dataURLtoFile,
 	detachBlockFromComponent,
 	extractNumberAndUnit,

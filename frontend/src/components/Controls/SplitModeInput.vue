@@ -87,7 +87,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style } as HTMLAttributes));
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }) as HTMLAttributes);
 const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
