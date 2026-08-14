@@ -3257,7 +3257,7 @@ msgstr "Skicka Inbjudan"
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-msgstr "Serversida Python skript som fyller i komponent data. Tar emot rekvisita som indata. Använd: data.events = frappe.get_list('Event')"
+msgstr "Serversida Python skript som fyller i komponent data. Tar emot props som indata. Använd: data.events = frappe.get_list('Event')"
 
 #: frontend/src/components/Settings/PageGeneral.vue:114
 msgid "Set As Homepage"
