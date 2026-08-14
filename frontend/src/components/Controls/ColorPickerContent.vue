@@ -160,8 +160,12 @@ const defaultColors: HashString[] = [
 // the eyedropper occupies the last slot when the browser supports it
 const swatchCount = computed(() => (isSupported.value ? 8 : 9));
 
-// persisted and shared across every picker instance in the tab
-const recentColors = useStorage<HashString[]>("builderRecentColors", []);
+// persisted and shared across every picker instance in the tab.
+// flush must be "sync": the default "pre" write runs in a scope-bound watcher, so
+// a value set while the picker is unmounting never reaches localStorage
+const recentColors = useStorage<HashString[]>("builderRecentColors", [], localStorage, {
+	flush: "sync",
+});
 
 // hex casing varies by source, so compare swatches on a common form
 const normalizeColor = (color: HashString) => color.trim().toLowerCase();
@@ -180,10 +184,15 @@ const colors = computed(() => {
 	return palette;
 });
 
-// only the color the picker closes on is banked, not every drag frame
+// dismissing the popover also deselects the block, so modelValue is already null
+// by the time the commit runs — keep hold of the last real color instead
+let lastColor: HashString | null = null;
+watch(modelColor, (color) => color && (lastColor = color), { immediate: true });
+
+// only the color the picker closed on is banked, not every drag frame
 const commitRecentColor = () => {
-	if (!modelColor.value) return;
-	const color = normalizeColor(modelColor.value) as HashString;
+	if (!lastColor) return;
+	const color = normalizeColor(lastColor) as HashString;
 	recentColors.value = [color, ...recentColors.value.filter((c) => normalizeColor(c) !== color)].slice(
 		0,
 		swatchCount.value,
