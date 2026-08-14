@@ -110,8 +110,8 @@ class TestResolvePageReference(FrappeTestCase):
 		self.assertIn("no-such-thing", why)
 
 
-class TestSiteContext(FrappeTestCase):
-	def test_names_the_site_and_the_open_page(self):
+class TestOpenPageContext(FrappeTestCase):
+	def test_names_the_open_page_and_nothing_else(self):
 		from builder.ai.agent.loop import AgentRunner
 
 		page = frappe.get_doc(
@@ -123,9 +123,10 @@ class TestSiteContext(FrappeTestCase):
 		).insert(ignore_if_duplicate=True)
 		runner = AgentRunner("hi", model="m", api_key="k", page_id=page.name)
 
-		out = runner.build_site_context()
+		out = runner.build_open_page_context()
 
-		self.assertIn(frappe.utils.get_url(), out)
 		self.assertIn(f"id {page.name}", out)
 		self.assertIn("'Context Page'", out)
 		self.assertIn("draft", out)
+		# The site's URL and structure are DISCOVERED via the read tools, never pre-baked.
+		self.assertNotIn(frappe.utils.get_url(), out)

@@ -95,6 +95,7 @@ def build_default_registry() -> ToolRegistry:
 		images,
 		memory,
 		preview,
+		python,
 		query,
 		scripts,
 		settings,
@@ -108,6 +109,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(conversation.TOOLS)
 	registry.extend(memory.TOOLS)
 	registry.extend(data.TOOLS)
+	registry.extend(python.TOOLS)
 	registry.extend(forms.TOOLS)
 	registry.extend(settings.TOOLS)
 	registry.extend(images.TOOLS)

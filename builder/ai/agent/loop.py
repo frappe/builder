@@ -310,6 +310,7 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"query_blocks",
 		"read_block",
 		"read_page",
+		"run_python",
 		"get_document",
 		"query_records",
 		"list_doctypes",
@@ -403,6 +404,7 @@ TOOL_LABELS = {
 	"extract_component": "Made a reusable component",
 	"write_page_data_script": "Connected the page to data",
 	"list_doctypes": "Looked for existing data",
+	"run_python": "Looked up site data",
 	"get_page_scripts": "Read the page scripts",
 	"set_page_settings": "Updated page settings",
 	"remember": "Saved a note for next time",
@@ -683,31 +685,20 @@ class AgentRunner:
 	def build_page_context(self) -> str:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
-	def build_site_context(self) -> str:
-		"""WHERE the agent is: the site's own URL, the shape of its page URLs, and the
-		open page's identity. Grounded orientation is what lets a pasted link, a route,
-		or 'this page vs that page' resolve by reasoning instead of guessing."""
-		host = frappe.utils.get_url()
-		editor = f"{host}/{frappe.conf.builder_path or 'builder'}/page/<page-id>"
-		lines = []
-		if self.page_id:
-			row = frappe.db.get_value(
-				"Builder Page", self.page_id, ["page_title", "route", "published"], as_dict=True
-			)
-			if row:
-				state = "published" if row.published else "draft"
-				route = "/" + (row.route or "").lstrip("/")
-				lines.append(
-					f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, "
-					f"route {route}, {state}."
-				)
-		lines.append(
-			f"Site: {host} (Frappe Builder). Its editor links look like {editor} — a pasted "
-			f"link in that shape names a page of THIS site, as does any {host}/<route> "
-			"address (the Builder Page with that route). Pass any of those to read_page/"
-			"preview_page. A URL on any other host is an external site you cannot read."
+	def build_open_page_context(self) -> str:
+		"""The one fact the agent cannot discover for itself: WHICH page the user has
+		open. Everything else about the site is pulled on demand (run_python, read_page,
+		query_records) — nothing is pre-baked into the context."""
+		if not self.page_id:
+			return ""
+		row = frappe.db.get_value(
+			"Builder Page", self.page_id, ["page_title", "route", "published"], as_dict=True
 		)
-		return "Where you are:\n" + "\n".join(lines)
+		if not row:
+			return ""
+		state = "published" if row.published else "draft"
+		route = "/" + (row.route or "").lstrip("/")
+		return f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
 
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
@@ -729,7 +720,7 @@ class AgentRunner:
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_site_context(), self.build_page_context(), self.build_memory_context()]
+		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
