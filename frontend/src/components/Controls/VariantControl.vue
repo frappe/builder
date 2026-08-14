@@ -84,6 +84,7 @@
 
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import { useEventListener } from "@vueuse/core";
 import type { Component } from "vue";
 import { ref, watch } from "vue";
 
@@ -126,17 +127,56 @@ const claimFocus = (framesLeft: number) => {
 	requestAnimationFrame(() => claimFocus(framesLeft - 1));
 };
 
-// A popover holds the focus of the row that opened it. Its panel is portalled out of
-// the row, and a click inside it can also drop focus to the body.
-const popoverIsOpen = () => Boolean(document.querySelector("[data-slot='content']"));
+// A popover panel is portalled out of the row and takes the focus with it, so focus that
+// lands in one is not the user leaving. The preview lasts until the panel closes, and the
+// focus then decides: the panel gives it back to the row when it closes on its own, and
+// leaves it on whatever the user clicked outside.
+const PANEL = "[data-slot='content']";
+let watchedPanel: Element | null = null;
+let pressThatClosedPanel: MouseEvent | null = null;
+
+useEventListener(document, "mousedown", (event: MouseEvent) => (pressThatClosedPanel = event), {
+	capture: true,
+});
+
+// A press on the row, or on a canvas handle that keeps the focus by preventing the
+// default, goes on editing this state. Anything else is the user leaving.
+const pressKeepsPreview = () => {
+	const press = pressThatClosedPanel;
+	if (!press) return false;
+	return press.defaultPrevented || Boolean(rowRef.value?.contains(press.target as Node));
+};
+
+const watchPanel = (panel: Element) => {
+	if (watchedPanel === panel) return;
+	watchedPanel = panel;
+	pressThatClosedPanel = null;
+	const check = () => {
+		if (watchedPanel !== panel) return;
+		if (panel.isConnected) return requestAnimationFrame(check);
+		watchedPanel = null;
+		claimingFocus = false;
+		// The state is no longer this row's once another control claims it.
+		if (!props.isActive || holdsFocus()) return;
+		// The row holds the preview, so take the focus back for the press to work on.
+		if (pressKeepsPreview()) return field()?.focus();
+		emit("blur");
+	};
+	requestAnimationFrame(check);
+};
+
+const panelFor = (relatedTarget: Element | null) =>
+	relatedTarget?.closest?.(PANEL) || document.querySelector(PANEL);
 
 // Leaving the row ends the preview, so the canvas and the controls read normally again.
 // Focus that goes nowhere is the dropdown closing, not the user leaving. Anything
 // else is a real departure, even while the row is still claiming focus back.
 const handleFocusOut = (event: FocusEvent) => {
-	if (rowRef.value?.contains(event.relatedTarget as Node)) return;
-	if (popoverIsOpen()) return;
-	if (claimingFocus && !event.relatedTarget) return;
+	const relatedTarget = event.relatedTarget as Element | null;
+	if (rowRef.value?.contains(relatedTarget)) return;
+	const panel = panelFor(relatedTarget);
+	if (panel) return watchPanel(panel);
+	if (claimingFocus && !relatedTarget) return;
 	claimingFocus = false;
 	emit("blur");
 };

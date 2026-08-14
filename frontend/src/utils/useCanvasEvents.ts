@@ -27,9 +27,6 @@ export function useCanvasEvents(
 ) {
 	let counter = 0;
 	useEventListener(container, "mousedown", (ev: MouseEvent) => {
-		// back on the canvas, so the block reads normally again. The drag handles stop
-		// their mousedown, which keeps a preview alive for the drag that edits it.
-		selectedBlocks.value.forEach((block) => (block.activeState = null));
 		if (builderStore.mode === "move") {
 			return;
 		}
