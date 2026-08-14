@@ -94,6 +94,18 @@ class BlockCodec:
 			out["component"] = block["extendedFromComponent"]
 		if block.get("isChildOfComponent"):
 			out["child_of"] = block["isChildOfComponent"]
+		# Repeaters and bindings read back in the same vocabulary they're written in
+		# (repeat/bind) — without them a data-driven block reads as a plain div and
+		# its dynamic wiring is invisible.
+		data_key = block.get("dataKey")
+		if block.get("isRepeaterBlock") and isinstance(data_key, dict) and data_key.get("key"):
+			out["repeat"] = {"data": data_key["key"]}
+		if bind := {
+			dv["property"]: dv["key"]
+			for dv in block.get("dynamicValues") or []
+			if isinstance(dv, dict) and dv.get("property") and dv.get("key")
+		}:
+			out["bind"] = bind
 		if block.get("classes"):
 			out["classes"] = block["classes"]
 		if block.get("innerHTML"):

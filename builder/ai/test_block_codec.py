@@ -60,6 +60,23 @@ class TestCompress(FrappeTestCase):
 	def test_ignores_a_value_that_is_not_a_block(self):
 		self.assertEqual(BlockCodec.compress("nope"), "nope")
 
+	def test_surfaces_repeaters_and_bindings(self):
+		repeater = block(
+			isRepeaterBlock=True,
+			dataKey={"key": "products", "property": "innerHTML", "type": "key"},
+			dynamicValues=[
+				{"key": "title", "property": "innerHTML", "type": "key"},
+				{"key": "image", "property": "src", "type": "attribute"},
+			],
+		)
+		out = BlockCodec.compress(repeater)
+
+		self.assertEqual(out["repeat"], {"data": "products"})
+		self.assertEqual(out["bind"], {"innerHTML": "title", "src": "image"})
+
+	def test_tolerates_null_children(self):
+		self.assertEqual(BlockCodec.compress({"element": "p", "children": None}), {"el": "p"})
+
 
 class TestExpand(FrappeTestCase):
 	def test_restores_the_editor_fields(self):

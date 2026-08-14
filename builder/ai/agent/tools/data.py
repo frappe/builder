@@ -117,13 +117,34 @@ def get_document(ctx, args: dict) -> str:
 		for key in ("blocks", "draft_blocks"):
 			if data.get(key):
 				data[key] = f"<a Builder Page block tree — read it with read_page('{doc.name}')>"
-	# Bound long values (e.g. a raw HTML blob) so a read never blows the context.
-	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
+	data = redact_and_bound(meta, data)
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
 		data["block"] = component_block_yaml(doc.block)
 	return frappe.as_json(data)
+
+
+FIELD_CAP = 1000
+# Code fields carry the thing being asked for (a site-wide stylesheet, head HTML) —
+# the generic bound would shred exactly what the read was for.
+CODE_FIELD_CAP = 8000
+
+
+def redact_and_bound(meta, data: dict) -> dict:
+	"""Secrets never leave; long values are bounded so a read never blows the context."""
+	secret = {f.fieldname for f in meta.fields if f.fieldtype == "Password"}
+	code = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
+
+	def bound(key, value):
+		if key in secret and value:
+			return "<hidden (Password field)>"
+		if not isinstance(value, str):
+			return value
+		cap = CODE_FIELD_CAP if key in code else FIELD_CAP
+		return value[:cap] + "…" if len(value) > cap else value
+
+	return {k: bound(k, v) for k, v in data.items()}
 
 
 COMPONENT_YAML_LIMIT = 8000

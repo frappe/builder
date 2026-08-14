@@ -195,30 +195,55 @@ def run_read_page(ctx, args: dict) -> str:
 	root = load_page_root(page_id)
 	if root is None:
 		return f"{label} has no blocks yet."
-	return f"{label} — READ-ONLY reference; its refs are NOT editable from here.\n" + render_reference(root)
+	parts = [
+		f"{label} — READ-ONLY reference; its refs are NOT editable from here.",
+		render_reference(root),
+	]
+	if scripts := render_scripts(page_id):
+		parts.append(scripts)
+	return "\n".join(parts)
 
 
+# A reference read is a ONE-TIME tool result, not per-round context — it affords a
+# far higher complete-structure budget than the page context's limit. Real pages
+# (15-50k chars) always ship whole; only stress-fixture monsters fall back to the
+# outline, which loses styles and is why the threshold errs high.
+REFERENCE_FULL_LIMIT = 120_000
 OUTLINE_LIMIT = 20_000  # a reference outline is for rhythm, not coverage — bound the tail
+SCRIPT_LIMIT = 4_000  # per attached script
 
 
 def render_reference(root: dict) -> str:
 	"""Digest + structure. The digest leads so the design language survives even
 	when the tree is big and only the outline ships."""
-	from builder.ai.agent.loop import FULL_CONTEXT_LIMIT
-
 	digest = f"Design digest (base styles, with use counts):\n{design_digest(root)}"
 	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
-	if len(full) <= FULL_CONTEXT_LIMIT:
-		return f"{digest}\n\nFull structure (YAML):\n{full}"
+	if len(full) <= REFERENCE_FULL_LIMIT:
+		return f"{digest}\n\nFull structure and styles (YAML):\n{full}"
 	outline = render_skeleton(root)
 	if len(outline) > OUTLINE_LIMIT:
 		kept = outline[:OUTLINE_LIMIT].rsplit("\n", 1)[0]
 		dropped = outline.count("\n") - kept.count("\n")
 		outline = f"{kept}\n… ({dropped} more blocks — the rhythm above is representative)"
 	return (
-		f"{digest}\n\nThe page is large, so its structure is an OUTLINE (styles omitted "
-		"— the digest above carries them):\n" + outline
+		f"{digest}\n\nThe page is extremely large, so its structure is an OUTLINE (styles "
+		"omitted — the digest above carries them):\n" + outline
 	)
+
+
+def render_scripts(page_id: str) -> str:
+	"""A reference page's look can live in its attached CSS as much as its blocks."""
+	from builder.ai.agent.tools.scripts import page_scripts
+
+	parts = []
+	for script in page_scripts(page_id):
+		body = script["script"] or ""
+		if len(body) > SCRIPT_LIMIT:
+			body = body[:SCRIPT_LIMIT] + "\n… (truncated)"
+		parts.append(f"--- {script['script_type']} script '{script['script_name']}':\n{body}")
+	if not parts:
+		return ""
+	return "Attached page scripts:\n" + "\n".join(parts)
 
 
 read_page = Tool(

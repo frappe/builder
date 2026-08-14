@@ -33,6 +33,15 @@ class TestReadPage(FrappeTestCase):
 				).as_json(wrap_in_array=True),
 			}
 		).insert(ignore_if_duplicate=True)
+		script = frappe.get_doc(
+			{
+				"doctype": "Builder Client Script",
+				"script_type": "CSS",
+				"script": ".raven { letter-spacing: 0.08em; }",
+			}
+		).insert(ignore_permissions=True)
+		cls.page.append("client_scripts", {"builder_script": script.name})
+		cls.page.save(ignore_permissions=True)
 
 	def ctx(self, page_id="some-other-page", page_read_count=0):
 		return SimpleNamespace(page_id=page_id, page_read_count=page_read_count)
@@ -45,6 +54,12 @@ class TestReadPage(FrappeTestCase):
 		self.assertIn("fonts: Libre Baskerville x1, Cinzel x1", out)
 		self.assertIn("colors: #E6DECA x1, #161412 x1", out)
 		self.assertIn("el: h1", out)
+
+	def test_includes_the_pages_attached_scripts(self):
+		out = run_read_page(self.ctx(), {"page_id": self.page.name})
+
+		self.assertIn("Attached page scripts", out)
+		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
 
 	def test_points_back_to_context_for_the_open_page(self):
 		out = run_read_page(self.ctx(page_id=self.page.name), {"page_id": self.page.name})
