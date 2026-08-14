@@ -15,15 +15,15 @@ interface WeightOption {
 }
 
 const WEIGHT_LABELS: Record<FontWeight, string> = {
-	"100": "Thin",
-	"200": "Extra Light",
-	"300": "Light",
-	"400": "Regular",
-	"500": "Medium",
-	"600": "Semi Bold",
-	"700": "Bold",
-	"800": "Extra Bold",
-	"900": "Black",
+	"100": __("Thin"),
+	"200": __("Extra Light"),
+	"300": __("Light"),
+	"400": __("Regular"),
+	"500": __("Medium"),
+	"600": __("Semi Bold"),
+	"700": __("Bold"),
+	"800": __("Extra Bold"),
+	"900": __("Black"),
 };
 
 const GF_CSS = "https://fonts.googleapis.com/css2";

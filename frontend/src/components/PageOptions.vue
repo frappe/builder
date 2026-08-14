@@ -19,7 +19,7 @@
 				@update:modelValue="(val: string) => updateActivePage('route', val)" />
 			<!-- Dynamic Route Variables -->
 			<CollapsibleSection
-				sectionName="URL Variables"
+				:sectionName="__('URL Variables')"
 				v-if="dynamicVariables.length"
 				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-ink-gray-5">
 				<BuilderInput
@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
 import usepageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { getRouteVariables } from "@/utils/helpers";
 import { useDebounceFn } from "@vueuse/core";

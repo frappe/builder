@@ -89,8 +89,8 @@
 					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 					@click="onLoadMore(node.id, node.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
-					Load {{ Math.min(PAGE_LIMIT_PER_NODE, node.totalCount - node.loadedCount) }} more
-					<span class="ml-0.5 text-ink-gray-3">({{ node.totalCount - node.loadedCount }} remaining)</span>
+					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, node.totalCount - node.loadedCount)]) }}
+					<span class="ml-0.5 text-ink-gray-3">{{ __("({0} remaining)", [node.totalCount - node.loadedCount]) }}</span>
 				</button>
 			</div>
 		</section>
@@ -99,6 +99,7 @@
 
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { Tooltip } from "frappe-ui";
 import HomeIcon from "~icons/lucide/house";

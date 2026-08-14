@@ -169,7 +169,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			block: Block,
 			fragmentType: "component" | "blockTemplate",
 			saveAction: (block: Block) => void,
-			saveActionLabel: string = "Save",
+			saveActionLabel: string = __("Save"),
 			fragmentName?: string,
 			fragmentId?: string,
 			showUsageCount?: boolean,

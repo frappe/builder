@@ -17,8 +17,8 @@ frappe.ui.form.on("Builder Settings", {
               {
                 fieldtype: "HTML",
                 fieldname: "filter_area",
-                label: "Builder Page Filter",
-                description: "Limits the pages where the component is replaced",
+                label: __("Builder Page Filter"),
+                description: __("Limits the pages where the component is replaced"),
               },
               {
                 fieldname: "target_component",
@@ -64,9 +64,7 @@ frappe.ui.form.on("Builder Settings", {
               doctype: "Builder Page",
               on_change: () => {},
             });
-            filter_group.wrapper.prepend(
-              "<h5>Filter Builder Pages</h5><p>Limits the pages where the component is replaced</p><br>",
-            );
+            filter_group.wrapper.prepend("<h5>" + __("Filter Builder Pages") + "</h5><p>" + __("Limits the pages where the component is replaced") + "</p><br>");
             filter_group.wrapper.append("<br><br>");
           });
           d.set_primary_action(__("Replace"), (values) => {

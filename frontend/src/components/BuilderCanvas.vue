@@ -126,6 +126,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import {
@@ -228,7 +229,7 @@ const canvasProps = reactive({
 		{
 			icon: "lucide-monitor",
 			device: "desktop",
-			displayName: "Desktop",
+			displayName: __("Desktop"),
 			width: 1400,
 			visible: true,
 			renderedOnce: true,
@@ -236,14 +237,14 @@ const canvasProps = reactive({
 		{
 			icon: "lucide-tablet",
 			device: "tablet",
-			displayName: "Tablet",
+			displayName: __("Tablet"),
 			width: 800,
 			visible: false,
 		},
 		{
 			icon: "lucide-smartphone",
 			device: "mobile",
-			displayName: "Mobile",
+			displayName: __("Mobile"),
 			width: 420,
 			visible: false,
 		},

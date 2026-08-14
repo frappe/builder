@@ -37,7 +37,7 @@
 						<div class="flex min-w-0 flex-col">
 							<span class="truncate text-sm text-ink-gray-8">{{ item.component_name }}</span>
 							<span class="text-xs text-ink-gray-5">
-								{{ item.count }} instance{{ item.count === 1 ? "" : "s" }}
+								{{ item.count === 1 ? __("{0} instance", [item.count]) : __("{0} instances", [item.count]) }}
 							</span>
 						</div>
 						<Button
@@ -57,6 +57,7 @@
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 

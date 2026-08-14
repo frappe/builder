@@ -12,6 +12,7 @@
 
 <script lang="ts" setup>
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import type { Component } from "vue";
 import { computed } from "vue";
@@ -51,9 +52,9 @@ const props = withDefaults(
 );
 
 const stateLabels: Record<string, string> = {
-	hover: "On Hover",
-	active: "On Active",
-	focus: "On Focus",
+	hover: __("On Hover"),
+	active: __("On Active"),
+	focus: __("On Focus"),
 };
 
 const stateVariants = computed(() =>

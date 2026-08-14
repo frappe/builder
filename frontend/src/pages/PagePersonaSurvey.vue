@@ -108,9 +108,9 @@ const questions: {
 }[] = [
 	{
 		key: "source",
-		heading: "How did you hear about Builder?",
-		subtitle: "Just curious, it helps us know what's working.",
-		otherPlaceholder: "I heard from the community",
+		heading: __("How did you hear about Builder?"),
+		subtitle: __("Just curious, it helps us know what's working."),
+		otherPlaceholder: __("I heard from the community"),
 		options: [
 			{ value: "search", label: __("Search (Google)") },
 			{ value: "youtube", label: __("YouTube") },
@@ -122,9 +122,9 @@ const questions: {
 	},
 	{
 		key: "role",
-		heading: "Which one best describes you?",
-		subtitle: "This helps us personalise your Builder experience",
-		otherPlaceholder: "I'm a student building my first site",
+		heading: __("Which one best describes you?"),
+		subtitle: __("This helps us personalise your Builder experience"),
+		otherPlaceholder: __("I'm a student building my first site"),
 		options: [
 			{ value: "designer", label: __("Designer") },
 			{ value: "developer", label: __("Developer") },
@@ -136,9 +136,9 @@ const questions: {
 	},
 	{
 		key: "use_case",
-		heading: "What do you want to build first?",
-		subtitle: "We'll point you to the right starting templates",
-		otherPlaceholder: "A booking site for my clinic",
+		heading: __("What do you want to build first?"),
+		subtitle: __("We'll point you to the right starting templates"),
+		otherPlaceholder: __("A booking site for my clinic"),
 		options: [
 			{ value: "marketing_site", label: __("Marketing / landing site") },
 			{ value: "ecommerce", label: __("Online store / E-commerce") },

@@ -40,7 +40,7 @@
 		<form @submit.prevent="handleAdd" class="flex flex-col gap-3">
 			<FormControl
 				:label="__('Enter your domain')"
-				placeholder="e.g. yourdomain.com"
+				:placeholder="__('e.g. yourdomain.com')"
 				v-model="newDomain"
 				autocomplete="off" />
 
@@ -49,13 +49,13 @@
 				<template v-for="(rec, i) in dnsRecords" :key="rec.type">
 					<div v-if="i > 0" class="flex items-center gap-3 px-3">
 						<div class="bg-outline-gray-2 h-px flex-1"></div>
-						<span class="text-p-xs text-ink-gray-4">or</span>
+						<span class="text-p-xs text-ink-gray-4">{{ __("or") }}</span>
 						<div class="bg-outline-gray-2 h-px flex-1"></div>
 					</div>
 					<div class="flex items-center gap-2 px-3 py-2.5">
 						<div class="min-w-0 flex-1">
 							<div class="flex items-baseline gap-1.5">
-								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ rec.type }} record</span>
+								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ __("{0} record", [rec.type]) }}</span>
 								<span class="font-mono text-p-xs">
 									<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">{{ rec.host }}</span>
 									<span class="px-1 text-ink-gray-4">→</span>
@@ -157,7 +157,7 @@ const dnsRecords = computed(() => {
 			value: currentSite,
 			copyValue: currentSite,
 			recommended: true,
-			hint: "Automatically follows server IP changes. Best choice for subdomains.",
+			hint: __("Automatically follows server IP changes. Best choice for subdomains."),
 		});
 	}
 	records.push({
@@ -174,22 +174,22 @@ const dnsRecords = computed(() => {
 });
 
 function brokenReason(d: any): string {
-	if (!d.dns_response) return "Domain setup failed. Please retry or contact support.";
+	if (!d.dns_response) return __("Domain setup failed. Please retry or contact support.");
 	try {
 		const parsed = JSON.parse(d.dns_response);
 		if (parsed.exc_message) return parsed.exc_message.replace(/<[^>]*>/g, "").trim();
 		const cname = parsed.CNAME;
 		const a = parsed.A;
 		if (cname?.exists && !cname?.matched)
-			return `CNAME record points to wrong destination: ${cname.answer?.trim() || "unknown"}`;
-		if (a?.exists && !a?.matched) return `A record points to wrong IP: ${a.answer?.trim() || "unknown"}`;
-		if (!cname?.exists && !a?.exists) return "No DNS record found for this domain.";
+			return __("CNAME record points to wrong destination: {0}", [cname.answer?.trim() || __("unknown")]);
+		if (a?.exists && !a?.matched) return __("A record points to wrong IP: {0}", [a.answer?.trim() || __("unknown")]);
+		if (!cname?.exists && !a?.exists) return __("No DNS record found for this domain.");
 		if (parsed.matched || parsed.valid)
-			return "DNS is verified but SSL certificate provisioning failed. Please retry.";
+			return __("DNS is verified but SSL certificate provisioning failed. Please retry.");
 	} catch {
 		// ignore parse errors
 	}
-	return "Domain setup failed. Please retry or contact support.";
+	return __("Domain setup failed. Please retry or contact support.");
 }
 
 function statusTheme(status: string) {

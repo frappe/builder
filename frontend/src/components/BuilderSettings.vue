@@ -32,7 +32,7 @@
 				<component :is="selectedItemDoc?.component" class="pb-16" />
 			</KeepAlive>
 			<div v-else class="flex items-center justify-center">
-				<span class="text-ink-gray-5">Loading...</span>
+				<span class="text-ink-gray-5">{{ __("Loading...") }}</span>
 			</div>
 		</div>
 	</div>
@@ -43,6 +43,7 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
