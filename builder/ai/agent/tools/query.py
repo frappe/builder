@@ -142,11 +142,44 @@ read_block = Tool(
 MAX_PAGE_READS_PER_TURN = 3  # each read is thousands of tokens — bound a sweep of the whole site
 
 
+def resolve_page_reference(ref: str) -> tuple[str | None, str]:
+	"""A page named ANY way users name pages — doc id, route, page title, or a
+	pasted URL (editor link or published address) — resolved to a Builder Page id.
+	Uniform addressing keeps ONE general read tool instead of a tool per shape.
+	Returns (page_id, "") or (None, why)."""
+	from urllib.parse import urlparse
+
+	ref = (ref or "").strip().strip("<>")
+	if not ref:
+		return None, "pass a page id, route, page title, or a URL of this site"
+	if "://" in ref:
+		parsed = urlparse(ref)
+		site_host = urlparse(frappe.utils.get_url()).netloc
+		if parsed.netloc and parsed.netloc != site_host:
+			return None, (
+				f"'{parsed.netloc}' is not this site ({site_host}) — an external page can't be "
+				"read with your tools; ask the user to paste its content or a screenshot"
+			)
+		path = (parsed.path or "").strip("/")
+		editor_prefix = (frappe.conf.builder_path or "builder") + "/page/"
+		ref = path[len(editor_prefix) :].split("/")[0] if path.startswith(editor_prefix) else path
+	if frappe.db.exists("Builder Page", ref):
+		return ref, ""
+	# Routes are stored both with and without a leading slash — match either.
+	bare = ref.lstrip("/")
+	for route in (bare, f"/{bare}"):
+		if name := frappe.db.get_value("Builder Page", {"route": route}):
+			return name, ""
+	if name := frappe.db.get_value("Builder Page", {"page_title": ref}):
+		return name, ""
+	return None, f"no page on this site has id, route, or title '{ref}'"
+
+
 def run_read_page(ctx, args: dict) -> str:
-	page_id = (args.get("page_id") or "").strip()
-	if not page_id or not frappe.db.exists("Builder Page", page_id):
+	page_id, why = resolve_page_reference(args.get("page_id") or "")
+	if page_id is None:
 		return (
-			f"FAILED: page '{page_id or '(none)'}' not found — list the site's pages with "
+			f"FAILED: {why} — list the site's pages with "
 			"query_records('Builder Page', fields=['name', 'route', 'page_title'])."
 		)
 	if page_id == ctx.page_id:
@@ -198,14 +231,22 @@ read_page = Tool(
 		"understand the site's existing design language before matching it — when the "
 		"user names a reference page or asks that this page fit the rest of the site, "
 		"read the reference FIRST and carry its exact values (font families, hexes, "
-		"var(--id) handles, section structure) into your brief or edits. Find page ids "
-		"with query_records('Builder Page', fields=['name', 'route', 'page_title']). "
-		"You cannot edit another page's blocks."
+		"var(--id) handles, section structure) into your brief or edits. For a normal-"
+		"size page the YAML is complete — exact enough to rebuild sections from "
+		"(add_block) when the user wants a page copied. You cannot edit another page's "
+		"blocks directly."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
-			"page_id": {"type": "string", "description": "The Builder Page id, e.g. 'page-f664795a'."},
+			"page_id": {
+				"type": "string",
+				"description": (
+					"The page, named any way the user named it: its id ('page-f664795a'), "
+					"its route, its title, or a pasted URL of this site (an editor link or "
+					"a published address)."
+				),
+			},
 		},
 		"required": ["page_id"],
 	},

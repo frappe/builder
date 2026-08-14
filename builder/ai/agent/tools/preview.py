@@ -118,9 +118,15 @@ def attach_to_model(ctx, page, image: bytes) -> tuple[int, bool]:
 
 
 def run_preview_page(ctx, args: dict) -> str:
-	page_id = ((args.get("page_id") or "").strip()) or ctx.page_id
+	from builder.ai.agent.tools.query import resolve_page_reference
+
+	page_id = ctx.page_id
+	if ref := (args.get("page_id") or "").strip():
+		page_id, why = resolve_page_reference(ref)
+		if page_id is None:
+			return f"FAILED: {why}."
 	if not page_id or not frappe.db.exists("Builder Page", page_id):
-		return f"FAILED: page '{page_id or '(none)'}' not found — open or create a page first."
+		return "FAILED: no page in context — open or create a page first."
 	if ctx.preview_count >= MAX_PREVIEWS_PER_TURN:
 		return "Preview limit reached for this turn — proceed with what you have."
 	ctx.preview_count += 1
