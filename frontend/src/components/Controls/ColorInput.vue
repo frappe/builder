@@ -18,7 +18,7 @@
 					<div class="relative w-full">
 						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
 							<Autocomplete
-								class="[&>div>input]:pl-8"
+								class="[&>div>input]:ps-8"
 								:class="{
 									'[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono':
 										isCssVariable,

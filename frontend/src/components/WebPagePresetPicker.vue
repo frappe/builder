@@ -91,7 +91,7 @@
 						<div
 							class="absolute bottom-0 left-0 top-0 w-0.5"
 							style="background: linear-gradient(180deg, #b8860b, #ffd700, #b8860b)"></div>
-						<div class="flex h-full flex-col justify-center gap-1.5 pl-3">
+						<div class="flex h-full flex-col justify-center gap-1.5 ps-3">
 							<div class="h-1.5 w-4/5 rounded-sm bg-yellow-300 opacity-90"></div>
 							<div class="h-px w-full bg-yellow-300 opacity-20"></div>
 							<div class="h-1 w-3/5 rounded-sm bg-yellow-200 opacity-50"></div>
@@ -247,7 +247,7 @@
 									linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 								background-size: 10px 10px;
 							"></div>
-						<div class="relative flex flex-col gap-1.5 border-l border-white/20 pl-2">
+						<div class="relative flex flex-col gap-1.5 border-l border-white/20 ps-2">
 							<div class="h-2 w-3/4 border-b border-t border-white/40 bg-white/5"></div>
 							<div class="flex items-center gap-1">
 								<div class="h-1.5 w-1.5 border border-white/60"></div>

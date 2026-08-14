@@ -8,12 +8,12 @@
 			@select="useTemplate"></TemplatePreview>
 		<template v-else>
 			<!-- header; pt-5 in group view lines the back button up with the preview header's -->
-			<div class="px-8 pb-4 pr-5" :class="activeGroup ? 'pt-5' : 'pt-7'">
+			<div class="px-8 pb-4 pe-5" :class="activeGroup ? 'pt-5' : 'pt-7'">
 				<Button
 					v-if="activeGroup"
 					icon-left="lucide-arrow-left"
 					variant="ghost"
-					class="-ml-3 mb-5"
+					class="-ms-3 mb-5"
 					@click="selectedGroup = ''">
 					{{ __("Back to all templates") }}
 				</Button>

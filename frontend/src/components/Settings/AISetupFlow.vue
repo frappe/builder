@@ -29,7 +29,7 @@
 				<button
 					v-for="preset in presets"
 					:key="preset.id"
-					class="group flex flex-col gap-1 rounded-lg border p-3.5 text-left transition-colors"
+					class="group flex flex-col gap-1 rounded-lg border p-3.5 text-start transition-colors"
 					:class="
 						preset.configured
 							? 'border-outline-gray-2 bg-surface-gray-1 hover:border-outline-gray-3'
@@ -56,7 +56,7 @@
 				<p class="text-p-sm text-ink-gray-6">{{ active.blurb }}</p>
 			</div>
 
-			<ol v-if="active.key_steps?.length" class="flex flex-col gap-1.5 pl-1">
+			<ol v-if="active.key_steps?.length" class="flex flex-col gap-1.5 ps-1">
 				<li v-for="(s, i) in active.key_steps" :key="s" class="flex gap-2 text-p-sm text-ink-gray-7">
 					<span class="text-ink-gray-4">{{ i + 1 }}</span>
 					<span>{{ s }}</span>

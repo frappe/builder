@@ -3,7 +3,7 @@
 		<Tooltip :text="isCssVariable ? resolvedFont : undefined">
 			<Autocomplete
 				ref="fontInput"
-				class="[&>div>input]:pl-9"
+				class="[&>div>input]:ps-9"
 				:class="{
 					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
 				}"

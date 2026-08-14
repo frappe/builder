@@ -37,7 +37,7 @@
 					@click="loadMore('__root__', rootLoadMore.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
 					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount)]) }}
-					<span class="ml-0.5 text-ink-gray-3">
+					<span class="ms-0.5 text-ink-gray-3">
 						{{ __("({0} remaining)", [rootLoadMore.totalCount - rootLoadMore.loadedCount]) }}
 					</span>
 				</button>

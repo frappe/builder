@@ -29,7 +29,7 @@
 			class="canvas-container absolute bottom-0 flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 			<template v-slot:header>
 				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
-					<div class="flex items-center gap-1 pl-2 text-xs">
+					<div class="flex items-center gap-1 ps-2 text-xs">
 						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">{{ __("Page") }}</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">

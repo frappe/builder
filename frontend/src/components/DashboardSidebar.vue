@@ -27,7 +27,7 @@
 
 			<p
 				v-if="!builderProjectFolder.data?.length"
-				class="mt-0.5 flex h-7 items-center pl-2 text-sm text-ink-gray-5">
+				class="mt-0.5 flex h-7 items-center ps-2 text-sm text-ink-gray-5">
 				{{ __("No folders yet") }}
 			</p>
 			<nav class="mt-0.5 space-y-0.5">

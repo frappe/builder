@@ -16,7 +16,7 @@
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
 								:class="{
-									'[&>input]:pl-8': labelPosition === 'left',
+									'[&>input]:ps-8': labelPosition === 'left',
 								}"
 								type="text"
 								:label="labelPosition === 'top' ? label : null"

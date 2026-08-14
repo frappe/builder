@@ -19,7 +19,7 @@
 				@input="setQuery"
 				@keydown.enter="handlePrimaryAction" />
 
-			<Popover class="relative inline-block text-left">
+			<Popover class="relative inline-block text-start">
 				<template #target="{ isOpen, togglePopover }">
 					<Button
 						@click="togglePopover"
@@ -31,7 +31,7 @@
 						]">
 						<span
 							v-if="selectedFiltersCount > 0"
-							class="bg-ink-gray-7 ml-1 rounded-full px-2 py-0.5 text-xs text-white">
+							class="bg-ink-gray-7 ms-1 rounded-full px-2 py-0.5 text-xs text-white">
 							{{ selectedFiltersCount }}
 						</span>
 						<span
@@ -50,7 +50,7 @@
 								<Checkbox
 									:modelValue="filter.selected"
 									@update:modelValue="toggleFilter(filter)"
-									class="mr-3" />
+									class="me-3" />
 								<span>{{ filter.name }}</span>
 							</label>
 						</div>
@@ -66,7 +66,7 @@
 
 		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
-				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="mr-2" />
+				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="me-2" />
 				<span>{{ __("Search inside selected block only") }}</span>
 			</label>
 		</div>
@@ -122,7 +122,7 @@
 						v-if="searchMode === 'replace'"
 						@click.stop="replaceInBlock(result, index)"
 						variant="subtle"
-						class="ml-3 px-2 py-1 text-xs"
+						class="ms-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
 						{{ __("Replace") }}
 					</Button>

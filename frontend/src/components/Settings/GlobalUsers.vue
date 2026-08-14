@@ -55,11 +55,11 @@
 					<div class="flex min-w-0 flex-col">
 						<span class="truncate text-p-sm text-ink-gray-8">
 							{{ user.full_name }}
-							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">{{ __("You") }}</Badge>
+							<Badge v-if="user.name === sessionUser" theme="gray" class="ms-1">{{ __("You") }}</Badge>
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">{{ __("Admin") }}</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ms-auto shrink-0">{{ __("Admin") }}</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
 					<template v-if="searchQuery.trim()">{{ __('No members match "{0}"', [searchQuery]) }}</template>

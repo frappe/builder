@@ -14,7 +14,7 @@
 					}">
 					<div
 						ref="headerRef"
-						class="flex cursor-grab select-none items-center justify-between px-4 py-2 pr-3 text-sm text-ink-gray-9"
+						class="flex cursor-grab select-none items-center justify-between px-4 py-2 pe-3 text-sm text-ink-gray-9"
 						:class="{ 'cursor-grabbing': isDragging }"
 						@mousedown="startDrag">
 						<slot name="header"></slot>

@@ -18,7 +18,7 @@
 		<!-- Dynamic value overlay -->
 		<div
 			v-if="dynamicValueKey"
-			class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-2 py-0.5 pl-2.5 pr-6 text-sm text-ink-violet-8"
+			class="absolute bottom-0 left-0 right-0 top-0 flex cursor-pointer items-center gap-2 rounded bg-surface-violet-2 py-0.5 ps-2.5 pe-6 text-sm text-ink-violet-8"
 			@click.stop="$emit('openDynamicModal')">
 			<span class="lucide-zap size-3" aria-hidden="true" />
 			<MiddleTruncate :text="dynamicValueKey" />

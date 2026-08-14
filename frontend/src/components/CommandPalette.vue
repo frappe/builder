@@ -10,12 +10,12 @@
 
 				<!-- Search bar -->
 				<div class="flex items-center border-b border-outline-gray-1 px-1">
-					<span class="lucide-search ml-3 size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
+					<span class="lucide-search ms-3 size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
 					<!-- Step badge -->
 					<button
 						v-if="stepLabel"
 						type="button"
-						class="text-base-semibold ml-3 flex shrink-0 items-center gap-2 py-1 text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
+						class="text-base-semibold ms-3 flex shrink-0 items-center gap-2 py-1 text-ink-gray-7 transition-colors hover:bg-surface-gray-3"
 						@click="goBack">
 						{{ stepLabel }}
 						<span class="lucide-chevron-right size-3 text-ink-gray-4" aria-hidden="true" />
@@ -24,12 +24,12 @@
 						ref="inputRef"
 						v-model="localQuery"
 						:placeholder="placeholder || (stepLabel ? __('Search...') : __('Search commands...'))"
-						class="w-full border-none bg-transparent py-3.5 pl-3 pr-4 text-base text-ink-gray-8 placeholder-ink-gray-4 outline-none ring-0 focus:outline-none focus:ring-0"
+						class="w-full border-none bg-transparent py-3.5 ps-3 pe-4 text-base text-ink-gray-8 placeholder-ink-gray-4 outline-none ring-0 focus:outline-none focus:ring-0"
 						autocomplete="off"
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
+						class="text-xs-medium me-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
 						:title="__('Close')">
 						esc
 					</kbd>

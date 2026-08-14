@@ -11,7 +11,7 @@
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
-				<div v-if="$slots.prefix" class="flex items-center pl-2">
+				<div v-if="$slots.prefix" class="flex items-center ps-2">
 					<slot name="prefix" />
 				</div>
 				<ComboboxInput
@@ -30,12 +30,12 @@
 					:placeholder="placeholder"
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
-						'pl-2': !$slots.prefix,
-						'pr-2': !hasValue && !canShowArrows,
+						'ps-2': !$slots.prefix,
+						'pe-2': !hasValue && !canShowArrows,
 					}" />
 				<span
 					v-if="hasOverflow"
-					class="pointer-events-none relative z-10 -ml-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-focus-within:hidden group-hover:to-surface-gray-3"
+					class="pointer-events-none relative z-10 -ms-4 w-4 flex-shrink-0 self-stretch bg-gradient-to-r from-transparent to-surface-gray-2 group-focus-within:hidden group-hover:to-surface-gray-3"
 					aria-hidden="true" />
 				<div class="flex items-center gap-0.5">
 					<NumberArrows
@@ -46,7 +46,7 @@
 
 					<button
 						v-if="hasValue"
-						class="mr-2 flex-shrink-0 cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
+						class="me-2 flex-shrink-0 cursor-pointer text-ink-gray-4 hover:text-ink-gray-5"
 						tabindex="-1"
 						@click.stop="clearSelection"
 						@mousedown.prevent>

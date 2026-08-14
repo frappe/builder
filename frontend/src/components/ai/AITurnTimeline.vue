@@ -11,7 +11,7 @@
 			<button
 				v-if="step.kind === 'thinking' && (running(step) || step.text)"
 				type="button"
-				class="flex w-fit items-center gap-1 text-left text-p-xs text-ink-gray-5"
+				class="flex w-fit items-center gap-1 text-start text-p-xs text-ink-gray-5"
 				:class="step.text ? 'hover:text-ink-gray-7' : 'cursor-default'"
 				:disabled="!step.text"
 				@click="toggle(step.id)">
@@ -29,7 +29,7 @@
 			     aside you opened, not the answer. -->
 			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 ps-3 text-p-xs text-ink-gray-5"
 				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
@@ -39,7 +39,7 @@
 					{{ step.summary }}
 				</span>
 				<span v-if="step.repeats" class="shrink-0 tabular-nums text-ink-gray-4">×{{ step.repeats }}</span>
-				<span v-if="duration(step.ms)" class="ml-auto shrink-0 tabular-nums text-ink-gray-4">
+				<span v-if="duration(step.ms)" class="ms-auto shrink-0 tabular-nums text-ink-gray-4">
 					{{ duration(step.ms) }}
 				</span>
 			</div>

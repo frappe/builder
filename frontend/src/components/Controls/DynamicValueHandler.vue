@@ -17,7 +17,7 @@
 							)
 						">
 						<div
-							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-left font-mono text-p-sm text-ink-gray-9"
+							class="w-full cursor-pointer truncate rounded bg-surface-gray-3 p-2 text-start font-mono text-p-sm text-ink-gray-9"
 							@click.stop="selectAndSetItem(selectedItem)">
 							<MiddleTruncate :text="selectedItem.key" />
 							<p class="truncate text-xs text-ink-gray-5" :class="{ italic: getValue(selectedItem) == null }">
@@ -27,7 +27,7 @@
 					</li>
 					<li v-for="item in filteredItems" :key="item.key">
 						<div
-							class="w-full cursor-pointer truncate rounded p-2 text-left font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
+							class="w-full cursor-pointer truncate rounded p-2 text-start font-mono text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
 							:class="{
 								'bg-surface-gray-3 text-ink-gray-9':
 									selectedItem?.key === item.key && selectedItem?.comesFrom === item.comesFrom,

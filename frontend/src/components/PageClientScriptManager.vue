@@ -125,7 +125,7 @@
 					<a
 						v-if="!scriptUsageResource.loading"
 						@click="pageListDialog = true"
-						class="ml-1 cursor-pointer text-p-sm text-ink-gray-4 underline">
+						class="ms-1 cursor-pointer text-p-sm text-ink-gray-4 underline">
 						{{ usageMessage }}
 					</a>
 				</template>
