@@ -109,7 +109,7 @@ class BlockCodec:
 
 		children = [
 			BlockCodec.compress(c, depth + 1, task_tier)
-			for c in block.get("children", [])
+			for c in block.get("children") or []
 			if isinstance(c, dict)
 		]
 		if children:

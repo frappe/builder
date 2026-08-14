@@ -51,6 +51,42 @@ def render_skeleton(root: dict, max_text: int = 60) -> str:
 	return "\n".join(lines)
 
 
+def design_digest(root: dict) -> str:
+	"""A page's design language in a few lines: fonts, colours and radii with use
+	counts, plus the top-level section rhythm. This is what a reference page is
+	read FOR — even when its tree is too big to ship whole, the digest carries the
+	exact families and hexes/var handles a matching brief needs."""
+	from collections import Counter
+
+	fonts, colors, radii = Counter(), Counter(), Counter()
+	for block, _depth in walk_blocks(root):
+		styles = block.get("baseStyles") or {}
+		if family := styles.get("fontFamily"):
+			fonts[family] += 1
+		for prop in ("color", "backgroundColor"):
+			if value := styles.get(prop):
+				colors[value] += 1
+		if radius := styles.get("borderRadius"):
+			radii[radius] += 1
+	sections = []
+	for child in root.get("children") or []:
+		if isinstance(child, dict):
+			el = child.get("element") or "div"
+			sections.append(f"{el}({child['blockName']})" if child.get("blockName") else el)
+	lines = []
+	if fonts:
+		lines.append("fonts: " + ", ".join(f"{f} x{n}" for f, n in fonts.most_common()))
+	if colors:
+		lines.append("colors: " + ", ".join(f"{c} x{n}" for c, n in colors.most_common(14)))
+	if radii:
+		lines.append("radii: " + ", ".join(f"{r} x{n}" for r, n in radii.most_common(6)))
+	if len(sections) > 40:
+		sections = [*sections[:40], f"+{len(sections) - 40} more"]
+	if sections:
+		lines.append("sections: " + " > ".join(sections))
+	return "\n".join(lines) or "(no styles set)"
+
+
 def is_text_block(block: dict) -> bool:
 	"""A leaf block that carries user-visible copy. Defined by SHAPE, not a tag
 	whitelist: non-empty innerHTML and no block children — so it catches text in

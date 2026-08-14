@@ -101,7 +101,13 @@ def get_document(ctx, args: dict) -> str:
 	data = doc.as_dict()
 	wanted = args.get("fields")
 	if isinstance(wanted, list) and wanted:
-		data = {f: data.get(f) for f in wanted}
+		# A typo'd fieldname must say so — a silent null reads as "field is empty"
+		# and the model moves on having learned nothing (a real empty field IS in
+		# the dict, as None).
+		data = {
+			f: data.get(f) if f in data else f"<no field '{f}' on {dt} — see get_doctype_schema>"
+			for f in wanted
+		}
 	else:
 		# Drop internal fields and child tables so the read stays legible + cheap.
 		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
@@ -110,10 +116,35 @@ def get_document(ctx, args: dict) -> str:
 	if dt == "Builder Page":
 		for key in ("blocks", "draft_blocks"):
 			if data.get(key):
-				data[key] = "<a Builder Page block tree; not shown here>"
+				data[key] = f"<a Builder Page block tree — read it with read_page('{doc.name}')>"
 	# Bound long values (e.g. a raw HTML blob) so a read never blows the context.
 	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
+	# A component's design IS its block tree — render it readable instead of letting
+	# the generic bound shred the raw JSON.
+	if dt == "Builder Component" and data.get("block") and doc.get("block"):
+		data["block"] = component_block_yaml(doc.block)
 	return frappe.as_json(data)
+
+
+COMPONENT_YAML_LIMIT = 8000
+
+
+def component_block_yaml(raw: str) -> str:
+	from builder.ai.block_codec import BlockCodec
+	from builder.utils import to_compact_yaml
+
+	try:
+		block = json.loads(raw)
+	except (json.JSONDecodeError, TypeError):
+		return "<unreadable block JSON>"
+	if isinstance(block, list):
+		block = block[0] if block else None
+	if not isinstance(block, dict):
+		return "<empty>"
+	rendered = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
+	if len(rendered) > COMPONENT_YAML_LIMIT:
+		rendered = rendered[:COMPONENT_YAML_LIMIT] + "\n… (truncated — a large component)"
+	return rendered
 
 
 # A data script POPULATES `data` — it must never mutate documents. A script that

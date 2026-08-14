@@ -309,6 +309,7 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 	{
 		"query_blocks",
 		"read_block",
+		"read_page",
 		"get_document",
 		"query_records",
 		"list_doctypes",
@@ -434,6 +435,9 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 		return label
 	if tool_name == "read_block":
 		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
+	if tool_name == "read_page":
+		title = args.get("page_id") and frappe.db.get_value("Builder Page", args["page_id"], "page_title")
+		return f"Read page: {title}" if title else "Read another page"
 	if tool_name == "set_design_token":
 		# The tool's argument is token_name; reading `name` meant every token in the
 		# chat read "Set theme variable" no matter which one it was.
@@ -508,6 +512,8 @@ class AgentRunner:
 		self.live_text = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
+		# read_page calls this turn — same idea, a reference sweep can't run up context.
+		self.page_read_count = 0
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
 		# page creation…) — counts as real work for the no-op-claim guards.
 		self.server_mutations = 0
