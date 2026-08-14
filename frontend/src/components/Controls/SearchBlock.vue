@@ -92,7 +92,11 @@
 				{{ __("Replace All ({0} matches)", [results.length]) }}
 			</Button>
 			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
-				{{ __("{0} replacements made", [replacedCount]) }}
+				{{
+					replacedCount === 1
+						? __("Replaced in {0} block", [replacedCount])
+						: __("Replaced in {0} blocks", [replacedCount])
+				}}
 			</div>
 		</div>
 
@@ -388,7 +392,7 @@ const replaceAll = () => {
 	});
 
 	if (totalReplacements > 0) {
-		toast.success(__("Made {0} replacements across {0} blocks", [totalReplacements]));
+		toast.success(totalReplacements === 1 ? __("Replaced in {0} block", [totalReplacements]) : __("Replaced in {0} blocks", [totalReplacements]));
 		performSearch();
 	} else {
 		toast.error(__("No replacements made"));
