@@ -282,13 +282,7 @@ def get_safer_globals():
 		as_json=frappe.as_json,
 		dict=safe_globals["dict"],
 		args=form_dict,
-		# Top-level, not just frappe.NamespaceDict below: `frappe._(...)` is an
-		# attribute read, and safe_exec's _getattr_ guard rejects any attribute
-		# name starting with "_" outright (frappe/utils/safe_exec.py,
-		# _validate_attribute_read) - it never reaches whatever "_" resolves to,
-		# regardless of where it's defined. A bare name lookup isn't attribute
-		# access, so `_(...)` at the top level is what actually works; this is
-		# also where frappe.utils.safe_exec's own render_safe_globals() puts it.
+		# must stay top-level: safe_exec's _getattr_ guard rejects `frappe._`
 		_=frappe._,
 		frappe=NamespaceDict(
 			db=NamespaceDict(

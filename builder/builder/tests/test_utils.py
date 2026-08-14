@@ -140,14 +140,11 @@ class TestBuilderUtils(FrappeTestCase):
 		self.assertEqual(data.sum, 4)
 
 	def test_execute_script_can_translate(self):
-		# frappe._(...) can't work in a Page Data Script: it's an attribute
-		# read, and the sandbox's _getattr_ guard rejects any name starting
-		# with "_" before ever getting to what "_" resolves to. "_" has to be
-		# called bare - see get_safer_globals(), and #626.
 		data = frappe._dict({})
 		execute_script('data.text = _("Supplier")', {"data": data}, "test.py")
 		self.assertEqual(data.text, "Supplier")
 
+		# the sandbox rejects `frappe._`, only the bare name works (#626)
 		with self.assertRaises(Exception):
 			execute_script('data.text = frappe._("Supplier")', {"data": data}, "test.py")
 
