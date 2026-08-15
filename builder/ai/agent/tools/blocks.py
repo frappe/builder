@@ -86,9 +86,10 @@ update_block = Tool(
 					"this.querySelector(...), never document-wide selectors. `props` holds the "
 					"instance's resolved prop values (props.active_tab); `component_data` is only "
 					"what the server data script set under component.component_data. css is scoped to "
-					"this block's subtree (@scope), so plain selectors are safe. This is where "
-					"component behaviour lives: it ships automatically with every embed instead "
-					"of needing a page script re-attached by hand."
+					"this block's subtree (@scope), so plain selectors are safe. Select ONLY class "
+					"hooks you set on the blocks (rendered HTML is not the block tree — bound "
+					"text renders as plain divs), never tags or sibling walks. Writes here "
+					"mirror into the component definition, so every embed gets the behaviour."
 				),
 			},
 		},

@@ -113,9 +113,12 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 def merge_props(block: dict, props: dict) -> None:
 	"""Per-instance prop values ({name: value}; None removes). Only `value` is
 	touched; a FIRST override borrows the declaration's config (as the canvas twin
-	does) so label/options survive in the authoritative draft."""
+	does) so label/options survive in the authoritative draft. A prop the
+	definition never declared gets DECLARED there too — a fresh embed must offer
+	the same knob, not arrive bare."""
 	current = block.setdefault("props", {})
 	declared = None
+	undeclared = {}
 	for name, value in props.items():
 		if value is None:
 			current.pop(name, None)
@@ -129,6 +132,12 @@ def merge_props(block: dict, props: dict) -> None:
 			)
 			config["value"] = value
 			current[name] = config
+			if name not in declared:
+				undeclared[name] = config
+	if undeclared and block.get("extendedFromComponent"):
+		update_definition(
+			block["extendedFromComponent"], lambda root: root.setdefault("props", {}).update(undeclared)
+		)
 
 
 def declared_props(block: dict) -> dict:
@@ -160,7 +169,25 @@ def client_script_outside_component(block: dict, args: dict) -> bool:
 
 
 def merge_client_script(block: dict, script: dict) -> None:
-	"""The block's own js/css ({js: ..., css: ...}; None clears a key)."""
+	"""The block's own js/css ({js: ..., css: ...}; None clears a key). Mirrored
+	into the component DEFINITION (root or the mirrored internal block): behaviour
+	must ship with every embed, and the edit necessarily lands on instance blocks
+	(the component exists by the time the script is written)."""
+	apply_client_script(block, script)
+	component = block.get("extendedFromComponent") or block.get("isChildOfComponent")
+	if not component:
+		return
+	inner = None if block.get("extendedFromComponent") else (block.get("referenceBlockId") or "")
+
+	def mirror(root: dict) -> None:
+		target = root if inner is None else find_block(root, inner)
+		if target is not None:
+			apply_client_script(target, script)
+
+	update_definition(component, mirror)
+
+
+def apply_client_script(block: dict, script: dict) -> None:
 	current = block.setdefault("clientScript", {})
 	for kind in ("js", "css"):
 		if kind not in script:
@@ -169,6 +196,23 @@ def merge_client_script(block: dict, script: dict) -> None:
 			current.pop(kind, None)
 		else:
 			current[kind] = script[kind]
+
+
+def update_definition(component: str, mutate) -> None:
+	"""Apply a mutation to the Builder Component's live block JSON. Editors pick
+	the change up when they next load the component; this page's instance already
+	carries the same values as overrides."""
+	import json
+
+	import frappe
+
+	if not frappe.db.exists("Builder Component", component):
+		return
+	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component, "block") or "{}")
+	if not isinstance(definition, dict):
+		return
+	mutate(definition)
+	frappe.db.set_value("Builder Component", component, "block", json.dumps(definition), update_modified=True)
 
 
 def merge_bindings(block: dict, bind: dict) -> None:
