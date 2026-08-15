@@ -339,6 +339,11 @@ def render_components(root: dict, on_open_page: bool = False) -> str:
 			lines.append(f"  default content: {' · '.join(repr(t) for t in texts)}")
 		if props := get_component_prop_values(block):
 			lines.append(f"  props (each instance sets its own values): {props}")
+		if scripts := client_script_count(block):
+			lines.append(
+				f"  carries {scripts} client script(s) on its blocks — behaviour/styles ship "
+				"with every embed; nothing to attach page-side"
+			)
 		if resolved.get("component_data_script"):
 			lines.append(
 				"  has a server data script (runs with the instance's props, fills component.* "
@@ -367,6 +372,15 @@ def render_components(root: dict, on_open_page: bool = False) -> str:
 			"the shared chrome its own — mirror that pattern:"
 		)
 	return preamble + "\n" + "\n".join(lines)
+
+
+def client_script_count(block: dict) -> int:
+	return sum(
+		1
+		for child, _depth in walk_blocks(block)
+		for kind in ("js", "css")
+		if (child.get("clientScript") or {}).get(kind) or (kind == "js" and child.get("blockClientScript"))
+	)
 
 
 def component_texts(block: dict) -> list[str]:

@@ -99,6 +99,8 @@ export class ToolDispatcher {
 				if (args.inner_html !== undefined) props.push("html");
 				if (args.element !== undefined) props.push("element");
 				if (args.classes !== undefined) props.push("classes");
+				if (args.props) props.push("props");
+				if (args.client_script) props.push("client_script");
 				return props;
 			}
 			case "add_block":
@@ -209,6 +211,15 @@ export class ToolDispatcher {
 				own[name] = { ...config, value };
 			}
 			block.setBlockProps(own);
+		}
+		// client_script = {js?, css?}; null clears a key.
+		if (args.client_script && typeof args.client_script === "object" && !Array.isArray(args.client_script)) {
+			for (const kind of ["js", "css"] as const) {
+				if (!(kind in args.client_script)) continue;
+				const value = (args.client_script as Record<string, string | null>)[kind];
+				if (value === null) delete block.clientScript[kind];
+				else block.clientScript[kind] = value;
+			}
 		}
 		if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
 		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);

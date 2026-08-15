@@ -146,6 +146,18 @@ def declared_props(block: dict) -> dict:
 	return declared if isinstance(declared, dict) else {}
 
 
+def merge_client_script(block: dict, script: dict) -> None:
+	"""The block's own js/css ({js: ..., css: ...}; None clears a key)."""
+	current = block.setdefault("clientScript", {})
+	for kind in ("js", "css"):
+		if kind not in script:
+			continue
+		if script[kind] is None:
+			current.pop(kind, None)
+		else:
+			current[kind] = script[kind]
+
+
 def merge_bindings(block: dict, bind: dict) -> None:
 	"""Merge {property: item_key} bindings into dynamicValues — one entry per bound
 	property (a re-bind replaces, a None value unbinds)."""
@@ -203,6 +215,8 @@ def merge_block_update(block: dict, args: dict) -> None:
 		merge_bindings(block, args["bind"])
 	if isinstance(args.get("props"), dict):
 		merge_props(block, args["props"])
+	if isinstance(args.get("client_script"), dict):
+		merge_client_script(block, args["client_script"])
 
 
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:

@@ -98,6 +98,14 @@ class BlockCodec:
 		# key between a component's defaults and the page-side ref that overrides them.
 		if block.get("referenceBlockId"):
 			out["of"] = block["referenceBlockId"]
+		# Behaviour/styles riding on the block itself: js runs per instance with
+		# `this` = the block's element and (component_data, props) as arguments;
+		# css is @scope'd to the block's subtree.
+		client_script = block.get("clientScript") or {}
+		if not client_script.get("js") and block.get("blockClientScript"):
+			client_script = {"js": block["blockClientScript"]}
+		if script := {k: v for k, v in client_script.items() if k in ("js", "css") and v}:
+			out["client_script"] = script
 		# Props compressed to name -> effective value (declarations on a definition,
 		# per-page values on an instance).
 		if isinstance(props := block.get("props"), dict) and props:
@@ -182,6 +190,7 @@ class BlockCodec:
 			("classes", "classes"),
 			("component", "extendedFromComponent"),
 			("child_of", "isChildOfComponent"),
+			("client_script", "clientScript"),
 		]:
 			if yaml_key in node:
 				block[block_key] = node[yaml_key]
