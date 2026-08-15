@@ -308,13 +308,17 @@ def render_components(root: dict) -> str:
 	from builder.builder.component_versions import resolve_component
 
 	# Deduped by (component, pinned version) — two instances of the SAME component
-	# can validly pin different versions, and each renders its own.
+	# can validly pin different versions, and each renders its own. The FIRST
+	# instance of each pair also contributes its per-instance overrides: how the
+	# reference ADAPTS the shared chrome is as much the contract as its layout.
 	pairs: list = []
+	instances: dict = {}
 	for block, _depth in walk_blocks(root):
 		component = block.get("extendedFromComponent")
 		pair = (component, block.get("componentVersion"))
 		if component and pair not in pairs:
 			pairs.append(pair)
+			instances[pair] = block
 	if not pairs:
 		return ""
 	pairs = pairs[:8]
@@ -341,12 +345,65 @@ def render_components(root: dict) -> str:
 		lines.append(
 			f"- {component_id} ('{names.get(component_id, component_id)}'): root {{{detail}}}{hooks}"
 		)
+		if texts := component_texts(block):
+			lines.append(f"  default content: {' · '.join(repr(t) for t in texts)}")
+		if overrides := instance_overrides(instances[(component_id, version)]):
+			lines.append(f"  the reference's instance overrides: {'; '.join(overrides)}")
 	if not lines:
 		return ""
 	return (
 		"Embedded components (their ROOT styles are the layout contract — a component "
-		"sizes itself; do not wrap or constrain it to force layout):\n" + "\n".join(lines)
+		"sizes itself; do not wrap or constrain it to force layout). Embedding is HALF "
+		"the job: an instance renders the component's DEFAULT content until the page "
+		"overrides its children, and the overrides below are how the reference makes "
+		"the shared chrome its own — mirror that pattern:\n" + "\n".join(lines)
 	)
+
+
+def component_texts(block: dict) -> list[str]:
+	"""What the component renders by default — a breadcrumb reading 'Home', a nav
+	naming another product. This is what an embedding page must OVERRIDE to make
+	the chrome its own; without it the model cannot know what the defaults say."""
+	import re
+
+	texts = []
+	for child, _depth in walk_blocks(block):
+		clean = re.sub(r"<[^>]+>", " ", child.get("innerHTML") or "").strip()
+		if clean:
+			texts.append(clean[:30])
+		if len(texts) == 6:
+			break
+	return texts
+
+
+def instance_overrides(instance: dict) -> list[str]:
+	"""The per-instance adjustments a reference applies to an embedded component:
+	replaced text, hidden parts, attribute changes. 'root {display: none}' is the
+	hide-and-replace pattern — the page suppresses the shared chrome and supplies
+	its own variant beside it."""
+	import re
+
+	notes = []
+	if root_styles := visible_styles(instance.get("baseStyles")):
+		hidden = " (HIDDEN — the page suppresses this chrome and builds its own variant nearby)"
+		notes.append(f"root {root_styles}{hidden if root_styles.get('display') == 'none' else ''}")
+	for child, _depth in walk_blocks(instance):
+		if child is instance:
+			continue
+		ref = child.get("referenceBlockId") or child.get("blockId")
+		if text := re.sub(r"<[^>]+>", " ", child.get("innerHTML") or "").strip():
+			notes.append(f"{ref} text → {text[:40]!r}")
+		if styles := visible_styles(child.get("baseStyles")):
+			notes.append(f"{ref} {styles}")
+		if attrs := child.get("attributes"):
+			notes.append(f"{ref} attrs {attrs}")
+		if len(notes) >= 8:
+			break
+	return notes[:8]
+
+
+def visible_styles(styles: dict | None) -> dict:
+	return {k: v for k, v in (styles or {}).items() if not k.startswith("__")}
 
 
 FONT_CHECK_TIMEOUT = 3

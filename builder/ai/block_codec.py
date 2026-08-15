@@ -94,6 +94,12 @@ class BlockCodec:
 			out["component"] = block["extendedFromComponent"]
 		if block.get("isChildOfComponent"):
 			out["child_of"] = block["isChildOfComponent"]
+		# `of` names WHICH component-internal block this instance child mirrors —
+		# it is the join key between a component's default content ("the 'Home'
+		# span is r72e2mg7t") and the page-side ref to update_block for a
+		# per-instance override.
+		if block.get("referenceBlockId"):
+			out["of"] = block["referenceBlockId"]
 		# Repeaters and bindings read back in the same vocabulary they're written in
 		# (repeat/bind) — without them a data-driven block reads as a plain div and
 		# its dynamic wiring is invisible.
