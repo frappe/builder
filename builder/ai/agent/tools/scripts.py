@@ -19,31 +19,33 @@ logger = frappe.logger("builder.ai.agent.scripts")
 logger.setLevel(logging.INFO)
 
 
+def page_scripts(page_id: str, script_type: str | None = None) -> list[dict]:
+	"""The client scripts attached to a page — shared by get_page_scripts (this
+	page) and read_page (a reference page, whose look may live in its CSS)."""
+	script_names = frappe.db.get_all(
+		"Builder Page Client Script",
+		filters={"parent": page_id, "parenttype": "Builder Page"},
+		pluck="builder_script",
+	)
+	if not script_names:
+		return []
+	filters: dict = {"name": ["in", script_names]}
+	if script_type:
+		filters["script_type"] = script_type
+	scripts = frappe.db.get_all(
+		"Builder Client Script",
+		filters=filters,
+		fields=["name", "script_type", "script"],
+	)
+	return [{"script_name": s.name, "script_type": s.script_type, "script": s.script} for s in scripts]
+
+
 def fetch_page_scripts(ctx, args: dict) -> str:
 	"""Return the scripts attached to ctx.page_id as a JSON string."""
-	page_id = ctx.page_id
-	script_type = args.get("script_type")
-	if not page_id:
+	if not ctx.page_id:
 		return json.dumps([])
 	try:
-		script_names = frappe.db.get_all(
-			"Builder Page Client Script",
-			filters={"parent": page_id, "parenttype": "Builder Page"},
-			pluck="builder_script",
-		)
-		if not script_names:
-			return json.dumps([])
-		filters: dict = {"name": ["in", script_names]}
-		if script_type:
-			filters["script_type"] = script_type
-		scripts = frappe.db.get_all(
-			"Builder Client Script",
-			filters=filters,
-			fields=["name", "script_type", "script"],
-		)
-		return json.dumps(
-			[{"script_name": s.name, "script_type": s.script_type, "script": s.script} for s in scripts]
-		)
+		return json.dumps(page_scripts(ctx.page_id, args.get("script_type")))
 	except Exception as e:
 		logger.warning(f"fetch_page_scripts failed: {e}")
 		return json.dumps([])

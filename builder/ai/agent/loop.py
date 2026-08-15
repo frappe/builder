@@ -309,6 +309,10 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 	{
 		"query_blocks",
 		"read_block",
+		"read_page",
+		"run_python",
+		"read_url",
+		"research",
 		"get_document",
 		"query_records",
 		"list_doctypes",
@@ -320,10 +324,11 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 
 # --- prompt-cache breakpoints (Claude via OpenRouter; stripped elsewhere) ------
 # Ported from the agent-v2 rewrite, where this scheme measured ~90% cache reads
-# on real multi-round builds (~80% input-cost cut). The system breakpoint holds
-# the prompt + tools; user turns are minutes apart, so the default 5-minute TTL
-# would expire between turns — 1h costs 2x to write but breaks even by the third
-# turn of a session.
+# on real multi-round builds (~80% input-cost cut). The system and end-of-history
+# breakpoints hold the cross-turn prefix (prompt + tools + conversation); user
+# turns are minutes apart, so the default 5-minute TTL would expire on exactly
+# the entries the next turn re-matches — 1h costs 2x to write but breaks even by
+# the third turn of a session.
 SYSTEM_CACHE_CONTROL = {"type": "ephemeral", "ttl": "1h"}
 TURN_CACHE_CONTROL = {"type": "ephemeral"}
 # Anthropic allows at most 4 cache_control markers per request.
@@ -332,6 +337,16 @@ MAX_CACHE_MARKERS = 4
 # behind a marker; long turns get a mid-turn anchor every this many messages so
 # consecutive rounds always land inside the lookback window.
 MID_TURN_MARKER_EVERY = 15
+
+
+def marker_position(messages: list[dict], pos: int) -> int:
+	"""The nearest position at or before `pos` whose message HAS content. A marker
+	on a content-less assistant tool_calls message would materialize as an empty
+	text block on the Claude path (see llm.patch_messages_for_provider), which
+	Anthropic's API rejects."""
+	while pos > 0 and not messages[pos].get("content"):
+		pos -= 1
+	return pos
 
 
 def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
@@ -402,6 +417,9 @@ TOOL_LABELS = {
 	"extract_component": "Made a reusable component",
 	"write_page_data_script": "Connected the page to data",
 	"list_doctypes": "Looked for existing data",
+	"run_python": "Looked up site data",
+	"read_url": "Read a web page",
+	"research": "Researched online",
 	"get_page_scripts": "Read the page scripts",
 	"set_page_settings": "Updated page settings",
 	"remember": "Saved a note for next time",
@@ -434,6 +452,9 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 		return label
 	if tool_name == "read_block":
 		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
+	if tool_name == "read_page":
+		title = args.get("page_id") and frappe.db.get_value("Builder Page", args["page_id"], "page_title")
+		return f"Read page: {title}" if title else "Read another page"
 	if tool_name == "set_design_token":
 		# The tool's argument is token_name; reading `name` meant every token in the
 		# chat read "Set theme variable" no matter which one it was.
@@ -508,6 +529,11 @@ class AgentRunner:
 		self.live_text = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
+		# read_page calls this turn — same idea, a reference sweep can't run up context.
+		self.page_read_count = 0
+		# Web tools this turn — bounded like every other read that costs context/latency.
+		self.web_read_count = 0
+		self.research_count = 0
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
 		# page creation…) — counts as real work for the no-op-claim guards.
 		self.server_mutations = 0
@@ -677,6 +703,21 @@ class AgentRunner:
 	def build_page_context(self) -> str:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
+	def build_open_page_context(self) -> str:
+		"""The one fact the agent cannot discover for itself: WHICH page the user has
+		open. Everything else about the site is pulled on demand (run_python, read_page,
+		query_records) — nothing is pre-baked into the context."""
+		if not self.page_id:
+			return ""
+		row = frappe.db.get_value(
+			"Builder Page", self.page_id, ["page_title", "route", "published"], as_dict=True
+		)
+		if not row:
+			return ""
+		state = "published" if row.published else "draft"
+		route = "/" + (row.route or "").lstrip("/")
+		return f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
+
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
 		the cached context block, so remembering costs nothing per-round."""
@@ -697,7 +738,7 @@ class AgentRunner:
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_page_context(), self.build_memory_context()]
+		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -724,27 +765,31 @@ class AgentRunner:
 	def refresh_cache_markers(self, messages: list[dict]) -> None:
 		"""Re-derive the prompt-cache breakpoints before every LLM round (Claude
 		routes only benefit; llm.py strips the markers for other providers).
-		Deterministic positions: the system prompt (1h TTL), the end of the replayed
-		history (the prefix next turn's first request re-matches), the current user
-		prompt (the stable turn-start prefix), the newest message (caches this
-		round's prefix for the next), and a mid-turn anchor every
-		MID_TURN_MARKER_EVERY messages so a long turn's rounds stay inside
-		Anthropic's cache-lookback window. Capped at 4 markers, oldest dropped
-		first — their cache entries were already written by earlier rounds."""
+		Deterministic positions: the system prompt and the end of the replayed
+		history (both 1h TTL — they are the prefix the NEXT turn re-matches, and
+		user turns are minutes apart, so the 5m default would expire exactly on
+		the entries that matter across turns), the current user prompt (the stable
+		turn-start prefix), the newest message (caches this round's prefix for the
+		next), and a mid-turn anchor every MID_TURN_MARKER_EVERY messages so a
+		long turn's rounds stay inside Anthropic's cache-lookback window. Capped
+		at 4 markers, oldest dropped first — their cache entries were already
+		written by earlier rounds."""
 		for m in messages:
 			m.pop("cache_control", None)
 			if isinstance(m.get("content"), list):
 				for block in m["content"]:
 					if isinstance(block, dict):
 						block.pop("cache_control", None)
-		last = len(messages) - 1
-		positions = {0, max(self.history_end_index, 0), self.prompt_index, last}
-		span = last - self.prompt_index
+		last = marker_position(messages, len(messages) - 1)
+		history_end = max(self.history_end_index, 0)
+		positions = {0, history_end, self.prompt_index, last}
+		span = len(messages) - 1 - self.prompt_index
 		if span > MID_TURN_MARKER_EVERY + 3:
 			anchor = self.prompt_index + MID_TURN_MARKER_EVERY * (span // MID_TURN_MARKER_EVERY)
-			positions.add(min(anchor, last))
+			positions.add(marker_position(messages, min(anchor, last)))
+		long_lived = {0, history_end}
 		for pos in sorted(positions)[-MAX_CACHE_MARKERS:]:
-			messages[pos]["cache_control"] = SYSTEM_CACHE_CONTROL if pos == 0 else TURN_CACHE_CONTROL
+			messages[pos]["cache_control"] = SYSTEM_CACHE_CONTROL if pos in long_lived else TURN_CACHE_CONTROL
 
 	# --- LLM call ---------------------------------------------------------
 
@@ -1434,13 +1479,13 @@ class AgentRunner:
 			# vanish on reload.
 			logger.warning("Agent returned empty response (no text; tools=%d)", len(self.tool_steps()))
 			if self.server_mutations:
-				note = "Done — the steps above were applied (I skipped the write-up)."
+				note = "Done. The steps above were applied (I skipped the write-up)."
 			elif self.tool_steps():
 				note = (
-					"I gathered that information but didn't write up a reply — ask me again and I'll answer."
+					"I gathered that information but didn't write up a reply. Ask me again and I'll answer."
 				)
 			else:
-				note = "I came back empty on that one — try rephrasing your request."
+				note = "I came back empty on that one. Try rephrasing your request."
 			metadata = {"status": "warning"}
 			if timeline := self.timeline():
 				metadata["steps"] = timeline

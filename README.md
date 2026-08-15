@@ -37,7 +37,7 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 ### Key Features
 
 - **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
-- **AI-Powered Page Generation:** Generate complete web pages instantly using AI with a simple text prompt.
+- **AI Site Builder:** Build and edit pages by chatting with Bob, an agent that grounds itself in your site instead of guessing. It reads your existing pages and follows their design language by default, reuses your components and theme tokens, fits new pages into your route structure (including dynamic detail pages), wires forms and data-driven sections to real doctypes, and researches facts online rather than inventing them. Reads respect your permissions, sensitive changes wait for your approval, and every AI edit is revertable.
 - **Responsive Views:** Ensure your sites look great on any device without the fuss.
 - **Dark Mode Support:** Built-in dark mode with automatic system preference detection and a manual override option.
 - **Built-in CMS:** Leverage Frappe Framework's inbuilt CMS to manage structured content, fetch dynamic data from your database, and power data-driven pages without a separate backend.

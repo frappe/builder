@@ -118,9 +118,15 @@ def attach_to_model(ctx, page, image: bytes) -> tuple[int, bool]:
 
 
 def run_preview_page(ctx, args: dict) -> str:
-	page_id = ((args.get("page_id") or "").strip()) or ctx.page_id
+	from builder.ai.agent.tools.query import resolve_page_reference
+
+	page_id = ctx.page_id
+	if ref := (args.get("page_id") or "").strip():
+		page_id, why = resolve_page_reference(ref)
+		if page_id is None:
+			return f"FAILED: {why}."
 	if not page_id or not frappe.db.exists("Builder Page", page_id):
-		return f"FAILED: page '{page_id or '(none)'}' not found — open or create a page first."
+		return "FAILED: no page in context — open or create a page first."
 	if ctx.preview_count >= MAX_PREVIEWS_PER_TURN:
 		return "Preview limit reached for this turn — proceed with what you have."
 	ctx.preview_count += 1
@@ -154,6 +160,16 @@ def run_preview_page(ctx, args: dict) -> str:
 	)
 	if not complete:
 		extent += " They stop before the end of the page; anything past that you have NOT seen."
+	# A screenshot of ANOTHER page is a reference to study, not a build to review —
+	# the self-review rubric below would send the model off editing blocks it can't reach.
+	if page_id != ctx.page_id:
+		return (
+			f"{extent} This is another page of the site, attached as a visual REFERENCE for "
+			"your eyes only. Study its design language — palette, typography, spacing rhythm, "
+			"section structure, imagery treatment — and carry the exact values into your work "
+			"on the open page (read_page gives you the precise fonts/hexes/handles). Its "
+			"blocks are not editable from here."
+		)
 	return (
 		f"{extent} For YOUR eyes only (the user doesn't see it). Review in "
 		"two passes, then act:\n"
@@ -181,8 +197,10 @@ preview_page = Tool(
 		"built (also refreshes the page's dashboard thumbnail — the user is not shown the "
 		"image in chat). Call it after EVERY generate_page build: it returns a review "
 		"rubric (breakage + template-fingerprint checks); fix failures with surgical "
-		"block/script edits, optionally preview once more, never loop screenshots. If "
-		"the renderer is unavailable, continue without it."
+		"block/script edits, optionally preview once more, never loop screenshots. Also "
+		"works on ANOTHER page (pass its page_id) to study it as a visual reference — do "
+		"that BEFORE designing a page that must match it, paired with read_page for the "
+		"exact values. If the renderer is unavailable, continue without it."
 	),
 	parameters={
 		"type": "object",

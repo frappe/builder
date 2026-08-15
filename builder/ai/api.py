@@ -84,7 +84,7 @@ def run(
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
 	if image_data and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(
-			_("{0} can't view images — pick a vision-capable model or remove the image").format(
+			_("{0} can't view images. Pick a vision-capable model or remove the image.").format(
 				resolved_model
 			)
 		)
@@ -142,7 +142,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
-		outcome = "Skipped — nothing was changed."
+		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
 		resumed = resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}

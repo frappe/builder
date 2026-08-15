@@ -67,7 +67,8 @@ def query_records(ctx, args: dict) -> str:
 	filters = args.get("filters") if isinstance(args.get("filters"), dict) else {}
 	limit = min(int(args.get("limit") or 20), 100)
 	try:
-		rows = frappe.get_all(dt, filters=filters, fields=fields, limit=limit)
+		# get_list, not get_all — reads answer with the session user's permissions.
+		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	return json.dumps([dict(r) for r in rows], default=str)
@@ -101,7 +102,13 @@ def get_document(ctx, args: dict) -> str:
 	data = doc.as_dict()
 	wanted = args.get("fields")
 	if isinstance(wanted, list) and wanted:
-		data = {f: data.get(f) for f in wanted}
+		# A typo'd fieldname must say so — a silent null reads as "field is empty"
+		# and the model moves on having learned nothing (a real empty field IS in
+		# the dict, as None).
+		data = {
+			f: data.get(f) if f in data else f"<no field '{f}' on {dt} — see get_doctype_schema>"
+			for f in wanted
+		}
 	else:
 		# Drop internal fields and child tables so the read stays legible + cheap.
 		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
@@ -110,10 +117,45 @@ def get_document(ctx, args: dict) -> str:
 	if dt == "Builder Page":
 		for key in ("blocks", "draft_blocks"):
 			if data.get(key):
-				data[key] = "<a Builder Page block tree; not shown here>"
-	# Bound long values (e.g. a raw HTML blob) so a read never blows the context.
-	data = {k: (v[:1000] + "…" if isinstance(v, str) and len(v) > 1000 else v) for k, v in data.items()}
+				data[key] = f"<a Builder Page block tree — read it with read_page('{doc.name}')>"
+	# Bound long values so a read never blows the context. Code fields carry the
+	# thing being asked for (a site stylesheet, head HTML) — they get a wider bound.
+	code_fields = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
+	data = {k: truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP) for k, v in data.items()}
+	# A component's design IS its block tree — render it readable instead of letting
+	# the generic bound shred the raw JSON.
+	if dt == "Builder Component" and data.get("block") and doc.get("block"):
+		data["block"] = component_block_yaml(doc.block)
 	return frappe.as_json(data)
+
+
+FIELD_CAP = 1000
+CODE_FIELD_CAP = 8000
+
+
+def truncate(value, cap: int):
+	return value[:cap] + "…" if isinstance(value, str) and len(value) > cap else value
+
+
+COMPONENT_YAML_LIMIT = 8000
+
+
+def component_block_yaml(raw: str) -> str:
+	from builder.ai.block_codec import BlockCodec
+	from builder.utils import to_compact_yaml
+
+	try:
+		block = json.loads(raw)
+	except (json.JSONDecodeError, TypeError):
+		return "<unreadable block JSON>"
+	if isinstance(block, list):
+		block = block[0] if block else None
+	if not isinstance(block, dict):
+		return "<empty>"
+	rendered = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
+	if len(rendered) > COMPONENT_YAML_LIMIT:
+		rendered = rendered[:COMPONENT_YAML_LIMIT] + "\n… (truncated — a large component)"
+	return rendered
 
 
 # A data script POPULATES `data` — it must never mutate documents. A script that
@@ -318,9 +360,12 @@ write_page_data_script_tool = Tool(
 		"filters={'published': 1})`. Then bind blocks/repeaters to the keys you set. Runs in the "
 		"safe_exec SANDBOX at render time: NO import statements — frappe.get_all/get_list/get_doc, "
 		"frappe.db.get_value/count, and frappe.utils date/format helpers (getdate, formatdate, "
-		"now_datetime, add_days, fmt_money) are preinjected. Keys must be descriptive names "
-		"(data.products) — NEVER dict method names like data.items/keys/values/get (they shadow "
-		"and break the render). READ-ONLY: never save/insert/delete documents here."
+		"now_datetime, add_days, fmt_money) are preinjected. On a DYNAMIC route "
+		"('partners/<partner_id>') the URL params arrive as frappe.form_dict.<param> — load the "
+		"record from them (data.partner = frappe.get_doc('Partner', frappe.form_dict.partner_id)). "
+		"Keys must be descriptive names (data.products) — NEVER dict method names like "
+		"data.items/keys/values/get (they shadow and break the render). READ-ONLY: never "
+		"save/insert/delete documents here."
 	),
 	parameters={
 		"type": "object",

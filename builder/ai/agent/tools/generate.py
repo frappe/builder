@@ -20,9 +20,13 @@ generate_page = Tool(
 		"Use this when the page is empty, or when the user asks to create a new page or "
 		"fully redesign/restructure the existing one — but only AFTER the user has "
 		"approved a proposed plan. When a plan is pending and the user approves it (any "
-		"affirmative), call THIS — do not present the plan again. For small, targeted "
-		"edits to an existing page, use the block tools (update_block, add_block, …) "
-		"instead — do NOT regenerate the whole page for a minor change."
+		"affirmative), call THIS — do not present the plan again. If the page must MATCH "
+		"a reference page of this site, you must have read_page'd that reference THIS "
+		"turn and the brief must carry its exact values (var(--id) handles, font names, "
+		"section structure) — a brief written from your memory or description of a page "
+		"you didn't read produces an unrelated design. For small, targeted edits to an "
+		"existing page, use the block tools (update_block, add_block, …) instead — do "
+		"NOT regenerate the whole page for a minor change."
 	),
 	parameters={
 		"type": "object",

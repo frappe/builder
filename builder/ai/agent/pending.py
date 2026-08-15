@@ -28,13 +28,21 @@ GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
 def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 	"""Persist + emit a pending sensitive action, then end the turn without mutating."""
+	metadata = {"status": "pending_action", "kind": kind, "payload": payload}
+	# The card is this turn's ONLY persisted message — without the timeline and
+	# trace, everything the turn did before proposing (a whole page build) is
+	# invisible on reload and undebuggable after the fact.
+	if timeline := ctx.timeline():
+		metadata["steps"] = timeline
+	if ctx.trace:
+		metadata["debug"] = {"loopModel": ctx.loop_model, "trace": ctx.trace}
 	message_id = AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
 		summary,
 		message_type="clarification",
 		task_type="agent",
-		metadata={"status": "pending_action", "kind": kind, "payload": payload},
+		metadata=metadata,
 	)
 	ctx.emit(
 		"clarify",
@@ -203,7 +211,7 @@ def apply_connect_form(payload: dict) -> str:
 		attach_form_script(page_id, doctype, wf_name, selector, ordered_fieldnames)
 	slug = desk_slug(doctype)
 	return frappe._(
-		"Form connected — submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
+		"Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
 	).format(doctype, slug)
 
 

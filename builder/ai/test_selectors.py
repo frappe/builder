@@ -2,6 +2,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.selectors import (
 	block_text,
+	design_digest,
 	find_block,
 	is_text_block,
 	match_block,
@@ -105,3 +106,38 @@ class TestMatching(FrappeTestCase):
 
 	def test_matches_anything_without_filters(self):
 		self.assertTrue(match_block(text("a")))
+
+
+STYLED_PAGE = {
+	"blockId": "root",
+	"element": "body",
+	"baseStyles": {"backgroundColor": "#E6DECA", "fontFamily": "Libre Baskerville"},
+	"children": [
+		{
+			"blockId": "hero",
+			"element": "section",
+			"blockName": "hero",
+			"baseStyles": {"backgroundColor": "#E6DECA"},
+			"children": [
+				text("title", "h1", "Ravens", baseStyles={"fontFamily": "Cinzel", "color": "#161412"}),
+				text("cta", "a", "Send word", baseStyles={"color": "#161412", "borderRadius": "2px"}),
+			],
+		},
+		{"blockId": "footer", "element": "section", "children": []},
+	],
+}
+
+
+class TestDesignDigest(FrappeTestCase):
+	def test_counts_fonts_colors_and_radii_across_the_tree(self):
+		digest = design_digest(STYLED_PAGE)
+
+		self.assertIn("fonts: Libre Baskerville x1, Cinzel x1", digest)
+		self.assertIn("colors: #E6DECA x2, #161412 x2", digest)
+		self.assertIn("radii: 2px x1", digest)
+
+	def test_lists_top_level_sections_in_order(self):
+		self.assertIn("sections: section(hero) > section", design_digest(STYLED_PAGE))
+
+	def test_reports_an_unstyled_tree(self):
+		self.assertEqual(design_digest({"blockId": "root", "children": []}), "(no styles set)")
