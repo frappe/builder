@@ -11,14 +11,19 @@
 			<button
 				v-if="step.kind === 'thinking' && (running(step) || step.text)"
 				type="button"
-				class="flex w-fit items-center gap-1 text-left text-p-xs text-ink-gray-5"
+				class="flex w-fit items-center gap-2 text-left text-p-xs text-ink-gray-5"
 				:class="step.text ? 'hover:text-ink-gray-7' : 'cursor-default'"
 				:disabled="!step.text"
 				@click="toggle(step.id)">
-				<span
-					v-if="step.text"
-					class="lucide-chevron-right size-3 shrink-0 transition-transform"
-					:class="expanded.has(step.id) && 'rotate-90'" />
+				<!-- The leading slot is always the tool-icon size, chevron or not: every
+				     row's label starts at the same x, and "Thinking" doesn't hop sideways
+				     the moment streamed reasoning makes the chevron appear. -->
+				<span class="flex size-3.5 shrink-0 items-center justify-center">
+					<span
+						v-if="step.text"
+						class="lucide-chevron-right size-3 transition-transform"
+						:class="expanded.has(step.id) && 'rotate-90'" />
+				</span>
 				<span :class="running(step) && 'animate-shine'">
 					{{ running(step) ? "Thinking" : "Thought" }}
 				</span>
@@ -26,10 +31,10 @@
 			</button>
 			<!-- Reasoning arrives as markdown ("**Sorting visual elements**"), so render
 			     it — as raw text the asterisks were on show. Muted and tight: it is an
-			     aside you opened, not the answer. -->
+			     aside you opened, not the answer. The rule hangs under the chevron. -->
 			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				class="ai-thought prose prose-sm ml-[7px] max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
 				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
@@ -50,6 +55,15 @@
 				class="ai-prose prose prose-sm max-w-none break-words text-p-sm text-ink-gray-7"
 				v-html="renderMarkdown(step.text)" />
 		</template>
+
+		<!-- The turn's idle stretches (tool arguments streaming, the next round
+		     opening) live HERE, as the timeline's tail row with the same geometry as
+		     every other row — so when the next step arrives, "Working" becomes
+		     "Thinking" (or a tool line) in place, with no layout shift. -->
+		<div v-if="working" class="flex items-center gap-2 text-p-xs text-ink-gray-5">
+			<span class="size-3.5 shrink-0" />
+			<span class="animate-shine">Working</span>
+		</div>
 	</div>
 </template>
 
@@ -60,8 +74,9 @@ import { computed, ref } from "vue";
 
 /** The steps of one assistant turn, in the order they happened. Fed live from
  * `ai_chat_step` events and rehydrated from message metadata on reload, so a
- * turn reads the same whether you watched it or came back to it. */
-const props = defineProps<{ steps: AITurnStep[] }>();
+ * turn reads the same whether you watched it or came back to it. `working`
+ * appends the turn's idle shimmer as the tail row (see template). */
+const props = defineProps<{ steps: AITurnStep[]; working?: boolean }>();
 
 /** A run of the same tool collapses to one row with a count. Minting six design
  * tokens is one action to the reader, not six lines of "Set theme variable", and

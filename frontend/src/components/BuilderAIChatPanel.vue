@@ -97,16 +97,23 @@
 							<AITurnTimeline
 								v-if="message.metadata?.steps?.length"
 								:steps="message.metadata.steps"
+								:working="stillWorking(message) && !assistantText(message)"
 								class="mb-2" />
 							<div
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
-							<!-- Turn running, nothing on the clock: the model is streaming a tool
-							     call's arguments (a page-sized edit takes a while) or opening the
-							     next round. Sits below the answer so it reads as the turn's own
-							     status, never as the reply shimmering while it's being read. -->
-							<div v-if="stillWorking(message)" class="animate-shine mt-1 w-fit text-p-xs">Working</div>
+							<!-- Turn running, nothing on the clock. Between rounds the shimmer is
+							     the timeline's own tail row (same geometry as the steps, so the
+							     next step replaces it in place, no layout shift); this standalone
+							     line covers only what the timeline can't — the answer already
+							     streaming (it sits below the reply as the turn's status, never the
+							     reply shimmering while it's read) or no steps yet. -->
+							<div
+								v-if="stillWorking(message) && (!!assistantText(message) || !message.metadata?.steps?.length)"
+								class="animate-shine mt-1 w-fit text-p-xs">
+								Working
+							</div>
 						</template>
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
