@@ -1052,8 +1052,7 @@ class AgentRunner:
 		token = locks.acquire(key, locks.PAGE_LOCK_TTL)
 		if token is None:
 			return (
-				f"FAILED: page {page_id} is being edited by another AI task right now — "
-				"try again in a moment."
+				f"FAILED: page {page_id} is being edited by another AI task right now. Try again in a moment."
 			)
 		self.held_locks.append((key, token))
 		self.tree = WorkingTree(page_writer.load_page_root(page_id))
@@ -1427,8 +1426,10 @@ class AgentRunner:
 	def run_turn(self, started: float):
 		# Load the page into the authoritative working tree, under the page lock.
 		if self.page_id and self.tree is None:
-			if (failure := self.load_page(self.page_id)).startswith("FAILED"):
-				self.fail_turn(failure)
+			if self.load_page(self.page_id).startswith("FAILED"):
+				# The chat shows this verbatim: human words, no FAILED prefix, no
+				# internal page id (the user is already on the page).
+				self.fail_turn("Another AI request is still working on this page. Try again in a moment.")
 				return
 		if self.tree is None:
 			self.tree = WorkingTree(None)
