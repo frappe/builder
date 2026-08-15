@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"PO-Revision-Date: 2026-08-15 19:23\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -3948,7 +3948,7 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "Feltöltés..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
