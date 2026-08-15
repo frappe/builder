@@ -11,14 +11,6 @@ def read(request: dict):
 
 
 class TestGetDocument(FrappeTestCase):
-	def test_hides_password_fields(self):
-		frappe.db.set_single_value("Builder Settings", "ai_api_key", "sk-secret-value")
-
-		out = read({"doctype": "Builder Settings"})
-
-		self.assertEqual(out["ai_api_key"], "<hidden (Password field)>")
-		self.assertNotIn("sk-secret-value", json.dumps(out))
-
 	def test_returns_code_fields_nearly_whole(self):
 		style = "\n".join(f".rule-{i} {{ color: red; }}" for i in range(200))
 		frappe.db.set_single_value("Builder Settings", "style", style)

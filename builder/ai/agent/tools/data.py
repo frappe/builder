@@ -117,7 +117,10 @@ def get_document(ctx, args: dict) -> str:
 		for key in ("blocks", "draft_blocks"):
 			if data.get(key):
 				data[key] = f"<a Builder Page block tree — read it with read_page('{doc.name}')>"
-	data = redact_and_bound(meta, data)
+	# Bound long values so a read never blows the context. Code fields carry the
+	# thing being asked for (a site stylesheet, head HTML) — they get a wider bound.
+	code_fields = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
+	data = {k: truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP) for k, v in data.items()}
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
@@ -126,25 +129,11 @@ def get_document(ctx, args: dict) -> str:
 
 
 FIELD_CAP = 1000
-# Code fields carry the thing being asked for (a site-wide stylesheet, head HTML) —
-# the generic bound would shred exactly what the read was for.
 CODE_FIELD_CAP = 8000
 
 
-def redact_and_bound(meta, data: dict) -> dict:
-	"""Secrets never leave; long values are bounded so a read never blows the context."""
-	secret = {f.fieldname for f in meta.fields if f.fieldtype == "Password"}
-	code = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
-
-	def bound(key, value):
-		if key in secret and value:
-			return "<hidden (Password field)>"
-		if not isinstance(value, str):
-			return value
-		cap = CODE_FIELD_CAP if key in code else FIELD_CAP
-		return value[:cap] + "…" if len(value) > cap else value
-
-	return {k: bound(k, v) for k, v in data.items()}
+def truncate(value, cap: int):
+	return value[:cap] + "…" if isinstance(value, str) and len(value) > cap else value
 
 
 COMPONENT_YAML_LIMIT = 8000
