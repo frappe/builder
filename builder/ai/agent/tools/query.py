@@ -425,12 +425,18 @@ def visible_styles(styles: dict | None) -> dict:
 
 
 FONT_CHECK_TIMEOUT = 3
+# Per-family probes must be bounded per read: real pages name 2-4 families, the
+# answers cache for a day, and a reference read cannot stall behind a font sweep.
+# (A single combined css2 request can NOT replace them: in multi-family mode the
+# endpoint answers 200 and silently DROPS unknown families.)
+FONT_PROBE_LIMIT = 5
 
 
-def google_font_exists(family: str) -> bool:
+def google_font_exists(family: str) -> bool | None:
 	"""css2 answers 400 for a family Google Fonts does not ship. Cached a day —
-	the catalog barely changes and a read must not re-probe per turn. Fails open
-	on network trouble: a false warning is worse than a missed one."""
+	the catalog barely changes and a read must not re-probe per turn. Returns None
+	on network trouble; the caller fails open for the whole probe run (one dead
+	network must cost one timeout, not one per family)."""
 	from urllib.parse import quote_plus
 
 	import requests
@@ -444,7 +450,7 @@ def google_font_exists(family: str) -> bool:
 			timeout=FONT_CHECK_TIMEOUT,
 		)
 	except Exception:
-		return True
+		return None
 	frappe.cache().set_value(cache_key, "1" if response.ok else "0", expires_in_sec=86400)
 	return response.ok
 
@@ -488,9 +494,14 @@ def unavailable_fonts(root: dict) -> list[str]:
 	if not families:
 		return []
 	user_fonts = {row.font_name for row in frappe.get_all("User Font", fields=["font_name"])}
-	return sorted(
-		family for family in families if family not in user_fonts and not google_font_exists(family)
-	)
+	missing = []
+	for family in sorted(families - user_fonts)[:FONT_PROBE_LIMIT]:
+		exists = google_font_exists(family)
+		if exists is None:
+			break
+		if not exists:
+			missing.append(family)
+	return missing
 
 
 def font_warning(root: dict) -> str:
