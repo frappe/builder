@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-15 19:23\n"
+"PO-Revision-Date: 2026-08-15 20:57\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -1029,7 +1029,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr ""
+msgstr "Tervező"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:248
 msgid "Detach Component"
@@ -1471,7 +1471,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "Rögzített"
 
 #: frontend/src/components/Commands/index.ts:248
 msgid "Focus Property Search"
@@ -1892,7 +1892,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "Nagy"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -2086,7 +2086,7 @@ msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:74
 msgid "Model"
-msgstr ""
+msgstr "Modell"
 
 #: frontend/src/components/WebPagePresetPicker.vue:457
 msgid "Modern"
