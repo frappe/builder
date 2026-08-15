@@ -142,6 +142,28 @@ export class AIChatController {
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
 	);
+	/** Blocks the user EXPLICITLY attached to the next message. Canvas selection by
+	 * itself sends nothing — attaching is the deliberate act that scopes the request,
+	 * so the agent can treat these with real priority. */
+	readonly attachedBlocks = ref<{ id: string; label: string }[]>([]);
+	/** Currently selected canvas blocks not yet attached — what the "+" chip offers. */
+	readonly attachableBlocks = computed<Block[]>(() => {
+		const attached = new Set(this.attachedBlocks.value.map((b) => b.id));
+		return this.selectedBlocks.value.filter((b) => b.blockId && !attached.has(b.blockId));
+	});
+
+	attachSelection = () => {
+		for (const block of this.attachableBlocks.value) {
+			this.attachedBlocks.value.push({
+				id: block.blockId,
+				label: block.getBlockDescription?.() || block.blockName || block.element || "block",
+			});
+		}
+	};
+
+	detachBlock = (id: string) => {
+		this.attachedBlocks.value = this.attachedBlocks.value.filter((b) => b.id !== id);
+	};
 	readonly modelLabel = computed(
 		() =>
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
@@ -711,10 +733,12 @@ export class AIChatController {
 		this.submittedForPageId = this.pageId.value;
 		if (!this.sessionId.value) await this.loadSession();
 
-		const selectedBlockContext = this.selectedBlocks.value
-			.filter((b) => b.blockId)
-			.map((b) => ({ id: b.blockId, label: b.blockName || b.element }));
-		const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
+		// Only EXPLICITLY attached blocks travel with the message; a block merely
+		// selected on the canvas is not context (selection changes constantly while
+		// editing, and riding it along made the agent's scope arbitrary).
+		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
+		const selectedIds = this.attachedBlocks.value.map((b) => b.id);
+		this.attachedBlocks.value = [];
 		const attachedImageData = this.imageData.value;
 		const attachedImageUrl = this.imagePreviewUrl.value;
 		this.clearImage();

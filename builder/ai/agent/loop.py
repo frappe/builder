@@ -780,7 +780,7 @@ class AgentRunner:
 
 		user_text = self.prompt
 		if self.selected_block_ids:
-			user_text += f"\n\n(User has selected: {', '.join(self.selected_block_ids)})"
+			user_text += "\n\n" + self.attached_blocks_note()
 		if self.image_url:
 			messages.append(
 				{
@@ -1093,6 +1093,30 @@ class AgentRunner:
 			or (s.get("kind") == "text" and s.get("text"))
 			or (s.get("kind") == "thinking" and s.get("text"))
 		]
+
+	def attached_blocks_note(self) -> str:
+		"""The user deliberately attached these blocks to the message — that is a
+		scoping act, not a hint. Labels ride along because a bare ref gives the model
+		nothing to anchor the request's nouns to ('nav should be centered' + an
+		unlabelled id got the selection ignored and a sibling edited instead)."""
+		from builder.ai.agent.selectors import find_block
+
+		root = self.page_root()
+		labelled = []
+		for ref in self.selected_block_ids:
+			block = find_block(root, ref) if root else None
+			if block:
+				label = block.get("blockName") or f"<{block.get('element') or 'div'}>"
+				labelled.append(f"{ref} ({label})")
+			else:
+				labelled.append(ref)
+		return (
+			"ATTACHED BLOCKS — the user explicitly attached these blocks to this request: "
+			f"{', '.join(labelled)}. They are the SUBJECT and SCOPE of the request: interpret "
+			"it as being about them, and make your changes on or within them. Look at their "
+			"current styles first (page context or read_block). Touch other blocks only when "
+			"the request itself plainly requires it, and say so if you do."
+		)
 
 	def begin_activity(self, tool_name: str, args: dict) -> dict | None:
 		if tool_name in ACTIVITY_SILENT:
