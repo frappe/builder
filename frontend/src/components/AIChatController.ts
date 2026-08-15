@@ -142,9 +142,8 @@ export class AIChatController {
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
 	);
-	/** Blocks the user EXPLICITLY attached to the next message. Canvas selection by
-	 * itself sends nothing — attaching is the deliberate act that scopes the request,
-	 * so the agent can treat these with real priority. */
+	/** Blocks the user explicitly attached to the next message — canvas selection
+	 * by itself sends nothing. */
 	readonly attachedBlocks = ref<{ id: string; label: string }[]>([]);
 	/** Currently selected canvas blocks not yet attached — what the "+" chip offers. */
 	readonly attachableBlocks = computed<Block[]>(() => {
@@ -733,9 +732,7 @@ export class AIChatController {
 		this.submittedForPageId = this.pageId.value;
 		if (!this.sessionId.value) await this.loadSession();
 
-		// Only EXPLICITLY attached blocks travel with the message; a block merely
-		// selected on the canvas is not context (selection changes constantly while
-		// editing, and riding it along made the agent's scope arbitrary).
+		// Only explicitly attached blocks travel with the message.
 		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
 		const selectedIds = this.attachedBlocks.value.map((b) => b.id);
 		this.attachedBlocks.value = [];

@@ -368,10 +368,8 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 		)
 	else:
 		context = render_skeleton_context(root, selected_block_ids)
-	# The contract of THIS page's embedded components (declared props, default
-	# content, data script). Without it an instance advertises nothing, and the
-	# model reaches for a child override where a declared prop was the intended
-	# surface — it cannot use what it cannot see.
+	# THIS page's component contracts — without them an instance advertises nothing
+	# (declared props were unreachable from the open page).
 	from builder.ai.agent.tools.query import render_components
 
 	if contract := render_components(root, on_open_page=True):
@@ -421,9 +419,7 @@ BUILDER_DOCTYPE_LABELS = {
 # Plain-English name for each tool, for tools whose line needs no arguments. The
 # derived fallback (tool_name.replace("_", " ")) leaks the vocabulary of the tool
 # API — "Get doctype schema", "Seed sample data" — which is ours, not the user's.
-# (while running, once done) — a step's label must be true to its status: the
-# timeline shows the running voice live and flips to the done voice when the
-# step completes (finish_step re-emits the same id with the final summary).
+# (while running, once done) — finish_step re-emits the step with the done voice.
 TOOL_LABELS = {
 	"generate_page": ("Building the page", "Built the page"),
 	"preview_page": ("Checking how it looks", "Checked how it looks"),
@@ -455,8 +451,7 @@ def readable_doctype(doctype: str | None) -> str:
 def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -> str:
 	"""A short human line for the chat's timeline ("Read block: Hero"). Written for
 	someone who asked for a web page, not someone who knows the tool API. The voice
-	follows the step's status: "Reading page…" while it runs, "Read page" once done —
-	a past-tense label on a running step claims something that hasn't happened."""
+	follows the step's status: running or done."""
 	args = args or {}
 
 	def block_label(ref: str | None) -> str:
@@ -1094,10 +1089,8 @@ class AgentRunner:
 		]
 
 	def attached_blocks_note(self) -> str:
-		"""The user deliberately attached these blocks to the message — that is a
-		scoping act, not a hint. Labels ride along because a bare ref gives the model
-		nothing to anchor the request's nouns to ('nav should be centered' + an
-		unlabelled id got the selection ignored and a sibling edited instead)."""
+		"""Attaching is a scoping act, not a hint — and labels ride along because a
+		bare ref gives the model nothing to anchor the request's nouns to."""
 		from builder.ai.agent.selectors import find_block
 
 		root = self.page_root()
@@ -1127,8 +1120,7 @@ class AgentRunner:
 			status="running",
 		)
 		self.step_starts[entry["id"]] = time.monotonic()
-		# The done-voice label, resolved NOW while args/tree still describe the call;
-		# finish_step swaps it in so the persisted timeline reads as history.
+		# Resolved now, while args/tree still describe the call; finish_step swaps it in.
 		self.step_done_summaries[entry["id"]] = activity_summary(tool_name, args, self.tree)
 		return entry
 
@@ -1427,8 +1419,7 @@ class AgentRunner:
 		# Load the page into the authoritative working tree, under the page lock.
 		if self.page_id and self.tree is None:
 			if self.load_page(self.page_id).startswith("FAILED"):
-				# The chat shows this verbatim: human words, no FAILED prefix, no
-				# internal page id (the user is already on the page).
+				# Shown verbatim in the chat — human words, no internal page id.
 				self.fail_turn("Another AI request is still working on this page. Try again in a moment.")
 				return
 		if self.tree is None:

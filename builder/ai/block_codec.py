@@ -94,16 +94,12 @@ class BlockCodec:
 			out["component"] = block["extendedFromComponent"]
 		if block.get("isChildOfComponent"):
 			out["child_of"] = block["isChildOfComponent"]
-		# `of` names WHICH component-internal block this instance child mirrors —
-		# it is the join key between a component's default content ("the 'Home'
-		# span is r72e2mg7t") and the page-side ref to update_block for a
-		# per-instance override.
+		# `of` = which component-internal block this instance child mirrors; the join
+		# key between a component's defaults and the page-side ref that overrides them.
 		if block.get("referenceBlockId"):
 			out["of"] = block["referenceBlockId"]
-		# Component props: on a component definition these are the declarations
-		# (name -> {value/propOptions}); on an instance, the values this page
-		# passes. Compressed to name -> effective value — enough to see what is
-		# parameterizable and what this instance sets.
+		# Props compressed to name -> effective value (declarations on a definition,
+		# per-page values on an instance).
 		if isinstance(props := block.get("props"), dict) and props:
 			out["props"] = {
 				name: config.get(

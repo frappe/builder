@@ -346,7 +346,7 @@ class TestComponentContract(FrappeTestCase):
 
 		self.assertIn("FONT AVAILABILITY", out)
 		self.assertIn("'Inter Variable'", out)
-		self.assertIn("default serif", out)
+		self.assertIn("Times-like serif", out)
 		# The generation step must hear it too, not just the loop model.
 		self.assertIn("FONT AVAILABILITY", ctx.reference_reads[0])
 

@@ -240,9 +240,8 @@
 			</div>
 
 			<div class="border-t border-outline-gray-1 p-4">
-				<!-- Context is an explicit act: canvas selection alone sends NOTHING. The
-				     user attaches the selected block(s), which the agent then treats as
-				     the request's subject and scope, with real priority. -->
+				<!-- Canvas selection alone sends nothing; attaching is the explicit act
+				     that scopes the request. -->
 				<div
 					v-if="attachedBlocks.length || attachableBlocks.length"
 					class="mb-2 flex flex-wrap items-center gap-1.5">

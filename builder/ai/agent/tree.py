@@ -111,11 +111,9 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 
 
 def merge_props(block: dict, props: dict) -> None:
-	"""Per-instance component prop values ({name: value}; None removes). Stored
-	entries are the editor's config dicts — only `value` is touched so a prop's
-	label/options survive the merge. A FIRST override borrows the declaration's
-	full config (the canvas twin does the same); a bare value would drop the
-	prop's label/options from the authoritative draft on the next reload."""
+	"""Per-instance prop values ({name: value}; None removes). Only `value` is
+	touched; a FIRST override borrows the declaration's config (as the canvas twin
+	does) so label/options survive in the authoritative draft."""
 	current = block.setdefault("props", {})
 	declared = None
 	for name, value in props.items():
@@ -134,8 +132,7 @@ def merge_props(block: dict, props: dict) -> None:
 
 
 def declared_props(block: dict) -> dict:
-	"""The component declaration's prop configs, honouring the instance's pinned
-	version. parse_json returns a fresh dict, so callers may copy entries shallowly."""
+	"""The declaration's prop configs, honouring the instance's pinned version."""
 	component = block.get("extendedFromComponent")
 	if not component:
 		return {}

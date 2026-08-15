@@ -52,13 +52,9 @@ def render_skeleton(root: dict, max_text: int = 60) -> str:
 
 
 def design_digest(root: dict) -> str:
-	"""A page's design language in a few lines: fonts with their ROLES, colours
-	and radii with use counts, plus the top-level section rhythm. This is what a
-	reference page is read FOR — even when its tree is too big to ship whole, the
-	digest carries the exact families and hexes/var handles a matching brief needs.
-	Fonts state where and at what size they appear, not just how often: a bare
-	'Newsreader x1' reads like half of a heading/body pairing and gets promoted to
-	every heading, when the page uses it for one 48px hero moment."""
+	"""A page's design language in a few lines: fonts with their ROLES (elements +
+	sizes, not just counts — a bare 'x1' reads like half of a pairing and gets
+	promoted to every heading), colours and radii with use counts, section rhythm."""
 	from collections import Counter
 
 	fonts: dict[str, dict] = {}

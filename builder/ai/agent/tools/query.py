@@ -211,11 +211,8 @@ def run_read_page(ctx, args: dict) -> str:
 		parts.append(components)
 	if scripts := render_scripts(page_id):
 		parts.append(scripts)
-	# Stash the reference's page-level geometry and design digest for the
-	# generation step: the loop model sees this full read, but generate_page's
-	# model sees only the brief it distils — and briefs lose exactly this (a
-	# 'sidebar beside content' in prose came back as a stacked column; a one-off
-	# 48px serif came back as every heading). See artifact.reference_geometry.
+	# For the generation step, which sees only the brief — and briefs lose exactly
+	# this (geometry, font roles). See artifact.reference_geometry.
 	if (reads := getattr(ctx, "reference_reads", None)) is not None:
 		sections = (f"{label}:", layout_scaffold(root), design_digest(root), fonts_missing, components)
 		reads.append("\n".join(section for section in sections if section))
@@ -275,9 +272,7 @@ SCAFFOLD_MAX_LINES = 30
 
 
 def layout_scaffold(root: dict) -> str:
-	"""The page-level geometry as indented lines. This is what a prose brief loses:
-	'sidebar beside content' says nothing about HOW — the scaffold states it
-	(flexDirection row, the rail component embed, the scrolling main column)."""
+	"""The page-level geometry as indented lines — the HOW a prose brief loses."""
 	lines = []
 	for block, depth in walk_blocks(root):
 		if depth > SCAFFOLD_DEPTH:
@@ -375,9 +370,7 @@ def render_components(root: dict, on_open_page: bool = False) -> str:
 
 
 def component_texts(block: dict) -> list[str]:
-	"""What the component renders by default — a breadcrumb reading 'Home', a nav
-	naming another product. This is what an embedding page must OVERRIDE to make
-	the chrome its own; without it the model cannot know what the defaults say."""
+	"""The component's default copy — what an embedding page must override."""
 	import re
 
 	texts = []
@@ -391,10 +384,7 @@ def component_texts(block: dict) -> list[str]:
 
 
 def instance_overrides(instance: dict) -> list[str]:
-	"""The per-instance adjustments a reference applies to an embedded component:
-	replaced text, hidden parts, attribute changes. 'root {display: none}' is the
-	hide-and-replace pattern — the page suppresses the shared chrome and supplies
-	its own variant beside it."""
+	"""Per-instance adjustments: replaced text, hidden parts, props, attributes."""
 	import re
 
 	from builder.builder.doctype.builder_component.builder_component import get_component_prop_values
@@ -425,18 +415,14 @@ def visible_styles(styles: dict | None) -> dict:
 
 
 FONT_CHECK_TIMEOUT = 3
-# Per-family probes must be bounded per read: real pages name 2-4 families, the
-# answers cache for a day, and a reference read cannot stall behind a font sweep.
-# (A single combined css2 request can NOT replace them: in multi-family mode the
-# endpoint answers 200 and silently DROPS unknown families.)
+# A combined css2 request cannot replace per-family probes: multi-family mode
+# answers 200 and silently DROPS unknown families.
 FONT_PROBE_LIMIT = 5
 
 
 def google_font_exists(family: str) -> bool | None:
-	"""css2 answers 400 for a family Google Fonts does not ship. Cached a day —
-	the catalog barely changes and a read must not re-probe per turn. Returns None
-	on network trouble; the caller fails open for the whole probe run (one dead
-	network must cost one timeout, not one per family)."""
+	"""css2 answers 400 for a family Google Fonts does not ship; cached a day.
+	None means network trouble — the caller fails open for the whole run."""
 	from urllib.parse import quote_plus
 
 	import requests
@@ -472,17 +458,12 @@ GENERIC_FAMILIES = {
 
 
 def primary_family(value: str) -> str:
-	"""'Inter, sans-serif' names the font 'Inter' — probe the first family, never
-	the whole stack as one name (Google Fonts answers 400 for the stack, flagging
-	a perfectly loadable font as missing)."""
+	"""'Inter, sans-serif' names the font 'Inter' — never probe the stack as one name."""
 	return value.split(",")[0].strip().strip("'\"")
 
 
 def unavailable_fonts(root: dict) -> list[str]:
-	"""Families this page names that will NOT render on this site: no User Font
-	record and not a Google Fonts family. The browser falls back to its default
-	serif silently — which is how a faithful copy of a reference still comes out
-	broken when the reference relied on a font asset this site never got."""
+	"""Families that will NOT render here: no User Font record, not on Google Fonts."""
 	families = set()
 	for block, _depth in walk_blocks(root):
 		value = (block.get("baseStyles") or {}).get("fontFamily")
@@ -512,8 +493,9 @@ def font_warning(root: dict) -> str:
 		"FONT AVAILABILITY: "
 		+ ", ".join(f"'{family}'" for family in missing)
 		+ " does NOT resolve on this site — no User Font record here and not a Google Fonts "
-		"family, so text set in it silently falls back to the browser's default serif (the "
-		"reference itself renders broken on this site). Never copy the name as-is: use the "
+		"family, so text set in it abandons the page's Inter default and falls back to the "
+		"browser's own Times-like serif (the reference itself renders broken on this site). "
+		"Never copy the name as-is: use the "
 		"closest family that IS available (a real Google Fonts family, or an installed User "
 		"Font), and tell the user this site is missing the font asset the reference names."
 	)

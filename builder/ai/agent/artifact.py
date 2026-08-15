@@ -127,12 +127,8 @@ def found_photo_list(ctx) -> str:
 
 
 def reference_geometry(ctx) -> str:
-	"""The page-level geometry of every reference page read this turn.
-
-	The generator sees only the brief the loop model distilled, and prose loses
-	exactly this: 'a sidebar beside a scrollable main container' in a brief came
-	back as a stacked column. The scaffolds carry the load-bearing values — root
-	flexDirection, the panes, the component embeds — as ground truth."""
+	"""Geometry of every reference read this turn — the generator sees only the
+	brief, and prose loses exactly these load-bearing values."""
 	reads = getattr(ctx, "reference_reads", None) or []
 	if not reads:
 		return ""
