@@ -200,10 +200,13 @@ def run_read_page(ctx, args: dict) -> str:
 	if root is None:
 		return f"{label} has no blocks yet."
 	components = render_components(root)
+	fonts_missing = font_warning(root)
 	parts = [
 		f"{label} — READ-ONLY reference; its refs are NOT editable from here.",
 		render_reference(root),
 	]
+	if fonts_missing:
+		parts.append(fonts_missing)
 	if components:
 		parts.append(components)
 	if scripts := render_scripts(page_id):
@@ -215,7 +218,12 @@ def run_read_page(ctx, args: dict) -> str:
 	# 48px serif came back as every heading). See artifact.reference_geometry.
 	if (reads := getattr(ctx, "reference_reads", None)) is not None:
 		reads.append(
-			"\n".join(filter(None, (f"{label}:", layout_scaffold(root), design_digest(root), components)))
+			"\n".join(
+				filter(
+					None,
+					(f"{label}:", layout_scaffold(root), design_digest(root), fonts_missing, components),
+				)
+			)
 		)
 	return "\n".join(parts)
 
@@ -338,6 +346,64 @@ def render_components(root: dict) -> str:
 	return (
 		"Embedded components (their ROOT styles are the layout contract — a component "
 		"sizes itself; do not wrap or constrain it to force layout):\n" + "\n".join(lines)
+	)
+
+
+FONT_CHECK_TIMEOUT = 3
+
+
+def google_font_exists(family: str) -> bool:
+	"""css2 answers 400 for a family Google Fonts does not ship. Cached a day —
+	the catalog barely changes and a read must not re-probe per turn. Fails open
+	on network trouble: a false warning is worse than a missed one."""
+	from urllib.parse import quote_plus
+
+	import requests
+
+	cache_key = f"google_font_exists:{family}"
+	if (cached := frappe.cache().get_value(cache_key)) is not None:
+		return cached == "1"
+	try:
+		response = requests.head(
+			f"https://fonts.googleapis.com/css2?family={quote_plus(family)}:wght@400",
+			timeout=FONT_CHECK_TIMEOUT,
+		)
+	except Exception:
+		return True
+	frappe.cache().set_value(cache_key, "1" if response.ok else "0", expires_in_sec=86400)
+	return response.ok
+
+
+def unavailable_fonts(root: dict) -> list[str]:
+	"""Families this page names that will NOT render on this site: no User Font
+	record and not a Google Fonts family. The browser falls back to its default
+	serif silently — which is how a faithful copy of a reference still comes out
+	broken when the reference relied on a font asset this site never got."""
+	families = {
+		family
+		for block, _depth in walk_blocks(root)
+		if (family := (block.get("baseStyles") or {}).get("fontFamily")) and not family.startswith("var(")
+	}
+	if not families:
+		return []
+	user_fonts = {row.font_name for row in frappe.get_all("User Font", fields=["font_name"])}
+	return sorted(
+		family for family in families if family not in user_fonts and not google_font_exists(family)
+	)
+
+
+def font_warning(root: dict) -> str:
+	missing = unavailable_fonts(root)
+	if not missing:
+		return ""
+	return (
+		"FONT AVAILABILITY: "
+		+ ", ".join(f"'{family}'" for family in missing)
+		+ " does NOT resolve on this site — no User Font record here and not a Google Fonts "
+		"family, so text set in it silently falls back to the browser's default serif (the "
+		"reference itself renders broken on this site). Never copy the name as-is: use the "
+		"closest family that IS available (a real Google Fonts family, or an installed User "
+		"Font), and tell the user this site is missing the font asset the reference names."
 	)
 
 

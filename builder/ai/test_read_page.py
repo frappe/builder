@@ -1,5 +1,6 @@
 import json
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -314,6 +315,68 @@ class TestComponentContract(FrappeTestCase):
 		self.assertIn("flexDirection: row", message)
 		# A ctx without the stash (tests, older callers) produces no message.
 		self.assertEqual(reference_geometry(SimpleNamespace()), "")
+
+	def test_warns_when_a_reference_font_cannot_resolve_on_this_site(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Ghost Font Reference",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{
+									"element": "h1",
+									"innerHTML": "Hello",
+									"baseStyles": {"fontFamily": "Inter Variable"},
+								}
+							],
+						}
+					]
+				),
+			}
+		).insert()
+		ctx = SimpleNamespace(page_id="another-page", page_read_count=0, reference_reads=[])
+
+		with patch(
+			"builder.ai.agent.tools.query.google_font_exists", side_effect=lambda f: f != "Inter Variable"
+		):
+			out = run_read_page(ctx, {"page_id": page.name})
+
+		self.assertIn("FONT AVAILABILITY", out)
+		self.assertIn("'Inter Variable'", out)
+		self.assertIn("default serif", out)
+		# The generation step must hear it too, not just the loop model.
+		self.assertIn("FONT AVAILABILITY", ctx.reference_reads[0])
+
+	def test_no_font_warning_when_families_resolve(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Resolvable Font Reference",
+				"draft_blocks": json.dumps(
+					[{"element": "div", "baseStyles": {"fontFamily": "Inter"}, "children": []}]
+				),
+			}
+		).insert()
+		ctx = SimpleNamespace(page_id="another-page", page_read_count=0, reference_reads=[])
+
+		with patch("builder.ai.agent.tools.query.google_font_exists", return_value=True):
+			out = run_read_page(ctx, {"page_id": page.name})
+
+		self.assertNotIn("FONT AVAILABILITY", out)
+
+	def test_a_user_font_counts_as_available(self):
+		from builder.ai.agent.tools.query import unavailable_fonts
+
+		frappe.get_doc({"doctype": "User Font", "font_name": "House Grotesk"}).insert(
+			ignore_if_duplicate=True
+		)
+		root = {"element": "div", "baseStyles": {"fontFamily": "House Grotesk"}, "children": []}
+
+		with patch("builder.ai.agent.tools.query.google_font_exists", return_value=False):
+			self.assertEqual(unavailable_fonts(root), [])
 
 	def test_states_each_pinned_version_when_instances_differ(self):
 		from builder.builder.component_versions import ensure_component_version
