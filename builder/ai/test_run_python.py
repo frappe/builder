@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -13,15 +14,16 @@ def run(script, page_id="the-open-page"):
 class TestRunPython(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
-		# CI test sites run with server scripts off — the sandbox gate would fail
-		# every test before it exercises anything.
+		# CI sites run with server scripts off, and the gate reads
+		# common_site_config.json (not frappe.conf) — patch the gate itself, which
+		# also covers safe_exec's own internal check.
 		super().setUpClass()
-		cls.sandbox_was = frappe.conf.server_script_enabled
-		frappe.conf.server_script_enabled = True
+		cls.sandbox_gate = patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=True)
+		cls.sandbox_gate.start()
 
 	@classmethod
 	def tearDownClass(cls):
-		frappe.conf.server_script_enabled = cls.sandbox_was
+		cls.sandbox_gate.stop()
 		super().tearDownClass()
 
 	def test_reads_records(self):
