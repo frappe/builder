@@ -110,6 +110,20 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 			block.setdefault(target, {})[key] = value
 
 
+def merge_props(block: dict, props: dict) -> None:
+	"""Per-instance component prop values ({name: value}; None removes). Stored
+	entries are the editor's config dicts — only `value` is touched so a prop's
+	label/options survive the merge."""
+	current = block.setdefault("props", {})
+	for name, value in props.items():
+		if value is None:
+			current.pop(name, None)
+		elif isinstance(current.get(name), dict):
+			current[name]["value"] = value
+		else:
+			current[name] = {"value": value, "isDynamic": False, "isPassedDown": False, "comesFrom": None}
+
+
 def merge_bindings(block: dict, bind: dict) -> None:
 	"""Merge {property: item_key} bindings into dynamicValues — one entry per bound
 	property (a re-bind replaces, a None value unbinds)."""
@@ -165,6 +179,8 @@ def merge_block_update(block: dict, args: dict) -> None:
 		block["classes"] = args["classes"]
 	if isinstance(args.get("bind"), dict):
 		merge_bindings(block, args["bind"])
+	if isinstance(args.get("props"), dict):
+		merge_props(block, args["props"])
 
 
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:

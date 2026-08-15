@@ -100,6 +100,19 @@ class BlockCodec:
 		# per-instance override.
 		if block.get("referenceBlockId"):
 			out["of"] = block["referenceBlockId"]
+		# Component props: on a component definition these are the declarations
+		# (name -> {value/propOptions}); on an instance, the values this page
+		# passes. Compressed to name -> effective value — enough to see what is
+		# parameterizable and what this instance sets.
+		if isinstance(props := block.get("props"), dict) and props:
+			out["props"] = {
+				name: config.get(
+					"value", config.get("propOptions", {}).get("options", {}).get("defaultValue")
+				)
+				if isinstance(config, dict)
+				else config
+				for name, config in props.items()
+			}
 		# Repeaters and bindings read back in the same vocabulary they're written in
 		# (repeat/bind) — without them a data-driven block reads as a plain div and
 		# its dynamic wiring is invisible.

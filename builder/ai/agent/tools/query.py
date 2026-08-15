@@ -306,6 +306,7 @@ def render_components(root: dict) -> str:
 	instance's pinned version: the contract must describe what THIS page renders,
 	which is not always the live component."""
 	from builder.builder.component_versions import resolve_component
+	from builder.builder.doctype.builder_component.builder_component import get_component_prop_values
 
 	# Deduped by (component, pinned version) — two instances of the SAME component
 	# can validly pin different versions, and each renders its own. The FIRST
@@ -347,6 +348,13 @@ def render_components(root: dict) -> str:
 		)
 		if texts := component_texts(block):
 			lines.append(f"  default content: {' · '.join(repr(t) for t in texts)}")
+		if props := get_component_prop_values(block):
+			lines.append(f"  props (each instance sets its own values): {props}")
+		if resolved.get("component_data_script"):
+			lines.append(
+				"  has a server data script (runs with the instance's props, fills component.* "
+				f"bindings) — read it via get_document('Builder Component', '{component_id}')"
+			)
 		if overrides := instance_overrides(instances[(component_id, version)]):
 			lines.append(f"  the reference's instance overrides: {'; '.join(overrides)}")
 	if not lines:
@@ -383,7 +391,11 @@ def instance_overrides(instance: dict) -> list[str]:
 	its own variant beside it."""
 	import re
 
+	from builder.builder.doctype.builder_component.builder_component import get_component_prop_values
+
 	notes = []
+	if props := get_component_prop_values(instance):
+		notes.append(f"props {props}")
 	if root_styles := visible_styles(instance.get("baseStyles")):
 		hidden = " (HIDDEN — the page suppresses this chrome and builds its own variant nearby)"
 		notes.append(f"root {root_styles}{hidden if root_styles.get('display') == 'none' else ''}")

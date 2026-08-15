@@ -194,6 +194,24 @@ export class ToolDispatcher {
 				}
 			});
 		}
+		// props = {name: value} → per-instance component prop values. Starts from the
+		// instance's OWN props (not the merged view) so untouched defaults keep
+		// flowing from the component; the touched prop borrows its config from the
+		// merged view when the instance has none, so label/options survive.
+		if (args.props && typeof args.props === "object" && !Array.isArray(args.props)) {
+			const root = block.getPropsRoot() || block;
+			const own = { ...(root.props || {}) };
+			const merged = block.getBlockProps();
+			for (const [name, value] of Object.entries(args.props as Record<string, string | null>)) {
+				if (value === null) {
+					delete own[name];
+					continue;
+				}
+				const config = own[name] || merged[name] || { isDynamic: false, isPassedDown: false, comesFrom: null };
+				own[name] = { ...config, value };
+			}
+			block.setBlockProps(own);
+		}
 		if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
 		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
 		if (args.element !== undefined) block.element = args.element;

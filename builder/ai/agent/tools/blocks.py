@@ -63,6 +63,17 @@ update_block = Tool(
 					"inner_text/attributes (it renders literally). A null value unbinds."
 				),
 			},
+			"props": {
+				"type": "object",
+				"description": (
+					"Component prop values for THIS instance: {name: value} for props the "
+					"component declares (read_page / get_document show them with defaults). "
+					"The clean way to parameterize embedded chrome — an active tab, a title, "
+					"a variant — when the component was built for it. A null value reverts "
+					"the prop to the component's default. Only meaningful on a component "
+					"instance's root block."
+				),
+			},
 		},
 		"required": ["block_id"],
 	},
