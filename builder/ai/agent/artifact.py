@@ -144,8 +144,9 @@ def reference_geometry(ctx) -> str:
 		"vertical stack, and give each font the ROLE its usage shows — the dominant family "
 		"is the working face for headings AND body; a font used once is a one-spot accent "
 		"to reproduce in that one place (its element, its size), never the display face "
-		"for every heading. The reference's measured sizes beat this prompt's scale "
-		"defaults: a calm reference stays calm."
+		"for every heading and never every section's opener — at most the hero moment. "
+		"The reference's measured sizes beat this prompt's scale defaults: a calm "
+		"reference stays calm."
 	)
 	return preamble + "\n\n" + "\n\n".join(reads)
 

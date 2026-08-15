@@ -490,9 +490,12 @@ def render_scripts(page_id: str) -> str:
 		return ""
 	return (
 		"Attached page scripts — these often CARRY the behaviour of the page's components "
-		"(a sidebar's expand, a nav's toggle). When you embed the same components, attach "
-		"the SAME scripts verbatim (set_page_script with this exact content); never write "
-		"your own replacement for behaviour you can copy:\n" + "\n".join(parts)
+		"(a sidebar's expand, a nav's toggle). Embedding a component and attaching its "
+		"companion scripts are ONE action, not optional polish: without them the chrome is "
+		"dead (no hover-expand, no mobile toggle), and styling the instance to LOOK right "
+		"statically does not replace the behaviour. Attach the SAME scripts verbatim "
+		"(set_page_script with this exact content); never write your own replacement for "
+		"behaviour you can copy, and never skip them:\n" + "\n".join(parts)
 	)
 
 
