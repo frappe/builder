@@ -26,10 +26,37 @@ STRIPPED_DB_METHODS = ("sql", "set_value", "add_index")
 def sandbox_globals() -> dict:
 	from frappe.utils.safe_exec import get_safe_globals
 
-	safe = get_safe_globals()  # built per call — stripping keys touches only this copy
+	safe = get_safe_globals()  # built per call — rebinding keys touches only this copy
+	fr = safe["frappe"]
+	db = fr["db"]
 	for method in STRIPPED_DB_METHODS:
-		safe["frappe"]["db"].pop(method, None)
+		db.pop(method, None)
+	# Server-script globals read with ELEVATED rights (get_all and frappe.db.*
+	# skip permission checks) — right for System-Manager-authored scripts, wrong
+	# for model-written ones. Every read here answers with the session user's OWN
+	# permissions: Bob sees exactly what the person driving it could open in Desk.
+	fr["get_all"] = fr["get_list"] = db["get_all"] = db["get_list"] = frappe.get_list
+	fr["get_doc"] = fr["get_cached_doc"] = guarded_get_doc
+	for method in ("get_value", "get_single_value", "exists", "count"):
+		db[method] = read_guarded(getattr(frappe.db, method))
+	if "get_value" in fr:
+		fr["get_value"] = db["get_value"]
 	return safe
+
+
+def guarded_get_doc(*args, **kwargs):
+	doc = frappe.get_doc(*args, **kwargs)
+	if not doc.has_permission():
+		frappe.throw(f"No permission to read {doc.doctype}", frappe.PermissionError)
+	return doc
+
+
+def read_guarded(fn):
+	def checked(doctype, *args, **kwargs):
+		frappe.has_permission(doctype, throw=True)
+		return fn(doctype, *args, **kwargs)
+
+	return checked
 
 
 def run_python(ctx, args: dict) -> str:
@@ -73,8 +100,8 @@ run_python_tool = Tool(
 		"or record, cross-doctype questions. Available: frappe.get_all/get_list/get_doc, "
 		"frappe.db.get_value/get_single_value/count/exists, frappe.utils date/format "
 		"helpers, frappe.session.user, and `page_id` (the open page). No imports, no raw "
-		"SQL; nothing it writes persists. Orient yourself with it instead of guessing or "
-		"asking the user."
+		"SQL; nothing it writes persists, and reads answer with the current user's own "
+		"permissions. Orient yourself with it instead of guessing or asking the user."
 	),
 	parameters={
 		"type": "object",

@@ -67,7 +67,8 @@ def query_records(ctx, args: dict) -> str:
 	filters = args.get("filters") if isinstance(args.get("filters"), dict) else {}
 	limit = min(int(args.get("limit") or 20), 100)
 	try:
-		rows = frappe.get_all(dt, filters=filters, fields=fields, limit=limit)
+		# get_list, not get_all — reads answer with the session user's permissions.
+		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	return json.dumps([dict(r) for r in rows], default=str)

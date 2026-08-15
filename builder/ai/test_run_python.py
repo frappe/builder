@@ -62,3 +62,16 @@ class TestRunPython(FrappeTestCase):
 
 		self.assertLess(len(out), 7000)
 		self.assertIn("truncated", out)
+
+	def test_reads_answer_with_the_users_own_permissions(self):
+		frappe.set_user("Guest")
+		try:
+			listed = run("result = frappe.get_all('User', pluck='name')")
+			fetched = run("result = frappe.db.get_value('User', 'Administrator', 'email')")
+			loaded = run("result = frappe.get_doc('User', 'Administrator').email")
+		finally:
+			frappe.set_user("Administrator")
+
+		self.assertIn("FAILED", listed)
+		self.assertIn("FAILED", fetched)
+		self.assertIn("FAILED", loaded)
