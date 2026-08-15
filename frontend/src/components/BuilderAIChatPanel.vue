@@ -788,6 +788,11 @@ function toggleChips(messageId: string) {
 	--tw-prose-headings: var(--ink-gray-9);
 	--tw-prose-bold: var(--ink-gray-9);
 	--tw-prose-code: var(--ink-gray-8);
+	/* Code blocks: typography's pre defaults are fixed light-theme colors, so on
+	 * the dark panel a route tree rendered as barely-visible dark-on-dark. Pin
+	 * BOTH sides of the pair to theme-adaptive tokens (they flip together). */
+	--tw-prose-pre-code: var(--ink-gray-8);
+	--tw-prose-pre-bg: var(--surface-gray-2);
 	--tw-prose-links: var(--ink-gray-9);
 	--tw-prose-bullets: var(--ink-gray-4);
 	--tw-prose-hr: var(--outline-gray-1);
