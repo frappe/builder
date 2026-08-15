@@ -5,17 +5,17 @@
 		<!-- lucide string icon (e.g. "lucide-search") -->
 		<span
 			v-if="item.icon && typeof item.icon === 'string'"
-			:class="[item.icon, 'mr-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']"
+			:class="[item.icon, 'me-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']"
 			aria-hidden="true" />
 		<!-- component icon -->
 		<component
 			v-else-if="item.icon"
 			:is="item.icon"
-			:class="['mr-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']" />
+			:class="['me-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']" />
 		<span class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 			{{ item.title }}
 		</span>
-		<span v-if="item.description && showDescription" class="ml-3 shrink-0 text-xs text-ink-gray-4">
+		<span v-if="item.description && showDescription" class="ms-3 shrink-0 text-xs text-ink-gray-4">
 			{{ item.description }}
 		</span>
 	</div>

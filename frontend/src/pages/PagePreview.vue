@@ -4,7 +4,7 @@
 			<router-link
 				:to="{ name: 'builder', params: { pageId: route.params.pageId || 'new' } }"
 				class="flex w-fit text-sm text-ink-gray-7 hover:text-ink-gray-9">
-				<span class="lucide-arrow-left mr-4 h-4 w-4 cursor-pointer" aria-hidden="true" />
+				<span class="lucide-arrow-left me-4 h-4 w-4 cursor-pointer" aria-hidden="true" />
 				{{ __("Back to builder") }}
 			</router-link>
 			<div class="flex gap-1">

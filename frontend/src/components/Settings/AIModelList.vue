@@ -28,7 +28,7 @@
 
 			<div v-for="group in grouped" :key="group.provider" class="flex flex-col">
 				<button
-					class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
+					class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-start"
 					@click="editProvider(group.provider)">
 					<span
 						class="text-p-sm font-medium"
@@ -47,7 +47,7 @@
 						size="sm"
 						:modelValue="Boolean(row.enabled)"
 						@update:modelValue="(value: boolean) => toggle(row, value)" />
-					<button class="flex min-w-0 flex-1 flex-col text-left" @click="editModel(row)">
+					<button class="flex min-w-0 flex-1 flex-col text-start" @click="editModel(row)">
 						<span class="flex items-center gap-1.5">
 							<span class="truncate text-p-sm text-ink-gray-8">{{ row.label }}</span>
 							<span

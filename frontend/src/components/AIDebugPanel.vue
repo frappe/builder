@@ -145,7 +145,7 @@
 					<span class="lucide-chevron-right size-3.5 transition-transform group-open:rotate-90" />
 					Raw JSON
 					<button
-						class="ml-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
+						class="ms-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
 						@click.prevent="copyRaw">
 						<span :class="copied ? 'lucide-check' : 'lucide-copy'" class="size-3" />
 						{{ copied ? "copied" : "copy" }}

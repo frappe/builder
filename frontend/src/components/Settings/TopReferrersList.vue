@@ -16,7 +16,7 @@
 						return h('img', {
 							src: `https://${row.domain}/favicon.ico`,
 							alt: row.domain,
-							class: 'inline-block mr-2 w-5 h-5 align-middle rounded',
+							class: 'inline-block me-2 w-5 h-5 align-middle rounded',
 							onError: (e: Event) => {
 								const img = e.target as HTMLImageElement | null;
 								if (img) {

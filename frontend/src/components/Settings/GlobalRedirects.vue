@@ -15,8 +15,8 @@
 			<div
 				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 				:class="rowGridClass">
-				<div class="pl-2">{{ __("Source") }}</div>
-				<div class="border-l border-outline-gray-1 pl-2">{{ __("Target") }}</div>
+				<div class="ps-2">{{ __("Source") }}</div>
+				<div class="border-l border-outline-gray-1 ps-2">{{ __("Target") }}</div>
 				<div></div>
 			</div>
 
@@ -115,7 +115,7 @@
 								<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
 								<span class="lucide-arrow-right size-3 text-ink-gray-4" aria-hidden="true" />
 								<code class="font-mono text-ink-gray-7" v-html="highlight('to', example.to)" />
-								<span class="pl-4 text-ink-gray-5">{{ example.label }}</span>
+								<span class="ps-4 text-ink-gray-5">{{ example.label }}</span>
 							</template>
 						</div>
 					</div>
@@ -137,7 +137,7 @@ type RedirectRow = { id: string; from: string; to: string; status: string; forwa
 type Draft = { from: string; to: string; status: string; forward: boolean };
 
 const rowGridClass = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-2 px-1";
-const cellDividerClass = "border-l border-outline-gray-1 pl-2";
+const cellDividerClass = "border-l border-outline-gray-1 ps-2";
 const fields = ["from", "to"] as const;
 const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
 const statusOptions = [

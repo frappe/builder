@@ -20,7 +20,7 @@
 										open();
 									}
 								">
-								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
+								<div class="flex w-fit max-w-[60%] items-center gap-2 ps-2">
 									<div class="icon">
 										<component
 											v-if="value.propOptions?.type"

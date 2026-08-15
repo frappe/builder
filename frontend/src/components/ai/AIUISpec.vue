@@ -93,7 +93,7 @@
 						v-for="(option, j) in el.options || []"
 						:key="j"
 						:disabled="!interactive || disabled"
-						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
+						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-start transition-all disabled:cursor-not-allowed disabled:opacity-50"
 						:class="
 							isSelected(i, j)
 								? 'border-outline-gray-4 bg-surface-gray-2'

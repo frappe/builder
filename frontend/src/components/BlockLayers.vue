@@ -32,13 +32,13 @@
 					"
 					@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
 					<span
-						class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+						class="group my-[7px] flex items-center gap-1.5 pe-[2px] font-medium"
 						:style="{ paddingLeft: `${indent}px` }"
 						:class="{
 							'!opacity-50': !element.isVisible() || isParentHidden,
 						}">
 						<div>
-							<div class="scroll-into-view-anchor absolute ml-20"></div>
+							<div class="scroll-into-view-anchor absolute ms-20"></div>
 						</div>
 						<span
 							:class="[
@@ -66,7 +66,7 @@
 							aria-hidden="true"
 							v-if="!Boolean(element.extendedFromComponent)" />
 						<span
-							class="lucide-layout-dashboard mr-1 h-3 w-3"
+							class="lucide-layout-dashboard me-1 h-3 w-3"
 							:class="{
 								'text-purple-500 opacity-80 dark:opacity-100 dark:brightness-125 dark:saturate-[0.3]':
 									element.isExtendedFromComponent(),
@@ -100,7 +100,7 @@
 							v-if="!element.isRoot() && !isParentHidden && !readonly"
 							:class="[
 								element.isVisible() ? 'lucide-eye' : 'lucide-eye-off',
-								'invisible ml-auto mr-2 h-3 w-3 group-hover:visible',
+								'invisible ms-auto me-2 h-3 w-3 group-hover:visible',
 							]"
 							aria-hidden="true"
 							@click.stop="element.toggleVisibility()" />

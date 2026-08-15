@@ -97,7 +97,7 @@
 			class="text-sm-semibold fixed bottom-12 left-[50%] flex translate-x-[-50%] cursor-default items-center justify-center gap-2 rounded-lg bg-surface-base px-3 py-2 text-center text-ink-gray-7 shadow-md"
 			v-show="!canvasProps.panning && !canvasStore.isDragging">
 			{{ Math.round(canvasProps.scale * 100) + "%" }}
-			<div class="ml-2 cursor-pointer" @click="setScaleAndTranslate">
+			<div class="ms-2 cursor-pointer" @click="setScaleAndTranslate">
 				<FitScreenIcon />
 			</div>
 		</div>

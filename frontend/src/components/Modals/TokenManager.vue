@@ -45,12 +45,12 @@
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
-						<div class="pl-2">{{ __("Name") }}</div>
+						<div class="ps-2">{{ __("Name") }}</div>
 						<template v-if="isColorType">
-							<div class="border-l border-outline-gray-1 pl-2">{{ __("Light") }}</div>
-							<div class="border-l border-outline-gray-1 pl-2">{{ __("Dark") }}</div>
+							<div class="border-l border-outline-gray-1 ps-2">{{ __("Light") }}</div>
+							<div class="border-l border-outline-gray-1 ps-2">{{ __("Dark") }}</div>
 						</template>
-						<div v-else class="border-l border-outline-gray-1 pl-2">{{ __("Value") }}</div>
+						<div v-else class="border-l border-outline-gray-1 ps-2">{{ __("Value") }}</div>
 					</div>
 
 					<template v-for="group in displayGroups" :key="group.group ?? '__flat__'">
@@ -181,7 +181,7 @@
 											:text="__('This is a standard variable. It cannot be modified or deleted.')"
 											placement="top">
 											<span
-												class="lucide-info ml-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
+												class="lucide-info ms-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
 												aria-hidden="true" />
 										</Tooltip>
 										<input
@@ -204,7 +204,7 @@
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
 										<Tooltip v-if="row.name" :text="__('Copy var(--{0})', [row.name])" placement="top">
 											<div
-												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
+												class="invisible ms-auto me-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
@@ -382,7 +382,7 @@
 					<button
 						@click="downloadSampleCSV"
 						variant="subtle"
-						class="ml-2 text-xs text-blue-600 underline hover:text-blue-700">
+						class="ms-2 text-xs text-blue-600 underline hover:text-blue-700">
 						{{ __("Download sample") }}
 					</button>
 				</div>

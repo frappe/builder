@@ -3,7 +3,7 @@
 		<span class="truncate"><slot /></span>
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>
-				<span class="lucide-info ml-1 h-[12px] w-[12px] text-gray-500" aria-hidden="true" />
+				<span class="lucide-info ms-1 h-[12px] w-[12px] text-gray-500" aria-hidden="true" />
 			</template>
 			<template #body>
 				<slot name="body">

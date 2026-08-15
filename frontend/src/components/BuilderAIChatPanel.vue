@@ -140,7 +140,7 @@
 							</button>
 							<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 							<template v-if="message.metadata?.debug">
-								<div class="ml-auto flex items-center gap-2">
+								<div class="ms-auto flex items-center gap-2">
 									<span v-if="message.metadata.debug.elapsedMs" class="font-mono">
 										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
 									</span>
@@ -245,7 +245,7 @@
 							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
 							<button
 								type="button"
-								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+								class="ms-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
 								title="Remove image"
 								@click="clearImage">
 								<span class="lucide-x h-3 w-3" />

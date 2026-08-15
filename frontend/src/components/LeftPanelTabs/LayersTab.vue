@@ -1,5 +1,5 @@
 <template>
-	<div class="min-h-full p-3 pr-0" @click.stop="canvasStore.activeCanvas?.clearSelection()">
+	<div class="min-h-full p-3 pe-0" @click.stop="canvasStore.activeCanvas?.clearSelection()">
 		<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
 			<span
 				:class="[
@@ -12,7 +12,7 @@
 			{{ canvasStore.activeCanvas?.activeBreakpoint }}
 		</span>
 		<BlockLayers
-			class="block-layers w-fit min-w-full pr-3"
+			class="block-layers w-fit min-w-full pe-3"
 			v-if="pageCanvas"
 			:disable-draggable="true"
 			:readonly="builderStore.readOnlyMode"
@@ -20,7 +20,7 @@
 			:blocks="[pageCanvas?.getRootBlock() as Block]"
 			v-show="canvasStore.editingMode == 'page'" />
 		<BlockLayers
-			class="block-layers w-fit min-w-full pr-3"
+			class="block-layers w-fit min-w-full pe-3"
 			ref="componentLayers"
 			:disable-draggable="true"
 			:readonly="builderStore.readOnlyMode"

@@ -1,5 +1,5 @@
 <template>
-	<div class="no-scrollbar h-full overflow-y-auto overflow-x-hidden pr-1">
+	<div class="no-scrollbar h-full overflow-y-auto overflow-x-hidden pe-1">
 		<TrackingDisabledNotice v-if="trackingEnabled === false" />
 		<template v-else>
 			<AnalyticsOverview

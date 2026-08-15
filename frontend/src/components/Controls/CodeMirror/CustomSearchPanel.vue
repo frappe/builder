@@ -46,7 +46,7 @@
 						<span class="font-mono text-xs">Ab</span>
 					</Button>
 				</div>
-				<div class="flex shrink-0 items-center border-l border-outline-gray-2 pl-1">
+				<div class="flex shrink-0 items-center border-l border-outline-gray-2 ps-1">
 					<Button
 						size="sm"
 						icon="lucide-chevron-up"

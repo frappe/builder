@@ -1,9 +1,9 @@
 <template>
 	<div class="flex h-full flex-col overflow-hidden">
 		<!-- pt/pr center this row on the dialog's absolute close button (top-5/right-5) -->
-		<div class="flex items-center justify-between gap-4 px-8 pb-4 pr-16 pt-5">
+		<div class="flex items-center justify-between gap-4 px-8 pb-4 pe-16 pt-5">
 			<div class="flex min-w-0 flex-1 items-center">
-				<Button icon-left="lucide-arrow-left" variant="ghost" class="-ml-3" @click="$emit('close')">
+				<Button icon-left="lucide-arrow-left" variant="ghost" class="-ms-3" @click="$emit('close')">
 					{{ __("Back") }}
 				</Button>
 			</div>
