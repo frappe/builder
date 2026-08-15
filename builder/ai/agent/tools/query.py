@@ -208,12 +208,15 @@ def run_read_page(ctx, args: dict) -> str:
 		parts.append(components)
 	if scripts := render_scripts(page_id):
 		parts.append(scripts)
-	# Stash the reference's page-level geometry for the generation step: the loop
-	# model sees this full read, but generate_page's model sees only the brief it
-	# distils — and briefs lose exactly this (a 'sidebar beside content' in prose
-	# came back as a stacked column). See artifact.reference_geometry.
+	# Stash the reference's page-level geometry and design digest for the
+	# generation step: the loop model sees this full read, but generate_page's
+	# model sees only the brief it distils — and briefs lose exactly this (a
+	# 'sidebar beside content' in prose came back as a stacked column; a one-off
+	# 48px serif came back as every heading). See artifact.reference_geometry.
 	if (reads := getattr(ctx, "reference_reads", None)) is not None:
-		reads.append("\n".join(filter(None, (f"{label}:", layout_scaffold(root), components))))
+		reads.append(
+			"\n".join(filter(None, (f"{label}:", layout_scaffold(root), design_digest(root), components)))
+		)
 	return "\n".join(parts)
 
 

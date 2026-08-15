@@ -52,17 +52,26 @@ def render_skeleton(root: dict, max_text: int = 60) -> str:
 
 
 def design_digest(root: dict) -> str:
-	"""A page's design language in a few lines: fonts, colours and radii with use
-	counts, plus the top-level section rhythm. This is what a reference page is
-	read FOR — even when its tree is too big to ship whole, the digest carries the
-	exact families and hexes/var handles a matching brief needs."""
+	"""A page's design language in a few lines: fonts with their ROLES, colours
+	and radii with use counts, plus the top-level section rhythm. This is what a
+	reference page is read FOR — even when its tree is too big to ship whole, the
+	digest carries the exact families and hexes/var handles a matching brief needs.
+	Fonts state where and at what size they appear, not just how often: a bare
+	'Newsreader x1' reads like half of a heading/body pairing and gets promoted to
+	every heading, when the page uses it for one 48px hero moment."""
 	from collections import Counter
 
-	fonts, colors, radii = Counter(), Counter(), Counter()
+	fonts: dict[str, dict] = {}
+	colors, radii = Counter(), Counter()
 	for block, _depth in walk_blocks(root):
 		styles = block.get("baseStyles") or {}
 		if family := styles.get("fontFamily"):
-			fonts[family] += 1
+			usage = fonts.setdefault(family, {"count": 0, "els": [], "sizes": []})
+			usage["count"] += 1
+			if (el := block.get("element") or "div") not in usage["els"]:
+				usage["els"].append(el)
+			if (size := styles.get("fontSize")) and size not in usage["sizes"]:
+				usage["sizes"].append(size)
 		for prop in ("color", "backgroundColor"):
 			if value := styles.get(prop):
 				colors[value] += 1
@@ -75,7 +84,13 @@ def design_digest(root: dict) -> str:
 			sections.append(f"{el}({child['blockName']})" if child.get("blockName") else el)
 	lines = []
 	if fonts:
-		lines.append("fonts: " + ", ".join(f"{f} x{n}" for f, n in fonts.most_common()))
+		lines.append(
+			"fonts: "
+			+ ", ".join(
+				font_role(family, usage)
+				for family, usage in sorted(fonts.items(), key=lambda kv: -kv[1]["count"])
+			)
+		)
 	if colors:
 		lines.append("colors: " + ", ".join(f"{c} x{n}" for c, n in colors.most_common(14)))
 	if radii:
@@ -85,6 +100,15 @@ def design_digest(root: dict) -> str:
 	if sections:
 		lines.append("sections: " + " > ".join(sections))
 	return "\n".join(lines) or "(no styles set)"
+
+
+def font_role(family: str, usage: dict) -> str:
+	"""'Inter Variable x13 (p/h2/span at 11px, 17px, 20px)' — the count says how
+	dominant a font is, the elements and sizes say what it is FOR."""
+	where = "/".join(usage["els"][:4])
+	if sizes := ", ".join(usage["sizes"][:4]):
+		where += f" at {sizes}"
+	return f"{family} x{usage['count']} ({where})"
 
 
 def is_text_block(block: dict) -> bool:

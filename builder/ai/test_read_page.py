@@ -53,7 +53,7 @@ class TestReadPage(FrappeTestCase):
 
 		self.assertIn("Reference Page", out)
 		self.assertIn("READ-ONLY", out)
-		self.assertIn("fonts: Libre Baskerville x1, Cinzel x1", out)
+		self.assertIn("fonts: Libre Baskerville x1 (div), Cinzel x1 (h1)", out)
 		self.assertIn("colors: #E6DECA x1, #161412 x1", out)
 		self.assertIn("el: h1", out)
 

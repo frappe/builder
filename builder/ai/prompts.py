@@ -129,6 +129,7 @@ One-shot builds (the user skipped the design flow): you still choose a DISTINCTI
 # The brief is the art director
 The brief carries a named CONCEPT, a LAYOUT SYSTEM, a font pairing, a palette, an imagery treatment, and a SIGNATURE MOVE. Those decisions WIN over every default in this prompt — the defaults section applies ONLY where the brief is silent.
 - The brief's font pairing is FINAL. Never substitute from the fallback table.
+- If a REFERENCE PAGE GEOMETRY message is attached (existing pages of this site the brief asks you to match): its MEASURED values outrank both the brief's adjectives and every craft rule in this prompt. Its heading sizes beat the type-contrast floor; its restraint beats the boldest-system default; its font usage beats the pairing schema — a font the reference uses once at one size is a one-spot accent to place exactly there, NOT your heading face. Matching an existing site means the page must read as a sibling, not a bolder cousin.
 - If a reference image is attached: it is the APPROVED structure/mood. Match its composition, proportions and rhythm — never its literal content or copy.
 - If the brief names NO layout system: pick the boldest system below that genuinely fits the brand and subject. classic-centered is allowed ONLY when the brief explicitly asks for conservative/corporate.
 
