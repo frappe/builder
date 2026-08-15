@@ -165,23 +165,28 @@
 								</div>
 							</template>
 						</div>
-						<!-- Sensitive action — needs the user's OK -->
+						<!-- Sensitive action — needs the user's OK. Calm neutral surface with a
+						     small amber eyebrow: the QUESTION is the content, and it appears once
+						     (the model-facing summary text is suppressed above), so the card
+						     reads as a decision, not an alarm. -->
 						<div
 							v-if="message.metadata?.status === 'pending_action'"
-							class="mt-2 w-full rounded-lg border border-outline-amber-2 bg-surface-amber-1 p-3">
-							<p class="text-p-sm font-medium text-ink-gray-8">Needs your OK</p>
-							<p class="mt-0.5 text-xs leading-snug text-ink-gray-6">
+							class="mt-2 w-full rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+							<p class="text-p-xs font-medium text-ink-amber-8">Needs your OK</p>
+							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
 							</p>
 							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
 								<Button
 									variant="solid"
+									size="sm"
 									:loading="confirmingAction"
 									@click="confirmPendingAction(message, 'apply')">
-									Apply
+									{{ applyLabel(message.metadata?.kind) }}
 								</Button>
 								<Button
 									variant="subtle"
+									size="sm"
 									:disabled="confirmingAction"
 									@click="confirmPendingAction(message, 'skip')">
 									Skip
@@ -449,25 +454,46 @@ async function confirmPendingAction(message: ChatMessage, decision: "apply" | "s
 }
 
 /** Short human summary of a proposed sensitive action, shown on its confirm card. */
+/** The fields as the user would name them ("Name, Email, Message") — the card
+ * must say what gets stored, not count fields in engineering vocabulary. */
+function fieldNames(fields: any[]): string {
+	return (fields || [])
+		.map((f) => f?.label || f?.fieldname)
+		.filter(Boolean)
+		.join(", ");
+}
+
 function pendingPreview(m: Record<string, any>): string {
 	const p = m.payload || {};
+	const fields = fieldNames(p.fields);
 	switch (m.kind) {
 		case "create_doctype":
-			return `Create a new DocType “${p.name}” with ${(p.fields || []).length} field(s).`;
+			return `Create “${p.name}” to store this page's data${fields ? ` (${fields})` : ""}.`;
 		case "connect_form":
-			return `Save this form's submissions to a new “${p.doctype_name}” DocType (${
-				(p.fields || []).length
-			} field(s)). You'll see entries in Desk.`;
-		case "seed_sample_data":
-			return `Insert ${(p.rows || []).length} sample record(s) into “${p.doctype}”.`;
+			return `Save this form's submissions as “${p.doctype_name}” records${fields ? ` (${fields})` : ""}.`;
+		case "seed_sample_data": {
+			const n = (p.rows || []).length;
+			return `Add ${n} sample ${n === 1 ? "record" : "records"} to “${p.doctype}”.`;
+		}
 		case "global_settings":
-			return `Update site-wide settings (${Object.keys(p).join(", ")}). These load on every page.`;
+			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
 		case "home_page":
-			return `Set the site home page to “${p.route}”.`;
+			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
 		default:
 			return "Confirm this change?";
 	}
 }
+
+/** The apply button names the action it performs; a bare "Apply" makes the user
+ * re-read the card to know what they're agreeing to. */
+const APPLY_LABELS: Record<string, string> = {
+	create_doctype: "Create it",
+	connect_form: "Connect form",
+	seed_sample_data: "Add records",
+	home_page: "Set home page",
+	global_settings: "Apply",
+};
+const applyLabel = (kind?: string) => APPLY_LABELS[kind || ""] || "Apply";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -475,8 +501,11 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 
 /** The answer itself, without the timeline that led to it. A card message persists
  * its whole card as text so the model sees it on replay — the chat shows only the
- * lead-in and lets AIUISpec draw the rest. */
+ * lead-in and lets AIUISpec draw the rest. A pending-action message's content is
+ * the model-facing summary, and the card already asks the question in human terms;
+ * rendering both put the same ask on screen twice, once in jargon. */
 function assistantText(message: ChatMessage): string {
+	if (message.metadata?.status === "pending_action") return "";
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
 }
 
