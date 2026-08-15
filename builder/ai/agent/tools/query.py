@@ -166,10 +166,15 @@ def resolve_page_reference(ref: str) -> tuple[str | None, str]:
 	if frappe.db.exists("Builder Page", ref):
 		return ref, ""
 	# Routes are stored both with and without a leading slash — match either.
+	# Several pages can share a route (drafts of a redesign); the one serving the
+	# route — published, most recently touched — is the one a reference means.
+	prefer_live = "published desc, modified desc"
 	bare = ref.lstrip("/")
-	if name := frappe.db.get_value("Builder Page", {"route": ("in", (bare, f"/{bare}"))}):
+	if name := frappe.db.get_value(
+		"Builder Page", {"route": ("in", (bare, f"/{bare}"))}, order_by=prefer_live
+	):
 		return name, ""
-	if name := frappe.db.get_value("Builder Page", {"page_title": ref}):
+	if name := frappe.db.get_value("Builder Page", {"page_title": ref}, order_by=prefer_live):
 		return name, ""
 	return None, f"no page on this site has id, route, or title '{ref}'"
 
@@ -194,14 +199,21 @@ def run_read_page(ctx, args: dict) -> str:
 	root = load_page_root(page_id)
 	if root is None:
 		return f"{label} has no blocks yet."
+	components = render_components(root)
 	parts = [
 		f"{label} — READ-ONLY reference; its refs are NOT editable from here.",
 		render_reference(root),
 	]
-	if components := render_components(root):
+	if components:
 		parts.append(components)
 	if scripts := render_scripts(page_id):
 		parts.append(scripts)
+	# Stash the reference's page-level geometry for the generation step: the loop
+	# model sees this full read, but generate_page's model sees only the brief it
+	# distils — and briefs lose exactly this (a 'sidebar beside content' in prose
+	# came back as a stacked column). See artifact.reference_geometry.
+	if (reads := getattr(ctx, "reference_reads", None)) is not None:
+		reads.append("\n".join(filter(None, (f"{label}:", layout_scaffold(root), components))))
 	return "\n".join(parts)
 
 
@@ -235,6 +247,10 @@ def render_reference(root: dict) -> str:
 LAYOUT_STYLE_KEYS = (
 	"position",
 	"display",
+	"flexDirection",
+	"alignItems",
+	"flexWrap",
+	"gridTemplateColumns",
 	"width",
 	"minWidth",
 	"maxWidth",
@@ -244,8 +260,32 @@ LAYOUT_STYLE_KEYS = (
 	"left",
 	"top",
 	"zIndex",
+	"overflowX",
+	"overflowY",
 	"transition",
 )
+
+SCAFFOLD_DEPTH = 2  # root + panes + their immediate children: the shell, not the content
+SCAFFOLD_MAX_LINES = 30
+
+
+def layout_scaffold(root: dict) -> str:
+	"""The page-level geometry as indented lines. This is what a prose brief loses:
+	'sidebar beside content' says nothing about HOW — the scaffold states it
+	(flexDirection row, the rail component embed, the scrolling main column)."""
+	lines = []
+	for block, depth in walk_blocks(root):
+		if depth > SCAFFOLD_DEPTH:
+			continue
+		if len(lines) == SCAFFOLD_MAX_LINES:
+			lines.append("…")
+			break
+		styles = {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
+		name = block.get("blockName") or block.get("element") or "div"
+		component = f" [component {c}]" if (c := block.get("extendedFromComponent")) else ""
+		detail = ", ".join(f"{k}: {v}" for k, v in styles.items())
+		lines.append(f"{'  ' * depth}- {name}{component} {{{detail}}}")
+	return "\n".join(lines)
 
 
 def render_components(root: dict) -> str:

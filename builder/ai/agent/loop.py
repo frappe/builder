@@ -516,6 +516,9 @@ class AgentRunner:
 		# Every photo search_images turned up this turn, handed to the generation step
 		# so the page can use any of them without the model retyping urls into a brief.
 		self.found_images: list[dict] = []
+		# Page-level geometry of every reference page read this turn (read_page stashes
+		# it), handed to the generation step — a brief's prose loses the root layout.
+		self.reference_reads: list[str] = []
 		# The turn's timeline, streamed to the chat as ai_chat_step events and persisted
 		# on the final message: what the model thought about, the tools it ran, and the
 		# narration it wrote between rounds — in the order they happened.

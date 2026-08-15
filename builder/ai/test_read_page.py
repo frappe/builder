@@ -6,6 +6,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.tools.query import (
 	MAX_PAGE_READS_PER_TURN,
+	layout_scaffold,
 	resolve_page_reference,
 	run_read_page,
 )
@@ -125,6 +126,19 @@ class TestResolvePageReference(FrappeTestCase):
 		self.assertIsNone(page_id)
 		self.assertIn("no-such-thing", why)
 
+	def test_prefers_the_published_page_when_routes_collide(self):
+		live = frappe.get_doc(
+			{"doctype": "Builder Page", "page_title": "Live Copy", "route": "collide-route"}
+		).insert()
+		frappe.db.set_value("Builder Page", live.name, "published", 1, update_modified=False)
+		frappe.get_doc(
+			{"doctype": "Builder Page", "page_title": "Newer Draft", "route": "collide-route"}
+		).insert()
+
+		# The draft is more recently modified; the PUBLISHED page still wins —
+		# it is the one actually serving the route a reference means.
+		self.assertEqual(resolve_page_reference("collide-route")[0], live.name)
+
 
 class TestOpenPageContext(FrappeTestCase):
 	def test_names_the_open_page_and_nothing_else(self):
@@ -241,6 +255,65 @@ class TestComponentContract(FrappeTestCase):
 		# The page renders the PINNED block, so the contract must state its styles.
 		self.assertIn("width: fit-content", out)
 		self.assertNotIn("999px", out)
+
+	def test_scaffold_states_the_shell_row_and_rail_component(self):
+		root = {
+			"element": "div",
+			"baseStyles": {"display": "flex", "flexDirection": "row", "alignItems": "stretch"},
+			"children": [
+				{"element": "div", "extendedFromComponent": "rail-1", "children": []},
+				{
+					"blockName": "container",
+					"element": "div",
+					"baseStyles": {"flexDirection": "column", "overflowY": "auto", "width": "100%"},
+					"children": [
+						{
+							"element": "section",
+							"baseStyles": {"width": "100%"},
+							"children": [{"element": "h1", "baseStyles": {"position": "absolute"}}],
+						}
+					],
+				},
+			],
+		}
+
+		out = layout_scaffold(root)
+
+		self.assertIn("flexDirection: row", out)
+		self.assertIn("[component rail-1]", out)
+		self.assertIn("overflowY: auto", out)
+		# The h1 sits past SCAFFOLD_DEPTH — content, not shell.
+		self.assertNotIn("absolute", out)
+
+	def test_read_page_stashes_geometry_for_the_generation_step(self):
+		from builder.ai.agent.artifact import reference_geometry
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Shell Reference",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"baseStyles": {"display": "flex", "flexDirection": "row"},
+							"children": [],
+						}
+					]
+				),
+			}
+		).insert()
+		ctx = SimpleNamespace(page_id="another-page", page_read_count=0, reference_reads=[])
+
+		run_read_page(ctx, {"page_id": page.name})
+
+		self.assertEqual(len(ctx.reference_reads), 1)
+		self.assertIn("Shell Reference", ctx.reference_reads[0])
+		message = reference_geometry(ctx)
+		self.assertIn("ground truth", message)
+		self.assertIn("flexDirection: row", message)
+		# A ctx without the stash (tests, older callers) produces no message.
+		self.assertEqual(reference_geometry(SimpleNamespace()), "")
 
 	def test_states_each_pinned_version_when_instances_differ(self):
 		from builder.builder.component_versions import ensure_component_version
