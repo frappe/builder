@@ -251,29 +251,40 @@ LAYOUT_STYLE_KEYS = (
 def render_components(root: dict) -> str:
 	"""The layout contract of each embedded component. An instance block shows only
 	overrides — the component's own root styles (a fit-content rail, a fixed strip)
-	are what the page must NOT fight with wrappers and constraints."""
-	import json
+	are what the page must NOT fight with wrappers and constraints. Honours each
+	instance's pinned version: the contract must describe what THIS page renders,
+	which is not always the live component."""
+	from builder.builder.component_versions import resolve_component
 
-	ids = []
+	pins: dict = {}
 	for block, _depth in walk_blocks(root):
 		component = block.get("extendedFromComponent")
-		if component and component not in ids:
-			ids.append(component)
+		if component and component not in pins:
+			pins[component] = block.get("componentVersion")
+	if not pins:
+		return ""
+	ids = list(pins)[:8]
+	names = {
+		row.name: row.component_name
+		for row in frappe.get_all(
+			"Builder Component", filters={"name": ("in", ids)}, fields=["name", "component_name"]
+		)
+	}
 	lines = []
-	for component_id in ids[:8]:
-		raw = frappe.db.get_value("Builder Component", component_id, ["component_name", "block"])
-		if not raw:
+	for component_id in ids:
+		resolved = resolve_component(component_id, pins[component_id])
+		if not resolved:
 			continue
-		name, block_json = raw
-		try:
-			block = json.loads(block_json or "{}")
-		except json.JSONDecodeError:
+		block = frappe.parse_json(resolved.get("block") or "{}")
+		if not isinstance(block, dict):
 			continue
 		styles = {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
 		classes = block.get("classes") or []
 		detail = ", ".join(f"{k}: {v}" for k, v in styles.items()) or "no layout styles"
 		hooks = f" — classes {classes}" if classes else ""
-		lines.append(f"- {component_id} ('{name}'): root {{{detail}}}{hooks}")
+		lines.append(
+			f"- {component_id} ('{names.get(component_id, component_id)}'): root {{{detail}}}{hooks}"
+		)
 	if not lines:
 		return ""
 	return (

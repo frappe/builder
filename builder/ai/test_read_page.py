@@ -190,3 +190,54 @@ class TestComponentContract(FrappeTestCase):
 		self.assertIn("test-rail", out)
 		self.assertIn("width: fit-content", out)
 		self.assertIn("hr-sidebar", out)
+
+	def test_honours_the_instances_pinned_component_version(self):
+		from builder.builder.component_versions import ensure_component_version
+
+		component_id = frappe.generate_hash(length=12)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "pinned-rail",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "baseStyles": {"width": "fit-content"}}),
+			}
+		).insert(ignore_permissions=True)
+		version = ensure_component_version(component_id)
+		# db.set_value: the doc is queue-locked by version capture, and only the
+		# live column needs to diverge from the snapshot for this test.
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			json.dumps({"element": "div", "baseStyles": {"width": "999px"}}),
+		)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Pinned Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{
+									"element": "div",
+									"extendedFromComponent": component_id,
+									"componentVersion": version,
+									"children": [],
+								}
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		# The page renders the PINNED block, so the contract must state its styles.
+		self.assertIn("width: fit-content", out)
+		self.assertNotIn("999px", out)
