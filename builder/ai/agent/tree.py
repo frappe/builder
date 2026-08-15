@@ -162,6 +162,28 @@ CLIENT_SCRIPT_HINT = (
 )
 
 
+def undeclared_prop_names(block: dict, args: dict) -> list[str]:
+	"""On a component whose definition already declares props, an unknown name is
+	almost always a typo — writing it through would mutate the shared component for
+	every embed. A BARE definition (no props yet) is the authoring flow: new names
+	are accepted and declared there."""
+	props = args.get("props")
+	if not isinstance(props, dict) or not block.get("extendedFromComponent"):
+		return []
+	declared = declared_props(block)
+	if not declared:
+		return []
+	return [name for name in props if name not in declared and props[name] is not None]
+
+
+def undeclared_props_hint(block: dict) -> str:
+	declared = ", ".join(declared_props(block))
+	return (
+		f"this component declares only: {declared}. Use a declared name; a genuinely new "
+		"prop is added by editing the component itself, not through an instance."
+	)
+
+
 def client_script_outside_component(block: dict, args: dict) -> bool:
 	return isinstance(args.get("client_script"), dict) and not (
 		block.get("extendedFromComponent") or block.get("isChildOfComponent")
@@ -345,6 +367,8 @@ class WorkingTree:
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if client_script_outside_component(block, args):
 			return f"FAILED: {CLIENT_SCRIPT_HINT}"
+		if unknown := undeclared_prop_names(block, args):
+			return f"FAILED: props {unknown} — {undeclared_props_hint(block)}"
 		merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
@@ -369,6 +393,8 @@ class WorkingTree:
 				rejected.append(f"{block_id} moustache in {fields}")
 			elif client_script_outside_component(block, patch):
 				rejected.append(f"{block_id} client_script outside a component")
+			elif unknown := undeclared_prop_names(block, patch):
+				rejected.append(f"{block_id} undeclared props {unknown}")
 			else:
 				merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)
