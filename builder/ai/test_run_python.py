@@ -11,6 +11,19 @@ def run(script, page_id="the-open-page"):
 
 
 class TestRunPython(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		# CI test sites run with server scripts off — the sandbox gate would fail
+		# every test before it exercises anything.
+		super().setUpClass()
+		cls.sandbox_was = frappe.conf.server_script_enabled
+		frappe.conf.server_script_enabled = True
+
+	@classmethod
+	def tearDownClass(cls):
+		frappe.conf.server_script_enabled = cls.sandbox_was
+		super().tearDownClass()
+
 	def test_reads_records(self):
 		out = run("result = frappe.db.count('Builder Page')")
 

@@ -43,7 +43,10 @@ def run_python(ctx, args: dict) -> str:
 	_locals = {"page_id": ctx.page_id, "result": None}
 	frappe.db.savepoint(SAVEPOINT)
 	try:
-		safe_exec(script, sandbox_globals(), _locals, restrict_commit_rollback=True)
+		# Audited dynamic execution — the point of this tool. Server-script sandbox,
+		# raw SQL and value-writes stripped (sandbox_globals), commits blocked, and
+		# the savepoint rollback below discards anything a snippet wrote.
+		safe_exec(script, sandbox_globals(), _locals, restrict_commit_rollback=True)  # nosemgrep
 	except Exception as e:
 		return f"FAILED: {type(e).__name__}: {e}"
 	finally:

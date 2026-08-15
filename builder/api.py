@@ -314,8 +314,10 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	return image_url
 
 
-def assert_not_private_url(url: str) -> None:
-	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard)."""
+def assert_not_private_url(url: str) -> list[str]:
+	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard).
+	Returns the addresses it validated so a caller can PIN its connection to one — a
+	second DNS resolution at connect time can answer differently (DNS rebinding)."""
 	parsed = urlparse(url)
 	if parsed.scheme not in ("http", "https"):
 		frappe.throw(_("Only HTTP/HTTPS URLs are allowed for external images."), frappe.PermissionError)
@@ -326,12 +328,15 @@ def assert_not_private_url(url: str) -> None:
 		addr_infos = socket.getaddrinfo(hostname, None)
 	except socket.gaierror:
 		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
+	ips = []
 	for addr_info in addr_infos:
 		ip = ipaddress.ip_address(addr_info[4][0])
 		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
 			frappe.throw(
 				_("Requests to private or internal addresses are not allowed."), frappe.PermissionError
 			)
+		ips.append(str(ip))
+	return ips
 
 
 def check_app_permission():

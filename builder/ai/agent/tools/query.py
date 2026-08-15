@@ -167,9 +167,8 @@ def resolve_page_reference(ref: str) -> tuple[str | None, str]:
 		return ref, ""
 	# Routes are stored both with and without a leading slash — match either.
 	bare = ref.lstrip("/")
-	for route in (bare, f"/{bare}"):
-		if name := frappe.db.get_value("Builder Page", {"route": route}):
-			return name, ""
+	if name := frappe.db.get_value("Builder Page", {"route": ("in", (bare, f"/{bare}"))}):
+		return name, ""
 	if name := frappe.db.get_value("Builder Page", {"page_title": ref}):
 		return name, ""
 	return None, f"no page on this site has id, route, or title '{ref}'"

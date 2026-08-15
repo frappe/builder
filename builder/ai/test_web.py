@@ -78,3 +78,21 @@ class TestResearch(FrappeTestCase):
 		out = run_research(ctx(research_count=MAX_RESEARCH_PER_TURN), {"question": "q"})
 
 		self.assertIn("limit reached", out)
+
+
+class TestPinnedUrl(FrappeTestCase):
+	def test_dials_the_ip_and_keeps_the_host_header(self):
+		from builder.ai.agent.tools.web import pinned_url
+
+		self.assertEqual(
+			pinned_url("https://example.com/a?b=1", "93.184.216.34"),
+			("https://93.184.216.34/a?b=1", "example.com"),
+		)
+
+	def test_brackets_ipv6_and_keeps_ports(self):
+		from builder.ai.agent.tools.web import pinned_url
+
+		self.assertEqual(
+			pinned_url("http://example.com:8080/x", "2606:2800:220:1::1"),
+			("http://[2606:2800:220:1::1]:8080/x", "example.com:8080"),
+		)

@@ -6,8 +6,8 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai.agent.tools.data import CODE_FIELD_CAP, get_document
 
 
-def read(args):
-	return json.loads(get_document(None, args))
+def read(request: dict):
+	return json.loads(get_document(None, request))
 
 
 class TestGetDocument(FrappeTestCase):

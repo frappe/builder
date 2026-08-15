@@ -54,26 +54,63 @@ def run_read_url(ctx, args: dict) -> str:
 
 def fetch_public(url: str):
 	"""GET with the SSRF guard applied to EVERY hop — a public host that redirects
-	to a private address is the classic bypass."""
+	to a private address is the classic bypass. Each hop then connects to the
+	ADDRESS the guard validated: letting requests re-resolve the hostname is the
+	other classic bypass (DNS rebinding — a public answer for the check, a private
+	one for the connect)."""
 	from urllib.parse import urljoin
 
 	from builder.api import assert_not_private_url
 
 	for _ in range(MAX_REDIRECTS + 1):
-		assert_not_private_url(url)
-		response = requests.get(
-			url,
-			timeout=FETCH_TIMEOUT,
-			stream=True,
-			allow_redirects=False,
-			headers={"User-Agent": USER_AGENT},
-		)
+		ips = assert_not_private_url(url)
+		response = pinned_get(url, ips[0])
 		location = response.headers.get("location")
 		if response.status_code in (301, 302, 303, 307, 308) and location:
 			url = urljoin(url, location)
 			continue
 		return response, url
 	raise Exception(f"too many redirects (>{MAX_REDIRECTS})")
+
+
+class SniAdapter(requests.adapters.HTTPAdapter):
+	"""TLS for a pinned connection: the socket dials the validated IP while the
+	handshake (SNI) and certificate check use the real hostname."""
+
+	def __init__(self, hostname: str):
+		self.hostname = hostname
+		super().__init__()
+
+	def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+		pool_kwargs["server_hostname"] = self.hostname
+		super().init_poolmanager(connections, maxsize, block, **pool_kwargs)
+
+
+def pinned_url(url: str, ip: str) -> tuple[str, str]:
+	"""The URL rewritten to dial the validated address, plus the Host header that
+	keeps the request addressed to the original site."""
+	from urllib.parse import urlparse
+
+	parsed = urlparse(url)
+	literal = f"[{ip}]" if ":" in ip else ip
+	netloc = f"{literal}:{parsed.port}" if parsed.port else literal
+	host_header = f"{parsed.hostname}:{parsed.port}" if parsed.port else parsed.hostname
+	return parsed._replace(netloc=netloc).geturl(), host_header
+
+
+def pinned_get(url: str, ip: str):
+	from urllib.parse import urlparse
+
+	target, host_header = pinned_url(url, ip)
+	session = requests.Session()
+	session.mount("https://", SniAdapter(urlparse(url).hostname))
+	return session.get(
+		target,
+		timeout=FETCH_TIMEOUT,
+		stream=True,
+		allow_redirects=False,
+		headers={"User-Agent": USER_AGENT, "Host": host_header},
+	)
 
 
 def read_bounded(response) -> str:
