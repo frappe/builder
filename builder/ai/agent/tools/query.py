@@ -198,6 +198,8 @@ def run_read_page(ctx, args: dict) -> str:
 		f"{label} — READ-ONLY reference; its refs are NOT editable from here.",
 		render_reference(root),
 	]
+	if components := render_components(root):
+		parts.append(components)
 	if scripts := render_scripts(page_id):
 		parts.append(scripts)
 	return "\n".join(parts)
@@ -230,6 +232,72 @@ def render_reference(root: dict) -> str:
 	)
 
 
+LAYOUT_STYLE_KEYS = (
+	"position",
+	"display",
+	"width",
+	"minWidth",
+	"maxWidth",
+	"height",
+	"minHeight",
+	"flex",
+	"left",
+	"top",
+	"zIndex",
+	"transition",
+)
+
+
+def render_components(root: dict) -> str:
+	"""The layout contract of each embedded component. An instance block shows only
+	overrides — the component's own root styles (a fit-content rail, a fixed strip)
+	are what the page must NOT fight with wrappers and constraints. Honours each
+	instance's pinned version: the contract must describe what THIS page renders,
+	which is not always the live component."""
+	from builder.builder.component_versions import resolve_component
+
+	# Deduped by (component, pinned version) — two instances of the SAME component
+	# can validly pin different versions, and each renders its own.
+	pairs: list = []
+	for block, _depth in walk_blocks(root):
+		component = block.get("extendedFromComponent")
+		pair = (component, block.get("componentVersion"))
+		if component and pair not in pairs:
+			pairs.append(pair)
+	if not pairs:
+		return ""
+	pairs = pairs[:8]
+	names = {
+		row.name: row.component_name
+		for row in frappe.get_all(
+			"Builder Component",
+			filters={"name": ("in", {component for component, _version in pairs})},
+			fields=["name", "component_name"],
+		)
+	}
+	lines = []
+	for component_id, version in pairs:
+		resolved = resolve_component(component_id, version)
+		if not resolved:
+			continue
+		block = frappe.parse_json(resolved.get("block") or "{}")
+		if not isinstance(block, dict):
+			continue
+		styles = {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
+		classes = block.get("classes") or []
+		detail = ", ".join(f"{k}: {v}" for k, v in styles.items()) or "no layout styles"
+		hooks = f" — classes {classes}" if classes else ""
+		lines.append(
+			f"- {component_id} ('{names.get(component_id, component_id)}'): root {{{detail}}}{hooks}"
+		)
+	if not lines:
+		return ""
+	return (
+		"Embedded components (their ROOT styles are the layout contract — a component "
+		"sizes itself; do not wrap or constrain it to force layout):\n" + "\n".join(lines)
+	)
+
+
 def render_scripts(page_id: str) -> str:
 	"""A reference page's look can live in its attached CSS as much as its blocks."""
 	from builder.ai.agent.tools.scripts import page_scripts
@@ -242,7 +310,12 @@ def render_scripts(page_id: str) -> str:
 		parts.append(f"--- {script['script_type']} script '{script['script_name']}':\n{body}")
 	if not parts:
 		return ""
-	return "Attached page scripts:\n" + "\n".join(parts)
+	return (
+		"Attached page scripts — these often CARRY the behaviour of the page's components "
+		"(a sidebar's expand, a nav's toggle). When you embed the same components, attach "
+		"the SAME scripts verbatim (set_page_script with this exact content); never write "
+		"your own replacement for behaviour you can copy:\n" + "\n".join(parts)
+	)
 
 
 read_page = Tool(

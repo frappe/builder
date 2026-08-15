@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import frappe
@@ -145,3 +146,148 @@ class TestOpenPageContext(FrappeTestCase):
 		self.assertIn("draft", out)
 		# The site's URL and structure are DISCOVERED via the read tools, never pre-baked.
 		self.assertNotIn(frappe.utils.get_url(), out)
+
+
+class TestComponentContract(FrappeTestCase):
+	def test_lists_embedded_component_contracts(self):
+		component_id = frappe.generate_hash(length=12)
+		frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "test-rail",
+				"component_id": component_id,
+				"block": json.dumps(
+					{
+						"element": "div",
+						"baseStyles": {"width": "fit-content", "display": "flex"},
+						"classes": ["hr-sidebar"],
+					}
+				),
+			}
+		).insert(ignore_permissions=True)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{"element": "div", "extendedFromComponent": component_id, "children": []}
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		self.assertIn("Embedded components", out)
+		self.assertIn("test-rail", out)
+		self.assertIn("width: fit-content", out)
+		self.assertIn("hr-sidebar", out)
+
+	def test_honours_the_instances_pinned_component_version(self):
+		from builder.builder.component_versions import ensure_component_version
+
+		component_id = frappe.generate_hash(length=12)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "pinned-rail",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "baseStyles": {"width": "fit-content"}}),
+			}
+		).insert(ignore_permissions=True)
+		version = ensure_component_version(component_id)
+		# db.set_value: the doc is queue-locked by version capture, and only the
+		# live column needs to diverge from the snapshot for this test.
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			json.dumps({"element": "div", "baseStyles": {"width": "999px"}}),
+		)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Pinned Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{
+									"element": "div",
+									"extendedFromComponent": component_id,
+									"componentVersion": version,
+									"children": [],
+								}
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		# The page renders the PINNED block, so the contract must state its styles.
+		self.assertIn("width: fit-content", out)
+		self.assertNotIn("999px", out)
+
+	def test_states_each_pinned_version_when_instances_differ(self):
+		from builder.builder.component_versions import ensure_component_version
+
+		component_id = frappe.generate_hash(length=12)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "mixed-rail",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "baseStyles": {"width": "fit-content"}}),
+			}
+		).insert(ignore_permissions=True)
+		version = ensure_component_version(component_id)
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			json.dumps({"element": "div", "baseStyles": {"width": "999px"}}),
+		)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Mixed Pins Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{
+									"element": "div",
+									"extendedFromComponent": component_id,
+									"componentVersion": version,
+									"children": [],
+								},
+								{"element": "div", "extendedFromComponent": component_id, "children": []},
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		# One instance renders the pinned block, the other the live one — both contracts show.
+		self.assertIn("width: fit-content", out)
+		self.assertIn("width: 999px", out)
