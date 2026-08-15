@@ -11,19 +11,17 @@
 			<button
 				v-if="step.kind === 'thinking' && (running(step) || step.text)"
 				type="button"
-				class="flex w-fit items-center gap-2 text-left text-p-xs text-ink-gray-5"
+				class="flex w-fit items-center gap-1 text-left text-p-xs text-ink-gray-5"
 				:class="step.text ? 'hover:text-ink-gray-7' : 'cursor-default'"
 				:disabled="!step.text"
 				@click="toggle(step.id)">
-				<!-- The leading slot is always the tool-icon size, chevron or not: every
-				     row's label starts at the same x, and "Thinking" doesn't hop sideways
-				     the moment streamed reasoning makes the chevron appear. -->
-				<span class="flex size-3.5 shrink-0 items-center justify-center">
-					<span
-						v-if="step.text"
-						class="lucide-chevron-right size-3 transition-transform"
-						:class="expanded.has(step.id) && 'rotate-90'" />
-				</span>
+				<!-- Flush on the container edge, snug to its label — this row must read as
+				     one piece with the reply below it. Invisible (not v-if) while reasoning
+				     hasn't streamed: the space stays reserved, so the label doesn't hop
+				     sideways the moment the chevron appears. -->
+				<span
+					class="lucide-chevron-right size-3 shrink-0 transition-transform"
+					:class="[expanded.has(step.id) && 'rotate-90', !step.text && 'invisible']" />
 				<span :class="running(step) && 'animate-shine'">
 					{{ running(step) ? "Thinking" : "Thought" }}
 				</span>
@@ -34,7 +32,7 @@
 			     aside you opened, not the answer. The rule hangs under the chevron. -->
 			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="ai-thought prose prose-sm ml-[7px] max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				class="ai-thought prose prose-sm ml-[5px] max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
 				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
@@ -57,11 +55,11 @@
 		</template>
 
 		<!-- The turn's idle stretches (tool arguments streaming, the next round
-		     opening) live HERE, as the timeline's tail row with the same geometry as
-		     every other row — so when the next step arrives, "Working" becomes
-		     "Thinking" (or a tool line) in place, with no layout shift. -->
-		<div v-if="working" class="flex items-center gap-2 text-p-xs text-ink-gray-5">
-			<span class="size-3.5 shrink-0" />
+		     opening) live HERE, as the timeline's tail row with the thinking row's
+		     exact geometry — its most common fate is becoming "Thinking" in place,
+		     with no layout shift. -->
+		<div v-if="working" class="flex items-center gap-1 text-p-xs text-ink-gray-5">
+			<span class="size-3 shrink-0" />
 			<span class="animate-shine">Working</span>
 		</div>
 	</div>
