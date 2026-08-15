@@ -99,6 +99,7 @@ def build_default_registry() -> ToolRegistry:
 		query,
 		scripts,
 		settings,
+		web,
 	)
 
 	registry = ToolRegistry()
@@ -113,6 +114,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(forms.TOOLS)
 	registry.extend(settings.TOOLS)
 	registry.extend(images.TOOLS)
+	registry.extend(web.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
 	return registry

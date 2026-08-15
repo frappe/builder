@@ -157,8 +157,8 @@ def resolve_page_reference(ref: str) -> tuple[str | None, str]:
 		site_host = urlparse(frappe.utils.get_url()).netloc
 		if parsed.netloc and parsed.netloc != site_host:
 			return None, (
-				f"'{parsed.netloc}' is not this site ({site_host}) — an external page can't be "
-				"read with your tools; ask the user to paste its content or a screenshot"
+				f"'{parsed.netloc}' is not this site ({site_host}) — an EXTERNAL page. Read its "
+				"content with read_url (source material, not something you can edit)"
 			)
 		path = (parsed.path or "").strip("/")
 		editor_prefix = (frappe.conf.builder_path or "builder") + "/page/"

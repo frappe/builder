@@ -311,6 +311,8 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"read_block",
 		"read_page",
 		"run_python",
+		"read_url",
+		"research",
 		"get_document",
 		"query_records",
 		"list_doctypes",
@@ -405,6 +407,8 @@ TOOL_LABELS = {
 	"write_page_data_script": "Connected the page to data",
 	"list_doctypes": "Looked for existing data",
 	"run_python": "Looked up site data",
+	"read_url": "Read a web page",
+	"research": "Researched online",
 	"get_page_scripts": "Read the page scripts",
 	"set_page_settings": "Updated page settings",
 	"remember": "Saved a note for next time",
@@ -516,6 +520,9 @@ class AgentRunner:
 		self.preview_count = 0
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
+		# Web tools this turn — bounded like every other read that costs context/latency.
+		self.web_read_count = 0
+		self.research_count = 0
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
 		# page creation…) — counts as real work for the no-op-claim guards.
 		self.server_mutations = 0
