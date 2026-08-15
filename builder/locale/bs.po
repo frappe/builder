@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-15 13:34\n"
+"PO-Revision-Date: 2026-08-15 14:48\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -1271,7 +1271,7 @@ msgstr ""
 
 #: frontend/src/components/PropsOptions/ImageOptions.vue:6
 msgid "Enter image URL or upload one"
-msgstr ""
+msgstr "Unesi URL slike ili je otpremi"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:16
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:16
@@ -1350,7 +1350,7 @@ msgstr "Proširi Sve Slojeve"
 
 #: frontend/src/components/RouteTreeView.vue:355
 msgid "Expand node or move down in page tree"
-msgstr ""
+msgstr "Proširi čvor ili se pomakni niže u stablu stranice"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
@@ -2242,7 +2242,7 @@ msgstr "Još nije dodana nijedna prilagođena domena."
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
 msgid "No dynamic values found. Please add using"
-msgstr ""
+msgstr "Nije pronađena nijedna dinamička vrijednost. Dodaj koristeći"
 
 #: frontend/src/components/DashboardSidebar.vue:31
 msgid "No folders yet"
@@ -2258,7 +2258,7 @@ msgstr "Nema odgovarajućih svojstava"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
-msgstr ""
+msgstr "Još nema članova. Pozovite nekoga da mu date pristup Web Uređivač."
 
 #: builder/api.py:425
 msgid "No pages found in this template group."
@@ -2270,7 +2270,7 @@ msgstr "Nije pronađena nijedna stranica."
 
 #: builder/api.py:40
 msgid "No permission to preview this page"
-msgstr ""
+msgstr "Nema dozvole za pregled ove stranice"
 
 #: frontend/src/components/Controls/SearchBlock.vue:372
 #: frontend/src/components/Controls/SearchBlock.vue:394
@@ -2562,7 +2562,7 @@ msgstr "Zalijepi Stil"
 
 #: frontend/src/components/AIPageGeneratorModal.vue:32
 msgid "Paste or drop image"
-msgstr ""
+msgstr "Zalijepi ili ispusti sliku"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:184
 msgid "Pasting a page!"
@@ -2634,7 +2634,7 @@ msgstr "Pokazivač"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:171
 msgid "Points your root domain directly to the server. Use @ as the host name."
-msgstr ""
+msgstr "Usmjerava vašu korijensku domenu direktno na server. Koristi @ kao ime hosta."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:145
 msgid "Portfolio / personal site"
@@ -2666,11 +2666,11 @@ msgstr "Spriječi pretraživače da indeksiraju ovu stranicu"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
-msgstr ""
+msgstr "Spriječi automatsko prebacivanje web stranice u tamni način rada"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:23
 msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
-msgstr ""
+msgstr "Sprječava emulaciju događaja klikanja u uređivaču za blokove s klijentskim skriptama."
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3035,7 +3035,7 @@ msgstr "Redovi"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
-msgstr ""
+msgstr "SVG sa umetnutom slikom nije podržan. Umjesto toga, zalijepite ga kao PNG."
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:61
 msgid "Same Tab"
@@ -3099,7 +3099,7 @@ msgstr "Tip Skripte"
 
 #: frontend/src/components/PageClientScriptManager.vue:243
 msgid "Script cannot be empty"
-msgstr ""
+msgstr "Skripta ne može biti prazna"
 
 #: frontend/src/components/PageClientScriptManager.vue:386
 msgid "Script order updated"
@@ -3243,11 +3243,11 @@ msgstr "Odaberi način rada"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
-msgstr ""
+msgstr "Odaberi ili upiši naziv grupe"
 
 #: frontend/src/components/Settings/PageGeneral.vue:146
 msgid "Select the app for this standard page"
-msgstr ""
+msgstr "Odaberi aplikaciju za ovu standardnu stranicu"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
@@ -3295,7 +3295,7 @@ msgstr "Postavi trenutnu stranicu kao početnu stranicu"
 
 #: frontend/src/components/Settings/PageGeneral.vue:164
 msgid "Set folder to organize your page"
-msgstr ""
+msgstr "Postavi mapu za organizaciju stranice"
 
 #: frontend/src/components/BuilderCommandPalette.vue:77
 #: frontend/src/components/BuilderCommandPalette.vue:86
@@ -3431,7 +3431,7 @@ msgstr "Razmak"
 
 #: frontend/src/components/Settings/PageRobots.vue:31
 msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
-msgstr ""
+msgstr "Navedi pravila za kontrolu načina na koji pretraživači komuniciraju s vašom web stranicom. Za više detalja posjeti {0}."
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
@@ -3550,7 +3550,7 @@ msgstr "Upravitelj Sistema"
 
 #: frontend/src/components/DashboardSidebar.vue:61
 msgid "System generated folder cannot be edited or deleted"
-msgstr ""
+msgstr "Sistemski izrađenu mapu nije moguće uređivati ili brisati"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:96
 msgid "Tab Index"
@@ -3628,7 +3628,7 @@ msgstr "Tekstualni način"
 
 #: frontend/src/components/PageOptions.vue:15
 msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
-msgstr ""
+msgstr "URL putanja za ovu stranicu. Za varijable koristi dvotačku (npr. /users/:id)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
