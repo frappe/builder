@@ -241,3 +241,53 @@ class TestComponentContract(FrappeTestCase):
 		# The page renders the PINNED block, so the contract must state its styles.
 		self.assertIn("width: fit-content", out)
 		self.assertNotIn("999px", out)
+
+	def test_states_each_pinned_version_when_instances_differ(self):
+		from builder.builder.component_versions import ensure_component_version
+
+		component_id = frappe.generate_hash(length=12)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "mixed-rail",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "baseStyles": {"width": "fit-content"}}),
+			}
+		).insert(ignore_permissions=True)
+		version = ensure_component_version(component_id)
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			json.dumps({"element": "div", "baseStyles": {"width": "999px"}}),
+		)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Mixed Pins Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{
+									"element": "div",
+									"extendedFromComponent": component_id,
+									"componentVersion": version,
+									"children": [],
+								},
+								{"element": "div", "extendedFromComponent": component_id, "children": []},
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		# One instance renders the pinned block, the other the live one — both contracts show.
+		self.assertIn("width: fit-content", out)
+		self.assertIn("width: 999px", out)

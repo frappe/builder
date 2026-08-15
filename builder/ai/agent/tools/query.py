@@ -256,23 +256,28 @@ def render_components(root: dict) -> str:
 	which is not always the live component."""
 	from builder.builder.component_versions import resolve_component
 
-	pins: dict = {}
+	# Deduped by (component, pinned version) — two instances of the SAME component
+	# can validly pin different versions, and each renders its own.
+	pairs: list = []
 	for block, _depth in walk_blocks(root):
 		component = block.get("extendedFromComponent")
-		if component and component not in pins:
-			pins[component] = block.get("componentVersion")
-	if not pins:
+		pair = (component, block.get("componentVersion"))
+		if component and pair not in pairs:
+			pairs.append(pair)
+	if not pairs:
 		return ""
-	ids = list(pins)[:8]
+	pairs = pairs[:8]
 	names = {
 		row.name: row.component_name
 		for row in frappe.get_all(
-			"Builder Component", filters={"name": ("in", ids)}, fields=["name", "component_name"]
+			"Builder Component",
+			filters={"name": ("in", {component for component, _version in pairs})},
+			fields=["name", "component_name"],
 		)
 	}
 	lines = []
-	for component_id in ids:
-		resolved = resolve_component(component_id, pins[component_id])
+	for component_id, version in pairs:
+		resolved = resolve_component(component_id, version)
 		if not resolved:
 			continue
 		block = frappe.parse_json(resolved.get("block") or "{}")
