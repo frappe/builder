@@ -113,15 +113,40 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 def merge_props(block: dict, props: dict) -> None:
 	"""Per-instance component prop values ({name: value}; None removes). Stored
 	entries are the editor's config dicts — only `value` is touched so a prop's
-	label/options survive the merge."""
+	label/options survive the merge. A FIRST override borrows the declaration's
+	full config (the canvas twin does the same); a bare value would drop the
+	prop's label/options from the authoritative draft on the next reload."""
 	current = block.setdefault("props", {})
+	declared = None
 	for name, value in props.items():
 		if value is None:
 			current.pop(name, None)
 		elif isinstance(current.get(name), dict):
 			current[name]["value"] = value
 		else:
-			current[name] = {"value": value, "isDynamic": False, "isPassedDown": False, "comesFrom": None}
+			if declared is None:
+				declared = declared_props(block)
+			config = dict(
+				declared.get(name) or {"isDynamic": False, "isPassedDown": False, "comesFrom": None}
+			)
+			config["value"] = value
+			current[name] = config
+
+
+def declared_props(block: dict) -> dict:
+	"""The component declaration's prop configs, honouring the instance's pinned
+	version. parse_json returns a fresh dict, so callers may copy entries shallowly."""
+	component = block.get("extendedFromComponent")
+	if not component:
+		return {}
+	import frappe
+
+	from builder.builder.component_versions import resolve_component
+
+	resolved = resolve_component(component, block.get("componentVersion"))
+	definition = frappe.parse_json((resolved or {}).get("block") or "{}")
+	declared = definition.get("props") if isinstance(definition, dict) else None
+	return declared if isinstance(declared, dict) else {}
 
 
 def merge_bindings(block: dict, bind: dict) -> None:

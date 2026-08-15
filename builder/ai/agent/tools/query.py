@@ -217,14 +217,8 @@ def run_read_page(ctx, args: dict) -> str:
 	# 'sidebar beside content' in prose came back as a stacked column; a one-off
 	# 48px serif came back as every heading). See artifact.reference_geometry.
 	if (reads := getattr(ctx, "reference_reads", None)) is not None:
-		reads.append(
-			"\n".join(
-				filter(
-					None,
-					(f"{label}:", layout_scaffold(root), design_digest(root), fonts_missing, components),
-				)
-			)
-		)
+		sections = (f"{label}:", layout_scaffold(root), design_digest(root), fonts_missing, components)
+		reads.append("\n".join(section for section in sections if section))
 	return "\n".join(parts)
 
 
@@ -455,16 +449,42 @@ def google_font_exists(family: str) -> bool:
 	return response.ok
 
 
+# CSS keywords that resolve in every browser — never worth probing as font names.
+GENERIC_FAMILIES = {
+	"serif",
+	"sans-serif",
+	"monospace",
+	"cursive",
+	"fantasy",
+	"system-ui",
+	"ui-sans-serif",
+	"ui-serif",
+	"ui-monospace",
+	"inherit",
+	"initial",
+}
+
+
+def primary_family(value: str) -> str:
+	"""'Inter, sans-serif' names the font 'Inter' — probe the first family, never
+	the whole stack as one name (Google Fonts answers 400 for the stack, flagging
+	a perfectly loadable font as missing)."""
+	return value.split(",")[0].strip().strip("'\"")
+
+
 def unavailable_fonts(root: dict) -> list[str]:
 	"""Families this page names that will NOT render on this site: no User Font
 	record and not a Google Fonts family. The browser falls back to its default
 	serif silently — which is how a faithful copy of a reference still comes out
 	broken when the reference relied on a font asset this site never got."""
-	families = {
-		family
-		for block, _depth in walk_blocks(root)
-		if (family := (block.get("baseStyles") or {}).get("fontFamily")) and not family.startswith("var(")
-	}
+	families = set()
+	for block, _depth in walk_blocks(root):
+		value = (block.get("baseStyles") or {}).get("fontFamily")
+		if not value or value.startswith("var("):
+			continue
+		family = primary_family(value)
+		if family and family.lower() not in GENERIC_FAMILIES:
+			families.add(family)
 	if not families:
 		return []
 	user_fonts = {row.font_name for row in frappe.get_all("User Font", fields=["font_name"])}

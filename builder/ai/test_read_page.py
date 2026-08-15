@@ -378,6 +378,39 @@ class TestComponentContract(FrappeTestCase):
 		with patch("builder.ai.agent.tools.query.google_font_exists", return_value=False):
 			self.assertEqual(unavailable_fonts(root), [])
 
+	def test_first_prop_override_borrows_the_declared_config(self):
+		from builder.ai.agent.tree import merge_props
+
+		component_id = frappe.generate_hash(length=12)
+		frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "prop-meta",
+				"component_id": component_id,
+				"block": json.dumps(
+					{
+						"element": "div",
+						"props": {
+							"title": {
+								"label": "Title",
+								"isDynamic": False,
+								"isPassedDown": False,
+								"comesFrom": None,
+								"propOptions": {"options": {"defaultValue": "Hi"}},
+							}
+						},
+					}
+				),
+			}
+		).insert(ignore_permissions=True)
+		instance = {"element": "div", "extendedFromComponent": component_id}
+
+		merge_props(instance, {"title": "Hello"})
+
+		# The value lands INSIDE the declaration's config — label/options survive.
+		self.assertEqual(instance["props"]["title"]["value"], "Hello")
+		self.assertEqual(instance["props"]["title"]["label"], "Title")
+
 	def test_states_each_pinned_version_when_instances_differ(self):
 		from builder.builder.component_versions import ensure_component_version
 
