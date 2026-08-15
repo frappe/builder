@@ -15,24 +15,25 @@
 				:class="step.text ? 'hover:text-ink-gray-7' : 'cursor-default'"
 				:disabled="!step.text"
 				@click="toggle(step.id)">
-				<!-- Flush on the container edge, snug to its label — this row must read as
-				     one piece with the reply below it. Invisible (not v-if) while reasoning
-				     hasn't streamed: the space stays reserved, so the label doesn't hop
-				     sideways the moment the chevron appears. -->
-				<span
-					class="lucide-chevron-right size-3 shrink-0 transition-transform"
-					:class="[expanded.has(step.id) && 'rotate-90', !step.text && 'invisible']" />
 				<span :class="running(step) && 'animate-shine'">
 					{{ running(step) ? "Thinking" : "Thought" }}
 				</span>
 				<span v-if="duration(step.ms)" class="tabular-nums text-ink-gray-4">{{ duration(step.ms) }}</span>
+				<!-- Disclosure chevron TRAILS the label: the label sits flush on the
+				     container edge (one line with the reply below and the "Working" row it
+				     replaces), and the chevron appearing once reasoning streams shifts
+				     nothing to its left. -->
+				<span
+					v-if="step.text"
+					class="lucide-chevron-right size-3 shrink-0 transition-transform"
+					:class="expanded.has(step.id) && 'rotate-90'" />
 			</button>
 			<!-- Reasoning arrives as markdown ("**Sorting visual elements**"), so render
 			     it — as raw text the asterisks were on show. Muted and tight: it is an
 			     aside you opened, not the answer. The rule hangs under the chevron. -->
 			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="ai-thought prose prose-sm ml-[5px] max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
 				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
@@ -55,13 +56,10 @@
 		</template>
 
 		<!-- The turn's idle stretches (tool arguments streaming, the next round
-		     opening) live HERE, as the timeline's tail row with the thinking row's
-		     exact geometry — its most common fate is becoming "Thinking" in place,
+		     opening) live HERE, as the timeline's tail row, flush left like the
+		     thinking row — its most common fate is becoming "Thinking" in place,
 		     with no layout shift. -->
-		<div v-if="working" class="flex items-center gap-1 text-p-xs text-ink-gray-5">
-			<span class="size-3 shrink-0" />
-			<span class="animate-shine">Working</span>
-		</div>
+		<div v-if="working" class="animate-shine w-fit text-p-xs text-ink-gray-5">Working</div>
 	</div>
 </template>
 
