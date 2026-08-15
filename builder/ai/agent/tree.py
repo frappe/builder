@@ -146,6 +146,19 @@ def declared_props(block: dict) -> dict:
 	return declared if isinstance(declared, dict) else {}
 
 
+CLIENT_SCRIPT_HINT = (
+	"client_script belongs to COMPONENT blocks only (an instance root or a block inside "
+	"one), where behaviour ships with every embed. For a plain page block use "
+	"set_page_script: page scripts stay visible and manageable in the editor's panel."
+)
+
+
+def client_script_outside_component(block: dict, args: dict) -> bool:
+	return isinstance(args.get("client_script"), dict) and not (
+		block.get("extendedFromComponent") or block.get("isChildOfComponent")
+	)
+
+
 def merge_client_script(block: dict, script: dict) -> None:
 	"""The block's own js/css ({js: ..., css: ...}; None clears a key)."""
 	current = block.setdefault("clientScript", {})
@@ -286,6 +299,8 @@ class WorkingTree:
 			return f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if fields := moustache_fields(args):
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
+		if client_script_outside_component(block, args):
+			return f"FAILED: {CLIENT_SCRIPT_HINT}"
 		merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
@@ -308,6 +323,8 @@ class WorkingTree:
 				rejected.append(f"{block_id} {bad}")
 			elif fields := moustache_fields(patch):
 				rejected.append(f"{block_id} moustache in {fields}")
+			elif client_script_outside_component(block, patch):
+				rejected.append(f"{block_id} client_script outside a component")
 			else:
 				merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)

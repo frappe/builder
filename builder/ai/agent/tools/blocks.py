@@ -77,16 +77,16 @@ update_block = Tool(
 			"client_script": {
 				"type": "object",
 				"description": (
-					"The block's OWN behaviour and styling, travelling with the block (and with "
-					"every instance when the block is inside a component): {js: '...', css: '...'} "
-					"(either key; null clears one). js is the BODY of an async function run once "
-					"per rendered instance with `this` = this block's DOM element and arguments "
-					"(component_data, props) — write plain statements, no function wrapper, no "
-					"DOMContentLoaded, and reach inside via this.querySelector(...), never "
-					"document-wide selectors. css is scoped to this block's subtree (@scope), so "
-					"plain selectors are safe. PREFER this over set_page_script for behaviour that "
-					"belongs to one block or component: a page script must be re-attached on every "
-					"page by hand, a client script ships automatically wherever the block goes."
+					"Behaviour/styling for a COMPONENT block ONLY (an instance root or a block "
+					"inside one) — rejected elsewhere; plain page blocks use set_page_script. "
+					"{js: '...', css: '...'} (either key; null clears one). js is the BODY of an "
+					"async function run once per rendered instance with `this` = this block's DOM "
+					"element and arguments (component_data, props) — write plain statements, no "
+					"function wrapper, no DOMContentLoaded, and reach inside via "
+					"this.querySelector(...), never document-wide selectors. css is scoped to "
+					"this block's subtree (@scope), so plain selectors are safe. This is where "
+					"component behaviour lives: it ships automatically with every embed instead "
+					"of needing a page script re-attached by hand."
 				),
 			},
 		},
