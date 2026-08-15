@@ -211,7 +211,7 @@ def apply_connect_form(payload: dict) -> str:
 		attach_form_script(page_id, doctype, wf_name, selector, ordered_fieldnames)
 	slug = desk_slug(doctype)
 	return frappe._(
-		"Form connected — submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
+		"Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
 	).format(doctype, slug)
 
 

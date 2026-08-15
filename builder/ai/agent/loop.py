@@ -1464,13 +1464,13 @@ class AgentRunner:
 			# vanish on reload.
 			logger.warning("Agent returned empty response (no text; tools=%d)", len(self.tool_steps()))
 			if self.server_mutations:
-				note = "Done — the steps above were applied (I skipped the write-up)."
+				note = "Done. The steps above were applied (I skipped the write-up)."
 			elif self.tool_steps():
 				note = (
-					"I gathered that information but didn't write up a reply — ask me again and I'll answer."
+					"I gathered that information but didn't write up a reply. Ask me again and I'll answer."
 				)
 			else:
-				note = "I came back empty on that one — try rephrasing your request."
+				note = "I came back empty on that one. Try rephrasing your request."
 			metadata = {"status": "warning"}
 			if timeline := self.timeline():
 				metadata["steps"] = timeline
