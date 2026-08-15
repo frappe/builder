@@ -421,25 +421,28 @@ BUILDER_DOCTYPE_LABELS = {
 # Plain-English name for each tool, for tools whose line needs no arguments. The
 # derived fallback (tool_name.replace("_", " ")) leaks the vocabulary of the tool
 # API — "Get doctype schema", "Seed sample data" — which is ours, not the user's.
+# (while running, once done) — a step's label must be true to its status: the
+# timeline shows the running voice live and flips to the done voice when the
+# step completes (finish_step re-emits the same id with the final summary).
 TOOL_LABELS = {
-	"generate_page": "Building the page",
-	"preview_page": "Checked how it looks",
-	"query_blocks": "Searched the page",
-	"search_images": "Searched for photos",
-	"extract_component": "Made a reusable component",
-	"write_page_data_script": "Connected the page to data",
-	"list_doctypes": "Looked for existing data",
-	"run_python": "Looked up site data",
-	"read_url": "Read a web page",
-	"research": "Researched online",
-	"get_page_scripts": "Read the page scripts",
-	"set_page_settings": "Updated page settings",
-	"remember": "Saved a note for next time",
-	"seed_sample_data": "Added sample records",
-	"create_doctype": "Created a place to store data",
-	"connect_form": "Connected the form",
-	"edit_global_settings": "Updated site settings",
-	"set_home_page": "Set the home page",
+	"generate_page": ("Building the page", "Built the page"),
+	"preview_page": ("Checking how it looks", "Checked how it looks"),
+	"query_blocks": ("Searching the page", "Searched the page"),
+	"search_images": ("Searching for photos", "Searched for photos"),
+	"extract_component": ("Making a reusable component", "Made a reusable component"),
+	"write_page_data_script": ("Connecting the page to data", "Connected the page to data"),
+	"list_doctypes": ("Looking for existing data", "Looked for existing data"),
+	"run_python": ("Looking up site data", "Looked up site data"),
+	"read_url": ("Reading a web page", "Read a web page"),
+	"research": ("Researching online", "Researched online"),
+	"get_page_scripts": ("Reading the page scripts", "Read the page scripts"),
+	"set_page_settings": ("Updating page settings", "Updated page settings"),
+	"remember": ("Saving a note for next time", "Saved a note for next time"),
+	"seed_sample_data": ("Adding sample records", "Added sample records"),
+	"create_doctype": ("Creating a place to store data", "Created a place to store data"),
+	"connect_form": ("Connecting the form", "Connected the form"),
+	"edit_global_settings": ("Updating site settings", "Updated site settings"),
+	"set_home_page": ("Setting the home page", "Set the home page"),
 }
 
 
@@ -449,9 +452,11 @@ def readable_doctype(doctype: str | None) -> str:
 	return BUILDER_DOCTYPE_LABELS.get(doctype) or f"{doctype} records"
 
 
-def activity_summary(tool_name: str, args: dict, tree=None) -> str:
+def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -> str:
 	"""A short human line for the chat's timeline ("Read block: Hero"). Written for
-	someone who asked for a web page, not someone who knows the tool API."""
+	someone who asked for a web page, not someone who knows the tool API. The voice
+	follows the step's status: "Reading page…" while it runs, "Read page" once done —
+	a past-tense label on a running step claims something that hasn't happened."""
 	args = args or {}
 
 	def block_label(ref: str | None) -> str:
@@ -460,28 +465,40 @@ def activity_summary(tool_name: str, args: dict, tree=None) -> str:
 			return block.get("blockName") or f"<{block.get('element') or 'div'}>"
 		return ref or ""
 
-	if label := TOOL_LABELS.get(tool_name):
-		return label
+	def voice(running: str, finished: str) -> str:
+		return finished if done else running
+
+	if pair := TOOL_LABELS.get(tool_name):
+		return pair[1] if done else pair[0]
 	if tool_name == "read_block":
-		return f"Read block: {block_label(args.get('block_id'))}".rstrip(": ")
+		return f"{voice('Reading', 'Read')} block: {block_label(args.get('block_id'))}".rstrip(": ")
 	if tool_name == "read_page":
 		title = args.get("page_id") and frappe.db.get_value("Builder Page", args["page_id"], "page_title")
-		return f"Read page: {title}" if title else "Read another page"
+		if title:
+			return f"{voice('Reading', 'Read')} page: {title}"
+		return voice("Reading another page", "Read another page")
 	if tool_name == "set_design_token":
 		# The tool's argument is token_name; reading `name` meant every token in the
 		# chat read "Set theme variable" no matter which one it was.
 		label = args.get("token_name") or args.get("id")
-		return f"Set token: {label}" if label else "Set theme variable"
+		if label:
+			return f"{voice('Setting', 'Set')} token: {label}"
+		return voice("Setting a theme variable", "Set theme variable")
 	if tool_name == "set_page_script":
-		return f"Added script: {args.get('name') or ''}".rstrip(": ")
+		return f"{voice('Adding', 'Added')} script: {args.get('name') or ''}".rstrip(": ")
 	if tool_name == "update_script":
-		return f"Updated script: {args.get('script_name') or ''}".rstrip(": ")
+		return f"{voice('Updating', 'Updated')} script: {args.get('script_name') or ''}".rstrip(": ")
 	if tool_name == "create_component":
-		return f"Created component: {args.get('name') or ''}".strip()
+		return f"{voice('Creating', 'Created')} component: {args.get('name') or ''}".strip()
 	if tool_name == "get_doctype_schema":
-		return f"Checked the {args['doctype']} fields" if args.get("doctype") else "Checked the data fields"
+		checking = voice("Checking", "Checked")
+		return (
+			f"{checking} the {args['doctype']} fields"
+			if args.get("doctype")
+			else f"{checking} the data fields"
+		)
 	if tool_name in ("get_document", "query_records"):
-		return f"Read {readable_doctype(args.get('doctype'))}"
+		return f"{voice('Reading', 'Read')} {readable_doctype(args.get('doctype'))}"
 	return tool_name.replace("_", " ").capitalize()
 
 
@@ -538,6 +555,8 @@ class AgentRunner:
 		# step id -> monotonic start, so a step can be timed without the clock riding
 		# along into the emitted event and the persisted metadata.
 		self.step_starts: dict[int, float] = {}
+		# step id -> the past-tense label finish_step swaps in (see begin_activity).
+		self.step_done_summaries: dict[int, str] = {}
 		# What the chat is currently showing as the live answer: the text streamed
 		# since the last round was committed. finish_turn compares against it so a
 		# summary already on screen isn't said twice.
@@ -1081,16 +1100,23 @@ class AgentRunner:
 		entry = self.add_step(
 			"tool",
 			tool=tool_name,
-			summary=activity_summary(tool_name, args, self.tree),
+			summary=activity_summary(tool_name, args, self.tree, done=False),
 			status="running",
 		)
 		self.step_starts[entry["id"]] = time.monotonic()
+		# The done-voice label, resolved NOW while args/tree still describe the call;
+		# finish_step swaps it in so the persisted timeline reads as history.
+		self.step_done_summaries[entry["id"]] = activity_summary(tool_name, args, self.tree)
 		return entry
 
 	def end_activity(self, entry: dict | None) -> None:
 		if entry is None:
 			return
-		self.finish_step(entry, started=self.step_starts.pop(entry["id"], None))
+		self.finish_step(
+			entry,
+			started=self.step_starts.pop(entry["id"], None),
+			summary=self.step_done_summaries.pop(entry["id"], entry.get("summary")),
+		)
 
 	@staticmethod
 	def describe_operations(operations: list[dict]) -> str:
