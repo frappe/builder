@@ -370,9 +370,12 @@ write_page_data_script_tool = Tool(
 		"filters={'published': 1})`. Then bind blocks/repeaters to the keys you set. Runs in the "
 		"safe_exec SANDBOX at render time: NO import statements — frappe.get_all/get_list/get_doc, "
 		"frappe.db.get_value/count, and frappe.utils date/format helpers (getdate, formatdate, "
-		"now_datetime, add_days, fmt_money) are preinjected. Keys must be descriptive names "
-		"(data.products) — NEVER dict method names like data.items/keys/values/get (they shadow "
-		"and break the render). READ-ONLY: never save/insert/delete documents here."
+		"now_datetime, add_days, fmt_money) are preinjected. On a DYNAMIC route "
+		"('partners/<partner_id>') the URL params arrive as frappe.form_dict.<param> — load the "
+		"record from them (data.partner = frappe.get_doc('Partner', frappe.form_dict.partner_id)). "
+		"Keys must be descriptive names (data.products) — NEVER dict method names like "
+		"data.items/keys/values/get (they shadow and break the render). READ-ONLY: never "
+		"save/insert/delete documents here."
 	),
 	parameters={
 		"type": "object",
