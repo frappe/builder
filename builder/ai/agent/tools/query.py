@@ -299,7 +299,7 @@ def layout_scaffold(root: dict) -> str:
 	return "\n".join(lines)
 
 
-def render_components(root: dict) -> str:
+def render_components(root: dict, on_open_page: bool = False) -> str:
 	"""The layout contract of each embedded component. An instance block shows only
 	overrides — the component's own root styles (a fit-content rail, a fixed strip)
 	are what the page must NOT fight with wrappers and constraints. Honours each
@@ -356,16 +356,28 @@ def render_components(root: dict) -> str:
 				f"bindings) — read it via get_document('Builder Component', '{component_id}')"
 			)
 		if overrides := instance_overrides(instances[(component_id, version)]):
-			lines.append(f"  the reference's instance overrides: {'; '.join(overrides)}")
+			owner = "this page" if on_open_page else "the reference"
+			lines.append(f"  {owner}'s instance overrides: {'; '.join(overrides)}")
 	if not lines:
 		return ""
-	return (
-		"Embedded components (their ROOT styles are the layout contract — a component "
-		"sizes itself; do not wrap or constrain it to force layout). Embedding is HALF "
-		"the job: an instance renders the component's DEFAULT content until the page "
-		"overrides its children, and the overrides below are how the reference makes "
-		"the shared chrome its own — mirror that pattern:\n" + "\n".join(lines)
-	)
+	if on_open_page:
+		preamble = (
+			"Embedded components on this page (their ROOT styles are the layout contract — a "
+			"component sizes itself; do not wrap or constrain it to force layout). An instance "
+			"renders the component's DEFAULT content plus the overrides below; its internal "
+			"blocks appear in the tree as child_of refs, `of` naming the mirrored block. Adapt "
+			"page-specific chrome through the declared props (update_block's props on the "
+			"instance root) or by overriding those children:"
+		)
+	else:
+		preamble = (
+			"Embedded components (their ROOT styles are the layout contract — a component "
+			"sizes itself; do not wrap or constrain it to force layout). Embedding is HALF "
+			"the job: an instance renders the component's DEFAULT content until the page "
+			"overrides its children, and the overrides below are how the reference makes "
+			"the shared chrome its own — mirror that pattern:"
+		)
+	return preamble + "\n" + "\n".join(lines)
 
 
 def component_texts(block: dict) -> list[str]:

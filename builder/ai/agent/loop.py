@@ -363,8 +363,20 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 	# on demand with read_block. The threshold is on the full serialisation length,
 	# which tracks token cost closely.
 	if len(full) <= FULL_CONTEXT_LIMIT:
-		return f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
-	return render_skeleton_context(root, selected_block_ids)
+		context = (
+			f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
+		)
+	else:
+		context = render_skeleton_context(root, selected_block_ids)
+	# The contract of THIS page's embedded components (declared props, default
+	# content, data script). Without it an instance advertises nothing, and the
+	# model reaches for a child override where a declared prop was the intended
+	# surface — it cannot use what it cannot see.
+	from builder.ai.agent.tools.query import render_components
+
+	if contract := render_components(root, on_open_page=True):
+		return f"{context}\n\n{contract}"
+	return context
 
 
 OUTLINE_PREAMBLE = (
