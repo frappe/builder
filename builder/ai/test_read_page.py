@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import frappe
@@ -145,3 +146,47 @@ class TestOpenPageContext(FrappeTestCase):
 		self.assertIn("draft", out)
 		# The site's URL and structure are DISCOVERED via the read tools, never pre-baked.
 		self.assertNotIn(frappe.utils.get_url(), out)
+
+
+class TestComponentContract(FrappeTestCase):
+	def test_lists_embedded_component_contracts(self):
+		component_id = frappe.generate_hash(length=12)
+		frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "test-rail",
+				"component_id": component_id,
+				"block": json.dumps(
+					{
+						"element": "div",
+						"baseStyles": {"width": "fit-content", "display": "flex"},
+						"classes": ["hr-sidebar"],
+					}
+				),
+			}
+		).insert(ignore_permissions=True)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Host",
+				"draft_blocks": json.dumps(
+					[
+						{
+							"element": "div",
+							"children": [
+								{"element": "div", "extendedFromComponent": component_id, "children": []}
+							],
+						}
+					]
+				),
+			}
+		).insert()
+
+		out = run_read_page(
+			SimpleNamespace(page_id="another-page", page_read_count=0), {"page_id": page.name}
+		)
+
+		self.assertIn("Embedded components", out)
+		self.assertIn("test-rail", out)
+		self.assertIn("width: fit-content", out)
+		self.assertIn("hr-sidebar", out)
