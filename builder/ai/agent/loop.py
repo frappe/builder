@@ -324,10 +324,11 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 
 # --- prompt-cache breakpoints (Claude via OpenRouter; stripped elsewhere) ------
 # Ported from the agent-v2 rewrite, where this scheme measured ~90% cache reads
-# on real multi-round builds (~80% input-cost cut). The system breakpoint holds
-# the prompt + tools; user turns are minutes apart, so the default 5-minute TTL
-# would expire between turns — 1h costs 2x to write but breaks even by the third
-# turn of a session.
+# on real multi-round builds (~80% input-cost cut). The system and end-of-history
+# breakpoints hold the cross-turn prefix (prompt + tools + conversation); user
+# turns are minutes apart, so the default 5-minute TTL would expire on exactly
+# the entries the next turn re-matches — 1h costs 2x to write but breaks even by
+# the third turn of a session.
 SYSTEM_CACHE_CONTROL = {"type": "ephemeral", "ttl": "1h"}
 TURN_CACHE_CONTROL = {"type": "ephemeral"}
 # Anthropic allows at most 4 cache_control markers per request.
@@ -336,6 +337,16 @@ MAX_CACHE_MARKERS = 4
 # behind a marker; long turns get a mid-turn anchor every this many messages so
 # consecutive rounds always land inside the lookback window.
 MID_TURN_MARKER_EVERY = 15
+
+
+def marker_position(messages: list[dict], pos: int) -> int:
+	"""The nearest position at or before `pos` whose message HAS content. A marker
+	on a content-less assistant tool_calls message would materialize as an empty
+	text block on the Claude path (see llm.patch_messages_for_provider), which
+	Anthropic's API rejects."""
+	while pos > 0 and not messages[pos].get("content"):
+		pos -= 1
+	return pos
 
 
 def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
@@ -754,27 +765,31 @@ class AgentRunner:
 	def refresh_cache_markers(self, messages: list[dict]) -> None:
 		"""Re-derive the prompt-cache breakpoints before every LLM round (Claude
 		routes only benefit; llm.py strips the markers for other providers).
-		Deterministic positions: the system prompt (1h TTL), the end of the replayed
-		history (the prefix next turn's first request re-matches), the current user
-		prompt (the stable turn-start prefix), the newest message (caches this
-		round's prefix for the next), and a mid-turn anchor every
-		MID_TURN_MARKER_EVERY messages so a long turn's rounds stay inside
-		Anthropic's cache-lookback window. Capped at 4 markers, oldest dropped
-		first — their cache entries were already written by earlier rounds."""
+		Deterministic positions: the system prompt and the end of the replayed
+		history (both 1h TTL — they are the prefix the NEXT turn re-matches, and
+		user turns are minutes apart, so the 5m default would expire exactly on
+		the entries that matter across turns), the current user prompt (the stable
+		turn-start prefix), the newest message (caches this round's prefix for the
+		next), and a mid-turn anchor every MID_TURN_MARKER_EVERY messages so a
+		long turn's rounds stay inside Anthropic's cache-lookback window. Capped
+		at 4 markers, oldest dropped first — their cache entries were already
+		written by earlier rounds."""
 		for m in messages:
 			m.pop("cache_control", None)
 			if isinstance(m.get("content"), list):
 				for block in m["content"]:
 					if isinstance(block, dict):
 						block.pop("cache_control", None)
-		last = len(messages) - 1
-		positions = {0, max(self.history_end_index, 0), self.prompt_index, last}
-		span = last - self.prompt_index
+		last = marker_position(messages, len(messages) - 1)
+		history_end = max(self.history_end_index, 0)
+		positions = {0, history_end, self.prompt_index, last}
+		span = len(messages) - 1 - self.prompt_index
 		if span > MID_TURN_MARKER_EVERY + 3:
 			anchor = self.prompt_index + MID_TURN_MARKER_EVERY * (span // MID_TURN_MARKER_EVERY)
-			positions.add(min(anchor, last))
+			positions.add(marker_position(messages, min(anchor, last)))
+		long_lived = {0, history_end}
 		for pos in sorted(positions)[-MAX_CACHE_MARKERS:]:
-			messages[pos]["cache_control"] = SYSTEM_CACHE_CONTROL if pos == 0 else TURN_CACHE_CONTROL
+			messages[pos]["cache_control"] = SYSTEM_CACHE_CONTROL if pos in long_lived else TURN_CACHE_CONTROL
 
 	# --- LLM call ---------------------------------------------------------
 
