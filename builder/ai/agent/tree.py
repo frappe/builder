@@ -133,9 +133,12 @@ def merge_props(block: dict, props: dict) -> None:
 			if name not in declared:
 				undeclared[name] = config
 	if undeclared and block.get("extendedFromComponent"):
-		update_definition(
-			block["extendedFromComponent"], lambda root: root.setdefault("props", {}).update(undeclared)
-		)
+		# Mirror only into a BARE live schema (the authoring flow); a live schema
+		# with props already declared must never gain names from an instance.
+		if not live_declared_props(block["extendedFromComponent"]):
+			update_definition(
+				block["extendedFromComponent"], lambda root: root.setdefault("props", {}).update(undeclared)
+			)
 
 
 def prop_config(value) -> dict:
@@ -167,11 +170,22 @@ def declared_props(block: dict) -> dict:
 	component = block.get("extendedFromComponent")
 	if not component:
 		return {}
+	return resolve_declared_props(component, block.get("componentVersion"))
+
+
+def live_declared_props(component: str) -> dict:
+	"""The LIVE definition's schema — the mutation target for declaration mirrors,
+	so authoring-vs-strict is judged here, never against a pinned snapshot (a
+	prop-less pinned version must not open the live schema to accidental props)."""
+	return resolve_declared_props(component, None)
+
+
+def resolve_declared_props(component: str, version) -> dict:
 	import frappe
 
 	from builder.builder.component_versions import resolve_component
 
-	resolved = resolve_component(component, block.get("componentVersion"))
+	resolved = resolve_component(component, version)
 	definition = frappe.parse_json((resolved or {}).get("block") or "{}")
 	declared = definition.get("props") if isinstance(definition, dict) else None
 	return declared if isinstance(declared, dict) else {}
@@ -192,14 +206,19 @@ def undeclared_prop_names(block: dict, args: dict) -> list[str]:
 	props = args.get("props")
 	if not isinstance(props, dict) or not block.get("extendedFromComponent"):
 		return []
-	declared = declared_props(block)
-	if not declared:
+	live = live_declared_props(block["extendedFromComponent"])
+	if not live:
 		return []
-	return [name for name in props if name not in declared and props[name] is not None]
+	# A name the pinned schema declares stays settable (it is what THIS instance
+	# renders); anything else must exist on the live schema.
+	pinned = declared_props(block)
+	return [name for name in props if props[name] is not None and name not in pinned and name not in live]
 
 
 def undeclared_props_hint(block: dict) -> str:
-	declared = ", ".join(declared_props(block))
+	declared = ", ".join(
+		sorted(set(declared_props(block)) | set(live_declared_props(block["extendedFromComponent"])))
+	)
 	return (
 		f"this component declares only: {declared}. Use a declared name; a genuinely new "
 		"prop is added by editing the component itself, not through an instance."

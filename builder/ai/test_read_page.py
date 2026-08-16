@@ -411,6 +411,49 @@ class TestComponentContract(FrappeTestCase):
 		self.assertEqual(instance["props"]["title"]["value"], "Hello")
 		self.assertEqual(instance["props"]["title"]["label"], "Title")
 
+	def test_pinned_empty_schema_cannot_pollute_a_declared_live_schema(self):
+		from builder.ai.agent.tree import WorkingTree
+		from builder.builder.component_versions import ensure_component_version
+
+		component_id = frappe.generate_hash(length=12)
+		component = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "pin-guard",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "children": []}),
+			}
+		).insert(ignore_permissions=True)
+		version = ensure_component_version(component_id)
+		frappe.db.set_value(
+			"Builder Component",
+			component.name,
+			"block",
+			json.dumps({"element": "div", "props": {"title": {"value": "Hi"}}, "children": []}),
+		)
+		tree = WorkingTree(
+			{
+				"blockId": "root",
+				"element": "div",
+				"children": [
+					{
+						"blockId": "inst",
+						"element": "div",
+						"extendedFromComponent": component_id,
+						"componentVersion": version,
+						"children": [],
+					}
+				],
+			}
+		)
+
+		# The pinned snapshot has no props, but the LIVE schema does: an unknown
+		# name is rejected against the live schema, never declared onto it.
+		self.assertIn("FAILED", tree.apply_update("inst", {"props": {"titel": "Typo"}}))
+		self.assertIn("Applied", tree.apply_update("inst", {"props": {"title": "New"}}))
+		live = frappe.parse_json(frappe.db.get_value("Builder Component", component.name, "block"))
+		self.assertEqual(list(live["props"].keys()), ["title"])
+
 	def test_states_each_pinned_version_when_instances_differ(self):
 		from builder.builder.component_versions import ensure_component_version
 
