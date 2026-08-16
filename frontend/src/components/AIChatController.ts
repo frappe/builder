@@ -48,6 +48,9 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
+	// True while get_ai_session is in flight — the panel holds its empty-state
+	// hero until this settles, so a stored chat never flashes in over it.
+	readonly isLoadingSession = ref(false);
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -190,13 +193,13 @@ export class AIChatController {
 			if (!newPageId) return;
 			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
-			// Sessions are page-scoped: never carry one across a page switch.
+			// Sessions are page-scoped: never carry one across a page switch — and
+			// that includes the transcript, which would otherwise sit on screen as
+			// the previous page's chat until the new one loads over it.
 			this.sessionId.value = "";
 			this.sessions.value = [];
-			if (newPageId === "new") {
-				this.messages.value = [];
-				return;
-			}
+			this.messages.value = [];
+			if (newPageId === "new") return;
 			await this.loadSession();
 			// A build may be mid-stream on this page (opened from another chat's link,
 			// or a refresh mid-generation): replay the buffered stream as live preview.
@@ -282,33 +285,56 @@ export class AIChatController {
 		};
 	}
 
+	// The panel mounts hidden behind the tab bar's v-show, and scrolling a
+	// display:none container is a no-op — so a scroll that lands while the tab
+	// is closed is parked here and replayed when the panel becomes visible.
+	private pendingScrollToBottom = false;
+
 	private scrollToBottom() {
 		nextTick(() => {
-			if (this.messageContainer.value) {
-				this.messageContainer.value.scrollTop = this.messageContainer.value.scrollHeight;
+			const el = this.messageContainer.value;
+			if (!el || el.clientHeight === 0) {
+				this.pendingScrollToBottom = true;
+				return;
 			}
+			el.scrollTop = el.scrollHeight;
 		});
 	}
+
+	/** Called by the panel when its tab opens: perform the scroll the hidden
+	 * container couldn't. */
+	flushPendingScroll = () => {
+		if (!this.pendingScrollToBottom) return;
+		this.pendingScrollToBottom = false;
+		this.scrollToBottom();
+	};
 
 	/** Load a chat session: the given one, else the current one, else the page's
 	 * most recently used (the server creates the first). A page can hold several
 	 * parallel sessions — see switchSession/newSession. */
 	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
-		const result = await createResource({
-			url: "builder.ai.api.get_ai_session",
-			makeParams: () => ({
-				page_id: this.pageId.value,
-				model: this.selectedModel.value,
-				session_id: sessionId || this.sessionId.value || undefined,
-			}),
-		}).submit();
-		const session = result as { session_id: string; messages: ChatMessage[] };
-		this.sessionId.value = session.session_id;
-		this.messages.value = (session.messages || []).map(
-			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
-		);
-		this.loadSessions();
+		this.isLoadingSession.value = true;
+		try {
+			const result = await createResource({
+				url: "builder.ai.api.get_ai_session",
+				makeParams: () => ({
+					page_id: this.pageId.value,
+					model: this.selectedModel.value,
+					session_id: sessionId || this.sessionId.value || undefined,
+				}),
+			}).submit();
+			const session = result as { session_id: string; messages: ChatMessage[] };
+			this.sessionId.value = session.session_id;
+			this.messages.value = (session.messages || []).map(
+				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+			);
+			// A restored conversation opens where it left off, not at its beginning.
+			this.scrollToBottom();
+			this.loadSessions();
+		} finally {
+			this.isLoadingSession.value = false;
+		}
 	}
 
 	/** Refresh the session-switcher list (fire-and-forget; the panel renders it). */

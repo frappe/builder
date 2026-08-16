@@ -64,11 +64,17 @@ const useBuilderStore = defineStore("builderStore", {
 		// Set from ai_setup_state: a provider carrying its own key (Anthropic, a
 		// self-hosted gateway) is enough on its own, and the shared OpenRouter key in
 		// Builder Settings is the only thing the client can see for itself.
-		aiConfigured: false,
+		// null until the server answers — false means "asked, not configured".
+		aiConfigured: <boolean | null>null,
 	}),
 	getters: {
 		isAIEnabled(): boolean {
-			return this.aiConfigured || !!builderSettings.doc?.ai_api_key;
+			return !!this.aiConfigured || !!builderSettings.doc?.ai_api_key;
+		},
+		// The panel must not draw the setup hero (or the chat) on a guess: until
+		// one positive signal or the server's verdict arrives, the answer is unknown.
+		isAIStateKnown(): boolean {
+			return this.aiConfigured !== null || this.isAIEnabled;
 		},
 	},
 	actions: {
