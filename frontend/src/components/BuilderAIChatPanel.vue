@@ -240,14 +240,40 @@
 			</div>
 
 			<div class="border-t border-outline-gray-1 p-4">
-				<div v-if="selectedBlocks.length" class="mb-2 flex flex-wrap items-center gap-1.5">
-					<span class="text-xs text-ink-gray-5">Selections:</span>
+				<!-- Canvas selection alone sends nothing; attaching is the explicit act
+				     that scopes the request. -->
+				<div
+					v-if="attachedBlocks.length || attachableBlocks.length"
+					class="mb-2 flex flex-wrap items-center gap-1.5">
+					<span v-if="attachedBlocks.length" class="text-xs text-ink-gray-5">Context:</span>
 					<span
-						v-for="block in selectedBlocks"
-						:key="block.blockId"
+						v-for="block in attachedBlocks"
+						:key="block.id"
 						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-						<span class="block max-w-[8rem] truncate">{{ block.getBlockDescription() }}</span>
+						<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
+						<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
+						<button
+							type="button"
+							class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+							title="Remove from context"
+							@click="chat.detachBlock(block.id)">
+							<span class="lucide-x h-3 w-3" />
+						</button>
 					</span>
+					<button
+						v-if="attachableBlocks.length"
+						type="button"
+						class="inline-flex items-center gap-1 rounded border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
+						@click="chat.attachSelection()">
+						<span class="lucide-plus h-3 w-3" />
+						<span class="block max-w-[10rem] truncate">
+							{{
+								attachableBlocks.length === 1
+									? attachableBlocks[0].getBlockDescription()
+									: `${attachableBlocks.length} selected blocks`
+							}}
+						</span>
+					</button>
 				</div>
 				<Transition name="fade">
 					<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
@@ -326,26 +352,15 @@
 								<span class="truncate text-xs">{{ modelLabel }}</span>
 							</button>
 						</Dropdown>
-						<Popover v-if="!messages.length" placement="top-start" :offset="6">
-							<template #target="{ togglePopover }">
-								<Tooltip :text="selectedPreset ? selectedPreset.name : 'Style Preset'" placement="top">
-									<button
-										class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
-										:class="{ 'bg-surface-gray-2 text-ink-gray-8': selectedPreset }"
-										@click="togglePopover">
-										<span class="lucide-layout size-3.5" />
-									</button>
-								</Tooltip>
-							</template>
-							<template #body>
-								<!-- Sized to the panel, not past it: w-96 overhung the chat panel and
-								     spilled over the canvas. -->
-								<div
-									class="w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-lg">
-									<WebPagePresetPicker v-model="selectedPreset" />
-								</div>
-							</template>
-						</Popover>
+						<Tooltip text="Improve prompt" placement="top">
+							<button
+								class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
+								:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
+								@click="chat.improvePrompt">
+								<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />
+								<span v-else class="lucide-wand-sparkles size-3.5" />
+							</button>
+						</Tooltip>
 					</div>
 					<Button
 						v-if="isSubmitting"
@@ -380,7 +395,6 @@ import { AIChatController, type ChatMessage } from "@/components/AIChatControlle
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
-import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep } from "@/components/ai/types";
@@ -392,6 +406,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
@@ -439,7 +454,7 @@ const sessionOptions = computed(() => {
 	];
 });
 const { selectBlockById, openScriptByName } = chat;
-const { selectedBlocks } = chat;
+const { attachedBlocks, attachableBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 
@@ -701,20 +716,7 @@ function formatDuration(ms: number): string {
 	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
 }
 
-const selectedPreset = ref<{
-	id: string;
-	name: string;
-	category: string;
-	description: string;
-	icon: string;
-} | null>(null);
-
 const submitPrompt = () => {
-	if (selectedPreset.value) {
-		// Pass preset as a structured system-level parameter, not appended user text
-		chat.pendingStylePreset = `${selectedPreset.value.name}: ${selectedPreset.value.description}`;
-		selectedPreset.value = null;
-	}
 	chat.submitPrompt();
 };
 
@@ -788,6 +790,11 @@ function toggleChips(messageId: string) {
 	--tw-prose-headings: var(--ink-gray-9);
 	--tw-prose-bold: var(--ink-gray-9);
 	--tw-prose-code: var(--ink-gray-8);
+	/* Code blocks: typography's pre defaults are fixed light-theme colors, so on
+	 * the dark panel a route tree rendered as barely-visible dark-on-dark. Pin
+	 * BOTH sides of the pair to theme-adaptive tokens (they flip together). */
+	--tw-prose-pre-code: var(--ink-gray-8);
+	--tw-prose-pre-bg: var(--surface-gray-2);
 	--tw-prose-links: var(--ink-gray-9);
 	--tw-prose-bullets: var(--ink-gray-4);
 	--tw-prose-hr: var(--outline-gray-1);

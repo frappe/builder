@@ -111,8 +111,26 @@ export class AIChatController {
 		this.scheduleStreamRender();
 	}
 
-	// Set by the panel's style-preset picker; folded into the prompt on submit.
-	pendingStylePreset: string | null = null;
+	readonly isImprovingPrompt = ref(false);
+
+	/** One cheap completion that sharpens the composer draft in place — the user
+	 * still reads and edits it before sending. */
+	improvePrompt = async () => {
+		const draft = this.prompt.value.trim();
+		if (!draft || this.isImprovingPrompt.value) return;
+		this.isImprovingPrompt.value = true;
+		try {
+			const improved = (await createResource({ url: "builder.ai.api.improve_prompt" }).submit({
+				prompt: draft,
+				model: this.selectedModel.value,
+			})) as string;
+			if (improved) this.prompt.value = improved;
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Could not improve the prompt");
+		} finally {
+			this.isImprovingPrompt.value = false;
+		}
+	};
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
 
@@ -142,6 +160,27 @@ export class AIChatController {
 	readonly selectedBlocks = computed<Block[]>(
 		() => (this.canvasStore.activeCanvas?.selectedBlocks || []) as Block[],
 	);
+	/** Blocks the user explicitly attached to the next message — canvas selection
+	 * by itself sends nothing. */
+	readonly attachedBlocks = ref<{ id: string; label: string }[]>([]);
+	/** Currently selected canvas blocks not yet attached — what the "+" chip offers. */
+	readonly attachableBlocks = computed<Block[]>(() => {
+		const attached = new Set(this.attachedBlocks.value.map((b) => b.id));
+		return this.selectedBlocks.value.filter((b) => b.blockId && !attached.has(b.blockId));
+	});
+
+	attachSelection = () => {
+		for (const block of this.attachableBlocks.value) {
+			this.attachedBlocks.value.push({
+				id: block.blockId,
+				label: block.getBlockDescription?.() || block.blockName || block.element || "block",
+			});
+		}
+	};
+
+	detachBlock = (id: string) => {
+		this.attachedBlocks.value = this.attachedBlocks.value.filter((b) => b.id !== id);
+	};
 	readonly modelLabel = computed(
 		() =>
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
@@ -702,19 +741,15 @@ export class AIChatController {
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
 
-		let userText = this.prompt.value.trim();
+		const userText = this.prompt.value.trim();
 		this.prompt.value = "";
-		if (this.pendingStylePreset) {
-			userText += `\n\n(Preferred visual style: ${this.pendingStylePreset})`;
-			this.pendingStylePreset = null;
-		}
 		this.submittedForPageId = this.pageId.value;
 		if (!this.sessionId.value) await this.loadSession();
 
-		const selectedBlockContext = this.selectedBlocks.value
-			.filter((b) => b.blockId)
-			.map((b) => ({ id: b.blockId, label: b.blockName || b.element }));
-		const selectedIds = this.selectedBlocks.value.map((b) => b.blockId).filter(Boolean);
+		// Only explicitly attached blocks travel with the message.
+		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
+		const selectedIds = this.attachedBlocks.value.map((b) => b.id);
+		this.attachedBlocks.value = [];
 		const attachedImageData = this.imageData.value;
 		const attachedImageUrl = this.imagePreviewUrl.value;
 		this.clearImage();

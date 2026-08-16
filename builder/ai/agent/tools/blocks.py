@@ -58,9 +58,42 @@ update_block = Tool(
 					"Data bindings: {property: data_key}, e.g. {innerHTML: 'title', src: 'image', "
 					"href: 'url'}. Keys are BARE names: inside a repeater's item template the key "
 					"is a field of each record ('image', NOT 'item.image'); elsewhere it's a "
-					"page-data key ('merch_items', NOT 'data.merch_items'). This is the ONLY way "
-					"to render dynamic data — NEVER write '{{ item.title }}' moustache text into "
-					"inner_text/attributes (it renders literally). A null value unbinds."
+					"page-data key ('merch_items', NOT 'data.merch_items'). Inside a COMPONENT, "
+					"'props.<name>' binds to the instance's prop and 'component.<key>' to its data "
+					"script's output — a props binding shows the prop's value live in the editor "
+					"canvas too, so text that mirrors a prop should be BOUND to it, not hardcoded. "
+					"This is the ONLY way to render dynamic data — NEVER write '{{ item.title }}' "
+					"moustache text into inner_text/attributes (it renders literally). A null "
+					"value unbinds."
+				),
+			},
+			"props": {
+				"type": "object",
+				"description": (
+					"Component prop values for THIS instance: {name: value} for props the "
+					"component declares (read_page / get_document show them with defaults). "
+					"The clean way to parameterize embedded chrome — an active tab, a title, "
+					"a variant — when the component was built for it. A null value reverts "
+					"the prop to the component's default. Only meaningful on a component "
+					"instance's root block."
+				),
+			},
+			"client_script": {
+				"type": "object",
+				"description": (
+					"Behaviour/styling for a COMPONENT block ONLY (an instance root or a block "
+					"inside one) — rejected elsewhere; plain page blocks use set_page_script. "
+					"{js: '...', css: '...'} (either key; null clears one). js is the BODY of an "
+					"async function run once per rendered instance with `this` = this block's DOM "
+					"element and arguments (component_data, props) — write plain statements, no "
+					"function wrapper, no DOMContentLoaded, and reach inside via "
+					"this.querySelector(...), never document-wide selectors. `props` holds the "
+					"instance's resolved prop values (props.active_tab); `component_data` is only "
+					"what the server data script set under component.component_data. css is scoped to "
+					"this block's subtree (@scope), so plain selectors are safe. Select ONLY class "
+					"hooks you set on the blocks (rendered HTML is not the block tree — bound "
+					"text renders as plain divs), never tags or sibling walks. Writes here "
+					"mirror into the component definition, so every embed gets the behaviour."
 				),
 			},
 		},

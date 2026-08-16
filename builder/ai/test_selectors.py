@@ -132,9 +132,27 @@ class TestDesignDigest(FrappeTestCase):
 	def test_counts_fonts_colors_and_radii_across_the_tree(self):
 		digest = design_digest(STYLED_PAGE)
 
-		self.assertIn("fonts: Libre Baskerville x1, Cinzel x1", digest)
+		self.assertIn("fonts: Libre Baskerville x1 (body), Cinzel x1 (h1)", digest)
 		self.assertIn("colors: #E6DECA x2, #161412 x2", digest)
 		self.assertIn("radii: 2px x1", digest)
+
+	def test_states_each_fonts_role_elements_and_sizes(self):
+		# The working face vs a one-off accent must be tellable apart from the
+		# digest alone: 'Newsreader x1' with no role got promoted to every heading.
+		page = {
+			"blockId": "root",
+			"element": "body",
+			"children": [
+				text("a", "p", "body", baseStyles={"fontFamily": "Inter", "fontSize": "16px"}),
+				text("b", "h2", "head", baseStyles={"fontFamily": "Inter", "fontSize": "20px"}),
+				text("c", "p", "hero", baseStyles={"fontFamily": "Newsreader", "fontSize": "48px"}),
+			],
+		}
+
+		digest = design_digest(page)
+
+		self.assertIn("Inter x2 (p/h2 at 16px, 20px)", digest)
+		self.assertIn("Newsreader x1 (p at 48px)", digest)
 
 	def test_lists_top_level_sections_in_order(self):
 		self.assertIn("sections: section(hero) > section", design_digest(STYLED_PAGE))

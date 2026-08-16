@@ -94,6 +94,26 @@ class BlockCodec:
 			out["component"] = block["extendedFromComponent"]
 		if block.get("isChildOfComponent"):
 			out["child_of"] = block["isChildOfComponent"]
+		# `of` = which component-internal block this instance child mirrors; the join
+		# key between a component's defaults and the page-side ref that overrides them.
+		if block.get("referenceBlockId"):
+			out["of"] = block["referenceBlockId"]
+		# Behaviour/styles riding on the block itself: js runs per instance with
+		# `this` = the block's element and (component_data, props) as arguments;
+		# css is @scope'd to the block's subtree.
+		client_script = block.get("clientScript") or {}
+		if not client_script.get("js") and block.get("blockClientScript"):
+			client_script = {"js": block["blockClientScript"]}
+		if script := {k: v for k, v in client_script.items() if k in ("js", "css") and v}:
+			out["client_script"] = script
+		# Props compressed to name -> effective value (declarations on a definition,
+		# per-page values on an instance).
+		if isinstance(block.get("props"), dict) and block["props"]:
+			from builder.builder.doctype.builder_component.builder_component import (
+				get_component_prop_values,
+			)
+
+			out["props"] = get_component_prop_values(block)
 		# Repeaters and bindings read back in the same vocabulary they're written in
 		# (repeat/bind) — without them a data-driven block reads as a plain div and
 		# its dynamic wiring is invisible.
@@ -101,7 +121,13 @@ class BlockCodec:
 		if block.get("isRepeaterBlock") and isinstance(data_key, dict) and data_key.get("key"):
 			out["repeat"] = {"data": data_key["key"]}
 		if bind := {
-			dv["property"]: dv["key"]
+			dv["property"]: (
+				f"props.{dv['key']}"
+				if dv.get("comesFrom") == "props"
+				else f"component.{dv['key']}"
+				if dv.get("comesFrom") == "componentData"
+				else dv["key"]
+			)
 			for dv in block.get("dynamicValues") or []
 			if isinstance(dv, dict) and dv.get("property") and dv.get("key")
 		}:
@@ -134,18 +160,12 @@ class BlockCodec:
 		if not isinstance(node, dict):
 			return node
 
-		# Icon ref. The authoritative SVG is baked client-side (frontend has the
-		# Lucide set); the server only records the name so the block round-trips.
+		# Icon ref: one expansion path — page_writer owns the wrapper defaults and
+		# the baked SVG (lazy import; page_writer imports this module at top level).
 		if node.get("icon"):
-			return {
-				"element": "svg",
-				"blockName": node.get("name") or f"Icon: {node['icon']}",
-				"baseStyles": node.get("style", {}),
-				"attributes": {},
-				"customAttributes": {"data-lucide": node["icon"]},
-				"children": [],
-				"innerHTML": "",
-			}
+			from builder.ai.page_writer import convert_icon_block
+
+			return convert_icon_block(node)
 
 		attrs = node.get("attrs", {})
 		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}
@@ -167,6 +187,7 @@ class BlockCodec:
 			("classes", "classes"),
 			("component", "extendedFromComponent"),
 			("child_of", "isChildOfComponent"),
+			("client_script", "clientScript"),
 		]:
 			if yaml_key in node:
 				block[block_key] = node[yaml_key]

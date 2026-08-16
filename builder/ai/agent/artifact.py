@@ -126,6 +126,27 @@ def found_photo_list(ctx) -> str:
 	return "\n".join(lines)
 
 
+def reference_geometry(ctx) -> str:
+	"""Geometry of every reference read this turn — the generator sees only the
+	brief, and prose loses exactly these load-bearing values."""
+	reads = getattr(ctx, "reference_reads", None) or []
+	if not reads:
+		return ""
+	preamble = (
+		"REFERENCE PAGE GEOMETRY — pages of this site read this turn as references. When "
+		"the brief asks this page to match them or sit in the same site, what follows is "
+		"ground truth over any prose: reproduce the SAME root geometry (e.g. a shell row "
+		"of rail component + scrolling main column) instead of defaulting to a plain "
+		"vertical stack, and give each font the ROLE its usage shows — the dominant family "
+		"is the working face for headings AND body; a font used once is a one-spot accent "
+		"to reproduce in that one place (its element, its size), never the display face "
+		"for every heading and never every section's opener — at most the hero moment. "
+		"The reference's measured sizes beat this prompt's scale defaults: a calm "
+		"reference stays calm."
+	)
+	return preamble + "\n\n" + "\n\n".join(reads)
+
+
 def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
 	"""Make the generation path debuggable: log model, finish_reason, YAML size, parse
 	result, and top-level section count. A thin/broken page shows up here as a 'length'
@@ -208,6 +229,9 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.
 	if photos := found_photo_list(ctx):
 		messages.append({"role": "user", "content": photos})
+	# The geometry of reference pages read this turn — the brief alone cannot carry it.
+	if geometry := reference_geometry(ctx):
+		messages.append({"role": "user", "content": geometry})
 
 	if brief:
 		build_text = f"Build this page now:\n{brief}"

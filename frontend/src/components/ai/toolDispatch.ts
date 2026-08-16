@@ -1,36 +1,20 @@
 import type Block from "@/block";
 import type useCanvasStore from "@/stores/canvasStore";
 import type usePageStore from "@/stores/pageStore";
-import type { BuilderClientScript } from "@/types/doctypes";
 import { getBlockInstance } from "@/utils/helpers";
-import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { normalizeStyles } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
 import {
+	bindingEntry,
 	buildRepeaterDataScript,
 	convertYAMLtoBlock,
 	parseBlock,
 	STANDARD_ATTRS,
-	stripBindingPrefix,
 } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 type CanvasStore = ReturnType<typeof useCanvasStore>;
-
-/** Make an AI-suggested script name safe to use as a Builder Client Script doc name:
- * keep letters/numbers/spaces/hyphens (the doc name is also used in the public file path),
- * collapse whitespace, and cap the length. Returns "" if nothing usable remains. */
-function sanitizeScriptName(raw?: string): string {
-	if (!raw || typeof raw !== "string") return "";
-	return raw
-		.trim()
-		.replace(/[^\w\s-]/g, "")
-		.replace(/\s+/g, " ")
-		.trim()
-		.slice(0, 40)
-		.trim();
-}
 
 /**
  * Applies the agent's client-side tool operations to the canvas block tree and
@@ -99,6 +83,8 @@ export class ToolDispatcher {
 				if (args.inner_html !== undefined) props.push("html");
 				if (args.element !== undefined) props.push("element");
 				if (args.classes !== undefined) props.push("classes");
+				if (args.props) props.push("props");
+				if (args.client_script) props.push("client_script");
 				return props;
 			}
 			case "add_block":
@@ -194,6 +180,49 @@ export class ToolDispatcher {
 				}
 			});
 		}
+		// props = {name: value}. Starts from the instance's OWN props so untouched
+		// defaults keep flowing; a first override borrows its config from the merged view.
+		if (args.props && typeof args.props === "object" && !Array.isArray(args.props)) {
+			const root = block.getPropsRoot() || block;
+			const own = { ...(root.props || {}) };
+			const merged = block.getBlockProps();
+			for (const [name, value] of Object.entries(args.props as Record<string, any>)) {
+				if (value === null) {
+					delete own[name];
+					continue;
+				}
+				// Typed like the server twin (tree.prop_config), so the props panel
+				// renders a proper input for a fresh declaration.
+				const propType = Array.isArray(value)
+					? "array"
+					: typeof value === "boolean"
+						? "boolean"
+						: typeof value === "number"
+							? "number"
+							: typeof value === "object"
+								? "object"
+								: "string";
+				const config = own[name] ||
+					merged[name] || {
+						isDynamic: false,
+						isPassedDown: false,
+						comesFrom: null,
+						isStandard: true,
+						propOptions: { type: propType },
+					};
+				own[name] = { ...config, value };
+			}
+			block.setBlockProps(own);
+		}
+		// client_script = {js?, css?}; null clears a key.
+		if (args.client_script && typeof args.client_script === "object" && !Array.isArray(args.client_script)) {
+			for (const kind of ["js", "css"] as const) {
+				if (!(kind in args.client_script)) continue;
+				const value = (args.client_script as Record<string, string | null>)[kind];
+				if (value === null) delete block.clientScript[kind];
+				else block.clientScript[kind] = value;
+			}
+		}
 		if (args.inner_text !== undefined) block.setInnerHTML(args.inner_text);
 		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
 		if (args.element !== undefined) block.element = args.element;
@@ -206,12 +235,7 @@ export class ToolDispatcher {
 				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
 				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);
 				if (field != null) {
-					const key = stripBindingPrefix(field);
-					block.dynamicValues.push(
-						property === "innerHTML"
-							? { key, property: "innerHTML", type: "key" }
-							: { key, property, type: "attribute" },
-					);
+					block.dynamicValues.push(bindingEntry(property, field));
 				}
 			}
 		}
@@ -306,87 +330,27 @@ export class ToolDispatcher {
 				return;
 			}
 			case "update_script": {
-				// server_applied: the loop already persisted the change (scripts are
-				// server-authoritative now) — only mirror the local UI state.
-				if (args.server_applied) {
-					const existing = this.pageStore.activePageScripts.find(
-						(s) => s.name === (args.script_name as string),
-					);
-					if (existing) {
-						existing.script = args.script as string;
-						if (args.script_type) existing.script_type = args.script_type as any;
-					}
-					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-					return;
+				// Scripts are server-authoritative (SCRIPT_TWIN_TOOLS): the loop has
+				// already persisted the change — only mirror the local UI state.
+				const existing = this.pageStore.activePageScripts.find(
+					(s) => s.name === (args.script_name as string),
+				);
+				if (existing) {
+					existing.script = args.script as string;
+					if (args.script_type) existing.script_type = args.script_type as any;
 				}
-				const op = createResource({ url: "frappe.client.set_value" })
-					.submit({
-						doctype: "Builder Client Script",
-						name: args.script_name as string,
-						fieldname: {
-							script: args.script as string,
-							...(args.script_type ? { script_type: args.script_type as string } : {}),
-						},
-					})
-					.then(() => {
-						const existing = this.pageStore.activePageScripts.find(
-							(s) => s.name === (args.script_name as string),
-						);
-						if (existing) {
-							existing.script = args.script as string;
-							if (args.script_type) existing.script_type = args.script_type as any;
-						}
-						return args.script_name as string;
-					})
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
+				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
 				return;
 			}
 			case "set_page_script": {
-				// server_applied: the script doc exists and is attached — mirror only.
-				if (args.server_applied && args.script_name) {
-					this.pageStore.activePageScripts.push({
-						name: args.script_name as string,
-						script_type: ((args.script_type as string) || "JavaScript") as any,
-						script: args.script as string,
-					} as any);
-					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-					return;
-				}
-				const scriptType = (args.script_type as string) || "JavaScript";
-				// Use the model's descriptive name as the doc name (autoname is "prompt"), so the
-				// script list reads "Confetti On Load", not "JavaScript-52b52". Falls back to the
-				// auto hash name if the chosen name is empty or already taken.
-				const desiredName = sanitizeScriptName(args.name as string);
-				const insertScript = (useName: boolean) =>
-					createResource({ url: "frappe.client.insert" }).submit({
-						doc: {
-							doctype: "Builder Client Script",
-							script_type: scriptType,
-							script: args.script as string,
-							...(useName && desiredName ? { name: desiredName } : {}),
-						},
-					}) as Promise<BuilderClientScript>;
-				const op = insertScript(true)
-					.catch(() => insertScript(false))
-					.then((res: BuilderClientScript) =>
-						createResource({ url: "frappe.client.insert" })
-							.submit({
-								doc: {
-									doctype: "Builder Page Client Script",
-									parent: this.getPageId(),
-									parenttype: "Builder Page",
-									parentfield: "client_scripts",
-									builder_script: res.name,
-								},
-							})
-							.then(() => {
-								this.pageStore.activePageScripts.push(res);
-								return res.name;
-							}),
-					)
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
+				// Server-authoritative like update_script: the doc exists and is attached.
+				if (!args.script_name) return;
+				this.pageStore.activePageScripts.push({
+					name: args.script_name as string,
+					script_type: ((args.script_type as string) || "JavaScript") as any,
+					script: args.script as string,
+				} as any);
+				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
 				return;
 			}
 		}

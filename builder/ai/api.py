@@ -113,6 +113,34 @@ def run(
 	return {"status": "accepted", "session_id": session_id}
 
 
+IMPROVE_PROMPT_INSTRUCTION = """You rewrite a user's draft prompt for a website-builder AI into a sharper version of ITSELF.
+Preserve every stated fact, constraint, language and the request's SCOPE: a small edit request stays a small edit request, only made clearer; a vague page or section request gains concrete specifics (purpose, audience, section list, tone, style direction).
+Write it as the user speaking, plain text, no headings or bullets unless the draft had them, under 120 words. Do not use em dashes. Output ONLY the rewritten prompt."""
+
+
+@frappe.whitelist()
+def improve_prompt(prompt: str, model: str | None = None) -> str:
+	"""One cheap completion that sharpens the composer draft in place — the user
+	reviews and edits the result before sending it."""
+	from builder.ai import llm
+
+	prompt = (prompt or "").strip()
+	if not prompt:
+		frappe.throw(_("Type a prompt first"))
+	resolved_model = ModelRegistry.get_default(model or "openrouter")
+	text = llm.complete(
+		resolved_model,
+		[
+			{"role": "system", "content": IMPROVE_PROMPT_INSTRUCTION},
+			{"role": "user", "content": prompt},
+		],
+		llm.TASK_PARAMS["simple"],
+		stream=False,
+		api_key=resolve_api_key(resolved_model),
+	)
+	return (text or "").strip()
+
+
 def ensure_session_owner(session_id: str) -> None:
 	owner = frappe.db.get_value(AISession.DOCTYPE, session_id, "session_user")
 	if not owner:
