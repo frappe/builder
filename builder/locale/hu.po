@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-15 20:57\n"
+"PO-Revision-Date: 2026-08-16 07:33\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -703,7 +703,7 @@ msgstr ""
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr ""
+msgstr "Összetevő megnevezése"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
