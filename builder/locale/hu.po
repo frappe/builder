@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-16 08:49\n"
+"PO-Revision-Date: 2026-08-16 10:59\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -3372,7 +3372,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "Kicsi"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
@@ -3809,7 +3809,7 @@ msgstr ""
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "Összes megtekintés"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
