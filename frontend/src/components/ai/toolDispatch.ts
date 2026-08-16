@@ -251,12 +251,25 @@ export class ToolDispatcher {
 				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
 				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);
 				if (field != null) {
-					const key = stripBindingPrefix(field);
-					block.dynamicValues.push(
-						property === "innerHTML"
-							? { key, property: "innerHTML", type: "key" }
-							: { key, property, type: "attribute" },
-					);
+					// 'props.<name>' / 'component.<key>' select the binding source (see
+					// page_writer.binding_entry, the server twin).
+					let key = field;
+					let comesFrom: BlockDataKey["comesFrom"];
+					if (key.startsWith("props.")) {
+						key = key.slice("props.".length);
+						comesFrom = "props";
+					} else if (key.startsWith("component.")) {
+						key = key.slice("component.".length);
+						comesFrom = "componentData";
+					} else {
+						key = stripBindingPrefix(key);
+					}
+					block.dynamicValues.push({
+						...(property === "innerHTML"
+							? { key, property: "innerHTML", type: "key" as BlockDataKeyType }
+							: { key, property, type: "attribute" as BlockDataKeyType }),
+						...(comesFrom ? { comesFrom } : {}),
+					});
 				}
 			}
 		}

@@ -124,7 +124,13 @@ class BlockCodec:
 		if block.get("isRepeaterBlock") and isinstance(data_key, dict) and data_key.get("key"):
 			out["repeat"] = {"data": data_key["key"]}
 		if bind := {
-			dv["property"]: dv["key"]
+			dv["property"]: (
+				f"props.{dv['key']}"
+				if dv.get("comesFrom") == "props"
+				else f"component.{dv['key']}"
+				if dv.get("comesFrom") == "componentData"
+				else dv["key"]
+			)
 			for dv in block.get("dynamicValues") or []
 			if isinstance(dv, dict) and dv.get("property") and dv.get("key")
 		}:

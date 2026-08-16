@@ -230,15 +230,37 @@ def strip_binding_prefix(key) -> str:
 	return key
 
 
+# Key prefixes that SELECT a binding source: a component instance's props, or the
+# component data script's output. Anything else resolves against page data.
+BINDING_SOURCES = {"props.": "props", "component.": "componentData"}
+
+
+def binding_entry(prop: str, field) -> dict:
+	key = str(field or "").strip()
+	comes_from = None
+	for prefix, source in BINDING_SOURCES.items():
+		if key.startswith(prefix):
+			key = key[len(prefix) :]
+			comes_from = source
+			break
+	else:
+		key = strip_binding_prefix(key)
+	entry = (
+		{"key": key, "property": "innerHTML", "type": "key"}
+		if prop in ("innerHTML", "text")
+		else {"key": key, "property": prop, "type": "attribute"}
+	)
+	if comes_from:
+		entry["comesFrom"] = comes_from
+	return entry
+
+
 def bind_to_dynamic_values(bind: dict) -> list:
 	"""{property: item_key} → dynamicValues entries (the editor's binding shape).
-	innerHTML/text bind by content ("key"); anything else binds an HTML attribute."""
-	return [
-		{"key": strip_binding_prefix(field), "property": "innerHTML", "type": "key"}
-		if prop in ("innerHTML", "text")
-		else {"key": strip_binding_prefix(field), "property": prop, "type": "attribute"}
-		for prop, field in bind.items()
-	]
+	innerHTML/text bind by content ("key"); anything else binds an HTML attribute.
+	'props.<name>' / 'component.<key>' keys bind to those sources instead of page
+	data — a props binding resolves live in the editor canvas too."""
+	return [binding_entry(prop, field) for prop, field in bind.items()]
 
 
 def convert_yaml_block(node, is_root: bool = False) -> dict | None:

@@ -58,9 +58,13 @@ update_block = Tool(
 					"Data bindings: {property: data_key}, e.g. {innerHTML: 'title', src: 'image', "
 					"href: 'url'}. Keys are BARE names: inside a repeater's item template the key "
 					"is a field of each record ('image', NOT 'item.image'); elsewhere it's a "
-					"page-data key ('merch_items', NOT 'data.merch_items'). This is the ONLY way "
-					"to render dynamic data — NEVER write '{{ item.title }}' moustache text into "
-					"inner_text/attributes (it renders literally). A null value unbinds."
+					"page-data key ('merch_items', NOT 'data.merch_items'). Inside a COMPONENT, "
+					"'props.<name>' binds to the instance's prop and 'component.<key>' to its data "
+					"script's output — a props binding shows the prop's value live in the editor "
+					"canvas too, so text that mirrors a prop should be BOUND to it, not hardcoded. "
+					"This is the ONLY way to render dynamic data — NEVER write '{{ item.title }}' "
+					"moustache text into inner_text/attributes (it renders literally). A null "
+					"value unbinds."
 				),
 			},
 			"props": {
