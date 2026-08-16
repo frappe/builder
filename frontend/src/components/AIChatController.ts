@@ -769,6 +769,8 @@ export class AIChatController {
 
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
+		// submitting pins the current chat: a still-pending create must not replace it
+		this.sessionIntentEpoch++;
 
 		let userText = this.prompt.value.trim();
 		this.prompt.value = "";
