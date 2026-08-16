@@ -28,6 +28,7 @@
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
 					:placeholder="placeholder"
+					:style="inputStyle"
 					class="h-full w-full flex-1 border-none bg-transparent px-0 text-base placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 					:class="{
 						'pl-2': !$slots.prefix,
@@ -159,6 +160,9 @@ interface Props {
 	// token's name instead of var(--id); the combobox still selects by value
 	displayValue?: string | null;
 	placeholder?: string;
+	// styles the field's own text, for values that are worth rendering as a specimen
+	// (a font family set in that family); the options keep using `labelStyle`
+	inputStyle?: StyleValue;
 	showInputAsOption?: boolean;
 	actionButton?: ActionButton;
 	referenceElementSelector?: string;

@@ -11,6 +11,7 @@
 				:placeholder="displayPlaceholder"
 				:getOptions="getOptions"
 				:actionButton="{ component: FontUploader }"
+				:inputStyle="inputStyle"
 				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
@@ -35,7 +36,6 @@ const props = withDefaults(
 	}>(),
 	{
 		modelValue: null,
-		placeholder: __("Set Font"),
 	},
 );
 
@@ -50,13 +50,11 @@ type FontOption = {
 const { fontTokens, resolveVariableValue, getVariableName } = useBuilderToken();
 const fontInput = ref<typeof Autocomplete | null>(null);
 
-const isCssVariable = computed(
-	() =>
-		typeof props.modelValue === "string" &&
-		(props.modelValue.startsWith("var(--") || props.modelValue.startsWith("--")),
-);
+const isToken = (value?: string | null): value is string =>
+	typeof value === "string" && (value.startsWith("var(--") || value.startsWith("--"));
 
-// resolve a Font token to its real family so the specimen renders in it
+const isCssVariable = computed(() => isToken(props.modelValue));
+
 const resolvedFont = computed(() => {
 	if (!props.modelValue) return "inherit";
 	return isCssVariable.value ? resolveVariableValue(props.modelValue) : props.modelValue;
@@ -73,10 +71,18 @@ const displayValue = computed(() => {
 // a cascading/inherited placeholder may itself be a token — show its name, not var(--uuid)
 const displayPlaceholder = computed(() => {
 	const p = props.placeholder;
-	if (typeof p === "string" && (p.startsWith("var(--") || p.startsWith("--"))) {
-		return getVariableName(p) ?? p;
-	}
-	return p;
+	if (!p) return __("Set Font");
+	return isToken(p) ? getVariableName(p) ?? p : p;
+});
+
+// the field doubles as a specimen: whatever family name it shows — the one that is set,
+// or the inherited one standing in as placeholder — is rendered in that family. Both are
+// already applied on the canvas, so the face is loaded. A token shows its own name rather
+// than a family, so it keeps the mono treatment that marks it as one.
+const inputStyle = computed(() => {
+	const family = props.modelValue || props.placeholder;
+	if (!family || isToken(family)) return undefined;
+	return { fontFamily: family };
 });
 
 const handleUpdate = (val: string | null) => emit("update:modelValue", val);
