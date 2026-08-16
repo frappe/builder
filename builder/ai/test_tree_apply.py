@@ -152,7 +152,8 @@ class TestMutatingUpdate(unittest.TestCase):
 				]
 			},
 		)
-		self.assertIn("BAD BIND", msg)
+		self.assertIn("REJECTED", msg)
+		self.assertIn("PLAIN field/data keys", msg)
 		self.assertEqual(self.tree.resolve("h1")["innerHTML"], "ok")  # good patch still applied
 
 	def test_repeater_via_bind_is_rejected(self):

@@ -108,15 +108,12 @@ class BlockCodec:
 			out["client_script"] = script
 		# Props compressed to name -> effective value (declarations on a definition,
 		# per-page values on an instance).
-		if isinstance(props := block.get("props"), dict) and props:
-			out["props"] = {
-				name: config.get(
-					"value", config.get("propOptions", {}).get("options", {}).get("defaultValue")
-				)
-				if isinstance(config, dict)
-				else config
-				for name, config in props.items()
-			}
+		if isinstance(block.get("props"), dict) and block["props"]:
+			from builder.builder.doctype.builder_component.builder_component import (
+				get_component_prop_values,
+			)
+
+			out["props"] = get_component_prop_values(block)
 		# Repeaters and bindings read back in the same vocabulary they're written in
 		# (repeat/bind) — without them a data-driven block reads as a plain div and
 		# its dynamic wiring is invisible.
@@ -163,21 +160,12 @@ class BlockCodec:
 		if not isinstance(node, dict):
 			return node
 
-		# Icon ref. The authoritative SVG is baked client-side (frontend has the
-		# Lucide set); the server only records the name so the block round-trips.
+		# Icon ref: one expansion path — page_writer owns the wrapper defaults and
+		# the baked SVG (lazy import; page_writer imports this module at top level).
 		if node.get("icon"):
-			from builder.ai.lucide import lucide_svg
+			from builder.ai.page_writer import convert_icon_block
 
-			return {
-				"element": "svg",
-				"blockName": node.get("name") or f"Icon: {node['icon']}",
-				"baseStyles": node.get("style", {}),
-				"attributes": {},
-				"customAttributes": {"data-lucide": node["icon"]},
-				"children": [],
-				# Baked here because THIS expansion feeds the authoritative tree.
-				"innerHTML": lucide_svg(node["icon"]),
-			}
+			return convert_icon_block(node)
 
 		attrs = node.get("attrs", {})
 		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}

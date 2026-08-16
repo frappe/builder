@@ -442,6 +442,10 @@ TOOL_LABELS = {
 }
 
 
+def block_label(block: dict) -> str:
+	return block.get("blockName") or f"<{block.get('element') or 'div'}>"
+
+
 def readable_doctype(doctype: str | None) -> str:
 	if not doctype:
 		return "records"
@@ -454,19 +458,17 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 	follows the step's status: running or done."""
 	args = args or {}
 
-	def block_label(ref: str | None) -> str:
+	def resolved_label(ref: str | None) -> str:
 		block = tree.resolve(ref) if (tree and ref) else None
-		if block:
-			return block.get("blockName") or f"<{block.get('element') or 'div'}>"
-		return ref or ""
+		return block_label(block) if block else (ref or "")
 
 	def voice(running: str, finished: str) -> str:
 		return finished if done else running
 
 	if pair := TOOL_LABELS.get(tool_name):
-		return pair[1] if done else pair[0]
+		return voice(*pair)
 	if tool_name == "read_block":
-		return f"{voice('Reading', 'Read')} block: {block_label(args.get('block_id'))}".rstrip(": ")
+		return f"{voice('Reading', 'Read')} block: {resolved_label(args.get('block_id'))}".rstrip(": ")
 	if tool_name == "read_page":
 		title = args.get("page_id") and frappe.db.get_value("Builder Page", args["page_id"], "page_title")
 		if title:
@@ -1097,11 +1099,7 @@ class AgentRunner:
 		labelled = []
 		for ref in self.selected_block_ids:
 			block = find_block(root, ref) if root else None
-			if block:
-				label = block.get("blockName") or f"<{block.get('element') or 'div'}>"
-				labelled.append(f"{ref} ({label})")
-			else:
-				labelled.append(ref)
+			labelled.append(f"{ref} ({block_label(block)})" if block else ref)
 		return (
 			"ATTACHED BLOCKS — the user explicitly attached these blocks to this request: "
 			f"{', '.join(labelled)}. They are the SUBJECT and SCOPE of the request: interpret "

@@ -12,6 +12,8 @@ reference, so "match the rest of the site" and "use this page as reference" are
 answered from the site's real design instead of the model's priors.
 """
 
+import re
+
 import frappe
 
 from builder.ai.agent.registry import Tool
@@ -201,9 +203,10 @@ def run_read_page(ctx, args: dict) -> str:
 		return f"{label} has no blocks yet."
 	components = render_components(root)
 	fonts_missing = font_warning(root)
+	digest = design_digest(root)
 	parts = [
 		f"{label} — READ-ONLY reference; its refs are NOT editable from here.",
-		render_reference(root),
+		render_reference(root, digest),
 	]
 	if fonts_missing:
 		parts.append(fonts_missing)
@@ -214,7 +217,7 @@ def run_read_page(ctx, args: dict) -> str:
 	# For the generation step, which sees only the brief — and briefs lose exactly
 	# this (geometry, font roles). See artifact.reference_geometry.
 	if (reads := getattr(ctx, "reference_reads", None)) is not None:
-		sections = (f"{label}:", layout_scaffold(root), design_digest(root), fonts_missing, components)
+		sections = (f"{label}:", layout_scaffold(root), digest, fonts_missing, components)
 		reads.append("\n".join(section for section in sections if section))
 	return "\n".join(parts)
 
@@ -228,10 +231,10 @@ OUTLINE_LIMIT = 20_000  # a reference outline is for rhythm, not coverage — bo
 SCRIPT_LIMIT = 4_000  # per attached script
 
 
-def render_reference(root: dict) -> str:
+def render_reference(root: dict, digest: str) -> str:
 	"""Digest + structure. The digest leads so the design language survives even
 	when the tree is big and only the outline ships."""
-	digest = f"Design digest (base styles, with use counts):\n{design_digest(root)}"
+	digest = f"Design digest (base styles, with use counts):\n{digest}"
 	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
 	if len(full) <= REFERENCE_FULL_LIMIT:
 		return f"{digest}\n\nFull structure and styles (YAML):\n{full}"
@@ -271,6 +274,14 @@ SCAFFOLD_DEPTH = 2  # root + panes + their immediate children: the shell, not th
 SCAFFOLD_MAX_LINES = 30
 
 
+def layout_styles(block: dict) -> dict:
+	return {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
+
+
+def strip_tags(html: str) -> str:
+	return re.sub(r"<[^>]+>", " ", html or "").strip()
+
+
 def layout_scaffold(root: dict) -> str:
 	"""The page-level geometry as indented lines — the HOW a prose brief loses."""
 	lines = []
@@ -280,10 +291,9 @@ def layout_scaffold(root: dict) -> str:
 		if len(lines) == SCAFFOLD_MAX_LINES:
 			lines.append("…")
 			break
-		styles = {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
 		name = block.get("blockName") or block.get("element") or "div"
 		component = f" [component {c}]" if (c := block.get("extendedFromComponent")) else ""
-		detail = ", ".join(f"{k}: {v}" for k, v in styles.items())
+		detail = ", ".join(f"{k}: {v}" for k, v in layout_styles(block).items())
 		lines.append(f"{'  ' * depth}- {name}{component} {{{detail}}}")
 	return "\n".join(lines)
 
@@ -301,17 +311,13 @@ def render_components(root: dict, on_open_page: bool = False) -> str:
 	# can validly pin different versions, and each renders its own. The FIRST
 	# instance of each pair also contributes its per-instance overrides: how the
 	# reference ADAPTS the shared chrome is as much the contract as its layout.
-	pairs: list = []
 	instances: dict = {}
 	for block, _depth in walk_blocks(root):
-		component = block.get("extendedFromComponent")
-		pair = (component, block.get("componentVersion"))
-		if component and pair not in pairs:
-			pairs.append(pair)
-			instances[pair] = block
-	if not pairs:
+		if component := block.get("extendedFromComponent"):
+			instances.setdefault((component, block.get("componentVersion")), block)
+	if not instances:
 		return ""
-	pairs = pairs[:8]
+	pairs = list(instances)[:8]
 	names = {
 		row.name: row.component_name
 		for row in frappe.get_all(
@@ -328,9 +334,8 @@ def render_components(root: dict, on_open_page: bool = False) -> str:
 		block = frappe.parse_json(resolved.get("block") or "{}")
 		if not isinstance(block, dict):
 			continue
-		styles = {k: v for k, v in (block.get("baseStyles") or {}).items() if k in LAYOUT_STYLE_KEYS}
 		classes = block.get("classes") or []
-		detail = ", ".join(f"{k}: {v}" for k, v in styles.items()) or "no layout styles"
+		detail = ", ".join(f"{k}: {v}" for k, v in layout_styles(block).items()) or "no layout styles"
 		hooks = f" — classes {classes}" if classes else ""
 		lines.append(
 			f"- {component_id} ('{names.get(component_id, component_id)}'): root {{{detail}}}{hooks}"
@@ -385,12 +390,9 @@ def client_script_count(block: dict) -> int:
 
 def component_texts(block: dict) -> list[str]:
 	"""The component's default copy — what an embedding page must override."""
-	import re
-
 	texts = []
 	for child, _depth in walk_blocks(block):
-		clean = re.sub(r"<[^>]+>", " ", child.get("innerHTML") or "").strip()
-		if clean:
+		if clean := strip_tags(child.get("innerHTML")):
 			texts.append(clean[:30])
 		if len(texts) == 6:
 			break
@@ -399,8 +401,6 @@ def component_texts(block: dict) -> list[str]:
 
 def instance_overrides(instance: dict) -> list[str]:
 	"""Per-instance adjustments: replaced text, hidden parts, props, attributes."""
-	import re
-
 	from builder.builder.doctype.builder_component.builder_component import get_component_prop_values
 
 	notes = []
@@ -413,7 +413,7 @@ def instance_overrides(instance: dict) -> list[str]:
 		if child is instance:
 			continue
 		ref = child.get("referenceBlockId") or child.get("blockId")
-		if text := re.sub(r"<[^>]+>", " ", child.get("innerHTML") or "").strip():
+		if text := strip_tags(child.get("innerHTML")):
 			notes.append(f"{ref} text → {text[:40]!r}")
 		if styles := visible_styles(child.get("baseStyles")):
 			notes.append(f"{ref} {styles}")
@@ -542,7 +542,9 @@ def unavailable_fonts(root: dict) -> list[str]:
 			families.add(family)
 	if not families:
 		return []
-	user_fonts = {row.font_name for row in frappe.get_all("User Font", fields=["font_name"])}
+	from builder.builder.doctype.user_font.user_font import get_all_user_fonts
+
+	user_fonts = {font.font_name for font in get_all_user_fonts()}
 	missing, unknown = [], []
 	for family in sorted(families - user_fonts)[:FONT_PROBE_LIMIT]:
 		cached = frappe.cache().get_value(f"google_font_exists:{family}")

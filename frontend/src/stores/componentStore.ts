@@ -176,25 +176,16 @@ const useComponentStore = defineStore("componentStore", {
 					.then((componentDoc) => {
 						this.setComponentMap(componentDoc);
 					})
-					.catch(async () => {
-						// A just-created component can race its transaction commit; one
-						// delayed retry beats caching the Missing placeholder for the session.
-						await new Promise((resolve) => setTimeout(resolve, 2000));
-						return this.fetchComponent(componentName)
-							.then((componentDoc) => {
-								this.setComponentMap(componentDoc);
-							})
-							.catch(() => {
-								const missingComponentDoc = {
-									name: componentName,
-									block: JSON.stringify(getBlockTemplate("missing-component")),
-									creation: "",
-									modified: "",
-									owner: "Administrator",
-									modified_by: "Administrator",
-								};
-								this.setComponentMap(missingComponentDoc);
-							});
+					.catch(() => {
+						const missingComponentDoc = {
+							name: componentName,
+							block: JSON.stringify(getBlockTemplate("missing-component")),
+							creation: "",
+							modified: "",
+							owner: "Administrator",
+							modified_by: "Administrator",
+						};
+						this.setComponentMap(missingComponentDoc);
 					})
 					.finally(() => {
 						this.fetchingComponent.delete(componentName);

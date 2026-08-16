@@ -1,36 +1,20 @@
 import type Block from "@/block";
 import type useCanvasStore from "@/stores/canvasStore";
 import type usePageStore from "@/stores/pageStore";
-import type { BuilderClientScript } from "@/types/doctypes";
 import { getBlockInstance } from "@/utils/helpers";
-import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { normalizeStyles } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
 import {
+	bindingEntry,
 	buildRepeaterDataScript,
 	convertYAMLtoBlock,
 	parseBlock,
 	STANDARD_ATTRS,
-	stripBindingPrefix,
 } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 type CanvasStore = ReturnType<typeof useCanvasStore>;
-
-/** Make an AI-suggested script name safe to use as a Builder Client Script doc name:
- * keep letters/numbers/spaces/hyphens (the doc name is also used in the public file path),
- * collapse whitespace, and cap the length. Returns "" if nothing usable remains. */
-function sanitizeScriptName(raw?: string): string {
-	if (!raw || typeof raw !== "string") return "";
-	return raw
-		.trim()
-		.replace(/[^\w\s-]/g, "")
-		.replace(/\s+/g, " ")
-		.trim()
-		.slice(0, 40)
-		.trim();
-}
 
 /**
  * Applies the agent's client-side tool operations to the canvas block tree and
@@ -251,25 +235,7 @@ export class ToolDispatcher {
 				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
 				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);
 				if (field != null) {
-					// 'props.<name>' / 'component.<key>' select the binding source (see
-					// page_writer.binding_entry, the server twin).
-					let key = field;
-					let comesFrom: BlockDataKey["comesFrom"];
-					if (key.startsWith("props.")) {
-						key = key.slice("props.".length);
-						comesFrom = "props";
-					} else if (key.startsWith("component.")) {
-						key = key.slice("component.".length);
-						comesFrom = "componentData";
-					} else {
-						key = stripBindingPrefix(key);
-					}
-					block.dynamicValues.push({
-						...(property === "innerHTML"
-							? { key, property: "innerHTML", type: "key" as BlockDataKeyType }
-							: { key, property, type: "attribute" as BlockDataKeyType }),
-						...(comesFrom ? { comesFrom } : {}),
-					});
+					block.dynamicValues.push(bindingEntry(property, field));
 				}
 			}
 		}
@@ -364,87 +330,27 @@ export class ToolDispatcher {
 				return;
 			}
 			case "update_script": {
-				// server_applied: the loop already persisted the change (scripts are
-				// server-authoritative now) — only mirror the local UI state.
-				if (args.server_applied) {
-					const existing = this.pageStore.activePageScripts.find(
-						(s) => s.name === (args.script_name as string),
-					);
-					if (existing) {
-						existing.script = args.script as string;
-						if (args.script_type) existing.script_type = args.script_type as any;
-					}
-					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-					return;
+				// Scripts are server-authoritative (SCRIPT_TWIN_TOOLS): the loop has
+				// already persisted the change — only mirror the local UI state.
+				const existing = this.pageStore.activePageScripts.find(
+					(s) => s.name === (args.script_name as string),
+				);
+				if (existing) {
+					existing.script = args.script as string;
+					if (args.script_type) existing.script_type = args.script_type as any;
 				}
-				const op = createResource({ url: "frappe.client.set_value" })
-					.submit({
-						doctype: "Builder Client Script",
-						name: args.script_name as string,
-						fieldname: {
-							script: args.script as string,
-							...(args.script_type ? { script_type: args.script_type as string } : {}),
-						},
-					})
-					.then(() => {
-						const existing = this.pageStore.activePageScripts.find(
-							(s) => s.name === (args.script_name as string),
-						);
-						if (existing) {
-							existing.script = args.script as string;
-							if (args.script_type) existing.script_type = args.script_type as any;
-						}
-						return args.script_name as string;
-					})
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
+				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
 				return;
 			}
 			case "set_page_script": {
-				// server_applied: the script doc exists and is attached — mirror only.
-				if (args.server_applied && args.script_name) {
-					this.pageStore.activePageScripts.push({
-						name: args.script_name as string,
-						script_type: ((args.script_type as string) || "JavaScript") as any,
-						script: args.script as string,
-					} as any);
-					this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-					return;
-				}
-				const scriptType = (args.script_type as string) || "JavaScript";
-				// Use the model's descriptive name as the doc name (autoname is "prompt"), so the
-				// script list reads "Confetti On Load", not "JavaScript-52b52". Falls back to the
-				// auto hash name if the chosen name is empty or already taken.
-				const desiredName = sanitizeScriptName(args.name as string);
-				const insertScript = (useName: boolean) =>
-					createResource({ url: "frappe.client.insert" }).submit({
-						doc: {
-							doctype: "Builder Client Script",
-							script_type: scriptType,
-							script: args.script as string,
-							...(useName && desiredName ? { name: desiredName } : {}),
-						},
-					}) as Promise<BuilderClientScript>;
-				const op = insertScript(true)
-					.catch(() => insertScript(false))
-					.then((res: BuilderClientScript) =>
-						createResource({ url: "frappe.client.insert" })
-							.submit({
-								doc: {
-									doctype: "Builder Page Client Script",
-									parent: this.getPageId(),
-									parenttype: "Builder Page",
-									parentfield: "client_scripts",
-									builder_script: res.name,
-								},
-							})
-							.then(() => {
-								this.pageStore.activePageScripts.push(res);
-								return res.name;
-							}),
-					)
-					.catch(() => null);
-				this.pendingScriptOps.value.push(op);
+				// Server-authoritative like update_script: the doc exists and is attached.
+				if (!args.script_name) return;
+				this.pageStore.activePageScripts.push({
+					name: args.script_name as string,
+					script_type: ((args.script_type as string) || "JavaScript") as any,
+					script: args.script as string,
+				} as any);
+				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
 				return;
 			}
 		}

@@ -110,14 +110,14 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 			block.setdefault(target, {})[key] = value
 
 
-def merge_props(block: dict, props: dict) -> None:
+def merge_props(block: dict, props: dict, pinned: dict | None = None, live: dict | None = None) -> None:
 	"""Per-instance prop values ({name: value}; None removes). Only `value` is
 	touched; a FIRST override borrows the declaration's config (as the canvas twin
 	does) so label/options survive in the authoritative draft. A prop the
 	definition never declared gets DECLARED there too — a fresh embed must offer
-	the same knob, not arrive bare."""
+	the same knob, not arrive bare. `pinned`/`live` accept schemas the caller
+	already resolved (route_props), sparing repeat snapshot reads."""
 	current = block.setdefault("props", {})
-	declared = None
 	undeclared = {}
 	for name, value in props.items():
 		if value is None:
@@ -125,17 +125,19 @@ def merge_props(block: dict, props: dict) -> None:
 		elif isinstance(current.get(name), dict):
 			current[name]["value"] = value
 		else:
-			if declared is None:
-				declared = declared_props(block)
-			config = dict(declared.get(name) or prop_config(value))
+			if pinned is None:
+				pinned = declared_props(block)
+			config = dict(pinned.get(name) or prop_config(value))
 			config["value"] = value
 			current[name] = config
-			if name not in declared:
+			if name not in pinned:
 				undeclared[name] = config
 	if undeclared and block.get("extendedFromComponent"):
+		if live is None:
+			live = live_declared_props(block["extendedFromComponent"])
 		# Mirror only into a BARE live schema (the authoring flow); a live schema
 		# with props already declared must never gain names from an instance.
-		if not live_declared_props(block["extendedFromComponent"]):
+		if not live:
 			update_definition(
 				block["extendedFromComponent"], lambda root: root.setdefault("props", {}).update(undeclared)
 			)
@@ -196,33 +198,6 @@ CLIENT_SCRIPT_HINT = (
 	"one), where behaviour ships with every embed. For a plain page block use "
 	"set_page_script: page scripts stay visible and manageable in the editor's panel."
 )
-
-
-def undeclared_prop_names(block: dict, args: dict) -> list[str]:
-	"""On a component whose definition already declares props, an unknown name is
-	almost always a typo — writing it through would mutate the shared component for
-	every embed. A BARE definition (no props yet) is the authoring flow: new names
-	are accepted and declared there."""
-	props = args.get("props")
-	if not isinstance(props, dict) or not block.get("extendedFromComponent"):
-		return []
-	live = live_declared_props(block["extendedFromComponent"])
-	if not live:
-		return []
-	# A name the pinned schema declares stays settable (it is what THIS instance
-	# renders); anything else must exist on the live schema.
-	pinned = declared_props(block)
-	return [name for name in props if props[name] is not None and name not in pinned and name not in live]
-
-
-def undeclared_props_hint(block: dict) -> str:
-	declared = ", ".join(
-		sorted(set(declared_props(block)) | set(live_declared_props(block["extendedFromComponent"])))
-	)
-	return (
-		f"this component declares only: {declared}. Use a declared name; a genuinely new "
-		"prop is added by editing the component itself, not through an instance."
-	)
 
 
 def client_script_outside_component(block: dict, args: dict) -> bool:
@@ -333,8 +308,8 @@ def merge_block_update(block: dict, args: dict) -> None:
 		block["classes"] = args["classes"]
 	if isinstance(args.get("bind"), dict):
 		merge_bindings(block, args["bind"])
-	if isinstance(args.get("props"), dict):
-		merge_props(block, args["props"])
+	# props never reach here: WorkingTree.route_props validates and applies them
+	# on the owning instance root before this merge runs.
 	if isinstance(args.get("client_script"), dict):
 		merge_client_script(block, args["client_script"])
 
@@ -400,25 +375,34 @@ class WorkingTree:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
-		if props := repeater_bind_props(args):
-			return f"FAILED: bind {props} — {REPEATER_BIND_HINT}"
-		if bad := bad_bind_keys(args):
-			return f"FAILED: {bad} — {BAD_BIND_HINT}"
-		if fields := moustache_fields(args):
-			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
-		if client_script_outside_component(block, args):
-			return f"FAILED: {CLIENT_SCRIPT_HINT}"
-		args, failure = self.route_props(block, args)
+		args, failure = self.screen_patch(block, args)
 		if failure:
 			return failure
 		merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
+	def screen_patch(self, block: dict, args: dict) -> tuple[dict, str]:
+		"""Every per-field guard, in one seam shared by the single and batch update
+		paths. Returns (args ready to merge, "") or (args, "FAILED: …")."""
+		if props := repeater_bind_props(args):
+			return args, f"FAILED: bind {props} — {REPEATER_BIND_HINT}"
+		if bad := bad_bind_keys(args):
+			return args, f"FAILED: {bad} — {BAD_BIND_HINT}"
+		if fields := moustache_fields(args):
+			return args, f"FAILED: {fields} — {MOUSTACHE_HINT}"
+		if client_script_outside_component(block, args):
+			return args, f"FAILED: {CLIENT_SCRIPT_HINT}"
+		return self.route_props(block, args)
+
 	def route_props(self, block: dict, args: dict) -> tuple[dict, str]:
 		"""Prop values live on the INSTANCE ROOT — the canvas routes a child-targeted
 		write up via getPropsRoot(), and resolution only reads the root, so the server
 		must land it in the same place or a reload silently restores the old value.
-		Returns (args for this block, "") or (args, failure)."""
+		Schemas resolve ONCE here (pinned = what this instance renders, live = the
+		mirror target) and feed both validation and the merge. An unknown name on a
+		declared live schema is almost always a typo — writing it through would
+		mutate the shared component; a BARE live schema is the authoring flow.
+		Returns (args stripped of props, "") or (args, failure)."""
 		if not isinstance(args.get("props"), dict):
 			return args, ""
 		owner = self.props_owner(block)
@@ -427,12 +411,20 @@ class WorkingTree:
 				"FAILED: props apply to component instances — this block is not inside one. "
 				"Style or text changes on a plain block go through the other update fields."
 			)
-		if unknown := undeclared_prop_names(owner, args):
-			return args, f"FAILED: props {unknown} — {undeclared_props_hint(owner)}"
-		if owner is not block:
-			merge_props(owner, args["props"])
-			args = {k: v for k, v in args.items() if k != "props"}
-		return args, ""
+		props = args["props"]
+		pinned = declared_props(owner)
+		live = live_declared_props(owner["extendedFromComponent"])
+		if live and (
+			unknown := [n for n in props if props[n] is not None and n not in pinned and n not in live]
+		):
+			declared = ", ".join(sorted(set(pinned) | set(live)))
+			return args, (
+				f"FAILED: props {unknown} — this component declares only: {declared}. Use a "
+				"declared name; a genuinely new prop is added by editing the component itself, "
+				"not through an instance."
+			)
+		merge_props(owner, props, pinned=pinned, live=live)
+		return {k: v for k, v in args.items() if k != "props"}, ""
 
 	def props_owner(self, block: dict) -> dict | None:
 		"""The instance root a prop write belongs to: the block itself, or the nearest
@@ -441,23 +433,10 @@ class WorkingTree:
 			return block
 		if not block.get("isChildOfComponent"):
 			return None
-		chain: list[dict] = []
-
-		def walk(node: dict) -> bool:
-			if node is block:
-				return True
-			chain.append(node)
-			for child in node.get("children") or []:
-				if isinstance(child, dict) and walk(child):
-					return True
-			chain.pop()
-			return False
-
-		if self.root and walk(self.root):
-			for ancestor in reversed(chain):
-				if ancestor.get("extendedFromComponent"):
-					return ancestor
-		return None
+		node = block
+		while node is not None and not node.get("extendedFromComponent"):
+			node = self.parent_of(node.get("blockId"))
+		return node
 
 	def apply_update_blocks(self, args: dict) -> str:
 		patches = args.get("patches")
@@ -472,26 +451,20 @@ class WorkingTree:
 			block = self.resolve(block_id)
 			if block is None:
 				missing.append(block_id)
-			elif props := repeater_bind_props(patch):
-				rejected.append(f"{block_id} bind {props} ({REPEATER_BIND_HINT.split('.')[0]})")
-			elif bad := bad_bind_keys(patch):
-				rejected.append(f"{block_id} {bad}")
-			elif fields := moustache_fields(patch):
-				rejected.append(f"{block_id} moustache in {fields}")
-			elif client_script_outside_component(block, patch):
-				rejected.append(f"{block_id} client_script outside a component")
+				continue
+			patch, failure = self.screen_patch(block, patch)
+			if failure:
+				# Each entry keeps ITS OWN reason — a props typo must not read as a
+				# bad bind in the summary.
+				rejected.append(f"{block_id}: {failure.removeprefix('FAILED: ')[:110]}")
 			else:
-				patch, failure = self.route_props(block, patch)
-				if failure:
-					rejected.append(f"{block_id} {failure.removeprefix('FAILED: ')[:90]}")
-				else:
-					merge_block_update(block, patch)
+				merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)
 		problems = []
 		if missing:
 			problems.append(f"NOT FOUND: {missing} — those refs don't exist, recheck them.")
 		if rejected:
-			problems.append(f"BAD BIND on {rejected} — {BAD_BIND_HINT}")
+			problems.append("REJECTED " + "; ".join(rejected))
 		if problems:
 			return f"Applied to {applied} of {len(targets)} blocks. " + " ".join(problems)
 		return f"Applied to all {applied} block(s)."
