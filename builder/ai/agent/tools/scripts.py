@@ -88,10 +88,14 @@ def apply_update_script(ctx, args: dict) -> str:
 		return f"FAILED: script '{name}' not found — call get_page_scripts and use its exact script_name."
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
-	values = {"script": args.get("script") or ""}
+	doc = frappe.get_doc("Builder Client Script", name)
+	doc.script = args.get("script") or ""
 	if args.get("script_type"):
-		values["script_type"] = args["script_type"]
-	frappe.db.set_value("Builder Client Script", name, values)
+		doc.script_type = args["script_type"]
+	# A full save, never db.set_value: on_update rewrites the minified public file
+	# the published page serves and bumps its cache-busting URL — a bare column
+	# write leaves every published page running the OLD script.
+	doc.save(ignore_permissions=True)
 	return f"Updated script '{name}'."
 
 
