@@ -1,7 +1,10 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
-		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
+	<Popover placement="left" class="!block w-full" :offset="25" @close="endStatePreview">
+		<template #target="{ togglePopover, isOpen }">
+			<div
+				class="flex w-full items-center justify-between"
+				@focusin="updateActiveState"
+				@click="$event.target instanceof HTMLInputElement && togglePopover(true)">
 				<StylePropertyControl
 					propertyKey="background"
 					:component="BackgroundInput"
@@ -12,7 +15,7 @@
 					readonly
 					:selectOnFocus="false"
 					class="[&_input]:cursor-pointer"
-					@focus="togglePopover"
+					@focus="canOpenOnFocus() && togglePopover(true)"
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -20,12 +23,8 @@
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
-							@click="
-								() => {
-									activeState = variant;
-									togglePopover();
-								}
-							"
+							@pointerdown="rememberPopoverState(variant, isOpen)"
+							@click="togglePopoverForState(variant, togglePopover)"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
 							:style="getPreviewStyle(variant)" />
 					</template>
@@ -140,6 +139,7 @@ import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderToken } from "@/utils/useBuilderToken";
+import { useStatePopover } from "@/composables/useStatePopover";
 import { STRETCH_TABS } from "@/utils/tabButtons";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
 import { computed, defineComponent, h, ref, watch } from "vue";
@@ -177,7 +177,8 @@ const BackgroundInput = defineComponent({
 	},
 });
 
-const activeState = ref<string | null>(null);
+const { activeState, rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } =
+	useStatePopover();
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;

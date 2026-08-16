@@ -95,75 +95,76 @@ const emit = defineEmits<{
 const isTopLabel = computed(() => props.labelPlacement === "top");
 
 const rowRef = ref<HTMLElement | null>(null);
+const panelSelector = "[data-slot='content']";
 
-const holdsFocus = () => !!rowRef.value?.contains(document.activeElement);
-const field = () => rowRef.value?.querySelector<HTMLElement>("input, select");
+const hasFocus = () => rowRef.value?.contains(document.activeElement) ?? false;
+const focusField = () => rowRef.value?.querySelector<HTMLElement>("input, select")?.focus();
 
-// The label dropdown hands focus to its trigger span as it closes, so focus lands
-// on <body> a few frames after the row appears. Take it back until something else holds it.
+// Reclaim focus after a label dropdown closes, until another element owns it.
 let claimingFocus = false;
 
-const claimFocus = (framesLeft: number) => {
-	claimingFocus = framesLeft > 0 && !!props.isActive;
-	if (!claimingFocus) return;
-	if (document.activeElement === document.body) field()?.focus();
-	requestAnimationFrame(() => claimFocus(framesLeft - 1));
-};
-
-// A popover panel sits outside the row, so focus that lands in one is not the user leaving.
-// The preview lasts until the panel closes.
-const PANEL = "[data-slot='content']";
-let watchedPanel: Element | null = null;
-let pressThatClosedPanel: MouseEvent | null = null;
-
-useEventListener(document, "mousedown", (event: MouseEvent) => (pressThatClosedPanel = event), {
-	capture: true,
-});
-
-// A press on the row, or on a canvas handle that prevents the default, keeps editing this
-// state. Anything else is the user leaving.
-const pressKeepsPreview = () => {
-	const press = pressThatClosedPanel;
-	return !!press && (press.defaultPrevented || !!rowRef.value?.contains(press.target as Node));
-};
-
-const watchPanel = (panel: Element) => {
-	if (watchedPanel === panel) return;
-	watchedPanel = panel;
-	pressThatClosedPanel = null;
-	const check = () => {
-		if (watchedPanel !== panel) return;
-		if (panel.isConnected) return requestAnimationFrame(check);
-		watchedPanel = null;
-		claimingFocus = false;
-		// Another control now owns the state.
-		if (!props.isActive || holdsFocus()) return;
-		if (pressKeepsPreview()) return field()?.focus();
-		emit("blur");
-	};
-	requestAnimationFrame(check);
-};
-
-// Leaving the row ends the preview. Focus that goes nowhere is the dropdown closing,
-// not the user leaving.
-const handleFocusOut = (event: FocusEvent) => {
-	const relatedTarget = event.relatedTarget as Element | null;
-	if (rowRef.value?.contains(relatedTarget)) return;
-	const panel = relatedTarget?.closest?.(PANEL) || document.querySelector(PANEL);
-	if (panel) return watchPanel(panel);
-	if (claimingFocus && !relatedTarget) return;
+const endPreview = () => {
 	claimingFocus = false;
 	emit("blur");
 };
 
-// The canvas previews the active state, so put the caret in its field. This also marks
-// the row with the focus styling.
+const keepFocus = (framesLeft: number) => {
+	claimingFocus = framesLeft > 0 && !!props.isActive;
+	if (!claimingFocus) return;
+	if (document.activeElement === document.body) focusField();
+	requestAnimationFrame(() => keepFocus(framesLeft - 1));
+};
+
+// Panels render outside the row, so preserve the preview until they close.
+let watchedPanel: Element | null = null;
+let lastMouseDown: MouseEvent | null = null;
+
+useEventListener(document, "mousedown", (event: MouseEvent) => (lastMouseDown = event), {
+	capture: true,
+});
+
+// Row presses and prevented canvas-handle presses retain the preview.
+const shouldKeepPreview = () => {
+	const press = lastMouseDown;
+	return !!press && (press.defaultPrevented || rowRef.value?.contains(press.target as Node));
+};
+
+const waitForPanelClose = (panel: Element) => {
+	if (watchedPanel === panel) return;
+	watchedPanel = panel;
+	lastMouseDown = null;
+	const waitForClose = () => {
+		if (watchedPanel !== panel) return;
+		if (panel.isConnected) return requestAnimationFrame(waitForClose);
+		watchedPanel = null;
+		claimingFocus = false;
+		// Another control now owns the state.
+		if (!props.isActive || hasFocus()) return;
+		if (shouldKeepPreview()) return focusField();
+		endPreview();
+	};
+	requestAnimationFrame(waitForClose);
+};
+
+// A focusout ends the preview unless a panel is closing.
+const handleFocusOut = (event: FocusEvent) => {
+	const relatedTarget = event.relatedTarget as Element | null;
+	if (rowRef.value?.contains(relatedTarget)) return;
+	const panel = relatedTarget?.closest?.(panelSelector) || document.querySelector(panelSelector);
+	if (panel) return waitForPanelClose(panel);
+	// Focus that goes nowhere is a panel opening or a dropdown closing. A press inside
+	// the row keeps editing this state, so it is not the user leaving.
+	if (!relatedTarget && (claimingFocus || shouldKeepPreview())) return;
+	endPreview();
+};
+
+// An active canvas preview needs the field focused for row styling.
 watch(
 	() => props.isActive,
 	(isActive) => {
-		if (!isActive || holdsFocus()) return;
-		field()?.focus();
-		claimFocus(20);
+		if (!isActive || hasFocus()) return;
+		focusField();
+		keepFocus(20);
 	},
 	{ immediate: true, flush: "post" },
 );

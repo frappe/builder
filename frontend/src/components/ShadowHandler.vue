@@ -1,7 +1,10 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
-		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
+	<Popover placement="left" class="!block w-full" :offset="25" @close="endStatePreview">
+		<template #target="{ togglePopover, isOpen }">
+			<div
+				class="flex w-full items-center justify-between"
+				@focusin="updateActiveState"
+				@click="$event.target instanceof HTMLInputElement && togglePopover(true)">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -9,7 +12,7 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('None')"
-					@focus="togglePopover"
+					@focus="canOpenOnFocus() && togglePopover(true)"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -17,12 +20,8 @@
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded border border-outline-gray-1 shadow-sm"
-							@click="
-								() => {
-									activeState = variant;
-									togglePopover();
-								}
-							"
+							@pointerdown="rememberPopoverState(variant, isOpen)"
+							@click="togglePopoverForState(variant, togglePopover)"
 							:style="{
 								backgroundColor: shadowConfigs[0]?.color ?? 'transparent',
 							}" />
@@ -145,6 +144,7 @@ import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
+import { useStatePopover } from "@/composables/useStatePopover";
 import { useEventListener } from "@vueuse/core";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
@@ -156,7 +156,8 @@ const SHADOW_CONTROLS = [
 	{ key: "spread", label: __("Spread"), prefix: "S" },
 ] as const;
 
-const activeState = ref<string | null>(null);
+const { activeState, rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } =
+	useStatePopover();
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
