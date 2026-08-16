@@ -352,26 +352,15 @@
 								<span class="truncate text-xs">{{ modelLabel }}</span>
 							</button>
 						</Dropdown>
-						<Popover v-if="!messages.length" placement="top-start" :offset="6">
-							<template #target="{ togglePopover }">
-								<Tooltip :text="selectedPreset ? selectedPreset.name : 'Style Preset'" placement="top">
-									<button
-										class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
-										:class="{ 'bg-surface-gray-2 text-ink-gray-8': selectedPreset }"
-										@click="togglePopover">
-										<span class="lucide-layout size-3.5" />
-									</button>
-								</Tooltip>
-							</template>
-							<template #body>
-								<!-- Sized to the panel, not past it: w-96 overhung the chat panel and
-								     spilled over the canvas. -->
-								<div
-									class="w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-lg">
-									<WebPagePresetPicker v-model="selectedPreset" />
-								</div>
-							</template>
-						</Popover>
+						<Tooltip text="Improve prompt" placement="top">
+							<button
+								class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
+								:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
+								@click="chat.improvePrompt">
+								<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />
+								<span v-else class="lucide-wand-sparkles size-3.5" />
+							</button>
+						</Tooltip>
 					</div>
 					<Button
 						v-if="isSubmitting"
@@ -406,7 +395,6 @@ import { AIChatController, type ChatMessage } from "@/components/AIChatControlle
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
-import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep } from "@/components/ai/types";
@@ -418,6 +406,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
@@ -727,20 +716,7 @@ function formatDuration(ms: number): string {
 	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
 }
 
-const selectedPreset = ref<{
-	id: string;
-	name: string;
-	category: string;
-	description: string;
-	icon: string;
-} | null>(null);
-
 const submitPrompt = () => {
-	if (selectedPreset.value) {
-		// Pass preset as a structured system-level parameter, not appended user text
-		chat.pendingStylePreset = `${selectedPreset.value.name}: ${selectedPreset.value.description}`;
-		selectedPreset.value = null;
-	}
 	chat.submitPrompt();
 };
 

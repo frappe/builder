@@ -111,8 +111,26 @@ export class AIChatController {
 		this.scheduleStreamRender();
 	}
 
-	// Set by the panel's style-preset picker; folded into the prompt on submit.
-	pendingStylePreset: string | null = null;
+	readonly isImprovingPrompt = ref(false);
+
+	/** One cheap completion that sharpens the composer draft in place — the user
+	 * still reads and edits it before sending. */
+	improvePrompt = async () => {
+		const draft = this.prompt.value.trim();
+		if (!draft || this.isImprovingPrompt.value) return;
+		this.isImprovingPrompt.value = true;
+		try {
+			const improved = (await createResource({ url: "builder.ai.api.improve_prompt" }).submit({
+				prompt: draft,
+				model: this.selectedModel.value,
+			})) as string;
+			if (improved) this.prompt.value = improved;
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Could not improve the prompt");
+		} finally {
+			this.isImprovingPrompt.value = false;
+		}
+	};
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
 
@@ -723,12 +741,8 @@ export class AIChatController {
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
 
-		let userText = this.prompt.value.trim();
+		const userText = this.prompt.value.trim();
 		this.prompt.value = "";
-		if (this.pendingStylePreset) {
-			userText += `\n\n(Preferred visual style: ${this.pendingStylePreset})`;
-			this.pendingStylePreset = null;
-		}
 		this.submittedForPageId = this.pageId.value;
 		if (!this.sessionId.value) await this.loadSession();
 
