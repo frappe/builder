@@ -573,6 +573,8 @@ export class AIChatController {
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
+		// the session this turn belongs to; the user may switch chats mid-await below
+		const completedSession = data.session_id || this.sessionId.value;
 
 		let undoScripts: string[] = [];
 		if (this.dispatcher.pendingScriptOps.value.length) {
@@ -600,21 +602,23 @@ export class AIChatController {
 
 		const localMeta = { ...meta };
 		if (
-			this.sessionId.value &&
+			completedSession &&
 			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
 		) {
 			createResource({ url: "builder.ai.api.update_session_message_metadata" })
-				.submit({ session_id: this.sessionId.value, metadata: localMeta })
+				.submit({ session_id: completedSession, metadata: localMeta })
 				.catch(() => null);
 		}
 
 		await this.loadSession();
 
-		// Re-apply client-only metadata in case the server hasn't flushed it yet.
+		// Re-apply client-only metadata in case the server hasn't flushed it yet —
+		// but only onto the turn's own session, not one switched to meanwhile.
 		if (
-			localMeta.affectedBlocks?.length ||
-			localMeta.affectedScripts?.length ||
-			localMeta.undoScripts?.length
+			this.sessionId.value === completedSession &&
+			(localMeta.affectedBlocks?.length ||
+				localMeta.affectedScripts?.length ||
+				localMeta.undoScripts?.length)
 		) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
