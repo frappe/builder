@@ -429,30 +429,47 @@ def visible_styles(styles: dict | None) -> dict:
 
 
 FONT_CHECK_TIMEOUT = 3
+# Wall-clock budget for ALL probes of one read TOGETHER (they run in parallel);
+# families that don't answer in time are simply not judged — fail open.
+FONT_PROBE_BUDGET = 3
 # A combined css2 request cannot replace per-family probes: multi-family mode
 # answers 200 and silently DROPS unknown families.
 FONT_PROBE_LIMIT = 5
 
 
-def google_font_exists(family: str) -> bool | None:
-	"""css2 answers 400 for a family Google Fonts does not ship; cached a day.
-	None means network trouble — the caller fails open for the whole run."""
+def google_font_exists(family: str) -> bool:
+	"""Bare probe: css2 answers 400 for a family Google Fonts does not ship.
+	Raises on network trouble; caching and fail-open live in the caller."""
 	from urllib.parse import quote_plus
 
 	import requests
 
-	cache_key = f"google_font_exists:{family}"
-	if (cached := frappe.cache().get_value(cache_key)) is not None:
-		return cached == "1"
+	return requests.head(
+		f"https://fonts.googleapis.com/css2?family={quote_plus(family)}:wght@400",
+		timeout=FONT_CHECK_TIMEOUT,
+	).ok
+
+
+def probe_google_fonts(families: list[str]) -> dict:
+	"""One parallel sweep under ONE wall-clock budget: the slowest a reference
+	read can stall on fonts is FONT_PROBE_BUDGET, not one timeout per family.
+	Returns {family: exists} only for families that answered in time."""
+	import concurrent.futures
+
+	results: dict = {}
+	pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(families))
+	futures = {pool.submit(google_font_exists, family): family for family in families}
 	try:
-		response = requests.head(
-			f"https://fonts.googleapis.com/css2?family={quote_plus(family)}:wght@400",
-			timeout=FONT_CHECK_TIMEOUT,
-		)
-	except Exception:
-		return None
-	frappe.cache().set_value(cache_key, "1" if response.ok else "0", expires_in_sec=86400)
-	return response.ok
+		for future in concurrent.futures.as_completed(futures, timeout=FONT_PROBE_BUDGET):
+			try:
+				results[futures[future]] = future.result()
+			except Exception:
+				pass
+	except concurrent.futures.TimeoutError:
+		pass
+	finally:
+		pool.shutdown(wait=False, cancel_futures=True)
+	return results
 
 
 # CSS keywords that resolve in every browser — never worth probing as font names.
@@ -489,14 +506,18 @@ def unavailable_fonts(root: dict) -> list[str]:
 	if not families:
 		return []
 	user_fonts = {row.font_name for row in frappe.get_all("User Font", fields=["font_name"])}
-	missing = []
+	missing, unknown = [], []
 	for family in sorted(families - user_fonts)[:FONT_PROBE_LIMIT]:
-		exists = google_font_exists(family)
-		if exists is None:
-			break
+		cached = frappe.cache().get_value(f"google_font_exists:{family}")
+		if cached is None:
+			unknown.append(family)
+		elif cached == "0":
+			missing.append(family)
+	for family, exists in probe_google_fonts(unknown).items() if unknown else ():
+		frappe.cache().set_value(f"google_font_exists:{family}", "1" if exists else "0", expires_in_sec=86400)
 		if not exists:
 			missing.append(family)
-	return missing
+	return sorted(missing)
 
 
 def font_warning(root: dict) -> str:
