@@ -55,6 +55,8 @@ export class AIChatController {
 	private pendingSessionId: string | null = null;
 	// orders the user's session choices (switch/new/delete); refreshes don't count
 	private sessionIntentEpoch = 0;
+	// in-flight new_ai_session calls; a "reselect" during one must cancel it
+	private pendingSessionCreates = 0;
 
 	private invalidateSessionLoads() {
 		this.loadSessionEpoch++;
@@ -362,8 +364,12 @@ export class AIChatController {
 	};
 
 	switchSession = async (sessionId: string) => {
-		// reselecting the current chat is a no-op only when no other load is pending
-		if (!sessionId || (sessionId === this.sessionId.value && !this.pendingSessionId)) return;
+		// reselecting the current chat is a no-op only when nothing else is pending
+		if (
+			!sessionId ||
+			(sessionId === this.sessionId.value && !this.pendingSessionId && !this.pendingSessionCreates)
+		)
+			return;
 		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
@@ -375,18 +381,23 @@ export class AIChatController {
 		const intent = ++this.sessionIntentEpoch;
 		this.invalidateSessionLoads();
 		const pageId = this.pageId.value;
-		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
-			page_id: pageId,
-			model: this.selectedModel.value,
-		});
-		// a later choice (another chat, another page) beats this create
-		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
-		this.resetTransientState();
-		// loads started during the round-trip above carry a valid epoch; void them
-		this.invalidateSessionLoads();
-		this.sessionId.value = (result as { session_id: string }).session_id;
-		this.messages.value = [];
-		this.loadSessions();
+		this.pendingSessionCreates++;
+		try {
+			const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
+				page_id: pageId,
+				model: this.selectedModel.value,
+			});
+			// a later choice (another chat, another page) beats this create
+			if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
+			this.resetTransientState();
+			// loads started during the round-trip above carry a valid epoch; void them
+			this.invalidateSessionLoads();
+			this.sessionId.value = (result as { session_id: string }).session_id;
+			this.messages.value = [];
+			this.loadSessions();
+		} finally {
+			this.pendingSessionCreates--;
+		}
 	};
 
 	deleteSession = async () => {
