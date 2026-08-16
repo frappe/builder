@@ -3,7 +3,6 @@
 		<Tooltip :text="isCssVariable ? resolvedFont : undefined">
 			<Autocomplete
 				ref="fontInput"
-				class="[&>div>input]:pl-9"
 				:class="{
 					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
 				}"
@@ -12,15 +11,7 @@
 				:placeholder="displayPlaceholder"
 				:getOptions="getOptions"
 				:actionButton="{ component: FontUploader }"
-				@update:modelValue="handleUpdate">
-				<template #prefix>
-					<div
-						class="flex size-4 items-center justify-center rounded bg-surface-gray-3 text-xs leading-none text-ink-gray-7 shadow-sm"
-						:style="{ fontFamily: resolvedFont }">
-						A
-					</div>
-				</template>
-			</Autocomplete>
+				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
 </template>
