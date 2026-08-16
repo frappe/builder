@@ -61,6 +61,11 @@ export class AIChatController {
 		this.loadSessionEpoch++;
 		this.isLoadingSession.value = false;
 	}
+
+	// Counts the user's session choices (switch, new, delete) as opposed to
+	// automatic refreshes: an async commit from an older choice must never
+	// override a newer one, while a mere refresh never blocks a choice.
+	private sessionIntentEpoch = 0;
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -363,6 +368,7 @@ export class AIChatController {
 
 	switchSession = async (sessionId: string) => {
 		if (!sessionId || sessionId === this.sessionId.value) return;
+		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
 		this.scrollToBottom();
@@ -370,15 +376,16 @@ export class AIChatController {
 
 	newSession = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		const intent = ++this.sessionIntentEpoch;
 		this.invalidateSessionLoads();
 		const pageId = this.pageId.value;
 		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
 			page_id: pageId,
 			model: this.selectedModel.value,
 		});
-		// Navigated away mid-create: this chat belongs to the old page — committing
-		// it here would plant its session id (and void the new page's own load).
-		if (this.pageId.value !== pageId) return;
+		// The user picked another chat (or page) while this one was being created:
+		// their later choice stands, committing here would overwrite it.
+		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
 		this.resetTransientState();
 		// Again at commit: a load STARTED during the round-trip above (a finished
 		// turn refreshing its transcript) holds a valid epoch bound to the old chat.
@@ -391,6 +398,7 @@ export class AIChatController {
 	deleteSession = async () => {
 		if (!this.sessionId.value) return;
 		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
+		this.sessionIntentEpoch++;
 		await createResource({ url: "builder.ai.api.delete_ai_session" })
 			.submit({ session_id: this.sessionId.value })
 			.catch(() => null);
