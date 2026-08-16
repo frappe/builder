@@ -48,24 +48,19 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
-	// True while get_ai_session is in flight — the panel holds its empty-state
-	// hero until this settles, so a stored chat never flashes in over it.
 	readonly isLoadingSession = ref(false);
-	// Bumped per loadSession call: a response older than the latest call (or from
-	// before a page switch) is stale and must not paint the current page.
+	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;
+	// target of the newest in-flight load; refreshes follow it, not the current session
+	private pendingSessionId: string | null = null;
+	// orders the user's session choices (switch/new/delete); refreshes don't count
+	private sessionIntentEpoch = 0;
 
-	/** Anything that replaces the session outside loadSession (a new chat) must
-	 * void in-flight loads, or their late response resurrects the old chat. */
 	private invalidateSessionLoads() {
 		this.loadSessionEpoch++;
+		this.pendingSessionId = null;
 		this.isLoadingSession.value = false;
 	}
-
-	// Counts the user's session choices (switch, new, delete) as opposed to
-	// automatic refreshes: an async commit from an older choice must never
-	// override a newer one, while a mere refresh never blocks a choice.
-	private sessionIntentEpoch = 0;
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -208,9 +203,9 @@ export class AIChatController {
 			if (!newPageId) return;
 			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
-			// Sessions are page-scoped: never carry one across a page switch — and
-			// that includes the transcript, which would otherwise sit on screen as
-			// the previous page's chat until the new one loads over it.
+			// Sessions are page-scoped: never carry one across a page switch.
+			this.sessionIntentEpoch++;
+			this.invalidateSessionLoads();
 			this.sessionId.value = "";
 			this.sessions.value = [];
 			this.messages.value = [];
@@ -300,9 +295,7 @@ export class AIChatController {
 		};
 	}
 
-	// The panel mounts hidden behind the tab bar's v-show, and scrolling a
-	// display:none container is a no-op — so a scroll that lands while the tab
-	// is closed is parked here and replayed when the panel becomes visible.
+	// scrolling a display:none container (closed tab) is a no-op; park and replay
 	private pendingScrollToBottom = false;
 
 	private scrollToBottom() {
@@ -316,8 +309,6 @@ export class AIChatController {
 		});
 	}
 
-	/** Called by the panel when its tab opens: perform the scroll the hidden
-	 * container couldn't. */
 	flushPendingScroll = () => {
 		if (!this.pendingScrollToBottom) return;
 		this.pendingScrollToBottom = false;
@@ -329,8 +320,10 @@ export class AIChatController {
 	 * parallel sessions — see switchSession/newSession. */
 	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
+		const target = sessionId || this.pendingSessionId || this.sessionId.value || undefined;
 		const epoch = ++this.loadSessionEpoch;
 		const pageId = this.pageId.value;
+		this.pendingSessionId = target ?? null;
 		this.isLoadingSession.value = true;
 		try {
 			const result = await createResource({
@@ -338,7 +331,7 @@ export class AIChatController {
 				makeParams: () => ({
 					page_id: pageId,
 					model: this.selectedModel.value,
-					session_id: sessionId || this.sessionId.value || undefined,
+					session_id: target,
 				}),
 			}).submit();
 			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
@@ -347,11 +340,13 @@ export class AIChatController {
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
 			);
-			// A restored conversation opens where it left off, not at its beginning.
 			this.scrollToBottom();
 			this.loadSessions();
 		} finally {
-			if (epoch === this.loadSessionEpoch) this.isLoadingSession.value = false;
+			if (epoch === this.loadSessionEpoch) {
+				this.isLoadingSession.value = false;
+				this.pendingSessionId = null;
+			}
 		}
 	}
 
@@ -383,12 +378,10 @@ export class AIChatController {
 			page_id: pageId,
 			model: this.selectedModel.value,
 		});
-		// The user picked another chat (or page) while this one was being created:
-		// their later choice stands, committing here would overwrite it.
+		// a later choice (another chat, another page) beats this create
 		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
 		this.resetTransientState();
-		// Again at commit: a load STARTED during the round-trip above (a finished
-		// turn refreshing its transcript) holds a valid epoch bound to the old chat.
+		// loads started during the round-trip above carry a valid epoch; void them
 		this.invalidateSessionLoads();
 		this.sessionId.value = (result as { session_id: string }).session_id;
 		this.messages.value = [];
@@ -398,10 +391,12 @@ export class AIChatController {
 	deleteSession = async () => {
 		if (!this.sessionId.value) return;
 		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
-		this.sessionIntentEpoch++;
+		const intent = ++this.sessionIntentEpoch;
+		const pageId = this.pageId.value;
 		await createResource({ url: "builder.ai.api.delete_ai_session" })
 			.submit({ session_id: this.sessionId.value })
 			.catch(() => null);
+		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
 		this.resetTransientState();
 		this.sessionId.value = "";
 		await this.loadSession(); // falls back to the next most recent (or a fresh one)

@@ -3,8 +3,7 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<!-- min-h holds the line while the title is still blank, so the header
-				     doesn't grow a row when it arrives -->
+				<!-- min-h holds the row while the title is still blank -->
 				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
@@ -28,11 +27,8 @@
 			</div>
 		</div>
 
-		<!-- Whether AI is set up, and what the last chat holds, are server answers
-		     that haven't arrived yet: drawing any branch now means flashing "Set up
-		     AI" (or the empty-chat hero) at a configured user on a slow network.
-		     One element spans both waits so the shimmer never blinks between them,
-		     and it fades in late so a fast load shows nothing at all. -->
+		<!-- one element spans both waits (setup verdict + session load) so the
+		     shimmer never blinks; the delayed fade keeps fast loads flash-free -->
 		<div
 			v-if="!builderStore.isAIStateKnown || (isLoadingSession && !messages.length)"
 			class="flex flex-1 items-center justify-center pb-40">
@@ -414,8 +410,7 @@ const { revertTurn, selectOption } = chat;
 const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
 
 const currentSessionTitle = computed(() => {
-	// Nothing loaded yet: an empty line beats "New chat" flipping to the real
-	// title a beat later.
+	// blank until loaded, not "New chat" flipping to the real title
 	if (!sessionId.value || !sessions.value.length) return "";
 	const current = sessions.value.find((s) => s.name === sessionId.value);
 	return current?.title || "New chat";
@@ -752,8 +747,7 @@ onMounted(() => {
 	builderStore.refreshAIState();
 });
 
-// The panel usually mounts (and loads its chat) behind a closed tab, where the
-// open-at-the-end scroll can't land. Replay it the moment the tab opens.
+// the chat usually loads behind the closed tab, where the scroll can't land
 watch(
 	() => builderStore.leftPanelActiveTab,
 	(tab) => {
