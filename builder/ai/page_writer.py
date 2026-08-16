@@ -15,6 +15,7 @@ import frappe
 import yaml
 
 from builder.ai.block_codec import BlockCodec
+from builder.ai.lucide import lucide_svg
 from builder.utils import compact_json
 
 logger = frappe.logger("builder.ai.page_writer")
@@ -170,9 +171,10 @@ def convert_icon_block(node: dict) -> dict:
 		"element": "svg",
 		"blockName": node.get("name") or f"Icon: {name}",
 		"baseStyles": base,
-		# The Lucide SVG set lives in the frontend; the server records only the name and
-		# the renderer bakes the svg from data-lucide. innerHTML stays empty here.
+		# Bake the SVG here: this tree is authoritative (the canvas reloads it and
+		# the published page renders it); data-lucide stays the round-trip hint.
 		"customAttributes": {"data-lucide": name},
+		"innerHTML": lucide_svg(name, node.get("stroke") or 2),
 		"children": [],
 	}
 	if isinstance(node.get("attrs"), dict):

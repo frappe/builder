@@ -166,6 +166,8 @@ class BlockCodec:
 		# Icon ref. The authoritative SVG is baked client-side (frontend has the
 		# Lucide set); the server only records the name so the block round-trips.
 		if node.get("icon"):
+			from builder.ai.lucide import lucide_svg
+
 			return {
 				"element": "svg",
 				"blockName": node.get("name") or f"Icon: {node['icon']}",
@@ -173,7 +175,8 @@ class BlockCodec:
 				"attributes": {},
 				"customAttributes": {"data-lucide": node["icon"]},
 				"children": [],
-				"innerHTML": "",
+				# Baked here because THIS expansion feeds the authoritative tree.
+				"innerHTML": lucide_svg(node["icon"]),
 			}
 
 		attrs = node.get("attrs", {})
