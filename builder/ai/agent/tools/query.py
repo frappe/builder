@@ -487,6 +487,43 @@ GENERIC_FAMILIES = {
 	"initial",
 }
 
+# Browser/OS-native families: not on Google Fonts, yet they render fine — a
+# probe would brand them missing and push generation to replace them.
+WEB_SAFE_FAMILIES = {
+	"arial",
+	"arial black",
+	"helvetica",
+	"helvetica neue",
+	"georgia",
+	"times",
+	"times new roman",
+	"courier",
+	"courier new",
+	"verdana",
+	"tahoma",
+	"trebuchet ms",
+	"impact",
+	"palatino",
+	"palatino linotype",
+	"garamond",
+	"comic sans ms",
+	"segoe ui",
+	"lucida console",
+	"lucida sans",
+	"lucida sans unicode",
+	"menlo",
+	"monaco",
+	"consolas",
+	"avenir",
+	"avenir next",
+	"futura",
+	"gill sans",
+	"optima",
+	"baskerville",
+	"didot",
+	"american typewriter",
+}
+
 
 def primary_family(value: str) -> str:
 	"""'Inter, sans-serif' names the font 'Inter' — never probe the stack as one name."""
@@ -501,7 +538,7 @@ def unavailable_fonts(root: dict) -> list[str]:
 		if not value or value.startswith("var("):
 			continue
 		family = primary_family(value)
-		if family and family.lower() not in GENERIC_FAMILIES:
+		if family and family.lower() not in GENERIC_FAMILIES and family.lower() not in WEB_SAFE_FAMILIES:
 			families.add(family)
 	if not families:
 		return []
