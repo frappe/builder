@@ -51,6 +51,9 @@ export class AIChatController {
 	// True while get_ai_session is in flight — the panel holds its empty-state
 	// hero until this settles, so a stored chat never flashes in over it.
 	readonly isLoadingSession = ref(false);
+	// Bumped per loadSession call: a response older than the latest call (or from
+	// before a page switch) is stale and must not paint the current page.
+	private loadSessionEpoch = 0;
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -314,16 +317,19 @@ export class AIChatController {
 	 * parallel sessions — see switchSession/newSession. */
 	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
+		const epoch = ++this.loadSessionEpoch;
+		const pageId = this.pageId.value;
 		this.isLoadingSession.value = true;
 		try {
 			const result = await createResource({
 				url: "builder.ai.api.get_ai_session",
 				makeParams: () => ({
-					page_id: this.pageId.value,
+					page_id: pageId,
 					model: this.selectedModel.value,
 					session_id: sessionId || this.sessionId.value || undefined,
 				}),
 			}).submit();
+			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
 			const session = result as { session_id: string; messages: ChatMessage[] };
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
@@ -333,17 +339,19 @@ export class AIChatController {
 			this.scrollToBottom();
 			this.loadSessions();
 		} finally {
-			this.isLoadingSession.value = false;
+			if (epoch === this.loadSessionEpoch) this.isLoadingSession.value = false;
 		}
 	}
 
 	/** Refresh the session-switcher list (fire-and-forget; the panel renders it). */
 	loadSessions = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		const pageId = this.pageId.value;
 		const rows = await createResource({ url: "builder.ai.api.list_page_ai_sessions" })
-			.submit({ page_id: this.pageId.value })
+			.submit({ page_id: pageId })
 			.catch(() => null);
-		if (rows) this.sessions.value = rows as Array<{ name: string; title: string | null }>;
+		if (rows && this.pageId.value === pageId)
+			this.sessions.value = rows as Array<{ name: string; title: string | null }>;
 	};
 
 	switchSession = async (sessionId: string) => {
