@@ -430,7 +430,11 @@ def visible_styles(styles: dict | None) -> dict:
 
 FONT_CHECK_TIMEOUT = 3
 # Wall-clock budget for ALL probes of one read TOGETHER (they run in parallel);
-# families that don't answer in time are simply not judged — fail open.
+# families that don't answer in time are simply not judged — fail open. A
+# bounded synchronous wait is the right trade here: read_page is a model-facing
+# tool inside multi-second agent turns (its own YAML serialization costs more),
+# and deferring the probe would drop the warning on the FIRST read of a
+# reference — the read where an unresolvable font must be caught.
 FONT_PROBE_BUDGET = 3
 # A combined css2 request cannot replace per-family probes: multi-family mode
 # answers 200 and silently DROPS unknown families.
