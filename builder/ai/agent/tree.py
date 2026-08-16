@@ -127,9 +127,7 @@ def merge_props(block: dict, props: dict) -> None:
 		else:
 			if declared is None:
 				declared = declared_props(block)
-			config = dict(
-				declared.get(name) or {"isDynamic": False, "isPassedDown": False, "comesFrom": None}
-			)
+			config = dict(declared.get(name) or prop_config(value))
 			config["value"] = value
 			current[name] = config
 			if name not in declared:
@@ -138,6 +136,27 @@ def merge_props(block: dict, props: dict) -> None:
 		update_definition(
 			block["extendedFromComponent"], lambda root: root.setdefault("props", {}).update(undeclared)
 		)
+
+
+def prop_config(value) -> dict:
+	"""A fresh declaration typed from its first value, so the editor's props panel
+	renders a proper input instead of an untyped entry."""
+	if isinstance(value, bool):
+		prop_type = "boolean"
+	elif isinstance(value, (int, float)):
+		prop_type = "number"
+	elif isinstance(value, list):
+		prop_type = "array"
+	elif isinstance(value, dict):
+		prop_type = "object"
+	else:
+		prop_type = "string"
+	return {
+		"isDynamic": False,
+		"isPassedDown": False,
+		"comesFrom": None,
+		"propOptions": {"type": prop_type},
+	}
 
 
 def declared_props(block: dict) -> dict:

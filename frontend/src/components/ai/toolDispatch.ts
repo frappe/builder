@@ -202,12 +202,29 @@ export class ToolDispatcher {
 			const root = block.getPropsRoot() || block;
 			const own = { ...(root.props || {}) };
 			const merged = block.getBlockProps();
-			for (const [name, value] of Object.entries(args.props as Record<string, string | null>)) {
+			for (const [name, value] of Object.entries(args.props as Record<string, any>)) {
 				if (value === null) {
 					delete own[name];
 					continue;
 				}
-				const config = own[name] || merged[name] || { isDynamic: false, isPassedDown: false, comesFrom: null };
+				// Typed like the server twin (tree.prop_config), so the props panel
+				// renders a proper input for a fresh declaration.
+				const propType = Array.isArray(value)
+					? "array"
+					: typeof value === "boolean"
+						? "boolean"
+						: typeof value === "number"
+							? "number"
+							: typeof value === "object"
+								? "object"
+								: "string";
+				const config = own[name] ||
+					merged[name] || {
+						isDynamic: false,
+						isPassedDown: false,
+						comesFrom: null,
+						propOptions: { type: propType },
+					};
 				own[name] = { ...config, value };
 			}
 			block.setBlockProps(own);
