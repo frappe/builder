@@ -54,6 +54,13 @@ export class AIChatController {
 	// Bumped per loadSession call: a response older than the latest call (or from
 	// before a page switch) is stale and must not paint the current page.
 	private loadSessionEpoch = 0;
+
+	/** Anything that replaces the session outside loadSession (a new chat) must
+	 * void in-flight loads, or their late response resurrects the old chat. */
+	private invalidateSessionLoads() {
+		this.loadSessionEpoch++;
+		this.isLoadingSession.value = false;
+	}
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -363,6 +370,7 @@ export class AIChatController {
 
 	newSession = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		this.invalidateSessionLoads();
 		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
 			page_id: this.pageId.value,
 			model: this.selectedModel.value,
