@@ -376,6 +376,9 @@ export class AIChatController {
 			model: this.selectedModel.value,
 		});
 		this.resetTransientState();
+		// Again at commit: a load STARTED during the round-trip above (a finished
+		// turn refreshing its transcript) holds a valid epoch bound to the old chat.
+		this.invalidateSessionLoads();
 		this.sessionId.value = (result as { session_id: string }).session_id;
 		this.messages.value = [];
 		this.loadSessions();
