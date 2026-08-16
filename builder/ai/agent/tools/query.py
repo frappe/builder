@@ -513,10 +513,18 @@ def unavailable_fonts(root: dict) -> list[str]:
 			unknown.append(family)
 		elif cached == "0":
 			missing.append(family)
-	for family, exists in probe_google_fonts(unknown).items() if unknown else ():
-		frappe.cache().set_value(f"google_font_exists:{family}", "1" if exists else "0", expires_in_sec=86400)
-		if not exists:
-			missing.append(family)
+	if unknown:
+		results = probe_google_fonts(unknown)
+		for family, exists in results.items():
+			frappe.cache().set_value(
+				f"google_font_exists:{family}", "1" if exists else "0", expires_in_sec=86400
+			)
+		# Negatives are actionable only when the WHOLE sweep answered: on a flaky
+		# network (or behind a proxy that 4xxs everything) a partial result must
+		# not drive font replacement. Definitive answers still cached above, so
+		# the next read warns from a complete picture.
+		if len(results) == len(unknown):
+			missing.extend(family for family, exists in results.items() if not exists)
 	return sorted(missing)
 
 
