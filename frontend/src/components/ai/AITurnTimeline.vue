@@ -129,6 +129,17 @@ const TOOL_ICONS: Record<string, string> = {
 	query_records: "lucide-database",
 	get_document: "lucide-file-text",
 	remember: "lucide-bookmark",
+	read_page: "lucide-book-open",
+	read_url: "lucide-globe",
+	research: "lucide-telescope",
+	run_python: "lucide-terminal",
+	set_page_settings: "lucide-settings-2",
+	get_page_scripts: "lucide-code",
+	seed_sample_data: "lucide-database",
+	create_doctype: "lucide-database",
+	connect_form: "lucide-link-2",
+	edit_global_settings: "lucide-settings",
+	set_home_page: "lucide-home",
 };
 
 const toolIcon = (tool?: string) => TOOL_ICONS[tool || ""] || "lucide-wrench";

@@ -1213,7 +1213,10 @@ class AgentRunner:
 				applied.append(op)
 		if applied:
 			self.applied_operations.extend(applied)
-			self.emit("tool_batch", operations=applied)
+			# after_commit: an op can reference a doc this round created (a component
+			# extract) — mirrored early, the canvas fetches it before the checkpoint
+			# commit lands and caches a Missing placeholder.
+			self.emit("tool_batch", operations=applied, after_commit=True)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
 
