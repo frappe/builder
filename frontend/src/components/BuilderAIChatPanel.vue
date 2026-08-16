@@ -3,7 +3,8 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="truncate text-p-xs leading-4 text-ink-gray-5">
+				<!-- min-h holds the row while the title is still blank -->
+				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
 			</div>
@@ -26,10 +27,20 @@
 			</div>
 		</div>
 
+		<!-- one element spans both waits (setup verdict + session load) so the
+		     shimmer never blinks; the delayed fade keeps fast loads flash-free -->
+		<div
+			v-if="!builderStore.isAIStateKnown || (isLoadingSession && !messages.length)"
+			class="flex flex-1 items-center justify-center pb-40">
+			<span class="bob-pill-in" style="animation-delay: 300ms">
+				<span class="animate-shine text-p-xs">Loading</span>
+			</span>
+		</div>
+
 		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
 		     full-height panel leaves it stranded low with nothing beneath it. -->
 		<div
-			v-if="!builderStore.isAIEnabled"
+			v-else-if="!builderStore.isAIEnabled"
 			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
@@ -411,9 +422,11 @@ const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
-const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
+const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
 
 const currentSessionTitle = computed(() => {
+	// blank until loaded, not "New chat" flipping to the real title
+	if (!sessionId.value || !sessions.value.length) return "";
 	const current = sessions.value.find((s) => s.name === sessionId.value);
 	return current?.title || "New chat";
 });
@@ -735,6 +748,14 @@ onMounted(() => {
 	// is actually usable rather than inferring it from Builder Settings alone.
 	builderStore.refreshAIState();
 });
+
+// the chat usually loads behind the closed tab, where the scroll can't land
+watch(
+	() => builderStore.leftPanelActiveTab,
+	(tab) => {
+		if (tab === "Chat") chat.flushPendingScroll();
+	},
+);
 
 // Providers and models are configured in Settings, so the picker is stale the
 // moment that dialog closes. Refetch then rather than making every screen in
