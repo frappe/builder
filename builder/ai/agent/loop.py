@@ -1172,9 +1172,11 @@ class AgentRunner:
 
 		if not parts:
 			n = len(operations)
-			return f"Applied {n} change{'s' if n != 1 else ''} to the page."
+			return f"Applied {n} change{'s' if n != 1 else ''} to the page"
 		sentence = parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
-		return sentence[0].upper() + sentence[1:] + "."
+		# No trailing period: these render as timeline rows beside "Checked how it
+		# looks" and friends, which carry none.
+		return sentence[0].upper() + sentence[1:]
 
 	# --- round execution ----------------------------------------------------
 
