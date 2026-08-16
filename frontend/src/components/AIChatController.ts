@@ -362,7 +362,8 @@ export class AIChatController {
 	};
 
 	switchSession = async (sessionId: string) => {
-		if (!sessionId || sessionId === this.sessionId.value) return;
+		// reselecting the current chat is a no-op only when no other load is pending
+		if (!sessionId || (sessionId === this.sessionId.value && !this.pendingSessionId)) return;
 		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
