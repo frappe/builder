@@ -223,6 +223,7 @@ export class ToolDispatcher {
 						isDynamic: false,
 						isPassedDown: false,
 						comesFrom: null,
+						isStandard: true,
 						propOptions: { type: propType },
 					};
 				own[name] = { ...config, value };

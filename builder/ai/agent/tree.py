@@ -151,10 +151,13 @@ def prop_config(value) -> dict:
 		prop_type = "object"
 	else:
 		prop_type = "string"
+	# isStandard is what the editor's Block Options section filters on — without
+	# it a declared prop exists but never renders in the properties panel.
 	return {
 		"isDynamic": False,
 		"isPassedDown": False,
 		"comesFrom": None,
+		"isStandard": True,
 		"propOptions": {"type": prop_type},
 	}
 
