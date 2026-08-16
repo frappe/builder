@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-15 14:48\n"
+"PO-Revision-Date: 2026-08-16 19:29\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -1179,15 +1179,15 @@ msgstr "Dinamička Ruta"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:53
 msgid "Ease In"
-msgstr ""
+msgstr "Postepeno Uvođenje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:55
 msgid "Ease In Out"
-msgstr ""
+msgstr "Postepeno Uvođenje Izvođenje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:54
 msgid "Ease Out"
-msgstr ""
+msgstr "Postepeno Izvođenje"
 
 #: frontend/src/components/Commands/index.ts:46
 #: frontend/src/utils/useBuilderEvents.ts:241
@@ -1197,7 +1197,7 @@ msgstr "Uredi"
 
 #: frontend/src/pages/PageBuilder.vue:308
 msgid "Edit Block Client Script"
-msgstr ""
+msgstr "Uredi Klijentsku Skriptu Bloka"
 
 #: frontend/src/components/Commands/index.ts:293
 msgid "Edit Block with AI"
@@ -1267,7 +1267,7 @@ msgstr "Unesi standard vrijednost"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:16
 msgid "Enter false label display"
-msgstr ""
+msgstr "Unesi prikaz lažne oznake"
 
 #: frontend/src/components/PropsOptions/ImageOptions.vue:6
 msgid "Enter image URL or upload one"
@@ -1276,7 +1276,7 @@ msgstr "Unesi URL slike ili je otpremi"
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:16
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:16
 msgid "Enter max number of items"
-msgstr ""
+msgstr "Unesi maksimalan broj artikala"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:15
 #: frontend/src/components/PropsOptions/NumberOptions.vue:24
@@ -1327,7 +1327,7 @@ msgstr "Primjeri"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:5
 msgid "Execute Block Client Scripts in Editor"
-msgstr ""
+msgstr "Izvrši Klijentske Skripte Bloka u Uređivaču"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
@@ -1703,7 +1703,7 @@ msgstr "Istakni Blokove pomoću Klijentskih Skripti"
 
 #: frontend/src/pages/PageBuilder.vue:273
 msgid "Hold for move mode"
-msgstr ""
+msgstr "Drži za način kretanja"
 
 #: frontend/src/components/Settings/PageGeneral.vue:204
 #: frontend/src/utils/dialogs.ts:73
@@ -2459,23 +2459,23 @@ msgstr "Stranica"
 
 #: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
-msgstr ""
+msgstr "Analiza Stranice"
 
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Client Script"
-msgstr ""
+msgstr "Klijentski Skript Stranice"
 
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
-msgstr ""
+msgstr "Kod Stranice"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:145
 msgid "Page Copied"
-msgstr ""
+msgstr "Stranica Kopirana"
 
 #: frontend/src/components/PageScript.vue:15
 msgid "Page Data Preview"
-msgstr ""
+msgstr "Pregled Podataka Stranice"
 
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2509,7 +2509,7 @@ msgstr "Naslov Stranice"
 #: frontend/src/components/RouteTreeView.vue:375
 #: frontend/src/components/RouteTreeView.vue:391
 msgid "Page Tree"
-msgstr ""
+msgstr "Struktura Stranice"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:209
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
@@ -2534,7 +2534,7 @@ msgstr "Stranica nije pronađena"
 
 #: frontend/src/stores/pageStore.ts:258
 msgid "Page unpublished"
-msgstr ""
+msgstr "Stranica nije objavljena"
 
 #: frontend/src/components/BuilderCommandPalette.vue:279
 msgid "Pages"
@@ -3714,11 +3714,11 @@ msgstr "Danas"
 
 #: frontend/src/components/Commands/index.ts:228
 msgid "Toggle Canvas Dark Mode"
-msgstr ""
+msgstr "Uključi/isključi tamni način rada platna"
 
 #: frontend/src/components/BuilderCanvas.vue:29
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
-msgstr ""
+msgstr "Uključi/isključi tamni način rada platna (⌘⇧D)"
 
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
@@ -3735,7 +3735,7 @@ msgstr "Prebaci temu"
 
 #: frontend/src/components/Commands/index.ts:232
 msgid "Toggle canvas dark mode"
-msgstr ""
+msgstr "Uključi/isključi tamni način rada platna"
 
 #: frontend/src/components/Commands/index.ts:177
 msgid "Toggle left panel"
@@ -3797,7 +3797,7 @@ msgstr "Najpopularnije Stranice"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:3
 msgid "Top Referrers"
-msgstr ""
+msgstr "Najbolji Upućivači"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:109
 #: frontend/src/components/BlockGridLayoutHandler.vue:172
