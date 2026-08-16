@@ -454,6 +454,50 @@ class TestComponentContract(FrappeTestCase):
 		live = frappe.parse_json(frappe.db.get_value("Builder Component", component.name, "block"))
 		self.assertEqual(list(live["props"].keys()), ["title"])
 
+	def test_child_targeted_prop_writes_land_on_the_instance_root(self):
+		from builder.ai.agent.tree import WorkingTree
+
+		component_id = frappe.generate_hash(length=12)
+		frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "prop-route",
+				"component_id": component_id,
+				"block": json.dumps({"element": "div", "children": []}),
+			}
+		).insert(ignore_permissions=True)
+		tree = WorkingTree(
+			{
+				"blockId": "root",
+				"element": "div",
+				"children": [
+					{
+						"blockId": "inst",
+						"element": "div",
+						"extendedFromComponent": component_id,
+						"children": [
+							{
+								"blockId": "child",
+								"element": "div",
+								"isChildOfComponent": component_id,
+								"referenceBlockId": "x1",
+								"children": [],
+							}
+						],
+					}
+				],
+			}
+		)
+
+		self.assertIn("Applied", tree.apply_update("child", {"props": {"title": "Routed"}}))
+
+		# The canvas routes child prop writes to the instance root (getPropsRoot);
+		# the server must land them in the same place or a reload loses the value.
+		inst = tree.resolve("inst")
+		self.assertEqual(inst["props"]["title"]["value"], "Routed")
+		self.assertNotIn("props", tree.resolve("child"))
+		self.assertIn("FAILED", tree.apply_update("root", {"props": {"x": "1"}}))
+
 	def test_states_each_pinned_version_when_instances_differ(self):
 		from builder.builder.component_versions import ensure_component_version
 

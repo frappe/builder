@@ -408,10 +408,56 @@ class WorkingTree:
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if client_script_outside_component(block, args):
 			return f"FAILED: {CLIENT_SCRIPT_HINT}"
-		if unknown := undeclared_prop_names(block, args):
-			return f"FAILED: props {unknown} — {undeclared_props_hint(block)}"
+		args, failure = self.route_props(block, args)
+		if failure:
+			return failure
 		merge_block_update(block, args)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
+
+	def route_props(self, block: dict, args: dict) -> tuple[dict, str]:
+		"""Prop values live on the INSTANCE ROOT — the canvas routes a child-targeted
+		write up via getPropsRoot(), and resolution only reads the root, so the server
+		must land it in the same place or a reload silently restores the old value.
+		Returns (args for this block, "") or (args, failure)."""
+		if not isinstance(args.get("props"), dict):
+			return args, ""
+		owner = self.props_owner(block)
+		if owner is None:
+			return args, (
+				"FAILED: props apply to component instances — this block is not inside one. "
+				"Style or text changes on a plain block go through the other update fields."
+			)
+		if unknown := undeclared_prop_names(owner, args):
+			return args, f"FAILED: props {unknown} — {undeclared_props_hint(owner)}"
+		if owner is not block:
+			merge_props(owner, args["props"])
+			args = {k: v for k, v in args.items() if k != "props"}
+		return args, ""
+
+	def props_owner(self, block: dict) -> dict | None:
+		"""The instance root a prop write belongs to: the block itself, or the nearest
+		ancestor instance root when the target is a component-internal child."""
+		if block.get("extendedFromComponent"):
+			return block
+		if not block.get("isChildOfComponent"):
+			return None
+		chain: list[dict] = []
+
+		def walk(node: dict) -> bool:
+			if node is block:
+				return True
+			chain.append(node)
+			for child in node.get("children") or []:
+				if isinstance(child, dict) and walk(child):
+					return True
+			chain.pop()
+			return False
+
+		if self.root and walk(self.root):
+			for ancestor in reversed(chain):
+				if ancestor.get("extendedFromComponent"):
+					return ancestor
+		return None
 
 	def apply_update_blocks(self, args: dict) -> str:
 		patches = args.get("patches")
@@ -434,10 +480,12 @@ class WorkingTree:
 				rejected.append(f"{block_id} moustache in {fields}")
 			elif client_script_outside_component(block, patch):
 				rejected.append(f"{block_id} client_script outside a component")
-			elif unknown := undeclared_prop_names(block, patch):
-				rejected.append(f"{block_id} undeclared props {unknown}")
 			else:
-				merge_block_update(block, patch)
+				patch, failure = self.route_props(block, patch)
+				if failure:
+					rejected.append(f"{block_id} {failure.removeprefix('FAILED: ')[:90]}")
+				else:
+					merge_block_update(block, patch)
 		applied = len(targets) - len(missing) - len(rejected)
 		problems = []
 		if missing:
