@@ -371,10 +371,14 @@ export class AIChatController {
 	newSession = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
 		this.invalidateSessionLoads();
+		const pageId = this.pageId.value;
 		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
-			page_id: this.pageId.value,
+			page_id: pageId,
 			model: this.selectedModel.value,
 		});
+		// Navigated away mid-create: this chat belongs to the old page — committing
+		// it here would plant its session id (and void the new page's own load).
+		if (this.pageId.value !== pageId) return;
 		this.resetTransientState();
 		// Again at commit: a load STARTED during the round-trip above (a finished
 		// turn refreshing its transcript) holds a valid epoch bound to the old chat.
