@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-17 04:45\n"
+"PO-Revision-Date: 2026-08-17 17:47\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -1153,7 +1153,7 @@ msgstr "Kopiraj"
 
 #: frontend/src/components/Commands/index.ts:279
 msgid "Duplicate Block"
-msgstr "Dupliciraj Blok"
+msgstr "Dupliraj Blok"
 
 #: frontend/src/components/Commands/index.ts:132
 #: frontend/src/components/MainMenu.vue:74
@@ -1162,11 +1162,11 @@ msgstr "Dupliraj Stranicu"
 
 #: frontend/src/components/Commands/index.ts:283
 msgid "Duplicate block"
-msgstr "Dupliciraj blok"
+msgstr "Dupliraj blok"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
-msgstr "Dupliciraj za uređivanje"
+msgstr "Dupliraj za uređivanje"
 
 #: frontend/src/stores/pageStore.ts:155
 msgid "Duplicating page"
@@ -1423,7 +1423,7 @@ msgstr "Favicon"
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
-msgstr "Popuni i Izreži"
+msgstr "Ispuni & Obreži"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:5
 msgid "Filter by route"
