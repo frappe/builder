@@ -45,6 +45,7 @@ type FontOption = {
 	label: string;
 	value: string;
 	labelStyle?: () => { fontFamily: string } | undefined;
+	previewFont?: string;
 };
 
 const { fontTokens, resolveVariableValue, getVariableName } = useBuilderToken();
@@ -95,6 +96,7 @@ const getOptions = async (filterString: string) => {
 		label: family,
 		value: family,
 		labelStyle: () => previewFontStyle(family),
+		previewFont: family,
 	});
 	// a token's name is what the field shows when one is picked, and it matches no
 	// family: filtering the font lists by it would leave only the token to choose from
@@ -104,10 +106,17 @@ const getOptions = async (filterString: string) => {
 	// token updates every block bound to it. The family is part of the label, so
 	// it stays searchable.
 	const tokenOptions = filterOptions(
-		fontTokens.value.map((token: BuilderToken) => ({
-			label: `${token.token_name || token.value} (${token.value})`,
-			value: `var(--${token.name})`,
-		})),
+		fontTokens.value.map((token: BuilderToken) => {
+			const label = `${token.token_name || token.value} (${token.value})`;
+			// previewed against the whole label, since it carries the token's name as well
+			// as the family, and a subset cut to the family alone could not render it
+			return {
+				label,
+				value: `var(--${token.name})`,
+				labelStyle: () => previewFontStyle(label),
+				previewFont: token.value as string,
+			};
+		}),
 		filterString,
 	);
 	const userFontOptions = filterOptions(
@@ -132,9 +141,10 @@ const getOptions = async (filterString: string) => {
 		options.push(...defaultFontOptions);
 	}
 
-	// separators and design tokens are the only entries without a preview: a token's
-	// label carries its name too, which the family's own subset cannot render
-	enqueuePreviewLoad(options.filter((o) => o.labelStyle).map((o) => o.value));
+	// separators are the only entries without a preview
+	enqueuePreviewLoad(
+		options.flatMap((o) => (o.previewFont ? [{ font: o.previewFont, label: o.label }] : [])),
+	);
 	return options;
 };
 
