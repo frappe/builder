@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-16 19:29\n"
+"PO-Revision-Date: 2026-08-17 03:43\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -2542,19 +2542,19 @@ msgstr "Stranice"
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
-msgstr ""
+msgstr "Pomakni radnu površinu prema dolje"
 
 #: frontend/src/utils/useBuilderEvents.ts:312
 msgid "Pan canvas left"
-msgstr ""
+msgstr "Pomakni radnu površinu lijevo"
 
 #: frontend/src/utils/useBuilderEvents.ts:301
 msgid "Pan canvas right"
-msgstr ""
+msgstr "Pomakni radnu površinu desno"
 
 #: frontend/src/utils/useBuilderEvents.ts:323
 msgid "Pan canvas up"
-msgstr ""
+msgstr "Pomakni radnu površinu gore"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:70
 msgid "Paste Style"
@@ -2940,7 +2940,7 @@ msgstr "Poništi Preusmjeravanja"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset canvas zoom"
-msgstr ""
+msgstr "Poništi zumiranje radne površine"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:185
 msgid "Reset changes in child blocks as well?"
