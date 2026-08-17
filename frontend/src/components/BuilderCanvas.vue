@@ -136,6 +136,7 @@ import {
 } from "@/utils/scriptSandbox";
 import { useBlockEventHandlers } from "@/utils/useBlockEventHandlers";
 import { useBlockSelection } from "@/utils/useBlockSelection";
+import { useBuildFollow } from "@/utils/useBuildFollow";
 import { setFont } from "@/utils/fontManager";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useCanvasDropZone } from "@/utils/useCanvasDropZone";
@@ -269,6 +270,8 @@ const {
 	findBlock,
 	isDirty,
 } = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
+
+const { followBuildEdge, followBlock } = useBuildFollow(canvasProps, canvasContainer, canvas);
 
 const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMarqueeListeners } =
 	useCanvasMarqueeSelection({
@@ -424,6 +427,8 @@ defineExpose({
 	isDirty,
 	toggleDirty,
 	scrollBlockIntoView,
+	followBuildEdge,
+	followBlock,
 	removeBlock,
 	selectBlockRange,
 	resizingBlock,
