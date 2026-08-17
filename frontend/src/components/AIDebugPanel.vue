@@ -171,9 +171,6 @@ const STOP_META: Record<string, { label: string; tone: "good" | "bad" | "warn" }
 	model_finished: { label: "Finished", tone: "good" },
 	generated: { label: "Page generated", tone: "good" },
 	max_rounds: { label: "Incomplete — hit round cap", tone: "bad" },
-	noop_retry: { label: "No-op corrected", tone: "warn" },
-	build_retry: { label: "Build corrected", tone: "warn" },
-	noop_unbacked: { label: "Claimed edit, applied nothing", tone: "bad" },
 };
 
 const tokens = computed(() => props.debug?.tokens || {});
@@ -233,7 +230,6 @@ const signals = computed(() => {
 	if (d.argsRepaired > 0) out.push({ text: `JSON repaired ×${d.argsRepaired}`, tone: "warn" });
 	if (d.streamRetries > 0)
 		out.push({ text: `${d.streamRetries} stream retr${d.streamRetries === 1 ? "y" : "ies"}`, tone: "warn" });
-	if (d.noopCorrected) out.push({ text: "no-op corrected", tone: "warn" });
 	return out;
 });
 

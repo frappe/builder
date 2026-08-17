@@ -709,12 +709,10 @@ function openDebug(debug: Record<string, any>) {
 function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
-		debug.noopCorrected ||
-			(debug.argsRepaired ?? 0) > 0 ||
+		(debug.argsRepaired ?? 0) > 0 ||
 			(debug.toolFailures?.length ?? 0) > 0 ||
 			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds" ||
-			debug.stopReason === "noop_unbacked",
+			debug.stopReason === "max_rounds",
 	);
 }
 
