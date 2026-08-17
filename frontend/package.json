@@ -37,7 +37,7 @@
     "@tiptap/vue-3": "^3.26.0",
     "@types/dompurify": "^3.2.0",
     "@vueuse/components": "^14.4.0",
-    "@vueuse/core": "^10.2.1",
+    "@vueuse/core": "^14.4.0",
     "codemirror": "^6.0.2",
     "dompurify": "^3.4.5",
     "frappe-ui": "1.0.0-beta.21",
