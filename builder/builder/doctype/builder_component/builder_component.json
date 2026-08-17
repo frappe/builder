@@ -23,6 +23,7 @@
   {
    "fieldname": "block",
    "fieldtype": "JSON",
+   "ignore_xss_filter": 1,
    "label": "Block",
    "read_only": 1
   },
@@ -51,7 +52,7 @@
   ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-29 09:30:34.896956",
+ "modified": "2026-08-17 17:40:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Component",
