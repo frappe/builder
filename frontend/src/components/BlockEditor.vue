@@ -46,7 +46,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber } from "@/utils/helpers";
+import { addPxToNumber, getNumberInUnit } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -100,7 +100,6 @@ const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventClick = ref(false);
-
 const showPaddingHandler = computed(() => {
 	return (
 		builderStore.mode === "select" &&
@@ -295,8 +294,12 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
-	const startTop = (props.target as HTMLElement).offsetTop || 0;
+	// A non-px position (e.g. a percentage) cannot be read as pixels, so the drag
+	// starts from the rendered offset instead.
+	const activeLeft = props.block.getActiveStyleValue("left");
+	const activeTop = props.block.getActiveStyleValue("top");
+	const startLeft = getNumberInUnit(activeLeft, "px") ?? (props.target as HTMLElement).offsetLeft;
+	const startTop = getNumberInUnit(activeTop, "px") ?? (props.target as HTMLElement).offsetTop;
 
 	moving.value = true;
 	guides.showX();
@@ -313,15 +316,15 @@ const handleMove = (ev: MouseEvent) => {
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
 		let finalTop = startTop + movementY;
-		props.block.setStyle("left", addPxToNumber(finalLeft));
-		props.block.setStyle("top", addPxToNumber(finalTop));
+		props.block.setActiveStyle("left", addPxToNumber(finalLeft));
+		props.block.setActiveStyle("top", addPxToNumber(finalTop));
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+			props.block.setActiveStyle("left", addPxToNumber(finalLeft + leftOffset));
 		}
 		if (rightOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + rightOffset));
+			props.block.setActiveStyle("left", addPxToNumber(finalLeft + rightOffset));
 		}
 
 		mouseMoveEvent.preventDefault();

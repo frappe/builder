@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div ref="rootRef">
 		<ColorPicker
 			ref="colorPickerRef"
 			:placement="placement"
@@ -13,7 +13,9 @@
 				}
 			">
 			<template #target="{ togglePopover, isOpen }">
-				<div class="flex items-center justify-between">
+				<div
+					class="flex items-center justify-between"
+					@click="$event.target instanceof HTMLInputElement && !isCssVariable && togglePopover(true)">
 					<InputLabel v-if="label">{{ label }}</InputLabel>
 					<div class="relative w-full">
 						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
@@ -27,7 +29,7 @@
 								ref="colorInput"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="() => !isCssVariable && togglePopover()"
+								@focus="!isCssVariable && canOpenOnFocus() && togglePopover(true)"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
@@ -45,7 +47,8 @@
 								<template #prefix>
 									<div
 										class="size-4 cursor-pointer rounded shadow-md"
-										@click="togglePopover"
+										@pointerdown="rememberPopoverState(null, isOpen)"
+										@click="togglePopoverForState(null, togglePopover)"
 										:style="{
 											background: modelValue
 												? resolvedColor
@@ -70,6 +73,7 @@ import { BuilderToken } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { getRGB } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
+import { useStatePopover } from "@/composables/useStatePopover";
 import { Tooltip } from "frappe-ui";
 import { computed, ComputedRef, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
@@ -84,6 +88,9 @@ const events = Object.fromEntries(
 
 const colorInput = ref<typeof Autocomplete | null>(null);
 const colorPickerRef = ref<typeof ColorPicker | null>(null);
+const rootRef = ref<HTMLElement | null>(null);
+// each instance edits one state, so its swatch always toggles the same picker
+const { rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } = useStatePopover();
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderToken> | null>(null);
 const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
@@ -227,6 +234,11 @@ const handleClose = () => {
 	}
 	if (typeof events.onBlur === "function") {
 		events.onBlur();
+	}
+	// only a property row owns a state preview, a picker inside another popover
+	// belongs to the editor that opened it
+	if (rootRef.value?.closest("[data-variant], [data-property]")) {
+		endStatePreview();
 	}
 };
 

@@ -2,7 +2,7 @@ import type Block from "@/block";
 import { CanvasProps } from "@/types/Builder/BuilderCanvas";
 import { collapseBoxShorthand, expandBoxShorthand } from "@/utils/cssUtils";
 import { startDrag } from "@/utils/cursor";
-import { getNumberFromPx } from "@/utils/helpers";
+import { getNumberInUnit } from "@/utils/helpers";
 import { toLocalDelta } from "@/utils/rotation";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref } from "vue";
@@ -43,13 +43,12 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	const updating = ref(false);
 
 	const blockStyles = computed(() => {
+		const block = getTargetBlock();
 		const breakpoint = getBreakpoint();
-		let styles = { ...getTargetBlock().baseStyles };
-		if (breakpoint === "mobile" || breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().mobileStyles };
-		}
-		if (breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().tabletStyles };
+		const styles = { ...block.getStyles(breakpoint) };
+		if (block.activeState) {
+			const [state] = block.activeState.split(":");
+			Object.assign(styles, block.getStateStyles(state, breakpoint));
 		}
 		return styles;
 	});
@@ -92,11 +91,11 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		updatedSides.forEach((updatedSide) => {
 			parts[sides[updatedSide].index] = `${value}px`;
 		});
-		block.setStyle(`${property}Top`, null);
-		block.setStyle(`${property}Right`, null);
-		block.setStyle(`${property}Bottom`, null);
-		block.setStyle(`${property}Left`, null);
-		block.setStyle(property, collapseBoxShorthand(parts));
+		block.setActiveStyle(`${property}Top`, null);
+		block.setActiveStyle(`${property}Right`, null);
+		block.setActiveStyle(`${property}Bottom`, null);
+		block.setActiveStyle(`${property}Left`, null);
+		block.setActiveStyle(property, collapseBoxShorthand(parts));
 	};
 
 	// Shift spreads the value to all four sides, alt to both sides of the dragged axis.
@@ -114,7 +113,8 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		const { axis, outward } = sides[side];
 		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a padding
 		const sign = property === "margin" ? outward : -outward;
-		const startValue = getNumberFromPx(getSpacingValue(property, side)) || fallback;
+		const currentValue = getSpacingValue(property, side);
+		const startValue = getNumberInUnit(currentValue, "px") ?? fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();

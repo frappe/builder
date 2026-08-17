@@ -5,7 +5,7 @@
 		<button
 			type="button"
 			class="circle-cursor duration-250 -mb-[1.5px] flex h-3 w-5 items-center justify-center rounded text-ink-gray-5 transition-all ease-in-out active:-translate-y-[2px] active:text-ink-gray-9"
-			@mousedown.prevent.stop="startHold('increment')"
+			@mousedown.prevent="startHold('increment')"
 			@mouseup="stopHold"
 			@mouseleave="stopHold"
 			tabindex="-1">
@@ -25,7 +25,7 @@
 		<button
 			type="button"
 			class="circle-cursor duration-250 -mt-[1.5px] flex h-3 w-5 items-center justify-center rounded text-ink-gray-5 transition-all ease-in-out active:translate-y-[2px] active:text-ink-gray-9"
-			@mousedown.prevent.stop="startHold('decrement')"
+			@mousedown.prevent="startHold('decrement')"
 			@mouseup="stopHold"
 			@mouseleave="stopHold"
 			tabindex="-1">
