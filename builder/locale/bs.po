@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-17 17:47\n"
+"PO-Revision-Date: 2026-08-17 18:54\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -2936,7 +2936,7 @@ msgstr "Poništi Komponentu"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:173
 msgid "Reset Overrides"
-msgstr "Poništi Preusmjeravanja"
+msgstr "Poništi Poništavanja"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset canvas zoom"
@@ -3107,7 +3107,7 @@ msgstr "Redoslijed skripti ažuriran"
 
 #: frontend/src/components/PageClientScriptManager.vue:266
 msgid "Script saved successfully"
-msgstr "Skripta uspješno sačuvana"
+msgstr "Skripta uspješno spremljena"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4159,7 +4159,7 @@ msgstr "Još nemate nijednu stranicu. Kliknite na dugme + Nova da izradite novu 
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
-msgstr "Imate nesačuvane promjene. Jeste li sigurni da želite izaći?"
+msgstr "Imate nespremljene promjene. Jeste li sigurni da želite izaći?"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
