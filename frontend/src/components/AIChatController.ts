@@ -782,8 +782,8 @@ export class AIChatController {
 	cancel = async () => {
 		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
 		this.isCancelling.value = true;
-		this.progressMessage.value = "Cancelling...";
-		this.replacePendingAssistant("Cancelling...", { status: "running" });
+		this.progressMessage.value = "Cancelling…";
+		this.replacePendingAssistant("Cancelling…", { status: "running" });
 		const resetStuckCancel = async () => {
 			if (!this.isCancelling.value) return;
 			this.endCanvasBuild(!!this.pageStreamContent.value);

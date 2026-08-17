@@ -83,7 +83,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Chat",
-	label: "Bob AI",
+	label: __("Bob AI"),
 	icon: "lucide-sparkle",
 	component: BuilderAIChatPanel,
 	shortcut: { key: "o", ctrl: true, shift: true },
