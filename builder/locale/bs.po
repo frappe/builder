@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-17 03:43\n"
+"PO-Revision-Date: 2026-08-17 04:45\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -195,7 +195,7 @@ msgstr "Pojavljuje se pored naslova na kartici vašeg pretraživača. Preporuče
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:105
 msgid "Append the original query string to the target URL"
-msgstr "Pridodaj originalni niy upita na ciljni URL"
+msgstr "Dodaj originalni niz upita na ciljni URL"
 
 #: frontend/src/components/Settings/GlobalCode.vue:33
 msgid "Applies to all pages"
@@ -281,7 +281,7 @@ msgstr "Nazad"
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
-msgstr "Nazad na Nadzornu Ploču"
+msgstr "Nazad na Nadzornu Tablu"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
