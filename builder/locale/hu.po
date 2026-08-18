@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-16 10:59\n"
+"PO-Revision-Date: 2026-08-18 10:15\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -1058,7 +1058,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:451
 msgid "Dimensions"
-msgstr ""
+msgstr "Méretek"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -2827,7 +2827,7 @@ msgstr ""
 
 #: frontend/src/utils/fontManager.ts:242
 msgid "Regular"
-msgstr ""
+msgstr "Szabályos"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
@@ -2890,7 +2890,7 @@ msgstr ""
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
 #: frontend/src/components/Controls/SearchBlock.vue:127
 msgid "Replace"
-msgstr ""
+msgstr "Csere"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
