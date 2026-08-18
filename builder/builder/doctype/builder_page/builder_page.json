@@ -73,6 +73,7 @@
   {
    "fieldname": "blocks",
    "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Blocks",
    "read_only": 1
   },
@@ -120,6 +121,7 @@
   {
    "fieldname": "draft_blocks",
    "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Draft Blocks",
    "read_only": 1
   },
@@ -262,7 +264,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 10:00:00.000000",
+ "modified": "2026-08-17 17:40:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

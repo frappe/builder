@@ -311,19 +311,3 @@ commands.register({
 		if (canvas?.history?.canRedo) canvas.history.redo();
 	},
 });
-
-commands.register({
-	name: "delete-page",
-	title: __("Delete Page"),
-	icon: "lucide-trash-2",
-	group: "General",
-	inPalette: false,
-	// same binding as toggle-canvas-dark-mode, as it was before this registry
-	keys: { key: "d", ctrl: true, shift: true, description: __("Delete Page") },
-	condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
-	action: () => {
-		if (pageStore.activePage && !pageStore.activePage.is_standard) {
-			pageStore.deletePage(pageStore.activePage).then(() => router.push({ name: "home" }));
-		}
-	},
-});
