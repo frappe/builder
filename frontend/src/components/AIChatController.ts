@@ -315,6 +315,7 @@ export class AIChatController {
 		this.lastStreamRenderAt = Date.now();
 		try {
 			this.dispatcher.applyPageYaml(this.pageStreamContent.value);
+			nextTick(() => this.canvasStore.activeCanvas?.followBuildEdge());
 		} catch {}
 	}
 
@@ -588,11 +589,32 @@ export class AIChatController {
 				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
 			}
 		}
+		const followId = this.followTargetIn(data.operations);
+		if (followId) nextTick(() => this.canvasStore.activeCanvas?.followBlock(followId));
 		// Don't overwrite the bubble with a static "Applying N changes…" — the loop emits
 		// a per-round progress note (the model's words, or a "Updated N blocks" summary)
 		// right after each batch, which is what the user actually sees update.
 		this.scrollToBottom();
 	};
+
+	/** The batch's last touched block, for the canvas to pan into view. Whole-tree
+	 * rewrites (generate_page/set_page_blocks) have no single locus; skip those. */
+	private followTargetIn(operations: Array<{ tool_name: string; args: Record<string, any> }>) {
+		for (let i = operations.length - 1; i >= 0; i--) {
+			const { tool_name, args } = operations[i];
+			if (tool_name === "add_block") {
+				return ((args.block_json as Record<string, any>)?.blockId || args.parent_block_id) as string;
+			}
+			if (tool_name === "update_block" || tool_name === "move_block") return args.block_id as string;
+			if (tool_name === "update_blocks") {
+				if (Array.isArray(args.patches)) {
+					return (args.patches as Record<string, any>[]).at(-1)?.block_id as string;
+				}
+				return ((args.block_ids as string[]) || []).at(-1);
+			}
+		}
+		return null;
+	}
 
 	onComplete = async (data: { message?: string; session_id?: string }) => {
 		if (this.isForeignSession(data)) {
@@ -782,8 +804,8 @@ export class AIChatController {
 	cancel = async () => {
 		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
 		this.isCancelling.value = true;
-		this.progressMessage.value = "Cancelling...";
-		this.replacePendingAssistant("Cancelling...", { status: "running" });
+		this.progressMessage.value = "Cancelling…";
+		this.replacePendingAssistant("Cancelling…", { status: "running" });
 		const resetStuckCancel = async () => {
 			if (!this.isCancelling.value) return;
 			this.endCanvasBuild(!!this.pageStreamContent.value);

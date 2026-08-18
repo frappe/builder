@@ -177,6 +177,5 @@ declare module 'vue' {
     VersionHistory: typeof import('./src/components/VersionHistory.vue')['default']
     ViewerAvatars: typeof import('./src/components/ToolbarItems/ViewerAvatars.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
-    WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }
 }

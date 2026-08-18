@@ -25,6 +25,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.skills import Skills
 from builder.api import assert_not_private_url
 
 logger = frappe.logger("builder.ai.agent.artifact")
@@ -232,6 +233,10 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	# The geometry of reference pages read this turn — the brief alone cannot carry it.
 	if geometry := reference_geometry(ctx):
 		messages.append({"role": "user", "content": geometry})
+	# The domain skill the agent attached — art direction the base prompt
+	# deliberately doesn't carry into every build.
+	if skill := Skills.get(args.get("skill") or ""):
+		messages.append({"role": "user", "content": skill})
 
 	if brief:
 		build_text = f"Build this page now:\n{brief}"
