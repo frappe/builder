@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-17 18:54\n"
+"PO-Revision-Date: 2026-08-18 12:42\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -351,11 +351,11 @@ msgstr "Predložak Bloka"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Client Script"
-msgstr "Blokiraj Predložak Klijetske Skripte"
+msgstr "Predložak Bloka: Klijentska Skripta"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Data Script"
-msgstr "Blokiraj Predložak Podataka Skripte"
+msgstr "Predložak Bloka: Skripta Podataka"
 
 #: frontend/src/stores/blockTemplateStore.ts:94
 msgid "Block template saved!"
@@ -2016,11 +2016,11 @@ msgstr "Marketing / odredišna stranica"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
 msgid "Match Case"
-msgstr "Upari Slučaj"
+msgstr "Traži Slučaj"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
 msgid "Match Whole Word"
-msgstr "Upari Cijelu Riječ"
+msgstr "Traži Cijelu Riječ"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
@@ -2124,7 +2124,7 @@ msgstr "Premjesti u Mapu"
 
 #: frontend/src/components/RouteTreeView.vue:335
 msgid "Move down in page tree"
-msgstr "Premjesti prema dolje u stablu stranice"
+msgstr "Premjesti niže u stablu stranice"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:759
