@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-18 12:42\n"
+"PO-Revision-Date: 2026-08-18 13:40\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -2342,7 +2342,7 @@ msgstr "Objekt"
 
 #: frontend/src/components/ObjectInput.vue:20
 msgid "Object Items:"
-msgstr "Stavke Objekta:"
+msgstr "Elementi Objekta:"
 
 #: frontend/src/utils/helpers.ts:54
 msgid "Ok"
@@ -2542,7 +2542,7 @@ msgstr "Stranice"
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
-msgstr "Pomakni radnu površinu prema dolje"
+msgstr "Pomakni radnu površinu prema niže"
 
 #: frontend/src/utils/useBuilderEvents.ts:312
 msgid "Pan canvas left"
