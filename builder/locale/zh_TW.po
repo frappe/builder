@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"PO-Revision-Date: 2026-08-18 10:15\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -703,7 +703,7 @@ msgstr ""
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr ""
+msgstr "组件名称"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
@@ -739,7 +739,7 @@ msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:47
 msgid "Components"
-msgstr ""
+msgstr "組成項目"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
@@ -785,7 +785,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr ""
+msgstr "已复制到剪贴板"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:58
 msgid "Copy"
@@ -1029,7 +1029,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr ""
+msgstr "设计师"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:248
 msgid "Detach Component"
@@ -1058,7 +1058,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:451
 msgid "Dimensions"
-msgstr ""
+msgstr "维度"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1471,7 +1471,7 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "固定金额"
 
 #: frontend/src/components/Commands/index.ts:248
 msgid "Focus Property Search"
@@ -1813,7 +1813,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
-msgstr ""
+msgstr "邀請使用者"
 
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
@@ -1831,7 +1831,7 @@ msgstr ""
 #. Label of the is_template (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Is Template"
-msgstr ""
+msgstr "是模板"
 
 #. Label of the is_unique (Check) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -1892,7 +1892,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "大"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -2086,7 +2086,7 @@ msgstr ""
 
 #: frontend/src/components/AIPageGeneratorModal.vue:74
 msgid "Model"
-msgstr ""
+msgstr "型号"
 
 #: frontend/src/components/WebPagePresetPicker.vue:457
 msgid "Modern"
@@ -2827,7 +2827,7 @@ msgstr ""
 
 #: frontend/src/utils/fontManager.ts:242
 msgid "Regular"
-msgstr ""
+msgstr "定期"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
@@ -2890,7 +2890,7 @@ msgstr ""
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
 #: frontend/src/components/Controls/SearchBlock.vue:127
 msgid "Replace"
-msgstr ""
+msgstr "替换"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
@@ -3372,7 +3372,7 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "Small"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
@@ -3769,7 +3769,7 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:395
 #: frontend/src/utils/useBuilderEvents.ts:403
 msgid "Tools"
-msgstr ""
+msgstr "工具"
 
 #: frontend/src/components/BackgroundHandler.vue:291
 #: frontend/src/components/BlockPositionHandler.vue:23
@@ -3809,7 +3809,7 @@ msgstr ""
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "总访问量"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
@@ -3948,7 +3948,7 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "上传中..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
@@ -4166,7 +4166,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
