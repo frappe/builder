@@ -25,7 +25,7 @@ class BuilderComponent(StandardFileSync, Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		block: DF.JSON | None
+		block: DF.LongText | None
 		component_data_script: DF.Code | None
 		component_id: DF.Data | None
 		component_name: DF.Data | None
