@@ -280,6 +280,8 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 	def voice(running: str, finished: str) -> str:
 		return finished if done else running
 
+	if tool_name == "generate_page" and args.get("skill"):
+		return f"{voice('Building', 'Built')} the page ({args['skill']} playbook)"
 	if pair := TOOL_LABELS.get(tool_name):
 		return voice(*pair)
 	if tool_name == "read_block":
