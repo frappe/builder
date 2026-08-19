@@ -76,6 +76,13 @@
 								{ label: __('Original Size'), value: 'none' },
 							]"
 							@update:modelValue="setImageFit" />
+						<ImageFocusInput
+							v-if="objectPosition !== undefined && imageFit === 'cover' && currentImageURL"
+							class="mt-4"
+							:label="__('Focus Point')"
+							:imageSrc="currentImageURL"
+							:modelValue="objectPosition"
+							@update:modelValue="(val) => emit('update:objectPosition', val)" />
 					</div>
 				</template>
 			</Popover>
@@ -84,6 +91,7 @@
 </template>
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
@@ -99,6 +107,8 @@ const props = withDefaults(
 		labelPosition?: "top" | "left";
 		placeholder?: string;
 		imageFit?: "contain" | "cover" | "fill" | "none";
+		// pass it (even empty) to get the focus-point picker for cover fits
+		objectPosition?: string;
 		description?: string;
 		popoverOffset?: number;
 	}>(),
@@ -124,7 +134,7 @@ watch(
 );
 
 const currentImageURL = computed(() => props.modelValue || "");
-const emit = defineEmits(["update:imageFit", "update:modelValue"]);
+const emit = defineEmits(["update:imageFit", "update:modelValue", "update:objectPosition"]);
 
 const setImageURL = (fileURL: string) => {
 	emit("update:modelValue", fileURL);

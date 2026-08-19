@@ -1,5 +1,4 @@
 import AttributePropertyControl from "@/components/Controls/AttributePropertyControl.vue";
-import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import ImageUploadInput from "@/components/ImageUploadInput.vue";
 import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
@@ -18,35 +17,18 @@ const imageOptionsSectionProperties = [
 				allowDynamicValue: true,
 				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
+				objectPosition: (blockController.getStyle("objectPosition") as string) || "",
 				variants: [{ name: "dark", property: "darkSrc", label: __("Dark Mode") }],
 			};
 		},
 		events: {
 			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
 			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
+			"update:objectPosition": (val: string) => blockController.setStyle("objectPosition", val),
 		},
 		searchKeyWords:
-			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
-		usedStyleProperties: ["object-fit"],
-	},
-	{
-		component: ImageFocusInput,
-		getProps: () => {
-			return {
-				label: __("Focus Point"),
-				imageSrc: (blockController.getAttribute("src") as string) || "",
-				modelValue: (blockController.getStyle("objectPosition") as string) || "",
-			};
-		},
-		events: {
-			"update:modelValue": (val: string) => blockController.setStyle("objectPosition", val),
-		},
-		searchKeyWords: "Focus, Focal, Point, Crop, Framing, Position, Object Position, ObjectPosition",
-		usedStyleProperties: ["object-position"],
-		condition: () =>
-			blockController.isImage() &&
-			blockController.getStyle("objectFit") === "cover" &&
-			Boolean(blockController.getAttribute("src")),
+			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme, Focus, Focal, Point, Crop, Framing, Object Position, ObjectPosition",
+		usedStyleProperties: ["object-fit", "object-position"],
 	},
 	{
 		component: Button,
