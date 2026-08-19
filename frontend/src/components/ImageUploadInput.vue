@@ -46,37 +46,46 @@
 					</div>
 				</template>
 				<template #body>
-					<div class="rounded-lg bg-surface-base p-3 shadow-lg">
-						<!-- With a cover fit the preview IS the focus-point surface: one image,
-						     drag to frame the crop, Upload/Reset ride it as hover chips. -->
-						<div v-if="focusEnabled" class="group relative w-48">
-							<ImageFocusInput
-								:imageSrc="currentImageURL"
-								:modelValue="objectPosition"
-								:viewBox="objectViewBox"
-								:targetRatio="targetRatio"
-								@update:modelValue="(val) => emit('update:objectPosition', val)"
-								@update:viewBox="(val) => emit('update:objectViewBox', val)">
+					<div class="w-64 rounded-lg bg-surface-base p-3 shadow-lg">
+						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center justify-between gap-2">
+							<span class="text-sm font-semibold text-ink-gray-9">{{ __("Image") }}</span>
+							<div class="flex items-center gap-1.5">
 								<Button
-									variant="subtle"
-									icon="upload"
-									:title="__('Upload image')"
-									class="absolute -right-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									variant="outline"
+									iconLeft="upload"
+									:label="__('Replace')"
 									@click="openFileSelector" />
 								<Button
-									v-if="objectPosition || objectViewBox"
-									variant="subtle"
+									variant="outline"
 									icon="rotate-ccw"
-									:title="__('Reset focus point')"
-									class="absolute -left-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									:title="__('Reset focal point')"
+									:disabled="!objectPosition && !objectViewBox"
 									@click="resetFocus" />
-							</ImageFocusInput>
+							</div>
 						</div>
+						<div v-if="objectPosition !== undefined" class="mb-3">
+							<TabButtons
+								:class="STRETCH_TABS"
+								:options="fitOptions"
+								:modelValue="imageFit || 'contain'"
+								@update:modelValue="setImageFit" />
+						</div>
+						<!-- one surface for every fit: interactive (dot, frame, zoom) when the
+						     cover crop makes a focal point meaningful, plain preview otherwise -->
+						<ImageFocusInput
+							v-if="currentImageURL && objectPosition !== undefined"
+							:imageSrc="currentImageURL"
+							:modelValue="objectPosition"
+							:viewBox="objectViewBox"
+							:targetRatio="targetRatio"
+							:disabled="imageFit !== 'cover'"
+							@update:modelValue="(val) => emit('update:objectPosition', val)"
+							@update:viewBox="(val) => emit('update:objectViewBox', val)" />
 						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
-								class="image-preview relative h-24 w-48 cursor-pointer bg-surface-gray-2"
+								class="image-preview relative h-24 w-full cursor-pointer bg-surface-gray-2"
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
@@ -90,6 +99,7 @@
 							</div>
 						</div>
 						<InlineInput
+							v-if="objectPosition === undefined"
 							:label="__('Image Fit')"
 							class="mt-4"
 							:modelValue="imageFit"
@@ -114,7 +124,8 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { FileUploader, Popover } from "frappe-ui";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { FileUploader, Popover, TabButtons } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -154,9 +165,13 @@ watch(
 );
 
 const currentImageURL = computed(() => props.modelValue || "");
-const focusEnabled = computed(
-	() => props.objectPosition !== undefined && props.imageFit === "cover" && Boolean(currentImageURL.value),
-);
+
+const fitOptions = [
+	{ label: __("Fill & crop"), value: "cover" },
+	{ label: __("Fit"), value: "contain" },
+	{ label: __("Stretch"), value: "fill" },
+];
+
 const emit = defineEmits([
 	"update:imageFit",
 	"update:modelValue",

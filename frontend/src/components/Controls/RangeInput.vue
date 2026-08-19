@@ -2,6 +2,7 @@
 	<div class="flex items-center gap-2">
 		<InputLabel v-if="label">{{ label }}</InputLabel>
 		<BuilderInput
+			v-if="!hideInput"
 			:modelValue="modelValue"
 			:hideClearButton="true"
 			type="number"
@@ -36,6 +37,8 @@ const props = defineProps<{
 	max?: number;
 	step?: number;
 	placeholder?: string;
+	// slider-only mode: no number field beside the track
+	hideInput?: boolean;
 }>();
 const emit = defineEmits(["update:modelValue", "focus", "blur"]);
 const inputRef = ref<HTMLInputElement | null>(null);

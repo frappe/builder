@@ -1,24 +1,15 @@
 <template>
-	<div ref="rootRef" class="flex flex-col gap-1.5">
-		<div v-if="label" class="flex items-center justify-between">
-			<InputLabel>{{ label }}</InputLabel>
-			<button
-				v-if="hasCustomValue"
-				type="button"
-				class="text-xs text-ink-gray-5 transition-colors hover:text-ink-gray-7"
-				@click="emit('update:modelValue', '')">
-				{{ __("Reset") }}
-			</button>
-		</div>
+	<div ref="rootRef" class="flex flex-col gap-2">
 		<!-- chips slot beside the clipped box, not inside it, so they can straddle
 		     its edges without being cut by overflow-hidden -->
 		<div
-			class="group/surface relative mx-auto"
+			class="relative mx-auto"
 			:class="[boxSize ? '' : 'h-24 w-full', dragging && 'is-dragging']"
 			:style="boxSize || {}">
 			<div
 				ref="boxRef"
-				class="relative h-full w-full cursor-crosshair overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+				class="relative h-full w-full overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+				:class="disabled ? '' : 'cursor-crosshair'"
 				@mousedown="onBoxMouseDown">
 				<img
 					ref="imgRef"
@@ -27,39 +18,51 @@
 					draggable="false"
 					@load="onLoad" />
 				<div
-					v-if="cropRectStyle"
+					v-if="!disabled && cropRectStyle"
 					class="pointer-events-none absolute rounded-[2px] border border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
 					:style="cropRectStyle" />
 				<div
-					v-if="imageRect"
+					v-if="!disabled && imageRect"
 					class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
 					:style="dotStyle" />
-			</div>
-			<div
-				v-if="viewBox !== undefined && natural"
-				class="absolute -bottom-2 -right-2 hidden gap-1 group-hover/surface:flex [.is-dragging_&]:!hidden">
-				<Button
-					variant="subtle"
-					icon="minus"
-					:title="__('Zoom out')"
-					:disabled="zoom <= 1"
-					class="shadow-sm"
-					@click="stepZoom(-1)" />
-				<Button
-					variant="subtle"
-					icon="plus"
-					:title="__('Zoom in')"
-					:disabled="zoom >= 4"
-					class="shadow-sm"
-					@click="stepZoom(1)" />
+				<div
+					v-if="!disabled && imageRect && !dragging && !hasCustomValue"
+					class="pointer-events-none absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+					{{ __("Drag to set focal point") }}
+				</div>
 			</div>
 			<slot />
+		</div>
+		<div
+			v-if="!disabled && viewBox !== undefined && natural"
+			class="flex items-center gap-1.5"
+			:title="`${Math.round(zoom * 100)}%`">
+			<Button
+				variant="ghost"
+				icon="zoom-out"
+				:title="__('Zoom out')"
+				:disabled="zoom <= 1"
+				@click="stepZoom(-1)" />
+			<RangeInput
+				class="w-full"
+				hideInput
+				:modelValue="zoom"
+				:min="1"
+				:max="4"
+				:step="0.05"
+				@update:modelValue="(v: string | number) => emitViewBoxAt(Number(v), point.x, point.y)" />
+			<Button
+				variant="ghost"
+				icon="zoom-in"
+				:title="__('Zoom in')"
+				:disabled="zoom >= 4"
+				@click="stepZoom(1)" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import InputLabel from "@/components/Controls/InputLabel.vue";
+import RangeInput from "@/components/Controls/RangeInput.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { Button } from "frappe-ui";
 import { __ } from "@/translation";
@@ -75,6 +78,8 @@ const props = defineProps<{
 	viewBox?: string;
 	// aspect ratio of the element the image fills; draws the visible-part frame
 	targetRatio?: number;
+	// plain preview: no dot, frame, hint, or zoom (non-cover fits)
+	disabled?: boolean;
 }>();
 
 const emit = defineEmits(["update:modelValue", "update:viewBox"]);
@@ -162,6 +167,7 @@ let pauseId: PauseId | undefined = undefined;
 
 // a press on a slotted chip (upload/reset) is a click, never a drag
 function onBoxMouseDown(e: MouseEvent) {
+	if (props.disabled) return;
 	if ((e.target as HTMLElement).closest("button")) return;
 	e.preventDefault();
 	dragging.value = true;
