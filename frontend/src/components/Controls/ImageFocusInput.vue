@@ -142,11 +142,10 @@ const point = computed(() => {
 		}
 		return KEYWORDS[part] ?? 50;
 	};
-	// a lone vertical keyword ("top") names the y axis
-	if (parts.length === 1 && (parts[0] === "top" || parts[0] === "bottom")) {
-		return { x: 50, y: KEYWORDS[parts[0]] };
-	}
-	return { x: parse(parts[0]), y: parse(parts[1]) };
+	// keywords name their own axis regardless of order ("top right" == "right top")
+	let [x, y] = parts;
+	if (x === "top" || x === "bottom" || y === "left" || y === "right") [x, y] = [y, x];
+	return { x: parse(x), y: parse(y) };
 });
 
 // with a view-box crop, object-position percentages are relative to the CROPPED
