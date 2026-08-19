@@ -14,7 +14,8 @@
 				<img
 					ref="imgRef"
 					:src="imageSrc"
-					class="pointer-events-none h-full w-full select-none object-contain"
+					class="pointer-events-none h-full w-full select-none"
+					:style="{ objectFit: disabled ? props.fit || 'contain' : 'contain' }"
 					draggable="false"
 					@load="onLoad" />
 				<div
@@ -25,18 +26,10 @@
 					v-if="!disabled && imageRect"
 					class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
 					:style="dotStyle" />
-				<div
-					v-if="!disabled && imageRect && !dragging && !hasCustomValue"
-					class="pointer-events-none absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/60 px-2 py-0.5 text-xs text-white">
-					{{ __("Drag to set focal point") }}
-				</div>
 			</div>
 			<slot />
 		</div>
-		<div
-			v-if="!disabled && viewBox !== undefined && natural"
-			class="flex items-center gap-1.5"
-			:title="`${Math.round(zoom * 100)}%`">
+		<div v-if="!disabled && viewBox !== undefined && natural" class="flex items-center gap-1.5">
 			<Button
 				variant="ghost"
 				icon="zoom-out"
@@ -80,6 +73,8 @@ const props = defineProps<{
 	targetRatio?: number;
 	// plain preview: no dot, frame, hint, or zoom (non-cover fits)
 	disabled?: boolean;
+	// the actual object-fit, so the plain preview mirrors what the element shows
+	fit?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue", "update:viewBox"]);
@@ -114,8 +109,11 @@ const { width: rootWidth } = useElementSize(rootRef);
 // photo doesn't sit in a letterboxed band with dead space either side
 const MAX_BOX_H = 176;
 const boxSize = computed(() => {
-	if (!natural.value || !rootWidth.value) return null;
-	const ratio = natural.value.w / natural.value.h;
+	if (!rootWidth.value) return null;
+	// a plain preview mirrors the ELEMENT: its ratio, its fit — the interactive
+	// surface shows the whole image at the image's own ratio
+	const ratio = props.disabled ? props.targetRatio : natural.value && natural.value.w / natural.value.h;
+	if (!ratio) return null;
 	const w = Math.min(rootWidth.value, MAX_BOX_H * ratio);
 	return { width: `${Math.round(w)}px`, height: `${Math.round(w / ratio)}px` };
 });
@@ -147,8 +145,6 @@ const point = computed(() => {
 	}
 	return { x: parse(parts[0]), y: parse(parts[1]) };
 });
-
-const hasCustomValue = computed(() => Boolean((props.modelValue || "").trim()));
 
 const dotStyle = computed(() => {
 	const rect = imageRect.value;

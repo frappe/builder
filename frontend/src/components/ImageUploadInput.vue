@@ -47,21 +47,8 @@
 				</template>
 				<template #body>
 					<div class="w-64 rounded-lg bg-surface-base p-3 shadow-lg">
-						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center justify-between gap-2">
+						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center">
 							<span class="text-sm font-semibold text-ink-gray-9">{{ __("Image") }}</span>
-							<div class="flex items-center gap-1.5">
-								<Button
-									variant="outline"
-									iconLeft="upload"
-									:label="__('Replace')"
-									@click="openFileSelector" />
-								<Button
-									variant="outline"
-									icon="rotate-ccw"
-									:title="__('Reset focal point')"
-									:disabled="!objectPosition && !objectViewBox"
-									@click="resetFocus" />
-							</div>
 						</div>
 						<div v-if="objectPosition !== undefined" class="mb-3">
 							<TabButtons
@@ -78,9 +65,15 @@
 							:modelValue="objectPosition"
 							:viewBox="objectViewBox"
 							:targetRatio="targetRatio"
+							:fit="imageFit"
 							:disabled="imageFit !== 'cover'"
 							@update:modelValue="(val) => emit('update:objectPosition', val)"
 							@update:viewBox="(val) => emit('update:objectViewBox', val)" />
+						<div
+							v-else-if="objectPosition !== undefined"
+							class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 text-p-xs text-ink-gray-4">
+							{{ __("No image") }}
+						</div>
 						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
@@ -97,6 +90,20 @@
 								}">
 								<Button variant="subtle" @click="openFileSelector">{{ __("Upload") }}</Button>
 							</div>
+						</div>
+						<div v-if="objectPosition !== undefined" class="mt-3 flex items-center gap-1.5">
+							<Button
+								class="flex-1"
+								variant="outline"
+								iconLeft="upload"
+								:label="currentImageURL ? __('Replace') : __('Upload')"
+								@click="openFileSelector" />
+							<Button
+								variant="outline"
+								icon="rotate-ccw"
+								:title="__('Reset focal point')"
+								:disabled="!objectPosition && !objectViewBox"
+								@click="resetFocus" />
 						</div>
 						<InlineInput
 							v-if="objectPosition === undefined"
