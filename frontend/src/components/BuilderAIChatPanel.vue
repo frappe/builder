@@ -120,9 +120,13 @@
 							     line covers only what the timeline can't — the answer already
 							     streaming (it sits below the reply as the turn's status, never the
 							     reply shimmering while it's read) or no steps yet. -->
+							<!-- mt-1 only under a streamed reply: standing alone it must sit exactly
+							     where the timeline's first row lands, or the label jumps 4px the
+							     moment "Working" becomes "Thinking". -->
 							<div
 								v-if="stillWorking(message) && (!!assistantText(message) || !message.metadata?.steps?.length)"
-								class="animate-shine mt-1 w-fit text-p-xs">
+								class="animate-shine w-fit text-p-xs text-ink-gray-5"
+								:class="assistantText(message) && 'mt-1'">
 								Working
 							</div>
 						</template>
