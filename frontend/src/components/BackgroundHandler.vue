@@ -55,87 +55,78 @@
 				</div>
 
 				<!-- Image Tab -->
-				<div v-else-if="activeTab === 'image'" class="space-y-4">
-					<!-- A cover background gets the focus-point surface as its preview:
-					     drag to choose what the crop keeps, upload rides as a hover chip. -->
-					<FileUploader
-						v-if="bgFocusEnabled"
-						@success="setBGImage"
-						:uploadArgs="{
-							private: false,
-							folder: 'Home/Builder Uploads',
-							optimize: true,
-							upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-						}">
-						<template v-slot="{ openFileSelector }">
-							<div class="group relative">
-								<ImageFocusInput
-									:imageSrc="backgroundImageURL || ''"
-									:modelValue="backgroundPosition"
-									:targetRatio="selectedBlockRatio"
-									@update:modelValue="setBGPosition">
-									<Button
-										variant="subtle"
-										icon="upload"
-										:title="__('Upload image')"
-										class="absolute -right-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
-										@click="openFileSelector" />
-								</ImageFocusInput>
+				<FileUploader
+					v-else-if="activeTab === 'image'"
+					@success="setBGImage"
+					:uploadArgs="{
+						private: false,
+						folder: 'Home/Builder Uploads',
+						optimize: true,
+						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+					}">
+					<template v-slot="{ openFileSelector }">
+						<div class="space-y-3">
+							<TabButtons
+								:class="STRETCH_TABS"
+								:options="sizeTabOptions"
+								:modelValue="backgroundSize || 'auto'"
+								@update:modelValue="setBGSize" />
+							<ImageFocusInput
+								v-if="backgroundImageURL"
+								:imageSrc="backgroundImageURL"
+								:modelValue="backgroundPosition"
+								:targetRatio="selectedBlockRatio"
+								:fit="backgroundSize === 'contain' ? 'contain' : 'none'"
+								:disabled="!bgFocusEnabled"
+								@update:modelValue="setBGPosition" />
+							<div
+								v-else
+								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+								{{ __("No image") }}
 							</div>
-						</template>
-					</FileUploader>
-					<div
-						v-else
-						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
-						:style="getPreviewStyle(activeState)">
-						<FileUploader
-							@success="setBGImage"
-							:uploadArgs="{
-								private: false,
-								folder: 'Home/Builder Uploads',
-								optimize: true,
-								upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-							}">
-							<template v-slot="{ openFileSelector }">
-								<div
-									class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
-									:class="{
-										'!grid': !backgroundImageURL,
-										'group-hover:grid': backgroundImageURL,
-									}">
-									<Button @click="openFileSelector">{{ __("Upload") }}</Button>
-								</div>
-							</template>
-						</FileUploader>
-					</div>
-					<div class="space-y-2">
-						<InlineInput
-							:label="__('Size')"
-							:modelValue="backgroundSize"
-							type="select"
-							:options="sizeOptions"
-							@update:modelValue="setBGSize" />
-						<InlineInput
-							v-if="!bgFocusEnabled"
-							:label="__('Position')"
-							:modelValue="backgroundPosition"
-							type="select"
-							:options="positionOptions"
-							@update:modelValue="setBGPosition" />
-						<InlineInput
-							:label="__('Repeat')"
-							:modelValue="backgroundRepeat"
-							type="select"
-							:options="repeatOptions"
-							@update:modelValue="setBGRepeat" />
-					</div>
-					<Button v-if="showServeLocallyButton" class="w-full" @click="serveBackgroundImageLocally">
-						{{ serveLocallyButtonText }}
-					</Button>
-					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
-						{{ __("Clear Image") }}
-					</Button>
-				</div>
+							<div v-if="!bgFocusEnabled && backgroundImageURL" class="space-y-2">
+								<InlineInput
+									:label="__('Position')"
+									:modelValue="backgroundPosition"
+									type="select"
+									:options="positionOptions"
+									@update:modelValue="setBGPosition" />
+								<InlineInput
+									:label="__('Repeat')"
+									:modelValue="backgroundRepeat"
+									type="select"
+									:options="repeatOptions"
+									@update:modelValue="setBGRepeat" />
+							</div>
+							<div class="flex items-center gap-1.5">
+								<Button
+									class="flex-1"
+									variant="outline"
+									iconLeft="upload"
+									:label="backgroundImageURL ? __('Replace') : __('Upload')"
+									@click="openFileSelector" />
+								<Button
+									v-if="bgFocusEnabled"
+									variant="outline"
+									icon="rotate-ccw"
+									:title="__('Reset focal point')"
+									@click="setBGPosition('center')" />
+								<Button
+									v-if="showServeLocallyButton"
+									variant="outline"
+									icon="download"
+									:title="serveLocallyButtonText"
+									@click="serveBackgroundImageLocally" />
+								<Button
+									v-if="backgroundImageURL"
+									variant="outline"
+									icon="trash"
+									:title="__('Clear image')"
+									@click="clearBGImage" />
+							</div>
+						</div>
+					</template>
+				</FileUploader>
 
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
@@ -320,9 +311,9 @@ const getPreviewStyle = (state: string | null) => {
 	};
 };
 
-const sizeOptions = [
-	{ label: __("Contain"), value: "contain" },
-	{ label: __("Cover"), value: "cover" },
+const sizeTabOptions = [
+	{ label: __("Fill & crop"), value: "cover" },
+	{ label: __("Fit"), value: "contain" },
 	{ label: __("Auto"), value: "auto" },
 ];
 
