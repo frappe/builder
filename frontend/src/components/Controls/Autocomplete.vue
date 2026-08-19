@@ -64,8 +64,10 @@
 						referenceElementSelector ? 'fixed' : 'absolute',
 						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
 						!referenceElementSelector && !openOptionsAbove ? 'mt-1' : '',
+						// wider than the input: anchor right so the extra width grows away from the panel edge
+						!referenceElementSelector && optionsMinWidth ? 'right-0' : '',
 					]"
-					:style="fixedPositionStyles"
+					:style="[fixedPositionStyles, optionsMinWidthStyle]"
 					@after-enter="setOptionsPosition"
 					@after-leave="fixedPositionStyles = {}">
 					<div class="options-list overflow-y-auto p-1 empty:p-0">
@@ -168,6 +170,8 @@ interface Props {
 	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
 	disabled?: boolean;
+	// floor for the options width, so a narrow input doesn't force truncated labels
+	optionsMinWidth?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -191,6 +195,10 @@ const hasValue = computed(() => props.modelValue != null && props.modelValue !==
 const comboboxInput = ref<ComponentPublicInstance | null>(null);
 const contentRef = ref<ComponentPublicInstance | null>(null);
 const fixedPositionStyles = ref<Record<string, string>>({});
+// the fixed path bakes the floor into its explicit width instead
+const optionsMinWidthStyle = computed(() =>
+	props.optionsMinWidth && !props.referenceElementSelector ? { minWidth: `${props.optionsMinWidth}px` } : {},
+);
 const openOptionsAbove = ref(false);
 const allOptions = computed(() => (props.getOptions ? asyncOptions.value : props.options));
 
@@ -367,13 +375,15 @@ const getFixedPositionStyles = (): Record<string, string> => {
 	const bottom = openOptionsAbove.value
 		? window.innerHeight - comboboxInputRect.top + OPTIONS_GAP + "px"
 		: "unset";
-	const left = comboboxInputRect.left + "px";
+	const width = Math.max(comboboxInputRect.width, props.optionsMinWidth || 0);
+	// a widened list keeps its left edge on the input but never leaves the viewport
+	const left = Math.min(comboboxInputRect.left, window.innerWidth - width - OPTIONS_GAP) + "px";
 
 	return {
 		top,
 		bottom,
 		left,
-		width: comboboxInputRect.width + "px",
+		width: width + "px",
 		zIndex: "999",
 	};
 };
