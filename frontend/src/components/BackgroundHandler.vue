@@ -76,7 +76,7 @@
 								:imageSrc="backgroundImageURL"
 								:modelValue="backgroundPosition"
 								:targetRatio="selectedBlockRatio"
-								:fit="backgroundSize === 'contain' ? 'contain' : 'none'"
+								:fit="backgroundSize === 'contain' ? 'contain' : 'scale-down'"
 								:disabled="!bgFocusEnabled"
 								@update:modelValue="setBGPosition" />
 							<div
