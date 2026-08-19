@@ -55,57 +55,64 @@
 				</div>
 
 				<!-- Image Tab -->
-				<div v-else-if="activeTab === 'image'" class="space-y-4">
-					<div
-						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
-						:style="getPreviewStyle(activeState)">
-						<FileUploader
-							@success="setBGImage"
-							:uploadArgs="{
-								private: false,
-								folder: 'Home/Builder Uploads',
-								optimize: true,
-								upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-							}">
-							<template v-slot="{ openFileSelector }">
-								<div
-									class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
-									:class="{
-										'!grid': !backgroundImageURL,
-										'group-hover:grid': backgroundImageURL,
-									}">
-									<Button @click="openFileSelector">{{ __("Upload") }}</Button>
-								</div>
-							</template>
-						</FileUploader>
-					</div>
-					<div class="space-y-2">
-						<InlineInput
-							:label="__('Size')"
-							:modelValue="backgroundSize"
-							type="select"
-							:options="sizeOptions"
-							@update:modelValue="setBGSize" />
-						<InlineInput
-							:label="__('Position')"
-							:modelValue="backgroundPosition"
-							type="select"
-							:options="positionOptions"
-							@update:modelValue="setBGPosition" />
-						<InlineInput
-							:label="__('Repeat')"
-							:modelValue="backgroundRepeat"
-							type="select"
-							:options="repeatOptions"
-							@update:modelValue="setBGRepeat" />
-					</div>
-					<Button v-if="showServeLocallyButton" class="w-full" @click="serveBackgroundImageLocally">
-						{{ serveLocallyButtonText }}
-					</Button>
-					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
-						{{ __("Clear Image") }}
-					</Button>
-				</div>
+				<FileUploader
+					v-else-if="activeTab === 'image'"
+					@success="setBGImage"
+					:uploadArgs="{
+						private: false,
+						folder: 'Home/Builder Uploads',
+						optimize: true,
+						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+					}">
+					<template v-slot="{ openFileSelector }">
+						<div class="space-y-3">
+							<TabButtons
+								:class="STRETCH_TABS"
+								:options="sizeTabOptions"
+								:modelValue="backgroundSize || 'auto'"
+								@update:modelValue="setBGSize" />
+							<ImageFocusInput
+								v-if="backgroundImageURL"
+								:imageSrc="backgroundImageURL"
+								:modelValue="backgroundPosition"
+								:targetRatio="selectedBlockRatio"
+								:fit="backgroundSize === 'contain' ? 'contain' : 'scale-down'"
+								:disabled="!bgFocusEnabled"
+								@update:modelValue="setBGPosition" />
+							<div
+								v-else
+								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+								{{ __("No image") }}
+							</div>
+							<TabButtons
+								v-if="!bgFocusEnabled && backgroundImageURL"
+								:class="STRETCH_TABS"
+								:options="repeatTabOptions"
+								:modelValue="backgroundRepeat || 'repeat'"
+								@update:modelValue="setBGRepeat" />
+							<div class="flex items-center gap-1.5">
+								<Button
+									class="flex-1"
+									variant="outline"
+									iconLeft="upload"
+									:label="backgroundImageURL ? __('Replace') : __('Upload')"
+									@click="openFileSelector" />
+								<Button
+									v-if="bgFocusEnabled"
+									variant="outline"
+									icon="rotate-ccw"
+									:title="__('Reset focal point')"
+									@click="setBGPosition('center')" />
+								<Button
+									v-if="backgroundImageURL"
+									variant="outline"
+									icon="trash"
+									:title="__('Clear image')"
+									@click="clearBGImage" />
+							</div>
+						</div>
+					</template>
+				</FileUploader>
 
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
@@ -133,13 +140,12 @@
 import { __ } from "@/translation";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
-import InlineInput from "@/components/Controls/InlineInput.vue";
+import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
-import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { STRETCH_TABS } from "@/utils/tabButtons";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
@@ -245,6 +251,8 @@ const backgroundImageURL = computed(() => {
 });
 
 const backgroundSize = computed(() => blockController.getStyle(getStyleKey("backgroundSize")) as string);
+const bgFocusEnabled = computed(() => Boolean(backgroundImageURL.value) && backgroundSize.value === "cover");
+const selectedBlockRatio = computed(() => blockController.getSelectedBlockAspectRatio());
 const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );
@@ -287,25 +295,17 @@ const getPreviewStyle = (state: string | null) => {
 	};
 };
 
-const sizeOptions = [
-	{ label: __("Contain"), value: "contain" },
-	{ label: __("Cover"), value: "cover" },
+const sizeTabOptions = [
+	{ label: __("Fill & crop"), value: "cover" },
+	{ label: __("Fit"), value: "contain" },
 	{ label: __("Auto"), value: "auto" },
 ];
 
-const positionOptions = [
-	{ label: __("Center"), value: "center" },
-	{ label: __("Top"), value: "top" },
-	{ label: __("Bottom"), value: "bottom" },
-	{ label: __("Left"), value: "left" },
-	{ label: __("Right"), value: "right" },
-];
-
-const repeatOptions = [
-	{ label: __("No Repeat"), value: "no-repeat" },
-	{ label: __("Repeat"), value: "repeat" },
-	{ label: __("Repeat X"), value: "repeat-x" },
-	{ label: __("Repeat Y"), value: "repeat-y" },
+const repeatTabOptions = [
+	{ label: "", value: "no-repeat", icon: "lucide-square", tooltip: __("No repeat") },
+	{ label: "", value: "repeat", icon: "lucide-grid-2x2", tooltip: __("Repeat") },
+	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal", tooltip: __("Repeat horizontally") },
+	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical", tooltip: __("Repeat vertically") },
 ];
 
 const setBGImage = (file: { file_url: string }) => {
@@ -408,21 +408,5 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 	// instead of the display text (e.g. "Gradient", variable name, image file name)
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
-};
-
-const showServeLocallyButton = computed(() => shouldShowOptimizeButton(backgroundImageURL.value));
-const serveLocallyButtonText = computed(() => getOptimizeButtonText(backgroundImageURL.value));
-
-const serveBackgroundImageLocally = () => {
-	if (!backgroundImageURL.value) {
-		return;
-	}
-
-	return optimizeImage({
-		imageUrl: backgroundImageURL.value,
-		onSuccess: (newUrl: string) => {
-			blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(newUrl));
-		},
-	});
 };
 </script>
