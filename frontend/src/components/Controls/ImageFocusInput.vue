@@ -110,9 +110,14 @@ const { width: rootWidth } = useElementSize(rootRef);
 const MAX_BOX_H = 176;
 const boxSize = computed(() => {
 	if (!rootWidth.value) return null;
-	// a plain preview mirrors the ELEMENT: its ratio, its fit — the interactive
-	// surface shows the whole image at the image's own ratio
-	const ratio = props.disabled ? props.targetRatio : natural.value && natural.value.w / natural.value.h;
+	// a plain preview mirrors the ELEMENT: full width, its ratio, its fit — the
+	// interactive surface shows the whole image at the image's own ratio
+	if (props.disabled) {
+		if (!props.targetRatio) return null;
+		const h = Math.min(MAX_BOX_H, rootWidth.value / props.targetRatio);
+		return { width: `${Math.round(rootWidth.value)}px`, height: `${Math.round(h)}px` };
+	}
+	const ratio = natural.value && natural.value.w / natural.value.h;
 	if (!ratio) return null;
 	const w = Math.min(rootWidth.value, MAX_BOX_H * ratio);
 	return { width: `${Math.round(w)}px`, height: `${Math.round(w / ratio)}px` };
