@@ -302,10 +302,10 @@ const sizeTabOptions = [
 ];
 
 const repeatTabOptions = [
-	{ label: "", value: "no-repeat", icon: "lucide-square" },
-	{ label: "", value: "repeat", icon: "lucide-grid-2x2" },
-	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal" },
-	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical" },
+	{ label: "", value: "no-repeat", icon: "lucide-square", tooltip: __("No repeat") },
+	{ label: "", value: "repeat", icon: "lucide-grid-2x2", tooltip: __("Repeat") },
+	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal", tooltip: __("Repeat horizontally") },
+	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical", tooltip: __("Repeat vertically") },
 ];
 
 const setBGImage = (file: { file_url: string }) => {

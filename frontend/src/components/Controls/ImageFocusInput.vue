@@ -149,12 +149,33 @@ const point = computed(() => {
 	return { x: parse(parts[0]), y: parse(parts[1]) };
 });
 
-const dotStyle = computed(() => {
-	const rect = imageRect.value;
-	if (!rect) return {};
+// with a view-box crop, object-position percentages are relative to the CROPPED
+// content — so the dot lives in window space, which also keeps it inside the frame
+const cropWindow = computed(() => {
+	if (!insets.value) return { x: 0, y: 0, spanX: 1, spanY: 1 };
 	return {
-		left: `${rect.x + (point.value.x / 100) * rect.w}px`,
-		top: `${rect.y + (point.value.y / 100) * rect.h}px`,
+		x: insets.value.left / 100,
+		y: insets.value.top / 100,
+		spanX: (100 - insets.value.left - insets.value.right) / 100,
+		spanY: (100 - insets.value.top - insets.value.bottom) / 100,
+	};
+});
+
+const dotPx = computed(() => {
+	const rect = imageRect.value;
+	if (!rect) return null;
+	const win = cropWindow.value;
+	return {
+		x: rect.x + (win.x + (point.value.x / 100) * win.spanX) * rect.w,
+		y: rect.y + (win.y + (point.value.y / 100) * win.spanY) * rect.h,
+	};
+});
+
+const dotStyle = computed(() => {
+	if (!dotPx.value) return {};
+	return {
+		left: `${dotPx.value.x}px`,
+		top: `${dotPx.value.y}px`,
 		transform: "translate(-50%, -50%)",
 	};
 });
@@ -165,11 +186,8 @@ const dragging = ref(false);
 let pauseId: PauseId | undefined = undefined;
 
 const overDot = computed(() => {
-	const rect = imageRect.value;
-	if (!rect) return false;
-	const dx = elementX.value - (rect.x + (point.value.x / 100) * rect.w);
-	const dy = elementY.value - (rect.y + (point.value.y / 100) * rect.h);
-	return Math.abs(dx) <= 8 && Math.abs(dy) <= 8;
+	if (!dotPx.value) return false;
+	return Math.abs(elementX.value - dotPx.value.x) <= 8 && Math.abs(elementY.value - dotPx.value.y) <= 8;
 });
 
 const overFrame = computed(() => {
@@ -231,8 +249,11 @@ function onBoxMouseDown(e: MouseEvent) {
 function setFromPointer() {
 	const rect = imageRect.value;
 	if (!rect) return;
-	const x = Math.round(Math.min(100, Math.max(0, ((elementX.value - rect.x) / rect.w) * 100)));
-	const y = Math.round(Math.min(100, Math.max(0, ((elementY.value - rect.y) / rect.h) * 100)));
+	const win = cropWindow.value;
+	const fx = ((elementX.value - rect.x) / rect.w - win.x) / win.spanX;
+	const fy = ((elementY.value - rect.y) / rect.h - win.y) / win.spanY;
+	const x = Math.round(Math.min(100, Math.max(0, fx * 100)));
+	const y = Math.round(Math.min(100, Math.max(0, fy * 100)));
 	emit("update:modelValue", `${x}% ${y}%`);
 }
 
