@@ -84,20 +84,12 @@
 								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
 								{{ __("No image") }}
 							</div>
-							<div v-if="!bgFocusEnabled && backgroundImageURL" class="space-y-2">
-								<InlineInput
-									:label="__('Position')"
-									:modelValue="backgroundPosition"
-									type="select"
-									:options="positionOptions"
-									@update:modelValue="setBGPosition" />
-								<InlineInput
-									:label="__('Repeat')"
-									:modelValue="backgroundRepeat"
-									type="select"
-									:options="repeatOptions"
-									@update:modelValue="setBGRepeat" />
-							</div>
+							<TabButtons
+								v-if="!bgFocusEnabled && backgroundImageURL"
+								:class="STRETCH_TABS"
+								:options="repeatTabOptions"
+								:modelValue="backgroundRepeat || 'repeat'"
+								@update:modelValue="setBGRepeat" />
 							<div class="flex items-center gap-1.5">
 								<Button
 									class="flex-1"
@@ -111,12 +103,6 @@
 									icon="rotate-ccw"
 									:title="__('Reset focal point')"
 									@click="setBGPosition('center')" />
-								<Button
-									v-if="showServeLocallyButton"
-									variant="outline"
-									icon="download"
-									:title="serveLocallyButtonText"
-									@click="serveBackgroundImageLocally" />
 								<Button
 									v-if="backgroundImageURL"
 									variant="outline"
@@ -155,13 +141,11 @@ import { __ } from "@/translation";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
-import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
-import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { STRETCH_TABS } from "@/utils/tabButtons";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
@@ -317,19 +301,11 @@ const sizeTabOptions = [
 	{ label: __("Auto"), value: "auto" },
 ];
 
-const positionOptions = [
-	{ label: __("Center"), value: "center" },
-	{ label: __("Top"), value: "top" },
-	{ label: __("Bottom"), value: "bottom" },
-	{ label: __("Left"), value: "left" },
-	{ label: __("Right"), value: "right" },
-];
-
-const repeatOptions = [
-	{ label: __("No Repeat"), value: "no-repeat" },
-	{ label: __("Repeat"), value: "repeat" },
-	{ label: __("Repeat X"), value: "repeat-x" },
-	{ label: __("Repeat Y"), value: "repeat-y" },
+const repeatTabOptions = [
+	{ label: "", value: "no-repeat", icon: "lucide-square" },
+	{ label: "", value: "repeat", icon: "lucide-grid-2x2" },
+	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal" },
+	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical" },
 ];
 
 const setBGImage = (file: { file_url: string }) => {
@@ -432,21 +408,5 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 	// instead of the display text (e.g. "Gradient", variable name, image file name)
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
-};
-
-const showServeLocallyButton = computed(() => shouldShowOptimizeButton(backgroundImageURL.value));
-const serveLocallyButtonText = computed(() => getOptimizeButtonText(backgroundImageURL.value));
-
-const serveBackgroundImageLocally = () => {
-	if (!backgroundImageURL.value) {
-		return;
-	}
-
-	return optimizeImage({
-		imageUrl: backgroundImageURL.value,
-		onSuccess: (newUrl: string) => {
-			blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(newUrl));
-		},
-	});
 };
 </script>

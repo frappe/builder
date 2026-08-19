@@ -9,7 +9,7 @@
 			<div
 				ref="boxRef"
 				class="relative h-full w-full overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
-				:class="disabled ? '' : 'cursor-crosshair'"
+				:class="disabled ? '' : cursorClass"
 				@mousedown="onBoxMouseDown">
 				<img
 					ref="imgRef"
@@ -43,7 +43,7 @@
 				:min="1"
 				:max="4"
 				:step="0.05"
-				@update:modelValue="(v: string | number) => emitViewBoxAt(Number(v), point.x, point.y)" />
+				@update:modelValue="(v: string | number) => setZoom(Number(v))" />
 			<Button
 				variant="ghost"
 				icon="zoom-in"
@@ -164,15 +164,55 @@ const { elementX, elementY } = useMouseInElement(boxRef);
 const dragging = ref(false);
 let pauseId: PauseId | undefined = undefined;
 
+const overDot = computed(() => {
+	const rect = imageRect.value;
+	if (!rect) return false;
+	const dx = elementX.value - (rect.x + (point.value.x / 100) * rect.w);
+	const dy = elementY.value - (rect.y + (point.value.y / 100) * rect.h);
+	return Math.abs(dx) <= 8 && Math.abs(dy) <= 8;
+});
+
+const overFrame = computed(() => {
+	const frame = cropRect.value;
+	if (!frame || !insets.value) return false;
+	return (
+		elementX.value >= frame.x &&
+		elementX.value <= frame.x + frame.w &&
+		elementY.value >= frame.y &&
+		elementY.value <= frame.y + frame.h
+	);
+});
+
+// the frame pans the crop window (hand), everywhere else places the focal dot
+const cursorClass = computed(() => {
+	if (dragging.value) return dragMode === "window" ? "cursor-grabbing" : "cursor-crosshair";
+	if (!overDot.value && overFrame.value) return "cursor-grab";
+	return "cursor-crosshair";
+});
+
+let dragMode: "point" | "window" = "point";
+
 // a press on a slotted chip (upload/reset) is a click, never a drag
 function onBoxMouseDown(e: MouseEvent) {
 	if (props.disabled) return;
 	if ((e.target as HTMLElement).closest("button")) return;
 	e.preventDefault();
+	dragMode = !overDot.value && overFrame.value ? "window" : "point";
 	dragging.value = true;
 	pauseId = canvasStore.activeCanvas?.history?.pause();
-	setFromPointer();
-	const onMove = () => setFromPointer();
+	const rect = imageRect.value;
+	const start = { x: elementX.value, y: elementY.value, insets: insets.value };
+	const onMove = () => {
+		if (dragMode === "window" && rect && start.insets) {
+			const span = 100 - start.insets.left - start.insets.right;
+			const dx = ((elementX.value - start.x) / rect.w) * 100;
+			const dy = ((elementY.value - start.y) / rect.h) * 100;
+			emitWindow(start.insets.left + dx, start.insets.top + dy, span);
+		} else {
+			setFromPointer();
+		}
+	};
+	if (dragMode === "point") setFromPointer();
 	document.addEventListener("mousemove", onMove);
 	document.addEventListener(
 		"mouseup",
@@ -194,7 +234,6 @@ function setFromPointer() {
 	const x = Math.round(Math.min(100, Math.max(0, ((elementX.value - rect.x) / rect.w) * 100)));
 	const y = Math.round(Math.min(100, Math.max(0, ((elementY.value - rect.y) / rect.h) * 100)));
 	emit("update:modelValue", `${x}% ${y}%`);
-	if (zoom.value > 1) emitViewBoxAt(zoom.value, x, y);
 }
 
 // --- zoom crop (objectViewBox inset window centred on the focus point) -----
@@ -213,27 +252,38 @@ const zoom = computed(() => {
 });
 
 function stepZoom(dir: number) {
-	const z = Math.min(4, Math.max(1, Math.round((zoom.value + dir * 0.25) * 20) / 20));
-	emitViewBoxAt(z, point.value.x, point.value.y);
+	setZoom(Math.min(4, Math.max(1, Math.round((zoom.value + dir * 0.25) * 20) / 20)));
 }
 
-function emitViewBoxAt(z: number, fx: number, fy: number) {
+function setZoom(z: number) {
 	if (props.viewBox === undefined) return;
 	if (z <= 1.001) {
 		emit("update:viewBox", "");
 		return;
 	}
 	const span = 100 / z;
-	const left = (fx / 100) * (100 - span);
-	const top = (fy / 100) * (100 - span);
+	let cx = point.value.x;
+	let cy = point.value.y;
+	if (insets.value) {
+		const span0 = 100 - insets.value.left - insets.value.right;
+		cx = insets.value.left + span0 / 2;
+		cy = insets.value.top + span0 / 2;
+	}
+	emitWindow(cx - span / 2, cy - span / 2, span);
+}
+
+function emitWindow(left: number, top: number, span: number) {
+	const clamp = (n: number) => Math.min(100 - span, Math.max(0, n));
 	const f = (n: number) => Math.round(n * 10) / 10;
-	emit("update:viewBox", `inset(${f(top)}% ${f(100 - span - left)}% ${f(100 - span - top)}% ${f(left)}%)`);
+	const l = clamp(left);
+	const t = clamp(top);
+	emit("update:viewBox", `inset(${f(t)}% ${f(100 - span - l)}% ${f(100 - span - t)}% ${f(l)}%)`);
 }
 
 // The white frame: the part of the image the element ACTUALLY shows — the zoom
 // window narrowed by the cover fit against the element's own aspect ratio, so
 // dragging the dot slides the frame exactly as the crop slides on canvas.
-const cropRectStyle = computed(() => {
+const cropRect = computed(() => {
 	const rect = imageRect.value;
 	if (!rect || !natural.value || !(insets.value || props.targetRatio)) return null;
 	const winX = (insets.value?.left ?? 0) / 100;
@@ -256,11 +306,12 @@ const cropRectStyle = computed(() => {
 			h = spanY * frac;
 		}
 	}
-	return {
-		left: `${rect.x + x * rect.w}px`,
-		top: `${rect.y + y * rect.h}px`,
-		width: `${w * rect.w}px`,
-		height: `${h * rect.h}px`,
-	};
+	return { x: rect.x + x * rect.w, y: rect.y + y * rect.h, w: w * rect.w, h: h * rect.h };
+});
+
+const cropRectStyle = computed(() => {
+	const frame = cropRect.value;
+	if (!frame) return null;
+	return { left: `${frame.x}px`, top: `${frame.y}px`, width: `${frame.w}px`, height: `${frame.h}px` };
 });
 </script>
