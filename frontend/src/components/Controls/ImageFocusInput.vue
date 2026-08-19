@@ -110,12 +110,10 @@ const { width: rootWidth } = useElementSize(rootRef);
 const MAX_BOX_H = 176;
 const boxSize = computed(() => {
 	if (!rootWidth.value) return null;
-	// a plain preview mirrors the ELEMENT: full width, its ratio, its fit — the
-	// interactive surface shows the whole image at the image's own ratio
+	// a plain preview stretches across the card at a steady height, drawn with the
+	// element's fit — the interactive surface shows the whole image at its own ratio
 	if (props.disabled) {
-		if (!props.targetRatio) return null;
-		const h = Math.min(MAX_BOX_H, rootWidth.value / props.targetRatio);
-		return { width: `${Math.round(rootWidth.value)}px`, height: `${Math.round(h)}px` };
+		return { width: `${Math.round(rootWidth.value)}px`, height: `${MAX_BOX_H}px` };
 	}
 	const ratio = natural.value && natural.value.w / natural.value.h;
 	if (!ratio) return null;
