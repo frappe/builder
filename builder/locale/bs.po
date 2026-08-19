@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 12:41\n"
+"PO-Revision-Date: 2026-08-19 20:56\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -454,7 +454,7 @@ msgstr "Samo Pozadina"
 #. Description of the 'API Base' (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Base URL for an OpenAI-compatible gateway. Leave empty for OpenRouter."
-msgstr "Osnovni URL za OpenAI kompatibilni gateway. Ostavite prazno za OpenRouter."
+msgstr "Osnovni URL za OpenAI kompatibilni pristupnik. Ostavite prazno za OpenRouter."
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -1729,7 +1729,7 @@ msgstr "Nije uspjela izrada tokena"
 
 #: frontend/src/components/Modals/TokenManager.vue:1018
 msgid "Failed to create {0} token"
-msgstr "Nije uspjela izrada tokena {0}"
+msgstr "Nije uspjela izrada {0} tokena"
 
 #: frontend/src/components/Modals/TokenManager.vue:1018
 msgid "Failed to create {0} tokens"
@@ -4422,7 +4422,7 @@ msgstr "Preferirana URL verzija ove stranice za pretraživače. Ako nije postavl
 #. Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
-msgstr "Pružitelj Usluge LiteLLM bi trebao pozvati. Po standardnom koristi <code>openai</code> kada je postavljena API Baza (bilo koji gateway kompatibilan s OpenAI), inače <code>openrouter</code>."
+msgstr "Pružitelj Usluge LiteLLM bi trebao pozvati. Po standardnom koristi <code>openai</code> kada je postavljena API Baza (bilo koji pristupnik kompatibilan s OpenAI), inače <code>openrouter</code>."
 
 #: frontend/src/stores/pageStore.ts:354
 msgid "There was an error while fetching page data"
