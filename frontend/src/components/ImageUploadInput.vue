@@ -53,20 +53,23 @@
 							<ImageFocusInput
 								:imageSrc="currentImageURL"
 								:modelValue="objectPosition"
-								@update:modelValue="(val) => emit('update:objectPosition', val)">
+								:viewBox="objectViewBox"
+								:targetRatio="targetRatio"
+								@update:modelValue="(val) => emit('update:objectPosition', val)"
+								@update:viewBox="(val) => emit('update:objectViewBox', val)">
 								<Button
 									variant="subtle"
 									icon="upload"
 									:title="__('Upload image')"
-									class="absolute right-1 top-1 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									class="absolute -right-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
 									@click="openFileSelector" />
 								<Button
-									v-if="objectPosition"
+									v-if="objectPosition || objectViewBox"
 									variant="subtle"
 									icon="rotate-ccw"
 									:title="__('Reset focus point')"
-									class="absolute left-1 top-1 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
-									@click="emit('update:objectPosition', '')" />
+									class="absolute -left-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									@click="resetFocus" />
 							</ImageFocusInput>
 						</div>
 						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
@@ -122,8 +125,10 @@ const props = withDefaults(
 		labelPosition?: "top" | "left";
 		placeholder?: string;
 		imageFit?: "contain" | "cover" | "fill" | "none";
-		// pass it (even empty) to get the focus-point picker for cover fits
+		// pass them (even empty) to get the focus-point picker / zoom crop for cover fits
 		objectPosition?: string;
+		objectViewBox?: string;
+		targetRatio?: number;
 		description?: string;
 		popoverOffset?: number;
 	}>(),
@@ -152,7 +157,17 @@ const currentImageURL = computed(() => props.modelValue || "");
 const focusEnabled = computed(
 	() => props.objectPosition !== undefined && props.imageFit === "cover" && Boolean(currentImageURL.value),
 );
-const emit = defineEmits(["update:imageFit", "update:modelValue", "update:objectPosition"]);
+const emit = defineEmits([
+	"update:imageFit",
+	"update:modelValue",
+	"update:objectPosition",
+	"update:objectViewBox",
+]);
+
+const resetFocus = () => {
+	emit("update:objectPosition", "");
+	emit("update:objectViewBox", "");
+};
 
 const setImageURL = (fileURL: string) => {
 	emit("update:modelValue", fileURL);

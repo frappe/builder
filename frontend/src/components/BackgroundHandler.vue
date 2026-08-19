@@ -56,7 +56,35 @@
 
 				<!-- Image Tab -->
 				<div v-else-if="activeTab === 'image'" class="space-y-4">
+					<!-- A cover background gets the focus-point surface as its preview:
+					     drag to choose what the crop keeps, upload rides as a hover chip. -->
+					<div v-if="bgFocusEnabled" class="group relative">
+						<ImageFocusInput
+							:imageSrc="backgroundImageURL || ''"
+							:modelValue="backgroundPosition"
+							:targetRatio="selectedBlockRatio"
+							@update:modelValue="setBGPosition">
+							<FileUploader
+								@success="setBGImage"
+								:uploadArgs="{
+									private: false,
+									folder: 'Home/Builder Uploads',
+									optimize: true,
+									upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+								}">
+								<template v-slot="{ openFileSelector }">
+									<Button
+										variant="subtle"
+										icon="upload"
+										:title="__('Upload image')"
+										class="absolute -right-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+										@click="openFileSelector" />
+								</template>
+							</FileUploader>
+						</ImageFocusInput>
+					</div>
 					<div
+						v-else
 						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
 						:style="getPreviewStyle(activeState)">
 						<FileUploader
@@ -87,6 +115,7 @@
 							:options="sizeOptions"
 							@update:modelValue="setBGSize" />
 						<InlineInput
+							v-if="!bgFocusEnabled"
 							:label="__('Position')"
 							:modelValue="backgroundPosition"
 							type="select"
@@ -133,6 +162,7 @@
 import { __ } from "@/translation";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
+import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
@@ -245,6 +275,8 @@ const backgroundImageURL = computed(() => {
 });
 
 const backgroundSize = computed(() => blockController.getStyle(getStyleKey("backgroundSize")) as string);
+const bgFocusEnabled = computed(() => Boolean(backgroundImageURL.value) && backgroundSize.value === "cover");
+const selectedBlockRatio = computed(() => blockController.getSelectedBlockAspectRatio());
 const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );

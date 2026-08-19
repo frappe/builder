@@ -10,42 +10,66 @@
 				{{ __("Reset") }}
 			</button>
 		</div>
+		<!-- chips slot beside the clipped box, not inside it, so they can straddle
+		     its edges without being cut by overflow-hidden -->
 		<div
-			ref="boxRef"
-			class="relative mx-auto cursor-crosshair overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+			class="relative mx-auto"
 			:class="[boxSize ? '' : 'h-24 w-full', dragging && 'is-dragging']"
-			:style="boxSize || {}"
-			@mousedown="onBoxMouseDown">
-			<img
-				ref="imgRef"
-				:src="imageSrc"
-				class="pointer-events-none h-full w-full select-none object-contain"
-				draggable="false"
-				@load="onLoad" />
+			:style="boxSize || {}">
 			<div
-				v-if="imageRect"
-				class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
-				:style="dotStyle" />
+				ref="boxRef"
+				class="relative h-full w-full cursor-crosshair overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+				@mousedown="onBoxMouseDown">
+				<img
+					ref="imgRef"
+					:src="imageSrc"
+					class="pointer-events-none h-full w-full select-none object-contain"
+					draggable="false"
+					@load="onLoad" />
+				<div
+					v-if="cropRectStyle"
+					class="pointer-events-none absolute rounded-[2px] border border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
+					:style="cropRectStyle" />
+				<div
+					v-if="imageRect"
+					class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
+					:style="dotStyle" />
+			</div>
 			<slot />
+		</div>
+		<div v-if="viewBox !== undefined && natural" class="flex items-center justify-between gap-2">
+			<InputLabel class="w-1/3 min-w-[88px] shrink-0">{{ __("Zoom") }}</InputLabel>
+			<RangeInput
+				class="w-full"
+				:modelValue="zoom"
+				:min="1"
+				:max="4"
+				:step="0.05"
+				@update:modelValue="(v: string | number) => emitViewBoxAt(Number(v), point.x, point.y)" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import RangeInput from "@/components/Controls/RangeInput.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { __ } from "@/translation";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { useElementSize, useMouseInElement } from "@vueuse/core";
-import { computed, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
 	modelValue?: string;
 	imageSrc: string;
 	label?: string;
+	// objectViewBox inset; pass it (even empty) to get the zoom-crop slider
+	viewBox?: string;
+	// aspect ratio of the element the image fills; draws the visible-part frame
+	targetRatio?: number;
 }>();
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "update:viewBox"]);
 
 const canvasStore = useCanvasStore();
 
@@ -58,6 +82,17 @@ const onLoad = () => {
 	const img = imgRef.value;
 	if (img?.naturalWidth) natural.value = { w: img.naturalWidth, h: img.naturalHeight };
 };
+
+// a cached image can be complete before the load listener attaches; without this
+// the box never learns the ratio and falls back to the letterboxed strip
+onMounted(onLoad);
+watch(
+	() => props.imageSrc,
+	() => {
+		natural.value = null;
+		void nextTick(onLoad);
+	},
+);
 
 const { width: boxWidth, height: boxHeight } = useElementSize(boxRef);
 const { width: rootWidth } = useElementSize(rootRef);
@@ -146,5 +181,68 @@ function setFromPointer() {
 	const x = Math.round(Math.min(100, Math.max(0, ((elementX.value - rect.x) / rect.w) * 100)));
 	const y = Math.round(Math.min(100, Math.max(0, ((elementY.value - rect.y) / rect.h) * 100)));
 	emit("update:modelValue", `${x}% ${y}%`);
+	if (zoom.value > 1) emitViewBoxAt(zoom.value, x, y);
 }
+
+// --- zoom crop (objectViewBox inset window centred on the focus point) -----
+
+const insets = computed(() => {
+	const m = (props.viewBox || "").match(/inset\(\s*([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\s*\)/);
+	if (!m) return null;
+	const [top, right, bottom, left] = m.slice(1).map(Number);
+	return { top, right, bottom, left };
+});
+
+const zoom = computed(() => {
+	if (!insets.value) return 1;
+	const span = 100 - insets.value.left - insets.value.right;
+	return span > 0 ? Math.round((100 / span) * 20) / 20 : 1;
+});
+
+function emitViewBoxAt(z: number, fx: number, fy: number) {
+	if (props.viewBox === undefined) return;
+	if (z <= 1.001) {
+		emit("update:viewBox", "");
+		return;
+	}
+	const span = 100 / z;
+	const left = (fx / 100) * (100 - span);
+	const top = (fy / 100) * (100 - span);
+	const f = (n: number) => Math.round(n * 10) / 10;
+	emit("update:viewBox", `inset(${f(top)}% ${f(100 - span - left)}% ${f(100 - span - top)}% ${f(left)}%)`);
+}
+
+// The white frame: the part of the image the element ACTUALLY shows — the zoom
+// window narrowed by the cover fit against the element's own aspect ratio, so
+// dragging the dot slides the frame exactly as the crop slides on canvas.
+const cropRectStyle = computed(() => {
+	const rect = imageRect.value;
+	if (!rect || !natural.value || !(insets.value || props.targetRatio)) return null;
+	const winX = (insets.value?.left ?? 0) / 100;
+	const winY = (insets.value?.top ?? 0) / 100;
+	const spanX = insets.value ? (100 - insets.value.left - insets.value.right) / 100 : 1;
+	const spanY = insets.value ? (100 - insets.value.top - insets.value.bottom) / 100 : 1;
+	let x = winX;
+	let y = winY;
+	let w = spanX;
+	let h = spanY;
+	if (props.targetRatio) {
+		const contentRatio = (natural.value.w * spanX) / (natural.value.h * spanY);
+		if (contentRatio > props.targetRatio) {
+			const frac = props.targetRatio / contentRatio;
+			x = winX + (point.value.x / 100) * spanX * (1 - frac);
+			w = spanX * frac;
+		} else if (contentRatio < props.targetRatio) {
+			const frac = contentRatio / props.targetRatio;
+			y = winY + (point.value.y / 100) * spanY * (1 - frac);
+			h = spanY * frac;
+		}
+	}
+	return {
+		left: `${rect.x + x * rect.w}px`,
+		top: `${rect.y + y * rect.h}px`,
+		width: `${w * rect.w}px`,
+		height: `${h * rect.h}px`,
+	};
+});
 </script>
