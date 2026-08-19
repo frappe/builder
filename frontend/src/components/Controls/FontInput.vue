@@ -9,6 +9,7 @@
 				:getOptions="getOptions"
 				:actionButton="{ component: FontUploader }"
 				:inputStyle="inputStyle"
+				:referenceElementSelector="referenceElementSelector"
 				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
@@ -30,6 +31,9 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: string | null;
 		placeholder?: string;
+		// only real font families: token editors must not point a token at another token
+		familiesOnly?: boolean;
+		referenceElementSelector?: string;
 	}>(),
 	{
 		modelValue: null,
@@ -102,20 +106,22 @@ const getOptions = async (filterString: string) => {
 	// Font design tokens first: picking one stores var(--id), so retheming the
 	// token updates every block bound to it. The family is part of the label, so
 	// it stays searchable.
-	const tokenOptions = filterOptions(
-		fontTokens.value.map((token: BuilderToken) => {
-			const label = `${token.token_name || token.value} (${token.value})`;
-			// previewed against the whole label, since it carries the token's name as well
-			// as the family, and a subset cut to the family alone could not render it
-			return {
-				label,
-				value: `var(--${token.name})`,
-				labelStyle: () => previewFontStyle(label),
-				previewFont: token.value as string,
-			};
-		}),
-		filterString,
-	);
+	const tokenOptions = props.familiesOnly
+		? []
+		: filterOptions(
+				fontTokens.value.map((token: BuilderToken) => {
+					const label = `${token.token_name || token.value} (${token.value})`;
+					// previewed against the whole label, since it carries the token's name as well
+					// as the family, and a subset cut to the family alone could not render it
+					return {
+						label,
+						value: `var(--${token.name})`,
+						labelStyle: () => previewFontStyle(label),
+						previewFont: token.value as string,
+					};
+				}),
+				filterString,
+			);
 	const userFontOptions = filterOptions(
 		(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
 		fontQuery,
