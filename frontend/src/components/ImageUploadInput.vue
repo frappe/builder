@@ -15,9 +15,6 @@
 						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
-								:class="{
-									'[&>input]:pl-8': labelPosition === 'left',
-								}"
 								type="text"
 								:label="labelPosition === 'top' ? label : null"
 								:placeholder="placeholder"
@@ -25,6 +22,16 @@
 								:hideClearButton="labelPosition === 'top'"
 								@update:modelValue="setImageURL"
 								:modelValue="currentImageURL">
+								<template v-if="labelPosition === 'left'" #prefix>
+									<img
+										:src="currentImageURL || '/assets/builder/images/fallback.png'"
+										alt=""
+										@click="togglePopover"
+										class="h-4 w-4 cursor-pointer rounded border border-outline-gray-3 shadow-sm"
+										:style="{
+											'object-fit': imageFit || 'contain',
+										}" />
+								</template>
 								<template v-if="labelPosition === 'top'" #suffix>
 									<ImageUploader
 										@upload="setImageURL"
@@ -33,15 +40,6 @@
 										:file_types="['image/*']" />
 								</template>
 							</BuilderInput>
-							<img
-								v-if="labelPosition === 'left'"
-								:src="currentImageURL || '/assets/builder/images/fallback.png'"
-								alt=""
-								@click="togglePopover"
-								class="absolute bottom-[6px] left-2 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
-								:style="{
-									'object-fit': imageFit || 'contain',
-								}" />
 						</div>
 					</div>
 				</template>
