@@ -268,13 +268,15 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	try:
 		for chunk in stream:
 			if ctx.is_cancelled():
+				# Stop, but KEEP: what already streamed is paid-for, visible work.
+				# Fall through to persist the partial page; the loop's own cancel
+				# check ends the turn right after this step returns.
 				try:
 					stream.close()
 				except Exception:
 					pass
-				from builder.ai.agent.loop import CancelledError
-
-				raise CancelledError
+				logger.info("generate_page_yaml: cancelled mid-stream, keeping the partial page")
+				break
 			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 			if not chunk.choices:
 				continue

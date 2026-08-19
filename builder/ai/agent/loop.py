@@ -1107,7 +1107,7 @@ class AgentRunner:
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
-		msg = "Cancelled."
+		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
 		)
@@ -1172,6 +1172,10 @@ class AgentRunner:
 
 		try:
 			for round_index in range(MAX_ROUNDS):
+				# A cancel that landed mid-round (e.g. during a generation stream that
+				# kept its partial page) ends the turn HERE, before another paid call.
+				if round_index and self.is_cancelled():
+					raise CancelledError
 				self.refresh_cache_markers(messages)
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 				self.record_round(round_index, tool_operations, summary_text)
