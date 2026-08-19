@@ -71,7 +71,7 @@
 							@update:viewBox="(val) => emit('update:objectViewBox', val)" />
 						<div
 							v-else-if="objectPosition !== undefined"
-							class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 text-p-xs text-ink-gray-4">
+							class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
 							{{ __("No image") }}
 						</div>
 						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
