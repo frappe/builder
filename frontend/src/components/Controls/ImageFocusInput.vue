@@ -13,7 +13,7 @@
 		<!-- chips slot beside the clipped box, not inside it, so they can straddle
 		     its edges without being cut by overflow-hidden -->
 		<div
-			class="relative mx-auto"
+			class="group/surface relative mx-auto"
 			:class="[boxSize ? '' : 'h-24 w-full', dragging && 'is-dragging']"
 			:style="boxSize || {}">
 			<div
@@ -35,25 +35,33 @@
 					class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
 					:style="dotStyle" />
 			</div>
+			<div
+				v-if="viewBox !== undefined && natural"
+				class="absolute -bottom-2 -right-2 hidden gap-1 group-hover/surface:flex [.is-dragging_&]:!hidden">
+				<Button
+					variant="subtle"
+					icon="minus"
+					:title="__('Zoom out')"
+					:disabled="zoom <= 1"
+					class="shadow-sm"
+					@click="stepZoom(-1)" />
+				<Button
+					variant="subtle"
+					icon="plus"
+					:title="__('Zoom in')"
+					:disabled="zoom >= 4"
+					class="shadow-sm"
+					@click="stepZoom(1)" />
+			</div>
 			<slot />
-		</div>
-		<div v-if="viewBox !== undefined && natural" class="flex items-center justify-between gap-2">
-			<InputLabel class="w-1/3 min-w-[88px] shrink-0">{{ __("Zoom") }}</InputLabel>
-			<RangeInput
-				class="w-full"
-				:modelValue="zoom"
-				:min="1"
-				:max="4"
-				:step="0.05"
-				@update:modelValue="(v: string | number) => emitViewBoxAt(Number(v), point.x, point.y)" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputLabel from "@/components/Controls/InputLabel.vue";
-import RangeInput from "@/components/Controls/RangeInput.vue";
 import useCanvasStore from "@/stores/canvasStore";
+import { Button } from "frappe-ui";
 import { __ } from "@/translation";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { useElementSize, useMouseInElement } from "@vueuse/core";
@@ -198,6 +206,11 @@ const zoom = computed(() => {
 	const span = 100 - insets.value.left - insets.value.right;
 	return span > 0 ? Math.round((100 / span) * 20) / 20 : 1;
 });
+
+function stepZoom(dir: number) {
+	const z = Math.min(4, Math.max(1, Math.round((zoom.value + dir * 0.25) * 20) / 20));
+	emitViewBoxAt(z, point.value.x, point.value.y);
+}
 
 function emitViewBoxAt(z: number, fx: number, fy: number) {
 	if (props.viewBox === undefined) return;

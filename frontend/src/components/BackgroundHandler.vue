@@ -58,31 +58,32 @@
 				<div v-else-if="activeTab === 'image'" class="space-y-4">
 					<!-- A cover background gets the focus-point surface as its preview:
 					     drag to choose what the crop keeps, upload rides as a hover chip. -->
-					<div v-if="bgFocusEnabled" class="group relative">
-						<ImageFocusInput
-							:imageSrc="backgroundImageURL || ''"
-							:modelValue="backgroundPosition"
-							:targetRatio="selectedBlockRatio"
-							@update:modelValue="setBGPosition">
-							<FileUploader
-								@success="setBGImage"
-								:uploadArgs="{
-									private: false,
-									folder: 'Home/Builder Uploads',
-									optimize: true,
-									upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-								}">
-								<template v-slot="{ openFileSelector }">
+					<FileUploader
+						v-if="bgFocusEnabled"
+						@success="setBGImage"
+						:uploadArgs="{
+							private: false,
+							folder: 'Home/Builder Uploads',
+							optimize: true,
+							upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+						}">
+						<template v-slot="{ openFileSelector }">
+							<div class="group relative">
+								<ImageFocusInput
+									:imageSrc="backgroundImageURL || ''"
+									:modelValue="backgroundPosition"
+									:targetRatio="selectedBlockRatio"
+									@update:modelValue="setBGPosition">
 									<Button
 										variant="subtle"
 										icon="upload"
 										:title="__('Upload image')"
 										class="absolute -right-2 -top-2 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
 										@click="openFileSelector" />
-								</template>
-							</FileUploader>
-						</ImageFocusInput>
-					</div>
+								</ImageFocusInput>
+							</div>
+						</template>
+					</FileUploader>
 					<div
 						v-else
 						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
