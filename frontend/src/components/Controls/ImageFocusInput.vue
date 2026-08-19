@@ -1,6 +1,6 @@
 <template>
-	<div class="flex flex-col gap-1.5">
-		<div class="flex items-center justify-between">
+	<div ref="rootRef" class="flex flex-col gap-1.5">
+		<div v-if="label" class="flex items-center justify-between">
 			<InputLabel>{{ label }}</InputLabel>
 			<button
 				v-if="hasCustomValue"
@@ -12,7 +12,10 @@
 		</div>
 		<div
 			ref="boxRef"
-			class="relative h-32 w-full cursor-crosshair overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1">
+			class="relative mx-auto cursor-crosshair overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+			:class="[boxSize ? '' : 'h-24 w-full', dragging && 'is-dragging']"
+			:style="boxSize || {}"
+			@mousedown="onBoxMouseDown">
 			<img
 				ref="imgRef"
 				:src="imageSrc"
@@ -23,6 +26,7 @@
 				v-if="imageRect"
 				class="pointer-events-none absolute size-3 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.45)]"
 				:style="dotStyle" />
+			<slot />
 		</div>
 	</div>
 </template>
@@ -32,8 +36,8 @@ import InputLabel from "@/components/Controls/InputLabel.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import { __ } from "@/translation";
 import type { PauseId } from "@/utils/useCanvasHistory";
-import { useElementSize, useMouseInElement, useMousePressed } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+import { useElementSize, useMouseInElement } from "@vueuse/core";
+import { computed, ref } from "vue";
 
 const props = defineProps<{
 	modelValue?: string;
@@ -45,6 +49,7 @@ const emit = defineEmits(["update:modelValue"]);
 
 const canvasStore = useCanvasStore();
 
+const rootRef = ref<HTMLElement | null>(null);
 const boxRef = ref<HTMLElement | null>(null);
 const imgRef = ref<HTMLImageElement | null>(null);
 const natural = ref<{ w: number; h: number } | null>(null);
@@ -55,6 +60,17 @@ const onLoad = () => {
 };
 
 const { width: boxWidth, height: boxHeight } = useElementSize(boxRef);
+const { width: rootWidth } = useElementSize(rootRef);
+
+// the box hugs the image's own aspect ratio (height-capped) so a portrait
+// photo doesn't sit in a letterboxed band with dead space either side
+const MAX_BOX_H = 176;
+const boxSize = computed(() => {
+	if (!natural.value || !rootWidth.value) return null;
+	const ratio = natural.value.w / natural.value.h;
+	const w = Math.min(rootWidth.value, MAX_BOX_H * ratio);
+	return { width: `${Math.round(w)}px`, height: `${Math.round(w / ratio)}px` };
+});
 
 // where the object-contain image actually renders inside the box (it letterboxes)
 const imageRect = computed(() => {
@@ -97,24 +113,32 @@ const dotStyle = computed(() => {
 });
 
 const { elementX, elementY } = useMouseInElement(boxRef);
-const { pressed } = useMousePressed({ target: boxRef });
 
+const dragging = ref(false);
 let pauseId: PauseId | undefined = undefined;
 
-watch(pressed, (down) => {
-	const history = canvasStore.activeCanvas?.history;
-	if (down) {
-		pauseId = history?.pause();
-		setFromPointer();
-	} else if (pauseId) {
-		history?.resume(pauseId, true);
-		pauseId = undefined;
-	}
-});
-
-watch([elementX, elementY], () => {
-	if (pressed.value) setFromPointer();
-});
+// a press on a slotted chip (upload/reset) is a click, never a drag
+function onBoxMouseDown(e: MouseEvent) {
+	if ((e.target as HTMLElement).closest("button")) return;
+	e.preventDefault();
+	dragging.value = true;
+	pauseId = canvasStore.activeCanvas?.history?.pause();
+	setFromPointer();
+	const onMove = () => setFromPointer();
+	document.addEventListener("mousemove", onMove);
+	document.addEventListener(
+		"mouseup",
+		() => {
+			document.removeEventListener("mousemove", onMove);
+			dragging.value = false;
+			if (pauseId) {
+				canvasStore.activeCanvas?.history?.resume(pauseId, true);
+				pauseId = undefined;
+			}
+		},
+		{ once: true },
+	);
+}
 
 function setFromPointer() {
 	const rect = imageRect.value;

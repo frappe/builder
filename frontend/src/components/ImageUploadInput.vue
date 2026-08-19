@@ -47,7 +47,29 @@
 				</template>
 				<template #body>
 					<div class="rounded-lg bg-surface-base p-3 shadow-lg">
-						<div class="group relative flex items-center justify-center overflow-hidden rounded">
+						<!-- With a cover fit the preview IS the focus-point surface: one image,
+						     drag to frame the crop, Upload/Reset ride it as hover chips. -->
+						<div v-if="focusEnabled" class="group relative w-48">
+							<ImageFocusInput
+								:imageSrc="currentImageURL"
+								:modelValue="objectPosition"
+								@update:modelValue="(val) => emit('update:objectPosition', val)">
+								<Button
+									variant="subtle"
+									icon="upload"
+									:title="__('Upload image')"
+									class="absolute right-1 top-1 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									@click="openFileSelector" />
+								<Button
+									v-if="objectPosition"
+									variant="subtle"
+									icon="rotate-ccw"
+									:title="__('Reset focus point')"
+									class="absolute left-1 top-1 hidden shadow-sm group-hover:flex [.is-dragging_&]:!hidden"
+									@click="emit('update:objectPosition', '')" />
+							</ImageFocusInput>
+						</div>
+						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
@@ -76,13 +98,6 @@
 								{ label: __('Original Size'), value: 'none' },
 							]"
 							@update:modelValue="setImageFit" />
-						<ImageFocusInput
-							v-if="objectPosition !== undefined && imageFit === 'cover' && currentImageURL"
-							class="mt-4"
-							:label="__('Focus Point')"
-							:imageSrc="currentImageURL"
-							:modelValue="objectPosition"
-							@update:modelValue="(val) => emit('update:objectPosition', val)" />
 					</div>
 				</template>
 			</Popover>
@@ -134,6 +149,9 @@ watch(
 );
 
 const currentImageURL = computed(() => props.modelValue || "");
+const focusEnabled = computed(
+	() => props.objectPosition !== undefined && props.imageFit === "cover" && Boolean(currentImageURL.value),
+);
 const emit = defineEmits(["update:imageFit", "update:modelValue", "update:objectPosition"]);
 
 const setImageURL = (fileURL: string) => {
