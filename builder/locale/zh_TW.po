@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 05:57\n"
+"PO-Revision-Date: 2026-08-19 10:45\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -20,80 +20,80 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:965
 msgid "({0} invalid entries skipped)"
-msgstr ""
+msgstr "({0} 已跳過無效的條目)"
 
 #: frontend/src/components/Modals/TokenManager.vue:965
 msgid "({0} invalid entry skipped)"
-msgstr ""
+msgstr "({0} 無效的輸入項已跳過)"
 
 #: frontend/src/components/RouteTreeNode.vue:91
 #: frontend/src/components/RouteTreeView.vue:41
 msgid "({0} remaining)"
-msgstr ""
+msgstr "({0} 剩餘)"
 
 #: frontend/src/components/Modals/TokenManager.vue:966
 msgid "({0} standard token skipped)"
-msgstr ""
+msgstr "({0} 跳過標準標記)"
 
 #: frontend/src/components/Modals/TokenManager.vue:966
 msgid "({0} standard tokens skipped)"
-msgstr ""
+msgstr "({0} 跳過標準標記)"
 
 #: frontend/src/components/ShadowHandler.vue:134
 msgid "+ Add Shadow Layer"
-msgstr ""
+msgstr "+ 新增陰影圖層"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:144
 msgid "301 - Moved Permanently"
-msgstr ""
+msgstr "301 - 已永久移轉"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:145
 msgid "302 - Found (Temporary)"
-msgstr ""
+msgstr "302 - 已找到（暫時）"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:146
 msgid "307 - Temporary Redirect"
-msgstr ""
+msgstr "307 - 暫時重新導向"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:147
 msgid "308 - Permanent Redirect"
-msgstr ""
+msgstr "308 - 永久重定向"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:141
 msgid "A booking site for my clinic"
-msgstr ""
+msgstr "我診所的預約網站"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:185
 msgid "A record points to wrong IP: {0}"
-msgstr ""
+msgstr "某筆記錄指向錯誤的 IP 位址： {0}"
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
-msgstr ""
+msgstr "AI"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI API Key"
-msgstr ""
+msgstr "AI API金鑰"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/index.ts:145
 msgid "AI Settings"
-msgstr ""
+msgstr "AI設定"
 
 #: builder/ai/session.py:90
 msgid "AI session does not belong to this page"
-msgstr ""
+msgstr "AI 會話不屬於此頁面"
 
 #: builder/ai/session.py:85
 msgid "AI session not found"
-msgstr ""
+msgstr "找不到 AI 課程"
 
 #. Label of the api_base (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "API Base"
-msgstr ""
+msgstr "API 基礎"
 
 #. Label of the api_key (Password) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
@@ -104,15 +104,15 @@ msgstr ""
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
-msgstr ""
+msgstr "所選 AI 模型提供者的 API 金鑰"
 
 #: builder/ai/api.py:609
 msgid "API key is valid"
-msgstr ""
+msgstr "API金鑰有效"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
 msgid "Accessibility"
-msgstr ""
+msgstr "無障礙功能"
 
 #. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
@@ -128,16 +128,16 @@ msgstr ""
 
 #: frontend/src/components/MoreStylesPanel.vue:22
 msgid "Add CSS property"
-msgstr ""
+msgstr "新增 CSS 屬性"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
-msgstr ""
+msgstr "新增自訂元標籤"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:80
 msgid "Add Domain"
-msgstr ""
+msgstr "新增網域"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
 #: frontend/src/components/Settings/GlobalRedirects.vue:68
@@ -223,7 +223,7 @@ msgstr ""
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
-msgstr ""
+msgstr "所有頁面"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
