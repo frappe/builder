@@ -10,6 +10,7 @@
 				:actionButton="{ component: FontUploader }"
 				:inputStyle="inputStyle"
 				:referenceElementSelector="referenceElementSelector"
+				:optionsMinWidth="240"
 				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
@@ -73,7 +74,7 @@ const displayValue = computed(() => {
 const displayPlaceholder = computed(() => {
 	const p = props.placeholder;
 	if (!p) return __("Set Font");
-	return isToken(p) ? getVariableName(p) ?? p : p;
+	return isToken(p) ? (getVariableName(p) ?? p) : p;
 });
 
 // the field doubles as a specimen: whatever it shows — the family that is set, the name of
