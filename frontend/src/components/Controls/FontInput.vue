@@ -3,9 +3,6 @@
 		<Tooltip :text="isCssVariable ? resolvedFont : undefined">
 			<Autocomplete
 				ref="fontInput"
-				:class="{
-					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
-				}"
 				:modelValue="modelValue"
 				:displayValue="displayValue"
 				:placeholder="displayPlaceholder"
@@ -56,10 +53,9 @@ const isToken = (value?: string | null): value is string =>
 
 const isCssVariable = computed(() => isToken(props.modelValue));
 
-const resolvedFont = computed(() => {
-	if (!props.modelValue) return "inherit";
-	return isCssVariable.value ? resolveVariableValue(props.modelValue) : props.modelValue;
-});
+// a Font token stands in for a family; an unknown one resolves to itself, leaving none
+const toFamily = (value: string) => (isToken(value) ? resolveVariableValue(value) : value);
+const resolvedFont = computed(() => (props.modelValue ? toFamily(props.modelValue) : "inherit"));
 
 // show the token's friendly name instead of the raw var(--uuid), mirroring the color field
 const displayValue = computed(() => {
@@ -76,14 +72,15 @@ const displayPlaceholder = computed(() => {
 	return isToken(p) ? getVariableName(p) ?? p : p;
 });
 
-// the field doubles as a specimen: whatever family name it shows — the one that is set,
-// or the inherited one standing in as placeholder — is rendered in that family. Both are
-// already applied on the canvas, so the face is loaded. A token shows its own name rather
-// than a family, so it keeps the mono treatment that marks it as one.
+// the field doubles as a specimen: whatever it shows — the family that is set, the name of
+// the token standing in for one, or the inherited value behind the placeholder — is
+// rendered in the family it resolves to. Each of them is applied on the canvas, so the
+// full face is loaded and covers a token name as readily as a family name.
 const inputStyle = computed(() => {
-	const family = props.modelValue || props.placeholder;
-	if (!family || isToken(family)) return undefined;
-	return { fontFamily: family };
+	const value = props.modelValue || props.placeholder;
+	const family = value && toFamily(value);
+	// an unresolved token is still var(--uuid): no family to set
+	return family && !isToken(family) ? { fontFamily: family } : undefined;
 });
 
 const handleUpdate = (val: string | null) => emit("update:modelValue", val);
