@@ -90,7 +90,13 @@ def read_site_image(file_url: str) -> str | None:
 		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
 		if not name:
 			return None
-		content = frappe.get_doc("File", name).get_content()
+		file = frappe.get_doc("File", name)
+		# The path may come out of a model-written brief, so a private file is only
+		# inlined when the user this run acts for may actually read it.
+		if file.is_private and not file.has_permission("read"):
+			logger.warning(f"read_site_image: {file_url} is private and not readable here")
+			return None
+		content = file.get_content()
 		if isinstance(content, str):
 			content = content.encode()
 		if not content or len(content) > MAX_IMAGE_BYTES:

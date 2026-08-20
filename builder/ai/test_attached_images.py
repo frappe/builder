@@ -4,6 +4,7 @@ import json
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from builder.ai.agent.artifact import read_site_image
 from builder.ai.api import save_attached_image
 from builder.ai.session import AISession
 
@@ -54,3 +55,17 @@ class TestAttachedImages(FrappeTestCase):
 
 	def test_row_without_image_replays_nothing(self):
 		self.assertIsNone(self.session().replay_image_part(user_row()))
+
+	def test_private_file_needs_read_permission(self):
+		file_url = save_attached_image(DATA_URL)
+		user = "ai-attachment-perm-test@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Perm"}).insert(
+				ignore_permissions=True
+			)
+		frappe.set_user(user)
+		try:
+			self.assertIsNone(read_site_image(file_url))
+		finally:
+			frappe.set_user("Administrator")
+		self.assertIsNotNone(read_site_image(file_url))
