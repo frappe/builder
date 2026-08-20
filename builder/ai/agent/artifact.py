@@ -25,7 +25,6 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
-from builder.ai.skills import Skills
 from builder.api import assert_not_private_url
 
 logger = frappe.logger("builder.ai.agent.artifact")
@@ -67,8 +66,8 @@ def image_url_resolves(url: str) -> bool:
 
 def brief_image_parts(brief: str) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
-	attached directly (the provider fetches them); /files/ paths are read from the
-	site and inlined as data URLs. The marker lines always stay in the brief text,
+	attached directly (the provider fetches them); site file paths (public or
+	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
 	so the model still knows the exact URLs to place in blocks."""
 	parts = []
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
@@ -79,7 +78,7 @@ def brief_image_parts(brief: str) -> list[dict]:
 				logger.warning(f"skipping unreachable brief image: {url}")
 				continue
 			parts.append({"type": "image_url", "image_url": {"url": url}})
-		elif url.startswith("/files/"):
+		elif url.startswith(("/files/", "/private/files/")):
 			data_url = read_site_image(url)
 			if data_url:
 				parts.append({"type": "image_url", "image_url": {"url": data_url}})
@@ -91,7 +90,13 @@ def read_site_image(file_url: str) -> str | None:
 		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
 		if not name:
 			return None
-		content = frappe.get_doc("File", name).get_content()
+		file = frappe.get_doc("File", name)
+		# The path may come out of a model-written brief, so a private file is only
+		# inlined when the user this run acts for may actually read it.
+		if file.is_private and not file.has_permission("read"):
+			logger.warning(f"read_site_image: {file_url} is private and not readable here")
+			return None
+		content = file.get_content()
 		if isinstance(content, str):
 			content = content.encode()
 		if not content or len(content) > MAX_IMAGE_BYTES:
@@ -223,8 +228,14 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			"cache_control": {"type": "ephemeral", "ttl": "1h"},
 		},
 	]
-	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
-	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))
+	# Prior conversation (incl. the approved plan) as proper role-tagged turns, with
+	# the newest attached images re-shown — a reference design pasted on an earlier
+	# turn must reach the step that actually draws the page.
+	messages.extend(
+		AISession.build_context_messages_from_id(
+			ctx.session_id, include_images=ModelRegistry.supports_vision(ctx.model)
+		)
+	)
 	# The photos this turn actually found. Without them the generator can only use
 	# urls the model retyped into the brief, which is why pages came back with one
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.
@@ -233,11 +244,6 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	# The geometry of reference pages read this turn — the brief alone cannot carry it.
 	if geometry := reference_geometry(ctx):
 		messages.append({"role": "user", "content": geometry})
-	# The domain skill the agent attached — art direction the base prompt
-	# deliberately doesn't carry into every build.
-	if skill := Skills.get(args.get("skill") or ""):
-		messages.append({"role": "user", "content": skill})
-
 	if brief:
 		build_text = f"Build this page now:\n{brief}"
 		# Vision models get the reference/hero images themselves, not just their
