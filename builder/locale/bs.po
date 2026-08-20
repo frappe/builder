@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-20 05:20\n"
+"PO-Revision-Date: 2026-08-20 06:45\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -5100,7 +5100,7 @@ msgstr "Imate nespremljene promjene. Jeste li sigurni da želite izaći?"
 
 #: frontend/src/components/Controls/Dialog.vue:49
 msgid "You have unsaved changes. Please save before leaving."
-msgstr "Imate nesačuvane promjene. Spremi ih prije odlaska."
+msgstr "Imate nespremljene promjene. Spremi ih prije odlaska."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
@@ -5211,7 +5211,7 @@ msgstr "{0} uspješno dodano"
 
 #: builder/ai/api.py:87
 msgid "{0} can't view images. Pick a vision-capable model or remove the image."
-msgstr "{0} ne može prikazati slike. Odaber model s podrškom za prikaz ili ukloni sliku."
+msgstr "{0} ne može prikazati slike. Odaberi model s podrškom za prikaz ili ukloni sliku."
 
 #: frontend/src/components/Modals/TokenManager.vue:951
 msgid "{0} entries were invalid"
