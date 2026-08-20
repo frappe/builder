@@ -353,6 +353,19 @@ export class ToolDispatcher {
 				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
 				return;
 			}
+			case "attach_page_script": {
+				// Server-authoritative: an existing shared doc was linked to this page;
+				// the server enriched the op with its type and content for the list.
+				const name = args.script_name as string;
+				if (!name || this.pageStore.activePageScripts.some((s) => s.name === name)) return;
+				this.pageStore.activePageScripts.push({
+					name,
+					script_type: ((args.script_type as string) || "JavaScript") as any,
+					script: (args.script as string) || "",
+				} as any);
+				this.pendingScriptOps.value.push(Promise.resolve(name));
+				return;
+			}
 		}
 	}
 }

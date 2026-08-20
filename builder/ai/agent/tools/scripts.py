@@ -79,6 +79,34 @@ def apply_set_page_script(ctx, args: dict) -> str:
 	return f"Created {script_type} script '{doc.name}' and attached it to the page."
 
 
+def apply_attach_page_script(ctx, args: dict) -> str:
+	"""Headless twin of the editor's attach_page_script apply: link an EXISTING
+	Builder Client Script doc to this page. Shared on purpose — one doc drives
+	every page attached to it, so the site's behaviour stays editable in one place."""
+	if not ctx.page_id:
+		return "FAILED: no page is open."
+	name = (args.get("script_name") or "").strip()
+	if not name or not frappe.db.exists("Builder Client Script", name):
+		return (
+			f"FAILED: script '{name}' not found — use the exact script name from "
+			"read_page's script listing or get_page_scripts."
+		)
+	page = frappe.get_doc("Builder Page", ctx.page_id)
+	doc = frappe.db.get_value("Builder Client Script", name, ["script_type", "script"], as_dict=True)
+	# The content rides the op to the canvas so its script list picks it up.
+	args["script_type"] = doc.script_type
+	args["script"] = doc.script
+	if any(row.builder_script == name for row in page.get("client_scripts") or []):
+		return f"Script '{name}' is already attached to this page."
+	page.append("client_scripts", {"builder_script": name})
+	page.save(ignore_permissions=True)
+	return (
+		f"Attached shared {doc.script_type} script '{name}'. It is the SAME doc the other page "
+		"uses — editing it changes every page it is attached to; to diverge later, create a "
+		"copy with set_page_script instead."
+	)
+
+
 def apply_update_script(ctx, args: dict) -> str:
 	"""Headless twin of the editor's update_script apply."""
 	from builder.ai.agent.tree import validate_script
@@ -141,6 +169,34 @@ set_page_script = Tool(
 	},
 )
 
+attach_page_script = Tool(
+	name="attach_page_script",
+	side="client",
+	handler=apply_attach_page_script,  # the loop applies script ops server-side
+	description=(
+		"Attach an EXISTING client script doc (one another page of this site already uses) to "
+		"this page — the right way to reuse a reference page's motion/behaviour. The script "
+		"stays SHARED: one doc drives every page it is attached to, so a later edit rethemes "
+		"them all together. Pass the exact script name from read_page's script listing. Attach "
+		"whenever the script is cleanly reusable here (it targets class hooks this page also "
+		"carries); only when it does work unrelated to this page (sections this page doesn't "
+		"have, other-page logic) copy just the relevant part into a new set_page_script instead."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"script_name": {
+				"type": "string",
+				"description": (
+					"The exact script doc name from read_page/get_page_scripts "
+					"(e.g. 'Studio Motion' or 'BSC-00001'). Never invent this value."
+				),
+			},
+		},
+		"required": ["script_name"],
+	},
+)
+
 update_script = Tool(
 	name="update_script",
 	side="client",
@@ -196,4 +252,4 @@ get_page_scripts = Tool(
 	handler=fetch_page_scripts,
 )
 
-TOOLS = [set_page_script, update_script, get_page_scripts]
+TOOLS = [set_page_script, attach_page_script, update_script, get_page_scripts]

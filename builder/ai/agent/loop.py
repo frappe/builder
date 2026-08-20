@@ -96,7 +96,7 @@ SNAPSHOT_TOOLS = frozenset(
 # silently — two parallel attaches in one round raced and .catch(() => null) ate the
 # failure; a page then published with its reveal CSS but not the JS that fires it.
 # The server apply is atomic and verified; the canvas just mirrors the result.
-SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "update_script"})
+SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "attach_page_script", "update_script"})
 
 
 class CancelledError(Exception):
@@ -247,6 +247,7 @@ TOOL_LABELS = {
 	"read_url": ("Reading a web page", "Read a web page"),
 	"research": ("Researching online", "Researched online"),
 	"get_page_scripts": ("Reading the page scripts", "Read the page scripts"),
+	"attach_page_script": ("Attaching a shared script", "Attached a shared script"),
 	"set_page_settings": ("Updating page settings", "Updated page settings"),
 	"remember": ("Saving a note for next time", "Saved a note for next time"),
 	"seed_sample_data": ("Adding sample records", "Added sample records"),
