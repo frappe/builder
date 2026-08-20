@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 20:56\n"
+"PO-Revision-Date: 2026-08-20 05:20\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -3543,7 +3543,7 @@ msgstr "Zamijeni Sve"
 
 #: frontend/src/components/Controls/SearchBlock.vue:92
 msgid "Replace All ({0} matches)"
-msgstr "Zamijeni sve ({0} koja odgovara)"
+msgstr "Zamijeni sve ({0} odgovara)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
