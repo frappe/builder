@@ -606,9 +606,12 @@ def render_scripts(page_id: str) -> str:
 		"(a sidebar's expand, a nav's toggle). Embedding a component and attaching its "
 		"companion scripts are ONE action, not optional polish: without them the chrome is "
 		"dead (no hover-expand, no mobile toggle), and styling the instance to LOOK right "
-		"statically does not replace the behaviour. Attach the SAME scripts verbatim "
-		"(set_page_script with this exact content); never write your own replacement for "
-		"behaviour you can copy, and never skip them:\n" + "\n".join(parts)
+		"statically does not replace the behaviour. Reuse by ATTACHING the same doc: "
+		"attach_page_script with the exact script name below keeps it SHARED, so one later "
+		"edit rethemes every page using it. Only when a script also does work unrelated to "
+		"the page you're building (sections it doesn't have, other-page logic) copy just "
+		"the relevant part into a new set_page_script instead. Never write your own "
+		"replacement for behaviour you can attach, and never skip them:\n" + "\n".join(parts)
 	)
 
 
