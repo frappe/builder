@@ -144,7 +144,7 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: __("Block Options"),
+	name: __("Component Options"),
 	properties: getStandardPropsInputSection,
 	collapsed: false,
 	condition: () =>
