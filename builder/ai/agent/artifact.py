@@ -222,8 +222,14 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			"cache_control": {"type": "ephemeral", "ttl": "1h"},
 		},
 	]
-	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
-	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))
+	# Prior conversation (incl. the approved plan) as proper role-tagged turns, with
+	# the newest attached images re-shown — a reference design pasted on an earlier
+	# turn must reach the step that actually draws the page.
+	messages.extend(
+		AISession.build_context_messages_from_id(
+			ctx.session_id, include_images=ModelRegistry.supports_vision(ctx.model)
+		)
+	)
 	# The photos this turn actually found. Without them the generator can only use
 	# urls the model retyped into the brief, which is why pages came back with one
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.

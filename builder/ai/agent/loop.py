@@ -326,6 +326,7 @@ class AgentRunner:
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
 		image_url: str | None = None,
+		image_file_url: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -339,6 +340,7 @@ class AgentRunner:
 		self.channel = page_id or session_id
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
+		self.image_file_url = image_file_url
 		self.registry = registry or build_default_registry()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
@@ -570,7 +572,11 @@ class AgentRunner:
 		# byte-stable from the session rows, so system + history stays a provider-
 		# cache prefix hit ACROSS turns. The page context goes after — it changes
 		# every turn and would otherwise invalidate everything behind it.
-		messages.extend(AISession.build_context_messages_from_id(self.session_id))
+		messages.extend(
+			AISession.build_context_messages_from_id(
+				self.session_id, include_images=ModelRegistry.supports_vision(self.loop_model)
+			)
+		)
 		self.history_end_index = len(messages) - 1
 
 		# The page structure. It's resent on every round of a multi-round turn, so a
@@ -585,6 +591,13 @@ class AgentRunner:
 		user_text = self.prompt
 		if self.selected_block_ids:
 			user_text += "\n\n" + self.attached_blocks_note()
+		if self.image_url and self.image_file_url:
+			# The image itself rides below; the model also needs its ADDRESS — the
+			# only handle a brief can carry into the generation step.
+			user_text += (
+				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
+				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
+			)
 		if self.image_url:
 			messages.append(
 				{

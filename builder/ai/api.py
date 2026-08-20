@@ -42,6 +42,28 @@ def resolve_api_key(model: str | None = None) -> str:
 	return api_key
 
 
+def save_attached_image(data_url: str) -> str | None:
+	"""Persist a pasted image as a site file. The data URI only lives for the turn
+	it was sent on; the file URL is what later turns replay and briefs reference."""
+	try:
+		header, content = data_url.split(";base64,", 1)
+		ext = header.removeprefix("data:image/").split("+")[0] or "png"
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"ai-attachment-{frappe.generate_hash(length=10)}.{ext}",
+				"is_private": 0,
+				"folder": "Home/Builder Uploads",
+				"content": content,
+				"decode": True,
+			}
+		).insert(ignore_permissions=True)
+		return file.file_url
+	except Exception:
+		logger.warning("could not save the attached image as a file", exc_info=True)
+		return None
+
+
 @frappe.whitelist()
 @has_page_write()
 def run(
@@ -61,6 +83,11 @@ def run(
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
+	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
+	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
+	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
+	image_file_url = save_attached_image(image_url) if image_url else None
+
 	# Append the user turn + guard concurrency for an established session. The worker
 	# takes the atomic run lock; this check just gives a fast 429 instead of a queued
 	# rejection.
@@ -72,7 +99,7 @@ def run(
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
 		if image_data:
-			msg_meta["attachedImageUrl"] = image_data
+			msg_meta["attachedImageUrl"] = image_file_url or image_data
 		# A card-composed reply (option tap, form submit) shows as this compact line
 		# in the chat; the full labelled text stays the message content for the model.
 		if display_text:
@@ -89,7 +116,6 @@ def run(
 			)
 		)
 	api_key = resolve_api_key(resolved_model)
-	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
@@ -108,6 +134,7 @@ def run(
 		enqueue_after_commit=True,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
+		image_file_url=image_file_url,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
