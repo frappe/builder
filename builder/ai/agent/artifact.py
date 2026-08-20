@@ -134,7 +134,10 @@ def found_photo_list(ctx) -> str:
 
 def reference_geometry(ctx) -> str:
 	"""Geometry of every reference read this turn — the generator sees only the
-	brief, and prose loses exactly these load-bearing values."""
+	brief, and prose loses exactly these load-bearing values. The FIRST read is
+	the page the agent was told to match (the user-named page or the home page),
+	so it is labelled primary; unordered references let a stray sibling read
+	restyle the build with the wrong design system."""
 	reads = getattr(ctx, "reference_reads", None) or []
 	if not reads:
 		return ""
@@ -150,7 +153,15 @@ def reference_geometry(ctx) -> str:
 		"The reference's measured sizes beat this prompt's scale defaults: a calm "
 		"reference stays calm."
 	)
-	return preamble + "\n\n" + "\n\n".join(reads)
+	if len(reads) == 1:
+		return preamble + "\n\n" + reads[0]
+	labelled = [
+		f"PRIMARY REFERENCE — the page to match; where references disagree, THIS one is law:\n{reads[0]}"
+	]
+	labelled += [
+		f"SECONDARY REFERENCE — background only, never the system to match:\n{read}" for read in reads[1:]
+	]
+	return preamble + "\n\n" + "\n\n".join(labelled)
 
 
 def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
