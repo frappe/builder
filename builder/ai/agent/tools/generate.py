@@ -9,7 +9,6 @@ calling this tool is the only trigger for generation — see agent/artifact.py.
 
 from builder.ai.agent.artifact import generate_page_yaml
 from builder.ai.agent.registry import Tool
-from builder.ai.skills import Skills
 
 generate_page = Tool(
 	name="generate_page",
@@ -44,16 +43,6 @@ generate_page = Tool(
 					"enough that the generation step can output correct letterSpacing, fontWeight, and "
 					"section alternation without re-inferring from adjectives. Do NOT write the YAML "
 					"yourself — the brief guides a dedicated generation step."
-				),
-			},
-			"skill": {
-				"type": "string",
-				"enum": Skills.names(),
-				"description": (
-					"Domain playbook to load into the generation step. Pass 'portfolio' whenever "
-					"the page is a personal, designer, developer, photographer, studio, or agency "
-					"portfolio/CV page — the step then builds a distinctive, work-first portfolio "
-					"instead of a generic template. Omit for every other kind of page."
 				),
 			},
 		},
