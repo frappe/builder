@@ -44,7 +44,9 @@ def resolve_api_key(model: str | None = None) -> str:
 
 def save_attached_image(data_url: str) -> str | None:
 	"""Persist a pasted image as a site file. The data URI only lives for the turn
-	it was sent on; the file URL is what later turns replay and briefs reference."""
+	it was sent on; the file URL is what later turns replay and briefs reference.
+	Private: it belongs to the chat (a mock may be confidential), and every reader —
+	replay, brief attachment, the chat thumbnail — goes through permissioned paths."""
 	try:
 		header, content = data_url.split(";base64,", 1)
 		ext = header.removeprefix("data:image/").split("+")[0] or "png"
@@ -52,7 +54,7 @@ def save_attached_image(data_url: str) -> str | None:
 			{
 				"doctype": "File",
 				"file_name": f"ai-attachment-{frappe.generate_hash(length=10)}.{ext}",
-				"is_private": 0,
+				"is_private": 1,
 				"folder": "Home/Builder Uploads",
 				"content": content,
 				"decode": True,
@@ -84,18 +86,20 @@ def run(
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
+
+	# Guard concurrency for an established session first — nothing may persist on the
+	# busy path. The worker takes the atomic run lock; this check just gives a fast
+	# 429 instead of a queued rejection.
+	if session_id and AISession.is_session_running(session_id):
+		frappe.local.response.http_status_code = 429
+		return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+
 	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
 
-	# Append the user turn + guard concurrency for an established session. The worker
-	# takes the atomic run lock; this check just gives a fast 429 instead of a queued
-	# rejection.
+	# Append the user turn for an established session.
 	if session_id:
-		if AISession.is_session_running(session_id):
-			frappe.local.response.http_status_code = 429
-			return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
-
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
 		if image_data:

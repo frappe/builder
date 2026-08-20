@@ -22,9 +22,9 @@ class TestAttachedImages(FrappeTestCase):
 	def session(self) -> AISession:
 		return AISession(frappe.new_doc("Builder AI Session"))
 
-	def test_saved_file_round_trips(self):
+	def test_saved_file_is_private_and_round_trips(self):
 		file_url = save_attached_image(DATA_URL)
-		self.assertTrue(file_url.startswith("/files/"))
+		self.assertTrue(file_url.startswith("/private/files/"))
 		content = frappe.get_doc("File", {"file_url": file_url}).get_content()
 		if isinstance(content, str):
 			content = content.encode()

@@ -66,8 +66,8 @@ def image_url_resolves(url: str) -> bool:
 
 def brief_image_parts(brief: str) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
-	attached directly (the provider fetches them); /files/ paths are read from the
-	site and inlined as data URLs. The marker lines always stay in the brief text,
+	attached directly (the provider fetches them); site file paths (public or
+	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
 	so the model still knows the exact URLs to place in blocks."""
 	parts = []
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
@@ -78,7 +78,7 @@ def brief_image_parts(brief: str) -> list[dict]:
 				logger.warning(f"skipping unreachable brief image: {url}")
 				continue
 			parts.append({"type": "image_url", "image_url": {"url": url}})
-		elif url.startswith("/files/"):
+		elif url.startswith(("/files/", "/private/files/")):
 			data_url = read_site_image(url)
 			if data_url:
 				parts.append({"type": "image_url", "image_url": {"url": data_url}})

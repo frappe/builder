@@ -243,7 +243,7 @@ class AISession:
 		url = self.load_metadata(row.get("metadata_json")).get("attachedImageUrl") or ""
 		if url.startswith("data:image/"):
 			return {"type": "image_url", "image_url": {"url": url}}
-		if url.startswith("/files/"):
+		if url.startswith(("/files/", "/private/files/")):
 			from builder.ai.agent.artifact import read_site_image
 
 			if data_url := read_site_image(url):
