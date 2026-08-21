@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-21 03:24\n"
+"PO-Revision-Date: 2026-08-21 04:46\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -1806,7 +1806,7 @@ msgstr "快"
 #: frontend/src/components/Settings/PageGeneral.vue:65
 #: frontend/src/components/Settings/PageGeneral.vue:80
 msgid "Favicon"
-msgstr ""
+msgstr "網站圖示"
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
@@ -2405,7 +2405,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
-msgstr ""
+msgstr "版面配置"
 
 #. Description of the 'API Key' (Password) field in DocType 'Builder AI
 #. Provider'
@@ -2715,7 +2715,7 @@ msgstr "新增指令碼"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
-msgstr ""
+msgstr "新增分頁"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:5
 msgid "New Token"
@@ -2847,7 +2847,7 @@ msgstr "沒有「{0}」的結果"
 
 #: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "No results found"
-msgstr ""
+msgstr "找不到結果"
 
 #: frontend/src/components/VersionHistory.vue:36
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
@@ -2878,7 +2878,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:17
 msgid "Normal"
-msgstr ""
+msgstr "一般"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:248
 msgid "Not Allowed"
@@ -3476,7 +3476,7 @@ msgstr "定期"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
-msgstr ""
+msgstr "相對"
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
 #: frontend/src/components/Modals/TokenManager.vue:764
@@ -3696,7 +3696,7 @@ msgstr "列跨距"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:26
 msgid "Rows"
-msgstr ""
+msgstr "列"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
@@ -3825,7 +3825,7 @@ msgstr "搜尋頁面"
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
-msgstr ""
+msgstr "搜尋範本"
 
 #: frontend/src/components/Commands/index.ts:240
 msgid "Search blocks"
@@ -4149,7 +4149,7 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
-msgstr ""
+msgstr "排序"
 
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -4438,7 +4438,7 @@ msgstr "細"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
-msgstr ""
+msgstr "今年"
 
 #: builder/ai/api.py:167
 msgid "This action does not belong to you"
@@ -4744,7 +4744,7 @@ msgstr "取消設定首頁"
 
 #: frontend/src/App.vue:33
 msgid "Untitled"
-msgstr ""
+msgstr "未命名"
 
 #: frontend/src/components/ComponentUpdates.vue:46
 #: frontend/src/components/Modals/NewBuilderToken.vue:9
