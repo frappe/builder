@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 05:57\n"
+"PO-Revision-Date: 2026-08-22 07:32\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -41,23 +41,23 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:134
 msgid "+ Add Shadow Layer"
-msgstr ""
+msgstr "+ افزودن لایه سایه"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:144
 msgid "301 - Moved Permanently"
-msgstr ""
+msgstr "301 - به طور دائم منتقل شد"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:145
 msgid "302 - Found (Temporary)"
-msgstr ""
+msgstr "۳۰۲ - یافت شد (موقتی)"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:146
 msgid "307 - Temporary Redirect"
-msgstr ""
+msgstr "۳۰۷ - تغییر مسیر موقت"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:147
 msgid "308 - Permanent Redirect"
-msgstr ""
+msgstr "308 - تغییر مسیر دائمی"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:141
 msgid "A booking site for my clinic"
@@ -5071,11 +5071,11 @@ msgstr ""
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:267
 msgid "You cannot make heading a link"
-msgstr ""
+msgstr "شما نمی‌توانید لینک را به عنوان تبدیل کنید"
 
 #: builder/ai/session.py:88
 msgid "You do not have access to this AI session"
-msgstr ""
+msgstr "شما به این session هوش مصنوعی دسترسی ندارید"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
@@ -5099,7 +5099,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/Dialog.vue:49
 msgid "You have unsaved changes. Please save before leaving."
-msgstr ""
+msgstr "شما تغییرات ذخیره نشده‌ای دارید. لطفاً قبل از خروج، آنها را ذخیره کنید."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
@@ -5124,7 +5124,7 @@ msgstr "کوچک‌نمایی"
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "assistant"
-msgstr ""
+msgstr "دستیار"
 
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
@@ -5134,11 +5134,11 @@ msgstr "چت"
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "clarification"
-msgstr ""
+msgstr "شفاف سازی"
 
 #: builder/ai/agent/pending.py:160
 msgid "connect_form needs a doctype, fields, and a form selector"
-msgstr ""
+msgstr "connect_form به یک doctype، فیلدها و یک انتخابگر فرم نیاز دارد"
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -5153,7 +5153,7 @@ msgstr "مثلاً yourdomain.com"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:23
 msgid "e.g., primary, accent, background"
-msgstr ""
+msgstr "مثلاً، اصلی، تأکیدی، پس‌زمینه"
 
 #: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
@@ -5179,7 +5179,7 @@ msgstr "ناشناخته"
 
 #: frontend/src/components/Modals/TokenManager.vue:202
 msgid "unnamed"
-msgstr ""
+msgstr "بی‌نام"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
@@ -5200,53 +5200,53 @@ msgstr "کاربر"
 
 #: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
 msgid "{0} & {1} others"
-msgstr ""
+msgstr "{0} و {1} سایر"
 
 #: frontend/src/data/domains.ts:62
 msgid "{0} added successfully"
-msgstr ""
+msgstr "{0} با موفقیت افزوده شد"
 
 #: builder/ai/api.py:87
 msgid "{0} can't view images. Pick a vision-capable model or remove the image."
-msgstr ""
+msgstr "{0} نمی‌توان تصاویر را مشاهده کرد. یک مدل با قابلیت بینایی انتخاب کنید یا تصویر را حذف کنید."
 
 #: frontend/src/components/Modals/TokenManager.vue:951
 msgid "{0} entries were invalid"
-msgstr ""
+msgstr "{0} ورودی‌ها نامعتبر بودند"
 
 #: frontend/src/components/Modals/TokenManager.vue:951
 msgid "{0} entry was invalid"
-msgstr ""
+msgstr "{0} ورودی نامعتبر بود"
 
 #: frontend/src/components/ComponentUpdates.vue:40
 msgid "{0} instance"
-msgstr ""
+msgstr "{0} نمونه"
 
 #: frontend/src/components/ComponentUpdates.vue:40
 msgid "{0} instances"
-msgstr ""
+msgstr "{0} نمونه"
 
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.py:42
 msgid "{0} models still use this provider: {1}"
-msgstr ""
+msgstr "{0} مدل هنوز از این ارائه‌دهنده استفاده می‌کنند: {1}"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:25
 msgid "{0} page"
-msgstr ""
+msgstr "{0} صفحه"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:25
 msgid "{0} pages"
-msgstr ""
+msgstr "{0} صفحه"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:58
 msgid "{0} record"
-msgstr ""
+msgstr "{0} رکورد"
 
 #: frontend/src/data/domains.ts:72
 msgid "{0} removed"
-msgstr ""
+msgstr "{0} حذف شد"
 
 #: frontend/src/data/domains.ts:80
 msgid "{0} set as primary"
-msgstr ""
+msgstr "{0} به عنوان اصلی تنظیم شود"
 
