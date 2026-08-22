@@ -471,8 +471,8 @@ class BuilderPage(WebsiteGenerator):
 			)
 
 		page_data = self._get_page_data(for_render=True)
-		if page_data.get("title"):
-			context.title = page_data.get("page_title")
+		if page_data.get("title") or page_data.get("page_title"):
+			context.title = page_data.get("page_title") or page_data.get("title")
 
 		blocks = self.blocks
 
@@ -938,14 +938,26 @@ def get_dynamic_props_template(
 	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
 
 
+BLOCK_LEVEL_TAGS = re.compile(
+	r"<(p|div|h[1-6]|ul|ol|li|section|article|header|footer|nav|blockquote|pre|table|form|figure)\b", re.I
+)
+
+
+def has_block_level_content(block: dict) -> bool:
+	"""A <p> may only hold phrasing content; child blocks or block-level tags in its
+	innerHTML would be invalid HTML, so such blocks are demoted to <div>."""
+	if block.get("children"):
+		return True
+	return bool(BLOCK_LEVEL_TAGS.search(str(block.get("innerHTML") or "")))
+
+
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
 	"""Create HTML tag element with attributes, classes, and styling."""
 	soup = state["soup"]
 
 	element = block.get("originalElement") or block.get("element") or "div"
 
-	# fix: since p inside p is illegal
-	if element in ["p", "__raw_html__"]:
+	if element == "__raw_html__" or (element == "p" and has_block_level_content(block)):
 		element = "div"
 
 	if element == "img":

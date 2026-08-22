@@ -53,8 +53,9 @@
 	/* @tailwindcss/forms paints a hardcoded blue focus ring plus a blue border on
 	   every focused field: a full blue box even around underline-only inputs, clashing
 	   with any page design that isn't blue. Keep focus visible but design-neutral:
-	   no ring, the field's existing borders darken to the text colour instead (the
-	   caret already marks focus in text fields). Pages layer their own treatment via
+	   no ring, the field's existing borders darken to the text colour and a
+	   currentColor outline marks keyboard focus (WCAG 2.4.7: a border-colour shift
+	   alone is not a visible indicator). Pages layer their own treatment via
 	   focus: block styles, which come later in the document and win. */
 	[multiple]:focus,
 	[type="date"]:focus,
@@ -75,6 +76,13 @@
 		--tw-ring-shadow: 0 0 #0000;
 		--tw-ring-offset-shadow: 0 0 #0000;
 		border-color: currentColor;
+	}
+	[multiple]:focus-visible,
+	input:focus-visible,
+	select:focus-visible,
+	textarea:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 2px;
 	}
 }
 

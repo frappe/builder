@@ -38,4 +38,6 @@ def lucide_svg(name: str, stroke_width: float = 2) -> str:
 	svg = re.sub(r'width="\d+"', 'width="100%"', svg, count=1)
 	svg = re.sub(r'height="\d+"', 'height="100%"', svg, count=1)
 	svg = re.sub(r'stroke-width="[\d.]+"', f'stroke-width="{stroke_width}"', svg, count=1)
+	# Decorative by default: the wrapper block carries any accessible name.
+	svg = svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ', 1)
 	return svg.strip()
