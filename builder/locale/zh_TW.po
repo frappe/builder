@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-21 04:46\n"
+"PO-Revision-Date: 2026-08-23 03:34\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -1341,7 +1341,7 @@ msgstr "自動偵測。未知時假設為 200,000。"
 #: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Developer"
-msgstr ""
+msgstr "開發者"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
@@ -1834,7 +1834,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:24
 msgid "Find"
-msgstr ""
+msgstr "尋找"
 
 #: frontend/src/components/Controls/SearchBlock.vue:8
 msgid "Find & Replace"
@@ -2253,7 +2253,7 @@ msgstr "已傳送邀請給 {0}"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
-msgstr ""
+msgstr "邀請"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
@@ -2377,7 +2377,7 @@ msgstr "最後互動時間"
 
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
-msgstr ""
+msgstr "上次修改時間"
 
 #. Label of the last_task_type (Data) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
