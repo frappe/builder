@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-22 07:32\n"
+"PO-Revision-Date: 2026-08-25 08:21\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -4433,7 +4433,7 @@ msgstr ""
 
 #: frontend/src/utils/fontManager.ts:18
 msgid "Thin"
-msgstr ""
+msgstr "نازک"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
@@ -5047,15 +5047,15 @@ msgstr ""
 
 #: builder/ai/api.py:160
 msgid "You are not permitted to apply this change"
-msgstr ""
+msgstr "شما مجاز به اعمال این تغییر نیستید"
 
 #: builder/ai/api.py:302
 msgid "You are not permitted to manage AI models"
-msgstr ""
+msgstr "شما مجاز به مدیریت مدل‌های هوش مصنوعی نیستید"
 
 #: builder/ai/api.py:274
 msgid "You are not permitted to manage AI providers"
-msgstr ""
+msgstr "شما مجاز به مدیریت ارائه دهندگان هوش مصنوعی نیستید"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
@@ -5063,11 +5063,11 @@ msgstr ""
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:269
 msgid "You cannot add link inside a button block"
-msgstr ""
+msgstr "شما نمی‌توانید لینک را داخل یک بلوک دکمه اضافه کنید"
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:268
 msgid "You cannot add link inside a link block"
-msgstr ""
+msgstr "شما نمی‌توانید لینک را داخل یک بلوک لینک اضافه کنید"
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:267
 msgid "You cannot make heading a link"
