@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-25 08:21\n"
+"PO-Revision-Date: 2026-08-25 10:51\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -940,7 +940,7 @@ msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:52
 msgid "Components"
-msgstr ""
+msgstr "اجزاء"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
