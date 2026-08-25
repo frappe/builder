@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-25 19:39\n"
+"PO-Revision-Date: 2026-08-25 22:31\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -375,7 +375,7 @@ msgstr "ARIA-Bezeichnung"
 
 #: frontend/src/components/PropsPopoverContent.vue:171
 msgid "Array"
-msgstr ""
+msgstr "Array"
 
 #: frontend/src/components/ArrayInput.vue:20
 msgid "Array Items:"
@@ -688,7 +688,7 @@ msgstr "CSV muss mindestens eine Kopfzeile und eine Datenzeile enthalten"
 
 #: frontend/src/components/Settings/TopClicksList.vue:13
 msgid "CTR"
-msgstr ""
+msgstr "CTR"
 
 #: frontend/src/utils/helpers.ts:36
 msgid "Cancel"
@@ -975,7 +975,7 @@ msgstr "Einpassen"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
 msgid "Container (c)"
-msgstr ""
+msgstr "Container (c)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
 msgid "Container mode"
@@ -1164,7 +1164,7 @@ msgstr "Derzeit live"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:239
 msgid "Cursor"
-msgstr ""
+msgstr "Cursor"
 
 #: frontend/src/components/Controls/FontInput.vue:130
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
@@ -1433,7 +1433,7 @@ msgstr "Domain-Verifizierung fehlgeschlagen"
 
 #: frontend/src/components/Settings/index.ts:118
 msgid "Domains"
-msgstr ""
+msgstr "Domains"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
@@ -1947,7 +1947,7 @@ msgstr "Gründer / Geschäftsinhaber"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
@@ -2063,7 +2063,7 @@ msgstr "HTML-Optionen"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0}"
-msgstr ""
+msgstr "HTTP {0}"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0} · forwards query parameters"
@@ -2450,7 +2450,7 @@ msgstr "Begrenzt die Seiten, auf denen die Komponente ersetzt wird"
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
 #: frontend/src/components/Controls/GradientEditor.vue:7
 msgid "Linear"
-msgstr ""
+msgstr "Linear"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:91
 msgid "Link"
@@ -3026,11 +3026,11 @@ msgstr "Äußerer Schatten"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
-msgstr ""
+msgstr "Überlauf X"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:220
 msgid "Overflow Y"
-msgstr ""
+msgstr "Überlauf Y"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:4
 msgid "Overview"
@@ -3253,7 +3253,7 @@ msgstr "Position"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
 msgid "Poster"
-msgstr ""
+msgstr "Poster"
 
 #: frontend/src/components/ShadowHandler.vue:57
 msgid "Presets"
@@ -3391,7 +3391,7 @@ msgstr "Wird lokal gespeichert..."
 
 #: frontend/src/components/Controls/GradientEditor.vue:8
 msgid "Radial"
-msgstr ""
+msgstr "Radial"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:157
 msgid "Radius"
@@ -3642,7 +3642,7 @@ msgstr "Rechts"
 
 #: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
-msgstr ""
+msgstr "Robots"
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
@@ -4321,7 +4321,7 @@ msgstr "Tab-Index"
 
 #: frontend/src/components/BuilderCanvas.vue:240
 msgid "Tablet"
-msgstr ""
+msgstr "Tablet"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
 #: frontend/src/components/Controls/SearchBlock.vue:171
@@ -4378,7 +4378,7 @@ msgstr "Text"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:23
 msgid "Text (t)"
-msgstr ""
+msgstr "Text (t)"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:81
 msgid "Text Color"
@@ -5112,7 +5112,7 @@ msgstr "Youtube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
@@ -5125,7 +5125,7 @@ msgstr "Verkleinern"
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "assistant"
-msgstr ""
+msgstr "Assistent"
 
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
@@ -5135,7 +5135,7 @@ msgstr "unterhaltung"
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "clarification"
-msgstr ""
+msgstr "Rückfrage"
 
 #: builder/ai/agent/pending.py:160
 msgid "connect_form needs a doctype, fields, and a form selector"
