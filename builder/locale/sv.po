@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 09:50\n"
+"PO-Revision-Date: 2026-08-26 13:21\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -1947,7 +1947,7 @@ msgstr "Grundare / Affärsägare"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr "Frappe / ERPNext"
+msgstr "System / Affärssystem"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
