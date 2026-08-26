@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-25 10:51\n"
+"PO-Revision-Date: 2026-08-26 04:17\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -2400,7 +2400,7 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:159
 #: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
-msgstr ""
+msgstr "لایه‌ها"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
@@ -4111,7 +4111,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
 msgid "Slow"
-msgstr ""
+msgstr "آهسته"
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
