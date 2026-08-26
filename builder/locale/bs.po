@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-20 06:45\n"
+"PO-Revision-Date: 2026-08-26 13:20\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -1262,15 +1262,15 @@ msgstr "Standard Vrijednost"
 #: frontend/src/components/BlockContextMenuOptions/index.ts:260
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
-msgstr "Izbriši"
+msgstr "Obriši"
 
 #: frontend/src/components/DashboardSidebar.vue:75
 msgid "Delete Folder"
-msgstr "Izbriši Mapu"
+msgstr "Obriši Mapu"
 
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
-msgstr "Izbriši Stranicu"
+msgstr "Obriši Stranicu"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
@@ -1279,11 +1279,11 @@ msgstr "Obriši odabrane blokove"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete variable"
-msgstr "Izbriši varijablu"
+msgstr "Obriši varijablu"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete {0} variables"
-msgstr "Izbriši {0} varijabli"
+msgstr "Obriši {0} varijabli"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
