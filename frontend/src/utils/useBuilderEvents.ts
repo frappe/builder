@@ -163,7 +163,13 @@ export function useBuilderEvents(
 					const fileURL = await resolveOversizedSVG(text);
 					if (fileURL) {
 						const imageBlock = getImageBlock(fileURL);
-						imageBlock.baseStyles = { ...block.baseStyles, ...imageBlock.baseStyles };
+						// the image template defaults to cover, which crops artwork that an
+						// inline <svg> would have letterboxed inside the same box
+						imageBlock.baseStyles = {
+							...block.baseStyles,
+							...imageBlock.baseStyles,
+							objectFit: "contain",
+						};
 						block = imageBlock;
 					}
 				}
