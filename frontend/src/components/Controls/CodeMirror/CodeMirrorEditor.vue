@@ -29,6 +29,7 @@ const props = defineProps<{
 
 const editorContainer = ref<HTMLDivElement | null>(null);
 let editor: EditorView | null = null;
+let disposed = false;
 const theme = new Compartment();
 
 const emit = defineEmits<{
@@ -140,6 +141,10 @@ onMounted(async () => {
 		blockProps: allBlockProps.value,
 	});
 
+	// the awaits above give the component time to unmount, and teardown has already
+	// run by then: building the view now would orphan it in a detached container
+	if (disposed) return;
+
 	editor = new EditorView({
 		state: startState,
 		parent: editorContainer.value,
@@ -149,6 +154,7 @@ onMounted(async () => {
 // CodeMirror does not release its view tree, DOM or document observer on its own,
 // so an undestroyed view keeps the whole editor DOM alive and keeps polling selection.
 onBeforeUnmount(() => {
+	disposed = true;
 	editor?.destroy();
 	editor = null;
 });
