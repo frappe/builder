@@ -68,7 +68,7 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 			mode: props.mode,
 			blockProps: allBlockProps.value,
 		});
-		// teardown can land while the state above is being built, and it drops the view
+		// teardown can land while the state above is being built
 		if (!editor) return;
 		editor.setState(startState);
 	} else {
@@ -141,8 +141,7 @@ onMounted(async () => {
 		blockProps: allBlockProps.value,
 	});
 
-	// the awaits above give the component time to unmount, and teardown has already
-	// run by then: building the view now would orphan it in a detached container
+	// unmounted mid-await: building the view now would orphan it in a detached container
 	if (disposed) return;
 
 	editor = new EditorView({
@@ -151,8 +150,7 @@ onMounted(async () => {
 	});
 });
 
-// CodeMirror does not release its view tree, DOM or document observer on its own,
-// so an undestroyed view keeps the whole editor DOM alive and keeps polling selection.
+// CodeMirror keeps its view tree, DOM and document observer alive until told otherwise
 onBeforeUnmount(() => {
 	disposed = true;
 	editor?.destroy();

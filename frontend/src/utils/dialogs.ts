@@ -16,8 +16,7 @@ import { __ } from "@/translation";
 // a frappe-ui prompt that auto-closes once `onConfirm` resolves; throwing from
 // onConfirm surfaces the error inline and keeps the dialog open.
 
-// Resolves true when the user wants the SVG uploaded as a file, false to keep it
-// inline. Dismissing counts as keeping it inline, so a stray Esc never uploads.
+// dismissing resolves false, so a stray Esc never uploads
 export function promptOversizedSVG(bytes: number): Promise<boolean> {
 	return new Promise((resolve) => {
 		dialog.confirm({

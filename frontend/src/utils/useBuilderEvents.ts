@@ -35,8 +35,6 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 
-// Offer to store a large pasted SVG as a file instead of inlining it into the page.
-// Returns the file URL when the user takes the offer, null to keep it inline.
 async function resolveOversizedSVG(svg: string) {
 	if (!isOversizedSVG(svg) || !(await promptOversizedSVG(svg.length))) return null;
 	const { fileURL } = await uploadSVGAsFile(svg);
@@ -163,8 +161,7 @@ export function useBuilderEvents(
 					const fileURL = await resolveOversizedSVG(text);
 					if (fileURL) {
 						const imageBlock = getImageBlock(fileURL);
-						// the image template defaults to cover, which crops artwork that an
-						// inline <svg> would have letterboxed inside the same box
+						// the image template defaults to cover, which would crop the artwork
 						imageBlock.baseStyles = {
 							...block.baseStyles,
 							...imageBlock.baseStyles,

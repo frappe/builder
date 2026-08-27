@@ -7,8 +7,6 @@ import useCanvasStore from "../../stores/canvasStore";
 import BasePropertyControl from "../Controls/BasePropertyControl.vue";
 import { __ } from "@/translation";
 
-// the inline SVG of the selected block, only when it is big enough to be worth
-// moving out of the page. Empty string otherwise, so the button stays hidden.
 function getSelectedSVG() {
 	const block = blockController.getSelectedBlocks()[0];
 	const html = block?.getInnerHTML() || "";

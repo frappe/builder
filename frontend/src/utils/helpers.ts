@@ -386,10 +386,7 @@ async function uploadBuilderAsset(file: File, silent = false) {
 
 const MAX_INLINE_SVG_SIZE = 20 * 1024;
 
-// An inline SVG lives in the page JSON, so every autosave sends it in full, every
-// history entry copies it, and each of its paths is a real node in the canvas. Past
-// a point it is cheaper as a file the browser can cache. One that paints from a
-// Builder token has to stay inline though: an <img> cannot read CSS variables.
+// a token-painted SVG has to stay inline: an <img> cannot read CSS variables
 function isOversizedSVG(svg: string) {
 	return svg.length > MAX_INLINE_SVG_SIZE && !svg.includes("var(--") && !svg.includes("currentColor");
 }
@@ -399,21 +396,17 @@ async function uploadSVGAsFile(svg: string) {
 	return uploadBuilderAsset(file);
 }
 
-// Moves an already-inlined SVG out of the page and repoints the block at the file.
-// The block keeps its id, position and styles, so nothing downstream has to move.
 async function convertSVGBlockToImage(block: Block) {
 	const svg = block.getInnerHTML() || "";
 	const { fileURL } = await uploadSVGAsFile(svg);
 	if (!fileURL) return;
 
-	// the intrinsic size lived on the <svg> tag that is about to leave the page
 	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
 	const width = source?.getAttribute("width");
 	const height = source?.getAttribute("height");
 	if (width && !block.baseStyles?.width) block.setStyle("width", addPxToNumber(parseInt(width)));
 	if (height && !block.baseStyles?.height) block.setStyle("height", addPxToNumber(parseInt(height)));
-	// an inline <svg> letterboxes inside its box by default, an <img> stretches,
-	// so without this the artwork skews the moment it becomes a file
+	// an inline <svg> letterboxes in its box, an <img> stretches
 	if (!block.baseStyles?.objectFit) block.setStyle("objectFit", "contain");
 
 	block.element = "img";

@@ -11,9 +11,7 @@ export type PauseId = string & { __brand: "PauseId" };
 
 const CAPACITY = 500;
 const DEBOUNCE_DELAY = 100;
-// Every record is a full serialisation of the tree, so a heavy page can reach
-// hundreds of MB long before it reaches CAPACITY. Whichever limit is hit first wins,
-// but always keep MIN_ENTRIES so undo stays usable on a page too big for the budget.
+// each record serialises the whole tree, so a heavy page blows past this well before CAPACITY
 const MAX_BYTES = 20 * 1024 * 1024;
 const MIN_ENTRIES = 10;
 
@@ -97,8 +95,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	function createHistoryRecord() {
 		return {
 			block: getBlockString(source.value),
-			// copy, or the record aliases the live set and every stacked entry
-			// tracks the current selection instead of the one it was taken with
+			// copy, or every stacked entry aliases the live set
 			selectedBlockIds: new Set(selectedBlockIds.value),
 		};
 	}
