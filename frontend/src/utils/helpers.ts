@@ -1,11 +1,11 @@
 import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
-import { __ } from "@/translation";
 import {
 	addPxToNumber,
 	extractNumberAndUnit,
@@ -397,6 +397,29 @@ function isOversizedSVG(svg: string) {
 async function uploadSVGAsFile(svg: string) {
 	const file = new File([svg], `${generateId()}.svg`, { type: "image/svg+xml" });
 	return uploadBuilderAsset(file);
+}
+
+// Moves an already-inlined SVG out of the page and repoints the block at the file.
+// The block keeps its id, position and styles, so nothing downstream has to move.
+async function convertSVGBlockToImage(block: Block) {
+	const svg = block.getInnerHTML() || "";
+	const { fileURL } = await uploadSVGAsFile(svg);
+	if (!fileURL) return;
+
+	// the intrinsic size lived on the <svg> tag that is about to leave the page
+	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
+	const width = source?.getAttribute("width");
+	const height = source?.getAttribute("height");
+	if (width && !block.baseStyles?.width) block.setStyle("width", addPxToNumber(parseInt(width)));
+	if (height && !block.baseStyles?.height) block.setStyle("height", addPxToNumber(parseInt(height)));
+	// an inline <svg> letterboxes inside its box by default, an <img> stretches,
+	// so without this the artwork skews the moment it becomes a file
+	if (!block.baseStyles?.objectFit) block.setStyle("objectFit", "contain");
+
+	block.element = "img";
+	if (block.originalElement === "__raw_html__") block.originalElement = undefined;
+	block.setInnerHTML("");
+	block.setAttribute("src", fileURL);
 }
 
 // Naming every data URL image.png makes the server read an SVG or a GIF as a PNG,
@@ -954,10 +977,14 @@ export {
 	alert,
 	confirm,
 	copyToClipboard,
+	convertSVGBlockToImage,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
+	deepEqual,
 	detachBlockFromComponent,
+	diffArray,
+	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
@@ -982,7 +1009,6 @@ export {
 	getRouteVariables,
 	getSpacing,
 	getStandardPropValue,
-	extractComponentId,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,
@@ -1002,6 +1028,7 @@ export {
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
+	parseJSONWithFallback,
 	removeDefaultUnit,
 	replaceMapKey,
 	setSpacing,
@@ -1016,7 +1043,4 @@ export {
 	uploadBuilderAsset,
 	uploadSVGAsFile,
 	uploadUserFont,
-	parseJSONWithFallback,
-	deepEqual,
-	diffArray,
 };
