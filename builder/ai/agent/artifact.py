@@ -66,8 +66,8 @@ def image_url_resolves(url: str) -> bool:
 
 def brief_image_parts(brief: str) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
-	attached directly (the provider fetches them); /files/ paths are read from the
-	site and inlined as data URLs. The marker lines always stay in the brief text,
+	attached directly (the provider fetches them); site file paths (public or
+	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
 	so the model still knows the exact URLs to place in blocks."""
 	parts = []
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
@@ -78,7 +78,7 @@ def brief_image_parts(brief: str) -> list[dict]:
 				logger.warning(f"skipping unreachable brief image: {url}")
 				continue
 			parts.append({"type": "image_url", "image_url": {"url": url}})
-		elif url.startswith("/files/"):
+		elif url.startswith(("/files/", "/private/files/")):
 			data_url = read_site_image(url)
 			if data_url:
 				parts.append({"type": "image_url", "image_url": {"url": data_url}})
@@ -90,7 +90,13 @@ def read_site_image(file_url: str) -> str | None:
 		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
 		if not name:
 			return None
-		content = frappe.get_doc("File", name).get_content()
+		file = frappe.get_doc("File", name)
+		# The path may come out of a model-written brief, so a private file is only
+		# inlined when the user this run acts for may actually read it.
+		if file.is_private and not file.has_permission("read"):
+			logger.warning(f"read_site_image: {file_url} is private and not readable here")
+			return None
+		content = file.get_content()
 		if isinstance(content, str):
 			content = content.encode()
 		if not content or len(content) > MAX_IMAGE_BYTES:
@@ -128,7 +134,10 @@ def found_photo_list(ctx) -> str:
 
 def reference_geometry(ctx) -> str:
 	"""Geometry of every reference read this turn — the generator sees only the
-	brief, and prose loses exactly these load-bearing values."""
+	brief, and prose loses exactly these load-bearing values. The FIRST read is
+	the page the agent was told to match (the user-named page or the home page),
+	so it is labelled primary; unordered references let a stray sibling read
+	restyle the build with the wrong design system."""
 	reads = getattr(ctx, "reference_reads", None) or []
 	if not reads:
 		return ""
@@ -144,7 +153,15 @@ def reference_geometry(ctx) -> str:
 		"The reference's measured sizes beat this prompt's scale defaults: a calm "
 		"reference stays calm."
 	)
-	return preamble + "\n\n" + "\n\n".join(reads)
+	if len(reads) == 1:
+		return preamble + "\n\n" + reads[0]
+	labelled = [
+		f"PRIMARY REFERENCE — the page to match; where references disagree, THIS one is law:\n{reads[0]}"
+	]
+	labelled += [
+		f"SECONDARY REFERENCE — background only, never the system to match:\n{read}" for read in reads[1:]
+	]
+	return preamble + "\n\n" + "\n\n".join(labelled)
 
 
 def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
@@ -222,8 +239,14 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			"cache_control": {"type": "ephemeral", "ttl": "1h"},
 		},
 	]
-	# Prior conversation (incl. the approved plan) as proper role-tagged turns.
-	messages.extend(AISession.build_context_messages_from_id(ctx.session_id))
+	# Prior conversation (incl. the approved plan) as proper role-tagged turns, with
+	# the newest attached images re-shown — a reference design pasted on an earlier
+	# turn must reach the step that actually draws the page.
+	messages.extend(
+		AISession.build_context_messages_from_id(
+			ctx.session_id, include_images=ModelRegistry.supports_vision(ctx.model)
+		)
+	)
 	# The photos this turn actually found. Without them the generator can only use
 	# urls the model retyped into the brief, which is why pages came back with one
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.
@@ -232,7 +255,6 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	# The geometry of reference pages read this turn — the brief alone cannot carry it.
 	if geometry := reference_geometry(ctx):
 		messages.append({"role": "user", "content": geometry})
-
 	if brief:
 		build_text = f"Build this page now:\n{brief}"
 		# Vision models get the reference/hero images themselves, not just their
@@ -263,13 +285,15 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	try:
 		for chunk in stream:
 			if ctx.is_cancelled():
+				# Stop, but KEEP: what already streamed is paid-for, visible work.
+				# Fall through to persist the partial page; the loop's own cancel
+				# check ends the turn right after this step returns.
 				try:
 					stream.close()
 				except Exception:
 					pass
-				from builder.ai.agent.loop import CancelledError
-
-				raise CancelledError
+				logger.info("generate_page_yaml: cancelled mid-stream, keeping the partial page")
+				break
 			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 			if not chunk.choices:
 				continue

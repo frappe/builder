@@ -100,44 +100,53 @@ export function useAnalytics({
 		tooltipText: "var(--ink-gray-7)",
 	};
 
-	const getAxisStyle = () => ({
+	// echarts drops its own palette when a chart config leaves `colors` unset, so series stay invisible without this
+	const seriesColors = ["var(--ink-blue-6)", "var(--ink-teal-6)"];
+	const fillOpacity = 0.15;
+
+	// a css var can't be parsed into a derived hover color, so the hovered state repeats the color instead
+	const areaSeries = (name: string, color: string) => ({
+		name,
+		type: "area",
+		fillOpacity,
+		echartOptions: {
+			emphasis: {
+				lineStyle: { color },
+				areaStyle: { color, opacity: fillOpacity },
+				itemStyle: { color },
+			},
+		},
+	});
+
+	const getAxisStyle = (axisLabel: Record<string, any> = {}) => ({
 		axisLine: { lineStyle: { color: themeColors.axisLineColor } },
 		axisTick: { lineStyle: { color: themeColors.axisLineColor } },
-		axisLabel: { color: themeColors.textColor },
+		axisLabel: { color: themeColors.textColor, ...axisLabel },
 		splitLine: { lineStyle: { color: themeColors.gridLineColor } },
 	});
 
 	const chartConfig = computed(() => ({
 		data: analyticsData.value.data,
 		title: "",
+		colors: seriesColors,
 		xAxis: {
 			key: "interval",
 			type: "category",
+			// axis styling belongs here; a top-level echartOptions.xAxis/yAxis replaces the chart's own axis config
+			echartOptions: getAxisStyle({ alignMaxLabel: "right" }),
 		},
 		yAxis: {
-			title: __("Timeline"),
-		},
-		y2Axis: {
-			title: __("Total Views"),
+			title: __("Views"),
+			echartOptions: getAxisStyle(),
 		},
 		series: [
-			{
-				name: "total_page_views",
-				type: "area",
-				axis: "y2",
-			},
-			{
-				name: "unique_page_views",
-				type: "area",
-				axis: "y2",
-			},
+			areaSeries("total_page_views", seriesColors[0]),
+			areaSeries("unique_page_views", seriesColors[1]),
 		],
 		echartOptions: {
 			backgroundColor: themeColors.backgroundColor,
 			textStyle: { color: themeColors.textColor },
 			grid: { borderColor: themeColors.gridLineColor },
-			xAxis: getAxisStyle(),
-			yAxis: [getAxisStyle(), getAxisStyle()],
 			tooltip: {
 				backgroundColor: themeColors.tooltipBg,
 				borderColor: themeColors.tooltipBorder,

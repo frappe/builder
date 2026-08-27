@@ -3,7 +3,8 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="truncate text-p-xs leading-4 text-ink-gray-5">
+				<!-- min-h holds the row while the title is still blank -->
+				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
 			</div>
@@ -26,10 +27,20 @@
 			</div>
 		</div>
 
+		<!-- one element spans both waits (setup verdict + session load) so the
+		     shimmer never blinks; the delayed fade keeps fast loads flash-free -->
+		<div
+			v-if="!builderStore.isAIStateKnown || (isLoadingSession && !messages.length)"
+			class="flex flex-1 items-center justify-center pb-40">
+			<span class="bob-pill-in" style="animation-delay: 300ms">
+				<span class="animate-shine text-p-xs">Loading</span>
+			</span>
+		</div>
+
 		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
 		     full-height panel leaves it stranded low with nothing beneath it. -->
 		<div
-			v-if="!builderStore.isAIEnabled"
+			v-else-if="!builderStore.isAIEnabled"
 			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
@@ -59,7 +70,7 @@
 							<SparklesIcon class="bob-orb-spark relative z-10 size-7 text-ink-gray-8" />
 						</span>
 						<p class="text-sm font-medium text-ink-gray-8">
-							{{ pageHasContent ? "Describe a change" : "Describe your site" }}
+							{{ pageHasContent ? "What should we change?" : "Tell me what you're building" }}
 						</p>
 						<p class="text-p-xs text-ink-gray-5">Try one of these, or type your own below</p>
 					</div>
@@ -109,9 +120,13 @@
 							     line covers only what the timeline can't — the answer already
 							     streaming (it sits below the reply as the turn's status, never the
 							     reply shimmering while it's read) or no steps yet. -->
+							<!-- mt-1 only under a streamed reply: standing alone it must sit exactly
+							     where the timeline's first row lands, or the label jumps 4px the
+							     moment "Working" becomes "Thinking". -->
 							<div
 								v-if="stillWorking(message) && (!!assistantText(message) || !message.metadata?.steps?.length)"
-								class="animate-shine mt-1 w-fit text-p-xs">
+								class="animate-shine w-fit text-p-xs text-ink-gray-5"
+								:class="assistantText(message) && 'mt-1'">
 								Working
 							</div>
 						</template>
@@ -317,9 +332,9 @@
 						ref="promptInput"
 						v-model="prompt"
 						rows="1"
-						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
-						placeholder="Ask to create or edit this page..."
+						placeholder="Ask to create or edit this page…"
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
 					<Transition name="fade">
@@ -411,9 +426,11 @@ const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
-const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
+const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
 
 const currentSessionTitle = computed(() => {
+	// blank until loaded, not "New chat" flipping to the real title
+	if (!sessionId.value || !sessions.value.length) return "";
 	const current = sessions.value.find((s) => s.name === sessionId.value);
 	return current?.title || "New chat";
 });
@@ -696,12 +713,10 @@ function openDebug(debug: Record<string, any>) {
 function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
-		debug.noopCorrected ||
-			(debug.argsRepaired ?? 0) > 0 ||
+		(debug.argsRepaired ?? 0) > 0 ||
 			(debug.toolFailures?.length ?? 0) > 0 ||
 			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds" ||
-			debug.stopReason === "noop_unbacked",
+			debug.stopReason === "max_rounds",
 	);
 }
 
@@ -735,6 +750,14 @@ onMounted(() => {
 	// is actually usable rather than inferring it from Builder Settings alone.
 	builderStore.refreshAIState();
 });
+
+// the chat usually loads behind the closed tab, where the scroll can't land
+watch(
+	() => builderStore.leftPanelActiveTab,
+	(tab) => {
+		if (tab === "Chat") chat.flushPendingScroll();
+	},
+);
 
 // Providers and models are configured in Settings, so the picker is stale the
 // moment that dialog closes. Refetch then rather than making every screen in

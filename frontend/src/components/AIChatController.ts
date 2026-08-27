@@ -48,6 +48,21 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
+	readonly isLoadingSession = ref(false);
+	// only the newest load may commit; older responses are stale
+	private loadSessionEpoch = 0;
+	// target of the newest in-flight load; refreshes follow it, not the current session
+	private pendingSessionId: string | null = null;
+	// orders the user's session choices (switch/new/delete); refreshes don't count
+	private sessionIntentEpoch = 0;
+	// in-flight new_ai_session calls; a "reselect" during one must cancel it
+	private pendingSessionCreates = 0;
+
+	private invalidateSessionLoads() {
+		this.loadSessionEpoch++;
+		this.pendingSessionId = null;
+		this.isLoadingSession.value = false;
+	}
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
@@ -230,12 +245,12 @@ export class AIChatController {
 			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
 			// Sessions are page-scoped: never carry one across a page switch.
+			this.sessionIntentEpoch++;
+			this.invalidateSessionLoads();
 			this.sessionId.value = "";
 			this.sessions.value = [];
-			if (newPageId === "new") {
-				this.messages.value = [];
-				return;
-			}
+			this.messages.value = [];
+			if (newPageId === "new") return;
 			await this.loadSession();
 			// A build may be mid-stream on this page (opened from another chat's link,
 			// or a refresh mid-generation): replay the buffered stream as live preview.
@@ -300,6 +315,7 @@ export class AIChatController {
 		this.lastStreamRenderAt = Date.now();
 		try {
 			this.dispatcher.applyPageYaml(this.pageStreamContent.value);
+			nextTick(() => this.canvasStore.activeCanvas?.followBuildEdge());
 		} catch {}
 	}
 
@@ -321,46 +337,80 @@ export class AIChatController {
 		};
 	}
 
+	// scrolling a display:none container (closed tab) is a no-op; park and replay
+	private pendingScrollToBottom = false;
+
 	private scrollToBottom() {
 		nextTick(() => {
-			if (this.messageContainer.value) {
-				this.messageContainer.value.scrollTop = this.messageContainer.value.scrollHeight;
+			const el = this.messageContainer.value;
+			if (!el || el.clientHeight === 0) {
+				this.pendingScrollToBottom = true;
+				return;
 			}
+			el.scrollTop = el.scrollHeight;
 		});
 	}
+
+	flushPendingScroll = () => {
+		if (!this.pendingScrollToBottom) return;
+		this.pendingScrollToBottom = false;
+		this.scrollToBottom();
+	};
 
 	/** Load a chat session: the given one, else the current one, else the page's
 	 * most recently used (the server creates the first). A page can hold several
 	 * parallel sessions — see switchSession/newSession. */
 	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
-		const result = await createResource({
-			url: "builder.ai.api.get_ai_session",
-			makeParams: () => ({
-				page_id: this.pageId.value,
-				model: this.selectedModel.value,
-				session_id: sessionId || this.sessionId.value || undefined,
-			}),
-		}).submit();
-		const session = result as { session_id: string; messages: ChatMessage[] };
-		this.sessionId.value = session.session_id;
-		this.messages.value = (session.messages || []).map(
-			(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
-		);
-		this.loadSessions();
+		const target = sessionId || this.pendingSessionId || this.sessionId.value || undefined;
+		const epoch = ++this.loadSessionEpoch;
+		const pageId = this.pageId.value;
+		this.pendingSessionId = target ?? null;
+		this.isLoadingSession.value = true;
+		try {
+			const result = await createResource({
+				url: "builder.ai.api.get_ai_session",
+				makeParams: () => ({
+					page_id: pageId,
+					model: this.selectedModel.value,
+					session_id: target,
+				}),
+			}).submit();
+			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
+			const session = result as { session_id: string; messages: ChatMessage[] };
+			this.sessionId.value = session.session_id;
+			this.messages.value = (session.messages || []).map(
+				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+			);
+			this.scrollToBottom();
+			this.loadSessions();
+		} finally {
+			if (epoch === this.loadSessionEpoch) {
+				this.isLoadingSession.value = false;
+				this.pendingSessionId = null;
+			}
+		}
 	}
 
 	/** Refresh the session-switcher list (fire-and-forget; the panel renders it). */
 	loadSessions = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
+		const pageId = this.pageId.value;
 		const rows = await createResource({ url: "builder.ai.api.list_page_ai_sessions" })
-			.submit({ page_id: this.pageId.value })
+			.submit({ page_id: pageId })
 			.catch(() => null);
-		if (rows) this.sessions.value = rows as Array<{ name: string; title: string | null }>;
+		if (rows && this.pageId.value === pageId)
+			this.sessions.value = rows as Array<{ name: string; title: string | null }>;
 	};
 
 	switchSession = async (sessionId: string) => {
-		if (!sessionId || sessionId === this.sessionId.value) return;
+		// reselecting the current chat is a no-op only when nothing else is pending
+		if (
+			!sessionId ||
+			(sessionId === this.sessionId.value && !this.pendingSessionId && !this.pendingSessionCreates)
+		)
+			return;
+		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
 		this.scrollToBottom();
@@ -368,22 +418,37 @@ export class AIChatController {
 
 	newSession = async () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
-		const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
-			page_id: this.pageId.value,
-			model: this.selectedModel.value,
-		});
-		this.resetTransientState();
-		this.sessionId.value = (result as { session_id: string }).session_id;
-		this.messages.value = [];
-		this.loadSessions();
+		const intent = ++this.sessionIntentEpoch;
+		this.invalidateSessionLoads();
+		const pageId = this.pageId.value;
+		this.pendingSessionCreates++;
+		try {
+			const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
+				page_id: pageId,
+				model: this.selectedModel.value,
+			});
+			// a later choice (another chat, another page) beats this create
+			if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
+			this.resetTransientState();
+			// loads started during the round-trip above carry a valid epoch; void them
+			this.invalidateSessionLoads();
+			this.sessionId.value = (result as { session_id: string }).session_id;
+			this.messages.value = [];
+			this.loadSessions();
+		} finally {
+			this.pendingSessionCreates--;
+		}
 	};
 
 	deleteSession = async () => {
 		if (!this.sessionId.value) return;
 		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
+		const intent = ++this.sessionIntentEpoch;
+		const pageId = this.pageId.value;
 		await createResource({ url: "builder.ai.api.delete_ai_session" })
 			.submit({ session_id: this.sessionId.value })
 			.catch(() => null);
+		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
 		this.resetTransientState();
 		this.sessionId.value = "";
 		await this.loadSession(); // falls back to the next most recent (or a fresh one)
@@ -524,11 +589,32 @@ export class AIChatController {
 				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
 			}
 		}
+		const followId = this.followTargetIn(data.operations);
+		if (followId) nextTick(() => this.canvasStore.activeCanvas?.followBlock(followId));
 		// Don't overwrite the bubble with a static "Applying N changes…" — the loop emits
 		// a per-round progress note (the model's words, or a "Updated N blocks" summary)
 		// right after each batch, which is what the user actually sees update.
 		this.scrollToBottom();
 	};
+
+	/** The batch's last touched block, for the canvas to pan into view. Whole-tree
+	 * rewrites (generate_page/set_page_blocks) have no single locus; skip those. */
+	private followTargetIn(operations: Array<{ tool_name: string; args: Record<string, any> }>) {
+		for (let i = operations.length - 1; i >= 0; i--) {
+			const { tool_name, args } = operations[i];
+			if (tool_name === "add_block") {
+				return ((args.block_json as Record<string, any>)?.blockId || args.parent_block_id) as string;
+			}
+			if (tool_name === "update_block" || tool_name === "move_block") return args.block_id as string;
+			if (tool_name === "update_blocks") {
+				if (Array.isArray(args.patches)) {
+					return (args.patches as Record<string, any>[]).at(-1)?.block_id as string;
+				}
+				return ((args.block_ids as string[]) || []).at(-1);
+			}
+		}
+		return null;
+	}
 
 	onComplete = async (data: { message?: string; session_id?: string }) => {
 		if (this.isForeignSession(data)) {
@@ -548,6 +634,8 @@ export class AIChatController {
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
+		// the session this turn belongs to; the user may switch chats mid-await below
+		const completedSession = data.session_id || this.sessionId.value;
 
 		let undoScripts: string[] = [];
 		if (this.dispatcher.pendingScriptOps.value.length) {
@@ -575,21 +663,23 @@ export class AIChatController {
 
 		const localMeta = { ...meta };
 		if (
-			this.sessionId.value &&
+			completedSession &&
 			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
 		) {
 			createResource({ url: "builder.ai.api.update_session_message_metadata" })
-				.submit({ session_id: this.sessionId.value, metadata: localMeta })
+				.submit({ session_id: completedSession, metadata: localMeta })
 				.catch(() => null);
 		}
 
 		await this.loadSession();
 
-		// Re-apply client-only metadata in case the server hasn't flushed it yet.
+		// Re-apply client-only metadata in case the server hasn't flushed it yet —
+		// but only onto the turn's own session, not one switched to meanwhile.
 		if (
-			localMeta.affectedBlocks?.length ||
-			localMeta.affectedScripts?.length ||
-			localMeta.undoScripts?.length
+			this.sessionId.value === completedSession &&
+			(localMeta.affectedBlocks?.length ||
+				localMeta.affectedScripts?.length ||
+				localMeta.undoScripts?.length)
 		) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
@@ -714,8 +804,8 @@ export class AIChatController {
 	cancel = async () => {
 		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
 		this.isCancelling.value = true;
-		this.progressMessage.value = "Cancelling...";
-		this.replacePendingAssistant("Cancelling...", { status: "running" });
+		this.progressMessage.value = "Cancelling…";
+		this.replacePendingAssistant("Cancelling…", { status: "running" });
 		const resetStuckCancel = async () => {
 			if (!this.isCancelling.value) return;
 			this.endCanvasBuild(!!this.pageStreamContent.value);
@@ -740,6 +830,8 @@ export class AIChatController {
 
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
+		// submitting pins the current chat: a still-pending create must not replace it
+		this.sessionIntentEpoch++;
 
 		const userText = this.prompt.value.trim();
 		this.prompt.value = "";

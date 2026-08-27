@@ -111,58 +111,58 @@ export interface BuilderClientScript extends DocType {
 	public_url?: string;
 }
 
-// Last updated: 2026-06-04 10:00:00.000000
+// Last updated: 2026-08-17 17:40:00.000000
 export interface BuilderPage extends DocType {
-	/** Page Name: Data */
-	page_name?: string;
-	/** Route: Data */
-	route?: string;
-	/** Published: Check */
-	published: 0 | 1;
-	/** Blocks: Long Text */
-	blocks?: any;
-	/** Page Preview: Data */
-	preview?: string;
-	/** Title: Data */
-	page_title?: string;
-	/** Page Data Script: Code */
-	page_data_script?: string;
-	/** Dynamic Route: Check */
-	dynamic_route: 0 | 1;
-	/** Draft Blocks: Long Text */
-	draft_blocks?: any;
-	/** Image: Attach Image */
-	meta_image?: string;
-	/** Description: Small Text */
-	meta_description?: string;
-	/** Canonical URL: Data */
-	canonical_url?: string;
-	/** Language: Data */
-	language?: string;
-	/** Client Scripts: Table MultiSelect (Builder Page Client Script) */
-	client_scripts: BuilderPageClientScript[];
-	/** Is Template: Check */
-	is_template: 0 | 1;
-	/** Template Group: Data */
-	template_group?: string;
-	/** Favicon: Attach Image */
-	favicon?: string;
-	/** Authenticated Access: Check */
-	authenticated_access: 0 | 1;
-	/** Disable Indexing: Check */
-	disable_indexing: 0 | 1;
-	/** Project Folder: Link (Builder Project Folder) */
-	project_folder?: string;
-	/** Head HTML: Code */
-	head_html?: string;
-	/** Body HTML: Code */
-	body_html?: string;
-	/** Is Standard: Check */
-	is_standard: 0 | 1;
-	/** App: Select */
-	app?: any;
-	/** Published At: Datetime */
-	published_at?: string;
+  /** Page Name: Data */
+  page_name?: string;
+  /** Route: Data */
+  route?: string;
+  /** Published: Check */
+  published: 0 | 1;
+  /** Blocks: Long Text */
+  blocks?: any;
+  /** Page Preview: Data */
+  preview?: string;
+  /** Title: Data */
+  page_title?: string;
+  /** Page Data Script: Code */
+  page_data_script?: string;
+  /** Dynamic Route: Check */
+  dynamic_route: 0 | 1;
+  /** Draft Blocks: Long Text */
+  draft_blocks?: any;
+  /** Image: Attach Image */
+  meta_image?: string;
+  /** Description: Small Text */
+  meta_description?: string;
+  /** Canonical URL: Data */
+  canonical_url?: string;
+  /** Language: Data */
+  language?: string;
+  /** Client Scripts: Table MultiSelect (Builder Page Client Script) */
+  client_scripts: BuilderPageClientScript[];
+  /** Is Template: Check */
+  is_template: 0 | 1;
+  /** Template Group: Data */
+  template_group?: string;
+  /** Favicon: Attach Image */
+  favicon?: string;
+  /** Authenticated Access: Check */
+  authenticated_access: 0 | 1;
+  /** Disable Indexing: Check */
+  disable_indexing: 0 | 1;
+  /** Project Folder: Link (Builder Project Folder) */
+  project_folder?: string;
+  /** Head HTML: Code */
+  head_html?: string;
+  /** Body HTML: Code */
+  body_html?: string;
+  /** Is Standard: Check */
+  is_standard: 0 | 1;
+  /** App: Select */
+  app?: any;
+  /** Published At: Datetime */
+  published_at?: string;
 }
 
 // Last updated: 2026-06-10 00:00:00.000000
@@ -179,18 +179,18 @@ export interface BuilderSnapshot extends DocType {
 	data: string;
 }
 
-// Last updated: 2025-01-29 09:30:34.896956
+// Last updated: 2026-08-18 18:11:58.308298
 export interface BuilderComponent extends DocType {
-	/** Component Name: Data */
-	component_name?: string;
-	/** Block: JSON */
-	block?: any;
-	/** For Web Page: Link (Builder Page) */
-	for_web_page?: string;
-	/** Component ID: Data */
-	component_id?: string;
-	/** Component Data Script: Code */
-	component_data_script?: string;
+  /** Component Name: Data */
+  component_name?: string;
+  /** Block: Long Text */
+  block?: any;
+  /** For Web Page: Link (Builder Page) */
+  for_web_page?: string;
+  /** Component ID: Data */
+  component_id?: string;
+  /** Component Data Script: Code */
+  component_data_script?: string;
 }
 
 // Last updated: 2026-08-04 10:00:00.000000

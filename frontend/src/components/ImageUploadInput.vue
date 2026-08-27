@@ -15,9 +15,6 @@
 						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
-								:class="{
-									'[&>input]:pl-8': labelPosition === 'left',
-								}"
 								type="text"
 								:label="labelPosition === 'top' ? label : null"
 								:placeholder="placeholder"
@@ -25,6 +22,16 @@
 								:hideClearButton="labelPosition === 'top'"
 								@update:modelValue="setImageURL"
 								:modelValue="currentImageURL">
+								<template v-if="labelPosition === 'left'" #prefix>
+									<img
+										:src="currentImageURL || '/assets/builder/images/fallback.png'"
+										alt=""
+										@click="togglePopover"
+										class="h-4 w-4 cursor-pointer rounded border border-outline-gray-3 shadow-sm"
+										:style="{
+											'object-fit': imageFit || 'contain',
+										}" />
+								</template>
 								<template v-if="labelPosition === 'top'" #suffix>
 									<ImageUploader
 										@upload="setImageURL"
@@ -33,25 +40,43 @@
 										:file_types="['image/*']" />
 								</template>
 							</BuilderInput>
-							<img
-								v-if="labelPosition === 'left'"
-								:src="currentImageURL || '/assets/builder/images/fallback.png'"
-								alt=""
-								@click="togglePopover"
-								class="absolute bottom-[6px] left-2 h-4 w-4 rounded border border-outline-gray-3 shadow-sm"
-								:style="{
-									'object-fit': imageFit || 'contain',
-								}" />
 						</div>
 					</div>
 				</template>
 				<template #body>
-					<div class="rounded-lg bg-surface-base p-3 shadow-lg">
-						<div class="group relative flex items-center justify-center overflow-hidden rounded">
+					<div class="w-64 rounded-lg bg-surface-base p-3 shadow-lg">
+						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center">
+							<span class="text-sm font-semibold text-ink-gray-9">{{ __("Image") }}</span>
+						</div>
+						<div v-if="objectPosition !== undefined" class="mb-3">
+							<TabButtons
+								:class="STRETCH_TABS"
+								:options="fitOptions"
+								:modelValue="imageFit || 'contain'"
+								@update:modelValue="setImageFit" />
+						</div>
+						<!-- one surface for every fit: interactive (dot, frame, zoom) when the
+						     cover crop makes a focal point meaningful, plain preview otherwise -->
+						<ImageFocusInput
+							v-if="currentImageURL && objectPosition !== undefined"
+							:imageSrc="currentImageURL"
+							:modelValue="objectPosition"
+							:viewBox="objectViewBox"
+							:targetRatio="targetRatio"
+							:fit="imageFit"
+							:disabled="imageFit !== 'cover'"
+							@update:modelValue="(val) => emit('update:objectPosition', val)"
+							@update:viewBox="(val) => emit('update:objectViewBox', val)" />
+						<div
+							v-else-if="objectPosition !== undefined"
+							class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+							{{ __("No image") }}
+						</div>
+						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
-								class="image-preview relative h-24 w-48 cursor-pointer bg-surface-gray-2"
+								class="image-preview relative h-24 w-full cursor-pointer bg-surface-gray-2"
 								:style="{
 									'object-fit': imageFit || 'contain',
 								}" />
@@ -64,7 +89,22 @@
 								<Button variant="subtle" @click="openFileSelector">{{ __("Upload") }}</Button>
 							</div>
 						</div>
+						<div v-if="objectPosition !== undefined" class="mt-3 flex items-center gap-1.5">
+							<Button
+								class="flex-1"
+								variant="outline"
+								iconLeft="upload"
+								:label="currentImageURL ? __('Replace') : __('Upload')"
+								@click="openFileSelector" />
+							<Button
+								variant="outline"
+								icon="rotate-ccw"
+								:title="__('Reset focal point')"
+								:disabled="!objectPosition && !objectViewBox"
+								@click="resetFocus" />
+						</div>
 						<InlineInput
+							v-if="objectPosition === undefined"
 							:label="__('Image Fit')"
 							class="mt-4"
 							:modelValue="imageFit"
@@ -84,11 +124,13 @@
 </template>
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { FileUploader, Popover } from "frappe-ui";
+import { STRETCH_TABS } from "@/utils/tabButtons";
+import { FileUploader, Popover, TabButtons } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -99,6 +141,10 @@ const props = withDefaults(
 		labelPosition?: "top" | "left";
 		placeholder?: string;
 		imageFit?: "contain" | "cover" | "fill" | "none";
+		// pass them (even empty) to get the focus-point picker / zoom crop for cover fits
+		objectPosition?: string;
+		objectViewBox?: string;
+		targetRatio?: number;
 		description?: string;
 		popoverOffset?: number;
 	}>(),
@@ -124,7 +170,24 @@ watch(
 );
 
 const currentImageURL = computed(() => props.modelValue || "");
-const emit = defineEmits(["update:imageFit", "update:modelValue"]);
+
+const fitOptions = [
+	{ label: __("Fill & crop"), value: "cover" },
+	{ label: __("Fit"), value: "contain" },
+	{ label: __("Stretch"), value: "fill" },
+];
+
+const emit = defineEmits([
+	"update:imageFit",
+	"update:modelValue",
+	"update:objectPosition",
+	"update:objectViewBox",
+]);
+
+const resetFocus = () => {
+	emit("update:objectPosition", "");
+	emit("update:objectViewBox", "");
+};
 
 const setImageURL = (fileURL: string) => {
 	emit("update:modelValue", fileURL);

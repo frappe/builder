@@ -1,6 +1,7 @@
 <!-- TODO: Refactor; split into manageable smaller files -->
 <template>
 	<DraggablePopup
+		class="token-manager-popup"
 		:modelValue="modelValue"
 		@update:modelValue="
 			(val) => {
@@ -114,9 +115,20 @@
 										v-else
 										:class="[
 											colorCellBoxClass,
-											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1',
+											isFontType ? '' : 'bg-surface-base ring-2 ring-outline-gray-3',
 										]">
+										<FontInput
+											v-if="isFontType"
+											class="w-full"
+											familiesOnly
+											referenceElementSelector=".token-manager-popup"
+											:modelValue="row.value || null"
+											:placeholder="VALUE_PLACEHOLDERS.Font"
+											@mousedown.stop
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')" />
 										<input
+											v-else
 											type="text"
 											:value="row.value"
 											:placeholder="VALUE_PLACEHOLDERS[activeType]"
@@ -222,13 +234,25 @@
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
-											isEditing(row, 'value')
+											isEditing(row, 'value') && !isFontType
 												? 'bg-surface-base ring-2 ring-outline-gray-3'
 												: cellTextClass(row),
 										]"
 										@dblclick="startEdit(row, 'value')">
+										<FontInput
+											v-if="isEditing(row, 'value') && isFontType"
+											class="w-full"
+											familiesOnly
+											referenceElementSelector=".token-manager-popup"
+											:modelValue="row.value || null"
+											:placeholder="VALUE_PLACEHOLDERS.Font"
+											:ref="focusEditInput"
+											@mousedown.stop
+											@update:modelValue="(value: string | null) => commitFontEdit(row, value)"
+											@focusout="(e: FocusEvent) => handleFontEditFocusOut(e, row)"
+											@keydown.esc.stop.prevent="() => cancelEdit(row)" />
 										<input
-											v-if="isEditing(row, 'value')"
+											v-else-if="isEditing(row, 'value')"
 											type="text"
 											:value="row.value"
 											:placeholder="VALUE_PLACEHOLDERS[activeType]"
@@ -397,6 +421,7 @@ import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import FontInput from "@/components/Controls/FontInput.vue";
 import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
@@ -424,6 +449,7 @@ const {
 const csvFileInput = ref<HTMLInputElement>();
 const activeType = ref<"Color" | "Font" | "Dimension">("Color");
 const isColorType = computed(() => activeType.value === "Color");
+const isFontType = computed(() => activeType.value === "Font");
 const emptyTypeMessage = computed(() => {
 	if (activeType.value === "Color") return __("No color tokens yet");
 	if (activeType.value === "Font") return __("No font tokens yet");
@@ -579,9 +605,14 @@ const startEdit = (row: Row, field: EditableField) => {
 };
 
 const focusEditInput = (el: Element | ComponentPublicInstance | null) => {
-	if (el instanceof HTMLInputElement) {
-		el.focus();
-		el.select();
+	// component refs (FontInput) expose their root element; focus the input inside it
+	const input =
+		el instanceof HTMLInputElement
+			? el
+			: ((el as ComponentPublicInstance | null)?.$el as HTMLElement | undefined)?.querySelector?.("input");
+	if (input) {
+		input.focus();
+		input.select();
 	}
 };
 
@@ -612,6 +643,22 @@ const cancelEdit = (row: Row) => {
 	exitEdit(row);
 };
 
+// the font dropdown commits through update:modelValue, not through input blur
+const commitFontEdit = (row: Row, value: string | null) => {
+	if (!isEditing(row, "value")) return;
+	exitEdit(row);
+	if ((row.value || "") === (value || "")) return;
+	updateRowValue(row, value, "light");
+};
+
+const handleFontEditFocusOut = (e: FocusEvent, row: Row) => {
+	const wrapper = e.currentTarget as HTMLElement;
+	const next = e.relatedTarget as HTMLElement | null;
+	// the options list is teleported to body, so it never sits inside the wrapper
+	if (next && (wrapper.contains(next) || next.closest(".combobox-content"))) return;
+	cancelEdit(row);
+};
+
 const commitAndEditNext = (row: Row, field: EditableField, e: KeyboardEvent) => {
 	// bounded: tab moves name -> group -> light -> dark, then exits
 	const next = e.shiftKey ? undefined : EDIT_ORDER[EDIT_ORDER.indexOf(field) + 1];
@@ -624,7 +671,9 @@ const commitAndEditNext = (row: Row, field: EditableField, e: KeyboardEvent) => 
 // create the variable once focus leaves the new row entirely (Tab-ing between its cells is fine)
 const handleNewRowFocusOut = (e: FocusEvent, row: Row) => {
 	const rowEl = e.currentTarget as HTMLElement;
-	if (e.relatedTarget && rowEl.contains(e.relatedTarget as Node)) return;
+	const related = e.relatedTarget as HTMLElement | null;
+	// the font dropdown's options render outside the row (teleported to body)
+	if (related && (rowEl.contains(related) || related.closest(".combobox-content"))) return;
 	createVariable(row);
 };
 
@@ -724,9 +773,17 @@ const moveSelectedToGroup = async (group: string) => {
 		await saveVariable(row);
 	}
 	if (group) {
-		toast.success(rows.length === 1 ? __('Moved {0} token to "{1}"', [rows.length, group]) : __('Moved {0} tokens to "{1}"', [rows.length, group]));
+		toast.success(
+			rows.length === 1
+				? __('Moved {0} token to "{1}"', [rows.length, group])
+				: __('Moved {0} tokens to "{1}"', [rows.length, group]),
+		);
 	} else {
-		toast.success(rows.length === 1 ? __("Ungrouped {0} token", [rows.length]) : __("Ungrouped {0} tokens", [rows.length]));
+		toast.success(
+			rows.length === 1
+				? __("Ungrouped {0} token", [rows.length])
+				: __("Ungrouped {0} tokens", [rows.length]),
+		);
 	}
 };
 
@@ -741,7 +798,10 @@ const uniqueCopyName = (name: string) => {
 const deleteSelected = async () => {
 	const rows = selectedRows();
 	if (!rows.length) return;
-	const deleteMessage = rows.length === 1 ? __("Are you sure you want to delete {0} token?", [rows.length]) : __("Are you sure you want to delete {0} tokens?", [rows.length]);
+	const deleteMessage =
+		rows.length === 1
+			? __("Are you sure you want to delete {0} token?", [rows.length])
+			: __("Are you sure you want to delete {0} tokens?", [rows.length]);
 	const confirmed = await confirm(deleteMessage);
 	if (!confirmed) return;
 
@@ -755,7 +815,8 @@ const deleteSelected = async () => {
 			toast.error(__('Failed to delete "{0}"', [row.token_name]));
 		}
 	}
-	if (deleted) toast.success(deleted === 1 ? __("Deleted {0} token", [deleted]) : __("Deleted {0} tokens", [deleted]));
+	if (deleted)
+		toast.success(deleted === 1 ? __("Deleted {0} token", [deleted]) : __("Deleted {0} tokens", [deleted]));
 	clearSelection();
 };
 
@@ -948,23 +1009,54 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	if (newVariables.length === 0 && updateVariables.length === 0) {
-		if (invalidCount > 0) toast.error(invalidCount === 1 ? __("{0} entry was invalid", [invalidCount]) : __("{0} entries were invalid", [invalidCount]));
+		if (invalidCount > 0)
+			toast.error(
+				invalidCount === 1
+					? __("{0} entry was invalid", [invalidCount])
+					: __("{0} entries were invalid", [invalidCount]),
+			);
 		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
 	// Warn user that existing variables will be updated
-	const createAndUpdateMessage = newVariables.length === 1
-		? updateVariables.length === 1
-			? __("Create {0} new token and update {1} existing token?", [newVariables.length, updateVariables.length])
-			: __("Create {0} new token and update {1} existing tokens?", [newVariables.length, updateVariables.length])
-		: updateVariables.length === 1
-			? __("Create {0} new tokens and update {1} existing token?", [newVariables.length, updateVariables.length])
-			: __("Create {0} new tokens and update {1} existing tokens?", [newVariables.length, updateVariables.length]);
+	const createAndUpdateMessage =
+		newVariables.length === 1
+			? updateVariables.length === 1
+				? __("Create {0} new token and update {1} existing token?", [
+						newVariables.length,
+						updateVariables.length,
+					])
+				: __("Create {0} new token and update {1} existing tokens?", [
+						newVariables.length,
+						updateVariables.length,
+					])
+			: updateVariables.length === 1
+				? __("Create {0} new tokens and update {1} existing token?", [
+						newVariables.length,
+						updateVariables.length,
+					])
+				: __("Create {0} new tokens and update {1} existing tokens?", [
+						newVariables.length,
+						updateVariables.length,
+					]);
 	const confirmationLines = [createAndUpdateMessage];
-	if (invalidCount > 0) confirmationLines.push(invalidCount === 1 ? __("({0} invalid entry skipped)", [invalidCount]) : __("({0} invalid entries skipped)", [invalidCount]));
-	if (standardCount > 0) confirmationLines.push(standardCount === 1 ? __("({0} standard token skipped)", [standardCount]) : __("({0} standard tokens skipped)", [standardCount]));
-	confirmationLines.push("", __("WARNING: Updating will overwrite the existing values for the listed variables."));
+	if (invalidCount > 0)
+		confirmationLines.push(
+			invalidCount === 1
+				? __("({0} invalid entry skipped)", [invalidCount])
+				: __("({0} invalid entries skipped)", [invalidCount]),
+		);
+	if (standardCount > 0)
+		confirmationLines.push(
+			standardCount === 1
+				? __("({0} standard token skipped)", [standardCount])
+				: __("({0} standard tokens skipped)", [standardCount]),
+		);
+	confirmationLines.push(
+		"",
+		__("WARNING: Updating will overwrite the existing values for the listed variables."),
+	);
 	const confirmed = await confirm(confirmationLines.join("\n"));
 
 	if (!confirmed) {
@@ -1013,12 +1105,38 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
-	if (createdCount > 0) toast.success(createdCount === 1 ? __("Created {0} token", [createdCount]) : __("Created {0} tokens", [createdCount]));
-	if (updatedCount > 0) toast.success(updatedCount === 1 ? __("Updated {0} token", [updatedCount]) : __("Updated {0} tokens", [updatedCount]));
-	if (createErrors > 0) toast.error(createErrors === 1 ? __("Failed to create {0} token", [createErrors]) : __("Failed to create {0} tokens", [createErrors]));
-	if (updateErrors > 0) toast.error(updateErrors === 1 ? __("Failed to update {0} token", [updateErrors]) : __("Failed to update {0} tokens", [updateErrors]));
-	if (invalidCount > 0) toast.warning(invalidCount === 1 ? __("Skipped {0} invalid entry", [invalidCount]) : __("Skipped {0} invalid entries", [invalidCount]));
-	if (standardCount > 0) toast.warning(standardCount === 1 ? __("Skipped {0} standard token (read-only)", [standardCount]) : __("Skipped {0} standard tokens (read-only)", [standardCount]));
+	if (createdCount > 0)
+		toast.success(
+			createdCount === 1 ? __("Created {0} token", [createdCount]) : __("Created {0} tokens", [createdCount]),
+		);
+	if (updatedCount > 0)
+		toast.success(
+			updatedCount === 1 ? __("Updated {0} token", [updatedCount]) : __("Updated {0} tokens", [updatedCount]),
+		);
+	if (createErrors > 0)
+		toast.error(
+			createErrors === 1
+				? __("Failed to create {0} token", [createErrors])
+				: __("Failed to create {0} tokens", [createErrors]),
+		);
+	if (updateErrors > 0)
+		toast.error(
+			updateErrors === 1
+				? __("Failed to update {0} token", [updateErrors])
+				: __("Failed to update {0} tokens", [updateErrors]),
+		);
+	if (invalidCount > 0)
+		toast.warning(
+			invalidCount === 1
+				? __("Skipped {0} invalid entry", [invalidCount])
+				: __("Skipped {0} invalid entries", [invalidCount]),
+		);
+	if (standardCount > 0)
+		toast.warning(
+			standardCount === 1
+				? __("Skipped {0} standard token (read-only)", [standardCount])
+				: __("Skipped {0} standard tokens (read-only)", [standardCount]),
+		);
 
 	if (csvFileInput.value) csvFileInput.value.value = "";
 };

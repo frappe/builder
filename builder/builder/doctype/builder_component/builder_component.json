@@ -22,7 +22,8 @@
   },
   {
    "fieldname": "block",
-   "fieldtype": "JSON",
+   "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Block",
    "read_only": 1
   },
@@ -33,25 +34,25 @@
    "options": "Builder Page",
    "read_only": 1
   },
-   {
-    "fieldname": "component_id",
-    "fieldtype": "Data",
-    "label": "Component ID",
-    "no_copy": 1,
-    "read_only": 1,
-    "unique": 1
-   },
-   {
-    "fieldname": "component_data_script",
-    "fieldtype": "Code",
-    "label": "Component Data Script",
-    "options": "Python",
-    "description": "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-   }
-  ],
+  {
+   "fieldname": "component_id",
+   "fieldtype": "Data",
+   "label": "Component ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "description": "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')",
+   "fieldname": "component_data_script",
+   "fieldtype": "Code",
+   "label": "Component Data Script",
+   "options": "Python"
+  }
+ ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-29 09:30:34.896956",
+ "modified": "2026-08-18 18:11:58.308298",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Component",
@@ -83,6 +84,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

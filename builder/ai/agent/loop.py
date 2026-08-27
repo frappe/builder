@@ -96,196 +96,11 @@ SNAPSHOT_TOOLS = frozenset(
 # silently — two parallel attaches in one round raced and .catch(() => null) ate the
 # failure; a page then published with its reveal CSS but not the JS that fires it.
 # The server apply is atomic and verified; the canvas just mirrors the result.
-SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "update_script"})
+SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "attach_page_script", "update_script"})
 
 
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
-
-
-def looks_like_page_yaml(text: str) -> bool:
-	"""Heuristic: did the model emit page YAML as plain content?"""
-	if not text:
-		return False
-	stripped = re.sub(r"^```(?:yaml)?\s*", "", text.strip())
-	return stripped.startswith(("el:", "- el:", "id: root", "- id:"))
-
-
-# First-person / sentence-initial past-tense claims that the page was changed. The
-# no-op-claim guard uses this: if the model says it did the work but called no tool,
-# nothing was applied — a hallucinated success (weaker models narrate the action
-# instead of doing it). Anchored to "I added…" / "Added a…" shapes so a truthful
-# answer ABOUT past work ("your page was created last week") doesn't trip it.
-ACTION_VERBS = (
-	"added|created|updated|changed|removed|deleted|applied|attached|inserted|"
-	"replaced|moved|translated|restyled|recolou?red|rebuilt|built|wired|enabled|"
-	"adjusted|swapped|renamed|resized|reordered|set up"
-)
-ACTION_CLAIM_RE = re.compile(
-	rf"\b(?:I|I've|I have|we|we've)(?:\s+\w+){{0,2}}\s+(?:{ACTION_VERBS})\b"
-	rf"|^\s*(?:{ACTION_VERBS})\b",
-	re.IGNORECASE | re.MULTILINE,
-)
-
-NOOP_CORRECTION = (
-	"You wrote a summary describing changes, but you called no tools — so NOTHING was "
-	"applied to the page. If the request needs a change, call the appropriate tool(s) now "
-	"(update_block/add_block for targeted edits, query_blocks + update_blocks for bulk ones, "
-	"set_page_script, generate_page, …) and actually do the work. If no change is genuinely "
-	"needed, or you were only answering a question, reply plainly and do NOT claim you "
-	"changed anything."
-)
-
-
-def claims_unbacked_action(summary_text: str) -> bool:
-	"""True if the summary reads like a completed edit ('Added a confetti burst…')."""
-	return bool(summary_text) and bool(ACTION_CLAIM_RE.search(summary_text))
-
-
-# Persisted present_ui cards replay to the model as plain text ("[buttons: …]"),
-# and a model can MIMIC that format — writing a card as chat text instead of
-# calling present_ui. Text renders no controls, so the user is stuck.
-# Any card-atom name in bracket notation is mimicry, never natural prose — cover the
-# replay vocabulary AND the schema vocabulary (a model can leak either: Kimi wrote
-# "[actions: Continue]", blending the schema's kind name into the replay format).
-CARD_TEXT_RE = re.compile(
-	r"\[\s*(?:input|choices|buttons|upload|swatches|actions|color_input)\s*:"
-	r"|\[\s*colou?r picker\b",
-	re.IGNORECASE,
-)
-
-CARD_CORRECTION = (
-	"Your last message wrote an interactive card as plain TEXT (markup like [input: …] "
-	"or a raw JSON blob). Text renders NO controls — the user cannot answer it. "
-	"Ask again properly: ONE present_ui call composing the same fields from its ui atoms "
-	"(input/choices/upload/actions), following the tool's exact schema. Do not repeat "
-	"the markup or JSON in your text."
-)
-
-
-def looks_like_card_text(summary_text: str) -> bool:
-	return bool(summary_text) and bool(CARD_TEXT_RE.search(summary_text))
-
-
-# The subtler mimic: a question with enumerated options written as clean prose
-# ("Choose a typography pairing: • Syne + Albert Sans — … • …"). No card markup,
-# so CARD_TEXT_RE misses it — but the user gets a dead list instead of tappable
-# chips, and one such message in the history teaches the model to answer every
-# later question the same way (the design flow degrades permanently).
-BULLET_LINE_RE = re.compile(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+\S")
-ASKS_CHOICE_RE = re.compile(
-	r"(?mi)^\s*(?:choose|pick|select|which|what(?:'s| is)? your|would you (?:like|prefer)|let me know which|"
-	r"here are|let's (?:explore|look at)|consider (?:these|the following)|a few (?:more )?options)\b"
-)
-# Option-DECORATION markers (palette/image) are the exact format option_text()
-# replays a card in — a model writing "[palette: #C4552D, …]" in a bullet is
-# mimicking a past card as prose, whatever the lead-in reads like. Control-atom
-# markers (actions/buttons/input/…) count the same way: a bulleted question that
-# leaks ANY card notation is a card written as text.
-OPTION_MARKER_RE = re.compile(
-	r"\[\s*(?:palette|image|actions|buttons|input|choices|upload|swatches)\s*:",
-	re.IGNORECASE,
-)
-
-BUILD_INCOMPLETE_CORRECTION = (
-	"You set up the design system (tokens, page settings) but NEVER built the page — it is "
-	"still EMPTY. Call generate_page NOW with a full brief: the chosen layout SYSTEM and its "
-	"signature move, the font pairing, the palette and spacing as the exact var(--<id>) token "
-	"handles you just minted, every section with real copy, and — if the user asked for "
-	"movement — the class hooks your scripts will target. The turn is NOT done until the page "
-	"has content."
-)
-
-OPTIONS_AS_TEXT_CORRECTION = (
-	"You ended your turn by asking a question with a LIST OF OPTIONS as plain text — text "
-	"renders no controls, so the user has nothing to tap. Ask it again as ONE present_ui "
-	"call: a single short lead-in `text` atom, then a `choices` group with one option per "
-	"item (label + short description, plus `colors` on a layout direction so its palette "
-	"shows). A card that is one tappable question needs no extra button. Do NOT repeat the "
-	"options in your message text."
-)
-
-
-def asks_options_as_text(summary_text: str) -> bool:
-	"""True when a no-tool round poses a multi-option question as prose (2+ bullets
-	plus either a question, a presenting lead-in, or leaked card-option markers)."""
-	text = (summary_text or "").strip()
-	if not text or len(BULLET_LINE_RE.findall(text)) < 2:
-		return False
-	return "?" in text or bool(ASKS_CHOICE_RE.search(text)) or bool(OPTION_MARKER_RE.search(text))
-
-
-# Weaker models sometimes emit a pseudo tool call as plain TEXT instead of calling
-# the tool ("calc:default_api:write_page_data_script{…}", "```tool_code…"). That
-# must never reach the chat as the turn's summary. Conservative signals only —
-# `default_api` is Gemini's function namespace, never natural prose.
-TOOL_SYNTAX_RE = re.compile(r"\bdefault_api\b|<tool_code|```tool_code")
-
-
-def looks_like_tool_syntax(text: str) -> bool:
-	return bool(text) and bool(TOOL_SYNTAX_RE.search(text))
-
-
-# Weaker models sometimes emit their tool call as a plain-text JSON blob instead
-# of a native tool call — without salvage the raw JSON lands in the chat as the
-# turn's summary. Two salvageable shapes (an optional prose prefix is tolerated):
-# a wrapped call ({"type": "present_ui", "args": {…}}) naming a REGISTERED tool,
-# and bare present_ui args ({"text": …, "ui": […]} — the exact schema, nothing
-# looser). Card-ish JSON that matches neither (hallucinated schemas) gets the
-# corrective round instead — see looks_like_json_card.
-TEXT_TOOL_NAME_KEYS = ("type", "name", "tool", "tool_name")
-TEXT_TOOL_ARG_KEYS = ("args", "arguments", "parameters", "input")
-UI_CARD_KEYS = frozenset({"ui", "choices", "options", "buttons", "inputs", "swatches", "upload"})
-
-
-def split_trailing_json(text: str) -> tuple[str, str | None]:
-	"""Split "prose… {json}" into (prose, blob). The blob must run to the end of
-	the message; code fences are tolerated. blob is None when there isn't one."""
-	text = (text or "").strip()
-	if text.startswith("```"):
-		text = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", text).strip()
-	start = text.find("{")
-	if start == -1 or not text.endswith("}"):
-		return text, None
-	return text[:start].strip(), text[start:]
-
-
-def parse_text_tool_call(text: str, known_tools: list[str]) -> tuple[str, dict, str] | None:
-	"""Salvage a tool call the model wrote as text. Returns (tool_name, args,
-	prose_prefix) or None when nothing safely matches."""
-	prose, blob = split_trailing_json(text)
-	if not blob:
-		return None
-	parsed, _ = llm.loads_tolerant(blob)
-	if not isinstance(parsed, dict):
-		return None
-	name = next((parsed[k] for k in TEXT_TOOL_NAME_KEYS if isinstance(parsed.get(k), str)), None)
-	if name in known_tools:
-		args = next((parsed[k] for k in TEXT_TOOL_ARG_KEYS if isinstance(parsed.get(k), dict)), {})
-		return name, args, prose
-	if (
-		"present_ui" in known_tools
-		and isinstance(parsed.get("text"), str)
-		and isinstance(parsed.get("ui"), list)
-	):
-		return "present_ui", parsed, prose
-	return None
-
-
-def looks_like_json_card(text: str) -> bool:
-	"""A JSON blob that TRIES to be an interactive card but matches no salvageable
-	shape (hallucinated schema, e.g. {"text": …, "choices": {…}, "actions": {…}}).
-	Mapping arbitrary invented schemas is a losing game — send the model a
-	corrective round instead."""
-	_, blob = split_trailing_json(text)
-	if not blob:
-		return False
-	parsed, _ = llm.loads_tolerant(blob)
-	return (
-		isinstance(parsed, dict)
-		and isinstance(parsed.get("text"), str)
-		and bool(UI_CARD_KEYS & parsed.keys())
-	)
 
 
 # Above this many chars of compact-YAML page structure, switch the page context
@@ -432,6 +247,7 @@ TOOL_LABELS = {
 	"read_url": ("Reading a web page", "Read a web page"),
 	"research": ("Researching online", "Researched online"),
 	"get_page_scripts": ("Reading the page scripts", "Read the page scripts"),
+	"attach_page_script": ("Attaching a shared script", "Attached a shared script"),
 	"set_page_settings": ("Updating page settings", "Updated page settings"),
 	"remember": ("Saving a note for next time", "Saved a note for next time"),
 	"seed_sample_data": ("Adding sample records", "Added sample records"),
@@ -511,6 +327,7 @@ class AgentRunner:
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
 		image_url: str | None = None,
+		image_file_url: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -524,6 +341,7 @@ class AgentRunner:
 		self.channel = page_id or session_id
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
+		self.image_file_url = image_file_url
 		self.registry = registry or build_default_registry()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
@@ -579,17 +397,9 @@ class AgentRunner:
 		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
 		self.trace: list[dict] = []
 		self.stop_reason = ""
-		# Set once the no-op-claim guard has spent its single corrective round this turn.
-		self.noop_corrected = False
-		# Set once the incomplete-build guard has fired (foundation minted but page
-		# left empty because generate_page was never called).
-		self.build_correction_used = False
 		# Debug signals: how many tool-arg blobs needed json_repair, and the finish_reason
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
-		# Tool calls the model emitted as plain-text JSON instead of native calls
-		# (see parse_text_tool_call) — salvaged, but a signal the model is weak.
-		self.text_tools_salvaged = 0
 		self.finish_reasons: list[str | None] = []
 		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
@@ -763,7 +573,11 @@ class AgentRunner:
 		# byte-stable from the session rows, so system + history stays a provider-
 		# cache prefix hit ACROSS turns. The page context goes after — it changes
 		# every turn and would otherwise invalidate everything behind it.
-		messages.extend(AISession.build_context_messages_from_id(self.session_id))
+		messages.extend(
+			AISession.build_context_messages_from_id(
+				self.session_id, include_images=ModelRegistry.supports_vision(self.loop_model)
+			)
+		)
 		self.history_end_index = len(messages) - 1
 
 		# The page structure. It's resent on every round of a multi-round turn, so a
@@ -778,6 +592,13 @@ class AgentRunner:
 		user_text = self.prompt
 		if self.selected_block_ids:
 			user_text += "\n\n" + self.attached_blocks_note()
+		if self.image_url and self.image_file_url:
+			# The image itself rides below; the model also needs its ADDRESS — the
+			# only handle a brief can carry into the generation step.
+			user_text += (
+				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
+				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
+			)
 		if self.image_url:
 			messages.append(
 				{
@@ -974,23 +795,6 @@ class AgentRunner:
 			)
 
 		content = "".join(content_parts)
-		if not tool_operations and (salvaged := parse_text_tool_call(content, self.registry.names())):
-			name, args, prose = salvaged
-			self.text_tools_salvaged += 1
-			logger.warning(
-				"AI tool call emitted as TEXT, salvaged (tool=%s): %s",
-				name,
-				BlockCodec.truncate_for_log(content, 300),
-			)
-			tool_operations.append({"tool_name": name, "args": args})
-			raw_tool_calls.append(
-				{
-					"id": f"call_text_salvage_{len(self.trace)}",
-					"type": "function",
-					"function": {"name": name, "arguments": json.dumps(args)},
-				}
-			)
-			content = prose
 		self.finish_reasons.append(finish_reason)
 		# finish_reason="length" means the model hit max_tokens mid-output — the usual
 		# cause of truncated/unparseable tool args. Surface it as the prime suspect.
@@ -1289,72 +1093,12 @@ class AgentRunner:
 		"""Close off a tool-calling round's narration. The words were already streamed
 		as they were written; this fixes them in the timeline so the next round starts
 		with a clean slate, and stands in with a description of the ops when the model
-		called tools without saying anything. Emitted even when there is nothing to
-		show — that is what tells the client to drop what it has been streaming (a
-		round whose text turned out to be leaked tool syntax)."""
+		called tools without saying anything."""
 		note = (text or "").strip()
-		if looks_like_tool_syntax(note):
-			note = ""
 		if not note and applied:
 			note = self.describe_operations(applied)
 		self.live_text = ""
 		self.add_step("text", status="done", text=note)
-
-	def correction_for(self, summary_text: str) -> str | None:
-		"""A no-tool round that should have been a tool call gets EXACTLY ONE
-		corrective round. Three shapes: card markup written as plain text (mimicking
-		the persisted replay format — renders no controls), a multi-option question
-		asked as prose bullets (same dead end, no markup to match), and a summary
-		that CLAIMS an edit when nothing was applied this turn (hallucinated
-		success)."""
-		# Incomplete build: the model minted the design system (tokens/scripts) but
-		# never called generate_page, so the page is still empty. Its own dedicated
-		# one-shot correction, independent of the no-op guard (this turn DID mutate).
-		if not self.build_correction_used and self.build_incomplete():
-			self.build_correction_used = True
-			self.stop_reason = "build_retry"
-			logger.warning(
-				"Incomplete build corrected: foundation set but page still empty (no generate_page)"
-			)
-			return BUILD_INCOMPLETE_CORRECTION
-		if self.noop_corrected:
-			return None
-		correction = None
-		if looks_like_card_text(summary_text) or looks_like_json_card(summary_text):
-			correction = CARD_CORRECTION
-		elif asks_options_as_text(summary_text):
-			correction = OPTIONS_AS_TEXT_CORRECTION
-		elif (
-			not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text)
-		):
-			correction = NOOP_CORRECTION
-		if correction is None:
-			return None
-		self.noop_corrected = True
-		self.stop_reason = "noop_retry"
-		kind = {
-			id(CARD_CORRECTION): "card-as-text",
-			id(OPTIONS_AS_TEXT_CORRECTION): "options-as-text",
-			id(NOOP_CORRECTION): "no-op claim",
-		}[id(correction)]
-		logger.warning(
-			"No-tool round corrected (%s): %s",
-			kind,
-			BlockCodec.truncate_for_log(summary_text, 300),
-		)
-		return correction
-
-	def build_incomplete(self) -> bool:
-		"""True when this turn laid the FOUNDATION (minted design tokens) but never
-		called generate_page, leaving the page empty — the model stopped mid-build.
-		Only meaningful on a page turn; the fix is one more round that generates."""
-		if not self.page_id:
-			return False
-		root = self.page_root()
-		if root and (root.get("children") or []):
-			return False  # the page has content — build reached the layout
-		tools_called = {t.get("name") for entry in self.trace for t in entry.get("tools") or []}
-		return "set_design_token" in tools_called and "generate_page" not in tools_called
 
 	def flush_pending_images(self, messages: list[dict]) -> None:
 		"""Images a tool captured this round (preview_page screenshots) ride a
@@ -1375,7 +1119,7 @@ class AgentRunner:
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
-		msg = "Cancelled."
+		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
 		)
@@ -1440,15 +1184,15 @@ class AgentRunner:
 
 		try:
 			for round_index in range(MAX_ROUNDS):
+				# A cancel that landed mid-round (e.g. during a generation stream that
+				# kept its partial page) ends the turn HERE, before another paid call.
+				if round_index and self.is_cancelled():
+					raise CancelledError
 				self.refresh_cache_markers(messages)
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
-					if correction := self.correction_for(summary_text):
-						messages.append({"role": "assistant", "content": summary_text})
-						messages.append({"role": "user", "content": correction})
-						continue
 					self.stop_reason = "model_finished"
 					break
 
@@ -1504,35 +1248,7 @@ class AgentRunner:
 		frappe.db.commit()  # nosemgrep
 
 	def finish_turn(self, summary_text: str, started: float):
-		"""Wrap up a completed loop: recover stray output, guard hallucinated
-		summaries, pick/emit the final summary, and persist the turn."""
-		# Defensive: a weaker model may emit page YAML as content instead of calling
-		# generate_page. Persist it server-side and apply it as a generation op.
-		if not self.applied_operations and self.page_id and looks_like_page_yaml(summary_text):
-			logger.info("Recovering YAML-as-content into a synthetic generate_page op")
-			from builder.ai import page_writer
-
-			self.ensure_revert_snapshot()
-			root, data_script = page_writer.persist_page(self.page_id, BlockCodec.strip_fences(summary_text))
-			if root:
-				op = {"tool_name": "generate_page", "args": {"blocks": [root], "data_script": data_script}}
-				self.applied_operations.append(op)
-				self.emit("tool_batch", operations=[op])
-			summary_text = ""
-
-		# Leaked tool-call syntax (or a JSON card that survived its corrective round)
-		# is never a summary — suppress it. With applied work the deterministic
-		# fallbacks below take over; with none, say what happened.
-		if looks_like_tool_syntax(summary_text) or looks_like_json_card(summary_text):
-			logger.warning(
-				"Suppressed tool-syntax leak in summary: %s", BlockCodec.truncate_for_log(summary_text, 300)
-			)
-			summary_text = (
-				""
-				if self.applied_operations
-				else "My last step came out garbled and was not applied — ask me to try that again."
-			)
-
+		"""Wrap up a completed loop: pick/emit the final summary and persist the turn."""
 		if not self.applied_operations and not summary_text:
 			# A soft miss, not a failure: the model may have done real tool work (reads)
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
@@ -1554,20 +1270,6 @@ class AgentRunner:
 			)
 			self.emit("error", message=note, warning=True, after_commit=True)
 			return
-
-		# Backstop: the model still claims an edit it never made (no ops applied, no
-		# server-side writes, even after the corrective round). Don't present a
-		# hallucinated success — say so.
-		if not self.applied_operations and not self.server_mutations and claims_unbacked_action(summary_text):
-			logger.warning(
-				"Unbacked action claim persisted (no ops applied): %s",
-				BlockCodec.truncate_for_log(summary_text, 300),
-			)
-			summary_text = (
-				"I described that change but didn't actually apply it — so nothing on the page "
-				"changed. Could you rephrase, or tell me more specifically what to change?"
-			)
-			self.stop_reason = self.stop_reason or "noop_unbacked"
 
 		# Block/script edits and generation ops were already emitted incrementally inside
 		# the loop (live canvas progress); nothing more to emit here.
@@ -1622,9 +1324,7 @@ class AgentRunner:
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
 				"rounds": len(self.trace),
-				"noopCorrected": self.noop_corrected,
 				"argsRepaired": self.args_repaired,
-				"textToolsSalvaged": self.text_tools_salvaged,
 				"finishReasons": self.finish_reasons,
 				"toolFailures": self.tool_failures,
 				"streamRetries": self.stream_retries,
