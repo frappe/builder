@@ -386,10 +386,10 @@ async function uploadBuilderAsset(file: File, silent = false) {
 
 const MAX_INLINE_SVG_SIZE = 20 * 1024;
 
-// An inline SVG lives in the page JSON, so it is re-serialised on every save,
-// walked by every deep watcher and copied into every history entry. Past a point
-// it is cheaper as a file the browser can cache. One that paints from a Builder
-// token has to stay inline though: an <img> cannot read CSS variables.
+// An inline SVG lives in the page JSON, so every autosave sends it in full, every
+// history entry copies it, and each of its paths is a real node in the canvas. Past
+// a point it is cheaper as a file the browser can cache. One that paints from a
+// Builder token has to stay inline though: an <img> cannot read CSS variables.
 function isOversizedSVG(svg: string) {
 	return svg.length > MAX_INLINE_SVG_SIZE && !svg.includes("var(--") && !svg.includes("currentColor");
 }
