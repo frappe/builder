@@ -384,6 +384,21 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	};
 }
 
+const MAX_INLINE_SVG_SIZE = 20 * 1024;
+
+// An inline SVG lives in the page JSON, so it is re-serialised on every save,
+// walked by every deep watcher and copied into every history entry. Past a point
+// it is cheaper as a file the browser can cache. One that paints from a Builder
+// token has to stay inline though: an <img> cannot read CSS variables.
+function isOversizedSVG(svg: string) {
+	return svg.length > MAX_INLINE_SVG_SIZE && !svg.includes("var(--") && !svg.includes("currentColor");
+}
+
+async function uploadSVGAsFile(svg: string) {
+	const file = new File([svg], `${generateId()}.svg`, { type: "image/svg+xml" });
+	return uploadBuilderAsset(file);
+}
+
 // Naming every data URL image.png makes the server read an SVG or a GIF as a PNG,
 // which fails on upload. The MIME type in the data URL already tells us what it is.
 const DATA_URL_EXTENSIONS: Record<string, string> = {
@@ -979,6 +994,7 @@ export {
 	isHTMLString,
 	isInteractiveControl,
 	isJSONString,
+	isOversizedSVG,
 	isTargetEditable,
 	kebabToCamelCase,
 	mapToObject,
@@ -998,6 +1014,7 @@ export {
 	toTitleCase,
 	triggerCopyEvent,
 	uploadBuilderAsset,
+	uploadSVGAsFile,
 	uploadUserFont,
 	parseJSONWithFallback,
 	deepEqual,
