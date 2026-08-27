@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"POT-Creation-Date: 2026-08-18 15:53+0000\n"
+"PO-Revision-Date: 2026-08-19 05:58\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +17,55 @@ msgstr ""
 "X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
 "X-Crowdin-File-ID: 177\n"
 "Language: tr_TR\n"
+
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entries skipped)"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entry skipped)"
+msgstr ""
+
+#: frontend/src/components/RouteTreeNode.vue:91
+#: frontend/src/components/RouteTreeView.vue:41
+msgid "({0} remaining)"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard token skipped)"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard tokens skipped)"
+msgstr ""
+
+#: frontend/src/components/ShadowHandler.vue:134
+msgid "+ Add Shadow Layer"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:144
+msgid "301 - Moved Permanently"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:145
+msgid "302 - Found (Temporary)"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:146
+msgid "307 - Temporary Redirect"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:147
+msgid "308 - Permanent Redirect"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:141
+msgid "A booking site for my clinic"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "A record points to wrong IP: {0}"
+msgstr ""
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
@@ -33,19 +82,42 @@ msgstr ""
 msgid "AI Settings"
 msgstr ""
 
+#: builder/ai/session.py:90
+msgid "AI session does not belong to this page"
+msgstr ""
+
+#: builder/ai/session.py:85
+msgid "AI session not found"
+msgstr ""
+
+#. Label of the api_base (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Base"
+msgstr ""
+
+#. Label of the api_key (Password) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Key"
+msgstr "API Anahtarı"
+
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
 msgstr ""
 
-#: builder/ai_page_generator.py:671
+#: builder/ai/api.py:609
 msgid "API key is valid"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
 msgid "Accessibility"
 msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Active"
+msgstr "Aktif"
 
 #: frontend/src/components/ArrayEditor.vue:14
 #: frontend/src/components/MoreStylesPanel.vue:43
@@ -68,15 +140,25 @@ msgid "Add Domain"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 msgid "Add Redirect"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:109
+#: frontend/src/components/PageClientScriptManager.vue:107
 msgid "Add Script"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:15
+msgid "Add Token"
 msgstr ""
 
 #: frontend/src/components/DataLoaderBlock.vue:6
 msgid "Add a block to repeat"
+msgstr ""
+
+#: builder/ai/api.py:589
+msgid "Add a model to this provider first"
 msgstr ""
 
 #: frontend/src/components/Settings/PageCode.vue:7
@@ -97,6 +179,18 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalCode.vue:6
 msgid "Added to end of head. For meta tags, styles, and scripts."
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:240
+msgid "Adding all pages..."
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Adding redirect..."
+msgstr ""
+
+#: frontend/src/data/domains.ts:60
+msgid "Adding {0}…"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:62
@@ -135,8 +229,12 @@ msgstr ""
 msgid "All Properties"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:101
+#: frontend/src/components/PageClientScriptManager.vue:99
 msgid "All client scripts are executed in preview mode and on published pages."
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:241
+msgid "All pages added"
 msgstr ""
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
@@ -155,6 +253,14 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:64
 msgid "Alphabetically (Z-A)"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:184
+msgid "Already a member: {0}"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:181
+msgid "Already invited: {0}"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
@@ -178,8 +284,13 @@ msgstr ""
 msgid "Analytics"
 msgstr "Analitik"
 
+#: builder/ai/api.py:70
+msgid "Another AI request is still processing. Please wait."
+msgstr ""
+
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageGeneral.vue:140
 msgid "App"
 msgstr "Uygulama"
 
@@ -188,7 +299,7 @@ msgid "App {0} is not installed"
 msgstr "{0} Uygulaması yüklü değil"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
-#: frontend/src/components/Settings/PageGeneral.vue:87
+#: frontend/src/components/Settings/PageGeneral.vue:86
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
 msgstr ""
 
@@ -204,8 +315,25 @@ msgstr ""
 msgid "Apps"
 msgstr "Uygulamalar"
 
-#: frontend/src/stores/pageStore.ts:168
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Archived"
+msgstr "Arşivlendi"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:207
+msgid "Are you sure you want to cancel the invitation to {0}?"
+msgstr ""
+
+#: frontend/src/stores/componentStore.ts:441
+msgid "Are you sure you want to delete component: {0}?"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:174
 msgid "Are you sure you want to delete page: {0}?"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:271
+msgid "Are you sure you want to delete the redirect from \"{0}\" to \"{1}\"?"
 msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:236
@@ -216,19 +344,27 @@ msgstr ""
 msgid "Are you sure you want to delete this redirect?"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} token?"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} tokens?"
+msgstr ""
+
 #: frontend/src/stores/canvasStore.ts:198
 msgid "Are you sure you want to exit without saving?"
 msgstr ""
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:74
+#: builder/builder/doctype/builder_settings/builder_settings.js:72
 msgid "Are you sure you want to replace {0} with {1}?"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:206
+#: frontend/src/components/BlockContextMenuOptions/index.ts:183
 msgid "Are you sure you want to reset?"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:245
+#: frontend/src/stores/pageStore.ts:251
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr ""
 
@@ -244,17 +380,25 @@ msgstr ""
 msgid "Array Items:"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:90
-#: frontend/src/components/PageClientScriptManager.vue:93
+#: builder/ai/agent/pending.py:114
+msgid "At least one field is required"
+msgstr ""
+
+#: frontend/src/components/PageClientScriptManager.vue:88
+#: frontend/src/components/PageClientScriptManager.vue:91
 msgid "Attach Script"
 msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:229
+msgid "Attributes"
+msgstr "Özellikler"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Authenticated Access"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:286
+#: frontend/src/components/BackgroundHandler.vue:293
 #: frontend/src/components/BlockGridLayoutHandler.vue:13
 #: frontend/src/components/BlockPositionHandler.vue:11
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:20
@@ -267,6 +411,10 @@ msgstr "Otomatik"
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:67
 msgid "Auto convert images to WebP"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:160
+msgid "Automatically follows server IP changes. Best choice for subdomains."
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:58
@@ -302,6 +450,11 @@ msgstr ""
 msgid "Background Only"
 msgstr ""
 
+#. Description of the 'API Base' (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Base URL for an OpenAI-compatible gateway. Leave empty for OpenRouter."
+msgstr ""
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic"
@@ -312,12 +465,16 @@ msgstr "Temel"
 msgid "Basic Forms"
 msgstr ""
 
+#: frontend/src/utils/fontManager.ts:26
+msgid "Black"
+msgstr "Siyah"
+
 #: frontend/src/components/Templates/TemplatePageGrid.vue:12
 msgid "Blank Page"
 msgstr ""
 
 #. Label of the block (JSON) field in DocType 'Block Template'
-#. Label of the block (JSON) field in DocType 'Builder Component'
+#. Label of the block (Long Text) field in DocType 'Builder Component'
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
@@ -327,8 +484,13 @@ msgstr ""
 msgid "Block CSS"
 msgstr ""
 
-#: frontend/src/pages/PageBuilder.vue:307
+#: frontend/src/pages/PageBuilder.vue:226
 msgid "Block Client Script"
+msgstr ""
+
+#. Label of the block_id (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Block ID"
 msgstr ""
 
 #: frontend/src/components/PageScript.vue:95
@@ -376,6 +538,10 @@ msgstr ""
 msgid "Body HTML"
 msgstr ""
 
+#: frontend/src/utils/fontManager.ts:24
+msgid "Bold"
+msgstr "Kalın"
+
 #: frontend/src/components/PropsPopoverContent.vue:169
 msgid "Boolean"
 msgstr ""
@@ -392,7 +558,7 @@ msgstr ""
 msgid "Border Width"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:292
+#: frontend/src/components/BackgroundHandler.vue:299
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
 msgstr "Alt"
@@ -414,6 +580,31 @@ msgstr "Sağ Alt"
 
 #: frontend/src/components/BuilderCommandPalette.vue:88
 msgid "Browse all settings"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+msgid "Builder AI Memory"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Builder AI Message"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Builder AI Model"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Builder AI Provider"
+msgstr ""
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Builder AI Session"
 msgstr ""
 
 #. Name of a DocType
@@ -439,6 +630,10 @@ msgstr ""
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Page Client Script"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:20
+msgid "Builder Page Filter"
 msgstr ""
 
 #. Name of a DocType
@@ -468,25 +663,25 @@ msgstr ""
 msgid "Builder Token"
 msgstr ""
 
-#: builder/ai_page_generator.py:564
-msgid "Building {0}"
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+msgid "CNAME record points to wrong destination: {0}"
 msgstr ""
 
-#: builder/ai_page_generator.py:366
-msgid "Building..."
-msgstr ""
-
-#: frontend/src/components/PageClientScriptManager.vue:78
+#: frontend/src/components/PageClientScriptManager.vue:76
 #: frontend/src/components/PageScript.vue:194
-#: frontend/src/pages/PageBuilder.vue:311
+#: frontend/src/pages/PageBuilder.vue:230
 msgid "CSS"
 msgstr "CSS"
 
-#: frontend/src/components/Modals/TokenManager.vue:890
+#: frontend/src/components/Controls/SearchBlock.vue:243
+msgid "CSS Classes"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:900
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:878
+#: frontend/src/components/Modals/TokenManager.vue:888
 msgid "CSV must have at least a header row and one data row"
 msgstr ""
 
@@ -523,6 +718,12 @@ msgstr ""
 msgid "Canvas"
 msgstr ""
 
+#. Label of the capability_section (Section Break) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Capabilities"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
 msgstr ""
@@ -533,7 +734,7 @@ msgstr ""
 msgid "Category"
 msgstr "Kategori"
 
-#: frontend/src/components/BackgroundHandler.vue:290
+#: frontend/src/components/BackgroundHandler.vue:297
 #: frontend/src/components/BlockGridLayoutHandler.vue:67
 #: frontend/src/components/BlockGridLayoutHandler.vue:125
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
@@ -555,7 +756,7 @@ msgstr ""
 msgid "Change"
 msgstr "Değiştir"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:84
 msgid "Checked"
 msgstr ""
 
@@ -567,16 +768,12 @@ msgstr ""
 msgid "Class"
 msgstr "Sınıf"
 
-#: frontend/src/components/BackgroundHandler.vue:113
+#: frontend/src/components/BackgroundHandler.vue:114
 msgid "Clear Gradient"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:105
+#: frontend/src/components/BackgroundHandler.vue:106
 msgid "Clear Image"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:98
-msgid "Clear Selection"
 msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
@@ -606,7 +803,7 @@ msgstr "İstemci Komut Dosyası"
 msgid "Client Scripts"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:123
+#: frontend/src/components/BackgroundHandler.vue:124
 msgid "Clip Background to Text"
 msgstr ""
 
@@ -618,7 +815,7 @@ msgstr "Kapat"
 msgid "Close (Esc)"
 msgstr ""
 
-#: frontend/src/components/LeftPanelTabs/index.ts:54
+#: frontend/src/components/LeftPanelTabs/index.ts:60
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
@@ -632,7 +829,7 @@ msgstr ""
 msgid "Collapse"
 msgstr "Daralt"
 
-#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/Commands/index.ts:157
 msgid "Collapse All Layers"
 msgstr ""
 
@@ -650,7 +847,7 @@ msgstr ""
 msgid "Color"
 msgstr "Renk"
 
-#: frontend/src/components/Modals/TokenManager.vue:449
+#: frontend/src/components/Modals/TokenManager.vue:454
 msgid "Colors"
 msgstr ""
 
@@ -717,12 +914,16 @@ msgstr ""
 msgid "Component is used in current page. You cannot delete it."
 msgstr ""
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:88
+#: builder/builder/doctype/builder_settings/builder_settings.js:86
 msgid "Component replaced successfully"
 msgstr ""
 
 #: frontend/src/stores/componentStore.ts:111
 msgid "Component saved!"
+msgstr ""
+
+#: frontend/src/stores/componentStore.ts:130
+msgid "Component synced in all the pages!"
 msgstr ""
 
 #: frontend/src/components/ComponentUpdates.vue:19
@@ -737,7 +938,7 @@ msgstr ""
 msgid "Component {0} was deleted and will not render"
 msgstr ""
 
-#: frontend/src/components/LeftPanelTabs/index.ts:47
+#: frontend/src/components/LeftPanelTabs/index.ts:52
 msgid "Components"
 msgstr ""
 
@@ -757,7 +958,17 @@ msgstr ""
 msgid "Confirm"
 msgstr "Onayla"
 
-#: frontend/src/components/BackgroundHandler.vue:284
+#: builder/ai/codex.py:102 builder/ai/presets.py:256
+msgid "Connected"
+msgstr ""
+
+#. Label of the connection_section (Section Break) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Connection"
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:291
 msgid "Contain"
 msgstr ""
 
@@ -769,29 +980,47 @@ msgstr ""
 msgid "Container mode"
 msgstr ""
 
+#. Label of the content (Small Text) field in DocType 'Builder AI Memory'
+#. Label of the content (Long Text) field in DocType 'Builder AI Message'
 #. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:22
+#: frontend/src/components/Controls/SearchBlock.vue:198
 msgid "Content"
 msgstr "İçerik"
+
+#. Label of the max_tokens (Int) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Context Window"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:41
 msgid "Controls"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:84
+#: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Convert To Collection"
+msgstr ""
+
+#: frontend/src/utils/imageUtils.ts:33
+msgid "Convert to WebP"
+msgstr ""
+
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Converting..."
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
 msgstr "Panoya kopyalandı"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:58
+#: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:260
+#: frontend/src/components/Commands/index.ts:258
 msgid "Copy Block Styles"
 msgstr ""
 
@@ -799,11 +1028,11 @@ msgstr ""
 msgid "Copy Page"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:63
+#: frontend/src/components/BlockContextMenuOptions/index.ts:40
 msgid "Copy Style"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:264
+#: frontend/src/components/Commands/index.ts:262
 msgid "Copy block styles"
 msgstr ""
 
@@ -811,34 +1040,54 @@ msgstr ""
 msgid "Copy entire page?"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:205
+msgid "Copy var(--{0})"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGallery.vue:242
+msgid "Could not add pages"
+msgstr ""
+
 #: frontend/src/components/Templates/TemplateGallery.vue:210
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
 msgid "Could not create page from template"
 msgstr ""
 
-#: builder/api.py:440
+#: builder/api.py:583
 msgid "Could not import any pages from this template group."
 msgstr ""
 
-#: builder/api.py:408
+#: builder/api.py:551
 msgid "Could not load the selected template. Please try again."
 msgstr ""
 
-#: builder/api.py:190
+#: builder/ai/api.py:320
+msgid "Could not reach {0}: {1}"
+msgstr ""
+
+#: builder/api.py:330
 msgid "Could not resolve hostname: {0}"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:438
+#: frontend/src/components/Modals/TokenManager.vue:443
 msgid "Couldn't copy to clipboard"
+msgstr ""
+
+#: builder/ai/presets.py:284
+msgid "Couldn't reach the server. Check the address is right and that it's running."
 msgstr ""
 
 #: frontend/src/components/Settings/TopReferrersList.vue:29
 msgid "Count"
 msgstr "Sayı"
 
-#: frontend/src/components/BackgroundHandler.vue:285
+#: frontend/src/components/BackgroundHandler.vue:292
 msgid "Cover"
 msgstr ""
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
+msgid "Create"
+msgstr "Oluştur"
 
 #: frontend/src/utils/dialogs.ts:23
 msgid "Create Folder"
@@ -848,7 +1097,7 @@ msgstr ""
 msgid "Create New Folder"
 msgstr ""
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:189
+#: frontend/src/utils/builderBlockCopyPaste.ts:275
 msgid "Create New Page"
 msgstr ""
 
@@ -856,8 +1105,36 @@ msgstr ""
 msgid "Create a new page"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:959
+msgid "Create {0} new token and update {1} existing token?"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:960
+msgid "Create {0} new token and update {1} existing tokens?"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:962
+msgid "Create {0} new tokens and update {1} existing token?"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:963
+msgid "Create {0} new tokens and update {1} existing tokens?"
+msgstr ""
+
+#: builder/ai/agent/pending.py:131
+msgid "Created DocType {0} with {1} field(s)"
+msgstr ""
+
 #: frontend/src/components/PageListItem.vue:56
 msgid "Created by {0}"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} tokens"
 msgstr ""
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
@@ -898,6 +1175,10 @@ msgstr "Özel"
 msgid "Custom Domains"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalDomains.vue:188
+msgid "DNS is verified but SSL certificate provisioning failed. Please retry."
+msgstr ""
+
 #: frontend/src/components/Modals/TokenManager.vue:51
 msgid "Dark"
 msgstr "Koyu"
@@ -925,6 +1206,7 @@ msgstr ""
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: frontend/src/components/Controls/SearchBlock.vue:178
 msgid "Data"
 msgstr "Veri"
 
@@ -976,7 +1258,7 @@ msgstr ""
 msgid "Default Value"
 msgstr "Varsayılan Değer"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:283
+#: frontend/src/components/BlockContextMenuOptions/index.ts:260
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
 msgstr "Sil"
@@ -985,8 +1267,6 @@ msgstr "Sil"
 msgid "Delete Folder"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:339
-#: frontend/src/components/Commands/index.ts:344
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
 msgstr ""
@@ -996,16 +1276,28 @@ msgstr ""
 msgid "Delete selected blocks"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:172
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete variable"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete {0} variables"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} tokens"
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:178
 msgid "Deleting page"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:296
-msgid "Describe how you want to modify this section…"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:295
-msgid "Describe the page you want to create…"
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Deleting redirect..."
 msgstr ""
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
@@ -1018,7 +1310,7 @@ msgstr "Açıklama"
 msgid "Deselect pages"
 msgstr ""
 
-#: frontend/src/components/LeftPanelTabs/index.ts:66
+#: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
 msgid "Design Tokens"
 msgstr ""
@@ -1031,8 +1323,18 @@ msgstr ""
 msgid "Designer"
 msgstr "Tasarımcı"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:248
+#: frontend/src/components/BuilderCanvas.vue:232
+msgid "Desktop"
+msgstr "Masaüstü"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:225
 msgid "Detach Component"
+msgstr ""
+
+#. Description of the 'Context Window' (Int) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Detected automatically. 200,000 is assumed when unknown."
 msgstr ""
 
 #: frontend/src/components/Settings/index.ts:136
@@ -1056,7 +1358,7 @@ msgstr ""
 msgid "Dimension"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:451
+#: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
 msgstr "Boyutlar"
 
@@ -1073,7 +1375,7 @@ msgstr ""
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:128
+#: frontend/src/components/Settings/PageGeneral.vue:124
 msgid "Disable Indexing"
 msgstr ""
 
@@ -1087,6 +1389,10 @@ msgstr ""
 msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
 msgstr ""
 
+#: frontend/src/data/domains.ts:88
+msgid "Disabling redirect…"
+msgstr ""
+
 #: frontend/src/components/BlockFlexLayoutHandler.vue:22
 msgid "Distribution"
 msgstr ""
@@ -1095,13 +1401,30 @@ msgstr ""
 msgid "Do you want to copy the entire page including settings and scripts?"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:495
+#: frontend/src/utils/helpers.ts:516
 msgid "Do you want to upload the font \"{0}\"?"
+msgstr ""
+
+#: builder/ai/agent/pending.py:97
+msgid "DocType {0} already exists"
+msgstr ""
+
+#: builder/ai/agent/pending.py:138
+msgid "DocType {0} does not exist"
+msgstr "DocType {0} mevcut değil"
+
+#: builder/ai/agent/pending.py:95
+msgid "Doctype name is required"
 msgstr ""
 
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
 msgstr "Domain"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:177
+#: frontend/src/components/Settings/GlobalDomains.vue:192
+msgid "Domain setup failed. Please retry or contact support."
+msgstr ""
 
 #: frontend/src/data/domains.ts:54
 msgid "Domain verification failed"
@@ -1117,9 +1440,9 @@ msgstr ""
 msgid "Don't Execute"
 msgstr ""
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:169
-#: frontend/src/utils/builderBlockCopyPaste.ts:201
-#: frontend/src/utils/builderBlockCopyPaste.ts:221
+#: frontend/src/utils/builderBlockCopyPaste.ts:182
+#: frontend/src/utils/builderBlockCopyPaste.ts:293
+#: frontend/src/utils/builderBlockCopyPaste.ts:314
 msgid "Done"
 msgstr "Bitti"
 
@@ -1141,25 +1464,21 @@ msgstr "Taslak"
 msgid "Draft Blocks"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:25
-msgid "Drop image to attach"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:78
+#: frontend/src/components/BlockContextMenuOptions/index.ts:55
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
 msgstr "Kopyala"
 
-#: frontend/src/components/Commands/index.ts:279
+#: frontend/src/components/Commands/index.ts:277
 msgid "Duplicate Block"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/components/Commands/index.ts:130
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:283
+#: frontend/src/components/Commands/index.ts:281
 msgid "Duplicate block"
 msgstr ""
 
@@ -1167,7 +1486,7 @@ msgstr ""
 msgid "Duplicate to edit"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:155
+#: frontend/src/stores/pageStore.ts:161
 msgid "Duplicating page"
 msgstr ""
 
@@ -1188,43 +1507,40 @@ msgstr ""
 msgid "Ease Out"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:46
+#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/utils/colorOptions.ts:80
 #: frontend/src/utils/useBuilderEvents.ts:241
 #: frontend/src/utils/useBuilderEvents.ts:255
 msgid "Edit"
 msgstr "Düzenle"
 
-#: frontend/src/pages/PageBuilder.vue:308
+#: frontend/src/pages/PageBuilder.vue:227
 msgid "Edit Block Client Script"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:293
-msgid "Edit Block with AI"
-msgstr ""
-
-#: frontend/src/pages/PageBuilder.vue:312
+#: frontend/src/pages/PageBuilder.vue:231
 msgid "Edit CSS"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:225
+#: frontend/src/components/BlockContextMenuOptions/index.ts:202
 msgid "Edit Component"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:52
-#: frontend/src/pages/PageBuilder.vue:305
+#: frontend/src/components/BlockContextMenuOptions/index.ts:29
+#: frontend/src/pages/PageBuilder.vue:224
 msgid "Edit HTML"
 msgstr "HTML Düzenle"
 
-#: frontend/src/components/Commands/index.ts:297
-msgid "Edit block with AI"
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+msgid "Edit Redirect"
+msgstr ""
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "Edit Token"
 msgstr ""
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:28
 msgid "Edit template"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:31
-msgid "Edit with AI"
 msgstr ""
 
 #: frontend/src/components/PageCard.vue:23
@@ -1253,9 +1569,24 @@ msgstr ""
 msgid "Enable View Tracking"
 msgstr ""
 
+#. Label of the enabled (Check) field in DocType 'Builder AI Model'
+#. Label of the enabled (Check) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Enabled"
+msgstr "Etkin"
+
+#: frontend/src/data/domains.ts:84
+msgid "Enabling redirect…"
+msgstr ""
+
 #: frontend/src/components/BlockGridLayoutHandler.vue:71
 msgid "End"
 msgstr "Bitir"
+
+#: builder/ai/api.py:382
+msgid "Enter a model id to test with"
+msgstr ""
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:35
 #: frontend/src/components/PropsOptions/NumberOptions.vue:32
@@ -1311,6 +1642,22 @@ msgstr ""
 msgid "Enter your domain"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Error adding redirect"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Error deleting redirect"
+msgstr ""
+
+#: frontend/src/stores/componentStore.ts:132
+msgid "Error syncing component in all the pages!"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Error updating redirect"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:154
 msgid "Exact path"
 msgstr ""
@@ -1343,7 +1690,7 @@ msgstr ""
 msgid "Expand"
 msgstr "Genişlet"
 
-#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:144
 msgid "Expand All Layers"
 msgstr ""
 
@@ -1355,15 +1702,47 @@ msgstr ""
 msgid "External URL"
 msgstr ""
 
+#: frontend/src/utils/fontManager.ts:25
+msgid "Extra Bold"
+msgstr ""
+
+#: frontend/src/utils/fontManager.ts:19
+msgid "Extra Light"
+msgstr ""
+
+#: builder/domain.py:35
+msgid "FC API returned {0}"
+msgstr ""
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to convert image to WebP"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalDomains.vue:211
 msgid "Failed to copy"
 msgstr ""
 
-#: builder/ai_page_generator.py:385
-msgid "Failed to parse AI response. The model returned invalid YAML."
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to create token"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:869
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} tokens"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:755
+msgid "Failed to delete \"{0}\""
+msgstr ""
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to pull image to local"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:879
 msgid "Failed to read CSV file"
 msgstr ""
 
@@ -1376,24 +1755,32 @@ msgstr ""
 msgid "Failed to save component"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageClientScriptManager.vue:277
 #: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
 msgstr ""
 
-#: frontend/src/components/Settings/GlobalAI.vue:71
-msgid "Failed to test API key"
+#: frontend/src/components/PageClientScriptManager.vue:397
+msgid "Failed to update script order"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:390
-msgid "Failed to update script order"
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to update token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} tokens"
 msgstr ""
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:534
+#: frontend/src/utils/helpers.ts:555
 msgid "Failed to upload font"
 msgstr ""
 
@@ -1422,6 +1809,10 @@ msgstr ""
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Filter Builder Pages"
 msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:5
@@ -1456,6 +1847,10 @@ msgstr ""
 msgid "Find Previous (Shift+Enter)"
 msgstr ""
 
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Find..."
+msgstr ""
+
 #: frontend/src/components/DimensionInput.vue:13
 msgid "Fit Content"
 msgstr ""
@@ -1473,15 +1868,15 @@ msgstr ""
 msgid "Fixed"
 msgstr "Sabit"
 
-#: frontend/src/components/Commands/index.ts:248
+#: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:252
+#: frontend/src/components/Commands/index.ts:250
 msgid "Focus property search"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:163
+#: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
 msgid "Folder"
 msgstr "Klasör"
@@ -1501,11 +1896,11 @@ msgstr ""
 msgid "Font"
 msgstr "Yazı Tipi"
 
-#: frontend/src/utils/helpers.ts:488
+#: frontend/src/utils/helpers.ts:509
 msgid "Font \"{0}\" already exists in the project"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:533
+#: frontend/src/utils/helpers.ts:554
 msgid "Font \"{0}\" uploaded successfully"
 msgstr ""
 
@@ -1519,13 +1914,17 @@ msgstr ""
 msgid "Font Name"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:450
+#: frontend/src/components/Modals/TokenManager.vue:455
 msgid "Fonts"
 msgstr "Yazı Tipleri"
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "For Web Page"
+msgstr ""
+
+#: builder/ai/agent/pending.py:213
+msgid "Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
@@ -1535,6 +1934,10 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:104
 msgid "Forward query parameters"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:322
+msgid "Found in: {0}"
 msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:131
@@ -1568,8 +1971,8 @@ msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
-#: frontend/src/components/Commands/index.ts:45
-#: frontend/src/components/Commands/index.ts:204
+#: frontend/src/components/Commands/index.ts:44
+#: frontend/src/components/Commands/index.ts:202
 #: frontend/src/components/Settings/index.ts:44
 #: frontend/src/components/Settings/index.ts:45
 #: frontend/src/components/Settings/index.ts:78
@@ -1579,26 +1982,13 @@ msgstr ""
 msgid "General"
 msgstr "Genel"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Generate"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:290
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:5
-msgid "Generate with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Generating page…"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:17
-msgid "Get API key from"
-msgstr ""
-
 #: frontend/src/components/BuilderToolbar.vue:27
 msgid "Get Started"
 msgstr "Başlarken"
+
+#: builder/ai/presets.py:189
+msgid "Give this provider a name"
+msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:264
 #: frontend/src/components/Settings/index.ts:29
@@ -1627,8 +2017,12 @@ msgstr ""
 msgid "Global style that will be loaded with every page built with Frappe Builder"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:98
+#: frontend/src/components/Commands/index.ts:96
 msgid "Go to Dashboard"
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:231
+msgid "Gradient"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
@@ -1645,12 +2039,16 @@ msgstr ""
 msgid "Group"
 msgstr "Grup"
 
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:56
+msgid "Group name for this radio button. Radio buttons with the same name are grouped together."
+msgstr ""
+
 #: frontend/src/components/BlockFlexLayoutHandler.vue:41
 msgid "Grow"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
-#: frontend/src/pages/PageBuilder.vue:304
+#: frontend/src/pages/PageBuilder.vue:223
 msgid "HTML"
 msgstr "HTML"
 
@@ -1660,6 +2058,14 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
 msgid "HTML Options"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0}"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0} · forwards query parameters"
 msgstr ""
 
 #. Label of the head_html (Code) field in DocType 'Builder Page'
@@ -1688,11 +2094,15 @@ msgstr "Gizli"
 msgid "Hide"
 msgstr "Gizle"
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Hide Left Panel"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Hide Replace"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Hide Right Panel"
 msgstr ""
 
@@ -1700,11 +2110,11 @@ msgstr ""
 msgid "Highlight Blocks with Client Scripts"
 msgstr ""
 
-#: frontend/src/pages/PageBuilder.vue:273
+#: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for move mode"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:204
+#: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
 msgstr "Ana Sayfa"
@@ -1718,12 +2128,16 @@ msgstr "Ana Sayfa"
 msgid "Home page"
 msgstr ""
 
+#: builder/ai/agent/pending.py:75
+msgid "Home page set to /{0}"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
-#: frontend/src/components/Settings/PageGeneral.vue:100
+#: frontend/src/components/Settings/PageGeneral.vue:96
 msgid "Homepage"
 msgstr ""
 
-#: frontend/src/stores/builderStore.ts:77
+#: frontend/src/stores/builderStore.ts:96
 msgid "Homepage set successfully"
 msgstr ""
 
@@ -1731,8 +2145,21 @@ msgstr ""
 msgid "Horizontal"
 msgstr ""
 
+#: frontend/src/pages/PagePersonaSurvey.vue:111
+msgid "How did you hear about Builder?"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:113
+msgid "I heard from the community"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:127
+msgid "I'm a student building my first site"
+msgstr ""
+
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/BackgroundHandler.vue:235
 #: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
 msgstr "Resim"
@@ -1753,7 +2180,11 @@ msgstr ""
 msgid "Image URL"
 msgstr ""
 
-#: builder/ai_page_generator.py:221
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image converted to WebP"
+msgstr ""
+
+#: builder/ai/block_codec.py:256
 msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr ""
 
@@ -1761,13 +2192,21 @@ msgstr ""
 msgid "Image mode"
 msgstr ""
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:110
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image pulled to local"
+msgstr ""
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:109
 msgid "Input Options"
 msgstr ""
 
-#: frontend/src/components/LeftPanelTabs/index.ts:33
+#: frontend/src/components/LeftPanelTabs/index.ts:36
 msgid "Insert"
 msgstr "Ekleme"
+
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Inset Shadow"
+msgstr ""
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
@@ -1779,19 +2218,15 @@ msgstr ""
 msgid "Internal tool / dashboard"
 msgstr ""
 
-#: builder/api.py:186
+#: builder/api.py:326
 msgid "Invalid URL: missing hostname."
 msgstr ""
 
-#: builder/ai_page_generator.py:631
-msgid "Invalid block context JSON"
-msgstr ""
-
-#: builder/ai_page_generator.py:218
+#: builder/ai/block_codec.py:254
 msgid "Invalid image data: must be a base64-encoded data URL"
 msgstr ""
 
-#: builder/ai_page_generator.py:216
+#: builder/ai/block_codec.py:252
 msgid "Invalid image data: must be a base64-encoded image data URL"
 msgstr ""
 
@@ -1807,6 +2242,14 @@ msgstr ""
 msgid "Invitation cancelled"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:200
+msgid "Invitation resent to {0}"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:178
+msgid "Invitation sent to {0}"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
 msgstr ""
@@ -1815,8 +2258,21 @@ msgstr ""
 msgid "Invite Users"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0}"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0} by {1}"
+msgstr ""
+
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
+msgstr ""
+
+#. Label of the is_running (Check) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Is Running"
 msgstr ""
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
@@ -1842,10 +2298,14 @@ msgstr "Benzersiz"
 msgid "Item Width"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:77
+#: frontend/src/components/PageClientScriptManager.vue:75
 #: frontend/src/components/PageScript.vue:193
 msgid "JavaScript"
 msgstr "JavaScript"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:112
+msgid "Just curious, it helps us know what's working."
+msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Just exploring"
@@ -1861,11 +2321,13 @@ msgstr ""
 msgid "Key"
 msgstr "Anahtar"
 
-#: frontend/src/components/Commands/index.ts:202
+#: frontend/src/components/Commands/index.ts:200
 msgid "Keyboard Shortcuts"
 msgstr "Klavye Kısayolları"
 
+#. Label of the label (Data) field in DocType 'Builder AI Model'
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 #: frontend/src/components/PropsPopoverContent.vue:8
 msgid "Label"
@@ -1906,8 +2368,19 @@ msgstr "Son 7 Gün"
 msgid "Last Created"
 msgstr ""
 
+#. Label of the last_interaction_on (Datetime) field in DocType 'Builder AI
+#. Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Interaction On"
+msgstr ""
+
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
+msgstr ""
+
+#. Label of the last_task_type (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Task Type"
 msgstr ""
 
 #: frontend/src/components/PageListItem.vue:39
@@ -1918,10 +2391,14 @@ msgstr ""
 msgid "Layer Icon"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:43
-#: frontend/src/components/Commands/index.ts:148
-#: frontend/src/components/Commands/index.ts:161
-#: frontend/src/components/LeftPanelTabs/index.ts:40
+#: frontend/src/components/ShadowHandler.vue:64
+msgid "Layer {0}"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
 msgstr ""
 
@@ -1929,7 +2406,19 @@ msgstr ""
 msgid "Layout"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:293
+#. Description of the 'API Key' (Password) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Leave empty to fall back to the OpenRouter key in Builder Settings."
+msgstr ""
+
+#. Description of the 'Supports Vision' (Check) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Leave off unless the model accepts image input. Sending an image to a text-only model fails the whole turn."
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:300
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
@@ -1940,6 +2429,7 @@ msgid "Letter"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:50
+#: frontend/src/utils/fontManager.ts:20
 msgid "Light"
 msgstr "Açık"
 
@@ -1949,6 +2439,11 @@ msgstr ""
 
 #: frontend/src/components/PageListItem.vue:26
 msgid "Limited access"
+msgstr ""
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:21
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Limits the pages where the component is replaced"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
@@ -1968,14 +2463,29 @@ msgstr "Bağlantı Hedefi"
 msgid "List"
 msgstr "Liste"
 
+#. Label of the litellm_provider (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "LiteLLM Provider"
+msgstr ""
+
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
 msgstr "Daha Fazla Yükle"
+
+#: frontend/src/components/RouteTreeNode.vue:90
+#: frontend/src/components/RouteTreeView.vue:39
+msgid "Load {0} more"
+msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:5
 msgid "Loading domains…"
 msgstr ""
 
+#: frontend/src/components/RouteTreeView.vue:4
+msgid "Loading pages…"
+msgstr ""
+
+#: frontend/src/components/BuilderSettings.vue:35
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
 #: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
@@ -1992,7 +2502,7 @@ msgstr ""
 msgid "Lowercase"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:138
+#: frontend/src/components/Settings/PageGeneral.vue:134
 msgid "Make this page a standard page that can be exported to an app"
 msgstr ""
 
@@ -2044,8 +2554,18 @@ msgid "Media"
 msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:184
+#: frontend/src/utils/fontManager.ts:22
 msgid "Medium"
 msgstr "Orta"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:48
+msgid "Members ({0})"
+msgstr ""
+
+#. Label of the message_type (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Message Type"
+msgstr "Mesaj Türü"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2062,6 +2582,11 @@ msgstr "Meta Görseli"
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Meta Tags"
 msgstr "Meta Etiketleri"
+
+#. Label of the metadata_json (Long Text) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Metadata JSON"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:59
 msgid "Min Height"
@@ -2080,28 +2605,17 @@ msgstr ""
 msgid "Min. Value"
 msgstr ""
 
-#: frontend/src/components/WebPagePresetPicker.vue:455
-msgid "Minimal"
+#: frontend/src/components/BuilderCanvas.vue:247
+msgid "Mobile"
+msgstr "Cep Telefonu"
+
+#. Label of the model_id (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Model ID"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:74
-msgid "Model"
-msgstr "Modeli"
-
-#: frontend/src/components/WebPagePresetPicker.vue:457
-msgid "Modern"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Modify"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:291
-msgid "Modify with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Modifying section…"
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.py:23
+msgid "Model ID is required"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/MoreStylesSection.ts:15
@@ -2126,12 +2640,20 @@ msgid "Move down in page tree"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:365
-#: frontend/src/components/Modals/TokenManager.vue:759
+#: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to group"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move up in page tree"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} token to \"{1}\""
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} tokens to \"{1}\""
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:75
@@ -2148,14 +2670,24 @@ msgstr ""
 msgid "Name"
 msgstr "Adı"
 
+#: frontend/src/components/EditableSpan.vue:61
+msgid "Name already exists"
+msgstr ""
+
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
 msgstr ""
 
+#. Description of the 'Route Prefix' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty."
+msgstr ""
+
 #: frontend/src/components/BuilderCommandPalette.vue:62
 #: frontend/src/components/CommandPalette.vue:92
-#: frontend/src/components/Commands/index.ts:41
-#: frontend/src/components/Commands/index.ts:100
+#: frontend/src/components/Commands/index.ts:40
+#: frontend/src/components/Commands/index.ts:98
 msgid "Navigate"
 msgstr ""
 
@@ -2176,12 +2708,16 @@ msgstr ""
 msgid "New Page"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:83
+#: frontend/src/components/PageClientScriptManager.vue:81
 msgid "New Script"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
+msgstr ""
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "New Token"
 msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:24
@@ -2202,7 +2738,7 @@ msgstr "Sonraki"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:46
 #: frontend/src/components/BlockFlexLayoutHandler.vue:55
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:88
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:61
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:78
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
@@ -2210,16 +2746,16 @@ msgstr "Sonraki"
 msgid "No"
 msgstr "Hayır"
 
+#: frontend/src/components/Settings/GlobalDomains.vue:186
+msgid "No DNS record found for this domain."
+msgstr ""
+
 #: frontend/src/components/PropsEditor.vue:51
 msgid "No Default Value"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:298
+#: frontend/src/components/BackgroundHandler.vue:305
 msgid "No Repeat"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:81
-msgid "No Style"
 msgstr ""
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
@@ -2231,12 +2767,24 @@ msgstr ""
 msgid "No Wrap"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:428
+msgid "No color tokens yet"
+msgstr ""
+
+#: frontend/src/components/CommandPalette.vue:76
+msgid "No commands found"
+msgstr ""
+
 #: frontend/src/components/BuilderAssets.vue:20
 msgid "No components saved"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:8
 msgid "No custom domains added yet."
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:430
+msgid "No dimension tokens yet"
 msgstr ""
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
@@ -2247,6 +2795,10 @@ msgstr ""
 msgid "No folders yet"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:429
+msgid "No font tokens yet"
+msgstr ""
+
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
 msgstr ""
@@ -2255,11 +2807,15 @@ msgstr ""
 msgid "No matching properties"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:65
+msgid "No members match \"{0}\""
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
 msgstr ""
 
-#: builder/api.py:425
+#: builder/api.py:568
 msgid "No pages found in this template group."
 msgstr ""
 
@@ -2267,16 +2823,28 @@ msgstr ""
 msgid "No pages found."
 msgstr ""
 
+#: builder/ai/api.py:169
+msgid "No pending action on this message"
+msgstr ""
+
 #: builder/api.py:40
 msgid "No permission to preview this page"
 msgstr ""
 
-#: frontend/src/components/Controls/SearchBlock.vue:372
-#: frontend/src/components/Controls/SearchBlock.vue:394
+#: frontend/src/components/Settings/GlobalRedirects.vue:62
+msgid "No redirects match \"{0}\""
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:376
+#: frontend/src/components/Controls/SearchBlock.vue:398
 msgid "No replacements made"
 msgstr ""
 
-#: frontend/src/components/Controls/SearchBlock.vue:137
+#: frontend/src/components/CommandPalette.vue:75
+msgid "No results for \"{0}\""
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "No results found"
 msgstr ""
 
@@ -2286,6 +2854,10 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:349
 msgid "No tokens found"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:354
+msgid "No tokens match \"{0}\". Try a different search term."
 msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:35
@@ -2323,7 +2895,7 @@ msgstr ""
 msgid "Not used in any page"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:100
+#: frontend/src/components/PageClientScriptManager.vue:98
 msgid "Note:"
 msgstr "Not:"
 
@@ -2347,11 +2919,23 @@ msgstr ""
 msgid "Ok"
 msgstr ""
 
+#: frontend/src/components/Controls/StylePropertyControl.vue:56
+msgid "On Active"
+msgstr ""
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:57
+msgid "On Focus"
+msgstr ""
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:55
+msgid "On Hover"
+msgstr ""
+
 #: frontend/src/pages/PagePersonaSurvey.vue:144
 msgid "Online store / E-commerce"
 msgstr ""
 
-#: builder/api.py:183
+#: builder/api.py:323
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
 msgstr ""
 
@@ -2361,7 +2945,7 @@ msgstr ""
 msgid "Only allow logged-in users to view this page."
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:122
+#: frontend/src/components/Settings/PageGeneral.vue:118
 msgid "Only logged-in users can access this page"
 msgstr ""
 
@@ -2376,6 +2960,10 @@ msgstr ""
 #. Label of a shortcut in the Frappe Builder Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Open <strong>Frappe Builder</strong>"
+msgstr ""
+
+#: builder/public/js/builder.js:3
+msgid "Open Builder"
 msgstr ""
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:64
@@ -2394,12 +2982,12 @@ msgstr ""
 msgid "Open in Builder"
 msgstr ""
 
+#: frontend/src/components/TextBlockBubbleMenu.vue:39
+msgid "Open in New Tab"
+msgstr "Yeni Sekmede Aç"
+
 #: frontend/src/components/RouteTreeView.vue:390
 msgid "Open page or toggle folder in page tree"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:4
-msgid "OpenRouter API Key"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
@@ -2425,12 +3013,15 @@ msgstr "Sıra"
 msgid "Original Size"
 msgstr ""
 
-#: frontend/src/components/WebPagePresetPicker.vue:459
 #: frontend/src/pages/PagePersonaSurvey.vue:120
 #: frontend/src/pages/PagePersonaSurvey.vue:134
 #: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Other"
 msgstr "Diğer"
+
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Outset Shadow"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
@@ -2448,11 +3039,14 @@ msgstr "Genel Bakış"
 msgid "Padding"
 msgstr ""
 
+#. Label of the page (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/BuilderCommandPalette.vue:260
-#: frontend/src/components/Commands/index.ts:42
-#: frontend/src/components/Commands/index.ts:110
-#: frontend/src/components/Commands/index.ts:124
-#: frontend/src/components/Commands/index.ts:134
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/pages/PageBuilder.vue:33
 msgid "Page"
 msgstr "Sayfa"
 
@@ -2468,7 +3062,7 @@ msgstr ""
 msgid "Page Code"
 msgstr ""
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:145
+#: frontend/src/utils/builderBlockCopyPaste.ts:153
 msgid "Page Copied"
 msgstr ""
 
@@ -2515,23 +3109,23 @@ msgstr ""
 msgid "Page created"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:174
+#: frontend/src/stores/pageStore.ts:180
 msgid "Page deleted"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:177
+#: frontend/src/stores/pageStore.ts:183
 msgid "Page deletion failed"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:161
+#: frontend/src/stores/pageStore.ts:167
 msgid "Page duplicated"
 msgstr ""
 
-#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:46
+#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:53
 msgid "Page not found"
 msgstr "Sayfa bulunamadı"
 
-#: frontend/src/stores/pageStore.ts:258
+#: frontend/src/stores/pageStore.ts:264
 msgid "Page unpublished"
 msgstr ""
 
@@ -2555,21 +3149,17 @@ msgstr ""
 msgid "Pan canvas up"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:70
+#: frontend/src/components/BlockContextMenuOptions/index.ts:47
 msgid "Paste Style"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:32
-msgid "Paste or drop image"
-msgstr ""
-
-#: frontend/src/utils/builderBlockCopyPaste.ts:184
+#: frontend/src/utils/builderBlockCopyPaste.ts:271
 msgid "Pasting a page!"
 msgstr ""
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:159
-#: frontend/src/utils/builderBlockCopyPaste.ts:192
-#: frontend/src/utils/builderBlockCopyPaste.ts:208
+#: frontend/src/utils/builderBlockCopyPaste.ts:174
+#: frontend/src/utils/builderBlockCopyPaste.ts:278
+#: frontend/src/utils/builderBlockCopyPaste.ts:300
 msgid "Pasting..."
 msgstr ""
 
@@ -2577,6 +3167,14 @@ msgstr ""
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Path"
 msgstr "Yol"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:17
+msgid "Pending Invites ({0})"
+msgstr ""
+
+#: builder/ai/api.py:162
+msgid "Pending action not found"
+msgstr ""
 
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -2589,6 +3187,10 @@ msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:36
 msgid "Pick a wider date range, or share your page to start collecting data."
+msgstr ""
+
+#: builder/ai/api.py:442
+msgid "Pick at least one model"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:100
@@ -2606,25 +3208,29 @@ msgstr "Örnek Metin"
 msgid "Placement"
 msgstr ""
 
-#: builder/ai_page_generator.py:464
-msgid "Please configure an OpenRouter API key in Settings → AI"
+#: builder/ai/api.py:38
+msgid "Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
 msgstr ""
 
 #: builder/builder/doctype/builder_page/builder_page.py:88
 msgid "Please log in to view this page."
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:87
-#: frontend/src/components/BlockContextMenuOptions/index.ts:166
+#: frontend/src/components/BlockContextMenuOptions/index.ts:64
+#: frontend/src/components/BlockContextMenuOptions/index.ts:143
 msgid "Please select a collection"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:258
+#: frontend/src/components/Settings/PageGeneral.vue:254
 msgid "Please select an app for this standard page"
 msgstr ""
 
-#: builder/ai_page_generator.py:659
+#: builder/ai/api.py:595
 msgid "Please set an OpenRouter API key"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:6
+msgid "Please switch to a larger screen to edit"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:244
@@ -2639,7 +3245,7 @@ msgstr ""
 msgid "Portfolio / personal site"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:89
+#: frontend/src/components/BackgroundHandler.vue:90
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
 msgstr "Pozisyon"
@@ -2659,7 +3265,7 @@ msgstr ""
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:129
+#: frontend/src/components/Settings/PageGeneral.vue:125
 msgid "Prevent search engines from indexing this page"
 msgstr ""
 
@@ -2673,11 +3279,11 @@ msgstr ""
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/Commands/index.ts:113
+#: frontend/src/components/Commands/index.ts:111
 #: frontend/src/components/Templates/TemplateGroupCard.vue:16
 #: frontend/src/components/Templates/TemplatePageCard.vue:16
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:21
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:22
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:10
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
 msgid "Preview"
 msgstr "Önizleme"
 
@@ -2694,7 +3300,7 @@ msgstr ""
 msgid "Preview Image is mandatory"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:106
 msgid "Preview Page"
 msgstr ""
 
@@ -2721,9 +3327,19 @@ msgstr "Özellikler"
 msgid "Property"
 msgstr "Özellik"
 
-#: frontend/src/components/Settings/PageGeneral.vue:120
+#: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
 msgstr ""
+
+#. Label of the provider (Link) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Provider"
+msgstr "Sağlayıcı"
+
+#. Label of the provider_name (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Provider Name"
+msgstr "Sağlayıcı Adı"
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -2734,16 +3350,16 @@ msgstr ""
 msgid "Publicly accessible"
 msgstr ""
 
-#: frontend/src/components/PublishButton.vue:77
+#: frontend/src/components/PublishButton.vue:74
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Publish"
 msgstr "Yayınla"
 
-#: frontend/src/components/PublishButton.vue:79
+#: frontend/src/components/PublishButton.vue:76
 msgid "Publish Changes"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:120
 msgid "Publish Page"
 msgstr ""
 
@@ -2768,6 +3384,10 @@ msgstr ""
 msgid "Published with limited access"
 msgstr ""
 
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Pulling..."
+msgstr ""
+
 #: frontend/src/components/Controls/GradientEditor.vue:8
 msgid "Radial"
 msgstr ""
@@ -2789,12 +3409,36 @@ msgstr ""
 msgid "Recent"
 msgstr ""
 
+#: frontend/src/components/Controls/GradientEditor.vue:178
+msgid "Recently used"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Redirect added"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Redirect deleted"
+msgstr ""
+
+#: frontend/src/data/domains.ts:88
+msgid "Redirect disabled for {0}"
+msgstr ""
+
+#: frontend/src/data/domains.ts:84
+msgid "Redirect enabled for {0}"
+msgstr ""
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:240
 msgid "Redirect to Primary"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Redirect updated"
 msgstr ""
 
 #: frontend/src/components/Settings/index.ts:102
@@ -2806,8 +3450,8 @@ msgstr "Yönlendirmeler"
 msgid "Redirects to primary"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:326
-#: frontend/src/components/Commands/index.ts:330
+#: frontend/src/components/Commands/index.ts:304
+#: frontend/src/components/Commands/index.ts:308
 msgid "Redo"
 msgstr "İleri Al"
 
@@ -2825,7 +3469,7 @@ msgstr "Referans Adı"
 msgid "Regex capture"
 msgstr ""
 
-#: frontend/src/utils/fontManager.ts:242
+#: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:267
 msgid "Regular"
 msgstr "Düzenli"
 
@@ -2834,12 +3478,12 @@ msgid "Relative"
 msgstr ""
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
-#: frontend/src/components/Modals/TokenManager.vue:754
+#: frontend/src/components/Modals/TokenManager.vue:764
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
 msgstr "Kaldır"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:99
+#: frontend/src/components/BlockContextMenuOptions/index.ts:76
 msgid "Remove Collection"
 msgstr ""
 
@@ -2851,44 +3495,44 @@ msgstr ""
 msgid "Remove Script"
 msgstr ""
 
-#: frontend/src/components/Controls/GradientEditor.vue:45
+#: frontend/src/components/Controls/GradientEditor.vue:49
 msgid "Remove Stop"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:761
+#: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from group"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:44
-msgid "Remove image"
-msgstr "Görseli kaldır"
+#: frontend/src/data/domains.ts:72
+msgid "Removing {0}…"
+msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:261
+#: frontend/src/components/BlockContextMenuOptions/index.ts:238
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
 msgstr "Yeniden Adlandır"
 
-#: frontend/src/components/BackgroundHandler.vue:95
-#: frontend/src/components/BackgroundHandler.vue:299
+#: frontend/src/components/BackgroundHandler.vue:96
+#: frontend/src/components/BackgroundHandler.vue:306
 msgid "Repeat"
 msgstr "Tekrar"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:157
+#: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:300
+#: frontend/src/components/BackgroundHandler.vue:307
 msgid "Repeat X"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:301
+#: frontend/src/components/BackgroundHandler.vue:308
 msgid "Repeat Y"
 msgstr ""
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:72
+#: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
-#: frontend/src/components/Controls/SearchBlock.vue:127
+#: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
 msgstr "Değiştir"
 
@@ -2896,13 +3540,13 @@ msgstr "Değiştir"
 msgid "Replace All"
 msgstr ""
 
+#: frontend/src/components/Controls/SearchBlock.vue:92
+msgid "Replace All ({0} matches)"
+msgstr ""
+
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
 msgid "Replace Component"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:45
-msgid "Replace Image (AI)"
 msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:89
@@ -2917,7 +3561,21 @@ msgstr ""
 msgid "Replace with..."
 msgstr ""
 
-#: builder/api.py:195
+#: frontend/src/components/Controls/SearchBlock.vue:374
+msgid "Replaced in {0}"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:97
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} block"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:98
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} blocks"
+msgstr ""
+
+#: builder/api.py:336
 msgid "Requests to private or internal addresses are not allowed."
 msgstr ""
 
@@ -2925,15 +3583,15 @@ msgstr ""
 msgid "Resend"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:182
+#: frontend/src/components/BlockContextMenuOptions/index.ts:159
 msgid "Reset Changes"
 msgstr "Değişiklikleri Sıfırla"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:204
+#: frontend/src/components/BlockContextMenuOptions/index.ts:181
 msgid "Reset Component"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:173
+#: frontend/src/components/BlockContextMenuOptions/index.ts:150
 msgid "Reset Overrides"
 msgstr ""
 
@@ -2941,7 +3599,7 @@ msgstr ""
 msgid "Reset canvas zoom"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:185
+#: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
 msgstr ""
 
@@ -2963,19 +3621,19 @@ msgstr ""
 msgid "Restricted"
 msgstr "Kısıtlı"
 
-#: frontend/src/components/WebPagePresetPicker.vue:458
-msgid "Retro"
-msgstr ""
-
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
 msgstr "Yeniden Dene"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:38
-msgid "Rewrite (AI)"
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:294
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}…"
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
@@ -2993,6 +3651,8 @@ msgstr "Robots.txt"
 msgid "Robots.txt Guide"
 msgstr ""
 
+#. Label of the role (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
 msgstr "Rol"
@@ -3007,6 +3667,11 @@ msgstr ""
 #: frontend/src/components/Settings/GlobalAnalytics.vue:31
 msgid "Route"
 msgstr "Rota"
+
+#. Label of the route_prefix (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Route Prefix"
+msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:86
 msgid "Route Tree"
@@ -3040,23 +3705,33 @@ msgstr ""
 msgid "Same Tab"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:1037
+#: frontend/src/components/Modals/TokenManager.vue:1048
 msgid "Sample CSV downloaded"
 msgstr ""
 
 #: frontend/src/components/Controls/CodeEditor.vue:41
 #: frontend/src/components/Modals/NewBlockTemplate.vue:7
 #: frontend/src/components/PropsPopoverContent.vue:46
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 #: frontend/src/components/VersionHistory.vue:27
-#: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
+#: frontend/src/pages/PageBuilder.vue:46 frontend/src/stores/canvasStore.ts:172
+#: frontend/src/utils/dialogs.ts:38
 msgid "Save"
 msgstr "Kaydet"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:241
+#: frontend/src/components/BlockContextMenuOptions/index.ts:218
 msgid "Save As Component"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:232
+#: frontend/src/stores/componentStore.ts:88
+msgid "Save Component"
+msgstr ""
+
+#: frontend/src/stores/blockTemplateStore.ts:44
+msgid "Save Template"
+msgstr ""
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:209
 #: frontend/src/components/Modals/NewBlockTemplate.vue:3
 msgid "Save as Block Template"
 msgstr ""
@@ -3073,8 +3748,16 @@ msgstr ""
 msgid "Save page / component"
 msgstr ""
 
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:15
+#: builder/ai/api.py:522
+msgid "Save the page before starting a chat session"
+msgstr ""
+
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:4
 msgid "Saving template"
+msgstr ""
+
+#: frontend/src/pages/PageBuilder.vue:5
+msgid "Screen too small"
 msgstr ""
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
@@ -3096,15 +3779,15 @@ msgstr ""
 msgid "Script Type"
 msgstr "Script Türü"
 
-#: frontend/src/components/PageClientScriptManager.vue:243
+#: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:386
+#: frontend/src/components/PageClientScriptManager.vue:393
 msgid "Script order updated"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:266
+#: frontend/src/components/PageClientScriptManager.vue:273
 msgid "Script saved successfully"
 msgstr ""
 
@@ -3130,7 +3813,7 @@ msgstr ""
 msgid "Search Block"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:238
+#: frontend/src/components/Commands/index.ts:236
 msgid "Search Blocks"
 msgstr ""
 
@@ -3143,8 +3826,12 @@ msgstr ""
 msgid "Search Template"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:242
+#: frontend/src/components/Commands/index.ts:240
 msgid "Search blocks"
+msgstr ""
+
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Search blocks..."
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:7
@@ -3153,6 +3840,10 @@ msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:70
 msgid "Search by name or route..."
+msgstr ""
+
+#: frontend/src/components/CommandPalette.vue:26
+msgid "Search commands..."
 msgstr ""
 
 #: frontend/src/components/BuilderAssets.vue:6
@@ -3179,16 +3870,21 @@ msgstr ""
 msgid "Search tokens"
 msgstr ""
 
-#: frontend/src/components/Controls/SearchBlock.vue:104
+#: frontend/src/components/Controls/SearchBlock.vue:108
 msgid "Search your blocks"
 msgstr ""
 
+#: frontend/src/components/CommandPalette.vue:26
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
 msgstr "Arama..."
 
 #: frontend/src/components/CommandPalette.vue:74
 msgid "Searching..."
+msgstr ""
+
+#: builder/ai/agent/pending.py:145
+msgid "Seeded {0} sample record(s) into {1}"
 msgstr ""
 
 #: frontend/src/components/CommandPalette.vue:98
@@ -3204,16 +3900,12 @@ msgstr ""
 msgid "Select All Matches (Alt+Enter)"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:230
+#: frontend/src/components/Settings/PageGeneral.vue:226
 msgid "Select App"
 msgstr ""
 
 #: frontend/src/utils/dialogs.ts:80
 msgid "Select Folder"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:63
-msgid "Select Model"
 msgstr ""
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:13
@@ -3244,12 +3936,25 @@ msgstr ""
 msgid "Select or type a group name"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:146
+#: frontend/src/components/Settings/PageGeneral.vue:142
 msgid "Select the app for this standard page"
+msgstr ""
+
+#. Label of the selected_model (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Selected Model"
+msgstr ""
+
+#: frontend/src/utils/fontManager.ts:23
+msgid "Semi Bold"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
+msgstr ""
+
+#: frontend/src/utils/imageUtils.ts:31
+msgid "Serve Locally"
 msgstr ""
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
@@ -3258,7 +3963,21 @@ msgstr ""
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#. Label of the session (Link) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Session"
+msgstr ""
+
+#. Label of the session_user (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Session User"
+msgstr ""
+
+#: builder/ai/api.py:147
+msgid "Session not found"
+msgstr ""
+
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Set As Homepage"
 msgstr ""
 
@@ -3267,7 +3986,7 @@ msgid "Set Background"
 msgstr ""
 
 #: frontend/src/components/Controls/ColorInput.vue:172
-#: frontend/src/components/Controls/ColorPickerContent.vue:48
+#: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
 msgstr ""
 
@@ -3288,12 +4007,16 @@ msgstr ""
 msgid "Set as Primary"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:101
+#: frontend/src/components/Settings/PageGeneral.vue:97
 msgid "Set current page as Homepage"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:164
+#: frontend/src/components/Settings/PageGeneral.vue:160
 msgid "Set folder to organize your page"
+msgstr ""
+
+#: frontend/src/components/Controls/SplitModeInput.vue:71
+msgid "Set separately"
 msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:77
@@ -3304,7 +4027,7 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
 msgid "Settings"
 msgstr "Ayarlar"
 
@@ -3329,15 +4052,19 @@ msgstr "Göster"
 msgid "Show Children"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Show Left Panel"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Show Replace"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Show Right Panel"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:207
+#: frontend/src/components/Commands/index.ts:205
 msgid "Show keyboard shortcuts"
 msgstr ""
 
@@ -3357,13 +4084,29 @@ msgstr ""
 msgid "Site is in read-only mode"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:83
+#: frontend/src/components/BackgroundHandler.vue:84
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
 msgstr "Boyut"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:76
 msgid "Skip for now"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entries"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entry"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard token (read-only)"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard tokens (read-only)"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
@@ -3383,7 +4126,7 @@ msgstr ""
 msgid "Snapshot Type"
 msgstr ""
 
-#: builder/builder/doctype/builder_page/builder_page.py:392
+#: builder/builder/doctype/builder_page/builder_page.py:401
 msgid "Snapshot does not belong to this page"
 msgstr ""
 
@@ -3399,6 +4142,10 @@ msgstr ""
 msgid "Solid"
 msgstr "Dolu"
 
+#: frontend/src/data/domains.ts:11 frontend/src/data/domains.ts:44
+msgid "Something went wrong"
+msgstr "Bir şeyler yanlış gitti"
+
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
 msgstr ""
@@ -3409,6 +4156,7 @@ msgid "Sort Order"
 msgstr "Sıralama Düzeni"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:18
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 msgid "Source"
 msgstr "Kaynak"
 
@@ -3444,7 +4192,7 @@ msgstr ""
 msgid "Stack"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:136
+#: frontend/src/components/Settings/PageGeneral.vue:132
 msgid "Standard Page"
 msgstr ""
 
@@ -3477,6 +4225,10 @@ msgstr ""
 msgid "Start typing to search pages"
 msgstr ""
 
+#. Label of the status (Data) field in DocType 'Builder AI Message'
+#. Label of the status (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
 msgstr "Durum"
@@ -3503,6 +4255,7 @@ msgstr ""
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:273
+#: frontend/src/components/Controls/SearchBlock.vue:214
 #: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
 msgstr "Stil"
@@ -3513,19 +4266,20 @@ msgstr "Stil"
 msgid "Style Public URL"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:90
-msgid "Styles"
+#. Label of the supports_vision (Check) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Supports Vision"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Dark Mode"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Light Mode"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:197
+#: frontend/src/components/BlockContextMenuOptions/index.ts:174
 msgid "Sync Component"
 msgstr ""
 
@@ -3533,8 +4287,17 @@ msgstr ""
 msgid "Sync in all pages"
 msgstr ""
 
+#: frontend/src/stores/componentStore.ts:125
+msgid "Syncing component in all the pages..."
+msgstr ""
+
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3555,11 +4318,17 @@ msgstr ""
 msgid "Tab Index"
 msgstr ""
 
+#: frontend/src/components/BuilderCanvas.vue:240
+msgid "Tablet"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
+#: frontend/src/components/Controls/SearchBlock.vue:171
 msgid "Tag"
 msgstr "Etiket"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:19
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 #: frontend/src/components/Settings/TopClicksList.vue:11
 msgid "Target"
 msgstr "Hedef"
@@ -3568,9 +4337,10 @@ msgstr "Hedef"
 msgid "Target Component"
 msgstr ""
 
-#: frontend/src/components/WebPagePresetPicker.vue:456
-msgid "Technical"
-msgstr ""
+#. Label of the task_type (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Task Type"
+msgstr "Görev Türü"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
@@ -3587,24 +4357,16 @@ msgstr ""
 msgid "Template Name"
 msgstr "Şablon Adı"
 
-#: builder/api.py:421
+#: builder/api.py:564
 msgid "Template group not found."
 msgstr ""
 
-#: builder/builder/doctype/builder_page/builder_page.py:301
+#: builder/builder/doctype/builder_page/builder_page.py:310
 msgid "Template pages can only be deleted in developer mode."
 msgstr ""
 
-#: builder/builder/doctype/builder_page/builder_page.py:197
+#: builder/builder/doctype/builder_page/builder_page.py:203
 msgid "Template pages can only be modified in developer mode."
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Test Key"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Testing..."
 msgstr ""
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
@@ -3625,6 +4387,10 @@ msgstr "Yazı Rengi"
 msgid "Text mode"
 msgstr ""
 
+#: builder/ai/presets.py:273
+msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
+msgstr ""
+
 #: frontend/src/components/PageOptions.vue:15
 msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
 msgstr ""
@@ -3633,12 +4399,31 @@ msgstr ""
 msgid "The component you are trying to replace with does not exist"
 msgstr ""
 
+#: builder/ai/presets.py:282
+msgid "The key is valid, but that model isn't available on this account."
+msgstr ""
+
+#: builder/ai/presets.py:278
+msgid "The key is valid, but the account has no credit or is rate limited right now."
+msgstr ""
+
+#. Description of the 'Model ID' (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "The model id at the provider, e.g. <code>anthropic/claude-sonnet-5</code> or <code>llama3.2</code>. The document name is the provider's route prefix plus this id."
+msgstr ""
+
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:348
+#. Description of the 'LiteLLM Provider' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
+msgstr ""
+
+#: frontend/src/stores/pageStore.ts:354
 msgid "There was an error while fetching page data"
 msgstr ""
 
@@ -3646,8 +4431,24 @@ msgstr ""
 msgid "These components changed since this page was last updated. Update to use the latest."
 msgstr ""
 
+#: frontend/src/utils/fontManager.ts:18
+msgid "Thin"
+msgstr ""
+
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
+msgstr ""
+
+#: builder/ai/api.py:167
+msgid "This action does not belong to you"
+msgstr ""
+
+#: builder/ai/api.py:149
+msgid "This chat belongs to another user"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:126
+msgid "This helps us personalise your Builder experience"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:181
@@ -3663,8 +4464,16 @@ msgstr ""
 msgid "This page has limited access"
 msgstr ""
 
-#: frontend/src/stores/builderStore.ts:87
+#: frontend/src/components/Settings/PageGeneral.vue:260
+msgid "This page will be exported to {0} app as standard page"
+msgstr ""
+
+#: frontend/src/stores/builderStore.ts:106
 msgid "This page will no longer be the homepage"
+msgstr ""
+
+#: builder/ai/api.py:306
+msgid "This provider has no API Base to ask"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalCode.vue:24
@@ -3685,11 +4494,11 @@ msgstr ""
 msgid "This will be appended at the end of the &lt;head&gt;"
 msgstr ""
 
-#: frontend/src/components/VersionHistory.vue:243
+#: frontend/src/components/VersionHistory.vue:249
 msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:202
+#: frontend/src/stores/pageStore.ts:208
 msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
 msgstr ""
 
@@ -3701,7 +4510,9 @@ msgstr "Zaman cetveli"
 msgid "Timing"
 msgstr "Zamanlama"
 
+#. Label of the title (Data) field in DocType 'Builder AI Session'
 #. Label of the page_title (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:9
 msgid "Title"
@@ -3711,7 +4522,7 @@ msgstr "Başlık"
 msgid "Today"
 msgstr "Bugün"
 
-#: frontend/src/components/Commands/index.ts:228
+#: frontend/src/components/Commands/index.ts:226
 msgid "Toggle Canvas Dark Mode"
 msgstr ""
 
@@ -3723,7 +4534,7 @@ msgstr ""
 msgid "Toggle Dark Mode"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:215
+#: frontend/src/components/Commands/index.ts:213
 msgid "Toggle Panels"
 msgstr ""
 
@@ -3732,15 +4543,15 @@ msgstr ""
 msgid "Toggle Theme"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:232
+#: frontend/src/components/Commands/index.ts:230
 msgid "Toggle canvas dark mode"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:177
+#: frontend/src/components/Commands/index.ts:175
 msgid "Toggle left panel"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:219
+#: frontend/src/components/Commands/index.ts:217
 msgid "Toggle panels"
 msgstr ""
 
@@ -3750,7 +4561,7 @@ msgstr ""
 msgid "Token Name"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:830
+#: frontend/src/components/Modals/TokenManager.vue:840
 msgid "Token created"
 msgstr ""
 
@@ -3762,7 +4573,7 @@ msgstr ""
 msgid "Token updated"
 msgstr ""
 
-#: frontend/src/pages/PageBuilder.vue:274
+#: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
 #: frontend/src/utils/useBuilderEvents.ts:377
 #: frontend/src/utils/useBuilderEvents.ts:386
@@ -3771,7 +4582,7 @@ msgstr ""
 msgid "Tools"
 msgstr "Araçlar"
 
-#: frontend/src/components/BackgroundHandler.vue:291
+#: frontend/src/components/BackgroundHandler.vue:298
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
 msgstr "Üst"
@@ -3835,7 +4646,7 @@ msgstr ""
 msgid "True Label"
 msgstr ""
 
-#: frontend/src/components/Controls/SearchBlock.vue:138
+#: frontend/src/components/Controls/SearchBlock.vue:142
 msgid "Try different keywords or adjust your filters"
 msgstr ""
 
@@ -3853,19 +4664,51 @@ msgstr ""
 msgid "Type"
 msgstr "Türü"
 
+#: builder/ai/api.py:129
+msgid "Type a prompt first"
+msgstr ""
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:313
-#: frontend/src/components/Commands/index.ts:317
+#: frontend/src/components/Settings/PageGeneral.vue:22
+msgid "URL"
+msgstr ""
+
+#: frontend/src/components/PageOptions.vue:22
+msgid "URL Variables"
+msgstr ""
+
+#: frontend/src/components/Commands/index.ts:291
+#: frontend/src/components/Commands/index.ts:295
 msgid "Undo"
 msgstr "Geri Al"
 
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} tokens"
+msgstr ""
+
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
+msgstr ""
+
+#: builder/ai/api.py:84
+msgid "Unknown AI model: {0}"
+msgstr ""
+
+#: builder/ai/agent/pending.py:61
+msgid "Unknown pending action: {0}"
+msgstr ""
+
+#: builder/ai/api.py:379 builder/ai/api.py:439
+msgid "Unknown provider: {0}"
 msgstr ""
 
 #: frontend/src/components/PageActionsDropdown.vue:20
@@ -3894,15 +4737,20 @@ msgstr ""
 msgid "Unset"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Unset Homepage"
 msgstr ""
 
+#: frontend/src/App.vue:33
+msgid "Untitled"
+msgstr ""
+
 #: frontend/src/components/ComponentUpdates.vue:46
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Update"
 msgstr "Güncelle"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:205
+#: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
 msgstr ""
 
@@ -3910,11 +4758,31 @@ msgstr ""
 msgid "Update all"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:217
+#: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:76
+#: builder/ai/agent/pending.py:87
+msgid "Updated global settings: {0}"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} token"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} tokens"
+msgstr ""
+
+#: frontend/src/data/domains.ts:80
+msgid "Updating primary domain…"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Updating redirect..."
+msgstr ""
+
+#: frontend/src/components/BackgroundHandler.vue:77
 #: frontend/src/components/Controls/ImageUploader.vue:13
 #: frontend/src/components/ImageUploadInput.vue:64
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
@@ -3926,7 +4794,7 @@ msgid "Upload CSV"
 msgstr ""
 
 #: frontend/src/components/Controls/FontUploader.vue:6
-#: frontend/src/utils/helpers.ts:496
+#: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
 msgstr ""
 
@@ -3938,7 +4806,7 @@ msgstr ""
 msgid "Uploaded"
 msgstr "Yüklendi"
 
-#: frontend/src/utils/helpers.ts:532
+#: frontend/src/utils/helpers.ts:553
 msgid "Uploading font..."
 msgstr ""
 
@@ -3960,6 +4828,10 @@ msgstr ""
 
 #: frontend/src/components/Templates/TemplateGallery.vue:29
 msgid "Use all {0} pages"
+msgstr ""
+
+#: frontend/src/components/Controls/SplitModeInput.vue:70
+msgid "Use for all"
 msgstr ""
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:14
@@ -3988,6 +4860,10 @@ msgstr ""
 msgid "User Font"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:187
+msgid "User is disabled: {0}"
+msgstr ""
+
 #: frontend/src/components/Settings/index.ts:86
 #: frontend/src/components/Settings/index.ts:87
 msgid "Users"
@@ -3995,15 +4871,19 @@ msgstr "Kullanıcılar"
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:70
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:69
 #: frontend/src/components/DynamicValueDropdown.vue:6
 #: frontend/src/components/Modals/TokenManager.vue:53
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
 msgstr "Değer"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:72
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:71
 msgid "Value submitted with the form when this radio button is selected."
+msgstr ""
+
+#: frontend/src/data/domains.ts:50
+msgid "Verifying DNS for {0}…"
 msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:90
@@ -4016,11 +4896,11 @@ msgstr "Versiyon"
 msgid "Version History"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:238
+#: frontend/src/stores/pageStore.ts:244
 msgid "Version restored"
 msgstr ""
 
-#: frontend/src/components/VersionHistory.vue:235
+#: frontend/src/components/VersionHistory.vue:241
 msgid "Version saved"
 msgstr ""
 
@@ -4040,10 +4920,10 @@ msgstr ""
 msgid "Video URL"
 msgstr "Video URL'si"
 
-#: frontend/src/components/Commands/index.ts:44
-#: frontend/src/components/Commands/index.ts:174
-#: frontend/src/components/Commands/index.ts:185
-#: frontend/src/components/Commands/index.ts:195
+#: frontend/src/components/Commands/index.ts:43
+#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Commands/index.ts:193
 #: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
 msgstr "Görünüm"
@@ -4073,10 +4953,18 @@ msgstr ""
 msgid "Visitor ID"
 msgstr "Ziyaretçi Kimliği"
 
+#: frontend/src/components/Modals/TokenManager.vue:967
+msgid "WARNING: Updating will overwrite the existing values for the listed variables."
+msgstr ""
+
 #: frontend/src/utils/useBuilderEvents.ts:129
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
 msgstr "Uyarı"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:140
+msgid "We'll point you to the right starting templates"
+msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Web app UI"
@@ -4084,6 +4972,11 @@ msgstr ""
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4100,6 +4993,14 @@ msgstr "Web Yöneticisi"
 msgid "Weight"
 msgstr "Ağırlık"
 
+#: frontend/src/pages/PagePersonaSurvey.vue:139
+msgid "What do you want to build first?"
+msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:125
+msgid "Which one best describes you?"
+msgstr ""
+
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
 msgstr "Genişlik"
@@ -4113,7 +5014,7 @@ msgstr ""
 msgid "Wrap"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:109
+#: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap In Container"
 msgstr ""
 
@@ -4127,7 +5028,7 @@ msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:45
 #: frontend/src/components/BlockFlexLayoutHandler.vue:54
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:86
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:60
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:77
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:94
@@ -4136,15 +5037,51 @@ msgstr ""
 msgid "Yes"
 msgstr "Evet"
 
+#: frontend/src/components/Settings/GlobalUsers.vue:58
+msgid "You"
+msgstr "Kendisi"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:272
+msgid "You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"
+msgstr ""
+
+#: builder/ai/api.py:160
+msgid "You are not permitted to apply this change"
+msgstr ""
+
+#: builder/ai/api.py:302
+msgid "You are not permitted to manage AI models"
+msgstr ""
+
+#: builder/ai/api.py:274
+msgid "You are not permitted to manage AI providers"
+msgstr ""
+
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
+msgstr ""
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:269
+msgid "You cannot add link inside a button block"
+msgstr ""
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:268
+msgid "You cannot add link inside a link block"
+msgstr ""
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:267
+msgid "You cannot make heading a link"
+msgstr ""
+
+#: builder/ai/session.py:88
+msgid "You do not have access to this AI session"
 msgstr ""
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
 msgstr "Bu sayfaya erişmek için izniniz yok"
 
-#: builder/ai_page_generator.py:454 builder/utils.py:85
+#: builder/utils.py:85
 msgid "You do not have permission to modify pages"
 msgstr ""
 
@@ -4158,6 +5095,10 @@ msgstr ""
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
+msgstr ""
+
+#: frontend/src/components/Controls/Dialog.vue:49
+msgid "You have unsaved changes. Please save before leaving."
 msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
@@ -4180,6 +5121,25 @@ msgstr ""
 msgid "Zoom out"
 msgstr ""
 
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "assistant"
+msgstr ""
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "chat"
+msgstr "sohbet"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "clarification"
+msgstr ""
+
+#: builder/ai/agent/pending.py:160
+msgid "connect_form needs a doctype, fields, and a form selector"
+msgstr ""
+
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "data.events = frappe.get_list(\"Event\")\n"
@@ -4187,23 +5147,106 @@ msgid "data.events = frappe.get_list(\"Event\")\n"
 "<b>Note:</b> Each key value of data should be a list."
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:897
+#: frontend/src/components/Settings/GlobalDomains.vue:43
+msgid "e.g. yourdomain.com"
+msgstr "örn. yourdomain.com"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:23
+msgid "e.g., primary, accent, background"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:243
+#: frontend/src/components/Settings/GlobalDomains.vue:52
+msgid "or"
+msgstr "veya"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "status"
+msgstr "durum"
+
+#: frontend/src/stores/pageStore.ts:249
 msgid "this page"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "unknown"
+msgstr "bilinmiyor"
+
+#: frontend/src/components/Modals/TokenManager.vue:202
+msgid "unnamed"
+msgstr ""
+
+#: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:226
+#: frontend/src/components/PageClientScriptManager.vue:233
 msgid "used in {0}+ pages"
+msgstr ""
+
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "user"
+msgstr "kullanıcı"
+
+#: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
+msgid "{0} & {1} others"
+msgstr ""
+
+#: frontend/src/data/domains.ts:62
+msgid "{0} added successfully"
+msgstr ""
+
+#: builder/ai/api.py:87
+msgid "{0} can't view images. Pick a vision-capable model or remove the image."
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entries were invalid"
+msgstr ""
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entry was invalid"
+msgstr ""
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instance"
+msgstr ""
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instances"
+msgstr ""
+
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.py:42
+msgid "{0} models still use this provider: {1}"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} page"
+msgstr ""
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} pages"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalDomains.vue:58
+msgid "{0} record"
+msgstr ""
+
+#: frontend/src/data/domains.ts:72
+msgid "{0} removed"
+msgstr ""
+
+#: frontend/src/data/domains.ts:80
+msgid "{0} set as primary"
 msgstr ""
 

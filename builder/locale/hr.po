@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"POT-Creation-Date: 2026-08-18 15:53+0000\n"
+"PO-Revision-Date: 2026-08-20 06:45\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Croatian\n"
 "MIME-Version: 1.0\n"
@@ -18,9 +18,58 @@ msgstr ""
 "X-Crowdin-File-ID: 177\n"
 "Language: hr_HR\n"
 
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entries skipped)"
+msgstr "({0} nevažećih unosa preskočeno)"
+
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entry skipped)"
+msgstr "({0} nevažeći unos preskočen)"
+
+#: frontend/src/components/RouteTreeNode.vue:91
+#: frontend/src/components/RouteTreeView.vue:41
+msgid "({0} remaining)"
+msgstr "({0} preostaje)"
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard token skipped)"
+msgstr "({0} standardni token preskočen)"
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard tokens skipped)"
+msgstr "({0} standardnih tokena preskočeno)"
+
+#: frontend/src/components/ShadowHandler.vue:134
+msgid "+ Add Shadow Layer"
+msgstr "+ Dodaj Sloj Sjene"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:144
+msgid "301 - Moved Permanently"
+msgstr "301 - Trajno Premješteno"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:145
+msgid "302 - Found (Temporary)"
+msgstr "302 - Pronađeno (Privremeno)"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:146
+msgid "307 - Temporary Redirect"
+msgstr "307 - Privremeno Preusmjeravanje"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:147
+msgid "308 - Permanent Redirect"
+msgstr "308 - Trajno Preusmjeravanje"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:141
+msgid "A booking site for my clinic"
+msgstr "Stranica za rezervacije za moju kliniku"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "A record points to wrong IP: {0}"
+msgstr "Zapis upućuje na pogrešnu IP adresu: {0}"
+
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
-msgstr ""
+msgstr "AI"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -33,19 +82,42 @@ msgstr "AI API Ključ"
 msgid "AI Settings"
 msgstr "AI Postavke"
 
+#: builder/ai/session.py:90
+msgid "AI session does not belong to this page"
+msgstr "AI sesija ne pripada ovoj stranici"
+
+#: builder/ai/session.py:85
+msgid "AI session not found"
+msgstr "AI sesija nije pronađena"
+
+#. Label of the api_base (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Base"
+msgstr "API Baza"
+
+#. Label of the api_key (Password) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Key"
+msgstr "API Ključ"
+
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
 msgstr "API ključ za odabranog pružitelja AI modela"
 
-#: builder/ai_page_generator.py:671
+#: builder/ai/api.py:609
 msgid "API key is valid"
 msgstr "API ključ je valjan"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
 msgid "Accessibility"
-msgstr ""
+msgstr "Pristupačnost"
+
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Active"
+msgstr "Aktivan"
 
 #: frontend/src/components/ArrayEditor.vue:14
 #: frontend/src/components/MoreStylesPanel.vue:43
@@ -56,7 +128,7 @@ msgstr "Dodaj"
 
 #: frontend/src/components/MoreStylesPanel.vue:22
 msgid "Add CSS property"
-msgstr ""
+msgstr "Dodaj CSS svojstvo"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -65,39 +137,61 @@ msgstr "Dodaj Prilagođene Meta Oznake"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:80
 msgid "Add Domain"
-msgstr ""
+msgstr "Dodaj Domenu"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 msgid "Add Redirect"
-msgstr ""
+msgstr "Dodaj Preusmjeravanje"
 
-#: frontend/src/components/PageClientScriptManager.vue:109
+#: frontend/src/components/PageClientScriptManager.vue:107
 msgid "Add Script"
-msgstr ""
+msgstr "Dodaj Skriptu"
+
+#: frontend/src/components/Modals/TokenManager.vue:15
+msgid "Add Token"
+msgstr "Dodaj Token"
 
 #: frontend/src/components/DataLoaderBlock.vue:6
 msgid "Add a block to repeat"
-msgstr ""
+msgstr "Dodaj blok za ponavljanje"
+
+#: builder/ai/api.py:589
+msgid "Add a model to this provider first"
+msgstr "Prvo dodajte model ovom pružatelju usluga"
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr ""
+msgstr "Dodaj meta oznake, stilove i skripte u zaglavlje stranice"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add property"
-msgstr ""
+msgstr "Dodaj svojstvo"
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
-msgstr ""
+msgstr "Dodajte skripte u tekst stranice"
 
 #: frontend/src/components/Settings/GlobalCode.vue:15
 msgid "Added to end of body. For adding scripts."
-msgstr ""
+msgstr "Dodano na kraj teksta. Za dodavanje skripti."
 
 #: frontend/src/components/Settings/GlobalCode.vue:6
 msgid "Added to end of head. For meta tags, styles, and scripts."
-msgstr ""
+msgstr "Dodano na kraj zaglavlja. Za meta oznake, stilove i skripte."
+
+#: frontend/src/components/Templates/TemplateGallery.vue:240
+msgid "Adding all pages..."
+msgstr "Dodavanje svih stranica..."
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Adding redirect..."
+msgstr "Dodavanje preusmjeravanja..."
+
+#: frontend/src/data/domains.ts:60
+msgid "Adding {0}…"
+msgstr "Dodavanje {0}…"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:62
 msgid "Admin"
@@ -111,7 +205,7 @@ msgstr "Napredno"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Agency / Freelancer"
-msgstr ""
+msgstr "Agencija / Freelancer"
 
 #: frontend/src/utils/helpers.ts:50
 msgid "Alert"
@@ -133,11 +227,15 @@ msgstr "Sve Stranice"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
-msgstr ""
+msgstr "Sva Svojstva"
 
-#: frontend/src/components/PageClientScriptManager.vue:101
+#: frontend/src/components/PageClientScriptManager.vue:99
 msgid "All client scripts are executed in preview mode and on published pages."
-msgstr ""
+msgstr "Sve klijentske skripte izvršavaju se u načinu pregleda i na objavljenim stranicama."
+
+#: frontend/src/components/Templates/TemplateGallery.vue:241
+msgid "All pages added"
+msgstr "Sve stranice su dodane"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
@@ -147,19 +245,27 @@ msgstr "Sve slike učitane u Canvas automatski će se pretvoriti u WebP radi bol
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:69
 msgid "All the images uploaded via Builder will be converted to WebP for better page performance"
-msgstr ""
+msgstr "Sve slike prenesene putem Buildera bit će pretvorene u WebP radi boljih performansi stranice."
 
 #: frontend/src/components/DashboardHead.vue:60
 msgid "Alphabetically (A-Z)"
-msgstr ""
+msgstr "Abecedno (AZ)"
 
 #: frontend/src/components/DashboardHead.vue:64
 msgid "Alphabetically (Z-A)"
-msgstr ""
+msgstr "Abecedno (ZA)"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:184
+msgid "Already a member: {0}"
+msgstr "Već član: {0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:181
+msgid "Already invited: {0}"
+msgstr "Već pozvan: {0}"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
 msgid "Alt Text"
-msgstr ""
+msgstr "Alternativni Tekst"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -179,8 +285,13 @@ msgstr "Datoteka ikone s ekstenzijom .ico. Treba biti 16 x 16 px.<br>Možete je 
 msgid "Analytics"
 msgstr "Analitika"
 
+#: builder/ai/api.py:70
+msgid "Another AI request is still processing. Please wait."
+msgstr "Još jedan AI zahtjev se obrađuje. Molimo pričekajte."
+
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageGeneral.vue:140
 msgid "App"
 msgstr "Aplikacija"
 
@@ -189,73 +300,106 @@ msgid "App {0} is not installed"
 msgstr "Aplikacija {0} nije instalirana"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
-#: frontend/src/components/Settings/PageGeneral.vue:87
+#: frontend/src/components/Settings/PageGeneral.vue:86
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
 msgstr "Pojavljuje se pored naslova u kartici vašeg preglednika. Preporučena veličina je 32x32 px u PNG ili ICO formatu"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:105
 msgid "Append the original query string to the target URL"
-msgstr ""
+msgstr "Dodaj izvorni niz upita ciljnom URL-u"
 
 #: frontend/src/components/Settings/GlobalCode.vue:33
 msgid "Applies to all pages"
-msgstr ""
+msgstr "Primjenjuje se na sve stranice"
 
 #: frontend/src/components/DashboardSidebar.vue:176
 msgid "Apps"
 msgstr "Aplikacije"
 
-#: frontend/src/stores/pageStore.ts:168
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Archived"
+msgstr "Arhivirano"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:207
+msgid "Are you sure you want to cancel the invitation to {0}?"
+msgstr "Jeste li sigurni da želite otkazati pozivnicu za {0}?"
+
+#: frontend/src/stores/componentStore.ts:441
+msgid "Are you sure you want to delete component: {0}?"
+msgstr "Jeste li sigurni da želite izbrisati komponentu: {0}?"
+
+#: frontend/src/stores/pageStore.ts:174
 msgid "Are you sure you want to delete page: {0}?"
-msgstr ""
+msgstr "Jeste li sigurni da želite izbrisati stranicu: {0}?"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:271
+msgid "Are you sure you want to delete the redirect from \"{0}\" to \"{1}\"?"
+msgstr "Jeste li sigurni da želite izbrisati preusmjeravanje sa \"{0}\" na \"{1}\"?"
 
 #: frontend/src/components/DashboardSidebar.vue:236
 msgid "Are you sure you want to delete this folder? All the pages under this folder will be visible under \"All Pages\""
-msgstr ""
+msgstr "Jeste li sigurni da želite izbrisati ovu mapu? Sve stranice u ovoj mapi bit će vidljive pod \"Sve Stranice\""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:272
 msgid "Are you sure you want to delete this redirect?"
-msgstr ""
+msgstr "Jeste li sigurni da želite izbrisati ovo preusmjeravanje?"
+
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} token?"
+msgstr "Jeste li sigurni da želite izbrisati token {0}?"
+
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} tokens?"
+msgstr "Jeste li sigurni da želite izbrisati tokene {0}?"
 
 #: frontend/src/stores/canvasStore.ts:198
 msgid "Are you sure you want to exit without saving?"
-msgstr ""
+msgstr "Jeste li sigurni da želite izaći bez spremanja promjena?"
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:74
+#: builder/builder/doctype/builder_settings/builder_settings.js:72
 msgid "Are you sure you want to replace {0} with {1}?"
 msgstr "Jeste li sigurni da želite zamijeniti {0} s {1}?"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:206
+#: frontend/src/components/BlockContextMenuOptions/index.ts:183
 msgid "Are you sure you want to reset?"
-msgstr ""
+msgstr "Jeste li sigurni da želite poništiti?"
 
-#: frontend/src/stores/pageStore.ts:245
+#: frontend/src/stores/pageStore.ts:251
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr "Jeste li sigurni da želite poništiti objavu \"{0}\"? Više neće biti dostupna na web stranici."
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:49
 msgid "Aria Label"
-msgstr ""
+msgstr "Aria Etiketa"
 
 #: frontend/src/components/PropsPopoverContent.vue:171
 msgid "Array"
-msgstr ""
+msgstr "Niz"
 
 #: frontend/src/components/ArrayInput.vue:20
 msgid "Array Items:"
-msgstr ""
+msgstr "Elementi Niza:"
 
-#: frontend/src/components/PageClientScriptManager.vue:90
-#: frontend/src/components/PageClientScriptManager.vue:93
+#: builder/ai/agent/pending.py:114
+msgid "At least one field is required"
+msgstr "Barem jedno polje je obavezno"
+
+#: frontend/src/components/PageClientScriptManager.vue:88
+#: frontend/src/components/PageClientScriptManager.vue:91
 msgid "Attach Script"
-msgstr ""
+msgstr "Priloži Skriptu"
+
+#: frontend/src/components/Controls/SearchBlock.vue:229
+msgid "Attributes"
+msgstr "Atributi"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Authenticated Access"
 msgstr "Autentificirani Pristup"
 
-#: frontend/src/components/BackgroundHandler.vue:286
+#: frontend/src/components/BackgroundHandler.vue:293
 #: frontend/src/components/BlockGridLayoutHandler.vue:13
 #: frontend/src/components/BlockPositionHandler.vue:11
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:20
@@ -270,9 +414,13 @@ msgstr "Automatski"
 msgid "Auto convert images to WebP"
 msgstr "Automatski pretvori slike u WebP"
 
+#: frontend/src/components/Settings/GlobalDomains.vue:160
+msgid "Automatically follows server IP changes. Best choice for subdomains."
+msgstr "Automatski prati promjene IP adrese servera. Najbolji izbor za poddomene."
+
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:58
 msgid "Autoplay"
-msgstr ""
+msgstr "Automatska Reprodukcija"
 
 #: frontend/src/components/Templates/TemplatePreview.vue:7
 #: frontend/src/pages/PagePersonaSurvey.vue:27
@@ -281,7 +429,7 @@ msgstr "Nazad"
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
-msgstr ""
+msgstr "Natrag na Nadzornu Ploču"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
@@ -289,11 +437,11 @@ msgstr "Povratak na Početnu"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:18
 msgid "Back to all templates"
-msgstr ""
+msgstr "Natrag na sve predloške"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
 msgid "Back to builder"
-msgstr ""
+msgstr "Natrag na Web Uređivač"
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -301,7 +449,12 @@ msgstr "Pozadina"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:74
 msgid "Background Only"
-msgstr ""
+msgstr "Samo Pozadina"
+
+#. Description of the 'API Base' (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Base URL for an OpenAI-compatible gateway. Leave empty for OpenRouter."
+msgstr "Osnovni URL za OpenAI kompatibilni pristupnik. Ostavite prazno za OpenRouter."
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -313,12 +466,16 @@ msgstr "Osnovni"
 msgid "Basic Forms"
 msgstr "Osnovni Obrasci"
 
+#: frontend/src/utils/fontManager.ts:26
+msgid "Black"
+msgstr "Crna"
+
 #: frontend/src/components/Templates/TemplatePageGrid.vue:12
 msgid "Blank Page"
-msgstr ""
+msgstr "Prazna Stranica"
 
 #. Label of the block (JSON) field in DocType 'Block Template'
-#. Label of the block (JSON) field in DocType 'Builder Component'
+#. Label of the block (Long Text) field in DocType 'Builder Component'
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
@@ -326,23 +483,28 @@ msgstr "Blok"
 
 #: frontend/src/components/PageScript.vue:107
 msgid "Block CSS"
-msgstr ""
+msgstr "Blokiraj CSS"
 
-#: frontend/src/pages/PageBuilder.vue:307
+#: frontend/src/pages/PageBuilder.vue:226
 msgid "Block Client Script"
-msgstr ""
+msgstr "Klijent Skripta Bloka"
+
+#. Label of the block_id (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Block ID"
+msgstr "ID bloka"
 
 #: frontend/src/components/PageScript.vue:95
 msgid "Block JavaScript"
-msgstr ""
+msgstr "JavaScript Bloka"
 
 #: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:147
 msgid "Block Options"
-msgstr ""
+msgstr "Opcije Bloka"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Block Props"
-msgstr ""
+msgstr "Rekvizita Blok"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
@@ -351,15 +513,15 @@ msgstr "Predložak Bloka"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Client Script"
-msgstr ""
+msgstr "Klijentska Skripta Predloåka Bloka"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Data Script"
-msgstr ""
+msgstr "Skripta Podataka Predloška Bloka"
 
 #: frontend/src/stores/blockTemplateStore.ts:94
 msgid "Block template saved!"
-msgstr ""
+msgstr "Predložak bloka spremljen!"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -368,7 +530,7 @@ msgstr "Blokovi"
 
 #: frontend/src/components/ShadowHandler.vue:155
 msgid "Blur"
-msgstr ""
+msgstr "Zamagli"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
@@ -377,23 +539,27 @@ msgstr ""
 msgid "Body HTML"
 msgstr "HTML Tekst"
 
+#: frontend/src/utils/fontManager.ts:24
+msgid "Bold"
+msgstr "Podebljano"
+
 #: frontend/src/components/PropsPopoverContent.vue:169
 msgid "Boolean"
-msgstr ""
+msgstr "Booleov"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:91
 msgid "Border Color"
-msgstr ""
+msgstr "Boja Obruba"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:133
 msgid "Border Style"
-msgstr ""
+msgstr "Stil Obruba"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:116
 msgid "Border Width"
-msgstr ""
+msgstr "Širina Obruba"
 
-#: frontend/src/components/BackgroundHandler.vue:292
+#: frontend/src/components/BackgroundHandler.vue:299
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
 msgstr "Dno"
@@ -415,7 +581,32 @@ msgstr "Dno Desno"
 
 #: frontend/src/components/BuilderCommandPalette.vue:88
 msgid "Browse all settings"
-msgstr ""
+msgstr "Pregledaj sve postavke"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+msgid "Builder AI Memory"
+msgstr "AI Memorije"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Builder AI Message"
+msgstr "AI Poruka"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Builder AI Model"
+msgstr "AI Model"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Builder AI Provider"
+msgstr "AI Pružatelj Usluga"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Builder AI Session"
+msgstr "AI Sesija"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -441,6 +632,10 @@ msgstr "Klik Stranice"
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Page Client Script"
 msgstr "Klijent Skript Stranice"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:20
+msgid "Builder Page Filter"
+msgstr "Filter Stranice"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
@@ -469,31 +664,31 @@ msgstr "Snimak"
 msgid "Builder Token"
 msgstr "Token"
 
-#: builder/ai_page_generator.py:564
-msgid "Building {0}"
-msgstr ""
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+msgid "CNAME record points to wrong destination: {0}"
+msgstr "CNAME zapis upućuje na pogrešnu destinaciju: {0}"
 
-#: builder/ai_page_generator.py:366
-msgid "Building..."
-msgstr ""
-
-#: frontend/src/components/PageClientScriptManager.vue:78
+#: frontend/src/components/PageClientScriptManager.vue:76
 #: frontend/src/components/PageScript.vue:194
-#: frontend/src/pages/PageBuilder.vue:311
+#: frontend/src/pages/PageBuilder.vue:230
 msgid "CSS"
 msgstr "CSS"
 
-#: frontend/src/components/Modals/TokenManager.vue:890
-msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
-msgstr ""
+#: frontend/src/components/Controls/SearchBlock.vue:243
+msgid "CSS Classes"
+msgstr "CSS Klase"
 
-#: frontend/src/components/Modals/TokenManager.vue:878
+#: frontend/src/components/Modals/TokenManager.vue:900
+msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
+msgstr "CSV mora sadržavati stupce 'Token Name' i 'Light Mode'"
+
+#: frontend/src/components/Modals/TokenManager.vue:888
 msgid "CSV must have at least a header row and one data row"
-msgstr ""
+msgstr "CSV mora imati barem jedan red zaglavlja i jedan red podataka"
 
 #: frontend/src/components/Settings/TopClicksList.vue:13
 msgid "CTR"
-msgstr ""
+msgstr "CTR"
 
 #: frontend/src/utils/helpers.ts:36
 msgid "Cancel"
@@ -501,11 +696,11 @@ msgstr "Otkaži"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:40
 msgid "Cancel invitation"
-msgstr ""
+msgstr "Otkaži pozivnicu"
 
 #: frontend/src/utils/useCanvasUtils.ts:235
 msgid "Cannot delete root block"
-msgstr ""
+msgstr "Nije moguće izbrisati korijenski blok"
 
 #. Label of the canonical_url (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -524,6 +719,12 @@ msgstr "Kanonski URL"
 msgid "Canvas"
 msgstr "Platno"
 
+#. Label of the capability_section (Section Break) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Capabilities"
+msgstr "Mogućnosti"
+
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
 msgstr "Kapitalizuj"
@@ -534,7 +735,7 @@ msgstr "Kapitalizuj"
 msgid "Category"
 msgstr "Kategorija"
 
-#: frontend/src/components/BackgroundHandler.vue:290
+#: frontend/src/components/BackgroundHandler.vue:297
 #: frontend/src/components/BlockGridLayoutHandler.vue:67
 #: frontend/src/components/BlockGridLayoutHandler.vue:125
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
@@ -545,40 +746,36 @@ msgstr "Centar"
 #: frontend/src/components/BlockGridLayoutHandler.vue:129
 #: frontend/src/components/BlockGridLayoutHandler.vue:192
 msgid "Center Left"
-msgstr ""
+msgstr "Centar Lijevo"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:121
 #: frontend/src/components/BlockGridLayoutHandler.vue:184
 msgid "Center Right"
-msgstr ""
+msgstr "Centar Desno"
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Change"
 msgstr "Promjeni"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:84
 msgid "Checked"
-msgstr ""
+msgstr "Označeno"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:12
 msgid "Choose a template to get a head start, or start from scratch."
-msgstr ""
+msgstr "Odaberi predložak za početak ili počnite ispočetka."
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
 msgstr "Razred"
 
-#: frontend/src/components/BackgroundHandler.vue:113
+#: frontend/src/components/BackgroundHandler.vue:114
 msgid "Clear Gradient"
-msgstr ""
+msgstr "Očistii Gradijent"
 
-#: frontend/src/components/BackgroundHandler.vue:105
+#: frontend/src/components/BackgroundHandler.vue:106
 msgid "Clear Image"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:98
-msgid "Clear Selection"
-msgstr ""
+msgstr "Očisti Sliku"
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
 msgid "Clear all filters"
@@ -586,15 +783,15 @@ msgstr "Obriši sve filtere"
 
 #: frontend/src/components/Modals/TokenManager.vue:355
 msgid "Click 'Add Token' to create your first one."
-msgstr ""
+msgstr "Klikni na 'Dodaj Token' da izradite prvi."
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:20
 msgid "Click-through Rate"
-msgstr ""
+msgstr "Stopa Klikanja"
 
 #: frontend/src/components/Settings/TopClicksList.vue:12
 msgid "Clicks"
-msgstr ""
+msgstr "Klikovi"
 
 #: frontend/src/components/PageScript.vue:5
 #: frontend/src/components/Settings/GlobalCode.vue:22
@@ -607,9 +804,9 @@ msgstr "Skripta klijenta"
 msgid "Client Scripts"
 msgstr "Klijentske Skripte"
 
-#: frontend/src/components/BackgroundHandler.vue:123
+#: frontend/src/components/BackgroundHandler.vue:124
 msgid "Clip Background to Text"
-msgstr ""
+msgstr "Izreži Pozadinu u Tekst"
 
 #: frontend/src/components/CommandPalette.vue:33
 msgid "Close"
@@ -617,9 +814,9 @@ msgstr "Zatvori"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:72
 msgid "Close (Esc)"
-msgstr ""
+msgstr "Zatvori (Esc)"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:54
+#: frontend/src/components/LeftPanelTabs/index.ts:60
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
@@ -627,23 +824,23 @@ msgstr "Kod"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:148
 msgid "Col Span"
-msgstr ""
+msgstr "Raspon Stupca"
 
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Collapse"
 msgstr "Sklopi"
 
-#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/Commands/index.ts:157
 msgid "Collapse All Layers"
-msgstr ""
+msgstr "Sažmi Sve Slojeve"
 
 #: frontend/src/components/RouteTreeView.vue:374
 msgid "Collapse node or move up in page tree"
-msgstr ""
+msgstr "Sažmi čvor ili pomakni se prema gore u stablu stranica"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
-msgstr ""
+msgstr "Kolekcija"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -651,13 +848,13 @@ msgstr ""
 msgid "Color"
 msgstr "Boja"
 
-#: frontend/src/components/Modals/TokenManager.vue:449
+#: frontend/src/components/Modals/TokenManager.vue:454
 msgid "Colors"
 msgstr "Boje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:75
 msgid "Colors Only"
-msgstr ""
+msgstr "Samo Boje"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:87
 msgid "Column"
@@ -665,7 +862,7 @@ msgstr "Kolona"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:95
 msgid "Column Dense"
-msgstr ""
+msgstr "Gustoća Stupca"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:17
 msgid "Columns"
@@ -673,20 +870,20 @@ msgstr "Kolone"
 
 #: frontend/src/components/CommandPalette.vue:9
 msgid "Command Palette"
-msgstr ""
+msgstr "Paleta Naredbi"
 
 #: frontend/src/components/BuilderCommandPalette.vue:312
 msgid "Commands"
-msgstr ""
+msgstr "Naredbe"
 
 #: frontend/src/components/PageScript.vue:204
 msgid "Component Client Script"
-msgstr ""
+msgstr "Klijentski Skript Komponente"
 
 #: frontend/src/components/PageScript.vue:23
 #: frontend/src/components/PageScript.vue:133
 msgid "Component Data Preview"
-msgstr ""
+msgstr "Pregled Podataka Komponente"
 
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
@@ -708,37 +905,41 @@ msgstr "Naziv komponente"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
-msgstr ""
+msgstr "Rekviziti Komponente"
 
 #: frontend/src/stores/componentStore.ts:99
 msgid "Component draft is unavailable."
-msgstr ""
+msgstr "Nacrt komponente nije dostupan."
 
 #: frontend/src/stores/componentStore.ts:439
 msgid "Component is used in current page. You cannot delete it."
-msgstr ""
+msgstr "Komponenta se koristi na trenutnoj stranici. Ne možete je izbrisati."
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:88
+#: builder/builder/doctype/builder_settings/builder_settings.js:86
 msgid "Component replaced successfully"
 msgstr "Komponenta uspješno zamijenjena"
 
 #: frontend/src/stores/componentStore.ts:111
 msgid "Component saved!"
-msgstr ""
+msgstr "Komponenta spremljena!"
+
+#: frontend/src/stores/componentStore.ts:130
+msgid "Component synced in all the pages!"
+msgstr "Komponenta sinkronizirana na svim stranicama!"
 
 #: frontend/src/components/ComponentUpdates.vue:19
 msgid "Component updates"
-msgstr ""
+msgstr "Ažuriranja Komponente"
 
 #: frontend/src/components/ComponentUpdates.vue:4
 msgid "Component updates available"
-msgstr ""
+msgstr "Ažuriranja komponente dostupna"
 
 #: builder/builder/component_versions.py:236
 msgid "Component {0} was deleted and will not render"
 msgstr "Komponenta {0} je izbrisana i neće se renderirati"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:47
+#: frontend/src/components/LeftPanelTabs/index.ts:52
 msgid "Components"
 msgstr "Komponente"
 
@@ -748,146 +949,222 @@ msgstr "Uvjet"
 
 #: frontend/src/components/DashboardSidebar.vue:98
 msgid "Configure global settings for this builder project."
-msgstr ""
+msgstr "Konfiguriši postavke sustava za ovaj projekat web uređivača."
 
 #: frontend/src/components/BuilderToolbar.vue:41
 msgid "Configure page and global settings for this project."
-msgstr ""
+msgstr "Konfiguriraj postavke stranice i postavke sustava za ovaj projekt."
 
 #: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
 msgid "Confirm"
 msgstr "Potvrdi"
 
-#: frontend/src/components/BackgroundHandler.vue:284
+#: builder/ai/codex.py:102 builder/ai/presets.py:256
+msgid "Connected"
+msgstr "Povezano"
+
+#. Label of the connection_section (Section Break) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Connection"
+msgstr "Veza"
+
+#: frontend/src/components/BackgroundHandler.vue:291
 msgid "Contain"
-msgstr ""
+msgstr "Sadrži"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
 msgid "Container (c)"
-msgstr ""
+msgstr "Kontejner (c)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
 msgid "Container mode"
-msgstr ""
+msgstr "Način Kontejnera"
 
+#. Label of the content (Small Text) field in DocType 'Builder AI Memory'
+#. Label of the content (Long Text) field in DocType 'Builder AI Message'
 #. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:22
+#: frontend/src/components/Controls/SearchBlock.vue:198
 msgid "Content"
 msgstr "Sadržaj"
 
+#. Label of the max_tokens (Int) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Context Window"
+msgstr "Kontekstni Prozor"
+
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:41
 msgid "Controls"
-msgstr ""
+msgstr "Kontrole"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:84
+#: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Convert To Collection"
-msgstr ""
+msgstr "Pretvori u Kolekciju"
+
+#: frontend/src/utils/imageUtils.ts:33
+msgid "Convert to WebP"
+msgstr "Pretvori u WebP"
+
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Converting..."
+msgstr "Pretvara se..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
 msgstr "Kopirano u međuspremnik"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:58
+#: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
 msgstr "Kopiraj"
 
-#: frontend/src/components/Commands/index.ts:260
+#: frontend/src/components/Commands/index.ts:258
 msgid "Copy Block Styles"
-msgstr ""
+msgstr "Kopiraj Stilove Bloka"
 
 #: frontend/src/components/MainMenu.vue:68
 msgid "Copy Page"
-msgstr ""
+msgstr "Kopiraj Stranicu"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:63
+#: frontend/src/components/BlockContextMenuOptions/index.ts:40
 msgid "Copy Style"
-msgstr ""
+msgstr "Kopiraj Stil"
 
-#: frontend/src/components/Commands/index.ts:264
+#: frontend/src/components/Commands/index.ts:262
 msgid "Copy block styles"
-msgstr ""
+msgstr "Kopiraj stilove bloka"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
-msgstr ""
+msgstr "Kopiraj cijelu stranicu?"
+
+#: frontend/src/components/Modals/TokenManager.vue:205
+msgid "Copy var(--{0})"
+msgstr "Kopiraj var(--{0})"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:242
+msgid "Could not add pages"
+msgstr "Nije moguće dodati stranice"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:210
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
 msgid "Could not create page from template"
-msgstr ""
+msgstr "Nije moguće stvoriti stranicu iz predloška"
 
-#: builder/api.py:440
+#: builder/api.py:583
 msgid "Could not import any pages from this template group."
 msgstr "Nije moguće uvesti nijednu stranicu iz ove grupe predložaka."
 
-#: builder/api.py:408
+#: builder/api.py:551
 msgid "Could not load the selected template. Please try again."
 msgstr "Nije moguće učitati odabrani predložak. Pokušaj ponovo."
 
-#: builder/api.py:190
-msgid "Could not resolve hostname: {0}"
-msgstr ""
+#: builder/ai/api.py:320
+msgid "Could not reach {0}: {1}"
+msgstr "Nije moguće pristupiti {0}: {1}"
 
-#: frontend/src/components/Modals/TokenManager.vue:438
+#: builder/api.py:330
+msgid "Could not resolve hostname: {0}"
+msgstr "Nije moguće razriješiti naziv hosta: {0}"
+
+#: frontend/src/components/Modals/TokenManager.vue:443
 msgid "Couldn't copy to clipboard"
-msgstr ""
+msgstr "Nije moguće kopirati u međuspremnik"
+
+#: builder/ai/presets.py:284
+msgid "Couldn't reach the server. Check the address is right and that it's running."
+msgstr "Nije moguće doći do poslužitelja. Provjerite je li adresa ispravna i radi li."
 
 #: frontend/src/components/Settings/TopReferrersList.vue:29
 msgid "Count"
 msgstr "Broj"
 
-#: frontend/src/components/BackgroundHandler.vue:285
+#: frontend/src/components/BackgroundHandler.vue:292
 msgid "Cover"
-msgstr ""
+msgstr "Korice"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
+msgid "Create"
+msgstr "Izradi"
 
 #: frontend/src/utils/dialogs.ts:23
 msgid "Create Folder"
-msgstr ""
+msgstr "Izradi Mapu"
 
 #: frontend/src/utils/dialogs.ts:21
 msgid "Create New Folder"
-msgstr ""
+msgstr "Izradi Novu Mapu"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:189
+#: frontend/src/utils/builderBlockCopyPaste.ts:275
 msgid "Create New Page"
-msgstr ""
+msgstr "Izradi Novu Stranicu"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:4
 msgid "Create a new page"
-msgstr ""
+msgstr "Izradi novu stranicu"
+
+#: frontend/src/components/Modals/TokenManager.vue:959
+msgid "Create {0} new token and update {1} existing token?"
+msgstr "Izradi {0} novi token i ažuriraj {1} postojeći token?"
+
+#: frontend/src/components/Modals/TokenManager.vue:960
+msgid "Create {0} new token and update {1} existing tokens?"
+msgstr "Izradi {0} novi token i ažuriraj {1} postojeće tokene?"
+
+#: frontend/src/components/Modals/TokenManager.vue:962
+msgid "Create {0} new tokens and update {1} existing token?"
+msgstr "Izradi {0} novih tokena i ažuriraj{1} postojeći token?"
+
+#: frontend/src/components/Modals/TokenManager.vue:963
+msgid "Create {0} new tokens and update {1} existing tokens?"
+msgstr "Izradi{0} novih tokena i ažuriraj {1} postojećih tokena?"
+
+#: builder/ai/agent/pending.py:131
+msgid "Created DocType {0} with {1} field(s)"
+msgstr "Izrađen DocType {0} sa {1} poljem(a)"
 
 #: frontend/src/components/PageListItem.vue:56
 msgid "Created by {0}"
-msgstr ""
+msgstr "Izradio/la {0}"
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} token"
+msgstr "Izrađen {0} token"
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} tokens"
+msgstr "Izrađeno {0} tokena"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
 msgid "Creating an editable copy..."
-msgstr ""
+msgstr "Izrada uređive kopije..."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:208
 msgid "Creating page from template..."
-msgstr ""
+msgstr "Izrada stranice iz predloška..."
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:247
 msgid "Crosshair"
-msgstr ""
+msgstr "Nišan"
 
 #: frontend/src/components/Settings/index.ts:28
 msgid "Current Page"
-msgstr ""
+msgstr "Trenutna Stranica"
 
 #: frontend/src/components/VersionHistory.vue:50
 msgid "Current version"
-msgstr ""
+msgstr "Trenutna verzija"
 
 #: frontend/src/components/VersionHistory.vue:77
 msgid "Currently live"
-msgstr ""
+msgstr "Trenutno uživo"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:239
 msgid "Cursor"
-msgstr ""
+msgstr "Kursor"
 
 #: frontend/src/components/Controls/FontInput.vue:130
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
@@ -897,7 +1174,11 @@ msgstr "Prilagođeno"
 
 #: frontend/src/components/Settings/index.ts:119
 msgid "Custom Domains"
-msgstr ""
+msgstr "Prilagođene Domene"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:188
+msgid "DNS is verified but SSL certificate provisioning failed. Please retry."
+msgstr "DNS je provjeren, ali postavljanje SSL certifikata nije uspjelo. Pokušaj ponovo."
 
 #: frontend/src/components/Modals/TokenManager.vue:51
 msgid "Dark"
@@ -905,11 +1186,11 @@ msgstr "Tamno"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
 msgid "Dark Mode"
-msgstr ""
+msgstr "Tamni Način"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:34
 msgid "Dark Mode Color"
-msgstr ""
+msgstr "Boja Tamnog Načina"
 
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -922,28 +1203,29 @@ msgstr "Nadzorna Tabla"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:138
 msgid "Dashed"
-msgstr ""
+msgstr "Isprekidano"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: frontend/src/components/Controls/SearchBlock.vue:178
 msgid "Data"
 msgstr "Podaci"
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:51
 msgid "Data Key"
-msgstr ""
+msgstr "Ključ Podataka"
 
 #: frontend/src/components/PageScript.vue:75
 msgid "Data Preview"
-msgstr ""
+msgstr "Pregled Podataka"
 
 #: frontend/src/components/PageScript.vue:7
 msgid "Data Script"
-msgstr ""
+msgstr "Skripta Podataka"
 
 #: frontend/src/components/PageScript.vue:224
 msgid "Data script saved"
-msgstr ""
+msgstr "Skripta podataka spremljena"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:243
 #: frontend/src/components/Controls/FontInput.vue:134
@@ -960,7 +1242,7 @@ msgstr "Standard HTML kod jezika (npr. en, es, fr)"
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:19
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:19
 msgid "Default Items"
-msgstr ""
+msgstr "Standard Element"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -977,37 +1259,47 @@ msgstr "Standard Jezik"
 msgid "Default Value"
 msgstr "Standard Vrijednost"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:283
+#: frontend/src/components/BlockContextMenuOptions/index.ts:260
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
 msgstr "Izbriši"
 
 #: frontend/src/components/DashboardSidebar.vue:75
 msgid "Delete Folder"
-msgstr ""
+msgstr "Izbriši Mapu"
 
-#: frontend/src/components/Commands/index.ts:339
-#: frontend/src/components/Commands/index.ts:344
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
-msgstr ""
+msgstr "Izbriši Stranicu"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
 msgid "Delete selected blocks"
-msgstr ""
+msgstr "Izbriši odabrane blokove"
 
-#: frontend/src/stores/pageStore.ts:172
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete variable"
+msgstr "Izbriši varijablu"
+
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete {0} variables"
+msgstr "Izbriši {0} varijabli"
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} token"
+msgstr "Izbrisan {0} token"
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} tokens"
+msgstr "Izbrisano {0} tokena"
+
+#: frontend/src/stores/pageStore.ts:178
 msgid "Deleting page"
-msgstr ""
+msgstr "Brisanje stranice"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:296
-msgid "Describe how you want to modify this section…"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:295
-msgid "Describe the page you want to create…"
-msgstr ""
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Deleting redirect..."
+msgstr "Brisanje preusmjeravanja..."
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1017,24 +1309,34 @@ msgstr "Opis"
 
 #: frontend/src/components/DashboardContent.vue:134
 msgid "Deselect pages"
-msgstr ""
+msgstr "Poništi odabir stranica"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:66
+#: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
 msgid "Design Tokens"
-msgstr ""
+msgstr "Dizajnerski Tokeni"
 
 #: frontend/src/components/Controls/FontInput.vue:127
 msgid "Design tokens"
-msgstr ""
+msgstr "Dizajnerski tokeni"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
 msgstr "Dizajner"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:248
+#: frontend/src/components/BuilderCanvas.vue:232
+msgid "Desktop"
+msgstr "Radna Površina"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:225
 msgid "Detach Component"
-msgstr ""
+msgstr "Odvoji Komponentu"
+
+#. Description of the 'Context Window' (Int) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Detected automatically. 200,000 is assumed when unknown."
+msgstr "Automatski otkriveno. 200.000 se pretpostavlja kada je nepoznato."
 
 #: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
@@ -1049,7 +1351,7 @@ msgstr "Opcije Programera"
 
 #: frontend/src/components/Settings/index.ts:137
 msgid "Developer Settings"
-msgstr ""
+msgstr "Pprogramerske Postavke"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -1057,7 +1359,7 @@ msgstr ""
 msgid "Dimension"
 msgstr "Dimenzija"
 
-#: frontend/src/components/Modals/TokenManager.vue:451
+#: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
 msgstr "Dimenzije"
 
@@ -1070,17 +1372,17 @@ msgstr "Smjer"
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:77
 msgid "Disable Auto Dark Mode"
-msgstr "Onemogući Automatski Tamni Način Rada"
+msgstr "Onemogući Automatski Tamni Način"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:128
+#: frontend/src/components/Settings/PageGeneral.vue:124
 msgid "Disable Indexing"
 msgstr "Onemogući Indeksiranje"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:246
 msgid "Disable Redirect"
-msgstr ""
+msgstr "Onemogući Preusmjeravanje"
 
 #. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
 #. 'Builder Settings'
@@ -1088,29 +1390,50 @@ msgstr ""
 msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
 msgstr "Onemogući automatske prilagodbe sheme boja tamnog načina rada za sve stranice globalno."
 
+#: frontend/src/data/domains.ts:88
+msgid "Disabling redirect…"
+msgstr "Onemogućavanje preusmjeravanja…"
+
 #: frontend/src/components/BlockFlexLayoutHandler.vue:22
 msgid "Distribution"
-msgstr ""
+msgstr "Distribucija"
 
 #: frontend/src/utils/useBuilderEvents.ts:474
 msgid "Do you want to copy the entire page including settings and scripts?"
-msgstr ""
+msgstr "Želite li kopirati cijelu stranicu, uključujući postavke i skripte?"
 
-#: frontend/src/utils/helpers.ts:495
+#: frontend/src/utils/helpers.ts:516
 msgid "Do you want to upload the font \"{0}\"?"
-msgstr ""
+msgstr "Želite li učitati font \"{0}\"?"
+
+#: builder/ai/agent/pending.py:97
+msgid "DocType {0} already exists"
+msgstr "DocType {0} već postoji"
+
+#: builder/ai/agent/pending.py:138
+msgid "DocType {0} does not exist"
+msgstr "DocType {0} ne postoji"
+
+#: builder/ai/agent/pending.py:95
+msgid "Doctype name is required"
+msgstr "Doctype naziv je obavezan"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
 msgstr "Domena"
 
+#: frontend/src/components/Settings/GlobalDomains.vue:177
+#: frontend/src/components/Settings/GlobalDomains.vue:192
+msgid "Domain setup failed. Please retry or contact support."
+msgstr "Postavljanje domene nije uspjelo. Pokušajte ponovo ili kontaktirajte podršku."
+
 #: frontend/src/data/domains.ts:54
 msgid "Domain verification failed"
-msgstr ""
+msgstr "Provjera domene nije uspjela"
 
 #: frontend/src/components/Settings/index.ts:118
 msgid "Domains"
-msgstr ""
+msgstr "Domene"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
@@ -1118,19 +1441,19 @@ msgstr ""
 msgid "Don't Execute"
 msgstr "Ne Izvršavaj"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:169
-#: frontend/src/utils/builderBlockCopyPaste.ts:201
-#: frontend/src/utils/builderBlockCopyPaste.ts:221
+#: frontend/src/utils/builderBlockCopyPaste.ts:182
+#: frontend/src/utils/builderBlockCopyPaste.ts:293
+#: frontend/src/utils/builderBlockCopyPaste.ts:314
 msgid "Done"
 msgstr "Gotovo"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
-msgstr ""
+msgstr "Tačkasto"
 
 #: frontend/src/components/Modals/TokenManager.vue:386
 msgid "Download sample"
-msgstr ""
+msgstr "Preuzmi uzorak"
 
 #: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:47
@@ -1142,35 +1465,31 @@ msgstr "Nacrt"
 msgid "Draft Blocks"
 msgstr "Nacrti Blokova"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:25
-msgid "Drop image to attach"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:78
+#: frontend/src/components/BlockContextMenuOptions/index.ts:55
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
 msgstr "Kopiraj"
 
-#: frontend/src/components/Commands/index.ts:279
+#: frontend/src/components/Commands/index.ts:277
 msgid "Duplicate Block"
-msgstr ""
+msgstr "Dupliciraj Blok"
 
-#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/components/Commands/index.ts:130
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
-msgstr ""
+msgstr "Dupliraj Stranicu"
 
-#: frontend/src/components/Commands/index.ts:283
+#: frontend/src/components/Commands/index.ts:281
 msgid "Duplicate block"
-msgstr ""
+msgstr "Dupliciraj blok"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
-msgstr ""
+msgstr "Dupliciraj za uređivanje"
 
-#: frontend/src/stores/pageStore.ts:155
+#: frontend/src/stores/pageStore.ts:161
 msgid "Duplicating page"
-msgstr ""
+msgstr "Dupliranje stranice"
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1179,66 +1498,63 @@ msgstr "Dinamička Ruta"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:53
 msgid "Ease In"
-msgstr ""
+msgstr "Postepeno Uvođenje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:55
 msgid "Ease In Out"
-msgstr ""
+msgstr "Postepeno Uvođenje Izvođenje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:54
 msgid "Ease Out"
-msgstr ""
+msgstr "Postepeno Izvođenje"
 
-#: frontend/src/components/Commands/index.ts:46
+#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/utils/colorOptions.ts:80
 #: frontend/src/utils/useBuilderEvents.ts:241
 #: frontend/src/utils/useBuilderEvents.ts:255
 msgid "Edit"
 msgstr "Uredi"
 
-#: frontend/src/pages/PageBuilder.vue:308
+#: frontend/src/pages/PageBuilder.vue:227
 msgid "Edit Block Client Script"
-msgstr ""
+msgstr "Uredi Klijentsku Skriptu Bloka"
 
-#: frontend/src/components/Commands/index.ts:293
-msgid "Edit Block with AI"
-msgstr ""
-
-#: frontend/src/pages/PageBuilder.vue:312
+#: frontend/src/pages/PageBuilder.vue:231
 msgid "Edit CSS"
-msgstr ""
+msgstr "Uredi CSS"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:225
+#: frontend/src/components/BlockContextMenuOptions/index.ts:202
 msgid "Edit Component"
-msgstr ""
+msgstr "Uredi Komponentu"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:52
-#: frontend/src/pages/PageBuilder.vue:305
+#: frontend/src/components/BlockContextMenuOptions/index.ts:29
+#: frontend/src/pages/PageBuilder.vue:224
 msgid "Edit HTML"
 msgstr "Uredi HTML"
 
-#: frontend/src/components/Commands/index.ts:297
-msgid "Edit block with AI"
-msgstr ""
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+msgid "Edit Redirect"
+msgstr "Uredi Preusmjeravanje"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "Edit Token"
+msgstr "Uredi Token"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:28
 msgid "Edit template"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:31
-msgid "Edit with AI"
-msgstr ""
+msgstr "Uredi predložak"
 
 #: frontend/src/components/PageCard.vue:23
 msgid "Edited {0}"
-msgstr ""
+msgstr "Uređeno {0}"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:19
 msgid "Editing is disabled while the site is being updated. Please try again in a few minutes."
-msgstr ""
+msgstr "Uređivanje je onemogućeno dok se stranica ažurira. Pokušaj ponovo za nekoliko minuta."
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:53
 msgid "Editor Config"
-msgstr ""
+msgstr "Konfiguracija Uređivača"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -1247,74 +1563,105 @@ msgstr "Element"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:81
 msgid "Email addresses"
-msgstr ""
+msgstr "Adrese e-pošte"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:55
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:18
 msgid "Enable View Tracking"
-msgstr ""
+msgstr "Omogući Praćenje Prikaza"
+
+#. Label of the enabled (Check) field in DocType 'Builder AI Model'
+#. Label of the enabled (Check) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Enabled"
+msgstr "Omogućeno"
+
+#: frontend/src/data/domains.ts:84
+msgid "Enabling redirect…"
+msgstr "Omogućavanje preusmjeravanja…"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:71
 msgid "End"
 msgstr "Kraj"
+
+#: builder/ai/api.py:382
+msgid "Enter a model id to test with"
+msgstr "Unesite Id modela za testiranje"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:35
 #: frontend/src/components/PropsOptions/NumberOptions.vue:32
 #: frontend/src/components/PropsOptions/SelectOptions.vue:14
 #: frontend/src/components/PropsOptions/StringOptions.vue:8
 msgid "Enter default value"
-msgstr ""
+msgstr "Unesi standard vrijednost"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:16
 msgid "Enter false label display"
-msgstr ""
+msgstr "Unesi prikaz lažne oznake"
 
 #: frontend/src/components/PropsOptions/ImageOptions.vue:6
 msgid "Enter image URL or upload one"
-msgstr ""
+msgstr "Unesi URL slike ili je otpremi"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:16
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:16
 msgid "Enter max number of items"
-msgstr ""
+msgstr "Unesi maksimalan broj artikala"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:15
 #: frontend/src/components/PropsOptions/NumberOptions.vue:24
 msgid "Enter max value"
-msgstr ""
+msgstr "Unesi maksimalnu vrijednost"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:8
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:8
 msgid "Enter min number of items"
-msgstr ""
+msgstr "Unesi minimalni broj artikala"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:8
 msgid "Enter min value"
-msgstr ""
+msgstr "Unesi minimalnu vrijednost"
 
 #: frontend/src/components/PropsPopoverContent.vue:20
 msgid "Enter prop key"
-msgstr ""
+msgstr "Unesi ključ rekvizita"
 
 #: frontend/src/components/PropsPopoverContent.vue:12
 msgid "Enter prop label"
-msgstr ""
+msgstr "Unesi oznaku rekvizita"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:8
 msgid "Enter true label display"
-msgstr ""
+msgstr "Unesi prikaz prave oznake"
 
 #: frontend/src/components/ArrayEditor.vue:5
 msgid "Enter value"
-msgstr ""
+msgstr "Unesi vrijednost"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:42
 msgid "Enter your domain"
-msgstr ""
+msgstr "Unesi domenu"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Error adding redirect"
+msgstr "Pogreška pri dodavanju preusmjeravanja"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Error deleting redirect"
+msgstr "Pogreška pri brisanju preusmjeravanja"
+
+#: frontend/src/stores/componentStore.ts:132
+msgid "Error syncing component in all the pages!"
+msgstr "Greška pri sinkronizaciji komponente na svim stranicama!"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Error updating redirect"
+msgstr "Pogreška pri ažuriranju preusmjeravanja"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:154
 msgid "Exact path"
-msgstr ""
+msgstr "Točna putanja"
 
 #: frontend/src/components/PageScript.vue:80
 #: frontend/src/components/PageScript.vue:138
@@ -1327,7 +1674,7 @@ msgstr "Primjeri"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:5
 msgid "Execute Block Client Scripts in Editor"
-msgstr ""
+msgstr "Izvrši Klijentske Skripte Bloka u Uređivaču"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
@@ -1337,78 +1684,118 @@ msgstr "Izvrši Blokovske Skripte u Uređivaču"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
 msgid "Exit current mode"
-msgstr ""
+msgstr "Izađi iz trenutnog načina rada"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Expand"
 msgstr "Proširi"
 
-#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:144
 msgid "Expand All Layers"
-msgstr ""
+msgstr "Proširi Sve Slojeve"
 
 #: frontend/src/components/RouteTreeView.vue:355
 msgid "Expand node or move down in page tree"
-msgstr ""
+msgstr "Proširi čvor ili se pomakni prema dolje u stablu stranica"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
-msgstr ""
+msgstr "Vanjski URL"
+
+#: frontend/src/utils/fontManager.ts:25
+msgid "Extra Bold"
+msgstr "Izuzetno Podebljano"
+
+#: frontend/src/utils/fontManager.ts:19
+msgid "Extra Light"
+msgstr "Izuzetno Svijetlo"
+
+#: builder/domain.py:35
+msgid "FC API returned {0}"
+msgstr "FC API je vratio {0}"
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to convert image to WebP"
+msgstr "Nije uspjelo pretvoriti sliku u WebP"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:211
 msgid "Failed to copy"
-msgstr ""
+msgstr "Kopiranje nije uspjelo"
 
-#: builder/ai_page_generator.py:385
-msgid "Failed to parse AI response. The model returned invalid YAML."
-msgstr ""
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to create token"
+msgstr "Nije uspjela izrada tokena"
 
-#: frontend/src/components/Modals/TokenManager.vue:869
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} token"
+msgstr "Nije uspjela izrada {0} tokena"
+
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} tokens"
+msgstr "Nije uspjela izrada {0} tokena"
+
+#: frontend/src/components/Modals/TokenManager.vue:755
+msgid "Failed to delete \"{0}\""
+msgstr "Nije uspjelo izbrisati \"{0}\""
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to pull image to local"
+msgstr "Nije uspjelo preuzeti sliku lokalno"
+
+#: frontend/src/components/Modals/TokenManager.vue:879
 msgid "Failed to read CSV file"
-msgstr ""
+msgstr "Nije uspjelo čitanje CSV datoteke"
 
 #: frontend/src/components/EditableSpan.vue:63
 msgid "Failed to rename"
-msgstr ""
+msgstr "Preimenovanje nije uspjelo"
 
 #: frontend/src/stores/componentStore.ts:98
 #: frontend/src/stores/componentStore.ts:139
 msgid "Failed to save component"
-msgstr ""
+msgstr "Nije uspjelo spremanje komponente"
 
-#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageClientScriptManager.vue:277
 #: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
-msgstr ""
+msgstr "Nije uspjelo spremanje skripte"
 
-#: frontend/src/components/Settings/GlobalAI.vue:71
-msgid "Failed to test API key"
-msgstr ""
-
-#: frontend/src/components/PageClientScriptManager.vue:390
+#: frontend/src/components/PageClientScriptManager.vue:397
 msgid "Failed to update script order"
-msgstr ""
+msgstr "Nije uspjelo ažuriranje redoslijeda skripti"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to update token"
+msgstr "Ažuriranje tokena nije uspjelo"
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} token"
+msgstr "Ažuriranje {0} tokena nije uspjelo"
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} tokens"
+msgstr "Ažuriranje {0} tokena nije uspjelo"
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
-msgstr ""
+msgstr "Nije uspjelo otpremanje"
 
-#: frontend/src/utils/helpers.ts:534
+#: frontend/src/utils/helpers.ts:555
 msgid "Failed to upload font"
-msgstr ""
+msgstr "Nije uspjelo otpremanje fonta"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:12
 msgid "False Label"
-msgstr ""
+msgstr "Lažna Oznaka"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:41
 msgid "Family"
-msgstr ""
+msgstr "Obitelj"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:16
 msgid "Fast"
-msgstr ""
+msgstr "Brzo"
 
 #. Label of the favicon (Attach Image) field in DocType 'Builder Page'
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
@@ -1423,19 +1810,23 @@ msgstr "Favicon"
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
-msgstr ""
+msgstr "Ispuni & Obreži"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Filter Builder Pages"
+msgstr "Filtriraj Stranice"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:5
 msgid "Filter by route"
-msgstr ""
+msgstr "Filtriraj po ruti"
 
 #: frontend/src/components/DashboardHead.vue:16
 msgid "Filter by title or route"
-msgstr ""
+msgstr "Filtriraj po naslovu ili ruti"
 
 #: frontend/src/components/Controls/SearchBlock.vue:44
 msgid "Filter search results by:"
-msgstr ""
+msgstr "Filtriraj rezultate pretraživanja prema:"
 
 #: frontend/src/components/Controls/SearchBlock.vue:27
 msgid "Filters"
@@ -1447,42 +1838,46 @@ msgstr "Traži"
 
 #: frontend/src/components/Controls/SearchBlock.vue:8
 msgid "Find & Replace"
-msgstr ""
+msgstr "Pronađi & Zamijeni"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:60
 msgid "Find Next (Enter)"
-msgstr ""
+msgstr "Pronađi Sljedeće (Enter)"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:54
 msgid "Find Previous (Shift+Enter)"
-msgstr ""
+msgstr "Pronađi Prethodno (Shift+Enter)"
+
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Find..."
+msgstr "Pronađi..."
 
 #: frontend/src/components/DimensionInput.vue:13
 msgid "Fit Content"
-msgstr ""
+msgstr "Prilagodi Sadržaj"
 
 #: frontend/src/components/ImageUploadInput.vue:73
 msgid "Fit Inside"
-msgstr ""
+msgstr "Uklopi Unutar"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
 msgid "Fit canvas to screen"
-msgstr ""
+msgstr "Prilagodi radnu površinu zaslonu"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
 msgstr "Fiksna Cijena"
 
-#: frontend/src/components/Commands/index.ts:248
+#: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
-msgstr ""
+msgstr "Fokus na Svojstva Pretrage"
 
-#: frontend/src/components/Commands/index.ts:252
+#: frontend/src/components/Commands/index.ts:250
 msgid "Focus property search"
-msgstr ""
+msgstr "Fokus na svojstva pretrage"
 
-#: frontend/src/components/Settings/PageGeneral.vue:163
+#: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
 msgid "Folder"
 msgstr "Mapa"
@@ -1495,20 +1890,20 @@ msgstr "Naziv Mape"
 
 #: frontend/src/components/DashboardSidebar.vue:19
 msgid "Folders"
-msgstr ""
+msgstr "Mape"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
 msgstr "Font"
 
-#: frontend/src/utils/helpers.ts:488
+#: frontend/src/utils/helpers.ts:509
 msgid "Font \"{0}\" already exists in the project"
-msgstr ""
+msgstr "Font \"{0}\" već postoji u projektu"
 
-#: frontend/src/utils/helpers.ts:533
+#: frontend/src/utils/helpers.ts:554
 msgid "Font \"{0}\" uploaded successfully"
-msgstr ""
+msgstr "Font \"{0}\" uspješno otpremljen"
 
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
@@ -1520,7 +1915,7 @@ msgstr "Datoteka Fonta"
 msgid "Font Name"
 msgstr "Naziv Fonta"
 
-#: frontend/src/components/Modals/TokenManager.vue:450
+#: frontend/src/components/Modals/TokenManager.vue:455
 msgid "Fonts"
 msgstr "Fontovi"
 
@@ -1529,6 +1924,10 @@ msgstr "Fontovi"
 msgid "For Web Page"
 msgstr "Za Web Stranicu"
 
+#: builder/ai/agent/pending.py:213
+msgid "Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
+msgstr "Obrazac je povezan. Izmjene se spremaju u '{0}'. Pogledaj ih na Radnoj Površini: [/app/{1}](/app/{1})"
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Form parts"
@@ -1536,15 +1935,19 @@ msgstr "Dijelovi Obrasca"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:104
 msgid "Forward query parameters"
-msgstr ""
+msgstr "Proslijedi parametre upita"
+
+#: frontend/src/components/Controls/SearchBlock.vue:322
+msgid "Found in: {0}"
+msgstr "Pronađeno u: {0}"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:131
 msgid "Founder / Business owner"
-msgstr ""
+msgstr "Osnivač / Vlasnik tvrtke"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
@@ -1553,7 +1956,7 @@ msgstr "Frappe Builder"
 
 #: frontend/src/components/BuilderToolbar.vue:32
 msgid "Frappe Builder - Get Started"
-msgstr ""
+msgstr "Web Uređivač - Počni"
 
 #: frontend/src/components/BlockPositionHandler.vue:12
 msgid "Free"
@@ -1561,7 +1964,7 @@ msgstr "Slobodno"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:117
 msgid "Friend / colleague"
-msgstr ""
+msgstr "Prijatelj / kolega"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:12
 msgid "Gap"
@@ -1569,8 +1972,8 @@ msgstr "Razmak"
 
 #: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
-#: frontend/src/components/Commands/index.ts:45
-#: frontend/src/components/Commands/index.ts:204
+#: frontend/src/components/Commands/index.ts:44
+#: frontend/src/components/Commands/index.ts:202
 #: frontend/src/components/Settings/index.ts:44
 #: frontend/src/components/Settings/index.ts:45
 #: frontend/src/components/Settings/index.ts:78
@@ -1580,26 +1983,13 @@ msgstr "Razmak"
 msgid "General"
 msgstr "Općenito"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Generate"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:290
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:5
-msgid "Generate with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Generating page…"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:17
-msgid "Get API key from"
-msgstr ""
-
 #: frontend/src/components/BuilderToolbar.vue:27
 msgid "Get Started"
 msgstr "Započni"
+
+#: builder/ai/presets.py:189
+msgid "Give this provider a name"
+msgstr "Daj naziv ovom pružatelju usluga"
 
 #: frontend/src/components/BuilderCommandPalette.vue:264
 #: frontend/src/components/Settings/index.ts:29
@@ -1608,15 +1998,15 @@ msgstr "Globalno"
 
 #: frontend/src/components/DashboardSidebar.vue:96
 msgid "Global Builder Settings"
-msgstr ""
+msgstr "Postavke Sustava Web Uređivača"
 
 #: frontend/src/components/Settings/index.ts:95
 msgid "Global Code"
-msgstr ""
+msgstr "Kod Sustava"
 
 #: frontend/src/utils/dialogs.ts:46
 msgid "Global Component"
-msgstr ""
+msgstr "Komponenta Sustava"
 
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -1628,9 +2018,13 @@ msgstr "Globalni skript koji će se učitavati sa svakom stranicom izgrađenom p
 msgid "Global style that will be loaded with every page built with Frappe Builder"
 msgstr "Globalni stil koji će se učitati na svaku stranicu izgrađenu pomoću Frappe Buildera"
 
-#: frontend/src/components/Commands/index.ts:98
+#: frontend/src/components/Commands/index.ts:96
 msgid "Go to Dashboard"
-msgstr ""
+msgstr "Idi na Nadzornu Ploču"
+
+#: frontend/src/components/BackgroundHandler.vue:231
+msgid "Gradient"
+msgstr "Gradijent"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
 #: frontend/src/components/DashboardHead.vue:74
@@ -1639,29 +2033,41 @@ msgstr "Mreža"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:6
 msgid "Grid Type"
-msgstr ""
+msgstr "Tip Mreže"
 
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Group"
 msgstr "Grupa"
 
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:56
+msgid "Group name for this radio button. Radio buttons with the same name are grouped together."
+msgstr "Naziv grupe za ovaj radio gumb. Radio gumbi s istim nazivom su grupirani zajedno."
+
 #: frontend/src/components/BlockFlexLayoutHandler.vue:41
 msgid "Grow"
-msgstr ""
+msgstr "Rasti"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
-#: frontend/src/pages/PageBuilder.vue:304
+#: frontend/src/pages/PageBuilder.vue:223
 msgid "HTML"
 msgstr "HTML"
 
 #: frontend/src/components/BlockPropertySections/CustomAttributesSection.ts:23
 msgid "HTML Attributes"
-msgstr ""
+msgstr "HTML Atributi"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
 msgid "HTML Options"
-msgstr ""
+msgstr "HTML Opcije"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0}"
+msgstr "HTTP {0}"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0} · forwards query parameters"
+msgstr "HTTP {0} · prosljeđuje parametre upita"
 
 #. Label of the head_html (Code) field in DocType 'Builder Page'
 #. Label of the head_html (Code) field in DocType 'Builder Settings'
@@ -1689,23 +2095,27 @@ msgstr "Sakriveno"
 msgid "Hide"
 msgstr "Sakrij"
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Hide Left Panel"
-msgstr ""
+msgstr "Sakrij Lijevi Panel"
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Hide Replace"
+msgstr "Sakrij Zamijeni"
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Hide Right Panel"
-msgstr ""
+msgstr "Sakrij Desni Panel"
 
 #: frontend/src/utils/useBuilderEvents.ts:413
 msgid "Highlight Blocks with Client Scripts"
-msgstr ""
+msgstr "Istakni Blokove pomoću Klijentskih Skripti"
 
-#: frontend/src/pages/PageBuilder.vue:273
+#: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for move mode"
-msgstr ""
+msgstr "Drži za način kretanja"
 
-#: frontend/src/components/Settings/PageGeneral.vue:204
+#: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
 msgstr "Početna"
@@ -1717,58 +2127,87 @@ msgstr "Početna Stranica"
 
 #: frontend/src/components/RouteTreeNode.vue:42
 msgid "Home page"
-msgstr ""
+msgstr "Početna stranica"
+
+#: builder/ai/agent/pending.py:75
+msgid "Home page set to /{0}"
+msgstr "Početna stranica postavljena na /{0}"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
-#: frontend/src/components/Settings/PageGeneral.vue:100
+#: frontend/src/components/Settings/PageGeneral.vue:96
 msgid "Homepage"
-msgstr ""
+msgstr "Početna stranica"
 
-#: frontend/src/stores/builderStore.ts:77
+#: frontend/src/stores/builderStore.ts:96
 msgid "Homepage set successfully"
-msgstr ""
+msgstr "Početna stranica uspješno postavljena"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:9
 msgid "Horizontal"
 msgstr "Horizontalno"
 
+#: frontend/src/pages/PagePersonaSurvey.vue:111
+msgid "How did you hear about Builder?"
+msgstr "Kako ste čuli za nas?"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:113
+msgid "I heard from the community"
+msgstr "Čuo/la sam od zajednice"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:127
+msgid "I'm a student building my first site"
+msgstr "Ja sam student i izrađujem svoju prvu web stranicu"
+
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/BackgroundHandler.vue:235
 #: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
 msgstr "Slika"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:24
 msgid "Image (i)"
-msgstr ""
+msgstr "Slika (i)"
 
 #: frontend/src/components/ImageUploadInput.vue:68
 msgid "Image Fit"
-msgstr ""
+msgstr "Prilagodba Slike"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:83
 msgid "Image Options"
-msgstr ""
+msgstr "Opcije Slike"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:16
 msgid "Image URL"
-msgstr ""
+msgstr "URL Slike"
 
-#: builder/ai_page_generator.py:221
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image converted to WebP"
+msgstr "Slika pretvorena u WebP"
+
+#: builder/ai/block_codec.py:256
 msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr "Slika je prevelika. Koristi sliku manju od 5 MB."
 
 #: frontend/src/utils/useBuilderEvents.ts:376
 msgid "Image mode"
-msgstr ""
+msgstr "Način Slike"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:110
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image pulled to local"
+msgstr "Slika preuzeta lokalno"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:109
 msgid "Input Options"
-msgstr ""
+msgstr "Opcije Unosa"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:33
+#: frontend/src/components/LeftPanelTabs/index.ts:36
 msgid "Insert"
 msgstr "Umetni"
+
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Inset Shadow"
+msgstr "Umetnuta Sjena"
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
@@ -1778,21 +2217,17 @@ msgstr "Interna zastavica: postavlja se nakon što se prikaže anketa za uvođen
 
 #: frontend/src/pages/PagePersonaSurvey.vue:147
 msgid "Internal tool / dashboard"
-msgstr ""
+msgstr "Unutarnji alat / nadzorna ploča"
 
-#: builder/api.py:186
+#: builder/api.py:326
 msgid "Invalid URL: missing hostname."
-msgstr ""
+msgstr "Nevažeći URL: nedostaje naziv hosta."
 
-#: builder/ai_page_generator.py:631
-msgid "Invalid block context JSON"
-msgstr "Nevažeći JSON konteksta bloka"
-
-#: builder/ai_page_generator.py:218
+#: builder/ai/block_codec.py:254
 msgid "Invalid image data: must be a base64-encoded data URL"
 msgstr "Nevažeći podaci slike: mora biti URL podataka kodiran u base64 formatu"
 
-#: builder/ai_page_generator.py:216
+#: builder/ai/block_codec.py:252
 msgid "Invalid image data: must be a base64-encoded image data URL"
 msgstr "Nevažeći podaci slike: mora biti URL podataka slike kodiran u base64"
 
@@ -1802,11 +2237,19 @@ msgstr "Nevažeći podaci slike: mora biti URL podataka slike kodiran u base64"
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:122
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:137
 msgid "Invalid option configuration!"
-msgstr ""
+msgstr "Nevažeća konfiguracija opcije!"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:210
 msgid "Invitation cancelled"
 msgstr "Pozivnica otkazana"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:200
+msgid "Invitation resent to {0}"
+msgstr "Pozivnica ponovo poslana za {0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:178
+msgid "Invitation sent to {0}"
+msgstr "Pozivnica poslana {0}"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
@@ -1816,9 +2259,22 @@ msgstr "Pozovi"
 msgid "Invite Users"
 msgstr "Pozovi korisnike"
 
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0}"
+msgstr "Pozvano {0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0} by {1}"
+msgstr "Pozvani {0} od {1}"
+
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
-msgstr ""
+msgstr "Je Obavezno"
+
+#. Label of the is_running (Check) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Is Running"
+msgstr "Je u Tijeku"
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
 #. Label of the is_standard (Check) field in DocType 'Builder Project Folder'
@@ -1841,12 +2297,16 @@ msgstr "Je Unikatno"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:34
 msgid "Item Width"
-msgstr ""
+msgstr "Širina Artikla"
 
-#: frontend/src/components/PageClientScriptManager.vue:77
+#: frontend/src/components/PageClientScriptManager.vue:75
 #: frontend/src/components/PageScript.vue:193
 msgid "JavaScript"
 msgstr "JavaScript"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:112
+msgid "Just curious, it helps us know what's working."
+msgstr "Samo iz znatiželje, pomaže nam da znamo što radi."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Just exploring"
@@ -1862,11 +2322,13 @@ msgstr "Prilagodi"
 msgid "Key"
 msgstr "Ključ"
 
-#: frontend/src/components/Commands/index.ts:202
+#: frontend/src/components/Commands/index.ts:200
 msgid "Keyboard Shortcuts"
 msgstr "Prečice Tastature"
 
+#. Label of the label (Data) field in DocType 'Builder AI Model'
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 #: frontend/src/components/PropsPopoverContent.vue:8
 msgid "Label"
@@ -1905,24 +2367,39 @@ msgstr "Posljednjih 7 Dana"
 
 #: frontend/src/components/DashboardHead.vue:57
 msgid "Last Created"
-msgstr ""
+msgstr "Zadnje Izrađeno"
+
+#. Label of the last_interaction_on (Datetime) field in DocType 'Builder AI
+#. Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Interaction On"
+msgstr "Posljednja interakcija"
 
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
 msgstr "Posljednja Izmjena"
 
+#. Label of the last_task_type (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Task Type"
+msgstr "Posljednji Tip Zadatka"
+
 #: frontend/src/components/PageListItem.vue:39
 msgid "Last updated {0} by {1}"
-msgstr ""
+msgstr "Zadnje ažuriranje {0} od strane {1}"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
 msgid "Layer Icon"
-msgstr ""
+msgstr "Ikona Sloja"
 
-#: frontend/src/components/Commands/index.ts:43
-#: frontend/src/components/Commands/index.ts:148
-#: frontend/src/components/Commands/index.ts:161
-#: frontend/src/components/LeftPanelTabs/index.ts:40
+#: frontend/src/components/ShadowHandler.vue:64
+msgid "Layer {0}"
+msgstr "Sloj {0}"
+
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
 msgstr "Slojevi"
 
@@ -1930,7 +2407,19 @@ msgstr "Slojevi"
 msgid "Layout"
 msgstr "Izgled"
 
-#: frontend/src/components/BackgroundHandler.vue:293
+#. Description of the 'API Key' (Password) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Leave empty to fall back to the OpenRouter key in Builder Settings."
+msgstr "Ostavite prazno da biste se vratili na OpenRouter ključ u Postavkama."
+
+#. Description of the 'Supports Vision' (Check) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Leave off unless the model accepts image input. Sending an image to a text-only model fails the whole turn."
+msgstr "Ostavite isključeno osim ako model ne prihvata unos slike. Slanje slike modelu koji prikazuje samo tekst ne uspijeva u cijelom krugu."
+
+#: frontend/src/components/BackgroundHandler.vue:300
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
@@ -1941,21 +2430,27 @@ msgid "Letter"
 msgstr "Pismo"
 
 #: frontend/src/components/Modals/TokenManager.vue:50
+#: frontend/src/utils/fontManager.ts:20
 msgid "Light"
 msgstr "Svijetlo"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:27
 msgid "Light Mode Color"
-msgstr ""
+msgstr "Boja Svijetlog Načina"
 
 #: frontend/src/components/PageListItem.vue:26
 msgid "Limited access"
-msgstr ""
+msgstr "Ograničen pristup"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:21
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Limits the pages where the component is replaced"
+msgstr "Ograničava stranice na kojima se komponenta zamjenjuje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
 #: frontend/src/components/Controls/GradientEditor.vue:7
 msgid "Linear"
-msgstr ""
+msgstr "Linearno"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:91
 msgid "Link"
@@ -1969,14 +2464,29 @@ msgstr "Poveži Sa"
 msgid "List"
 msgstr "Lista"
 
+#. Label of the litellm_provider (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "LiteLLM Provider"
+msgstr "LiteLLM Pružatelj Usluga"
+
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
 msgstr "Učitaj Još"
 
+#: frontend/src/components/RouteTreeNode.vue:90
+#: frontend/src/components/RouteTreeView.vue:39
+msgid "Load {0} more"
+msgstr "Učitaj još {0}"
+
 #: frontend/src/components/Settings/GlobalDomains.vue:5
 msgid "Loading domains…"
-msgstr ""
+msgstr "Učitavanje domena…"
 
+#: frontend/src/components/RouteTreeView.vue:4
+msgid "Loading pages…"
+msgstr "Učitavanje stranica…"
+
+#: frontend/src/components/BuilderSettings.vue:35
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
 #: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
@@ -1987,15 +2497,15 @@ msgstr "Učitavanje u toku..."
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:92
 msgid "Loop"
-msgstr ""
+msgstr "Petlja"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:128
 msgid "Lowercase"
-msgstr ""
+msgstr "Mala slova"
 
-#: frontend/src/components/Settings/PageGeneral.vue:138
+#: frontend/src/components/Settings/PageGeneral.vue:134
 msgid "Make this page a standard page that can be exported to an app"
-msgstr ""
+msgstr "Pretvori ovu stranicu u standardnu stranicu koja se može izvesti u aplikaciju"
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2008,19 +2518,19 @@ msgstr "Marža"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Marketer"
-msgstr ""
+msgstr "Marketinški stručnjak"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:143
 msgid "Marketing / landing site"
-msgstr ""
+msgstr "Marketinška / odredišna stranica"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
 msgid "Match Case"
-msgstr ""
+msgstr "Upari Slučaj"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
 msgid "Match Whole Word"
-msgstr ""
+msgstr "Traži Cijelu Riječ"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
@@ -2028,16 +2538,16 @@ msgstr "Maksimalna Visina"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:30
 msgid "Max Width"
-msgstr ""
+msgstr "Maksimalna Širina"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:12
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:12
 msgid "Max. Items"
-msgstr ""
+msgstr "Najviše Artikala"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:12
 msgid "Max. Value"
-msgstr ""
+msgstr "Najveća Vrijednost"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -2045,8 +2555,18 @@ msgid "Media"
 msgstr "Medij"
 
 #: frontend/src/components/ShadowHandler.vue:184
+#: frontend/src/utils/fontManager.ts:22
 msgid "Medium"
 msgstr "Medij"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:48
+msgid "Members ({0})"
+msgstr "Članovi ({0})"
+
+#. Label of the message_type (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Message Type"
+msgstr "Tip Poruke"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2064,50 +2584,44 @@ msgstr "Meta Slika"
 msgid "Meta Tags"
 msgstr "Meta Oznake"
 
+#. Label of the metadata_json (Long Text) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Metadata JSON"
+msgstr "Metapodaci JSON"
+
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:59
 msgid "Min Height"
-msgstr ""
+msgstr "Najmanja Visina"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:20
 msgid "Min Width"
-msgstr ""
+msgstr "Najmanja Širina"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:4
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:4
 msgid "Min. Items"
-msgstr ""
+msgstr "Najmanje Artikal"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:4
 msgid "Min. Value"
-msgstr ""
+msgstr "Najmanja Vrijednost"
 
-#: frontend/src/components/WebPagePresetPicker.vue:455
-msgid "Minimal"
-msgstr ""
+#: frontend/src/components/BuilderCanvas.vue:247
+msgid "Mobile"
+msgstr "Mobilni Broj"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:74
-msgid "Model"
-msgstr "Model"
+#. Label of the model_id (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Model ID"
+msgstr "ID Modela"
 
-#: frontend/src/components/WebPagePresetPicker.vue:457
-msgid "Modern"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Modify"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:291
-msgid "Modify with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Modifying section…"
-msgstr ""
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.py:23
+msgid "Model ID is required"
+msgstr "ID Modela je obavezan"
 
 #: frontend/src/components/BlockPropertySections/MoreStylesSection.ts:15
 msgid "More Styles"
-msgstr ""
+msgstr "Više Stilova"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:245
 #: frontend/src/components/Modals/TokenManager.vue:367
@@ -2116,24 +2630,32 @@ msgstr "Premjesti"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / hand mode"
-msgstr ""
+msgstr "Premjesti / ručni način"
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
-msgstr ""
+msgstr "Premjesti u Mapu"
 
 #: frontend/src/components/RouteTreeView.vue:335
 msgid "Move down in page tree"
-msgstr ""
+msgstr "Premjesti niže u stablu stranice"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
-#: frontend/src/components/Modals/TokenManager.vue:759
+#: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to group"
-msgstr ""
+msgstr "Premjesti u grupu"
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move up in page tree"
-msgstr ""
+msgstr "Premjesti gore u stablu stranice"
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} token to \"{1}\""
+msgstr "Token {0} je premješten u \"{1}\""
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} tokens to \"{1}\""
+msgstr "Premješteno {0} tokena u \"{1}\""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:75
 msgid "Muted"
@@ -2142,23 +2664,33 @@ msgstr "Utišano"
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
 msgid "My Page"
-msgstr ""
+msgstr "Moja Stranica"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
 #: frontend/src/components/Modals/TokenManager.vue:48
 msgid "Name"
 msgstr "Naziv"
 
+#: frontend/src/components/EditableSpan.vue:61
+msgid "Name already exists"
+msgstr "Naziv već postoji"
+
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
-msgstr ""
+msgstr "Nazovi ovu verziju (nije obavezno)"
+
+#. Description of the 'Route Prefix' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty."
+msgstr "Imenski prostor za nazive modela ovog pružitelja usluga, npr. <code>openrouter</code> daje <code>openrouter/anthropic/claude-sonnet-5</code>. Izvedeno iz naziva kada se ostavi prazno."
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
 #: frontend/src/components/CommandPalette.vue:92
-#: frontend/src/components/Commands/index.ts:41
-#: frontend/src/components/Commands/index.ts:100
+#: frontend/src/components/Commands/index.ts:40
+#: frontend/src/components/Commands/index.ts:98
 msgid "Navigate"
-msgstr ""
+msgstr "Navigacija"
 
 #: frontend/src/pages/PagePreview.vue:157
 msgid "Navigation"
@@ -2170,32 +2702,36 @@ msgstr "Novi"
 
 #: frontend/src/utils/dialogs.ts:36
 msgid "New Component"
-msgstr ""
+msgstr "Nova Komponenta"
 
 #: frontend/src/components/DashboardSidebar.vue:165
 #: frontend/src/components/MainMenu.vue:63
 msgid "New Page"
-msgstr ""
+msgstr "Nova Stranica"
 
-#: frontend/src/components/PageClientScriptManager.vue:83
+#: frontend/src/components/PageClientScriptManager.vue:81
 msgid "New Script"
-msgstr ""
+msgstr "Nova Skripta"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
 msgstr "Nova Kartica"
 
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "New Token"
+msgstr "Novi Token"
+
 #: frontend/src/components/DashboardSidebar.vue:24
 msgid "New folder"
-msgstr ""
+msgstr "Nova mapa"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:108
 msgid "New page"
-msgstr ""
+msgstr "Nova stranica"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:93
 msgid "New token created"
-msgstr ""
+msgstr "Novi token izrađen"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:71
 msgid "Next"
@@ -2203,7 +2739,7 @@ msgstr "Sljedeća"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:46
 #: frontend/src/components/BlockFlexLayoutHandler.vue:55
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:88
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:61
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:78
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
@@ -2211,56 +2747,76 @@ msgstr "Sljedeća"
 msgid "No"
 msgstr "Ne"
 
+#: frontend/src/components/Settings/GlobalDomains.vue:186
+msgid "No DNS record found for this domain."
+msgstr "Nije pronađen DNS zapis za ovu domenu."
+
 #: frontend/src/components/PropsEditor.vue:51
 msgid "No Default Value"
-msgstr ""
+msgstr "Nema standard vrijednosti"
 
-#: frontend/src/components/BackgroundHandler.vue:298
+#: frontend/src/components/BackgroundHandler.vue:305
 msgid "No Repeat"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:81
-msgid "No Style"
-msgstr ""
+msgstr "Bez Ponavljanja"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
 #: frontend/src/components/Controls/DynamicValueHandler.vue:38
 msgid "No Value Set"
-msgstr ""
+msgstr "Nije postavljena vrijednost"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:35
 msgid "No Wrap"
-msgstr ""
+msgstr "Bez Prelamanja"
+
+#: frontend/src/components/Modals/TokenManager.vue:428
+msgid "No color tokens yet"
+msgstr "Još nema tokena u boji"
+
+#: frontend/src/components/CommandPalette.vue:76
+msgid "No commands found"
+msgstr "Nije pronađena nijedna komanda"
 
 #: frontend/src/components/BuilderAssets.vue:20
 msgid "No components saved"
-msgstr ""
+msgstr "Nema spremljenih komponenti"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:8
 msgid "No custom domains added yet."
-msgstr ""
+msgstr "Još nije dodana nijedna prilagođena domena."
+
+#: frontend/src/components/Modals/TokenManager.vue:430
+msgid "No dimension tokens yet"
+msgstr "Još nema dimenzionalnih tokena"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
 msgid "No dynamic values found. Please add using"
-msgstr ""
+msgstr "Nije pronađena nijedna dinamička vrijednost. Dodaj koristeći"
 
 #: frontend/src/components/DashboardSidebar.vue:31
 msgid "No folders yet"
-msgstr ""
+msgstr "Još nema mapa"
+
+#: frontend/src/components/Modals/TokenManager.vue:429
+msgid "No font tokens yet"
+msgstr "Još nema tokena fonta"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
-msgstr ""
+msgstr "Nisu pronađene odgovarajuće stranice."
 
 #: frontend/src/components/MoreStylesPanel.vue:23
 msgid "No matching properties"
-msgstr ""
+msgstr "Nema odgovarajućih svojstava"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:65
+msgid "No members match \"{0}\""
+msgstr "Nema članova koji odgovaraju \"{0}\""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
-msgstr ""
+msgstr "Još nema članova. Pozovite nekoga da mu date pristup."
 
-#: builder/api.py:425
+#: builder/api.py:568
 msgid "No pages found in this template group."
 msgstr "U ovoj grupi predložaka nisu pronađene stranice."
 
@@ -2268,34 +2824,50 @@ msgstr "U ovoj grupi predložaka nisu pronađene stranice."
 msgid "No pages found."
 msgstr "Nije pronađena nijedna stranica."
 
+#: builder/ai/api.py:169
+msgid "No pending action on this message"
+msgstr "Nema radnji na čekanju za ovu poruku"
+
 #: builder/api.py:40
 msgid "No permission to preview this page"
-msgstr ""
+msgstr "Nemate dopuštenje za pregled ove stranice"
 
-#: frontend/src/components/Controls/SearchBlock.vue:372
-#: frontend/src/components/Controls/SearchBlock.vue:394
+#: frontend/src/components/Settings/GlobalRedirects.vue:62
+msgid "No redirects match \"{0}\""
+msgstr "Nema preusmjeravanja koja odgovaraju \"{0}\""
+
+#: frontend/src/components/Controls/SearchBlock.vue:376
+#: frontend/src/components/Controls/SearchBlock.vue:398
 msgid "No replacements made"
-msgstr ""
+msgstr "Nije izvršena nikakva zamjena"
 
-#: frontend/src/components/Controls/SearchBlock.vue:137
+#: frontend/src/components/CommandPalette.vue:75
+msgid "No results for \"{0}\""
+msgstr "Nema rezultata za \"{0}\""
+
+#: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "No results found"
 msgstr "Nisu pronađeni rezultati"
 
 #: frontend/src/components/VersionHistory.vue:36
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
-msgstr ""
+msgstr "Još nema spremljenih verzija. Verzija se snima svaki put kada objavite ili kada je ručno spremite."
 
 #: frontend/src/components/Modals/TokenManager.vue:349
 msgid "No tokens found"
-msgstr ""
+msgstr "Nije pronađen nijedan token"
+
+#: frontend/src/components/Modals/TokenManager.vue:354
+msgid "No tokens match \"{0}\". Try a different search term."
+msgstr "Nijedan token ne odgovara \"{0}\". Pokušajte s drugim pojmom za pretraživanje."
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:35
 msgid "No views in this period"
-msgstr ""
+msgstr "Nema pregleda u ovom razdoblju"
 
 #: frontend/src/utils/useBuilderEvents.ts:477
 msgid "No, just blocks"
-msgstr ""
+msgstr "Ne, samo blokovi"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:158
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:15
@@ -2318,19 +2890,19 @@ msgstr "Nije Pronađeno"
 
 #: frontend/src/components/RouteTreeNode.vue:51
 msgid "Not published"
-msgstr ""
+msgstr "Nije objavljeno"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
 msgstr "Nije korišteno ni na jednoj stranici"
 
-#: frontend/src/components/PageClientScriptManager.vue:100
+#: frontend/src/components/PageClientScriptManager.vue:98
 msgid "Note:"
 msgstr "Napomena:"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:33
 msgid "Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe."
-msgstr ""
+msgstr "Napomena: Skripte blokova se izvršavaju u izoliranom okruženju. To može imati ograničenja i možda neće savršeno replicirati ponašanje stranice u stvarnom okruženju. Izvršavanje nepouzdanih skripti može biti nesigurno."
 
 #: frontend/src/components/PropsPopoverContent.vue:168
 msgid "Number"
@@ -2338,23 +2910,35 @@ msgstr "Broj"
 
 #: frontend/src/components/PropsPopoverContent.vue:172
 msgid "Object"
-msgstr ""
+msgstr "Objekt"
 
 #: frontend/src/components/ObjectInput.vue:20
 msgid "Object Items:"
-msgstr ""
+msgstr "Elementi Objekta:"
 
 #: frontend/src/utils/helpers.ts:54
 msgid "Ok"
-msgstr ""
+msgstr "U redu"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:56
+msgid "On Active"
+msgstr "Na Aktivno"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:57
+msgid "On Focus"
+msgstr "Na Fokus"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:55
+msgid "On Hover"
+msgstr "Na Preletanja"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:144
 msgid "Online store / E-commerce"
-msgstr ""
+msgstr "Internetska trgovina / E-trgovina"
 
-#: builder/api.py:183
+#: builder/api.py:323
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
-msgstr ""
+msgstr "Za vanjske slike dopušteni su samo HTTP/HTTPS URL-ovi."
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
@@ -2362,54 +2946,58 @@ msgstr ""
 msgid "Only allow logged-in users to view this page."
 msgstr "Samo prijavljeni korisnici mogu pregledati ovu stranicu."
 
-#: frontend/src/components/Settings/PageGeneral.vue:122
+#: frontend/src/components/Settings/PageGeneral.vue:118
 msgid "Only logged-in users can access this page"
-msgstr ""
+msgstr "Samo prijavljeni korisnici mogu pristupiti ovoj stranici"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:42
 msgid "Opacity"
-msgstr ""
+msgstr "Neprozirnost"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:73
 msgid "Opacity Only"
-msgstr ""
+msgstr "Samo Neprozirnost"
 
 #. Label of a shortcut in the Frappe Builder Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Open <strong>Frappe Builder</strong>"
 msgstr "Otvori <strong>Frappe Builder</strong>"
 
+#: builder/public/js/builder.js:3
+msgid "Open Builder"
+msgstr "Otvori Uređivač"
+
 #: frontend/src/components/Controls/DynamicValueHandler.vue:64
 msgid "Open Code Tab"
-msgstr ""
+msgstr "Otvori Karticu Koda"
 
 #: frontend/src/components/BuilderCommandPalette.vue:44
 msgid "Open Command Palette"
-msgstr ""
+msgstr "Otvori Paletu Naredbi"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:21
 msgid "Open Global Settings"
-msgstr ""
+msgstr "Otvori Postavke Sustava"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
 msgstr "Otvori u Builderu"
 
+#: frontend/src/components/TextBlockBubbleMenu.vue:39
+msgid "Open in New Tab"
+msgstr "Otvori u Novoj Kartici"
+
 #: frontend/src/components/RouteTreeView.vue:390
 msgid "Open page or toggle folder in page tree"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:4
-msgid "OpenRouter API Key"
-msgstr ""
+msgstr "Otvori stranicu ili prebacite mapu u stablu stranica"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
-msgstr ""
+msgstr "Otvara se za"
 
 #: frontend/src/components/Settings/PageMeta.vue:57
 msgid "Optional. Set this to specify a preferred version of this page for search engines."
-msgstr ""
+msgstr "Neobavezno. Postavite ovo kako biste odredili preferiranu verziju ove stranice za tražilice."
 
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2424,22 +3012,25 @@ msgstr "Red"
 
 #: frontend/src/components/ImageUploadInput.vue:76
 msgid "Original Size"
-msgstr ""
+msgstr "Izvorna Veličina"
 
-#: frontend/src/components/WebPagePresetPicker.vue:459
 #: frontend/src/pages/PagePersonaSurvey.vue:120
 #: frontend/src/pages/PagePersonaSurvey.vue:134
 #: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Other"
 msgstr "Ostalo"
 
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Outset Shadow"
+msgstr "Izvorna Sjena"
+
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
-msgstr ""
+msgstr "Prelijevanje X"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:220
 msgid "Overflow Y"
-msgstr ""
+msgstr "Prelijevanje Y"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:4
 msgid "Overview"
@@ -2449,33 +3040,36 @@ msgstr "Pregled"
 msgid "Padding"
 msgstr "Popunjavanje"
 
+#. Label of the page (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/BuilderCommandPalette.vue:260
-#: frontend/src/components/Commands/index.ts:42
-#: frontend/src/components/Commands/index.ts:110
-#: frontend/src/components/Commands/index.ts:124
-#: frontend/src/components/Commands/index.ts:134
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/pages/PageBuilder.vue:33
 msgid "Page"
 msgstr "Stranica"
 
 #: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
-msgstr ""
+msgstr "Analitika Stranice"
 
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Client Script"
-msgstr ""
+msgstr "Klijentski Skript Stranice"
 
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
-msgstr ""
+msgstr "Kod Stranice"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:145
+#: frontend/src/utils/builderBlockCopyPaste.ts:153
 msgid "Page Copied"
-msgstr ""
+msgstr "Stranica Kopirana"
 
 #: frontend/src/components/PageScript.vue:15
 msgid "Page Data Preview"
-msgstr ""
+msgstr "Pregled Podataka Stranice"
 
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2509,32 +3103,32 @@ msgstr "Naslov Stranice"
 #: frontend/src/components/RouteTreeView.vue:375
 #: frontend/src/components/RouteTreeView.vue:391
 msgid "Page Tree"
-msgstr ""
+msgstr "Struktura Stranice"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:209
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
 msgid "Page created"
-msgstr ""
+msgstr "Stranica izrađena"
 
-#: frontend/src/stores/pageStore.ts:174
+#: frontend/src/stores/pageStore.ts:180
 msgid "Page deleted"
-msgstr ""
+msgstr "Stranica izbrisana"
 
-#: frontend/src/stores/pageStore.ts:177
+#: frontend/src/stores/pageStore.ts:183
 msgid "Page deletion failed"
-msgstr ""
+msgstr "Brisanje stranice nije uspjelo"
 
-#: frontend/src/stores/pageStore.ts:161
+#: frontend/src/stores/pageStore.ts:167
 msgid "Page duplicated"
-msgstr ""
+msgstr "Stranica duplicirana"
 
-#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:46
+#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:53
 msgid "Page not found"
 msgstr "Stranica nije pronađena"
 
-#: frontend/src/stores/pageStore.ts:258
+#: frontend/src/stores/pageStore.ts:264
 msgid "Page unpublished"
-msgstr ""
+msgstr "Stranica je poništena"
 
 #: frontend/src/components/BuilderCommandPalette.vue:279
 msgid "Pages"
@@ -2542,42 +3136,46 @@ msgstr "Stranice"
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
-msgstr ""
+msgstr "Pomakni radnu površinu prema niže"
 
 #: frontend/src/utils/useBuilderEvents.ts:312
 msgid "Pan canvas left"
-msgstr ""
+msgstr "Pomakni radnu površinu lijevo"
 
 #: frontend/src/utils/useBuilderEvents.ts:301
 msgid "Pan canvas right"
-msgstr ""
+msgstr "Pomakni radnu površinu desno"
 
 #: frontend/src/utils/useBuilderEvents.ts:323
 msgid "Pan canvas up"
-msgstr ""
+msgstr "Pomakni radnu površinu gore"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:70
+#: frontend/src/components/BlockContextMenuOptions/index.ts:47
 msgid "Paste Style"
-msgstr ""
+msgstr "Zalijepi Stil"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:32
-msgid "Paste or drop image"
-msgstr ""
-
-#: frontend/src/utils/builderBlockCopyPaste.ts:184
+#: frontend/src/utils/builderBlockCopyPaste.ts:271
 msgid "Pasting a page!"
-msgstr ""
+msgstr "Lijepljenje stranice!"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:159
-#: frontend/src/utils/builderBlockCopyPaste.ts:192
-#: frontend/src/utils/builderBlockCopyPaste.ts:208
+#: frontend/src/utils/builderBlockCopyPaste.ts:174
+#: frontend/src/utils/builderBlockCopyPaste.ts:278
+#: frontend/src/utils/builderBlockCopyPaste.ts:300
 msgid "Pasting..."
-msgstr ""
+msgstr "Lijepim..."
 
 #. Label of the path (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Path"
 msgstr "Put"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:17
+msgid "Pending Invites ({0})"
+msgstr "Pozivnice na Čekanju ({0})"
+
+#: builder/ai/api.py:162
+msgid "Pending action not found"
+msgstr "Radnja na čekanju nije pronađena"
 
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -2586,18 +3184,22 @@ msgstr "Persona Anketa Završena"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "Pick a starting point"
-msgstr ""
+msgstr "Odaberi početnu točku"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:36
 msgid "Pick a wider date range, or share your page to start collecting data."
-msgstr ""
+msgstr "Odaberi širi raspon datuma ili podijelite svoju stranicu da biste počeli prikupljati podatke."
+
+#: builder/ai/api.py:442
+msgid "Pick at least one model"
+msgstr "Odaberi barem jedan model"
 
 #: frontend/src/components/Modals/TokenManager.vue:100
 #: frontend/src/components/Modals/TokenManager.vue:145
 #: frontend/src/components/Modals/TokenManager.vue:269
 #: frontend/src/components/Modals/TokenManager.vue:315
 msgid "Pick color"
-msgstr ""
+msgstr "Odaberi boju"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:39
 msgid "Placeholder"
@@ -2607,47 +3209,51 @@ msgstr "Rezervisano"
 msgid "Placement"
 msgstr "Postavljanje"
 
-#: builder/ai_page_generator.py:464
-msgid "Please configure an OpenRouter API key in Settings → AI"
-msgstr "Konfiguriraj OpenRouter API ključ u Postavke → AI"
+#: builder/ai/api.py:38
+msgid "Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
+msgstr "Konfiguriraj OpenRouter API ključ u Postavke → AI ili API ključ na stranici pružitelja usluga modela"
 
 #: builder/builder/doctype/builder_page/builder_page.py:88
 msgid "Please log in to view this page."
-msgstr ""
+msgstr "Prijavite se da biste vidjeli ovu stranicu."
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:87
-#: frontend/src/components/BlockContextMenuOptions/index.ts:166
+#: frontend/src/components/BlockContextMenuOptions/index.ts:64
+#: frontend/src/components/BlockContextMenuOptions/index.ts:143
 msgid "Please select a collection"
-msgstr ""
+msgstr "Odaberi Kolekciju"
 
-#: frontend/src/components/Settings/PageGeneral.vue:258
+#: frontend/src/components/Settings/PageGeneral.vue:254
 msgid "Please select an app for this standard page"
-msgstr ""
+msgstr "Odaberi aplikaciju za ovu standardnu stranicu"
 
-#: builder/ai_page_generator.py:659
+#: builder/ai/api.py:595
 msgid "Please set an OpenRouter API key"
 msgstr "Postavi OpenRouter API ključ"
 
+#: frontend/src/pages/PageBuilder.vue:6
+msgid "Please switch to a larger screen to edit"
+msgstr "Prebacite se na veći zaslon za uređivanje"
+
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:244
 msgid "Pointer"
-msgstr ""
+msgstr "Pokazivač"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:171
 msgid "Points your root domain directly to the server. Use @ as the host name."
-msgstr ""
+msgstr "Usmjerava vašu korijensku domenu izravno na poslužitelj. Koristi @ kao naziv hosta."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:145
 msgid "Portfolio / personal site"
-msgstr ""
+msgstr "Portfolio / osobna stranica"
 
-#: frontend/src/components/BackgroundHandler.vue:89
+#: frontend/src/components/BackgroundHandler.vue:90
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
 msgstr "Pozicija"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
 msgid "Poster"
-msgstr ""
+msgstr "Plakat"
 
 #: frontend/src/components/ShadowHandler.vue:57
 msgid "Presets"
@@ -2655,30 +3261,30 @@ msgstr "Predodabir"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:21
 msgid "Prevent Click Emulation"
-msgstr ""
+msgstr "Spriječi Emulaciju Klika"
 
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:129
+#: frontend/src/components/Settings/PageGeneral.vue:125
 msgid "Prevent search engines from indexing this page"
 msgstr "Spriječi tražilice da indeksiraju ovu stranicu"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
-msgstr ""
+msgstr "Spriječi automatsko prebacivanje web stranice u tamni način"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:23
 msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
-msgstr ""
+msgstr "Sprječava emulaciju događaja klikanja u uređivaču za blokove s klijentskim skriptama."
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/Commands/index.ts:113
+#: frontend/src/components/Commands/index.ts:111
 #: frontend/src/components/Templates/TemplateGroupCard.vue:16
 #: frontend/src/components/Templates/TemplatePageCard.vue:16
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:21
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:22
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:10
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
 msgid "Preview"
 msgstr "Pregled"
 
@@ -2695,9 +3301,9 @@ msgstr "Pregled slike"
 msgid "Preview Image is mandatory"
 msgstr "Slika Pregleda je obavezna"
 
-#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:106
 msgid "Preview Page"
-msgstr ""
+msgstr "Pregled Stranice"
 
 #. Label of the preview_width (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -2722,9 +3328,19 @@ msgstr "Svojstva"
 msgid "Property"
 msgstr "Svojstvo"
 
-#: frontend/src/components/Settings/PageGeneral.vue:120
+#: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
-msgstr ""
+msgstr "Zaštićena Stranica"
+
+#. Label of the provider (Link) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Provider"
+msgstr "Dostavljač"
+
+#. Label of the provider_name (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Provider Name"
+msgstr "Naziv Dostavljača Servisa"
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -2733,20 +3349,20 @@ msgstr "Javni URL"
 
 #: frontend/src/components/PageListItem.vue:29
 msgid "Publicly accessible"
-msgstr ""
+msgstr "Javno dostupno"
 
-#: frontend/src/components/PublishButton.vue:77
+#: frontend/src/components/PublishButton.vue:74
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Publish"
 msgstr "Objavi"
 
-#: frontend/src/components/PublishButton.vue:79
+#: frontend/src/components/PublishButton.vue:76
 msgid "Publish Changes"
-msgstr ""
+msgstr "Objavi Promjene"
 
-#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:120
 msgid "Publish Page"
-msgstr ""
+msgstr "Objavi Stranicu"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2763,15 +3379,19 @@ msgstr "Objavljeno"
 
 #: frontend/src/components/VersionHistory.vue:69
 msgid "Published version"
-msgstr ""
+msgstr "Objavljena verzija"
 
 #: frontend/src/components/Settings/PageGeneral.vue:45
 msgid "Published with limited access"
-msgstr ""
+msgstr "Objavljeno s ograničenim pristupom"
+
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Pulling..."
+msgstr "Preuzima se..."
 
 #: frontend/src/components/Controls/GradientEditor.vue:8
 msgid "Radial"
-msgstr ""
+msgstr "Radijalno"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:157
 msgid "Radius"
@@ -2783,20 +3403,44 @@ msgstr "Samo za čitanje"
 
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
-msgstr ""
+msgstr "Pregled samo za čitanje · Upotrijebi <b>Vrati</b> za učitavanje ove verzije."
 
 #: frontend/src/components/BuilderCommandPalette.vue:291
 #: frontend/src/components/BuilderCommandPalette.vue:342
 msgid "Recent"
 msgstr "Nedavno"
 
+#: frontend/src/components/Controls/GradientEditor.vue:178
+msgid "Recently used"
+msgstr "Nedavno korišteno"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Redirect added"
+msgstr "Preusmjeravanje dodano"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Redirect deleted"
+msgstr "Preusmjeravanje izbrisano"
+
+#: frontend/src/data/domains.ts:88
+msgid "Redirect disabled for {0}"
+msgstr "Preusmjeravanje onemogućeno za {0}"
+
+#: frontend/src/data/domains.ts:84
+msgid "Redirect enabled for {0}"
+msgstr "Preusmjeravanje omogućeno za {0}"
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
-msgstr ""
+msgstr "Status preusmjeravanja"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:240
 msgid "Redirect to Primary"
-msgstr ""
+msgstr "Preusmjeri na Primarno"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Redirect updated"
+msgstr "Preusmjeravanje ažurirano"
 
 #: frontend/src/components/Settings/index.ts:102
 #: frontend/src/components/Settings/index.ts:103
@@ -2805,10 +3449,10 @@ msgstr "Preusmjeravanja"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:20
 msgid "Redirects to primary"
-msgstr ""
+msgstr "Preusmjerava na primarni"
 
-#: frontend/src/components/Commands/index.ts:326
-#: frontend/src/components/Commands/index.ts:330
+#: frontend/src/components/Commands/index.ts:304
+#: frontend/src/components/Commands/index.ts:308
 msgid "Redo"
 msgstr "Ponovi"
 
@@ -2824,9 +3468,9 @@ msgstr "Referentni Naziv"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:156
 msgid "Regex capture"
-msgstr ""
+msgstr "Snimanje Regularnih Izraza"
 
-#: frontend/src/utils/fontManager.ts:242
+#: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:267
 msgid "Regular"
 msgstr "Regularno"
 
@@ -2835,80 +3479,80 @@ msgid "Relative"
 msgstr "Relativno"
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
-#: frontend/src/components/Modals/TokenManager.vue:754
+#: frontend/src/components/Modals/TokenManager.vue:764
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
 msgstr "Ukloni"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:99
+#: frontend/src/components/BlockContextMenuOptions/index.ts:76
 msgid "Remove Collection"
-msgstr ""
+msgstr "Ukloni Kolekciju"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:253
 msgid "Remove Domain"
-msgstr ""
+msgstr "Ukloni Domenu"
 
 #: frontend/src/components/PageClientScriptManager.vue:54
 msgid "Remove Script"
-msgstr ""
+msgstr "Ukloni Skriptu"
 
-#: frontend/src/components/Controls/GradientEditor.vue:45
+#: frontend/src/components/Controls/GradientEditor.vue:49
 msgid "Remove Stop"
-msgstr ""
+msgstr "Ukloni Stop"
 
-#: frontend/src/components/Modals/TokenManager.vue:761
+#: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from group"
-msgstr ""
+msgstr "Ukloni iz grupe"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:44
-msgid "Remove image"
-msgstr "Ukloni sliku"
+#: frontend/src/data/domains.ts:72
+msgid "Removing {0}…"
+msgstr "Uklanjanje {0}…"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:261
+#: frontend/src/components/BlockContextMenuOptions/index.ts:238
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
 msgstr "Preimenuj"
 
-#: frontend/src/components/BackgroundHandler.vue:95
-#: frontend/src/components/BackgroundHandler.vue:299
+#: frontend/src/components/BackgroundHandler.vue:96
+#: frontend/src/components/BackgroundHandler.vue:306
 msgid "Repeat"
 msgstr "Ponovi"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:157
+#: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
-msgstr ""
+msgstr "Ponovi Blok"
 
-#: frontend/src/components/BackgroundHandler.vue:300
+#: frontend/src/components/BackgroundHandler.vue:307
 msgid "Repeat X"
-msgstr ""
+msgstr "Ponovi X"
 
-#: frontend/src/components/BackgroundHandler.vue:301
+#: frontend/src/components/BackgroundHandler.vue:308
 msgid "Repeat Y"
-msgstr ""
+msgstr "Ponovi Y"
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:72
+#: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
-#: frontend/src/components/Controls/SearchBlock.vue:127
+#: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
 msgstr "Zamijeni"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
-msgstr ""
+msgstr "Zamijeni Sve"
+
+#: frontend/src/components/Controls/SearchBlock.vue:92
+msgid "Replace All ({0} matches)"
+msgstr "Zamijeni sve ({0} odgovara)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
 msgid "Replace Component"
 msgstr "Zamijeni Komponentu"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:45
-msgid "Replace Image (AI)"
-msgstr ""
-
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:89
 msgid "Replace Next"
-msgstr ""
+msgstr "Zamijeni Sljedeće"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:53
 msgid "Replace With"
@@ -2916,40 +3560,54 @@ msgstr "Zamijeni s"
 
 #: frontend/src/components/Controls/SearchBlock.vue:78
 msgid "Replace with..."
-msgstr ""
+msgstr "Zamijeni s..."
 
-#: builder/api.py:195
+#: frontend/src/components/Controls/SearchBlock.vue:374
+msgid "Replaced in {0}"
+msgstr "Zamijenjeno u {0}"
+
+#: frontend/src/components/Controls/SearchBlock.vue:97
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} block"
+msgstr "Zamijenjeno u {0} bloku"
+
+#: frontend/src/components/Controls/SearchBlock.vue:98
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} blocks"
+msgstr "Zamijenjeno u {0} blokova"
+
+#: builder/api.py:336
 msgid "Requests to private or internal addresses are not allowed."
-msgstr ""
+msgstr "Zahtjevi na privatne ili interne adrese nisu dopušteni."
 
 #: frontend/src/components/Settings/GlobalUsers.vue:35
 msgid "Resend"
 msgstr "Ponovo pošalji"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:182
+#: frontend/src/components/BlockContextMenuOptions/index.ts:159
 msgid "Reset Changes"
 msgstr "Poništi Promjene"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:204
+#: frontend/src/components/BlockContextMenuOptions/index.ts:181
 msgid "Reset Component"
-msgstr ""
+msgstr "Poništi Komponentu"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:173
+#: frontend/src/components/BlockContextMenuOptions/index.ts:150
 msgid "Reset Overrides"
-msgstr ""
+msgstr "Poništi Poništavanja"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset canvas zoom"
-msgstr ""
+msgstr "Poništi zumiranje radne površine"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:185
+#: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
-msgstr ""
+msgstr "Poništi promjene i u podređenim blokovima?"
 
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
 msgid "Restore this version as your draft"
-msgstr ""
+msgstr "Vrati ovu verziju kao nacrt"
 
 #. Label of the restrict_click_handlers (Check) field in DocType 'Builder
 #. Settings'
@@ -2964,19 +3622,19 @@ msgstr "Ograniči Klik Rukovatelje"
 msgid "Restricted"
 msgstr "Ograničeno"
 
-#: frontend/src/components/WebPagePresetPicker.vue:458
-msgid "Retro"
-msgstr ""
-
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
 msgstr "Pokušaj Ponovno"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:38
-msgid "Rewrite (AI)"
-msgstr ""
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}"
+msgstr "Ponovni pokušaj {0}"
 
-#: frontend/src/components/BackgroundHandler.vue:294
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}…"
+msgstr "Ponovni pokušaj {0}…"
+
+#: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
@@ -2984,7 +3642,7 @@ msgstr "Desno"
 
 #: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
-msgstr ""
+msgstr "Roboti"
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
@@ -2992,15 +3650,17 @@ msgstr "Robots.txt"
 
 #: frontend/src/components/Settings/PageRobots.vue:30
 msgid "Robots.txt Guide"
-msgstr ""
+msgstr "Robots.txt Vodič"
 
+#. Label of the role (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
 msgstr "Uloga"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:258
 msgid "Rotation"
-msgstr ""
+msgstr "Rotacija"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3009,9 +3669,14 @@ msgstr ""
 msgid "Route"
 msgstr "Ruta"
 
+#. Label of the route_prefix (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Route Prefix"
+msgstr "Prefiks Rute"
+
 #: frontend/src/components/DashboardHead.vue:86
 msgid "Route Tree"
-msgstr ""
+msgstr "Stablo Rute"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:83
 msgid "Row"
@@ -3019,15 +3684,15 @@ msgstr "Red"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:91
 msgid "Row Dense"
-msgstr ""
+msgstr "Gusoća Reda"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:43
 msgid "Row Height"
-msgstr ""
+msgstr "Visina Reda"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:156
 msgid "Row Span"
-msgstr ""
+msgstr "Raspon Reda"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:26
 msgid "Rows"
@@ -3035,48 +3700,66 @@ msgstr "Redovi"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
-msgstr ""
+msgstr "SVG s umetnutom slikom nije podržan. Umjesto toga, zalijepite ga kao PNG."
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:61
 msgid "Same Tab"
-msgstr ""
+msgstr "Ista Kartica"
 
-#: frontend/src/components/Modals/TokenManager.vue:1037
+#: frontend/src/components/Modals/TokenManager.vue:1048
 msgid "Sample CSV downloaded"
-msgstr ""
+msgstr "Preuzet je primjer CSV datoteke"
 
 #: frontend/src/components/Controls/CodeEditor.vue:41
 #: frontend/src/components/Modals/NewBlockTemplate.vue:7
 #: frontend/src/components/PropsPopoverContent.vue:46
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 #: frontend/src/components/VersionHistory.vue:27
-#: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
+#: frontend/src/pages/PageBuilder.vue:46 frontend/src/stores/canvasStore.ts:172
+#: frontend/src/utils/dialogs.ts:38
 msgid "Save"
 msgstr "Spremi"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:241
+#: frontend/src/components/BlockContextMenuOptions/index.ts:218
 msgid "Save As Component"
-msgstr ""
+msgstr "Spremi kao Komponentu"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:232
+#: frontend/src/stores/componentStore.ts:88
+msgid "Save Component"
+msgstr "Spremi Komponentu"
+
+#: frontend/src/stores/blockTemplateStore.ts:44
+msgid "Save Template"
+msgstr "Spremi Predložak"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:209
 #: frontend/src/components/Modals/NewBlockTemplate.vue:3
 msgid "Save as Block Template"
-msgstr ""
+msgstr "Spremi kao Predložak Bloka"
 
 #: frontend/src/components/Controls/ColorInput.vue:38
 msgid "Save as Token"
-msgstr ""
+msgstr "Spremi kao Token"
 
 #: frontend/src/components/VersionHistory.vue:14
 msgid "Save current version"
-msgstr ""
+msgstr "Spremi trenutnu verziju"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
 msgid "Save page / component"
-msgstr ""
+msgstr "Spremi stranicu / komponentu"
 
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:15
+#: builder/ai/api.py:522
+msgid "Save the page before starting a chat session"
+msgstr "Spremi stranicu prije početka sesije ćaskanja"
+
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:4
 msgid "Saving template"
-msgstr ""
+msgstr "Spremanje predloška"
+
+#: frontend/src/pages/PageBuilder.vue:5
+msgid "Screen too small"
+msgstr "Zaslon je premalen"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
@@ -3097,17 +3780,17 @@ msgstr "Javni URL Skripte"
 msgid "Script Type"
 msgstr "Tip Skripte"
 
-#: frontend/src/components/PageClientScriptManager.vue:243
+#: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
-msgstr ""
+msgstr "Skripta ne može biti prazna"
 
-#: frontend/src/components/PageClientScriptManager.vue:386
+#: frontend/src/components/PageClientScriptManager.vue:393
 msgid "Script order updated"
-msgstr ""
+msgstr "Redoslijed skripti ažuriran"
 
-#: frontend/src/components/PageClientScriptManager.vue:266
+#: frontend/src/components/PageClientScriptManager.vue:273
 msgid "Script saved successfully"
-msgstr ""
+msgstr "Skripta uspješno spremljena"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3116,7 +3799,7 @@ msgstr "Skriptiranje"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:32
 msgid "Scroll"
-msgstr ""
+msgstr "Skrolaj"
 
 #: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
@@ -3125,44 +3808,52 @@ msgstr "Traži"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:115
 msgid "Search (Google)"
-msgstr ""
+msgstr "Pretraga (Google)"
 
 #: frontend/src/components/BuilderCanvas.vue:113
 msgid "Search Block"
-msgstr ""
+msgstr "Blok Pretrage"
 
-#: frontend/src/components/Commands/index.ts:238
+#: frontend/src/components/Commands/index.ts:236
 msgid "Search Blocks"
-msgstr ""
+msgstr "Blokovi Pretrage"
 
 #: frontend/src/components/BuilderCommandPalette.vue:60
 #: frontend/src/components/BuilderCommandPalette.vue:69
 msgid "Search Page"
-msgstr ""
+msgstr "Stranica Pretrage"
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
 msgstr "Predložak Pretraživanja"
 
-#: frontend/src/components/Commands/index.ts:242
+#: frontend/src/components/Commands/index.ts:240
 msgid "Search blocks"
-msgstr ""
+msgstr "Blokovi pretrage"
+
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Search blocks..."
+msgstr "Blokovi pretrage..."
 
 #: frontend/src/components/Settings/GlobalUsers.vue:7
 msgid "Search by name or email"
-msgstr ""
+msgstr "Pretraži po imenu ili e-pošti"
 
 #: frontend/src/components/BuilderCommandPalette.vue:70
 msgid "Search by name or route..."
-msgstr ""
+msgstr "Pretraži po imenu ili ruti..."
+
+#: frontend/src/components/CommandPalette.vue:26
+msgid "Search commands..."
+msgstr "Naredbe pretraživanja..."
 
 #: frontend/src/components/BuilderAssets.vue:6
 msgid "Search component"
-msgstr ""
+msgstr "Komponenta Pretrage"
 
 #: frontend/src/components/Controls/SearchBlock.vue:70
 msgid "Search inside selected block only"
-msgstr ""
+msgstr "Pretraži samo unutar odabranog bloka"
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
@@ -3170,20 +3861,21 @@ msgstr "Pretražna Svojstva"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:9
 msgid "Search redirects"
-msgstr ""
+msgstr "Preusmjeravanja pretrage"
 
 #: frontend/src/components/BuilderCommandPalette.vue:87
 msgid "Search settings..."
-msgstr ""
+msgstr "Postavke pretraživanja..."
 
 #: frontend/src/components/Modals/TokenManager.vue:37
 msgid "Search tokens"
-msgstr ""
+msgstr "Pretraživački tokeni"
 
-#: frontend/src/components/Controls/SearchBlock.vue:104
+#: frontend/src/components/Controls/SearchBlock.vue:108
 msgid "Search your blocks"
-msgstr ""
+msgstr "Pretraži blokove"
 
+#: frontend/src/components/CommandPalette.vue:26
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
 msgstr "Traži..."
@@ -3191,6 +3883,10 @@ msgstr "Traži..."
 #: frontend/src/components/CommandPalette.vue:74
 msgid "Searching..."
 msgstr "Pretraživanje..."
+
+#: builder/ai/agent/pending.py:145
+msgid "Seeded {0} sample record(s) into {1}"
+msgstr "Umetnuto {0} uzorka zapisa u {1}"
 
 #: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
@@ -3203,55 +3899,64 @@ msgstr "Odaberi (v)"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
 msgid "Select All Matches (Alt+Enter)"
-msgstr ""
+msgstr "Odaberi sve Rezultate (Alt+Enter)"
 
-#: frontend/src/components/Settings/PageGeneral.vue:230
+#: frontend/src/components/Settings/PageGeneral.vue:226
 msgid "Select App"
-msgstr ""
+msgstr "Odaberi Aplikaciju"
 
 #: frontend/src/utils/dialogs.ts:80
 msgid "Select Folder"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:63
-msgid "Select Model"
-msgstr ""
+msgstr "Odaberi Mapu"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:13
 msgid "Select Template"
-msgstr ""
+msgstr "Odaberi Predložak"
 
 #: frontend/src/components/BlockProperties.vue:31
 msgid "Select a block to edit properties"
-msgstr ""
+msgstr "Odaberi blok za uređivanje svojstava"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:104
 msgid "Select a collection"
-msgstr ""
+msgstr "Odaberi kolekciju"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:15
 msgid "Select date range"
-msgstr ""
+msgstr "Odaberi raspon datuma"
 
 #: frontend/src/components/PropsOptions/ColorOptions.vue:10
 msgid "Select default color"
-msgstr ""
+msgstr "Odaberi standard boju"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
 msgid "Select mode"
-msgstr ""
+msgstr "Odaberi način"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
-msgstr ""
+msgstr "Odaberi ili upiši naziv grupe"
 
-#: frontend/src/components/Settings/PageGeneral.vue:146
+#: frontend/src/components/Settings/PageGeneral.vue:142
 msgid "Select the app for this standard page"
-msgstr ""
+msgstr "Odaberi aplikaciju za ovu standardnu stranicu"
+
+#. Label of the selected_model (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Selected Model"
+msgstr "Odabrani Model"
+
+#: frontend/src/utils/fontManager.ts:23
+msgid "Semi Bold"
+msgstr "Polupodebljano"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
 msgstr "Pošalji pozivnicu"
+
+#: frontend/src/utils/imageUtils.ts:31
+msgid "Serve Locally"
+msgstr "Posluži Lokalno"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
@@ -3259,43 +3964,61 @@ msgstr "Pošalji pozivnicu"
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
 msgstr "Python skripta na strani servera koja popunjava podatke komponente. Prima props kao ulaz. Upotreba: data.events = frappe.get_list('Event')"
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#. Label of the session (Link) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Session"
+msgstr "Sesija"
+
+#. Label of the session_user (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Session User"
+msgstr "Korisnik Sesije"
+
+#: builder/ai/api.py:147
+msgid "Session not found"
+msgstr "Sesija nije pronađena"
+
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Set As Homepage"
-msgstr ""
+msgstr "Postavi kao Početnu Stranicu"
 
 #: frontend/src/components/BackgroundHandler.vue:11
 msgid "Set Background"
-msgstr ""
+msgstr "Postavi Pozadinu"
 
 #: frontend/src/components/Controls/ColorInput.vue:172
-#: frontend/src/components/Controls/ColorPickerContent.vue:48
+#: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
 msgstr "Postavi boju"
 
 #: frontend/src/components/Controls/BasePropertyControl.vue:34
 #: frontend/src/components/Controls/BasePropertyControl.vue:261
 msgid "Set Dynamic Value"
-msgstr ""
+msgstr "Postavi Dinamičku Vrijednost"
 
 #: frontend/src/components/Controls/FontInput.vue:47
 msgid "Set Font"
-msgstr ""
+msgstr "Postavi Font"
 
 #: frontend/src/components/ImageUploadInput.vue:107
 msgid "Set Image"
-msgstr ""
+msgstr "Postavi Sliku"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:237
 msgid "Set as Primary"
 msgstr "Postavi kao Primarni"
 
-#: frontend/src/components/Settings/PageGeneral.vue:101
+#: frontend/src/components/Settings/PageGeneral.vue:97
 msgid "Set current page as Homepage"
-msgstr ""
+msgstr "Postavi trenutnu stranicu kao Početnu Stranicu"
 
-#: frontend/src/components/Settings/PageGeneral.vue:164
+#: frontend/src/components/Settings/PageGeneral.vue:160
 msgid "Set folder to organize your page"
-msgstr ""
+msgstr "Postavi mapu za organizaciju stranice"
+
+#: frontend/src/components/Controls/SplitModeInput.vue:71
+msgid "Set separately"
+msgstr "Postavi odvojeno"
 
 #: frontend/src/components/BuilderCommandPalette.vue:77
 #: frontend/src/components/BuilderCommandPalette.vue:86
@@ -3305,17 +4028,17 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
 msgid "Settings"
 msgstr "Postavke"
 
 #: frontend/src/components/ShadowHandler.vue:8
 msgid "Shadow"
-msgstr ""
+msgstr "Sjena"
 
 #: frontend/src/components/ShadowHandler.vue:124
 msgid "Shadow Color"
-msgstr ""
+msgstr "Boja Sjene"
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
@@ -3328,37 +4051,41 @@ msgstr "Prikaži"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
 msgid "Show Children"
-msgstr ""
+msgstr "Prikaži Podređene"
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Show Left Panel"
-msgstr ""
+msgstr "Prikaži Lijevi Panel"
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Show Replace"
+msgstr "Prikaži Zamjenu"
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Show Right Panel"
-msgstr ""
+msgstr "Prikaži Desni Panel"
 
-#: frontend/src/components/Commands/index.ts:207
+#: frontend/src/components/Commands/index.ts:205
 msgid "Show keyboard shortcuts"
 msgstr "Prikaži tipkovničke prečace"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
-msgstr ""
+msgstr "Smanji"
 
 #: frontend/src/components/Settings/index.ts:128
 msgid "Site Analytics"
-msgstr ""
+msgstr "Analitika Stranice"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "Site is back online"
-msgstr ""
+msgstr "Stranica je ponovno dostupna."
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:16
 msgid "Site is in read-only mode"
-msgstr ""
+msgstr "Stranica je u načinu samo za čitanje"
 
-#: frontend/src/components/BackgroundHandler.vue:83
+#: frontend/src/components/BackgroundHandler.vue:84
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
 msgstr "Veličina"
@@ -3366,6 +4093,22 @@ msgstr "Veličina"
 #: frontend/src/pages/PagePersonaSurvey.vue:76
 msgid "Skip for now"
 msgstr "Preskoči za sada"
+
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entries"
+msgstr "Preskočeno {0} nevažećih unosa"
+
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entry"
+msgstr "Preskočen {0} nevažeći unos"
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard token (read-only)"
+msgstr "Preskočen {0} standardni token (samo za čitanje)"
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard tokens (read-only)"
+msgstr "Preskočeno {0} standardnih tokena (samo za čitanje)"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
 msgid "Slow"
@@ -3377,28 +4120,32 @@ msgstr "Malo"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
-msgstr ""
+msgstr "Glatko"
 
 #. Label of the snapshot_type (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Snapshot Type"
 msgstr "Tip Snimka"
 
-#: builder/builder/doctype/builder_page/builder_page.py:392
+#: builder/builder/doctype/builder_page/builder_page.py:401
 msgid "Snapshot does not belong to this page"
 msgstr "Snimak ne pripada ovoj stranici"
 
 #: frontend/src/components/Settings/PageMeta.vue:33
 msgid "Social Preview"
-msgstr ""
+msgstr "Društveni Pregled"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:119
 msgid "Social media"
-msgstr ""
+msgstr "Društveni mediji"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:137
 msgid "Solid"
 msgstr "Solid"
+
+#: frontend/src/data/domains.ts:11 frontend/src/data/domains.ts:44
+msgid "Something went wrong"
+msgstr "Nešto je pošlo po zlu"
 
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
@@ -3410,12 +4157,13 @@ msgid "Sort Order"
 msgstr "Redoslijed Sortiranja"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:18
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 msgid "Source"
 msgstr "Izvor"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:25
 msgid "Space Around"
-msgstr ""
+msgstr "Prostor Oko"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:24
 msgid "Space Between"
@@ -3431,32 +4179,32 @@ msgstr "Razmak"
 
 #: frontend/src/components/Settings/PageRobots.vue:31
 msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
-msgstr ""
+msgstr "Navedi pravila za kontrolu načina na koji pretraživači komuniciraju s vašom web stranicom. Za više detalja posjeti {0}."
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
-msgstr ""
+msgstr "Brzina"
 
 #: frontend/src/components/ShadowHandler.vue:156
 msgid "Spread"
-msgstr ""
+msgstr "Širi"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:40
 msgid "Stack"
-msgstr ""
+msgstr "Stog"
 
-#: frontend/src/components/Settings/PageGeneral.vue:136
+#: frontend/src/components/Settings/PageGeneral.vue:132
 msgid "Standard Page"
-msgstr ""
+msgstr "Standardna Stranica"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
 msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
-msgstr "Standardne mape nije moguće izbrisati. Omogućite način rada za razvojne programere da biste izbrisali standardne mape."
+msgstr "Standardne mape nije moguće izbrisati. Omogućite način za razvojne programere da biste izbrisali standardne mape."
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.js:13
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:26
 msgid "Standard folders cannot be modified. Please enable developer mode to edit standard folders."
-msgstr "Standardne mape nije moguće mijenjati. Omogućite način rada za razvojne programere za uređivanje standardnih mapa."
+msgstr "Standardne mape nije moguće mijenjati. Omogućite način za razvojne programere za uređivanje standardnih mapa."
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:63
 msgid "Start"
@@ -3464,20 +4212,24 @@ msgstr "Počni"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:6
 msgid "Start from a blank page or pick a page from a template."
-msgstr ""
+msgstr "Počni s praznom stranicom ili odaberi stranicu iz predloška."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:109
 msgid "Start from a blank page or pick a template."
-msgstr ""
+msgstr "Počni s praznom stranicom ili odaberi predložak."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:70
 msgid "Start from scratch"
-msgstr ""
+msgstr "Počni od nule"
 
 #: frontend/src/components/BuilderCommandPalette.vue:71
 msgid "Start typing to search pages"
-msgstr ""
+msgstr "Počni tipkati za pretraživanje stranica"
 
+#. Label of the status (Data) field in DocType 'Builder AI Message'
+#. Label of the status (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
 msgstr "Status"
@@ -3490,7 +4242,7 @@ msgstr "Sticky"
 #: frontend/src/components/DimensionInput.vue:17
 #: frontend/src/components/ImageUploadInput.vue:75
 msgid "Stretch"
-msgstr ""
+msgstr "Istegni"
 
 #: frontend/src/components/PropsPopoverContent.vue:167
 msgid "String"
@@ -3504,6 +4256,7 @@ msgstr "Struktura"
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:273
+#: frontend/src/components/Controls/SearchBlock.vue:214
 #: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
 msgstr "Stil"
@@ -3514,28 +4267,38 @@ msgstr "Stil"
 msgid "Style Public URL"
 msgstr "Javni URL Stila"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:90
-msgid "Styles"
-msgstr ""
+#. Label of the supports_vision (Check) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Supports Vision"
+msgstr "Podržava Pregled"
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Dark Mode"
-msgstr ""
+msgstr "Prebaci na Tamni Način"
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Light Mode"
-msgstr ""
+msgstr "Prebaci na Svjetli Način"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:197
+#: frontend/src/components/BlockContextMenuOptions/index.ts:174
 msgid "Sync Component"
-msgstr ""
+msgstr "Sinkronizuj Komponentu"
 
 #: frontend/src/stores/componentStore.ts:114
 msgid "Sync in all pages"
-msgstr ""
+msgstr "Sinkronizuj na svim stranicama"
+
+#: frontend/src/stores/componentStore.ts:125
+msgid "Syncing component in all the pages..."
+msgstr "Sinkronizacija komponente na svim stranicama..."
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3550,17 +4313,23 @@ msgstr "Upravitelj Sustava"
 
 #: frontend/src/components/DashboardSidebar.vue:61
 msgid "System generated folder cannot be edited or deleted"
-msgstr ""
+msgstr "Sustavno izrađena mapa se ne može uređivati niti brisati"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:96
 msgid "Tab Index"
-msgstr ""
+msgstr "Indeks Kartica"
+
+#: frontend/src/components/BuilderCanvas.vue:240
+msgid "Tablet"
+msgstr "Tablet"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
+#: frontend/src/components/Controls/SearchBlock.vue:171
 msgid "Tag"
 msgstr "Oznaka"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:19
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 #: frontend/src/components/Settings/TopClicksList.vue:11
 msgid "Target"
 msgstr "Cilj"
@@ -3569,9 +4338,10 @@ msgstr "Cilj"
 msgid "Target Component"
 msgstr "Ciljna Komponenta"
 
-#: frontend/src/components/WebPagePresetPicker.vue:456
-msgid "Technical"
-msgstr ""
+#. Label of the task_type (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Task Type"
+msgstr "Tip Zadatka"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
@@ -3588,25 +4358,17 @@ msgstr "Grupa Predložka"
 msgid "Template Name"
 msgstr "Naziv Predloška"
 
-#: builder/api.py:421
+#: builder/api.py:564
 msgid "Template group not found."
 msgstr "Grupa predložaka nije pronađena."
 
-#: builder/builder/doctype/builder_page/builder_page.py:301
+#: builder/builder/doctype/builder_page/builder_page.py:310
 msgid "Template pages can only be deleted in developer mode."
 msgstr "Stranice predložaka mogu se izbrisati samo u načinu rada za razvojne programere."
 
-#: builder/builder/doctype/builder_page/builder_page.py:197
+#: builder/builder/doctype/builder_page/builder_page.py:203
 msgid "Template pages can only be modified in developer mode."
 msgstr "Stranice predložaka mogu se mijenjati samo u načinu rada za razvojne programere."
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Test Key"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Testing..."
-msgstr ""
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -3616,7 +4378,7 @@ msgstr "Tekst"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:23
 msgid "Text (t)"
-msgstr ""
+msgstr "Tekst (t)"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:81
 msgid "Text Color"
@@ -3624,53 +4386,100 @@ msgstr "Boja Teksta"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
 msgid "Text mode"
-msgstr ""
+msgstr "Tekstualni način"
+
+#: builder/ai/presets.py:273
+msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
+msgstr "Taj ključ je odbijen. Provjerite jeste li ga u potpunosti kopirali i da nije opozvan."
 
 #: frontend/src/components/PageOptions.vue:15
 msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
-msgstr ""
+msgstr "URL putanja za ovu stranicu. Za varijable koristi dvotočku (npr. /users/:id)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
 msgstr "Komponenta kojom pokušavate zamijeniti ne postoji"
+
+#: builder/ai/presets.py:282
+msgid "The key is valid, but that model isn't available on this account."
+msgstr "Ključ je valjan, ali taj model nije dostupan na ovom računu."
+
+#: builder/ai/presets.py:278
+msgid "The key is valid, but the account has no credit or is rate limited right now."
+msgstr "Ključ je važeći, ali račun trenutno nema kredita ili je ograničen."
+
+#. Description of the 'Model ID' (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "The model id at the provider, e.g. <code>anthropic/claude-sonnet-5</code> or <code>llama3.2</code>. The document name is the provider's route prefix plus this id."
+msgstr "ID modela kod pružatelja usluga, npr. <code>anthropic/claude-sonnet-5</code> ili <code>llama3.2</code>. Naziv dokumenta je prefiks rute pružatelja usluga plus ovaj ID."
 
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
 msgstr "Preferirana URL verzija ove stranice za pretraživače. Ako nije postavljena, koristit će se trenutni URL stranice."
 
-#: frontend/src/stores/pageStore.ts:348
+#. Description of the 'LiteLLM Provider' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
+msgstr "Pružitelj Usluge LiteLLM bi trebao pozvati. Po standardnom koristi <code>openai</code> kada je postavljena API Baza (bilo koji pristupnik kompatibilan s OpenAI), inače <code>openrouter</code>."
+
+#: frontend/src/stores/pageStore.ts:354
 msgid "There was an error while fetching page data"
-msgstr ""
+msgstr "Došlo je do pogreške prilikom preuzimanja podataka stranice"
 
 #: frontend/src/components/ComponentUpdates.vue:28
 msgid "These components changed since this page was last updated. Update to use the latest."
-msgstr ""
+msgstr "Ove su se komponente promijenile od zadnjeg ažuriranja ove stranice. Ažurirajte ih kako biste koristili najnovije."
+
+#: frontend/src/utils/fontManager.ts:18
+msgid "Thin"
+msgstr "Tanki"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
 msgstr "Ove Godine"
 
+#: builder/ai/api.py:167
+msgid "This action does not belong to you"
+msgstr "Ova radnja ne pripada tebi"
+
+#: builder/ai/api.py:149
+msgid "This chat belongs to another user"
+msgstr "Ovo ćaskanje pripada drugom korisniku"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:126
+msgid "This helps us personalise your Builder experience"
+msgstr "Ovo nam pomaže personalizirati vaše iskustvo"
+
 #: frontend/src/components/Modals/TokenManager.vue:181
 msgid "This is a standard variable. It cannot be modified or deleted."
-msgstr ""
+msgstr "Ovo je standardna varijabla. Ne može se mijenjati ili brisati."
 
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:9
 msgid "This is the homepage for your site"
-msgstr ""
+msgstr "Ovo je početna stranica vaše web stranice"
 
 #: frontend/src/components/RouteTreeNode.vue:47
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
 msgid "This page has limited access"
-msgstr ""
+msgstr "Ova stranica ima ograničen pristup"
 
-#: frontend/src/stores/builderStore.ts:87
+#: frontend/src/components/Settings/PageGeneral.vue:260
+msgid "This page will be exported to {0} app as standard page"
+msgstr "Ova stranica će biti izvezena u {0} aplikaciju kao standardna stranica"
+
+#: frontend/src/stores/builderStore.ts:106
 msgid "This page will no longer be the homepage"
-msgstr ""
+msgstr "Ova stranica više neće biti početna stranica"
+
+#: builder/ai/api.py:306
+msgid "This provider has no API Base to ask"
+msgstr "Ovaj pružatelj usluga nema API Bazu za upit"
 
 #: frontend/src/components/Settings/GlobalCode.vue:24
 msgid "This script will be executed on all the pages of your website."
-msgstr ""
+msgstr "Ovaj će se skript izvršiti na svim stranicama vaše web stranice."
 
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Settings'
@@ -3686,13 +4495,13 @@ msgstr "Ovo će biti dodano na kraj &lt;body&gt;"
 msgid "This will be appended at the end of the &lt;head&gt;"
 msgstr "Ovo će biti dodano na kraj &lt;head&gt;"
 
-#: frontend/src/components/VersionHistory.vue:243
+#: frontend/src/components/VersionHistory.vue:249
 msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
-msgstr ""
+msgstr "Ovim će se ova verzija učitati u uređivač kao vaš trenutni nacrt. Vaša aktivna stranica neće se promijeniti dok je ne objavite. Želite li nastaviti?"
 
-#: frontend/src/stores/pageStore.ts:202
+#: frontend/src/stores/pageStore.ts:208
 msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
-msgstr ""
+msgstr "Ovo će poništiti sve promjene napravljene na stranici od posljednjeg objavljivanja. Jeste li sigurni da želite nastaviti?"
 
 #: frontend/src/composables/useAnalytics.ts:118
 msgid "Timeline"
@@ -3702,7 +4511,9 @@ msgstr "Vremenska Linija"
 msgid "Timing"
 msgstr "Vrijeme"
 
+#. Label of the title (Data) field in DocType 'Builder AI Session'
 #. Label of the page_title (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:9
 msgid "Title"
@@ -3712,38 +4523,38 @@ msgstr "Naziv"
 msgid "Today"
 msgstr "Danas"
 
-#: frontend/src/components/Commands/index.ts:228
+#: frontend/src/components/Commands/index.ts:226
 msgid "Toggle Canvas Dark Mode"
-msgstr ""
+msgstr "Uključi/isključi Tamni Način Radne Površine"
 
 #: frontend/src/components/BuilderCanvas.vue:29
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
-msgstr ""
+msgstr "Uključi/isključi Tamni Način Radne Površine (⌘⇧D)"
 
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
-msgstr ""
+msgstr "Uključi/isključi Tamni Način Radne Površine"
 
-#: frontend/src/components/Commands/index.ts:215
+#: frontend/src/components/Commands/index.ts:213
 msgid "Toggle Panels"
-msgstr ""
+msgstr "Uključi/isključi Panele"
 
 #: frontend/src/components/DashboardSidebar.vue:181
 #: frontend/src/components/MainMenu.vue:96
 msgid "Toggle Theme"
 msgstr "Prebaci temu"
 
-#: frontend/src/components/Commands/index.ts:232
+#: frontend/src/components/Commands/index.ts:230
 msgid "Toggle canvas dark mode"
-msgstr ""
+msgstr "Uključi/isključi tamni način radne površine"
 
-#: frontend/src/components/Commands/index.ts:177
+#: frontend/src/components/Commands/index.ts:175
 msgid "Toggle left panel"
-msgstr ""
+msgstr "Uključi/isključi lijevi panel"
 
-#: frontend/src/components/Commands/index.ts:219
+#: frontend/src/components/Commands/index.ts:217
 msgid "Toggle panels"
-msgstr ""
+msgstr "Uključi/isključi panele"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -3751,19 +4562,19 @@ msgstr ""
 msgid "Token Name"
 msgstr "Naziv Tokena"
 
-#: frontend/src/components/Modals/TokenManager.vue:830
+#: frontend/src/components/Modals/TokenManager.vue:840
 msgid "Token created"
-msgstr ""
+msgstr "Token izrađen"
 
 #: frontend/src/components/Modals/TokenManager.vue:79
 msgid "Token name"
-msgstr ""
+msgstr "Naziv tokena"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
-msgstr ""
+msgstr "Token ažuriran"
 
-#: frontend/src/pages/PageBuilder.vue:274
+#: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
 #: frontend/src/utils/useBuilderEvents.ts:377
 #: frontend/src/utils/useBuilderEvents.ts:386
@@ -3772,7 +4583,7 @@ msgstr ""
 msgid "Tools"
 msgstr "Alati"
 
-#: frontend/src/components/BackgroundHandler.vue:291
+#: frontend/src/components/BackgroundHandler.vue:298
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
 msgstr "Vrh"
@@ -3784,7 +4595,7 @@ msgstr "Vrh Centar"
 
 #: frontend/src/components/Settings/TopClicksList.vue:3
 msgid "Top Clicks"
-msgstr ""
+msgstr "Najviše klikova"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:117
 #: frontend/src/components/BlockGridLayoutHandler.vue:180
@@ -3793,11 +4604,11 @@ msgstr "Vrh Lijevo"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:21
 msgid "Top Pages"
-msgstr ""
+msgstr "Najpopularnije Stranice"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:3
 msgid "Top Referrers"
-msgstr ""
+msgstr "Najvažniji Preporučitelji"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:109
 #: frontend/src/components/BlockGridLayoutHandler.vue:172
@@ -3806,7 +4617,7 @@ msgstr "Vrh Desno"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:16
 msgid "Total Pageviews"
-msgstr ""
+msgstr "Ukupno Pregleda Stranica"
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
@@ -3814,11 +4625,11 @@ msgstr "Ukupno Pregleda"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
-msgstr ""
+msgstr "Prati Klikove"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:56
 msgid "Track the number of views on each page of your website"
-msgstr ""
+msgstr "Prati broj pregleda na svakoj stranici web stranice"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:114
 msgid "Transform"
@@ -3826,23 +4637,23 @@ msgstr "Transformiraj"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:72
 msgid "Transform Only"
-msgstr ""
+msgstr "Samo Transformiraj"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:85
 msgid "Transition"
-msgstr ""
+msgstr "Prijelaz"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:4
 msgid "True Label"
-msgstr ""
+msgstr "Prava Etiketa"
 
-#: frontend/src/components/Controls/SearchBlock.vue:138
+#: frontend/src/components/Controls/SearchBlock.vue:142
 msgid "Try different keywords or adjust your filters"
-msgstr ""
+msgstr "Isprobaj druge ključne riječi ili prilagodi filtere"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:10
 msgid "Turn on view tracking to start collecting page views, clicks and click-through rates for your published pages."
-msgstr ""
+msgstr "Uključi praćenje pregleda da biste počeli prikupljati podatke o pregledima stranica, klikovima i stopama klikanja za objavljene stranice."
 
 #. Label of the type (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -3854,20 +4665,52 @@ msgstr ""
 msgid "Type"
 msgstr "Tip"
 
+#: builder/ai/api.py:129
+msgid "Type a prompt first"
+msgstr "Prvo upiši upit"
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
 msgstr "Tipografija"
 
-#: frontend/src/components/Commands/index.ts:313
-#: frontend/src/components/Commands/index.ts:317
+#: frontend/src/components/Settings/PageGeneral.vue:22
+msgid "URL"
+msgstr "URL"
+
+#: frontend/src/components/PageOptions.vue:22
+msgid "URL Variables"
+msgstr "URL Varijable"
+
+#: frontend/src/components/Commands/index.ts:291
+#: frontend/src/components/Commands/index.ts:295
 msgid "Undo"
 msgstr "Poništi"
 
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} token"
+msgstr "Grupiranje {0} tokena poništeno"
+
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} tokens"
+msgstr "Grupiranje {0} tokena poništeno"
+
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
-msgstr ""
+msgstr "Jedinstveni Posjetitelji"
+
+#: builder/ai/api.py:84
+msgid "Unknown AI model: {0}"
+msgstr "Nepoznati AI model: {0}"
+
+#: builder/ai/agent/pending.py:61
+msgid "Unknown pending action: {0}"
+msgstr "Nepoznata radnja na čekanju: {0}"
+
+#: builder/ai/api.py:379 builder/ai/api.py:439
+msgid "Unknown provider: {0}"
+msgstr "Nepoznati pružatelj usluga {0}"
 
 #: frontend/src/components/PageActionsDropdown.vue:20
 #: frontend/src/components/PublishButton.vue:31
@@ -3893,29 +4736,54 @@ msgstr "Naziv nesigurnog predloška za učvršćivanje: {0}"
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:16
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120
 msgid "Unset"
-msgstr ""
+msgstr "Poništi"
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Unset Homepage"
-msgstr ""
+msgstr "Poništi Postavljanje Početne Stranice"
+
+#: frontend/src/App.vue:33
+msgid "Untitled"
+msgstr "Neimenovano"
 
 #: frontend/src/components/ComponentUpdates.vue:46
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Update"
 msgstr "Ažuriraj"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:205
+#: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
-msgstr ""
+msgstr "Ažuriraj Trenutnu Stranicu"
 
 #: frontend/src/components/ComponentUpdates.vue:23
 msgid "Update all"
-msgstr ""
+msgstr "Ažuriraj sve"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:217
+#: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
-msgstr ""
+msgstr "Ažuriranje na Najnoviju Komponentu"
 
-#: frontend/src/components/BackgroundHandler.vue:76
+#: builder/ai/agent/pending.py:87
+msgid "Updated global settings: {0}"
+msgstr "Ažurirane postavke sustava: {0}"
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} token"
+msgstr "Ažuriran {0} token"
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} tokens"
+msgstr "Ažurirano {0} tokena"
+
+#: frontend/src/data/domains.ts:80
+msgid "Updating primary domain…"
+msgstr "Ažuriranje primarne domene…"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Updating redirect..."
+msgstr "Ažuriranje preusmjeravanja..."
+
+#: frontend/src/components/BackgroundHandler.vue:77
 #: frontend/src/components/Controls/ImageUploader.vue:13
 #: frontend/src/components/ImageUploadInput.vue:64
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
@@ -3924,24 +4792,24 @@ msgstr "Učitaj"
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
-msgstr ""
+msgstr "Učitaj CSV"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
-#: frontend/src/utils/helpers.ts:496
+#: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
-msgstr ""
+msgstr "Učitaj Font"
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
-msgstr ""
+msgstr "Učitaj Meta sliku"
 
 #: frontend/src/utils/helpers.ts:374
 msgid "Uploaded"
 msgstr "Preneseno"
 
-#: frontend/src/utils/helpers.ts:532
+#: frontend/src/utils/helpers.ts:553
 msgid "Uploading font..."
-msgstr ""
+msgstr "Učitavanje fonta..."
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Uploading {0}%"
@@ -3953,24 +4821,28 @@ msgstr "Otpremanje u toku..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
-msgstr ""
+msgstr "Velika slova"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
 msgid "Use Regular Expression"
-msgstr ""
+msgstr "Koristi Regularni Izraz"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:29
 msgid "Use all {0} pages"
-msgstr ""
+msgstr "Koristi svih {0} stranica"
+
+#: frontend/src/components/Controls/SplitModeInput.vue:70
+msgid "Use for all"
+msgstr "Koristi za sve"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:14
 #: frontend/src/components/Templates/TemplatePreview.vue:20
 msgid "Use template"
-msgstr ""
+msgstr "Koristi predložak"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:170
 msgid "Use this if your DNS provider doesn't support CNAME for subdomains."
-msgstr ""
+msgstr "Koristi ovo ako vaš DNS pružatelj usluga ne podržava CNAME za poddomene."
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:44
 msgid "Used in 1 page"
@@ -3978,7 +4850,7 @@ msgstr "Korišteno na 1 stranici"
 
 #: frontend/src/components/Modals/PageListModal.vue:2
 msgid "Used in following pages"
-msgstr ""
+msgstr "Korišteno na sljedećim stranicama"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:45
 msgid "Used in {0} pages"
@@ -3989,6 +4861,10 @@ msgstr "Korišteno na {0} stranica"
 msgid "User Font"
 msgstr "Korisnički Font"
 
+#: frontend/src/components/Settings/GlobalUsers.vue:187
+msgid "User is disabled: {0}"
+msgstr "Korisnik je onemogućen: {0}"
+
 #: frontend/src/components/Settings/index.ts:86
 #: frontend/src/components/Settings/index.ts:87
 msgid "Users"
@@ -3996,16 +4872,20 @@ msgstr "Korisnici"
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:70
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:69
 #: frontend/src/components/DynamicValueDropdown.vue:6
 #: frontend/src/components/Modals/TokenManager.vue:53
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
 msgstr "Vrijednost"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:72
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:71
 msgid "Value submitted with the form when this radio button is selected."
-msgstr ""
+msgstr "Vrijednost poslana putem obrasca kada je odabran ovaj radio gumb."
+
+#: frontend/src/data/domains.ts:50
+msgid "Verifying DNS for {0}…"
+msgstr "Provjera DNS-a za {0}…"
 
 #: frontend/src/components/DashboardSidebar.vue:90
 #: frontend/src/components/VersionHistory.vue:114
@@ -4015,15 +4895,15 @@ msgstr "Verzija"
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
-msgstr ""
+msgstr "Povijest Verzija"
 
-#: frontend/src/stores/pageStore.ts:238
+#: frontend/src/stores/pageStore.ts:244
 msgid "Version restored"
-msgstr ""
+msgstr "Verzija vraćena"
 
-#: frontend/src/components/VersionHistory.vue:235
+#: frontend/src/components/VersionHistory.vue:241
 msgid "Version saved"
-msgstr ""
+msgstr "Verzija spremljena"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:10
 msgid "Vertical"
@@ -4031,35 +4911,35 @@ msgstr "Vertikalno"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
 msgid "Very Slow"
-msgstr ""
+msgstr "Vrlo Sporo"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:106
 msgid "Video Options"
-msgstr ""
+msgstr "Video Opcije"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
 msgid "Video URL"
 msgstr "Video URL"
 
-#: frontend/src/components/Commands/index.ts:44
-#: frontend/src/components/Commands/index.ts:174
-#: frontend/src/components/Commands/index.ts:185
-#: frontend/src/components/Commands/index.ts:195
+#: frontend/src/components/Commands/index.ts:43
+#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Commands/index.ts:193
 #: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
 msgstr "Prikaz"
 
 #: frontend/src/components/PageActionsDropdown.vue:14
 msgid "View Page"
-msgstr ""
+msgstr "Prikaži Stranicu"
 
 #: frontend/src/components/PageActionsDropdown.vue:26
 msgid "View in Desk"
-msgstr ""
+msgstr "Prikaži na Radnoj Površini"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
 msgid "View tracking is off"
-msgstr ""
+msgstr "Praćenje pregleda je isključeno"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
 msgid "Views"
@@ -4074,17 +4954,30 @@ msgstr "Vidljivo"
 msgid "Visitor ID"
 msgstr "Posjetitelj"
 
+#: frontend/src/components/Modals/TokenManager.vue:967
+msgid "WARNING: Updating will overwrite the existing values for the listed variables."
+msgstr "UPOZORENJE: Ažuriranje će prebrisati postojeće vrijednosti za navedene varijable."
+
 #: frontend/src/utils/useBuilderEvents.ts:129
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
 msgstr "Upozorenje"
 
+#: frontend/src/pages/PagePersonaSurvey.vue:140
+msgid "We'll point you to the right starting templates"
+msgstr "Uputit ćemo vas na odgovarajuće početne predloške."
+
 #: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Web app UI"
-msgstr ""
+msgstr "Korisničko sučelje web aplikacije"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4101,34 +4994,42 @@ msgstr "Upravitelj Web Stranice"
 msgid "Weight"
 msgstr "Težina"
 
+#: frontend/src/pages/PagePersonaSurvey.vue:139
+msgid "What do you want to build first?"
+msgstr "Što prvo želiš izraditi?"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:125
+msgid "Which one best describes you?"
+msgstr "Koji te najbolje opisuje?"
+
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
 msgstr "Širina"
 
 #: frontend/src/components/VersionHistory.vue:52
 msgid "Working draft · unpublished changes"
-msgstr ""
+msgstr "Radni nacrt · neobjavljene promjene"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:32
 #: frontend/src/components/BlockFlexLayoutHandler.vue:36
 msgid "Wrap"
-msgstr ""
+msgstr "Umotaj"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:109
+#: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap In Container"
-msgstr ""
+msgstr "Omotaj u Posudu"
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
-msgstr ""
+msgstr "X Pomak"
 
 #: frontend/src/components/ShadowHandler.vue:154
 msgid "Y Offset"
-msgstr ""
+msgstr "Y Pomak"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:45
 #: frontend/src/components/BlockFlexLayoutHandler.vue:54
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:86
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:60
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:77
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:94
@@ -4137,15 +5038,51 @@ msgstr ""
 msgid "Yes"
 msgstr "Da"
 
+#: frontend/src/components/Settings/GlobalUsers.vue:58
+msgid "You"
+msgstr "Vi"
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:272
+msgid "You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"
+msgstr "Upravo ćete zalijepiti stranicu s postavkama i skriptama. Želite li ažurirati trenutnu stranicu ili izraditi novu?"
+
+#: builder/ai/api.py:160
+msgid "You are not permitted to apply this change"
+msgstr "Nije vam dopušteno primijeniti ovu promjenu"
+
+#: builder/ai/api.py:302
+msgid "You are not permitted to manage AI models"
+msgstr "Nije vam dopušteno upravljanje AI modelima"
+
+#: builder/ai/api.py:274
+msgid "You are not permitted to manage AI providers"
+msgstr "Nije vam dopušteno upravljati pružateljima AI usluga."
+
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
-msgstr ""
+msgstr "Možete nastaviti uređivati."
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:269
+msgid "You cannot add link inside a button block"
+msgstr "Ne možete dodati poveznicu unutar bloka gumba"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:268
+msgid "You cannot add link inside a link block"
+msgstr "Ne možete dodati poveznicu unutar bloka poveznica"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:267
+msgid "You cannot make heading a link"
+msgstr "Ne možete napraviti zaglavlje kao poveznicu"
+
+#: builder/ai/session.py:88
+msgid "You do not have access to this AI session"
+msgstr "Nemate pristup ovoj AI sesiji"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
 msgstr "Nemate dozvolu za pristup ovoj stranici"
 
-#: builder/ai_page_generator.py:454 builder/utils.py:85
+#: builder/utils.py:85
 msgid "You do not have permission to modify pages"
 msgstr "Nemate dopuštenje za izmjenu stranica"
 
@@ -4155,15 +5092,19 @@ msgstr "Nemate dopuštenje za čitanje stranica"
 
 #: frontend/src/components/DashboardContent.vue:8
 msgid "You don't have any pages yet. Click on the + New button to create a new page."
-msgstr ""
+msgstr "Još nemate nijednu stranicu. Kliknite gumb + Novo da biste stvorili novu stranicu."
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
-msgstr ""
+msgstr "Imate nespremljene promjene. Jeste li sigurni da želite izaći?"
+
+#: frontend/src/components/Controls/Dialog.vue:49
+msgid "You have unsaved changes. Please save before leaving."
+msgstr "Imate nespremljene promjene. Spremite ih prije odlaska."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
-msgstr ""
+msgstr "Sve je spremno{0}. Odaberi početnu točku."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"
@@ -4171,7 +5112,7 @@ msgstr "Youtube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-Indeks"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
@@ -4180,6 +5121,25 @@ msgstr "Uvećaj"
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom out"
 msgstr "Umanji"
+
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "assistant"
+msgstr "pomoćnik"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "chat"
+msgstr "chat"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "clarification"
+msgstr "pojašnjenje"
+
+#: builder/ai/agent/pending.py:160
+msgid "connect_form needs a doctype, fields, and a form selector"
+msgstr "connect_form treba doctype, polja i selektor obrasca"
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4190,23 +5150,106 @@ msgstr "data.events = frappe.get_list(\"Događaj\")\n"
 "<br>\n"
 "<b>Napomena:</b> Svaka ključna vrijednost podataka treba biti popis."
 
-#: frontend/src/utils/helpers.ts:897
+#: frontend/src/components/Settings/GlobalDomains.vue:43
+msgid "e.g. yourdomain.com"
+msgstr "npr. yourdomain.com"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:23
+msgid "e.g., primary, accent, background"
+msgstr "npr. primarni, naglasak, pozadina"
+
+#: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
-msgstr ""
+msgstr "ne koristi se ni na jednoj stranici"
 
-#: frontend/src/stores/pageStore.ts:243
+#: frontend/src/components/Settings/GlobalDomains.vue:52
+msgid "or"
+msgstr "ili"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "status"
+msgstr "status"
+
+#: frontend/src/stores/pageStore.ts:249
 msgid "this page"
-msgstr ""
+msgstr "ova stranica"
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "unknown"
+msgstr "nepoznato"
+
+#: frontend/src/components/Modals/TokenManager.vue:202
+msgid "unnamed"
+msgstr "neimenovan"
+
+#: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
 msgstr "korišteno na 1 stranici"
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
 msgstr "korišteno na {0} stranica"
 
-#: frontend/src/components/PageClientScriptManager.vue:226
+#: frontend/src/components/PageClientScriptManager.vue:233
 msgid "used in {0}+ pages"
-msgstr ""
+msgstr "upotrijebljeno u {0}+ stranice"
+
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "user"
+msgstr "korisnik"
+
+#: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
+msgid "{0} & {1} others"
+msgstr "{0} & {1} i drugi"
+
+#: frontend/src/data/domains.ts:62
+msgid "{0} added successfully"
+msgstr "{0} uspješno dodano"
+
+#: builder/ai/api.py:87
+msgid "{0} can't view images. Pick a vision-capable model or remove the image."
+msgstr "{0} ne može prikazati slike. Odaberi model s podrškom za prikaz ili ukloni sliku."
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entries were invalid"
+msgstr "{0} unosa nije bilo valjano"
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entry was invalid"
+msgstr "{0} unos nije bio valjan"
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instance"
+msgstr "{0} instanca"
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instances"
+msgstr "{0} instanci"
+
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.py:42
+msgid "{0} models still use this provider: {1}"
+msgstr "{0} modeli još uvijek koriste ovog pružatelja usluga: {1}"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} page"
+msgstr "{0} stranica"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} pages"
+msgstr "{0} stranica"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:58
+msgid "{0} record"
+msgstr "{0} zapis"
+
+#: frontend/src/data/domains.ts:72
+msgid "{0} removed"
+msgstr "{0} uklonjeno"
+
+#: frontend/src/data/domains.ts:80
+msgid "{0} set as primary"
+msgstr "{0} postavljeno kao primarno"
 

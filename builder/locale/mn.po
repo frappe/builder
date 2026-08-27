@@ -3,9 +3,9 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 05:58\n"
+"PO-Revision-Date: 2026-08-26 11:04\n"
 "Last-Translator: suraj@frappe.io\n"
-"Language-Team: Norwegian Bokmal\n"
+"Language-Team: Mongolian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13,390 +13,391 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Crowdin-Project: frappe\n"
 "X-Crowdin-Project-ID: 639578\n"
-"X-Crowdin-Language: nb\n"
+"X-Crowdin-Language: mn\n"
 "X-Crowdin-File: /[frappe.builder] develop/builder/locale/main.pot\n"
 "X-Crowdin-File-ID: 177\n"
-"Language: nb_NO\n"
+"Language: mn_MN\n"
 
 #: frontend/src/components/Modals/TokenManager.vue:965
 msgid "({0} invalid entries skipped)"
-msgstr ""
+msgstr "({0} алдаатай бичилтүүдийг алгассан)"
 
 #: frontend/src/components/Modals/TokenManager.vue:965
 msgid "({0} invalid entry skipped)"
-msgstr ""
+msgstr "({0} алдаатай бичилтүүдийг алгассан)"
 
 #: frontend/src/components/RouteTreeNode.vue:91
 #: frontend/src/components/RouteTreeView.vue:41
 msgid "({0} remaining)"
-msgstr ""
+msgstr "({0} үлдсэн)"
 
 #: frontend/src/components/Modals/TokenManager.vue:966
 msgid "({0} standard token skipped)"
-msgstr ""
+msgstr "({0} стандарт токеныг алгассан)"
 
 #: frontend/src/components/Modals/TokenManager.vue:966
 msgid "({0} standard tokens skipped)"
-msgstr ""
+msgstr "({0} стандарт токенуудыг алгассан)"
 
 #: frontend/src/components/ShadowHandler.vue:134
 msgid "+ Add Shadow Layer"
-msgstr ""
+msgstr "+ Сүүдрийн давхарга нэмэх"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:144
 msgid "301 - Moved Permanently"
-msgstr ""
+msgstr "301 - Бүрмөсөн шилжүүлсэн"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:145
 msgid "302 - Found (Temporary)"
-msgstr ""
+msgstr "302 - Олдсон (Түр зуурын)"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:146
 msgid "307 - Temporary Redirect"
-msgstr ""
+msgstr "307 - Түр зуурын чиглүүлэлт"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:147
 msgid "308 - Permanent Redirect"
-msgstr ""
+msgstr "308 - Байнгын чиглүүлэлт"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:141
 msgid "A booking site for my clinic"
-msgstr ""
+msgstr "Миний эмнэлгийн захиалгын сайт"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:185
 msgid "A record points to wrong IP: {0}"
-msgstr ""
+msgstr "Бичлэг нь буруу IP хаяг руу зааж байна: {0}"
 
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
-msgstr ""
+msgstr "Хиймэл оюун ухаан"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI API Key"
-msgstr ""
+msgstr "Хиймэл оюун ухааны API түлхүүр"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/index.ts:145
 msgid "AI Settings"
-msgstr ""
+msgstr "Хиймэл оюун ухааны тохиргоо"
 
 #: builder/ai/session.py:90
 msgid "AI session does not belong to this page"
-msgstr ""
+msgstr "Хиймэл оюун ухааны сесс энэ хуудсанд хамаарахгүй"
 
 #: builder/ai/session.py:85
 msgid "AI session not found"
-msgstr ""
+msgstr "Хиймэл оюун ухааны сесс олдсонгүй"
 
 #. Label of the api_base (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "API Base"
-msgstr ""
+msgstr "API суурь"
 
 #. Label of the api_key (Password) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "API Key"
-msgstr "API-nøkkel"
+msgstr "API түлхүүр"
 
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
-msgstr ""
+msgstr "Сонгосон хиймэл оюун ухааны загварын үйлчилгээ үзүүлэгчийн API түлхүүр"
 
 #: builder/ai/api.py:609
 msgid "API key is valid"
-msgstr ""
+msgstr "API түлхүүр хүчинтэй байна"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
 msgid "Accessibility"
-msgstr ""
+msgstr "Хүртээмж"
 
 #. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Active"
-msgstr "Aktiv"
+msgstr "Идэвхтэй"
 
 #: frontend/src/components/ArrayEditor.vue:14
 #: frontend/src/components/MoreStylesPanel.vue:43
 #: frontend/src/components/ObjectEditor.vue:30
 #: frontend/src/components/PropsEditor.vue:87
 msgid "Add"
-msgstr "Legg til"
+msgstr "Нэмэх"
 
 #: frontend/src/components/MoreStylesPanel.vue:22
 msgid "Add CSS property"
-msgstr ""
+msgstr "CSS шинж чанар нэмэх"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
-msgstr ""
+msgstr "Захиалгат мета шошго нэмэх"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:80
 msgid "Add Domain"
-msgstr ""
+msgstr "Домэйн нэмэх"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
 #: frontend/src/components/Settings/GlobalRedirects.vue:68
 #: frontend/src/components/Settings/GlobalRedirects.vue:69
 msgid "Add Redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлт нэмэх"
 
 #: frontend/src/components/PageClientScriptManager.vue:107
 msgid "Add Script"
-msgstr ""
+msgstr "Скрипт нэмэх"
 
 #: frontend/src/components/Modals/TokenManager.vue:15
 msgid "Add Token"
-msgstr ""
+msgstr "Токен нэмэх"
 
 #: frontend/src/components/DataLoaderBlock.vue:6
 msgid "Add a block to repeat"
-msgstr ""
+msgstr "Давтах блок нэмэх"
 
 #: builder/ai/api.py:589
 msgid "Add a model to this provider first"
-msgstr ""
+msgstr "Эхлээд энэ үйлчилгээ үзүүлэгчид загвар нэмнэ үү"
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr ""
+msgstr "Хуудасны толгой хэсэгт мета шошго, хэв маяг болон скрипт нэмэх"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add property"
-msgstr ""
+msgstr "Үзүүлэлт нэмэх"
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
-msgstr ""
+msgstr "Хуудасны биед скрипт нэмэх"
 
 #: frontend/src/components/Settings/GlobalCode.vue:15
 msgid "Added to end of body. For adding scripts."
-msgstr ""
+msgstr "Биеийн төгсгөлд нэмэгдсэн. Скрипт нэмэхэд зориулагдсан."
 
 #: frontend/src/components/Settings/GlobalCode.vue:6
 msgid "Added to end of head. For meta tags, styles, and scripts."
-msgstr ""
+msgstr "Толгойн төгсгөлд нэмэгдсэн. Мета таг, хэв маяг болон скриптүүдэд зориулагдсан."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:240
 msgid "Adding all pages..."
-msgstr ""
+msgstr "Бүх хуудсыг нэмж байна..."
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:253
 msgid "Adding redirect..."
-msgstr ""
+msgstr "Дахин чиглүүлэлт нэмж байна..."
 
 #: frontend/src/data/domains.ts:60
 msgid "Adding {0}…"
-msgstr ""
+msgstr "{0}… нэмж байна"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:62
 msgid "Admin"
-msgstr ""
+msgstr "Админ"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/Settings/GlobalRedirects.vue:92
 msgid "Advanced"
-msgstr "Avansert"
+msgstr "Дэвшилтэт"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Agency / Freelancer"
-msgstr ""
+msgstr "Агентлаг / Фрилансер"
 
 #: frontend/src/utils/helpers.ts:50
 msgid "Alert"
-msgstr "Alarm"
+msgstr "Сэрэмжлүүлэг"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:148
 msgid "Align"
-msgstr "Juster"
+msgstr "Зэрэгцүүлэх"
 
 #: frontend/src/components/DashboardHead.vue:33
 #: frontend/src/components/Templates/TemplateGallery.vue:65
 msgid "All"
-msgstr "Alle"
+msgstr "Бүгд"
 
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
-msgstr ""
+msgstr "Бүх хуудаснууд"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
-msgstr ""
+msgstr "Бүх үзүүлэлтүүд"
 
 #: frontend/src/components/PageClientScriptManager.vue:99
 msgid "All client scripts are executed in preview mode and on published pages."
-msgstr ""
+msgstr "Бүх үйлчлүүлэгчийн скриптүүд урьдчилан харах горимд болон нийтлэгдсэн хуудсан дээр гүйцэтгэгддэг."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:241
 msgid "All pages added"
-msgstr ""
+msgstr "Бүх хуудсыг нэмсэн"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "All the images uploaded to Canvas will be auto converted to WebP for better page performance."
-msgstr ""
+msgstr "Canvas руу байршуулсан бүх зургийг хуудасны гүйцэтгэлийг сайжруулахын тулд автоматаар WebP болгон хөрвүүлэх болно."
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:69
 msgid "All the images uploaded via Builder will be converted to WebP for better page performance"
-msgstr ""
+msgstr "Хуудасны гүйцэтгэлийг сайжруулахын тулд Builder-ээр дамжуулан байршуулсан бүх зургийг WebP болгон хөрвүүлнэ."
 
 #: frontend/src/components/DashboardHead.vue:60
 msgid "Alphabetically (A-Z)"
-msgstr ""
+msgstr "Үсгийн дарааллаар (A-Z)"
 
 #: frontend/src/components/DashboardHead.vue:64
 msgid "Alphabetically (Z-A)"
-msgstr ""
+msgstr "Үсгийн дарааллаар (Z-A)"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:184
 msgid "Already a member: {0}"
-msgstr ""
+msgstr "Аль хэдийн гишүүн болсон: {0}"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:181
 msgid "Already invited: {0}"
-msgstr ""
+msgstr "Өмнө уригдсан: {0}"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
 msgid "Alt Text"
-msgstr ""
+msgstr "Alt Текст"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
-msgstr ""
+msgstr ".ico өргөтгөлтэй дүрс файл. 16 x 16 пиксел хэмжээтэй байх ёстой.\n"
+"Та favicon-generator.org хаягаар үүсгэж болно."
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
-msgstr ""
+msgstr ".ico өргөтгөлтэй дүрс файл. 16 x 16 пиксел хэмжээтэй байх ёстой.<br>Та <a href=\"https://favicon-generator.org\" target=\"_blank\">ашиглан үүсгэж болно favicon-generator.org</a>"
 
 #: frontend/src/components/Settings/index.ts:68
 #: frontend/src/components/Settings/index.ts:127
 msgid "Analytics"
-msgstr "Analyse"
+msgstr "Аналитик"
 
 #: builder/ai/api.py:70
 msgid "Another AI request is still processing. Please wait."
-msgstr ""
+msgstr "Өөр нэг хиймэл оюун ухааны хүсэлтийг боловсруулж байна. Түр хүлээнэ үү."
 
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageGeneral.vue:140
 msgid "App"
-msgstr "App"
+msgstr "Апп"
 
 #: builder/export_import_standard_page.py:29
 msgid "App {0} is not installed"
-msgstr "Appen {0} er ikke installert"
+msgstr "{0} апп суулгаагүй байна"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
 #: frontend/src/components/Settings/PageGeneral.vue:86
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
-msgstr "Vises ved siden av tittelen i nettleserfanen. Anbefalt størrelse er 32x32 px i PNG eller ICO"
+msgstr "Таны хөтчийн таб дээрх гарчгийн хажууд гарч ирнэ. Санал болгож буй хэмжээ нь PNG эсвэл ICO форматаар 32x32 пиксел байна."
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:105
 msgid "Append the original query string to the target URL"
-msgstr ""
+msgstr "Анхны асуулгын мөрийг зорилтот URL хаягт нэмнэ үү"
 
 #: frontend/src/components/Settings/GlobalCode.vue:33
 msgid "Applies to all pages"
-msgstr ""
+msgstr "Бүх хуудсанд хамаарна"
 
 #: frontend/src/components/DashboardSidebar.vue:176
 msgid "Apps"
-msgstr "Apper"
+msgstr "Аппликейшнүүд"
 
 #. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Archived"
-msgstr "Arkivert"
+msgstr "Архивлагдсан"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:207
 msgid "Are you sure you want to cancel the invitation to {0}?"
-msgstr ""
+msgstr "Та {0} руу илгээсэн урилгыг цуцлахдаа итгэлтэй байна уу?"
 
 #: frontend/src/stores/componentStore.ts:441
 msgid "Are you sure you want to delete component: {0}?"
-msgstr ""
+msgstr "Та {0} компонентыг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/stores/pageStore.ts:174
 msgid "Are you sure you want to delete page: {0}?"
-msgstr ""
+msgstr "Та {0} хуудсыг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:271
 msgid "Are you sure you want to delete the redirect from \"{0}\" to \"{1}\"?"
-msgstr ""
+msgstr "Та \"{0}\"-с \"{1} \" руу дахин чиглүүлэлтийг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/components/DashboardSidebar.vue:236
 msgid "Are you sure you want to delete this folder? All the pages under this folder will be visible under \"All Pages\""
-msgstr ""
+msgstr "Та энэ фолдерыг устгахдаа итгэлтэй байна уу? Энэ фолдерын бүх хуудсууд \"Бүх хуудас\" хэсэгт харагдах болно."
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:272
 msgid "Are you sure you want to delete this redirect?"
-msgstr ""
+msgstr "Та энэ дахин чиглүүлэлтийг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/components/Modals/TokenManager.vue:744
 msgid "Are you sure you want to delete {0} token?"
-msgstr ""
+msgstr "Та {0} токеныг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/components/Modals/TokenManager.vue:744
 msgid "Are you sure you want to delete {0} tokens?"
-msgstr ""
+msgstr "Та {0} токенуудыг устгахдаа итгэлтэй байна уу?"
 
 #: frontend/src/stores/canvasStore.ts:198
 msgid "Are you sure you want to exit without saving?"
-msgstr ""
+msgstr "Та хадгалахгүйгээр гарахдаа итгэлтэй байна уу?"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:72
 msgid "Are you sure you want to replace {0} with {1}?"
-msgstr ""
+msgstr "Та {0} -г {1}-р солихдоо итгэлтэй байна уу?"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:183
 msgid "Are you sure you want to reset?"
-msgstr ""
+msgstr "Та дахин тохируулахдаа итгэлтэй байна уу?"
 
 #: frontend/src/stores/pageStore.ts:251
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
-msgstr ""
+msgstr "Та \"{0}\" нийтлэхээ болихдоо итгэлтэй байна уу? Энэ нь цаашид вэбсайт дээр хандах боломжгүй болно."
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:49
 msgid "Aria Label"
-msgstr ""
+msgstr "Ариа шошго"
 
 #: frontend/src/components/PropsPopoverContent.vue:171
 msgid "Array"
-msgstr ""
+msgstr "Массив"
 
 #: frontend/src/components/ArrayInput.vue:20
 msgid "Array Items:"
-msgstr ""
+msgstr "Массивын зүйлс:"
 
 #: builder/ai/agent/pending.py:114
 msgid "At least one field is required"
-msgstr ""
+msgstr "Дор хаяж нэг талбар шаардлагатай"
 
 #: frontend/src/components/PageClientScriptManager.vue:88
 #: frontend/src/components/PageClientScriptManager.vue:91
 msgid "Attach Script"
-msgstr ""
+msgstr "Скрипт хавсаргах"
 
 #: frontend/src/components/Controls/SearchBlock.vue:229
 msgid "Attributes"
-msgstr ""
+msgstr "Шинж чанарууд"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Authenticated Access"
-msgstr ""
+msgstr "Баталгаажсан хандалт"
 
 #: frontend/src/components/BackgroundHandler.vue:293
 #: frontend/src/components/BlockGridLayoutHandler.vue:13
@@ -404,268 +405,268 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:20
 #: frontend/src/components/DimensionInput.vue:9
 msgid "Auto"
-msgstr "Auto"
+msgstr "Автомат"
 
 #. Label of the auto_convert_images_to_webp (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:67
 msgid "Auto convert images to WebP"
-msgstr ""
+msgstr "Зургийг WebP руу автоматаар хөрвүүлэх"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:160
 msgid "Automatically follows server IP changes. Best choice for subdomains."
-msgstr ""
+msgstr "Серверийн IP өөрчлөлтийг автоматаар дагадаг. Дэд домэйнүүдэд хамгийн сайн сонголт."
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:58
 msgid "Autoplay"
-msgstr ""
+msgstr "Автоматаар тоглуулах"
 
 #: frontend/src/components/Templates/TemplatePreview.vue:7
 #: frontend/src/pages/PagePersonaSurvey.vue:27
 msgid "Back"
-msgstr "Tilbake"
+msgstr "Буцах"
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
-msgstr ""
+msgstr "Хяналтын самбар руу буцах"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
-msgstr "Tilbake til hjem"
+msgstr "Нүүр хуудас руу буцах"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:18
 msgid "Back to all templates"
-msgstr ""
+msgstr "Бүх загвар руу буцах"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
 msgid "Back to builder"
-msgstr ""
+msgstr "Барилгачин руу буцах"
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
-msgstr ""
+msgstr "Арын дэвсгэр"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:74
 msgid "Background Only"
-msgstr ""
+msgstr "Зөвхөн дэвсгэр"
 
 #. Description of the 'API Base' (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Base URL for an OpenAI-compatible gateway. Leave empty for OpenRouter."
-msgstr ""
+msgstr "OpenAI-тэй нийцтэй гарцын үндсэн URL. OpenRouter-д хоосон үлдээнэ үү."
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic"
-msgstr "Grunnleggende"
+msgstr "Үндсэн"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic Forms"
-msgstr ""
+msgstr "Үндсэн маягтууд"
 
 #: frontend/src/utils/fontManager.ts:26
 msgid "Black"
-msgstr ""
+msgstr "Хар"
 
 #: frontend/src/components/Templates/TemplatePageGrid.vue:12
 msgid "Blank Page"
-msgstr ""
+msgstr "Хоосон хуудас"
 
 #. Label of the block (JSON) field in DocType 'Block Template'
 #. Label of the block (Long Text) field in DocType 'Builder Component'
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
-msgstr ""
+msgstr "Блок"
 
 #: frontend/src/components/PageScript.vue:107
 msgid "Block CSS"
-msgstr ""
+msgstr "CSS-г блоклох"
 
 #: frontend/src/pages/PageBuilder.vue:226
 msgid "Block Client Script"
-msgstr ""
+msgstr "Үйлчлүүлэгчийн скриптийг блоклох"
 
 #. Label of the block_id (Data) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Block ID"
-msgstr ""
+msgstr "Блокийн ID"
 
 #: frontend/src/components/PageScript.vue:95
 msgid "Block JavaScript"
-msgstr ""
+msgstr "JavaScript-ийг блоклох"
 
 #: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:147
 msgid "Block Options"
-msgstr ""
+msgstr "Блокийн сонголтууд"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Block Props"
-msgstr ""
+msgstr "Блокны тулгуурууд"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
-msgstr ""
+msgstr "Блокийн загвар"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Client Script"
-msgstr ""
+msgstr "Блок Загвар Клиент Скрипт"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Data Script"
-msgstr ""
+msgstr "Блок Загварын Өгөгдлийн Скрипт"
 
 #: frontend/src/stores/blockTemplateStore.ts:94
 msgid "Block template saved!"
-msgstr ""
+msgstr "Блокийн загварыг хадгаллаа!"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Blocks"
-msgstr ""
+msgstr "Блокууд"
 
 #: frontend/src/components/ShadowHandler.vue:155
 msgid "Blur"
-msgstr ""
+msgstr "Бүдэгрүүлэх"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Body HTML"
-msgstr ""
+msgstr "HTML биеийн хэсэг"
 
 #: frontend/src/utils/fontManager.ts:24
 msgid "Bold"
-msgstr "Fet"
+msgstr "Тод"
 
 #: frontend/src/components/PropsPopoverContent.vue:169
 msgid "Boolean"
-msgstr ""
+msgstr "Буль"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:91
 msgid "Border Color"
-msgstr ""
+msgstr "Хүрээний өнгө"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:133
 msgid "Border Style"
-msgstr ""
+msgstr "Хүрээний загвар"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:116
 msgid "Border Width"
-msgstr ""
+msgstr "Хүрээний өргөн"
 
 #: frontend/src/components/BackgroundHandler.vue:299
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
-msgstr "Nederst"
+msgstr "Доод тал"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:137
 #: frontend/src/components/BlockGridLayoutHandler.vue:200
 msgid "Bottom Center"
-msgstr "Nederst i senter"
+msgstr "Доод төв"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:141
 #: frontend/src/components/BlockGridLayoutHandler.vue:204
 msgid "Bottom Left"
-msgstr "Nederst til venstre"
+msgstr "Зүүн доод"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:133
 #: frontend/src/components/BlockGridLayoutHandler.vue:196
 msgid "Bottom Right"
-msgstr "Nederst til høyre"
+msgstr "Баруун доод"
 
 #: frontend/src/components/BuilderCommandPalette.vue:88
 msgid "Browse all settings"
-msgstr ""
+msgstr "Бүх тохиргоог үзэх"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
 msgid "Builder AI Memory"
-msgstr ""
+msgstr "Бүтээгчийн хиймэл оюун ухааны санах ой"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Builder AI Message"
-msgstr ""
+msgstr "Бүтээгчийн хиймэл оюун ухааны зурвас"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Builder AI Model"
-msgstr ""
+msgstr "Бүтээгчийн хиймэл оюун ухааны загвар"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Builder AI Provider"
-msgstr ""
+msgstr "Бүтээгчийн хиймэл оюун ухааны үйлчилгээ үзүүлэгч"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Builder AI Session"
-msgstr ""
+msgstr "Бүтээгчийн хиймэл оюун ухааны сесс"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Builder Client Script"
-msgstr ""
+msgstr "Бүтээгчийн Клиент Скрипт"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Builder Component"
-msgstr ""
+msgstr "Бүтээгчийн бүрэлдэхүүн хэсэг"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Builder Page"
-msgstr ""
+msgstr "Бүтээгчийн хуудас"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Builder Page Click"
-msgstr ""
+msgstr "Бүтээгчийн хуудасны товшилт"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Page Client Script"
-msgstr ""
+msgstr "Бүтээгч хуудасны үйлчлүүлэгчийн скрипт"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:20
 msgid "Builder Page Filter"
-msgstr ""
+msgstr "Бүтээгчийн хуудасны шүүлтүүр"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Builder Project Folder"
-msgstr ""
+msgstr "Бүтээгчийн төслийн хавтас"
 
 #. Label of the builder_script (Link) field in DocType 'Builder Page Client
 #. Script'
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Script"
-msgstr ""
+msgstr "Бүтээгчийн скрипт"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/BuilderToolbar.vue:39
 msgid "Builder Settings"
-msgstr ""
+msgstr "Бүтээгчийн тохиргоо"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Builder Snapshot"
-msgstr ""
+msgstr "Бүтээгчийн снапшот"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Builder Token"
-msgstr ""
+msgstr "Бүтээгчийн токен"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:184
 msgid "CNAME record points to wrong destination: {0}"
-msgstr ""
+msgstr "CNAME бичлэг буруу очих газрыг зааж байна: {0}"
 
 #: frontend/src/components/PageClientScriptManager.vue:76
 #: frontend/src/components/PageScript.vue:194
@@ -675,37 +676,37 @@ msgstr "CSS"
 
 #: frontend/src/components/Controls/SearchBlock.vue:243
 msgid "CSS Classes"
-msgstr ""
+msgstr "CSS ангиуд"
 
 #: frontend/src/components/Modals/TokenManager.vue:900
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
-msgstr ""
+msgstr "CSV нь 'Токен нэр' болон 'Гэрлийн горим' багана агуулсан байх ёстой"
 
 #: frontend/src/components/Modals/TokenManager.vue:888
 msgid "CSV must have at least a header row and one data row"
-msgstr ""
+msgstr "CSV нь дор хаяж нэг толгой мөр болон нэг өгөгдлийн мөртэй байх ёстой"
 
 #: frontend/src/components/Settings/TopClicksList.vue:13
 msgid "CTR"
-msgstr ""
+msgstr "CTR"
 
 #: frontend/src/utils/helpers.ts:36
 msgid "Cancel"
-msgstr "Avbryt"
+msgstr "Цуцлах"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:40
 msgid "Cancel invitation"
-msgstr ""
+msgstr "Урилгыг цуцлах"
 
 #: frontend/src/utils/useCanvasUtils.ts:235
 msgid "Cannot delete root block"
-msgstr ""
+msgstr "Үндсэн блокийг устгах боломжгүй"
 
 #. Label of the canonical_url (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:55
 msgid "Canonical URL"
-msgstr ""
+msgstr "Каноник URL"
 
 #: frontend/src/utils/useBuilderEvents.ts:280
 #: frontend/src/utils/useBuilderEvents.ts:292
@@ -716,23 +717,23 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:347
 #: frontend/src/utils/useBuilderEvents.ts:358
 msgid "Canvas"
-msgstr ""
+msgstr "Зотон даавуу"
 
 #. Label of the capability_section (Section Break) field in DocType 'Builder AI
 #. Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Capabilities"
-msgstr ""
+msgstr "Чадварууд"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
-msgstr ""
+msgstr "Том үсгээр бичих"
 
 #. Label of the category (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/Modals/NewBlockTemplate.vue:32
 msgid "Category"
-msgstr "Kategori"
+msgstr "Ангилал"
 
 #: frontend/src/components/BackgroundHandler.vue:297
 #: frontend/src/components/BlockGridLayoutHandler.vue:67
@@ -740,245 +741,245 @@ msgstr "Kategori"
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:159
 msgid "Center"
-msgstr "Senter"
+msgstr "Төв"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:129
 #: frontend/src/components/BlockGridLayoutHandler.vue:192
 msgid "Center Left"
-msgstr ""
+msgstr "Зүүн төв"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:121
 #: frontend/src/components/BlockGridLayoutHandler.vue:184
 msgid "Center Right"
-msgstr ""
+msgstr "Баруун төв"
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Change"
-msgstr "Endre"
+msgstr "Өөрчлөлт"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:84
 msgid "Checked"
-msgstr ""
+msgstr "Тэмдэглэгдсэн"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:12
 msgid "Choose a template to get a head start, or start from scratch."
-msgstr ""
+msgstr "Урьдчилан эхлүүлэхийн тулд загвар сонгох эсвэл эхнээс нь эхлэх."
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
-msgstr ""
+msgstr "Ангилал"
 
 #: frontend/src/components/BackgroundHandler.vue:114
 msgid "Clear Gradient"
-msgstr ""
+msgstr "Цэвэр градиент"
 
 #: frontend/src/components/BackgroundHandler.vue:106
 msgid "Clear Image"
-msgstr ""
+msgstr "Зургийг цэвэрлэх"
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
 msgid "Clear all filters"
-msgstr ""
+msgstr "Бүх шүүлтүүрийг арилгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:355
 msgid "Click 'Add Token' to create your first one."
-msgstr ""
+msgstr "Эхнийхийгээ үүсгэхийн тулд 'Токен нэмэх' дээр дарна уу."
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:20
 msgid "Click-through Rate"
-msgstr ""
+msgstr "Товшилтын түвшин"
 
 #: frontend/src/components/Settings/TopClicksList.vue:12
 msgid "Clicks"
-msgstr ""
+msgstr "Товшилтууд"
 
 #: frontend/src/components/PageScript.vue:5
 #: frontend/src/components/Settings/GlobalCode.vue:22
 msgid "Client Script"
-msgstr "Klientskript"
+msgstr "Клиентийн скрипт"
 
 #. Label of the client_scripts (Table MultiSelect) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Client Scripts"
-msgstr ""
+msgstr "Үйлчлүүлэгчийн скриптүүд"
 
 #: frontend/src/components/BackgroundHandler.vue:124
 msgid "Clip Background to Text"
-msgstr ""
+msgstr "Текст рүү дэвсгэрийг хавсаргах"
 
 #: frontend/src/components/CommandPalette.vue:33
 msgid "Close"
-msgstr "Lukk"
+msgstr "Хаах"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:72
 msgid "Close (Esc)"
-msgstr ""
+msgstr "Хаах (Esc)"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:60
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
-msgstr "Kode"
+msgstr "Код"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:148
 msgid "Col Span"
-msgstr ""
+msgstr "Колон Спан"
 
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Collapse"
-msgstr "Fold sammen alle"
+msgstr "Хураах"
 
 #: frontend/src/components/Commands/index.ts:157
 msgid "Collapse All Layers"
-msgstr ""
+msgstr "Бүх давхаргыг хумих"
 
 #: frontend/src/components/RouteTreeView.vue:374
 msgid "Collapse node or move up in page tree"
-msgstr ""
+msgstr "Зангилааг хумих эсвэл хуудасны мод дотор дээш зөөх"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
-msgstr ""
+msgstr "Цуглуулга"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/PropsPopoverContent.vue:174
 msgid "Color"
-msgstr "Farge"
+msgstr "Өнгө"
 
 #: frontend/src/components/Modals/TokenManager.vue:454
 msgid "Colors"
-msgstr ""
+msgstr "Өнгө"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:75
 msgid "Colors Only"
-msgstr ""
+msgstr "Зөвхөн өнгө"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:87
 msgid "Column"
-msgstr "Kolonne"
+msgstr "Багана"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:95
 msgid "Column Dense"
-msgstr ""
+msgstr "Баганын нягтрал"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:17
 msgid "Columns"
-msgstr "Kolonner"
+msgstr "Баганууд"
 
 #: frontend/src/components/CommandPalette.vue:9
 msgid "Command Palette"
-msgstr ""
+msgstr "Командын палитр"
 
 #: frontend/src/components/BuilderCommandPalette.vue:312
 msgid "Commands"
-msgstr ""
+msgstr "Тушаалууд"
 
 #: frontend/src/components/PageScript.vue:204
 msgid "Component Client Script"
-msgstr ""
+msgstr "Компонент клиентийн скрипт"
 
 #: frontend/src/components/PageScript.vue:23
 #: frontend/src/components/PageScript.vue:133
 msgid "Component Data Preview"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн өгөгдлийн урьдчилсан тойм"
 
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/components/PageScript.vue:204
 msgid "Component Data Script"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн өгөгдлийн скрипт"
 
 #. Label of the component_id (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Component ID"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн ID"
 
 #. Label of the component_name (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн нэр"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгүүдийн тулгуурууд"
 
 #: frontend/src/stores/componentStore.ts:99
 msgid "Component draft is unavailable."
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн ноорог боломжгүй байна."
 
 #: frontend/src/stores/componentStore.ts:439
 msgid "Component is used in current page. You cannot delete it."
-msgstr ""
+msgstr "Компонентийг одоогийн хуудсанд ашиглаж байна. Та үүнийг устгах боломжгүй."
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:86
 msgid "Component replaced successfully"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг амжилттай сольсон"
 
 #: frontend/src/stores/componentStore.ts:111
 msgid "Component saved!"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсэг хадгалагдлаа!"
 
 #: frontend/src/stores/componentStore.ts:130
 msgid "Component synced in all the pages!"
-msgstr ""
+msgstr "Бүх хуудсан дээр бүрэлдэхүүн хэсэг синк хийгдсэн!"
 
 #: frontend/src/components/ComponentUpdates.vue:19
 msgid "Component updates"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн шинэчлэлтүүд"
 
 #: frontend/src/components/ComponentUpdates.vue:4
 msgid "Component updates available"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийн шинэчлэлтүүд боломжтой"
 
 #: builder/builder/component_versions.py:236
 msgid "Component {0} was deleted and will not render"
-msgstr ""
+msgstr "{0} компонентыг устгасан бөгөөд үзүүлэхгүй"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:52
 msgid "Components"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгүүд"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
-msgstr "Betingelse"
+msgstr "Нөхцөл байдал"
 
 #: frontend/src/components/DashboardSidebar.vue:98
 msgid "Configure global settings for this builder project."
-msgstr ""
+msgstr "Энэ бүтээгч төслийн дэлхийн тохиргоог тохируулна уу."
 
 #: frontend/src/components/BuilderToolbar.vue:41
 msgid "Configure page and global settings for this project."
-msgstr ""
+msgstr "Энэ төслийн хуудас болон дэлхийн тохиргоог тохируулна уу."
 
 #: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
 msgid "Confirm"
-msgstr "Bekreft"
+msgstr "Баталгаажуулах"
 
 #: builder/ai/codex.py:102 builder/ai/presets.py:256
 msgid "Connected"
-msgstr ""
+msgstr "Холбогдсон"
 
 #. Label of the connection_section (Section Break) field in DocType 'Builder AI
 #. Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Connection"
-msgstr ""
+msgstr "Холболт"
 
 #: frontend/src/components/BackgroundHandler.vue:291
 msgid "Contain"
-msgstr ""
+msgstr "Агуулах"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
 msgid "Container (c)"
-msgstr ""
+msgstr "Контейнер (в)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
 msgid "Container mode"
-msgstr ""
+msgstr "Контейнерын горим"
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
 #. Label of the content (Long Text) field in DocType 'Builder AI Message'
@@ -989,264 +990,264 @@ msgstr ""
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:22
 #: frontend/src/components/Controls/SearchBlock.vue:198
 msgid "Content"
-msgstr "Innhold"
+msgstr "Агуулга"
 
 #. Label of the max_tokens (Int) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Context Window"
-msgstr ""
+msgstr "Контекст цонх"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:41
 msgid "Controls"
-msgstr ""
+msgstr "Хяналтууд"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Convert To Collection"
-msgstr ""
+msgstr "Цуглуулга руу хөрвүүлэх"
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
-msgstr ""
+msgstr "WebP руу хөрвүүлэх"
 
 #: frontend/src/utils/imageUtils.ts:57
 msgid "Converting..."
-msgstr ""
+msgstr "Хөрвүүлж байна..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr ""
+msgstr "Түр санах ой руу хуулсан"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
-msgstr ""
+msgstr "Хуулбарлах"
 
 #: frontend/src/components/Commands/index.ts:258
 msgid "Copy Block Styles"
-msgstr ""
+msgstr "Блокийн хэв маягийг хуулах"
 
 #: frontend/src/components/MainMenu.vue:68
 msgid "Copy Page"
-msgstr ""
+msgstr "Хуудсыг хуулах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:40
 msgid "Copy Style"
-msgstr ""
+msgstr "Хуулбарлах хэв маяг"
 
 #: frontend/src/components/Commands/index.ts:262
 msgid "Copy block styles"
-msgstr ""
+msgstr "Блокийн хэв маягийг хуулах"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
-msgstr ""
+msgstr "Хуудсыг бүхэлд нь хуулах уу?"
 
 #: frontend/src/components/Modals/TokenManager.vue:205
 msgid "Copy var(--{0})"
-msgstr ""
+msgstr "Хуулах var(--{0})"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:242
 msgid "Could not add pages"
-msgstr ""
+msgstr "Хуудас нэмж чадсангүй"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:210
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
 msgid "Could not create page from template"
-msgstr ""
+msgstr "Загвараас хуудас үүсгэж чадсангүй"
 
 #: builder/api.py:583
 msgid "Could not import any pages from this template group."
-msgstr ""
+msgstr "Энэ загварын бүлгээс ямар ч хуудас импортлох боломжгүй."
 
 #: builder/api.py:551
 msgid "Could not load the selected template. Please try again."
-msgstr ""
+msgstr "Сонгосон загварыг ачаалж чадсангүй. Дахин оролдоно уу."
 
 #: builder/ai/api.py:320
 msgid "Could not reach {0}: {1}"
-msgstr ""
+msgstr "{0}руу хүрч чадсангүй : {1}"
 
 #: builder/api.py:330
 msgid "Could not resolve hostname: {0}"
-msgstr ""
+msgstr "Хостын нэрийг тодорхойлж чадсангүй: {0}"
 
 #: frontend/src/components/Modals/TokenManager.vue:443
 msgid "Couldn't copy to clipboard"
-msgstr ""
+msgstr "Түр санах ой руу хуулж чадсангүй"
 
 #: builder/ai/presets.py:284
 msgid "Couldn't reach the server. Check the address is right and that it's running."
-msgstr ""
+msgstr "Сервертэй холбогдож чадсангүй. Хаяг зөв байгаа болон ажиллаж байгаа эсэхийг шалгана уу."
 
 #: frontend/src/components/Settings/TopReferrersList.vue:29
 msgid "Count"
-msgstr "Antall"
+msgstr "Тоолох"
 
 #: frontend/src/components/BackgroundHandler.vue:292
 msgid "Cover"
-msgstr ""
+msgstr "Хавтас"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Create"
-msgstr "Opprett"
+msgstr "Үүсгэх"
 
 #: frontend/src/utils/dialogs.ts:23
 msgid "Create Folder"
-msgstr ""
+msgstr "Хавтас үүсгэх"
 
 #: frontend/src/utils/dialogs.ts:21
 msgid "Create New Folder"
-msgstr ""
+msgstr "Шинэ хавтас үүсгэх"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:275
 msgid "Create New Page"
-msgstr ""
+msgstr "Шинэ хуудас үүсгэх"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:4
 msgid "Create a new page"
-msgstr ""
+msgstr "Шинэ хуудас үүсгэх"
 
 #: frontend/src/components/Modals/TokenManager.vue:959
 msgid "Create {0} new token and update {1} existing token?"
-msgstr ""
+msgstr "{0} шинэ токен үүсгэж, {1} байгаа токеныг шинэчлэх үү?"
 
 #: frontend/src/components/Modals/TokenManager.vue:960
 msgid "Create {0} new token and update {1} existing tokens?"
-msgstr ""
+msgstr "{0} шинэ токен үүсгэж, {1} одоо байгаа токенуудыг шинэчлэх үү?"
 
 #: frontend/src/components/Modals/TokenManager.vue:962
 msgid "Create {0} new tokens and update {1} existing token?"
-msgstr ""
+msgstr "{0} шинэ токен үүсгэж, {1} одоо байгаа токеныг шинэчлэх үү?"
 
 #: frontend/src/components/Modals/TokenManager.vue:963
 msgid "Create {0} new tokens and update {1} existing tokens?"
-msgstr ""
+msgstr "{0} шинэ токен үүсгэж, {1} одоо байгаа токенуудыг шинэчлэх үү?"
 
 #: builder/ai/agent/pending.py:131
 msgid "Created DocType {0} with {1} field(s)"
-msgstr ""
+msgstr "{1} талбар(ууд)-тай DocType {0} үүсгэсэн"
 
 #: frontend/src/components/PageListItem.vue:56
 msgid "Created by {0}"
-msgstr ""
+msgstr "{0}-н үүсгэсэн"
 
 #: frontend/src/components/Modals/TokenManager.vue:1016
 msgid "Created {0} token"
-msgstr ""
+msgstr "{0} токен үүсгэсэн"
 
 #: frontend/src/components/Modals/TokenManager.vue:1016
 msgid "Created {0} tokens"
-msgstr ""
+msgstr "{0} токен үүсгэсэн"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
 msgid "Creating an editable copy..."
-msgstr ""
+msgstr "Засах боломжтой хуулбар үүсгэж байна..."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:208
 msgid "Creating page from template..."
-msgstr ""
+msgstr "Загвараас хуудас үүсгэж байна..."
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:247
 msgid "Crosshair"
-msgstr ""
+msgstr "Загалмай"
 
 #: frontend/src/components/Settings/index.ts:28
 msgid "Current Page"
-msgstr ""
+msgstr "Одоогийн хуудас"
 
 #: frontend/src/components/VersionHistory.vue:50
 msgid "Current version"
-msgstr ""
+msgstr "Одоогийн хувилбар"
 
 #: frontend/src/components/VersionHistory.vue:77
 msgid "Currently live"
-msgstr ""
+msgstr "Одоогоор шууд дамжуулалттай"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:239
 msgid "Cursor"
-msgstr ""
+msgstr "Курсор"
 
 #: frontend/src/components/Controls/FontInput.vue:130
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
 #: frontend/src/components/ShadowHandler.vue:186
 msgid "Custom"
-msgstr "Egendefinert"
+msgstr "Захиалгат"
 
 #: frontend/src/components/Settings/index.ts:119
 msgid "Custom Domains"
-msgstr ""
+msgstr "Захиалгат домэйн"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:188
 msgid "DNS is verified but SSL certificate provisioning failed. Please retry."
-msgstr ""
+msgstr "DNS баталгаажсан боловч SSL сертификатын хангамж амжилтгүй боллоо. Дахин оролдоно уу."
 
 #: frontend/src/components/Modals/TokenManager.vue:51
 msgid "Dark"
-msgstr "Mørk"
+msgstr "Харанхуй"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
 msgid "Dark Mode"
-msgstr ""
+msgstr "Харанхуй горим"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:34
 msgid "Dark Mode Color"
-msgstr ""
+msgstr "Харанхуй горимын өнгө"
 
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
-msgstr ""
+msgstr "Харанхуй утга"
 
 #: frontend/src/components/DashboardContent.vue:135
 msgid "Dashboard"
-msgstr "Oversiktspanel"
+msgstr "Хяналтын самбар"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:138
 msgid "Dashed"
-msgstr ""
+msgstr "Тасархай"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 #: frontend/src/components/Controls/SearchBlock.vue:178
 msgid "Data"
-msgstr "Data"
+msgstr "Өгөгдөл"
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:51
 msgid "Data Key"
-msgstr ""
+msgstr "Өгөгдлийн түлхүүр"
 
 #: frontend/src/components/PageScript.vue:75
 msgid "Data Preview"
-msgstr ""
+msgstr "Өгөгдлийн урьдчилсан тойм"
 
 #: frontend/src/components/PageScript.vue:7
 msgid "Data Script"
-msgstr ""
+msgstr "Өгөгдлийн скрипт"
 
 #: frontend/src/components/PageScript.vue:224
 msgid "Data script saved"
-msgstr ""
+msgstr "Өгөгдлийн скрипт хадгалагдсан"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:243
 #: frontend/src/components/Controls/FontInput.vue:134
 msgid "Default"
-msgstr "Standard"
+msgstr "Үндсэн"
 
 #. Description of the 'Default Language' (Data) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:17
 msgid "Default HTML lang code (e.g., en, es, fr)"
-msgstr ""
+msgstr "Өгөгдмөл HTML lang код (жишээ нь, en, es, fr)"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:19
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:19
 msgid "Default Items"
-msgstr ""
+msgstr "Анхдагч зүйлс"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default Language"
-msgstr ""
+msgstr "Үндсэн хэл"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:20
 #: frontend/src/components/PropsOptions/ColorOptions.vue:5
@@ -1256,545 +1257,545 @@ msgstr ""
 #: frontend/src/components/PropsOptions/SelectOptions.vue:8
 #: frontend/src/components/PropsOptions/StringOptions.vue:4
 msgid "Default Value"
-msgstr "Standardverdi"
+msgstr "Анхдагч утга"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:260
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
-msgstr "Slett"
+msgstr "Устгах"
 
 #: frontend/src/components/DashboardSidebar.vue:75
 msgid "Delete Folder"
-msgstr ""
+msgstr "Фолдерыг устгах"
 
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
-msgstr ""
+msgstr "Хуудсыг устгах"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
 msgid "Delete selected blocks"
-msgstr ""
+msgstr "Сонгосон блокуудыг устгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete variable"
-msgstr ""
+msgstr "Хувьсагчийг устгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete {0} variables"
-msgstr ""
+msgstr "{0} хувьсагчийг устгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
-msgstr ""
+msgstr "{0} токеныг устгасан"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} tokens"
-msgstr ""
+msgstr "{0} токенуудыг устгасан"
 
 #: frontend/src/stores/pageStore.ts:178
 msgid "Deleting page"
-msgstr ""
+msgstr "Хуудсыг устгаж байна"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:281
 msgid "Deleting redirect..."
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг устгаж байна..."
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:15
 msgid "Description"
-msgstr "Beskrivelse"
+msgstr "Тайлбар"
 
 #: frontend/src/components/DashboardContent.vue:134
 msgid "Deselect pages"
-msgstr ""
+msgstr "Хуудсуудыг сонгохоо болих"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
 msgid "Design Tokens"
-msgstr ""
+msgstr "Дизайн Токенууд"
 
 #: frontend/src/components/Controls/FontInput.vue:127
 msgid "Design tokens"
-msgstr ""
+msgstr "Дизайн жетонууд"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr ""
+msgstr "Дизайнер"
 
 #: frontend/src/components/BuilderCanvas.vue:232
 msgid "Desktop"
-msgstr "Skrivebord"
+msgstr "Ширээний компьютер"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:225
 msgid "Detach Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг салгах"
 
 #. Description of the 'Context Window' (Int) field in DocType 'Builder AI
 #. Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Detected automatically. 200,000 is assumed when unknown."
-msgstr ""
+msgstr "Автоматаар илрүүлдэг. Тодорхойгүй үед 200,000 гэж үздэг."
 
 #: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Developer"
-msgstr "Utvikler"
+msgstr "Хөгжүүлэгч"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Developer Options"
-msgstr ""
+msgstr "Хөгжүүлэгчийн сонголтууд"
 
 #: frontend/src/components/Settings/index.ts:137
 msgid "Developer Settings"
-msgstr ""
+msgstr "Хөгжүүлэгчийн тохиргоо"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:77
 msgid "Dimension"
-msgstr ""
+msgstr "Хэмжээ"
 
 #: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
-msgstr ""
+msgstr "Хэмжээ"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
-msgstr ""
+msgstr "Чиглэл"
 
 #. Label of the disable_auto_dark_mode (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:77
 msgid "Disable Auto Dark Mode"
-msgstr ""
+msgstr "Автомат харанхуй горимыг идэвхгүй болгох"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageGeneral.vue:124
 msgid "Disable Indexing"
-msgstr ""
+msgstr "Индексжүүлэлтийг идэвхгүй болгох"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:246
 msgid "Disable Redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг идэвхгүй болгох"
 
 #. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
-msgstr ""
+msgstr "Дэлхий даяарх бүх хуудсанд зориулсан бараан горимын өнгөний схемийн автомат тохируулгыг идэвхгүй болгох."
 
 #: frontend/src/data/domains.ts:88
 msgid "Disabling redirect…"
-msgstr ""
+msgstr "… дахин чиглүүлэлтийг идэвхгүй болгож байна"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:22
 msgid "Distribution"
-msgstr ""
+msgstr "Түгээлт"
 
 #: frontend/src/utils/useBuilderEvents.ts:474
 msgid "Do you want to copy the entire page including settings and scripts?"
-msgstr ""
+msgstr "Та тохиргоо болон скриптүүдийн хамт хуудсыг бүхэлд нь хуулахыг хүсэж байна уу?"
 
 #: frontend/src/utils/helpers.ts:516
 msgid "Do you want to upload the font \"{0}\"?"
-msgstr ""
+msgstr "Та \"{0} \" фонтыг байршуулахыг хүсэж байна уу?"
 
 #: builder/ai/agent/pending.py:97
 msgid "DocType {0} already exists"
-msgstr ""
+msgstr "DocType {0} аль хэдийн байна"
 
 #: builder/ai/agent/pending.py:138
 msgid "DocType {0} does not exist"
-msgstr "Dokumenttype (DocType) {0} finnes ikke"
+msgstr "DocType {0} байхгүй байна"
 
 #: builder/ai/agent/pending.py:95
 msgid "Doctype name is required"
-msgstr ""
+msgstr "Докторын нэр шаардлагатай"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
-msgstr "Domene"
+msgstr "Домэйн"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:177
 #: frontend/src/components/Settings/GlobalDomains.vue:192
 msgid "Domain setup failed. Please retry or contact support."
-msgstr ""
+msgstr "Домэйны тохиргоо амжилтгүй боллоо. Дахин оролдоно уу эсвэл дэмжлэгтэй холбогдоно уу."
 
 #: frontend/src/data/domains.ts:54
 msgid "Domain verification failed"
-msgstr ""
+msgstr "Домэйн баталгаажуулалт амжилтгүй боллоо"
 
 #: frontend/src/components/Settings/index.ts:118
 msgid "Domains"
-msgstr ""
+msgstr "Домэйн"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Don't Execute"
-msgstr ""
+msgstr "Бүү гүйцэтгэ"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:182
 #: frontend/src/utils/builderBlockCopyPaste.ts:293
 #: frontend/src/utils/builderBlockCopyPaste.ts:314
 msgid "Done"
-msgstr "Utført"
+msgstr "Дууссан"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
-msgstr ""
+msgstr "Цэгтэй"
 
 #: frontend/src/components/Modals/TokenManager.vue:386
 msgid "Download sample"
-msgstr ""
+msgstr "Жишээ татаж авах"
 
 #: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:47
 msgid "Draft"
-msgstr "Utkast"
+msgstr "Ноорог"
 
 #. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Draft Blocks"
-msgstr ""
+msgstr "Ноорог блокууд"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:55
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
-msgstr "Dupliser"
+msgstr "Хуулбарлах"
 
 #: frontend/src/components/Commands/index.ts:277
 msgid "Duplicate Block"
-msgstr ""
+msgstr "Давхардсан блок"
 
 #: frontend/src/components/Commands/index.ts:130
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
-msgstr ""
+msgstr "Давхардсан хуудас"
 
 #: frontend/src/components/Commands/index.ts:281
 msgid "Duplicate block"
-msgstr ""
+msgstr "Давхардсан блок"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
-msgstr ""
+msgstr "Засварлахын тулд хуулбарлах"
 
 #: frontend/src/stores/pageStore.ts:161
 msgid "Duplicating page"
-msgstr ""
+msgstr "Хуудсыг хуулбарлаж байна"
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Dynamic Route"
-msgstr "Dynamisk rute"
+msgstr "Динамик маршрут"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:53
 msgid "Ease In"
-msgstr ""
+msgstr "Хялбархан орох"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:55
 msgid "Ease In Out"
-msgstr ""
+msgstr "Ороход хялбар"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:54
 msgid "Ease Out"
-msgstr ""
+msgstr "Хялбаршуулах"
 
 #: frontend/src/components/Commands/index.ts:45
 #: frontend/src/utils/colorOptions.ts:80
 #: frontend/src/utils/useBuilderEvents.ts:241
 #: frontend/src/utils/useBuilderEvents.ts:255
 msgid "Edit"
-msgstr "Rediger"
+msgstr "Засварлах"
 
 #: frontend/src/pages/PageBuilder.vue:227
 msgid "Edit Block Client Script"
-msgstr ""
+msgstr "Блок клиентийн скриптийг засах"
 
 #: frontend/src/pages/PageBuilder.vue:231
 msgid "Edit CSS"
-msgstr ""
+msgstr "CSS-г засах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:202
 msgid "Edit Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг засах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:29
 #: frontend/src/pages/PageBuilder.vue:224
 msgid "Edit HTML"
-msgstr "Rediger HTML"
+msgstr "HTML засварлах"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:68
 msgid "Edit Redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг засах"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:5
 msgid "Edit Token"
-msgstr ""
+msgstr "Токеныг засах"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:28
 msgid "Edit template"
-msgstr ""
+msgstr "Загварыг засах"
 
 #: frontend/src/components/PageCard.vue:23
 msgid "Edited {0}"
-msgstr ""
+msgstr "Зассан {0}"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:19
 msgid "Editing is disabled while the site is being updated. Please try again in a few minutes."
-msgstr ""
+msgstr "Сайтыг шинэчилж байх үед засварлах боломжгүй байна. Хэдэн минутын дараа дахин оролдоно уу."
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:53
 msgid "Editor Config"
-msgstr ""
+msgstr "Редакторын тохиргоо"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Element"
-msgstr ""
+msgstr "Элемент"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:81
 msgid "Email addresses"
-msgstr ""
+msgstr "И-мэйл хаягууд"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:55
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:18
 msgid "Enable View Tracking"
-msgstr ""
+msgstr "Үзэлтийн хяналтыг идэвхжүүлэх"
 
 #. Label of the enabled (Check) field in DocType 'Builder AI Model'
 #. Label of the enabled (Check) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Enabled"
-msgstr "Aktivert"
+msgstr "Идэвхжүүлсэн"
 
 #: frontend/src/data/domains.ts:84
 msgid "Enabling redirect…"
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг идэвхжүүлж байна…"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:71
 msgid "End"
-msgstr "Slutt"
+msgstr "Төгсгөл"
 
 #: builder/ai/api.py:382
 msgid "Enter a model id to test with"
-msgstr ""
+msgstr "Турших загварын дугаарыг оруулна уу"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:35
 #: frontend/src/components/PropsOptions/NumberOptions.vue:32
 #: frontend/src/components/PropsOptions/SelectOptions.vue:14
 #: frontend/src/components/PropsOptions/StringOptions.vue:8
 msgid "Enter default value"
-msgstr ""
+msgstr "Анхдагч утгыг оруулна уу"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:16
 msgid "Enter false label display"
-msgstr ""
+msgstr "Хуурамч шошгоны дэлгэцийг оруулна уу"
 
 #: frontend/src/components/PropsOptions/ImageOptions.vue:6
 msgid "Enter image URL or upload one"
-msgstr ""
+msgstr "Зургийн URL оруулна уу эсвэл нэгийг байршуулна уу"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:16
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:16
 msgid "Enter max number of items"
-msgstr ""
+msgstr "Хамгийн ихдээ хэдэн зүйл оруулна уу"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:15
 #: frontend/src/components/PropsOptions/NumberOptions.vue:24
 msgid "Enter max value"
-msgstr ""
+msgstr "Хамгийн их утгыг оруулна уу"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:8
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:8
 msgid "Enter min number of items"
-msgstr ""
+msgstr "Хамгийн багадаа хэдэн зүйл оруулна уу"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:8
 msgid "Enter min value"
-msgstr ""
+msgstr "Хамгийн бага утгыг оруулна уу"
 
 #: frontend/src/components/PropsPopoverContent.vue:20
 msgid "Enter prop key"
-msgstr ""
+msgstr "Түлхүүр үг оруулна уу"
 
 #: frontend/src/components/PropsPopoverContent.vue:12
 msgid "Enter prop label"
-msgstr ""
+msgstr "Проп шошгыг оруулна уу"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:8
 msgid "Enter true label display"
-msgstr ""
+msgstr "Жинхэнэ шошгоны дэлгэцийг оруулна уу"
 
 #: frontend/src/components/ArrayEditor.vue:5
 msgid "Enter value"
-msgstr ""
+msgstr "Утга оруулна уу"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:42
 msgid "Enter your domain"
-msgstr ""
+msgstr "Домэйн хаягаа оруулна уу"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:253
 msgid "Error adding redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлт нэмэхэд алдаа гарлаа"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:281
 msgid "Error deleting redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг устгахад алдаа гарлаа"
 
 #: frontend/src/stores/componentStore.ts:132
 msgid "Error syncing component in all the pages!"
-msgstr ""
+msgstr "Бүх хуудсан дээрх бүрэлдэхүүн хэсгүүдийг синк хийхэд алдаа гарлаа!"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:264
 msgid "Error updating redirect"
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг шинэчлэхэд алдаа гарлаа"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:154
 msgid "Exact path"
-msgstr ""
+msgstr "Яг тодорхой зам"
 
 #: frontend/src/components/PageScript.vue:80
 #: frontend/src/components/PageScript.vue:138
 msgid "Example:"
-msgstr "Eksempel:"
+msgstr "Жишээ нь:"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:112
 msgid "Examples"
-msgstr ""
+msgstr "Жишээнүүд"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:5
 msgid "Execute Block Client Scripts in Editor"
-msgstr ""
+msgstr "Редакторт Блок Клиент Скриптүүдийг гүйцэтгэх"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Execute Block Scripts in Editor"
-msgstr ""
+msgstr "Редакторт Блок скриптүүдийг гүйцэтгэх"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
 msgid "Exit current mode"
-msgstr ""
+msgstr "Одоогийн горимоос гарах"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Expand"
-msgstr "Utvid"
+msgstr "Өргөжүүлэх"
 
 #: frontend/src/components/Commands/index.ts:144
 msgid "Expand All Layers"
-msgstr ""
+msgstr "Бүх давхаргыг дэлгэх"
 
 #: frontend/src/components/RouteTreeView.vue:355
 msgid "Expand node or move down in page tree"
-msgstr ""
+msgstr "Зангилааг өргөжүүлэх эсвэл хуудасны мод дотор доош зөөх"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
-msgstr ""
+msgstr "Гадаад URL"
 
 #: frontend/src/utils/fontManager.ts:25
 msgid "Extra Bold"
-msgstr ""
+msgstr "Илүү тод"
 
 #: frontend/src/utils/fontManager.ts:19
 msgid "Extra Light"
-msgstr ""
+msgstr "Нэмэлт гэрэл"
 
 #: builder/domain.py:35
 msgid "FC API returned {0}"
-msgstr ""
+msgstr "FC API нь {0} буцаагдсан"
 
 #: frontend/src/utils/imageUtils.ts:59
 msgid "Failed to convert image to WebP"
-msgstr ""
+msgstr "Зургийг WebP руу хөрвүүлж чадсангүй"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:211
 msgid "Failed to copy"
-msgstr ""
+msgstr "Хуулж чадсангүй"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:99
 msgid "Failed to create token"
-msgstr ""
+msgstr "Токен үүсгэж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:1018
 msgid "Failed to create {0} token"
-msgstr ""
+msgstr "{0} токен үүсгэж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:1018
 msgid "Failed to create {0} tokens"
-msgstr ""
+msgstr "{0} токен үүсгэж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:755
 msgid "Failed to delete \"{0}\""
-msgstr ""
+msgstr "\"{0} \"-г устгахад алдаа гарлаа"
 
 #: frontend/src/utils/imageUtils.ts:59
 msgid "Failed to pull image to local"
-msgstr ""
+msgstr "Зургийг орон нутгийн фолдер руу татаж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:879
 msgid "Failed to read CSV file"
-msgstr ""
+msgstr "CSV файлыг уншиж чадсангүй"
 
 #: frontend/src/components/EditableSpan.vue:63
 msgid "Failed to rename"
-msgstr ""
+msgstr "Нэрийг нь өөрчилж чадсангүй"
 
 #: frontend/src/stores/componentStore.ts:98
 #: frontend/src/stores/componentStore.ts:139
 msgid "Failed to save component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг хадгалахад алдаа гарлаа"
 
 #: frontend/src/components/PageClientScriptManager.vue:277
 #: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
-msgstr ""
+msgstr "Скриптийг хадгалахад алдаа гарлаа"
 
 #: frontend/src/components/PageClientScriptManager.vue:397
 msgid "Failed to update script order"
-msgstr ""
+msgstr "Скриптийн дарааллыг шинэчилж чадсангүй"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:99
 msgid "Failed to update token"
-msgstr ""
+msgstr "Токеныг шинэчилж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:1019
 msgid "Failed to update {0} token"
-msgstr ""
+msgstr "{0} токеныг шинэчилж чадсангүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:1019
 msgid "Failed to update {0} tokens"
-msgstr ""
+msgstr "{0} токенуудыг шинэчилж чадсангүй"
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
-msgstr ""
+msgstr "Байршуулж чадсангүй"
 
 #: frontend/src/utils/helpers.ts:555
 msgid "Failed to upload font"
-msgstr ""
+msgstr "Фонтыг байршуулж чадсангүй"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:12
 msgid "False Label"
-msgstr ""
+msgstr "Хуурамч шошго"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:41
 msgid "Family"
-msgstr ""
+msgstr "Гэр бүл"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:16
 msgid "Fast"
-msgstr ""
+msgstr "Хурдан"
 
 #. Label of the favicon (Attach Image) field in DocType 'Builder Page'
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
@@ -1805,169 +1806,169 @@ msgstr ""
 #: frontend/src/components/Settings/PageGeneral.vue:65
 #: frontend/src/components/Settings/PageGeneral.vue:80
 msgid "Favicon"
-msgstr "Favicon"
+msgstr "Фавикон"
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
-msgstr ""
+msgstr "Дүүргэх ба тайрах"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:67
 msgid "Filter Builder Pages"
-msgstr ""
+msgstr "Шүүлтүүр үүсгэгчийн хуудаснууд"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:5
 msgid "Filter by route"
-msgstr ""
+msgstr "Маршрутаар шүүх"
 
 #: frontend/src/components/DashboardHead.vue:16
 msgid "Filter by title or route"
-msgstr ""
+msgstr "Гарчиг эсвэл маршрутаар шүүх"
 
 #: frontend/src/components/Controls/SearchBlock.vue:44
 msgid "Filter search results by:"
-msgstr ""
+msgstr "Хайлтын үр дүнг дараах байдлаар шүүх:"
 
 #: frontend/src/components/Controls/SearchBlock.vue:27
 msgid "Filters"
-msgstr "Filtre"
+msgstr "Шүүлтүүрүүд"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:24
 msgid "Find"
-msgstr "Finn"
+msgstr "Олох"
 
 #: frontend/src/components/Controls/SearchBlock.vue:8
 msgid "Find & Replace"
-msgstr ""
+msgstr "Олох ба солих"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:60
 msgid "Find Next (Enter)"
-msgstr ""
+msgstr "Дараагийнхыг олох (Оруулах)"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:54
 msgid "Find Previous (Shift+Enter)"
-msgstr ""
+msgstr "Өмнөхийг хайх (Shift+Enter)"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
 msgid "Find..."
-msgstr ""
+msgstr "Олох..."
 
 #: frontend/src/components/DimensionInput.vue:13
 msgid "Fit Content"
-msgstr ""
+msgstr "Тохиромжтой контент"
 
 #: frontend/src/components/ImageUploadInput.vue:73
 msgid "Fit Inside"
-msgstr ""
+msgstr "Дотор нь багтаах"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
 msgid "Fit canvas to screen"
-msgstr ""
+msgstr "Дэлгэцэнд зураг тохируулах"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "Зассан"
 
 #: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
-msgstr ""
+msgstr "Үл хөдлөх хөрөнгийн хайлтыг фокуслах"
 
 #: frontend/src/components/Commands/index.ts:250
 msgid "Focus property search"
-msgstr ""
+msgstr "Үл хөдлөх хөрөнгийн хайлтад анхаарлаа хандуулна уу"
 
 #: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
 msgid "Folder"
-msgstr "Mappe"
+msgstr "Хавтас"
 
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 #: frontend/src/utils/dialogs.ts:24
 msgid "Folder Name"
-msgstr "Mappenavn"
+msgstr "Фолдерын нэр"
 
 #: frontend/src/components/DashboardSidebar.vue:19
 msgid "Folders"
-msgstr ""
+msgstr "Хавтаснууд"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
-msgstr "Font"
+msgstr "Фонт"
 
 #: frontend/src/utils/helpers.ts:509
 msgid "Font \"{0}\" already exists in the project"
-msgstr ""
+msgstr "\"{0}\" фонт нь төсөлд аль хэдийн байна"
 
 #: frontend/src/utils/helpers.ts:554
 msgid "Font \"{0}\" uploaded successfully"
-msgstr ""
+msgstr "\"{0}\" фонтыг амжилттай байршуулсан"
 
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font File"
-msgstr ""
+msgstr "Фонтын файл"
 
 #. Label of the font_name (Data) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font Name"
-msgstr ""
+msgstr "Фонтын нэр"
 
 #: frontend/src/components/Modals/TokenManager.vue:455
 msgid "Fonts"
-msgstr "Fonter"
+msgstr "Фонтууд"
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "For Web Page"
-msgstr ""
+msgstr "Вэб хуудасны хувьд"
 
 #: builder/ai/agent/pending.py:213
 msgid "Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
-msgstr ""
+msgstr "Маягт холбогдсон. Илгээсэн материалыг '{0}' хавтсанд хадгална. Тэдгээрийг ширээн дээрээс үзнэ үү: [/app/{1}](/app/{1})"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Form parts"
-msgstr ""
+msgstr "Хэлбэрийн хэсгүүд"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:104
 msgid "Forward query parameters"
-msgstr ""
+msgstr "Илгээх асуулгын параметрүүд"
 
 #: frontend/src/components/Controls/SearchBlock.vue:322
 msgid "Found in: {0}"
-msgstr ""
+msgstr "Дараахаас олдсон: {0}"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:131
 msgid "Founder / Business owner"
-msgstr ""
+msgstr "Үүсгэн байгуулагч / Бизнесийн эзэн"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Frappe Builder"
-msgstr ""
+msgstr "Фраппе барилгачин"
 
 #: frontend/src/components/BuilderToolbar.vue:32
 msgid "Frappe Builder - Get Started"
-msgstr ""
+msgstr "Frappe Builder - Эхлээрэй"
 
 #: frontend/src/components/BlockPositionHandler.vue:12
 msgid "Free"
-msgstr "Gratis"
+msgstr "Үнэгүй"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:117
 msgid "Friend / colleague"
-msgstr ""
+msgstr "Найз / хамт ажиллагч"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:12
 msgid "Gap"
-msgstr ""
+msgstr "Завсарлага"
 
 #: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
@@ -1980,72 +1981,72 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:229
 #: frontend/src/utils/useBuilderEvents.ts:269
 msgid "General"
-msgstr "Generell"
+msgstr "Ерөнхий"
 
 #: frontend/src/components/BuilderToolbar.vue:27
 msgid "Get Started"
-msgstr ""
+msgstr "Эхлэх"
 
 #: builder/ai/presets.py:189
 msgid "Give this provider a name"
-msgstr ""
+msgstr "Энэ үйлчилгээ үзүүлэгчийн нэрийг өгнө үү"
 
 #: frontend/src/components/BuilderCommandPalette.vue:264
 #: frontend/src/components/Settings/index.ts:29
 msgid "Global"
-msgstr ""
+msgstr "Дэлхийн"
 
 #: frontend/src/components/DashboardSidebar.vue:96
 msgid "Global Builder Settings"
-msgstr ""
+msgstr "Глобал Бүтээгчийн Тохиргоо"
 
 #: frontend/src/components/Settings/index.ts:95
 msgid "Global Code"
-msgstr ""
+msgstr "Дэлхийн код"
 
 #: frontend/src/utils/dialogs.ts:46
 msgid "Global Component"
-msgstr ""
+msgstr "Дэлхийн бүрэлдэхүүн хэсэг"
 
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global script that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "Frappe Builder ашиглан бүтээгдсэн хуудас бүрт ачаалагдах дэлхийн скрипт"
 
 #. Description of the 'Style' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global style that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "Frappe Builder ашиглан бүтээгдсэн хуудас бүрт ачаалагдах дэлхийн хэв маяг"
 
 #: frontend/src/components/Commands/index.ts:96
 msgid "Go to Dashboard"
-msgstr ""
+msgstr "Хяналтын самбар руу очих"
 
 #: frontend/src/components/BackgroundHandler.vue:231
 msgid "Gradient"
-msgstr ""
+msgstr "Градиент"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
 #: frontend/src/components/DashboardHead.vue:74
 msgid "Grid"
-msgstr ""
+msgstr "Тор"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:6
 msgid "Grid Type"
-msgstr ""
+msgstr "Торны төрөл"
 
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Group"
-msgstr "Gruppe"
+msgstr "Бүлэг"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:56
 msgid "Group name for this radio button. Radio buttons with the same name are grouped together."
-msgstr ""
+msgstr "Энэ радио товчлуурын бүлгийн нэр. Ижил нэртэй радио товчлууруудыг хамтад нь бүлэглэсэн."
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:41
 msgid "Grow"
-msgstr ""
+msgstr "Өсөх"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
 #: frontend/src/pages/PageBuilder.vue:223
@@ -2054,181 +2055,181 @@ msgstr "HTML"
 
 #: frontend/src/components/BlockPropertySections/CustomAttributesSection.ts:23
 msgid "HTML Attributes"
-msgstr ""
+msgstr "HTML шинж чанарууд"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
 msgid "HTML Options"
-msgstr ""
+msgstr "HTML сонголтууд"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0}"
-msgstr ""
+msgstr "HTTP {0}"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0} · forwards query parameters"
-msgstr ""
+msgstr "HTTP {0} · асуулгын параметрүүдийг дамжуулдаг"
 
 #. Label of the head_html (Code) field in DocType 'Builder Page'
 #. Label of the head_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Head HTML"
-msgstr ""
+msgstr "Толгойн HTML"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:49
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:90
 msgid "Height"
-msgstr ""
+msgstr "Өндөр"
 
 #: frontend/src/components/DashboardSidebar.vue:197
 #: frontend/src/components/MainMenu.vue:111
 msgid "Help"
-msgstr "Hjelp"
+msgstr "Тусламж"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:28
 msgid "Hidden"
-msgstr "Skjult"
+msgstr "Нуугдсан"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:40
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:44
 msgid "Hide"
-msgstr "Skjul"
+msgstr "Нуух"
 
 #: frontend/src/components/Commands/index.ts:170
 msgid "Hide Left Panel"
-msgstr ""
+msgstr "Зүүн самбарыг нуух"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
 msgid "Hide Replace"
-msgstr ""
+msgstr "Нуух Солих"
 
 #: frontend/src/components/Commands/index.ts:181
 msgid "Hide Right Panel"
-msgstr ""
+msgstr "Баруун самбарыг нуух"
 
 #: frontend/src/utils/useBuilderEvents.ts:413
 msgid "Highlight Blocks with Client Scripts"
-msgstr ""
+msgstr "Клиент скриптүүдээр блокуудыг тодруулах"
 
 #: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for move mode"
-msgstr ""
+msgstr "Хөдөлгөөнт горимд шилжихийн тулд удаан дарна уу"
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
-msgstr "Hjem"
+msgstr "Гэр"
 
 #. Label of the home_page (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Home Page"
-msgstr "Hjemmeside"
+msgstr "Нүүр хуудас"
 
 #: frontend/src/components/RouteTreeNode.vue:42
 msgid "Home page"
-msgstr ""
+msgstr "Нүүр хуудас"
 
 #: builder/ai/agent/pending.py:75
 msgid "Home page set to /{0}"
-msgstr ""
+msgstr "Нүүр хуудсыг /{0} болгож тохируулсан"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
 #: frontend/src/components/Settings/PageGeneral.vue:96
 msgid "Homepage"
-msgstr ""
+msgstr "Нүүр хуудас"
 
 #: frontend/src/stores/builderStore.ts:96
 msgid "Homepage set successfully"
-msgstr ""
+msgstr "Нүүр хуудас амжилттай тохируулагдсан"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:9
 msgid "Horizontal"
-msgstr ""
+msgstr "Хэвтээ"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:111
 msgid "How did you hear about Builder?"
-msgstr ""
+msgstr "Та Builder-ийн талаар хаанаас сонссон бэ?"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:113
 msgid "I heard from the community"
-msgstr ""
+msgstr "Би олон нийтээс сонссон"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:127
 msgid "I'm a student building my first site"
-msgstr ""
+msgstr "Би анхны сайтаа бүтээж буй оюутан"
 
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BackgroundHandler.vue:235
 #: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
-msgstr "Bilde"
+msgstr "Зураг"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:24
 msgid "Image (i)"
-msgstr ""
+msgstr "Зураг (i)"
 
 #: frontend/src/components/ImageUploadInput.vue:68
 msgid "Image Fit"
-msgstr ""
+msgstr "Зургийн тохиргоо"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:83
 msgid "Image Options"
-msgstr ""
+msgstr "Зургийн сонголтууд"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:16
 msgid "Image URL"
-msgstr ""
+msgstr "Зургийн URL"
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image converted to WebP"
-msgstr ""
+msgstr "Зургийг WebP болгон хөрвүүлэв"
 
 #: builder/ai/block_codec.py:256
 msgid "Image is too large. Please use an image smaller than 5 MB."
-msgstr ""
+msgstr "Зураг хэт том байна. 5 МБ-аас бага хэмжээтэй зураг ашиглана уу."
 
 #: frontend/src/utils/useBuilderEvents.ts:376
 msgid "Image mode"
-msgstr ""
+msgstr "Зургийн горим"
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
-msgstr ""
+msgstr "Зургийг орон нутгийн фолдерт татаж авав"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:109
 msgid "Input Options"
-msgstr ""
+msgstr "Оролтын сонголтууд"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:36
 msgid "Insert"
-msgstr "Sett inn"
+msgstr "Оруулах"
 
 #: frontend/src/components/ShadowHandler.vue:113
 msgid "Inset Shadow"
-msgstr ""
+msgstr "Сүүдэр оруулах"
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
-msgstr ""
+msgstr "Дотоод туг: хувь хүний онцлох судалгааг харуулсны дараа тохируулна. Сайтын хэмжээнд (Бүтээгчийн тохиргоо нь дан) — ганц хэрэглэгчийн туршилтын сайтууд дээр хэрэглэгч тус бүрт хүлээн зөвшөөрөгдөх прокси."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:147
 msgid "Internal tool / dashboard"
-msgstr ""
+msgstr "Дотоод хэрэгсэл / хяналтын самбар"
 
 #: builder/api.py:326
 msgid "Invalid URL: missing hostname."
-msgstr ""
+msgstr "Буруу URL: хостын нэр дутуу байна."
 
 #: builder/ai/block_codec.py:254
 msgid "Invalid image data: must be a base64-encoded data URL"
-msgstr ""
+msgstr "Зургийн өгөгдөл буруу: base64-кодлогдсон өгөгдлийн URL байх ёстой"
 
 #: builder/ai/block_codec.py:252
 msgid "Invalid image data: must be a base64-encoded image data URL"
-msgstr ""
+msgstr "Зургийн өгөгдөл буруу: base64-кодлогдсон зургийн өгөгдлийн URL байх ёстой"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:111
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:126
@@ -2236,44 +2237,44 @@ msgstr ""
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:122
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:137
 msgid "Invalid option configuration!"
-msgstr ""
+msgstr "Буруу сонголтын тохиргоо!"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:210
 msgid "Invitation cancelled"
-msgstr ""
+msgstr "Урилга цуцлагдсан"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:200
 msgid "Invitation resent to {0}"
-msgstr ""
+msgstr "Урилгыг {0} руу дахин илгээнэ үү"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:178
 msgid "Invitation sent to {0}"
-msgstr ""
+msgstr "{0} хаяг руу урилга илгээсэн"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
-msgstr "Invitere"
+msgstr "Урих"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
-msgstr ""
+msgstr "Хэрэглэгчдийг урих"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:29
 msgid "Invited {0}"
-msgstr ""
+msgstr "Урьсан {0}"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:29
 msgid "Invited {0} by {1}"
-msgstr ""
+msgstr "{1}-с {0} урьсан"
 
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
-msgstr ""
+msgstr "Шаардлагатай"
 
 #. Label of the is_running (Check) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Is Running"
-msgstr ""
+msgstr "Ажиллаж байна"
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
 #. Label of the is_standard (Check) field in DocType 'Builder Project Folder'
@@ -2282,21 +2283,21 @@ msgstr ""
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Is Standard"
-msgstr "Er standard"
+msgstr "Стандарт юм"
 
 #. Label of the is_template (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Is Template"
-msgstr ""
+msgstr "Загвар юм"
 
 #. Label of the is_unique (Check) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Is Unique"
-msgstr "Er unik"
+msgstr "Өвөрмөц юм"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:34
 msgid "Item Width"
-msgstr ""
+msgstr "Зүйлийн өргөн"
 
 #: frontend/src/components/PageClientScriptManager.vue:75
 #: frontend/src/components/PageScript.vue:193
@@ -2305,25 +2306,25 @@ msgstr "JavaScript"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:112
 msgid "Just curious, it helps us know what's working."
-msgstr ""
+msgstr "Зүгээр л сонирхож байна, энэ нь юу үр дүнтэй байгааг мэдэхэд бидэнд тусалдаг."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Just exploring"
-msgstr ""
+msgstr "Зүгээр л судалж байна"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:171
 msgid "Justify"
-msgstr ""
+msgstr "Тэгшлэх"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:102
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:11
 #: frontend/src/components/PropsPopoverContent.vue:16
 msgid "Key"
-msgstr "Nøkkel"
+msgstr "Түлхүүр"
 
 #: frontend/src/components/Commands/index.ts:200
 msgid "Keyboard Shortcuts"
-msgstr "Tastatursnarveier"
+msgstr "Гарны товчлолууд"
 
 #. Label of the label (Data) field in DocType 'Builder AI Model'
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
@@ -2331,159 +2332,159 @@ msgstr "Tastatursnarveier"
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 #: frontend/src/components/PropsPopoverContent.vue:8
 msgid "Label"
-msgstr "Etikett"
+msgstr "Шошго"
 
 #. Label of the landing_page_section (Section Break) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Landing Page"
-msgstr "Landingsside"
+msgstr "Буух хуудас"
 
 #. Label of the language (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:16
 #: frontend/src/components/Settings/PageMeta.vue:65
 msgid "Language"
-msgstr "Språk"
+msgstr "Хэл"
 
 #. Description of the 'Language' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:66
 msgid "Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
-msgstr ""
+msgstr "HTML хэлний код (жишээ нь, en, es, fr, de). Тохируулаагүй бол анхдагч утгыг ашиглана."
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "Том"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
-msgstr "Siste 30 dager"
+msgstr "Сүүлийн 30 хоног"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:54
 msgid "Last 7 Days"
-msgstr "De siste 7 dager"
+msgstr "Сүүлийн 7 хоног"
 
 #: frontend/src/components/DashboardHead.vue:57
 msgid "Last Created"
-msgstr ""
+msgstr "Хамгийн сүүлд үүсгэсэн"
 
 #. Label of the last_interaction_on (Datetime) field in DocType 'Builder AI
 #. Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Last Interaction On"
-msgstr ""
+msgstr "Сүүлийн харилцан үйлчлэл асаалттай"
 
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
-msgstr "Sist endret"
+msgstr "Хамгийн сүүлд өөрчлөгдсөн"
 
 #. Label of the last_task_type (Data) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Last Task Type"
-msgstr ""
+msgstr "Сүүлийн даалгаврын төрөл"
 
 #: frontend/src/components/PageListItem.vue:39
 msgid "Last updated {0} by {1}"
-msgstr ""
+msgstr "Хамгийн сүүлд {0} -г {1} шинэчилсэн"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
 msgid "Layer Icon"
-msgstr ""
+msgstr "Давхаргын дүрс тэмдэг"
 
 #: frontend/src/components/ShadowHandler.vue:64
 msgid "Layer {0}"
-msgstr ""
+msgstr "Давхарга {0}"
 
 #: frontend/src/components/Commands/index.ts:42
 #: frontend/src/components/Commands/index.ts:146
 #: frontend/src/components/Commands/index.ts:159
 #: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
-msgstr ""
+msgstr "Давхаргууд"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
-msgstr ""
+msgstr "Байршил"
 
 #. Description of the 'API Key' (Password) field in DocType 'Builder AI
 #. Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Leave empty to fall back to the OpenRouter key in Builder Settings."
-msgstr ""
+msgstr "Builder Settings доторх OpenRouter түлхүүр рүү буцахын тулд хоосон үлдээнэ үү."
 
 #. Description of the 'Supports Vision' (Check) field in DocType 'Builder AI
 #. Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Leave off unless the model accepts image input. Sending an image to a text-only model fails the whole turn."
-msgstr ""
+msgstr "Хэрэв загвар нь зургийн оролтыг хүлээн аваагүй бол орхино уу. Зөвхөн текст бүхий загвар руу зураг илгээх нь бүхэл бүтэн ээлжинд амжилтгүй болно."
 
 #: frontend/src/components/BackgroundHandler.vue:300
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
-msgstr "Venstre"
+msgstr "Зүүн"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:102
 msgid "Letter"
-msgstr "Brev"
+msgstr "Захидал"
 
 #: frontend/src/components/Modals/TokenManager.vue:50
 #: frontend/src/utils/fontManager.ts:20
 msgid "Light"
-msgstr "Lys"
+msgstr "Гэрэл"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:27
 msgid "Light Mode Color"
-msgstr ""
+msgstr "Гэрлийн горимын өнгө"
 
 #: frontend/src/components/PageListItem.vue:26
 msgid "Limited access"
-msgstr ""
+msgstr "Хязгаарлагдмал хандалт"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:21
 #: builder/builder/doctype/builder_settings/builder_settings.js:67
 msgid "Limits the pages where the component is replaced"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг сольсон хуудсуудыг хязгаарладаг"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
 #: frontend/src/components/Controls/GradientEditor.vue:7
 msgid "Linear"
-msgstr ""
+msgstr "Шугаман"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:91
 msgid "Link"
-msgstr "Lenke"
+msgstr "Холбоос"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:12
 msgid "Link To"
-msgstr "Lenke til"
+msgstr "Холбоос"
 
 #: frontend/src/components/DashboardHead.vue:80
 msgid "List"
-msgstr "Liste"
+msgstr "Жагсаалт"
 
 #. Label of the litellm_provider (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "LiteLLM Provider"
-msgstr ""
+msgstr "LiteLLM үйлчилгээ үзүүлэгч"
 
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
-msgstr "Last inn flere"
+msgstr "Илүү ихийг ачаалах"
 
 #: frontend/src/components/RouteTreeNode.vue:90
 #: frontend/src/components/RouteTreeView.vue:39
 msgid "Load {0} more"
-msgstr ""
+msgstr "{0} -г ачаалах"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:5
 msgid "Loading domains…"
-msgstr ""
+msgstr "Домэйнуудыг ачаалж байна…"
 
 #: frontend/src/components/RouteTreeView.vue:4
 msgid "Loading pages…"
-msgstr ""
+msgstr "Хуудсуудыг ачаалж байна…"
 
 #: frontend/src/components/BuilderSettings.vue:35
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
@@ -2492,249 +2493,249 @@ msgstr ""
 #: frontend/src/components/Settings/TopReferrersList.vue:5
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:6
 msgid "Loading..."
-msgstr "Laster inn..."
+msgstr "Ачааллаж байна..."
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:92
 msgid "Loop"
-msgstr ""
+msgstr "Давталт"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:128
 msgid "Lowercase"
-msgstr ""
+msgstr "Жижиг үсгээр"
 
 #: frontend/src/components/Settings/PageGeneral.vue:134
 msgid "Make this page a standard page that can be exported to an app"
-msgstr ""
+msgstr "Энэ хуудсыг апп руу экспортлох боломжтой стандарт хуудас болго"
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Map route parameters into form variables. Example <code>/profile/:user</code>"
-msgstr ""
+msgstr "Маршрутын параметрүүдийг маягтын хувьсагч болгон дүрслэнэ үү. Жишээ <code>/profile/:user</code>"
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:13
 msgid "Margin"
-msgstr ""
+msgstr "Маржин"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Marketer"
-msgstr ""
+msgstr "Маркетер"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:143
 msgid "Marketing / landing site"
-msgstr ""
+msgstr "Маркетинг / буух сайт"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
 msgid "Match Case"
-msgstr ""
+msgstr "Тохирох тохиолдол"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
 msgid "Match Whole Word"
-msgstr ""
+msgstr "Бүхэл үгийг тааруул"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
-msgstr "Maks høyde"
+msgstr "Хамгийн их өндөр"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:30
 msgid "Max Width"
-msgstr ""
+msgstr "Хамгийн их өргөн"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:12
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:12
 msgid "Max. Items"
-msgstr ""
+msgstr "Хамгийн ихдээ зүйлс"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:12
 msgid "Max. Value"
-msgstr ""
+msgstr "Хамгийн их утга"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Media"
-msgstr ""
+msgstr "Хэвлэл мэдээлэл"
 
 #: frontend/src/components/ShadowHandler.vue:184
 #: frontend/src/utils/fontManager.ts:22
 msgid "Medium"
-msgstr "Medium"
+msgstr "Дунд зэрэг"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:48
 msgid "Members ({0})"
-msgstr ""
+msgstr "Гишүүд ({0})"
 
 #. Label of the message_type (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Message Type"
-msgstr "Meldingstype"
+msgstr "Зурвасын төрөл"
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/index.ts:60
 #: frontend/src/components/Settings/index.ts:61
 msgid "Meta"
-msgstr "Meta"
+msgstr "Мета"
 
 #: frontend/src/components/Settings/PageMeta.vue:23
 msgid "Meta Image"
-msgstr "Metabilde"
+msgstr "Мета зураг"
 
 #. Label of the meta_column (Column Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Meta Tags"
-msgstr "Meta-tagger"
+msgstr "Мета шошго"
 
 #. Label of the metadata_json (Long Text) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Metadata JSON"
-msgstr ""
+msgstr "Мета өгөгдөл JSON"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:59
 msgid "Min Height"
-msgstr ""
+msgstr "Хамгийн бага өндөр"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:20
 msgid "Min Width"
-msgstr ""
+msgstr "Хамгийн бага өргөн"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:4
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:4
 msgid "Min. Items"
-msgstr ""
+msgstr "Хамгийн бага бараа"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:4
 msgid "Min. Value"
-msgstr ""
+msgstr "Хамгийн бага утга"
 
 #: frontend/src/components/BuilderCanvas.vue:247
 msgid "Mobile"
-msgstr "Mobil"
+msgstr "Мобайл"
 
 #. Label of the model_id (Data) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Model ID"
-msgstr ""
+msgstr "Загварын дугаар"
 
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.py:23
 msgid "Model ID is required"
-msgstr ""
+msgstr "Загварын дугаар шаардлагатай"
 
 #: frontend/src/components/BlockPropertySections/MoreStylesSection.ts:15
 msgid "More Styles"
-msgstr ""
+msgstr "Бусад хэв маяг"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:245
 #: frontend/src/components/Modals/TokenManager.vue:367
 msgid "Move"
-msgstr "Flytt"
+msgstr "Зөөх"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / hand mode"
-msgstr ""
+msgstr "Хөдлөх / гар горим"
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
-msgstr ""
+msgstr "Фолдер руу зөөх"
 
 #: frontend/src/components/RouteTreeView.vue:335
 msgid "Move down in page tree"
-msgstr ""
+msgstr "Хуудасны мод дотор доош шилжих"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to group"
-msgstr ""
+msgstr "Бүлэг рүү шилжих"
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move up in page tree"
-msgstr ""
+msgstr "Хуудасны модоор дээшээ шилжих"
 
 #: frontend/src/components/Modals/TokenManager.vue:727
 msgid "Moved {0} token to \"{1}\""
-msgstr ""
+msgstr "{0} тэмдгийг \"{1} \" руу зөөвөрлөв"
 
 #: frontend/src/components/Modals/TokenManager.vue:727
 msgid "Moved {0} tokens to \"{1}\""
-msgstr ""
+msgstr "{0} токенуудыг \"{1} \" руу зөөв."
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:75
 msgid "Muted"
-msgstr ""
+msgstr "Дуугүй болгосон"
 
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
 msgid "My Page"
-msgstr ""
+msgstr "Миний хуудас"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
 #: frontend/src/components/Modals/TokenManager.vue:48
 msgid "Name"
-msgstr "Navn"
+msgstr "Нэр"
 
 #: frontend/src/components/EditableSpan.vue:61
 msgid "Name already exists"
-msgstr ""
+msgstr "Нэр аль хэдийн байна"
 
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
-msgstr ""
+msgstr "Энэ хувилбарыг нэрлэнэ үү (заавал биш)"
 
 #. Description of the 'Route Prefix' (Data) field in DocType 'Builder AI
 #. Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty."
-msgstr ""
+msgstr "Энэ үйлчилгээ үзүүлэгчийн загварын нэрсийн нэрийн орон зай, жишээ нь <code>openrouter</code> нь <code>openrouter/anthropic/claude-sonnet-5</code>гэсэн утгатай. Хоосон орхисон нэрнээс гаралтай."
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
 #: frontend/src/components/CommandPalette.vue:92
 #: frontend/src/components/Commands/index.ts:40
 #: frontend/src/components/Commands/index.ts:98
 msgid "Navigate"
-msgstr ""
+msgstr "Навигаци хийх"
 
 #: frontend/src/pages/PagePreview.vue:157
 msgid "Navigation"
-msgstr ""
+msgstr "Навигаци"
 
 #: frontend/src/components/DashboardToolbar.vue:10
 msgid "New"
-msgstr "Ny"
+msgstr "Шинэ"
 
 #: frontend/src/utils/dialogs.ts:36
 msgid "New Component"
-msgstr ""
+msgstr "Шинэ бүрэлдэхүүн хэсэг"
 
 #: frontend/src/components/DashboardSidebar.vue:165
 #: frontend/src/components/MainMenu.vue:63
 msgid "New Page"
-msgstr ""
+msgstr "Шинэ хуудас"
 
 #: frontend/src/components/PageClientScriptManager.vue:81
 msgid "New Script"
-msgstr ""
+msgstr "Шинэ скрипт"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
-msgstr ""
+msgstr "Шинэ таб"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:5
 msgid "New Token"
-msgstr ""
+msgstr "Шинэ токен"
 
 #: frontend/src/components/DashboardSidebar.vue:24
 msgid "New folder"
-msgstr ""
+msgstr "Шинэ хавтас"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:108
 msgid "New page"
-msgstr ""
+msgstr "Шинэ хуудас"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:93
 msgid "New token created"
-msgstr ""
+msgstr "Шинэ токен үүсгэсэн"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:71
 msgid "Next"
-msgstr "Neste"
+msgstr "Дараагийнх"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:46
 #: frontend/src/components/BlockFlexLayoutHandler.vue:55
@@ -2744,300 +2745,300 @@ msgstr "Neste"
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
 #: frontend/src/components/PropsPopoverContent.vue:107
 msgid "No"
-msgstr "Nei"
+msgstr "Үгүй"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:186
 msgid "No DNS record found for this domain."
-msgstr ""
+msgstr "Энэ домэйнд DNS бичлэг олдсонгүй."
 
 #: frontend/src/components/PropsEditor.vue:51
 msgid "No Default Value"
-msgstr ""
+msgstr "Анхдагч утга байхгүй"
 
 #: frontend/src/components/BackgroundHandler.vue:305
 msgid "No Repeat"
-msgstr ""
+msgstr "Давтагдахгүй"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
 #: frontend/src/components/Controls/DynamicValueHandler.vue:38
 msgid "No Value Set"
-msgstr ""
+msgstr "Утга тохируулаагүй байна"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:35
 msgid "No Wrap"
-msgstr ""
+msgstr "Боолтгүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:428
 msgid "No color tokens yet"
-msgstr ""
+msgstr "Өнгөний тэмдэг хараахан алга байна"
 
 #: frontend/src/components/CommandPalette.vue:76
 msgid "No commands found"
-msgstr ""
+msgstr "Команд олдсонгүй"
 
 #: frontend/src/components/BuilderAssets.vue:20
 msgid "No components saved"
-msgstr ""
+msgstr "Хадгалсан бүрэлдэхүүн хэсэг байхгүй"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:8
 msgid "No custom domains added yet."
-msgstr ""
+msgstr "Одоогоор өөрчлөн тохируулсан домэйн нэмэгдээгүй байна."
 
 #: frontend/src/components/Modals/TokenManager.vue:430
 msgid "No dimension tokens yet"
-msgstr ""
+msgstr "Хэмжээст токен хараахан байхгүй байна"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
 msgid "No dynamic values found. Please add using"
-msgstr ""
+msgstr "Динамик утга олдсонгүй. Ашиглан нэмнэ үү"
 
 #: frontend/src/components/DashboardSidebar.vue:31
 msgid "No folders yet"
-msgstr ""
+msgstr "Одоогоор фолдер байхгүй байна"
 
 #: frontend/src/components/Modals/TokenManager.vue:429
 msgid "No font tokens yet"
-msgstr ""
+msgstr "Одоогоор фонтын тэмдэг алга байна"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
-msgstr ""
+msgstr "Таарах хуудас олдсонгүй."
 
 #: frontend/src/components/MoreStylesPanel.vue:23
 msgid "No matching properties"
-msgstr ""
+msgstr "Тохирох шинж чанар алга"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:65
 msgid "No members match \"{0}\""
-msgstr ""
+msgstr "\"{0} \"-тэй тохирох гишүүн алга"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
-msgstr ""
+msgstr "Гишүүн хараахан алга. Builder-д хандах эрх өгөх хэн нэгнийг урина уу."
 
 #: builder/api.py:568
 msgid "No pages found in this template group."
-msgstr ""
+msgstr "Энэ загварын бүлэгт хуудас олдсонгүй."
 
 #: frontend/src/components/RouteTreeView.vue:9
 msgid "No pages found."
-msgstr ""
+msgstr "Хуудас олдсонгүй."
 
 #: builder/ai/api.py:169
 msgid "No pending action on this message"
-msgstr ""
+msgstr "Энэ мессеж дээр хүлээгдэж буй үйлдэл алга"
 
 #: builder/api.py:40
 msgid "No permission to preview this page"
-msgstr ""
+msgstr "Энэ хуудсыг урьдчилан харах зөвшөөрөл алга"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:62
 msgid "No redirects match \"{0}\""
-msgstr ""
+msgstr "\"{0} \"-тэй тохирох чиглүүлэлт байхгүй"
 
 #: frontend/src/components/Controls/SearchBlock.vue:376
 #: frontend/src/components/Controls/SearchBlock.vue:398
 msgid "No replacements made"
-msgstr ""
+msgstr "Ямар ч солих зүйл хийгээгүй"
 
 #: frontend/src/components/CommandPalette.vue:75
 msgid "No results for \"{0}\""
-msgstr ""
+msgstr "\"{0} \" хайлтын үр дүн алга"
 
 #: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "No results found"
-msgstr ""
+msgstr "Илэрц олдсонгүй"
 
 #: frontend/src/components/VersionHistory.vue:36
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
-msgstr ""
+msgstr "Хадгалсан хувилбар хараахан алга байна. Та нийтлэх бүрт эсвэл гараар хадгалах үед хувилбарыг нь хадгалдаг."
 
 #: frontend/src/components/Modals/TokenManager.vue:349
 msgid "No tokens found"
-msgstr ""
+msgstr "Токен олдсонгүй"
 
 #: frontend/src/components/Modals/TokenManager.vue:354
 msgid "No tokens match \"{0}\". Try a different search term."
-msgstr ""
+msgstr "\"{0}\"-тэй тохирох токен олдсонгүй. Өөр хайлтын нэр томьёо ашиглана уу."
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:35
 msgid "No views in this period"
-msgstr ""
+msgstr "Энэ хугацаанд үзэлт алга"
 
 #: frontend/src/utils/useBuilderEvents.ts:477
 msgid "No, just blocks"
-msgstr ""
+msgstr "Үгүй ээ, зүгээр л блокууд"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:158
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:15
 #: frontend/src/components/ShadowHandler.vue:11
 #: frontend/src/components/ShadowHandler.vue:182
 msgid "None"
-msgstr "Ingen"
+msgstr "Байхгүй"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:17
 msgid "Normal"
-msgstr ""
+msgstr "Хэвийн"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:248
 msgid "Not Allowed"
-msgstr "Ikke tillatt"
+msgstr "Зөвшөөрөгдөөгүй"
 
 #: builder/www/404.html:6
 msgid "Not Found"
-msgstr "Ikke funnet"
+msgstr "Олдсонгүй"
 
 #: frontend/src/components/RouteTreeNode.vue:51
 msgid "Not published"
-msgstr ""
+msgstr "Нийтлэгдээгүй"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
-msgstr ""
+msgstr "Ямар ч хуудсанд ашиглагдаагүй"
 
 #: frontend/src/components/PageClientScriptManager.vue:98
 msgid "Note:"
-msgstr "Notat:"
+msgstr "Тэмдэглэл:"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:33
 msgid "Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe."
-msgstr ""
+msgstr "Тэмдэглэл: Блок скриптүүдийг sandboxed орчинд гүйцэтгэдэг. Энэ нь хязгаарлалттай байж болох бөгөөд шууд сайтын зан төлөвийг төгс хуулбарлахгүй байж магадгүй. Найдваргүй скриптүүдийг ажиллуулах нь аюултай байж болзошгүй."
 
 #: frontend/src/components/PropsPopoverContent.vue:168
 msgid "Number"
-msgstr "Nummer"
+msgstr "Дугаар"
 
 #: frontend/src/components/PropsPopoverContent.vue:172
 msgid "Object"
-msgstr ""
+msgstr "Объект"
 
 #: frontend/src/components/ObjectInput.vue:20
 msgid "Object Items:"
-msgstr ""
+msgstr "Объектын зүйлс:"
 
 #: frontend/src/utils/helpers.ts:54
 msgid "Ok"
-msgstr ""
+msgstr "За"
 
 #: frontend/src/components/Controls/StylePropertyControl.vue:56
 msgid "On Active"
-msgstr ""
+msgstr "Идэвхтэй горимд"
 
 #: frontend/src/components/Controls/StylePropertyControl.vue:57
 msgid "On Focus"
-msgstr ""
+msgstr "Анхаарал төвлөрсөн"
 
 #: frontend/src/components/Controls/StylePropertyControl.vue:55
 msgid "On Hover"
-msgstr ""
+msgstr "Хүргэлт дээр"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:144
 msgid "Online store / E-commerce"
-msgstr ""
+msgstr "Онлайн дэлгүүр / Цахим худалдаа"
 
 #: builder/api.py:323
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
-msgstr ""
+msgstr "Зөвхөн HTTP/HTTPS URL хаягууд нь гадаад зургуудад зөвшөөрөгдөнө."
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Only allow logged-in users to view this page."
-msgstr ""
+msgstr "Зөвхөн нэвтэрсэн хэрэглэгчдийг энэ хуудсыг үзэхийг зөвшөөрнө үү."
 
 #: frontend/src/components/Settings/PageGeneral.vue:118
 msgid "Only logged-in users can access this page"
-msgstr ""
+msgstr "Зөвхөн нэвтэрсэн хэрэглэгчид л энэ хуудсанд хандах боломжтой"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:42
 msgid "Opacity"
-msgstr ""
+msgstr "Тунгалаг бус байдал"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:73
 msgid "Opacity Only"
-msgstr ""
+msgstr "Зөвхөн тунгалаг бус байдал"
 
 #. Label of a shortcut in the Frappe Builder Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Open <strong>Frappe Builder</strong>"
-msgstr ""
+msgstr "<strong>Frappe Builder</strong>-г нээх"
 
 #: builder/public/js/builder.js:3
 msgid "Open Builder"
-msgstr ""
+msgstr "Нээлттэй барилгачин"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:64
 msgid "Open Code Tab"
-msgstr ""
+msgstr "Код нээх таб"
 
 #: frontend/src/components/BuilderCommandPalette.vue:44
 msgid "Open Command Palette"
-msgstr ""
+msgstr "Тушаалын самбарыг нээх"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:21
 msgid "Open Global Settings"
-msgstr ""
+msgstr "Дэлхийн тохиргоог нээх"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
-msgstr ""
+msgstr "Builder дээр нээх"
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:39
 msgid "Open in New Tab"
-msgstr "Åpne i ny fane"
+msgstr "Шинэ таб дээр нээх"
 
 #: frontend/src/components/RouteTreeView.vue:390
 msgid "Open page or toggle folder in page tree"
-msgstr ""
+msgstr "Хуудасны модонд хуудсыг нээх эсвэл фолдерыг асаах/унтраах"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
-msgstr ""
+msgstr "Нээгдэх хугацаа"
 
 #: frontend/src/components/Settings/PageMeta.vue:57
 msgid "Optional. Set this to specify a preferred version of this page for search engines."
-msgstr ""
+msgstr "Заавал биш. Хайлтын системд энэ хуудасны давуу эрхтэй хувилбарыг тодорхойлохын тулд үүнийг тохируулна уу."
 
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:48
 #: frontend/src/components/PropsOptions/SelectOptions.vue:3
 msgid "Options"
-msgstr "Alternativer"
+msgstr "Сонголтууд"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:59
 msgid "Order"
-msgstr "Rekkefølge"
+msgstr "Захиалга"
 
 #: frontend/src/components/ImageUploadInput.vue:76
 msgid "Original Size"
-msgstr ""
+msgstr "Анхны хэмжээ"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:120
 #: frontend/src/pages/PagePersonaSurvey.vue:134
 #: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Other"
-msgstr "Annen"
+msgstr "Бусад"
 
 #: frontend/src/components/ShadowHandler.vue:113
 msgid "Outset Shadow"
-msgstr ""
+msgstr "Эхлэлийн сүүдэр"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
-msgstr ""
+msgstr "Хэт их X"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:220
 msgid "Overflow Y"
-msgstr ""
+msgstr "Хэт их Y"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:4
 msgid "Overview"
-msgstr "Oversikt"
+msgstr "Тойм"
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:37
 msgid "Padding"
-msgstr ""
+msgstr "Зөөлөвч"
 
 #. Label of the page (Link) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
@@ -3048,53 +3049,53 @@ msgstr ""
 #: frontend/src/components/Commands/index.ts:132
 #: frontend/src/pages/PageBuilder.vue:33
 msgid "Page"
-msgstr "Side"
+msgstr "Хуудас"
 
 #: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
-msgstr ""
+msgstr "Хуудасны аналитик"
 
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Client Script"
-msgstr ""
+msgstr "Хуудасны үйлчлүүлэгчийн скрипт"
 
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
-msgstr ""
+msgstr "Хуудасны код"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:153
 msgid "Page Copied"
-msgstr ""
+msgstr "Хуудсыг хуулсан"
 
 #: frontend/src/components/PageScript.vue:15
 msgid "Page Data Preview"
-msgstr ""
+msgstr "Хуудасны өгөгдлийн урьдчилсан тойм"
 
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Controls/DynamicValueHandler.vue:51
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Data Script"
-msgstr ""
+msgstr "Хуудасны өгөгдлийн скрипт"
 
 #. Label of the page_name (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Name"
-msgstr "Sidens navn"
+msgstr "Хуудасны нэр"
 
 #. Label of the preview (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Preview"
-msgstr ""
+msgstr "Хуудасны урьдчилсан тойм"
 
 #: frontend/src/components/Settings/PageGeneral.vue:14
 msgid "Page Route"
-msgstr "Sidesti"
+msgstr "Хуудасны маршрут"
 
 #: frontend/src/components/PageOptions.vue:5
 #: frontend/src/components/Settings/PageGeneral.vue:8
 msgid "Page Title"
-msgstr "Sidetittel"
+msgstr "Хуудасны гарчиг"
 
 #: frontend/src/components/RouteTreeView.vue:336
 #: frontend/src/components/RouteTreeView.vue:346
@@ -3102,180 +3103,180 @@ msgstr "Sidetittel"
 #: frontend/src/components/RouteTreeView.vue:375
 #: frontend/src/components/RouteTreeView.vue:391
 msgid "Page Tree"
-msgstr ""
+msgstr "Хуудасны мод"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:209
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
 msgid "Page created"
-msgstr ""
+msgstr "Хуудас үүсгэсэн"
 
 #: frontend/src/stores/pageStore.ts:180
 msgid "Page deleted"
-msgstr ""
+msgstr "Хуудсыг устгасан"
 
 #: frontend/src/stores/pageStore.ts:183
 msgid "Page deletion failed"
-msgstr ""
+msgstr "Хуудсыг устгаж чадсангүй"
 
 #: frontend/src/stores/pageStore.ts:167
 msgid "Page duplicated"
-msgstr ""
+msgstr "Хуудас давхардсан"
 
 #: builder/www/404.html:25 frontend/src/stores/pageStore.ts:53
 msgid "Page not found"
-msgstr "Side ikke funnet"
+msgstr "Хуудас олдсонгүй"
 
 #: frontend/src/stores/pageStore.ts:264
 msgid "Page unpublished"
-msgstr ""
+msgstr "Хуудас нийтлэгдээгүй"
 
 #: frontend/src/components/BuilderCommandPalette.vue:279
 msgid "Pages"
-msgstr ""
+msgstr "Хуудаснууд"
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
-msgstr ""
+msgstr "Доош нь зотон даавуу"
 
 #: frontend/src/utils/useBuilderEvents.ts:312
 msgid "Pan canvas left"
-msgstr ""
+msgstr "Зүүн талын пан зураг"
 
 #: frontend/src/utils/useBuilderEvents.ts:301
 msgid "Pan canvas right"
-msgstr ""
+msgstr "Баруун талын пан зураг"
 
 #: frontend/src/utils/useBuilderEvents.ts:323
 msgid "Pan canvas up"
-msgstr ""
+msgstr "Дээшээ чиглүүлэн зураг зурах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:47
 msgid "Paste Style"
-msgstr ""
+msgstr "Буулгах хэв маяг"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:271
 msgid "Pasting a page!"
-msgstr ""
+msgstr "Хуудсыг буулгаж байна!"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:174
 #: frontend/src/utils/builderBlockCopyPaste.ts:278
 #: frontend/src/utils/builderBlockCopyPaste.ts:300
 msgid "Pasting..."
-msgstr ""
+msgstr "Буулгаж байна..."
 
 #. Label of the path (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Path"
-msgstr "Sti"
+msgstr "Зам"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:17
 msgid "Pending Invites ({0})"
-msgstr ""
+msgstr "Хүлээгдэж буй урилгууд ({0})"
 
 #: builder/ai/api.py:162
 msgid "Pending action not found"
-msgstr ""
+msgstr "Хүлээгдэж буй үйлдэл олдсонгүй"
 
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Persona Survey Done"
-msgstr ""
+msgstr "Хувь хүний судалгаа дууссан"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "Pick a starting point"
-msgstr ""
+msgstr "Эхлэх цэгийг сонгоно уу"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:36
 msgid "Pick a wider date range, or share your page to start collecting data."
-msgstr ""
+msgstr "Илүү өргөн огнооны хүрээ сонгох эсвэл өгөгдөл цуглуулж эхлэхийн тулд хуудсаа хуваалцана уу."
 
 #: builder/ai/api.py:442
 msgid "Pick at least one model"
-msgstr ""
+msgstr "Дор хаяж нэг загвар сонгоно уу"
 
 #: frontend/src/components/Modals/TokenManager.vue:100
 #: frontend/src/components/Modals/TokenManager.vue:145
 #: frontend/src/components/Modals/TokenManager.vue:269
 #: frontend/src/components/Modals/TokenManager.vue:315
 msgid "Pick color"
-msgstr ""
+msgstr "Өнгө сонгох"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:39
 msgid "Placeholder"
-msgstr "Plassholder"
+msgstr "Орлуулагч"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:14
 msgid "Placement"
-msgstr ""
+msgstr "Байршуулалт"
 
 #: builder/ai/api.py:38
 msgid "Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
-msgstr ""
+msgstr "Тохиргоо → AI хэсэгт OpenRouter API түлхүүр эсвэл загварын үйлчилгээ үзүүлэгч дээрх API түлхүүрийг тохируулна уу"
 
 #: builder/builder/doctype/builder_page/builder_page.py:88
 msgid "Please log in to view this page."
-msgstr ""
+msgstr "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү."
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:64
 #: frontend/src/components/BlockContextMenuOptions/index.ts:143
 msgid "Please select a collection"
-msgstr ""
+msgstr "Цуглуулга сонгоно уу"
 
 #: frontend/src/components/Settings/PageGeneral.vue:254
 msgid "Please select an app for this standard page"
-msgstr ""
+msgstr "Энэ стандарт хуудсанд зориулсан апп сонгоно уу"
 
 #: builder/ai/api.py:595
 msgid "Please set an OpenRouter API key"
-msgstr ""
+msgstr "OpenRouter API түлхүүрийг тохируулна уу"
 
 #: frontend/src/pages/PageBuilder.vue:6
 msgid "Please switch to a larger screen to edit"
-msgstr ""
+msgstr "Засахын тулд том дэлгэц рүү шилжинэ үү"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:244
 msgid "Pointer"
-msgstr ""
+msgstr "Заагч"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:171
 msgid "Points your root domain directly to the server. Use @ as the host name."
-msgstr ""
+msgstr "Өөрийн үндсэн домэйныг сервер рүү шууд чиглүүлнэ үү. Хостын нэр болгон @ ашиглана уу."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:145
 msgid "Portfolio / personal site"
-msgstr ""
+msgstr "Портфолио / хувийн сайт"
 
 #: frontend/src/components/BackgroundHandler.vue:90
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
-msgstr "Posisjon"
+msgstr "Албан тушаал"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
 msgid "Poster"
-msgstr ""
+msgstr "Зурагт хуудас"
 
 #: frontend/src/components/ShadowHandler.vue:57
 msgid "Presets"
-msgstr ""
+msgstr "Урьдчилсан тохиргоонууд"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:21
 msgid "Prevent Click Emulation"
-msgstr ""
+msgstr "Товшилтын эмуляцийг урьдчилан сэргийлэх"
 
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageGeneral.vue:125
 msgid "Prevent search engines from indexing this page"
-msgstr ""
+msgstr "Хайлтын системүүд энэ хуудсыг индексжүүлэхээс сэргийлнэ үү"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
-msgstr ""
+msgstr "Сайтыг автоматаар харанхуй горимд шилжихээс сэргийлэх"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:23
 msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
-msgstr ""
+msgstr "Блок Клиент Скриптүүдтэй блокуудын засварлагч дээр товшилтын үйл явдлуудыг дуурайхаас сэргийлдэг."
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3285,83 +3286,83 @@ msgstr ""
 #: frontend/src/components/ToolbarItems/ToolbarActions.vue:10
 #: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
 msgid "Preview"
-msgstr "Forhåndsvisning"
+msgstr "Урьдчилан харах"
 
 #. Label of the preview_height (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Height"
-msgstr ""
+msgstr "Урьдчилан харах өндөр"
 
 #: frontend/src/components/Modals/NewBlockTemplate.vue:39
 msgid "Preview Image"
-msgstr ""
+msgstr "Урьдчилан харах зураг"
 
 #: builder/builder/doctype/block_template/block_template.py:20
 msgid "Preview Image is mandatory"
-msgstr ""
+msgstr "Урьдчилсан зураг заавал байх ёстой"
 
 #: frontend/src/components/Commands/index.ts:106
 msgid "Preview Page"
-msgstr ""
+msgstr "Урьдчилан харах хуудас"
 
 #. Label of the preview_width (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Width"
-msgstr ""
+msgstr "Урьдчилан харах өргөн"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:22
 msgid "Primary"
-msgstr "Primær"
+msgstr "Үндсэн"
 
 #. Label of the project_folder (Link) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Project Folder"
-msgstr ""
+msgstr "Төслийн хавтас"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:66
 msgid "Properties"
-msgstr ""
+msgstr "Үл хөдлөх хөрөнгө"
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
 #: frontend/src/components/ObjectEditor.vue:6
 msgid "Property"
-msgstr "Egenskap"
+msgstr "Үл хөдлөх хөрөнгө"
 
 #: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
-msgstr ""
+msgstr "Хамгаалагдсан хуудас"
 
 #. Label of the provider (Link) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Provider"
-msgstr "Leverandør"
+msgstr "Нийлүүлэгч"
 
 #. Label of the provider_name (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Provider Name"
-msgstr "Leverandørens navn"
+msgstr "Нийлүүлэгчийн нэр"
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Public URL"
-msgstr ""
+msgstr "Олон нийтийн URL"
 
 #: frontend/src/components/PageListItem.vue:29
 msgid "Publicly accessible"
-msgstr ""
+msgstr "Олон нийтэд нээлттэй"
 
 #: frontend/src/components/PublishButton.vue:74
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Publish"
-msgstr "Publiser"
+msgstr "Нийтлэх"
 
 #: frontend/src/components/PublishButton.vue:76
 msgid "Publish Changes"
-msgstr ""
+msgstr "Өөрчлөлтийг нийтлэх"
 
 #: frontend/src/components/Commands/index.ts:120
 msgid "Publish Page"
-msgstr ""
+msgstr "Хуудсыг нийтлэх"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3369,345 +3370,345 @@ msgstr ""
 #: frontend/src/components/PageListItem.vue:48
 #: frontend/src/components/Settings/PageGeneral.vue:46
 msgid "Published"
-msgstr "Publisert"
+msgstr "Нийтлэгдсэн"
 
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published At"
-msgstr ""
+msgstr "Нийтлэгдсэн"
 
 #: frontend/src/components/VersionHistory.vue:69
 msgid "Published version"
-msgstr ""
+msgstr "Нийтлэгдсэн хувилбар"
 
 #: frontend/src/components/Settings/PageGeneral.vue:45
 msgid "Published with limited access"
-msgstr ""
+msgstr "Хязгаарлагдмал хандалттайгаар нийтлэгдсэн"
 
 #: frontend/src/utils/imageUtils.ts:57
 msgid "Pulling..."
-msgstr ""
+msgstr "Татаж байна..."
 
 #: frontend/src/components/Controls/GradientEditor.vue:8
 msgid "Radial"
-msgstr ""
+msgstr "Радиал"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:157
 msgid "Radius"
-msgstr ""
+msgstr "Радиус"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Read Only"
-msgstr "Skrivebeskyttet"
+msgstr "Зөвхөн унших"
 
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
-msgstr ""
+msgstr "Зөвхөн унших горимд урьдчилан харах · Энэ хувилбарыг ачаалахын тулд <b>Сэргээх</b> -г ашиглана уу."
 
 #: frontend/src/components/BuilderCommandPalette.vue:291
 #: frontend/src/components/BuilderCommandPalette.vue:342
 msgid "Recent"
-msgstr ""
+msgstr "Саяхны"
 
 #: frontend/src/components/Controls/GradientEditor.vue:178
 msgid "Recently used"
-msgstr ""
+msgstr "Саяхан ашигласан"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:253
 msgid "Redirect added"
-msgstr ""
+msgstr "Дахин чиглүүлэлт нэмэгдлээ"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:281
 msgid "Redirect deleted"
-msgstr ""
+msgstr "Чиглүүлэлтийг устгасан"
 
 #: frontend/src/data/domains.ts:88
 msgid "Redirect disabled for {0}"
-msgstr ""
+msgstr "{0}-д чиглүүлэлтийг идэвхгүй болгосон"
 
 #: frontend/src/data/domains.ts:84
 msgid "Redirect enabled for {0}"
-msgstr ""
+msgstr "{0}-д дахин чиглүүлэлтийг идэвхжүүлсэн"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
-msgstr ""
+msgstr "Дахин чиглүүлэх төлөв"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:240
 msgid "Redirect to Primary"
-msgstr ""
+msgstr "Үндсэн рүү дахин чиглүүлэх"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:264
 msgid "Redirect updated"
-msgstr ""
+msgstr "Чиглүүлэлтийн шинэчлэлт"
 
 #: frontend/src/components/Settings/index.ts:102
 #: frontend/src/components/Settings/index.ts:103
 msgid "Redirects"
-msgstr "Omdirigeringer"
+msgstr "Дахин чиглүүлэлтүүд"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:20
 msgid "Redirects to primary"
-msgstr ""
+msgstr "Үндсэн рүү чиглүүлдэг"
 
 #: frontend/src/components/Commands/index.ts:304
 #: frontend/src/components/Commands/index.ts:308
 msgid "Redo"
-msgstr "Gjenta"
+msgstr "Дахин хийх"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Doctype"
-msgstr "Referanse-DocType"
+msgstr "Лавлах баримт бичгийн төрөл"
 
 #. Label of the reference_name (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Reference Name"
-msgstr "Referansenavn"
+msgstr "Лавлах нэр"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:156
 msgid "Regex capture"
-msgstr ""
+msgstr "Regex бичлэг"
 
 #: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:267
 msgid "Regular"
-msgstr ""
+msgstr "Ердийн"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
-msgstr ""
+msgstr "Хамаатан садан"
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
 #: frontend/src/components/Modals/TokenManager.vue:764
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
-msgstr "Fjern"
+msgstr "Хасах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:76
 msgid "Remove Collection"
-msgstr ""
+msgstr "Цуглуулгыг устгах"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:253
 msgid "Remove Domain"
-msgstr ""
+msgstr "Домэйныг устгах"
 
 #: frontend/src/components/PageClientScriptManager.vue:54
 msgid "Remove Script"
-msgstr ""
+msgstr "Скриптийг устгах"
 
 #: frontend/src/components/Controls/GradientEditor.vue:49
 msgid "Remove Stop"
-msgstr ""
+msgstr "Зогсоолыг устгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from group"
-msgstr ""
+msgstr "Бүлгээс хасах"
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
-msgstr ""
+msgstr "{0}…-г устгаж байна"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:238
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
-msgstr "Endre navn"
+msgstr "Нэрийг нь өөрчлөх"
 
 #: frontend/src/components/BackgroundHandler.vue:96
 #: frontend/src/components/BackgroundHandler.vue:306
 msgid "Repeat"
-msgstr "Gjenta"
+msgstr "Давтах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
-msgstr ""
+msgstr "Давталтын блок"
 
 #: frontend/src/components/BackgroundHandler.vue:307
 msgid "Repeat X"
-msgstr ""
+msgstr "X давтах"
 
 #: frontend/src/components/BackgroundHandler.vue:308
 msgid "Repeat Y"
-msgstr ""
+msgstr "Y-г давтах"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
 #: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
-msgstr ""
+msgstr "Солих"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
-msgstr ""
+msgstr "Бүгдийг солих"
 
 #: frontend/src/components/Controls/SearchBlock.vue:92
 msgid "Replace All ({0} matches)"
-msgstr ""
+msgstr "Бүгдийг солих ({0} тохирч байна)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
 msgid "Replace Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг солих"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:89
 msgid "Replace Next"
-msgstr ""
+msgstr "Дараагийнхийг орлуулах"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:53
 msgid "Replace With"
-msgstr ""
+msgstr "Орлуулах"
 
 #: frontend/src/components/Controls/SearchBlock.vue:78
 msgid "Replace with..."
-msgstr ""
+msgstr "...-аар солих"
 
 #: frontend/src/components/Controls/SearchBlock.vue:374
 msgid "Replaced in {0}"
-msgstr ""
+msgstr "{0}-д орлуулсан"
 
 #: frontend/src/components/Controls/SearchBlock.vue:97
 #: frontend/src/components/Controls/SearchBlock.vue:395
 msgid "Replaced in {0} block"
-msgstr ""
+msgstr "{0} блок дотор солигдсон"
 
 #: frontend/src/components/Controls/SearchBlock.vue:98
 #: frontend/src/components/Controls/SearchBlock.vue:395
 msgid "Replaced in {0} blocks"
-msgstr ""
+msgstr "{0} блокоор солигдсон"
 
 #: builder/api.py:336
 msgid "Requests to private or internal addresses are not allowed."
-msgstr ""
+msgstr "Хувийн болон дотоод хаяг руу хүсэлт илгээхийг зөвшөөрөхгүй."
 
 #: frontend/src/components/Settings/GlobalUsers.vue:35
 msgid "Resend"
-msgstr ""
+msgstr "Дахин илгээх"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:159
 msgid "Reset Changes"
-msgstr "Tilbakestill endringer"
+msgstr "Өөрчлөлтийг дахин тохируулах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:181
 msgid "Reset Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг дахин тохируулах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:150
 msgid "Reset Overrides"
-msgstr ""
+msgstr "Дахин дарах үйлдлийг дахин тохируулах"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset canvas zoom"
-msgstr ""
+msgstr "Зургийн томруулалтыг дахин тохируулах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
-msgstr ""
+msgstr "Хүүхдийн блокуудын өөрчлөлтийг мөн дахин тохируулах уу?"
 
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
 msgid "Restore this version as your draft"
-msgstr ""
+msgstr "Энэ хувилбарыг ноорог болгон сэргээнэ үү"
 
 #. Label of the restrict_click_handlers (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Restrict Click Handlers"
-msgstr ""
+msgstr "Товшилтын зохицуулагчдыг хязгаарлах"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalDeveloper.vue:15
 msgid "Restricted"
-msgstr ""
+msgstr "Хязгаарлагдмал"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
-msgstr "Prøv på nytt"
+msgstr "Дахин оролдох"
 
 #: frontend/src/data/domains.ts:76
 msgid "Retrying {0}"
-msgstr ""
+msgstr "Дахин оролдож байна {0}"
 
 #: frontend/src/data/domains.ts:76
 msgid "Retrying {0}…"
-msgstr ""
+msgstr "Дахин оролдож байна {0}…"
 
 #: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
-msgstr "Høyre"
+msgstr "Баруун"
 
 #: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
-msgstr ""
+msgstr "Роботууд"
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
-msgstr "Robots.txt"
+msgstr "Роботс.txt"
 
 #: frontend/src/components/Settings/PageRobots.vue:30
 msgid "Robots.txt Guide"
-msgstr ""
+msgstr "Robots.txt гарын авлага"
 
 #. Label of the role (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
-msgstr "Rolle"
+msgstr "Үүрэг"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:258
 msgid "Rotation"
-msgstr ""
+msgstr "Эргэлт"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/PageOptions.vue:14
 #: frontend/src/components/Settings/GlobalAnalytics.vue:31
 msgid "Route"
-msgstr "Rute"
+msgstr "Маршрут"
 
 #. Label of the route_prefix (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Route Prefix"
-msgstr ""
+msgstr "Чиглүүлэлтийн угтвар"
 
 #: frontend/src/components/DashboardHead.vue:86
 msgid "Route Tree"
-msgstr ""
+msgstr "Маршрутын мод"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:83
 msgid "Row"
-msgstr "Rad"
+msgstr "Мөр"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:91
 msgid "Row Dense"
-msgstr ""
+msgstr "Эгнээ нягт"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:43
 msgid "Row Height"
-msgstr ""
+msgstr "Мөрийн өндөр"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:156
 msgid "Row Span"
-msgstr ""
+msgstr "Эгнээ хоорондын зай"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:26
 msgid "Rows"
-msgstr ""
+msgstr "Мөрүүд"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
-msgstr ""
+msgstr "Дотор нь мөртэй зурагтай SVG дэмжигдээгүй байна. Үүний оронд PNG хэлбэрээр буулгана уу."
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:61
 msgid "Same Tab"
-msgstr ""
+msgstr "Ижил таб"
 
 #: frontend/src/components/Modals/TokenManager.vue:1048
 msgid "Sample CSV downloaded"
-msgstr ""
+msgstr "Жишээ CSV татаж авсан"
 
 #: frontend/src/components/Controls/CodeEditor.vue:41
 #: frontend/src/components/Modals/NewBlockTemplate.vue:7
@@ -3717,307 +3718,307 @@ msgstr ""
 #: frontend/src/pages/PageBuilder.vue:46 frontend/src/stores/canvasStore.ts:172
 #: frontend/src/utils/dialogs.ts:38
 msgid "Save"
-msgstr "Lagre"
+msgstr "Хадгалах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
 msgid "Save As Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсэг болгон хадгалах"
 
 #: frontend/src/stores/componentStore.ts:88
 msgid "Save Component"
-msgstr ""
+msgstr "Бүрэлдэхүүн хэсгийг хадгалах"
 
 #: frontend/src/stores/blockTemplateStore.ts:44
 msgid "Save Template"
-msgstr ""
+msgstr "Загварыг хадгалах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:209
 #: frontend/src/components/Modals/NewBlockTemplate.vue:3
 msgid "Save as Block Template"
-msgstr ""
+msgstr "Блокийн загвар болгон хадгалах"
 
 #: frontend/src/components/Controls/ColorInput.vue:38
 msgid "Save as Token"
-msgstr ""
+msgstr "Токен болгон хадгалах"
 
 #: frontend/src/components/VersionHistory.vue:14
 msgid "Save current version"
-msgstr ""
+msgstr "Одоогийн хувилбарыг хадгалах"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
 msgid "Save page / component"
-msgstr ""
+msgstr "Хуудас / бүрэлдэхүүн хэсгийг хадгалах"
 
 #: builder/ai/api.py:522
 msgid "Save the page before starting a chat session"
-msgstr ""
+msgstr "Чатын сесс эхлүүлэхийн өмнө хуудсыг хадгална уу"
 
 #: frontend/src/components/ToolbarItems/ToolbarActions.vue:4
 msgid "Saving template"
-msgstr ""
+msgstr "Загварыг хадгалж байна"
 
 #: frontend/src/pages/PageBuilder.vue:5
 msgid "Screen too small"
-msgstr ""
+msgstr "Дэлгэц хэт жижиг"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script"
-msgstr "Skript"
+msgstr "Скрипт"
 
 #. Label of the script_public_url (Read Only) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script Public URL"
-msgstr ""
+msgstr "Скриптийн нийтийн URL"
 
 #. Label of the script_type (Autocomplete) field in DocType 'Builder Client
 #. Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Script Type"
-msgstr "Skripttype"
+msgstr "Скриптийн төрөл"
 
 #: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
-msgstr ""
+msgstr "Скрипт хоосон байж болохгүй"
 
 #: frontend/src/components/PageClientScriptManager.vue:393
 msgid "Script order updated"
-msgstr ""
+msgstr "Скриптийн дараалал шинэчлэгдсэн"
 
 #: frontend/src/components/PageClientScriptManager.vue:273
 msgid "Script saved successfully"
-msgstr ""
+msgstr "Скрипт амжилттай хадгалагдлаа"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Scripting"
-msgstr "Skripting"
+msgstr "Скрипт бичих"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:32
 msgid "Scroll"
-msgstr ""
+msgstr "Гүйлгэх"
 
 #: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
 msgid "Search"
-msgstr "Søk"
+msgstr "Хайлт"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:115
 msgid "Search (Google)"
-msgstr ""
+msgstr "Хайлт (Google)"
 
 #: frontend/src/components/BuilderCanvas.vue:113
 msgid "Search Block"
-msgstr ""
+msgstr "Хайлтын блок"
 
 #: frontend/src/components/Commands/index.ts:236
 msgid "Search Blocks"
-msgstr ""
+msgstr "Хайлтын блокууд"
 
 #: frontend/src/components/BuilderCommandPalette.vue:60
 #: frontend/src/components/BuilderCommandPalette.vue:69
 msgid "Search Page"
-msgstr ""
+msgstr "Хайлтын хуудас"
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
-msgstr ""
+msgstr "Хайлтын загвар"
 
 #: frontend/src/components/Commands/index.ts:240
 msgid "Search blocks"
-msgstr ""
+msgstr "Хайлтын блокууд"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
 msgid "Search blocks..."
-msgstr ""
+msgstr "Хайлтын блокууд..."
 
 #: frontend/src/components/Settings/GlobalUsers.vue:7
 msgid "Search by name or email"
-msgstr ""
+msgstr "Нэр эсвэл имэйлээр хайх"
 
 #: frontend/src/components/BuilderCommandPalette.vue:70
 msgid "Search by name or route..."
-msgstr ""
+msgstr "Нэр эсвэл маршрутаар хайх..."
 
 #: frontend/src/components/CommandPalette.vue:26
 msgid "Search commands..."
-msgstr ""
+msgstr "Хайлтын командууд..."
 
 #: frontend/src/components/BuilderAssets.vue:6
 msgid "Search component"
-msgstr ""
+msgstr "Хайлтын бүрэлдэхүүн хэсэг"
 
 #: frontend/src/components/Controls/SearchBlock.vue:70
 msgid "Search inside selected block only"
-msgstr ""
+msgstr "Зөвхөн сонгосон блок дотроос хайх"
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
-msgstr "Søk egenskaper"
+msgstr "Хайлтын шинж чанарууд"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:9
 msgid "Search redirects"
-msgstr ""
+msgstr "Хайлтын чиглүүлэлтүүд"
 
 #: frontend/src/components/BuilderCommandPalette.vue:87
 msgid "Search settings..."
-msgstr ""
+msgstr "Хайлтын тохиргоо..."
 
 #: frontend/src/components/Modals/TokenManager.vue:37
 msgid "Search tokens"
-msgstr ""
+msgstr "Хайлтын токенууд"
 
 #: frontend/src/components/Controls/SearchBlock.vue:108
 msgid "Search your blocks"
-msgstr ""
+msgstr "Блокуудаа хайх"
 
 #: frontend/src/components/CommandPalette.vue:26
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
-msgstr "Søk..."
+msgstr "Хайлт..."
 
 #: frontend/src/components/CommandPalette.vue:74
 msgid "Searching..."
-msgstr "Søker..."
+msgstr "Хайж байна..."
 
 #: builder/ai/agent/pending.py:145
 msgid "Seeded {0} sample record(s) into {1}"
-msgstr ""
+msgstr "{0} жишээ бичлэг(үүд)-ийг {1} руу үржүүлсэн"
 
 #: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
 msgid "Select"
-msgstr "Velg"
+msgstr "Сонгох"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:21
 msgid "Select (v)"
-msgstr ""
+msgstr "(v)-г сонгоно уу"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
 msgid "Select All Matches (Alt+Enter)"
-msgstr ""
+msgstr "Бүх тохирлыг сонгох (Alt+Enter)"
 
 #: frontend/src/components/Settings/PageGeneral.vue:226
 msgid "Select App"
-msgstr ""
+msgstr "Апп сонгох"
 
 #: frontend/src/utils/dialogs.ts:80
 msgid "Select Folder"
-msgstr ""
+msgstr "Хавтас сонгох"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:13
 msgid "Select Template"
-msgstr ""
+msgstr "Загвар сонгох"
 
 #: frontend/src/components/BlockProperties.vue:31
 msgid "Select a block to edit properties"
-msgstr ""
+msgstr "Шинж чанаруудыг засахын тулд блок сонгоно уу"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:104
 msgid "Select a collection"
-msgstr ""
+msgstr "Цуглуулга сонгох"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:15
 msgid "Select date range"
-msgstr ""
+msgstr "Огнооны хүрээг сонгох"
 
 #: frontend/src/components/PropsOptions/ColorOptions.vue:10
 msgid "Select default color"
-msgstr ""
+msgstr "Анхдагч өнгө сонгох"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
 msgid "Select mode"
-msgstr ""
+msgstr "Горим сонгох"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
-msgstr ""
+msgstr "Бүлгийн нэрийг сонгох эсвэл бичих"
 
 #: frontend/src/components/Settings/PageGeneral.vue:142
 msgid "Select the app for this standard page"
-msgstr ""
+msgstr "Энэ стандарт хуудсанд зориулсан аппликейшнийг сонгоно уу"
 
 #. Label of the selected_model (Data) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Selected Model"
-msgstr ""
+msgstr "Сонгосон загвар"
 
 #: frontend/src/utils/fontManager.ts:23
 msgid "Semi Bold"
-msgstr ""
+msgstr "Хагас тод"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
-msgstr ""
+msgstr "Урилга илгээх"
 
 #: frontend/src/utils/imageUtils.ts:31
 msgid "Serve Locally"
-msgstr ""
+msgstr "Орон нутагт үйлчилнэ"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-msgstr ""
+msgstr "Компонент өгөгдлийг дүүргэдэг сервер талын Python скрипт. Оролт болгон пропыг хүлээн авдаг. Ашиглах: data.events = frappe.get_list('Event')"
 
 #. Label of the session (Link) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Session"
-msgstr ""
+msgstr "Хуралдаан"
 
 #. Label of the session_user (Link) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 msgid "Session User"
-msgstr ""
+msgstr "Сессийн хэрэглэгч"
 
 #: builder/ai/api.py:147
 msgid "Session not found"
-msgstr ""
+msgstr "Хурал олдсонгүй"
 
 #: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Set As Homepage"
-msgstr ""
+msgstr "Нүүр хуудас болгон тохируулах"
 
 #: frontend/src/components/BackgroundHandler.vue:11
 msgid "Set Background"
-msgstr ""
+msgstr "Арын дэвсгэр тохируулах"
 
 #: frontend/src/components/Controls/ColorInput.vue:172
 #: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
-msgstr "Angi farge"
+msgstr "Өнгө тохируулах"
 
 #: frontend/src/components/Controls/BasePropertyControl.vue:34
 #: frontend/src/components/Controls/BasePropertyControl.vue:261
 msgid "Set Dynamic Value"
-msgstr ""
+msgstr "Динамик утгыг тохируулах"
 
 #: frontend/src/components/Controls/FontInput.vue:47
 msgid "Set Font"
-msgstr ""
+msgstr "Фонт тохируулах"
 
 #: frontend/src/components/ImageUploadInput.vue:107
 msgid "Set Image"
-msgstr ""
+msgstr "Зураг тохируулах"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:237
 msgid "Set as Primary"
-msgstr ""
+msgstr "Үндсэн болгож тохируулах"
 
 #: frontend/src/components/Settings/PageGeneral.vue:97
 msgid "Set current page as Homepage"
-msgstr ""
+msgstr "Одоогийн хуудсыг нүүр хуудас болгон тохируулах"
 
 #: frontend/src/components/Settings/PageGeneral.vue:160
 msgid "Set folder to organize your page"
-msgstr ""
+msgstr "Хуудсаа цэгцлэхийн тулд хавтас тохируулна уу"
 
 #: frontend/src/components/Controls/SplitModeInput.vue:71
 msgid "Set separately"
-msgstr ""
+msgstr "Тусад нь тохируулах"
 
 #: frontend/src/components/BuilderCommandPalette.vue:77
 #: frontend/src/components/BuilderCommandPalette.vue:86
@@ -4029,201 +4030,201 @@ msgstr ""
 #: frontend/src/components/MainMenu.vue:101
 #: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
 msgid "Settings"
-msgstr "Innstillinger"
+msgstr "Тохиргоо"
 
 #: frontend/src/components/ShadowHandler.vue:8
 msgid "Shadow"
-msgstr ""
+msgstr "Сүүдэр"
 
 #: frontend/src/components/ShadowHandler.vue:124
 msgid "Shadow Color"
-msgstr ""
+msgstr "Сүүдрийн өнгө"
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
-msgstr "Snarveier"
+msgstr "Товчлолууд"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:39
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:43
 msgid "Show"
-msgstr "Vis"
+msgstr "Шоу"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
 msgid "Show Children"
-msgstr ""
+msgstr "Хүүхдүүдийг харуулах"
 
 #: frontend/src/components/Commands/index.ts:170
 msgid "Show Left Panel"
-msgstr ""
+msgstr "Зүүн самбарыг харуулах"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
 msgid "Show Replace"
-msgstr ""
+msgstr "Орлуулахыг харуулах"
 
 #: frontend/src/components/Commands/index.ts:181
 msgid "Show Right Panel"
-msgstr ""
+msgstr "Баруун самбарыг харуулах"
 
 #: frontend/src/components/Commands/index.ts:205
 msgid "Show keyboard shortcuts"
-msgstr ""
+msgstr "Гарын товчлолыг харуулах"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
-msgstr ""
+msgstr "Агших"
 
 #: frontend/src/components/Settings/index.ts:128
 msgid "Site Analytics"
-msgstr ""
+msgstr "Сайтын аналитик"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "Site is back online"
-msgstr ""
+msgstr "Сайт дахин онлайн боллоо"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:16
 msgid "Site is in read-only mode"
-msgstr ""
+msgstr "Сайт зөвхөн унших горимд байна"
 
 #: frontend/src/components/BackgroundHandler.vue:84
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
-msgstr "Størrelse"
+msgstr "Хэмжээ"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:76
 msgid "Skip for now"
-msgstr ""
+msgstr "Одоо алгасах"
 
 #: frontend/src/components/Modals/TokenManager.vue:1020
 msgid "Skipped {0} invalid entries"
-msgstr ""
+msgstr "{0} хүчингүй оруулгыг алгассан"
 
 #: frontend/src/components/Modals/TokenManager.vue:1020
 msgid "Skipped {0} invalid entry"
-msgstr ""
+msgstr "{0} буруу оруулгыг алгассан"
 
 #: frontend/src/components/Modals/TokenManager.vue:1021
 msgid "Skipped {0} standard token (read-only)"
-msgstr ""
+msgstr "{0} стандарт токеныг алгассан (зөвхөн унших)"
 
 #: frontend/src/components/Modals/TokenManager.vue:1021
 msgid "Skipped {0} standard tokens (read-only)"
-msgstr ""
+msgstr "{0} стандарт токенуудыг алгассан (зөвхөн унших боломжтой)"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
 msgid "Slow"
-msgstr ""
+msgstr "Удаан"
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "Жижиг"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
-msgstr ""
+msgstr "Гөлгөр"
 
 #. Label of the snapshot_type (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Snapshot Type"
-msgstr ""
+msgstr "Агшин зургийн төрөл"
 
 #: builder/builder/doctype/builder_page/builder_page.py:401
 msgid "Snapshot does not belong to this page"
-msgstr ""
+msgstr "Зураг энэ хуудсанд хамаарахгүй"
 
 #: frontend/src/components/Settings/PageMeta.vue:33
 msgid "Social Preview"
-msgstr ""
+msgstr "Сошиал медиа тойм"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:119
 msgid "Social media"
-msgstr ""
+msgstr "Сошиал медиа"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:137
 msgid "Solid"
-msgstr "Fylt"
+msgstr "Хатуу"
 
 #: frontend/src/data/domains.ts:11 frontend/src/data/domains.ts:44
 msgid "Something went wrong"
-msgstr "Noe gikk galt"
+msgstr "Ямар нэгэн зүйл буруу болсон"
 
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
-msgstr ""
+msgstr "Эрэмбэлэх"
 
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Sort Order"
-msgstr "Sorteringsrekkefølge"
+msgstr "Эрэмбэлэх дараалал"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:18
 #: frontend/src/components/Settings/GlobalRedirects.vue:78
 msgid "Source"
-msgstr "Kilde"
+msgstr "Эх сурвалж"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:25
 msgid "Space Around"
-msgstr ""
+msgstr "Эргэн тойрон дахь орон зай"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:24
 msgid "Space Between"
-msgstr ""
+msgstr "Хоорон дахь зай"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:26
 msgid "Space Evenly"
-msgstr ""
+msgstr "Тэгш зай"
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:58
 msgid "Spacing"
-msgstr ""
+msgstr "Зай"
 
 #: frontend/src/components/Settings/PageRobots.vue:31
 msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
-msgstr ""
+msgstr "Хайлтын системүүд таны сайттай хэрхэн харьцахыг хянах дүрмийг тодорхойл. Дэлгэрэнгүй мэдээллийг {0} хаягаар орж үзнэ үү."
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
-msgstr ""
+msgstr "Хурд"
 
 #: frontend/src/components/ShadowHandler.vue:156
 msgid "Spread"
-msgstr ""
+msgstr "Тархалт"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:40
 msgid "Stack"
-msgstr ""
+msgstr "Стек"
 
 #: frontend/src/components/Settings/PageGeneral.vue:132
 msgid "Standard Page"
-msgstr ""
+msgstr "Стандарт хуудас"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
 msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
-msgstr ""
+msgstr "Стандарт фолдеруудыг устгах боломжгүй. Стандарт фолдеруудыг устгахын тулд хөгжүүлэгчийн горимыг идэвхжүүлнэ үү."
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.js:13
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:26
 msgid "Standard folders cannot be modified. Please enable developer mode to edit standard folders."
-msgstr ""
+msgstr "Стандарт фолдеруудыг өөрчлөх боломжгүй. Стандарт фолдеруудыг засахын тулд хөгжүүлэгчийн горимыг идэвхжүүлнэ үү."
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:63
 msgid "Start"
-msgstr "Start"
+msgstr "Эхлэх"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:6
 msgid "Start from a blank page or pick a page from a template."
-msgstr ""
+msgstr "Хоосон хуудаснаас эхлэх эсвэл загвараас хуудас сонгоно уу."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:109
 msgid "Start from a blank page or pick a template."
-msgstr ""
+msgstr "Хоосон хуудаснаас эхлэх эсвэл загвар сонгоно уу."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:70
 msgid "Start from scratch"
-msgstr ""
+msgstr "Эхнээс нь эхлэх"
 
 #: frontend/src/components/BuilderCommandPalette.vue:71
 msgid "Start typing to search pages"
-msgstr ""
+msgstr "Хайлтын хуудсууд руу бичиж эхлэх"
 
 #. Label of the status (Data) field in DocType 'Builder AI Message'
 #. Label of the status (Select) field in DocType 'Builder AI Session'
@@ -4231,26 +4232,26 @@ msgstr ""
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
-msgstr "Status"
+msgstr "Статус"
 
 #: frontend/src/components/BlockPositionHandler.vue:18
 msgid "Sticky"
-msgstr "Klebrig"
+msgstr "Наалдамхай"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:59
 #: frontend/src/components/DimensionInput.vue:17
 #: frontend/src/components/ImageUploadInput.vue:75
 msgid "Stretch"
-msgstr ""
+msgstr "Сунгах"
 
 #: frontend/src/components/PropsPopoverContent.vue:167
 msgid "String"
-msgstr ""
+msgstr "Чавхдаст утас"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Structure"
-msgstr ""
+msgstr "Бүтэц"
 
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
@@ -4258,38 +4259,38 @@ msgstr ""
 #: frontend/src/components/Controls/SearchBlock.vue:214
 #: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
-msgstr "Stil"
+msgstr "Загвар"
 
 #. Label of the style_public_url (Read Only) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Style Public URL"
-msgstr ""
+msgstr "Style Public URL"
 
 #. Label of the supports_vision (Check) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Supports Vision"
-msgstr ""
+msgstr "Алсын харааг дэмждэг"
 
 #: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Dark Mode"
-msgstr ""
+msgstr "Харанхуй горим руу шилжих"
 
 #: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Light Mode"
-msgstr ""
+msgstr "Гэрлийн горим руу шилжих"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:174
 msgid "Sync Component"
-msgstr ""
+msgstr "Синхрончлолын бүрэлдэхүүн хэсэг"
 
 #: frontend/src/stores/componentStore.ts:114
 msgid "Sync in all pages"
-msgstr ""
+msgstr "Бүх хуудсанд синк хийх"
 
 #: frontend/src/stores/componentStore.ts:125
 msgid "Syncing component in all the pages..."
-msgstr ""
+msgstr "Бүх хуудсан дээрх бүрэлдэхүүн хэсгийг синк хийж байна..."
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
@@ -4308,207 +4309,207 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: builder/builder/doctype/user_font/user_font.json
 msgid "System Manager"
-msgstr "Systemansvarlig"
+msgstr "Системийн менежер"
 
 #: frontend/src/components/DashboardSidebar.vue:61
 msgid "System generated folder cannot be edited or deleted"
-msgstr ""
+msgstr "Системийн үүсгэсэн фолдерыг засах эсвэл устгах боломжгүй"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:96
 msgid "Tab Index"
-msgstr ""
+msgstr "Таб индекс"
 
 #: frontend/src/components/BuilderCanvas.vue:240
 msgid "Tablet"
-msgstr ""
+msgstr "Таблет"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
 #: frontend/src/components/Controls/SearchBlock.vue:171
 msgid "Tag"
-msgstr "Stikkord"
+msgstr "Шошго"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:19
 #: frontend/src/components/Settings/GlobalRedirects.vue:78
 #: frontend/src/components/Settings/TopClicksList.vue:11
 msgid "Target"
-msgstr "Mål"
+msgstr "Бай"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
 msgid "Target Component"
-msgstr ""
+msgstr "Зорилтот бүрэлдэхүүн хэсэг"
 
 #. Label of the task_type (Data) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Task Type"
-msgstr ""
+msgstr "Даалгаврын төрөл"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
-msgstr "Mal"
+msgstr "Загвар"
 
 #. Label of the template_group (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Template Group"
-msgstr ""
+msgstr "Загварын бүлэг"
 
 #. Label of the template_name (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/Modals/NewBlockTemplate.vue:26
 msgid "Template Name"
-msgstr ""
+msgstr "Загварын нэр"
 
 #: builder/api.py:564
 msgid "Template group not found."
-msgstr ""
+msgstr "Загварын бүлэг олдсонгүй."
 
 #: builder/builder/doctype/builder_page/builder_page.py:310
 msgid "Template pages can only be deleted in developer mode."
-msgstr ""
+msgstr "Загварын хуудсуудыг зөвхөн хөгжүүлэгчийн горимд устгах боломжтой."
 
 #: builder/builder/doctype/builder_page/builder_page.py:203
 msgid "Template pages can only be modified in developer mode."
-msgstr ""
+msgstr "Загварын хуудсуудыг зөвхөн хөгжүүлэгчийн горимд өөрчлөх боломжтой."
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:246
 msgid "Text"
-msgstr "Tekst"
+msgstr "Текст"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:23
 msgid "Text (t)"
-msgstr ""
+msgstr "Текст (t)"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:81
 msgid "Text Color"
-msgstr "Tekstfarge"
+msgstr "Текстийн өнгө"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
 msgid "Text mode"
-msgstr ""
+msgstr "Текст горим"
 
 #: builder/ai/presets.py:273
 msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
-msgstr ""
+msgstr "Тэр түлхүүрийг татгалзсан. Та бүгдийг нь хуулбарласан эсэхээ шалгаарай, мөн хүчингүй болгоогүй эсэхийг шалгана уу."
 
 #: frontend/src/components/PageOptions.vue:15
 msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
-msgstr ""
+msgstr "Энэ хуудасны URL зам. Хувьсагчдын хувьд цэгэн хээ ашиглана уу (жишээ нь /users/:id)"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
-msgstr ""
+msgstr "Таны солих гэж буй бүрэлдэхүүн хэсэг байхгүй байна"
 
 #: builder/ai/presets.py:282
 msgid "The key is valid, but that model isn't available on this account."
-msgstr ""
+msgstr "Түлхүүр хүчинтэй боловч энэ загвар энэ бүртгэлд боломжгүй байна."
 
 #: builder/ai/presets.py:278
 msgid "The key is valid, but the account has no credit or is rate limited right now."
-msgstr ""
+msgstr "Түлхүүр хүчинтэй боловч дансанд зээл байхгүй эсвэл хүүгийн хязгаарлагдмал байна."
 
 #. Description of the 'Model ID' (Data) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "The model id at the provider, e.g. <code>anthropic/claude-sonnet-5</code> or <code>llama3.2</code>. The document name is the provider's route prefix plus this id."
-msgstr ""
+msgstr "Үйлчилгээ үзүүлэгч дээрх загварын дугаар, жишээ нь <code>anthropic/claude-sonnet-5</code> эсвэл <code>llama3.2</code>. Баримт бичгийн нэр нь үйлчилгээ үзүүлэгчийн маршрутын угтвар дээр нэмсэн энэ дугаар юм."
 
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
-msgstr ""
+msgstr "Хайлтын системд зориулсан энэ хуудасны URL хувилбарыг илүүд үзнэ үү. Хэрэв тохируулаагүй бол одоогийн хуудасны URL-г ашиглана."
 
 #. Description of the 'LiteLLM Provider' (Data) field in DocType 'Builder AI
 #. Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
-msgstr ""
+msgstr "Үйлчилгээ үзүүлэгч litellm-г дуудах ёстой. API Base (OpenAI-тэй нийцтэй гарц) тохируулагдсан үед анхдагчаар <code>openai</code> гэж тохируулна, эс тэгвээс <code>openrouter</code>."
 
 #: frontend/src/stores/pageStore.ts:354
 msgid "There was an error while fetching page data"
-msgstr ""
+msgstr "Хуудасны өгөгдлийг татаж авах явцад алдаа гарлаа"
 
 #: frontend/src/components/ComponentUpdates.vue:28
 msgid "These components changed since this page was last updated. Update to use the latest."
-msgstr ""
+msgstr "Энэ хуудсыг хамгийн сүүлд шинэчилснээс хойш эдгээр бүрэлдэхүүн хэсгүүд өөрчлөгдсөн. Хамгийн сүүлийн хувилбарыг ашиглахын тулд шинэчилнэ үү."
 
 #: frontend/src/utils/fontManager.ts:18
 msgid "Thin"
-msgstr ""
+msgstr "Нимгэн"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
-msgstr ""
+msgstr "Энэ жил"
 
 #: builder/ai/api.py:167
 msgid "This action does not belong to you"
-msgstr ""
+msgstr "Энэ үйлдэл танд хамаарахгүй"
 
 #: builder/ai/api.py:149
 msgid "This chat belongs to another user"
-msgstr ""
+msgstr "Энэ чат өөр хэрэглэгчийнх"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:126
 msgid "This helps us personalise your Builder experience"
-msgstr ""
+msgstr "Энэ нь бидэнд таны Builder туршлагыг хувийн болгоход тусалдаг"
 
 #: frontend/src/components/Modals/TokenManager.vue:181
 msgid "This is a standard variable. It cannot be modified or deleted."
-msgstr ""
+msgstr "Энэ бол стандарт хувьсагч. Үүнийг өөрчлөх эсвэл устгах боломжгүй."
 
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:9
 msgid "This is the homepage for your site"
-msgstr ""
+msgstr "Энэ бол таны сайтын нүүр хуудас юм"
 
 #: frontend/src/components/RouteTreeNode.vue:47
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
 msgid "This page has limited access"
-msgstr ""
+msgstr "Энэ хуудас хязгаарлагдмал хандалттай байна"
 
 #: frontend/src/components/Settings/PageGeneral.vue:260
 msgid "This page will be exported to {0} app as standard page"
-msgstr ""
+msgstr "Энэ хуудсыг {0} апп руу стандарт хуудас болгон экспортлох болно"
 
 #: frontend/src/stores/builderStore.ts:106
 msgid "This page will no longer be the homepage"
-msgstr ""
+msgstr "Энэ хуудас цаашид нүүр хуудас байхаа болино"
 
 #: builder/ai/api.py:306
 msgid "This provider has no API Base to ask"
-msgstr ""
+msgstr "Энэ үйлчилгээ үзүүлэгч асуух API баазгүй байна"
 
 #: frontend/src/components/Settings/GlobalCode.vue:24
 msgid "This script will be executed on all the pages of your website."
-msgstr ""
+msgstr "Энэ скриптийг таны вэбсайтын бүх хуудсан дээр ажиллуулах болно."
 
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;body&gt;"
-msgstr ""
+msgstr "Үүнийг &lt;body&gt;-н төгсгөлд хавсаргана"
 
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;head&gt;"
-msgstr ""
+msgstr "Үүнийг &lt;head&gt;-н төгсгөлд хавсаргана"
 
 #: frontend/src/components/VersionHistory.vue:249
 msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
-msgstr ""
+msgstr "Энэ нь энэ хувилбарыг засварлагчид таны одоогийн ноорог хэлбэрээр ачаалах болно. Та нийтлэх хүртэл таны шууд хуудас өөрчлөгдөхгүй. Үргэлжлүүлэх үү?"
 
 #: frontend/src/stores/pageStore.ts:208
 msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
-msgstr ""
+msgstr "Энэ нь сүүлийн нийтлэлтээс хойш хуудсанд хийгдсэн бүх өөрчлөлтийг буцаана. Та үргэлжлүүлэхийг хүсч байна уу?"
 
 #: frontend/src/composables/useAnalytics.ts:118
 msgid "Timeline"
-msgstr "Tidslinje"
+msgstr "Цаг хугацааны шугам"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:46
 msgid "Timing"
-msgstr ""
+msgstr "Цаг хугацаа"
 
 #. Label of the title (Data) field in DocType 'Builder AI Session'
 #. Label of the page_title (Data) field in DocType 'Builder Page'
@@ -4516,62 +4517,62 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:9
 msgid "Title"
-msgstr "Tittel"
+msgstr "Гарчиг"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:53
 msgid "Today"
-msgstr "I dag"
+msgstr "Өнөөдөр"
 
 #: frontend/src/components/Commands/index.ts:226
 msgid "Toggle Canvas Dark Mode"
-msgstr ""
+msgstr "Canvas Dark Mode горимыг асаах/унтраах"
 
 #: frontend/src/components/BuilderCanvas.vue:29
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
-msgstr ""
+msgstr "Зурагны бараан горимыг асаах/унтраах (⌘⇧D)"
 
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
-msgstr ""
+msgstr "Харанхуй горимыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:213
 msgid "Toggle Panels"
-msgstr ""
+msgstr "Самбаруудыг асаах/унтраах"
 
 #: frontend/src/components/DashboardSidebar.vue:181
 #: frontend/src/components/MainMenu.vue:96
 msgid "Toggle Theme"
-msgstr "Bytt tema"
+msgstr "Загварыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:230
 msgid "Toggle canvas dark mode"
-msgstr ""
+msgstr "Зурагны бараан горимыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:175
 msgid "Toggle left panel"
-msgstr ""
+msgstr "Зүүн самбарыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:217
 msgid "Toggle panels"
-msgstr ""
+msgstr "Самбаруудыг асаах/унтраах"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/Modals/NewBuilderToken.vue:20
 msgid "Token Name"
-msgstr ""
+msgstr "Токен нэр"
 
 #: frontend/src/components/Modals/TokenManager.vue:840
 msgid "Token created"
-msgstr ""
+msgstr "Токен үүсгэсэн"
 
 #: frontend/src/components/Modals/TokenManager.vue:79
 msgid "Token name"
-msgstr ""
+msgstr "Токен нэр"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
-msgstr ""
+msgstr "Токен шинэчлэгдсэн"
 
 #: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
@@ -4580,79 +4581,79 @@ msgstr ""
 #: frontend/src/utils/useBuilderEvents.ts:395
 #: frontend/src/utils/useBuilderEvents.ts:403
 msgid "Tools"
-msgstr "Verktøy"
+msgstr "Багаж хэрэгсэл"
 
 #: frontend/src/components/BackgroundHandler.vue:298
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
-msgstr "Topp"
+msgstr "Дээд"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:113
 #: frontend/src/components/BlockGridLayoutHandler.vue:176
 msgid "Top Center"
-msgstr "Øverst i senter"
+msgstr "Дээд төв"
 
 #: frontend/src/components/Settings/TopClicksList.vue:3
 msgid "Top Clicks"
-msgstr ""
+msgstr "Шилдэг товшилтууд"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:117
 #: frontend/src/components/BlockGridLayoutHandler.vue:180
 msgid "Top Left"
-msgstr "Øverst til venstre"
+msgstr "Зүүн дээд"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:21
 msgid "Top Pages"
-msgstr ""
+msgstr "Шилдэг хуудсууд"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:3
 msgid "Top Referrers"
-msgstr ""
+msgstr "Шилдэг лавлагаа"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:109
 #: frontend/src/components/BlockGridLayoutHandler.vue:172
 msgid "Top Right"
-msgstr "Øverst til høyre"
+msgstr "Баруун дээд"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:16
 msgid "Total Pageviews"
-msgstr ""
+msgstr "Нийт хуудас үзсэн тоо"
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "Нийт үзэлт"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
-msgstr ""
+msgstr "Товшилтуудыг хянах"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:56
 msgid "Track the number of views on each page of your website"
-msgstr ""
+msgstr "Вэбсайтынхаа хуудас бүр дээрх үзэлтийн тоог хянах"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:114
 msgid "Transform"
-msgstr ""
+msgstr "Хувиргах"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:72
 msgid "Transform Only"
-msgstr ""
+msgstr "Зөвхөн хувиргах"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:85
 msgid "Transition"
-msgstr ""
+msgstr "Шилжилт"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:4
 msgid "True Label"
-msgstr ""
+msgstr "Жинхэнэ шошго"
 
 #: frontend/src/components/Controls/SearchBlock.vue:142
 msgid "Try different keywords or adjust your filters"
-msgstr ""
+msgstr "Өөр түлхүүр үгсийг туршиж үзэх эсвэл шүүлтүүрээ тохируулна уу"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:10
 msgid "Turn on view tracking to start collecting page views, clicks and click-through rates for your published pages."
-msgstr ""
+msgstr "Нийтлэгдсэн хуудсуудынхаа үзэлт, товшилт болон товшилтын түвшинг цуглуулж эхлэхийн тулд үзэлт хянахыг асаана уу."
 
 #. Label of the type (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -4662,17 +4663,17 @@ msgstr ""
 #: frontend/src/components/DashboardHead.vue:32
 #: frontend/src/components/PropsPopoverContent.vue:24
 msgid "Type"
-msgstr "Type"
+msgstr "Төрөл"
 
 #: builder/ai/api.py:129
 msgid "Type a prompt first"
-msgstr ""
+msgstr "Эхлээд зааварчилгаа бичнэ үү"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
-msgstr ""
+msgstr "Типографи"
 
 #: frontend/src/components/Settings/PageGeneral.vue:22
 msgid "URL"
@@ -4680,194 +4681,194 @@ msgstr "URL"
 
 #: frontend/src/components/PageOptions.vue:22
 msgid "URL Variables"
-msgstr ""
+msgstr "URL хувьсагчууд"
 
 #: frontend/src/components/Commands/index.ts:291
 #: frontend/src/components/Commands/index.ts:295
 msgid "Undo"
-msgstr "Angre"
+msgstr "Буцаах"
 
 #: frontend/src/components/Modals/TokenManager.vue:729
 msgid "Ungrouped {0} token"
-msgstr ""
+msgstr "Бүлэглээгүй {0} токен"
 
 #: frontend/src/components/Modals/TokenManager.vue:729
 msgid "Ungrouped {0} tokens"
-msgstr ""
+msgstr "Бүлэглээгүй {0} токенууд"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
-msgstr ""
+msgstr "Өвөрмөц зочид"
 
 #: builder/ai/api.py:84
 msgid "Unknown AI model: {0}"
-msgstr ""
+msgstr "Үл мэдэгдэх хиймэл оюун ухааны загвар: {0}"
 
 #: builder/ai/agent/pending.py:61
 msgid "Unknown pending action: {0}"
-msgstr ""
+msgstr "Үл мэдэгдэх хүлээгдэж буй үйлдэл: {0}"
 
 #: builder/ai/api.py:379 builder/ai/api.py:439
 msgid "Unknown provider: {0}"
-msgstr ""
+msgstr "Үл мэдэгдэх үйлчилгээ үзүүлэгч: {0}"
 
 #: frontend/src/components/PageActionsDropdown.vue:20
 #: frontend/src/components/PublishButton.vue:31
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Unpublish"
-msgstr "Avpubliser"
+msgstr "Нийтлэхээ болих"
 
 #: frontend/src/components/DashboardHead.vue:36
 msgid "Unpublished"
-msgstr ""
+msgstr "Нийтлэгдээгүй"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalDeveloper.vue:16
 msgid "Unrestricted"
-msgstr ""
+msgstr "Хязгаарлалтгүй"
 
 #: builder/template_sync.py:55
 msgid "Unsafe template fixture name: {0}"
-msgstr ""
+msgstr "Аюултай загварын бэхэлгээний нэр: {0}"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:16
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120
 msgid "Unset"
-msgstr ""
+msgstr "Тохируулаагүй"
 
 #: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Unset Homepage"
-msgstr ""
+msgstr "Нүүр хуудасны тохиргоог болиулах"
 
 #: frontend/src/App.vue:33
 msgid "Untitled"
-msgstr ""
+msgstr "Гарчиггүй"
 
 #: frontend/src/components/ComponentUpdates.vue:46
 #: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Update"
-msgstr "Oppdater"
+msgstr "Шинэчлэлт"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
-msgstr ""
+msgstr "Одоогийн хуудсыг шинэчлэх"
 
 #: frontend/src/components/ComponentUpdates.vue:23
 msgid "Update all"
-msgstr ""
+msgstr "Бүгдийг шинэчлэх"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
-msgstr ""
+msgstr "Хамгийн сүүлийн үеийн бүрэлдэхүүн хэсэг рүү шинэчлэх"
 
 #: builder/ai/agent/pending.py:87
 msgid "Updated global settings: {0}"
-msgstr ""
+msgstr "Шинэчилсэн дэлхийн тохиргоонууд: {0}"
 
 #: frontend/src/components/Modals/TokenManager.vue:1017
 msgid "Updated {0} token"
-msgstr ""
+msgstr "{0} токеныг шинэчилсэн"
 
 #: frontend/src/components/Modals/TokenManager.vue:1017
 msgid "Updated {0} tokens"
-msgstr ""
+msgstr "{0} токенуудыг шинэчилсэн"
 
 #: frontend/src/data/domains.ts:80
 msgid "Updating primary domain…"
-msgstr ""
+msgstr "Үндсэн домэйныг шинэчилж байна…"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:264
 msgid "Updating redirect..."
-msgstr ""
+msgstr "Дахин чиглүүлэлтийг шинэчилж байна..."
 
 #: frontend/src/components/BackgroundHandler.vue:77
 #: frontend/src/components/Controls/ImageUploader.vue:13
 #: frontend/src/components/ImageUploadInput.vue:64
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
 msgid "Upload"
-msgstr "Last opp"
+msgstr "Байршуулах"
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
-msgstr ""
+msgstr "CSV байршуулах"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
 #: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
-msgstr ""
+msgstr "Фонт байршуулах"
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
-msgstr ""
+msgstr "Мета зургийг байршуулах"
 
 #: frontend/src/utils/helpers.ts:374
 msgid "Uploaded"
-msgstr ""
+msgstr "Байршуулсан"
 
 #: frontend/src/utils/helpers.ts:553
 msgid "Uploading font..."
-msgstr ""
+msgstr "Фонтыг байршуулж байна..."
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Uploading {0}%"
-msgstr ""
+msgstr "{0} % байршуулж байна"
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "Байршуулж байна..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
-msgstr ""
+msgstr "Том үсгээр"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
 msgid "Use Regular Expression"
-msgstr ""
+msgstr "Тогтмол илэрхийллийг ашиглах"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:29
 msgid "Use all {0} pages"
-msgstr ""
+msgstr "Бүх {0} хуудсыг ашиглах"
 
 #: frontend/src/components/Controls/SplitModeInput.vue:70
 msgid "Use for all"
-msgstr ""
+msgstr "Бүгдэд нь ашиглах"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:14
 #: frontend/src/components/Templates/TemplatePreview.vue:20
 msgid "Use template"
-msgstr ""
+msgstr "Загвар ашиглах"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:170
 msgid "Use this if your DNS provider doesn't support CNAME for subdomains."
-msgstr ""
+msgstr "Хэрэв таны DNS үйлчилгээ үзүүлэгч дэд домэйнуудад CNAME-г дэмждэггүй бол үүнийг ашиглана уу."
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:44
 msgid "Used in 1 page"
-msgstr ""
+msgstr "1 хуудсанд ашигласан"
 
 #: frontend/src/components/Modals/PageListModal.vue:2
 msgid "Used in following pages"
-msgstr ""
+msgstr "Дараагийн хуудсуудад ашигласан"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:45
 msgid "Used in {0} pages"
-msgstr ""
+msgstr "{0} хуудсанд ашигласан"
 
 #. Name of a DocType
 #: builder/builder/doctype/user_font/user_font.json
 msgid "User Font"
-msgstr ""
+msgstr "Хэрэглэгчийн фонт"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:187
 msgid "User is disabled: {0}"
-msgstr ""
+msgstr "Хэрэглэгч идэвхгүй болсон: {0}"
 
 #: frontend/src/components/Settings/index.ts:86
 #: frontend/src/components/Settings/index.ts:87
 msgid "Users"
-msgstr "Brukere"
+msgstr "Хэрэглэгчид"
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -4876,49 +4877,49 @@ msgstr "Brukere"
 #: frontend/src/components/Modals/TokenManager.vue:53
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
-msgstr "Verdi"
+msgstr "Үнэ цэнэ"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:71
 msgid "Value submitted with the form when this radio button is selected."
-msgstr ""
+msgstr "Энэ радио товчийг сонгоход маягттай хамт илгээсэн утга."
 
 #: frontend/src/data/domains.ts:50
 msgid "Verifying DNS for {0}…"
-msgstr ""
+msgstr "{0}…-н DNS-г баталгаажуулж байна"
 
 #: frontend/src/components/DashboardSidebar.vue:90
 #: frontend/src/components/VersionHistory.vue:114
 msgid "Version"
-msgstr "Versjon"
+msgstr "Хувилбар"
 
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
-msgstr ""
+msgstr "Хувилбарын түүх"
 
 #: frontend/src/stores/pageStore.ts:244
 msgid "Version restored"
-msgstr ""
+msgstr "Хувилбарыг сэргээв"
 
 #: frontend/src/components/VersionHistory.vue:241
 msgid "Version saved"
-msgstr ""
+msgstr "Хувилбар хадгалагдсан"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:10
 msgid "Vertical"
-msgstr ""
+msgstr "Босоо"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
 msgid "Very Slow"
-msgstr ""
+msgstr "Маш удаан"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:106
 msgid "Video Options"
-msgstr ""
+msgstr "Видео сонголтууд"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
 msgid "Video URL"
-msgstr "Video-URL"
+msgstr "Видеоны URL"
 
 #: frontend/src/components/Commands/index.ts:43
 #: frontend/src/components/Commands/index.ts:172
@@ -4926,49 +4927,49 @@ msgstr "Video-URL"
 #: frontend/src/components/Commands/index.ts:193
 #: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
-msgstr "Vis"
+msgstr "Харах"
 
 #: frontend/src/components/PageActionsDropdown.vue:14
 msgid "View Page"
-msgstr ""
+msgstr "Хуудсыг харах"
 
 #: frontend/src/components/PageActionsDropdown.vue:26
 msgid "View in Desk"
-msgstr ""
+msgstr "Ширээн дээр харах"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
 msgid "View tracking is off"
-msgstr ""
+msgstr "Үзэлтийн хяналт идэвхгүй байна"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
 msgid "Views"
-msgstr "Visninger"
+msgstr "Үзсэн тоо"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:24
 msgid "Visible"
-msgstr ""
+msgstr "Харагдахуйц"
 
 #. Label of the visitor_id (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Visitor ID"
-msgstr "Besøks-ID"
+msgstr "Зочны дугаар"
 
 #: frontend/src/components/Modals/TokenManager.vue:967
 msgid "WARNING: Updating will overwrite the existing values for the listed variables."
-msgstr ""
+msgstr "АНХААРУУЛГА: Шинэчлэлт нь жагсаасан хувьсагчдын одоо байгаа утгуудыг дарж бичих болно."
 
 #: frontend/src/utils/useBuilderEvents.ts:129
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
-msgstr "Advarsel"
+msgstr "Анхааруулга"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:140
 msgid "We'll point you to the right starting templates"
-msgstr ""
+msgstr "Бид танд зөв эхлэх загваруудыг зааж өгөх болно"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Web app UI"
-msgstr ""
+msgstr "Вэб аппликейшны хэрэглэгчийн интерфэйс"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
@@ -4987,44 +4988,44 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Website Manager"
-msgstr "Nettstedsansvarlig"
+msgstr "Вэбсайт менежер"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:55
 msgid "Weight"
-msgstr "Vekt"
+msgstr "Жин"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:139
 msgid "What do you want to build first?"
-msgstr ""
+msgstr "Та эхлээд юу бүтээхийг хүсэж байна вэ?"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:125
 msgid "Which one best describes you?"
-msgstr ""
+msgstr "Аль нь таныг хамгийн сайн тодорхойлдог вэ?"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
-msgstr "Bredde"
+msgstr "Өргөн"
 
 #: frontend/src/components/VersionHistory.vue:52
 msgid "Working draft · unpublished changes"
-msgstr ""
+msgstr "Ажлын ноорог · нийтлээгүй өөрчлөлтүүд"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:32
 #: frontend/src/components/BlockFlexLayoutHandler.vue:36
 msgid "Wrap"
-msgstr ""
+msgstr "Боолт"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap In Container"
-msgstr ""
+msgstr "Савлах сав"
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
-msgstr ""
+msgstr "X офсет"
 
 #: frontend/src/components/ShadowHandler.vue:154
 msgid "Y Offset"
-msgstr ""
+msgstr "Y офсет"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:45
 #: frontend/src/components/BlockFlexLayoutHandler.vue:54
@@ -5035,75 +5036,75 @@ msgstr ""
 #: frontend/src/components/PropsPopoverContent.vue:106
 #: frontend/src/utils/useBuilderEvents.ts:486
 msgid "Yes"
-msgstr "Ja"
+msgstr "Тийм"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:58
 msgid "You"
-msgstr "Du"
+msgstr "Чи"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:272
 msgid "You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"
-msgstr ""
+msgstr "Та тохиргоо болон скрипт бүхий хуудсыг буулгах гэж байна. Та одоогийн хуудсыг шинэчлэх үү эсвэл шинээр үүсгэх үү?"
 
 #: builder/ai/api.py:160
 msgid "You are not permitted to apply this change"
-msgstr ""
+msgstr "Та энэ өөрчлөлтийг хэрэгжүүлэх зөвшөөрөлгүй байна"
 
 #: builder/ai/api.py:302
 msgid "You are not permitted to manage AI models"
-msgstr ""
+msgstr "Та хиймэл оюун ухааны загваруудыг удирдах эрхгүй"
 
 #: builder/ai/api.py:274
 msgid "You are not permitted to manage AI providers"
-msgstr ""
+msgstr "Та хиймэл оюун ухааны үйлчилгээ үзүүлэгчдийг удирдах эрхгүй"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
-msgstr ""
+msgstr "Та засварлахаа үргэлжлүүлж болно."
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:269
 msgid "You cannot add link inside a button block"
-msgstr ""
+msgstr "Та товчлуурын блок дотор холбоос нэмж чадахгүй"
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:268
 msgid "You cannot add link inside a link block"
-msgstr ""
+msgstr "Та холбоос блок дотор холбоос нэмж чадахгүй"
 
 #: frontend/src/components/TextBlockBubbleMenu.vue:267
 msgid "You cannot make heading a link"
-msgstr ""
+msgstr "Та гарчгийг холбоос болгож чадахгүй"
 
 #: builder/ai/session.py:88
 msgid "You do not have access to this AI session"
-msgstr ""
+msgstr "Та энэ хиймэл оюун ухааны хуралдаанд хандах эрхгүй байна"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
-msgstr ""
+msgstr "Та энэ хуудсанд хандах эрхгүй байна"
 
 #: builder/utils.py:85
 msgid "You do not have permission to modify pages"
-msgstr ""
+msgstr "Танд хуудсуудыг өөрчлөх зөвшөөрөл байхгүй байна"
 
 #: builder/utils.py:87
 msgid "You do not have permission to read pages"
-msgstr ""
+msgstr "Та хуудас унших зөвшөөрөлгүй байна"
 
 #: frontend/src/components/DashboardContent.vue:8
 msgid "You don't have any pages yet. Click on the + New button to create a new page."
-msgstr ""
+msgstr "Танд одоогоор хуудас алга байна. Шинэ хуудас үүсгэхийн тулд + Шинэ товчийг дарна уу."
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
-msgstr ""
+msgstr "Танд хадгалагдаагүй өөрчлөлтүүд байна. Та гарахдаа итгэлтэй байна уу?"
 
 #: frontend/src/components/Controls/Dialog.vue:49
 msgid "You have unsaved changes. Please save before leaving."
-msgstr ""
+msgstr "Танд хадгалагдаагүй өөрчлөлтүүд байна. Гарахаасаа өмнө хадгална уу."
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
-msgstr ""
+msgstr "Та бэлэн боллоо{0}. Эхлэх цэгээ сонгоно уу"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"
@@ -5111,142 +5112,144 @@ msgstr "YouTube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-индекс"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
-msgstr ""
+msgstr "Томруулж харах"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom out"
-msgstr ""
+msgstr "Жижигрүүлэх"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "assistant"
-msgstr ""
+msgstr "туслах"
 
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "chat"
-msgstr "chat"
+msgstr "чат"
 
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "clarification"
-msgstr ""
+msgstr "тодруулга"
 
 #: builder/ai/agent/pending.py:160
 msgid "connect_form needs a doctype, fields, and a form selector"
-msgstr ""
+msgstr "connect_form нь doctype, талбарууд болон маягт сонгогчийг шаарддаг"
 
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
-msgstr ""
+msgstr "data.events = frappe.get_list(\"Үйл явдал\")\n"
+"<br>\n"
+"<b>Тайлбар:</b> Өгөгдлийн түлхүүр утга бүр жагсаалт байх ёстой."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:43
 msgid "e.g. yourdomain.com"
-msgstr "f.eks. yourdomain.com"
+msgstr "жишээ нь yourdomain.com"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:23
 msgid "e.g., primary, accent, background"
-msgstr ""
+msgstr "ж.нь, үндсэн, аялга, дэвсгэр"
 
 #: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
-msgstr ""
+msgstr "ямар ч хуудсанд ашиглагдаагүй"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:52
 msgid "or"
-msgstr "eller"
+msgstr "эсвэл"
 
 #. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "status"
-msgstr "status"
+msgstr "байдал"
 
 #: frontend/src/stores/pageStore.ts:249
 msgid "this page"
-msgstr ""
+msgstr "энэ хуудас"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:184
 #: frontend/src/components/Settings/GlobalDomains.vue:185
 msgid "unknown"
-msgstr "ukjent"
+msgstr "үл мэдэгдэх"
 
 #: frontend/src/components/Modals/TokenManager.vue:202
 msgid "unnamed"
-msgstr ""
+msgstr "нэргүй"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
-msgstr ""
+msgstr "1 хуудсанд ашигласан"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
-msgstr ""
+msgstr "{0} хуудсанд ашигласан"
 
 #: frontend/src/components/PageClientScriptManager.vue:233
 msgid "used in {0}+ pages"
-msgstr ""
+msgstr "{0}+ хуудсанд ашигласан"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "user"
-msgstr ""
+msgstr "хэрэглэгч"
 
 #: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
 msgid "{0} & {1} others"
-msgstr ""
+msgstr "{0} & {1} бусад"
 
 #: frontend/src/data/domains.ts:62
 msgid "{0} added successfully"
-msgstr ""
+msgstr "{0} амжилттай нэмэгдлээ"
 
 #: builder/ai/api.py:87
 msgid "{0} can't view images. Pick a vision-capable model or remove the image."
-msgstr ""
+msgstr "{0} зураг үзэх боломжгүй байна. Харааны чадвартай загвар сонгох эсвэл зургийг устгана уу."
 
 #: frontend/src/components/Modals/TokenManager.vue:951
 msgid "{0} entries were invalid"
-msgstr ""
+msgstr "{0} оруулгууд хүчингүй байсан"
 
 #: frontend/src/components/Modals/TokenManager.vue:951
 msgid "{0} entry was invalid"
-msgstr ""
+msgstr "{0} оруулга хүчингүй байна"
 
 #: frontend/src/components/ComponentUpdates.vue:40
 msgid "{0} instance"
-msgstr ""
+msgstr "{0} жишээ"
 
 #: frontend/src/components/ComponentUpdates.vue:40
 msgid "{0} instances"
-msgstr ""
+msgstr "{0} тохиолдлууд"
 
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.py:42
 msgid "{0} models still use this provider: {1}"
-msgstr ""
+msgstr "{0} загварууд энэ үйлчилгээ үзүүлэгчийг ашигласаар байна: {1}"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:25
 msgid "{0} page"
-msgstr ""
+msgstr "{0} хуудас"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:25
 msgid "{0} pages"
-msgstr ""
+msgstr "{0} хуудаснууд"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:58
 msgid "{0} record"
-msgstr ""
+msgstr "{0} бичлэг"
 
 #: frontend/src/data/domains.ts:72
 msgid "{0} removed"
-msgstr ""
+msgstr "{0} устгагдсан"
 
 #: frontend/src/data/domains.ts:80
 msgid "{0} set as primary"
-msgstr ""
+msgstr "{0} үндсэн болгож тохируулсан"
 

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-13 08:13+0553\n"
-"PO-Revision-Date: 2026-08-13 03:20\n"
+"POT-Creation-Date: 2026-08-18 15:53+0000\n"
+"PO-Revision-Date: 2026-08-23 03:34\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -18,33 +18,105 @@ msgstr ""
 "X-Crowdin-File-ID: 177\n"
 "Language: zh_TW\n"
 
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entries skipped)"
+msgstr "({0} 已跳過無效的條目)"
+
+#: frontend/src/components/Modals/TokenManager.vue:965
+msgid "({0} invalid entry skipped)"
+msgstr "({0} 無效的輸入項已跳過)"
+
+#: frontend/src/components/RouteTreeNode.vue:91
+#: frontend/src/components/RouteTreeView.vue:41
+msgid "({0} remaining)"
+msgstr "({0} 剩餘)"
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard token skipped)"
+msgstr "({0} 跳過標準標記)"
+
+#: frontend/src/components/Modals/TokenManager.vue:966
+msgid "({0} standard tokens skipped)"
+msgstr "({0} 跳過標準標記)"
+
+#: frontend/src/components/ShadowHandler.vue:134
+msgid "+ Add Shadow Layer"
+msgstr "+ 新增陰影圖層"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:144
+msgid "301 - Moved Permanently"
+msgstr "301 - 已永久移轉"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:145
+msgid "302 - Found (Temporary)"
+msgstr "302 - 已找到（暫時）"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:146
+msgid "307 - Temporary Redirect"
+msgstr "307 - 暫時重新導向"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:147
+msgid "308 - Permanent Redirect"
+msgstr "308 - 永久重定向"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:141
+msgid "A booking site for my clinic"
+msgstr "我診所的預約網站"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "A record points to wrong IP: {0}"
+msgstr "某筆記錄指向錯誤的 IP 位址： {0}"
+
 #: frontend/src/components/Settings/index.ts:144
 msgid "AI"
-msgstr ""
+msgstr "AI"
 
 #. Label of the ai_api_key (Password) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "AI API Key"
-msgstr ""
+msgstr "AI API金鑰"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/index.ts:145
 msgid "AI Settings"
+msgstr "AI設定"
+
+#: builder/ai/session.py:90
+msgid "AI session does not belong to this page"
+msgstr "AI 會話不屬於此頁面"
+
+#: builder/ai/session.py:85
+msgid "AI session not found"
+msgstr "找不到 AI 課程"
+
+#. Label of the api_base (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Base"
+msgstr "API 基礎"
+
+#. Label of the api_key (Password) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "API Key"
 msgstr ""
 
 #. Description of the 'AI API Key' (Password) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "API key for the selected AI model provider"
-msgstr ""
+msgstr "所選 AI 模型提供者的 API 金鑰"
 
-#: builder/ai_page_generator.py:671
+#: builder/ai/api.py:609
 msgid "API key is valid"
-msgstr ""
+msgstr "API金鑰有效"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:109
 msgid "Accessibility"
+msgstr "無障礙功能"
+
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Active"
 msgstr ""
 
 #: frontend/src/components/ArrayEditor.vue:14
@@ -56,48 +128,70 @@ msgstr ""
 
 #: frontend/src/components/MoreStylesPanel.vue:22
 msgid "Add CSS property"
-msgstr ""
+msgstr "新增 CSS 屬性"
 
 #. Label of the set_meta_tags (Button) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Add Custom Meta Tags"
-msgstr ""
+msgstr "新增自訂元標籤"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:80
 msgid "Add Domain"
-msgstr ""
+msgstr "新增網域"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 msgid "Add Redirect"
-msgstr ""
+msgstr "新增重新導向"
 
-#: frontend/src/components/PageClientScriptManager.vue:109
+#: frontend/src/components/PageClientScriptManager.vue:107
 msgid "Add Script"
-msgstr ""
+msgstr "新增指令碼"
+
+#: frontend/src/components/Modals/TokenManager.vue:15
+msgid "Add Token"
+msgstr "新增權杖"
 
 #: frontend/src/components/DataLoaderBlock.vue:6
 msgid "Add a block to repeat"
-msgstr ""
+msgstr "新增要重複的區塊"
+
+#: builder/ai/api.py:589
+msgid "Add a model to this provider first"
+msgstr "請先為此提供者新增模型"
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr ""
+msgstr "在頁面 head 加入 meta 標籤、樣式與指令碼"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add property"
-msgstr ""
+msgstr "新增屬性"
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
-msgstr ""
+msgstr "在頁面 body 加入指令碼"
 
 #: frontend/src/components/Settings/GlobalCode.vue:15
 msgid "Added to end of body. For adding scripts."
-msgstr ""
+msgstr "加到 body 結尾，用於加入指令碼。"
 
 #: frontend/src/components/Settings/GlobalCode.vue:6
 msgid "Added to end of head. For meta tags, styles, and scripts."
-msgstr ""
+msgstr "加到 head 結尾，用於 meta 標籤、樣式與指令碼。"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:240
+msgid "Adding all pages..."
+msgstr "正在加入所有頁面..."
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Adding redirect..."
+msgstr "正在新增重新導向..."
+
+#: frontend/src/data/domains.ts:60
+msgid "Adding {0}…"
+msgstr "正在新增 {0}…"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:62
 msgid "Admin"
@@ -111,7 +205,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Agency / Freelancer"
-msgstr ""
+msgstr "代理商／自由工作者"
 
 #: frontend/src/utils/helpers.ts:50
 msgid "Alert"
@@ -129,57 +223,75 @@ msgstr ""
 #: frontend/src/components/DashboardHead.vue:4
 #: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
-msgstr ""
+msgstr "所有頁面"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:71
 msgid "All Properties"
-msgstr ""
+msgstr "所有屬性"
 
-#: frontend/src/components/PageClientScriptManager.vue:101
+#: frontend/src/components/PageClientScriptManager.vue:99
 msgid "All client scripts are executed in preview mode and on published pages."
-msgstr ""
+msgstr "所有用戶端指令碼都會在預覽模式及已發佈的頁面上執行。"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:241
+msgid "All pages added"
+msgstr "已加入所有頁面"
 
 #. Description of the 'Auto convert images to WebP' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "All the images uploaded to Canvas will be auto converted to WebP for better page performance."
-msgstr ""
+msgstr "所有上傳到 Canvas 的圖片都會自動轉換為 WebP 格式，以提高頁面效能。"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:69
 msgid "All the images uploaded via Builder will be converted to WebP for better page performance"
-msgstr ""
+msgstr "透過 Builder 上傳的所有圖片都會轉換為 WebP，以提升頁面效能"
 
 #: frontend/src/components/DashboardHead.vue:60
 msgid "Alphabetically (A-Z)"
-msgstr ""
+msgstr "依字母順序（A-Z）"
 
 #: frontend/src/components/DashboardHead.vue:64
 msgid "Alphabetically (Z-A)"
-msgstr ""
+msgstr "依字母順序（Z-A）"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:184
+msgid "Already a member: {0}"
+msgstr "已是成員：{0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:181
+msgid "Already invited: {0}"
+msgstr "已邀請：{0}"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
 msgid "Alt Text"
-msgstr ""
+msgstr "替代文字"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "An icon file with .ico extension. Should be 16 x 16 px.\n"
 "You can generate using favicon-generator.org"
-msgstr ""
+msgstr "副檔名為 .ico 的圖示檔案。尺寸應為 16 x 16 像素。\n"
+"您可使用 favicon-generator.org 來產生圖示"
 
 #. Description of the 'Favicon' (Attach Image) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
-msgstr ""
+msgstr "副檔名為 .ico 的圖示檔案。尺寸應為 16 x 16 像素。<br>您可透過<a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>進行生成"
 
 #: frontend/src/components/Settings/index.ts:68
 #: frontend/src/components/Settings/index.ts:127
 msgid "Analytics"
 msgstr ""
 
+#: builder/ai/api.py:70
+msgid "Another AI request is still processing. Please wait."
+msgstr "另一個 AI 請求仍在處理中，請稍候。"
+
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/Settings/PageGeneral.vue:140
 msgid "App"
 msgstr ""
 
@@ -188,73 +300,106 @@ msgid "App {0} is not installed"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
-#: frontend/src/components/Settings/PageGeneral.vue:87
+#: frontend/src/components/Settings/PageGeneral.vue:86
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
-msgstr ""
+msgstr "顯示於瀏覽器分頁標題旁。建議尺寸為 32x32 像素的 PNG 或 ICO"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:105
 msgid "Append the original query string to the target URL"
-msgstr ""
+msgstr "將原始查詢字串附加到目標 URL"
 
 #: frontend/src/components/Settings/GlobalCode.vue:33
 msgid "Applies to all pages"
-msgstr ""
+msgstr "套用至所有頁面"
 
 #: frontend/src/components/DashboardSidebar.vue:176
 msgid "Apps"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:168
-msgid "Are you sure you want to delete page: {0}?"
+#. Option for the 'Status' (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Archived"
 msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:207
+msgid "Are you sure you want to cancel the invitation to {0}?"
+msgstr "確定要取消對 {0} 的邀請嗎？"
+
+#: frontend/src/stores/componentStore.ts:441
+msgid "Are you sure you want to delete component: {0}?"
+msgstr "確定要刪除元件：{0} 嗎？"
+
+#: frontend/src/stores/pageStore.ts:174
+msgid "Are you sure you want to delete page: {0}?"
+msgstr "確定要刪除頁面：{0} 嗎？"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:271
+msgid "Are you sure you want to delete the redirect from \"{0}\" to \"{1}\"?"
+msgstr "確定要刪除從「{0}」到「{1}」的重新導向嗎？"
 
 #: frontend/src/components/DashboardSidebar.vue:236
 msgid "Are you sure you want to delete this folder? All the pages under this folder will be visible under \"All Pages\""
-msgstr ""
+msgstr "確定要刪除此資料夾嗎？此資料夾下的所有頁面將會顯示在「所有頁面」中"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:272
 msgid "Are you sure you want to delete this redirect?"
-msgstr ""
+msgstr "確定要刪除此重新導向嗎？"
+
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} token?"
+msgstr "確定要刪除 {0} 個權杖嗎？"
+
+#: frontend/src/components/Modals/TokenManager.vue:744
+msgid "Are you sure you want to delete {0} tokens?"
+msgstr "確定要刪除 {0} 個權杖嗎？"
 
 #: frontend/src/stores/canvasStore.ts:198
 msgid "Are you sure you want to exit without saving?"
-msgstr ""
+msgstr "確定要不儲存就離開嗎？"
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:74
+#: builder/builder/doctype/builder_settings/builder_settings.js:72
 msgid "Are you sure you want to replace {0} with {1}?"
-msgstr ""
+msgstr "您確定要將 {0} 替換為 {1} 嗎？"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:206
+#: frontend/src/components/BlockContextMenuOptions/index.ts:183
 msgid "Are you sure you want to reset?"
-msgstr ""
+msgstr "確定要重設嗎？"
 
-#: frontend/src/stores/pageStore.ts:245
+#: frontend/src/stores/pageStore.ts:251
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
-msgstr ""
+msgstr "您確定要取消發布「{0}」嗎？取消發布後，該內容將無法在網站上存取。"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:49
 msgid "Aria Label"
-msgstr ""
+msgstr "Aria 標籤"
 
 #: frontend/src/components/PropsPopoverContent.vue:171
 msgid "Array"
-msgstr ""
+msgstr "陣列"
 
 #: frontend/src/components/ArrayInput.vue:20
 msgid "Array Items:"
-msgstr ""
+msgstr "陣列項目："
 
-#: frontend/src/components/PageClientScriptManager.vue:90
-#: frontend/src/components/PageClientScriptManager.vue:93
+#: builder/ai/agent/pending.py:114
+msgid "At least one field is required"
+msgstr "至少須填寫一個欄位"
+
+#: frontend/src/components/PageClientScriptManager.vue:88
+#: frontend/src/components/PageClientScriptManager.vue:91
 msgid "Attach Script"
-msgstr ""
+msgstr "附加指令碼"
+
+#: frontend/src/components/Controls/SearchBlock.vue:229
+msgid "Attributes"
+msgstr "属性"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Authenticated Access"
-msgstr ""
+msgstr "已驗證訪問"
 
-#: frontend/src/components/BackgroundHandler.vue:286
+#: frontend/src/components/BackgroundHandler.vue:293
 #: frontend/src/components/BlockGridLayoutHandler.vue:13
 #: frontend/src/components/BlockPositionHandler.vue:11
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:20
@@ -267,11 +412,15 @@ msgstr ""
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:67
 msgid "Auto convert images to WebP"
-msgstr ""
+msgstr "自動將影像轉換為 WebP 格式"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:160
+msgid "Automatically follows server IP changes. Best choice for subdomains."
+msgstr "自動跟隨伺服器 IP 變更。子網域的最佳選擇。"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:58
 msgid "Autoplay"
-msgstr ""
+msgstr "自動播放"
 
 #: frontend/src/components/Templates/TemplatePreview.vue:7
 #: frontend/src/pages/PagePersonaSurvey.vue:27
@@ -280,7 +429,7 @@ msgstr ""
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
-msgstr ""
+msgstr "返回儀表板"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
@@ -288,11 +437,11 @@ msgstr ""
 
 #: frontend/src/components/Templates/TemplateGallery.vue:18
 msgid "Back to all templates"
-msgstr ""
+msgstr "返回所有範本"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
 msgid "Back to builder"
-msgstr ""
+msgstr "返回 Builder"
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -300,7 +449,12 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:74
 msgid "Background Only"
-msgstr ""
+msgstr "僅背景"
+
+#. Description of the 'API Base' (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Base URL for an OpenAI-compatible gateway. Leave empty for OpenRouter."
+msgstr "OpenAI 相容閘道的基底 URL。使用 OpenRouter 時請留空。"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -310,55 +464,64 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Basic Forms"
-msgstr ""
+msgstr "基本形式"
+
+#: frontend/src/utils/fontManager.ts:26
+msgid "Black"
+msgstr "黑"
 
 #: frontend/src/components/Templates/TemplatePageGrid.vue:12
 msgid "Blank Page"
-msgstr ""
+msgstr "空白頁面"
 
 #. Label of the block (JSON) field in DocType 'Block Template'
-#. Label of the block (JSON) field in DocType 'Builder Component'
+#. Label of the block (Long Text) field in DocType 'Builder Component'
 #: builder/builder/doctype/block_template/block_template.json
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Block"
-msgstr ""
+msgstr "區塊"
 
 #: frontend/src/components/PageScript.vue:107
 msgid "Block CSS"
-msgstr ""
+msgstr "區塊 CSS"
 
-#: frontend/src/pages/PageBuilder.vue:307
+#: frontend/src/pages/PageBuilder.vue:226
 msgid "Block Client Script"
-msgstr ""
+msgstr "區塊用戶端指令碼"
+
+#. Label of the block_id (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Block ID"
+msgstr "區塊 ID"
 
 #: frontend/src/components/PageScript.vue:95
 msgid "Block JavaScript"
-msgstr ""
+msgstr "區塊 JavaScript"
 
 #: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:147
 msgid "Block Options"
-msgstr ""
+msgstr "區塊選項"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Block Props"
-msgstr ""
+msgstr "區塊屬性"
 
 #. Name of a DocType
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Block Template"
-msgstr ""
+msgstr "區塊模板"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Client Script"
-msgstr ""
+msgstr "區塊範本用戶端指令碼"
 
 #: frontend/src/components/PageScript.vue:205
 msgid "Block Template Data Script"
-msgstr ""
+msgstr "區塊範本資料指令碼"
 
 #: frontend/src/stores/blockTemplateStore.ts:94
 msgid "Block template saved!"
-msgstr ""
+msgstr "已儲存區塊範本！"
 
 #. Label of the blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -367,32 +530,36 @@ msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:155
 msgid "Blur"
-msgstr ""
+msgstr "模糊"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Body HTML"
+msgstr "正文 HTML"
+
+#: frontend/src/utils/fontManager.ts:24
+msgid "Bold"
 msgstr ""
 
 #: frontend/src/components/PropsPopoverContent.vue:169
 msgid "Boolean"
-msgstr ""
+msgstr "布林值"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:91
 msgid "Border Color"
-msgstr ""
+msgstr "邊框顏色"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:133
 msgid "Border Style"
-msgstr ""
+msgstr "邊框樣式"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:116
 msgid "Border Width"
-msgstr ""
+msgstr "邊框寬度"
 
-#: frontend/src/components/BackgroundHandler.vue:292
+#: frontend/src/components/BackgroundHandler.vue:299
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
 msgstr ""
@@ -414,85 +581,114 @@ msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:88
 msgid "Browse all settings"
-msgstr ""
+msgstr "瀏覽所有設定"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+msgid "Builder AI Memory"
+msgstr "Builder AI 記憶"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Builder AI Message"
+msgstr "Builder AI 訊息"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Builder AI Model"
+msgstr "Builder AI 模型"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Builder AI Provider"
+msgstr "Builder AI 提供者"
+
+#. Name of a DocType
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Builder AI Session"
+msgstr "Builder AI 工作階段"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Builder Client Script"
-msgstr ""
+msgstr "建構器客戶端腳本"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Builder Component"
-msgstr ""
+msgstr "建構器元件"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Builder Page"
-msgstr ""
+msgstr "建構器頁面"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Builder Page Click"
-msgstr ""
+msgstr "點擊建立器頁面"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Page Client Script"
-msgstr ""
+msgstr "建構器頁面客戶端腳本"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:20
+msgid "Builder Page Filter"
+msgstr "Builder 頁面篩選條件"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
 msgid "Builder Project Folder"
-msgstr ""
+msgstr "建構器專案資料夾"
 
 #. Label of the builder_script (Link) field in DocType 'Builder Page Client
 #. Script'
 #: builder/builder/doctype/builder_page_client_script/builder_page_client_script.json
 msgid "Builder Script"
-msgstr ""
+msgstr "建置腳本"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/BuilderToolbar.vue:39
 msgid "Builder Settings"
-msgstr ""
+msgstr "建構器設定"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Builder Snapshot"
-msgstr ""
+msgstr "建構器快照"
 
 #. Name of a DocType
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Builder Token"
-msgstr ""
+msgstr "建造者令牌"
 
-#: builder/ai_page_generator.py:564
-msgid "Building {0}"
-msgstr ""
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+msgid "CNAME record points to wrong destination: {0}"
+msgstr "CNAME 記錄指向錯誤的目的地：{0}"
 
-#: builder/ai_page_generator.py:366
-msgid "Building..."
-msgstr ""
-
-#: frontend/src/components/PageClientScriptManager.vue:78
+#: frontend/src/components/PageClientScriptManager.vue:76
 #: frontend/src/components/PageScript.vue:194
-#: frontend/src/pages/PageBuilder.vue:311
+#: frontend/src/pages/PageBuilder.vue:230
 msgid "CSS"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:890
-msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
-msgstr ""
+#: frontend/src/components/Controls/SearchBlock.vue:243
+msgid "CSS Classes"
+msgstr "CSS 類別"
 
-#: frontend/src/components/Modals/TokenManager.vue:878
+#: frontend/src/components/Modals/TokenManager.vue:900
+msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
+msgstr "CSV 必須包含「Token Name」與「Light Mode」欄"
+
+#: frontend/src/components/Modals/TokenManager.vue:888
 msgid "CSV must have at least a header row and one data row"
-msgstr ""
+msgstr "CSV 至少必須有一個標題列與一個資料列"
 
 #: frontend/src/components/Settings/TopClicksList.vue:13
 msgid "CTR"
-msgstr ""
+msgstr "點閱率"
 
 #: frontend/src/utils/helpers.ts:36
 msgid "Cancel"
@@ -500,17 +696,17 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalUsers.vue:40
 msgid "Cancel invitation"
-msgstr ""
+msgstr "取消邀請"
 
 #: frontend/src/utils/useCanvasUtils.ts:235
 msgid "Cannot delete root block"
-msgstr ""
+msgstr "無法刪除根區塊"
 
 #. Label of the canonical_url (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:55
 msgid "Canonical URL"
-msgstr ""
+msgstr "規範網址"
 
 #: frontend/src/utils/useBuilderEvents.ts:280
 #: frontend/src/utils/useBuilderEvents.ts:292
@@ -523,6 +719,12 @@ msgstr ""
 msgid "Canvas"
 msgstr ""
 
+#. Label of the capability_section (Section Break) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Capabilities"
+msgstr "功能"
+
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
 msgstr ""
@@ -533,7 +735,7 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:290
+#: frontend/src/components/BackgroundHandler.vue:297
 #: frontend/src/components/BlockGridLayoutHandler.vue:67
 #: frontend/src/components/BlockGridLayoutHandler.vue:125
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
@@ -544,40 +746,36 @@ msgstr ""
 #: frontend/src/components/BlockGridLayoutHandler.vue:129
 #: frontend/src/components/BlockGridLayoutHandler.vue:192
 msgid "Center Left"
-msgstr ""
+msgstr "置中靠左"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:121
 #: frontend/src/components/BlockGridLayoutHandler.vue:184
 msgid "Center Right"
-msgstr ""
+msgstr "置中靠右"
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Change"
 msgstr ""
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:85
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:84
 msgid "Checked"
-msgstr ""
+msgstr "已勾選"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:12
 msgid "Choose a template to get a head start, or start from scratch."
-msgstr ""
+msgstr "選擇範本快速開始，或從頭建立。"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:16
 msgid "Class"
-msgstr ""
+msgstr "類別"
 
-#: frontend/src/components/BackgroundHandler.vue:113
+#: frontend/src/components/BackgroundHandler.vue:114
 msgid "Clear Gradient"
-msgstr ""
+msgstr "清除漸層"
 
-#: frontend/src/components/BackgroundHandler.vue:105
+#: frontend/src/components/BackgroundHandler.vue:106
 msgid "Clear Image"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:98
-msgid "Clear Selection"
-msgstr ""
+msgstr "清除圖片"
 
 #: frontend/src/components/Controls/SearchBlock.vue:59
 msgid "Clear all filters"
@@ -585,15 +783,15 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:355
 msgid "Click 'Add Token' to create your first one."
-msgstr ""
+msgstr "點擊「Add Token」建立你的第一個權杖。"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:20
 msgid "Click-through Rate"
-msgstr ""
+msgstr "點閱率"
 
 #: frontend/src/components/Settings/TopClicksList.vue:12
 msgid "Clicks"
-msgstr ""
+msgstr "點擊次數"
 
 #: frontend/src/components/PageScript.vue:5
 #: frontend/src/components/Settings/GlobalCode.vue:22
@@ -604,11 +802,11 @@ msgstr ""
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Client Scripts"
-msgstr ""
+msgstr "客戶端腳本"
 
-#: frontend/src/components/BackgroundHandler.vue:123
+#: frontend/src/components/BackgroundHandler.vue:124
 msgid "Clip Background to Text"
-msgstr ""
+msgstr "將背景裁切至文字"
 
 #: frontend/src/components/CommandPalette.vue:33
 msgid "Close"
@@ -616,9 +814,9 @@ msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:72
 msgid "Close (Esc)"
-msgstr ""
+msgstr "關閉（Esc）"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:54
+#: frontend/src/components/LeftPanelTabs/index.ts:60
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
@@ -626,23 +824,23 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:148
 msgid "Col Span"
-msgstr ""
+msgstr "欄跨距"
 
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Collapse"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/Commands/index.ts:157
 msgid "Collapse All Layers"
-msgstr ""
+msgstr "收合所有圖層"
 
 #: frontend/src/components/RouteTreeView.vue:374
 msgid "Collapse node or move up in page tree"
-msgstr ""
+msgstr "收合節點或在頁面樹中往上移動"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
-msgstr ""
+msgstr "集合"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -650,13 +848,13 @@ msgstr ""
 msgid "Color"
 msgstr ""
 
-#: frontend/src/components/Modals/TokenManager.vue:449
+#: frontend/src/components/Modals/TokenManager.vue:454
 msgid "Colors"
-msgstr ""
+msgstr "顏色"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:75
 msgid "Colors Only"
-msgstr ""
+msgstr "僅顏色"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:87
 msgid "Column"
@@ -664,7 +862,7 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:95
 msgid "Column Dense"
-msgstr ""
+msgstr "密集欄"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:17
 msgid "Columns"
@@ -672,74 +870,78 @@ msgstr ""
 
 #: frontend/src/components/CommandPalette.vue:9
 msgid "Command Palette"
-msgstr ""
+msgstr "命令面板"
 
 #: frontend/src/components/BuilderCommandPalette.vue:312
 msgid "Commands"
-msgstr ""
+msgstr "命令"
 
 #: frontend/src/components/PageScript.vue:204
 msgid "Component Client Script"
-msgstr ""
+msgstr "元件用戶端指令碼"
 
 #: frontend/src/components/PageScript.vue:23
 #: frontend/src/components/PageScript.vue:133
 msgid "Component Data Preview"
-msgstr ""
+msgstr "元件資料預覽"
 
 #. Label of the component_data_script (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/components/PageScript.vue:204
 msgid "Component Data Script"
-msgstr ""
+msgstr "組件資料腳本"
 
 #. Label of the component_id (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Component ID"
-msgstr ""
+msgstr "組件 ID"
 
 #. Label of the component_name (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr ""
+msgstr "组件名称"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
-msgstr ""
+msgstr "元件屬性"
 
 #: frontend/src/stores/componentStore.ts:99
 msgid "Component draft is unavailable."
-msgstr ""
+msgstr "元件草稿無法使用。"
 
 #: frontend/src/stores/componentStore.ts:439
 msgid "Component is used in current page. You cannot delete it."
-msgstr ""
+msgstr "目前頁面正在使用此元件，你無法刪除它。"
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:88
+#: builder/builder/doctype/builder_settings/builder_settings.js:86
 msgid "Component replaced successfully"
-msgstr ""
+msgstr "部件更換成功"
 
 #: frontend/src/stores/componentStore.ts:111
 msgid "Component saved!"
-msgstr ""
+msgstr "已儲存元件！"
+
+#: frontend/src/stores/componentStore.ts:130
+msgid "Component synced in all the pages!"
+msgstr "已在所有頁面同步元件！"
 
 #: frontend/src/components/ComponentUpdates.vue:19
 msgid "Component updates"
-msgstr ""
+msgstr "元件更新"
 
 #: frontend/src/components/ComponentUpdates.vue:4
 msgid "Component updates available"
-msgstr ""
+msgstr "有可用的元件更新"
 
 #: builder/builder/component_versions.py:236
 msgid "Component {0} was deleted and will not render"
-msgstr ""
+msgstr "元件 {0} 已被刪除，因此不會渲染"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:47
+#: frontend/src/components/LeftPanelTabs/index.ts:52
 msgid "Components"
-msgstr ""
+msgstr "組成項目"
 
 #: frontend/src/components/BlockPropertySections/OptionsSection.ts:30
 msgid "Condition"
@@ -747,146 +949,222 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:98
 msgid "Configure global settings for this builder project."
-msgstr ""
+msgstr "為此 Builder 專案設定全域設定。"
 
 #: frontend/src/components/BuilderToolbar.vue:41
 msgid "Configure page and global settings for this project."
-msgstr ""
+msgstr "為此專案設定頁面與全域設定。"
 
 #: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
 msgid "Confirm"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:284
+#: builder/ai/codex.py:102 builder/ai/presets.py:256
+msgid "Connected"
+msgstr "已連線"
+
+#. Label of the connection_section (Section Break) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Connection"
+msgstr "連線"
+
+#: frontend/src/components/BackgroundHandler.vue:291
 msgid "Contain"
-msgstr ""
+msgstr "包含"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
 msgid "Container (c)"
-msgstr ""
+msgstr "容器（c）"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
 msgid "Container mode"
-msgstr ""
+msgstr "容器模式"
 
+#. Label of the content (Small Text) field in DocType 'Builder AI Memory'
+#. Label of the content (Long Text) field in DocType 'Builder AI Message'
 #. Label of the content_tab (Tab Break) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:22
+#: frontend/src/components/Controls/SearchBlock.vue:198
 msgid "Content"
 msgstr ""
 
+#. Label of the max_tokens (Int) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Context Window"
+msgstr "上下文視窗"
+
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:41
 msgid "Controls"
-msgstr ""
+msgstr "控制項"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:84
+#: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Convert To Collection"
-msgstr ""
+msgstr "轉換為集合"
+
+#: frontend/src/utils/imageUtils.ts:33
+msgid "Convert to WebP"
+msgstr "轉換為 WebP"
+
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Converting..."
+msgstr "正在轉換..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr ""
+msgstr "已复制到剪贴板"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:58
+#: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:260
+#: frontend/src/components/Commands/index.ts:258
 msgid "Copy Block Styles"
-msgstr ""
+msgstr "複製區塊樣式"
 
 #: frontend/src/components/MainMenu.vue:68
 msgid "Copy Page"
-msgstr ""
+msgstr "複製頁面"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:63
+#: frontend/src/components/BlockContextMenuOptions/index.ts:40
 msgid "Copy Style"
-msgstr ""
+msgstr "複製樣式"
 
-#: frontend/src/components/Commands/index.ts:264
+#: frontend/src/components/Commands/index.ts:262
 msgid "Copy block styles"
-msgstr ""
+msgstr "複製區塊樣式"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
-msgstr ""
+msgstr "複製整個頁面？"
+
+#: frontend/src/components/Modals/TokenManager.vue:205
+msgid "Copy var(--{0})"
+msgstr "複製 var(--{0})"
+
+#: frontend/src/components/Templates/TemplateGallery.vue:242
+msgid "Could not add pages"
+msgstr "無法加入頁面"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:210
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
 msgid "Could not create page from template"
-msgstr ""
+msgstr "無法從範本建立頁面"
 
-#: builder/api.py:440
+#: builder/api.py:583
 msgid "Could not import any pages from this template group."
-msgstr ""
+msgstr "無法從此範本組匯入任何頁面。"
 
-#: builder/api.py:408
+#: builder/api.py:551
 msgid "Could not load the selected template. Please try again."
-msgstr ""
+msgstr "無法載入所選模板。請重試。"
 
-#: builder/api.py:190
+#: builder/ai/api.py:320
+msgid "Could not reach {0}: {1}"
+msgstr "無法連線到 {0}：{1}"
+
+#: builder/api.py:330
 msgid "Could not resolve hostname: {0}"
-msgstr ""
+msgstr "無法解析主機名稱：{0}"
 
-#: frontend/src/components/Modals/TokenManager.vue:438
+#: frontend/src/components/Modals/TokenManager.vue:443
 msgid "Couldn't copy to clipboard"
-msgstr ""
+msgstr "無法複製到剪貼簿"
+
+#: builder/ai/presets.py:284
+msgid "Couldn't reach the server. Check the address is right and that it's running."
+msgstr "無法連線到伺服器。請檢查位址是否正確以及伺服器是否正在執行。"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:29
 msgid "Count"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:285
+#: frontend/src/components/BackgroundHandler.vue:292
 msgid "Cover"
+msgstr "覆蓋"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
+msgid "Create"
 msgstr ""
 
 #: frontend/src/utils/dialogs.ts:23
 msgid "Create Folder"
-msgstr ""
+msgstr "建立資料夾"
 
 #: frontend/src/utils/dialogs.ts:21
 msgid "Create New Folder"
-msgstr ""
+msgstr "建立新資料夾"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:189
+#: frontend/src/utils/builderBlockCopyPaste.ts:275
 msgid "Create New Page"
-msgstr ""
+msgstr "建立新頁面"
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:4
 msgid "Create a new page"
-msgstr ""
+msgstr "建立新頁面"
+
+#: frontend/src/components/Modals/TokenManager.vue:959
+msgid "Create {0} new token and update {1} existing token?"
+msgstr "建立 {0} 個新權杖並更新 {1} 個現有權杖？"
+
+#: frontend/src/components/Modals/TokenManager.vue:960
+msgid "Create {0} new token and update {1} existing tokens?"
+msgstr "建立 {0} 個新權杖並更新 {1} 個現有權杖？"
+
+#: frontend/src/components/Modals/TokenManager.vue:962
+msgid "Create {0} new tokens and update {1} existing token?"
+msgstr "建立 {0} 個新權杖並更新 {1} 個現有權杖？"
+
+#: frontend/src/components/Modals/TokenManager.vue:963
+msgid "Create {0} new tokens and update {1} existing tokens?"
+msgstr "建立 {0} 個新權杖並更新 {1} 個現有權杖？"
+
+#: builder/ai/agent/pending.py:131
+msgid "Created DocType {0} with {1} field(s)"
+msgstr "已建立 DocType {0}，含 {1} 個欄位"
 
 #: frontend/src/components/PageListItem.vue:56
 msgid "Created by {0}"
-msgstr ""
+msgstr "由 {0} 建立"
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} token"
+msgstr "已建立 {0} 個權杖"
+
+#: frontend/src/components/Modals/TokenManager.vue:1016
+msgid "Created {0} tokens"
+msgstr "已建立 {0} 個權杖"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:34
 msgid "Creating an editable copy..."
-msgstr ""
+msgstr "正在建立可編輯的複本..."
 
 #: frontend/src/components/Templates/TemplateGallery.vue:208
 msgid "Creating page from template..."
-msgstr ""
+msgstr "正在從範本建立頁面..."
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:247
 msgid "Crosshair"
-msgstr ""
+msgstr "十字準星"
 
 #: frontend/src/components/Settings/index.ts:28
 msgid "Current Page"
-msgstr ""
+msgstr "目前頁面"
 
 #: frontend/src/components/VersionHistory.vue:50
 msgid "Current version"
-msgstr ""
+msgstr "目前版本"
 
 #: frontend/src/components/VersionHistory.vue:77
 msgid "Currently live"
-msgstr ""
+msgstr "目前上線中"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:239
 msgid "Cursor"
-msgstr ""
+msgstr "游標"
 
 #: frontend/src/components/Controls/FontInput.vue:130
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
@@ -896,7 +1174,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/index.ts:119
 msgid "Custom Domains"
-msgstr ""
+msgstr "自訂網域"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:188
+msgid "DNS is verified but SSL certificate provisioning failed. Please retry."
+msgstr "DNS 已驗證，但 SSL 憑證佈建失敗。請重試。"
 
 #: frontend/src/components/Modals/TokenManager.vue:51
 msgid "Dark"
@@ -904,16 +1186,16 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
 msgid "Dark Mode"
-msgstr ""
+msgstr "深色模式"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:34
 msgid "Dark Mode Color"
-msgstr ""
+msgstr "深色模式顏色"
 
 #. Label of the dark_value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Dark Value"
-msgstr ""
+msgstr "Dark Value"
 
 #: frontend/src/components/DashboardContent.vue:135
 msgid "Dashboard"
@@ -921,28 +1203,29 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:138
 msgid "Dashed"
-msgstr ""
+msgstr "虛線"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
+#: frontend/src/components/Controls/SearchBlock.vue:178
 msgid "Data"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:51
 msgid "Data Key"
-msgstr ""
+msgstr "資料鍵"
 
 #: frontend/src/components/PageScript.vue:75
 msgid "Data Preview"
-msgstr ""
+msgstr "資料預覽"
 
 #: frontend/src/components/PageScript.vue:7
 msgid "Data Script"
-msgstr ""
+msgstr "資料指令碼"
 
 #: frontend/src/components/PageScript.vue:224
 msgid "Data script saved"
-msgstr ""
+msgstr "已儲存資料指令碼"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:243
 #: frontend/src/components/Controls/FontInput.vue:134
@@ -954,17 +1237,17 @@ msgstr ""
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:17
 msgid "Default HTML lang code (e.g., en, es, fr)"
-msgstr ""
+msgstr "預設 HTML 語言程式碼（例如 en、es、fr）"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:19
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:19
 msgid "Default Items"
-msgstr ""
+msgstr "預設項目"
 
 #. Label of the default_language (Data) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Default Language"
-msgstr ""
+msgstr "預設語言"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:20
 #: frontend/src/components/PropsOptions/ColorOptions.vue:5
@@ -976,37 +1259,47 @@ msgstr ""
 msgid "Default Value"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:283
+#: frontend/src/components/BlockContextMenuOptions/index.ts:260
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
 msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:75
 msgid "Delete Folder"
-msgstr ""
+msgstr "刪除資料夾"
 
-#: frontend/src/components/Commands/index.ts:339
-#: frontend/src/components/Commands/index.ts:344
 #: frontend/src/components/MainMenu.vue:79
 msgid "Delete Page"
-msgstr ""
+msgstr "刪除頁面"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
 msgid "Delete selected blocks"
-msgstr ""
+msgstr "刪除選取的區塊"
 
-#: frontend/src/stores/pageStore.ts:172
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete variable"
+msgstr "刪除變數"
+
+#: frontend/src/components/Modals/TokenManager.vue:767
+msgid "Delete {0} variables"
+msgstr "刪除 {0} 個變數"
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} token"
+msgstr "已刪除 {0} 個權杖"
+
+#: frontend/src/components/Modals/TokenManager.vue:758
+msgid "Deleted {0} tokens"
+msgstr "已刪除 {0} 個權杖"
+
+#: frontend/src/stores/pageStore.ts:178
 msgid "Deleting page"
-msgstr ""
+msgstr "正在刪除頁面"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:296
-msgid "Describe how you want to modify this section…"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:295
-msgid "Describe the page you want to create…"
-msgstr ""
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Deleting redirect..."
+msgstr "正在刪除重新導向..."
 
 #. Label of the meta_description (Small Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1016,49 +1309,59 @@ msgstr ""
 
 #: frontend/src/components/DashboardContent.vue:134
 msgid "Deselect pages"
-msgstr ""
+msgstr "取消選取頁面"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:66
+#: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
 msgid "Design Tokens"
-msgstr ""
+msgstr "設計權杖"
 
 #: frontend/src/components/Controls/FontInput.vue:127
 msgid "Design tokens"
-msgstr ""
+msgstr "設計權杖"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
+msgstr "设计师"
+
+#: frontend/src/components/BuilderCanvas.vue:232
+msgid "Desktop"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:248
+#: frontend/src/components/BlockContextMenuOptions/index.ts:225
 msgid "Detach Component"
-msgstr ""
+msgstr "分離元件"
+
+#. Description of the 'Context Window' (Int) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Detected automatically. 200,000 is assumed when unknown."
+msgstr "自動偵測。未知時假設為 200,000。"
 
 #: frontend/src/components/Settings/index.ts:136
 #: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Developer"
-msgstr ""
+msgstr "開發者"
 
 #. Label of the developer_options_section (Section Break) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Developer Options"
-msgstr ""
+msgstr "開發者選項"
 
 #: frontend/src/components/Settings/index.ts:137
 msgid "Developer Settings"
-msgstr ""
+msgstr "開發人員設定"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:77
 msgid "Dimension"
-msgstr ""
+msgstr "Dimension"
 
-#: frontend/src/components/Modals/TokenManager.vue:451
+#: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
-msgstr ""
+msgstr "维度"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1069,67 +1372,88 @@ msgstr ""
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:77
 msgid "Disable Auto Dark Mode"
-msgstr ""
+msgstr "關閉自動深色模式"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:128
+#: frontend/src/components/Settings/PageGeneral.vue:124
 msgid "Disable Indexing"
-msgstr ""
+msgstr "停用索引"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:246
 msgid "Disable Redirect"
-msgstr ""
+msgstr "停用重新導向"
 
 #. Description of the 'Disable Auto Dark Mode' (Check) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Disable automatic dark mode color scheme adjustments for all pages globally."
-msgstr ""
+msgstr "全面停用所有頁面的自動深色模式配色方案調整功能。"
+
+#: frontend/src/data/domains.ts:88
+msgid "Disabling redirect…"
+msgstr "正在停用重新導向…"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:22
 msgid "Distribution"
-msgstr ""
+msgstr "分布"
 
 #: frontend/src/utils/useBuilderEvents.ts:474
 msgid "Do you want to copy the entire page including settings and scripts?"
-msgstr ""
+msgstr "你要複製包含設定與指令碼的整個頁面嗎？"
 
-#: frontend/src/utils/helpers.ts:495
+#: frontend/src/utils/helpers.ts:516
 msgid "Do you want to upload the font \"{0}\"?"
-msgstr ""
+msgstr "你要上傳字型「{0}」嗎？"
+
+#: builder/ai/agent/pending.py:97
+msgid "DocType {0} already exists"
+msgstr "DocType {0} 已存在"
+
+#: builder/ai/agent/pending.py:138
+msgid "DocType {0} does not exist"
+msgstr "DocType {0} 不存在"
+
+#: builder/ai/agent/pending.py:95
+msgid "Doctype name is required"
+msgstr "必須提供 DocType 名稱"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:12
 msgid "Domain"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalDomains.vue:177
+#: frontend/src/components/Settings/GlobalDomains.vue:192
+msgid "Domain setup failed. Please retry or contact support."
+msgstr "網域設定失敗。請重試或聯絡支援。"
+
 #: frontend/src/data/domains.ts:54
 msgid "Domain verification failed"
-msgstr ""
+msgstr "網域驗證失敗"
 
 #: frontend/src/components/Settings/index.ts:118
 msgid "Domains"
-msgstr ""
+msgstr "網域"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Don't Execute"
-msgstr ""
+msgstr "不要執行"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:169
-#: frontend/src/utils/builderBlockCopyPaste.ts:201
-#: frontend/src/utils/builderBlockCopyPaste.ts:221
+#: frontend/src/utils/builderBlockCopyPaste.ts:182
+#: frontend/src/utils/builderBlockCopyPaste.ts:293
+#: frontend/src/utils/builderBlockCopyPaste.ts:314
 msgid "Done"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:139
 msgid "Dotted"
-msgstr ""
+msgstr "點線"
 
 #: frontend/src/components/Modals/TokenManager.vue:386
 msgid "Download sample"
-msgstr ""
+msgstr "下載範例"
 
 #: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:47
@@ -1139,37 +1463,33 @@ msgstr ""
 #. Label of the draft_blocks (Long Text) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Draft Blocks"
-msgstr ""
+msgstr "草稿模組"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:25
-msgid "Drop image to attach"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:78
+#: frontend/src/components/BlockContextMenuOptions/index.ts:55
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:279
+#: frontend/src/components/Commands/index.ts:277
 msgid "Duplicate Block"
-msgstr ""
+msgstr "建立區塊複本"
 
-#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/components/Commands/index.ts:130
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
-msgstr ""
+msgstr "建立頁面複本"
 
-#: frontend/src/components/Commands/index.ts:283
+#: frontend/src/components/Commands/index.ts:281
 msgid "Duplicate block"
-msgstr ""
+msgstr "建立區塊複本"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
-msgstr ""
+msgstr "建立複本以編輯"
 
-#: frontend/src/stores/pageStore.ts:155
+#: frontend/src/stores/pageStore.ts:161
 msgid "Duplicating page"
-msgstr ""
+msgstr "正在建立頁面複本"
 
 #. Label of the dynamic_route (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -1178,236 +1498,304 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:53
 msgid "Ease In"
-msgstr ""
+msgstr "緩入"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:55
 msgid "Ease In Out"
-msgstr ""
+msgstr "緩入緩出"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:54
 msgid "Ease Out"
-msgstr ""
+msgstr "緩出"
 
-#: frontend/src/components/Commands/index.ts:46
+#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/utils/colorOptions.ts:80
 #: frontend/src/utils/useBuilderEvents.ts:241
 #: frontend/src/utils/useBuilderEvents.ts:255
 msgid "Edit"
 msgstr ""
 
-#: frontend/src/pages/PageBuilder.vue:308
+#: frontend/src/pages/PageBuilder.vue:227
 msgid "Edit Block Client Script"
-msgstr ""
+msgstr "編輯區塊用戶端指令碼"
 
-#: frontend/src/components/Commands/index.ts:293
-msgid "Edit Block with AI"
-msgstr ""
-
-#: frontend/src/pages/PageBuilder.vue:312
+#: frontend/src/pages/PageBuilder.vue:231
 msgid "Edit CSS"
-msgstr ""
+msgstr "編輯 CSS"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:225
+#: frontend/src/components/BlockContextMenuOptions/index.ts:202
 msgid "Edit Component"
-msgstr ""
+msgstr "編輯元件"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:52
-#: frontend/src/pages/PageBuilder.vue:305
+#: frontend/src/components/BlockContextMenuOptions/index.ts:29
+#: frontend/src/pages/PageBuilder.vue:224
 msgid "Edit HTML"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:297
-msgid "Edit block with AI"
-msgstr ""
+#: frontend/src/components/Settings/GlobalRedirects.vue:68
+msgid "Edit Redirect"
+msgstr "編輯重新導向"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "Edit Token"
+msgstr "編輯權杖"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:28
 msgid "Edit template"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:31
-msgid "Edit with AI"
-msgstr ""
+msgstr "編輯範本"
 
 #: frontend/src/components/PageCard.vue:23
 msgid "Edited {0}"
-msgstr ""
+msgstr "已編輯 {0}"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:19
 msgid "Editing is disabled while the site is being updated. Please try again in a few minutes."
-msgstr ""
+msgstr "網站更新期間會停用編輯功能。請於幾分鐘後再試。"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:53
 msgid "Editor Config"
-msgstr ""
+msgstr "編輯器設定"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Element"
-msgstr ""
+msgstr "元素"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:81
 msgid "Email addresses"
-msgstr ""
+msgstr "電子郵件地址"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:55
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:18
 msgid "Enable View Tracking"
+msgstr "啟用瀏覽追蹤"
+
+#. Label of the enabled (Check) field in DocType 'Builder AI Model'
+#. Label of the enabled (Check) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Enabled"
 msgstr ""
+
+#: frontend/src/data/domains.ts:84
+msgid "Enabling redirect…"
+msgstr "正在啟用重新導向…"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:71
 msgid "End"
 msgstr ""
+
+#: builder/ai/api.py:382
+msgid "Enter a model id to test with"
+msgstr "輸入要用於測試的模型 ID"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:35
 #: frontend/src/components/PropsOptions/NumberOptions.vue:32
 #: frontend/src/components/PropsOptions/SelectOptions.vue:14
 #: frontend/src/components/PropsOptions/StringOptions.vue:8
 msgid "Enter default value"
-msgstr ""
+msgstr "輸入預設值"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:16
 msgid "Enter false label display"
-msgstr ""
+msgstr "輸入 false 標籤顯示"
 
 #: frontend/src/components/PropsOptions/ImageOptions.vue:6
 msgid "Enter image URL or upload one"
-msgstr ""
+msgstr "輸入圖片 URL 或上傳一張"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:16
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:16
 msgid "Enter max number of items"
-msgstr ""
+msgstr "輸入項目數量上限"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:15
 #: frontend/src/components/PropsOptions/NumberOptions.vue:24
 msgid "Enter max value"
-msgstr ""
+msgstr "輸入最大值"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:8
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:8
 msgid "Enter min number of items"
-msgstr ""
+msgstr "輸入項目數量下限"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:8
 msgid "Enter min value"
-msgstr ""
+msgstr "輸入最小值"
 
 #: frontend/src/components/PropsPopoverContent.vue:20
 msgid "Enter prop key"
-msgstr ""
+msgstr "輸入屬性鍵"
 
 #: frontend/src/components/PropsPopoverContent.vue:12
 msgid "Enter prop label"
-msgstr ""
+msgstr "輸入屬性標籤"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:8
 msgid "Enter true label display"
-msgstr ""
+msgstr "輸入 true 標籤顯示"
 
 #: frontend/src/components/ArrayEditor.vue:5
 msgid "Enter value"
-msgstr ""
+msgstr "輸入值"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:42
 msgid "Enter your domain"
-msgstr ""
+msgstr "輸入你的網域"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Error adding redirect"
+msgstr "新增重新導向時發生錯誤"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Error deleting redirect"
+msgstr "刪除重新導向時發生錯誤"
+
+#: frontend/src/stores/componentStore.ts:132
+msgid "Error syncing component in all the pages!"
+msgstr "在所有頁面同步元件時發生錯誤！"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Error updating redirect"
+msgstr "更新重新導向時發生錯誤"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:154
 msgid "Exact path"
-msgstr ""
+msgstr "完全相符的路徑"
 
 #: frontend/src/components/PageScript.vue:80
 #: frontend/src/components/PageScript.vue:138
 msgid "Example:"
-msgstr "範例:"
+msgstr "範例："
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:112
 msgid "Examples"
-msgstr ""
+msgstr "範例"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:5
 msgid "Execute Block Client Scripts in Editor"
-msgstr ""
+msgstr "在編輯器中執行區塊用戶端指令碼"
 
 #. Label of the execute_block_scripts_in_editor (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Execute Block Scripts in Editor"
-msgstr ""
+msgstr "在編輯器中執行區塊腳本"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
 msgid "Exit current mode"
-msgstr ""
+msgstr "退出目前模式"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
 msgid "Expand"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:144
 msgid "Expand All Layers"
-msgstr ""
+msgstr "展開所有圖層"
 
 #: frontend/src/components/RouteTreeView.vue:355
 msgid "Expand node or move down in page tree"
-msgstr ""
+msgstr "展開節點或在頁面樹中往下移動"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
-msgstr ""
+msgstr "外部 URL"
+
+#: frontend/src/utils/fontManager.ts:25
+msgid "Extra Bold"
+msgstr "特粗"
+
+#: frontend/src/utils/fontManager.ts:19
+msgid "Extra Light"
+msgstr "特細"
+
+#: builder/domain.py:35
+msgid "FC API returned {0}"
+msgstr "FC API 傳回 {0}"
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to convert image to WebP"
+msgstr "圖片轉換為 WebP 失敗"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:211
 msgid "Failed to copy"
-msgstr ""
+msgstr "複製失敗"
 
-#: builder/ai_page_generator.py:385
-msgid "Failed to parse AI response. The model returned invalid YAML."
-msgstr ""
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to create token"
+msgstr "建立權杖失敗"
 
-#: frontend/src/components/Modals/TokenManager.vue:869
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} token"
+msgstr "建立 {0} 個權杖失敗"
+
+#: frontend/src/components/Modals/TokenManager.vue:1018
+msgid "Failed to create {0} tokens"
+msgstr "建立 {0} 個權杖失敗"
+
+#: frontend/src/components/Modals/TokenManager.vue:755
+msgid "Failed to delete \"{0}\""
+msgstr "刪除「{0}」失敗"
+
+#: frontend/src/utils/imageUtils.ts:59
+msgid "Failed to pull image to local"
+msgstr "將圖片拉取到本機失敗"
+
+#: frontend/src/components/Modals/TokenManager.vue:879
 msgid "Failed to read CSV file"
-msgstr ""
+msgstr "讀取 CSV 檔案失敗"
 
 #: frontend/src/components/EditableSpan.vue:63
 msgid "Failed to rename"
-msgstr ""
+msgstr "重新命名失敗"
 
 #: frontend/src/stores/componentStore.ts:98
 #: frontend/src/stores/componentStore.ts:139
 msgid "Failed to save component"
-msgstr ""
+msgstr "儲存元件失敗"
 
-#: frontend/src/components/PageClientScriptManager.vue:270
+#: frontend/src/components/PageClientScriptManager.vue:277
 #: frontend/src/components/PageScript.vue:231
 msgid "Failed to save script"
-msgstr ""
+msgstr "儲存指令碼失敗"
 
-#: frontend/src/components/Settings/GlobalAI.vue:71
-msgid "Failed to test API key"
-msgstr ""
-
-#: frontend/src/components/PageClientScriptManager.vue:390
+#: frontend/src/components/PageClientScriptManager.vue:397
 msgid "Failed to update script order"
-msgstr ""
+msgstr "更新指令碼順序失敗"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:99
+msgid "Failed to update token"
+msgstr "更新權杖失敗"
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} token"
+msgstr "更新 {0} 個權杖失敗"
+
+#: frontend/src/components/Modals/TokenManager.vue:1019
+msgid "Failed to update {0} tokens"
+msgstr "更新 {0} 個權杖失敗"
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
-msgstr ""
+msgstr "上傳失敗"
 
-#: frontend/src/utils/helpers.ts:534
+#: frontend/src/utils/helpers.ts:555
 msgid "Failed to upload font"
-msgstr ""
+msgstr "上傳字型失敗"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:12
 msgid "False Label"
-msgstr ""
+msgstr "False 標籤"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:41
 msgid "Family"
-msgstr ""
+msgstr "字型系列"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:16
 msgid "Fast"
-msgstr ""
+msgstr "快"
 
 #. Label of the favicon (Attach Image) field in DocType 'Builder Page'
 #. Label of the favicon (Attach Image) field in DocType 'Builder Settings'
@@ -1418,23 +1806,27 @@ msgstr ""
 #: frontend/src/components/Settings/PageGeneral.vue:65
 #: frontend/src/components/Settings/PageGeneral.vue:80
 msgid "Favicon"
-msgstr ""
+msgstr "網站圖示"
 
 #: frontend/src/components/ImageUploadInput.vue:74
 msgid "Fill & Crop"
-msgstr ""
+msgstr "填滿並裁切"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Filter Builder Pages"
+msgstr "篩選 Builder 頁面"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:5
 msgid "Filter by route"
-msgstr ""
+msgstr "依路由篩選"
 
 #: frontend/src/components/DashboardHead.vue:16
 msgid "Filter by title or route"
-msgstr ""
+msgstr "依標題或路由篩選"
 
 #: frontend/src/components/Controls/SearchBlock.vue:44
 msgid "Filter search results by:"
-msgstr ""
+msgstr "篩選搜尋結果依據："
 
 #: frontend/src/components/Controls/SearchBlock.vue:27
 msgid "Filters"
@@ -1442,46 +1834,50 @@ msgstr ""
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:24
 msgid "Find"
-msgstr ""
+msgstr "尋找"
 
 #: frontend/src/components/Controls/SearchBlock.vue:8
 msgid "Find & Replace"
-msgstr ""
+msgstr "尋找與取代"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:60
 msgid "Find Next (Enter)"
-msgstr ""
+msgstr "尋找下一個（Enter）"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:54
 msgid "Find Previous (Shift+Enter)"
-msgstr ""
+msgstr "尋找上一個（Shift+Enter）"
+
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Find..."
+msgstr "尋找..."
 
 #: frontend/src/components/DimensionInput.vue:13
 msgid "Fit Content"
-msgstr ""
+msgstr "符合內容"
 
 #: frontend/src/components/ImageUploadInput.vue:73
 msgid "Fit Inside"
-msgstr ""
+msgstr "符合內部"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
 msgid "Fit canvas to screen"
-msgstr ""
+msgstr "使畫布符合螢幕"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr ""
+msgstr "固定金额"
 
-#: frontend/src/components/Commands/index.ts:248
+#: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
-msgstr ""
+msgstr "聚焦屬性搜尋"
 
-#: frontend/src/components/Commands/index.ts:252
+#: frontend/src/components/Commands/index.ts:250
 msgid "Focus property search"
-msgstr ""
+msgstr "聚焦屬性搜尋"
 
-#: frontend/src/components/Settings/PageGeneral.vue:163
+#: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
 msgid "Folder"
 msgstr ""
@@ -1494,65 +1890,73 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:19
 msgid "Folders"
-msgstr ""
+msgstr "資料夾"
 
 #. Option for the 'Type' (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Font"
 msgstr ""
 
-#: frontend/src/utils/helpers.ts:488
+#: frontend/src/utils/helpers.ts:509
 msgid "Font \"{0}\" already exists in the project"
-msgstr ""
+msgstr "字型「{0}」已存在於專案中"
 
-#: frontend/src/utils/helpers.ts:533
+#: frontend/src/utils/helpers.ts:554
 msgid "Font \"{0}\" uploaded successfully"
-msgstr ""
+msgstr "已成功上傳字型「{0}」"
 
 #. Label of the font_file (Attach) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font File"
-msgstr ""
+msgstr "字型文件"
 
 #. Label of the font_name (Data) field in DocType 'User Font'
 #: builder/builder/doctype/user_font/user_font.json
 msgid "Font Name"
-msgstr ""
+msgstr "字體名稱"
 
-#: frontend/src/components/Modals/TokenManager.vue:450
+#: frontend/src/components/Modals/TokenManager.vue:455
 msgid "Fonts"
 msgstr ""
 
 #. Label of the for_web_page (Link) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "For Web Page"
-msgstr ""
+msgstr "網頁"
+
+#: builder/ai/agent/pending.py:213
+msgid "Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
+msgstr "已連接表單。提交內容會儲存到「{0}」。在 Desk 中檢視：[/app/{1}](/app/{1})"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Form parts"
-msgstr ""
+msgstr "組成零件"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:104
 msgid "Forward query parameters"
-msgstr ""
+msgstr "轉發查詢參數"
+
+#: frontend/src/components/Controls/SearchBlock.vue:322
+msgid "Found in: {0}"
+msgstr "找到於：{0}"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:131
 msgid "Founder / Business owner"
-msgstr ""
+msgstr "創辦人／企業主"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe／ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Frappe Builder"
-msgstr ""
+msgstr "Frappe Builder"
 
 #: frontend/src/components/BuilderToolbar.vue:32
 msgid "Frappe Builder - Get Started"
-msgstr ""
+msgstr "Frappe Builder - 開始使用"
 
 #: frontend/src/components/BlockPositionHandler.vue:12
 msgid "Free"
@@ -1560,7 +1964,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:117
 msgid "Friend / colleague"
-msgstr ""
+msgstr "朋友／同事"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:12
 msgid "Gap"
@@ -1568,8 +1972,8 @@ msgstr ""
 
 #: frontend/src/components/BuilderCommandPalette.vue:45
 #: frontend/src/components/BuilderCommandPalette.vue:79
-#: frontend/src/components/Commands/index.ts:45
-#: frontend/src/components/Commands/index.ts:204
+#: frontend/src/components/Commands/index.ts:44
+#: frontend/src/components/Commands/index.ts:202
 #: frontend/src/components/Settings/index.ts:44
 #: frontend/src/components/Settings/index.ts:45
 #: frontend/src/components/Settings/index.ts:78
@@ -1579,26 +1983,13 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Generate"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:290
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:5
-msgid "Generate with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Generating page…"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:17
-msgid "Get API key from"
-msgstr ""
-
 #: frontend/src/components/BuilderToolbar.vue:27
 msgid "Get Started"
 msgstr ""
+
+#: builder/ai/presets.py:189
+msgid "Give this provider a name"
+msgstr "為此提供者命名"
 
 #: frontend/src/components/BuilderCommandPalette.vue:264
 #: frontend/src/components/Settings/index.ts:29
@@ -1607,29 +1998,33 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:96
 msgid "Global Builder Settings"
-msgstr ""
+msgstr "全域 Builder 設定"
 
 #: frontend/src/components/Settings/index.ts:95
 msgid "Global Code"
-msgstr ""
+msgstr "全域程式碼"
 
 #: frontend/src/utils/dialogs.ts:46
 msgid "Global Component"
-msgstr ""
+msgstr "全域元件"
 
 #. Description of the 'Script' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global script that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "這是一個全球性腳本，凡是使用 Frappe Builder 建立的頁面都會載入此腳本"
 
 #. Description of the 'Style' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Global style that will be loaded with every page built with Frappe Builder"
-msgstr ""
+msgstr "使用 Frappe Builder 建立的每個頁面都會載入的全球樣式"
 
-#: frontend/src/components/Commands/index.ts:98
+#: frontend/src/components/Commands/index.ts:96
 msgid "Go to Dashboard"
-msgstr ""
+msgstr "前往儀表板"
+
+#: frontend/src/components/BackgroundHandler.vue:231
+msgid "Gradient"
+msgstr "漸層"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
 #: frontend/src/components/DashboardHead.vue:74
@@ -1638,36 +2033,48 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:6
 msgid "Grid Type"
-msgstr ""
+msgstr "格線類型"
 
 #. Label of the group (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 msgid "Group"
 msgstr ""
 
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:56
+msgid "Group name for this radio button. Radio buttons with the same name are grouped together."
+msgstr "此選項按鈕的群組名稱。名稱相同的選項按鈕會歸為同一組。"
+
 #: frontend/src/components/BlockFlexLayoutHandler.vue:41
 msgid "Grow"
-msgstr ""
+msgstr "增長"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
-#: frontend/src/pages/PageBuilder.vue:304
+#: frontend/src/pages/PageBuilder.vue:223
 msgid "HTML"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/CustomAttributesSection.ts:23
 msgid "HTML Attributes"
-msgstr ""
+msgstr "HTML 屬性"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
 msgid "HTML Options"
-msgstr ""
+msgstr "HTML 選項"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0}"
+msgstr "HTTP {0}"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:48
+msgid "HTTP {0} · forwards query parameters"
+msgstr "HTTP {0} · 轉發查詢參數"
 
 #. Label of the head_html (Code) field in DocType 'Builder Page'
 #. Label of the head_html (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Head HTML"
-msgstr ""
+msgstr "Head HTML"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:49
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:90
@@ -1688,23 +2095,27 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Hide Left Panel"
-msgstr ""
+msgstr "隱藏左側面板"
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Hide Replace"
+msgstr "隱藏取代"
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Hide Right Panel"
-msgstr ""
+msgstr "隱藏右側面板"
 
 #: frontend/src/utils/useBuilderEvents.ts:413
 msgid "Highlight Blocks with Client Scripts"
-msgstr ""
+msgstr "醒目提示含用戶端指令碼的區塊"
 
-#: frontend/src/pages/PageBuilder.vue:273
+#: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for move mode"
-msgstr ""
+msgstr "按住以進入移動模式"
 
-#: frontend/src/components/Settings/PageGeneral.vue:204
+#: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
 msgid "Home"
 msgstr ""
@@ -1716,84 +2127,109 @@ msgstr ""
 
 #: frontend/src/components/RouteTreeNode.vue:42
 msgid "Home page"
-msgstr ""
+msgstr "首頁"
+
+#: builder/ai/agent/pending.py:75
+msgid "Home page set to /{0}"
+msgstr "首頁已設為 /{0}"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
-#: frontend/src/components/Settings/PageGeneral.vue:100
+#: frontend/src/components/Settings/PageGeneral.vue:96
 msgid "Homepage"
-msgstr ""
+msgstr "首頁"
 
-#: frontend/src/stores/builderStore.ts:77
+#: frontend/src/stores/builderStore.ts:96
 msgid "Homepage set successfully"
-msgstr ""
+msgstr "已成功設定首頁"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:9
 msgid "Horizontal"
 msgstr ""
 
+#: frontend/src/pages/PagePersonaSurvey.vue:111
+msgid "How did you hear about Builder?"
+msgstr "你是如何得知 Builder 的？"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:113
+msgid "I heard from the community"
+msgstr "我從社群得知"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:127
+msgid "I'm a student building my first site"
+msgstr "我是正在建立第一個網站的學生"
+
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/BackgroundHandler.vue:235
 #: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
 msgstr ""
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:24
 msgid "Image (i)"
-msgstr ""
+msgstr "圖片（i）"
 
 #: frontend/src/components/ImageUploadInput.vue:68
 msgid "Image Fit"
-msgstr ""
+msgstr "圖片符合方式"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:83
 msgid "Image Options"
-msgstr ""
+msgstr "圖片選項"
 
 #: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:16
 msgid "Image URL"
-msgstr ""
+msgstr "圖片 URL"
 
-#: builder/ai_page_generator.py:221
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image converted to WebP"
+msgstr "圖片已轉換為 WebP"
+
+#: builder/ai/block_codec.py:256
 msgid "Image is too large. Please use an image smaller than 5 MB."
-msgstr ""
+msgstr "圖片過大，請使用小於5MB的圖片。"
 
 #: frontend/src/utils/useBuilderEvents.ts:376
 msgid "Image mode"
-msgstr ""
+msgstr "圖片模式"
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:110
+#: frontend/src/utils/imageUtils.ts:58
+msgid "Image pulled to local"
+msgstr "圖片已拉取到本機"
+
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:109
 msgid "Input Options"
-msgstr ""
+msgstr "輸入選項"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:33
+#: frontend/src/components/LeftPanelTabs/index.ts:36
 msgid "Insert"
 msgstr ""
+
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Inset Shadow"
+msgstr "內陰影"
 
 #. Description of the 'Persona Survey Done' (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
-msgstr ""
+msgstr "內部標誌：在使用者角色引導調查顯示後設定。全站範圍（建構器設定是單一設定）－適用於單一使用者試用網站上的單一使用者設定。"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:147
 msgid "Internal tool / dashboard"
-msgstr ""
+msgstr "內部工具／儀表板"
 
-#: builder/api.py:186
+#: builder/api.py:326
 msgid "Invalid URL: missing hostname."
-msgstr ""
+msgstr "無效的 URL：缺少主機名稱。"
 
-#: builder/ai_page_generator.py:631
-msgid "Invalid block context JSON"
-msgstr ""
-
-#: builder/ai_page_generator.py:218
+#: builder/ai/block_codec.py:254
 msgid "Invalid image data: must be a base64-encoded data URL"
-msgstr ""
+msgstr "無效的圖像資料：必須是 base64 編碼的資料 URL。"
 
-#: builder/ai_page_generator.py:216
+#: builder/ai/block_codec.py:252
 msgid "Invalid image data: must be a base64-encoded image data URL"
-msgstr ""
+msgstr "無效的圖像資料：必須是經過 Base64 編碼的圖像資料 URL。"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:111
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:126
@@ -1801,23 +2237,44 @@ msgstr ""
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:122
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:137
 msgid "Invalid option configuration!"
-msgstr ""
+msgstr "無效的選項設定！"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:210
 msgid "Invitation cancelled"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:200
+msgid "Invitation resent to {0}"
+msgstr "已重新傳送邀請給 {0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:178
+msgid "Invitation sent to {0}"
+msgstr "已傳送邀請給 {0}"
+
 #: frontend/src/components/Settings/GlobalUsers.vue:11
 msgid "Invite"
-msgstr ""
+msgstr "邀請"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:75
 msgid "Invite Users"
-msgstr ""
+msgstr "邀請使用者"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0}"
+msgstr "已邀請 {0}"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:29
+msgid "Invited {0} by {1}"
+msgstr "{1} 已邀請 {0}"
 
 #: frontend/src/components/PropsPopoverContent.vue:33
 msgid "Is Required"
-msgstr ""
+msgstr "為必填"
+
+#. Label of the is_running (Check) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Is Running"
+msgstr "執行中"
 
 #. Label of the is_standard (Check) field in DocType 'Builder Page'
 #. Label of the is_standard (Check) field in DocType 'Builder Project Folder'
@@ -1831,7 +2288,7 @@ msgstr ""
 #. Label of the is_template (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Is Template"
-msgstr ""
+msgstr "是模板"
 
 #. Label of the is_unique (Check) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -1840,12 +2297,16 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:34
 msgid "Item Width"
-msgstr ""
+msgstr "項目寬度"
 
-#: frontend/src/components/PageClientScriptManager.vue:77
+#: frontend/src/components/PageClientScriptManager.vue:75
 #: frontend/src/components/PageScript.vue:193
 msgid "JavaScript"
 msgstr ""
+
+#: frontend/src/pages/PagePersonaSurvey.vue:112
+msgid "Just curious, it helps us know what's working."
+msgstr "只是好奇，這有助於我們了解哪些做法有效。"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Just exploring"
@@ -1861,11 +2322,13 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:202
+#: frontend/src/components/Commands/index.ts:200
 msgid "Keyboard Shortcuts"
 msgstr ""
 
+#. Label of the label (Data) field in DocType 'Builder AI Model'
 #. Label of the label (Data) field in DocType 'Builder Snapshot'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 #: frontend/src/components/PropsPopoverContent.vue:8
 msgid "Label"
@@ -1888,11 +2351,11 @@ msgstr ""
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:66
 msgid "Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
-msgstr ""
+msgstr "HTML 語言程式碼（例如，en、es、fr、de）。如果未設置，則使用預設值。"
 
 #: frontend/src/components/ShadowHandler.vue:185
 msgid "Large"
-msgstr ""
+msgstr "大"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -1904,32 +2367,59 @@ msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:57
 msgid "Last Created"
-msgstr ""
+msgstr "最後建立"
+
+#. Label of the last_interaction_on (Datetime) field in DocType 'Builder AI
+#. Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Interaction On"
+msgstr "最後互動時間"
 
 #: frontend/src/components/DashboardHead.vue:58
 msgid "Last Modified"
-msgstr ""
+msgstr "上次修改時間"
+
+#. Label of the last_task_type (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Last Task Type"
+msgstr "最後任務類型"
 
 #: frontend/src/components/PageListItem.vue:39
 msgid "Last updated {0} by {1}"
-msgstr ""
+msgstr "最後由 {1} 更新於 {0}"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
 msgid "Layer Icon"
-msgstr ""
+msgstr "圖層圖示"
 
-#: frontend/src/components/Commands/index.ts:43
-#: frontend/src/components/Commands/index.ts:148
-#: frontend/src/components/Commands/index.ts:161
-#: frontend/src/components/LeftPanelTabs/index.ts:40
+#: frontend/src/components/ShadowHandler.vue:64
+msgid "Layer {0}"
+msgstr "圖層 {0}"
+
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:146
+#: frontend/src/components/Commands/index.ts:159
+#: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
-msgstr ""
+msgstr "版面配置"
 
-#: frontend/src/components/BackgroundHandler.vue:293
+#. Description of the 'API Key' (Password) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Leave empty to fall back to the OpenRouter key in Builder Settings."
+msgstr "留空以改用 Builder 設定中的 OpenRouter 金鑰。"
+
+#. Description of the 'Supports Vision' (Check) field in DocType 'Builder AI
+#. Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Leave off unless the model accepts image input. Sending an image to a text-only model fails the whole turn."
+msgstr "除非模型接受圖片輸入，否則請保持關閉。將圖片傳送給僅支援文字的模型會導致整個回合失敗。"
+
+#: frontend/src/components/BackgroundHandler.vue:300
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
@@ -1940,21 +2430,27 @@ msgid "Letter"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:50
+#: frontend/src/utils/fontManager.ts:20
 msgid "Light"
 msgstr ""
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:27
 msgid "Light Mode Color"
-msgstr ""
+msgstr "淺色模式顏色"
 
 #: frontend/src/components/PageListItem.vue:26
 msgid "Limited access"
-msgstr ""
+msgstr "有限存取"
+
+#: builder/builder/doctype/builder_settings/builder_settings.js:21
+#: builder/builder/doctype/builder_settings/builder_settings.js:67
+msgid "Limits the pages where the component is replaced"
+msgstr "限制取代該元件的頁面範圍"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:52
 #: frontend/src/components/Controls/GradientEditor.vue:7
 msgid "Linear"
-msgstr ""
+msgstr "線性"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:91
 msgid "Link"
@@ -1968,14 +2464,29 @@ msgstr ""
 msgid "List"
 msgstr ""
 
+#. Label of the litellm_provider (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "LiteLLM Provider"
+msgstr "LiteLLM 提供者"
+
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
 msgstr ""
 
+#: frontend/src/components/RouteTreeNode.vue:90
+#: frontend/src/components/RouteTreeView.vue:39
+msgid "Load {0} more"
+msgstr "載入另外 {0} 個"
+
 #: frontend/src/components/Settings/GlobalDomains.vue:5
 msgid "Loading domains…"
-msgstr ""
+msgstr "正在載入網域…"
 
+#: frontend/src/components/RouteTreeView.vue:4
+msgid "Loading pages…"
+msgstr "正在載入頁面…"
+
+#: frontend/src/components/BuilderSettings.vue:35
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
 #: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
@@ -1986,20 +2497,20 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:92
 msgid "Loop"
-msgstr ""
+msgstr "循環播放"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:128
 msgid "Lowercase"
-msgstr ""
+msgstr "小寫"
 
-#: frontend/src/components/Settings/PageGeneral.vue:138
+#: frontend/src/components/Settings/PageGeneral.vue:134
 msgid "Make this page a standard page that can be exported to an app"
-msgstr ""
+msgstr "將此頁面設為可匯出至應用程式的標準頁面"
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Map route parameters into form variables. Example <code>/profile/:user</code>"
-msgstr ""
+msgstr "將路由參數對應到表單變數。例如： <code>/profile/:user</code>"
 
 #: frontend/src/components/BlockPropertySections/SpacingSection.ts:13
 msgid "Margin"
@@ -2007,19 +2518,19 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Marketer"
-msgstr ""
+msgstr "行銷人員"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:143
 msgid "Marketing / landing site"
-msgstr ""
+msgstr "行銷／登陸頁網站"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
 msgid "Match Case"
-msgstr ""
+msgstr "大小寫須相符"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
 msgid "Match Whole Word"
-msgstr ""
+msgstr "全字須相符"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
@@ -2027,24 +2538,34 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:30
 msgid "Max Width"
-msgstr ""
+msgstr "最大寬度"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:12
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:12
 msgid "Max. Items"
-msgstr ""
+msgstr "項目數上限"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:12
 msgid "Max. Value"
-msgstr ""
+msgstr "最大值"
 
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Media"
-msgstr ""
+msgstr "媒體"
 
 #: frontend/src/components/ShadowHandler.vue:184
+#: frontend/src/utils/fontManager.ts:22
 msgid "Medium"
+msgstr ""
+
+#: frontend/src/components/Settings/GlobalUsers.vue:48
+msgid "Members ({0})"
+msgstr ""
+
+#. Label of the message_type (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Message Type"
 msgstr ""
 
 #. Label of the settings_tab (Tab Break) field in DocType 'Builder Page'
@@ -2063,50 +2584,44 @@ msgstr ""
 msgid "Meta Tags"
 msgstr ""
 
+#. Label of the metadata_json (Long Text) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Metadata JSON"
+msgstr "中繼資料 JSON"
+
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:59
 msgid "Min Height"
-msgstr ""
+msgstr "最小高度"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:20
 msgid "Min Width"
-msgstr ""
+msgstr "最小寬度"
 
 #: frontend/src/components/PropsOptions/ArrayOptions.vue:4
 #: frontend/src/components/PropsOptions/ObjectOptions.vue:4
 msgid "Min. Items"
-msgstr ""
+msgstr "項目數下限"
 
 #: frontend/src/components/PropsOptions/NumberOptions.vue:4
 msgid "Min. Value"
+msgstr "最小值"
+
+#: frontend/src/components/BuilderCanvas.vue:247
+msgid "Mobile"
 msgstr ""
 
-#: frontend/src/components/WebPagePresetPicker.vue:455
-msgid "Minimal"
-msgstr ""
+#. Label of the model_id (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Model ID"
+msgstr "模型 ID"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:74
-msgid "Model"
-msgstr ""
-
-#: frontend/src/components/WebPagePresetPicker.vue:457
-msgid "Modern"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:121
-msgid "Modify"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:291
-msgid "Modify with AI"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:144
-msgid "Modifying section…"
-msgstr ""
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.py:23
+msgid "Model ID is required"
+msgstr "必須提供模型 ID"
 
 #: frontend/src/components/BlockPropertySections/MoreStylesSection.ts:15
 msgid "More Styles"
-msgstr ""
+msgstr "更多樣式"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:245
 #: frontend/src/components/Modals/TokenManager.vue:367
@@ -2115,24 +2630,32 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / hand mode"
-msgstr ""
+msgstr "移動／手形模式"
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
-msgstr ""
+msgstr "移動至資料夾"
 
 #: frontend/src/components/RouteTreeView.vue:335
 msgid "Move down in page tree"
-msgstr ""
+msgstr "在頁面樹中往下移動"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
-#: frontend/src/components/Modals/TokenManager.vue:759
+#: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to group"
-msgstr ""
+msgstr "移動至群組"
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move up in page tree"
-msgstr ""
+msgstr "在頁面樹中往上移動"
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} token to \"{1}\""
+msgstr "已將 {0} 個權杖移動至「{1}」"
+
+#: frontend/src/components/Modals/TokenManager.vue:727
+msgid "Moved {0} tokens to \"{1}\""
+msgstr "已將 {0} 個權杖移動至「{1}」"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:75
 msgid "Muted"
@@ -2141,23 +2664,33 @@ msgstr ""
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
 msgid "My Page"
-msgstr ""
+msgstr "我的頁面"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
 #: frontend/src/components/Modals/TokenManager.vue:48
 msgid "Name"
 msgstr ""
 
+#: frontend/src/components/EditableSpan.vue:61
+msgid "Name already exists"
+msgstr "名稱已存在"
+
 #: frontend/src/components/VersionHistory.vue:24
 msgid "Name this version (optional)"
-msgstr ""
+msgstr "為此版本命名（選填）"
+
+#. Description of the 'Route Prefix' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty."
+msgstr "此提供者模型名稱的命名空間，例如 <code>openrouter</code> 會產生 <code>openrouter/anthropic/claude-sonnet-5</code>。留空時會從名稱衍生。"
 
 #: frontend/src/components/BuilderCommandPalette.vue:62
 #: frontend/src/components/CommandPalette.vue:92
-#: frontend/src/components/Commands/index.ts:41
-#: frontend/src/components/Commands/index.ts:100
+#: frontend/src/components/Commands/index.ts:40
+#: frontend/src/components/Commands/index.ts:98
 msgid "Navigate"
-msgstr ""
+msgstr "導覽"
 
 #: frontend/src/pages/PagePreview.vue:157
 msgid "Navigation"
@@ -2169,32 +2702,36 @@ msgstr ""
 
 #: frontend/src/utils/dialogs.ts:36
 msgid "New Component"
-msgstr ""
+msgstr "新增元件"
 
 #: frontend/src/components/DashboardSidebar.vue:165
 #: frontend/src/components/MainMenu.vue:63
 msgid "New Page"
-msgstr ""
+msgstr "新增頁面"
 
-#: frontend/src/components/PageClientScriptManager.vue:83
+#: frontend/src/components/PageClientScriptManager.vue:81
 msgid "New Script"
-msgstr ""
+msgstr "新增指令碼"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:65
 msgid "New Tab"
-msgstr ""
+msgstr "新增分頁"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:5
+msgid "New Token"
+msgstr "新增權杖"
 
 #: frontend/src/components/DashboardSidebar.vue:24
 msgid "New folder"
-msgstr ""
+msgstr "新增資料夾"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:108
 msgid "New page"
-msgstr ""
+msgstr "新增頁面"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:93
 msgid "New token created"
-msgstr ""
+msgstr "已建立新權杖"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:71
 msgid "Next"
@@ -2202,7 +2739,7 @@ msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:46
 #: frontend/src/components/BlockFlexLayoutHandler.vue:55
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:88
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:61
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:78
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:95
@@ -2210,91 +2747,127 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalDomains.vue:186
+msgid "No DNS record found for this domain."
+msgstr "找不到此網域的 DNS 記錄。"
+
 #: frontend/src/components/PropsEditor.vue:51
 msgid "No Default Value"
-msgstr ""
+msgstr "無預設值"
 
-#: frontend/src/components/BackgroundHandler.vue:298
+#: frontend/src/components/BackgroundHandler.vue:305
 msgid "No Repeat"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:81
-msgid "No Style"
-msgstr ""
+msgstr "不重複"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
 #: frontend/src/components/Controls/DynamicValueHandler.vue:38
 msgid "No Value Set"
-msgstr ""
+msgstr "未設定值"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:35
 msgid "No Wrap"
-msgstr ""
+msgstr "不換行"
+
+#: frontend/src/components/Modals/TokenManager.vue:428
+msgid "No color tokens yet"
+msgstr "尚無顏色權杖"
+
+#: frontend/src/components/CommandPalette.vue:76
+msgid "No commands found"
+msgstr "找不到命令"
 
 #: frontend/src/components/BuilderAssets.vue:20
 msgid "No components saved"
-msgstr ""
+msgstr "尚未儲存任何元件"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:8
 msgid "No custom domains added yet."
-msgstr ""
+msgstr "尚未新增任何自訂網域。"
+
+#: frontend/src/components/Modals/TokenManager.vue:430
+msgid "No dimension tokens yet"
+msgstr "尚無尺寸權杖"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:46
 msgid "No dynamic values found. Please add using"
-msgstr ""
+msgstr "找不到動態值。請使用以下方式新增"
 
 #: frontend/src/components/DashboardSidebar.vue:31
 msgid "No folders yet"
-msgstr ""
+msgstr "尚無資料夾"
+
+#: frontend/src/components/Modals/TokenManager.vue:429
+msgid "No font tokens yet"
+msgstr "尚無字型權杖"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
-msgstr ""
+msgstr "找不到相符的頁面。"
 
 #: frontend/src/components/MoreStylesPanel.vue:23
 msgid "No matching properties"
-msgstr ""
+msgstr "沒有相符的屬性"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:65
+msgid "No members match \"{0}\""
+msgstr "沒有符合「{0}」的成員"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:67
 msgid "No members yet. Invite someone to give them access to Builder."
-msgstr ""
+msgstr "尚無成員。邀請他人以授予他們存取 Builder 的權限。"
 
-#: builder/api.py:425
+#: builder/api.py:568
 msgid "No pages found in this template group."
-msgstr ""
+msgstr "此範本組中未找到任何頁面。"
 
 #: frontend/src/components/RouteTreeView.vue:9
 msgid "No pages found."
 msgstr ""
 
+#: builder/ai/api.py:169
+msgid "No pending action on this message"
+msgstr "此訊息沒有待處理的動作"
+
 #: builder/api.py:40
 msgid "No permission to preview this page"
-msgstr ""
+msgstr "沒有預覽此頁面的權限"
 
-#: frontend/src/components/Controls/SearchBlock.vue:372
-#: frontend/src/components/Controls/SearchBlock.vue:394
+#: frontend/src/components/Settings/GlobalRedirects.vue:62
+msgid "No redirects match \"{0}\""
+msgstr "沒有符合「{0}」的重新導向"
+
+#: frontend/src/components/Controls/SearchBlock.vue:376
+#: frontend/src/components/Controls/SearchBlock.vue:398
 msgid "No replacements made"
-msgstr ""
+msgstr "未進行任何取代"
 
-#: frontend/src/components/Controls/SearchBlock.vue:137
+#: frontend/src/components/CommandPalette.vue:75
+msgid "No results for \"{0}\""
+msgstr "沒有「{0}」的結果"
+
+#: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "No results found"
-msgstr ""
+msgstr "找不到結果"
 
 #: frontend/src/components/VersionHistory.vue:36
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
-msgstr ""
+msgstr "尚無已儲存的版本。每次發佈或手動儲存時都會擷取一個版本。"
 
 #: frontend/src/components/Modals/TokenManager.vue:349
 msgid "No tokens found"
-msgstr ""
+msgstr "找不到權杖"
+
+#: frontend/src/components/Modals/TokenManager.vue:354
+msgid "No tokens match \"{0}\". Try a different search term."
+msgstr "沒有符合「{0}」的權杖。請嘗試不同的搜尋字詞。"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:35
 msgid "No views in this period"
-msgstr ""
+msgstr "此期間沒有瀏覽次數"
 
 #: frontend/src/utils/useBuilderEvents.ts:477
 msgid "No, just blocks"
-msgstr ""
+msgstr "否，只要區塊"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:158
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:15
@@ -2305,7 +2878,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:17
 msgid "Normal"
-msgstr ""
+msgstr "一般"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:248
 msgid "Not Allowed"
@@ -2317,19 +2890,19 @@ msgstr ""
 
 #: frontend/src/components/RouteTreeNode.vue:51
 msgid "Not published"
-msgstr ""
+msgstr "未發佈"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
-msgstr ""
+msgstr "未在任何頁面中使用"
 
-#: frontend/src/components/PageClientScriptManager.vue:100
+#: frontend/src/components/PageClientScriptManager.vue:98
 msgid "Note:"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:33
 msgid "Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe."
-msgstr ""
+msgstr "注意：區塊指令碼會在沙箱環境中執行。這可能有其限制，且未必能完美重現實際網站的行為。執行不受信任的指令碼可能不安全。"
 
 #: frontend/src/components/PropsPopoverContent.vue:168
 msgid "Number"
@@ -2337,78 +2910,94 @@ msgstr ""
 
 #: frontend/src/components/PropsPopoverContent.vue:172
 msgid "Object"
-msgstr ""
+msgstr "物件"
 
 #: frontend/src/components/ObjectInput.vue:20
 msgid "Object Items:"
-msgstr ""
+msgstr "物件項目："
 
 #: frontend/src/utils/helpers.ts:54
 msgid "Ok"
-msgstr ""
+msgstr "確定"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:56
+msgid "On Active"
+msgstr "作用時"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:57
+msgid "On Focus"
+msgstr "聚焦時"
+
+#: frontend/src/components/Controls/StylePropertyControl.vue:55
+msgid "On Hover"
+msgstr "停留時"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:144
 msgid "Online store / E-commerce"
-msgstr ""
+msgstr "線上商店／電子商務"
 
-#: builder/api.py:183
+#: builder/api.py:323
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
-msgstr ""
+msgstr "外部圖片僅允許 HTTP/HTTPS URL。"
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Only allow logged-in users to view this page."
-msgstr ""
+msgstr "只有登入使用者才能查看此頁面。"
 
-#: frontend/src/components/Settings/PageGeneral.vue:122
+#: frontend/src/components/Settings/PageGeneral.vue:118
 msgid "Only logged-in users can access this page"
-msgstr ""
+msgstr "只有登入的使用者才能存取此頁面"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:42
 msgid "Opacity"
-msgstr ""
+msgstr "不透明度"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:73
 msgid "Opacity Only"
-msgstr ""
+msgstr "僅不透明度"
 
 #. Label of a shortcut in the Frappe Builder Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
 msgid "Open <strong>Frappe Builder</strong>"
-msgstr ""
+msgstr "打開 <strong>冰沙製作器</strong>"
+
+#: builder/public/js/builder.js:3
+msgid "Open Builder"
+msgstr "開啟 Builder"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:64
 msgid "Open Code Tab"
-msgstr ""
+msgstr "開啟程式碼分頁"
 
 #: frontend/src/components/BuilderCommandPalette.vue:44
 msgid "Open Command Palette"
-msgstr ""
+msgstr "開啟命令面板"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:21
 msgid "Open Global Settings"
-msgstr ""
+msgstr "開啟全域設定"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
+msgstr "在 Builder 中打開"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:39
+msgid "Open in New Tab"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:390
 msgid "Open page or toggle folder in page tree"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:4
-msgid "OpenRouter API Key"
-msgstr ""
+msgstr "開啟頁面或在頁面樹中切換資料夾"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
-msgstr ""
+msgstr "開啟於"
 
 #: frontend/src/components/Settings/PageMeta.vue:57
 msgid "Optional. Set this to specify a preferred version of this page for search engines."
-msgstr ""
+msgstr "選填。設定此項以為搜尋引擎指定此頁面的偏好版本。"
 
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2423,22 +3012,25 @@ msgstr ""
 
 #: frontend/src/components/ImageUploadInput.vue:76
 msgid "Original Size"
-msgstr ""
+msgstr "原始大小"
 
-#: frontend/src/components/WebPagePresetPicker.vue:459
 #: frontend/src/pages/PagePersonaSurvey.vue:120
 #: frontend/src/pages/PagePersonaSurvey.vue:134
 #: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Other"
 msgstr ""
 
+#: frontend/src/components/ShadowHandler.vue:113
+msgid "Outset Shadow"
+msgstr "外陰影"
+
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:201
 msgid "Overflow X"
-msgstr ""
+msgstr "X 溢位"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:220
 msgid "Overflow Y"
-msgstr ""
+msgstr "Y 溢位"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:4
 msgid "Overview"
@@ -2448,40 +3040,43 @@ msgstr ""
 msgid "Padding"
 msgstr ""
 
+#. Label of the page (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/BuilderCommandPalette.vue:260
-#: frontend/src/components/Commands/index.ts:42
-#: frontend/src/components/Commands/index.ts:110
-#: frontend/src/components/Commands/index.ts:124
-#: frontend/src/components/Commands/index.ts:134
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:132
+#: frontend/src/pages/PageBuilder.vue:33
 msgid "Page"
 msgstr ""
 
 #: frontend/src/components/Settings/index.ts:69
 msgid "Page Analytics"
-msgstr ""
+msgstr "頁面分析"
 
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Client Script"
-msgstr ""
+msgstr "頁面用戶端指令碼"
 
 #: frontend/src/components/Settings/index.ts:53
 msgid "Page Code"
-msgstr ""
+msgstr "頁面程式碼"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:145
+#: frontend/src/utils/builderBlockCopyPaste.ts:153
 msgid "Page Copied"
-msgstr ""
+msgstr "已複製頁面"
 
 #: frontend/src/components/PageScript.vue:15
 msgid "Page Data Preview"
-msgstr ""
+msgstr "頁面資料預覽"
 
 #. Label of the page_data_script (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Controls/DynamicValueHandler.vue:51
 #: frontend/src/components/PageScript.vue:203
 msgid "Page Data Script"
-msgstr ""
+msgstr "頁面資料腳本"
 
 #. Label of the page_name (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2491,7 +3086,7 @@ msgstr ""
 #. Label of the preview (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Page Preview"
-msgstr ""
+msgstr "頁面預覽"
 
 #: frontend/src/components/Settings/PageGeneral.vue:14
 msgid "Page Route"
@@ -2508,32 +3103,32 @@ msgstr ""
 #: frontend/src/components/RouteTreeView.vue:375
 #: frontend/src/components/RouteTreeView.vue:391
 msgid "Page Tree"
-msgstr ""
+msgstr "頁面樹"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:209
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
 msgid "Page created"
-msgstr ""
+msgstr "已建立頁面"
 
-#: frontend/src/stores/pageStore.ts:174
+#: frontend/src/stores/pageStore.ts:180
 msgid "Page deleted"
-msgstr ""
+msgstr "已刪除頁面"
 
-#: frontend/src/stores/pageStore.ts:177
+#: frontend/src/stores/pageStore.ts:183
 msgid "Page deletion failed"
-msgstr ""
+msgstr "頁面刪除失敗"
 
-#: frontend/src/stores/pageStore.ts:161
+#: frontend/src/stores/pageStore.ts:167
 msgid "Page duplicated"
-msgstr ""
+msgstr "已建立頁面複本"
 
-#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:46
+#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:53
 msgid "Page not found"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:258
+#: frontend/src/stores/pageStore.ts:264
 msgid "Page unpublished"
-msgstr ""
+msgstr "已取消發佈頁面"
 
 #: frontend/src/components/BuilderCommandPalette.vue:279
 msgid "Pages"
@@ -2541,62 +3136,70 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:334
 msgid "Pan canvas down"
-msgstr ""
+msgstr "向下平移畫布"
 
 #: frontend/src/utils/useBuilderEvents.ts:312
 msgid "Pan canvas left"
-msgstr ""
+msgstr "向左平移畫布"
 
 #: frontend/src/utils/useBuilderEvents.ts:301
 msgid "Pan canvas right"
-msgstr ""
+msgstr "向右平移畫布"
 
 #: frontend/src/utils/useBuilderEvents.ts:323
 msgid "Pan canvas up"
-msgstr ""
+msgstr "向上平移畫布"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:70
+#: frontend/src/components/BlockContextMenuOptions/index.ts:47
 msgid "Paste Style"
-msgstr ""
+msgstr "貼上樣式"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:32
-msgid "Paste or drop image"
-msgstr ""
-
-#: frontend/src/utils/builderBlockCopyPaste.ts:184
+#: frontend/src/utils/builderBlockCopyPaste.ts:271
 msgid "Pasting a page!"
-msgstr ""
+msgstr "正在貼上頁面！"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:159
-#: frontend/src/utils/builderBlockCopyPaste.ts:192
-#: frontend/src/utils/builderBlockCopyPaste.ts:208
+#: frontend/src/utils/builderBlockCopyPaste.ts:174
+#: frontend/src/utils/builderBlockCopyPaste.ts:278
+#: frontend/src/utils/builderBlockCopyPaste.ts:300
 msgid "Pasting..."
-msgstr ""
+msgstr "正在貼上..."
 
 #. Label of the path (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
 msgid "Path"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:17
+msgid "Pending Invites ({0})"
+msgstr "待處理的邀請（{0}）"
+
+#: builder/ai/api.py:162
+msgid "Pending action not found"
+msgstr "找不到待處理的動作"
+
 #. Label of the persona_survey_done (Check) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Persona Survey Done"
-msgstr ""
+msgstr "使用者畫像調查已完成"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "Pick a starting point"
-msgstr ""
+msgstr "選擇一個起點"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:36
 msgid "Pick a wider date range, or share your page to start collecting data."
-msgstr ""
+msgstr "選擇更寬的日期範圍，或分享你的頁面以開始收集資料。"
+
+#: builder/ai/api.py:442
+msgid "Pick at least one model"
+msgstr "至少選擇一個模型"
 
 #: frontend/src/components/Modals/TokenManager.vue:100
 #: frontend/src/components/Modals/TokenManager.vue:145
 #: frontend/src/components/Modals/TokenManager.vue:269
 #: frontend/src/components/Modals/TokenManager.vue:315
 msgid "Pick color"
-msgstr ""
+msgstr "挑選顏色"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:39
 msgid "Placeholder"
@@ -2606,47 +3209,51 @@ msgstr ""
 msgid "Placement"
 msgstr ""
 
-#: builder/ai_page_generator.py:464
-msgid "Please configure an OpenRouter API key in Settings → AI"
-msgstr ""
+#: builder/ai/api.py:38
+msgid "Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
+msgstr "請在「設定 → AI」中設定 OpenRouter API 金鑰，或在模型的提供者上設定 API 金鑰"
 
 #: builder/builder/doctype/builder_page/builder_page.py:88
 msgid "Please log in to view this page."
-msgstr ""
+msgstr "請登入以檢視此頁面。"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:87
-#: frontend/src/components/BlockContextMenuOptions/index.ts:166
+#: frontend/src/components/BlockContextMenuOptions/index.ts:64
+#: frontend/src/components/BlockContextMenuOptions/index.ts:143
 msgid "Please select a collection"
-msgstr ""
+msgstr "請選擇一個集合"
 
-#: frontend/src/components/Settings/PageGeneral.vue:258
+#: frontend/src/components/Settings/PageGeneral.vue:254
 msgid "Please select an app for this standard page"
-msgstr ""
+msgstr "請為此標準頁面選擇一個應用程式"
 
-#: builder/ai_page_generator.py:659
+#: builder/ai/api.py:595
 msgid "Please set an OpenRouter API key"
-msgstr ""
+msgstr "請設定 OpenRouter API 金鑰"
+
+#: frontend/src/pages/PageBuilder.vue:6
+msgid "Please switch to a larger screen to edit"
+msgstr "請切換到較大的螢幕以進行編輯"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:244
 msgid "Pointer"
-msgstr ""
+msgstr "指標"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:171
 msgid "Points your root domain directly to the server. Use @ as the host name."
-msgstr ""
+msgstr "將你的根網域直接指向伺服器。請使用 @ 作為主機名稱。"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:145
 msgid "Portfolio / personal site"
-msgstr ""
+msgstr "作品集／個人網站"
 
-#: frontend/src/components/BackgroundHandler.vue:89
+#: frontend/src/components/BackgroundHandler.vue:90
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:30
 msgid "Poster"
-msgstr ""
+msgstr "封面圖"
 
 #: frontend/src/components/ShadowHandler.vue:57
 msgid "Presets"
@@ -2654,37 +3261,37 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:21
 msgid "Prevent Click Emulation"
-msgstr ""
+msgstr "防止點擊模擬"
 
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:129
+#: frontend/src/components/Settings/PageGeneral.vue:125
 msgid "Prevent search engines from indexing this page"
-msgstr ""
+msgstr "阻止搜尋引擎索引此頁面"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
-msgstr ""
+msgstr "防止網站自動切換到深色模式"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:23
 msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
-msgstr ""
+msgstr "防止在編輯器中為含有區塊用戶端指令碼的區塊模擬點擊事件。"
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/Commands/index.ts:113
+#: frontend/src/components/Commands/index.ts:111
 #: frontend/src/components/Templates/TemplateGroupCard.vue:16
 #: frontend/src/components/Templates/TemplatePageCard.vue:16
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:21
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:22
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:10
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
 msgid "Preview"
 msgstr ""
 
 #. Label of the preview_height (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Height"
-msgstr ""
+msgstr "預覽高度"
 
 #: frontend/src/components/Modals/NewBlockTemplate.vue:39
 msgid "Preview Image"
@@ -2692,16 +3299,16 @@ msgstr ""
 
 #: builder/builder/doctype/block_template/block_template.py:20
 msgid "Preview Image is mandatory"
-msgstr ""
+msgstr "預覽圖為必填項"
 
-#: frontend/src/components/Commands/index.ts:108
+#: frontend/src/components/Commands/index.ts:106
 msgid "Preview Page"
-msgstr ""
+msgstr "預覽頁面"
 
 #. Label of the preview_width (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Preview Width"
-msgstr ""
+msgstr "預覽寬度"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:22
 msgid "Primary"
@@ -2710,42 +3317,52 @@ msgstr ""
 #. Label of the project_folder (Link) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Project Folder"
-msgstr ""
+msgstr "專案資料夾"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:66
 msgid "Properties"
-msgstr ""
+msgstr "屬性"
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
 #: frontend/src/components/ObjectEditor.vue:6
 msgid "Property"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:120
+#: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
+msgstr "受保護的頁面"
+
+#. Label of the provider (Link) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Provider"
+msgstr ""
+
+#. Label of the provider_name (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Provider Name"
 msgstr ""
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Public URL"
-msgstr ""
+msgstr "公共網址"
 
 #: frontend/src/components/PageListItem.vue:29
 msgid "Publicly accessible"
-msgstr ""
+msgstr "可公開存取"
 
-#: frontend/src/components/PublishButton.vue:77
+#: frontend/src/components/PublishButton.vue:74
 #: frontend/src/components/Settings/PageGeneral.vue:56
 msgid "Publish"
 msgstr ""
 
-#: frontend/src/components/PublishButton.vue:79
+#: frontend/src/components/PublishButton.vue:76
 msgid "Publish Changes"
-msgstr ""
+msgstr "發佈變更"
 
-#: frontend/src/components/Commands/index.ts:122
+#: frontend/src/components/Commands/index.ts:120
 msgid "Publish Page"
-msgstr ""
+msgstr "發佈頁面"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -2758,19 +3375,23 @@ msgstr ""
 #. Label of the published_at (Datetime) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Published At"
-msgstr ""
+msgstr "發佈於"
 
 #: frontend/src/components/VersionHistory.vue:69
 msgid "Published version"
-msgstr ""
+msgstr "已發佈的版本"
 
 #: frontend/src/components/Settings/PageGeneral.vue:45
 msgid "Published with limited access"
-msgstr ""
+msgstr "以有限存取發佈"
+
+#: frontend/src/utils/imageUtils.ts:57
+msgid "Pulling..."
+msgstr "正在拉取..."
 
 #: frontend/src/components/Controls/GradientEditor.vue:8
 msgid "Radial"
-msgstr ""
+msgstr "放射狀"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:157
 msgid "Radius"
@@ -2782,20 +3403,44 @@ msgstr ""
 
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
-msgstr ""
+msgstr "唯讀預覽 · 使用 <b>還原</b> 以載入此版本。"
 
 #: frontend/src/components/BuilderCommandPalette.vue:291
 #: frontend/src/components/BuilderCommandPalette.vue:342
 msgid "Recent"
 msgstr ""
 
+#: frontend/src/components/Controls/GradientEditor.vue:178
+msgid "Recently used"
+msgstr "最近使用"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:253
+msgid "Redirect added"
+msgstr "已新增重新導向"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:281
+msgid "Redirect deleted"
+msgstr "已刪除重新導向"
+
+#: frontend/src/data/domains.ts:88
+msgid "Redirect disabled for {0}"
+msgstr "已停用 {0} 的重新導向"
+
+#: frontend/src/data/domains.ts:84
+msgid "Redirect enabled for {0}"
+msgstr "已啟用 {0} 的重新導向"
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:98
 msgid "Redirect status"
-msgstr ""
+msgstr "重新導向狀態"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:240
 msgid "Redirect to Primary"
-msgstr ""
+msgstr "重新導向至主要網域"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Redirect updated"
+msgstr "已更新重新導向"
 
 #: frontend/src/components/Settings/index.ts:102
 #: frontend/src/components/Settings/index.ts:103
@@ -2804,10 +3449,10 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalDomains.vue:20
 msgid "Redirects to primary"
-msgstr ""
+msgstr "重新導向至主要網域"
 
-#: frontend/src/components/Commands/index.ts:326
-#: frontend/src/components/Commands/index.ts:330
+#: frontend/src/components/Commands/index.ts:304
+#: frontend/src/components/Commands/index.ts:308
 msgid "Redo"
 msgstr ""
 
@@ -2823,159 +3468,173 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:156
 msgid "Regex capture"
-msgstr ""
+msgstr "正規表示式擷取"
 
-#: frontend/src/utils/fontManager.ts:242
+#: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:267
 msgid "Regular"
-msgstr ""
+msgstr "定期"
 
 #: frontend/src/components/BlockPositionHandler.vue:13
 msgid "Relative"
-msgstr ""
+msgstr "相對"
 
 #: frontend/src/components/Controls/ImageUploader.vue:15
-#: frontend/src/components/Modals/TokenManager.vue:754
+#: frontend/src/components/Modals/TokenManager.vue:764
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:99
+#: frontend/src/components/BlockContextMenuOptions/index.ts:76
 msgid "Remove Collection"
-msgstr ""
+msgstr "移除集合"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:253
 msgid "Remove Domain"
-msgstr ""
+msgstr "移除網域"
 
 #: frontend/src/components/PageClientScriptManager.vue:54
 msgid "Remove Script"
-msgstr ""
+msgstr "移除指令碼"
 
-#: frontend/src/components/Controls/GradientEditor.vue:45
+#: frontend/src/components/Controls/GradientEditor.vue:49
 msgid "Remove Stop"
-msgstr ""
+msgstr "移除色標"
 
-#: frontend/src/components/Modals/TokenManager.vue:761
+#: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from group"
-msgstr ""
+msgstr "從群組移除"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:44
-msgid "Remove image"
-msgstr ""
+#: frontend/src/data/domains.ts:72
+msgid "Removing {0}…"
+msgstr "正在移除 {0}…"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:261
+#: frontend/src/components/BlockContextMenuOptions/index.ts:238
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
 msgstr ""
 
-#: frontend/src/components/BackgroundHandler.vue:95
-#: frontend/src/components/BackgroundHandler.vue:299
+#: frontend/src/components/BackgroundHandler.vue:96
+#: frontend/src/components/BackgroundHandler.vue:306
 msgid "Repeat"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:157
+#: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
-msgstr ""
+msgstr "重複區塊"
 
-#: frontend/src/components/BackgroundHandler.vue:300
+#: frontend/src/components/BackgroundHandler.vue:307
 msgid "Repeat X"
-msgstr ""
+msgstr "水平重複"
 
-#: frontend/src/components/BackgroundHandler.vue:301
+#: frontend/src/components/BackgroundHandler.vue:308
 msgid "Repeat Y"
-msgstr ""
+msgstr "垂直重複"
 
-#: builder/builder/doctype/builder_settings/builder_settings.js:72
+#: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
-#: frontend/src/components/Controls/SearchBlock.vue:127
+#: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
-msgstr ""
+msgstr "替换"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
-msgstr ""
+msgstr "全部取代"
+
+#: frontend/src/components/Controls/SearchBlock.vue:92
+msgid "Replace All ({0} matches)"
+msgstr "全部取代（{0} 個相符項目）"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:6
 #: builder/builder/doctype/builder_settings/builder_settings.js:15
 msgid "Replace Component"
-msgstr ""
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:45
-msgid "Replace Image (AI)"
-msgstr ""
+msgstr "更換組件"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:89
 msgid "Replace Next"
-msgstr ""
+msgstr "取代下一個"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:53
 msgid "Replace With"
-msgstr ""
+msgstr "替換為"
 
 #: frontend/src/components/Controls/SearchBlock.vue:78
 msgid "Replace with..."
-msgstr ""
+msgstr "取代為..."
 
-#: builder/api.py:195
+#: frontend/src/components/Controls/SearchBlock.vue:374
+msgid "Replaced in {0}"
+msgstr "已在 {0} 中取代"
+
+#: frontend/src/components/Controls/SearchBlock.vue:97
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} block"
+msgstr "已在 {0} 個區塊中取代"
+
+#: frontend/src/components/Controls/SearchBlock.vue:98
+#: frontend/src/components/Controls/SearchBlock.vue:395
+msgid "Replaced in {0} blocks"
+msgstr "已在 {0} 個區塊中取代"
+
+#: builder/api.py:336
 msgid "Requests to private or internal addresses are not allowed."
-msgstr ""
+msgstr "不允許對私人或內部位址發出請求。"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:35
 msgid "Resend"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:182
+#: frontend/src/components/BlockContextMenuOptions/index.ts:159
 msgid "Reset Changes"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:204
+#: frontend/src/components/BlockContextMenuOptions/index.ts:181
 msgid "Reset Component"
-msgstr ""
+msgstr "重設元件"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:173
+#: frontend/src/components/BlockContextMenuOptions/index.ts:150
 msgid "Reset Overrides"
-msgstr ""
+msgstr "重設覆寫"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset canvas zoom"
-msgstr ""
+msgstr "重設畫布縮放"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:185
+#: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
-msgstr ""
+msgstr "是否也一併重設子區塊中的變更？"
 
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
 msgid "Restore this version as your draft"
-msgstr ""
+msgstr "將此版本還原為你的草稿"
 
 #. Label of the restrict_click_handlers (Check) field in DocType 'Builder
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Restrict Click Handlers"
-msgstr ""
+msgstr "限制點擊處理程序"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalDeveloper.vue:15
 msgid "Restricted"
-msgstr ""
-
-#: frontend/src/components/WebPagePresetPicker.vue:458
-msgid "Retro"
-msgstr ""
+msgstr "受限制的"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:38
-msgid "Rewrite (AI)"
-msgstr ""
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}"
+msgstr "正在重試 {0}"
 
-#: frontend/src/components/BackgroundHandler.vue:294
+#: frontend/src/data/domains.ts:76
+msgid "Retrying {0}…"
+msgstr "正在重試 {0}…"
+
+#: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
@@ -2983,7 +3642,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/index.ts:110
 msgid "Robots"
-msgstr ""
+msgstr "Robots"
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
@@ -2991,15 +3650,17 @@ msgstr ""
 
 #: frontend/src/components/Settings/PageRobots.vue:30
 msgid "Robots.txt Guide"
-msgstr ""
+msgstr "Robots.txt 指南"
 
+#. Label of the role (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:63
 msgid "Role"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:258
 msgid "Rotation"
-msgstr ""
+msgstr "旋轉"
 
 #. Label of the route (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3008,9 +3669,14 @@ msgstr ""
 msgid "Route"
 msgstr ""
 
+#. Label of the route_prefix (Data) field in DocType 'Builder AI Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "Route Prefix"
+msgstr "路由前綴"
+
 #: frontend/src/components/DashboardHead.vue:86
 msgid "Route Tree"
-msgstr ""
+msgstr "路由樹"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:83
 msgid "Row"
@@ -3018,64 +3684,82 @@ msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:91
 msgid "Row Dense"
-msgstr ""
+msgstr "密集列"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:43
 msgid "Row Height"
-msgstr ""
+msgstr "列高"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:156
 msgid "Row Span"
-msgstr ""
+msgstr "列跨距"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:26
 msgid "Rows"
-msgstr ""
+msgstr "列"
 
 #: frontend/src/utils/useBuilderEvents.ts:130
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
-msgstr ""
+msgstr "不支援內含內嵌圖片的 SVG。請改以 PNG 貼上。"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:61
 msgid "Same Tab"
-msgstr ""
+msgstr "同一分頁"
 
-#: frontend/src/components/Modals/TokenManager.vue:1037
+#: frontend/src/components/Modals/TokenManager.vue:1048
 msgid "Sample CSV downloaded"
-msgstr ""
+msgstr "已下載範例 CSV"
 
 #: frontend/src/components/Controls/CodeEditor.vue:41
 #: frontend/src/components/Modals/NewBlockTemplate.vue:7
 #: frontend/src/components/PropsPopoverContent.vue:46
+#: frontend/src/components/Settings/GlobalRedirects.vue:69
 #: frontend/src/components/VersionHistory.vue:27
-#: frontend/src/pages/PageBuilder.vue:46 frontend/src/utils/dialogs.ts:38
+#: frontend/src/pages/PageBuilder.vue:46 frontend/src/stores/canvasStore.ts:172
+#: frontend/src/utils/dialogs.ts:38
 msgid "Save"
 msgstr ""
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:241
+#: frontend/src/components/BlockContextMenuOptions/index.ts:218
 msgid "Save As Component"
-msgstr ""
+msgstr "另存為元件"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:232
+#: frontend/src/stores/componentStore.ts:88
+msgid "Save Component"
+msgstr "儲存元件"
+
+#: frontend/src/stores/blockTemplateStore.ts:44
+msgid "Save Template"
+msgstr "儲存範本"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:209
 #: frontend/src/components/Modals/NewBlockTemplate.vue:3
 msgid "Save as Block Template"
-msgstr ""
+msgstr "另存為區塊範本"
 
 #: frontend/src/components/Controls/ColorInput.vue:38
 msgid "Save as Token"
-msgstr ""
+msgstr "另存為權杖"
 
 #: frontend/src/components/VersionHistory.vue:14
 msgid "Save current version"
-msgstr ""
+msgstr "儲存目前版本"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
 msgid "Save page / component"
-msgstr ""
+msgstr "儲存頁面／元件"
 
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:15
+#: builder/ai/api.py:522
+msgid "Save the page before starting a chat session"
+msgstr "開始交談工作階段前請先儲存頁面"
+
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:4
 msgid "Saving template"
-msgstr ""
+msgstr "正在儲存範本"
+
+#: frontend/src/pages/PageBuilder.vue:5
+msgid "Screen too small"
+msgstr "螢幕太小"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
@@ -3088,7 +3772,7 @@ msgstr ""
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script Public URL"
-msgstr ""
+msgstr "腳本公共 URL"
 
 #. Label of the script_type (Autocomplete) field in DocType 'Builder Client
 #. Script'
@@ -3096,17 +3780,17 @@ msgstr ""
 msgid "Script Type"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:243
+#: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
-msgstr ""
+msgstr "指令碼不能為空"
 
-#: frontend/src/components/PageClientScriptManager.vue:386
+#: frontend/src/components/PageClientScriptManager.vue:393
 msgid "Script order updated"
-msgstr ""
+msgstr "已更新指令碼順序"
 
-#: frontend/src/components/PageClientScriptManager.vue:266
+#: frontend/src/components/PageClientScriptManager.vue:273
 msgid "Script saved successfully"
-msgstr ""
+msgstr "已成功儲存指令碼"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3115,7 +3799,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:32
 msgid "Scroll"
-msgstr ""
+msgstr "捲動"
 
 #: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
@@ -3124,65 +3808,74 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:115
 msgid "Search (Google)"
-msgstr ""
+msgstr "搜尋（Google）"
 
 #: frontend/src/components/BuilderCanvas.vue:113
 msgid "Search Block"
-msgstr ""
+msgstr "搜尋區塊"
 
-#: frontend/src/components/Commands/index.ts:238
+#: frontend/src/components/Commands/index.ts:236
 msgid "Search Blocks"
-msgstr ""
+msgstr "搜尋區塊"
 
 #: frontend/src/components/BuilderCommandPalette.vue:60
 #: frontend/src/components/BuilderCommandPalette.vue:69
 msgid "Search Page"
-msgstr ""
+msgstr "搜尋頁面"
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
-msgstr ""
+msgstr "搜尋範本"
 
-#: frontend/src/components/Commands/index.ts:242
+#: frontend/src/components/Commands/index.ts:240
 msgid "Search blocks"
-msgstr ""
+msgstr "搜尋區塊"
+
+#: frontend/src/components/Controls/SearchBlock.vue:17
+msgid "Search blocks..."
+msgstr "搜尋區塊..."
 
 #: frontend/src/components/Settings/GlobalUsers.vue:7
 msgid "Search by name or email"
-msgstr ""
+msgstr "依名稱或電子郵件搜尋"
 
 #: frontend/src/components/BuilderCommandPalette.vue:70
 msgid "Search by name or route..."
-msgstr ""
+msgstr "依名稱或路由搜尋..."
+
+#: frontend/src/components/CommandPalette.vue:26
+msgid "Search commands..."
+msgstr "搜尋命令..."
 
 #: frontend/src/components/BuilderAssets.vue:6
 msgid "Search component"
-msgstr ""
+msgstr "搜尋元件"
 
 #: frontend/src/components/Controls/SearchBlock.vue:70
 msgid "Search inside selected block only"
-msgstr ""
+msgstr "僅在選取的區塊內搜尋"
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
-msgstr ""
+msgstr "搜尋屬性"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:9
 msgid "Search redirects"
-msgstr ""
+msgstr "搜尋重新導向"
 
 #: frontend/src/components/BuilderCommandPalette.vue:87
 msgid "Search settings..."
-msgstr ""
+msgstr "搜尋設定..."
 
 #: frontend/src/components/Modals/TokenManager.vue:37
 msgid "Search tokens"
-msgstr ""
+msgstr "搜尋權杖"
 
-#: frontend/src/components/Controls/SearchBlock.vue:104
+#: frontend/src/components/Controls/SearchBlock.vue:108
 msgid "Search your blocks"
-msgstr ""
+msgstr "搜尋你的區塊"
 
+#: frontend/src/components/CommandPalette.vue:26
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
 msgstr ""
@@ -3191,6 +3884,10 @@ msgstr ""
 msgid "Searching..."
 msgstr ""
 
+#: builder/ai/agent/pending.py:145
+msgid "Seeded {0} sample record(s) into {1}"
+msgstr "已將 {0} 筆範例記錄植入 {1}"
+
 #: frontend/src/components/CommandPalette.vue:98
 #: frontend/src/components/PropsPopoverContent.vue:170
 msgid "Select"
@@ -3198,103 +3895,130 @@ msgstr ""
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:21
 msgid "Select (v)"
-msgstr ""
+msgstr "選擇（v）"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
 msgid "Select All Matches (Alt+Enter)"
-msgstr ""
+msgstr "選取所有相符項目（Alt+Enter）"
 
-#: frontend/src/components/Settings/PageGeneral.vue:230
+#: frontend/src/components/Settings/PageGeneral.vue:226
 msgid "Select App"
-msgstr ""
+msgstr "選擇應用程式"
 
 #: frontend/src/utils/dialogs.ts:80
 msgid "Select Folder"
-msgstr ""
-
-#: frontend/src/components/AIPageGeneratorModal.vue:63
-msgid "Select Model"
-msgstr ""
+msgstr "選擇資料夾"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:13
 msgid "Select Template"
-msgstr ""
+msgstr "選擇範本"
 
 #: frontend/src/components/BlockProperties.vue:31
 msgid "Select a block to edit properties"
-msgstr ""
+msgstr "選取一個區塊以編輯屬性"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:104
 msgid "Select a collection"
-msgstr ""
+msgstr "選擇一個集合"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:15
 msgid "Select date range"
-msgstr ""
+msgstr "選擇日期範圍"
 
 #: frontend/src/components/PropsOptions/ColorOptions.vue:10
 msgid "Select default color"
-msgstr ""
+msgstr "選擇預設顏色"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
 msgid "Select mode"
-msgstr ""
+msgstr "選取模式"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
-msgstr ""
+msgstr "選擇或輸入群組名稱"
 
-#: frontend/src/components/Settings/PageGeneral.vue:146
+#: frontend/src/components/Settings/PageGeneral.vue:142
 msgid "Select the app for this standard page"
-msgstr ""
+msgstr "為此標準頁面選擇應用程式"
+
+#. Label of the selected_model (Data) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Selected Model"
+msgstr "已選取的模型"
+
+#: frontend/src/utils/fontManager.ts:23
+msgid "Semi Bold"
+msgstr "半粗"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
 msgstr ""
 
+#: frontend/src/utils/imageUtils.ts:31
+msgid "Serve Locally"
+msgstr "在本機提供"
+
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
 msgid "Server-side Python script that populates component data. Receives props as input. Use: data.events = frappe.get_list('Event')"
-msgstr ""
+msgstr "伺服器端 Python 腳本，用於填充組件資料。接收 props 作為輸入。用法：data.events = frappe.get_list('Event')"
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#. Label of the session (Link) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Session"
+msgstr "工作階段"
+
+#. Label of the session_user (Link) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+msgid "Session User"
+msgstr "工作階段使用者"
+
+#: builder/ai/api.py:147
+msgid "Session not found"
+msgstr "找不到工作階段"
+
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Set As Homepage"
-msgstr ""
+msgstr "設為首頁"
 
 #: frontend/src/components/BackgroundHandler.vue:11
 msgid "Set Background"
-msgstr ""
+msgstr "設定背景"
 
 #: frontend/src/components/Controls/ColorInput.vue:172
-#: frontend/src/components/Controls/ColorPickerContent.vue:48
+#: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
 msgstr ""
 
 #: frontend/src/components/Controls/BasePropertyControl.vue:34
 #: frontend/src/components/Controls/BasePropertyControl.vue:261
 msgid "Set Dynamic Value"
-msgstr ""
+msgstr "設定動態值"
 
 #: frontend/src/components/Controls/FontInput.vue:47
 msgid "Set Font"
-msgstr ""
+msgstr "設定字型"
 
 #: frontend/src/components/ImageUploadInput.vue:107
 msgid "Set Image"
-msgstr ""
+msgstr "設定圖片"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:237
 msgid "Set as Primary"
 msgstr ""
 
-#: frontend/src/components/Settings/PageGeneral.vue:101
+#: frontend/src/components/Settings/PageGeneral.vue:97
 msgid "Set current page as Homepage"
-msgstr ""
+msgstr "將目前頁面設為首頁"
 
-#: frontend/src/components/Settings/PageGeneral.vue:164
+#: frontend/src/components/Settings/PageGeneral.vue:160
 msgid "Set folder to organize your page"
-msgstr ""
+msgstr "設定資料夾以整理你的頁面"
+
+#: frontend/src/components/Controls/SplitModeInput.vue:71
+msgid "Set separately"
+msgstr "分別設定"
 
 #: frontend/src/components/BuilderCommandPalette.vue:77
 #: frontend/src/components/BuilderCommandPalette.vue:86
@@ -3304,17 +4028,17 @@ msgstr ""
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
 msgid "Settings"
 msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:8
 msgid "Shadow"
-msgstr ""
+msgstr "陰影"
 
 #: frontend/src/components/ShadowHandler.vue:124
 msgid "Shadow Color"
-msgstr ""
+msgstr "陰影顏色"
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
@@ -3327,37 +4051,41 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
 msgid "Show Children"
-msgstr ""
+msgstr "顯示子項"
 
-#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:170
 msgid "Show Left Panel"
-msgstr ""
+msgstr "顯示左側面板"
 
-#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:10
+msgid "Show Replace"
+msgstr "顯示取代"
+
+#: frontend/src/components/Commands/index.ts:181
 msgid "Show Right Panel"
-msgstr ""
+msgstr "顯示右側面板"
 
-#: frontend/src/components/Commands/index.ts:207
+#: frontend/src/components/Commands/index.ts:205
 msgid "Show keyboard shortcuts"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
-msgstr ""
+msgstr "縮小"
 
 #: frontend/src/components/Settings/index.ts:128
 msgid "Site Analytics"
-msgstr ""
+msgstr "網站分析"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "Site is back online"
-msgstr ""
+msgstr "網站已恢復上線"
 
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:16
 msgid "Site is in read-only mode"
-msgstr ""
+msgstr "網站處於唯讀模式"
 
-#: frontend/src/components/BackgroundHandler.vue:83
+#: frontend/src/components/BackgroundHandler.vue:84
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
 msgstr ""
@@ -3366,42 +4094,62 @@ msgstr ""
 msgid "Skip for now"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entries"
+msgstr "已跳過 {0} 個無效的項目"
+
+#: frontend/src/components/Modals/TokenManager.vue:1020
+msgid "Skipped {0} invalid entry"
+msgstr "已跳過 {0} 個無效的項目"
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard token (read-only)"
+msgstr "已跳過 {0} 個標準權杖（唯讀）"
+
+#: frontend/src/components/Modals/TokenManager.vue:1021
+msgid "Skipped {0} standard tokens (read-only)"
+msgstr "已跳過 {0} 個標準權杖（唯讀）"
+
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
 msgid "Slow"
 msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
-msgstr ""
+msgstr "Small"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:51
 msgid "Smooth"
-msgstr ""
+msgstr "平滑"
 
 #. Label of the snapshot_type (Data) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
 msgid "Snapshot Type"
-msgstr ""
+msgstr "快照類型"
 
-#: builder/builder/doctype/builder_page/builder_page.py:392
+#: builder/builder/doctype/builder_page/builder_page.py:401
 msgid "Snapshot does not belong to this page"
-msgstr ""
+msgstr "快照不屬於此頁面"
 
 #: frontend/src/components/Settings/PageMeta.vue:33
 msgid "Social Preview"
-msgstr ""
+msgstr "社群預覽"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:119
 msgid "Social media"
-msgstr ""
+msgstr "社群媒體"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:137
 msgid "Solid"
 msgstr ""
 
+#: frontend/src/data/domains.ts:11 frontend/src/data/domains.ts:44
+msgid "Something went wrong"
+msgstr ""
+
 #: frontend/src/components/DashboardHead.vue:56
 msgid "Sort"
-msgstr ""
+msgstr "排序"
 
 #. Label of the sort_order (Int) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3409,12 +4157,13 @@ msgid "Sort Order"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:18
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 msgid "Source"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:25
 msgid "Space Around"
-msgstr ""
+msgstr "環繞留白"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:24
 msgid "Space Between"
@@ -3430,32 +4179,32 @@ msgstr ""
 
 #: frontend/src/components/Settings/PageRobots.vue:31
 msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
-msgstr ""
+msgstr "指定規則以控制搜尋引擎與你網站的互動方式。如需更多細節，請造訪 {0}。"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
-msgstr ""
+msgstr "速度"
 
 #: frontend/src/components/ShadowHandler.vue:156
 msgid "Spread"
-msgstr ""
+msgstr "擴散"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:40
 msgid "Stack"
-msgstr ""
+msgstr "堆疊"
 
-#: frontend/src/components/Settings/PageGeneral.vue:136
+#: frontend/src/components/Settings/PageGeneral.vue:132
 msgid "Standard Page"
-msgstr ""
+msgstr "標準頁面"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:37
 msgid "Standard folders cannot be deleted. Please enable developer mode to delete standard folders."
-msgstr ""
+msgstr "標準資料夾無法刪除。請啟用開發者模式以刪除標準資料夾。"
 
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.js:13
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.py:26
 msgid "Standard folders cannot be modified. Please enable developer mode to edit standard folders."
-msgstr ""
+msgstr "標準資料夾無法修改。請啟用開發者模式以編輯標準資料夾。"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:63
 msgid "Start"
@@ -3463,20 +4212,24 @@ msgstr ""
 
 #: frontend/src/components/Templates/TemplatesDialog.vue:6
 msgid "Start from a blank page or pick a page from a template."
-msgstr ""
+msgstr "從空白頁面開始，或從範本挑選一個頁面。"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:109
 msgid "Start from a blank page or pick a template."
-msgstr ""
+msgstr "從空白頁面開始，或挑選一個範本。"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:70
 msgid "Start from scratch"
-msgstr ""
+msgstr "從頭開始"
 
 #: frontend/src/components/BuilderCommandPalette.vue:71
 msgid "Start typing to search pages"
-msgstr ""
+msgstr "開始輸入以搜尋頁面"
 
+#. Label of the status (Data) field in DocType 'Builder AI Message'
+#. Label of the status (Select) field in DocType 'Builder AI Session'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
 msgstr ""
@@ -3489,7 +4242,7 @@ msgstr ""
 #: frontend/src/components/DimensionInput.vue:17
 #: frontend/src/components/ImageUploadInput.vue:75
 msgid "Stretch"
-msgstr ""
+msgstr "延展"
 
 #: frontend/src/components/PropsPopoverContent.vue:167
 msgid "String"
@@ -3498,11 +4251,12 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 msgid "Structure"
-msgstr ""
+msgstr "結構"
 
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:273
+#: frontend/src/components/Controls/SearchBlock.vue:214
 #: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
 msgstr ""
@@ -3511,30 +4265,40 @@ msgstr ""
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Style Public URL"
-msgstr ""
+msgstr "樣式公用 URL"
 
-#: frontend/src/components/AIPageGeneratorModal.vue:90
-msgid "Styles"
-msgstr ""
+#. Label of the supports_vision (Check) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "Supports Vision"
+msgstr "支援視覺"
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Dark Mode"
-msgstr ""
+msgstr "切換到深色模式"
 
-#: frontend/src/components/Commands/index.ts:193
+#: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Light Mode"
-msgstr ""
+msgstr "切換到淺色模式"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:197
+#: frontend/src/components/BlockContextMenuOptions/index.ts:174
 msgid "Sync Component"
-msgstr ""
+msgstr "同步元件"
 
 #: frontend/src/stores/componentStore.ts:114
 msgid "Sync in all pages"
-msgstr ""
+msgstr "在所有頁面同步"
+
+#: frontend/src/stores/componentStore.ts:125
+msgid "Syncing component in all the pages..."
+msgstr "正在所有頁面同步元件..."
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3549,28 +4313,35 @@ msgstr ""
 
 #: frontend/src/components/DashboardSidebar.vue:61
 msgid "System generated folder cannot be edited or deleted"
-msgstr ""
+msgstr "系統產生的資料夾無法編輯或刪除"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:96
 msgid "Tab Index"
-msgstr ""
+msgstr "Tab 索引"
+
+#: frontend/src/components/BuilderCanvas.vue:240
+msgid "Tablet"
+msgstr "平板"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
+#: frontend/src/components/Controls/SearchBlock.vue:171
 msgid "Tag"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:19
+#: frontend/src/components/Settings/GlobalRedirects.vue:78
 #: frontend/src/components/Settings/TopClicksList.vue:11
 msgid "Target"
 msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:25
 msgid "Target Component"
-msgstr ""
+msgstr "目標組件"
 
-#: frontend/src/components/WebPagePresetPicker.vue:456
-msgid "Technical"
-msgstr ""
+#. Label of the task_type (Data) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "Task Type"
+msgstr "任务类型"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
@@ -3579,7 +4350,7 @@ msgstr ""
 #. Label of the template_group (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Template Group"
-msgstr ""
+msgstr "範本組"
 
 #. Label of the template_name (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
@@ -3587,25 +4358,17 @@ msgstr ""
 msgid "Template Name"
 msgstr ""
 
-#: builder/api.py:421
+#: builder/api.py:564
 msgid "Template group not found."
-msgstr ""
+msgstr "未找到模板組。"
 
-#: builder/builder/doctype/builder_page/builder_page.py:301
+#: builder/builder/doctype/builder_page/builder_page.py:310
 msgid "Template pages can only be deleted in developer mode."
-msgstr ""
+msgstr "模板頁面只能在開發者模式下刪除。"
 
-#: builder/builder/doctype/builder_page/builder_page.py:197
+#: builder/builder/doctype/builder_page/builder_page.py:203
 msgid "Template pages can only be modified in developer mode."
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Test Key"
-msgstr ""
-
-#: frontend/src/components/Settings/GlobalAI.vue:13
-msgid "Testing..."
-msgstr ""
+msgstr "模板頁面只能在開發者模式下修改。"
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -3615,7 +4378,7 @@ msgstr ""
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:23
 msgid "Text (t)"
-msgstr ""
+msgstr "文字（t）"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:81
 msgid "Text Color"
@@ -3623,75 +4386,122 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:385
 msgid "Text mode"
-msgstr ""
+msgstr "文字模式"
+
+#: builder/ai/presets.py:273
+msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
+msgstr "該金鑰遭拒。請檢查你是否完整複製，以及它是否尚未被撤銷。"
 
 #: frontend/src/components/PageOptions.vue:15
 msgid "The URL path for this page. For variables, use colon (e.g. /users/:id)"
-msgstr ""
+msgstr "此頁面的 URL 路徑。變數請使用冒號（例如 /users/:id）"
 
 #: builder/builder/doctype/builder_settings/builder_settings.py:98
 msgid "The component you are trying to replace with does not exist"
-msgstr ""
+msgstr "您嘗試替換的組件不存在。"
+
+#: builder/ai/presets.py:282
+msgid "The key is valid, but that model isn't available on this account."
+msgstr "金鑰有效，但該模型無法在此帳戶使用。"
+
+#: builder/ai/presets.py:278
+msgid "The key is valid, but the account has no credit or is rate limited right now."
+msgstr "金鑰有效，但帳戶目前沒有額度或受到速率限制。"
+
+#. Description of the 'Model ID' (Data) field in DocType 'Builder AI Model'
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+msgid "The model id at the provider, e.g. <code>anthropic/claude-sonnet-5</code> or <code>llama3.2</code>. The document name is the provider's route prefix plus this id."
+msgstr "提供者端的模型 ID，例如 <code>anthropic/claude-sonnet-5</code> 或 <code>llama3.2</code>。文件名稱為提供者的路由前綴加上此 ID。"
 
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
-msgstr ""
+msgstr "搜尋引擎首選的此頁面 URL 版本。如果未設置，則將使用目前頁面 URL。"
 
-#: frontend/src/stores/pageStore.ts:348
+#. Description of the 'LiteLLM Provider' (Data) field in DocType 'Builder AI
+#. Provider'
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
+msgstr "litellm 應呼叫的提供者。設定 API Base（任何 OpenAI 相容閘道）時預設為 <code>openai</code>，否則為 <code>openrouter</code>。"
+
+#: frontend/src/stores/pageStore.ts:354
 msgid "There was an error while fetching page data"
-msgstr ""
+msgstr "擷取頁面資料時發生錯誤"
 
 #: frontend/src/components/ComponentUpdates.vue:28
 msgid "These components changed since this page was last updated. Update to use the latest."
-msgstr ""
+msgstr "自上次更新此頁面以來，這些元件已變更。請更新以使用最新版本。"
+
+#: frontend/src/utils/fontManager.ts:18
+msgid "Thin"
+msgstr "細"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
-msgstr ""
+msgstr "今年"
+
+#: builder/ai/api.py:167
+msgid "This action does not belong to you"
+msgstr "此動作不屬於你"
+
+#: builder/ai/api.py:149
+msgid "This chat belongs to another user"
+msgstr "此交談屬於其他使用者"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:126
+msgid "This helps us personalise your Builder experience"
+msgstr "這有助於我們為你打造個人化的 Builder 體驗"
 
 #: frontend/src/components/Modals/TokenManager.vue:181
 msgid "This is a standard variable. It cannot be modified or deleted."
-msgstr ""
+msgstr "這是標準變數，無法修改或刪除。"
 
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:9
 msgid "This is the homepage for your site"
-msgstr ""
+msgstr "這是你網站的首頁"
 
 #: frontend/src/components/RouteTreeNode.vue:47
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
 msgid "This page has limited access"
-msgstr ""
+msgstr "此頁面為有限存取"
 
-#: frontend/src/stores/builderStore.ts:87
+#: frontend/src/components/Settings/PageGeneral.vue:260
+msgid "This page will be exported to {0} app as standard page"
+msgstr "此頁面將以標準頁面的形式匯出至 {0} 應用程式"
+
+#: frontend/src/stores/builderStore.ts:106
 msgid "This page will no longer be the homepage"
-msgstr ""
+msgstr "此頁面將不再是首頁"
+
+#: builder/ai/api.py:306
+msgid "This provider has no API Base to ask"
+msgstr "此提供者沒有可查詢的 API Base"
 
 #: frontend/src/components/Settings/GlobalCode.vue:24
 msgid "This script will be executed on all the pages of your website."
-msgstr ""
+msgstr "此指令碼將在你網站的所有頁面上執行。"
 
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Body HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;body&gt;"
-msgstr ""
+msgstr "這將附加到 &lt;body&gt; 的末尾。"
 
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Page'
 #. Description of the 'Head HTML' (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_page/builder_page.json
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "This will be appended at the end of the &lt;head&gt;"
-msgstr ""
+msgstr "這將附加到 &lt;head&gt; 的末尾。"
 
-#: frontend/src/components/VersionHistory.vue:243
+#: frontend/src/components/VersionHistory.vue:249
 msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
-msgstr ""
+msgstr "這會將此版本載入編輯器作為你目前的草稿。在你發佈之前，實際上線的頁面不會變更。要繼續嗎？"
 
-#: frontend/src/stores/pageStore.ts:202
+#: frontend/src/stores/pageStore.ts:208
 msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
-msgstr ""
+msgstr "這會還原自上次發佈以來對此頁面所做的所有變更。確定要繼續嗎？"
 
 #: frontend/src/composables/useAnalytics.ts:118
 msgid "Timeline"
@@ -3701,7 +4511,9 @@ msgstr ""
 msgid "Timing"
 msgstr ""
 
+#. Label of the title (Data) field in DocType 'Builder AI Session'
 #. Label of the page_title (Data) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageMeta.vue:9
 msgid "Title"
@@ -3711,67 +4523,67 @@ msgstr ""
 msgid "Today"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:228
+#: frontend/src/components/Commands/index.ts:226
 msgid "Toggle Canvas Dark Mode"
-msgstr ""
+msgstr "切換畫布深色模式"
 
 #: frontend/src/components/BuilderCanvas.vue:29
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
-msgstr ""
+msgstr "切換畫布深色模式（⌘⇧D）"
 
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
-msgstr ""
+msgstr "切換深色模式"
 
-#: frontend/src/components/Commands/index.ts:215
+#: frontend/src/components/Commands/index.ts:213
 msgid "Toggle Panels"
-msgstr ""
+msgstr "切換面板"
 
 #: frontend/src/components/DashboardSidebar.vue:181
 #: frontend/src/components/MainMenu.vue:96
 msgid "Toggle Theme"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:232
+#: frontend/src/components/Commands/index.ts:230
 msgid "Toggle canvas dark mode"
-msgstr ""
+msgstr "切換畫布深色模式"
 
-#: frontend/src/components/Commands/index.ts:177
+#: frontend/src/components/Commands/index.ts:175
 msgid "Toggle left panel"
-msgstr ""
+msgstr "切換左側面板"
 
-#: frontend/src/components/Commands/index.ts:219
+#: frontend/src/components/Commands/index.ts:217
 msgid "Toggle panels"
-msgstr ""
+msgstr "切換面板"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/Modals/NewBuilderToken.vue:20
 msgid "Token Name"
-msgstr ""
+msgstr "令牌名稱"
 
-#: frontend/src/components/Modals/TokenManager.vue:830
+#: frontend/src/components/Modals/TokenManager.vue:840
 msgid "Token created"
-msgstr ""
+msgstr "已建立權杖"
 
 #: frontend/src/components/Modals/TokenManager.vue:79
 msgid "Token name"
-msgstr ""
+msgstr "權杖名稱"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
-msgstr ""
+msgstr "已更新權杖"
 
-#: frontend/src/pages/PageBuilder.vue:274
+#: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
 #: frontend/src/utils/useBuilderEvents.ts:377
 #: frontend/src/utils/useBuilderEvents.ts:386
 #: frontend/src/utils/useBuilderEvents.ts:395
 #: frontend/src/utils/useBuilderEvents.ts:403
 msgid "Tools"
-msgstr ""
+msgstr "工具"
 
-#: frontend/src/components/BackgroundHandler.vue:291
+#: frontend/src/components/BackgroundHandler.vue:298
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
 msgstr ""
@@ -3783,7 +4595,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/TopClicksList.vue:3
 msgid "Top Clicks"
-msgstr ""
+msgstr "熱門點擊"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:117
 #: frontend/src/components/BlockGridLayoutHandler.vue:180
@@ -3792,11 +4604,11 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:21
 msgid "Top Pages"
-msgstr ""
+msgstr "熱門頁面"
 
 #: frontend/src/components/Settings/TopReferrersList.vue:3
 msgid "Top Referrers"
-msgstr ""
+msgstr "熱門參照來源"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:109
 #: frontend/src/components/BlockGridLayoutHandler.vue:172
@@ -3805,19 +4617,19 @@ msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:16
 msgid "Total Pageviews"
-msgstr ""
+msgstr "總網頁瀏覽次數"
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr ""
+msgstr "总访问量"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
-msgstr ""
+msgstr "追蹤點擊"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:56
 msgid "Track the number of views on each page of your website"
-msgstr ""
+msgstr "追蹤你網站上每個頁面的瀏覽次數"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:114
 msgid "Transform"
@@ -3825,23 +4637,23 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:72
 msgid "Transform Only"
-msgstr ""
+msgstr "僅變形"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:85
 msgid "Transition"
-msgstr ""
+msgstr "轉場"
 
 #: frontend/src/components/PropsOptions/BooleanOptions.vue:4
 msgid "True Label"
-msgstr ""
+msgstr "True 標籤"
 
-#: frontend/src/components/Controls/SearchBlock.vue:138
+#: frontend/src/components/Controls/SearchBlock.vue:142
 msgid "Try different keywords or adjust your filters"
-msgstr ""
+msgstr "嘗試不同的關鍵字或調整你的篩選條件"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:10
 msgid "Turn on view tracking to start collecting page views, clicks and click-through rates for your published pages."
-msgstr ""
+msgstr "開啟瀏覽追蹤，開始為你已發佈的頁面收集網頁瀏覽次數、點擊次數與點閱率。"
 
 #. Label of the type (Select) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -3853,20 +4665,52 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
+#: builder/ai/api.py:129
+msgid "Type a prompt first"
+msgstr "請先輸入提示"
+
 #. Option for the 'Category' (Select) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
+msgstr "排版"
+
+#: frontend/src/components/Settings/PageGeneral.vue:22
+msgid "URL"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:313
-#: frontend/src/components/Commands/index.ts:317
+#: frontend/src/components/PageOptions.vue:22
+msgid "URL Variables"
+msgstr "URL 變數"
+
+#: frontend/src/components/Commands/index.ts:291
+#: frontend/src/components/Commands/index.ts:295
 msgid "Undo"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} token"
+msgstr "已將 {0} 個權杖取消分組"
+
+#: frontend/src/components/Modals/TokenManager.vue:729
+msgid "Ungrouped {0} tokens"
+msgstr "已將 {0} 個權杖取消分組"
+
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
-msgstr ""
+msgstr "不重複訪客"
+
+#: builder/ai/api.py:84
+msgid "Unknown AI model: {0}"
+msgstr "未知的 AI 模型：{0}"
+
+#: builder/ai/agent/pending.py:61
+msgid "Unknown pending action: {0}"
+msgstr "未知的待處理動作：{0}"
+
+#: builder/ai/api.py:379 builder/ai/api.py:439
+msgid "Unknown provider: {0}"
+msgstr "未知的提供者：{0}"
 
 #: frontend/src/components/PageActionsDropdown.vue:20
 #: frontend/src/components/PublishButton.vue:31
@@ -3883,38 +4727,63 @@ msgstr ""
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalDeveloper.vue:16
 msgid "Unrestricted"
-msgstr ""
+msgstr "不受限制"
 
 #: builder/template_sync.py:55
 msgid "Unsafe template fixture name: {0}"
-msgstr ""
+msgstr "不安全的範本 fixture 名稱： {0}"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:16
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120
 msgid "Unset"
-msgstr ""
+msgstr "未設定"
 
-#: frontend/src/components/Settings/PageGeneral.vue:114
+#: frontend/src/components/Settings/PageGeneral.vue:110
 msgid "Unset Homepage"
-msgstr ""
+msgstr "取消設定首頁"
+
+#: frontend/src/App.vue:33
+msgid "Untitled"
+msgstr "未命名"
 
 #: frontend/src/components/ComponentUpdates.vue:46
+#: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Update"
 msgstr ""
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:205
+#: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
-msgstr ""
+msgstr "更新目前頁面"
 
 #: frontend/src/components/ComponentUpdates.vue:23
 msgid "Update all"
-msgstr ""
+msgstr "全部更新"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:217
+#: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
-msgstr ""
+msgstr "更新至最新元件"
 
-#: frontend/src/components/BackgroundHandler.vue:76
+#: builder/ai/agent/pending.py:87
+msgid "Updated global settings: {0}"
+msgstr "已更新全域設定：{0}"
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} token"
+msgstr "已更新 {0} 個權杖"
+
+#: frontend/src/components/Modals/TokenManager.vue:1017
+msgid "Updated {0} tokens"
+msgstr "已更新 {0} 個權杖"
+
+#: frontend/src/data/domains.ts:80
+msgid "Updating primary domain…"
+msgstr "正在更新主要網域…"
+
+#: frontend/src/components/Settings/GlobalRedirects.vue:264
+msgid "Updating redirect..."
+msgstr "正在更新重新導向..."
+
+#: frontend/src/components/BackgroundHandler.vue:77
 #: frontend/src/components/Controls/ImageUploader.vue:13
 #: frontend/src/components/ImageUploadInput.vue:64
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
@@ -3923,24 +4792,24 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
-msgstr ""
+msgstr "上傳 CSV"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
-#: frontend/src/utils/helpers.ts:496
+#: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
-msgstr ""
+msgstr "上傳字型"
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
-msgstr ""
+msgstr "上傳 Meta 圖片"
 
 #: frontend/src/utils/helpers.ts:374
 msgid "Uploaded"
-msgstr ""
+msgstr "已上傳"
 
-#: frontend/src/utils/helpers.ts:532
+#: frontend/src/utils/helpers.ts:553
 msgid "Uploading font..."
-msgstr ""
+msgstr "正在上傳字型..."
 
 #: frontend/src/components/Controls/ImageUploader.vue:13
 msgid "Uploading {0}%"
@@ -3948,45 +4817,53 @@ msgstr ""
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr ""
+msgstr "上传中..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
-msgstr ""
+msgstr "大寫"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:37
 msgid "Use Regular Expression"
-msgstr ""
+msgstr "使用正規表示式"
 
 #: frontend/src/components/Templates/TemplateGallery.vue:29
 msgid "Use all {0} pages"
-msgstr ""
+msgstr "使用全部 {0} 個頁面"
+
+#: frontend/src/components/Controls/SplitModeInput.vue:70
+msgid "Use for all"
+msgstr "全部使用"
 
 #: frontend/src/components/Templates/TemplatePageCard.vue:14
 #: frontend/src/components/Templates/TemplatePreview.vue:20
 msgid "Use template"
-msgstr ""
+msgstr "使用範本"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:170
 msgid "Use this if your DNS provider doesn't support CNAME for subdomains."
-msgstr ""
+msgstr "如果你的 DNS 提供者不支援子網域的 CNAME，請使用此選項。"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:44
 msgid "Used in 1 page"
-msgstr ""
+msgstr "僅使用 1 頁"
 
 #: frontend/src/components/Modals/PageListModal.vue:2
 msgid "Used in following pages"
-msgstr ""
+msgstr "用於下列頁面"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:45
 msgid "Used in {0} pages"
-msgstr ""
+msgstr "用於 {0} 頁面"
 
 #. Name of a DocType
 #: builder/builder/doctype/user_font/user_font.json
 msgid "User Font"
-msgstr ""
+msgstr "使用者字體"
+
+#: frontend/src/components/Settings/GlobalUsers.vue:187
+msgid "User is disabled: {0}"
+msgstr "使用者已停用：{0}"
 
 #: frontend/src/components/Settings/index.ts:86
 #: frontend/src/components/Settings/index.ts:87
@@ -3995,16 +4872,20 @@ msgstr ""
 
 #. Label of the value (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:70
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:69
 #: frontend/src/components/DynamicValueDropdown.vue:6
 #: frontend/src/components/Modals/TokenManager.vue:53
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
 msgstr ""
 
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:72
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:71
 msgid "Value submitted with the form when this radio button is selected."
-msgstr ""
+msgstr "選取此選項按鈕時隨表單提交的值。"
+
+#: frontend/src/data/domains.ts:50
+msgid "Verifying DNS for {0}…"
+msgstr "正在驗證 {0} 的 DNS…"
 
 #: frontend/src/components/DashboardSidebar.vue:90
 #: frontend/src/components/VersionHistory.vue:114
@@ -4014,15 +4895,15 @@ msgstr ""
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
-msgstr ""
+msgstr "版本歷程"
 
-#: frontend/src/stores/pageStore.ts:238
+#: frontend/src/stores/pageStore.ts:244
 msgid "Version restored"
-msgstr ""
+msgstr "已還原版本"
 
-#: frontend/src/components/VersionHistory.vue:235
+#: frontend/src/components/VersionHistory.vue:241
 msgid "Version saved"
-msgstr ""
+msgstr "已儲存版本"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:10
 msgid "Vertical"
@@ -4030,35 +4911,35 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
 msgid "Very Slow"
-msgstr ""
+msgstr "非常慢"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:106
 msgid "Video Options"
-msgstr ""
+msgstr "影片選項"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
 msgid "Video URL"
 msgstr ""
 
-#: frontend/src/components/Commands/index.ts:44
-#: frontend/src/components/Commands/index.ts:174
-#: frontend/src/components/Commands/index.ts:185
-#: frontend/src/components/Commands/index.ts:195
+#: frontend/src/components/Commands/index.ts:43
+#: frontend/src/components/Commands/index.ts:172
+#: frontend/src/components/Commands/index.ts:183
+#: frontend/src/components/Commands/index.ts:193
 #: frontend/src/utils/useBuilderEvents.ts:414
 msgid "View"
 msgstr ""
 
 #: frontend/src/components/PageActionsDropdown.vue:14
 msgid "View Page"
-msgstr ""
+msgstr "檢視頁面"
 
 #: frontend/src/components/PageActionsDropdown.vue:26
 msgid "View in Desk"
-msgstr ""
+msgstr "在 Desk 中檢視"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
 msgid "View tracking is off"
-msgstr ""
+msgstr "瀏覽追蹤已關閉"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
 msgid "Views"
@@ -4073,17 +4954,30 @@ msgstr ""
 msgid "Visitor ID"
 msgstr ""
 
+#: frontend/src/components/Modals/TokenManager.vue:967
+msgid "WARNING: Updating will overwrite the existing values for the listed variables."
+msgstr "警告：更新會覆寫所列變數的現有值。"
+
 #: frontend/src/utils/useBuilderEvents.ts:129
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
 msgstr ""
 
+#: frontend/src/pages/PagePersonaSurvey.vue:140
+msgid "We'll point you to the right starting templates"
+msgstr "我們會為你指向合適的起始範本"
+
 #: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Web app UI"
-msgstr ""
+msgstr "Web 應用程式 UI"
 
 #. Name of a role
 #: builder/builder/doctype/block_template/block_template.json
+#: builder/builder/doctype/builder_ai_memory/builder_ai_memory.json
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+#: builder/builder/doctype/builder_ai_model/builder_ai_model.json
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
+#: builder/builder/doctype/builder_ai_session/builder_ai_session.json
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 #: builder/builder/doctype/builder_component/builder_component.json
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4100,34 +4994,42 @@ msgstr ""
 msgid "Weight"
 msgstr ""
 
+#: frontend/src/pages/PagePersonaSurvey.vue:139
+msgid "What do you want to build first?"
+msgstr "你想先建立什麼？"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:125
+msgid "Which one best describes you?"
+msgstr "哪一項最能描述你？"
+
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
 msgstr ""
 
 #: frontend/src/components/VersionHistory.vue:52
 msgid "Working draft · unpublished changes"
-msgstr ""
+msgstr "工作草稿 · 未發佈的變更"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:32
 #: frontend/src/components/BlockFlexLayoutHandler.vue:36
 msgid "Wrap"
-msgstr ""
+msgstr "換行"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:109
+#: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap In Container"
-msgstr ""
+msgstr "包在容器中"
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
-msgstr ""
+msgstr "X 位移"
 
 #: frontend/src/components/ShadowHandler.vue:154
 msgid "Y Offset"
-msgstr ""
+msgstr "Y 位移"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:45
 #: frontend/src/components/BlockFlexLayoutHandler.vue:54
-#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:87
+#: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:86
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:60
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:77
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:94
@@ -4136,41 +5038,81 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
+#: frontend/src/components/Settings/GlobalUsers.vue:58
+msgid "You"
+msgstr ""
+
+#: frontend/src/utils/builderBlockCopyPaste.ts:272
+msgid "You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"
+msgstr "你即將貼上包含設定與指令碼的頁面。你要更新目前的頁面還是建立新頁面？"
+
+#: builder/ai/api.py:160
+msgid "You are not permitted to apply this change"
+msgstr "你沒有套用此變更的權限"
+
+#: builder/ai/api.py:302
+msgid "You are not permitted to manage AI models"
+msgstr "你沒有管理 AI 模型的權限"
+
+#: builder/ai/api.py:274
+msgid "You are not permitted to manage AI providers"
+msgstr "你沒有管理 AI 提供者的權限"
+
 #: frontend/src/utils/useSiteReadOnlyNotice.ts:43
 msgid "You can continue editing."
-msgstr ""
+msgstr "你可以繼續編輯。"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:269
+msgid "You cannot add link inside a button block"
+msgstr "你無法在按鈕區塊內加入連結"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:268
+msgid "You cannot add link inside a link block"
+msgstr "你無法在連結區塊內加入連結"
+
+#: frontend/src/components/TextBlockBubbleMenu.vue:267
+msgid "You cannot make heading a link"
+msgstr "你無法將標題設為連結"
+
+#: builder/ai/session.py:88
+msgid "You do not have access to this AI session"
+msgstr "你沒有存取此 AI 工作階段的權限"
 
 #: frontend/src/router.ts:13
 msgid "You do not have permission to access this page"
-msgstr ""
+msgstr "您無權訪問此頁面"
 
-#: builder/ai_page_generator.py:454 builder/utils.py:85
+#: builder/utils.py:85
 msgid "You do not have permission to modify pages"
-msgstr ""
+msgstr "您沒有修改頁面的權限"
 
 #: builder/utils.py:87
 msgid "You do not have permission to read pages"
-msgstr ""
+msgstr "您沒有權限閱讀這些頁面。"
 
 #: frontend/src/components/DashboardContent.vue:8
 msgid "You don't have any pages yet. Click on the + New button to create a new page."
-msgstr ""
+msgstr "你還沒有任何頁面。點擊「+ New」按鈕以建立新頁面。"
 
 #: frontend/src/components/Controls/Dialog.vue:56
 msgid "You have unsaved changes. Are you sure you want to leave?"
-msgstr ""
+msgstr "你有未儲存的變更。確定要離開嗎？"
+
+#: frontend/src/components/Controls/Dialog.vue:49
+msgid "You have unsaved changes. Please save before leaving."
+msgstr "你有未儲存的變更。請在離開前儲存。"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:185
 msgid "You're all set{0}. Pick a starting point"
-msgstr ""
+msgstr "一切就緒{0}。請選擇一個起點"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
@@ -4180,30 +5122,134 @@ msgstr ""
 msgid "Zoom out"
 msgstr ""
 
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "assistant"
+msgstr "助理"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "chat"
+msgstr "聊天"
+
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "clarification"
+msgstr "釐清"
+
+#: builder/ai/agent/pending.py:160
+msgid "connect_form needs a doctype, fields, and a form selector"
+msgstr "connect_form 需要 doctype、欄位與表單選擇器"
+
 #. Description of the 'Page Data Script' (Code) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "data.events = frappe.get_list(\"Event\")\n"
 "<br>\n"
 "<b>Note:</b> Each key value of data should be a list."
-msgstr ""
+msgstr "data.events = frappe.get_list(\"Event\")\n"
+"<br>\n"
+"<b>注意：</b>data 中的每個鍵值都應為一個清單。"
 
-#: frontend/src/utils/helpers.ts:897
+#: frontend/src/components/Settings/GlobalDomains.vue:43
+msgid "e.g. yourdomain.com"
+msgstr "例如 yourdomain.com"
+
+#: frontend/src/components/Modals/NewBuilderToken.vue:23
+msgid "e.g., primary, accent, background"
+msgstr "例如：primary、accent、background"
+
+#: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
+msgstr "未用於任何頁面"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:52
+msgid "or"
 msgstr ""
 
-#: frontend/src/stores/pageStore.ts:243
+#. Option for the 'Message Type' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "status"
+msgstr "狀態"
+
+#: frontend/src/stores/pageStore.ts:249
 msgid "this page"
-msgstr ""
+msgstr "此頁面"
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/components/Settings/GlobalDomains.vue:184
+#: frontend/src/components/Settings/GlobalDomains.vue:185
+msgid "unknown"
+msgstr "未知"
+
+#: frontend/src/components/Modals/TokenManager.vue:202
+msgid "unnamed"
+msgstr "未命名"
+
+#: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
-msgstr ""
+msgstr "用於 1 個頁面"
 
-#: frontend/src/utils/helpers.ts:899
+#: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
+msgstr "用於 {0} 個頁面"
+
+#: frontend/src/components/PageClientScriptManager.vue:233
+msgid "used in {0}+ pages"
+msgstr "用於 {0}+ 個頁面"
+
+#. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
+#: builder/builder/doctype/builder_ai_message/builder_ai_message.json
+msgid "user"
 msgstr ""
 
-#: frontend/src/components/PageClientScriptManager.vue:226
-msgid "used in {0}+ pages"
-msgstr ""
+#: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
+msgid "{0} & {1} others"
+msgstr "{0} 與另外 {1} 個"
+
+#: frontend/src/data/domains.ts:62
+msgid "{0} added successfully"
+msgstr "已成功新增 {0}"
+
+#: builder/ai/api.py:87
+msgid "{0} can't view images. Pick a vision-capable model or remove the image."
+msgstr "{0} 無法檢視圖片。請挑選支援視覺的模型或移除圖片。"
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entries were invalid"
+msgstr "{0} 個項目無效"
+
+#: frontend/src/components/Modals/TokenManager.vue:951
+msgid "{0} entry was invalid"
+msgstr "{0} 個項目無效"
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instance"
+msgstr "{0} 個執行個體"
+
+#: frontend/src/components/ComponentUpdates.vue:40
+msgid "{0} instances"
+msgstr "{0} 個執行個體"
+
+#: builder/builder/doctype/builder_ai_provider/builder_ai_provider.py:42
+msgid "{0} models still use this provider: {1}"
+msgstr "{0} 個模型仍在使用此提供者：{1}"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} page"
+msgstr "{0} 個頁面"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+msgid "{0} pages"
+msgstr "{0} 個頁面"
+
+#: frontend/src/components/Settings/GlobalDomains.vue:58
+msgid "{0} record"
+msgstr "{0} 筆記錄"
+
+#: frontend/src/data/domains.ts:72
+msgid "{0} removed"
+msgstr "已移除 {0}"
+
+#: frontend/src/data/domains.ts:80
+msgid "{0} set as primary"
+msgstr "已將 {0} 設為主要"
 
