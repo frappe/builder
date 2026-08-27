@@ -54,35 +54,35 @@ const getEditorValue = () => {
 };
 
 const resetEditor = async (params: { content: string; resetHistory: boolean; autofocus: boolean }) => {
-	if (editor) {
-		if (params.resetHistory) {
-			editor.setState(
-				(
-					await createStartingState({
-						props,
-						pythonCompletions: await getPythonCompletions(),
-						onSaveCallback: () => emit("save", getEditorValue()),
-						onChangeCallback: () => emit("change", getEditorValue()),
-						onBlurCallback: (value: string) => emit("blur", value),
-						initialValue: params.content,
-						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
-						mode: props.mode,
-						blockProps: allBlockProps.value,
-					})
-				).startState,
-			);
-		} else {
-			editor.dispatch({
-				changes: {
-					from: 0,
-					to: editor.state.doc.length,
-					insert: params.content,
-				},
-			});
-		}
-		params.autofocus && editor.focus();
-		(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
+	if (!editor) return;
+
+	if (params.resetHistory) {
+		const { startState } = await createStartingState({
+			props,
+			pythonCompletions: await getPythonCompletions(),
+			onSaveCallback: () => emit("save", getEditorValue()),
+			onChangeCallback: () => emit("change", getEditorValue()),
+			onBlurCallback: (value: string) => emit("blur", value),
+			initialValue: params.content,
+			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+			mode: props.mode,
+			blockProps: allBlockProps.value,
+		});
+		// teardown can land while the state above is being built, and it drops the view
+		if (!editor) return;
+		editor.setState(startState);
+	} else {
+		editor.dispatch({
+			changes: {
+				from: 0,
+				to: editor.state.doc.length,
+				insert: params.content,
+			},
+		});
 	}
+
+	params.autofocus && editor.focus();
+	(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
