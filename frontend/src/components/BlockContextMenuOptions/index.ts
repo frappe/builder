@@ -6,7 +6,14 @@ import type { ContextMenuOption } from "@/types/blockContextMenu";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { createRegistry } from "@/utils/createRegistry";
 import { promptCreateComponent } from "@/utils/dialogs";
-import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
+import {
+	confirm,
+	convertSVGBlockToImage,
+	detachBlockFromComponent,
+	getBlockCopy,
+	isOversizedSVG,
+	triggerCopyEvent,
+} from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, type Ref } from "vue";
@@ -29,6 +36,13 @@ const options: ContextMenuOption[] = [
 		label: __("Edit HTML"),
 		action: ({ block }) => canvasStore.editHTML(block),
 		condition: ({ block }) => block.isHTML(),
+	},
+	{
+		name: "convert-svg-to-image-file",
+		label: __("Convert to Image File"),
+		action: ({ block }) => convertSVGBlockToImage(block),
+		condition: ({ block }) => block.isSVG() && isOversizedSVG(block.getInnerHTML() || ""),
+		disabled: readOnly,
 	},
 	{
 		name: "copy",

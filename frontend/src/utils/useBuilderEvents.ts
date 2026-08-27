@@ -13,13 +13,17 @@ import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyP
 import {
 	addPxToNumber,
 	getBlockCopy,
+	getImageBlock,
 	isDialogOpen,
 	isHTMLString,
+	isOversizedSVG,
 	isTargetEditable,
 	showDialog,
 	triggerCopyEvent,
 	uploadBuilderAsset,
+	uploadSVGAsFile,
 } from "@/utils/helpers";
+import { promptOversizedSVG } from "@/utils/dialogs";
 import { useEventListener } from "@vueuse/core";
 import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
@@ -30,6 +34,12 @@ import { __ } from "@/translation";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
+
+async function resolveOversizedSVG(svg: string) {
+	if (!isOversizedSVG(svg) || !(await promptOversizedSVG(svg.length))) return null;
+	const { fileURL } = await uploadSVGAsFile(svg);
+	return fileURL || null;
+}
 
 export function useBuilderEvents(
 	pageCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
@@ -119,7 +129,8 @@ export function useBuilderEvents(
 			e.preventDefault();
 			// paste html
 			if (blockController.isHTML()) {
-				blockController.setInnerHTML(text);
+				const fileURL = text.startsWith("<svg") ? await resolveOversizedSVG(text) : null;
+				blockController.setInnerHTML(fileURL ? `<img src="${fileURL}" />` : text);
 			} else {
 				let block = null as unknown as Block | BlockOptions;
 				block = getBlockTemplate("html");
@@ -146,9 +157,23 @@ export function useBuilderEvents(
 						svg.removeAttribute("height");
 					}
 					text = svg.outerHTML;
+
+					const fileURL = await resolveOversizedSVG(text);
+					if (fileURL) {
+						const imageBlock = getImageBlock(fileURL);
+						// the image template defaults to cover, which would crop the artwork
+						imageBlock.baseStyles = {
+							...block.baseStyles,
+							...imageBlock.baseStyles,
+							objectFit: "contain",
+						};
+						block = imageBlock;
+					}
 				}
 
-				block.innerHTML = text;
+				if (!block.attributes?.src) {
+					block.innerHTML = text;
+				}
 
 				const selectedBlocks = blockController.getSelectedBlocks();
 				let parentBlock = selectedBlocks.length ? selectedBlocks[0] : null;
