@@ -5,7 +5,7 @@
 		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
 import blockController from "@/utils/blockController";
@@ -144,6 +144,13 @@ onMounted(async () => {
 		state: startState,
 		parent: editorContainer.value,
 	});
+});
+
+// CodeMirror does not release its view tree, DOM or document observer on its own,
+// so an undestroyed view keeps the whole editor DOM alive and keeps polling selection.
+onBeforeUnmount(() => {
+	editor?.destroy();
+	editor = null;
 });
 
 defineExpose({
