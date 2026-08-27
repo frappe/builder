@@ -38,8 +38,8 @@ const options: ContextMenuOption[] = [
 		condition: ({ block }) => block.isHTML(),
 	},
 	{
-		name: "upload-svg-as-file",
-		label: __("Upload SVG as File"),
+		name: "convert-svg-to-image-file",
+		label: __("Convert to Image File"),
 		action: ({ block }) => convertSVGBlockToImage(block),
 		condition: ({ block }) => block.isSVG() && isOversizedSVG(block.getInnerHTML() || ""),
 		disabled: readOnly,
