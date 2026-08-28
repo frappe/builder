@@ -346,7 +346,7 @@
 							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 								<span class="lucide-image h-3.5 w-3.5" />
-								Drop image to attach
+								{{ __("Drop image to attach") }}
 							</div>
 						</div>
 					</Transition>
