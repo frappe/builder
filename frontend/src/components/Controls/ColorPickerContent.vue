@@ -2,7 +2,9 @@
 	<div
 		:class="[
 			'color-picker-container flex flex-col gap-2',
-			renderMode === 'inline' ? 'w-full' : 'rounded-lg bg-surface-base p-3 shadow-lg',
+			renderMode === 'inline'
+				? 'w-full'
+				: 'w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
 		]">
 		<div
 			ref="colorMap"
@@ -42,9 +44,10 @@
 		</div>
 		<Autocomplete
 			v-if="showInput"
+			ref="autocompleteRef"
 			:modelValue="displayValue"
 			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
-			placeholder="Set Color"
+			:placeholder="__('Set Color')"
 			:getOptions="getOptions"
 			referenceElementSelector=".color-picker-container"
 			@update:modelValue="handleInputChange" />
@@ -57,28 +60,41 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
-import { useBuilderVariable } from "@/utils/useBuilderVariable";
-import { clamp, useElementBounding, useEyeDropper } from "@vueuse/core";
-import { Ref, StyleValue, computed, nextTick, ref, watch } from "vue";
+import { useBuilderToken } from "@/utils/useBuilderToken";
+import { clamp, useElementBounding, useEyeDropper, useStorage } from "@vueuse/core";
+import { Ref, StyleValue, computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { variables, resolveVariableValue, getVariableName } = useBuilderVariable();
+const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const alphaMap = ref(null) as unknown as Ref<HTMLDivElement>;
+const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
 
 const {
 	width: colorMapWidth,
 	height: colorMapHeight,
 	left: colorMapLeft,
 	top: colorMapTop,
+	update: updateColorMapBounds,
 } = useElementBounding(colorMap);
-const { width: hueMapWidth, left: hueMapLeft } = useElementBounding(hueMap);
-const { width: alphaMapWidth, left: alphaMapLeft } = useElementBounding(alphaMap);
+const { width: hueMapWidth, left: hueMapLeft, update: updateHueMapBounds } = useElementBounding(hueMap);
+const {
+	width: alphaMapWidth,
+	left: alphaMapLeft,
+	update: updateAlphaMapBounds,
+} = useElementBounding(alphaMap);
+
+// zoom/pan moves the popover without a resize or scroll, so cached bounds go stale
+const syncMapBounds = () => {
+	updateColorMapBounds();
+	updateHueMapBounds();
+	updateAlphaMapBounds();
+};
 
 const colorSelectorPosition = ref({ x: 0, y: 0 });
 const hueSelectorPosition = ref({ x: 0, y: 0 });
@@ -127,17 +143,63 @@ const getOptions = async (query: string) =>
 
 const emit = defineEmits(["update:modelValue"]);
 
-const colors: HashString[] = [
-	"#FFB3E6",
-	"#00B3E6",
-	"#E6B333",
-	"#3366E6",
+// seed palette, shown until enough colors have actually been used
+// kept lowercase to match what HSVToHex and getRGB emit, so no case conversion is needed
+const defaultColors: HashString[] = [
+	"#ffb3e6",
+	"#00b3e6",
+	"#e6b333",
+	"#3366e6",
 	"#999966",
-	"#99FF99",
-	"#B34D4D",
-	"#80B300",
+	"#99ff99",
+	"#b34d4d",
+	"#80b300",
+	"#808080",
 ];
-if (!isSupported.value) colors.push("#B34D4D");
+
+// the eyedropper occupies the last slot when the browser supports it
+const swatchCount = computed(() => (isSupported.value ? 8 : 9));
+
+// persisted and shared across every picker instance in the tab.
+// flush must be "sync": the default "pre" write runs in a scope-bound watcher, so
+// a value set while the picker is unmounting never reaches localStorage
+const recentColors = useStorage<HashString[]>("builderRecentColors", [], localStorage, {
+	flush: "sync",
+});
+
+// hex casing varies by source, so compare swatches on a common form
+const normalizeColor = (color: HashString) => color.trim().toLowerCase();
+
+// recents fill the row first, defaults seed whatever space is left over
+const colors = computed(() => {
+	const seen = new Set<string>();
+	const palette: HashString[] = [];
+	for (const color of [...recentColors.value, ...defaultColors]) {
+		const key = normalizeColor(color);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		palette.push(color);
+		if (palette.length === swatchCount.value) break;
+	}
+	return palette;
+});
+
+// dismissing the popover also deselects the block, so modelValue is already null
+// by the time the commit runs — keep hold of the last real color instead
+let lastColor: HashString | null = null;
+watch(modelColor, (color) => color && (lastColor = color), { immediate: true });
+
+// only the color the picker closed on is banked, not every drag frame
+const commitRecentColor = () => {
+	if (!lastColor) return;
+	const color = normalizeColor(lastColor) as HashString;
+	recentColors.value = [color, ...recentColors.value.filter((c) => normalizeColor(c) !== color)].slice(
+		0,
+		swatchCount.value,
+	);
+};
+
+onBeforeUnmount(commitRecentColor);
 
 const hue = computed(() => Math.round(((hueSelectorPosition.value.x || 0) / (hueMapWidth.value || 1)) * 360));
 const alpha = computed(() =>
@@ -207,7 +269,10 @@ const alphaSelectorStyle = computed(() => {
 
 const selectColor = (color: HashString) => {
 	setSelectorPosition(color);
-	updateColor();
+	// emit the exact value, not what updateColor() derives from the selector's
+	// pixel position — that round-trip rounds and banks a near-identical duplicate
+	currentColor = color;
+	emit("update:modelValue", color);
 };
 
 const handleInputChange = (color: string | null) => {
@@ -240,6 +305,7 @@ const setAlphaSelectorPosition = (color: string) => {
 
 function makeDragHandler(setter: (ev: MouseEvent) => void) {
 	return (ev: MouseEvent) => {
+		syncMapBounds();
 		setter(ev);
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const onMove = (e: MouseEvent) => {
@@ -323,5 +389,9 @@ watch(
 	{ immediate: true },
 );
 
-defineExpose({ syncPositions: () => setSelectorPosition(modelColor.value) });
+defineExpose({
+	syncPositions: () => setSelectorPosition(modelColor.value),
+	hideOptions: () => autocompleteRef.value?.hideOptions(),
+	commitRecentColor,
+});
 </script>

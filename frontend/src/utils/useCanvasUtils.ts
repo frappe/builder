@@ -7,6 +7,7 @@ import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "frappe-ui";
+import { __ } from "@/translation";
 
 const canvasStore = useCanvasStore();
 
@@ -230,8 +231,8 @@ export function useCanvasUtils(
 
 	function removeBlock(block: Block, force: boolean = false) {
 		if (block.blockId === "root") {
-			toast.warning("Warning", {
-				description: "Cannot delete root block",
+			toast.warning(__("Warning"), {
+				description: __("Cannot delete root block"),
 			});
 			return;
 		}

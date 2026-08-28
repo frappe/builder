@@ -1,17 +1,17 @@
 <template>
 	<div class="flex flex-col gap-3">
-		<InputLabel class="w-[88px] shrink-0">Options</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">{{ __("Options") }}</InputLabel>
 		<ArrayEditor :arr="options" @update:arr="handleOptionsChange" />
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="Default Value"
+			:label="__('Default Value')"
 			class="w-full"
 			type="select"
 			:options="optionsAvailable"
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
-			placeholder="Enter default value"></InlineInput>
+			:placeholder="__('Enter default value')"></InlineInput>
 	</div>
 </template>
 

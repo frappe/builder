@@ -1,85 +1,32 @@
 <template>
-	<div class="flex flex-col gap-5">
-		<div class="flex flex-col gap-2">
-			<label class="text-sm text-ink-gray-9">OpenRouter API Key</label>
-			<div class="flex items-center gap-2">
-				<FormControl
-					type="password"
-					:modelValue="apiKey"
-					@update:modelValue="updateApiKey"
-					placeholder="sk-or-v1-…"
-					class="flex-1" />
-				<Button v-if="apiKey" variant="subtle" @click="testApiKey" :disabled="testing">
-					{{ testing ? "Testing..." : "Test Key" }}
-				</Button>
-			</div>
-			<p class="text-xs text-ink-gray-6">
-				Get API key from
-				<a
-					href="https://openrouter.ai/keys"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="text-ink-blue-8 underline">
-					openrouter.ai/keys
-				</a>
-				— supports Claude, Gemini, GPT and more under one key.
-			</p>
-		</div>
-		<div v-if="statusMessage" class="rounded-lg p-3 text-sm" :class="statusClass">
-			{{ statusMessage }}
-		</div>
+	<div class="flex h-full min-h-0 flex-col">
+		<!-- A site with no usable key has nothing worth listing, so the setup flow IS
+		     the screen until one exists. After that it's reached via "Add provider". -->
+		<AISetupFlow v-if="setupMode" :canSkipSetup="configured" @done="finishSetup" />
+		<AIModelList v-else @add-provider="setupMode = true" />
 	</div>
 </template>
 <script setup lang="ts">
-import { builderSettings } from "@/data/builderSettings";
-import useBuilderStore from "@/stores/builderStore";
-import { createResource, FormControl } from "frappe-ui";
+import AIModelList from "@/components/Settings/AIModelList.vue";
+import AISetupFlow from "@/components/Settings/AISetupFlow.vue";
+import { createResource } from "frappe-ui";
 import { onMounted, ref } from "vue";
 
-const builderStore = useBuilderStore();
+const configured = ref(true);
+const setupMode = ref(false);
 
-const testing = ref(false);
-const statusMessage = ref("");
-const statusClass = ref("");
-const apiKey = ref("");
-
-const updateApiKey = (value: string) => {
-	apiKey.value = value;
-	builderStore.updateBuilderSettings("ai_api_key", value);
+const check = async () => {
+	const state: any = await createResource({ url: "builder.ai.api.ai_setup_state" })
+		.submit()
+		.catch(() => null);
+	configured.value = !!state?.configured;
+	setupMode.value = !configured.value;
 };
 
-const testApiKey = async () => {
-	if (!apiKey.value) return;
-
-	testing.value = true;
-	statusMessage.value = "";
-
-	try {
-		const result = (await createResource({
-			url: "builder.ai_page_generator.test_api_key",
-		}).submit()) as { success: boolean; message?: string };
-
-		if (result.success) {
-			statusMessage.value = "API key is valid!";
-			statusClass.value = "text-ink-green-6 bg-surface-green-1";
-		} else {
-			statusMessage.value = result.message || "API key test failed";
-			statusClass.value = "text-ink-red-6 bg-surface-red-1";
-		}
-	} catch (error: unknown) {
-		statusMessage.value = error instanceof Error ? error.message : "Failed to test API key";
-		statusClass.value = "text-ink-red-6 bg-surface-red-1";
-	} finally {
-		testing.value = false;
-		setTimeout(() => {
-			statusMessage.value = "";
-		}, 5000);
-	}
+const finishSetup = async () => {
+	setupMode.value = false;
+	await check();
 };
 
-onMounted(() => {
-	if (builderSettings.doc?.ai_api_key) {
-		apiKey.value = builderSettings.doc.ai_api_key;
-	}
-});
+onMounted(check);
 </script>

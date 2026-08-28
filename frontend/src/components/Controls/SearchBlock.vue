@@ -4,8 +4,8 @@
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
-					{ label: 'Search', value: 'search', icon: 'lucide-search' },
-					{ label: 'Find & Replace', value: 'replace', icon: 'lucide-edit-3' },
+					{ label: __('Search'), value: 'search', icon: 'lucide-search' },
+					{ label: __('Find & Replace'), value: 'replace', icon: 'lucide-edit-3' },
 				]" />
 		</div>
 
@@ -14,7 +14,7 @@
 				ref="searchInput"
 				class="flex-1"
 				type="text"
-				:placeholder="searchMode === 'replace' ? 'Find...' : 'Search blocks...'"
+				:placeholder="searchMode === 'replace' ? __('Find...') : __('Search blocks...')"
 				v-model="query"
 				@input="setQuery"
 				@keydown.enter="handlePrimaryAction" />
@@ -24,7 +24,7 @@
 					<Button
 						@click="togglePopover"
 						icon="lucide-filter"
-						label="Filters"
+						:label="__('Filters')"
 						:class="[
 							'flex items-center gap-2 text-sm',
 							selectedFiltersCount > 0 ? 'border-ink-gray-6 bg-ink-gray-1' : '',
@@ -41,7 +41,7 @@
 				</template>
 				<template #body>
 					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
-						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">Filter search results by:</div>
+						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
@@ -55,7 +55,9 @@
 							</label>
 						</div>
 						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
-							<Button @click="clearAllFilters" variant="subtle" class="w-full">Clear all filters</Button>
+							<Button @click="clearAllFilters" variant="subtle" class="w-full">
+								{{ __("Clear all filters") }}
+							</Button>
 						</div>
 					</div>
 				</template>
@@ -65,7 +67,7 @@
 		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
 				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="mr-2" />
-				<span>Search inside selected block only</span>
+				<span>{{ __("Search inside selected block only") }}</span>
 			</label>
 		</div>
 
@@ -73,7 +75,7 @@
 			<BuilderInput
 				class="w-full"
 				type="text"
-				placeholder="Replace with..."
+				:placeholder="__('Replace with...')"
 				v-model="replaceQuery"
 				@keydown.enter="handlePrimaryAction" />
 		</div>
@@ -87,10 +89,14 @@
 				variant="solid"
 				class="w-full"
 				:disabled="!replaceQuery">
-				Replace All ({{ results.length }} matches)
+				{{ __("Replace All ({0} matches)", [results.length]) }}
 			</Button>
 			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
-				{{ replacedCount }} replacements made
+				{{
+					replacedCount === 1
+						? __("Replaced in {0} block", [replacedCount])
+						: __("Replaced in {0} blocks", [replacedCount])
+				}}
 			</div>
 		</div>
 
@@ -99,7 +105,7 @@
 				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
 					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
 				</div>
-				<h3 class="text-sm-medium mb-2 text-ink-gray-6">Search your blocks</h3>
+				<h3 class="text-sm-medium mb-2 text-ink-gray-6">{{ __("Search your blocks") }}</h3>
 			</div>
 		</div>
 
@@ -122,7 +128,7 @@
 						variant="subtle"
 						class="ml-3 px-2 py-1 text-xs"
 						:disabled="!replaceQuery">
-						Replace
+						{{ __("Replace") }}
 					</Button>
 				</div>
 			</div>
@@ -132,13 +138,14 @@
 			<!-- No Results State -->
 			<div class="flex flex-col items-center justify-center py-6">
 				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
-				<h3 class="text-sm-medium mb-1 text-ink-gray-6">No results found</h3>
-				<p class="text-xs text-ink-gray-5">Try different keywords or adjust your filters</p>
+				<h3 class="text-sm-medium mb-1 text-ink-gray-6">{{ __("No results found") }}</h3>
+				<p class="text-xs text-ink-gray-5">{{ __("Try different keywords or adjust your filters") }}</p>
 			</div>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
@@ -161,14 +168,14 @@ const searchInSelectedBlock = ref(false);
 const propertyHandlers = [
 	{
 		key: "element",
-		name: "Tag",
+		name: __("Tag"),
 		matches: (block: Block, term: string) => block.getElement()?.toLowerCase().includes(term),
 		replace: () => false,
 	},
 	{
 		// dynamicValues and dataKey
 		key: "data",
-		name: "Data",
+		name: __("Data"),
 		matches: (block: Block, term: string) => {
 			if (block.getDynamicValues()) {
 				block.getDynamicValues().forEach((dv: BlockDataKey) => {
@@ -188,7 +195,7 @@ const propertyHandlers = [
 	},
 	{
 		key: "content",
-		name: "Content",
+		name: __("Content"),
 		matches: (block: Block, term: string) => block.getInnerHTML()?.toLowerCase().includes(term),
 		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
 			const innerHTML = block.getInnerHTML();
@@ -204,7 +211,7 @@ const propertyHandlers = [
 	},
 	{
 		key: "styles",
-		name: "Style",
+		name: __("Style"),
 		matches: (block: Block, term: string) => {
 			const styles = { ...block.baseStyles, ...block.mobileStyles, ...block.tabletStyles };
 			return Object.values(styles).some((val) => String(val).toLowerCase().includes(term));
@@ -219,7 +226,7 @@ const propertyHandlers = [
 	},
 	{
 		key: "attributes",
-		name: "Attributes",
+		name: __("Attributes"),
 		matches: (block: Block, term: string) => {
 			const attrs = { ...block.attributes, ...block.customAttributes };
 			return Object.values(attrs).some((val) => String(val).toLowerCase().includes(term));
@@ -233,7 +240,7 @@ const propertyHandlers = [
 	},
 	{
 		key: "classes",
-		name: "CSS Classes",
+		name: __("CSS Classes"),
 		matches: (block: Block, term: string) => {
 			return block.classes?.some((c) => c.toLowerCase().includes(term));
 		},
@@ -312,7 +319,7 @@ const getMatchDetails = (block: Block) => {
 	const lowerSearchTerm = query.value.toLowerCase();
 	const details = propertyHandlers.filter((h) => h.matches(block, lowerSearchTerm)).map((h) => h.name);
 
-	return details.length > 0 ? `Found in: ${details.join(", ")}` : "";
+	return details.length > 0 ? __("Found in: {0}", [details.join(", ")]) : "";
 };
 
 const replaceInProperty = (obj: any, searchTerm: string, replaceTerm: string): boolean => {
@@ -364,9 +371,9 @@ const replaceInBlock = (block: Block, index: number) => {
 	if (hasReplacement) {
 		replacedCount.value++;
 		results.value.splice(index, 1);
-		toast.success(`Replaced in ${block.getBlockDescription()}`);
+		toast.success(__("Replaced in {0}", [block.getBlockDescription()]));
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 
@@ -385,10 +392,10 @@ const replaceAll = () => {
 	});
 
 	if (totalReplacements > 0) {
-		toast.success(`Made ${totalReplacements} replacements across ${totalReplacements} blocks`);
+		toast.success(totalReplacements === 1 ? __("Replaced in {0} block", [totalReplacements]) : __("Replaced in {0} blocks", [totalReplacements]));
 		performSearch();
 	} else {
-		toast.error("No replacements made");
+		toast.error(__("No replacements made"));
 	}
 };
 

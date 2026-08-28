@@ -9,9 +9,11 @@
 				class="aspect-video w-full rounded-md bg-surface-gray-1 object-cover object-top" />
 			<div
 				class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-				<Button size="sm" variant="solid" @click.stop="$emit('select', group)">Select Template</Button>
+				<Button size="sm" variant="solid" @click.stop="$emit('select', group)">
+					{{ __("Select Template") }}
+				</Button>
 				<Button v-if="previewPage" size="sm" variant="subtle" @click.stop="$emit('preview', previewPage)">
-					Preview
+					{{ __("Preview") }}
 				</Button>
 			</div>
 		</div>
@@ -20,12 +22,13 @@
 				{{ group.title }}
 			</p>
 			<span class="shrink-0 text-xs text-ink-gray-4">
-				{{ group.pages.length }} {{ group.pages.length === 1 ? "page" : "pages" }}
+				{{ group.pages.length === 1 ? __("{0} page", [group.pages.length]) : __("{0} pages", [group.pages.length]) }}
 			</span>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { TemplateGroup } from "@/types/template";
 import { computed } from "vue";
 

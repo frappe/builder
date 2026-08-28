@@ -4,7 +4,7 @@
 			<Input
 				v-for="(split, index) in splits"
 				:key="`input-${index}`"
-				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-xs *:text-center"
+				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-center *:text-xs"
 				:class="{
 					'*:rounded-l': index == 0,
 					'*:rounded-r': index == splits.length - 1,
@@ -13,6 +13,7 @@
 				:aria-label="split.label"
 				:type="type"
 				:hideClearButton="true"
+				:hideArrows="true"
 				v-bind="getInputAttrs(index)"
 				@keydown="(event: KeyboardEvent) => handleKeyDown(event, index)"
 				@update:modelValue="(value) => updateValue(index, value)" />

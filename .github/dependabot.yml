@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    # only the root: yarn.lock lives here and covers the workspaces.
+    # Updating /frontend on its own bumps the manifest but leaves the lockfile
+    # stale, which breaks `yarn install`.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      # cypress transitives: uuid needs a major outside cypress's range,
+      # extract-zip has no patched release
+      - dependency-name: "uuid"
+      - dependency-name: "extract-zip"

@@ -23,10 +23,10 @@
 							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
 								<div v-show="page.published">
 									<span
-										title="Limited access"
+										:title="__('Limited access')"
 										class="lucide-shield-user size-4 text-ink-amber-6"
 										v-if="page.authenticated_access" />
-									<span class="lucide-globe size-4" title="Publicly accessible" v-else />
+									<span class="lucide-globe size-4" :title="__('Publicly accessible')" v-else />
 								</div>
 								<p class="max-w-[90%] truncate text-sm">
 									{{ page.route }}
@@ -35,7 +35,9 @@
 						</div>
 						<div class="flex items-baseline gap-2 text-ink-gray-6">
 							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-								<p class="mt-1 block text-sm">Last updated {{ timeAgo }} by {{ modifiedBy.fullname }}</p>
+								<p class="mt-1 block text-sm">
+									{{ __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname]) }}
+								</p>
 							</UseTimeAgo>
 						</div>
 					</span>
@@ -43,7 +45,7 @@
 			</div>
 			<div class="flex gap-2">
 				<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
-					Published
+					{{ __("Published") }}
 				</Badge>
 				<Avatar
 					:shape="'circle'"
@@ -51,14 +53,12 @@
 					:label="owner.fullname"
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
-					:title="`Created by ${owner.fullname}`" />
+					:title="__('Created by {0}', [owner.fullname])" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
-					<template v-slot="{ open }">
-						<span
-							class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
-							aria-hidden="true"
-							@click="open" />
-					</template>
+					<span
+						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
+						aria-hidden="true"
+						@click.stop />
 				</PageActionsDropdown>
 			</div>
 		</div>
@@ -66,6 +66,7 @@
 	</router-link>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";

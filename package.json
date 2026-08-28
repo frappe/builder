@@ -8,7 +8,8 @@
     "scripts": {
         "postinstall": "cd frontend && yarn install",
         "dev": "cd frontend && yarn dev",
-        "build": "cd frontend && yarn build"
+        "build": "cd frontend && yarn build",
+        "dev-setup": "git submodule update --init --recursive --verbose --depth 1 && yarn install"
     },
     "version": "0.0.0",
     "license": "MIT",
@@ -23,6 +24,11 @@
         "prosemirror-view": "1.41.8",
         "prosemirror-state": "1.4.4",
         "prosemirror-transform": "1.12.0",
-        "prosemirror-tables": "1.8.5"
+        "prosemirror-tables": "1.8.5",
+        "ws": "^8.21.0",
+        "qs": "^6.15.2",
+        "dompurify": "^3.4.13",
+        "echarts": "^6.1.0",
+        "js-yaml": "^4.3.1"
     }
 }

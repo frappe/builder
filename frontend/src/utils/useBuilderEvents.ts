@@ -13,21 +13,33 @@ import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyP
 import {
 	addPxToNumber,
 	getBlockCopy,
+	getImageBlock,
 	isDialogOpen,
 	isHTMLString,
+	isOversizedSVG,
 	isTargetEditable,
 	showDialog,
 	triggerCopyEvent,
 	uploadBuilderAsset,
+	uploadSVGAsFile,
 } from "@/utils/helpers";
-import { useEventListener, useStorage } from "@vueuse/core";
+import { promptOversizedSVG } from "@/utils/dialogs";
+import { useEventListener } from "@vueuse/core";
+import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { __ } from "@/translation";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
+
+async function resolveOversizedSVG(svg: string) {
+	if (!isOversizedSVG(svg) || !(await promptOversizedSVG(svg.length))) return null;
+	const { fileURL } = await uploadSVGAsFile(svg);
+	return fileURL || null;
+}
 
 export function useBuilderEvents(
 	pageCanvas: Ref<InstanceType<typeof BuilderCanvas> | null>,
@@ -117,15 +129,18 @@ export function useBuilderEvents(
 			e.preventDefault();
 			// paste html
 			if (blockController.isHTML()) {
-				blockController.setInnerHTML(text);
+				const fileURL = text.startsWith("<svg") ? await resolveOversizedSVG(text) : null;
+				blockController.setInnerHTML(fileURL ? `<img src="${fileURL}" />` : text);
 			} else {
 				let block = null as unknown as Block | BlockOptions;
 				block = getBlockTemplate("html");
 
 				if (text.startsWith("<svg")) {
 					if (text.includes("<image")) {
-						toast.warning("Warning", {
-							description: "SVG with inlined image in it is not supported. Please paste it as PNG instead.",
+						toast.warning(__("Warning"), {
+							description: __(
+								"SVG with inlined image in it is not supported. Please paste it as PNG instead.",
+							),
 						});
 						return;
 					}
@@ -142,9 +157,23 @@ export function useBuilderEvents(
 						svg.removeAttribute("height");
 					}
 					text = svg.outerHTML;
+
+					const fileURL = await resolveOversizedSVG(text);
+					if (fileURL) {
+						const imageBlock = getImageBlock(fileURL);
+						// the image template defaults to cover, which would crop the artwork
+						imageBlock.baseStyles = {
+							...block.baseStyles,
+							...imageBlock.baseStyles,
+							objectFit: "contain",
+						};
+						block = imageBlock;
+					}
 				}
 
-				block.innerHTML = text;
+				if (!block.attributes?.src) {
+					block.innerHTML = text;
+				}
 
 				const selectedBlocks = blockController.getSelectedBlocks();
 				let parentBlock = selectedBlocks.length ? selectedBlocks[0] : null;
@@ -214,42 +243,15 @@ export function useBuilderEvents(
 		}
 	});
 
+	// a command that declares keys owns its binding; what is left needs the
+	// keyboard event or a canvas ref, so it stays a plain shortcut
 	useShortcut([
-		{
-			key: "\\",
-			ctrl: true,
-			description: "Toggle panels",
-			group: "View",
-			handler: (e) => {
-				builderStore.showRightPanel = !builderStore.showRightPanel;
-				builderStore.showLeftPanel = builderStore.showRightPanel;
-			},
-		},
-		{
-			key: "\\",
-			ctrl: true,
-			shift: true,
-			description: "Toggle left panel",
-			group: "View",
-			handler: () => {
-				builderStore.showLeftPanel = !builderStore.showLeftPanel;
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			shift: true,
-			description: "Toggle canvas dark mode",
-			group: "View",
-			handler: () => {
-				builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
-			},
-		},
+		...commandShortcuts(),
 		{
 			key: "s",
 			ctrl: true,
-			description: "Save page / component",
-			group: "General",
+			description: __("Save page / component"),
+			group: __("General"),
 			allowInInput: true,
 			handler: (e) => {
 				if (canvasStore.editingMode === "fragment") {
@@ -259,78 +261,9 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "p",
-			ctrl: true,
-			description: "Preview",
-			group: "General",
-			handler: () => {
-				pageStore.savePage();
-				router.push({
-					name: "preview",
-					params: {
-						pageId: pageStore.selectedPage as string,
-					},
-				});
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			shift: true,
-			description: "Search blocks",
-			group: "General",
-			handler: () => {
-				builderStore.showSearchBlock = true;
-			},
-		},
-		{
-			key: "f",
-			ctrl: true,
-			description: "Focus property search",
-			group: "General",
-			allowInInput: true,
-			handler: () => {
-				document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
-			},
-		},
-		{
-			key: "c",
-			ctrl: true,
-			shift: true,
-			description: "Copy block styles",
-			group: "Edit",
-			handler: () => {
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					const copiedStyle = useStorage(
-						"copiedStyle",
-						{ blockId: "", style: {} },
-						sessionStorage,
-					) as Ref<StyleCopy>;
-					copiedStyle.value = {
-						blockId: block.blockId,
-						style: block.getStylesCopy(),
-					};
-				}
-			},
-		},
-		{
-			key: "d",
-			ctrl: true,
-			description: "Duplicate block",
-			group: "Edit",
-			handler: () => {
-				if (builderStore.readOnlyMode) return;
-				if (blockController.isBlockSelected() && !blockController.multipleBlocksSelected()) {
-					const block = blockController.getSelectedBlocks()[0];
-					block.duplicateBlock();
-				}
-			},
-		},
-		{
 			key: "Backspace",
-			description: "Delete selected blocks",
-			group: "Edit",
+			description: __("Delete selected blocks"),
+			group: __("Edit"),
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -343,8 +276,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "Delete",
-			description: "Delete selected blocks",
-			group: "Edit",
+			description: __("Delete selected blocks"),
+			group: __("Edit"),
 			handler: (e) => {
 				if (builderStore.readOnlyMode) return;
 				if (!blockController.isBlockSelected()) return;
@@ -357,8 +290,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "Escape",
-			description: "Exit current mode",
-			group: "General",
+			description: __("Exit current mode"),
+			group: __("General"),
 			condition: () => canvasStore.editingMode !== "page",
 			handler: (e) => {
 				canvasStore.exitFragmentMode(e);
@@ -366,33 +299,10 @@ export function useBuilderEvents(
 			preventDefault: false,
 		},
 		{
-			key: "z",
-			ctrl: true,
-			description: "Undo",
-			group: "Edit",
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canUndo) {
-					canvasStore.activeCanvas?.history.undo();
-				}
-			},
-		},
-		{
-			key: "z",
-			ctrl: true,
-			shift: true,
-			description: "Redo",
-			group: "Edit",
-			handler: () => {
-				if (canvasStore.activeCanvas?.history?.canRedo) {
-					canvasStore.activeCanvas?.history.redo();
-				}
-			},
-		},
-		{
 			key: "0",
 			ctrl: true,
-			description: "Reset canvas zoom",
-			group: "Canvas",
+			description: __("Reset canvas zoom"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setCanvasZoom?.(1, "center");
@@ -403,8 +313,8 @@ export function useBuilderEvents(
 			key: "0",
 			ctrl: true,
 			shift: true,
-			description: "Fit canvas to screen",
-			group: "Canvas",
+			description: __("Fit canvas to screen"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.setScaleAndTranslate();
@@ -413,8 +323,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowRight",
-			description: "Pan canvas right",
-			group: "Canvas",
+			description: __("Pan canvas right"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("right");
@@ -424,8 +334,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowLeft",
-			description: "Pan canvas left",
-			group: "Canvas",
+			description: __("Pan canvas left"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("left");
@@ -435,8 +345,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowUp",
-			description: "Pan canvas up",
-			group: "Canvas",
+			description: __("Pan canvas up"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("up");
@@ -446,8 +356,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowDown",
-			description: "Pan canvas down",
-			group: "Canvas",
+			description: __("Pan canvas down"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.moveCanvas("down");
@@ -458,8 +368,8 @@ export function useBuilderEvents(
 		{
 			key: "=",
 			ctrl: true,
-			description: "Zoom in",
-			group: "Canvas",
+			description: __("Zoom in"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomIn();
@@ -469,8 +379,8 @@ export function useBuilderEvents(
 		{
 			key: "-",
 			ctrl: true,
-			description: "Zoom out",
-			group: "Canvas",
+			description: __("Zoom out"),
+			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
 					pageCanvas.value.zoomOut();
@@ -479,8 +389,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "c",
-			description: "Container mode",
-			group: "Tools",
+			description: __("Container mode"),
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "container";
@@ -488,8 +398,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "i",
-			description: "Image mode",
-			group: "Tools",
+			description: __("Image mode"),
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "image";
@@ -497,8 +407,8 @@ export function useBuilderEvents(
 		},
 		{
 			key: "t",
-			description: "Text mode",
-			group: "Tools",
+			description: __("Text mode"),
+			group: __("Tools"),
 			handler: () => {
 				if (builderStore.readOnlyMode) return;
 				builderStore.mode = "text";
@@ -506,16 +416,16 @@ export function useBuilderEvents(
 		},
 		{
 			key: "v",
-			description: "Select mode",
-			group: "Tools",
+			description: __("Select mode"),
+			group: __("Tools"),
 			handler: () => {
 				builderStore.mode = "select";
 			},
 		},
 		{
 			key: "h",
-			description: "Move / hand mode",
-			group: "Tools",
+			description: __("Move / hand mode"),
+			group: __("Tools"),
 			handler: () => {
 				builderStore.mode = "move";
 			},
@@ -525,8 +435,8 @@ export function useBuilderEvents(
 			ctrl: true,
 			shift: true,
 			triggeredOn: "hold",
-			description: "Highlight Blocks with Client Scripts",
-			group: "View",
+			description: __("Highlight Blocks with Client Scripts"),
+			group: __("View"),
 			onHold: () => {
 				builderStore.highlightBlocksWithClientScripts = true;
 			},
@@ -585,11 +495,11 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 	) {
 		// Handle dialog first and wait for response
 		showDialog({
-			title: "Copy entire page?",
-			message: "Do you want to copy the entire page including settings and scripts?",
+			title: __("Copy entire page?"),
+			message: __("Do you want to copy the entire page including settings and scripts?"),
 			actions: [
 				{
-					label: "No, just blocks",
+					label: __("No, just blocks"),
 					variant: "subtle",
 					onClick: () => {
 						canvasStore.requiresConfirmationForCopyingEntirePage = false;
@@ -598,7 +508,7 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 					},
 				},
 				{
-					label: "Yes",
+					label: __("Yes"),
 					variant: "solid",
 					onClick: () => {
 						canvasStore.requiresConfirmationForCopyingEntirePage = false;

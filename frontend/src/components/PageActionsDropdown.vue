@@ -6,29 +6,29 @@
 				hideLabel: true,
 				items: [
 					{
-						label: 'Duplicate',
+						label: __('Duplicate'),
 						onClick: () => pageStore.duplicatePage(props.page),
 						icon: 'lucide-copy',
 					},
 					{
-						label: 'View Page',
+						label: __('View Page'),
 						onClick: () => pageStore.openPageInBrowser(props.page),
 						icon: 'lucide-globe',
 						condition: () => Boolean(props.page.published),
 					},
 					{
-						label: 'Unpublish',
+						label: __('Unpublish'),
 						onClick: () => pageStore.unpublishPage(props.page),
 						icon: 'lucide-globe-x',
 						condition: () => Boolean(props.page.published),
 					},
 					{
-						label: 'View in Desk',
+						label: __('View in Desk'),
 						onClick: () => openInDesk(props.page),
 						icon: 'lucide-arrow-up-right',
 					},
 					{
-						label: 'Delete',
+						label: __('Delete'),
 						onClick: () => pageStore.deletePage(props.page),
 						icon: 'lucide-trash',
 						condition: () => !props.page.is_standard,
@@ -38,13 +38,13 @@
 		]"
 		:size="size"
 		:placement="placement">
-		<template v-slot="{ open }">
-			<slot :open="open" />
-		</template>
+		<!-- The slot content becomes the dropdown trigger (reka-ui as-child). -->
+		<slot />
 	</Dropdown>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { openInDesk } from "@/utils/helpers";
@@ -56,11 +56,11 @@ const props = withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
-		placement?: "left" | "right" | "top" | "bottom";
+		placement?: "left" | "right" | "center";
 	}>(),
 	{
 		size: "md",
-		placement: "bottom",
+		placement: "left",
 	},
 );
 </script>

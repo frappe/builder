@@ -12,6 +12,7 @@
 
 <script lang="ts" setup>
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import type { Component } from "vue";
 import { computed } from "vue";
@@ -51,9 +52,9 @@ const props = withDefaults(
 );
 
 const stateLabels: Record<string, string> = {
-	hover: "On Hover",
-	active: "On Active",
-	focus: "On Focus",
+	hover: __("On Hover"),
+	active: __("On Active"),
+	focus: __("On Focus"),
 };
 
 const stateVariants = computed(() =>
@@ -77,7 +78,7 @@ const getVariantValue = (variantName: string): string | number | boolean => {
 		return blockController.getNativeStyle(`${variantName}:${props.propertyKey}`) ?? "";
 	}
 	const property = props.variants?.find((v) => v.name === variantName)?.property;
-	return property ? blockController.getNativeStyle(property) ?? "" : "";
+	return property ? (blockController.getNativeStyle(property) ?? "") : "";
 };
 
 const setVariantValue = (variantName: string, value: string | number | boolean | null) => {

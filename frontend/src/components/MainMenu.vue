@@ -14,7 +14,9 @@
 	</Dropdown>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -31,8 +33,8 @@ const isDark = useDark({
 const router = useRouter();
 const toggleDark = useToggle(isDark);
 const canvasStore = useCanvasStore();
-
-const emit = defineEmits(["showSettings", "showShortcuts"]);
+// a registry item has no parent to emit to, so write the store directly
+const builderStore = useBuilderStore();
 
 const handleCopyPage = () => {
 	if (!pageStore.activePage) return;
@@ -46,7 +48,11 @@ const mainMenuOptions = [
 		group: "Builder",
 		hideLabel: true,
 		items: [
-			{ label: "Back to Dashboard", onClick: () => router.push({ name: "home" }), icon: "lucide-arrow-left" },
+			{
+				label: __("Back to Dashboard"),
+				onClick: () => router.push({ name: "home" }),
+				icon: "lucide-arrow-left",
+			},
 		],
 	},
 	{
@@ -54,23 +60,23 @@ const mainMenuOptions = [
 		hideLabel: true,
 		items: [
 			{
-				label: "New Page",
+				label: __("New Page"),
 				onClick: () => (showTemplatesDialog.value = true),
 				icon: "lucide-plus",
 			},
 			{
-				label: "Copy Page",
+				label: __("Copy Page"),
 				onClick: handleCopyPage,
 				icon: "lucide-clipboard",
 				condition: () => Boolean(pageStore.activePage),
 			},
 			{
-				label: "Duplicate Page",
+				label: __("Duplicate Page"),
 				onClick: () => pageStore.duplicatePage(pageStore.activePage as BuilderPage),
 				icon: "lucide-copy",
 			},
 			{
-				label: "Delete Page",
+				label: __("Delete Page"),
 				onClick: () => {
 					if (!pageStore.activePage) return;
 					pageStore.deletePage(pageStore.activePage).then(() => {
@@ -87,14 +93,22 @@ const mainMenuOptions = [
 		hideLabel: true,
 		items: [
 			{
-				label: `Toggle Theme`,
+				label: __("Toggle Theme"),
 				onClick: () => toggleDark(),
 				icon: isDark ? "lucide-sun" : "lucide-moon",
 			},
-			{ label: "Settings", onClick: () => emit("showSettings"), icon: "lucide-settings" },
-			{ label: "Shortcuts", onClick: () => emit("showShortcuts"), icon: "lucide-command" },
 			{
-				label: "Help",
+				label: __("Settings"),
+				onClick: () => (builderStore.showSettingsDialog = true),
+				icon: "lucide-settings",
+			},
+			{
+				label: __("Shortcuts"),
+				onClick: () => (builderStore.shortcutsModalOpen = true),
+				icon: "lucide-command",
+			},
+			{
+				label: __("Help"),
 				onClick: () => {
 					// @ts-ignore
 					window.open("https://t.me/frappebuilder");

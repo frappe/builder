@@ -3,7 +3,7 @@
 		<div
 			v-if="!block.hasChildren()"
 			class="pointer-events-none flex h-full w-full items-center justify-center font-semibold">
-			Add a block to repeat
+			{{ __("Add a block to repeat") }}
 		</div>
 		<BuilderBlock
 			v-else
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import type Block from "@/block";
 import usePageStore from "@/stores/pageStore";
 import { getDataForKey, getStandardPropValue } from "@/utils/helpers";

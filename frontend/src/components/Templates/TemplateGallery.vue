@@ -15,7 +15,7 @@
 					variant="ghost"
 					class="-ml-3 mb-5"
 					@click="selectedGroup = ''">
-					Back to all templates
+					{{ __("Back to all templates") }}
 				</Button>
 				<div class="mb-2 flex flex-col gap-2">
 					<div class="flex items-center justify-between">
@@ -26,7 +26,7 @@
 							:loading="importingAll"
 							icon-left="lucide-copy-plus"
 							@click="importAll">
-							Use all {{ activeGroup?.pages.length }} pages
+							{{ __("Use all {0} pages", [activeGroup?.pages.length ?? 0]) }}
 						</Button>
 					</div>
 					<p v-if="activeGroup?.description" class="max-w-2xl text-sm leading-relaxed text-ink-gray-5">
@@ -62,12 +62,12 @@
 							v-for="category in ['', ...categories]"
 							:key="category"
 							:variant="selectedCategory === category ? 'subtle' : 'outline'"
-							:label="category || 'All'"
+							:label="category || __('All')"
 							:class="{ 'border border-transparent': selectedCategory === category }"
 							@click="selectedCategory = category" />
 					</div>
 					<div class="grid gap-x-4 gap-y-5 auto-fill-[190px]">
-						<BlankPageCard label="Start from scratch" @click="createBlankPage('gallery')" />
+						<BlankPageCard :label="__('Start from scratch')" @click="createBlankPage('gallery')" />
 						<TemplateGroupCard
 							v-for="group in filteredGroups"
 							:key="group.name"
@@ -82,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { templateGroups, webPages } from "@/data/webPage";
 import router from "@/router";
@@ -104,8 +105,8 @@ const props = withDefaults(
 		maxGroups?: number;
 	}>(),
 	{
-		heading: "New page",
-		subtitle: "Start from a blank page or pick a template.",
+		heading: __("New page"),
+		subtitle: __("Start from a blank page or pick a template."),
 		maxGroups: 0,
 	},
 );
@@ -204,9 +205,9 @@ const useTemplate = (page: TemplatePageSummary) => {
 			pageStore.setPage(newPageName);
 		});
 	toast.promise(promise, {
-		loading: "Creating page from template...",
-		success: () => "Page created",
-		error: () => "Could not create page from template",
+		loading: __("Creating page from template..."),
+		success: () => __("Page created"),
+		error: () => __("Could not create page from template"),
 	});
 	promise.finally(() => {
 		creatingPage.value = false;
@@ -236,9 +237,9 @@ const importAll = () => {
 			router.push({ name: "home" });
 		});
 	toast.promise(promise, {
-		loading: "Adding all pages...",
-		success: () => "All pages added",
-		error: () => "Could not add pages",
+		loading: __("Adding all pages..."),
+		success: () => __("All pages added"),
+		error: () => __("Could not add pages"),
 	});
 	promise.finally(() => {
 		importingAll.value = false;

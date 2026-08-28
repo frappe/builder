@@ -1,32 +1,44 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
+import { cssUrl } from "@/utils/helpers";
+import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
+import { Button } from "frappe-ui";
+import { computed } from "vue";
+
+const backgroundImageURL = () => {
+	const bg = (blockController.getStyle("backgroundImage") as string) || "";
+	return bg && !bg.includes("gradient") ? bg.replace(/^url\(['"]?|['"]?\)$/g, "") : "";
+};
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { BORDER_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions";
+import { BORDER_UNIT_OPTIONS, RADIUS_UNIT_OPTIONS, ROTATION_UNIT_OPTIONS } from "@/utils/unitOptions";
 import RangeInput from "../Controls/RangeInput.vue";
 import ShadowHandler from "@/components/ShadowHandler.vue";
-import BorderRadiusControl from "@/components/BorderRadiusControl.vue";
-import BorderControl from "@/components/BorderControl.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
+import { __ } from "@/translation";
+
+const hasBorder = () =>
+	Boolean(blockController.getStyle("borderColor") || blockController.getStyle("borderWidth"));
 
 const overflowOptions = [
 	{
-		label: "Unset",
+		label: __("Unset"),
 		value: "unset",
 	},
 	{
-		label: "Auto",
+		label: __("Auto"),
 		value: "auto",
 	},
 	{
-		label: "Visible",
+		label: __("Visible"),
 		value: "visible",
 	},
 	{
-		label: "Hidden",
+		label: __("Hidden"),
 		value: "hidden",
 	},
 	{
-		label: "Scroll",
+		label: __("Scroll"),
 		value: "scroll",
 	},
 ];
@@ -36,7 +48,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Opacity",
+				label: __("Opacity"),
 				propertyKey: "opacity",
 				enableSlider: false,
 				component: RangeInput,
@@ -70,24 +82,96 @@ const styleSectionProperties = [
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
 	},
 	{
+		component: Button,
+		getProps: () => {
+			return {
+				class: "text-base self-end",
+			};
+		},
+		innerText: computed(() => getOptimizeButtonText(backgroundImageURL())),
+		searchKeyWords:
+			"Background, Local, Copy, Server, Download, Host, Store, Convert, webp, Convert to webp, image, url",
+		events: {
+			click: () =>
+				optimizeImage({
+					imageUrl: backgroundImageURL(),
+					onSuccess: (newUrl: string) =>
+						blockController.setStyle("backgroundImage", cssUrl(newUrl)),
+				}),
+		},
+		condition: () => shouldShowOptimizeButton(backgroundImageURL()),
+	},
+	{
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
 				propertyKey: "color",
 				component: ColorInput,
-				label: "Text Color",
+				label: __("Text Color"),
 				popoverOffset: 120,
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",
 	},
 	{
-		component: BorderControl,
+		component: StylePropertyControl,
 		getProps: () => {
-			return {};
+			return {
+				label: __("Border Color"),
+				propertyKey: "borderColor",
+				component: ColorInput,
+				popoverOffset: 120,
+				events: {
+					// a border only shows up once it has a width and a style
+					"update:modelValue": (value: StyleValue) => {
+						if (!value) {
+							blockController.setStyle("borderWidth", null);
+							blockController.setStyle("borderStyle", null);
+						} else if (!blockController.getStyle("borderWidth")) {
+							blockController.setStyle("borderWidth", "1px");
+							blockController.setStyle("borderStyle", "solid");
+						}
+					},
+				},
+			};
 		},
-		usedStyleProperties: ["border", "border-color", "border-style", "border-width"],
-		searchKeyWords: "Border, Color, Width, Style, BorderColor, BorderWidth, BorderStyle",
+		usedStyleProperties: ["border", "border-color"],
+		searchKeyWords: "Border, Color, BorderColor, Border Color",
+	},
+	{
+		component: SplitPropertyControl,
+		getProps: () => {
+			return {
+				label: __("Border Width"),
+				propertyKey: "borderWidth",
+				unitOptions: BORDER_UNIT_OPTIONS,
+				splits: ["T", "R", "B", "L"],
+				toModelValue: (parts: StyleValue[]) => parts.join(" "),
+				getModelValue: (state: string | null = null) =>
+					String(blockController.getStyle(state ? `${state}:borderWidth` : "borderWidth") || ""),
+			};
+		},
+		usedStyleProperties: ["border-width"],
+		searchKeyWords: "Border, Width, BorderWidth, Border Width",
+		condition: () => hasBorder(),
+	},
+	{
+		component: StylePropertyControl,
+		getProps: () => {
+			return {
+				label: __("Border Style"),
+				propertyKey: "borderStyle",
+				type: "select",
+				options: [
+					{ value: "solid", label: __("Solid") },
+					{ value: "dashed", label: __("Dashed") },
+					{ value: "dotted", label: __("Dotted") },
+				],
+			};
+		},
+		usedStyleProperties: ["border-style"],
+		searchKeyWords: "Border, Style, BorderStyle, Border Style",
+		condition: () => hasBorder(),
 	},
 	{
 		component: ShadowHandler,
@@ -96,8 +180,26 @@ const styleSectionProperties = [
 		searchKeyWords: "Shadow, BoxShadow, Box Shadow",
 	},
 	{
-		component: BorderRadiusControl,
-		getProps: () => {},
+		component: SplitPropertyControl,
+		getProps: () => {
+			return {
+				label: __("Radius"),
+				placeholder: __("None"),
+				propertyKey: "borderRadius",
+				unitOptions: RADIUS_UNIT_OPTIONS,
+				splits: ["TL", "TR", "BR", "BL"],
+				getModelValue: (state: string | null = null) =>
+					String(blockController.getStyle(state ? `${state}:borderRadius` : "borderRadius") || ""),
+			};
+		},
+		events: {
+			// rounded corners only show if the content is clipped
+			"update:modelValue": (value: StyleValue) => {
+				if (!value) return;
+				if (!blockController.getStyle("overflowX")) blockController.setStyle("overflowX", "hidden");
+				if (!blockController.getStyle("overflowY")) blockController.setStyle("overflowY", "hidden");
+			},
+		},
 		usedStyleProperties: [
 			"border-bottom-left-radius",
 			"border-bottom-right-radius",
@@ -111,7 +213,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Z-Index",
+				label: __("Z-Index"),
 				propertyKey: "zIndex",
 			};
 		},
@@ -125,7 +227,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Overflow X",
+				label: __("Overflow X"),
 				type: "select",
 				propertyKey: "overflowX",
 				options: overflowOptions,
@@ -144,7 +246,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Overflow Y",
+				label: __("Overflow Y"),
 				propertyKey: "overflowY",
 				type: "select",
 				options: overflowOptions,
@@ -163,16 +265,16 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Cursor",
+				label: __("Cursor"),
 				propertyKey: "cursor",
 				type: "select",
 				options: [
-					{ value: null, label: "Default" },
-					{ value: "pointer", label: "Pointer" },
-					{ value: "move", label: "Move" },
-					{ value: "text", label: "Text" },
-					{ value: "crosshair", label: "Crosshair" },
-					{ value: "not-allowed", label: "Not Allowed" },
+					{ value: null, label: __("Default") },
+					{ value: "pointer", label: __("Pointer") },
+					{ value: "move", label: __("Move") },
+					{ value: "text", label: __("Text") },
+					{ value: "crosshair", label: __("Crosshair") },
+					{ value: "not-allowed", label: __("Not Allowed") },
 				],
 			};
 		},
@@ -182,7 +284,7 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Rotation",
+				label: __("Rotation"),
 				propertyKey: "rotate",
 				enableSlider: true,
 				unitOptions: ROTATION_UNIT_OPTIONS,
@@ -197,6 +299,6 @@ const styleSectionProperties = [
 ];
 
 export default {
-	name: "Style",
+	name: __("Style"),
 	properties: styleSectionProperties,
 };

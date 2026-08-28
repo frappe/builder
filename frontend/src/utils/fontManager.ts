@@ -1,5 +1,7 @@
 import userFont from "@/data/userFonts";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { shallowRef } from "vue";
+import { __ } from "@/translation";
 
 interface FontListItem {
 	family: string;
@@ -13,19 +15,43 @@ interface WeightOption {
 }
 
 const WEIGHT_LABELS: Record<FontWeight, string> = {
-	"100": "Thin",
-	"200": "Extra Light",
-	"300": "Light",
-	"400": "Regular",
-	"500": "Medium",
-	"600": "Semi Bold",
-	"700": "Bold",
-	"800": "Extra Bold",
-	"900": "Black",
+	"100": __("Thin"),
+	"200": __("Extra Light"),
+	"300": __("Light"),
+	"400": __("Regular"),
+	"500": __("Medium"),
+	"600": __("Semi Bold"),
+	"700": __("Bold"),
+	"800": __("Extra Bold"),
+	"900": __("Black"),
 };
 
 const GF_CSS = "https://fonts.googleapis.com/css2";
 const fontCache = new Map<string, Promise<string>>();
+
+// A preview renders one label — a family's own name, or a Font token's label, which
+// carries the token's name alongside it — so it loads a subset holding just that label's
+// glyphs (~1KB instead of the full face). That face must NOT be registered under the real
+// family name: a block that later applies the same font would otherwise race against a
+// face carrying a handful of glyphs. Alias it instead.
+const PREVIEW_PREFIX = "__builder_preview_";
+// the picker re-queries on every keystroke, so batch the resulting loads
+const PREVIEW_DEBOUNCE = 120;
+// a builder session runs for hours: without a ceiling, browsing the picker would leave
+// the whole catalog resident. Well above the ~20 rows on screen, so nothing visible goes.
+const PREVIEW_FACE_LIMIT = 150;
+
+// all three are keyed by the label being previewed, not by the family: one family can back
+// more than one label (its own row, and any Font token bound to it), and each needs a
+// subset cut to its own glyphs
+const previewRequests = new Map<string, Promise<void>>();
+// label -> the family its preview renders with; reactive so pickers restyle on arrival
+const previewFamilies = shallowRef(new Map<string, string>());
+// only subset faces, in insertion order — real faces belong to blocks and are never evicted
+const previewFaces = new Map<string, FontFace>();
+// aliases have to be unique per label, but a label is free-form text and a family name is
+// not, so they are numbered rather than built out of the label itself
+let previewFaceCount = 0;
 
 // the Google Fonts catalog is ~110KB, so it stays out of the main bundle
 // and loads on first use (font pickers read the reactive ref)
@@ -55,44 +81,189 @@ function loadCustomFont(font: string, url: string): Promise<string> {
 		});
 }
 
-function loadGoogleFont(font: string, weight?: string): Promise<string> {
-	const familyParam = weight ? `${encodeURIComponent(font)}:wght@${weight}` : encodeURIComponent(font);
+/** Does this family actually carry the weight? The css2 API answers a wght@ it
+ * doesn't have with a 400 — which the browser then reports as a CORS failure,
+ * since an error response carries no allow-origin header. Asking the catalogue
+ * first turns a guaranteed round trip plus retry into a lookup. */
+async function carriesWeight(font: string, weight: string): Promise<boolean> {
+	const items = fontListItems.value.length ? fontListItems.value : await loadFontList().catch(() => []);
+	const entry = items.find((item) => item.family === font);
+	// Unknown family: let the request decide, the retry below still covers it.
+	if (!entry) return true;
+	return entry.variants.includes(weight) || (weight === "400" && entry.variants.includes("regular"));
+}
 
+async function loadGoogleFont(font: string, weight?: string): Promise<string> {
+	if (weight && !(await carriesWeight(font, weight))) weight = undefined;
 	return new Promise<string>((resolve) => {
-		const id = `gf-${font.replace(/\s+/g, "-")}${weight ? `-${weight}` : ""}`;
-		const link = document.createElement("link");
-		link.id = id;
-		link.rel = "stylesheet";
-		link.crossOrigin = "anonymous";
-		link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
-		link.addEventListener("load", () => resolve(font), { once: true });
-		link.addEventListener(
-			"error",
-			() => {
-				console.warn(`Failed to load font: ${font}`);
-				resolve(font);
-			},
-			{ once: true },
-		);
-		document.head.appendChild(link);
+		const attempt = (withWeight: boolean) => {
+			const familyParam = withWeight
+				? `${encodeURIComponent(font)}:wght@${weight}`
+				: encodeURIComponent(font);
+			const link = document.createElement("link");
+			link.id = `gf-${font.replace(/\s+/g, "-")}${withWeight ? `-${weight}` : ""}`;
+			link.rel = "stylesheet";
+			link.crossOrigin = "anonymous";
+			link.href = `${GF_CSS}?family=${familyParam}&display=swap`;
+			link.addEventListener("load", () => resolve(font), { once: true });
+			link.addEventListener(
+				"error",
+				() => {
+					link.remove();
+					if (withWeight) {
+						// Single-weight faces (Italiana, Young Serif, Caprasimo…) 400 on ANY
+						// wght@ request — the css2 API rejects weights a family doesn't carry.
+						// Retry the family default; the browser synthesises the bold.
+						attempt(false);
+						return;
+					}
+					console.warn(`Failed to load font: ${font}`);
+					resolve(font);
+				},
+				{ once: true },
+			);
+			document.head.appendChild(link);
+		};
+		attempt(!!weight);
 	});
+}
+
+// A Font design token (fontFamily: var(--id)) stands in for its family, so every
+// caller can work with the family without knowing whether a style is tokenized.
+function resolveFontToken(font: string): string {
+	if (!font.includes("var(")) return font;
+	const { resolveVariableValue } = useBuilderToken();
+	const resolved = resolveVariableValue(font);
+	return resolved === font ? "" : resolved; // unknown token: no family to work with
 }
 
 export function setFont(font: string | null, weight?: string): Promise<string> {
 	if (!font) return Promise.resolve("");
-	const cacheKey = weight ? `${font}:${weight}` : font;
+
+	// a token stands in for its family; an unknown one leaves nothing to load
+	const family = font.includes("var(") ? resolveFontToken(font) : font;
+	if (!family) return Promise.resolve(font);
+
+	const cacheKey = weight ? `${family}:${weight}` : family;
 	if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
 	// userFont list resource may not have loaded yet (e.g. a page rendered right
 	// after navigation); fall back to treating it as a Google font until it does.
 	const customFont = (userFont.data || []).find(
-		(f: { font_name: string; font_file: string }) => f.font_name === font,
+		(f: { font_name: string; font_file: string }) => f.font_name === family,
 	);
 
-	const promise = customFont ? loadCustomFont(font, customFont.font_file) : loadGoogleFont(font, weight);
+	const promise = customFont ? loadCustomFont(family, customFont.font_file) : loadGoogleFont(family, weight);
 
 	fontCache.set(cacheKey, promise);
 	return promise;
+}
+
+/**
+ * Makes a family that has just become a User Font usable straight away. Whatever the
+ * family resolved to before (usually a failed Google Fonts lookup) is cached, so the
+ * old answer has to be dropped or the canvas keeps showing the fallback until reload.
+ */
+export function registerCustomFont(font: string, url: string): Promise<string> {
+	for (const key of [...fontCache.keys()]) {
+		if (key === font || key.startsWith(`${font}:`)) fontCache.delete(key);
+	}
+	const promise = loadCustomFont(font, url);
+	fontCache.set(font, promise);
+	return promise;
+}
+
+const isCustomFont = (font: string) =>
+	(userFont.data || []).some((f: { font_name: string }) => f.font_name === font);
+
+// Google's text= parameter returns a face carrying only the requested characters, which
+// for a preview is the label it has to render — roughly 1KB rather than the full file.
+async function loadSubsetFace(font: string, label: string): Promise<string> {
+	const glyphs = [...new Set(label)].join("");
+	const res = await fetch(`${GF_CSS}?family=${encodeURIComponent(font)}&text=${encodeURIComponent(glyphs)}`);
+	if (!res.ok) throw new Error(`No Google font named ${font}`);
+	const url = (await res.text()).match(/url\((https:\/\/[^)]+)\)/)?.[1];
+	if (!url) throw new Error(`No font file in the stylesheet for ${font}`);
+
+	const previewFamily = `${PREVIEW_PREFIX}${++previewFaceCount}`;
+	const face = await new FontFace(previewFamily, `url("${url}")`).load();
+	document.fonts.add(face);
+	previewFaces.set(label, face);
+	evictOldestPreviews();
+	return previewFamily;
+}
+
+function evictOldestPreviews() {
+	if (previewFaces.size <= PREVIEW_FACE_LIMIT) return;
+
+	const families = new Map(previewFamilies.value);
+	while (previewFaces.size > PREVIEW_FACE_LIMIT) {
+		const [oldest, face] = previewFaces.entries().next().value!;
+		document.fonts.delete(face);
+		previewFaces.delete(oldest);
+		// drop the request too, so the font can be previewed again if it comes back
+		previewRequests.delete(oldest);
+		families.delete(oldest);
+	}
+	previewFamilies.value = families;
+}
+
+function resolvePreviewFace(font: string, label: string): Promise<string> {
+	// a font already applied on the canvas has its full face on the way, and uploaded
+	// fonts are served whole from the site itself — either way there is nothing to
+	// subset, and setFont already caches both under the real family name
+	return isCustomFont(font) || fontCache.has(font) ? setFont(font) : loadSubsetFace(font, label);
+}
+
+/** Loads just enough of a font to render one label — its own family name by default.
+ * Failures leave it unpreviewed. */
+export function loadFontPreview(font: string, label: string = font): Promise<void> {
+	const pending = previewRequests.get(label);
+	if (pending) return pending;
+
+	const request = resolvePreviewFace(font, label)
+		.then((family) => {
+			// swap the map so the pickers restyle once the face is actually usable
+			previewFamilies.value = new Map(previewFamilies.value).set(label, family);
+		})
+		.catch(() => console.warn(`Failed to load font preview: ${font}`));
+
+	previewRequests.set(label, request);
+	return request;
+}
+
+/** A row to preview: the family to load, and the label that row actually renders. */
+export interface FontPreview {
+	font: string;
+	label: string;
+}
+
+let queuedPreviews: FontPreview[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+
+function flushPreviewQueue() {
+	flushTimer = undefined;
+	queuedPreviews.forEach(({ font, label }) => loadFontPreview(font, label));
+	queuedPreviews = [];
+}
+
+/** Queues previews for the currently visible options, coalescing bursts of keystrokes. */
+export function enqueuePreviewLoad(previews: FontPreview[]): void {
+	// every keystroke supersedes the last, so the pending set is replaced rather than
+	// accumulated: pausing on "rob" should not also fetch what matched "r"
+	queuedPreviews = previews.filter(({ label }) => !previewRequests.has(label));
+	if (flushTimer) clearTimeout(flushTimer);
+	if (queuedPreviews.length) flushTimer = setTimeout(flushPreviewQueue, PREVIEW_DEBOUNCE);
+}
+
+/**
+ * Style for rendering a label in its own typeface. Returns undefined until the preview
+ * has loaded, so the label stays in the UI font instead of flashing a fallback serif.
+ */
+export function previewFontStyle(label: string): { fontFamily: string } | undefined {
+	const family = previewFamilies.value.get(label);
+	// JSON.stringify quotes the family, which matters for names containing spaces
+	return family ? { fontFamily: JSON.stringify(family) } : undefined;
 }
 
 export function setFontFromHTML(html: string): void {
@@ -105,8 +276,9 @@ export function setFontFromHTML(html: string): void {
 
 export function getFontWeightOptions(font: string): WeightOption[] {
 	loadFontList();
-	const fontObj = font && fontListItems.value.find((f) => f.family === font);
-	if (!fontObj) return [{ value: "400", label: "Regular" }];
+	const family = font ? resolveFontToken(font) : font;
+	const fontObj = family && fontListItems.value.find((f) => f.family === family);
+	if (!fontObj) return [{ value: "400", label: __("Regular") }];
 
 	return fontObj.variants
 		.filter((v) => !v.includes("italic"))

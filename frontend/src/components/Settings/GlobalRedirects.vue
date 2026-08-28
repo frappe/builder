@@ -6,7 +6,7 @@
 				@input="(val: string) => (searchQuery = val)"
 				@update:modelValue="(val: string) => (searchQuery = val)"
 				type="text"
-				placeholder="Search redirects"
+				:placeholder="__('Search redirects')"
 				class="w-full"
 				icon-left="search" />
 		</div>
@@ -15,8 +15,8 @@
 			<div
 				class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 				:class="rowGridClass">
-				<div class="pl-2">Source</div>
-				<div class="border-l border-outline-gray-1 pl-2">Target</div>
+				<div class="pl-2">{{ __("Source") }}</div>
+				<div class="border-l border-outline-gray-1 pl-2">{{ __("Target") }}</div>
 				<div></div>
 			</div>
 
@@ -25,7 +25,7 @@
 				class="flex w-full items-center gap-2 border-b border-outline-gray-1 px-2 py-2 text-sm text-ink-gray-5 hover:bg-surface-gray-1 hover:text-ink-gray-8"
 				@click="openAdd">
 				<span class="lucide-plus size-4" aria-hidden="true" />
-				Add Redirect
+				{{ __("Add Redirect") }}
 			</button>
 
 			<div
@@ -45,7 +45,7 @@
 					<span
 						v-if="field === 'to' && (row.status !== '301' || row.forward)"
 						class="flex shrink-0 items-center gap-1 rounded bg-surface-gray-3 px-1.5 py-0.5 text-xs text-ink-gray-5"
-						:title="`HTTP ${row.status}${row.forward ? ' · forwards query parameters' : ''}`">
+						:title="row.forward ? __('HTTP {0} · forwards query parameters', [row.status]) : __('HTTP {0}', [row.status])">
 						<span v-if="row.status !== '301'" class="tabular-nums">{{ row.status }}</span>
 						<span v-if="row.forward" class="lucide-arrow-right-left size-3" aria-hidden="true" />
 					</span>
@@ -59,14 +59,14 @@
 			</div>
 
 			<div v-if="searchQuery.trim() && !rows.length" class="px-2 py-6 text-center text-sm text-ink-gray-5">
-				No redirects match "{{ searchQuery }}"
+				{{ __('No redirects match "{0}"', [searchQuery]) }}
 			</div>
 		</div>
 
 		<Dialog
 			v-model="showDialog"
-			:title="editingId ? 'Edit Redirect' : 'Add Redirect'"
-			:actions="[{ label: editingId ? 'Save' : 'Add Redirect', variant: 'solid', onClick: commit }]">
+			:title="editingId ? __('Edit Redirect') : __('Add Redirect')"
+			:actions="[{ label: editingId ? __('Save') : __('Add Redirect'), variant: 'solid', onClick: commit }]">
 			<template #default>
 				<div class="flex flex-col gap-3">
 					<BuilderInput
@@ -75,7 +75,7 @@
 						required
 						:ref="(el) => field === 'from' && (fromRef = el)"
 						:modelValue="draft[field]"
-						:label="field === 'from' ? 'Source' : 'Target'"
+						:label="field === 'from' ? __('Source') : __('Target')"
 						type="text"
 						:hideClearButton="true"
 						:placeholder="placeholders[field]"
@@ -89,27 +89,27 @@
 							class="size-3.5"
 							:class="advancedOpen ? 'lucide-chevron-down' : 'lucide-chevron-right'"
 							aria-hidden="true" />
-						Advanced
+						{{ __("Advanced") }}
 					</button>
 					<template v-if="advancedOpen">
 						<FormControl
 							type="select"
 							size="sm"
-							label="Redirect status"
+							:label="__('Redirect status')"
 							:options="statusOptions"
 							:modelValue="draft.status"
 							@update:modelValue="(val: string) => (draft.status = val)" />
 						<Switch
 							size="sm"
-							label="Forward query parameters"
-							description="Append the original query string to the target URL"
+							:label="__('Forward query parameters')"
+							:description="__('Append the original query string to the target URL')"
 							class="mt-2"
 							:modelValue="draft.forward"
 							@update:modelValue="(val: boolean) => (draft.forward = val)" />
 					</template>
 
 					<div v-if="!editingId" class="mt-3 text-xs">
-						<p class="mb-2 text-ink-gray-5">Examples</p>
+						<p class="mb-2 text-ink-gray-5">{{ __("Examples") }}</p>
 						<div class="grid w-fit grid-cols-[auto_auto_auto_1fr] items-center gap-x-3 gap-y-1.5">
 							<template v-for="example in examples" :key="example.label">
 								<code class="font-mono text-ink-gray-7" v-html="highlight('from', example.from)" />
@@ -125,6 +125,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import routeRedirects from "@/data/routeRedirects";
 import { confirm } from "@/utils/helpers";
 import { highlightSource, highlightTarget } from "@/utils/redirectSyntax";
@@ -140,19 +141,19 @@ const cellDividerClass = "border-l border-outline-gray-1 pl-2";
 const fields = ["from", "to"] as const;
 const placeholders: Record<Field, string> = { from: "/old-path", to: "/new-path" };
 const statusOptions = [
-	{ label: "301 - Moved Permanently", value: "301" },
-	{ label: "302 - Found (Temporary)", value: "302" },
-	{ label: "307 - Temporary Redirect", value: "307" },
-	{ label: "308 - Permanent Redirect", value: "308" },
+	{ label: __("301 - Moved Permanently"), value: "301" },
+	{ label: __("302 - Found (Temporary)"), value: "302" },
+	{ label: __("307 - Temporary Redirect"), value: "307" },
+	{ label: __("308 - Permanent Redirect"), value: "308" },
 ];
 
 const highlight = (field: Field, value: string) =>
 	field === "to" ? highlightTarget(value) : highlightSource(value);
 
 const examples = [
-	{ from: "/old-page", to: "/new-page", label: "Exact path" },
-	{ from: "/docs", to: "https://example.com/docs", label: "External URL" },
-	{ from: "/blog/(.*)", to: "/news/\\1", label: "Regex capture" },
+	{ from: "/old-page", to: "/new-page", label: __("Exact path") },
+	{ from: "/docs", to: "https://example.com/docs", label: __("External URL") },
+	{ from: "/blog/(.*)", to: "/news/\\1", label: __("Regex capture") },
 ];
 
 const searchQuery = ref("");
@@ -249,7 +250,7 @@ const insertNew = (d: Draft) => {
 			const i = findIndex(tempId);
 			if (i !== -1) routeRedirects.data?.splice(i, 1);
 		},
-		{ loading: "Adding redirect...", success: "Redirect added", error: "Error adding redirect" },
+		{ loading: __("Adding redirect..."), success: __("Redirect added"), error: __("Error adding redirect") },
 	);
 };
 
@@ -260,15 +261,15 @@ const saveExisting = (id: string, d: Draft) => {
 		() => routeRedirects.setValue.submit({ name: id, ...docFields(d) }),
 		() => index !== -1 && Object.assign(routeRedirects.data![index], docFields(d)),
 		() => backup && Object.assign(routeRedirects.data![index], backup),
-		{ loading: "Updating redirect...", success: "Redirect updated", error: "Error updating redirect" },
+		{ loading: __("Updating redirect..."), success: __("Redirect updated"), error: __("Error updating redirect") },
 	);
 };
 
 const deleteRedirect = async (id: string) => {
 	const row = rows.value.find((r) => r.id === id);
 	const message = row
-		? `Are you sure you want to delete the redirect from "${row.from}" to "${row.to}"?`
-		: "Are you sure you want to delete this redirect?";
+		? __('Are you sure you want to delete the redirect from "{0}" to "{1}"?', [row.from, row.to])
+		: __("Are you sure you want to delete this redirect?");
 	if (!(await confirm(message))) return;
 
 	const index = findIndex(id);
@@ -277,7 +278,7 @@ const deleteRedirect = async (id: string) => {
 		() => routeRedirects.delete.submit(id),
 		() => index !== -1 && routeRedirects.data!.splice(index, 1),
 		() => backup && routeRedirects.data!.splice(index, 0, backup),
-		{ loading: "Deleting redirect...", success: "Redirect deleted", error: "Error deleting redirect" },
+		{ loading: __("Deleting redirect..."), success: __("Redirect deleted"), error: __("Error deleting redirect") },
 	);
 };
 </script>

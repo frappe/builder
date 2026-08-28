@@ -7,20 +7,23 @@ import {
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import type { SpacingType } from "@/utils/cssUtils";
 import {
 	addPxToNumber,
 	cssUrl,
+	dataURLFileName,
 	dataURLtoFile,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
-	getBoxSpacing,
 	getNumberFromPx,
+	getSpacing,
 	getTextContent,
 	handleBase64Attribute,
+	isHTMLString,
 	kebabToCamelCase,
 	parseAndSetBackground,
-	setBoxSpacing,
+	setSpacing,
 	toStyleProperty,
 	uploadBuilderAsset,
 } from "@/utils/helpers";
@@ -46,6 +49,7 @@ const TEXT_ELEMENTS = new Set([
 	"em",
 	"i",
 	"blockquote",
+	"summary",
 ]);
 
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
@@ -210,8 +214,8 @@ class Block implements BlockOptions {
 		parseAndSetBackground(this.tabletStyles);
 
 		if (this.isImage()) {
-			handleBase64Attribute(this, "src", "image.png");
-			handleBase64Attribute(this, "darkSrc", "image-dark.png");
+			handleBase64Attribute(this, "src", "image");
+			handleBase64Attribute(this, "darkSrc", "image-dark");
 		}
 
 		const bgImage = this.getStyle("backgroundImage") as string;
@@ -219,7 +223,7 @@ class Block implements BlockOptions {
 			let bgImage = this.getStyle("backgroundImage") as string;
 			const dataURL = bgImage.match(/url\(['"]?(.*?)['"]?\)/)?.[1];
 
-			const file = dataURLtoFile(dataURL as string, "image.png");
+			const file = dataURLtoFile(dataURL as string, dataURLFileName(dataURL as string, "background"));
 
 			if (file) {
 				this.setStyle("backgroundImage", "");
@@ -752,7 +756,7 @@ class Block implements BlockOptions {
 		}
 	}
 	isHTML() {
-		return this.originalElement === "__raw_html__";
+		return this.originalElement === "__raw_html__" || (isHTMLString(this.getInnerHTML()) && !this.isText());
 	}
 	isIframe() {
 		return this.innerHTML?.startsWith("<iframe");
@@ -1011,17 +1015,11 @@ class Block implements BlockOptions {
 			}
 		});
 	}
-	setPadding(padding: string) {
-		setBoxSpacing(this, "padding", padding);
+	setSpacing(type: SpacingType, value: string) {
+		setSpacing(this, type, value);
 	}
-	getPadding(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
-		return getBoxSpacing(this, "padding", opts);
-	}
-	setMargin(margin: string) {
-		setBoxSpacing(this, "margin", margin);
-	}
-	getMargin(opts?: { nativeOnly?: boolean; cascading?: boolean }) {
-		return getBoxSpacing(this, "margin", opts);
+	getSpacing(type: SpacingType, opts?: { nativeOnly?: boolean; cascading?: boolean }) {
+		return getSpacing(this, type, opts);
 	}
 	getDynamicValues() {
 		const dynamicValues = [...this.dynamicValues];

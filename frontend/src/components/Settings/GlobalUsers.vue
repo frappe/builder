@@ -4,17 +4,17 @@
 			<BuilderInput
 				type="text"
 				class="w-72"
-				placeholder="Search by name or email"
+				:placeholder="__('Search by name or email')"
 				icon-left="search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
-			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">Invite</Button>
+			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">{{ __("Invite") }}</Button>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
 			<div v-if="filteredInvites.length" class="mb-6 flex flex-col">
 				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
-					Pending Invites ({{ filteredInvites.length }})
+					{{ __("Pending Invites ({0})", [filteredInvites.length]) }}
 				</span>
 				<div
 					v-for="invite in filteredInvites"
@@ -26,18 +26,18 @@
 							<span class="truncate text-p-sm text-ink-gray-8">{{ invite.email }}</span>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="invite.creation">
 								<span class="truncate text-p-xs text-ink-gray-5">
-									Invited {{ timeAgo }}{{ invite.invited_by_name ? ` by ${invite.invited_by_name}` : "" }}
+									{{ invite.invited_by_name ? __("Invited {0} by {1}", [timeAgo, invite.invited_by_name]) : __("Invited {0}", [timeAgo]) }}
 								</span>
 							</UseTimeAgo>
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-1">
-						<Button variant="subtle" size="sm" @click="resendInvite(invite)">Resend</Button>
+						<Button variant="subtle" size="sm" @click="resendInvite(invite)">{{ __("Resend") }}</Button>
 						<Button
 							variant="subtle"
 							size="sm"
 							icon="lucide-x"
-							title="Cancel invitation"
+							:title="__('Cancel invitation')"
 							@click="cancelInvite(invite)" />
 					</div>
 				</div>
@@ -45,7 +45,7 @@
 
 			<div class="flex flex-col">
 				<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
-					Members ({{ filteredMembers.length }})
+					{{ __("Members ({0})", [filteredMembers.length]) }}
 				</span>
 				<div
 					v-for="user in filteredMembers"
@@ -55,28 +55,30 @@
 					<div class="flex min-w-0 flex-col">
 						<span class="truncate text-p-sm text-ink-gray-8">
 							{{ user.full_name }}
-							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">You</Badge>
+							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">{{ __("You") }}</Badge>
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
 					</div>
-					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">Admin</Badge>
+					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">{{ __("Admin") }}</Badge>
 				</div>
 				<div v-if="!filteredMembers.length" class="py-6 text-center text-p-sm text-ink-gray-5">
-					<template v-if="searchQuery.trim()">No members match "{{ searchQuery }}"</template>
-					<template v-else>No members yet. Invite someone to give them access to Builder.</template>
+					<template v-if="searchQuery.trim()">{{ __('No members match "{0}"', [searchQuery]) }}</template>
+					<template v-else>
+						{{ __("No members yet. Invite someone to give them access to Builder.") }}
+					</template>
 				</div>
 			</div>
 		</div>
 
 		<Dialog
 			v-model="showInviteDialog"
-			title="Invite Users"
-			:actions="[{ label: 'Send Invitation', variant: 'solid', onClick: sendInvites }]">
+			:title="__('Invite Users')"
+			:actions="[{ label: __('Send Invitation'), variant: 'solid', onClick: sendInvites }]">
 			<template #default>
 				<BuilderInput
 					:ref="(el) => (inviteInputRef = el)"
 					type="textarea"
-					label="Email addresses"
+					:label="__('Email addresses')"
 					placeholder="jane@example.com, john@example.com"
 					:hideClearButton="true"
 					:modelValue="inviteEmails"
@@ -87,6 +89,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import router, { sessionUser } from "@/router";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
@@ -172,16 +175,16 @@ const sendInvites = async () => {
 			app_name: "builder",
 		});
 		if (res.invited_emails.length) {
-			toast.success(`Invitation sent to ${res.invited_emails.join(", ")}`);
+			toast.success(__("Invitation sent to {0}", [res.invited_emails.join(", ")]));
 		}
 		if (res.pending_invite_emails.length) {
-			toast.info(`Already invited: ${res.pending_invite_emails.join(", ")}`);
+			toast.info(__("Already invited: {0}", [res.pending_invite_emails.join(", ")]));
 		}
 		if (res.accepted_invite_emails.length) {
-			toast.info(`Already a member: ${res.accepted_invite_emails.join(", ")}`);
+			toast.info(__("Already a member: {0}", [res.accepted_invite_emails.join(", ")]));
 		}
 		if (res.disabled_user_emails.length) {
-			toast.error(`User is disabled: ${res.disabled_user_emails.join(", ")}`);
+			toast.error(__("User is disabled: {0}", [res.disabled_user_emails.join(", ")]));
 		}
 		showInviteDialog.value = false;
 		inviteEmails.value = "";
@@ -194,17 +197,17 @@ const sendInvites = async () => {
 const resendInvite = async (invite: PendingInvite) => {
 	try {
 		await resendResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success(`Invitation resent to ${invite.email}`);
+		toast.success(__("Invitation resent to {0}", [invite.email]));
 	} catch (error) {
 		toast.error(errorMessage(error));
 	}
 };
 
 const cancelInvite = async (invite: PendingInvite) => {
-	if (!(await confirm(`Are you sure you want to cancel the invitation to ${invite.email}?`))) return;
+	if (!(await confirm(__("Are you sure you want to cancel the invitation to {0}?", [invite.email])))) return;
 	try {
 		await cancelResource.submit({ name: invite.name, app_name: "builder" });
-		toast.success("Invitation cancelled");
+		toast.success(__("Invitation cancelled"));
 		pendingInvites.fetch();
 	} catch (error) {
 		toast.error(errorMessage(error));

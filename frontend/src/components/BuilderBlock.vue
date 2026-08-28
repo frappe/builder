@@ -428,7 +428,7 @@ watch(
 			javascript:
 				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
-					: clientScript.javascript ?? "",
+					: (clientScript.javascript ?? ""),
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});

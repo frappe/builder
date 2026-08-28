@@ -4,14 +4,14 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-2 px-3 py-2.5">
 			<div class="flex items-center gap-1.5">
 				<Button variant="ghost" size="sm" icon="lucide-chevron-left" @click="close" />
-				<span class="text-base font-medium text-ink-gray-8">Version History</span>
+				<span class="text-base font-medium text-ink-gray-8">{{ __("Version History") }}</span>
 			</div>
 			<Button
 				variant="ghost"
 				size="sm"
 				icon="lucide-bookmark-plus"
 				:loading="saving"
-				tooltip="Save current version"
+				:tooltip="__('Save current version')"
 				@click="toggleSaveRow" />
 		</div>
 
@@ -21,18 +21,22 @@
 				ref="labelInput"
 				v-model="newLabel"
 				type="text"
-				placeholder="Name this version (optional)"
+				:placeholder="__('Name this version (optional)')"
 				class="flex-1"
 				@keydown.enter="saveVersion" />
-			<Button variant="solid" size="sm" :loading="saving" label="Save" @click="saveVersion" />
+			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveVersion" />
 		</div>
 
 		<!-- list -->
 		<div class="no-scrollbar flex-1 overflow-y-auto p-2">
 			<div
-				v-if="!snapshots.data?.length && !snapshots.loading"
+				v-if="!snapshots.data?.length && !snapshots.loading && !showPublishedVersion"
 				class="px-2 pt-10 text-center text-p-sm text-ink-gray-4">
-				No saved versions yet. A version is captured every time you publish, or when you save one manually.
+				{{
+					__(
+						"No saved versions yet. A version is captured every time you publish, or when you save one manually.",
+					)
+				}}
 			</div>
 
 			<template v-else>
@@ -43,9 +47,45 @@
 					@click="canvasStore.clearVersionPreview()">
 					<span class="mt-1.5 h-2 w-2 shrink-0 self-start rounded-full bg-gray-400" />
 					<div class="flex min-w-0 flex-1 flex-col">
-						<span class="truncate text-p-sm font-medium text-ink-gray-8">Current version</span>
-						<span class="truncate text-p-xs text-ink-gray-5">Working draft · unpublished changes</span>
+						<span class="truncate text-p-sm font-medium text-ink-gray-8">{{ __("Current version") }}</span>
+						<span class="truncate text-p-xs text-ink-gray-5">
+							{{ __("Working draft · unpublished changes") }}
+						</span>
 					</div>
+				</button>
+
+				<!-- live published version, for pages published before any snapshot existed -->
+				<button
+					v-if="showPublishedVersion"
+					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					:class="
+						canvasStore.previewSnapshotName === PUBLISHED_VERSION
+							? 'bg-surface-gray-3'
+							: 'hover:bg-surface-gray-2'
+					"
+					@click="previewPublished">
+					<span class="mt-1.5 h-2 w-2 shrink-0 self-start rounded-full bg-green-500" />
+					<div class="flex min-w-0 flex-1 flex-col">
+						<span class="truncate text-p-sm text-ink-gray-8">{{ __("Published version") }}</span>
+						<span class="truncate text-p-xs text-ink-gray-5">
+							<UseTimeAgo
+								v-if="pageStore.activePage?.published_at"
+								v-slot="{ timeAgo }"
+								:time="pageStore.activePage.published_at">
+								{{ timeAgo }}
+							</UseTimeAgo>
+							<template v-else>{{ __("Currently live") }}</template>
+						</span>
+					</div>
+					<Button
+						class="shrink-0 opacity-0 group-hover:opacity-100"
+						:class="{ '!opacity-100': canvasStore.previewSnapshotName === PUBLISHED_VERSION }"
+						variant="subtle"
+						size="sm"
+						icon="lucide-rotate-ccw"
+						:tooltip="__('Restore this version as your draft')"
+						:loading="restoringName === PUBLISHED_VERSION"
+						@click.stop="restorePublished" />
 				</button>
 
 				<!-- saved versions -->
@@ -71,7 +111,7 @@
 							<UseTimeAgo v-if="snapshot.label" v-slot="{ timeAgo }" :time="snapshot.creation">
 								{{ timeAgo }}
 							</UseTimeAgo>
-							<template v-else>{{ snapshot.snapshot_type || "Version" }}</template>
+							<template v-else>{{ snapshot.snapshot_type || __("Version") }}</template>
 						</span>
 					</div>
 					<Button
@@ -80,7 +120,7 @@
 						variant="subtle"
 						size="sm"
 						icon="lucide-rotate-ccw"
-						tooltip="Restore this version as your draft"
+						:tooltip="__('Restore this version as your draft')"
 						:loading="restoringName === snapshot.name"
 						@click.stop="restore(snapshot)" />
 					<Avatar
@@ -97,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -105,7 +146,7 @@ import { getUserInfo } from "@/usersInfo";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar, Button, createListResource, TextInput, toast } from "frappe-ui";
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -119,12 +160,36 @@ const labelInput = ref<InstanceType<typeof TextInput> | null>(null);
 
 const user = (email: string) => getUserInfo(email || "Administrator");
 
+// virtual entry for the live published blocks; shown until a real publish snapshot exists
+const PUBLISHED_VERSION = "__published__";
+
+const showPublishedVersion = computed(() => {
+	const page = pageStore.activePage;
+	if (!page?.published || !page.blocks) return false;
+	return !(snapshots.data || []).some((s: BuilderSnapshot) => s.snapshot_type === "Publish");
+});
+
+function previewPublished() {
+	canvasStore.previewVersionBlocks(pageStore.activePage?.blocks as string, PUBLISHED_VERSION);
+}
+
+async function restorePublished() {
+	restoringName.value = PUBLISHED_VERSION;
+	try {
+		await pageStore.revertChanges();
+	} finally {
+		restoringName.value = null;
+	}
+}
+
 const snapshots = createListResource({
 	doctype: "Builder Snapshot",
 	fields: ["name", "label", "snapshot_type", "creation", "owner"],
 	filters: {
 		reference_doctype: "Builder Page",
 		reference_name: pageStore.selectedPage as string,
+		// AI revert snapshots are surfaced in the chat panel, not here.
+		snapshot_type: ["!=", "AI"],
 	},
 	orderBy: "creation desc",
 	pageLength: 100,
@@ -136,7 +201,11 @@ watch(
 	() => pageStore.selectedPage,
 	(page) => {
 		if (!page) return;
-		snapshots.filters = { reference_doctype: "Builder Page", reference_name: page as string };
+		snapshots.filters = {
+			reference_doctype: "Builder Page",
+			reference_name: page as string,
+			snapshot_type: ["!=", "AI"],
+		};
 		snapshots.reload();
 	},
 );
@@ -169,7 +238,7 @@ async function saveVersion() {
 		newLabel.value = "";
 		showSaveRow.value = false;
 		await snapshots.reload();
-		toast.success("Version saved");
+		toast.success(__("Version saved"));
 	} finally {
 		saving.value = false;
 	}
@@ -177,7 +246,9 @@ async function saveVersion() {
 
 async function restore(snapshot: BuilderSnapshot) {
 	const confirmed = await confirm(
-		"This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?",
+		__(
+			"This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?",
+		),
 	);
 	if (!confirmed) return;
 	restoringName.value = snapshot.name;

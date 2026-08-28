@@ -2,19 +2,17 @@
 	<div class="flex flex-wrap gap-2">
 		<Autocomplete
 			size="sm"
-			placeholder="Filter by route"
+			:placeholder="__('Filter by route')"
 			v-model="modelRoute"
 			:getOptions="getRouteOptions"
 			:allowArbitraryValue="true"
 			:showInputAsOption="true"
 			class="w-44" />
-		<div class="w-32">
-			<Select size="sm" v-model="modelRange" :options="rangeOptions" />
-		</div>
+		<Select size="sm" v-model="modelRange" :options="rangeOptions" />
 		<DateRangePicker
 			v-if="modelRange === 'custom'"
 			v-model="customDateRangeValue"
-			placeholder="Select date range"
+			:placeholder="__('Select date range')"
 			format="MMM D, YYYY"
 			size="sm"
 			class="!w-56" />
@@ -22,9 +20,11 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/doctypes";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import { DateRangePicker, Select } from "frappe-ui";
 import { computed } from "vue";
 
@@ -50,11 +50,11 @@ const props = defineProps({
 		type: Array as () => SelectOption[],
 		required: false,
 		default: () => [
-			{ label: "Today", value: "today" },
-			{ label: "Last 7 Days", value: "last_7_days" },
-			{ label: "Last 30 Days", value: "last_30_days" },
-			{ label: "This Year", value: "this_year" },
-			{ label: "Custom", value: "custom" },
+			{ label: __("Today"), value: "today" },
+			{ label: __("Last 7 Days"), value: "last_7_days" },
+			{ label: __("Last 30 Days"), value: "last_30_days" },
+			{ label: __("This Year"), value: "this_year" },
+			{ label: __("Custom"), value: "custom" },
 		],
 	},
 });
@@ -101,14 +101,10 @@ const getRouteOptions = async (query: string) => {
 		await webPages.fetch();
 	}
 
-	const queryLower = query?.toLowerCase() || "";
-
-	return (webPages.data ?? [])
+	const routeOptions = (webPages.data ?? [])
 		.filter((page: BuilderPage) => page.route && !page.dynamic_route)
-		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }))
-		.filter(
-			(option: { value: string; label: string }) =>
-				!queryLower || option.label.toLowerCase().includes(queryLower),
-		);
+		.map((page: BuilderPage) => ({ value: page.route as string, label: page.route as string }));
+
+	return filterOptions(routeOptions, query || "");
 };
 </script>

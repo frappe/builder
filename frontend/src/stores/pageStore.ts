@@ -5,6 +5,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore.js";
+import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
@@ -31,6 +32,7 @@ const usePageStore = defineStore("pageStore", {
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
 		settingPage: false,
+		pageLoadToken: 0,
 		snapshotsVersion: 0,
 	}),
 	actions: {
@@ -40,9 +42,15 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 
+			this.selectedPage = pageName;
+			const pageLoadToken = ++this.pageLoadToken;
+
 			const page = await this.fetchActivePage(pageName);
+			if (pageLoadToken !== this.pageLoadToken || this.selectedPage !== pageName) {
+				return;
+			}
 			if (!page) {
-				toast.error("Page not found", {
+				toast.error(__("Page not found"), {
 					duration: Infinity,
 				});
 				return;
@@ -58,7 +66,6 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			this.selectedPage = page.name;
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
 			this.routeVariables = JSON.parse(variables);
 			if (routeParams) {
@@ -151,29 +158,29 @@ const usePageStore = defineStore("pageStore", {
 					},
 				}).fetch(),
 				{
-					loading: "Duplicating page",
+					loading: __("Duplicating page"),
 					success: async (page: BuilderPage) => {
 						// load page and refresh
 						router.push({ name: "builder", params: { pageId: page.page_name } }).then(() => {
 							router.go(0);
 						});
-						return "Page duplicated";
+						return __("Page duplicated");
 					},
 				},
 			);
 		},
 		deletePage: async (page: BuilderPage) => {
 			const confirmed = await confirm(
-				`Are you sure you want to delete page: ${page.page_title || page.page_name}?`,
+				__("Are you sure you want to delete page: {0}?", [page.page_title || page.page_name]),
 			);
 			if (confirmed) {
 				await toast.promise(webPages.delete.submit(page.name), {
-					loading: "Deleting page",
+					loading: __("Deleting page"),
 					success: () => {
-						return "Page deleted";
+						return __("Page deleted");
 					},
 					error: () => {
-						return "Page deletion failed";
+						return __("Page deletion failed");
 					},
 				});
 			}
@@ -198,7 +205,9 @@ const usePageStore = defineStore("pageStore", {
 
 		async revertChanges() {
 			const confirmed = await confirm(
-				"This will revert all changes made to the page since the last publish. Are you sure you want to continue?",
+				__(
+					"This will revert all changes made to the page since the last publish. Are you sure you want to continue?",
+				),
 			);
 			if (confirmed) {
 				await this.updateActivePage("draft_blocks", null);
@@ -232,14 +241,16 @@ const usePageStore = defineStore("pageStore", {
 			// router.go(0);
 			// Instead of a hard reload, we could are just re-fetching the page document
 			this.setPage(this.selectedPage as string, false);
-			toast.success("Version restored");
+			toast.success(__("Version restored"));
 		},
 
 		async unpublishPage(page?: BuilderPage) {
 			const targetName = page?.name || this.selectedPage;
-			const targetTitle = page?.page_title || page?.page_name || "this page";
+			const targetTitle = page?.page_title || page?.page_name || __("this page");
 			const confirmed = await confirm(
-				`Are you sure you want to unpublish "${targetTitle}"? It will no longer be accessible on the website.`,
+				__('Are you sure you want to unpublish "{0}"? It will no longer be accessible on the website.', [
+					targetTitle,
+				]),
 			);
 			if (!confirmed) {
 				return;
@@ -250,7 +261,7 @@ const usePageStore = defineStore("pageStore", {
 					published: false,
 				})
 				.then(() => {
-					toast.success("Page unpublished");
+					toast.success(__("Page unpublished"));
 					if (page) {
 						page.published = 0;
 					} else {
@@ -274,7 +285,7 @@ const usePageStore = defineStore("pageStore", {
 
 		savePage() {
 			const builderStore = useBuilderStore();
-			if (builderStore.readOnlyMode) {
+			if (builderStore.readOnlyMode || builderStore.aiBuildingCanvas) {
 				// callers may have optimistically set this before invoking savePage
 				this.savingPage = false;
 				return;
@@ -296,7 +307,7 @@ const usePageStore = defineStore("pageStore", {
 			// more save requests can be triggered till the first one is completed
 			this.saveId = saveId;
 			const args = {
-				name: this.selectedPage,
+				name: this.activePage?.name || this.selectedPage,
 				draft_blocks: pageData,
 			};
 			return webPages.setValue
@@ -340,10 +351,26 @@ const usePageStore = defineStore("pageStore", {
 				})
 				.catch((e: { exc: string | null }) => {
 					const error_message = e.exc?.split("\n").slice(-2)[0];
-					toast.error("There was an error while fetching page data", {
+					toast.error(__("There was an error while fetching page data"), {
 						description: error_message,
 					});
 				});
+		},
+
+		/** Persist a generated page_data_script (the static-repeater data shim) and
+		 * refresh pageData so repeaters render immediately in the editor. The script
+		 * is code we generate from the AI's JSON data — never AI-authored. */
+		applyRepeaterDataScript(script: string) {
+			const name = this.activePage?.name || this.selectedPage;
+			if (!name) return;
+			if (this.activePage) this.activePage.page_data_script = script;
+			return webPages.setValue
+				.submit({ name, page_data_script: script })
+				.then((page: BuilderPage) => {
+					this.activePage = page;
+					this.setPageData(page);
+				})
+				.catch(() => null);
 		},
 
 		setRouteVariable(variable: string, value: string) {

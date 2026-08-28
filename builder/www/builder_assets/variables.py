@@ -1,7 +1,5 @@
-from builder.builder.doctype.builder_variable.builder_variable import get_css_variables
+# Compat route: pages published before the Builder Token rename link
+# /builder_assets/variables.css. Serves the same CSS as tokens.css.
+from builder.www.builder_assets.tokens import get_context
 
-
-def get_context(context):
-	css_variables, dark_mode_css_variables = get_css_variables()
-	context.css_variables = css_variables
-	context.dark_mode_css_variables = dark_mode_css_variables
+__all__ = ["get_context"]

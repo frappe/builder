@@ -11,6 +11,7 @@
 </template>
 
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import { nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 
@@ -57,9 +58,9 @@ function handleBlur() {
 		props.onChange(text).catch((e) => {
 			let error_message = e.exc.split("\n").slice(-2)[0];
 			if (error_message.includes("Duplicate") || error_message.includes("select another name")) {
-				error_message = "Name already exists";
+				error_message = __("Name already exists");
 			}
-			toast.error("Failed to rename", {
+			toast.error(__("Failed to rename"), {
 				description: error_message,
 			});
 			editableRef.value!.innerText = props.modelValue;

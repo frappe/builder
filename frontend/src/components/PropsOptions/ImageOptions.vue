@@ -1,9 +1,9 @@
 <template>
 	<div class="flex items-center justify-between">
 		<ImageUploadInput
-			label="Default Value"
+			:label="__('Default Value')"
 			label-position="left"
-			placeholder="Enter image URL or upload one"
+			:placeholder="__('Enter image URL or upload one')"
 			class="w-full"
 			:imageURL="defaultImageURL"
 			:image-fit="defaultImageFit"

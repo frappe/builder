@@ -9,7 +9,7 @@
 				class="mx-auto h-full w-full max-w-3xl"
 				:max-groups="8"
 				:heading="templateHeading"
-				subtitle="Choose a template to get a head start, or start from scratch." />
+				:subtitle="__('Choose a template to get a head start, or start from scratch.')" />
 		</div>
 	</div>
 
@@ -24,7 +24,7 @@
 					variant="ghost"
 					class="absolute -left-11 top-0"
 					:class="{ invisible: isFirst }"
-					label="Back"
+					:label="__('Back')"
 					@click="goBack">
 					<template #icon>
 						<LucideChevronLeft class="size-4" />
@@ -68,16 +68,17 @@
 				variant="solid"
 				size="md"
 				class="w-full"
-				label="Next"
+				:label="__('Next')"
 				:disabled="!answers[activeQuestion.key]"
 				@click="goNext" />
 		</div>
 
-		<Button variant="ghost" label="Skip for now" class="fixed bottom-8" @click="skip" />
+		<Button variant="ghost" :label="__('Skip for now')" class="fixed bottom-8" @click="skip" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { builderSettings } from "@/data/builderSettings";
@@ -107,45 +108,45 @@ const questions: {
 }[] = [
 	{
 		key: "source",
-		heading: "How did you hear about Builder?",
-		subtitle: "Just curious, it helps us know what's working.",
-		otherPlaceholder: "I heard from the community",
+		heading: __("How did you hear about Builder?"),
+		subtitle: __("Just curious, it helps us know what's working."),
+		otherPlaceholder: __("I heard from the community"),
 		options: [
-			{ value: "search", label: "Search (Google)" },
-			{ value: "youtube", label: "YouTube" },
-			{ value: "friend", label: "Friend / colleague" },
-			{ value: "frappe_ecosystem", label: "Frappe / ERPNext" },
-			{ value: "social", label: "Social media" },
-			{ value: "other", label: "Other" },
+			{ value: "search", label: __("Search (Google)") },
+			{ value: "youtube", label: __("YouTube") },
+			{ value: "friend", label: __("Friend / colleague") },
+			{ value: "frappe_ecosystem", label: __("Frappe / ERPNext") },
+			{ value: "social", label: __("Social media") },
+			{ value: "other", label: __("Other") },
 		],
 	},
 	{
 		key: "role",
-		heading: "Which one best describes you?",
-		subtitle: "This helps us personalise your Builder experience",
-		otherPlaceholder: "I'm a student building my first site",
+		heading: __("Which one best describes you?"),
+		subtitle: __("This helps us personalise your Builder experience"),
+		otherPlaceholder: __("I'm a student building my first site"),
 		options: [
-			{ value: "designer", label: "Designer" },
-			{ value: "developer", label: "Developer" },
-			{ value: "founder", label: "Founder / Business owner" },
-			{ value: "marketer", label: "Marketer" },
-			{ value: "agency_freelancer", label: "Agency / Freelancer" },
-			{ value: "other", label: "Other" },
+			{ value: "designer", label: __("Designer") },
+			{ value: "developer", label: __("Developer") },
+			{ value: "founder", label: __("Founder / Business owner") },
+			{ value: "marketer", label: __("Marketer") },
+			{ value: "agency_freelancer", label: __("Agency / Freelancer") },
+			{ value: "other", label: __("Other") },
 		],
 	},
 	{
 		key: "use_case",
-		heading: "What do you want to build first?",
-		subtitle: "We'll point you to the right starting templates",
-		otherPlaceholder: "A booking site for my clinic",
+		heading: __("What do you want to build first?"),
+		subtitle: __("We'll point you to the right starting templates"),
+		otherPlaceholder: __("A booking site for my clinic"),
 		options: [
-			{ value: "marketing_site", label: "Marketing / landing site" },
-			{ value: "ecommerce", label: "Online store / E-commerce" },
-			{ value: "portfolio", label: "Portfolio / personal site" },
-			{ value: "web_app_ui", label: "Web app UI" },
-			{ value: "internal_tool", label: "Internal tool / dashboard" },
-			{ value: "exploring", label: "Just exploring" },
-			{ value: "other", label: "Other" },
+			{ value: "marketing_site", label: __("Marketing / landing site") },
+			{ value: "ecommerce", label: __("Online store / E-commerce") },
+			{ value: "portfolio", label: __("Portfolio / personal site") },
+			{ value: "web_app_ui", label: __("Web app UI") },
+			{ value: "internal_tool", label: __("Internal tool / dashboard") },
+			{ value: "exploring", label: __("Just exploring") },
+			{ value: "other", label: __("Other") },
 		],
 	},
 ];
@@ -180,7 +181,9 @@ const greetingName = computed(() => {
 	return `, ${fullname.split(" ")[0]}`;
 });
 const templateHeading = computed(() =>
-	greetingName.value ? `You're all set${greetingName.value}. Pick a starting point` : "Pick a starting point",
+	greetingName.value
+		? __("You're all set{0}. Pick a starting point", [greetingName.value])
+		: __("Pick a starting point"),
 );
 
 // seeds the gallery's persisted category filter (used by the templates dialog too)

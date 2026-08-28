@@ -1,7 +1,7 @@
 <template>
 	<Popover v-if="outdated.length" placement="bottom-end">
 		<template #target="{ togglePopover }">
-			<Tooltip text="Component updates available" :hoverDelay="0.6" arrow-class="mb-3">
+			<Tooltip :text="__('Component updates available')" :hoverDelay="0.6" arrow-class="mb-3">
 				<button
 					class="relative flex h-7 w-7 items-center justify-center rounded text-ink-gray-7 hover:bg-surface-gray-3"
 					@click="togglePopover">
@@ -16,11 +16,16 @@
 		<template #body="{ close }">
 			<div class="w-72 rounded-lg bg-surface-base p-3 shadow-xl" @mouseleave="clearHighlight">
 				<div class="mb-2 flex items-center justify-between">
-					<span class="text-sm font-medium text-ink-gray-8">Component updates</span>
-					<Button variant="subtle" size="sm" label="Update all" :loading="updatingAll" @click="updateAll" />
+					<span class="text-sm font-medium text-ink-gray-8">{{ __("Component updates") }}</span>
+					<Button
+						variant="subtle"
+						size="sm"
+						:label="__('Update all')"
+						:loading="updatingAll"
+						@click="updateAll" />
 				</div>
 				<p class="mb-3 text-xs text-ink-gray-5">
-					These components changed since this page was last updated. Update to use the latest.
+					{{ __("These components changed since this page was last updated. Update to use the latest.") }}
 				</p>
 				<div class="flex max-h-72 flex-col overflow-y-auto">
 					<div
@@ -32,13 +37,13 @@
 						<div class="flex min-w-0 flex-col">
 							<span class="truncate text-sm text-ink-gray-8">{{ item.component_name }}</span>
 							<span class="text-xs text-ink-gray-5">
-								{{ item.count }} instance{{ item.count === 1 ? "" : "s" }}
+								{{ item.count === 1 ? __("{0} instance", [item.count]) : __("{0} instances", [item.count]) }}
 							</span>
 						</div>
 						<Button
 							variant="ghost"
 							size="sm"
-							label="Update"
+							:label="__('Update')"
 							:loading="updating === item.component_id"
 							@click="update(item.component_id)" />
 					</div>
@@ -52,6 +57,7 @@
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 

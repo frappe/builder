@@ -3,6 +3,7 @@
 		<span class="text-p-sm-medium text-ink-gray-8" v-show="label">
 			{{ label }}
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
+			<slot name="label-suffix"></slot>
 		</span>
 		<div
 			:style="{
@@ -37,11 +38,12 @@
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty || readonly">
-			Save
+			{{ __("Save") }}
 		</Button>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
 
 // keeps the CodeMirror stack out of the main editor bundle

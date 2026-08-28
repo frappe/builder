@@ -3,15 +3,15 @@
 		propertyKey="flexDirection"
 		defaultValue="row"
 		:component="OptionToggle"
-		label="Direction"
+		:label="__('Direction')"
 		v-if="blockController.isFlex()"
 		:options="[
-			{ label: 'Horizontal', value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
-			{ label: 'Vertical', value: 'column', icon: 'lucide-arrow-down', hideLabel: true },
+			{ label: __('Horizontal'), value: 'row', icon: 'lucide-arrow-right', hideLabel: true },
+			{ label: __('Vertical'), value: 'column', icon: 'lucide-arrow-down', hideLabel: true },
 		]"></StylePropertyControl>
 	<StylePropertyControl
 		propertyKey="alignItems"
-		label="Placement"
+		:label="__('Placement')"
 		:enableStates="false"
 		v-if="blockController.isFlex()"
 		:component="PlacementControl"></StylePropertyControl>
@@ -19,49 +19,44 @@
 		v-if="blockController.isFlex()"
 		propertyKey="justifyContent"
 		type="select"
-		label="Distribution"
+		:label="__('Distribution')"
 		:options="[
-			{ label: 'Space Between', value: 'space-between' },
-			{ label: 'Space Around', value: 'space-around' },
-			{ label: 'Space Evenly', value: 'space-evenly' },
+			{ label: __('Space Between'), value: 'space-between' },
+			{ label: __('Space Around'), value: 'space-around' },
+			{ label: __('Space Evenly'), value: 'space-evenly' },
 		]" />
-	<StylePropertyControl
-		v-if="blockController.isFlex()"
-		label="Gap"
-		propertyKey="gap"
-		:enableSlider="true"
-		:unitOptions="BOX_UNIT_OPTIONS" />
+	<SplitPropertyControl v-if="blockController.isFlex()" v-bind="gapProps" />
 	<StylePropertyControl
 		propertyKey="flexWrap"
 		:component="OptionToggle"
-		label="Wrap"
+		:label="__('Wrap')"
 		v-if="blockController.isFlex()"
 		:options="[
-			{ label: 'No Wrap', value: 'nowrap' },
-			{ label: 'Wrap', value: 'wrap' },
+			{ label: __('No Wrap'), value: 'nowrap' },
+			{ label: __('Wrap'), value: 'wrap' },
 		]"
 		defaultValue="nowrap"></StylePropertyControl>
 	<div class="flex flex-col gap-3" v-if="blockController.getParentBlock()?.isFlex()">
 		<StylePropertyControl
-			label="Grow"
+			:label="__('Grow')"
 			propertyKey="flexGrow"
 			:component="OptionToggle"
 			:options="[
-				{ label: 'Yes', value: 1 },
-				{ label: 'No', value: 0 },
+				{ label: __('Yes'), value: 1 },
+				{ label: __('No'), value: 0 },
 			]"
 			:defaultValue="0" />
 		<StylePropertyControl
-			label="Shrink"
+			:label="__('Shrink')"
 			propertyKey="flexShrink"
 			:component="OptionToggle"
 			:options="[
-				{ label: 'Yes', value: 1 },
-				{ label: 'No', value: 0 },
+				{ label: __('Yes'), value: 1 },
+				{ label: __('No'), value: 0 },
 			]"
 			:defaultValue="1" />
 		<StylePropertyControl
-			label="Order"
+			:label="__('Order')"
 			propertyKey="order"
 			:enableSlider="true"
 			:min="-99"
@@ -71,9 +66,12 @@
 	</div>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import SplitPropertyControl from "@/components/Controls/SplitPropertyControl.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import PlacementControl from "./PlacementControl.vue";
+
+defineProps<{ gapProps: InstanceType<typeof SplitPropertyControl>["$props"] }>();
 </script>

@@ -11,8 +11,13 @@ from urllib.parse import unquote, urlparse
 import frappe
 import yaml
 from frappe.model.document import Document
-from frappe.modules.import_file import import_file_by_path
-from frappe.utils import get_url
+from frappe.modules.import_file import (
+	import_doc,
+	import_file_by_path,
+	read_doc_from_file,
+	update_modified,
+)
+from frappe.utils import get_datetime, get_url
 from frappe.utils.safe_exec import (
 	SERVER_SCRIPT_FILE_PREFIX,
 	FrappeTransformer,
@@ -30,6 +35,48 @@ from werkzeug.routing import Rule
 
 def compact_json(obj) -> str:
 	return frappe.as_json(obj, indent=None, separators=(",", ":"))
+
+
+def is_bulk_import() -> bool:
+	"""True while frappe loads records in bulk: install, migrate, patch or import.
+
+	Unlike is_system_activity, a test is not a bulk import, so tests still
+	exercise the export.
+	"""
+	return bool(
+		frappe.flags.in_import or frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch
+	)
+
+
+def get_installed_app_path(app_name) -> str | None:
+	"""Path of an installed app, or None if it is unset or not installed.
+
+	frappe.get_app_path raises for both, and page.app is plain Data, so it can
+	name an app that was uninstalled later.
+	"""
+	if not app_name or app_name not in frappe.get_installed_apps():
+		return None
+	return frappe.get_app_path(app_name)
+
+
+def safe_segment(name) -> str:
+	"""Make a value safe for use as one filesystem path segment.
+
+	Replaces path separators and blocks empty/traversal values.
+	"""
+	segment = str(name).replace("/", "_").replace("\\", "_")
+	if segment in ("", ".", ".."):
+		frappe.throw(frappe._("Unsafe fixture name: {0}").format(name))
+	return segment
+
+
+def export_dir_name(name) -> str:
+	"""Directory and JSON file name for an exported record.
+
+	Shared by every exporter and by the delete helpers, so a record always
+	lands where the cleanup looks for it. frappe.scrub keeps a slash.
+	"""
+	return safe_segment(frappe.scrub(str(name)))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -318,10 +365,34 @@ def sync_block_templates():
 	make_records(builder_block_template_path)
 
 
-def sync_builder_variables():
-	print("Syncing Builder Builder Variables")
-	builder_variable_path = frappe.get_module_path("builder", "builder_variable")
-	make_records(builder_variable_path)
+def sync_builder_tokens():
+	print("Syncing Builder Tokens")
+	builder_token_path = frappe.get_module_path("builder", "builder_token")
+	make_records(builder_token_path)
+
+
+# Compat alias, external scripts may still call the old name
+sync_builder_variables = sync_builder_tokens
+
+
+# Fixture exports and template bundles made before the Builder Token rename still
+# say Builder Variable, and carry the pre-rename fieldname
+RENAMED_FIXTURE_DOCTYPES = {"Builder Variable": "Builder Token"}
+RENAMED_FIXTURE_FIELDS = {"Builder Token": {"variable_name": "token_name"}}
+
+
+def normalize_renamed_doc(docdict):
+	"""Rewrite a doc exported under a doctype's old name so it can be imported.
+
+	A no-op while the old doctype is still around, i.e. before the rename patch runs."""
+	new_doctype = RENAMED_FIXTURE_DOCTYPES.get(docdict.get("doctype"))
+	if not new_doctype or frappe.db.exists("DocType", docdict["doctype"]):
+		return docdict
+	docdict["doctype"] = new_doctype
+	for old_field, new_field in RENAMED_FIXTURE_FIELDS[new_doctype].items():
+		if old_field in docdict:
+			docdict.setdefault(new_field, docdict.pop(old_field))
+	return docdict
 
 
 def make_records(path):
@@ -329,7 +400,30 @@ def make_records(path):
 		return
 	for fname in os.listdir(path):
 		if os.path.isdir(join(path, fname)) and fname != "__pycache__":
-			import_file_by_path(f"{path}/{fname}/{fname}.json")
+			import_fixture_record(f"{path}/{fname}/{fname}.json")
+
+
+def import_fixture_record(fpath):
+	"""import_file_by_path, but tolerant of fixtures exported under a doctype's old name."""
+	try:
+		docdict = read_doc_from_file(fpath)
+	except OSError:
+		print(f"{fpath} missing")
+		return
+	if not isinstance(docdict, dict):
+		import_file_by_path(fpath)
+		return
+	old_doctype = docdict.get("doctype")
+	normalize_renamed_doc(docdict)
+	if docdict.get("doctype") == old_doctype:
+		import_file_by_path(fpath)
+		return
+	db_modified = frappe.db.get_value(docdict["doctype"], docdict.get("name"), "modified")
+	if db_modified and get_datetime(docdict.get("modified")) <= get_datetime(db_modified):
+		return
+	import_doc(docdict)
+	if docdict.get("modified"):
+		update_modified(docdict["modified"], docdict)
 
 
 def copy_img_to_asset_folder(block, page_doc, app=None):
@@ -646,22 +740,27 @@ def extract_components_from_blocks(blocks):
 	return components
 
 
-def export_client_scripts(page_doc, client_scripts_path):
+def export_client_scripts(client_scripts, client_scripts_path):
 	"""Export client scripts for a page"""
 	from frappe.modules.export_file import strip_default_fields
 
-	for script_row in page_doc.client_scripts:
-		script_doc = frappe.get_doc("Builder Client Script", script_row.builder_script)
+	for script_name in client_scripts:
+		script_doc = frappe.get_doc("Builder Client Script", script_name)
 		script_config = script_doc.as_dict(no_nulls=True)
+		# no_nulls drops the key when the script has no body
+		script_content = script_config.get("script") or ""
 		script_config = strip_default_fields(script_doc, script_config)
-		fname = frappe.scrub(str(script_doc.name))
-		# ensure the target directory exists before writing the file
+		fname = export_dir_name(script_doc.name)
 		script_dir = os.path.join(client_scripts_path, fname)
 		os.makedirs(script_dir, exist_ok=True)
-		script_file_path = os.path.join(script_dir, f"{fname}.json")
+		script_config_path = os.path.join(script_dir, f"{fname}.json")
+		extension = "js" if script_doc.script_type == "JavaScript" else "css"
+		script_path = os.path.join(script_dir, f"client_script.{extension}")
 
-		with open(script_file_path, "w", encoding="utf-8") as f:
+		with open(script_config_path, "w", encoding="utf-8") as f:  # nosemgrep
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
+		with open(script_path, "w", encoding="utf-8") as f:  # nosemgrep
+			f.write(script_content)
 
 
 def export_components(components, components_path, assets_path, target_app="builder"):
@@ -674,11 +773,10 @@ def export_components(components, components_path, assets_path, target_app="buil
 			copy_assets_from_blocks(component_blocks, assets_path, target_app)
 			component_doc.block = frappe.as_json(component_blocks)
 
-			# Replace forward slashes with underscores to create valid directory names
-			safe_component_name = frappe.scrub(component_doc.component_name).replace("/", "_")
-			component_dir = os.path.join(components_path, safe_component_name)
+			safe_component_id = export_dir_name(component_doc.component_id)
+			component_dir = os.path.join(components_path, safe_component_id)
 			os.makedirs(component_dir, exist_ok=True)
-			component_file_path = os.path.join(component_dir, f"{safe_component_name}.json")
+			component_file_path = os.path.join(component_dir, f"{safe_component_id}.json")
 
 			with open(component_file_path, "w") as f:
 				f.write(frappe.as_json(component_doc.as_dict()))

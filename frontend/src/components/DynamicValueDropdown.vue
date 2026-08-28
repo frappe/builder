@@ -3,7 +3,7 @@
 		<Autocomplete
 			ref="autocompleteRef"
 			class="w-full"
-			placeholder="Value"
+			:placeholder="__('Value')"
 			:modelValue="autocompleteValue"
 			:getOptions="getOptions"
 			:showInputAsOption="true"
@@ -30,6 +30,7 @@
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import MiddleTruncate from "@/components/MiddleTruncate.vue";
 import usePageStore from "@/stores/pageStore";
+import { filterOptions } from "@/utils/autocompleteOptions";
 import blockController from "@/utils/blockController";
 import { getDataArray, getDefaultPropsList, getParentProps, getRepeaterScopedData } from "@/utils/helpers";
 import { computed, ref, watch } from "vue";
@@ -100,12 +101,7 @@ const dynamicOptions = computed(() => {
 	return options;
 });
 
-const getOptions = async (query: string) => {
-	const normalizedQuery = query.trim().toLowerCase();
-	return dynamicOptions.value.filter((option) => {
-		return !normalizedQuery || option.label.toLowerCase().includes(normalizedQuery);
-	});
-};
+const getOptions = async (query: string) => filterOptions(dynamicOptions.value, query);
 
 const handleModelValueUpdate = (value: string | null) => {
 	if (value == null) {

@@ -1,27 +1,28 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Min. Items"
+			:label="__('Min. Items')"
 			:modelValue="minItems"
 			@update:modelValue="handleMinItemsChange"
 			@input="handleMinItemsChange"
-			placeholder="Enter min number of items"></InlineInput>
+			:placeholder="__('Enter min number of items')"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Max. Items"
+			:label="__('Max. Items')"
 			:modelValue="maxItems"
 			@update:modelValue="handleMaxItemsChange"
 			@input="handleMaxItemsChange"
-			placeholder="Enter max number of items"></InlineInput>
+			:placeholder="__('Enter max number of items')"></InlineInput>
 	</div>
 	<div class="flex flex-col gap-3">
-		<InputLabel class="w-[88px] shrink-0">Default Items</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">{{ __("Default Items") }}</InputLabel>
 		<ArrayEditor :arr @update:arr="handleArrChange" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import Input from "@/components/Controls/Input.vue";
 import ArrayEditor from "@/components/ArrayEditor.vue";
@@ -107,7 +108,7 @@ function useArrayOption(key: string, isNumeric: boolean = false) {
 				defaultValue: arr,
 			});
 		} else {
-			toast.error("Invalid option configuration!");
+			toast.error(__("Invalid option configuration!"));
 		}
 	}
 
@@ -122,7 +123,7 @@ function useArrayOption(key: string, isNumeric: boolean = false) {
 				defaultValue: arr.value,
 			});
 		} else {
-			toast.error("Invalid option configuration!");
+			toast.error(__("Invalid option configuration!"));
 		}
 	}
 

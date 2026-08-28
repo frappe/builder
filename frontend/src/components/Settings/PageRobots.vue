@@ -15,13 +15,21 @@
 				height="100%"
 				label="robot.txt"
 				:showSaveButton="true"
-				description='Specify rules to control how search engines interact with your site.
-				For more details, visit <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt">Robots.txt Guide.</a>'
+				:description="description"
 				:show-line-numbers="true"></CodeEditor>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { websiteSettings } from "@/data/websiteSettings";
 import CodeEditor from "../Controls/CodeEditor.vue";
+
+const guideURL =
+	"https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt";
+const guideLink = `<a href="${guideURL}">${__("Robots.txt Guide")}</a>`;
+const description = __(
+	"Specify rules to control how search engines interact with your site. For more details, visit {0}.",
+	[guideLink],
+);
 </script>

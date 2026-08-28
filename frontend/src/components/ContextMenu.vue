@@ -12,10 +12,10 @@
 				<DropdownMenuItem
 					v-for="(option, index) in options"
 					:key="index"
-					v-show="!option.condition || option.condition()"
+					v-show="!option.condition || option.condition(props.context)"
 					class="block cursor-pointer rounded px-3 py-1.5 text-ink-gray-9 outline-none data-[highlighted]:bg-surface-gray-4"
-					:class="{ '!cursor-default !text-ink-gray-4': option.disabled?.() }"
-					:disabled="option.disabled?.()"
+					:class="{ '!cursor-default !text-ink-gray-4': option.disabled?.(props.context) }"
+					:disabled="option.disabled?.(props.context)"
 					@select="handleClick(option.action)">
 					{{ option.label }}
 				</DropdownMenuItem>
@@ -33,11 +33,13 @@ import {
 } from "reka-ui";
 import { computed, ref, watch } from "vue";
 
+// each caller types its own option list. A generic here would break
+// InstanceType<typeof ContextMenu>, which all three callers use.
 interface ContextMenuOption {
 	label: string;
-	action: CallableFunction;
-	condition?: () => boolean;
-	disabled?: () => boolean;
+	action: (context: any) => void;
+	condition?: (context: any) => boolean;
+	disabled?: (context: any) => boolean;
 }
 
 const props = withDefaults(
@@ -45,6 +47,8 @@ const props = withDefaults(
 		posX?: number;
 		posY?: number;
 		options?: ContextMenuOption[];
+		// callers whose items close over their own scope pass nothing
+		context?: unknown;
 	}>(),
 	{
 		posX: 0,
@@ -54,7 +58,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits({
-	select: (action: CallableFunction) => action,
+	select: (action: (context: any) => void) => action,
 	hide: () => true,
 });
 
@@ -69,8 +73,8 @@ watch(visible, (open) => {
 	if (!open) emit("hide");
 });
 
-const handleClick = (action: CallableFunction) => {
-	action();
+const handleClick = (action: (context: any) => void) => {
+	action(props.context);
 	emit("select", action);
 };
 

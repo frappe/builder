@@ -37,7 +37,7 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 ### Key Features
 
 - **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
-- **AI-Powered Page Generation:** Generate complete web pages instantly using AI with a simple text prompt.
+- **AI Site Builder:** Build and edit pages by chatting with Bob, an agent that grounds itself in your site instead of guessing. It reads your existing pages and follows their design language by default, reuses your components and theme tokens, fits new pages into your route structure (including dynamic detail pages), wires forms and data-driven sections to real doctypes, and researches facts online rather than inventing them. Reads respect your permissions, sensitive changes wait for your approval, and every AI edit is revertable.
 - **Responsive Views:** Ensure your sites look great on any device without the fuss.
 - **Dark Mode Support:** Built-in dark mode with automatic system preference detection and a manual override option.
 - **Built-in CMS:** Leverage Frappe Framework's inbuilt CMS to manage structured content, fetch dynamic data from your database, and power data-driven pages without a separate backend.
@@ -140,7 +140,7 @@ bench --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken err
 1. Open a new terminal session and run the following commands:
 ```bash
 cd frappe-bench/apps/builder
-yarn install
+yarn dev-setup
 yarn dev --host
 ```
 1. Now, you can access the site on vite dev server at `http://builder.localhost:8080`
@@ -156,6 +156,7 @@ yarn dev --host
 - [Documentation](https://docs.frappe.io/builder)
 - [Figma Plugin (Beta)](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder)
 - [Frappe Script Editor](https://github.com/frappe/frappe-script-editor)
+- [Translations](https://crowdin.com/project/frappe)
 
 <br>
 <br>

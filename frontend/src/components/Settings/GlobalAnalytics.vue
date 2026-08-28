@@ -16,39 +16,41 @@
 						@update:customDateRange="(val) => (customDateRange = val)" />
 				</template>
 			</AnalyticsOverview>
-			<div class="mt-8">
-				<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Pages</h3>
-				<div
-					v-if="analytics.loading"
-					class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-					Loading...
+			<div class="mt-8 flex flex-col gap-5 md:flex-row md:items-start">
+				<div v-if="analytics.loading || processedAnalyticsData.top_pages?.length" class="flex-1">
+					<h3 class="text-lg-medium mb-4 text-ink-gray-7">{{ __("Top Pages") }}</h3>
+					<div
+						v-if="analytics.loading"
+						class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
+						{{ __("Loading...") }}
+					</div>
+					<ListView
+						class="!w-auto"
+						v-else
+						:columns="[
+							{ label: __('Route'), key: 'route', width: '60%' },
+							{ label: __('Views'), key: 'view_count', align: 'right' },
+						]"
+						:options="{
+							selectable: false,
+							emptyState: {},
+							showTooltip: false,
+							onRowClick: onPageRowClick,
+						}"
+						:rows="processedAnalyticsData.top_pages"
+						row-key="route" />
 				</div>
-				<ListView
-					class="!w-auto"
-					v-else-if="processedAnalyticsData.top_pages?.length"
-					:columns="[
-						{ label: 'Route', key: 'route', width: '60%' },
-						{ label: 'Views', key: 'view_count', align: 'right' },
-					]"
-					:options="{
-						selectable: false,
-						emptyState: {},
-						showTooltip: false,
-						onRowClick: onPageRowClick,
-					}"
-					:rows="processedAnalyticsData.top_pages"
-					row-key="route" />
-				<AnalyticsEmptyState v-else title="No page views yet" />
-			</div>
-			<div class="mt-8">
-				<TopReferrersList :rows="processedAnalyticsData.top_referrers" :loading="analytics.loading" />
+				<TopReferrersList
+					class="flex-1"
+					:rows="processedAnalyticsData.top_referrers"
+					:loading="analytics.loading" />
 			</div>
 		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
-import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
+import { __ } from "@/translation";
 import AnalyticsFilters from "@/components/Settings/AnalyticsFilters.vue";
 import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import TopReferrersList from "@/components/Settings/TopReferrersList.vue";

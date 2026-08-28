@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import type { IndicatorGeometry } from "@/utils/dropGeometry";
@@ -69,7 +70,11 @@ const useCanvasStore = defineStore("canvasStore", {
 		// the draft's content or undo stack. We just stash the draft root to restore it.
 		async previewVersion(snapshotName: string) {
 			const doc = await getVersionedDoc(snapshotName);
-			const blocks = JSON.parse((doc?.draft_blocks || doc?.blocks || "[]") as string);
+			this.previewVersionBlocks((doc?.draft_blocks || doc?.blocks) as string, snapshotName);
+		},
+		// preview raw blocks JSON under a preview key (e.g. the live published version)
+		previewVersionBlocks(blocksJSON: string, previewName: string) {
+			const blocks = JSON.parse(blocksJSON || "[]");
 			if (!blocks[0] || !this.activeCanvas) return;
 			const previewRoot = getBlockInstance(blocks[0]);
 			if (!this.versionPreviewBlock) {
@@ -77,8 +82,8 @@ const useCanvasStore = defineStore("canvasStore", {
 			}
 			this.activeCanvas.setRootBlock(previewRoot, false, false);
 			this.versionPreviewBlock = previewRoot;
-			this.previewSnapshotName = snapshotName;
-			toast.info("Read-only preview · Use <b>Restore</b> to load this version.", {
+			this.previewSnapshotName = previewName;
+			toast.info(__("Read-only preview · Use <b>Restore</b> to load this version."), {
 				id: PREVIEW_TOAST_ID,
 				duration: Infinity,
 				dismissible: false,
@@ -164,7 +169,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			block: Block,
 			fragmentType: "component" | "blockTemplate",
 			saveAction: (block: Block) => void,
-			saveActionLabel: string = "Save",
+			saveActionLabel: string = __("Save"),
 			fragmentName?: string,
 			fragmentId?: string,
 			showUsageCount?: boolean,
@@ -190,7 +195,7 @@ const useCanvasStore = defineStore("canvasStore", {
 			e?.preventDefault();
 
 			if (this.activeCanvas?.isDirty) {
-				const exit = await confirm("Are you sure you want to exit without saving?");
+				const exit = await confirm(__("Are you sure you want to exit without saving?"));
 				if (!exit) {
 					return;
 				}

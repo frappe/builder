@@ -4,17 +4,11 @@
 		v-if="renderMode === 'popover'"
 		:placement="placement"
 		:offset="offset"
+		:portal-to="portalTo"
+		@update:open="handleOpenChange"
 		class="!block w-full">
-		<template #target="{ togglePopover, isOpen }">
-			<slot
-				name="target"
-				:togglePopover="
-					() => {
-						togglePopover();
-						contentRef?.syncPositions();
-					}
-				"
-				:isOpen="isOpen"></slot>
+		<template #target>
+			<slot name="target" :togglePopover="togglePopover" :isOpen="isOpen"></slot>
 		</template>
 		<template #body>
 			<ColorPickerContent
@@ -59,6 +53,7 @@ const props = withDefaults(
 			| "left";
 		renderMode?: "popover" | "inline";
 		offset?: number;
+		portalTo?: string | HTMLElement;
 	}>(),
 	{ modelValue: null, showInput: false, placement: "left-start", renderMode: "popover", offset: 10 },
 );
@@ -66,14 +61,30 @@ const props = withDefaults(
 const emit = defineEmits(["update:modelValue"]);
 const colorPickerPopover = ref<InstanceType<typeof Popover> | null>(null);
 const contentRef = ref<InstanceType<typeof ColorPickerContent> | null>(null);
+const isOpen = ref(false);
 
-function togglePopover(open?: boolean) {
-	if (open === undefined || open) {
+// bank the color the picker closed on into the recently used swatches
+function handleOpenChange(open: boolean) {
+	if (!open) contentRef.value?.commitRecentColor();
+	isOpen.value = open;
+}
+
+// event handlers bind this directly, so drop the event they pass
+function togglePopover(open?: boolean | Event) {
+	if (open instanceof Event) open = undefined;
+	if (open == null) open = !isOpen.value;
+	if (open) {
 		colorPickerPopover.value?.open();
 	} else {
 		colorPickerPopover.value?.close();
 	}
+	contentRef.value?.syncPositions();
 }
 
-defineExpose({ togglePopover });
+defineExpose({
+	togglePopover,
+	isOpen,
+	hideOptions: () => contentRef.value?.hideOptions(),
+	commitRecentColor: () => contentRef.value?.commitRecentColor(),
+});
 </script>
