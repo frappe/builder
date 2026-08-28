@@ -28,9 +28,10 @@ jobs:
         with:
           node-version: 24
 
+      # npm resolves the frontend workspace here and enforces peer ranges yarn only warns about
       - name: Setup dependencies
         run: |
-          npm install @semantic-release/git @semantic-release/exec --no-save
+          npm install @semantic-release/git @semantic-release/exec --no-save --legacy-peer-deps
 
       - name: Create Release
         env:
