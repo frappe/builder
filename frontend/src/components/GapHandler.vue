@@ -163,23 +163,23 @@ const sameLine = (a: Box, b: Box) => {
 	return overlap > shorter * 0.5;
 };
 
-// Group the children into visual lines in reading order: one line per grid/wrap row, a
-// single line for a flex row, one line per child for a flex column. DOM order is reading
-// order for every layout the builder produces, so a line simply ends as soon as the next
-// child stops overlapping its band. Never emits an empty line.
+// Group the children into visual lines: one line per grid/wrap row, a single line for a
+// flex row, one line per child for a flex column. Grouping is purely geometric — a box
+// joins the first line it shares a band with — because DOM order is not visual order:
+// `order` on a flex child, and grid auto-placement, both move a child between rows without
+// moving it in the DOM. Lines and their contents come back in visual order, top-to-bottom
+// then left-to-right. Never emits an empty line.
 const clusterLines = (boxes: Box[]) => {
 	const lines: Box[][] = [];
-	let current: Box[] = [];
-	boxes.forEach((box) => {
-		if (current.length && !current.some((sibling) => sameLine(sibling, box))) {
-			lines.push(current);
-			current = [];
-		}
-		current.push(box);
-	});
-	if (current.length) lines.push(current);
+	[...boxes]
+		.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0)
+		.forEach((box) => {
+			const line = lines.find((candidate) => candidate.some((sibling) => sameLine(sibling, box)));
+			if (line) line.push(box);
+			else lines.push([box]);
+		});
 	lines.forEach((line) => line.sort((a, b) => a.x0 - b.x0));
-	return lines;
+	return lines.sort((a, b) => topOf(a) - topOf(b));
 };
 
 const layout = computed(() => {
