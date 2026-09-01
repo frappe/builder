@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-26 04:17\n"
+"PO-Revision-Date: 2026-09-01 05:47\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -675,7 +675,7 @@ msgstr "CSS"
 
 #: frontend/src/components/Controls/SearchBlock.vue:243
 msgid "CSS Classes"
-msgstr ""
+msgstr "کلاس‌های CSS"
 
 #: frontend/src/components/Modals/TokenManager.vue:900
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
@@ -722,7 +722,7 @@ msgstr ""
 #. Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Capabilities"
-msgstr ""
+msgstr "قابلیت‌ها"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
@@ -924,7 +924,7 @@ msgstr ""
 
 #: frontend/src/stores/componentStore.ts:130
 msgid "Component synced in all the pages!"
-msgstr ""
+msgstr "کامپوننت در تمام صفحات همگام‌سازی شده است!"
 
 #: frontend/src/components/ComponentUpdates.vue:19
 msgid "Component updates"
@@ -960,7 +960,7 @@ msgstr "تأیید"
 
 #: builder/ai/codex.py:102 builder/ai/presets.py:256
 msgid "Connected"
-msgstr ""
+msgstr "متصل"
 
 #. Label of the connection_section (Section Break) field in DocType 'Builder AI
 #. Provider'
@@ -1006,11 +1006,11 @@ msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
-msgstr ""
+msgstr "تبدیل به WebP"
 
 #: frontend/src/utils/imageUtils.ts:57
 msgid "Converting..."
-msgstr ""
+msgstr "در حال تبدیل..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
@@ -4401,7 +4401,7 @@ msgstr ""
 
 #: builder/ai/presets.py:282
 msgid "The key is valid, but that model isn't available on this account."
-msgstr ""
+msgstr "کلید معتبر است، اما آن مدل در این حساب کاربری موجود نیست."
 
 #: builder/ai/presets.py:278
 msgid "The key is valid, but the account has no credit or is rate limited right now."
@@ -4995,11 +4995,11 @@ msgstr "وزن"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:139
 msgid "What do you want to build first?"
-msgstr ""
+msgstr "اول چه چیزی می‌خواهید بسازید؟"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:125
 msgid "Which one best describes you?"
-msgstr ""
+msgstr "کدام یک شما را بهتر توصیف می‌کند؟"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
