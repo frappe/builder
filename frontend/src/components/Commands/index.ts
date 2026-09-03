@@ -85,6 +85,11 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
+// module scope, not inside the command action: useStorage subscribes to storage
+// events and registers its cleanup on the active effect scope. A key handler has
+// none, so calling it per keypress would leak a subscription every time.
+const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
+
 const setLayersTab = async () => {
 	builderStore.showLeftPanel = true;
 	builderStore.leftPanelActiveTab = "Layers";
@@ -263,11 +268,6 @@ commands.register({
 	action: () => {
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		const block = blockController.getSelectedBlocks()[0];
-		const copiedStyle = useStorage(
-			"copiedStyle",
-			{ blockId: "", style: {} },
-			sessionStorage,
-		) as Ref<StyleCopy>;
 		copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 	},
 });
