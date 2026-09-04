@@ -10,7 +10,7 @@
 				:actionButton="{ component: FontUploader }"
 				:inputStyle="inputStyle"
 				:referenceElementSelector="referenceElementSelector"
-				:optionsMinWidth="240"
+				marqueeOptions
 				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
