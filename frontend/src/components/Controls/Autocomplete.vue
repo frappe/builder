@@ -266,6 +266,7 @@ const resolveLabelStyle = (option: Option): StyleValue | undefined =>
 
 const clearSelection = () => emit("update:modelValue", null);
 
+
 const getInputValue = (event: Event) => (event.target as HTMLInputElement)?.value?.trim();
 
 const submitArbitraryValue = (inputValue: string) => {
