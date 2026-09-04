@@ -17,6 +17,14 @@
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
+		<GapHandler
+			:data-block-id="block.blockId"
+			v-if="showGapHandler"
+			:target-block="block"
+			:target="target"
+			:on-update="updateTracker"
+			:disable-handlers="false"
+			:breakpoint="breakpoint" />
 		<MarginHandler
 			v-show="showMarginHandler"
 			:target-block="block"
@@ -53,6 +61,7 @@ import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
+import GapHandler from "./GapHandler.vue";
 import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 import RotationHandler from "./RotationHandler.vue";
@@ -112,6 +121,16 @@ const showPaddingHandler = computed(() => {
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
 		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
+	);
+});
+
+// A gap needs two children to sit between. Whether the block is actually a flex or grid
+// container is decided inside the handler, off the rendered display — isFlex()/isGrid()
+// read only the block's own styles and miss a layout that comes from a CSS class.
+const showGapHandler = computed(() => {
+	return (
+		showPaddingHandler.value &&
+		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
 	);
 });
 
