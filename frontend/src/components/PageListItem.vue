@@ -10,6 +10,7 @@
 					width="140"
 					height="82"
 					:src="page.meta_image || page.preview"
+					:alt="page.page_title || page.page_name"
 					onerror="this.src='/assets/builder/images/fallback.png'"
 					class="block aspect-video w-36 flex-shrink-0 overflow-hidden rounded-lg bg-surface-gray-1 object-cover shadow-md" />
 				<div class="flex flex-1 items-start justify-between overflow-hidden">
