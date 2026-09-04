@@ -85,9 +85,7 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
-// module scope, not inside the command action: useStorage subscribes to storage
-// events and registers its cleanup on the active effect scope. A key handler has
-// none, so calling it per keypress would leak a subscription every time.
+// module scope: useStorage in the handler would leak a subscription per keypress
 const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
 
 const setLayersTab = async () => {
