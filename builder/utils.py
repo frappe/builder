@@ -293,6 +293,8 @@ def get_safer_globals():
 		as_json=frappe.as_json,
 		dict=safe_globals["dict"],
 		args=form_dict,
+		# must stay top-level: safe_exec's _getattr_ guard rejects `frappe._`
+		_=frappe._,
 		frappe=NamespaceDict(
 			db=NamespaceDict(
 				count=frappe.db.count,
