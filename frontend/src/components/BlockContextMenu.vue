@@ -35,7 +35,12 @@ const showContextMenu = (event: MouseEvent, refBlock: Block) => {
 	contextMenu.value?.show(event);
 };
 
+const hideContextMenu = () => {
+	contextMenu.value?.hide();
+};
+
 defineExpose({
 	showContextMenu,
+	hideContextMenu,
 });
 </script>
