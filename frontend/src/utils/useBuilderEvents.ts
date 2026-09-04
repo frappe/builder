@@ -430,20 +430,6 @@ export function useBuilderEvents(
 				builderStore.mode = "move";
 			},
 		},
-		{
-			key: "l",
-			ctrl: true,
-			shift: true,
-			triggeredOn: "hold",
-			description: __("Highlight Blocks with Client Scripts"),
-			group: __("View"),
-			onHold: () => {
-				builderStore.highlightBlocksWithClientScripts = true;
-			},
-			onRelease: () => {
-				builderStore.highlightBlocksWithClientScripts = false;
-			},
-		},
 	]);
 
 	// on tab activation, reload for latest data
