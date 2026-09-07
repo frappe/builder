@@ -85,6 +85,9 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
+// module scope: useStorage in the handler would leak a subscription per keypress
+const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
+
 const setLayersTab = async () => {
 	builderStore.showLeftPanel = true;
 	builderStore.leftPanelActiveTab = "Layers";
@@ -262,11 +265,6 @@ commands.register({
 	action: () => {
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		const block = blockController.getSelectedBlocks()[0];
-		const copiedStyle = useStorage(
-			"copiedStyle",
-			{ blockId: "", style: {} },
-			sessionStorage,
-		) as Ref<StyleCopy>;
 		copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 	},
 });
