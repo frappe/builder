@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-26 13:21\n"
+"PO-Revision-Date: 2026-09-01 13:56\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -2505,7 +2505,7 @@ msgstr "Gemen"
 
 #: frontend/src/components/Settings/PageGeneral.vue:134
 msgid "Make this page a standard page that can be exported to an app"
-msgstr "Gör denna sida till en standardsida som kan exporteras till en app"
+msgstr "Gör denna sida till en standardsida som kan exporteras till app"
 
 #. Description of the 'Dynamic Route' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -4731,7 +4731,7 @@ msgstr "Obegränsad"
 
 #: builder/template_sync.py:55
 msgid "Unsafe template fixture name: {0}"
-msgstr "Osäkert mall fixtur namn: {0}"
+msgstr "Osäker malltillägg namn: {0}"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:16
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120

@@ -9,7 +9,10 @@ import { BuilderPage } from "@/types/doctypes";
 import blockController from "@/utils/blockController";
 import getBlockTemplate from "@/utils/blockTemplate";
 
+import { commandShortcuts } from "@/components/Commands";
+import { __ } from "@/translation";
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
+import { promptOversizedSVG } from "@/utils/dialogs";
 import {
 	addPxToNumber,
 	getBlockCopy,
@@ -23,13 +26,10 @@ import {
 	uploadBuilderAsset,
 	uploadSVGAsFile,
 } from "@/utils/helpers";
-import { promptOversizedSVG } from "@/utils/dialogs";
 import { useEventListener } from "@vueuse/core";
-import { commandShortcuts } from "@/components/Commands";
 import { toast, useShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { __ } from "@/translation";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
@@ -161,12 +161,7 @@ export function useBuilderEvents(
 					const fileURL = await resolveOversizedSVG(text);
 					if (fileURL) {
 						const imageBlock = getImageBlock(fileURL);
-						// the image template defaults to cover, which would crop the artwork
-						imageBlock.baseStyles = {
-							...block.baseStyles,
-							...imageBlock.baseStyles,
-							objectFit: "contain",
-						};
+						imageBlock.baseStyles = { ...block.baseStyles, ...imageBlock.baseStyles };
 						block = imageBlock;
 					}
 				}
@@ -323,7 +318,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowRight",
-			description: __("Pan canvas right"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -334,7 +329,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowLeft",
-			description: __("Pan canvas left"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -345,7 +340,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowUp",
-			description: __("Pan canvas up"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -356,7 +351,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowDown",
-			description: __("Pan canvas down"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
