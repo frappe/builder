@@ -63,9 +63,6 @@ export function commandShortcuts() {
 			...command.keys!,
 			group: commandGroupLabels[command.group] ?? __(command.group),
 			condition: command.condition,
-			// the block context menu is portalled and keeps focus, so a keyboard
-			// command never dismisses it: it would stay on top of whatever the
-			// command opens 
 			handler: () => {
 				builderStore.blockContextMenu?.hideContextMenu();
 				command.action();
