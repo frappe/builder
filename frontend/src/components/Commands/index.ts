@@ -2,11 +2,11 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { useDark, useStorage, useToggle } from "@vueuse/core";
 import { nextTick, type Ref } from "vue";
-import { __ } from "@/translation";
 
 /** A key binding for a command. The description labels it in the shortcuts modal. */
 export type CommandKeys = {
@@ -105,10 +105,9 @@ commands.register({
 	name: "preview",
 	title: __("Preview Page"),
 	icon: "lucide-play",
-	description: __("Page"),
-	group: "Page",
+	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "p", ctrl: true, description: __("Preview") },
+	keys: { key: "p", ctrl: true, description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
 		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
