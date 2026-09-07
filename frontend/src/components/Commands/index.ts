@@ -63,7 +63,10 @@ export function commandShortcuts() {
 			...command.keys!,
 			group: commandGroupLabels[command.group] ?? __(command.group),
 			condition: command.condition,
-			handler: command.action,
+			handler: () => {
+				builderStore.blockContextMenu?.hideContextMenu();
+				command.action();
+			},
 		}));
 }
 
