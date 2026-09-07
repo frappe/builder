@@ -318,7 +318,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowRight",
-			description: __("Pan canvas right"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -329,7 +329,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowLeft",
-			description: __("Pan canvas left"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -340,7 +340,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowUp",
-			description: __("Pan canvas up"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
@@ -351,7 +351,7 @@ export function useBuilderEvents(
 		},
 		{
 			key: "ArrowDown",
-			description: __("Pan canvas down"),
+			description: __("Pan canvas"),
 			group: __("Canvas"),
 			handler: () => {
 				if (pageCanvas.value) {
