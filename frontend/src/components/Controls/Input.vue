@@ -78,6 +78,8 @@ interface UseNumberInputOptions {
 }
 
 const isStrictNumber = computed(() => {
+	// Controls like grid Columns/Rows bind a plain number, not a string.
+	if (typeof data.value === "number") return Number.isFinite(data.value);
 	if (typeof data.value !== "string") return false;
 
 	return /^\d*\.?\d+(px|%|em|rem)?$/.test(data.value.trim());
