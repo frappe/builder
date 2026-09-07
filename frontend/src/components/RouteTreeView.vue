@@ -332,7 +332,7 @@ const treeActive = () => regularNodes().length > 0;
 useShortcut([
 	{
 		key: "ArrowDown",
-		description: __("Move down in page tree"),
+		description: __("Move Down in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -342,7 +342,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowUp",
-		description: __("Move up in page tree"),
+		description: __("Move Up in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -352,7 +352,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowRight",
-		description: __("Expand node or move down in page tree"),
+		description: __("Expand Node or Move Down in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -371,7 +371,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowLeft",
-		description: __("Collapse node or move up in page tree"),
+		description: __("Collapse Node or Move Up in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -387,7 +387,7 @@ useShortcut([
 	},
 	{
 		key: "Enter",
-		description: __("Open page or toggle folder in page tree"),
+		description: __("Open Page or Toggle Folder in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {

@@ -177,7 +177,7 @@ commands.register({
 	description: __("View"),
 	group: "View",
 	condition: isBuilderRoute,
-	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle left panel") },
+	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle Left Panel") },
 	action: () => (builderStore.showLeftPanel = !builderStore.showLeftPanel),
 });
 
@@ -207,7 +207,7 @@ commands.register({
 	description: __("General"),
 	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "?", description: __("Show keyboard shortcuts") },
+	keys: { key: "?", description: __("Show Keyboard Shortcuts") },
 	action: () => (builderStore.shortcutsModalOpen = true),
 });
 
@@ -219,7 +219,7 @@ commands.register({
 	icon: "lucide-panels-left-bottom",
 	group: "View",
 	inPalette: false,
-	keys: { key: "\\", ctrl: true, description: __("Toggle panels") },
+	keys: { key: "\\", ctrl: true, description: __("Toggle Panels") },
 	action: () => {
 		builderStore.showRightPanel = !builderStore.showRightPanel;
 		builderStore.showLeftPanel = builderStore.showRightPanel;
@@ -232,7 +232,7 @@ commands.register({
 	icon: "lucide-moon",
 	group: "View",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle canvas dark mode") },
+	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle Canvas Dark Mode") },
 	action: () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode),
 });
 
@@ -242,7 +242,7 @@ commands.register({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, shift: true, description: __("Search blocks") },
+	keys: { key: "f", ctrl: true, shift: true, description: __("Search Blocks") },
 	action: () => (builderStore.showSearchBlock = true),
 });
 
@@ -252,7 +252,7 @@ commands.register({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus property search") },
+	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus Property Search") },
 	action: () => {
 		document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 	},
@@ -264,7 +264,7 @@ commands.register({
 	icon: "lucide-clipboard-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "c", ctrl: true, shift: true, description: __("Copy block styles") },
+	keys: { key: "c", ctrl: true, shift: true, description: __("Copy Block Styles") },
 	action: () => {
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		const block = blockController.getSelectedBlocks()[0];
@@ -278,7 +278,7 @@ commands.register({
 	icon: "lucide-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, description: __("Duplicate block") },
+	keys: { key: "d", ctrl: true, description: __("Duplicate Block") },
 	action: () => {
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
