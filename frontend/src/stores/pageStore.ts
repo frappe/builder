@@ -10,14 +10,18 @@ import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	confirm,
+	countBlocks,
 	generateId,
 	getBlockInstance,
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "@/utils/helpers";
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
+
+const { capture } = useTelemetry();
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -42,6 +46,7 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 
+			const switchingPage = pageName !== this.selectedPage;
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -58,6 +63,13 @@ const usePageStore = defineStore("pageStore", {
 			this.activePage = page;
 
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
+			if (switchingPage) {
+				capture("builder_editor_opened", {
+					page: page.name,
+					block_count: countBlocks(blocks),
+					is_published: Boolean(page.published),
+				});
+			}
 			this.editPage(!resetCanvas);
 			if (!Array.isArray(blocks)) {
 				const canvasStore = useCanvasStore();
