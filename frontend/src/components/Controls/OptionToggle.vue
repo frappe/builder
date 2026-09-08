@@ -1,6 +1,6 @@
 <template>
 	<div class="flex w-full items-center justify-between">
-		<InputLabel v-if="label">{{ label }}</InputLabel>
+		<InputLabel v-if="label" class="w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
 		<TabButtons
 			:class="['w-full min-w-[150px]', STRETCH_TABS]"
 			:options="tabOptions"
