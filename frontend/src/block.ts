@@ -50,6 +50,7 @@ const TEXT_ELEMENTS = new Set([
 	"i",
 	"blockquote",
 	"summary",
+	"option",
 ]);
 
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
