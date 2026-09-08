@@ -163,7 +163,7 @@
 							<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 							<template v-if="message.metadata?.debug">
 								<div class="ml-auto flex items-center gap-2">
-									<span v-if="message.metadata.debug.elapsedMs" class="font-mono">
+									<span v-if="message.metadata.debug.elapsedMs">
 										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
 									</span>
 									<button

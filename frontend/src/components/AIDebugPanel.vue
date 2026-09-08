@@ -13,7 +13,7 @@
 			<div class="grid grid-cols-2 divide-x divide-y divide-outline-gray-2 sm:grid-cols-4">
 				<div v-for="s in primaryStats" :key="s.label" class="flex flex-col gap-1 p-3.5">
 					<span class="text-[10px] font-medium uppercase tracking-wide text-ink-gray-5">{{ s.label }}</span>
-					<span class="font-mono text-lg font-medium leading-none text-ink-gray-9">{{ s.value }}</span>
+					<span class="text-lg font-medium tabular-nums leading-none text-ink-gray-9">{{ s.value }}</span>
 					<span v-if="s.sub" class="text-[11px] leading-none" :class="s.subTone || 'text-ink-gray-5'">
 						{{ s.sub }}
 					</span>
@@ -24,7 +24,7 @@
 			<div v-if="context" class="flex flex-col gap-1.5 border-t border-outline-gray-2 px-4 py-3">
 				<div class="flex items-center justify-between text-[11px] text-ink-gray-5">
 					<span class="font-medium uppercase tracking-wide">Context window</span>
-					<span class="font-mono">{{ context.used }} / {{ context.total }} · {{ context.pct }}%</span>
+					<span class="tabular-nums">{{ context.used }} / {{ context.total }} · {{ context.pct }}%</span>
 				</div>
 				<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-gray-3">
 					<div
@@ -73,7 +73,7 @@
 				<div v-for="(round, idx) in trace" :key="idx" class="relative flex gap-3 pb-4 last:pb-0">
 					<div class="flex flex-col items-center">
 						<span
-							class="z-10 grid size-5 shrink-0 place-items-center rounded-full bg-surface-gray-3 font-mono text-[10px] font-semibold text-ink-gray-6">
+							class="z-10 grid size-5 shrink-0 place-items-center rounded-full bg-surface-gray-3 text-[10px] font-semibold text-ink-gray-6">
 							{{ (round.round ?? idx) + 1 }}
 						</span>
 						<span v-if="idx < trace.length - 1" class="bg-outline-gray-2 -mb-4 mt-1 w-px flex-1" />
