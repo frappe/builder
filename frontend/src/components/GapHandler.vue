@@ -70,13 +70,7 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 );
 
 const CHILD_SELECTOR = ":scope > .__builder_component__";
-
-// Below this zoom the handles are smaller than they are grabbable, so hide them.
 const HANDLE_MIN_SCALE = 0.5;
-
-// A zero gap measures as a zero-thickness band, which would leave nothing on screen to aim
-// at. Paint it this thick (in canvas pixels) so the seam — and the handle sitting on it —
-// stays findable, exactly as a padding handle stays visible at zero padding.
 const MIN_BAND = 2;
 
 // Any of these moves the children, and with them the seams the bands are drawn on.
@@ -92,11 +86,13 @@ const LAYOUT_STYLES = [
 	"gridTemplateRows",
 ] as const;
 
-// A box in the block's own (unscaled, unrotated) layout space, measured from the top-left
-// of its border box — the same origin the editor host is anchored to.
+// A box in the block's own (unscaled, unrotated) layout space, measured from the top-left of
+// its border box — the origin the editor host is anchored to.
 type Box = { x0: number; y0: number; x1: number; y1: number };
-// One drawn overlay: the painted strip plus the pill that drags it, both already in canvas
-// pixels relative to the editor host.
+// The vertical slice of one: a box's extent, or the band a line's members share.
+type Span = { y0: number; y1: number };
+// One drawn overlay: the strip plus the pill that drags it, in canvas pixels relative to the
+// editor host.
 type GapBand = {
 	key: string;
 	position: Position;
@@ -104,9 +100,8 @@ type GapBand = {
 	handleStyle: Record<string, string | undefined>;
 };
 
-// Child geometry isn't reactive: a child resizing, or the block reflowing after its own
-// first paint, moves the seams without touching any style this component reads. Bumping
-// this on every observed resize re-runs the measurement.
+// Child geometry isn't reactive: a resize or reflow moves the seams without touching any style
+// this component reads, so bumping this on each observed resize re-runs the measurement.
 const measured = ref(0);
 let resizeObserver: ResizeObserver | null = null;
 
@@ -123,8 +118,6 @@ onBeforeUnmount(() => {
 	resizeObserver = null;
 });
 
-// offsetLeft/offsetTop are layout coordinates, so — unlike getBoundingClientRect — they
-// stay correct when the block, and with it the editor host, is rotated.
 const layoutOffset = (el: HTMLElement) => {
 	let x = 0;
 	let y = 0;
@@ -137,12 +130,8 @@ const layoutOffset = (el: HTMLElement) => {
 	return { x, y };
 };
 
-// Position of a child's border box within the target's, which is the origin the editor host
-// is anchored to. Summing each chain to the root and subtracting cancels whatever they
-// share, but an offset is measured from its offsetParent's *padding* edge: when that
-// offsetParent is the target itself, its border has to be added back. When the target isn't
-// positioned the chain skips it, both are measured from the same ancestor, and the
-// difference already is border box to border box.
+// Position of a child's border box within the target's: summing both chains and subtracting
+// cancels what they share, but an offset starts at its offsetParent's *padding* edge.
 const offsetWithin = (child: HTMLElement, target: HTMLElement, targetOffset: { x: number; y: number }) => {
 	const { x, y } = layoutOffset(child);
 	const nested = child.offsetParent === target;
@@ -157,29 +146,29 @@ const bottomOf = (line: Box[]) => Math.max(...line.map((box) => box.y1));
 
 // Two children share a visual line when they overlap vertically by more than half of the
 // shorter one — robust to ragged item heights in a wrapped flex or a grid.
-const sameLine = (a: Box, b: Box) => {
+const sameLine = (a: Span, b: Span) => {
 	const overlap = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
 	const shorter = Math.min(a.y1 - a.y0, b.y1 - b.y0) || 1;
 	return overlap > shorter * 0.5;
 };
 
-// Group the children into visual lines: one line per grid/wrap row, a single line for a
-// flex row, one line per child for a flex column. Grouping is purely geometric — a box
-// joins the first line it shares a band with — because DOM order is not visual order:
-// `order` on a flex child, and grid auto-placement, both move a child between rows without
-// moving it in the DOM. Lines and their contents come back in visual order, top-to-bottom
-// then left-to-right. Never emits an empty line.
+// Group children into visual lines, top-to-bottom then left-to-right — DOM order isn't visual.
+// A box matches a line's *band* (its members' intersection), so a row-span can't chain rows.
 const clusterLines = (boxes: Box[]) => {
-	const lines: Box[][] = [];
+	const lines: { boxes: Box[]; band: Span }[] = [];
 	[...boxes]
 		.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0)
 		.forEach((box) => {
-			const line = lines.find((candidate) => candidate.some((sibling) => sameLine(sibling, box)));
-			if (line) line.push(box);
-			else lines.push([box]);
+			const line = lines.find((candidate) => sameLine(candidate.band, box));
+			if (!line) {
+				lines.push({ boxes: [box], band: { y0: box.y0, y1: box.y1 } });
+				return;
+			}
+			line.boxes.push(box);
+			line.band = { y0: Math.max(line.band.y0, box.y0), y1: Math.min(line.band.y1, box.y1) };
 		});
-	lines.forEach((line) => line.sort((a, b) => a.x0 - b.x0));
-	return lines.sort((a, b) => topOf(a) - topOf(b));
+	const grouped = lines.map(({ boxes }) => boxes.sort((a, b) => a.x0 - b.x0));
+	return grouped.sort((a, b) => topOf(a) - topOf(b));
 };
 
 const layout = computed(() => {
@@ -192,9 +181,8 @@ const layout = computed(() => {
 	if (!target?.isConnected) return null;
 
 	const style = getComputedStyle(target);
-	// Decide off the rendered display, not the block's own styles: a block laid out by a CSS
-	// class rather than an inline style is still a flex/grid container, and gap only applies
-	// to those two.
+	// Decide off the rendered display, not the block's own styles: a block laid out by a CSS class
+	// is still a flex/grid container, and gap only applies to those two.
 	if (!/^(inline-)?(flex|grid)$/.test(style.display)) return null;
 
 	const targetOffset = layoutOffset(target);
@@ -205,7 +193,6 @@ const layout = computed(() => {
 	const boxes: Box[] = [];
 	children.forEach((child) => {
 		if (child.id === "placeholder") return;
-		// a hidden child has no box, which also covers display:none
 		if (!child.offsetWidth && !child.offsetHeight) return;
 		const { x, y } = offsetWithin(child, target, targetOffset);
 		boxes.push({ x0: x, y0: y, x1: x + child.offsetWidth, y1: y + child.offsetHeight });
@@ -253,8 +240,8 @@ const handleStyle = (
 	cursor: props.disableHandlers ? undefined : cursor,
 });
 
-// One band per column boundary, spanning the full content height. Every line shares the
-// same column-gap, so the fullest line carries all of the boundaries.
+// One band per column boundary, spanning the full content height. Every line shares the same
+// column-gap, so the fullest line carries all of the boundaries.
 const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
 	const size = sideHandleSize.value;
@@ -285,8 +272,10 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 	const size = longHandleSize.value;
 
 	return lines.slice(1).map((line, index) => {
-		const previous = lines[index];
-		const y0 = bottomOf(previous);
+		// A row-spanning box straddles the seam instead of ending above it, so its bottom isn't
+		// where the gap starts: measure from the lowest edge that stops short of this line.
+		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
+		const y0 = above.length ? bottomOf(above) : topOf(line);
 		const y1 = Math.max(topOf(line), y0);
 
 		return {
