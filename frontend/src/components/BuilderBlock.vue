@@ -11,6 +11,7 @@
 		:readonly="readonly"
 		:style="styles"
 		ref="component">
+		<template v-if="optionText != null">{{ optionText }}</template>
 		<BuilderBlock
 			:data="data"
 			:componentData="resolvedComponentData"
@@ -50,7 +51,7 @@ import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
 import { setFont } from "@/utils/fontManager";
-import { extractComponentId } from "@/utils/helpers";
+import { extractComponentId, getTextContent } from "@/utils/helpers";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
@@ -180,6 +181,13 @@ const valueResolver = new BlockValueResolver({
 	data: () => props.data ?? null,
 	componentData: () => resolvedComponentData.value ?? null,
 	defaultProps: () => props.defaultProps ?? null,
+});
+
+// option supports only text content, so its label renders as a text node instead of going through TextBlock
+const optionText = computed(() => {
+	if (props.block.getElement() !== "option") return null;
+	const resolved = valueResolver.applyDynamicValues("key", { innerHTML: null }).innerHTML;
+	return getTextContent(String(resolved ?? props.block.getInnerHTML() ?? ""));
 });
 
 const attributes = computed(() => {
