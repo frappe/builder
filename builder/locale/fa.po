@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-01 05:47\n"
+"PO-Revision-Date: 2026-09-08 08:49\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -1774,7 +1774,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:1019
 msgid "Failed to update {0} tokens"
-msgstr ""
+msgstr "به‌روزرسانی {0} توکن ناموفق بود"
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
@@ -1946,7 +1946,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
@@ -2062,7 +2062,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0}"
-msgstr ""
+msgstr "HTTP {0}"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0} · forwards query parameters"
@@ -4571,7 +4571,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
-msgstr ""
+msgstr "توکن به‌روزرسانی شد"
 
 #: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
@@ -4752,11 +4752,11 @@ msgstr "به‌روزرسانی"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
-msgstr ""
+msgstr "به‌روزرسانی صفحه فعلی"
 
 #: frontend/src/components/ComponentUpdates.vue:23
 msgid "Update all"
-msgstr ""
+msgstr "به‌روزرسانی همه"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
@@ -4791,12 +4791,12 @@ msgstr "آپلود"
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
-msgstr ""
+msgstr "بارگذاری CSV"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
 #: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
-msgstr ""
+msgstr "بارگذاری فونت"
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
@@ -5111,7 +5111,7 @@ msgstr "یوتیوب"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
@@ -5157,7 +5157,7 @@ msgstr "مثلاً، اصلی، تأکیدی، پس‌زمینه"
 
 #: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
-msgstr ""
+msgstr "در هیچ صفحه‌ای استفاده نشده"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:52
 msgid "or"
@@ -5170,7 +5170,7 @@ msgstr "وضعیت"
 
 #: frontend/src/stores/pageStore.ts:249
 msgid "this page"
-msgstr ""
+msgstr "این صفحه"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:184
 #: frontend/src/components/Settings/GlobalDomains.vue:185
@@ -5183,15 +5183,15 @@ msgstr "بی‌نام"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
-msgstr ""
+msgstr "استفاده‌شده در ۱ صفحه"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
-msgstr ""
+msgstr "استفاده‌شده در {0} صفحه"
 
 #: frontend/src/components/PageClientScriptManager.vue:233
 msgid "used in {0}+ pages"
-msgstr ""
+msgstr "استفاده‌شده در {0}+ صفحه"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
