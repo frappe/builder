@@ -12,7 +12,9 @@
 			<Popover placement="left" class="!block w-full" :offset="popoverOffset">
 				<template #target="{ togglePopover }">
 					<div class="flex items-center justify-between">
-						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
+						<InputLabel v-if="label && labelPosition === 'left'" class="w-1/3 min-w-[88px] shrink-0">
+							{{ label }}
+						</InputLabel>
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
 								type="text"

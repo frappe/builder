@@ -1,5 +1,5 @@
 <template>
-	<span class="flex w-[88px] min-w-16 items-center truncate text-xs leading-5 text-ink-gray-6">
+	<span class="flex min-w-0 items-center truncate text-xs leading-5 text-ink-gray-6">
 		<span class="truncate"><slot /></span>
 		<Popover trigger="hover" v-if="description" placement="top">
 			<template #target>
