@@ -1,5 +1,5 @@
 <template>
-	<Popover placement="bottom" :offset="20">
+	<Popover placement="bottom" :offset="20" v-model:open="showPopover">
 		<template #target="{ togglePopover }">
 			<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 				<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
@@ -50,13 +50,25 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageOptions from "@/components/PageOptions.vue";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { Popover, Tooltip } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
+const showPopover = ref(false);
+
+watch(
+	() => builderStore.isSmallScreen,
+	(isSmallScreen) => {
+		if (isSmallScreen) {
+			showPopover.value = false;
+		}
+	},
+);
 
 const routeString = computed(() => {
 	const route = pageStore.activePage?.route || "/";

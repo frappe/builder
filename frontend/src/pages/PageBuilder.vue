@@ -1,12 +1,16 @@
 <template>
-	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
+	<div
+		v-if="builderStore.isSmallScreen"
+		class="fixed inset-0 z-[9999] grid place-content-center gap-4 bg-surface-base text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
 			<h1 class="text-p-3xl-semibold">{{ __("Screen too small") }}</h1>
 			<p class="text-p-base">{{ __("Please switch to a larger screen to edit") }}</p>
 		</div>
 	</div>
-	<div v-show="!isSmallScreen" class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
+	<div
+		v-show="!builderStore.isSmallScreen"
+		class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
 		<!-- Canvas layer (bottom) - comes first in DOM -->
 		<BuilderCanvas
 			ref="fragmentCanvas"
@@ -127,7 +131,7 @@ import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
+import { useDebounceFn, useEventListener } from "@vueuse/core";
 import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -135,9 +139,6 @@ import CodeEditor from "../components/Controls/CodeEditor.vue";
 import { prefetchBuilderSettings } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
-
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isSmallScreen = breakpoints.smaller("lg");
 
 const route = useRoute();
 const router = useRouter();
