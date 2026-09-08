@@ -19,7 +19,7 @@
 					</Tooltip>
 					<Tooltip :text="__('Publicly accessible')" :hoverDelay="0.6">
 						<span
-							class="lucide-globe size-4 text-ink-gray-5"
+							class="lucide-globe mr-1 h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 							v-if="pageStore.activePage?.published && !pageStore.activePage?.authenticated_access" />
 					</Tooltip>
 					<span
