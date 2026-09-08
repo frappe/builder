@@ -46,7 +46,9 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 
-			const switchingPage = pageName !== this.selectedPage;
+			// against the last page that actually loaded, so a retry after a failed
+			// fetch still counts as opening it
+			const switchingPage = pageName !== this.activePage?.name;
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 

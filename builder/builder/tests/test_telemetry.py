@@ -4,6 +4,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.api import create_page_from_bundle, duplicate_page, identify_persona
+from builder.utils import count_blocks
 
 CAPTURE = "builder.builder.doctype.builder_page.builder_page.capture"
 IDENTIFY = "frappe.utils.telemetry.pulse.client.identify"
@@ -21,6 +22,10 @@ def new_page(**fields):
 
 
 class TestPageLifecycleEvents(FrappeTestCase):
+	def test_counts_a_legacy_single_root_block(self):
+		self.assertEqual(count_blocks(ROOT_WITH_CHILD), 2)
+		self.assertEqual(count_blocks(None), 0)
+
 	def test_created_event_identifies_the_page(self):
 		with patch(CAPTURE) as capture:
 			page = new_page(draft_blocks=[ROOT_WITH_CHILD])
