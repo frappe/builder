@@ -384,6 +384,11 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	};
 }
 
+function countBlocks(blocks: BlockOptions | BlockOptions[]): number {
+	const list = Array.isArray(blocks) ? blocks : [blocks];
+	return list.reduce((count, block) => count + 1 + countBlocks(block.children || []), 0);
+}
+
 const MAX_INLINE_SVG_SIZE = 20 * 1024;
 
 // a token-painted SVG has to stay inline: an <img> cannot read CSS variables
@@ -971,6 +976,7 @@ export {
 	confirm,
 	copyToClipboard,
 	convertSVGBlockToImage,
+	countBlocks,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,

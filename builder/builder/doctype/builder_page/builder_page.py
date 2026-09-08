@@ -42,6 +42,7 @@ from builder.utils import (
 	camel_case_to_kebab_case,
 	clean_data,
 	compact_json,
+	count_blocks,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -160,7 +161,10 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
-		capture("builder_page_created", "builder")
+
+	# the name is only final after insert: naming wipes whatever before_insert set
+	def after_insert(self):
+		capture("builder_page_created", "builder", properties=self.creation_event_properties())
 
 	# every write path, not just insert: callers that hand over a block tree
 	# (paste, AI writes, the API) would otherwise fail on update with
@@ -188,6 +192,30 @@ class BuilderPage(WebsiteGenerator):
 			if not self.name:
 				self.autoname()
 			self.route = f"pages/{self.name}"
+
+	def block_count(self) -> int:
+		return count_blocks(self.draft_blocks or self.blocks)
+
+	def creation_event_properties(self) -> dict:
+		block_count = self.block_count()
+		# template and duplicate are stamped by their api entry points; anything
+		# else arriving with content (paste, REST) is an import
+		return {
+			"page": self.name,
+			"source": self.flags.source or ("blank" if block_count <= 1 else "import"),
+			"template_page": self.flags.template_page,
+			"block_count": block_count,
+		}
+
+	def publish_event_properties(self, is_first_publish: bool) -> dict:
+		return {
+			"page": self.name,
+			"is_first_publish": is_first_publish,
+			"seconds_since_created": int(frappe.utils.time_diff_in_seconds(now(), self.creation)),
+			"block_count": self.block_count(),
+			"has_client_script": bool(self.client_scripts),
+			"has_data_script": bool(self.page_data_script),
+		}
 
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
@@ -220,6 +248,9 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
+
+		if self.has_value_changed("published") and not self.published and not self.is_new():
+			capture("builder_page_unpublished", "builder", properties={"page": self.name})
 
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
@@ -345,6 +376,7 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def publish(self):
+		is_first_publish = not self.published and not self.published_at
 		self.published = 1
 		self.published_at = now()
 		if self.draft_blocks:
@@ -361,7 +393,9 @@ class BuilderPage(WebsiteGenerator):
 			self.blocks = self.draft_blocks
 			self.draft_blocks = None
 		self.save()
-		capture("builder_page_published", "builder")
+		capture(
+			"builder_page_published", "builder", properties=self.publish_event_properties(is_first_publish)
+		)
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -376,7 +410,6 @@ class BuilderPage(WebsiteGenerator):
 	def unpublish(self):
 		self.published = 0
 		self.save()
-		capture("builder_page_unpublished", "builder")
 
 	@frappe.whitelist()
 	def create_manual_snapshot(self, label: str | None = None):

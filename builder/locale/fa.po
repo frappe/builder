@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-26 04:17\n"
+"PO-Revision-Date: 2026-09-08 08:49\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -675,7 +675,7 @@ msgstr "CSS"
 
 #: frontend/src/components/Controls/SearchBlock.vue:243
 msgid "CSS Classes"
-msgstr ""
+msgstr "کلاس‌های CSS"
 
 #: frontend/src/components/Modals/TokenManager.vue:900
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
@@ -722,7 +722,7 @@ msgstr ""
 #. Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Capabilities"
-msgstr ""
+msgstr "قابلیت‌ها"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:132
 msgid "Capitalize"
@@ -924,7 +924,7 @@ msgstr ""
 
 #: frontend/src/stores/componentStore.ts:130
 msgid "Component synced in all the pages!"
-msgstr ""
+msgstr "کامپوننت در تمام صفحات همگام‌سازی شده است!"
 
 #: frontend/src/components/ComponentUpdates.vue:19
 msgid "Component updates"
@@ -960,7 +960,7 @@ msgstr "تأیید"
 
 #: builder/ai/codex.py:102 builder/ai/presets.py:256
 msgid "Connected"
-msgstr ""
+msgstr "متصل"
 
 #. Label of the connection_section (Section Break) field in DocType 'Builder AI
 #. Provider'
@@ -1006,11 +1006,11 @@ msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
-msgstr ""
+msgstr "تبدیل به WebP"
 
 #: frontend/src/utils/imageUtils.ts:57
 msgid "Converting..."
-msgstr ""
+msgstr "در حال تبدیل..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
@@ -1774,7 +1774,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:1019
 msgid "Failed to update {0} tokens"
-msgstr ""
+msgstr "به‌روزرسانی {0} توکن ناموفق بود"
 
 #: frontend/src/utils/helpers.ts:376
 msgid "Failed to upload"
@@ -1946,7 +1946,7 @@ msgstr ""
 
 #: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Frappe / ERPNext"
-msgstr ""
+msgstr "Frappe / ERPNext"
 
 #. Name of a Workspace
 #: builder/builder/workspace/frappe_builder/frappe_builder.json
@@ -2062,7 +2062,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0}"
-msgstr ""
+msgstr "HTTP {0}"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:48
 msgid "HTTP {0} · forwards query parameters"
@@ -4401,7 +4401,7 @@ msgstr ""
 
 #: builder/ai/presets.py:282
 msgid "The key is valid, but that model isn't available on this account."
-msgstr ""
+msgstr "کلید معتبر است، اما آن مدل در این حساب کاربری موجود نیست."
 
 #: builder/ai/presets.py:278
 msgid "The key is valid, but the account has no credit or is rate limited right now."
@@ -4571,7 +4571,7 @@ msgstr ""
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
-msgstr ""
+msgstr "توکن به‌روزرسانی شد"
 
 #: frontend/src/pages/PageBuilder.vue:193
 #: frontend/src/utils/useBuilderEvents.ts:368
@@ -4752,11 +4752,11 @@ msgstr "به‌روزرسانی"
 
 #: frontend/src/utils/builderBlockCopyPaste.ts:297
 msgid "Update Current Page"
-msgstr ""
+msgstr "به‌روزرسانی صفحه فعلی"
 
 #: frontend/src/components/ComponentUpdates.vue:23
 msgid "Update all"
-msgstr ""
+msgstr "به‌روزرسانی همه"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:194
 msgid "Update to Latest Component"
@@ -4791,12 +4791,12 @@ msgstr "آپلود"
 
 #: frontend/src/components/Modals/TokenManager.vue:380
 msgid "Upload CSV"
-msgstr ""
+msgstr "بارگذاری CSV"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
 #: frontend/src/utils/helpers.ts:517
 msgid "Upload Font"
-msgstr ""
+msgstr "بارگذاری فونت"
 
 #: frontend/src/components/Settings/PageMeta.vue:24
 msgid "Upload Meta Image"
@@ -4995,11 +4995,11 @@ msgstr "وزن"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:139
 msgid "What do you want to build first?"
-msgstr ""
+msgstr "اول چه چیزی می‌خواهید بسازید؟"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:125
 msgid "Which one best describes you?"
-msgstr ""
+msgstr "کدام یک شما را بهتر توصیف می‌کند؟"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:10
 msgid "Width"
@@ -5111,7 +5111,7 @@ msgstr "یوتیوب"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 msgid "Z-Index"
-msgstr ""
+msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom in"
@@ -5157,7 +5157,7 @@ msgstr "مثلاً، اصلی، تأکیدی، پس‌زمینه"
 
 #: frontend/src/utils/helpers.ts:918
 msgid "not used in any pages"
-msgstr ""
+msgstr "در هیچ صفحه‌ای استفاده نشده"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:52
 msgid "or"
@@ -5170,7 +5170,7 @@ msgstr "وضعیت"
 
 #: frontend/src/stores/pageStore.ts:249
 msgid "this page"
-msgstr ""
+msgstr "این صفحه"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:184
 #: frontend/src/components/Settings/GlobalDomains.vue:185
@@ -5183,15 +5183,15 @@ msgstr "بی‌نام"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in 1 page"
-msgstr ""
+msgstr "استفاده‌شده در ۱ صفحه"
 
 #: frontend/src/utils/helpers.ts:920
 msgid "used in {0} pages"
-msgstr ""
+msgstr "استفاده‌شده در {0} صفحه"
 
 #: frontend/src/components/PageClientScriptManager.vue:233
 msgid "used in {0}+ pages"
-msgstr ""
+msgstr "استفاده‌شده در {0}+ صفحه"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json

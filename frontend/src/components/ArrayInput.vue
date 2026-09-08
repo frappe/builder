@@ -2,8 +2,8 @@
 	<Popover :offset="20" placement="left">
 		<template #target="{ open }">
 			<div class="relative flex w-full gap-2">
-				<div class="flex w-[88px] shrink-0 items-center">
-					<InputLabel class="truncate">
+				<div class="flex w-1/3 min-w-[88px] shrink-0 items-center">
+					<InputLabel class="w-full truncate">
 						{{ label }}
 					</InputLabel>
 				</div>

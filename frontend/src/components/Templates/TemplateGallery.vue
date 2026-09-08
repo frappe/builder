@@ -196,6 +196,7 @@ const useTemplate = (page: TemplatePageSummary) => {
 		})
 		.then((newPageName: string) => {
 			capture("builder_page_template_used", {
+				page: newPageName,
 				template_page: page.name,
 				template_group: page.template_group,
 				source: page.live_url ? "hub" : "local",
@@ -227,6 +228,7 @@ const importAll = () => {
 		})
 		.then((pageNames: string[]) => {
 			capture("builder_template_group_imported", {
+				pages: pageNames,
 				template_group: activeGroup.value!.name,
 				page_count: pageNames.length,
 			});

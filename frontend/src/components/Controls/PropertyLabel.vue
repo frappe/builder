@@ -7,7 +7,7 @@
 				aria-hidden="true" />
 		</Dropdown>
 		<InputLabel
-			class="truncate"
+			class="w-full truncate"
 			:title="label"
 			:class="{ 'cursor-ns-resize': enableSlider }"
 			@mousedown="$emit('mousedown', $event)">
