@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-08 08:49\n"
+"PO-Revision-Date: 2026-09-09 06:56\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Persian\n"
 "MIME-Version: 1.0\n"
@@ -163,7 +163,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr ""
+msgstr "افزودن متا تگ‌ها، استایل‌ها و اسکریپت‌ها به سرصفحه"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add property"
@@ -3320,7 +3320,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:66
 msgid "Properties"
-msgstr ""
+msgstr "ویژگی‌ها"
 
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
 #: frontend/src/components/ObjectEditor.vue:6
@@ -3329,7 +3329,7 @@ msgstr "ویژگی"
 
 #: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
-msgstr ""
+msgstr "صفحه محافظت‌شده"
 
 #. Label of the provider (Link) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
@@ -3348,7 +3348,7 @@ msgstr "URL عمومی"
 
 #: frontend/src/components/PageListItem.vue:29
 msgid "Publicly accessible"
-msgstr ""
+msgstr "قابل دسترس عمومی"
 
 #: frontend/src/components/PublishButton.vue:74
 #: frontend/src/components/Settings/PageGeneral.vue:56
@@ -3485,15 +3485,15 @@ msgstr "حدف"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:76
 msgid "Remove Collection"
-msgstr ""
+msgstr "حذف مجموعه"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:253
 msgid "Remove Domain"
-msgstr ""
+msgstr "حذف دامنه"
 
 #: frontend/src/components/PageClientScriptManager.vue:54
 msgid "Remove Script"
-msgstr ""
+msgstr "حذف اسکریپت"
 
 #: frontend/src/components/Controls/GradientEditor.vue:49
 msgid "Remove Stop"
@@ -3501,11 +3501,11 @@ msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from group"
-msgstr ""
+msgstr "حذف از گروه"
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
-msgstr ""
+msgstr "در حال حذف {0}…"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:238
 #: frontend/src/components/DashboardSidebar.vue:68
@@ -3520,15 +3520,15 @@ msgstr "تکرار"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
-msgstr ""
+msgstr "تکرار بلوک"
 
 #: frontend/src/components/BackgroundHandler.vue:307
 msgid "Repeat X"
-msgstr ""
+msgstr "تکرار X"
 
 #: frontend/src/components/BackgroundHandler.vue:308
 msgid "Repeat Y"
-msgstr ""
+msgstr "تکرار Y"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
@@ -3538,7 +3538,7 @@ msgstr "جایگزین کردن"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
-msgstr ""
+msgstr "جایگزینی همه"
 
 #: frontend/src/components/Controls/SearchBlock.vue:92
 msgid "Replace All ({0} matches)"
@@ -3555,11 +3555,11 @@ msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:53
 msgid "Replace With"
-msgstr ""
+msgstr "جایگزینی با"
 
 #: frontend/src/components/Controls/SearchBlock.vue:78
 msgid "Replace with..."
-msgstr ""
+msgstr "جایگزینی با..."
 
 #: frontend/src/components/Controls/SearchBlock.vue:374
 msgid "Replaced in {0}"
@@ -3623,15 +3623,15 @@ msgstr "محدود شده است"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
-msgstr "تلاش مجدد"
+msgstr "تلاش دوباره"
 
 #: frontend/src/data/domains.ts:76
 msgid "Retrying {0}"
-msgstr ""
+msgstr "تلاش دوباره {0}"
 
 #: frontend/src/data/domains.ts:76
 msgid "Retrying {0}…"
-msgstr ""
+msgstr "در حال تلاش دوباره {0}…"
 
 #: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
@@ -3738,7 +3738,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/ColorInput.vue:38
 msgid "Save as Token"
-msgstr ""
+msgstr "ذخیره به عنوان توکن"
 
 #: frontend/src/components/VersionHistory.vue:14
 msgid "Save current version"
@@ -3758,7 +3758,7 @@ msgstr ""
 
 #: frontend/src/pages/PageBuilder.vue:5
 msgid "Screen too small"
-msgstr ""
+msgstr "صفحه‌نمایش خیلی کوچک است"
 
 #. Label of the script (Code) field in DocType 'Builder Client Script'
 #. Label of the script (Code) field in DocType 'Builder Settings'
@@ -3771,7 +3771,7 @@ msgstr "اسکریپت"
 #. Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
 msgid "Script Public URL"
-msgstr ""
+msgstr "URL عمومی اسکریپت"
 
 #. Label of the script_type (Autocomplete) field in DocType 'Builder Client
 #. Script'
@@ -3781,7 +3781,7 @@ msgstr "نوع اسکریپت"
 
 #: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
-msgstr ""
+msgstr "اسکریپت نمی‌تواند خالی باشد"
 
 #: frontend/src/components/PageClientScriptManager.vue:393
 msgid "Script order updated"
@@ -3789,7 +3789,7 @@ msgstr ""
 
 #: frontend/src/components/PageClientScriptManager.vue:273
 msgid "Script saved successfully"
-msgstr ""
+msgstr "اسکریپت با موفقیت ذخیره شد"
 
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3798,7 +3798,7 @@ msgstr "اسکریپت"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:32
 msgid "Scroll"
-msgstr ""
+msgstr "اسکرول"
 
 #: frontend/src/components/Controls/Autocomplete.vue:171
 #: frontend/src/components/Controls/SearchBlock.vue:7
@@ -3852,7 +3852,7 @@ msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:70
 msgid "Search inside selected block only"
-msgstr ""
+msgstr "فقط داخل بلوک انتخاب‌شده جستجو شود"
 
 #: frontend/src/components/BlockProperties.vue:7
 msgid "Search properties"
@@ -3894,7 +3894,7 @@ msgstr "انتخاب کردن"
 
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:21
 msgid "Select (v)"
-msgstr ""
+msgstr "انتخاب (v)"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:66
 msgid "Select All Matches (Alt+Enter)"
@@ -3906,11 +3906,11 @@ msgstr ""
 
 #: frontend/src/utils/dialogs.ts:80
 msgid "Select Folder"
-msgstr ""
+msgstr "انتخاب پوشه"
 
 #: frontend/src/components/Templates/TemplateGroupCard.vue:13
 msgid "Select Template"
-msgstr ""
+msgstr "انتخاب الگو"
 
 #: frontend/src/components/BlockProperties.vue:31
 msgid "Select a block to edit properties"
@@ -4001,7 +4001,7 @@ msgstr ""
 
 #: frontend/src/components/ImageUploadInput.vue:107
 msgid "Set Image"
-msgstr ""
+msgstr "تنظیم تصویر"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:237
 msgid "Set as Primary"
@@ -4033,11 +4033,11 @@ msgstr "تنظیمات"
 
 #: frontend/src/components/ShadowHandler.vue:8
 msgid "Shadow"
-msgstr ""
+msgstr "سایه"
 
 #: frontend/src/components/ShadowHandler.vue:124
 msgid "Shadow Color"
-msgstr ""
+msgstr "رنگ سایه"
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
@@ -4182,7 +4182,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
-msgstr ""
+msgstr "سرعت"
 
 #: frontend/src/components/ShadowHandler.vue:156
 msgid "Spread"
@@ -4559,15 +4559,15 @@ msgstr ""
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/Modals/NewBuilderToken.vue:20
 msgid "Token Name"
-msgstr ""
+msgstr "نام توکن"
 
 #: frontend/src/components/Modals/TokenManager.vue:840
 msgid "Token created"
-msgstr ""
+msgstr "توکن ایجاد شد"
 
 #: frontend/src/components/Modals/TokenManager.vue:79
 msgid "Token name"
-msgstr ""
+msgstr "نام توکن"
 
 #: frontend/src/components/Modals/NewBuilderToken.vue:90
 msgid "Token updated"
@@ -4624,7 +4624,7 @@ msgstr "کل بازدیدها"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
-msgstr ""
+msgstr "ردیابی کلیک‌ها"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:56
 msgid "Track the number of views on each page of your website"
@@ -4672,7 +4672,7 @@ msgstr ""
 #: builder/builder/doctype/block_template/block_template.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:186
 msgid "Typography"
-msgstr ""
+msgstr "تایپوگرافی"
 
 #: frontend/src/components/Settings/PageGeneral.vue:22
 msgid "URL"
@@ -4680,7 +4680,7 @@ msgstr "URL"
 
 #: frontend/src/components/PageOptions.vue:22
 msgid "URL Variables"
-msgstr ""
+msgstr "متغیرهای URL"
 
 #: frontend/src/components/Commands/index.ts:291
 #: frontend/src/components/Commands/index.ts:295
@@ -4697,7 +4697,7 @@ msgstr ""
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:12
 msgid "Unique Visitors"
-msgstr ""
+msgstr "بازدیدکنندگان یکتا"
 
 #: builder/ai/api.py:84
 msgid "Unknown AI model: {0}"
@@ -4709,7 +4709,7 @@ msgstr ""
 
 #: builder/ai/api.py:379 builder/ai/api.py:439
 msgid "Unknown provider: {0}"
-msgstr ""
+msgstr "ارائه‌دهنده ناشناخته: {0}"
 
 #: frontend/src/components/PageActionsDropdown.vue:20
 #: frontend/src/components/PublishButton.vue:31
@@ -4853,12 +4853,12 @@ msgstr ""
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:45
 msgid "Used in {0} pages"
-msgstr ""
+msgstr "در {0} صفحه استفاده شده است"
 
 #. Name of a DocType
 #: builder/builder/doctype/user_font/user_font.json
 msgid "User Font"
-msgstr ""
+msgstr "فونت کاربر"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:187
 msgid "User is disabled: {0}"
@@ -4884,7 +4884,7 @@ msgstr ""
 
 #: frontend/src/data/domains.ts:50
 msgid "Verifying DNS for {0}…"
-msgstr ""
+msgstr "در حال تأیید DNS برای {0}…"
 
 #: frontend/src/components/DashboardSidebar.vue:90
 #: frontend/src/components/VersionHistory.vue:114
@@ -4894,15 +4894,15 @@ msgstr "نسخه"
 #: frontend/src/components/PublishButton.vue:23
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
-msgstr ""
+msgstr "تاریخچه نسخه‌ها"
 
 #: frontend/src/stores/pageStore.ts:244
 msgid "Version restored"
-msgstr ""
+msgstr "نسخه بازیابی شد"
 
 #: frontend/src/components/VersionHistory.vue:241
 msgid "Version saved"
-msgstr ""
+msgstr "نسخه ذخیره شد"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:10
 msgid "Vertical"
@@ -4910,11 +4910,11 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:19
 msgid "Very Slow"
-msgstr ""
+msgstr "خیلی کند"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:106
 msgid "Video Options"
-msgstr ""
+msgstr "گزینه‌های ویدیو"
 
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:15
 msgid "Video URL"
@@ -4934,7 +4934,7 @@ msgstr ""
 
 #: frontend/src/components/PageActionsDropdown.vue:26
 msgid "View in Desk"
-msgstr ""
+msgstr "مشاهده در Desk"
 
 #: frontend/src/components/Settings/TrackingDisabledNotice.vue:7
 msgid "View tracking is off"
