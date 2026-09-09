@@ -25,17 +25,19 @@
 					class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
 					:style="{ left: stop.position + '%' }">
 					<Popover
-						placement="top"
+						side="top"
+						align="center"
 						:offset="10"
-						@update:open="(open: boolean) => handleStopPopoverToggle(open, index)">
-						<template #target="{ togglePopover }">
+						bare
+						:open="openStop === index"
+						@update:open="(open: boolean) => setStopOpen(index, open)">
+						<template #trigger>
 							<div
 								class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
 								:style="{ backgroundColor: stop.color }"
-								@mousedown="handleStopMouseDown(index, $event)"
-								@click="(e) => !hasMoved && togglePopover()" />
+								@mousedown="handleStopMouseDown(index, $event)" />
 						</template>
-						<template #body="{ close }">
+						<template #default="{ close }">
 							<div class="w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
 									:ref="(el) => (stopPickerRefs[index] = el)"
@@ -118,8 +120,17 @@ const hasMoved = ref(false);
 // the same way BackgroundHandler does for the background picker
 const stopPickerRefs: Record<number, any> = {};
 
-const handleStopPopoverToggle = (open: boolean, index: number) => {
-	if (!open) stopPickerRefs[index]?.commitRecentColor();
+const openStop = ref<number | null>(null);
+
+// a drag ends with a click on the handle; that click must not open the picker
+const setStopOpen = (index: number, open: boolean) => {
+	if (open && hasMoved.value) return;
+	if (open) {
+		openStop.value = index;
+		return;
+	}
+	if (openStop.value === index) openStop.value = null;
+	stopPickerRefs[index]?.commitRecentColor();
 };
 
 const { elementX } = useMouseInElement(barRef);

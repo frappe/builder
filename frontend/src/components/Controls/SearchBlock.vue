@@ -19,10 +19,9 @@
 				@input="setQuery"
 				@keydown.enter="handlePrimaryAction" />
 
-			<Popover class="relative inline-block text-left">
-				<template #target="{ isOpen, togglePopover }">
+			<Popover bare>
+				<template #trigger="{ isOpen }">
 					<Button
-						@click="togglePopover"
 						icon="lucide-filter"
 						:label="__('Filters')"
 						:class="[
@@ -39,7 +38,7 @@
 							aria-hidden="true" />
 					</Button>
 				</template>
-				<template #body>
+				<template #default>
 					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
 						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
 						<div class="space-y-1 px-2">
@@ -392,7 +391,11 @@ const replaceAll = () => {
 	});
 
 	if (totalReplacements > 0) {
-		toast.success(totalReplacements === 1 ? __("Replaced in {0} block", [totalReplacements]) : __("Replaced in {0} blocks", [totalReplacements]));
+		toast.success(
+			totalReplacements === 1
+				? __("Replaced in {0} block", [totalReplacements])
+				: __("Replaced in {0} blocks", [totalReplacements]),
+		);
 		performSearch();
 	} else {
 		toast.error(__("No replacements made"));
