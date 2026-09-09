@@ -1,5 +1,5 @@
 <template>
-	<div class="select-none space-y-4">
+	<div class="select-none space-y-3">
 		<!-- Type & Angle -->
 		<div class="flex items-center gap-3">
 			<TabButtons
@@ -83,11 +83,11 @@
 		</div>
 
 		<!-- Recently used gradients, falling back to the built-in presets -->
-		<div class="flex flex-wrap gap-2">
+		<div class="flex flex-wrap gap-1.5">
 			<div
 				v-for="swatch in gradientSwatches"
 				:key="swatch.gradient"
-				class="size-6 cursor-pointer rounded-full border border-outline-gray-2 shadow-sm transition-colors hover:border-outline-gray-4"
+				class="size-5 cursor-pointer rounded-full shadow-sm"
 				:style="{ background: swatch.gradient }"
 				@click="applyPreset(swatch.gradient)"
 				:title="swatch.name" />
