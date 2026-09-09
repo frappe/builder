@@ -868,14 +868,20 @@ const getPropValue = (
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			if (matchingProp.value) {
-				return JSON.parse(matchingProp.value);
-			} else {
-				if (typeof defaultValue === "string") {
-					return JSON.parse(defaultValue);
+			const parse = (raw: string, fallback: any) => {
+				try {
+					return JSON.parse(raw);
+				} catch {
+					return fallback;
 				}
-				return defaultValue;
+			};
+			if (matchingProp.value) {
+				return parse(matchingProp.value, defaultValue);
 			}
+			if (typeof defaultValue === "string") {
+				return parse(defaultValue, null);
+			}
+			return defaultValue;
 		}
 		return matchingProp.value || defaultValue;
 	}
