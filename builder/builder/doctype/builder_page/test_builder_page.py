@@ -321,6 +321,73 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def component_with_dynamic_title(self, key):
+		prop = {
+			"label": "Title",
+			"isStandard": True,
+			"isDynamic": False,
+			"isPassedDown": False,
+			"comesFrom": None,
+			"value": "Default Title",
+			"propOptions": {
+				"isRequired": False,
+				"type": "string",
+				"options": {"defaultValue": "Default Title"},
+			},
+		}
+		root = Block(
+			element="div", blockId="dynamic-prop-root", clientScript={"js": "void 0;"}, props={"title": prop}
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": root.as_json()}).insert()
+		instance = Block(
+			extendedFromComponent=component.name,
+			props={"title": {**prop, "isDynamic": True, "comesFrom": "dataScript", "value": key}},
+		)
+		return component, instance
+
+	def test_dynamic_prop_without_its_root_uses_the_default(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Fallback Test",
+				"published": 1,
+				"route": "/dynamic-prop-fallback-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-fallback-test")
+			self.assertIn('"title": "Default Title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_resolves_from_page_data(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Test",
+				"published": 1,
+				"route": "/dynamic-prop-test",
+				"page_data_script": 'data.update({"hero": {"title": "Real title"}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-test")
+			self.assertIn('"title": "Real title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
 			element="div",

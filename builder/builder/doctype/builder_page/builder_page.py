@@ -972,7 +972,8 @@ def get_dynamic_props_template(
 	"""Get a Jinja template reference for dynamic properties."""
 	key = get_binding_key(prop_value, comes_from, data_key)
 	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+	# a guarded chain yields {} for a missing binding, which still counts as defined
+	return f"{{{{ {key} if {key} is defined and {key} != {{}} else '{fallback}' }}}}"
 
 
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
