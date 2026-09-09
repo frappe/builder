@@ -9,7 +9,7 @@
 		:open="isOpen"
 		@update:open="onUpdateOpen">
 		<template #trigger>
-			<div class="flex" v-bind="$attrs" @click.capture="onAnchorClick">
+			<div class="w-full" v-bind="$attrs" @click.capture="onAnchorClick">
 				<slot name="target" :togglePopover="togglePopover" :isOpen="isOpen"></slot>
 			</div>
 		</template>
