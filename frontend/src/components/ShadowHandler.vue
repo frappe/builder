@@ -1,7 +1,10 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
-		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
+	<Popover side="left" align="center" :offset="25" bare :open="isOpen" @update:open="onUpdateOpen">
+		<template #trigger>
+			<div
+				class="flex w-full items-center justify-between"
+				@focusin="updateActiveState"
+				@click.capture="onAnchorClick">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -9,7 +12,7 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('None')"
-					@focus="togglePopover"
+					@focus="toggle"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -20,7 +23,7 @@
 							@click="
 								() => {
 									activeState = variant;
-									togglePopover();
+									toggle();
 								}
 							"
 							:style="{
@@ -30,7 +33,7 @@
 				</StylePropertyControl>
 			</div>
 		</template>
-		<template #body>
+		<template #default>
 			<div
 				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-base p-3 shadow-xl">
 				<div class="mb-3 space-y-3">
@@ -146,6 +149,7 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
 import { useEventListener } from "@vueuse/core";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
 
@@ -157,6 +161,7 @@ const SHADOW_CONTROLS = [
 ] as const;
 
 const activeState = ref<string | null>(null);
+const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;

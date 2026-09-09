@@ -25,7 +25,7 @@ const props = withDefaults(
 			showTooltip?: boolean;
 		}[];
 		label?: string;
-		defaultValue?: string | number;
+		defaultValue?: string | number | boolean;
 	}>(),
 	{
 		options: () => [],

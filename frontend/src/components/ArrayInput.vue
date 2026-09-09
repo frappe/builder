@@ -1,6 +1,6 @@
 <template>
-	<Popover :offset="20" placement="left">
-		<template #target="{ open }">
+	<Popover :offset="20" side="left" align="center" bare>
+		<template #trigger>
 			<div class="relative flex w-full gap-2">
 				<div class="flex w-1/3 min-w-[88px] shrink-0 items-center">
 					<InputLabel class="w-full truncate">
@@ -8,16 +8,16 @@
 					</InputLabel>
 				</div>
 				<div class="relative w-full">
-					<Button class="w-full" variant="subtle" icon="lucide-pencil" @click.stop="open()" />
+					<Button class="w-full" variant="subtle" icon="lucide-pencil" />
 				</div>
 			</div>
 		</template>
-		<template #body="{ open, close }">
+		<template #default>
 			<div
 				@click.stop
 				@mousedown.stop
 				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
-				<div class="text-sm text-ink-gray-8">{{ __("Array Items:") }}</div>
+				<div class="text-sm text-ink-gray-8">{{ __("Items") }}</div>
 				<ArrayEditor :arr @update:arr="updateModelValue" />
 			</div>
 		</template>

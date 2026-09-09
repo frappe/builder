@@ -1,7 +1,10 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25" @update:open="handlePopoverToggle">
-		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
+	<Popover side="left" align="center" :offset="25" bare :open="isOpen" @update:open="onUpdateOpen">
+		<template #trigger>
+			<div
+				class="flex w-full items-center justify-between"
+				@focusin="updateActiveState"
+				@click.capture="onAnchorClick">
 				<StylePropertyControl
 					propertyKey="background"
 					:component="BackgroundInput"
@@ -12,7 +15,7 @@
 					readonly
 					:selectOnFocus="false"
 					class="[&_input]:cursor-pointer"
-					@focus="togglePopover"
+					@focus="toggle"
 					:getModelValue="() => getDisplayValue(null)"
 					:getVariantValue="(v: string) => getDisplayValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -23,7 +26,7 @@
 							@click="
 								() => {
 									activeState = variant;
-									togglePopover();
+									toggle();
 								}
 							"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
@@ -32,7 +35,7 @@
 				</StylePropertyControl>
 			</div>
 		</template>
-		<template #body>
+		<template #default>
 			<div
 				class="background-popover-body w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
@@ -148,6 +151,7 @@ import blockController from "@/utils/blockController";
 import { cssUrl } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { STRETCH_TABS } from "@/utils/tabButtons";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
 import { computed, defineComponent, h, ref, watch } from "vue";
 
@@ -191,6 +195,7 @@ const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
 const handlePopoverToggle = (open: boolean) => {
 	if (!open) colorPickerRef.value?.commitRecentColor();
 };
+const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(handlePopoverToggle);
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
