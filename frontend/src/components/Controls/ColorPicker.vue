@@ -85,7 +85,6 @@ function togglePopover(open?: boolean | Event) {
 defineExpose({
 	togglePopover,
 	isOpen,
-	hideOptions: () => contentRef.value?.hideOptions(),
 	commitRecentColor: () => contentRef.value?.commitRecentColor(),
 });
 </script>

@@ -3,26 +3,25 @@
 		<template #trigger>
 			<div
 				class="flex w-full items-center justify-between"
-				@focusin="updateActiveState"
+				@focusin="handleFocusIn"
 				@click.capture="onAnchorClick">
 				<StylePropertyControl
 					propertyKey="background"
-					:component="BackgroundInput"
+					:component="Autocomplete"
 					:label="__('Background')"
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('Set Background')"
-					readonly
-					:selectOnFocus="false"
-					class="[&_input]:cursor-pointer"
-					@focus="toggle"
-					:getModelValue="() => getDisplayValue(null)"
-					:getVariantValue="(v: string) => getDisplayValue(v)"
+					:getOptions="getColorOptions"
+					:allowArbitraryValue="false"
+					:getModelValue="() => getValue(null)"
+					:getVariantValue="(v: string) => getValue(v)"
+					:getControlAttrs="getControlAttrs"
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
 						<div
-							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
+							class="size-4 cursor-pointer rounded shadow-md"
 							@click="
 								() => {
 									activeState = variant;
@@ -141,52 +140,23 @@
 
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
-import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
+import { getColorVariableOptions } from "@/utils/colorOptions";
 import { cssUrl } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { STRETCH_TABS } from "@/utils/tabButtons";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
-import { computed, defineComponent, h, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
 const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
-
-// wraps Input to style the value like ColorInput does when it displays a variable name
-const BackgroundInput = defineComponent({
-	props: {
-		modelValue: { type: [String, Number, Boolean], default: "" },
-	},
-	setup(props, { attrs, slots }) {
-		const showsVariableName = computed(() => {
-			return (
-				!!props.modelValue &&
-				variables.value.some((builderToken) => builderToken.token_name === props.modelValue)
-			);
-		});
-		return () =>
-			h(
-				Input,
-				{
-					...attrs,
-					modelValue: props.modelValue,
-					class: [
-						attrs.class,
-						showsVariableName.value
-							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-6"
-							: "",
-					],
-				},
-				slots,
-			);
-	},
-});
 
 const activeState = ref<string | null>(null);
 const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
@@ -213,6 +183,14 @@ const updateActiveState = (e: FocusEvent) => {
 	}
 };
 
+// like ColorInput: a token value gets the token dropdown on focus, anything else the picker
+const handleFocusIn = (e: FocusEvent) => {
+	updateActiveState(e);
+	const target = e.target as HTMLElement;
+	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
+	if (!getColorToken(activeState.value)) toggle();
+};
+
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {
 	return state ? `${state}:${prop}` : prop;
 };
@@ -234,6 +212,23 @@ watch(
 	},
 	{ immediate: true },
 );
+
+const getColorToken = (state: string | null) => {
+	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
+	const hasImage = Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
+	return !hasImage && color?.startsWith("var(--") ? color : null;
+};
+
+// a token is handed over as its var() value so the dropdown can mark it as selected
+const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
+
+const getControlAttrs = (state: string | null) => ({
+	displayValue: getDisplayValue(state),
+	class: getColorToken(state) ? "[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-6" : "",
+});
+
+const getColorOptions = async (query: string) =>
+	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
@@ -339,7 +334,7 @@ const setBGValue = (value: string) => {
 	if (isValidHexValue(value)) {
 		blockController.setStyle(colorKey, `#${value}`);
 		blockController.setStyle(bgKey, null);
-	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
+	} else if (/^(#|rgb|hsl|var\()/.test(value || "")) {
 		blockController.setStyle(colorKey, value);
 		blockController.setStyle(bgKey, null);
 	} else {
@@ -408,9 +403,15 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	// the trigger input is read-only, so a non-null value here can only come from
-	// the "copy current value to state" dropdown — copy the actual base styles
-	// instead of the display text (e.g. "Gradient", variable name, image file name)
+	if (typeof value === "string" && value.startsWith("var(--")) {
+		blockController.setStyle(colorKey, value);
+		blockController.setStyle(bgKey, null);
+		return;
+	}
+
+	// the input only picks tokens, so any other value comes from the "copy current
+	// value to state" dropdown: copy the actual base styles instead of the display
+	// text (e.g. "Gradient", image file name)
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };
