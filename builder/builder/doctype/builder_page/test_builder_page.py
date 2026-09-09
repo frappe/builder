@@ -267,6 +267,60 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def dotted_key_blocks(self):
+		body = Block(element="div", originalElement="body")
+		heading = Block(element="h1", innerHTML="Fallback title")
+		heading.set_dynamic_value("hero.title", "key", "innerHTML")
+		link = Block(element="a", innerHTML="Link", attributes={"href": "/fallback"})
+		link.set_dynamic_value("hero.link", "attribute", "href")
+		note = Block(element="p", innerHTML="Only with hero")
+		note.visibilityCondition = {"key": "hero.show", "comesFrom": "dataScript"}
+		body.attach_children(heading, link, note)
+		return body
+
+	def test_dotted_keys_without_their_root_fall_back(self):
+		"""Blocks pasted from another page keep bindings like `hero.title`. A page whose
+		data script does not define `hero` must render the fallbacks, not fail."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Fallback Test",
+				"published": 1,
+				"route": "/dotted-keys-fallback-test",
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-fallback-test")
+			self.assertEqual("Fallback title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="/fallback"', get_html_for(content, "tag", "a"))
+			self.assertNotIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_resolve_from_page_data(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Test",
+				"published": 1,
+				"route": "/dotted-keys-test",
+				"page_data_script": (
+					'data.update({"hero": {"title": "Real title", "link": "https://example.com", "show": True}})'
+				),
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-test")
+			self.assertEqual("Real title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="https://example.com"', get_html_for(content, "tag", "a"))
+			self.assertIn("Only with hero", content)
+		finally:
+			page.delete()
+
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
 			element="div",
