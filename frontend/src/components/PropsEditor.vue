@@ -19,7 +19,7 @@
 										keyBeingEdited = name as string;
 									}
 								">
-								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
+								<div class="flex min-w-0 flex-1 items-center gap-2 pl-2">
 									<div class="icon">
 										<component
 											v-if="value.propOptions?.type"
@@ -37,14 +37,14 @@
 											"
 											class="h-4 w-4 text-ink-gray-4" />
 									</div>
-									<div class="flex max-w-full flex-col gap-1">
+									<div class="flex min-w-0 flex-1 flex-col gap-1">
 										<p class="text-sm-medium">
 											{{ value.label || name }}
 										</p>
-										<p class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
+										<p class="truncate text-xs text-ink-gray-4">
 											{{
 												value.propOptions?.options?.defaultValue
-													? ["array", "object"].includes(value.propOptions.options.type)
+													? ["array", "object"].includes(value.propOptions.type)
 														? JSON.stringify(value.propOptions?.options?.defaultValue)
 														: value.propOptions?.options?.defaultValue
 													: __("No Default Value")
