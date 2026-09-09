@@ -1,5 +1,5 @@
 <template>
-	<Popover side="bottom" align="center" :offset="20" bare>
+	<Popover side="bottom" align="center" :offset="20" bare v-model:open="showPopover">
 		<template #trigger>
 			<div class="flex cursor-pointer items-center gap-2 p-2 text-ink-gray-8">
 				<div class="flex h-6 items-center text-base text-ink-gray-6" v-if="!pageStore.activePage">
@@ -50,32 +50,45 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageOptions from "@/components/PageOptions.vue";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
 import { Popover, Tooltip } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
+const builderStore = useBuilderStore();
+const showPopover = ref(false);
+
+watch(
+	() => builderStore.isSmallScreen,
+	(isSmallScreen) => {
+		if (isSmallScreen) {
+			showPopover.value = false;
+		}
+	},
+);
 
 const routeString = computed(() => {
 	const route = pageStore.activePage?.route || "/";
 	const routeStringToReturn = route.split("/").map((part) => {
 		let variable = "";
+		let formattedPart = part;
 
 		if (part.startsWith(":")) {
 			variable = part.slice(1);
 		} else if (part.startsWith("<")) {
 			variable = part.slice(1, -1);
-			part = `&lt;${variable}&gt;`;
+			formattedPart = `&lt;${variable}&gt;`;
 		}
 		if (variable) {
 			const previewValue = pageStore.routeVariables[variable];
 			return `<span class="${
 				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
-			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || part}</span>`;
+			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || formattedPart}</span>`;
 		} else {
-			return part;
+			return formattedPart;
 		}
 	});
 	return routeStringToReturn.join("/");
