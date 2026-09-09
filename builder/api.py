@@ -439,6 +439,8 @@ def duplicate_page(page_name: str):
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
 	new_page.route = None
+	new_page.is_standard = 0
+	new_page.app = None
 	clone_client_scripts(page, new_page)
 	new_page.flags.source = "duplicate"
 	new_page.insert()

@@ -6,7 +6,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
-from builder.api import import_remote_assets, import_remote_fonts
+from builder.api import duplicate_page, import_remote_assets, import_remote_fonts
 
 FONT = "https://cdn.example.com/inter.woff2"
 
@@ -173,3 +173,16 @@ class TestImportRemoteFonts(FrappeTestCase):
 			imported = import_remote_fonts(fonts)
 
 		self.assertEqual(len(imported), 2)
+
+
+class TestDuplicatePage(FrappeTestCase):
+	def test_duplicate_of_a_standard_page_is_a_plain_page(self):
+		# developer mode off so the standard page is not exported to disk
+		with patch.dict(frappe.conf, {"developer_mode": 0}):
+			page = frappe.get_doc(
+				{"doctype": "Builder Page", "page_title": "Standard", "is_standard": 1, "app": "builder"}
+			).insert()
+			duplicate = duplicate_page(page.name)
+
+		self.assertFalse(duplicate.is_standard)
+		self.assertFalse(duplicate.app)
