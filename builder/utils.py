@@ -567,6 +567,13 @@ def normalize_legacy_style_key(style):
 	return f"{state}:{kebab_to_camel_case(property_name)}"
 
 
+def count_blocks(blocks) -> int:
+	blocks = frappe.parse_json(blocks or "[]")
+	if isinstance(blocks, dict):
+		blocks = [blocks]
+	return sum(1 + count_blocks(block.get("children")) for block in blocks if isinstance(block, dict))
+
+
 def merge_raw_styles_into_base_styles(block):
 	raw_styles = block.pop("rawStyles", None)
 	if not raw_styles:
