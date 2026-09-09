@@ -9,21 +9,22 @@
 				</div>
 			</div>
 			<div v-if="builderStore.isAIEnabled" class="flex shrink-0 items-center gap-1">
-				<Tooltip text="New chat">
-					<Button variant="ghost" size="sm" icon="lucide-plus" :disabled="isSubmitting" @click="newSession" />
-				</Tooltip>
-				<!-- Button sits directly in the Dropdown slot: a Tooltip wrapper breaks
-				     the as-child trigger wiring (frappe-ui slot API). -->
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-plus"
+					tooltip="New chat"
+					:disabled="isSubmitting"
+					@click="newSession" />
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
-					<Button variant="ghost" size="sm" icon="lucide-history" title="Chats on this page" />
+					<Button variant="ghost" size="sm" icon="lucide-history" tooltip="Chats on this page" />
 				</Dropdown>
-				<Tooltip text="AI settings">
-					<Button
-						variant="ghost"
-						size="sm"
-						icon="lucide-settings-2"
-						@click="builderStore.openBuilderSettings('global_ai')" />
-				</Tooltip>
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-settings-2"
+					tooltip="AI settings"
+					@click="builderStore.openBuilderSettings('global_ai')" />
 			</div>
 		</div>
 
@@ -152,31 +153,32 @@
 								@select-block="selectBlockById"
 								@open-script="openScriptByName" />
 
-							<button
-								v-if="message.metadata?.revertSnapshot"
-								class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
-								title="Revert the page to before this AI edit"
-								@click="revertTurn(message)">
-								<span class="lucide-rotate-ccw size-3" />
-								Revert
-							</button>
+							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
+								<button
+									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+									@click="revertTurn(message)">
+									<span class="lucide-rotate-ccw size-3" />
+									Revert
+								</button>
+							</Tooltip>
 							<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 							<template v-if="message.metadata?.debug">
 								<div class="ml-auto flex items-center gap-2">
 									<span v-if="message.metadata.debug.elapsedMs">
 										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
 									</span>
-									<button
-										class="inline-flex items-center transition-colors"
-										:class="
-											debugHasSignal(message.metadata.debug)
-												? 'text-ink-amber-8 hover:text-ink-amber-7'
-												: 'text-ink-gray-4 hover:text-ink-gray-7'
-										"
-										title="Inspect this turn (rounds, tools, tokens, why it stopped)"
-										@click="openDebug(message.metadata.debug)">
-										<span class="lucide-activity size-2.5" />
-									</button>
+									<Tooltip text="Inspect this turn (rounds, tools, tokens, why it stopped)">
+										<button
+											class="inline-flex items-center transition-colors"
+											:class="
+												debugHasSignal(message.metadata.debug)
+													? 'text-ink-amber-8 hover:text-ink-amber-7'
+													: 'text-ink-gray-4 hover:text-ink-gray-7'
+											"
+											@click="openDebug(message.metadata.debug)">
+											<span class="lucide-activity size-2.5" />
+										</button>
+									</Tooltip>
 								</div>
 							</template>
 						</div>
@@ -267,13 +269,14 @@
 						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
 						<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
 						<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
-						<button
-							type="button"
-							class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-							title="Remove from context"
-							@click="chat.detachBlock(block.id)">
-							<span class="lucide-x h-3 w-3" />
-						</button>
+						<Tooltip text="Remove from context">
+							<button
+								type="button"
+								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+								@click="chat.detachBlock(block.id)">
+								<span class="lucide-x h-3 w-3" />
+							</button>
+						</Tooltip>
 					</span>
 					<button
 						v-if="attachableBlocks.length"
@@ -296,13 +299,14 @@
 							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
 							<img :src="imagePreviewUrl" class="h-3 w-3 rounded object-cover" alt="" />
 							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
-							<button
-								type="button"
-								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-								title="Remove image"
-								@click="clearImage">
-								<span class="lucide-x h-3 w-3" />
-							</button>
+							<Tooltip text="Remove image">
+								<button
+									type="button"
+									class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+									@click="clearImage">
+									<span class="lucide-x h-3 w-3" />
+								</button>
+							</Tooltip>
 						</span>
 					</div>
 				</Transition>
@@ -382,7 +386,7 @@
 						variant="solid"
 						icon="lucide-square"
 						:loading="isCancelling"
-						:title="isCancelling ? 'Cancelling…' : 'Cancel generation'"
+						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
 					<Button
 						v-else
