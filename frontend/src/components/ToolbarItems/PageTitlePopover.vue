@@ -74,20 +74,21 @@ const routeString = computed(() => {
 	const route = pageStore.activePage?.route || "/";
 	const routeStringToReturn = route.split("/").map((part) => {
 		let variable = "";
+		let formattedPart = part;
 
 		if (part.startsWith(":")) {
 			variable = part.slice(1);
 		} else if (part.startsWith("<")) {
 			variable = part.slice(1, -1);
-			part = `&lt;${variable}&gt;`;
+			formattedPart = `&lt;${variable}&gt;`;
 		}
 		if (variable) {
 			const previewValue = pageStore.routeVariables[variable];
 			return `<span class="${
 				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
-			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || part}</span>`;
+			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || formattedPart}</span>`;
 		} else {
-			return part;
+			return formattedPart;
 		}
 	});
 	return routeStringToReturn.join("/");
