@@ -952,28 +952,28 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	return value if not is_empty else "undefined"
 
 
-def get_binding_key(key: str, comes_from: str, data_key: dict | None) -> str:
+def get_binding_key(key: str, comes_from: str, data_key: dict | None, missing: str = "{}") -> str:
 	"""Jinja expression for a bound key that survives a missing root."""
 	if comes_from == "props":
-		return jinja_safe_key(f"props.{key}")
+		return jinja_safe_key(f"props.{key}", missing)
 	if comes_from == "componentData":
-		return jinja_safe_key(f"component.{key}")
+		return jinja_safe_key(f"component.{key}", missing)
 	if data_key:
-		return jinja_safe_key(f"{extract_data_key(data_key)}.{key}")
+		return jinja_safe_key(f"{extract_data_key(data_key)}.{key}", missing)
 	# a flat key keeps 0 and "" as-is; only a dotted path raises when its root is undefined
 	if is_safe_data_key(key) and "." not in key:
 		return key
-	return jinja_safe_key(key)
+	return jinja_safe_key(key, missing)
 
 
 def get_dynamic_props_template(
 	prop_value: str, comes_from: str, data_key: dict | None, default_value: Any
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
-	key = get_binding_key(prop_value, comes_from, data_key)
+	# props tell a missing path apart from an empty object, so the chain ends in none
+	key = get_binding_key(prop_value, comes_from, data_key, missing="none")
 	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	# a guarded chain yields {} for a missing binding, which still counts as defined
-	return f"{{{{ {key} if {key} is defined and {key} != {{}} else '{fallback}' }}}}"
+	return f"{{{{ {key} if {key} is defined and {key} is not none else '{fallback}' }}}}"
 
 
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
@@ -1833,17 +1833,19 @@ def is_safe_data_key(key) -> bool:
 	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
 
 
-def jinja_safe_key(key):
-	# convert a.b to (a or {}).get('b', {})
-	# to avoid undefined error in jinja
+def jinja_safe_key(key, missing="{}"):
+	# convert a.b to (a or {}).get('b', {}) to avoid undefined error in jinja;
+	# the last segment falls back to `missing`
 	if not is_safe_data_key(key):
 		# render nothing rather than emitting a broken Jinja expression
-		return "{}"
-	keys = (key or "").split(".")
-	key = f"({keys[0]} or {{}})"
-	for k in keys[1:]:
-		key = f"{key}.get('{k}', {{}})"
-	return key
+		return missing
+	keys = key.split(".")
+	expr = f"({keys[0]} or {{}})"
+	for k in keys[1:-1]:
+		expr = f"{expr}.get('{k}', {{}})"
+	if len(keys) > 1:
+		expr = f"{expr}.get('{keys[-1]}', {missing})"
+	return expr
 
 
 def to_jinja_literal(obj):

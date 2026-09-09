@@ -388,6 +388,28 @@ class TestBuilderPage(FrappeTestCase):
 			page.delete()
 			component.delete()
 
+	def test_dynamic_prop_keeps_an_empty_object(self):
+		component, instance = self.component_with_dynamic_title("hero.meta")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Empty Object Test",
+				"published": 1,
+				"route": "/dynamic-prop-empty-object-test",
+				"page_data_script": 'data.update({"hero": {"meta": {}}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-empty-object-test")
+			self.assertIn('"title": {}', content)
+		finally:
+			page.delete()
+			component.delete()
+
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
 			element="div",
