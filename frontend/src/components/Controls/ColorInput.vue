@@ -231,9 +231,7 @@ const handleClose = () => {
 };
 
 const openVariableDialog = () => {
-	newVariable.value = {
-		value: props.modelValue || "",
-	};
+	newVariable.value = { type: "Color", value: props.modelValue || "" };
 	showVariableDialog.value = true;
 };
 
