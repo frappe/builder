@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-05 03:52\n"
+"PO-Revision-Date: 2026-09-10 03:34\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -166,8 +166,8 @@ msgid "Add meta tags, styles, and scripts to page head"
 msgstr "Lägg till metataggar, stilar och skript till sidhuvud"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
-msgid "Add property"
-msgstr "Lägg till egenskap"
+msgid "Add Property"
+msgstr ""
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
@@ -429,7 +429,7 @@ msgstr "Tillbaka"
 
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
-msgstr "Tillbaka till Översikt Panel"
+msgstr "Tillbaka till Översikt"
 
 #: builder/www/404.html:27
 msgid "Back to Home"
@@ -440,8 +440,8 @@ msgid "Back to all templates"
 msgstr "Tillbaka till alla mallar"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
-msgid "Back to builder"
-msgstr "Tillbaka till Webb Redigerare"
+msgid "Back to Builder"
+msgstr ""
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -783,7 +783,7 @@ msgstr "Rensa alla filter"
 
 #: frontend/src/components/Modals/TokenManager.vue:355
 msgid "Click 'Add Token' to create your first one."
-msgstr "Klicka på \"Lägg till Token\" för att skapa din första."
+msgstr "Klicka på \"Lägg till Token\" för att skapa."
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:20
 msgid "Click-through Rate"
@@ -835,8 +835,8 @@ msgid "Collapse All Layers"
 msgstr "Minimera Alla Lager"
 
 #: frontend/src/components/RouteTreeView.vue:374
-msgid "Collapse node or move up in page tree"
-msgstr "Minimera nod eller flytta upp i sidoträd"
+msgid "Collapse Node or Move Up in Page Tree"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
@@ -978,8 +978,8 @@ msgid "Container (c)"
 msgstr "Behållare (c)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
-msgid "Container mode"
-msgstr "Behållare läge"
+msgid "Container Mode"
+msgstr ""
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
 #. Label of the content (Long Text) field in DocType 'Builder AI Message'
@@ -1002,8 +1002,8 @@ msgid "Controls"
 msgstr "Kontroller"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
-msgid "Convert To Collection"
-msgstr "Konvertera till Samling"
+msgid "Convert to Collection"
+msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -1034,8 +1034,8 @@ msgid "Copy Style"
 msgstr "Kopiera Stil"
 
 #: frontend/src/components/Commands/index.ts:262
-msgid "Copy block styles"
-msgstr "Kopiera block stilar"
+msgid "Copy Block Styles"
+msgstr "Kopiera Block Stilar"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
@@ -1199,7 +1199,7 @@ msgstr "Mörkt Värde"
 
 #: frontend/src/components/DashboardContent.vue:135
 msgid "Dashboard"
-msgstr "Översikt Panel"
+msgstr "Översikt"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:138
 msgid "Dashed"
@@ -1274,16 +1274,16 @@ msgstr "Ta bort Sida"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
-msgid "Delete selected blocks"
-msgstr "Ta bort valda block"
+msgid "Delete Selected Blocks"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete variable"
-msgstr "Ta bort variabel"
+msgid "Delete Variable"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete {0} variables"
-msgstr "Ta bort {0} variabler"
+msgid "Delete {0} Variables"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
@@ -1308,8 +1308,8 @@ msgid "Description"
 msgstr "Beskrivning"
 
 #: frontend/src/components/DashboardContent.vue:134
-msgid "Deselect pages"
-msgstr "Avmarkera sidor"
+msgid "Deselect Pages"
+msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
@@ -1480,8 +1480,8 @@ msgid "Duplicate Page"
 msgstr "Duplicera Sida"
 
 #: frontend/src/components/Commands/index.ts:281
-msgid "Duplicate block"
-msgstr "Duplicera block"
+msgid "Duplicate Block"
+msgstr "Duplicera Block"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
@@ -1683,8 +1683,8 @@ msgid "Execute Block Scripts in Editor"
 msgstr "Kör Block Skript i Redigerare"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
-msgid "Exit current mode"
-msgstr "Avsluta aktuell läge"
+msgid "Exit Current Mode"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
@@ -1696,8 +1696,8 @@ msgid "Expand All Layers"
 msgstr "Maximera Alla Lager"
 
 #: frontend/src/components/RouteTreeView.vue:355
-msgid "Expand node or move down in page tree"
-msgstr "Expandera noden eller flytta nedåt i sidoträd"
+msgid "Expand Node or Move Down in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
@@ -1861,8 +1861,8 @@ msgid "Fit Inside"
 msgstr "Anpassa Insidan"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
-msgid "Fit canvas to screen"
-msgstr "Anpassa arbetsyta till skärm"
+msgid "Fit Canvas to Screen"
+msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
@@ -1874,8 +1874,8 @@ msgid "Focus Property Search"
 msgstr "Fokusera Egenskap Sökning"
 
 #: frontend/src/components/Commands/index.ts:250
-msgid "Focus property search"
-msgstr "Fokusera egenskap sökning"
+msgid "Focus Property Search"
+msgstr "Fokusera Egenskap Sökning"
 
 #: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
@@ -2020,7 +2020,7 @@ msgstr "System stil som laddas med varje sida som skapas med Webb Redigerare"
 
 #: frontend/src/components/Commands/index.ts:96
 msgid "Go to Dashboard"
-msgstr "Gå till Översikt Panel"
+msgstr "Gå till Översikt"
 
 #: frontend/src/components/BackgroundHandler.vue:231
 msgid "Gradient"
@@ -2112,8 +2112,8 @@ msgid "Highlight Blocks with Client Scripts"
 msgstr "Framhäv Block med Klient Skript"
 
 #: frontend/src/pages/PageBuilder.vue:192
-msgid "Hold for move mode"
-msgstr "Håll nedtryckt för flyttläge"
+msgid "Hold for Move Mode"
+msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
@@ -2190,8 +2190,8 @@ msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr "Bilden är för stor. Använd en bild som är mindre än 5 MB."
 
 #: frontend/src/utils/useBuilderEvents.ts:376
-msgid "Image mode"
-msgstr "Bildläge"
+msgid "Image Mode"
+msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
@@ -2217,7 +2217,7 @@ msgstr "Intern flagga: aktiveras när introduktion enkäte för persona visats. 
 
 #: frontend/src/pages/PagePersonaSurvey.vue:147
 msgid "Internal tool / dashboard"
-msgstr "Interna Verktyg / Översikt Panel"
+msgstr "Interna Verktyg / Översikt"
 
 #: builder/api.py:326
 msgid "Invalid URL: missing hostname."
@@ -2526,11 +2526,11 @@ msgstr "Marknadsföring / landning webbplats"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:32
 msgid "Match Case"
-msgstr "Matcha Ärende"
+msgstr "Samstämma Ärende"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:44
 msgid "Match Whole Word"
-msgstr "Matcha Hela Ord"
+msgstr "Samstämma Hela Ord"
 
 #: frontend/src/components/BlockPropertySections/DimensionSection.ts:69
 msgid "Max Height"
@@ -2629,25 +2629,25 @@ msgid "Move"
 msgstr "Flytta"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
-msgid "Move / hand mode"
-msgstr "Flytta / hand läge"
+msgid "Move / Hand Mode"
+msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
 msgstr "Flytta till Mapp"
 
 #: frontend/src/components/RouteTreeView.vue:335
-msgid "Move down in page tree"
-msgstr "Flytta nedåt i sidoträd"
+msgid "Move Down in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
-msgid "Move to group"
-msgstr "Flytta till grupp"
+msgid "Move to Group"
+msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:345
-msgid "Move up in page tree"
-msgstr "Flytta uppåt i sidoträd"
+msgid "Move Up in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:727
 msgid "Moved {0} token to \"{1}\""
@@ -2802,11 +2802,11 @@ msgstr "Inga teckensnitt tokens ännu"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
-msgstr "Inga matchande sidor hittades."
+msgstr "Inga samstämda sidor hittades."
 
 #: frontend/src/components/MoreStylesPanel.vue:23
 msgid "No matching properties"
-msgstr "Inga matchande egenskaper"
+msgstr "Inga samstämda egenskaper"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:65
 msgid "No members match \"{0}\""
@@ -2988,8 +2988,8 @@ msgid "Open in New Tab"
 msgstr "Öppna i Ny Flik"
 
 #: frontend/src/components/RouteTreeView.vue:390
-msgid "Open page or toggle folder in page tree"
-msgstr "Öppna sida eller växla mapp i sidoträd"
+msgid "Open Page or Toggle Folder in Page Tree"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
@@ -3501,8 +3501,8 @@ msgid "Remove Stop"
 msgstr "Ta bort Stopp"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
-msgid "Remove from group"
-msgstr "Ta bort från grupp"
+msgid "Remove from Group"
+msgstr ""
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
@@ -3597,8 +3597,8 @@ msgid "Reset Overrides"
 msgstr "Återställ Åsidosättningar"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
-msgid "Reset canvas zoom"
-msgstr "Återställ arbetsyta zoom"
+msgid "Reset Canvas Zoom"
+msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
@@ -3721,8 +3721,8 @@ msgid "Save"
 msgstr "Spara"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
-msgid "Save As Component"
-msgstr "Spara som Komponent"
+msgid "Save as Component"
+msgstr ""
 
 #: frontend/src/stores/componentStore.ts:88
 msgid "Save Component"
@@ -3746,8 +3746,8 @@ msgid "Save current version"
 msgstr "Spara aktuell version"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
-msgid "Save page / component"
-msgstr "Spara sida / komponent"
+msgid "Save Page / Component"
+msgstr ""
 
 #: builder/ai/api.py:522
 msgid "Save the page before starting a chat session"
@@ -3828,7 +3828,7 @@ msgid "Search Template"
 msgstr "Sök Mall"
 
 #: frontend/src/components/Commands/index.ts:240
-msgid "Search blocks"
+msgid "Search Blocks"
 msgstr "Sök Block"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
@@ -3930,8 +3930,8 @@ msgid "Select default color"
 msgstr "Välj standard färg"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
-msgid "Select mode"
-msgstr "Välj läge"
+msgid "Select Mode"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
@@ -4066,8 +4066,8 @@ msgid "Show Right Panel"
 msgstr "Visa Höger Panel"
 
 #: frontend/src/components/Commands/index.ts:205
-msgid "Show keyboard shortcuts"
-msgstr "Visa kortkommando"
+msgid "Show Keyboard Shortcuts"
+msgstr "Visa Kort Kommando"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
@@ -4385,8 +4385,8 @@ msgid "Text Color"
 msgstr "Text Färg"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
-msgid "Text mode"
-msgstr "Text läge"
+msgid "Text Mode"
+msgstr ""
 
 #: builder/ai/presets.py:273
 msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
@@ -4545,16 +4545,16 @@ msgid "Toggle Theme"
 msgstr "Växla Tema"
 
 #: frontend/src/components/Commands/index.ts:230
-msgid "Toggle canvas dark mode"
-msgstr "Växla arbetsyta mörkt läge"
+msgid "Toggle Canvas Dark Mode"
+msgstr "Växla Arbetsyta Mörkt Läge"
 
 #: frontend/src/components/Commands/index.ts:175
-msgid "Toggle left panel"
-msgstr "Växla vänster panel"
+msgid "Toggle Left Panel"
+msgstr ""
 
 #: frontend/src/components/Commands/index.ts:217
-msgid "Toggle panels"
-msgstr "Växla paneler"
+msgid "Toggle Panels"
+msgstr "Växla Paneler"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
@@ -4943,7 +4943,7 @@ msgstr "Visa spårning är inaktiverad"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
 msgid "Views"
-msgstr "Vyer"
+msgstr "Visningar"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:24
 msgid "Visible"
@@ -5016,8 +5016,8 @@ msgid "Wrap"
 msgstr "Radbryt"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
-msgid "Wrap In Container"
-msgstr "Radbryt i Behållare"
+msgid "Wrap in Container"
+msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
@@ -5115,12 +5115,12 @@ msgid "Z-Index"
 msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
-msgid "Zoom in"
-msgstr "Zooma in"
+msgid "Zoom In"
+msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:357
-msgid "Zoom out"
-msgstr "Zooma ut"
+msgid "Zoom Out"
+msgstr ""
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
