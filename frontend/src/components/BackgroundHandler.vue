@@ -13,7 +13,7 @@
 					:allowDynamicValue="true"
 					:placeholder="__('Set Background')"
 					:getOptions="getColorOptions"
-					:allowArbitraryValue="false"
+					:selectOnFocus="true"
 					:getModelValue="() => getValue(null)"
 					:getVariantValue="(v: string) => getValue(v)"
 					:getControlAttrs="getControlAttrs"
@@ -183,7 +183,6 @@ const updateActiveState = (e: FocusEvent) => {
 	}
 };
 
-// like ColorInput: a token value gets the token dropdown on focus, anything else the picker
 const handleFocusIn = (e: FocusEvent) => {
 	updateActiveState(e);
 	const target = e.target as HTMLElement;
@@ -219,7 +218,7 @@ const getColorToken = (state: string | null) => {
 	return !hasImage && color?.startsWith("var(--") ? color : null;
 };
 
-// a token is handed over as its var() value so the dropdown can mark it as selected
+// the var() value, not the name, so the dropdown marks it as selected
 const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
 
 const getControlAttrs = (state: string | null) => ({
@@ -322,26 +321,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGValue = (value: string) => {
-	const bgKey = getStyleKey("backgroundImage");
-	const colorKey = getStyleKey("backgroundColor");
-	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
-
-	let cleanURL = value;
-	if (value?.startsWith("url(")) {
-		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
+const parseBackground = (value: string) => {
+	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
+	if (CSS.supports("color", color)) return { color };
+	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
+		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
 	}
-	if (isValidHexValue(value)) {
-		blockController.setStyle(colorKey, `#${value}`);
-		blockController.setStyle(bgKey, null);
-	} else if (/^(#|rgb|hsl|var\()/.test(value || "")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-	} else {
-		blockController.setStyle(bgKey, cleanURL ? cssUrl(cleanURL) : null);
-		blockController.setStyle(colorKey, null);
-	}
+	return null;
 };
+
+const setBackground = (bgKey: string, colorKey: string, value: string | null) => {
+	const parsed = value ? parseBackground(value) : null;
+	if (value && !parsed) return;
+	blockController.setStyle(colorKey, parsed?.color ?? null);
+	blockController.setStyle(bgKey, parsed?.image ?? null);
+};
+
+const setBGValue = (value: string | null) =>
+	setBackground(getStyleKey("backgroundImage"), getStyleKey("backgroundColor"), value);
 
 const setBGColor = (color: string | null) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), color);
@@ -403,15 +400,9 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	if (typeof value === "string" && value.startsWith("var(--")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-		return;
-	}
+	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
 
-	// the input only picks tokens, so any other value comes from the "copy current
-	// value to state" dropdown: copy the actual base styles instead of the display
-	// text (e.g. "Gradient", image file name)
+	// display text from the "copy current value to state" dropdown: copy the real base styles
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };

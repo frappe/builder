@@ -25,6 +25,7 @@
 								}"
 								v-bind="events"
 								ref="colorInput"
+								:selectOnFocus="true"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
 								@focus="() => !isCssVariable && togglePopover()"
