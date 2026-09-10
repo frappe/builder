@@ -386,7 +386,7 @@
 
 				<Dialog
 					v-model="showGroupDialog"
-					:title="__('Move to group')"
+					:title="__('Move to Group')"
 					size="sm"
 					:actions="[{ label: __('Move'), variant: 'solid', onClick: confirmGroupDialog }]">
 					<template #default>
@@ -825,11 +825,11 @@ const contextMenuOptions = computed(() => {
 		return [{ label: __("Remove"), action: () => (newVariable.value = null) }];
 	}
 	const count = selectedIds.value.size;
-	const deleteLabel = count > 1 ? __("Delete {0} variables", [count]) : __("Delete variable");
+	const deleteLabel = count > 1 ? __("Delete {0} Variables", [count]) : __("Delete Variable");
 	return [
-		{ label: __("Move to group"), action: openGroupDialog },
+		{ label: __("Move to Group"), action: openGroupDialog },
 		{
-			label: __("Remove from group"),
+			label: __("Remove from Group"),
 			action: () => moveSelectedToGroup(""),
 			condition: () => selectedRows().some((row) => row.group),
 		},

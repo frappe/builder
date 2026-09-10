@@ -165,7 +165,7 @@ const propertyOptions = computed(() => [
 	{
 		type: "custom" as const,
 		key: "add-property",
-		label: __("Add property"),
+		label: __("Add Property"),
 		slot: "add-property",
 		condition: ({ query }: { query: string }) => canAddProperty(query),
 		onClick: ({ query }: { query: string }) => addProperty(query),

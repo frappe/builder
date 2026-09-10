@@ -190,7 +190,7 @@ useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, rou
 useShortcut([
 	{
 		key: " ",
-		description: __("Hold for move mode"),
+		description: __("Hold for Move Mode"),
 		group: __("Tools"),
 		handler: () => {
 			if (!canvasStore.editableBlock) {

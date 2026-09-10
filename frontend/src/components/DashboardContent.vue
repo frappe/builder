@@ -131,7 +131,7 @@ watch(displayType, () => fetchPages());
 // remove selection mode when the escape key is pressed
 useShortcut({
 	key: "Escape",
-	description: __("Deselect pages"),
+	description: __("Deselect Pages"),
 	group: __("Dashboard"),
 	handler: () => {
 		selectedPages.value.clear();
