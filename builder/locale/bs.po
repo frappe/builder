@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-10 03:34\n"
+"PO-Revision-Date: 2026-09-10 04:49\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -167,7 +167,7 @@ msgstr "Dodaj meta oznake, stilove i skripte u zaglavlje stranice"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add Property"
-msgstr ""
+msgstr "Dodaj Svojstvo"
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
@@ -441,7 +441,7 @@ msgstr "Nazad na sve predloške"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
 msgid "Back to Builder"
-msgstr ""
+msgstr "Nazad na Web Uređivač"
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -836,7 +836,7 @@ msgstr "Sažmi Sve Slojeve"
 
 #: frontend/src/components/RouteTreeView.vue:374
 msgid "Collapse Node or Move Up in Page Tree"
-msgstr ""
+msgstr "Sažmi Čvor ili Pomakni Prema Gore u Stablu Stranice"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
@@ -979,7 +979,7 @@ msgstr "Kontejner (c)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
 msgid "Container Mode"
-msgstr ""
+msgstr "Kontejnerski Način Rada"
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
 #. Label of the content (Long Text) field in DocType 'Builder AI Message'
@@ -1003,7 +1003,7 @@ msgstr "Kontrole"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Convert to Collection"
-msgstr ""
+msgstr "Pretvori u Kolekciju"
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -1275,15 +1275,15 @@ msgstr "Obriši Stranicu"
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
 msgid "Delete Selected Blocks"
-msgstr ""
+msgstr "Izbrisi Odabrane Blokove"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete Variable"
-msgstr ""
+msgstr "Izbriši Varijablu"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete {0} Variables"
-msgstr ""
+msgstr "Izbriši {0} Varijable"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
@@ -1309,7 +1309,7 @@ msgstr "Opis"
 
 #: frontend/src/components/DashboardContent.vue:134
 msgid "Deselect Pages"
-msgstr ""
+msgstr "Poništi Odabir Stranica"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
@@ -1684,7 +1684,7 @@ msgstr "Izvrši Blokovske Skripte u Uređivaču"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
 msgid "Exit Current Mode"
-msgstr ""
+msgstr "Izađi iz Trenutnog Načina Rada"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
@@ -1697,7 +1697,7 @@ msgstr "Proširi Sve Slojeve"
 
 #: frontend/src/components/RouteTreeView.vue:355
 msgid "Expand Node or Move Down in Page Tree"
-msgstr ""
+msgstr "Proširi Čvor ili Pomakni Prema Dolje u Stablu Stranica"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
@@ -1862,7 +1862,7 @@ msgstr "Uklopi Unutar"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
 msgid "Fit Canvas to Screen"
-msgstr ""
+msgstr "Prilagodi Radnu Površinu Ekranu"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
@@ -2113,7 +2113,7 @@ msgstr "Istakni Blokove pomoću Klijentskih Skripti"
 
 #: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for Move Mode"
-msgstr ""
+msgstr "Drži za Način Kretanja"
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
@@ -2191,7 +2191,7 @@ msgstr "Slika je prevelika. Koristi sliku manju od 5 MB."
 
 #: frontend/src/utils/useBuilderEvents.ts:376
 msgid "Image Mode"
-msgstr ""
+msgstr "Način Slike"
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
@@ -2630,7 +2630,7 @@ msgstr "Premjesti"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / Hand Mode"
-msgstr ""
+msgstr "Premjesti / Ručni Način Rada"
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
@@ -2638,16 +2638,16 @@ msgstr "Premjesti u Mapu"
 
 #: frontend/src/components/RouteTreeView.vue:335
 msgid "Move Down in Page Tree"
-msgstr ""
+msgstr "Premjesti Niže u Stablu Stranice"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to Group"
-msgstr ""
+msgstr "Premjesti u Grupu"
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move Up in Page Tree"
-msgstr ""
+msgstr "Premjesti Gore u Stablu Stranice"
 
 #: frontend/src/components/Modals/TokenManager.vue:727
 msgid "Moved {0} token to \"{1}\""
@@ -2989,7 +2989,7 @@ msgstr "Otvori u Novoj Kartici"
 
 #: frontend/src/components/RouteTreeView.vue:390
 msgid "Open Page or Toggle Folder in Page Tree"
-msgstr ""
+msgstr "Otvori Stranicu ili Prebaci Mapu u Stablu Stranica"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
@@ -3502,7 +3502,7 @@ msgstr "Ukloni Stop"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from Group"
-msgstr ""
+msgstr "Ukloni iz Grupe"
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
@@ -3598,7 +3598,7 @@ msgstr "Poništi Poništavanja"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset Canvas Zoom"
-msgstr ""
+msgstr "Poništi Zumiranje Radne Površine"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
@@ -3722,7 +3722,7 @@ msgstr "Spremi"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
 msgid "Save as Component"
-msgstr ""
+msgstr "Spremi kao Komponentu"
 
 #: frontend/src/stores/componentStore.ts:88
 msgid "Save Component"
@@ -3747,7 +3747,7 @@ msgstr "Spremi trenutnu verziju"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
 msgid "Save Page / Component"
-msgstr ""
+msgstr "Spremi Stranicu / Komponentu"
 
 #: builder/ai/api.py:522
 msgid "Save the page before starting a chat session"
@@ -3931,7 +3931,7 @@ msgstr "Odaberi standard boju"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
 msgid "Select Mode"
-msgstr ""
+msgstr "Odaberi Način Rada"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
@@ -4386,7 +4386,7 @@ msgstr "Boja Teksta"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
 msgid "Text Mode"
-msgstr ""
+msgstr "Tekst Način"
 
 #: builder/ai/presets.py:273
 msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
@@ -4550,7 +4550,7 @@ msgstr "Uključi/isključi tamni način rada platna"
 
 #: frontend/src/components/Commands/index.ts:175
 msgid "Toggle Left Panel"
-msgstr ""
+msgstr "Uključi/Isključi Lijevi Panel"
 
 #: frontend/src/components/Commands/index.ts:217
 msgid "Toggle Panels"
@@ -5017,7 +5017,7 @@ msgstr "Omotaj"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap in Container"
-msgstr ""
+msgstr "Omotaj u Posudu"
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
@@ -5116,11 +5116,11 @@ msgstr "Z-Indeks"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom In"
-msgstr ""
+msgstr "Uvećaj"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom Out"
-msgstr ""
+msgstr "Umanji"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
