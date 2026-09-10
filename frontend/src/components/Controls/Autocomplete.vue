@@ -277,7 +277,7 @@ const handleFocus = (event: FocusEvent) => {
 	emit("focus");
 };
 
-// the owner may reject what was submitted, so the input goes back to showing the model
+// a rejected submission leaves the model as is, so the text resyncs to it
 const submitArbitraryValue = (inputValue: string) => {
 	if (!inputValue) return;
 	const matchingOption = allOptions.value.find((opt) => opt.label.toLowerCase() === inputValue.toLowerCase());
@@ -326,10 +326,9 @@ watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
 watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
 // seed the search term with the option's label, not the raw value: it is what the
 // input shows, what filterOptions windows the list around, and what Enter compares
-// against (a value like "700" would otherwise read as text typed over "Bold").
-// a model change always wins, even under an open list (a popover may have set it);
-// options refreshing under an open list must not clobber what is being typed
+// against (a value like "700" would otherwise read as text typed over "Bold")
 watch(() => props.modelValue, syncSearchQuery, { immediate: true });
+// refreshed options must not clobber what is being typed
 watch(allOptions, () => !isOpen.value && syncSearchQuery());
 
 const setOptionsPosition = () => {

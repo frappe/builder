@@ -183,7 +183,6 @@ const updateActiveState = (e: FocusEvent) => {
 	}
 };
 
-// like ColorInput: a token value gets the token dropdown on focus, anything else the picker
 const handleFocusIn = (e: FocusEvent) => {
 	updateActiveState(e);
 	const target = e.target as HTMLElement;
@@ -219,7 +218,7 @@ const getColorToken = (state: string | null) => {
 	return !hasImage && color?.startsWith("var(--") ? color : null;
 };
 
-// a token is handed over as its var() value so the dropdown can mark it as selected
+// the var() value, not the name, so the dropdown marks it as selected
 const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
 
 const getControlAttrs = (state: string | null) => ({
@@ -322,7 +321,6 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-// what the field was given: a colour the browser accepts, an image, or nothing usable
 const parseBackground = (value: string) => {
 	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
 	if (CSS.supports("color", color)) return { color };
@@ -404,8 +402,7 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 
 	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
 
-	// anything else is display text from the "copy current value to state" dropdown
-	// (e.g. "Gradient", image file name): copy the actual base styles instead
+	// display text from the "copy current value to state" dropdown: copy the real base styles
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };
