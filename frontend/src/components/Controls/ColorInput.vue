@@ -43,14 +43,16 @@
 								"
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
-									<div
-										class="size-4 cursor-pointer rounded shadow-md"
+									<button
+										type="button"
+										class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+										:aria-label="__('Open color picker')"
 										@click="togglePopover"
 										:style="{
 											background: modelValue
 												? resolvedColor
 												: `url(/assets/builder/images/color-circle.png) center / contain`,
-										}"></div>
+										}"></button>
 								</template>
 							</Autocomplete>
 						</Tooltip>

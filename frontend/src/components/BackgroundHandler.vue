@@ -20,8 +20,10 @@
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
-						<div
-							class="size-4 cursor-pointer rounded shadow-md"
+						<button
+							type="button"
+							class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+							:aria-label="__('Open background picker')"
 							@click="
 								() => {
 									activeState = variant;
