@@ -47,6 +47,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
@@ -74,6 +75,7 @@ import TextBlock from "./TextBlock.vue";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
+const blockTemplateStore = useBlockTemplateStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const isMounted = ref(false);
@@ -298,16 +300,91 @@ const styles = computed(() => {
 
 	Object.keys(styleMap).forEach((key) => {
 		if (key.startsWith("hover:")) {
-			// state style preview on hover
-			// if (!isHovered.value) {
-			// 	delete styleMap[key];
-			// } else {
-			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
-			// 	delete styleMap[key];
-			// }
 			delete styleMap[key];
 		}
 	});
+
+	// Reactive flex layout enforcement for Carousel track and slides
+	const getCarouselRoot = (block: Block): Block | null => {
+		let current: Block | null = block;
+		while (current) {
+			const propsMap = current.getBlockProps?.() || {};
+			if ("show_all_slides" in propsMap) {
+				return current;
+			}
+			current = current.getParentBlock?.() || null;
+		}
+		return null;
+	};
+
+	const carouselRoot = getCarouselRoot(props.block);
+	if (carouselRoot) {
+		const resolvedVal = valueResolver.getPropValue("show_all_slides", carouselRoot);
+		const rawVal = resolvedVal !== undefined ? resolvedVal : carouselRoot.getBlockProps?.()?.["show_all_slides"]?.value;
+		const showAll = rawVal == null || rawVal === "" ? true : (rawVal === true || rawVal === "true" || rawVal === 1 || rawVal === "1");
+
+		const isTrack =
+			props.block.getAttributes?.()?.["data-carousel-track"] !== undefined ||
+			props.block.getAttributes?.()?.["data-array-items"] === "slides" ||
+			props.block.blockId === "crsl-track";
+
+		const parentOfBlock = props.block.getParentBlock?.();
+		const isSlide =
+			(parentOfBlock &&
+				(parentOfBlock.getAttributes?.()?.["data-carousel-track"] !== undefined ||
+					parentOfBlock.getAttributes?.()?.["data-array-items"] === "slides" ||
+					parentOfBlock.blockId === "crsl-track")) ||
+			(props.block.blockId && props.block.blockId.startsWith("crsl-slide"));
+
+		const isDot =
+			props.block.getAttributes?.()?.["data-carousel-dot"] !== undefined ||
+			(props.block.blockId && props.block.blockId.startsWith("crsl-dot"));
+
+		if (isDot) {
+			styleMap.width = "12px";
+			styleMap.height = "12px";
+			styleMap.minWidth = "12px";
+			styleMap.minHeight = "12px";
+			styleMap.maxWidth = "12px";
+			styleMap.maxHeight = "12px";
+			styleMap.flexShrink = 0;
+		}
+
+		if (isTrack) {
+			if (showAll) {
+				styleMap.display = "flex";
+				styleMap.flexDirection = "column";
+				styleMap.flexWrap = "nowrap";
+				styleMap.overflowX = "hidden";
+				styleMap.overflowY = "auto";
+			} else {
+				styleMap.display = "flex";
+				styleMap.flexDirection = "row";
+				styleMap.flexWrap = "nowrap";
+				styleMap.overflowX = "auto";
+				styleMap.overflowY = "hidden";
+				styleMap.scrollbarWidth = "none";
+			}
+		}
+
+		if (isSlide) {
+			if (showAll) {
+				styleMap.width = "100%";
+				styleMap.minWidth = "100%";
+				styleMap.maxWidth = "100%";
+				styleMap.flexShrink = 0;
+				styleMap.flexGrow = 0;
+			} else {
+				styleMap.width = "100%";
+				styleMap.minWidth = "100%";
+				styleMap.maxWidth = "100%";
+				styleMap.height = "100%";
+				styleMap.minHeight = "100%";
+				styleMap.flexShrink = 0;
+				styleMap.flexGrow = 0;
+			}
+		}
+	}
 
 	return styleMap;
 });
@@ -404,9 +481,29 @@ watch(resolvedComponentData, () => {
 });
 
 const blockClientScript = computed(() => {
-	const clientScript = props.block.extendedFromComponent
+	let clientScript = props.block.extendedFromComponent
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
+
+	if (
+		props.block.blockId === "crsl-root" ||
+		props.block.blockName === "Carousel" ||
+		props.block.getAttributes?.()?.["data-carousel-track"] !== undefined ||
+		(props.block.getChildren?.() || []).some(
+			(c) => c.getAttributes?.()?.["data-carousel-track"] !== undefined,
+		)
+	) {
+		const template = blockTemplateStore.getBlockTemplate("Carousel");
+		if (template?.block) {
+			try {
+				const parsed = JSON.parse(template.block);
+				if (parsed?.clientScript?.js) {
+					clientScript = parsed.clientScript;
+				}
+			} catch {}
+		}
+	}
+
 	const javascript = clientScript?.js || "";
 	const css = clientScript?.css || "";
 	// null (not an empty object) so scriptless blocks skip canvas registration
@@ -442,7 +539,7 @@ watch(
 		});
 		onCleanup(cleanup);
 	},
-	{ immediate: true },
+	{ immediate: true, flush: "post" },
 );
 
 const isEditable = computed(() => {
@@ -473,6 +570,36 @@ watch(
 	},
 	{ immediate: true },
 );
+
+watch(selectedInCanvas, async (selected) => {
+	if (!selected || props.preview) return;
+	await nextTick();
+	const element = target.value as HTMLElement | null;
+	if (!element) return;
+	const scale = canvasProps?.scale || 1;
+	let parent = element.parentElement;
+	while (parent && !parent.hasAttribute("data-builder-canvas")) {
+		const style = getComputedStyle(parent);
+		const elementRect = element.getBoundingClientRect();
+		const parentRect = parent.getBoundingClientRect();
+
+		if (/(auto|scroll)/.test(style.overflowX) && parent.scrollWidth > parent.clientWidth) {
+			const hiddenLeft = parentRect.left - elementRect.left;
+			const hiddenRight = elementRect.right - parentRect.right;
+			if (hiddenLeft > 0) parent.scrollLeft -= hiddenLeft / scale;
+			else if (hiddenRight > 0) parent.scrollLeft += hiddenRight / scale;
+		}
+
+		if (/(auto|scroll)/.test(style.overflowY) && parent.scrollHeight > parent.clientHeight) {
+			const hiddenTop = parentRect.top - elementRect.top;
+			const hiddenBottom = elementRect.bottom - parentRect.bottom;
+			if (hiddenTop > 0) parent.scrollTop -= hiddenTop / scale;
+			else if (hiddenBottom > 0) parent.scrollTop += hiddenBottom / scale;
+		}
+
+		parent = parent.parentElement;
+	}
+});
 
 // Note: All the block event listeners are delegated to parent for better scalability
 </script>

@@ -3,6 +3,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
 import componentController from "./componentController";
 import type { SpacingType } from "./cssUtils";
+import { getBlockCopy } from "./helpers";
 
 const canvasStore = useCanvasStore();
 
@@ -342,7 +343,93 @@ const blockController = {
 		const block = blockController.getFirstSelectedBlock();
 		if (!block) return;
 		block.setBlockProps(props);
+		const propsRoot = block.getPropsRoot() || block;
+		const allProps = propsRoot.getBlockProps();
+		const itemKeys = new Set<string>();
+		for (const [propKey, propDetails] of Object.entries(props || {})) {
+			if (propDetails?.propOptions?.type === "array") itemKeys.add(propKey);
+			if (propKey.endsWith(ITEM_COUNT_SUFFIX)) itemKeys.add(propKey.slice(0, -ITEM_COUNT_SUFFIX.length));
+		}
+		itemKeys.forEach((itemsKey) => {
+			const targetCount = desiredItemCount(allProps, itemsKey);
+			if (targetCount !== null) syncArrayPropChildBlocks(propsRoot, itemsKey, targetCount);
+		});
 	},
 };
+
+const ARRAY_ITEMS_ATTRIBUTE = "data-array-items";
+
+function collectArrayItemContainers(block: Block, propKey: string, found: Block[] = []): Block[] {
+	if (block.getAttributes()[ARRAY_ITEMS_ATTRIBUTE] === propKey) {
+		found.push(block);
+	}
+	(block.children || []).forEach((child) => collectArrayItemContainers(child, propKey, found));
+	return found;
+}
+
+function firstChildBearingContainer(block: Block): Block | null {
+	if (block.children && block.children.length > 0) {
+		return block.children.find((c) => c.children && c.children.length > 0) || block;
+	}
+	return block.canHaveChildren() ? block : null;
+}
+
+function syncContainerToCount(container: Block, targetCount: number) {
+	if (!container.children || container.children.length === 0) return;
+
+	const templateChild = container.children[0];
+	const baseName = (templateChild.blockName || "Item").replace(/\s*\d+$/, "");
+
+	while (container.children.length < targetCount) {
+		const newChild = getBlockCopy(templateChild);
+		newChild.blockName = `${baseName} ${container.children.length + 1}`;
+		container.addChild(newChild, null, false);
+	}
+
+	while (container.children.length > targetCount && container.children.length > 1) {
+		container.removeChild(container.children[container.children.length - 1]);
+	}
+}
+
+const ITEM_COUNT_SUFFIX = "_count";
+
+function parseArrayValue(rawValue: any): any[] | null {
+	if (Array.isArray(rawValue)) return rawValue;
+	if (typeof rawValue === "string") {
+		try {
+			const parsed = JSON.parse(rawValue);
+			return Array.isArray(parsed) ? parsed : null;
+		} catch {
+			return null;
+		}
+	}
+	return null;
+}
+
+function desiredItemCount(allProps: BlockProps, itemsKey: string): number | null {
+	const arrayProp = allProps[itemsKey];
+	const countProp = allProps[`${itemsKey}${ITEM_COUNT_SUFFIX}`];
+
+	if (!arrayProp && !countProp) return null;
+	if (arrayProp && arrayProp.propOptions?.type !== "array") return null;
+
+	let fromArray = 0;
+	if (arrayProp) {
+		const entries = parseArrayValue(arrayProp.value);
+		if (entries === null && arrayProp.value != null) return null;
+		fromArray = entries?.length ?? 0;
+	}
+
+	const rawCount = countProp ? countProp.value ?? countProp.propOptions?.options?.defaultValue : 0;
+	const fromCount = Math.floor(Number(rawCount) || 0);
+
+	return Math.max(fromArray, Math.max(fromCount, 0));
+}
+
+function syncArrayPropChildBlocks(block: Block, itemsKey: string, targetCount: number) {
+	const marked = collectArrayItemContainers(block, itemsKey);
+	const containers = marked.length ? marked : [firstChildBearingContainer(block)];
+	containers.forEach((container) => container && syncContainerToCount(container, targetCount));
+}
 
 export default blockController;
