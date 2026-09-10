@@ -23,7 +23,29 @@
 				icon="lucide-x"
 				@click="deleteItem(index)"></Button>
 		</div>
-		<Button variant="outline" class="w-full" :label="__('Add')" @click="addItem"></Button>
+		<Button
+			v-if="itemType === 'image'"
+			variant="outline"
+			class="w-full"
+			:loading="isBulkUploading"
+			:label="isBulkUploading ? __('Uploading...') : __('Upload')"
+			iconLeft="upload"
+			@click="triggerBulkUpload" />
+		<Button
+			v-else
+			variant="outline"
+			class="w-full"
+			:label="__('Add')"
+			iconLeft="plus"
+			@click="addItem" />
+		<input
+			v-if="itemType === 'image'"
+			ref="bulkFileInput"
+			type="file"
+			multiple
+			accept="image/*"
+			class="hidden"
+			@change="handleBulkUpload" />
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
@@ -32,6 +54,9 @@
 <script setup lang="ts">
 import { nextTick, ref } from "vue";
 import ImageUploadInput from "./ImageUploadInput.vue";
+import { uploadBuilderAsset } from "@/utils/helpers";
+import { toast } from "frappe-ui";
+import { __ } from "@/translation";
 
 const props = defineProps<{
 	arr: Array<ArrayPropItem>;
@@ -89,6 +114,41 @@ const deleteItem = (index: number) => {
 };
 
 const arrayEditor = ref<HTMLElement | null>(null);
+const bulkFileInput = ref<HTMLInputElement | null>(null);
+const isBulkUploading = ref(false);
+
+const triggerBulkUpload = () => {
+	bulkFileInput.value?.click();
+};
+
+const handleBulkUpload = async (e: Event) => {
+	const target = e.target as HTMLInputElement;
+	const files = target.files;
+	if (!files || files.length === 0) return;
+
+	isBulkUploading.value = true;
+	try {
+		const uploadPromises = Array.from(files).map((file) => uploadBuilderAsset(file, true));
+		const results = await Promise.all(uploadPromises);
+		const uploadedUrls = results
+			.map((res) => res.fileURL)
+			.filter((url) => typeof url === "string" && url.trim() !== "");
+
+		if (uploadedUrls.length > 0) {
+			const currentArr = props.arr.filter((item) => itemURL(item).trim() !== "");
+			const newArr = [...currentArr, ...uploadedUrls];
+			emit("update:arr", newArr);
+			toast.success(__("Uploaded {0} image(s)", [uploadedUrls.length]));
+		}
+	} catch (error) {
+		toast.error(__("Failed to upload images"));
+	} finally {
+		isBulkUploading.value = false;
+		if (target) {
+			target.value = "";
+		}
+	}
+};
 
 const pasteArray = (e: ClipboardEvent) => {
 	const passedArr = props.arr.filter((item) => itemURL(item).trim() !== "");
