@@ -322,10 +322,10 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-// what the field was given: a colour, an image, or nothing usable
+// what the field was given: a colour the browser accepts, an image, or nothing usable
 const parseBackground = (value: string) => {
-	if (/^([0-9A-F]{3}){1,2}$/i.test(value)) return { color: `#${value}` };
-	if (/^(#|rgb|hsl|var\()/.test(value)) return { color: value };
+	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
+	if (CSS.supports("color", color)) return { color };
 	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
 		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
 	}
