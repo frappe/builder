@@ -121,6 +121,44 @@ const triggerBulkUpload = () => {
 	bulkFileInput.value?.click();
 };
 
+const uploadFiles = async (files: FileList | File[]) => {
+	const uploadPromises = Array.from(files).map((file) => uploadBuilderAsset(file, true));
+	const results = await Promise.allSettled(uploadPromises);
+
+	const uploadedUrls: string[] = [];
+	let hasFailed = false;
+
+	for (const result of results) {
+		if (result.status === "fulfilled" && result.value?.fileURL) {
+			const url = result.value.fileURL;
+			if (typeof url === "string" && url.trim() !== "") {
+				uploadedUrls.push(url);
+			} else {
+				hasFailed = true;
+			}
+		} else {
+			hasFailed = true;
+		}
+	}
+
+	return { uploadedUrls, hasFailed };
+};
+
+const notifyUploadResults = (uploadedCount: number, hasFailed: boolean) => {
+	if (uploadedCount > 0) {
+		toast.success(__("Uploaded {0} image(s)", [uploadedCount]));
+	}
+	if (hasFailed) {
+		toast.error(__("Failed to upload images"));
+	}
+};
+
+const appendUploadedUrls = (urls: string[]) => {
+	const currentArr = props.arr.filter((item) => itemURL(item).trim() !== "");
+	const newArr = [...currentArr, ...urls];
+	emit("update:arr", newArr);
+};
+
 const handleBulkUpload = async (e: Event) => {
 	const target = e.target as HTMLInputElement;
 	const files = target.files;
@@ -128,35 +166,13 @@ const handleBulkUpload = async (e: Event) => {
 
 	isBulkUploading.value = true;
 	try {
-		const uploadPromises = Array.from(files).map((file) => uploadBuilderAsset(file, true));
-		const results = await Promise.allSettled(uploadPromises);
-
-		const uploadedUrls: string[] = [];
-		let hasFailed = false;
-
-		for (const result of results) {
-			if (result.status === "fulfilled" && result.value?.fileURL) {
-				const url = result.value.fileURL;
-				if (typeof url === "string" && url.trim() !== "") {
-					uploadedUrls.push(url);
-				} else {
-					hasFailed = true;
-				}
-			} else {
-				hasFailed = true;
-			}
-		}
+		const { uploadedUrls, hasFailed } = await uploadFiles(files);
 
 		if (uploadedUrls.length > 0) {
-			const currentArr = props.arr.filter((item) => itemURL(item).trim() !== "");
-			const newArr = [...currentArr, ...uploadedUrls];
-			emit("update:arr", newArr);
-			toast.success(__("Uploaded {0} image(s)", [uploadedUrls.length]));
+			appendUploadedUrls(uploadedUrls);
 		}
 
-		if (hasFailed) {
-			toast.error(__("Failed to upload images"));
-		}
+		notifyUploadResults(uploadedUrls.length, hasFailed);
 	} catch (error) {
 		toast.error(__("Failed to upload images"));
 	} finally {
