@@ -255,9 +255,10 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 		Object.entries(block.getBlockProps()).map(([key, prop]) => {
 			const propCopy = { ...prop }; // creating copy to avoid mutating original prop
 			if (propCopy.isStandard) {
-				let value = propCopy.value || propCopy.propOptions?.options?.defaultValue;
+				const hasVal = propCopy.value !== undefined && propCopy.value !== null && propCopy.value !== "";
+				let value = hasVal ? propCopy.value : propCopy.propOptions?.options?.defaultValue;
 				if (!["string", "select"].includes(propCopy.propOptions?.type!)) {
-					propCopy.value = JSON.stringify(value);
+					propCopy.value = typeof value === "string" ? value : JSON.stringify(value);
 				} else {
 					propCopy.value = value;
 				}
@@ -358,22 +359,31 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	});
 	await new Promise((resolve) => {
 		if (silent) {
-			upload.then((data: { file_name: string; file_url: string }) => {
-				fileDoc.file_name = data.file_name;
-				fileDoc.file_url = data.file_url;
-				resolve(fileDoc);
-			});
+			upload
+				.then((data: any) => {
+					fileDoc.file_name = data?.file_name || data?.message?.file_name || "";
+					fileDoc.file_url = data?.file_url || data?.message?.file_url || "";
+					resolve(fileDoc);
+				})
+				.catch((err: any) => {
+					console.error("Failed to upload builder asset:", err);
+					resolve(fileDoc);
+				});
 			return;
 		}
 		toast.promise(upload, {
 			loading: __("Uploading..."),
-			success: (data: { file_name: string; file_url: string }) => {
-				fileDoc.file_name = data.file_name;
-				fileDoc.file_url = data.file_url;
+			success: (data: any) => {
+				fileDoc.file_name = data?.file_name || data?.message?.file_name || "";
+				fileDoc.file_url = data?.file_url || data?.message?.file_url || "";
 				resolve(fileDoc);
 				return __("Uploaded");
 			},
-			error: () => __("Failed to upload"),
+			error: (err: any) => {
+				console.error("Failed to upload builder asset:", err);
+				resolve(fileDoc);
+				return __("Failed to upload");
+			},
 			duration: 500,
 		});
 	});
@@ -868,14 +878,16 @@ const getPropValue = (
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			const parse = (raw: string, fallback: any) => {
+			const parse = (raw: any, fallback: any) => {
+				if (typeof raw === "boolean" || typeof raw === "number") return raw;
 				try {
 					return JSON.parse(raw);
 				} catch {
 					return fallback;
 				}
 			};
-			if (matchingProp.value) {
+			const hasValue = matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+			if (hasValue) {
 				return parse(matchingProp.value, defaultValue);
 			}
 			if (typeof defaultValue === "string") {
@@ -883,7 +895,8 @@ const getPropValue = (
 			}
 			return defaultValue;
 		}
-		return matchingProp.value || defaultValue;
+		const hasValue = matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+		return hasValue ? matchingProp.value : defaultValue;
 	}
 
 	return matchingProp.value;
@@ -897,17 +910,40 @@ const getStandardPropValue = (
 	if (propsOfComponentRoot) {
 		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
 			if (propName === name && value.isStandard) {
+				const hasValue = value.value !== undefined && value.value !== null && value.value !== "";
 				if (PARSEABLE_STANDARD_TYPES.includes(value.propOptions?.type || "string")) {
-					const parsedValue = value.value
-						? JSON.parse(value.value)
-						: value.propOptions?.options?.defaultValue || null;
+					let parsedValue: any = null;
+					if (hasValue) {
+						if (typeof value.value === "boolean" || typeof value.value === "number") {
+							parsedValue = value.value;
+						} else {
+							try {
+								parsedValue = JSON.parse(value.value);
+							} catch {
+								parsedValue = value.value;
+							}
+						}
+					} else {
+						const def = value.propOptions?.options?.defaultValue;
+						if (def !== undefined && def !== null) {
+							if (def === "true") parsedValue = true;
+							else if (def === "false") parsedValue = false;
+							else {
+								try {
+									parsedValue = JSON.parse(def);
+								} catch {
+									parsedValue = def;
+								}
+							}
+						}
+					}
 					return {
 						value: parsedValue,
 						options: value.propOptions?.options || {},
 					};
 				} else {
 					return {
-						value: value.value || value.propOptions?.options?.defaultValue || null,
+						value: hasValue ? value.value : value.propOptions?.options?.defaultValue || null,
 						options: value.propOptions?.options || {},
 					};
 				}
