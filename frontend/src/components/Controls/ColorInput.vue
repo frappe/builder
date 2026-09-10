@@ -28,7 +28,6 @@
 								:selectOnFocus="true"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="() => !isCssVariable && togglePopover()"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
