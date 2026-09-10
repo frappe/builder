@@ -9,6 +9,7 @@
 				width="250"
 				height="140"
 				:src="page.meta_image || page.preview"
+				:alt="page.page_title || page.page_name"
 				onerror="this.src='/assets/builder/images/fallback.png'"
 				class="aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
 			<div class="flex items-center justify-between border-outline-gray-2">
