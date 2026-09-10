@@ -13,7 +13,7 @@
 					:allowDynamicValue="true"
 					:placeholder="__('Set Background')"
 					:getOptions="getColorOptions"
-					:allowArbitraryValue="false"
+					:selectOnFocus="true"
 					:getModelValue="() => getValue(null)"
 					:getVariantValue="(v: string) => getValue(v)"
 					:getControlAttrs="getControlAttrs"
@@ -322,26 +322,25 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGValue = (value: string) => {
-	const bgKey = getStyleKey("backgroundImage");
-	const colorKey = getStyleKey("backgroundColor");
-	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
-
-	let cleanURL = value;
-	if (value?.startsWith("url(")) {
-		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
+// what the field was given: a colour, an image, or nothing usable
+const parseBackground = (value: string) => {
+	if (/^([0-9A-F]{3}){1,2}$/i.test(value)) return { color: `#${value}` };
+	if (/^(#|rgb|hsl|var\()/.test(value)) return { color: value };
+	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
+		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
 	}
-	if (isValidHexValue(value)) {
-		blockController.setStyle(colorKey, `#${value}`);
-		blockController.setStyle(bgKey, null);
-	} else if (/^(#|rgb|hsl|var\()/.test(value || "")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-	} else {
-		blockController.setStyle(bgKey, cleanURL ? cssUrl(cleanURL) : null);
-		blockController.setStyle(colorKey, null);
-	}
+	return null;
 };
+
+const setBackground = (bgKey: string, colorKey: string, value: string | null) => {
+	const parsed = value ? parseBackground(value) : null;
+	if (value && !parsed) return;
+	blockController.setStyle(colorKey, parsed?.color ?? null);
+	blockController.setStyle(bgKey, parsed?.image ?? null);
+};
+
+const setBGValue = (value: string | null) =>
+	setBackground(getStyleKey("backgroundImage"), getStyleKey("backgroundColor"), value);
 
 const setBGColor = (color: string | null) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), color);
@@ -403,15 +402,10 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	if (typeof value === "string" && value.startsWith("var(--")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-		return;
-	}
+	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
 
-	// the input only picks tokens, so any other value comes from the "copy current
-	// value to state" dropdown: copy the actual base styles instead of the display
-	// text (e.g. "Gradient", image file name)
+	// anything else is display text from the "copy current value to state" dropdown
+	// (e.g. "Gradient", image file name): copy the actual base styles instead
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };

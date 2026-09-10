@@ -18,12 +18,7 @@
 					ref="comboboxInput"
 					v-model="searchQuery"
 					autocomplete="off"
-					@focus="
-						() => {
-							emit('focus');
-							return false;
-						}
-					"
+					@focus="handleFocus"
 					@blur="handleBlur"
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
@@ -169,6 +164,7 @@ interface Props {
 	actionButton?: ActionButton;
 	referenceElementSelector?: string;
 	allowArbitraryValue?: boolean;
+	selectOnFocus?: boolean;
 	disabled?: boolean;
 	// floor for the options width, so a narrow input doesn't force truncated labels
 	optionsMinWidth?: number;
@@ -272,11 +268,22 @@ const clearSelection = () => emit("update:modelValue", null);
 
 const getInputValue = (event: Event) => (event.target as HTMLInputElement)?.value?.trim();
 
+const syncSearchQuery = () => (searchQuery.value = getDisplayValue(props.modelValue));
+
+// select() also focuses, so skip it once a popover opened on this focus and took it
+const handleFocus = (event: FocusEvent) => {
+	const input = event.target as HTMLInputElement;
+	if (props.selectOnFocus) setTimeout(() => document.activeElement === input && input.select());
+	emit("focus");
+};
+
+// the owner may reject what was submitted, so the input goes back to showing the model
 const submitArbitraryValue = (inputValue: string) => {
 	if (!inputValue) return;
 	const matchingOption = allOptions.value.find((opt) => opt.label.toLowerCase() === inputValue.toLowerCase());
 	emit("update:modelValue", matchingOption?.value ?? inputValue);
 	isOpen.value = false;
+	nextTick(syncSearchQuery);
 };
 
 // the input still shows the current selection, i.e. nothing was typed over it
@@ -319,15 +326,11 @@ watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
 watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
 // seed the search term with the option's label, not the raw value: it is what the
 // input shows, what filterOptions windows the list around, and what Enter compares
-// against (a value like "700" would otherwise read as text typed over "Bold")
-watch(
-	[() => props.modelValue, allOptions],
-	() => {
-		if (isOpen.value) return;
-		searchQuery.value = getDisplayValue(props.modelValue);
-	},
-	{ immediate: true },
-);
+// against (a value like "700" would otherwise read as text typed over "Bold").
+// a model change always wins, even under an open list (a popover may have set it);
+// options refreshing under an open list must not clobber what is being typed
+watch(() => props.modelValue, syncSearchQuery, { immediate: true });
+watch(allOptions, () => !isOpen.value && syncSearchQuery());
 
 const setOptionsPosition = () => {
 	// nextTick flushes the DOM but not layout; the anchored position can still move
