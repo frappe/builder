@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-26 11:04\n"
+"PO-Revision-Date: 2026-09-10 03:34\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Mongolian\n"
 "MIME-Version: 1.0\n"
@@ -166,8 +166,8 @@ msgid "Add meta tags, styles, and scripts to page head"
 msgstr "Хуудасны толгой хэсэгт мета шошго, хэв маяг болон скрипт нэмэх"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
-msgid "Add property"
-msgstr "Үзүүлэлт нэмэх"
+msgid "Add Property"
+msgstr ""
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
@@ -440,8 +440,8 @@ msgid "Back to all templates"
 msgstr "Бүх загвар руу буцах"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
-msgid "Back to builder"
-msgstr "Барилгачин руу буцах"
+msgid "Back to Builder"
+msgstr ""
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -835,8 +835,8 @@ msgid "Collapse All Layers"
 msgstr "Бүх давхаргыг хумих"
 
 #: frontend/src/components/RouteTreeView.vue:374
-msgid "Collapse node or move up in page tree"
-msgstr "Зангилааг хумих эсвэл хуудасны мод дотор дээш зөөх"
+msgid "Collapse Node or Move Up in Page Tree"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
 msgid "Collection"
@@ -978,8 +978,8 @@ msgid "Container (c)"
 msgstr "Контейнер (в)"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
-msgid "Container mode"
-msgstr "Контейнерын горим"
+msgid "Container Mode"
+msgstr ""
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
 #. Label of the content (Long Text) field in DocType 'Builder AI Message'
@@ -1002,8 +1002,8 @@ msgid "Controls"
 msgstr "Хяналтууд"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
-msgid "Convert To Collection"
-msgstr "Цуглуулга руу хөрвүүлэх"
+msgid "Convert to Collection"
+msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -1034,7 +1034,7 @@ msgid "Copy Style"
 msgstr "Хуулбарлах хэв маяг"
 
 #: frontend/src/components/Commands/index.ts:262
-msgid "Copy block styles"
+msgid "Copy Block Styles"
 msgstr "Блокийн хэв маягийг хуулах"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
@@ -1274,16 +1274,16 @@ msgstr "Хуудсыг устгах"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
-msgid "Delete selected blocks"
-msgstr "Сонгосон блокуудыг устгах"
+msgid "Delete Selected Blocks"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete variable"
-msgstr "Хувьсагчийг устгах"
+msgid "Delete Variable"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete {0} variables"
-msgstr "{0} хувьсагчийг устгах"
+msgid "Delete {0} Variables"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
@@ -1308,8 +1308,8 @@ msgid "Description"
 msgstr "Тайлбар"
 
 #: frontend/src/components/DashboardContent.vue:134
-msgid "Deselect pages"
-msgstr "Хуудсуудыг сонгохоо болих"
+msgid "Deselect Pages"
+msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
 #: frontend/src/components/Modals/TokenManager.vue:19
@@ -1480,7 +1480,7 @@ msgid "Duplicate Page"
 msgstr "Давхардсан хуудас"
 
 #: frontend/src/components/Commands/index.ts:281
-msgid "Duplicate block"
+msgid "Duplicate Block"
 msgstr "Давхардсан блок"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
@@ -1683,8 +1683,8 @@ msgid "Execute Block Scripts in Editor"
 msgstr "Редакторт Блок скриптүүдийг гүйцэтгэх"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
-msgid "Exit current mode"
-msgstr "Одоогийн горимоос гарах"
+msgid "Exit Current Mode"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
@@ -1696,8 +1696,8 @@ msgid "Expand All Layers"
 msgstr "Бүх давхаргыг дэлгэх"
 
 #: frontend/src/components/RouteTreeView.vue:355
-msgid "Expand node or move down in page tree"
-msgstr "Зангилааг өргөжүүлэх эсвэл хуудасны мод дотор доош зөөх"
+msgid "Expand Node or Move Down in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
 msgid "External URL"
@@ -1861,8 +1861,8 @@ msgid "Fit Inside"
 msgstr "Дотор нь багтаах"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
-msgid "Fit canvas to screen"
-msgstr "Дэлгэцэнд зураг тохируулах"
+msgid "Fit Canvas to Screen"
+msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
@@ -1874,8 +1874,8 @@ msgid "Focus Property Search"
 msgstr "Үл хөдлөх хөрөнгийн хайлтыг фокуслах"
 
 #: frontend/src/components/Commands/index.ts:250
-msgid "Focus property search"
-msgstr "Үл хөдлөх хөрөнгийн хайлтад анхаарлаа хандуулна уу"
+msgid "Focus Property Search"
+msgstr "Үл хөдлөх хөрөнгийн хайлтыг фокуслах"
 
 #: frontend/src/components/Settings/PageGeneral.vue:159
 #: frontend/src/utils/dialogs.ts:86
@@ -2112,8 +2112,8 @@ msgid "Highlight Blocks with Client Scripts"
 msgstr "Клиент скриптүүдээр блокуудыг тодруулах"
 
 #: frontend/src/pages/PageBuilder.vue:192
-msgid "Hold for move mode"
-msgstr "Хөдөлгөөнт горимд шилжихийн тулд удаан дарна уу"
+msgid "Hold for Move Mode"
+msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
@@ -2190,8 +2190,8 @@ msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr "Зураг хэт том байна. 5 МБ-аас бага хэмжээтэй зураг ашиглана уу."
 
 #: frontend/src/utils/useBuilderEvents.ts:376
-msgid "Image mode"
-msgstr "Зургийн горим"
+msgid "Image Mode"
+msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
@@ -2629,25 +2629,25 @@ msgid "Move"
 msgstr "Зөөх"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
-msgid "Move / hand mode"
-msgstr "Хөдлөх / гар горим"
+msgid "Move / Hand Mode"
+msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
 msgstr "Фолдер руу зөөх"
 
 #: frontend/src/components/RouteTreeView.vue:335
-msgid "Move down in page tree"
-msgstr "Хуудасны мод дотор доош шилжих"
+msgid "Move Down in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
-msgid "Move to group"
-msgstr "Бүлэг рүү шилжих"
+msgid "Move to Group"
+msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:345
-msgid "Move up in page tree"
-msgstr "Хуудасны модоор дээшээ шилжих"
+msgid "Move Up in Page Tree"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:727
 msgid "Moved {0} token to \"{1}\""
@@ -2988,8 +2988,8 @@ msgid "Open in New Tab"
 msgstr "Шинэ таб дээр нээх"
 
 #: frontend/src/components/RouteTreeView.vue:390
-msgid "Open page or toggle folder in page tree"
-msgstr "Хуудасны модонд хуудсыг нээх эсвэл фолдерыг асаах/унтраах"
+msgid "Open Page or Toggle Folder in Page Tree"
+msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
@@ -3501,8 +3501,8 @@ msgid "Remove Stop"
 msgstr "Зогсоолыг устгах"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
-msgid "Remove from group"
-msgstr "Бүлгээс хасах"
+msgid "Remove from Group"
+msgstr ""
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
@@ -3597,8 +3597,8 @@ msgid "Reset Overrides"
 msgstr "Дахин дарах үйлдлийг дахин тохируулах"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
-msgid "Reset canvas zoom"
-msgstr "Зургийн томруулалтыг дахин тохируулах"
+msgid "Reset Canvas Zoom"
+msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
@@ -3721,8 +3721,8 @@ msgid "Save"
 msgstr "Хадгалах"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
-msgid "Save As Component"
-msgstr "Бүрэлдэхүүн хэсэг болгон хадгалах"
+msgid "Save as Component"
+msgstr ""
 
 #: frontend/src/stores/componentStore.ts:88
 msgid "Save Component"
@@ -3746,8 +3746,8 @@ msgid "Save current version"
 msgstr "Одоогийн хувилбарыг хадгалах"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
-msgid "Save page / component"
-msgstr "Хуудас / бүрэлдэхүүн хэсгийг хадгалах"
+msgid "Save Page / Component"
+msgstr ""
 
 #: builder/ai/api.py:522
 msgid "Save the page before starting a chat session"
@@ -3828,7 +3828,7 @@ msgid "Search Template"
 msgstr "Хайлтын загвар"
 
 #: frontend/src/components/Commands/index.ts:240
-msgid "Search blocks"
+msgid "Search Blocks"
 msgstr "Хайлтын блокууд"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
@@ -3930,8 +3930,8 @@ msgid "Select default color"
 msgstr "Анхдагч өнгө сонгох"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
-msgid "Select mode"
-msgstr "Горим сонгох"
+msgid "Select Mode"
+msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
@@ -4066,8 +4066,8 @@ msgid "Show Right Panel"
 msgstr "Баруун самбарыг харуулах"
 
 #: frontend/src/components/Commands/index.ts:205
-msgid "Show keyboard shortcuts"
-msgstr "Гарын товчлолыг харуулах"
+msgid "Show Keyboard Shortcuts"
+msgstr "Гарын товчлолуудыг харуулах"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
@@ -4385,8 +4385,8 @@ msgid "Text Color"
 msgstr "Текстийн өнгө"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
-msgid "Text mode"
-msgstr "Текст горим"
+msgid "Text Mode"
+msgstr ""
 
 #: builder/ai/presets.py:273
 msgid "That key was rejected. Check you copied all of it, and that it hasn't been revoked."
@@ -4545,15 +4545,15 @@ msgid "Toggle Theme"
 msgstr "Загварыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:230
-msgid "Toggle canvas dark mode"
-msgstr "Зурагны бараан горимыг асаах/унтраах"
+msgid "Toggle Canvas Dark Mode"
+msgstr "Canvas Dark Mode горимыг асаах/унтраах"
 
 #: frontend/src/components/Commands/index.ts:175
-msgid "Toggle left panel"
-msgstr "Зүүн самбарыг асаах/унтраах"
+msgid "Toggle Left Panel"
+msgstr ""
 
 #: frontend/src/components/Commands/index.ts:217
-msgid "Toggle panels"
+msgid "Toggle Panels"
 msgstr "Самбаруудыг асаах/унтраах"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
@@ -5016,8 +5016,8 @@ msgid "Wrap"
 msgstr "Боолт"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
-msgid "Wrap In Container"
-msgstr "Савлах сав"
+msgid "Wrap in Container"
+msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
@@ -5115,12 +5115,12 @@ msgid "Z-Index"
 msgstr "Z-индекс"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
-msgid "Zoom in"
-msgstr "Томруулж харах"
+msgid "Zoom In"
+msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:357
-msgid "Zoom out"
-msgstr "Жижигрүүлэх"
+msgid "Zoom Out"
+msgstr ""
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
