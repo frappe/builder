@@ -952,23 +952,28 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	return value if not is_empty else "undefined"
 
 
+def get_binding_key(key: str, comes_from: str, data_key: dict | None, missing: str = "{}") -> str:
+	"""Jinja expression for a bound key that survives a missing root."""
+	if comes_from == "props":
+		return jinja_safe_key(f"props.{key}", missing)
+	if comes_from == "componentData":
+		return jinja_safe_key(f"component.{key}", missing)
+	if data_key:
+		return jinja_safe_key(f"{extract_data_key(data_key)}.{key}", missing)
+	# a flat key keeps 0 and "" as-is; only a dotted path raises when its root is undefined
+	if is_safe_data_key(key) and "." not in key:
+		return key
+	return jinja_safe_key(key, missing)
+
+
 def get_dynamic_props_template(
 	prop_value: str, comes_from: str, data_key: dict | None, default_value: Any
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
-	if comes_from == "props":
-		key = jinja_safe_key(f"props.{prop_value}")
-	elif comes_from == "componentData":
-		key = jinja_safe_key(f"component.{prop_value}")
-	else:  # dataScript
-		if data_key:
-			base_key = extract_data_key(data_key)
-			key = jinja_safe_key(f"{base_key}.{prop_value}")
-		else:
-			key = prop_value
-
+	# props tell a missing path apart from an empty object, so the chain ends in none
+	key = get_binding_key(prop_value, comes_from, data_key, missing="none")
 	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+	return f"{{{{ {key} if {key} is defined and {key} is not none else '{fallback}' }}}}"
 
 
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
@@ -1265,15 +1270,7 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	if not key:
 		return None
 
-	# Get key based on source
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{key}")
-	else:  # dataScript
-		if data_key:
-			return f"{extract_data_key(data_key)}.{key}"
-		return key
+	return get_binding_key(key, comes_from, data_key)
 
 
 def escape_raw_text_end_tag(content: str, tag: str) -> str:
@@ -1400,7 +1397,7 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 		if not dynamic_value_doc or not dynamic_value_doc.get("key"):
 			continue
 
-		key = get_dynamic_value_key(dynamic_value_doc, original_key, data_key)
+		key = get_binding_key(original_key, dynamic_value_doc.get("comesFrom", "dataScript"), data_key)
 
 		property_name = dynamic_value_doc.get("property")
 		value_type = dynamic_value_doc.get("type")
@@ -1433,22 +1430,6 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 			block[property_name] = (
 				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(current_value)}' }}}}"
 			)
-
-
-def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
-	"""Get the Jinja key for a dynamic value."""
-	comes_from = dynamic_value_doc.get("comesFrom", "dataScript")
-
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{original_key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{original_key}")
-	else:  # dataScript
-		key = dynamic_value_doc.get("key")
-		if data_key:
-			key = f"{extract_data_key(data_key)}.{key}"
-			return jinja_safe_key(key)
-		return key
 
 
 def wrap_html_with_context(html: str, context: dict) -> str:
@@ -1852,17 +1833,19 @@ def is_safe_data_key(key) -> bool:
 	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
 
 
-def jinja_safe_key(key):
-	# convert a.b to (a or {}).get('b', {})
-	# to avoid undefined error in jinja
+def jinja_safe_key(key, missing="{}"):
+	# convert a.b to (a or {}).get('b', {}) to avoid undefined error in jinja;
+	# the last segment falls back to `missing`
 	if not is_safe_data_key(key):
 		# render nothing rather than emitting a broken Jinja expression
-		return "{}"
-	keys = (key or "").split(".")
-	key = f"({keys[0]} or {{}})"
-	for k in keys[1:]:
-		key = f"{key}.get('{k}', {{}})"
-	return key
+		return missing
+	keys = key.split(".")
+	expr = f"({keys[0]} or {{}})"
+	for k in keys[1:-1]:
+		expr = f"{expr}.get('{k}', {{}})"
+	if len(keys) > 1:
+		expr = f"{expr}.get('{keys[-1]}', {missing})"
+	return expr
 
 
 def to_jinja_literal(obj):
