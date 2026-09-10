@@ -129,16 +129,33 @@ const handleBulkUpload = async (e: Event) => {
 	isBulkUploading.value = true;
 	try {
 		const uploadPromises = Array.from(files).map((file) => uploadBuilderAsset(file, true));
-		const results = await Promise.all(uploadPromises);
-		const uploadedUrls = results
-			.map((res) => res.fileURL)
-			.filter((url) => typeof url === "string" && url.trim() !== "");
+		const results = await Promise.allSettled(uploadPromises);
+
+		const uploadedUrls: string[] = [];
+		let hasFailed = false;
+
+		for (const result of results) {
+			if (result.status === "fulfilled" && result.value?.fileURL) {
+				const url = result.value.fileURL;
+				if (typeof url === "string" && url.trim() !== "") {
+					uploadedUrls.push(url);
+				} else {
+					hasFailed = true;
+				}
+			} else {
+				hasFailed = true;
+			}
+		}
 
 		if (uploadedUrls.length > 0) {
 			const currentArr = props.arr.filter((item) => itemURL(item).trim() !== "");
 			const newArr = [...currentArr, ...uploadedUrls];
 			emit("update:arr", newArr);
 			toast.success(__("Uploaded {0} image(s)", [uploadedUrls.length]));
+		}
+
+		if (hasFailed) {
+			toast.error(__("Failed to upload images"));
 		}
 	} catch (error) {
 		toast.error(__("Failed to upload images"));
