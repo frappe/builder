@@ -20,8 +20,10 @@
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
-						<div
-							class="size-4 cursor-pointer rounded shadow-md"
+						<button
+							type="button"
+							class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+							:aria-label="__('Open background picker')"
 							@click="
 								() => {
 									activeState = variant;
@@ -183,11 +185,12 @@ const updateActiveState = (e: FocusEvent) => {
 	}
 };
 
+// a gradient or image has no text worth editing, so focus goes straight to the picker
 const handleFocusIn = (e: FocusEvent) => {
 	updateActiveState(e);
 	const target = e.target as HTMLElement;
 	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
-	if (!getColorToken(activeState.value)) toggle();
+	if (hasImage(activeState.value)) toggle();
 };
 
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {
@@ -212,10 +215,12 @@ watch(
 	{ immediate: true },
 );
 
+const hasImage = (state: string | null) =>
+	Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
+
 const getColorToken = (state: string | null) => {
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
-	const hasImage = Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
-	return !hasImage && color?.startsWith("var(--") ? color : null;
+	return !hasImage(state) && color?.startsWith("var(--") ? color : null;
 };
 
 // the var() value, not the name, so the dropdown marks it as selected
