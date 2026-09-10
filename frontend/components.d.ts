@@ -89,6 +89,7 @@ declare module 'vue' {
     FontInput: typeof import('./src/components/Controls/FontInput.vue')['default']
     FontInputActions: typeof import('./src/components/Controls/FontInputActions.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
+    GapHandler: typeof import('./src/components/GapHandler.vue')['default']
     GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']

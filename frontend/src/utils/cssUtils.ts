@@ -225,7 +225,10 @@ function shortenNumber(num: number): string {
 // read/write logic is identical, so each type just declares its shape here.
 export type SpacingType = "margin" | "padding" | "gap";
 
-const SPACING_PROPERTIES: Record<SpacingType, { longhands: styleProperty[]; slots: ShorthandSlots }> = {
+export const SPACING_PROPERTIES: Record<
+	SpacingType,
+	{ longhands: styleProperty[]; slots: ShorthandSlots }
+> = {
 	margin: { longhands: ["marginTop", "marginRight", "marginBottom", "marginLeft"], slots: 4 },
 	padding: { longhands: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"], slots: 4 },
 	gap: { longhands: ["rowGap", "columnGap"], slots: 2 },
