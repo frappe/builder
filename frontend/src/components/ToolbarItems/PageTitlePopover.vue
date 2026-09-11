@@ -17,14 +17,16 @@
 							class="lucide-shield-user size-4 text-ink-amber-6"
 							v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 					</Tooltip>
-					<Tooltip :text="__('Publicly accessible')" :hoverDelay="0.6">
+					<Tooltip :text="__('Currently live')" :hoverDelay="0.6">
 						<span
-							class="lucide-globe size-4"
+							class="flex size-4 items-center justify-center"
 							v-if="
 								pageStore.activePage?.published &&
 								!pageStore.activePage?.authenticated_access &&
 								!pageStore.isHomePage(pageStore.activePage)
-							" />
+							">
+							<span class="size-2 rounded-full bg-green-500" />
+						</span>
 					</Tooltip>
 					<span
 						class="max-w-48 truncate text-base text-ink-gray-8"
