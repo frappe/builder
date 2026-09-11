@@ -7,14 +7,14 @@
 		}"
 		@click.stop>
 		<div
-			class="padding-handler pointer-events-none absolute flex w-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute z-10 flex w-full bg-purple-400"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 			}"
 			ref="topPaddingHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > 0.5"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				:style="{
 					borderWidth: handleBorderWidth,
 					bottom: topHandle.bottom,
@@ -30,14 +30,14 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute bottom-0 flex w-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute bottom-0 z-10 flex w-full bg-purple-400"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
 			ref="bottomPaddingHandler">
 			<div
-				class="pointer-events-auto absolute left-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > 0.5"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				:style="{
 					borderWidth: handleBorderWidth,
 					top: bottomHandle.top,
@@ -53,14 +53,14 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute left-0 flex h-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute left-0 z-10 flex h-full bg-purple-400"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 			}"
 			ref="leftPaddingHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > 0.5"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				:style="{
 					borderWidth: handleBorderWidth,
 					right: leftHandle.right,
@@ -76,14 +76,14 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute right-0 flex h-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute right-0 z-10 flex h-full bg-purple-400"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 			}"
 			ref="rightPaddingHandler">
 			<div
-				class="pointer-events-auto absolute top-[50%] rounded-full border-2 border-purple-500 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > 0.5"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				:style="{
 					borderWidth: handleBorderWidth,
 					left: rightHandle.left,
@@ -144,6 +144,8 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
 	() => props.targetBlock,
 );
+
+const HANDLE_MIN_SCALE = 0.5;
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
