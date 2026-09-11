@@ -8,7 +8,7 @@
 				<div v-else class="flex items-center gap-1">
 					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
 						<span
-							class="lucide-home h-[14px] w-4"
+							class="lucide-home size-4"
 							aria-hidden="true"
 							v-if="pageStore.isHomePage(pageStore.activePage)" />
 					</Tooltip>
@@ -19,7 +19,7 @@
 					</Tooltip>
 					<Tooltip :text="__('Publicly accessible')" :hoverDelay="0.6">
 						<span
-							class="lucide-globe mr-1 h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
+							class="lucide-globe size-4"
 							v-if="
 								pageStore.activePage?.published &&
 								!pageStore.activePage?.authenticated_access &&
