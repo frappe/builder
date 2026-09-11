@@ -100,7 +100,8 @@ export function copyBuilderBlocks(
 		// Handle component children and create copy
 		let blockCopy = null;
 		if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
-			blockCopy = detachBlockFromComponent(block, null);
+			// the detached copy is a live Block whose children point back at it
+			blockCopy = getCopyWithoutParent(detachBlockFromComponent(block, null));
 		} else {
 			blockCopy = getCopyWithoutParent(block);
 		}
