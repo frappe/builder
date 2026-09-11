@@ -17,17 +17,6 @@
 							class="lucide-shield-user size-4 text-ink-amber-6"
 							v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
 					</Tooltip>
-					<Tooltip :text="__('Currently live')" :hoverDelay="0.6">
-						<span
-							class="flex size-4 items-center justify-center"
-							v-if="
-								pageStore.activePage?.published &&
-								!pageStore.activePage?.authenticated_access &&
-								!pageStore.isHomePage(pageStore.activePage)
-							">
-							<span class="size-2 rounded-full bg-green-500" />
-						</span>
-					</Tooltip>
 					<span
 						class="max-w-48 truncate text-base text-ink-gray-8"
 						:title="pageStore?.activePage?.page_title || __('My Page')">
@@ -39,6 +28,13 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
+				<Badge
+					theme="green"
+					size="sm"
+					v-if="pageStore.activePage?.published"
+					class="dark:bg-green-900 dark:text-green-400">
+					{{ __("Live") }}
+				</Badge>
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
@@ -60,7 +56,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
-import { Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
