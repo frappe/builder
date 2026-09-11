@@ -18,9 +18,9 @@
 							{{ page.page_title || page.page_name }}
 						</p>
 					</div>
-					<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
+					<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
 						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
-							{{ __("Edited {0}", [timeAgo]) }}
+							{{ sortedByCreation ? __("Created {0}", [timeAgo]) : __("Edited {0}", [timeAgo]) }}
 						</p>
 					</UseTimeAgo>
 				</span>
@@ -50,15 +50,18 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import { useDashboardState } from "@/composables/useDashboardState";
 import { BuilderPage } from "@/types/doctypes";
-import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Tooltip } from "frappe-ui";
+import { computed } from "vue";
 
 const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
 
-const user = getUserInfo(props.page.modified_by);
+const { orderBy } = useDashboardState();
+const sortedByCreation = computed(() => orderBy.value === "creation");
+const timestamp = computed(() => (sortedByCreation.value ? props.page.creation : props.page.modified));
 </script>
