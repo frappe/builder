@@ -100,7 +100,8 @@ export function copyBuilderBlocks(
 		// Handle component children and create copy
 		let blockCopy = null;
 		if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
-			blockCopy = detachBlockFromComponent(block, null);
+			// the detached copy is a live Block whose children point back at it
+			blockCopy = getCopyWithoutParent(detachBlockFromComponent(block, null));
 		} else {
 			blockCopy = getCopyWithoutParent(block);
 		}
@@ -149,7 +150,7 @@ export function copyBuilderBlocks(
 		};
 		dataToCopy.pageScripts = pageStore.activePageScripts;
 	}
-	copyToClipboard(dataToCopy, e, "builder-copied-blocks");
+	writeClipboardPayload(e, dataToCopy);
 	copyEntirePage && toast.success(__("Page Copied"));
 }
 
@@ -157,10 +158,11 @@ export function copyBuilderBlocks(
  * The "builder-copied-blocks" clipboard type and the shape below are a public
  * contract: the Copy to Frappe Builder browser extension writes this payload from
  * any web page (github.com/surajshetty3416/copy-to-builder, see its CONTRACT.md).
+ * The JSON is also mirrored into text/html, so a copy pastes across browsers.
  * Adding keys is safe, renaming or removing the ones it writes is not.
  */
 export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: string): Promise<void> {
-	const data = e.clipboardData?.getData("builder-copied-blocks") as string;
+	const data = readClipboardPayload(e);
 	if (!data || !isJSONString(data)) return;
 
 	const clipboardData = JSON.parse(data) as BuilderClipboardData;
@@ -593,4 +595,32 @@ function generateHash(initialId: string, siteURL: string, appendHash = false): s
 		const shortHash = Math.abs(hash).toString(36).slice(0, 8);
 		return `${initialId}_${shortHash}`;
 	}
+}
+
+// Chrome and Firefox keep custom clipboard types in private formats the other can't
+// read, so the payload is mirrored into text/html, which both share.
+const HTML_PAYLOAD_ATTRIBUTE = "data-builder-copied-blocks";
+
+function writeClipboardPayload(e: ClipboardEvent, data: BuilderClipboardData) {
+	const payload = JSON.stringify(data);
+	const holder = document.createElement("span");
+	holder.setAttribute(HTML_PAYLOAD_ATTRIBUTE, payload);
+	copyToClipboard(payload, e, "builder-copied-blocks");
+	copyToClipboard(holder.outerHTML, e, "text/html");
+}
+
+function readClipboardPayload(e: ClipboardEvent): string {
+	const data = e.clipboardData?.getData("builder-copied-blocks");
+	if (data) return data;
+	const html = e.clipboardData?.getData("text/html");
+	if (!html?.includes(HTML_PAYLOAD_ATTRIBUTE)) return "";
+	const holder = new DOMParser()
+		.parseFromString(html, "text/html")
+		.querySelector(`[${HTML_PAYLOAD_ATTRIBUTE}]`);
+	return holder?.getAttribute(HTML_PAYLOAD_ATTRIBUTE) || "";
+}
+
+// a rich-text editor would paste the empty text/html mirror over its selection
+export function hasBuilderClipboardPayload(e: ClipboardEvent): boolean {
+	return Boolean(readClipboardPayload(e));
 }
