@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-10 04:49\n"
+"PO-Revision-Date: 2026-09-13 04:52\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -1554,7 +1554,7 @@ msgstr "Redigering är inaktiverad medan webbplats uppdateras. Försök igen om 
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:53
 msgid "Editor Config"
-msgstr "Redigerare Konfiguration"
+msgstr "Redigera Inställningar"
 
 #. Label of the element (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
@@ -3272,7 +3272,7 @@ msgstr "Förhindra sökmotorer från att indexera denna sida"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
-msgstr "Förhindra att denna webbplats automatiskt växlar till mörkt läge"
+msgstr "Förhindra att denna webbplats automatiskt byter till mörkt läge"
 
 #: frontend/src/components/Settings/GlobalDeveloper.vue:23
 msgid "Prevents click events from being emulated in the editor for blocks with Block Client Scripts."
@@ -4274,11 +4274,11 @@ msgstr "Stöder Vision"
 
 #: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Dark Mode"
-msgstr "Växla till Mörkt Läge"
+msgstr "Byt till Mörkt Läge"
 
 #: frontend/src/components/Commands/index.ts:191
 msgid "Switch to Light Mode"
-msgstr "Växla till Ljust Läge"
+msgstr "Byt till Ljust Läge"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:174
 msgid "Sync Component"
@@ -4525,36 +4525,36 @@ msgstr "Idag"
 
 #: frontend/src/components/Commands/index.ts:226
 msgid "Toggle Canvas Dark Mode"
-msgstr "Växla Arbetsyta Mörkt Läge"
+msgstr "Byt Arbetsyta Mörkt Läge"
 
 #: frontend/src/components/BuilderCanvas.vue:29
 msgid "Toggle Canvas Dark Mode (⌘⇧D)"
-msgstr "Växla Arbetsyta Mörkt Läge (⌘⇧D)"
+msgstr "Byt Arbetsyta Mörkt Läge (⌘⇧D)"
 
 #: frontend/src/pages/PagePreview.vue:29
 msgid "Toggle Dark Mode"
-msgstr "Växla Mörkt Läge"
+msgstr "Byt Mörkt Läge"
 
 #: frontend/src/components/Commands/index.ts:213
 msgid "Toggle Panels"
-msgstr "Växla Paneler"
+msgstr "Byt Paneler"
 
 #: frontend/src/components/DashboardSidebar.vue:181
 #: frontend/src/components/MainMenu.vue:96
 msgid "Toggle Theme"
-msgstr "Växla Tema"
+msgstr "Byt Tema"
 
 #: frontend/src/components/Commands/index.ts:230
 msgid "Toggle Canvas Dark Mode"
-msgstr "Växla Arbetsyta Mörkt Läge"
+msgstr "Byt Arbetsyta Mörkt Läge"
 
 #: frontend/src/components/Commands/index.ts:175
 msgid "Toggle Left Panel"
-msgstr "Växla Vänster Panel"
+msgstr "Byt Vänster Panel"
 
 #: frontend/src/components/Commands/index.ts:217
 msgid "Toggle Panels"
-msgstr "Växla Paneler"
+msgstr "Byt Paneler"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
