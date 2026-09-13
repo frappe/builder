@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-08-21 10:00:00.000000",
- "description": "What an extension made. These rows outlive every uninstall, because a doctype holds the site's data, a token styles every page, and a client script runs for every visitor. They name the extension rather than one user's installation, so a later installation of the same extension owns what an earlier one made.",
+ "description": "What an extension made. These rows outlive every uninstall. A doctype holds site data, a token styles pages, and a client script runs for visitors. They name the extension itself, not one user's installation, so a later installation owns what an earlier one made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -11,7 +11,7 @@
  ],
  "fields": [
   {
-   "description": "The namespaced identity a frame carries over the bridge, as \"publisher/name\".",
+   "description": "The extension's namespaced identity, in the form \"publisher/name\".",
    "fieldname": "extension",
    "fieldtype": "Data",
    "in_list_view": 1,

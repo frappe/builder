@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-08-20 10:00:00.000000",
- "description": "What one extension may do to one doctype, for one installation. The user answers this in the Builder editor, never here. A grant belongs to the installation that holds it, so one user's answer applies to nobody else, and two copies of one extension answer separately. Each call still runs with that user's own permissions, so a grant widens what an extension may attempt, never what Frappe allows. An admin can narrow a grant here, or delete it to let the extension ask again.",
+ "description": "What one extension may do to one doctype, for one installation. The user grants this in the Builder editor, not here, and it cannot exceed the user's own Frappe permissions. An admin can narrow a grant here, or delete it to let the extension ask again.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -14,7 +14,7 @@
  ],
  "fields": [
   {
-   "description": "The copy this answer was given to. It names the user, the source and the extension.",
+   "description": "The installation this grant belongs to. It identifies the user, the source, and the extension.",
    "fieldname": "installation",
    "fieldtype": "Link",
    "in_list_view": 1,

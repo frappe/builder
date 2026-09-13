@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One user's installation of one extension. It holds their own copy of the built entry, the version they run, and what they allowed the extension to do. Another user's installation of the same extension is a separate record with separate files. Deleting this removes that user's copy, their grants, and their extension state, and leaves every doctype, token and client script the extension made.",
+ "description": "One user's installation of one extension, with its own build, version, and permissions. Deleting it removes the user's copy, grants, and extension state, but keeps any doctype, token, or client script the extension made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -23,7 +23,7 @@
  ],
  "fields": [
   {
-   "description": "Set from the session. The server never reads this from a caller.",
+   "description": "The server sets this from the session. It never reads this value from a caller.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -34,7 +34,7 @@
    "reqd": 1
   },
   {
-   "description": "The namespaced identity a frame carries over the bridge, as \"publisher/name\".",
+   "description": "The extension's namespaced identity, in the form \"publisher/name\".",
    "fieldname": "extension",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -44,7 +44,7 @@
    "reqd": 1
   },
   {
-   "description": "Where the files came from, shown in the panel. Not part of the identity: one user holds one installation of a name, whatever the source. Empty for an extension installed from a directory.",
+   "description": "Where the files came from. Shown in the panel, but not part of the extension's identity. Empty for an extension installed from a directory.",
    "fieldname": "source_url",
    "fieldtype": "Data",
    "in_standard_filter": 1,
@@ -79,7 +79,7 @@
    "label": "Icon"
   },
   {
-   "description": "The extension's own README, as Markdown. Builder Hub sends it, or the installer reads it from the author's folder.",
+   "description": "The extension's README, in Markdown. Builder Hub sends it, or the installer reads it from the author's folder.",
    "fieldname": "readme",
    "fieldtype": "Long Text",
    "ignore_xss_filter": 1,
@@ -94,7 +94,7 @@
    "reqd": 1
   },
   {
-   "description": "Of the installed files. It also keys the editor frame, so a rebuild remounts it.",
+   "description": "A hash of the installed files. It also keys the editor frame, so a rebuild remounts the frame.",
    "fieldname": "checksum",
    "fieldtype": "Data",
    "label": "Checksum",
@@ -121,7 +121,7 @@
   },
   {
    "default": "Ready",
-   "description": "A Hub install starts as Installing while a background job downloads it, then becomes Ready or Failed. Every other install path is Ready at once.",
+   "description": "A Hub install starts as Installing while a background job downloads it. It then becomes Ready or Failed. Every other install path is Ready right away.",
    "fieldname": "install_state",
    "fieldtype": "Select",
    "in_standard_filter": 1,

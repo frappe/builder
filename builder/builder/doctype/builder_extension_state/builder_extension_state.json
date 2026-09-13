@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One value an extension stored for one user. The extension owns this outright: no capability gates it, and nothing but that extension reads it. It lives here rather than in the browser so it follows the user between machines, and so two people sharing a machine do not share a store.",
+ "description": "One value an extension stored for one user. Only that extension reads it, and no capability gates it. It lives on the server, not the browser, so it follows the user between machines.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -11,7 +11,7 @@
  ],
  "fields": [
   {
-   "description": "The installation that stored this. It names the user, so this record needs no second owner.",
+   "description": "The installation that stored this value. It names the user, so this record needs no separate owner.",
    "fieldname": "installation",
    "fieldtype": "Link",
    "in_list_view": 1,
