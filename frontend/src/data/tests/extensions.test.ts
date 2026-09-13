@@ -11,8 +11,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const resource = { data: null as unknown[] | null, fetch: vi.fn() };
 const call = vi.fn();
+let lastResourceConfig: { params?: Record<string, unknown>; transform?: (data: unknown) => unknown } | undefined;
 
-vi.mock("frappe-ui", () => ({ call, createResource: () => resource }));
+vi.mock("frappe-ui", () => ({
+	call,
+	createResource: (config: typeof lastResourceConfig) => {
+		lastResourceConfig = config;
+		return resource;
+	},
+	createDocumentResource: () => resource,
+	frappeRequest: vi.fn(),
+	setConfig: vi.fn(),
+}));
 
 const installed = (name: string) => ({ name, label: name, entry: `/${name}.js`, capabilities: [] });
 const development = (name: string) => ({
@@ -79,10 +89,11 @@ describe("installedExtensions", () => {
 	});
 });
 
-describe("installationDetails", () => {
+describe("getInstallationDetails", () => {
 	beforeEach(async () => {
 		resource.data = null;
 		call.mockReset();
+		lastResourceConfig = undefined;
 		modules = await loadModule();
 	});
 
@@ -107,11 +118,21 @@ describe("installationDetails", () => {
 			capabilities: ["block.update"],
 		});
 
-	it("lets the dev server answer for what it shows a user", async () => {
-		call.mockResolvedValue(recorded);
+	const transform = (details: unknown) => {
+		modules.data.getInstallationDetails("acme/icons");
+		return lastResourceConfig!.transform!(details);
+	};
+
+	it("requests the record by extension name", () => {
+		modules.data.getInstallationDetails("acme/icons");
+
+		expect(lastResourceConfig!.params).toEqual({ extension: "acme/icons" });
+	});
+
+	it("lets the dev server answer for what it shows a user", () => {
 		modules.dev.devExtension.value = running();
 
-		await expect(modules.data.installationDetails("acme/icons")).resolves.toMatchObject({
+		expect(transform(recorded)).toMatchObject({
 			label: "Icons",
 			version: "1.2.0",
 			development_server: "http://localhost:5173",
@@ -124,29 +145,25 @@ describe("installationDetails", () => {
 	 * The record holds what the user narrowed to, and the entry holds what the
 	 * manifest asked for. Reading the entry would show a grant they took back.
 	 */
-	it("lets the record answer for the capabilities, which a user can narrow", async () => {
-		call.mockResolvedValue({ ...recorded, granted_capabilities: ["block.update"] });
+	it("lets the record answer for the capabilities, which a user can narrow", () => {
 		modules.dev.devExtension.value = running();
 
-		const details = await modules.data.installationDetails("acme/icons");
+		const details = transform({ ...recorded, granted_capabilities: ["block.update"] }) as typeof recorded;
 
 		expect(details.requested_capabilities).toEqual(recorded.requested_capabilities);
 		expect(details.granted_capabilities).toEqual(["block.update"]);
 	});
 
-	it("keeps the grants, which only the record holds", async () => {
-		call.mockResolvedValue(recorded);
+	it("keeps the grants, which only the record holds", () => {
 		modules.dev.devExtension.value = running();
 
-		const details = await modules.data.installationDetails("acme/icons");
+		const details = transform(recorded) as typeof recorded;
 
 		expect(details.grants).toEqual(recorded.grants);
 		expect(details.installed_on).toBe("2026-09-03 10:00:00");
 	});
 
-	it("answers with the record untouched for an installed extension", async () => {
-		call.mockResolvedValue(recorded);
-
-		await expect(modules.data.installationDetails("acme/icons")).resolves.toEqual(recorded);
+	it("answers with the record untouched for an installed extension", () => {
+		expect(transform(recorded)).toEqual(recorded);
 	});
 });

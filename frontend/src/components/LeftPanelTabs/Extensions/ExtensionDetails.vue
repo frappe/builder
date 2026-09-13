@@ -134,7 +134,7 @@ import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/Extensi
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	installedExtensions,
-	installationDetails,
+	getInstallationDetails,
 	getHubExtension,
 	installFromHub,
 	setExtensionEnabled,
@@ -147,14 +147,16 @@ import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";
 import { Badge, Button, LoadingIndicator, toast } from "frappe-ui";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 
 const props = defineProps<{ extension: string; isInstalled: boolean }>();
 const emit = defineEmits<{ back: [] }>();
 
 const builderStore = useBuilderStore();
 
-const details = ref<InstallationDetails | null>(null);
+const installationDetails = shallowRef<ReturnType<typeof getInstallationDetails> | null>(null);
+const hubDetails = ref<InstallationDetails | null>(null);
+const details = computed(() => installationDetails.value?.data ?? hubDetails.value);
 const error = ref("");
 const working = ref(false);
 
@@ -181,12 +183,17 @@ const installedOn = computed(() =>
 );
 
 const load = async () => {
-	details.value = null;
+	installationDetails.value = null;
+	hubDetails.value = null;
 	error.value = "";
 	try {
-		details.value = props.isInstalled
-			? await installationDetails(props.extension)
-			: fromHub(await getHubExtension(props.extension));
+		if (props.isInstalled) {
+			const resource = getInstallationDetails(props.extension);
+			installationDetails.value = resource;
+			await resource.fetch();
+		} else {
+			hubDetails.value = fromHub(await getHubExtension(props.extension));
+		}
 	} catch (thrown) {
 		error.value = (thrown as Error).message;
 	}
@@ -234,7 +241,16 @@ const discardInstall = async () => {
 	}
 };
 
-watch(() => props.extension, load, { immediate: true });
+watch([() => props.extension, () => props.isInstalled], load, { immediate: true });
+
+const extensionDoctypes = ["Builder User Extension", "Builder Extension Grant"];
+
+const onExtensionUpdate = (event: { doctype: string }) => {
+	if (!extensionDoctypes.includes(event.doctype) || !installationDetails.value) return;
+	installationDetails.value.reload().catch((thrown: Error) => {
+		error.value = thrown.message;
+	});
+};
 
 /** The install job finishes elsewhere. Reload this page when it touches this extension. */
 const onInstallDone = (event: { extension: string }) => {
@@ -242,7 +258,16 @@ const onInstallDone = (event: { extension: string }) => {
 };
 
 onMounted(() => builderStore.realtime.on("builder_extension_install", onInstallDone));
-onUnmounted(() => builderStore.realtime.off("builder_extension_install", onInstallDone));
+onMounted(() => {
+	// list_update is triggered on doctype saves as well
+	for (const doctype of extensionDoctypes) builderStore.realtime.emit("doctype_subscribe", doctype);
+	builderStore.realtime.on("list_update", onExtensionUpdate);
+});
+onUnmounted(() => {
+	builderStore.realtime.off("builder_extension_install", onInstallDone);
+	builderStore.realtime.off("list_update", onExtensionUpdate);
+	for (const doctype of extensionDoctypes) builderStore.realtime.doctype_unsubscribe(doctype);
+});
 
 /** Disabling unmounts every frame, so the panel has to say what it did. */
 const setEnabled = async (enabled: boolean) => {

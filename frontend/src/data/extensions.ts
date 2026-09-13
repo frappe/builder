@@ -116,6 +116,22 @@ export type InstallationDetails = UserInstallation & {
 	development_server?: string;
 };
 
+const applyDevelopmentDetails = (details: InstallationDetails): InstallationDetails => {
+	const development = devExtension.value;
+	if (!development || development.name !== details.name) return details;
+
+	return {
+		...details,
+		label: development.label,
+		description: development.description,
+		icon: development.icon,
+		version: development.version,
+		readme: development.readme,
+		is_development: true,
+		development_server: development.serverOrigin,
+	};
+};
+
 /**
  * What the panel manages, which is not what the editor mounts.
  *
@@ -167,22 +183,14 @@ export const reloadExtensions = async () => {
  * it granted, the doctype grants and the install date. What the dev server shows
  * a user comes from the dev server, which is the copy running right now.
  */
-export const installationDetails = async (extension: string): Promise<InstallationDetails> => {
-	const details = (await call(`${METHOD}.get_installation`, { extension })) as InstallationDetails;
-	const development = devExtension.value;
-	if (!development || development.name !== extension) return details;
 
-	return {
-		...details,
-		label: development.label,
-		description: development.description,
-		icon: development.icon,
-		version: development.version,
-		readme: development.readme,
-		is_development: true,
-		development_server: development.serverOrigin,
-	};
-};
+export const getInstallationDetails = (extension: string) =>
+	createResource<InstallationDetails>({
+		url: `${METHOD}.get_installation`,
+		params: { extension },
+		transform: applyDevelopmentDetails,
+		onError: (error: Error) => console.error("Could not load installation details", error),
+	});
 
 /**
  * The answer that stands for one doctype, answering with the grants after it.
