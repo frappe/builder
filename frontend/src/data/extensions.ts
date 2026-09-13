@@ -1,10 +1,19 @@
 import { devExtension, setDevCapabilities } from "@/extensions/devExtension";
 import type { Capability, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { call, createResource } from "frappe-ui";
-import { computed } from "vue";
+import {
+	call,
+	createDocumentResource,
+	createListResource,
+	createResource,
+	getCachedDocumentResource,
+	onDocUpdate,
+} from "frappe-ui";
+import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
 const METHOD = "builder.extensions.installations";
+export const INSTALLATION_DOCTYPE = "Builder User Extension";
+const GRANT_DOCTYPE = "Builder Extension Grant";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
 
@@ -25,11 +34,92 @@ function ensureProtocol(url: string, defaultProtocol = "http") {
 	return result;
 }
 
-const extensionsResource = createResource({
+type EnabledExtensionSummary = {
+	installation_id: string;
+	name: string;
+	label?: string;
+	description?: string;
+	icon?: string;
+};
+
+type InstallationDocument = {
+	extension: string;
+	label?: string;
+	description?: string;
+	enabled: boolean | number;
+	checksum?: string;
+	granted_capabilities?: string;
+	/** The rest is unread by the mount list, and read only by the details panel. */
+	version?: string;
+	source_url?: string;
+	install_state?: "Installing" | "Ready" | "Failed";
+	install_error?: string;
+	installed_on?: string;
+	readme?: string;
+	requested_capabilities?: string;
+};
+
+const enabledExtensions = createResource<EnabledExtensionSummary[]>({
 	url: "builder.extensions.registry.get_enabled_extensions",
 	// losing this list costs the editor its extensions, never the editor itself
 	onError: (error: Error) => console.error("Could not load extensions", error),
 });
+
+/** The Vue instance a document resource ties its realtime subscription to. Set once, from the editor. */
+let resourceVm: unknown;
+
+const grantedCapabilities = (value: string | undefined): Capability[] => {
+	if (!value) return [];
+	return JSON.parse(value) as Capability[];
+};
+
+/**
+ * One installation's document, shared by the mount list and the details panel.
+ *
+ * `frappe-ui` caches this itself by doctype and name, so calling it again for an
+ * installation already loaded returns the same live resource rather than a
+ * second copy racing it.
+ */
+const installationDocument = (installationId: string) =>
+	createDocumentResource<InstallationDocument>(
+		{
+			doctype: INSTALLATION_DOCTYPE,
+			name: installationId,
+			auto: false,
+			realtime: Boolean(resourceVm),
+			onError: (error: Error) => console.error("Could not load extension", error),
+		},
+		resourceVm,
+	);
+
+/**
+ * Fetch one installation's document into that shared cache.
+ *
+ * Read it back with `getCachedDocumentResource`, never held here: `toInstalledExtension`
+ * only reads that cache, so a fetch never happens as a side effect of a computed.
+ */
+const loadInstallationDocument = (summary: EnabledExtensionSummary) => {
+	void installationDocument(summary.installation_id)
+		.reload()
+		.catch(() => undefined);
+};
+
+const toInstalledExtension = (summary: EnabledExtensionSummary): InstalledExtension | null => {
+	const document = getCachedDocumentResource<InstallationDocument>(
+		INSTALLATION_DOCTYPE,
+		summary.installation_id,
+	)?.doc;
+	if (!document || !document.enabled) return null;
+
+	return {
+		name: summary.name,
+		label: document.label ?? summary.label ?? summary.name,
+		description: document.description ?? summary.description,
+		icon: summary.icon,
+		checksum: document.checksum,
+		capabilities: grantedCapabilities(document.granted_capabilities),
+	};
+};
 
 /**
  * Every extension this user runs: their installations, plus the one loaded from a
@@ -37,14 +127,22 @@ const extensionsResource = createResource({
  * name, because two entries would give it two frames.
  */
 export const installedExtensions = computed<InstalledExtension[]>(() => {
-	const installed: InstalledExtension[] = extensionsResource.data ?? [];
+	const installed = (enabledExtensions.data ?? []).flatMap((summary) => {
+		const extension = toInstalledExtension(summary);
+		return extension ? [extension] : [];
+	});
 	const development = devExtension.value;
 	if (!development) return installed;
 
 	return [...installed.filter((extension) => extension.name !== development.name), development];
 });
 
-export const loadExtensions = () => extensionsResource.fetch();
+export const loadExtensions = async (vm?: unknown) => {
+	if (vm) resourceVm = vm;
+	const summaries = (await enabledExtensions.fetch()) ?? [];
+	summaries.forEach(loadInstallationDocument);
+	return summaries;
+};
 
 /**
  * The built entry of one installation, which a frame runs from a Blob.
@@ -83,6 +181,8 @@ export const extensionSource = (extension: InstalledExtension): Promise<string> 
  */
 export type UserInstallation = {
 	name: string;
+	/** The document's own name, not the extension's. Empty for the dev extension, which has none. */
+	installation_id?: string;
 	label?: string;
 	description?: string;
 	icon?: string;
@@ -138,7 +238,7 @@ const applyDevelopmentDetails = (details: InstallationDetails): InstallationDeta
  * `installedExtensions` drops a disabled installation, because a frame must not
  * run for one. The panel keeps it, because turning it back on is the point.
  */
-const installationsResource = createResource({
+const installationsResource = createResource<UserInstallation[]>({
 	url: "builder.extensions.installations.get_user_installations",
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
@@ -173,7 +273,45 @@ export const loadUserInstallations = () => installationsResource.fetch();
  * a grant change remounts its frames, so neither list may be refreshed alone.
  */
 export const reloadExtensions = async () => {
-	await Promise.all([extensionsResource.fetch(), installationsResource.fetch()]);
+	await Promise.all([loadExtensions(), installationsResource.fetch()]);
+};
+
+/** The raw row `userInstallations` replaces for a running dev extension, kept for its `installation_id`. */
+const findInstallation = (extension: string) =>
+	(installationsResource.data ?? []).find((row) => row.name === extension);
+
+/**
+ * Every installation this has already wired a grant subscription for.
+ *
+ * A grant is inserted or deleted rather than only edited, so `createListResource`'s
+ * own `realtime` option cannot keep it live: that option only refreshes a row
+ * already in the fetched page, never a new one. `onDocUpdate` is the same
+ * primitive `createDocumentResource` uses for its own realtime, applied here by
+ * hand, once per installation, so a bare reload catches the row it would miss.
+ */
+const grantsSubscribed = new Set<string>();
+
+const installationGrants = (installationId: string) => {
+	const resource = createListResource<ExtensionGrant>(
+		{
+			doctype: GRANT_DOCTYPE,
+			filters: [["installation", "=", installationId]],
+			fields: ["document_type", "can_read", "can_write", "can_delete", "denied"],
+			orderBy: "document_type asc",
+			auto: false,
+			cache: ["installation-grants", installationId],
+			onError: (error: Error) => console.error("Could not load extension grants", error),
+		},
+		resourceVm,
+	);
+
+	const socket = (resourceVm as { $socket?: Parameters<typeof onDocUpdate>[0] } | undefined)?.$socket;
+	if (socket && !grantsSubscribed.has(installationId)) {
+		grantsSubscribed.add(installationId);
+		onDocUpdate(socket, GRANT_DOCTYPE, () => void resource.reload());
+	}
+
+	return resource;
 };
 
 /**
@@ -182,15 +320,42 @@ export const reloadExtensions = async () => {
  * A development installation is real, so the record answers for the capabilities
  * it granted, the doctype grants and the install date. What the dev server shows
  * a user comes from the dev server, which is the copy running right now.
+ *
+ * Composed from what the mount list and the panel's own list already fetch,
+ * rather than a details call of its own: the document carries the readme and the
+ * raw capability lists, `findInstallation` carries the icon and the install
+ * state, and only the grants are fetched here for the first time.
  */
+export const useInstallationDetails = (extension: string) => {
+	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
+	const grants = shallowRef<ReturnType<typeof installationGrants> | null>(null);
 
-export const getInstallationDetails = (extension: string) =>
-	createResource<InstallationDetails>({
-		url: `${METHOD}.get_installation`,
-		params: { extension },
-		transform: applyDevelopmentDetails,
-		onError: (error: Error) => console.error("Could not load installation details", error),
+	const reload = async () => {
+		const installationId = findInstallation(extension)?.installation_id;
+		if (!installationId) return;
+
+		document.value = installationDocument(installationId);
+		grants.value = installationGrants(installationId);
+		await Promise.all([document.value.reload(), grants.value.reload()]);
+	};
+
+	const details = computed<InstallationDetails | null>(() => {
+		const installation = findInstallation(extension);
+		const doc = document.value?.doc;
+		if (!installation || !doc) return null;
+
+		return applyDevelopmentDetails({
+			...installation,
+			installed_on: doc.installed_on ?? "",
+			readme: doc.readme,
+			requested_capabilities: grantedCapabilities(doc.requested_capabilities),
+			granted_capabilities: grantedCapabilities(doc.granted_capabilities),
+			grants: grants.value?.data ?? [],
+		});
 	});
+
+	return { details, reload };
+};
 
 /**
  * The answer that stands for one doctype, answering with the grants after it.
@@ -225,7 +390,6 @@ export const setGrantedCapabilities = async (extension: string, capabilities: Ca
 	// the mount list leaves a development installation out, so the reload below
 	// cannot carry the new grant to the entry the browser gate reads
 	setDevCapabilities(extension, granted);
-	await reloadExtensions();
 	return granted;
 };
 

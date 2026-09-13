@@ -46,10 +46,10 @@ class TestGetEnabledExtensions(FrappeTestCase):
 
 	def test_two_users_can_run_different_versions(self):
 		drop_installations("acme/versioned")
-		make_installation("acme/versioned", version="1.0.0")
+		mine = make_installation("acme/versioned", version="1.0.0")
 		make_installation("acme/versioned", user=make_user(), version="2.0.0")
 
-		self.assertEqual(self.listed("acme/versioned")["checksum"], "sum123")
+		self.assertEqual(self.listed("acme/versioned")["installation_id"], mine.name)
 		theirs = frappe.db.get_value(
 			INSTALLATION_DOCTYPE, {"user": make_user(), "extension": "acme/versioned"}, "version"
 		)
@@ -71,20 +71,12 @@ class TestGetEnabledExtensions(FrappeTestCase):
 
 		self.assertEqual(self.listed("acme/described")["description"], "Add and manage icons.")
 
-	def test_carries_the_checksum_that_keys_the_frame(self):
-		make_installation("acme/keyed", checksum="abc123")
+	def test_leaves_runtime_details_for_the_document_resource(self):
+		make_installation("acme/granted", capabilities=["context.read", "block.read"], checksum="abc123")
 
-		self.assertEqual(self.listed("acme/keyed")["checksum"], "abc123")
-
-	def test_capabilities_come_back_as_a_list(self):
-		make_installation("acme/granted", capabilities=["context.read", "block.read"])
-
-		self.assertEqual(self.listed("acme/granted")["capabilities"], ["context.read", "block.read"])
-
-	def test_capabilities_are_empty_when_none_were_granted(self):
-		make_installation("acme/plain", capabilities=[])
-
-		self.assertEqual(self.listed("acme/plain")["capabilities"], [])
+		listed = self.listed("acme/granted")
+		self.assertNotIn("checksum", listed)
+		self.assertNotIn("capabilities", listed)
 
 	def test_lists_an_extension_that_draws_nothing(self):
 		"""Every extension needs its entry frame, whether or not it registers a surface."""

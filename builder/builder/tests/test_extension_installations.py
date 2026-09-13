@@ -9,12 +9,12 @@ from builder.builder.tests.extension_fixtures import (
 	make_installation,
 	make_user,
 )
-from builder.extensions.access import assert_extension_access
+from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access, find_own_installation
 from builder.extensions.data import record_extension_grant
 from builder.extensions.installations import (
-	get_installation,
 	get_uninstall_summary,
 	get_user_installations,
+	installation_grants,
 	set_extension_enabled,
 	set_extension_grant,
 	set_granted_capabilities,
@@ -65,28 +65,34 @@ class TestUserInstallations(FrappeTestCase):
 
 
 class TestInstallationDetails(FrappeTestCase):
+	"""What a row never shows now sits on the document itself, for the client to read
+	directly: the panel keys it off `installation_id` instead of a details call."""
+
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_answers_with_what_a_row_never_shows(self):
-		make_installation(
+	def test_names_the_document_a_client_reads_the_rest_from(self):
+		installation = make_installation(EXTENSION)
+
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+
+		self.assertEqual(listed["installation_id"], installation.name)
+
+	def test_the_document_answers_with_what_a_row_never_shows(self):
+		installation = make_installation(
 			EXTENSION,
 			capabilities=["page.read", "token.write"],
 			granted=["page.read"],
 			readme="# Managed\n\nIt does one thing.",
 		)
 
-		details = get_installation(EXTENSION)
+		document = frappe.get_doc(INSTALLATION_DOCTYPE, installation.name)
 
-		self.assertEqual(details["requested_capabilities"], ["page.read", "token.write"])
-		self.assertEqual(details["granted_capabilities"], ["page.read"])
-		self.assertIn("It does one thing", details["readme"])
-		self.assertIsNotNone(details["installed_on"])
-
-	def test_refuses_an_extension_this_user_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			get_installation(EXTENSION)
+		self.assertEqual(document.requested, ["page.read", "token.write"])
+		self.assertEqual(document.capabilities, ["page.read"])
+		self.assertIn("It does one thing", document.readme)
+		self.assertIsNotNone(document.installed_on)
 
 
 class TestEnableAndDisable(FrappeTestCase):
@@ -100,7 +106,8 @@ class TestEnableAndDisable(FrappeTestCase):
 		set_extension_enabled(EXTENSION, False)
 
 		self.assertNotIn(EXTENSION, names(get_enabled_extensions()))
-		self.assertFalse(get_installation(EXTENSION)["enabled"])
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		self.assertFalse(listed["enabled"])
 
 	def test_disabling_closes_the_gate(self):
 		make_installation(EXTENSION)
@@ -247,10 +254,11 @@ class TestGrantAnswers(FrappeTestCase):
 
 	def test_asking_again_is_the_way_back_from_a_denial(self):
 		self.grant(denied=True)
+		installation = find_own_installation(EXTENSION)
 
 		set_extension_grant(EXTENSION, "Contact", [])
 
-		self.assertEqual(get_installation(EXTENSION)["grants"], [])
+		self.assertEqual(installation_grants(installation), [])
 
 	def test_refuses_an_access_name_it_does_not_know(self):
 		self.grant(access=["read"])

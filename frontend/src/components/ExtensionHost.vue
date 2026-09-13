@@ -42,13 +42,30 @@ import ExtensionDialog from "@/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/components/ExtensionFrame.vue";
 import ExtensionGrantDialog from "@/components/ExtensionGrantDialog.vue";
 import ExtensionPopover from "@/components/ExtensionPopover.vue";
-import { installedExtensions, loadExtensions } from "@/data/extensions";
+import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
+import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { onMounted, watch } from "vue";
+import { getCurrentInstance, onMounted, onUnmounted, watch } from "vue";
 
-onMounted(loadExtensions);
+const builderStore = useBuilderStore();
+const resourceVm = getCurrentInstance()?.proxy;
+
+const onInstallationListChanged = ({ doctype }: { doctype: string }) => {
+	if (doctype === INSTALLATION_DOCTYPE) void loadExtensions(resourceVm);
+};
+
+onMounted(() => {
+	builderStore.realtime.emit("doctype_subscribe", INSTALLATION_DOCTYPE);
+	builderStore.realtime.on("list_update", onInstallationListChanged);
+	void loadExtensions(resourceVm);
+});
+
+onUnmounted(() => {
+	builderStore.realtime.off("list_update", onInstallationListChanged);
+	builderStore.realtime.doctype_unsubscribe(INSTALLATION_DOCTYPE);
+});
 
 const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) => {
 	teardownExtension(extension.name);

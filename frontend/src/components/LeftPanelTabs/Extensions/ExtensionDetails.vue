@@ -111,8 +111,8 @@
 						:requested="details.requested_capabilities"
 						:granted="details.granted_capabilities"
 						:grants="details.grants"
-						@granted="(capabilities) => (details!.granted_capabilities = capabilities)"
-						@grants="(grants) => (details!.grants = grants)" />
+						@granted="refreshDetails"
+						@grants="refreshDetails" />
 				</section>
 
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
@@ -134,7 +134,7 @@ import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/Extensi
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	installedExtensions,
-	getInstallationDetails,
+	useInstallationDetails,
 	getHubExtension,
 	installFromHub,
 	setExtensionEnabled,
@@ -154,9 +154,9 @@ const emit = defineEmits<{ back: [] }>();
 
 const builderStore = useBuilderStore();
 
-const installationDetails = shallowRef<ReturnType<typeof getInstallationDetails> | null>(null);
+const activeInstallation = shallowRef<ReturnType<typeof useInstallationDetails> | null>(null);
 const hubDetails = ref<InstallationDetails | null>(null);
-const details = computed(() => installationDetails.value?.data ?? hubDetails.value);
+const details = computed(() => activeInstallation.value?.details.value ?? hubDetails.value);
 const error = ref("");
 const working = ref(false);
 
@@ -183,14 +183,14 @@ const installedOn = computed(() =>
 );
 
 const load = async () => {
-	installationDetails.value = null;
+	activeInstallation.value = null;
 	hubDetails.value = null;
 	error.value = "";
 	try {
 		if (props.isInstalled) {
-			const resource = getInstallationDetails(props.extension);
-			installationDetails.value = resource;
-			await resource.fetch();
+			const installation = useInstallationDetails(props.extension);
+			activeInstallation.value = installation;
+			await installation.reload();
 		} else {
 			hubDetails.value = fromHub(await getHubExtension(props.extension));
 		}
@@ -243,14 +243,12 @@ const discardInstall = async () => {
 
 watch([() => props.extension, () => props.isInstalled], load, { immediate: true });
 
-const extensionDoctypes = ["Builder User Extension", "Builder Extension Grant"];
-
-const onExtensionUpdate = (event: { doctype: string }) => {
-	if (!extensionDoctypes.includes(event.doctype) || !installationDetails.value) return;
-	installationDetails.value.reload().catch((thrown: Error) => {
-		error.value = thrown.message;
-	});
-};
+/**
+ * `ExtensionCapabilities` already wrote the change and the underlying resources
+ * are realtime, so this is only an immediate refresh rather than a wait for the
+ * round trip — not the only thing that keeps `details` current.
+ */
+const refreshDetails = () => activeInstallation.value?.reload();
 
 /** The install job finishes elsewhere. Reload this page when it touches this extension. */
 const onInstallDone = (event: { extension: string }) => {
@@ -258,16 +256,7 @@ const onInstallDone = (event: { extension: string }) => {
 };
 
 onMounted(() => builderStore.realtime.on("builder_extension_install", onInstallDone));
-onMounted(() => {
-	// list_update is triggered on doctype saves as well
-	for (const doctype of extensionDoctypes) builderStore.realtime.emit("doctype_subscribe", doctype);
-	builderStore.realtime.on("list_update", onExtensionUpdate);
-});
-onUnmounted(() => {
-	builderStore.realtime.off("builder_extension_install", onInstallDone);
-	builderStore.realtime.off("list_update", onExtensionUpdate);
-	for (const doctype of extensionDoctypes) builderStore.realtime.doctype_unsubscribe(doctype);
-});
+onUnmounted(() => builderStore.realtime.off("builder_extension_install", onInstallDone));
 
 /** Disabling unmounts every frame, so the panel has to say what it did. */
 const setEnabled = async (enabled: boolean) => {

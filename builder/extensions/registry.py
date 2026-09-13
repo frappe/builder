@@ -25,7 +25,7 @@ from builder.utils import has_page_read
 @frappe.whitelist()
 @has_page_read("You do not have permission to load extensions.")
 def get_enabled_extensions() -> list[dict]:
-	"""This user's enabled extensions, shaped the way the editor mounts a frame.
+	"""Summaries of this user's enabled extensions, used to discover their documents.
 
 	A development installation is left out. It has no files, and the browser adds
 	its own entry for it, so listing it here would give one extension two frames.
@@ -43,22 +43,18 @@ def get_enabled_extensions() -> list[dict]:
 
 
 def describe_extension(installation: str) -> dict:
-	"""Reads the whole document, because the icon is derived, not stored.
+	"""Return the summary needed to discover and display an enabled extension.
 
 	The icon travels as a data URI. A URL would need a route that serves one user's
 	private files to an anonymous request, which this design refuses.
-
-	The source takes its own call, made once and shared by the five frames that
-	mount it, so a list of five does not carry five bundles.
 	"""
 	extension = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
+		"installation_id": extension.name,
 		"name": extension.extension,
 		"label": extension.label,
 		"description": extension.description,
 		"icon": extension.icon_data_uri,
-		"checksum": extension.checksum,
-		"capabilities": extension.capabilities,
 	}
 
 

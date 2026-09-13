@@ -49,21 +49,6 @@ def get_user_installations() -> list[dict]:
 	return [describe_installation(name) for name in names]
 
 
-@frappe.whitelist()
-@has_page_read(NOT_INSTALLED)
-def get_installation(extension: str) -> dict:
-	"""One installation in full, with the doctype grants standing for it."""
-	installation = frappe.get_cached_doc(INSTALLATION_DOCTYPE, own_installation(extension))
-	return {
-		**describe_installation(installation.name),
-		"installed_on": installation.installed_on,
-		"readme": installation.readme,
-		"requested_capabilities": installation.requested,
-		"granted_capabilities": installation.capabilities,
-		"grants": installation_grants(installation.name),
-	}
-
-
 def installation_grants(installation: str) -> list[dict]:
 	"""Every doctype this user answered for, as the panel lists them."""
 	return frappe.get_all(
@@ -160,9 +145,14 @@ def uninstall_extension(extension: str) -> None:
 
 
 def describe_installation(installation: str) -> dict:
-	"""What a row in the panel shows. The icon is derived, so this reads the document."""
+	"""What a row in the panel shows. The icon is derived, so this reads the document.
+
+	`installation_id` names the document itself, not the extension. The panel
+	reads it to open the same live document the editor already keeps.
+	"""
 	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
+		"installation_id": row.name,
 		"name": row.extension,
 		"label": row.label,
 		"description": row.description,
