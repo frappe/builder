@@ -15,7 +15,7 @@ const call = vi.fn();
 let lastResourceConfig:
 	{ params?: Record<string, unknown>; transform?: (data: unknown) => unknown } | undefined;
 const documentResources = new Map<string, { doc: unknown; reload: ReturnType<typeof vi.fn> }>();
-const grantsResources = new Map<string, { data: unknown; reload: ReturnType<typeof vi.fn> }>();
+const doctypeGrantsResources = new Map<string, { data: unknown; reload: ReturnType<typeof vi.fn> }>();
 
 vi.mock("frappe-ui", () => ({
 	call,
@@ -31,9 +31,12 @@ vi.mock("frappe-ui", () => ({
 	getCachedDocumentResource: (_doctype: string, name: string) => documentResources.get(name) ?? null,
 	createListResource: (config: { filters?: [string, string, string][] }) => {
 		const installationId = config.filters?.[0]?.[2] as string;
-		const grantsResource = reactive({ data: [] as unknown[], reload: vi.fn().mockResolvedValue(null) });
-		grantsResources.set(installationId, grantsResource);
-		return grantsResource;
+		const doctypeGrantsResource = reactive({
+			data: [] as unknown[],
+			reload: vi.fn().mockResolvedValue(null),
+		});
+		doctypeGrantsResources.set(installationId, doctypeGrantsResource);
+		return doctypeGrantsResource;
 	},
 	onDocUpdate: vi.fn(),
 	frappeRequest: vi.fn(),
@@ -102,9 +105,9 @@ const detailsDocument = (name: string, overrides: Partial<Record<string, unknown
 	...overrides,
 });
 
-const seedInstallationGrants = (installationId: string, grants: unknown[]) => {
-	const resource = grantsResources.get(installationId);
-	if (resource) resource.data = grants;
+const seedInstallationDoctypeGrants = (installationId: string, doctypeGrants: unknown[]) => {
+	const resource = doctypeGrantsResources.get(installationId);
+	if (resource) resource.data = doctypeGrants;
 };
 
 let modules: Awaited<ReturnType<typeof loadModule>>;
@@ -182,11 +185,11 @@ describe("useInstallationDetails", () => {
 		resource.data = null;
 		call.mockReset();
 		documentResources.clear();
-		grantsResources.clear();
+		doctypeGrantsResources.clear();
 		modules = await loadModule();
 	});
 
-	const grants = [{ document_type: "ToDo", can_read: 1, can_write: 0, can_delete: 0, denied: 0 }];
+	const doctypeGrants = [{ document_type: "ToDo", can_read: 1, can_write: 0, can_delete: 0, denied: 0 }];
 
 	const running = () =>
 		Object.assign(development("acme/icons"), {
@@ -198,24 +201,24 @@ describe("useInstallationDetails", () => {
 			capabilities: ["block.update"],
 		});
 
-	/** Reload creates the document and grants resources; fill them in once they exist. */
+	/** Reload creates the document and doctype-grants resources; fill them in once they exist. */
 	const openDetails = async (name: string, documentOverrides: Partial<Record<string, unknown>> = {}) => {
 		resource.data = [installationRow(name)];
 		const installation = modules.data.useInstallationDetails(name);
 		await installation.reload();
 
 		documentResources.get(`${name}-id`)!.doc = detailsDocument(name, documentOverrides);
-		seedInstallationGrants(`${name}-id`, grants);
+		seedInstallationDoctypeGrants(`${name}-id`, doctypeGrants);
 		return installation.details.value!;
 	};
 
-	it("requests the document and the grants for this installation", async () => {
+	it("requests the document and the doctype grants for this installation", async () => {
 		resource.data = [installationRow("acme/icons")];
 
 		await modules.data.useInstallationDetails("acme/icons").reload();
 
 		expect(documentResources.has("acme/icons-id")).toBe(true);
-		expect(grantsResources.has("acme/icons-id")).toBe(true);
+		expect(doctypeGrantsResources.has("acme/icons-id")).toBe(true);
 	});
 
 	it("lets the dev server answer for what it shows a user", async () => {
@@ -247,12 +250,12 @@ describe("useInstallationDetails", () => {
 		expect(details.granted_capabilities).toEqual(["block.update"]);
 	});
 
-	it("keeps the grants and the install date, which only the record holds", async () => {
+	it("keeps the doctype grants and the install date, which only the record holds", async () => {
 		modules.dev.devExtension.value = running();
 
 		const details = await openDetails("acme/icons");
 
-		expect(details.grants).toEqual(grants);
+		expect(details.doctype_grants).toEqual(doctypeGrants);
 		expect(details.installed_on).toBe("2026-09-03 10:00:00");
 	});
 
@@ -264,7 +267,7 @@ describe("useInstallationDetails", () => {
 			label: "acme/icons",
 			requested_capabilities: ["block.update", "data.access", "schema.write"],
 			granted_capabilities: ["block.update", "data.access", "schema.write"],
-			grants,
+			doctype_grants: doctypeGrants,
 			installed_on: "2026-09-03 10:00:00",
 		});
 	});

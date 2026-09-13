@@ -25,7 +25,7 @@
 					The doctypes answered for sit under the capability they elaborate, so
 					turning that capability off shows what it leaves behind.
 				-->
-				<div v-for="grant in grantsUnder(group)" :key="grant.document_type" class="py-3">
+				<div v-for="grant in doctypeGrantsUnder(group)" :key="grant.document_type" class="py-3">
 					<div class="flex items-center justify-between gap-2">
 						<p class="min-w-0 truncate text-xs text-ink-gray-8">{{ grant.document_type }}</p>
 						<Select
@@ -74,20 +74,21 @@ const props = defineProps<{
 	label: string;
 	requested: Capability[];
 	granted: Capability[];
-	grants: ExtensionGrant[];
+	doctypeGrants: ExtensionGrant[];
 }>();
 
 const emit = defineEmits<{
 	granted: [capabilities: Capability[]];
-	grants: [grants: ExtensionGrant[]];
+	doctypeGrants: [doctypeGrants: ExtensionGrant[]];
 }>();
 
 /** Only what this extension asked for. A capability it never asked for is not a choice. */
 const groups = computed(() =>
-	groupCapabilities(props.requested, props.grants.length ? [SITE_DATA_CLASS] : []),
+	groupCapabilities(props.requested, props.doctypeGrants.length ? [SITE_DATA_CLASS] : []),
 );
 
-const grantsUnder = (group: CapabilityGroup) => (group.name === SITE_DATA_CLASS ? props.grants : []);
+const doctypeGrantsUnder = (group: CapabilityGroup) =>
+	group.name === SITE_DATA_CLASS ? props.doctypeGrants : [];
 
 const GRANT_ACTIONS = ["read", "write", "delete"] as const;
 type GrantAction = (typeof GRANT_ACTIONS)[number];
@@ -120,7 +121,7 @@ const answerGrant = (grant: ExtensionGrant, answer: unknown) => {
 
 const writeGrant = async (grant: ExtensionGrant, access: GrantAction[], denied = false) => {
 	try {
-		emit("grants", await setExtensionGrant(props.extension, grant.document_type, access, denied));
+		emit("doctypeGrants", await setExtensionGrant(props.extension, grant.document_type, access, denied));
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	}

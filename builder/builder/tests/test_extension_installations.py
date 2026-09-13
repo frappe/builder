@@ -14,7 +14,7 @@ from builder.extensions.data import record_extension_grant
 from builder.extensions.installations import (
 	get_uninstall_summary,
 	get_user_installations,
-	installation_grants,
+	installation_doctype_grants,
 	set_extension_enabled,
 	set_extension_grant,
 	set_granted_capabilities,
@@ -258,7 +258,7 @@ class TestGrantAnswers(FrappeTestCase):
 
 		set_extension_grant(EXTENSION, "Contact", [])
 
-		self.assertEqual(installation_grants(installation), [])
+		self.assertEqual(installation_doctype_grants(installation), [])
 
 	def test_refuses_an_access_name_it_does_not_know(self):
 		self.grant(access=["read"])

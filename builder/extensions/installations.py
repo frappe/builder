@@ -49,7 +49,7 @@ def get_user_installations() -> list[dict]:
 	return [describe_installation(name) for name in names]
 
 
-def installation_grants(installation: str) -> list[dict]:
+def installation_doctype_grants(installation: str) -> list[dict]:
 	"""Every doctype this user answered for, as the panel lists them."""
 	return frappe.get_all(
 		GRANT_DOCTYPE,
@@ -87,7 +87,7 @@ def set_extension_grant(
 		written = {field: int(name in allowed) for name, field in ACCESS_FIELDS.items()}
 		upsert_grant(installation, doctype, {**written, "denied": int(denied)})
 
-	return installation_grants(installation)
+	return installation_doctype_grants(installation)
 
 
 @frappe.whitelist(methods=["POST"])

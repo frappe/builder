@@ -211,7 +211,7 @@ export type InstallationDetails = UserInstallation & {
 	readme?: string;
 	requested_capabilities: Capability[];
 	granted_capabilities: Capability[];
-	grants: ExtensionGrant[];
+	doctype_grants: ExtensionGrant[];
 	is_development?: boolean;
 	development_server?: string;
 };
@@ -281,7 +281,7 @@ const findInstallation = (extension: string) =>
 	(installationsResource.data ?? []).find((row) => row.name === extension);
 
 /**
- * Every installation this has already wired a grant subscription for.
+ * Every installation this has already wired a doctype-grant subscription for.
  *
  * A grant is inserted or deleted rather than only edited, so `createListResource`'s
  * own `realtime` option cannot keep it live: that option only refreshes a row
@@ -289,9 +289,9 @@ const findInstallation = (extension: string) =>
  * primitive `createDocumentResource` uses for its own realtime, applied here by
  * hand, once per installation, so a bare reload catches the row it would miss.
  */
-const grantsSubscribed = new Set<string>();
+const doctypeGrantsSubscribed = new Set<string>();
 
-const installationGrants = (installationId: string) => {
+const installationDoctypeGrants = (installationId: string) => {
 	const resource = createListResource<ExtensionGrant>(
 		{
 			doctype: GRANT_DOCTYPE,
@@ -299,15 +299,15 @@ const installationGrants = (installationId: string) => {
 			fields: ["document_type", "can_read", "can_write", "can_delete", "denied"],
 			orderBy: "document_type asc",
 			auto: false,
-			cache: ["installation-grants", installationId],
+			cache: ["installation-doctype-grants", installationId],
 			onError: (error: Error) => console.error("Could not load extension grants", error),
 		},
 		resourceVm,
 	);
 
 	const socket = (resourceVm as { $socket?: Parameters<typeof onDocUpdate>[0] } | undefined)?.$socket;
-	if (socket && !grantsSubscribed.has(installationId)) {
-		grantsSubscribed.add(installationId);
+	if (socket && !doctypeGrantsSubscribed.has(installationId)) {
+		doctypeGrantsSubscribed.add(installationId);
 		onDocUpdate(socket, GRANT_DOCTYPE, () => void resource.reload());
 	}
 
@@ -324,19 +324,19 @@ const installationGrants = (installationId: string) => {
  * Composed from what the mount list and the panel's own list already fetch,
  * rather than a details call of its own: the document carries the readme and the
  * raw capability lists, `findInstallation` carries the icon and the install
- * state, and only the grants are fetched here for the first time.
+ * state, and only the doctype grants are fetched here for the first time.
  */
 export const useInstallationDetails = (extension: string) => {
 	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
-	const grants = shallowRef<ReturnType<typeof installationGrants> | null>(null);
+	const doctypeGrants = shallowRef<ReturnType<typeof installationDoctypeGrants> | null>(null);
 
 	const reload = async () => {
 		const installationId = findInstallation(extension)?.installation_id;
 		if (!installationId) return;
 
 		document.value = installationDocument(installationId);
-		grants.value = installationGrants(installationId);
-		await Promise.all([document.value.reload(), grants.value.reload()]);
+		doctypeGrants.value = installationDoctypeGrants(installationId);
+		await Promise.all([document.value.reload(), doctypeGrants.value.reload()]);
 	};
 
 	const details = computed<InstallationDetails | null>(() => {
@@ -350,7 +350,7 @@ export const useInstallationDetails = (extension: string) => {
 			readme: doc.readme,
 			requested_capabilities: grantedCapabilities(doc.requested_capabilities),
 			granted_capabilities: grantedCapabilities(doc.granted_capabilities),
-			grants: grants.value?.data ?? [],
+			doctype_grants: doctypeGrants.value?.data ?? [],
 		});
 	});
 

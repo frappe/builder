@@ -110,9 +110,9 @@
 						:label="details.label ?? details.name"
 						:requested="details.requested_capabilities"
 						:granted="details.granted_capabilities"
-						:grants="details.grants"
+						:doctype-grants="details.doctype_grants"
 						@granted="refreshDetails"
-						@grants="refreshDetails" />
+						@doctype-grants="refreshDetails" />
 				</section>
 
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
@@ -207,7 +207,7 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	installed_on: "",
 	requested_capabilities: [],
 	granted_capabilities: [],
-	grants: [],
+	doctype_grants: [],
 });
 
 /** Serves the Marketplace "Install" and the "Retry" on a failed row. Retry stays
