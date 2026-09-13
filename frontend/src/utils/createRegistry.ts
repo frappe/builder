@@ -1,5 +1,23 @@
 import { computed, markRaw, reactive, ref, toRaw } from "vue";
 
+const isComponentLike = (value: unknown): value is object =>
+	Boolean(value) &&
+	typeof value === "object" &&
+	("render" in (value as object) || "setup" in (value as object) || "__name" in (value as object));
+
+// items live in a reactive Map, which would proxy the component definitions they
+// carry (a tab's panel, a control, an icon) and make Vue warn on every render
+function withRawComponents<T extends object>(item: T): T {
+	for (const [key, value] of Object.entries(item)) {
+		if (isComponentLike(value)) {
+			(item as Record<string, unknown>)[key] = markRaw(value);
+		} else if (Array.isArray(value)) {
+			value.forEach((entry) => entry && typeof entry === "object" && withRawComponents(entry));
+		}
+	}
+	return item;
+}
+
 /**
  * Every registry item needs a stable identity, and may ask for a position
  * relative to another item's name.
@@ -64,7 +82,7 @@ export function createRegistry<T extends RegistryEntry>() {
 	const add = (item: T) => {
 		// Registry entries can carry Vue components. Keeping the snapshot raw stops
 		// the reactive Map from proxying those components before a surface renders it.
-		const registered = markRaw({ ...item });
+		const registered = withRawComponents({ ...item });
 		items.set(item.name, registered);
 		place(registered);
 		// a later registration under the same name owns the entry, so this must not delete it

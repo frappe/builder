@@ -14,6 +14,7 @@ from builder.utils import (
 	copy_img_to_asset_folder,
 	escape_single_quotes,
 	execute_script,
+	export_dir_name,
 	extract_components_from_blocks,
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
@@ -22,6 +23,7 @@ from builder.utils import (
 	normalize_legacy_raw_styles,
 	process_block_assets,
 	remove_unsafe_fields,
+	safe_segment,
 	sanitize_style_value,
 	split_styles,
 )
@@ -56,6 +58,30 @@ class TestBuilderUtils(FrappeTestCase):
 
 		for input_str, expected in test_cases.items():
 			self.assertEqual(escape_single_quotes(input_str), expected)
+
+	def test_export_dir_name(self):
+		test_cases = {
+			"Home Page": "home_page",
+			"Nav-Bar": "nav_bar",
+			"about/us": "about_us",
+			"../../etc/passwd": ".._.._etc_passwd",
+			"..\\..\\secrets": ".._.._secrets",
+		}
+
+		for input_str, expected in test_cases.items():
+			self.assertEqual(export_dir_name(input_str), expected)
+
+	def test_export_dir_name_rejects_traversal_segments(self):
+		for name in ("", ".", ".."):
+			with self.assertRaises(frappe.ValidationError):
+				export_dir_name(name)
+
+	def test_safe_segment_keeps_the_name_within_one_directory(self):
+		self.assertEqual(safe_segment("a/b\\c"), "a_b_c")
+
+		for name in ("", ".", ".."):
+			with self.assertRaises(frappe.ValidationError):
+				safe_segment(name)
 
 	def test_preview_file_paths(self):
 		test_page = frappe.get_doc(

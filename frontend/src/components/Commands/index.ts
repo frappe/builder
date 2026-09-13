@@ -2,11 +2,11 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { useDark, useStorage, useToggle } from "@vueuse/core";
 import { nextTick, type Ref } from "vue";
-import { __ } from "@/translation";
 
 /** A key binding for a command. The description labels it in the shortcuts modal. */
 export type CommandKeys = {
@@ -63,7 +63,10 @@ export function commandShortcuts() {
 			...command.keys!,
 			group: commandGroupLabels[command.group] ?? __(command.group),
 			condition: command.condition,
-			handler: command.action,
+			handler: () => {
+				builderStore.blockContextMenu?.hideContextMenu();
+				command.action();
+			},
 		}));
 }
 
@@ -85,6 +88,9 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
+// module scope: useStorage in the handler would leak a subscription per keypress
+const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
+
 const setLayersTab = async () => {
 	builderStore.showLeftPanel = true;
 	builderStore.leftPanelActiveTab = "Layers";
@@ -105,10 +111,9 @@ commands.registerBuiltIn({
 	name: "preview",
 	title: __("Preview Page"),
 	icon: "lucide-play",
-	description: __("Page"),
-	group: "Page",
+	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "p", ctrl: true, description: __("Preview") },
+	keys: { key: "p", ctrl: true, description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
 		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
@@ -172,7 +177,7 @@ commands.registerBuiltIn({
 	description: __("View"),
 	group: "View",
 	condition: isBuilderRoute,
-	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle left panel") },
+	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle Left Panel") },
 	action: () => (builderStore.showLeftPanel = !builderStore.showLeftPanel),
 });
 
@@ -202,7 +207,7 @@ commands.registerBuiltIn({
 	description: __("General"),
 	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "?", description: __("Show keyboard shortcuts") },
+	keys: { key: "?", description: __("Show Keyboard Shortcuts") },
 	action: () => (builderStore.shortcutsModalOpen = true),
 });
 
@@ -214,7 +219,7 @@ commands.registerBuiltIn({
 	icon: "lucide-panels-left-bottom",
 	group: "View",
 	inPalette: false,
-	keys: { key: "\\", ctrl: true, description: __("Toggle panels") },
+	keys: { key: "\\", ctrl: true, description: __("Toggle Panels") },
 	action: () => {
 		builderStore.showRightPanel = !builderStore.showRightPanel;
 		builderStore.showLeftPanel = builderStore.showRightPanel;
@@ -227,7 +232,7 @@ commands.registerBuiltIn({
 	icon: "lucide-moon",
 	group: "View",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle canvas dark mode") },
+	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle Canvas Dark Mode") },
 	action: () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode),
 });
 
@@ -237,7 +242,7 @@ commands.registerBuiltIn({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, shift: true, description: __("Search blocks") },
+	keys: { key: "f", ctrl: true, shift: true, description: __("Search Blocks") },
 	action: () => (builderStore.showSearchBlock = true),
 });
 
@@ -247,7 +252,7 @@ commands.registerBuiltIn({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus property search") },
+	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus Property Search") },
 	action: () => {
 		document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 	},
@@ -259,15 +264,10 @@ commands.registerBuiltIn({
 	icon: "lucide-clipboard-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "c", ctrl: true, shift: true, description: __("Copy block styles") },
+	keys: { key: "c", ctrl: true, shift: true, description: __("Copy Block Styles") },
 	action: () => {
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		const block = blockController.getSelectedBlocks()[0];
-		const copiedStyle = useStorage(
-			"copiedStyle",
-			{ blockId: "", style: {} },
-			sessionStorage,
-		) as Ref<StyleCopy>;
 		copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 	},
 });
@@ -278,7 +278,7 @@ commands.registerBuiltIn({
 	icon: "lucide-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, description: __("Duplicate block") },
+	keys: { key: "d", ctrl: true, description: __("Duplicate Block") },
 	action: () => {
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;

@@ -84,14 +84,15 @@ import { useDashboardState } from "@/composables/useDashboardState";
 import { builderSettings } from "@/data/builderSettings";
 import { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
-import { Button, Textarea } from "frappe-ui";
+import { Button, Textarea, call } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { computed, nextTick, reactive, ref } from "vue";
 import LucideChevronLeft from "~icons/lucide/chevron-left";
 
-// Pulse is event-only (no person properties), but every event carries the
-// (anonymized, stable) user id, so this single event can be joined to the
-// rest of the user's funnel for persona-wise segmentation.
+// Every event carries the (anonymized, stable) user id, so this single event can
+// be joined to the rest of the user's funnel for persona-wise segmentation. The
+// answers are also attached to the site's Pulse profile (identify_persona) so
+// site-level metrics split by persona without a join.
 const telemetry = useTelemetry();
 const { templateCategoryFilter } = useDashboardState();
 // Dev benches have telemetry off; ?persona_survey=test logs the payload instead.
@@ -250,5 +251,12 @@ function finishQuestions(skipped = false) {
 	} catch (e) {
 		console.error("[persona-survey] failed to capture", e);
 	}
+	call("builder.api.identify_persona", {
+		role: props.role,
+		use_case: props.use_case,
+		source: props.source,
+	}).catch((e: unknown) => {
+		console.error("[persona-survey] failed to identify", e);
+	});
 }
 </script>

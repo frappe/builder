@@ -11,6 +11,9 @@ export type PauseId = string & { __brand: "PauseId" };
 
 const CAPACITY = 500;
 const DEBOUNCE_DELAY = 100;
+// each record serialises the whole tree, so a heavy page blows past this well before CAPACITY
+const MAX_BYTES = 20 * 1024 * 1024;
+const MIN_ENTRIES = 10;
 
 export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<string>>) {
 	const undoStack = ref([]) as Ref<CanvasState[]>;
@@ -65,11 +68,23 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		if (!enabled.value) return;
 		undoStack.value.unshift(last.value);
 		last.value = createHistoryRecord();
-		if (undoStack.value.length > CAPACITY) {
-			undoStack.value.splice(CAPACITY, Number.POSITIVE_INFINITY);
-		}
+		trim(undoStack.value);
 		if (redoStack.value.length) {
 			redoStack.value.splice(0, redoStack.value.length);
+		}
+	}
+
+	function trim(stack: CanvasState[]) {
+		if (stack.length > CAPACITY) {
+			stack.splice(CAPACITY, Number.POSITIVE_INFINITY);
+		}
+		let bytes = 0;
+		for (let i = 0; i < stack.length; i++) {
+			bytes += stack[i].block.length;
+			if (bytes > MAX_BYTES && i >= MIN_ENTRIES) {
+				stack.splice(i + 1, Number.POSITIVE_INFINITY);
+				return;
+			}
 		}
 	}
 
@@ -80,7 +95,8 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	function createHistoryRecord() {
 		return {
 			block: getBlockString(source.value),
-			selectedBlockIds: selectedBlockIds.value,
+			// copy, or every stacked entry aliases the live set
+			selectedBlockIds: new Set(selectedBlockIds.value),
 		};
 	}
 
@@ -111,6 +127,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		const state = undoStack.value.shift();
 		if (state) {
 			redoStack.value.unshift(last.value);
+			trim(redoStack.value);
 			setSource(state);
 		}
 	}
@@ -124,6 +141,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		const state = redoStack.value.shift();
 		if (state) {
 			undoStack.value.unshift(last.value);
+			trim(undoStack.value);
 			setSource(state);
 		}
 	}

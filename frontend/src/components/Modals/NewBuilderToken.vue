@@ -22,7 +22,15 @@
 					:autofocus="true"
 					:placeholder="__('e.g., primary, accent, background')"
 					:hideClearButton="true" />
-				<div v-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
+				<div v-if="dialogMode === 'add' && activeBuilderToken.value" class="flex flex-col gap-1.5">
+					<InputLabel>{{ __("Value") }}</InputLabel>
+					<BuilderInput type="text" :modelValue="activeBuilderToken.value" readonly :hideClearButton="true">
+						<template v-if="activeBuilderToken.type === 'Color'" #prefix>
+							<div class="size-4 rounded shadow-md" :style="{ background: activeBuilderToken.value }" />
+						</template>
+					</BuilderInput>
+				</div>
+				<div v-else-if="activeBuilderToken.type === 'Color'" class="flex flex-col gap-3">
 					<div class="flex flex-col gap-1.5">
 						<InputLabel>{{ __("Light Mode Color") }}</InputLabel>
 						<ColorInput

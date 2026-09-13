@@ -24,14 +24,25 @@
 						</p>
 					</UseTimeAgo>
 				</span>
-				<PageActionsDropdown :page="page" size="xs" placement="right">
-					<Button
-						icon="lucide-more-horizontal"
-						size="sm"
-						variant="ghost"
-						class="bg-surface-elevation-1 !text-ink-gray-5 hover:!text-ink-gray-9"
-						@click.stop></Button>
-				</PageActionsDropdown>
+				<div class="flex shrink-0 items-center gap-1.5">
+					<Tooltip
+						v-if="page.published && page.authenticated_access"
+						:text="__('This page has limited access')"
+						:hoverDelay="0.5">
+						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
+					</Tooltip>
+					<Tooltip v-else-if="page.published" :text="__('Publicly accessible')" :hoverDelay="0.5">
+						<span class="lucide-globe size-3.5 text-ink-gray-5" />
+					</Tooltip>
+					<PageActionsDropdown :page="page" size="xs" placement="right">
+						<Button
+							icon="lucide-more-horizontal"
+							size="sm"
+							variant="ghost"
+							class="bg-surface-elevation-1 !text-ink-gray-5 hover:!text-ink-gray-9"
+							@click.stop></Button>
+					</PageActionsDropdown>
+				</div>
 			</div>
 		</div>
 	</router-link>
@@ -42,6 +53,7 @@ import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
+import { Tooltip } from "frappe-ui";
 
 const props = defineProps<{
 	page: BuilderPage;

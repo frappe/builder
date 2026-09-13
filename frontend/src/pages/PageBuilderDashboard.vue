@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-screen">
 		<DashboardSidebar></DashboardSidebar>
-		<div class="flex w-full flex-1 flex-col overflow-hidden pb-10">
+		<div class="flex w-full flex-1 flex-col overflow-hidden">
 			<DashboardToolbar class="sticky top-0" />
 			<DashboardHead />
 			<DashboardContent />

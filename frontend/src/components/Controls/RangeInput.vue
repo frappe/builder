@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center gap-2">
-		<InputLabel v-if="label">{{ label }}</InputLabel>
+		<InputLabel v-if="label" class="w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
 		<BuilderInput
 			v-if="!hideInput"
 			:modelValue="modelValue"
