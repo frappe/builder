@@ -38,15 +38,23 @@ def get_user_installations() -> list[dict]:
 	"""Every installation of this user, the disabled ones included.
 
 	A disabled extension has to stay visible. Hiding it would leave no way to turn
-	it back on but the bench.
+	it back on but the bench. It sorts last, and the last edited sorts first in
+	each group.
 	"""
-	names = frappe.get_all(
+	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
 		filters={"user": frappe.session.user, "version": ["!=", DEV_EXTENSION_VERSION]},
-		pluck="name",
-		order_by="label asc",
+		fields=["name", "enabled", "install_state"],
+		order_by="modified desc",
 	)
-	return [describe_installation(name) for name in names]
+	# a stable sort, so each group keeps the modified order
+	rows.sort(key=is_turned_off)
+	return [describe_installation(row.name) for row in rows]
+
+
+def is_turned_off(row: dict) -> bool:
+	"""A pending or failed install is not enabled yet, but no user turned it off."""
+	return not row.enabled and row.install_state in (None, "", "Ready")
 
 
 def installation_doctype_grants(installation: str) -> list[dict]:

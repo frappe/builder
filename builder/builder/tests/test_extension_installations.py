@@ -63,6 +63,33 @@ class TestUserInstallations(FrappeTestCase):
 
 		self.assertNotIn(EXTENSION, names(get_user_installations()))
 
+	def test_lists_enabled_first_and_the_last_edited_first_in_each_group(self):
+		"""A pending install is not enabled yet, but it is not one the user turned off.
+
+		The disabled row is the last edited, so only the grouping can put it last.
+		"""
+		disabled, pending, older, newer = (
+			f"{EXTENSION}-{suffix}" for suffix in ("off", "pending", "old", "new")
+		)
+		ordered = [newer, older, pending, disabled]
+		for extension in ordered:
+			drop_installations(extension)
+			self.addCleanup(drop_installations, extension)
+
+		edited = {
+			disabled: ("2026-04-01", {"enabled": 0}),
+			pending: ("2026-01-01", {"enabled": 0, "install_state": "Installing"}),
+			older: ("2026-02-01", {}),
+			newer: ("2026-03-01", {}),
+		}
+		for extension, (modified, values) in edited.items():
+			installation = make_installation(extension, **values)
+			frappe.db.set_value(
+				INSTALLATION_DOCTYPE, installation.name, "modified", modified, update_modified=False
+			)
+
+		self.assertEqual([name for name in names(get_user_installations()) if name in edited], ordered)
+
 
 class TestInstallationDetails(FrappeTestCase):
 	"""What a row never shows now sits on the document itself, for the client to read

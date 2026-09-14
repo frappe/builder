@@ -261,9 +261,8 @@ export const userInstallations = computed<UserInstallation[]>(() => {
 	if (!development) return installed;
 
 	// The server leaves a development installation out, so the browser's own entry
-	// is the only row for it, exactly as it is in the mount list.
+	// is the only row for it. It is always enabled, so it leads the list.
 	return [
-		...installed.filter((row) => row.name !== development.name),
 		{
 			name: development.name,
 			label: development.label,
@@ -273,6 +272,7 @@ export const userInstallations = computed<UserInstallation[]>(() => {
 			source_url: "",
 			enabled: true,
 		},
+		...installed.filter((row) => row.name !== development.name),
 	];
 });
 

@@ -201,6 +201,16 @@ describe("userInstallations", () => {
 		expect(iconOf()).toBeUndefined();
 	});
 
+	it("leads with the dev extension, which is always enabled", () => {
+		resource.data = [installationRow("acme/listed", { enabled: false }), installationRow("acme/icons")];
+		modules.dev.devExtension.value = development("acme/icons");
+
+		expect(modules.data.userInstallations.value.map((row) => row.name)).toEqual([
+			"acme/icons",
+			"acme/listed",
+		]);
+	});
+
 	it("lends the same icon to the details page", async () => {
 		resource.data = [installationRow("acme/icons", { icon: undefined, install_state: "Failed" })];
 		const installation = modules.data.useInstallationDetails("acme/icons");
