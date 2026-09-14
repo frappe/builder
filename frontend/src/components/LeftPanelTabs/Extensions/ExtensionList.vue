@@ -74,13 +74,20 @@
 				</div>
 			</CollapsibleSection>
 
-			<!--
-				Empty, and it will stay empty until Builder can distribute an extension.
-				It is here so the panel says that out loud: an empty list a user can see
-				reads as "none yet", where a missing list reads as "this cannot be done".
-			-->
 			<CollapsibleSection section-name="Marketplace">
-				<p v-if="!notInstalled.length" class="text-p-sm text-ink-gray-5">Coming soon...</p>
+				<div
+					v-if="extensionsCatalog.loading && !catalog.length"
+					class="flex items-center gap-2 text-p-sm text-ink-gray-5">
+					<LoadingIndicator class="size-4" />
+					Loading extensions…
+				</div>
+				<div v-else-if="extensionsCatalog.error" class="flex flex-col items-start gap-2">
+					<p class="text-p-sm italic text-ink-gray-5">Could not reach the Builder Hub.</p>
+					<Button variant="subtle" size="sm" label="Try again" @click="extensionsCatalog.reload()" />
+				</div>
+				<p v-else-if="!notInstalled.length" class="text-p-sm italic text-ink-gray-5">
+					{{ emptyMarketplaceText }}
+				</p>
 				<ItemListRow
 					v-for="extension in notInstalled"
 					:key="extension.name"
@@ -153,11 +160,18 @@ function matchesFilter(extension: CatalogExtension) {
 const installed = computed(() => userInstallations.value.filter(matchesFilter));
 
 const extensionsCatalog = getExtensionsCatalog();
+const catalog = computed<CatalogExtension[]>(() => extensionsCatalog.data?.extensions ?? []);
 
 /** Catalog entries this user has not installed yet. */
 const notInstalled = computed<CatalogExtension[]>(() => {
 	const installedNames = new Set(userInstallations.value.map((extension) => extension.name));
-	const catalog: CatalogExtension[] = extensionsCatalog.data?.extensions ?? [];
-	return catalog.filter((extension) => !installedNames.has(extension.name) && matchesFilter(extension));
+	return catalog.value.filter((extension) => !installedNames.has(extension.name) && matchesFilter(extension));
+});
+
+/** The Hub answered, so an empty section means a search, a full install, or an empty Hub. */
+const emptyMarketplaceText = computed(() => {
+	if (filter.value) return "Nothing here matches that.";
+	if (catalog.value.length) return "You have installed every extension on the Hub.";
+	return "The Hub has no extensions yet.";
 });
 </script>
