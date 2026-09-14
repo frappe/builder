@@ -41,7 +41,7 @@ class TestExtensionGrants(FrappeTestCase):
 		grant = get_extension_grant("acme/data", "Contact")
 
 		self.assertEqual(
-			grant, {"doctype": "Contact", "read": False, "write": False, "delete": False, "denied": False}
+			grant, {"doctype": "Contact", "read": "not asked", "write": "not asked", "delete": "not asked"}
 		)
 
 	def test_an_extension_this_user_has_not_installed_is_refused(self):
@@ -69,43 +69,45 @@ class TestExtensionGrants(FrappeTestCase):
 		frappe.set_user(theirs)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-		self.assertFalse(get_extension_grant("acme/data", "Contact")["read"])
+		self.assertEqual(get_extension_grant("acme/data", "Contact")["read"], "not asked")
 
 	def test_recording_a_grant_allows_what_was_asked(self):
 		grant = record_extension_grant("acme/data", "Contact", ["read"])
 
-		self.assertTrue(grant["read"])
-		self.assertFalse(grant["write"])
+		self.assertEqual(grant["read"], "allowed")
+		self.assertEqual(grant["write"], "not asked")
 
 	def test_a_second_grant_merges_with_the_first(self):
 		record_extension_grant("acme/data", "Contact", ["read"])
 		grant = record_extension_grant("acme/data", "Contact", ["write"])
 
-		self.assertTrue(grant["read"])
-		self.assertTrue(grant["write"])
+		self.assertEqual(grant["read"], "allowed")
+		self.assertEqual(grant["write"], "allowed")
 
-	def test_granting_clears_an_earlier_denial(self):
-		record_extension_grant("acme/data", "Contact", denied=True)
+	def test_allowing_replaces_an_earlier_denial_of_the_same_access(self):
+		record_extension_grant("acme/data", "Contact", ["read"], denied=True)
 		grant = record_extension_grant("acme/data", "Contact", ["read"])
 
-		self.assertFalse(grant["denied"])
-		self.assertTrue(grant["read"])
+		self.assertEqual(grant["read"], "allowed")
 
-	def test_a_denial_is_a_row_so_the_extension_is_not_asked_again(self):
-		record_extension_grant("acme/data", "Contact", denied=True)
+	def test_a_denial_answers_only_the_access_it_names(self):
+		record_extension_grant("acme/data", "Contact", ["delete"], denied=True)
 		grant = get_extension_grant("acme/data", "Contact")
 
-		self.assertTrue(grant["denied"])
-		self.assertFalse(grant["read"])
+		self.assertEqual(grant["delete"], "denied")
+		self.assertEqual(grant["read"], "not asked")
 
 	def test_a_denial_leaves_earlier_access_alone(self):
 		"""Refusing write does not take back the read the user already allowed."""
 		record_extension_grant("acme/data", "Contact", ["read"])
 		grant = record_extension_grant("acme/data", "Contact", ["write"], denied=True)
 
-		self.assertTrue(grant["read"])
-		self.assertFalse(grant["write"])
-		self.assertTrue(grant["denied"])
+		self.assertEqual(grant["read"], "allowed")
+		self.assertEqual(grant["write"], "denied")
+		self.assertEqual(grant["delete"], "not asked")
+
+	def test_an_answer_names_at_least_one_access(self):
+		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", [], True)
 
 	def test_an_unknown_access_word_is_refused(self):
 		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", ["publish"])
@@ -124,12 +126,12 @@ class TestExtensionGrants(FrappeTestCase):
 		make_extension("acme/other")
 		record_extension_grant("acme/data", "Contact", ["read"])
 
-		self.assertFalse(get_extension_grant("acme/other", "Contact")["read"])
+		self.assertEqual(get_extension_grant("acme/other", "Contact")["read"], "not asked")
 
 	def test_a_grant_is_scoped_to_one_doctype(self):
 		record_extension_grant("acme/data", "Contact", ["read"])
 
-		self.assertFalse(get_extension_grant("acme/data", "ToDo")["read"])
+		self.assertEqual(get_extension_grant("acme/data", "ToDo")["read"], "not asked")
 
 	def test_assert_grant_passes_what_was_granted(self):
 		record_extension_grant("acme/data", "Contact", ["read"])
@@ -152,7 +154,7 @@ class TestExtensionGrants(FrappeTestCase):
 	def test_uninstalling_drops_only_this_users_grants(self):
 		record_extension_grant("acme/data", "Contact", ["read"])
 		theirs = make_extension(user=make_user())
-		upsert_grant(theirs.name, "Contact", {"can_read": 1})
+		upsert_grant(theirs.name, "Contact", {"read_access": "allowed"})
 
 		frappe.delete_doc(INSTALLATION_DOCTYPE, self.extension.name)
 

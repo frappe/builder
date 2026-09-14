@@ -28,7 +28,7 @@ class TestBuilderExtensionGrant(FrappeTestCase):
 
 	def test_name_is_a_uuid(self):
 		"""A composite name would go stale the first time a doctype is renamed."""
-		self.assertEqual(len(self.grant(can_read=1).insert().name), 36)
+		self.assertEqual(len(self.grant(read_access="allowed").insert().name), 36)
 
 	def test_installation_must_exist(self):
 		self.assertRaises(frappe.LinkValidationError, self.grant(installation="no-such-copy").insert)
@@ -40,8 +40,8 @@ class TestBuilderExtensionGrant(FrappeTestCase):
 		"""One person allowing an extension says nothing about the next."""
 		theirs = make_installation("acme/grants", user=make_user())
 
-		mine = self.grant(can_read=1).insert()
-		other = self.grant(installation=theirs.name, can_read=0).insert()
+		mine = self.grant(read_access="allowed").insert()
+		other = self.grant(installation=theirs.name, read_access="denied").insert()
 
 		self.assertNotEqual(mine.name, other.name)
 		self.assertEqual(mine.installation, self.installation.name)

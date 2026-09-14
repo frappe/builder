@@ -85,9 +85,7 @@ class TestExtensionSchema(FrappeTestCase):
 		self.create()
 
 		grant = get_extension_grant("acme/schema", NAME)
-		self.assertTrue(grant["read"])
-		self.assertTrue(grant["write"])
-		self.assertTrue(grant["delete"])
+		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "allowed", "allowed"))
 
 	def test_the_default_naming_is_a_hash(self):
 		self.create()

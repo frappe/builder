@@ -136,7 +136,8 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
  *
  * It answers with the data, and throws on a refusal, which is the contract
  * `resources.js` expects. A refusal keeps its `code`, so a resource's `onError`
- * can still read `grant_required` and call `builder.data.requestAccess`.
+ * can still read `grant_required` and call `builder.data.requestAccess`. Read
+ * the answer it returns: a denied access returns "denied" without a dialog.
  *
  * It never opens the consent dialog itself. A resource fetches when it decides
  * to — `auto: true` fires on mount — so an asking fetcher would put a modal on

@@ -1,4 +1,5 @@
 import { devExtension, isDevExtension, setDevCapabilities } from "@/extensions/devExtension";
+import type { Access, AccessAnswer } from "@/extensions/data/grants";
 import type { Capability, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import {
 	call,
@@ -208,10 +209,9 @@ type UserInstallation = {
 /** One doctype this user answered for, as `Builder Extension Grant` holds it. */
 type ExtensionGrant = {
 	document_type: string;
-	can_read: number;
-	can_write: number;
-	can_delete: number;
-	denied: number;
+	read_access: AccessAnswer;
+	write_access: AccessAnswer;
+	delete_access: AccessAnswer;
 };
 
 type InstallationDetails = UserInstallation & {
@@ -295,7 +295,7 @@ const installationDoctypeGrants = (installationId: string) => {
 		{
 			doctype: GRANT_DOCTYPE,
 			filters: [["installation", "=", installationId]],
-			fields: ["document_type", "can_read", "can_write", "can_delete", "denied"],
+			fields: ["document_type", "read_access", "write_access", "delete_access"],
 			orderBy: "document_type asc",
 			auto: false,
 			cache: ["installation-doctype-grants", installationId],
@@ -357,13 +357,13 @@ const useInstallationDetails = (extension: string) => {
 };
 
 /**
- * The answer that stands for one doctype, answering with the grants after it.
+ * The three answers that stand for one doctype, answering with the grants after it.
  *
- * Allowing nothing drops the answer, so the extension asks again. Denying is
- * what stops it asking, and allowing nothing is the only way back from that.
+ * "Not asked" lets the extension ask about that access again, and the row stays
+ * so the panel keeps listing the doctype. A denied access stops the asking.
  */
-const setExtensionGrant = (extension: string, doctype: string, access: string[], denied = false) =>
-	call(`${METHOD}.set_extension_grant`, { extension, doctype, access, denied }) as Promise<ExtensionGrant[]>;
+const setExtensionGrant = (extension: string, doctype: string, answers: Record<Access, AccessAnswer>) =>
+	call(`${METHOD}.set_extension_grant`, { extension, doctype, answers }) as Promise<ExtensionGrant[]>;
 
 /** What the site keeps when a user removes an extension. */
 type UninstallSummary = {

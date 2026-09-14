@@ -230,13 +230,7 @@ export const settings = {
 };
 
 export type ContextField =
-	| "selection"
-	| "breakpoint"
-	| "editingMode"
-	| "readOnly"
-	| "isAIEnabled"
-	| "page"
-	| "site";
+	"selection" | "breakpoint" | "editingMode" | "readOnly" | "isAIEnabled" | "page" | "site";
 
 export type ContextHandler = (context: Record<string, unknown>) => void;
 
@@ -393,14 +387,15 @@ export const tokens = {
 	unset: (key: string) => call("tokens.unset", { key }),
 };
 
+/** The user's answer about one access to one doctype. */
+export type AccessAnswer = "allowed" | "denied" | "not asked";
+
 /** What one extension may do to one doctype, as the host answers it. */
 export type Grant = {
 	doctype: string;
-	read: boolean;
-	write: boolean;
-	delete: boolean;
-	/** The user said no last time, so `requestAccess` returns without a dialog. */
-	denied: boolean;
+	read: AccessAnswer;
+	write: AccessAnswer;
+	delete: AccessAnswer;
 };
 
 export type Access = "read" | "write" | "delete";
@@ -432,9 +427,10 @@ export const data = {
 	 * The one method here that can open a dialog. Call it when the user is
 	 * expecting it — behind a button they pressed — because it is modal.
 	 *
-	 * It returns without asking when the grant already covers everything named,
-	 * and when the user said no last time. Read `denied` on the answer to tell
-	 * "not yet asked" from "already refused".
+	 * It asks only about each access that is "not asked". An access the user
+	 * allowed or denied is not asked about again, so when every access named is
+	 * answered, it returns without a dialog. Compare an answer to "allowed"
+	 * before you use that access: "denied" is a truthy string.
 	 */
 	requestAccess: (doctype: string, access: Access[]) =>
 		call("data.requestAccess", { doctype, access }) as Promise<Grant>,
@@ -445,10 +441,11 @@ export const data = {
 	/**
 	 * One page of documents. Needs a `read` grant on the doctype.
 	 *
-	 * Every call below refuses with the code `grant_required` when no grant
-	 * covers the doctype. That is the one refusal worth catching: it means ask
-	 * the user. Any other refusal is the site saying no, and asking again will
-	 * not change it.
+	 * Every call below refuses with the code `grant_required` when the access it
+	 * needs is not allowed. That is the one refusal worth catching. Call
+	 * `requestAccess`, then read the answer: an access the user denied returns
+	 * "denied" without a dialog, so tell the user why nothing happened. Any other
+	 * refusal is the site saying no, and asking again will not change it.
 	 */
 	getList: (doctype: string, options: ListOptions = {}) =>
 		call("data.getList", { doctype, ...options }) as Promise<Doc[]>,
@@ -458,12 +455,10 @@ export const data = {
 		call("data.getCount", { doctype, filters }) as Promise<number>,
 
 	/** One whole document, child tables included. Needs `read`. */
-	getDoc: (doctype: string, name: string) =>
-		call("data.getDoc", { doctype, name }) as Promise<Doc>,
+	getDoc: (doctype: string, name: string) => call("data.getDoc", { doctype, name }) as Promise<Doc>,
 
 	/** A new document. Needs `write`. Answers with the inserted document. */
-	insert: (doctype: string, doc: Doc) =>
-		call("data.insert", { doctype, doc }) as Promise<Doc>,
+	insert: (doctype: string, doc: Doc) => call("data.insert", { doctype, doc }) as Promise<Doc>,
 
 	/** A patch, not a replacement. Needs `write`. Answers with the saved document. */
 	update: (doctype: string, name: string, doc: Doc) =>
@@ -533,8 +528,7 @@ export const schema = {
 	deleteDoctype: (doctype: string) => call("schema.deleteDoctype", { doctype }),
 
 	/** Every doctype this extension made, and whether each still exists. */
-	listDoctypes: () =>
-		call("schema.listDoctypes") as Promise<Array<{ doctype: string; exists: boolean }>>,
+	listDoctypes: () => call("schema.listDoctypes") as Promise<Array<{ doctype: string; exists: boolean }>>,
 };
 
 export const actions = {

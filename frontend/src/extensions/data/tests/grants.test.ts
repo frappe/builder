@@ -39,7 +39,7 @@ const record = (name = "acme/crm"): InstalledExtension => ({
 	capabilities: ["data.access"],
 });
 
-const NONE = { read: false, write: false, delete: false, denied: false };
+const NONE = { read: "not asked", write: "not asked", delete: "not asked" };
 
 const request = (params: unknown, extension = record()) =>
 	grantMethods["data.requestAccess"].run(params, extension) as Promise<Record<string, unknown>>;
@@ -101,7 +101,7 @@ describe("what travels back to the frame", () => {
 	 * clone a Vue proxy. A browser found this before a test did.
 	 */
 	it("is a plain object a port can carry", async () => {
-		stored = { ...NONE, read: true };
+		stored = { ...NONE, read: "allowed" };
 
 		const grant = await getAccess({ doctype: "Contact" });
 
@@ -113,10 +113,9 @@ describe("what travels back to the frame", () => {
 
 		expect(await getAccess({ doctype: "Contact" })).toEqual({
 			doctype: "Contact",
-			read: false,
-			write: false,
-			delete: false,
-			denied: false,
+			read: "not asked",
+			write: "not asked",
+			delete: "not asked",
 		});
 	});
 });
@@ -138,17 +137,17 @@ describe("getAccess", () => {
 
 describe("when no dialog opens", () => {
 	it("returns the grant when it already covers the request", async () => {
-		stored = { ...NONE, read: true };
+		stored = { ...NONE, read: "allowed" };
 
 		const grant = await request({ doctype: "Contact", access: ["read"] });
 
 		expect(pendingPrompt.value).toBeNull();
-		expect(grant.read).toBe(true);
+		expect(grant.read).toBe("allowed");
 		expect(urls()).toEqual(["builder.extensions.data.get_extension_grant"]);
 	});
 
-	it("returns the grant when the user said no last time", async () => {
-		stored = { ...NONE, denied: true };
+	it("returns the grant when the user denied that access before", async () => {
+		stored = { ...NONE, read: "denied" };
 
 		await request({ doctype: "Contact", access: ["read"] });
 
@@ -170,12 +169,24 @@ describe("the prompt", () => {
 	});
 
 	it("asks only for what is missing", async () => {
-		stored = { ...NONE, read: true };
+		stored = { ...NONE, read: "allowed" };
 
 		const pending = request({ doctype: "Contact", access: ["read", "write"] });
 		await settled();
 
 		expect(pendingPrompt.value?.access).toEqual(["write"]);
+
+		answerPrompt(false);
+		await pending;
+	});
+
+	it("asks about neither an allowed nor a denied access", async () => {
+		stored = { ...NONE, read: "allowed", write: "denied" };
+
+		const pending = request({ doctype: "Contact", access: ["read", "write", "delete"] });
+		await settled();
+
+		expect(pendingPrompt.value?.access).toEqual(["delete"]);
 
 		answerPrompt(false);
 		await pending;
@@ -233,14 +244,14 @@ describe("the answer", () => {
 		});
 	});
 
-	it("records a denial as a denial, with nothing allowed", async () => {
+	it("records a denial for the access it asked about", async () => {
 		const pending = request({ doctype: "Contact", access: ["read"] });
 		await settled();
 		answerPrompt(false);
 		await pending;
 
 		expect(lastCall("record_extension_grant")?.params).toMatchObject({
-			access: [],
+			access: ["read"],
 			denied: true,
 		});
 	});

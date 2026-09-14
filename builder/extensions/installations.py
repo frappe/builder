@@ -21,7 +21,7 @@ from builder.extensions.access import (
 	find_own_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.data import ACCESS_FIELDS, forget_grant, read_access, upsert_grant
+from builder.extensions.data import ACCESS_FIELDS, read_answers, upsert_grant
 from builder.utils import has_page_read
 
 RESOURCE_DOCTYPE = "Builder Extension Resource"
@@ -63,38 +63,30 @@ def installation_doctype_grants(installation: str) -> list[dict]:
 	return frappe.get_all(
 		GRANT_DOCTYPE,
 		filters={"installation": installation},
-		fields=["document_type", "can_read", "can_write", "can_delete", "denied"],
+		fields=["document_type", *ACCESS_FIELDS.values()],
 		order_by="document_type asc",
 	)
 
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NOT_INSTALLED)
-def set_extension_grant(
-	extension: str, doctype: str, access: list[str] | None = None, denied: bool = False
-) -> list[dict]:
-	"""Write what stands for one doctype, and answer with every grant after it.
+def set_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> list[dict]:
+	"""Write the three answers for one doctype, and answer with every grant after it.
 
 	`record_extension_grant` merges, because an extension asking for more must not
 	drop what it already has. This writes exactly what it is given: the user
 	narrows a grant here, and merging would never let them.
 
-	Allowing nothing while denying nothing is not an answer, so it is dropped
-	rather than stored. An extension asks again when no grant names it, which is
-	what an empty one would mean. A denial is stored, because it stops the asking.
+	The row stays when all three answers are "not asked", so the panel keeps
+	listing the doctype. The extension asks again about each access, the way it
+	does when no grant names the doctype. A denial stops the asking for that access.
 
 	The gate is the user's own installation, not the extension's access. They most
 	want an answer back after they disable the extension or turn `data.access`
 	off, and the extension gate refuses both.
 	"""
 	installation = own_installation(extension)
-	allowed = set() if denied else read_access(access)
-
-	if not allowed and not denied:
-		forget_grant(installation, doctype)
-	else:
-		written = {field: int(name in allowed) for name, field in ACCESS_FIELDS.items()}
-		upsert_grant(installation, doctype, {**written, "denied": int(denied)})
+	upsert_grant(installation, doctype, read_answers(answers))
 
 	return installation_doctype_grants(installation)
 

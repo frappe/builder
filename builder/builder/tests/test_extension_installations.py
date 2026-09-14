@@ -231,8 +231,12 @@ class TestUninstall(FrappeTestCase):
 			uninstall_extension(EXTENSION)
 
 
+def answers(read="not asked", write="not asked", delete="not asked") -> dict:
+	return {"read": read, "write": write, "delete": delete}
+
+
 class TestGrantAnswers(FrappeTestCase):
-	"""Narrowing what a user already answered for, one action at a time.
+	"""Changing what a user already answered for, one access at a time.
 
 	The gate is the user's own installation, never the extension's access. They
 	must reach an answer after disabling the extension or turning `data.access`
@@ -247,72 +251,82 @@ class TestGrantAnswers(FrappeTestCase):
 		make_installation(EXTENSION)
 		record_extension_grant(EXTENSION, "Contact", **values)
 
-	def test_narrows_one_action_and_keeps_the_rest(self):
+	def assertAnswers(self, row, read, write, delete):
+		self.assertEqual(
+			(row["read_access"], row["write_access"], row["delete_access"]), (read, write, delete)
+		)
+
+	def test_narrows_one_access_and_keeps_the_rest(self):
 		self.grant(access=["read", "write", "delete"])
 
-		grants = set_extension_grant(EXTENSION, "Contact", ["read", "write"])
+		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
 
-		self.assertTrue(grants[0]["can_read"])
-		self.assertTrue(grants[0]["can_write"])
-		self.assertFalse(grants[0]["can_delete"])
+		self.assertAnswers(grants[0], "allowed", "allowed", "not asked")
+
+	def test_denies_one_access_and_keeps_the_rest(self):
+		self.grant(access=["read", "write"])
+
+		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "denied"))
+
+		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
 	def test_writes_exactly_what_it_is_given_where_recording_merges(self):
 		"""`record_extension_grant` never removes. This is what lets a user take back."""
 		self.grant(access=["read", "write"])
 
-		grants = set_extension_grant(EXTENSION, "Contact", ["delete"])
+		grants = set_extension_grant(EXTENSION, "Contact", answers(delete="allowed"))
 
-		self.assertFalse(grants[0]["can_read"])
-		self.assertFalse(grants[0]["can_write"])
-		self.assertTrue(grants[0]["can_delete"])
+		self.assertAnswers(grants[0], "not asked", "not asked", "allowed")
 
 	def test_widens_an_answer_the_user_wants_to_widen(self):
 		self.grant(access=["read"])
 
-		grants = set_extension_grant(EXTENSION, "Contact", ["read", "write"])
+		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
 
-		self.assertTrue(grants[0]["can_write"])
+		self.assertEqual(grants[0]["write_access"], "allowed")
 
-	def test_allowing_nothing_drops_the_answer_so_it_asks_again(self):
+	def test_three_not_asked_answers_keep_the_row_so_the_panel_lists_it(self):
 		self.grant(access=["read"])
 
-		self.assertEqual(set_extension_grant(EXTENSION, "Contact", []), [])
+		grants = set_extension_grant(EXTENSION, "Contact", answers())
 
-	def test_denying_stores_the_refusal_and_clears_the_access(self):
-		self.grant(access=["read", "write"])
+		self.assertEqual(len(grants), 1)
+		self.assertAnswers(grants[0], "not asked", "not asked", "not asked")
 
-		grants = set_extension_grant(EXTENSION, "Contact", denied=True)
-
-		self.assertTrue(grants[0]["denied"])
-		self.assertFalse(grants[0]["can_read"])
-		self.assertFalse(grants[0]["can_write"])
-
-	def test_asking_again_is_the_way_back_from_a_denial(self):
-		self.grant(denied=True)
+	def test_not_asked_is_the_way_back_from_a_denial(self):
+		self.grant(access=["read"], denied=True)
 		installation = find_own_installation(EXTENSION)
 
-		set_extension_grant(EXTENSION, "Contact", [])
+		set_extension_grant(EXTENSION, "Contact", answers())
 
-		self.assertEqual(installation_doctype_grants(installation), [])
+		self.assertAnswers(
+			installation_doctype_grants(installation)[0], "not asked", "not asked", "not asked"
+		)
 
-	def test_refuses_an_access_name_it_does_not_know(self):
+	def test_refuses_an_answer_it_does_not_know(self):
 		self.grant(access=["read"])
 
 		with self.assertRaises(frappe.ValidationError):
-			set_extension_grant(EXTENSION, "Contact", ["publish"])
+			set_extension_grant(EXTENSION, "Contact", answers(read="maybe"))
+
+	def test_refuses_answers_that_leave_an_access_out(self):
+		self.grant(access=["read"])
+
+		with self.assertRaises(frappe.ValidationError):
+			set_extension_grant(EXTENSION, "Contact", {"read": "allowed"})
 
 	def test_answers_a_disabled_extension_the_user_can_still_manage(self):
 		self.grant(access=["read"])
 		set_extension_enabled(EXTENSION, False)
 
-		self.assertEqual(set_extension_grant(EXTENSION, "Contact", []), [])
+		self.assertEqual(set_extension_grant(EXTENSION, "Contact", answers())[0]["read_access"], "not asked")
 
 	def test_answers_after_the_user_took_data_access_away(self):
 		self.grant(access=["read"])
 		set_granted_capabilities(EXTENSION, ["block.read"])
 
-		self.assertEqual(set_extension_grant(EXTENSION, "Contact", []), [])
+		self.assertEqual(set_extension_grant(EXTENSION, "Contact", answers())[0]["read_access"], "not asked")
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
-			set_extension_grant(EXTENSION, "Contact", [])
+			set_extension_grant(EXTENSION, "Contact", answers())

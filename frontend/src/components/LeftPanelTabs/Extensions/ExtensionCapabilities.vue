@@ -23,31 +23,41 @@
 
 				<!--
 					The doctypes answered for sit under the capability they elaborate, so
-					turning that capability off shows what it leaves behind.
+					turning that capability off shows what it leaves behind. No divider
+					comes before them, because they belong to the toggle above.
 				-->
-				<div v-for="grant in doctypeGrantsUnder(group)" :key="grant.document_type" class="py-3">
-					<div class="flex items-center justify-between gap-2">
-						<p class="min-w-0 truncate text-xs text-ink-gray-8">{{ grant.document_type }}</p>
-						<Select
-							size="sm"
-							class="w-28 shrink-0"
-							:model-value="grant.denied ? 'denied' : 'allowed'"
-							:options="grantOptions(grant)"
-							@update:model-value="(answer: unknown) => answerGrant(grant, answer)" />
-					</div>
-
-					<p v-if="grant.denied" class="pt-1 text-xs text-ink-gray-5">It stopped asking about this.</p>
-					<div v-else class="flex flex-col gap-2 pt-2">
-						<Switch
-							v-for="action in GRANT_ACTIONS"
-							:key="action"
-							size="sm"
-							:model-value="Boolean(grant[`can_${action}`])"
-							@update:model-value="(allow: boolean) => setAction(grant, action, allow)">
-							<template #label>
-								<span class="text-xs capitalize text-ink-gray-7">{{ action }}</span>
-							</template>
-						</Switch>
+				<div
+					v-if="doctypeGrantsUnder(group).length"
+					class="flex flex-col gap-3"
+					:class="group.capabilities.length ? '!border-t-0 pb-3' : 'py-3'">
+					<p class="text-xs text-ink-gray-5">Doctypes</p>
+					<div
+						v-for="grant in doctypeGrantsUnder(group)"
+						:key="grant.document_type"
+						class="flex flex-col gap-1.5 border-l border-outline-gray-2 pl-3">
+						<div class="flex items-center justify-between gap-2">
+							<p class="min-w-0 truncate text-xs font-medium text-ink-gray-8">{{ grant.document_type }}</p>
+							<Dropdown :options="answerAllOptions(grant)" placement="right">
+								<template #trigger="{ open }">
+									<Button
+										variant="ghost"
+										size="sm"
+										icon="lucide-more-horizontal"
+										:active="open"
+										:aria-label="`Answer every access to ${grant.document_type}`" />
+								</template>
+							</Dropdown>
+						</div>
+						<div v-for="access in ACCESS" :key="access" class="flex items-center justify-between gap-2">
+							<span class="text-xs capitalize text-ink-gray-6">{{ access }}</span>
+							<TabButtons
+								:class="COMPACT_TABS"
+								:options="ANSWER_BUTTONS"
+								:model-value="answersOf(grant)[access]"
+								@update:model-value="
+									(answer: unknown) => setAnswers(grant, [access], answer as AccessAnswer)
+								" />
+						</div>
 					</div>
 				</div>
 			</div>
@@ -57,6 +67,7 @@
 
 <script setup lang="ts">
 import { setExtensionGrant, type ExtensionGrant } from "@/data/extensions";
+import { ACCESS, type Access, type AccessAnswer } from "@/extensions/data/grants";
 import {
 	capabilityDetails,
 	groupCapabilities,
@@ -65,8 +76,9 @@ import {
 	type CapabilityGroup,
 } from "@/extensions/capabilityClasses";
 import { confirm } from "@/utils/helpers";
+import { COMPACT_TABS } from "@/utils/tabButtons";
 import type { Capability } from "frappe-builder-extension-sdk/types";
-import { Select, Switch, toast } from "frappe-ui";
+import { Button, Dropdown, Switch, TabButtons, toast } from "frappe-ui";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -90,38 +102,35 @@ const groups = computed(() =>
 const doctypeGrantsUnder = (group: CapabilityGroup) =>
 	group.name === SITE_DATA_CLASS ? props.doctypeGrants : [];
 
-const GRANT_ACTIONS = ["read", "write", "delete"] as const;
-type GrantAction = (typeof GRANT_ACTIONS)[number];
-
-const accessOf = (grant: ExtensionGrant) => GRANT_ACTIONS.filter((action) => grant[`can_${action}`]);
-
-/**
- * A denial records no access, so nothing stands to allow again. Asking again is
- * the way back: the extension asks, and the answer is a fresh one.
- */
-const grantOptions = (grant: ExtensionGrant) => [
-	...(grant.denied ? [] : [{ label: "Allowed", value: "allowed" }]),
-	{ label: "Denied", value: "denied" },
-	{ label: "Ask again", value: "forgotten" },
+/** Icon only: the label names each segment for a screen reader and a tooltip. */
+const ANSWER_BUTTONS = [
+	{ label: "Allowed", value: "allowed", icon: "lucide-check" },
+	{ label: "Denied", value: "denied", icon: "lucide-x" },
+	{ label: "Not asked", value: "not asked", icon: "lucide-minus" },
 ];
 
-/** Turning the last action off allows nothing, so the answer goes and it asks again. */
-const setAction = (grant: ExtensionGrant, action: GrantAction, allow: boolean) => {
-	const access = allow
-		? [...accessOf(grant), action]
-		: accessOf(grant).filter((granted) => granted !== action);
-	return writeGrant(grant, access);
-};
+const answersOf = (grant: ExtensionGrant): Record<Access, AccessAnswer> => ({
+	read: grant.read_access,
+	write: grant.write_access,
+	delete: grant.delete_access,
+});
 
-/** "allowed" is the standing answer, so choosing it again writes nothing. */
-const answerGrant = (grant: ExtensionGrant, answer: unknown) => {
-	if (answer === "denied") return writeGrant(grant, [], true);
-	if (answer === "forgotten") return writeGrant(grant, []);
-};
+const answerAllOptions = (grant: ExtensionGrant) => [
+	{ label: "Allow all", icon: "lucide-check", onClick: () => setAnswers(grant, ACCESS, "allowed") },
+	{ label: "Deny all", icon: "lucide-x", onClick: () => setAnswers(grant, ACCESS, "denied") },
+	{
+		label: "Set all to not asked",
+		icon: "lucide-minus",
+		onClick: () => setAnswers(grant, ACCESS, "not asked"),
+	},
+];
 
-const writeGrant = async (grant: ExtensionGrant, access: GrantAction[], denied = false) => {
+/** The server takes the three answers whole, so the ones not changed travel with the change. */
+const setAnswers = async (grant: ExtensionGrant, changed: readonly Access[], answer: AccessAnswer) => {
+	const answers = answersOf(grant);
+	changed.forEach((access) => (answers[access] = answer));
 	try {
-		emit("doctypeGrants", await setExtensionGrant(props.extension, grant.document_type, access, denied));
+		emit("doctypeGrants", await setExtensionGrant(props.extension, grant.document_type, answers));
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	}

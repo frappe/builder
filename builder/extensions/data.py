@@ -26,9 +26,13 @@ from builder.extensions.access import assert_extension_access
 
 GRANT_DOCTYPE = "Builder Extension Grant"
 
-ACCESS_FIELDS = {"read": "can_read", "write": "can_write", "delete": "can_delete"}
+NOT_ASKED = "not asked"
+ALLOWED = "allowed"
+DENIED = "denied"
+ANSWERS = (NOT_ASKED, ALLOWED, DENIED)
 
-NO_ACCESS = {"read": False, "write": False, "delete": False, "denied": False}
+# each access holds its own answer, so a user can allow read and deny delete
+ACCESS_FIELDS = {"read": "read_access", "write": "write_access", "delete": "delete_access"}
 
 # a page of rows, and the ceiling one call can ask for. The server owns this
 # number: it is the side protecting the database, and a copy in the browser
@@ -63,40 +67,54 @@ def record_extension_grant(
 	an extension frame cannot reach this method at all: it runs at an opaque origin
 	and carries no session cookie, so the host is the only caller.
 
-	Merges, and never removes what a call leaves unmentioned. That is the rule
-	`set_extension_tokens` follows too. An admin narrows a grant in Desk, and a
-	later `data.revokeAccess` can narrow it from an extension.
+	Answers only the access the call names, and leaves the rest as it stands.
+	That is the rule `set_extension_tokens` follows too. Denying delete does not
+	take back a read the user already allowed.
 	"""
 	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
-	allowed = set() if denied else read_access(access)
+	answer = DENIED if denied else ALLOWED
 
-	values = {field: 1 for name, field in ACCESS_FIELDS.items() if name in allowed}
-	values["denied"] = int(denied)
-
+	values = {ACCESS_FIELDS[name]: answer for name in read_access(access)}
 	upsert_grant(installation, doctype, values)
 	return describe_grant(installation, doctype)
 
 
 def read_access(access: list[str] | None) -> set[str]:
 	access = set(access or [])
+	if not access:
+		frappe.throw(_("Name the access this answers: read, write or delete."))
 	unknown = sorted(access - set(ACCESS_FIELDS))
 	if unknown:
 		frappe.throw(_("Unknown access: {0}").format(", ".join(unknown)))
 	return access
 
 
-def describe_grant(installation: str, doctype: str) -> dict:
-	grant = frappe.db.get_value(
-		GRANT_DOCTYPE,
-		{"installation": installation, "document_type": doctype},
-		[*ACCESS_FIELDS.values(), "denied"],
-		as_dict=True,
-	)
-	if not grant:
-		return {"doctype": doctype, **NO_ACCESS}
+def read_answers(answers: dict | None) -> dict:
+	"""One answer for each access, keyed the way the grant stores them."""
+	answers = answers or {}
+	if set(answers) != set(ACCESS_FIELDS):
+		frappe.throw(_("Answer read, write and delete."))
+	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
+	if unknown:
+		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
+	return {ACCESS_FIELDS[name]: answer for name, answer in answers.items()}
 
-	answer = {name: bool(grant[field]) for name, field in ACCESS_FIELDS.items()}
-	return {"doctype": doctype, **answer, "denied": bool(grant.denied)}
+
+def describe_grant(installation: str, doctype: str) -> dict:
+	"""One answer for each access. A doctype nobody answered has no row, so each is not asked."""
+	grant = (
+		frappe.db.get_value(
+			GRANT_DOCTYPE,
+			{"installation": installation, "document_type": doctype},
+			list(ACCESS_FIELDS.values()),
+			as_dict=True,
+		)
+		or {}
+	)
+	return {
+		"doctype": doctype,
+		**{name: grant.get(field, NOT_ASKED) for name, field in ACCESS_FIELDS.items()},
+	}
 
 
 def find_extension_grant(installation: str, doctype: str) -> str | None:
@@ -128,10 +146,9 @@ def upsert_grant(installation: str, doctype: str, values: dict) -> None:
 
 
 def forget_grant(installation: str, doctype: str) -> None:
-	"""Drop the answer, so the next request asks again.
+	"""Drop every answer, so the next request asks about each access again.
 
-	Nothing here narrows a grant. A user takes one back by forgetting it, and a
-	dropped doctype forgets its own, so a doctype remade under the same name
+	A dropped doctype forgets its own, so a doctype remade under the same name
 	inherits nothing.
 	"""
 	name = find_extension_grant(installation, doctype)
@@ -147,7 +164,7 @@ def assert_grant(installation: str, extension: str, doctype: str, access: str) -
 	refusal, because the message travels to the author and an installation name
 	is a uuid.
 	"""
-	if describe_grant(installation, doctype).get(access):
+	if describe_grant(installation, doctype)[access] == ALLOWED:
 		return
 
 	frappe.throw(

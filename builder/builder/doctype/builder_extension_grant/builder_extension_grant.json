@@ -1,16 +1,15 @@
 {
  "actions": [],
  "creation": "2026-08-20 10:00:00.000000",
- "description": "What one extension may do to one doctype, for one installation. The user grants this in the Builder editor, not here, and it cannot exceed the user's own Frappe permissions. An admin can narrow a grant here, or delete it to let the extension ask again.",
+ "description": "What one extension may do to one doctype, for one installation. The user answers read, write and delete in the Builder editor, not here, and no answer can exceed the user's own Frappe permissions. An admin can change an answer here. Set every answer to not asked, or delete the grant, to let the extension ask again.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "installation",
   "document_type",
-  "can_read",
-  "can_write",
-  "can_delete",
-  "denied"
+  "read_access",
+  "write_access",
+  "delete_access"
  ],
  "fields": [
   {
@@ -35,38 +34,37 @@
    "reqd": 1
   },
   {
-   "default": "0",
-   "fieldname": "can_read",
-   "fieldtype": "Check",
+   "default": "not asked",
+   "fieldname": "read_access",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Can Read"
+   "label": "Read",
+   "options": "not asked\nallowed\ndenied",
+   "reqd": 1
   },
   {
-   "default": "0",
-   "fieldname": "can_write",
-   "fieldtype": "Check",
+   "default": "not asked",
+   "fieldname": "write_access",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Can Write"
+   "label": "Write",
+   "options": "not asked\nallowed\ndenied",
+   "reqd": 1
   },
   {
-   "default": "0",
-   "fieldname": "can_delete",
-   "fieldtype": "Check",
+   "default": "not asked",
+   "fieldname": "delete_access",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Can Delete"
-  },
-  {
-   "default": "0",
-   "description": "The last answer was no. The extension is not asked again until this is cleared.",
-   "fieldname": "denied",
-   "fieldtype": "Check",
-   "label": "Denied"
+   "label": "Delete",
+   "options": "not asked\nallowed\ndenied",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-03 10:00:00.000000",
+ "modified": "2026-09-14 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension Grant",

@@ -110,7 +110,7 @@ const builder = {
 	 *
 	 * Then `createListResource` and `createDocumentResource` work as they do in
 	 * any Frappe app. The grant still comes first: a resource errors with
-	 * `grant_required` until `requestAccess` has been answered.
+	 * `grant_required` until the user allows the access it needs.
 	 */
 	data: { ...data, fetcher: resourceFetcher },
 

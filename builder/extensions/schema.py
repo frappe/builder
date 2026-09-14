@@ -25,7 +25,14 @@ import frappe
 from frappe import _
 
 from builder.extensions.access import assert_extension_access
-from builder.extensions.data import assert_grant, describe_grant, forget_grant, upsert_grant
+from builder.extensions.data import (
+	ACCESS_FIELDS,
+	ALLOWED,
+	assert_grant,
+	describe_grant,
+	forget_grant,
+	upsert_grant,
+)
 from builder.extensions.resources import (
 	RESOURCE_DOCTYPE,
 	find_resource,
@@ -263,7 +270,7 @@ def grant_everything(installation: str, doctype: str) -> None:
 	For this installation alone. Another user installing the same extension is
 	asked the ordinary way, because they did not make this table.
 	"""
-	upsert_grant(installation, doctype, {"can_read": 1, "can_write": 1, "can_delete": 1, "denied": 0})
+	upsert_grant(installation, doctype, dict.fromkeys(ACCESS_FIELDS.values(), ALLOWED))
 
 
 def assert_owned(extension: str, doctype: str) -> None:

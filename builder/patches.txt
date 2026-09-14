@@ -21,3 +21,4 @@ execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
 builder.builder.patches.per_user_extensions
 builder.builder.patches.grandfather_extension_capabilities
+builder.builder.patches.per_action_extension_grants

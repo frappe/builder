@@ -195,7 +195,7 @@ The error object can include one of these codes:
 | `already_registered` | The extension already registered a panel, settings page, dialog, or popover |
 | `unknown_block` | The active canvas does not contain the block ID |
 | `no_canvas` | Builder has no active canvas |
-| `grant_required` | No grant covers the doctype. Call `data.requestAccess` |
+| `grant_required` | The access is not allowed. Call `data.requestAccess`, then check the answer for `"denied"` |
 | `refused` | The user answered no to a schema dialog |
 | `server_error` | The site rejected the data or schema call |
 | `rate_limited` | The extension exceeded its request budget |
@@ -629,9 +629,9 @@ The capability alone grants nothing. The user must also grant access to each doc
 
 ```ts
 const grant = await builder.data.getAccess("Task");
-if (!grant.read) {
+if (grant.read !== "allowed") {
   const answer = await builder.data.requestAccess("Task", ["read", "write"]);
-  if (!answer.read) return;
+  if (answer.read !== "allowed") return;
 }
 
 const tasks = await builder.data.getList("Task", {
@@ -644,7 +644,9 @@ const tasks = await builder.data.getList("Task", {
 
 `requestAccess` opens a modal dialog. Call it after the user presses something, never at startup.
 
-`requestAccess` returns without a dialog when the grant already covers the access, and when the user refused before. Read `denied` on the answer to tell "not asked yet" from "already refused".
+Each access in a grant holds one answer: `"allowed"`, `"denied"`, or `"not asked"`. Compare an answer to `"allowed"`, because `"denied"` is a truthy string.
+
+`requestAccess` asks only about each access that is `"not asked"`. It returns without a dialog when every access you name is already allowed or denied. The user can change a denied access in the Extensions panel.
 
 These methods read and write documents:
 
@@ -659,7 +661,7 @@ These methods read and write documents:
 
 `getList` takes `fields`, `filters`, `orFilters`, `orderBy`, `groupBy`, `start`, and `pageLength`. `pageLength` can reach 500. Builder rejects 0.
 
-A call without a grant fails with `grant_required`. Catch that code and ask the user. Any other refusal comes from the site, and asking again does not help.
+A call fails with `grant_required` when the access it needs is not allowed. Catch that code and call `requestAccess`. Then read the answer. If the user denied that access before, `requestAccess` returns `"denied"` without a dialog, so tell the user to change it in the Extensions panel. Any other refusal comes from the site, and asking again does not help.
 
 For frappe-ui resources, wire the SDK fetcher once in the entry module:
 

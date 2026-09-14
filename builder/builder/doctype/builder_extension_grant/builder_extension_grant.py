@@ -16,12 +16,11 @@ class BuilderExtensionGrant(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		can_delete: DF.Check
-		can_read: DF.Check
-		can_write: DF.Check
-		denied: DF.Check
+		delete_access: DF.Literal["not asked", "allowed", "denied"]
 		document_type: DF.Link
 		installation: DF.Link
+		read_access: DF.Literal["not asked", "allowed", "denied"]
+		write_access: DF.Literal["not asked", "allowed", "denied"]
 	# end: auto-generated types
 
 	def autoname(self):

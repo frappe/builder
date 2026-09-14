@@ -27,15 +27,15 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 export const ACCESS = ["read", "write", "delete"] as const;
 export type Access = (typeof ACCESS)[number];
 
-/** What the server says about one extension and one doctype. */
-export type Grant = {
-	doctype: string;
-	read: boolean;
-	write: boolean;
-	delete: boolean;
-	/** The last answer was no. The extension is not asked again until this clears. */
-	denied: boolean;
-};
+export const ACCESS_ANSWERS = ["allowed", "denied", "not asked"] as const;
+export type AccessAnswer = (typeof ACCESS_ANSWERS)[number];
+
+/**
+ * What the server says about one extension and one doctype: one answer for each
+ * access. A denied access is not asked about again until the user changes it in
+ * the Extensions panel.
+ */
+export type Grant = { doctype: string } & Record<Access, AccessAnswer>;
 
 /**
  * Doctypes the prompt warns about twice.
@@ -98,7 +98,7 @@ export type GrantPrompt = {
 	extension: InstalledExtension;
 	/** The doctype an access or schema prompt names. The page route a script prompt names. */
 	subject: string;
-	/** What is still missing. An access the user already gave is not asked for again. */
+	/** What is still not asked. An access the user already allowed or denied is not asked about again. */
 	access: Access[];
 	sensitive: boolean;
 	/** For a schema prompt: the verb, in the words the dialog uses. */
@@ -156,7 +156,7 @@ const readAccess = (value: unknown): Access[] => {
 	if (!Array.isArray(value) || !value.length) {
 		// escaped rather than single-quoted, the way tokenMethods.ts:58 writes the
 		// same refusal: eslint wants double quotes and prettier wants fewer escapes
-		throw refuse("\"access\" must be a non-empty list.", "invalid_params");
+		throw refuse('"access" must be a non-empty list.', "invalid_params");
 	}
 	const unknown = value.filter((entry) => !ACCESS.includes(entry as Access));
 	if (unknown.length) {
@@ -173,14 +173,16 @@ const readAccess = (value: unknown): Access[] => {
  * with dialog props. Rebuilding the shape here fixes it and checks what the
  * server sent in the same step.
  */
+const readAnswer = (value: unknown): AccessAnswer =>
+	ACCESS_ANSWERS.includes(value as AccessAnswer) ? (value as AccessAnswer) : "not asked";
+
 const toGrant = (value: unknown, doctype: string): Grant => {
 	const sent = fields(value);
 	return {
 		doctype,
-		read: Boolean(sent.read),
-		write: Boolean(sent.write),
-		delete: Boolean(sent.delete),
-		denied: Boolean(sent.denied),
+		read: readAnswer(sent.read),
+		write: readAnswer(sent.write),
+		delete: readAnswer(sent.delete),
 	};
 };
 
@@ -206,11 +208,7 @@ const ask = (request: GrantPrompt) =>
  *
  * Exported for `schemaMethods.ts`, which is the only caller.
  */
-export const confirmSchema = (
-	extension: InstalledExtension,
-	doctype: string,
-	act: "create" | "delete",
-) => {
+export const confirmSchema = (extension: InstalledExtension, doctype: string, act: "create" | "delete") => {
 	hookTeardown(extension);
 	return enqueue(() =>
 		ask({ kind: "schema", extension, subject: doctype, act, access: [], sensitive: act === "delete" }),
@@ -249,17 +247,17 @@ const prompt = async (extension: InstalledExtension, doctype: string, access: Ac
 	return invoke("builder.extensions.data.record_extension_grant", {
 		extension: extension.name,
 		doctype,
-		access: granted ? access : [],
+		access,
 		denied: !granted,
 	}).then((sent: unknown) => toGrant(sent, doctype));
 };
 
 /**
- * Asks the user, unless the record already answers.
+ * Asks the user about each access nobody answered yet.
  *
- * Three ways this returns without a dialog: the grant already covers everything
- * asked for, the user said no last time, or another extension is mid-prompt and
- * this one waits its turn.
+ * An access the user allowed or denied is not asked about again. When every
+ * access named is answered, this returns the grant without a dialog. When
+ * another extension is mid-prompt, this one waits its turn.
  */
 const requestAccess = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
@@ -267,10 +265,10 @@ const requestAccess = async (params: unknown, extension: InstalledExtension) => 
 	const access = readAccess(sent.access);
 
 	const current = await readGrant(extension, doctype);
-	const missing = access.filter((entry) => !current[entry]);
-	if (!missing.length || current.denied) return current;
+	const unasked = access.filter((entry) => current[entry] === "not asked");
+	if (!unasked.length) return current;
 
-	return enqueue(() => prompt(extension, doctype, missing));
+	return enqueue(() => prompt(extension, doctype, unasked));
 };
 
 const getAccess = (params: unknown, extension: InstalledExtension) =>

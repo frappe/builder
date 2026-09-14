@@ -57,7 +57,8 @@ const installationRow = (name: string, overrides: Partial<Record<string, unknown
 	enabled: true,
 	...overrides,
 });
-const developmentRow = (name: string) => installationRow(name, { version: "0.0.0-dev", is_development: true });
+const developmentRow = (name: string) =>
+	installationRow(name, { version: "0.0.0-dev", is_development: true });
 const document = (name: string, capabilities: string[] = []) => ({
 	extension: name,
 	label: name,
@@ -259,7 +260,9 @@ describe("useInstallationDetails", () => {
 		modules = await loadModule();
 	});
 
-	const doctypeGrants = [{ document_type: "ToDo", can_read: 1, can_write: 0, can_delete: 0, denied: 0 }];
+	const doctypeGrants = [
+		{ document_type: "ToDo", read_access: "allowed", write_access: "not asked", delete_access: "not asked" },
+	];
 
 	const running = () =>
 		Object.assign(development("acme/icons"), {
@@ -314,7 +317,11 @@ describe("useInstallationDetails", () => {
 
 		const details = await openDetails("acme/icons", {}, developmentRow("acme/icons"));
 
-		expect(details).toMatchObject({ label: "Icons", is_development: true, installed_on: "2026-09-03 10:00:00" });
+		expect(details).toMatchObject({
+			label: "Icons",
+			is_development: true,
+			installed_on: "2026-09-03 10:00:00",
+		});
 	});
 
 	/**
