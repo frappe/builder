@@ -29,13 +29,22 @@
 			</div>
 			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
 				<Select
-					v-model="typeFilter"
+					v-model="statusFilter"
 					:options="[
-						{ label: __('Type'), value: '', disabled: true },
+						{ label: __('Status'), value: '', disabled: true },
 						{ label: __('All'), value: 'all' },
+						{ label: __('Live'), value: 'live' },
+						{ label: __('Staging'), value: 'staging' },
 						{ label: __('Draft'), value: 'draft' },
-						{ label: __('Published'), value: 'published' },
-						{ label: __('Unpublished'), value: 'unpublished' },
+					]" />
+			</div>
+			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
+				<Select
+					v-model="ownerFilter"
+					:options="[
+						{ label: __('Created By'), value: '', disabled: true },
+						{ label: __('Created by anyone'), value: 'anyone' },
+						{ label: __('Created by me'), value: 'me' },
 					]" />
 			</div>
 			<div v-if="displayType === 'tree' && !selectionMode">
@@ -114,7 +123,8 @@ const {
 	selectedPages,
 	treeExpanded,
 	displayType,
-	typeFilter,
+	statusFilter,
+	ownerFilter,
 	orderBy,
 	expandTreeFn,
 	collapseTreeFn,

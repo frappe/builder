@@ -200,12 +200,12 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async publishPage(openInBrowser = true) {
+		async publishPage(openInBrowser = true, staging = false) {
 			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
-					method: "publish",
+					method: staging ? "publish_to_staging" : "publish",
 					route_variables: this.routeVariables,
 				})
 				.then(async () => {
@@ -273,11 +273,13 @@ const usePageStore = defineStore("pageStore", {
 				.submit({
 					name: targetName,
 					published: false,
+					staging: false,
 				})
 				.then(() => {
 					toast.success(__("Page unpublished"));
 					if (page) {
 						page.published = 0;
+						page.staging = 0;
 					} else {
 						this.setPage(this.selectedPage as string);
 					}

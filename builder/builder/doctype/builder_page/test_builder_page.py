@@ -51,6 +51,21 @@ component.update({
 """
 
 
+def insert_page(route, heading):
+	return frappe.get_doc(
+		{
+			"doctype": "Builder Page",
+			"page_title": heading,
+			"route": route,
+			"draft_blocks": Block(
+				element="div",
+				originalElement="body",
+				children=[Block(element="h1", innerHTML=heading)],
+			).as_json(wrap_in_array=True),
+		}
+	).insert()
+
+
 class TestBuilderPage(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -162,6 +177,58 @@ class TestBuilderPage(FrappeTestCase):
 		self.page.publish()
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
+
+	def test_staging_page_is_served_but_kept_out_of_search(self):
+		from frappe.www.sitemap import get_public_pages_from_doctypes
+
+		noindex = '<meta name="robots" content="noindex, nofollow">'
+		page = insert_page("test-staging-page", "Staging Content")
+		try:
+			page.publish_to_staging()
+			content = get_response_content("/test-staging-page")
+			self.assertIn("Staging Content", content)
+			self.assertIn(noindex, content)
+			get_public_pages_from_doctypes.clear_cache()
+			self.assertNotIn("test-staging-page", get_public_pages_from_doctypes())
+
+			page.publish()
+			self.assertFalse(page.staging)
+			self.assertNotIn(noindex, get_response_content("/test-staging-page"))
+			get_public_pages_from_doctypes.clear_cache()
+			self.assertIn("test-staging-page", get_public_pages_from_doctypes())
+		finally:
+			page.delete()
+
+	def test_unpublish_takes_a_staging_page_offline(self):
+		page = insert_page("test-staging-unpublish", "Staging Content")
+		try:
+			page.publish_to_staging()
+			page.unpublish()
+			self.assertFalse(page.staging)
+			self.assertEqual(get_response("/test-staging-unpublish").status_code, 404)
+		finally:
+			page.delete()
+
+	def test_live_page_keeps_its_route_when_a_staging_page_shares_it(self):
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		route = "test-shared-route"
+		live = insert_page(route, "Live Content")
+		staging = insert_page(route, "Staging Content")
+		try:
+			live.publish()
+			staging.publish_to_staging()
+			# a staging page that was live more recently still can't take the route
+			staging.db_set("published_at", add_to_date(now_datetime(), days=1))
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+			self.assertIn("Live Content", get_response_content(f"/{route}"))
+		finally:
+			live.delete()
+			staging.delete()
 
 	def test_client_script(self):
 		client_script_js = frappe.get_doc(

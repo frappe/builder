@@ -21,7 +21,7 @@
 								</p>
 							</div>
 							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
-								<div v-show="page.published">
+								<div v-show="page.published || page.staging">
 									<span
 										:title="__('Limited access')"
 										class="lucide-shield-user size-4 text-ink-amber-6"
@@ -44,9 +44,7 @@
 				</div>
 			</div>
 			<div class="flex gap-2">
-				<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
-					{{ __("Published") }}
-				</Badge>
+				<PageStatusBadge :page="page" />
 				<Avatar
 					:shape="'circle'"
 					:image="owner.image"
@@ -68,11 +66,12 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Badge } from "frappe-ui";
+import { Avatar } from "frappe-ui";
 
 const pageStore = usePageStore();
 
