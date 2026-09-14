@@ -393,11 +393,13 @@ class BuilderPage(WebsiteGenerator):
 		self.enqueue_preview_image()
 		return self.route
 
-	# served at its route like a live page, but kept out of search engines and
-	# the sitemap (Frappe's sitemap lists only `published` pages)
 	@frappe.whitelist()
 	def publish_to_staging(self):
-		self.published = 0
+		"""Serve the page at its route like a live page, but keep it out of search engines and
+		the sitemap (Frappe's sitemap lists only `published` pages). A live page must be
+		unpublished first."""
+		if self.published:
+			frappe.throw(frappe._("A live page can't move to staging. Unpublish it first."))
 		self.staging = 1
 		self.promote_draft_blocks()
 		self.save()
@@ -1794,6 +1796,8 @@ def get_web_pages_with_dynamic_routes() -> list[dict]:
 		fields=["name", "route", "modified"],
 		filters={"dynamic_route": 1},
 		or_filters=SERVED_PAGE_FILTERS,
+		# the renderer serves the first match, so live pages come before staging ones
+		order_by="published desc, published_at desc, creation desc",
 		update={"doctype": "Builder Page"},
 	)
 

@@ -230,6 +230,26 @@ class TestBuilderPage(FrappeTestCase):
 			live.delete()
 			staging.delete()
 
+	def test_live_page_keeps_a_dynamic_route_when_a_staging_page_shares_it(self):
+		staging = insert_page("test-shared-dynamic/<slug>", "Staging Dynamic Content")
+		live = insert_page("test-shared-dynamic/<slug>", "Live Dynamic Content")
+		try:
+			staging.publish_to_staging()
+			live.publish()
+			self.assertIn("Live Dynamic Content", get_response_content("/test-shared-dynamic/any"))
+		finally:
+			live.delete()
+			staging.delete()
+
+	def test_live_page_cannot_move_to_staging(self):
+		page = insert_page("test-live-to-staging", "Live Content")
+		try:
+			page.publish()
+			self.assertRaises(frappe.ValidationError, page.publish_to_staging)
+			self.assertTrue(page.reload().published)
+		finally:
+			page.delete()
+
 	def test_client_script(self):
 		client_script_js = frappe.get_doc(
 			{
