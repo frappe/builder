@@ -5,12 +5,15 @@
 			:class="{
 				'!bg-surface-gray-2': selected,
 			}">
-			<img
-				width="250"
-				height="140"
-				:src="page.meta_image || page.preview"
-				onerror="this.src='/assets/builder/images/fallback.png'"
-				class="aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+			<div class="relative">
+				<img
+					width="250"
+					height="140"
+					:src="page.meta_image || page.preview"
+					onerror="this.src='/assets/builder/images/fallback.png'"
+					class="block aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+				<PageStatusBadge :page="page" size="sm" class="absolute left-2 top-2 shadow-sm" />
+			</div>
 			<div class="flex items-center justify-between border-outline-gray-2">
 				<span class="inline-block min-w-0 max-w-[160px]">
 					<div class="flex items-center gap-1">
@@ -31,7 +34,6 @@
 						:hoverDelay="0.5">
 						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 					</Tooltip>
-					<PageStatusBadge :page="page" size="sm" />
 					<PageActionsDropdown :page="page" size="xs" placement="right">
 						<Button
 							icon="lucide-more-horizontal"
