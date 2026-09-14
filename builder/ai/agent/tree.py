@@ -390,7 +390,7 @@ class WorkingTree:
 			return args, f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if fields := moustache_fields(args):
 			return args, f"FAILED: {fields} — {MOUSTACHE_HINT}"
-		if client_script_outside_component(block, args):
+		if self.rejects_client_script(block, args):
 			return args, f"FAILED: {CLIENT_SCRIPT_HINT}"
 		return self.route_props(block, args)
 
@@ -420,11 +420,14 @@ class WorkingTree:
 			declared = ", ".join(sorted(set(pinned) | set(live)))
 			return args, (
 				f"FAILED: props {unknown} — this component declares only: {declared}. Use a "
-				"declared name; a genuinely new prop is added by editing the component itself, "
-				"not through an instance."
+				"declared name; a genuinely new prop is declared with edit_component (props on "
+				"the component's root), not through an instance."
 			)
 		merge_props(owner, props, pinned=pinned, live=live)
 		return {k: v for k, v in args.items() if k != "props"}, ""
+
+	def rejects_client_script(self, block: dict, args: dict) -> bool:
+		return client_script_outside_component(block, args)
 
 	def props_owner(self, block: dict) -> dict | None:
 		"""The instance root a prop write belongs to: the block itself, or the nearest
@@ -516,3 +519,32 @@ class WorkingTree:
 		# chain edits onto the block it just added.
 		args["block_json"] = block
 		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
+
+
+class ComponentTree(WorkingTree):
+	"""A Builder Component's own definition. Every block in it belongs to the
+	component, so client scripts land on any block and props on the root are the
+	component's declarations, not an instance's values."""
+
+	def __init__(self, root: dict | None, component_id: str):
+		super().__init__(root)
+		self.component_id = component_id
+
+	def rejects_client_script(self, block: dict, args: dict) -> bool:
+		return False
+
+	def route_props(self, block: dict, args: dict) -> tuple[dict, str]:
+		if block is not self.root or not isinstance(args.get("props"), dict):
+			return super().route_props(block, args)
+		merge_props(block, args["props"], pinned={})
+		return {k: v for k, v in args.items() if k != "props"}, ""
+
+	def apply_remove(self, block_id: str | None) -> str:
+		if self.root and block_id == self.root.get("blockId"):
+			return "FAILED: can't remove the component's root block. Remove or edit its children instead."
+		return super().apply_remove(block_id)
+
+	def apply_add(self, args: dict) -> str:
+		if f'"component": "{self.component_id}"' in json_dumps_safe(args.get("block")):
+			return "FAILED: a component can't embed itself, it would render forever."
+		return super().apply_add(args)

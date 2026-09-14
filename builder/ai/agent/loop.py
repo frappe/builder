@@ -241,6 +241,7 @@ TOOL_LABELS = {
 	"query_blocks": ("Searching the page", "Searched the page"),
 	"search_images": ("Searching for photos", "Searched for photos"),
 	"extract_component": ("Making a reusable component", "Made a reusable component"),
+	"edit_component": ("Updating a shared component", "Updated a shared component"),
 	"write_page_data_script": ("Connecting the page to data", "Connected the page to data"),
 	"list_doctypes": ("Looking for existing data", "Looked for existing data"),
 	"run_python": ("Looking up site data", "Looked up site data"),

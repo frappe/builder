@@ -39,14 +39,14 @@ class BuilderComponent(StandardFileSync, Document):
 
 	def on_update(self):
 		# Skip the background cache-clear and version snapshot during bulk imports
-		# (install / migrate / import_doc). queue_action enqueues a job AND locks the
-		# doc, which can raise DocumentLockedError mid-import — e.g. when
-		# create_page_from_template import_doc's a hub template's components.
-		# ensure_component_version also walks nested components and prunes, which is
-		# unsafe when not all components are loaded yet. Versions are minted on the
-		# next real edit, so nothing is lost by skipping a fresh import.
+		# (install / migrate / import_doc). ensure_component_version walks nested
+		# components and prunes, which is unsafe when not all components are loaded
+		# yet. Versions are minted on the next real edit, so nothing is lost by
+		# skipping a fresh import.
 		if not is_bulk_import():
-			self.queue_action("clear_page_cache")
+			# Not queue_action: it locks the doc until the job runs, so a second save
+			# before the worker catches up raises DocumentLockedError.
+			frappe.enqueue_doc(self.doctype, self.name, "clear_page_cache", enqueue_after_commit=True)
 			ensure_component_version(self.name)
 		self.update_exported_component()
 		self.export_standard_files()
@@ -75,7 +75,7 @@ class BuilderComponent(StandardFileSync, Document):
 			if page_doc.is_component_used(self.component_id):
 				clear_website_cache(page_doc.route)
 
-	def sync_component(self):
+	def sync_component(self) -> list[str]:
 		# Only load pages whose blocks/draft_blocks mention this component; the
 		# precise is_component_used() check still runs below. Mirrors the filter
 		# used by Builder Settings.replace_component to avoid scanning every page.
@@ -87,10 +87,14 @@ class BuilderComponent(StandardFileSync, Document):
 				"draft_blocks": ["like", f"%{self.component_id}%"],
 			},
 		)
+		version = ensure_component_version(self.name)
+		synced = []
 		for page in pages:
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
 			if page_doc.is_component_used(self.component_id):
-				ComponentSyncer(page_doc).sync_component(self)
+				ComponentSyncer(page_doc, version).sync_component(self)
+				synced.append(page.name)
+		return synced
 
 	def get_referencing_pages(
 		self, filters: dict | None = None, fields: list[str] | None = None
@@ -124,8 +128,10 @@ class BuilderComponent(StandardFileSync, Document):
 
 
 class ComponentSyncer:
-	def __init__(self, page_doc) -> None:
+	def __init__(self, page_doc, version: str | None) -> None:
 		self.page_doc = page_doc
+		# Instances render their pinned version, so a sync that keeps the old pin changes nothing.
+		self.version = version
 
 	def sync_component(self, component) -> None:
 		"""Sync a component across draft and published blocks"""
@@ -146,6 +152,7 @@ class ComponentSyncer:
 			if not block:
 				continue
 			if block.extendedFromComponent == component.component_id:
+				block.componentVersion = self.version
 				component_block = Block(**frappe.parse_json(component.block))
 				self.sync_single_block(block, component.name, component_block.children or [])
 			else:
@@ -160,6 +167,8 @@ class ComponentSyncer:
 		for index, component_child in enumerate(component_children):
 			block_component = self.find_component_block(component_child.blockId, target_children)
 			if block_component:
+				if block_component.componentVersion and not block_component.extendedFromComponent:
+					block_component.componentVersion = self.version
 				self.sync_single_block(block_component, component_name, component_child.children or [])
 			else:
 				block_component = self.create_component_block(component_child, component_name)
