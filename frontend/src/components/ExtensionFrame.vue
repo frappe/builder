@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
-import { extensionSource, installedExtensions } from "@/data/extensions";
+import { getExtensionSource, installedExtensions } from "@/data/extensions";
 import { createPortChannel, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
 import {
 	PROTOCOL_VERSION,
@@ -73,7 +73,7 @@ const installed = (): InstalledExtension => {
 const code = async (): Promise<{ entry: string } | { source: string }> => {
 	const extension = installed();
 	if (extension.entry) return { entry: extension.entry };
-	return { source: await extensionSource(extension) };
+	return { source: await getExtensionSource(extension) };
 };
 
 const handshake = async (): Promise<ConnectMessage> => ({

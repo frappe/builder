@@ -13,7 +13,7 @@ import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
 const METHOD = "builder.extensions.installations";
-export const INSTALLATION_DOCTYPE = "Builder User Extension";
+const INSTALLATION_DOCTYPE = "Builder User Extension";
 const GRANT_DOCTYPE = "Builder Extension Grant";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
@@ -129,7 +129,7 @@ const toInstalledExtension = (row: UserInstallation): InstalledExtension | null 
  * A development record never mounts. It has no files, and the browser's own entry
  * runs it.
  */
-export const installedExtensions = computed<InstalledExtension[]>(() => {
+const installedExtensions = computed<InstalledExtension[]>(() => {
 	const installed = (installationsResource.data ?? [])
 		.filter((row) => !row.is_development)
 		.flatMap((row) => {
@@ -143,7 +143,7 @@ export const installedExtensions = computed<InstalledExtension[]>(() => {
 });
 
 /** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
-export const loadExtensions = async (vm?: unknown) => {
+const loadExtensions = async (vm?: unknown) => {
 	if (vm) resourceVm = vm;
 	const rows = (await installationsResource.fetch()) ?? [];
 	rows.filter((row) => row.enabled && !row.is_development).forEach(loadInstallationDocument);
@@ -160,7 +160,7 @@ export const loadExtensions = async (vm?: unknown) => {
  */
 const sources = new Map<string, Promise<string>>();
 
-export const extensionSource = (extension: InstalledExtension): Promise<string> => {
+const getExtensionSource = (extension: InstalledExtension): Promise<string> => {
 	const key = `${extension.name}@${extension.checksum ?? ""}`;
 
 	const cached = sources.get(key);
@@ -185,7 +185,7 @@ export const extensionSource = (extension: InstalledExtension): Promise<string> 
  * and a version number or an install date is none of its business. This carries
  * what the panel shows and the editor never needs.
  */
-export type UserInstallation = {
+type UserInstallation = {
 	name: string;
 	/** The document's own name, not the extension's. */
 	installation_id: string;
@@ -206,7 +206,7 @@ export type UserInstallation = {
 };
 
 /** One doctype this user answered for, as `Builder Extension Grant` holds it. */
-export type ExtensionGrant = {
+type ExtensionGrant = {
 	document_type: string;
 	can_read: number;
 	can_write: number;
@@ -214,7 +214,7 @@ export type ExtensionGrant = {
 	denied: number;
 };
 
-export type InstallationDetails = UserInstallation & {
+type InstallationDetails = UserInstallation & {
 	installed_on: string;
 	readme?: string;
 	requested_capabilities: Capability[];
@@ -266,7 +266,7 @@ const withDevelopment = (row: UserInstallation): UserInstallation => {
  * A development record that no dev server runs this session is one a closed tab
  * failed to remove, so the panel hides it.
  */
-export const userInstallations = computed<UserInstallation[]>(() => {
+const userInstallations = computed<UserInstallation[]>(() => {
 	const devInstallation: UserInstallation[] = [];
 	const others: UserInstallation[] = [];
 	for (const row of installationsResource.data ?? []) {
@@ -325,7 +325,7 @@ const installationDoctypeGrants = (installationId: string) => {
  * raw capability lists, `findInstallation` carries the icon and the install
  * state, and only the doctype grants are fetched here for the first time.
  */
-export const useInstallationDetails = (extension: string) => {
+const useInstallationDetails = (extension: string) => {
 	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
 	const doctypeGrants = shallowRef<ReturnType<typeof installationDoctypeGrants> | null>(null);
 
@@ -362,11 +362,11 @@ export const useInstallationDetails = (extension: string) => {
  * Allowing nothing drops the answer, so the extension asks again. Denying is
  * what stops it asking, and allowing nothing is the only way back from that.
  */
-export const setExtensionGrant = (extension: string, doctype: string, access: string[], denied = false) =>
+const setExtensionGrant = (extension: string, doctype: string, access: string[], denied = false) =>
 	call(`${METHOD}.set_extension_grant`, { extension, doctype, access, denied }) as Promise<ExtensionGrant[]>;
 
 /** What the site keeps when a user removes an extension. */
-export type UninstallSummary = {
+type UninstallSummary = {
 	resources: { resource_type: string; count: number }[];
 	tokens: number;
 	other_users: number;
@@ -376,12 +376,12 @@ export type UninstallSummary = {
  * Every write below reloads the list, so no caller can leave the panel showing
  * one answer and the editor running another.
  */
-export const setExtensionEnabled = async (extension: string, enabled: boolean) => {
+const setExtensionEnabled = async (extension: string, enabled: boolean) => {
 	await call(`${METHOD}.set_extension_enabled`, { extension, enabled });
 	await loadExtensions();
 };
 
-export const setGrantedCapabilities = async (extension: string, capabilities: Capability[]) => {
+const setGrantedCapabilities = async (extension: string, capabilities: Capability[]) => {
 	const granted = (await call(`${METHOD}.set_granted_capabilities`, {
 		extension,
 		capabilities,
@@ -392,23 +392,23 @@ export const setGrantedCapabilities = async (extension: string, capabilities: Ca
 	return granted;
 };
 
-export const uninstallSummary = (extension: string) =>
+const uninstallSummary = (extension: string) =>
 	call(`${METHOD}.get_uninstall_summary`, { extension }) as Promise<UninstallSummary>;
 
-export const uninstallExtension = async (extension: string) => {
+const uninstallExtension = async (extension: string) => {
 	await call(`${METHOD}.uninstall_extension`, { extension });
 	await loadExtensions();
 };
 
-export type CatalogExtension = Pick<UserInstallation, "name" | "label" | "description" | "icon">;
+type CatalogExtension = Pick<UserInstallation, "name" | "label" | "description" | "icon">;
 
 /** One row the Extensions panel opened, and whether this user has it installed. */
-export type SelectedExtension = {
+type SelectedExtension = {
 	name: string;
 	isInstalled: boolean;
 };
 
-export const getExtensionsCatalog = (page: number = 1) =>
+const getExtensionsCatalog = (page: number = 1) =>
 	createResource({
 		url: `${hubUrl()}/${HUB_API}.get_catalog`,
 		params: { page },
@@ -419,7 +419,7 @@ export const getExtensionsCatalog = (page: number = 1) =>
 	});
 
 /** A not-installed extension as its hub page describes it. No grants, no install date. */
-export type HubExtension = CatalogExtension & {
+type HubExtension = CatalogExtension & {
 	version: string;
 	readme?: string;
 	source_url?: string;
@@ -442,7 +442,7 @@ const latestVersion = (releases: HubExtensionResponse["releases"]) =>
  *
  * Goes to the hub, not the site, because the site has no record of it yet.
  */
-export const getHubExtension = async (name: string): Promise<HubExtension> => {
+const getHubExtension = async (name: string): Promise<HubExtension> => {
 	const { extension, releases }: HubExtensionResponse = await createResource({
 		url: `${hubUrl()}/${HUB_API}.get_extension`,
 		params: { name },
@@ -461,7 +461,7 @@ export const getHubExtension = async (name: string): Promise<HubExtension> => {
 };
 
 /** What one exact release asks for. The listing carries no manifest, so this reads the release. */
-export const getHubReleaseCapabilities = async (name: string, version: string): Promise<Capability[]> => {
+const getHubReleaseCapabilities = async (name: string, version: string): Promise<Capability[]> => {
 	const { release } = await createResource({
 		url: `${hubUrl()}/${HUB_API}.get_extension_release`,
 		params: { extension_name: name, version },
@@ -476,7 +476,35 @@ export const getHubReleaseCapabilities = async (name: string, version: string): 
  *
  * `version` pins the release whose capabilities the user answered for.
  */
-export const installFromHub = async (name: string, version: string, capabilities: Capability[]) => {
+const installFromHub = async (name: string, version: string, capabilities: Capability[]) => {
 	await call("builder.extensions.hub.install_from_hub", { name, version, capabilities });
 	await loadExtensions();
+};
+
+export {
+	getExtensionSource,
+	getExtensionsCatalog,
+	getHubExtension,
+	getHubReleaseCapabilities,
+	INSTALLATION_DOCTYPE,
+	installedExtensions,
+	installFromHub,
+	loadExtensions,
+	setExtensionEnabled,
+	setExtensionGrant,
+	setGrantedCapabilities,
+	uninstallExtension,
+	uninstallSummary,
+	useInstallationDetails,
+	userInstallations,
+};
+
+export type {
+	CatalogExtension,
+	ExtensionGrant,
+	HubExtension,
+	InstallationDetails,
+	SelectedExtension,
+	UninstallSummary,
+	UserInstallation,
 };
