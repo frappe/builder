@@ -53,7 +53,7 @@
 									text="Served by a dev server. A reload drops it.">
 									<Badge size="sm" theme="orange" label="Dev" />
 								</Tooltip>
-								<Badge v-else-if="!extension.enabled" size="sm" theme="gray" label="Disabled" />
+								<!-- <Badge v-else-if="!extension.enabled" size="sm" theme="gray" label="Disabled" /> -->
 							</div>
 						</div>
 						<template #suffix>

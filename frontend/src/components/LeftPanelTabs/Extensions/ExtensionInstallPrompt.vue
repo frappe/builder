@@ -23,8 +23,7 @@
 			<Button
 				variant="solid"
 				size="sm"
-				icon-left="lucide-download"
-				label="Install"
+				label="Confirm"
 				@click="emit('install', granted)" />
 			<Button variant="subtle" size="sm" label="Cancel" @click="emit('cancel')" />
 		</div>
