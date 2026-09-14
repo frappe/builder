@@ -30,11 +30,12 @@
 					v-if="doctypeGrantsUnder(group).length"
 					class="flex flex-col gap-3"
 					:class="group.capabilities.length ? '!border-t-0 pb-3' : 'py-3'">
-					<p class="text-xs text-ink-gray-5">Doctypes</p>
+					<!-- <p class="text-xs text-ink-gray-5">Doctypes</p> -->
 					<div
 						v-for="grant in doctypeGrantsUnder(group)"
 						:key="grant.document_type"
-						class="flex flex-col gap-1.5 border-l border-outline-gray-2 pl-3">
+						class="flex flex-col gap-1.5">
+						<hr />
 						<div class="flex items-center justify-between gap-2">
 							<p class="min-w-0 truncate text-xs font-medium text-ink-gray-8">{{ grant.document_type }}</p>
 							<Dropdown :options="answerAllOptions(grant)" placement="right">

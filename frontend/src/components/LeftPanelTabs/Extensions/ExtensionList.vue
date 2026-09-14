@@ -68,7 +68,7 @@
 									class="mr-2"
 									@click.stop="stopDevExtension()" />
 							</Tooltip>
-							<span v-else class="lucide-chevron-right size-4 text-ink-gray-5" aria-hidden="true" />
+							<span class="lucide-chevron-right size-4 text-ink-gray-5" aria-hidden="true" />
 						</template>
 					</ItemListRow>
 				</div>
