@@ -1,8 +1,8 @@
 <template>
-	<Badge v-if="page.published" theme="green" :size="size" class="dark:bg-green-900 dark:text-green-400">
+	<Badge v-if="page.published" theme="green" size="sm">
 		{{ __("Live") }}
 	</Badge>
-	<Badge v-else-if="page.staging" theme="amber" :size="size" class="dark:bg-amber-900 dark:text-amber-400">
+	<Badge v-else-if="page.staging" theme="amber" size="sm">
 		{{ __("Staging") }}
 	</Badge>
 </template>
@@ -13,6 +13,5 @@ import { Badge } from "frappe-ui";
 
 defineProps<{
 	page: BuilderPage;
-	size?: "sm" | "md" | "lg";
 }>();
 </script>

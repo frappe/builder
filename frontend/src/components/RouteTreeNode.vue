@@ -48,7 +48,7 @@
 							:hoverDelay="0.5">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
-						<PageStatusBadge :page="node.page" size="sm" />
+						<PageStatusBadge :page="node.page" />
 					</span>
 				</div>
 

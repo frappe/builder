@@ -31,7 +31,7 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
-				<PageStatusBadge v-if="pageStore.activePage" :page="pageStore.activePage" size="sm" />
+				<PageStatusBadge v-if="pageStore.activePage" :page="pageStore.activePage" />
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
