@@ -43,7 +43,8 @@ async function confirm(message: string, title: string = __("Confirm")): Promise<
 					onClick: () => resolve(true),
 				},
 			],
-		});
+			// closing with X or outside settles only the dialog's own promise
+		}).then(() => resolve(false));
 	});
 }
 
