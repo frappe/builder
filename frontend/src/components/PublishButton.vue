@@ -3,7 +3,7 @@
 		<Button
 			variant="solid"
 			:disabled="disabled"
-			@click="publish(false)"
+			@click="publish(Boolean(pageStore.activePage?.staging))"
 			class="border-0"
 			:class="{
 				'rounded-br-none rounded-tr-none': showDropdown,
@@ -17,8 +17,14 @@
 				{
 					label: __('Publish to Staging'),
 					onClick: () => publish(true),
-					condition: () => canPublishToStaging,
+					condition: () => isDraft,
 					icon: 'lucide-flask-conical',
+				},
+				{
+					label: __('Go Live'),
+					onClick: () => publish(false),
+					condition: () => Boolean(pageStore.activePage?.staging),
+					icon: 'lucide-rocket',
 				},
 				{
 					label: __('Unpublish'),
@@ -59,21 +65,12 @@ const showDropdown = computed(() => {
 	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 
-// a live page leaves staging behind; a staging page needs new changes to push there
-const canPublishToStaging = computed(() => {
-	const page = pageStore.activePage;
-	if (page?.published) {
-		return false;
-	}
-	return !page?.staging || Boolean(page?.draft_blocks);
-});
+// the main button keeps a live or staging page where it is; the menu moves it
+const isDraft = computed(() => !pageStore.activePage?.published && !pageStore.activePage?.staging);
 
 const publishButtonLabel = computed(() => {
 	const page = pageStore.activePage;
-	if (page?.staging) {
-		return __("Go Live");
-	}
-	return page?.published && page?.draft_blocks ? __("Publish Changes") : __("Publish");
+	return (page?.published || page?.staging) && page?.draft_blocks ? __("Publish Changes") : __("Publish");
 });
 
 const publish = (staging: boolean) => {
