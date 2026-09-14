@@ -53,7 +53,10 @@ from builder.ai.agent.page_changes import (
 	block_label,
 	describe_block_changes,
 	describe_user_changes,
+	merge_saved_draft,
 	page_state,
+	round_effects,
+	snapshot_blocks,
 )
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.tree import WorkingTree
@@ -377,8 +380,8 @@ class AgentRunner:
 		self.applied_operations: list[dict] = []
 		# Every document this turn writes, for reverting it (see builder/ai/journal.py).
 		self.journal: TurnJournal | None = None
-		# Block ops applied since the tree was last loaded or replaced wholesale.
-		self.page_ops: list[dict] = []
+		# What each round of block ops did since the tree was last loaded or replaced wholesale.
+		self.page_rounds: list[list[tuple]] = []
 		self.user_edit_note = ""
 		# Per-turn debug trace (one entry per round) + why the turn ended. Persisted on
 		# the assistant message so the agent debugger can explain what the model did and
@@ -469,8 +472,8 @@ class AgentRunner:
 		)
 
 	def absorb_user_edits(self) -> None:
-		"""Take in edits the user saved while this turn runs: the saved draft becomes the
-		tree with this turn's block ops replayed on top, so the next write keeps both."""
+		"""Take in edits the user saved while this turn runs, so the next write keeps them.
+		Rounds the editor had not saved yet are re-applied on top (merge_saved_draft)."""
 		from builder.ai import page_writer
 
 		if not (self.page_id and self.tree and self.tree.root):
@@ -478,14 +481,13 @@ class AgentRunner:
 		saved = page_writer.load_page_root(self.page_id)
 		if not saved or not describe_block_changes(self.tree.root, saved):
 			return
-		merged = WorkingTree(saved)
-		merged.replay(self.page_ops)
-		if lines := describe_block_changes(self.tree.root, merged.root):
+		merged = merge_saved_draft(saved, self.page_rounds, self.tree.root)
+		if lines := describe_block_changes(self.tree.root, merged):
 			self.user_edit_note = (
 				"While you were working, the user edited the page themselves. Their edits are kept; "
 				"build on them and don't undo them:\n" + "\n".join(f"- {line}" for line in lines)
 			)
-		self.tree.root = merged.root
+		self.tree.root = merged
 
 	def flush_user_edit_note(self, messages: list[dict]) -> None:
 		if self.user_edit_note:
@@ -856,7 +858,7 @@ class AgentRunner:
 				# (editor + published alike).
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
-				self.page_ops = []
+				self.page_rounds = []
 		self.applied_operations.extend(ops)
 		self.emit("tool_batch", operations=ops)
 		if self.page_id and self.tree and self.tree.root:
@@ -1028,6 +1030,7 @@ class AgentRunner:
 		Returns (tool-result per op, accepted ops)."""
 		results: dict[int, str] = {}
 		applied: list[dict] = []
+		before = snapshot_blocks(self.tree.root) if any(op["tool_name"] in PAGE_OPS for op in ops) else None
 		for op in ops:
 			content = self.tree.apply(op["tool_name"], op["args"])
 			results[id(op)] = content
@@ -1038,8 +1041,8 @@ class AgentRunner:
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 			if not content.startswith("FAILED"):
 				applied.append(op)
-				if op["tool_name"] in PAGE_OPS:
-					self.page_ops.append(op)
+		if before is not None:
+			self.page_rounds.append(round_effects(before, snapshot_blocks(self.tree.root)))
 		if applied:
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
@@ -1443,7 +1446,7 @@ class AgentRunner:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
-		self.page_ops = []
+		self.page_rounds = []
 		return (
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
 			"calls for (set_page_script), fix obvious breakage with the block tools, verify "

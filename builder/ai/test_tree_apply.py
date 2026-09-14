@@ -243,34 +243,3 @@ class TestMutatingStructure(unittest.TestCase):
 
 if __name__ == "__main__":
 	unittest.main()
-
-
-class TestReplay(unittest.TestCase):
-	def test_replay_keeps_the_users_edits_and_the_turns_ops(self):
-		ours = WorkingTree(sample_root())
-		update = {"tool_name": "update_block", "args": {"block_id": "h1", "inner_text": "Bob"}}
-		add = {
-			"tool_name": "add_block",
-			"args": {"parent_block_id": "hero", "block": {"el": "p", "text": "New"}},
-		}
-		ours.apply(update["tool_name"], update["args"])
-		ours.apply(add["tool_name"], add["args"])
-
-		saved = sample_root()
-		saved["children"][0]["children"][1]["innerHTML"] = "User"
-		theirs = WorkingTree(saved)
-		theirs.replay([update, add])
-
-		hero = theirs.resolve("hero")
-		self.assertEqual([c["innerHTML"] for c in hero["children"]], ["Bob", "User", "New"])
-		self.assertEqual(hero["children"][2]["blockId"], add["args"]["block_json"]["blockId"])
-
-	def test_replaying_an_add_twice_does_not_duplicate_it(self):
-		tree = WorkingTree(sample_root())
-		add = {
-			"tool_name": "add_block",
-			"args": {"parent_block_id": "hero", "block": {"el": "p", "text": "New"}},
-		}
-		tree.apply(add["tool_name"], add["args"])
-		tree.replay([add])
-		self.assertEqual(len(tree.resolve("hero")["children"]), 3)

@@ -286,14 +286,15 @@ def revert_to_message(session_id: str, message_id: str, snapshot: str | None = N
 	deleted (see builder/ai/journal.py). `snapshot` is the page restore point that turns from
 	before the journal carry instead."""
 	session = AISession.get(session_id)
-	failures = []
-	if since := session.turn_start(message_id):
-		failures = revert_since(session_id, since)
+	failures = revert_since(session_id, since) if (since := session.turn_start(message_id)) else []
+	if failures:
+		# Keep the turn in the chat so Revert can be retried for what failed.
+		return {"messages": session.get_messages(), "failures": failures}
 	if snapshot and session.page:
 		frappe.get_doc("Builder Page", session.page).restore_snapshot(snapshot)
 	session.truncate_from_turn(message_id)
 	AISession.save_turn_state(session_id, None)
-	return {"messages": session.get_messages(), "failures": failures}
+	return {"messages": session.get_messages(), "failures": []}
 
 
 PROVIDER_FIELDS = (

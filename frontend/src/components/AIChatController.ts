@@ -912,7 +912,9 @@ export class AIChatController {
 		builderTokens.reload();
 		this.pageStore.setPage(this.pageId.value, false);
 		if (result?.failures?.length) {
-			toast.warning("Some changes could not be reverted", { description: result.failures.join("\n") });
+			toast.warning("Some changes could not be reverted. The turn stays in the chat so you can try again.", {
+				description: result.failures.join("\n"),
+			});
 		}
 		await this.loadSession();
 		this.scrollToBottom();

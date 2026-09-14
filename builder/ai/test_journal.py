@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
@@ -136,3 +138,18 @@ class TestTurnJournal(FrappeTestCase):
 				}
 			).insert()
 		self.assertEqual(journal.entries, {})
+
+	def test_failed_entries_stay_recorded_for_a_retry(self):
+		session, _ = make_session()
+		token = make_token("#000000")
+		since = now_datetime()
+		with TurnJournal(session):
+			token.value = "#ffffff"
+			token.save()
+
+		with patch("builder.ai.journal.undo", side_effect=frappe.ValidationError("blocked")):
+			self.assertEqual(len(revert_since(session, since)), 1)
+		self.assertTrue(frappe.db.exists("Builder AI Change", {"session": session}))
+
+		self.assertEqual(revert_since(session, since), [])
+		self.assertEqual(token_values(token.name)[0], "#000000")

@@ -1,10 +1,14 @@
-"""What changed on a page, in lines Bob can act on.
+"""What changed on a page, in lines Bob can act on, and folding the user's mid-turn
+edits into the working tree.
 
 Bob works from the page as it last saw it. When the user edits between turns, or
 while a turn is running, these lines tell Bob what they changed so it builds on
 those edits instead of undoing them."""
 
+import copy
+import json
 import re
+from collections import defaultdict
 
 import frappe
 
@@ -77,6 +81,113 @@ def plain_text(html) -> str:
 	return re.sub(r"<[^>]+>", " ", str(html or "")).strip()[:60]
 
 
+def snapshot_blocks(root: dict | None) -> dict[str, tuple]:
+	"""Each block's parent, position and compared values, frozen so later edits can't reach them."""
+	snapshot = {}
+	stack = [(root, None, 0)] if isinstance(root, dict) else []
+	while stack:
+		block, parent_ref, position = stack.pop()
+		snapshot[block.get("blockId")] = (
+			parent_ref,
+			position,
+			{key: frozen(block.get(key)) for key in COMPARED_KEYS},
+		)
+		stack.extend(
+			(child, block.get("blockId"), i)
+			for i, child in enumerate(block.get("children") or [])
+			if isinstance(child, dict)
+		)
+	return snapshot
+
+
+def frozen(value) -> str:
+	return json.dumps(value or None, sort_keys=True, default=str)
+
+
+def round_effects(before: dict, after: dict) -> list[tuple]:
+	"""What one round of block ops did to the page: field changes, added, removed and moved blocks."""
+	effects = []
+	for ref, (parent_ref, position, values) in after.items():
+		if ref not in before:
+			if parent_ref in before:
+				effects.append(("add", ref, parent_ref, position))
+			continue
+		old_parent, _, old_values = before[ref]
+		effects += [
+			("field", ref, key, old_values[key], value)
+			for key, value in values.items()
+			if old_values[key] != value
+		]
+		if old_parent != parent_ref:
+			effects.append(("move", ref, old_parent, parent_ref, position))
+	effects += [
+		("remove", ref)
+		for ref, (parent_ref, _, _) in before.items()
+		if ref not in after and parent_ref in after
+	]
+	return effects
+
+
+def merge_saved_draft(saved: dict, rounds: list[list[tuple]], current: dict) -> dict:
+	"""The draft the user saved mid-turn, plus the rounds the editor had not saved yet.
+	A round the saved draft already shows is never re-applied, and an unsaved field
+	change lands only where the field still holds its old value, so the user's edits win."""
+	merged = copy.deepcopy(saved)
+	shown = snapshot_blocks(merged)
+	saved_up_to = max(
+		(i for i, effects in enumerate(rounds) if any(is_shown(effect, shown) for effect in effects)),
+		default=-1,
+	)
+	latest = index_blocks(current)
+	for effects in rounds[saved_up_to + 1 :]:
+		for effect in effects:
+			reapply(merged, effect, latest)
+	return merged
+
+
+def is_shown(effect: tuple, shown: dict) -> bool:
+	kind, ref = effect[0], effect[1]
+	if kind == "field":
+		return ref in shown and shown[ref][2][effect[2]] == effect[4]
+	if kind == "add":
+		return ref in shown
+	if kind == "remove":
+		return ref not in shown
+	return ref in shown and shown[ref][0] == effect[3]
+
+
+def reapply(merged: dict, effect: tuple, latest: dict) -> None:
+	index = index_blocks(merged)
+	kind, ref = effect[0], effect[1]
+	if kind == "field":
+		_, _, key, old_value, new_value = effect
+		block = index[ref][0] if ref in index else None
+		if block is not None and frozen(block.get(key)) == old_value:
+			if (value := json.loads(new_value)) is None:
+				block.pop(key, None)
+			else:
+				block[key] = value
+	elif kind == "add":
+		_, _, parent_ref, position = effect
+		if ref not in index and parent_ref in index and ref in latest:
+			insert_at(index[parent_ref][0], copy.deepcopy(latest[ref][0]), position)
+	elif kind == "remove":
+		if ref in index and index[ref][1] in index:
+			detach(index[index[ref][1]][0], ref)
+	elif ref in index and index[ref][1] == effect[2] and effect[3] in index:
+		detach(index[effect[2]][0], ref)
+		insert_at(index[effect[3]][0], index[ref][0], effect[4])
+
+
+def insert_at(parent: dict, block: dict, position: int) -> None:
+	children = parent.setdefault("children", [])
+	children.insert(min(position, len(children)), block)
+
+
+def detach(parent: dict, ref: str) -> None:
+	parent["children"] = [child for child in parent.get("children") or [] if child.get("blockId") != ref]
+
+
 def page_state(page_id: str, root: dict | None, doc_keys) -> dict:
 	"""The open page as a turn left it, plus when each other document the chat changed was last modified."""
 	return {
@@ -84,11 +195,7 @@ def page_state(page_id: str, root: dict | None, doc_keys) -> dict:
 		"blocks": root,
 		"fields": page_fields(page_id),
 		"scripts": attached_scripts(page_id),
-		"docs": {
-			f"{doctype}::{name}": modified
-			for doctype, name in doc_keys
-			if (doctype, name) != ("Builder Page", page_id) and (modified := last_modified(doctype, name))
-		},
+		"docs": modified_stamps(key for key in doc_keys if key != ("Builder Page", page_id)),
 	}
 
 
@@ -104,12 +211,13 @@ def describe_user_changes(state: dict | None, page_id: str | None, root: dict | 
 	]
 	if attached_scripts(page_id) != state.get("scripts"):
 		lines.append("the scripts attached to the page changed")
-	for key, modified in (state.get("docs") or {}).items():
+	docs = state.get("docs") or {}
+	stamps = modified_stamps(tuple(key.split("::", 1)) for key in docs)
+	for key, modified in docs.items():
 		doctype, name = key.split("::", 1)
-		now = last_modified(doctype, name)
-		if now is None:
+		if key not in stamps:
 			lines.append(f"{doctype} '{name}' was deleted")
-		elif now != modified:
+		elif stamps[key] != modified:
 			lines.append(f"{doctype} '{name}' was edited")
 	return lines
 
@@ -131,8 +239,15 @@ def attached_scripts(page_id: str) -> list[str]:
 	)
 
 
-def last_modified(doctype: str, name: str) -> str | None:
-	if not frappe.db.exists("DocType", doctype) or frappe.get_meta(doctype).issingle:
-		return None
-	value = frappe.db.get_value(doctype, name, "modified")
-	return str(value) if value else None
+def modified_stamps(doc_keys) -> dict[str, str]:
+	"""`doctype::name` -> last modified, one query per doctype. Singles and missing documents are left out."""
+	names_by_doctype = defaultdict(list)
+	for doctype, name in doc_keys:
+		names_by_doctype[doctype].append(name)
+	stamps = {}
+	for doctype, names in names_by_doctype.items():
+		if not frappe.db.exists("DocType", doctype) or frappe.get_meta(doctype).issingle:
+			continue
+		for row in frappe.get_all(doctype, filters={"name": ("in", names)}, fields=["name", "modified"]):
+			stamps[f"{doctype}::{row.name}"] = str(row.modified)
+	return stamps

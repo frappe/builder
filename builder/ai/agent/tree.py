@@ -11,7 +11,6 @@ Kept in lockstep with the frontend applier (toolDispatch.applyBlockUpdate /
 applyToolOperation), which replays the same accepted ops on the canvas.
 """
 
-import copy
 import re
 
 from builder.ai.agent.selectors import find_block, walk_blocks
@@ -334,19 +333,6 @@ def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -
 class WorkingTree:
 	def __init__(self, root: dict | None):
 		self.root = root
-
-	def replay(self, ops: list[dict]) -> None:
-		"""Re-apply ops this turn already made onto a tree the user has since edited.
-		add_block reinserts the block it built the first time, so refs stay the same."""
-		for op in ops:
-			args = op["args"]
-			block = args.get("block_json")
-			if op["tool_name"] != "add_block" or not isinstance(block, dict):
-				self.apply(op["tool_name"], args)
-			elif self.resolve(block.get("blockId")) is None and (
-				parent := self.resolve(args.get("parent_block_id"))
-			):
-				insert_child(parent, copy.deepcopy(block), args.get("after_block_id"), args.get("index"))
 
 	def resolve(self, block_id: str | None) -> dict | None:
 		return find_block(self.root, block_id) if (self.root and block_id) else None

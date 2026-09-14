@@ -124,23 +124,25 @@ def touch(doctype: str, name: str) -> None:
 def revert_since(session_id: str, since) -> list[str]:
 	"""Undo the session's recorded changes from `since` on and return what could not be undone.
 	Restores run newest first, then deletions of created documents, newest first, so nothing is
-	deleted while a restored document still links to it."""
+	deleted while a restored document still links to it. A failed entry stays recorded, so the
+	revert can be retried."""
 	entries = frappe.get_all(
 		DOCTYPE,
 		filters={"session": session_id, "creation": (">=", since)},
 		fields=["name", "reference_doctype", "reference_name", "action", "before", "after"],
 		order_by="creation desc",
 	)
-	failures = []
+	failures, undone = [], []
 	for entry in sorted(entries, key=lambda entry: entry.action == "Insert"):
 		frappe.db.savepoint(SAVEPOINT)
 		try:
 			undo(entry)
+			undone.append(entry.name)
 		except Exception as e:
 			rollback_to_savepoint()
 			failures.append(f"{entry.reference_doctype} {entry.reference_name}: {e}")
-	if entries:
-		frappe.db.delete(DOCTYPE, {"name": ("in", [entry.name for entry in entries])})
+	if undone:
+		frappe.db.delete(DOCTYPE, {"name": ("in", undone)})
 	return failures
 
 
