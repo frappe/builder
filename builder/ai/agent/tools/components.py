@@ -87,6 +87,7 @@ EDIT_OPS = ("update_block", "update_blocks", "add_block", "remove_block", "move_
 
 
 def run_edit_component(ctx, args: dict) -> str:
+	"""Apply block ops to a Builder Component's own definition, save it and sync every page that embeds it."""
 	from builder.ai.agent.tree import ComponentTree
 
 	component_id = (args.get("component_id") or "").strip()
@@ -113,6 +114,7 @@ def run_edit_component(ctx, args: dict) -> str:
 
 
 def apply_component_op(tree, op: dict) -> str:
+	"""Run one {tool, args} op on the component tree, prefixing the result with the tool name."""
 	tool = op.get("tool")
 	if tool not in EDIT_OPS:
 		return f"{tool}: FAILED: not an edit op. Use one of {', '.join(EDIT_OPS)}."
