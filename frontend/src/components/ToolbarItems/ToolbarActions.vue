@@ -4,6 +4,12 @@
 			{{ __("Saving template") }}
 		</span>
 		<ComponentUpdates />
+		<Tooltip v-if="hasVersionHistory" :text="__('Version History')" :hoverDelay="0.6" arrow-class="mb-3">
+			<Button
+				:variant="builderStore.showVersionHistory ? 'subtle' : 'ghost'"
+				icon="lucide-history"
+				@click="toggleVersionHistory"></Button>
+		</Tooltip>
 		<Tooltip :text="__('Settings')" :hoverDelay="0.6" arrow-class="mb-3">
 			<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 		</Tooltip>
@@ -20,11 +26,24 @@ import ComponentUpdates from "@/components/ComponentUpdates.vue";
 import PlayIcon from "@/components/Icons/Play.vue";
 import SettingsGearIcon from "@/components/Icons/SettingsGear.vue";
 import useBuilderStore from "@/stores/builderStore";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip } from "frappe-ui";
+import { computed } from "vue";
 
 const builderStore = useBuilderStore();
+const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
+
+// history is page-level: none while editing a component in place or on a template page
+const hasVersionHistory = computed(
+	() => canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template,
+);
+
+const toggleVersionHistory = () => {
+	builderStore.showRightPanel = true;
+	builderStore.showVersionHistory = !builderStore.showVersionHistory;
+};
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();

@@ -21,14 +21,6 @@
 					icon: 'lucide-flask-conical',
 				},
 				{
-					label: __('Version History'),
-					onClick: () => {
-						builderStore.showRightPanel = true;
-						builderStore.showVersionHistory = true;
-					},
-					icon: 'lucide-history',
-				},
-				{
 					label: __('Unpublish'),
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published || pageStore.activePage?.staging),
