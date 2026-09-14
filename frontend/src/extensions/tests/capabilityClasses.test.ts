@@ -4,7 +4,8 @@ import {
 	capabilityDetails,
 	groupCapabilities,
 	isSensitive,
-	SENSITIVE_CLASS,
+	SHARED_STATE_CLASS,
+	SITE_DATA_CLASS,
 } from "../capabilityClasses";
 
 describe("capabilityDetails", () => {
@@ -16,7 +17,7 @@ describe("capabilityDetails", () => {
 	it("gives every sensitive capability a reason to read", () => {
 		const sensitive = CAPABILITIES.filter(isSensitive);
 
-		expect(sensitive).toEqual(["token.write", "schema.write"]);
+		expect(sensitive).toEqual(["token.write", "data.access", "schema.write"]);
 		sensitive.forEach((capability) => expect(capabilityDetails[capability].warning).toBeTruthy());
 	});
 });
@@ -35,15 +36,16 @@ describe("groupCapabilities", () => {
 		expect(groupCapabilities(asked).map((group) => group.name)).toEqual([
 			"Editor read",
 			"Editor write",
-			SENSITIVE_CLASS,
+			SHARED_STATE_CLASS,
 		]);
 	});
 
-	it("marks only the shared class sensitive", () => {
+	it("marks the classes that reach past this session sensitive", () => {
 		const groups = groupCapabilities([...CAPABILITIES]);
 
 		expect(groups.filter((group) => group.sensitive).map((group) => group.name)).toEqual([
-			SENSITIVE_CLASS,
+			SITE_DATA_CLASS,
+			SHARED_STATE_CLASS,
 		]);
 	});
 

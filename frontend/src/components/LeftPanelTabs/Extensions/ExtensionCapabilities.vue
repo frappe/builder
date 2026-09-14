@@ -129,8 +129,8 @@ const writeGrant = async (grant: ExtensionGrant, access: GrantAction[], denied =
 
 /**
  * Turning one off asks nothing: a narrower grant can break the extension and
- * nothing else. Turning one back on can reach every published page, so that
- * direction carries the warning.
+ * nothing else. Turning a sensitive one on reaches the site's data or every
+ * published page, so that direction carries the warning.
  *
  * The parent decides where the list goes: an installation writes it, and the
  * install dialog holds it until the user installs.
