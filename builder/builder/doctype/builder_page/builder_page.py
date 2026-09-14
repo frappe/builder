@@ -396,16 +396,27 @@ class BuilderPage(WebsiteGenerator):
 	@frappe.whitelist()
 	def publish_to_staging(self):
 		"""Serve the page at its route like a live page, but keep it out of search engines and
-		the sitemap (Frappe's sitemap lists only `published` pages). A live page must be
-		unpublished first."""
+		the sitemap (Frappe's sitemap lists only `published` pages). A live page moves there with
+		`mark_as_staging` instead, so a stale editor can't take a page off live by publishing."""
 		if self.published:
-			frappe.throw(frappe._("A live page can't move to staging. Unpublish it first."))
+			frappe.throw(frappe._("This page is live. Mark it as staging instead."))
 		self.staging = 1
 		self.promote_draft_blocks()
 		self.save()
 		capture("builder_page_staged", "builder", properties={"page": self.name})
 		self.enqueue_preview_image()
 		return self.route
+
+	@frappe.whitelist()
+	def mark_as_staging(self):
+		"""Move a live page to staging. Its live content stays at its route, and unpublished
+		edits stay in the draft."""
+		if not self.published:
+			frappe.throw(frappe._("Only a live page can be marked as staging."))
+		self.published = 0
+		self.staging = 1
+		self.save()
+		capture("builder_page_staged", "builder", properties={"page": self.name})
 
 	def promote_draft_blocks(self):
 		if not self.draft_blocks:

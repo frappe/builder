@@ -27,6 +27,12 @@
 					icon: 'lucide-rocket',
 				},
 				{
+					label: __('Mark as Staging'),
+					onClick: () => pageStore.markAsStaging(),
+					condition: () => Boolean(pageStore.activePage?.published),
+					icon: 'lucide-flask-conical',
+				},
+				{
 					label: __('Unpublish'),
 					onClick: () => pageStore.unpublishPage(),
 					condition: () => Boolean(pageStore.activePage?.published || pageStore.activePage?.staging),

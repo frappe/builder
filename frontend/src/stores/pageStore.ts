@@ -217,6 +217,24 @@ const usePageStore = defineStore("pageStore", {
 				});
 		},
 
+		async markAsStaging() {
+			const confirmed = await confirm(
+				__(
+					'Mark "{0}" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it.',
+					[this.activePage?.page_title || __("this page")],
+				),
+			);
+			if (!confirmed) {
+				return;
+			}
+			await this.waitTillPageIsSaved();
+			await webPages.runDocMethod.submit({ name: this.selectedPage as string, method: "mark_as_staging" });
+			this.activePage = await this.fetchActivePage(this.selectedPage as string);
+			toast.success(__("Page marked as staging"));
+			// marking the home page as staging clears it from Builder Settings
+			builderSettings.reload();
+		},
+
 		async revertChanges() {
 			const confirmed = await confirm(
 				__(

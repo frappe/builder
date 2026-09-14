@@ -250,6 +250,21 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_mark_as_staging_moves_a_live_page_and_keeps_its_draft(self):
+		noindex = '<meta name="robots" content="noindex, nofollow">'
+		page = insert_page("test-mark-as-staging", "Live Content")
+		try:
+			page.publish()
+			page.db_set("draft_blocks", page.blocks)
+			page.reload().mark_as_staging()
+			self.assertFalse(page.published)
+			self.assertTrue(page.staging)
+			self.assertTrue(page.draft_blocks)
+			self.assertIn(noindex, get_response_content("/test-mark-as-staging"))
+			self.assertRaises(frappe.ValidationError, page.mark_as_staging)
+		finally:
+			page.delete()
+
 	def test_client_script(self):
 		client_script_js = frappe.get_doc(
 			{
