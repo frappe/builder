@@ -31,8 +31,16 @@
 
 				<p v-if="details.description" class="text-p-sm text-ink-gray-7">{{ details.description }}</p>
 
+				<ExtensionInstallPrompt
+					v-if="isInstallPromptOpen"
+					:extension="details.name"
+					:label="details.label ?? details.name"
+					:requested="releaseCapabilities"
+					@install="install"
+					@cancel="isInstallPromptOpen = false" />
+
 				<Button
-					v-if="!isInstalled"
+					v-else-if="!isInstalled"
 					variant="solid"
 					size="sm"
 					icon-left="lucide-download"
@@ -125,21 +133,13 @@
 				</div>
 			</div>
 		</div>
-
-		<ExtensionInstallDialog
-			v-if="details"
-			v-model:open="isInstallDialogOpen"
-			:extension="details.name"
-			:label="details.label ?? details.name"
-			:requested="releaseCapabilities"
-			@install="install" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import ExtensionActions from "@/components/LeftPanelTabs/Extensions/ExtensionActions.vue";
 import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/ExtensionCapabilities.vue";
-import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
+import ExtensionInstallPrompt from "@/components/LeftPanelTabs/Extensions/ExtensionInstallPrompt.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	installedExtensions,
@@ -197,6 +197,7 @@ const installedOn = computed(() =>
 const load = async () => {
 	activeInstallation.value = null;
 	hubDetails.value = null;
+	isInstallPromptOpen.value = false;
 	error.value = "";
 	try {
 		if (props.isInstalled) {
@@ -222,16 +223,16 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	doctype_grants: [],
 });
 
-const isInstallDialogOpen = ref(false);
+const isInstallPromptOpen = ref(false);
 const releaseCapabilities = ref<Capability[]>([]);
 
-/** Serves the Marketplace "Install" and the "Retry" on a failed row. The dialog
+/** Serves the Marketplace "Install" and the "Retry" on a failed row. The prompt
  * lists what the exact release asks for, so the install pins that version. */
 const askInstall = async () => {
 	working.value = true;
 	try {
 		releaseCapabilities.value = await getHubReleaseCapabilities(props.extension, details.value!.version);
-		isInstallDialogOpen.value = true;
+		isInstallPromptOpen.value = true;
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	} finally {
@@ -241,7 +242,7 @@ const askInstall = async () => {
 
 /** Retry stays on the page to show progress; a fresh install goes back to the list. */
 const install = async (capabilities: Capability[]) => {
-	isInstallDialogOpen.value = false;
+	isInstallPromptOpen.value = false;
 	working.value = true;
 	try {
 		await installFromHub(props.extension, details.value!.version, capabilities);
