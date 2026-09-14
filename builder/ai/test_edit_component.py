@@ -110,8 +110,27 @@ class TestEditComponent(FrappeTestCase):
 
 	def test_rejected_edits_change_nothing(self):
 		component = make_component()
+		wrapper = frappe.get_doc(
+			{
+				"doctype": "Builder Component",
+				"component_name": "Wraps Nav",
+				"block": frappe.as_json(
+					{
+						"blockId": "wrap",
+						"element": "div",
+						"children": [
+							{"blockId": "inner", "element": "div", "extendedFromComponent": component.name}
+						],
+					}
+				),
+			}
+		).insert()
 		before = definition(component.name)
 		for op in (
+			{
+				"tool": "add_block",
+				"args": {"parent_block_id": "nav", "block": {"el": "div", "component": wrapper.name}},
+			},
 			{"tool": "remove_block", "args": {"block_id": "nav"}},
 			{
 				"tool": "add_block",

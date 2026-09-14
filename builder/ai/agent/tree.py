@@ -545,6 +545,28 @@ class ComponentTree(WorkingTree):
 		return super().apply_remove(block_id)
 
 	def apply_add(self, args: dict) -> str:
-		if f'"component": "{self.component_id}"' in json_dumps_safe(args.get("block")):
-			return "FAILED: a component can't embed itself, it would render forever."
+		added = re.findall(r'"component": "([^"]+)"', json_dumps_safe(args.get("block")))
+		if any(component_embeds(component, self.component_id) for component in added):
+			return "FAILED: that would nest the component inside itself, which renders forever."
 		return super().apply_add(args)
+
+
+def component_embeds(component_id: str, target: str, seen: set | None = None) -> bool:
+	"""True when component_id is target or nests it at any depth."""
+	import frappe
+
+	if component_id == target:
+		return True
+	seen = set() if seen is None else seen
+	if component_id in seen:
+		return False
+	seen.add(component_id)
+	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component_id, "block") or "{}")
+	if not isinstance(definition, dict):
+		return False
+	nested = {
+		block["extendedFromComponent"]
+		for block, _ in walk_blocks(definition)
+		if block.get("extendedFromComponent")
+	}
+	return any(component_embeds(child, target, seen) for child in nested)
