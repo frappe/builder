@@ -1,4 +1,4 @@
-import { devExtension, setDevCapabilities } from "@/extensions/devExtension";
+import { devExtension, isDevExtension, setDevCapabilities } from "@/extensions/devExtension";
 import type { Capability, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import {
 	call,
@@ -36,14 +36,6 @@ function ensureProtocol(url: string, defaultProtocol = "http") {
 	return result;
 }
 
-type EnabledExtensionSummary = {
-	installation_id: string;
-	name: string;
-	label?: string;
-	description?: string;
-	icon?: string;
-};
-
 type InstallationDocument = {
 	extension: string;
 	label?: string;
@@ -60,12 +52,6 @@ type InstallationDocument = {
 	readme?: string;
 	requested_capabilities?: string;
 };
-
-const enabledExtensions = createResource<EnabledExtensionSummary[]>({
-	url: "builder.extensions.registry.get_enabled_extensions",
-	// losing this list costs the editor its extensions, never the editor itself
-	onError: (error: Error) => console.error("Could not load extensions", error),
-});
 
 /** The Vue instance a document resource ties its realtime subscription to. Set once, from the editor. */
 let resourceVm: unknown;
@@ -95,29 +81,41 @@ const installationDocument = (installationId: string) =>
 	);
 
 /**
+ * Every installation of this user, the disabled and development ones included.
+ *
+ * The editor mounts the enabled rows, and the panel shows them all. One list
+ * means one fetch to refresh after a change, so the two never disagree.
+ */
+const installationsResource = createResource<UserInstallation[]>({
+	url: "builder.extensions.installations.get_user_installations",
+	// losing this list costs the editor its extensions, never the editor itself
+	onError: (error: Error) => console.error("Could not load installations", error),
+});
+
+/**
  * Fetch one installation's document into that shared cache.
  *
  * Read it back with `getCachedDocumentResource`, never held here: `toInstalledExtension`
  * only reads that cache, so a fetch never happens as a side effect of a computed.
  */
-const loadInstallationDocument = (summary: EnabledExtensionSummary) => {
-	void installationDocument(summary.installation_id)
+const loadInstallationDocument = (row: UserInstallation) => {
+	void installationDocument(row.installation_id)
 		.reload()
 		.catch(() => undefined);
 };
 
-const toInstalledExtension = (summary: EnabledExtensionSummary): InstalledExtension | null => {
+const toInstalledExtension = (row: UserInstallation): InstalledExtension | null => {
 	const document = getCachedDocumentResource<InstallationDocument>(
 		INSTALLATION_DOCTYPE,
-		summary.installation_id,
+		row.installation_id,
 	)?.doc;
 	if (!document || !document.enabled) return null;
 
 	return {
-		name: summary.name,
-		label: document.label ?? summary.label ?? summary.name,
-		description: document.description ?? summary.description,
-		icon: summary.icon,
+		name: row.name,
+		label: document.label ?? row.label ?? row.name,
+		description: document.description ?? row.description,
+		icon: row.icon,
 		checksum: document.checksum,
 		capabilities: grantedCapabilities(document.granted_capabilities),
 	};
@@ -127,23 +125,29 @@ const toInstalledExtension = (summary: EnabledExtensionSummary): InstalledExtens
  * Every extension this user runs: their installations, plus the one loaded from a
  * dev server this session. A dev extension replaces the installation of the same
  * name, because two entries would give it two frames.
+ *
+ * A development record never mounts. It has no files, and the browser's own entry
+ * runs it.
  */
 export const installedExtensions = computed<InstalledExtension[]>(() => {
-	const installed = (enabledExtensions.data ?? []).flatMap((summary) => {
-		const extension = toInstalledExtension(summary);
-		return extension ? [extension] : [];
-	});
+	const installed = (installationsResource.data ?? [])
+		.filter((row) => !row.is_development)
+		.flatMap((row) => {
+			const extension = toInstalledExtension(row);
+			return extension ? [extension] : [];
+		});
 	const development = devExtension.value;
 	if (!development) return installed;
 
 	return [...installed.filter((extension) => extension.name !== development.name), development];
 });
 
+/** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
 export const loadExtensions = async (vm?: unknown) => {
 	if (vm) resourceVm = vm;
-	const summaries = (await enabledExtensions.fetch()) ?? [];
-	summaries.forEach(loadInstallationDocument);
-	return summaries;
+	const rows = (await installationsResource.fetch()) ?? [];
+	rows.filter((row) => row.enabled && !row.is_development).forEach(loadInstallationDocument);
+	return rows;
 };
 
 /**
@@ -183,12 +187,12 @@ export const extensionSource = (extension: InstalledExtension): Promise<string> 
  */
 export type UserInstallation = {
 	name: string;
-	/** The document's own name, not the extension's. Empty for the dev extension, which has none. */
-	installation_id?: string;
+	/** The document's own name, not the extension's. */
+	installation_id: string;
 	label?: string;
 	description?: string;
 	icon?: string;
-	/** Empty for the dev extension, which runs from a server rather than a release. */
+	/** For a running dev extension, the version its dev server serves. */
 	version: string;
 	/** The Builder Hub it came from. Empty for an extension installed from a directory. */
 	source_url: string;
@@ -197,6 +201,8 @@ export type UserInstallation = {
 	install_state?: "Installing" | "Ready" | "Failed";
 	/** Why the last Hub install failed, shown with a Retry. */
 	install_error?: string;
+	/** Made by a dev server load. Only the one running this session is shown. */
+	is_development?: boolean;
 };
 
 /** One doctype this user answered for, as `Builder Extension Grant` holds it. */
@@ -214,36 +220,16 @@ export type InstallationDetails = UserInstallation & {
 	requested_capabilities: Capability[];
 	granted_capabilities: Capability[];
 	doctype_grants: ExtensionGrant[];
-	is_development?: boolean;
 	development_server?: string;
 };
 
+/** What only a running dev server knows about its extension. */
 const applyDevelopmentDetails = (details: InstallationDetails): InstallationDetails => {
 	const development = devExtension.value;
 	if (!development || development.name !== details.name) return details;
 
-	return {
-		...details,
-		label: development.label,
-		description: development.description,
-		icon: development.icon,
-		version: development.version,
-		readme: development.readme,
-		is_development: true,
-		development_server: development.serverOrigin,
-	};
+	return { ...details, readme: development.readme, development_server: development.serverOrigin };
 };
-
-/**
- * What the panel manages, which is not what the editor mounts.
- *
- * `installedExtensions` drops a disabled installation, because a frame must not
- * run for one. The panel keeps it, because turning it back on is the point.
- */
-const installationsResource = createResource<UserInstallation[]>({
-	url: "builder.extensions.installations.get_user_installations",
-	onError: (error: Error) => console.error("Could not load installations", error),
-});
 
 /**
  * The install job writes the package icon last, so an Installing or Failed row
@@ -255,44 +241,43 @@ const withCatalogIcon = (row: UserInstallation): UserInstallation => {
 	return { ...row, icon: catalog.find((extension) => extension.name === row.name)?.icon };
 };
 
-export const userInstallations = computed<UserInstallation[]>(() => {
-	const installed = (installationsResource.data ?? []).map(withCatalogIcon);
+/** A running dev extension shows what its dev server serves, and is always enabled. */
+const withDevelopment = (row: UserInstallation): UserInstallation => {
 	const development = devExtension.value;
-	if (!development) return installed;
+	if (!development || development.name !== row.name) return row;
 
-	// The server leaves a development installation out, so the browser's own entry
-	// is the only row for it. It is always enabled, so it leads the list.
-	return [
-		{
-			name: development.name,
-			label: development.label,
-			description: development.description,
-			icon: development.icon,
-			version: development.version,
-			source_url: "",
-			enabled: true,
-		},
-		...installed.filter((row) => row.name !== development.name),
-	];
-});
-
-export const loadUserInstallations = () => installationsResource.fetch();
+	return {
+		...row,
+		label: development.label,
+		description: development.description,
+		icon: development.icon,
+		version: development.version,
+		enabled: true,
+		is_development: true,
+	};
+};
 
 /**
- * Both lists, after a change to an installation.
+ * What the panel manages, which is not what the editor mounts.
  *
- * Enabling, disabling and uninstalling all move an extension between the two, and
- * a grant change remounts its frames, so neither list may be refreshed alone.
+ * `installedExtensions` drops a disabled installation, because a frame must not
+ * run for one. The panel keeps it, because turning it back on is the point.
+ *
+ * A development record that no dev server runs this session is one a closed tab
+ * failed to remove, so the panel hides it.
  */
-export const reloadExtensions = async () => {
-	await Promise.all([loadExtensions(), installationsResource.fetch()]);
-};
+export const userInstallations = computed<UserInstallation[]>(() => {
+	const devInstallation: UserInstallation[] = [];
+	const others: UserInstallation[] = [];
+	for (const row of installationsResource.data ?? []) {
+		if (isDevExtension(row)) devInstallation.push(withDevelopment(withCatalogIcon(row)));
+		else if (!row.is_development) others.push(withCatalogIcon(row));
+	}
+	return [...devInstallation, ...others];
+});
 
-/** The raw row `userInstallations` replaces for a running dev extension, kept for its `installation_id`. */
-const findInstallation = (extension: string) => {
-	const row = (installationsResource.data ?? []).find((installation) => installation.name === extension);
-	return row && withCatalogIcon(row);
-};
+const findInstallation = (extension: string) =>
+	userInstallations.value.find((installation) => installation.name === extension);
 
 /**
  * Every installation this has already wired a doctype-grant subscription for.
@@ -388,12 +373,12 @@ export type UninstallSummary = {
 };
 
 /**
- * Every write below reloads both lists, so no caller can leave the panel showing
+ * Every write below reloads the list, so no caller can leave the panel showing
  * one answer and the editor running another.
  */
 export const setExtensionEnabled = async (extension: string, enabled: boolean) => {
 	await call(`${METHOD}.set_extension_enabled`, { extension, enabled });
-	await reloadExtensions();
+	await loadExtensions();
 };
 
 export const setGrantedCapabilities = async (extension: string, capabilities: Capability[]) => {
@@ -401,8 +386,8 @@ export const setGrantedCapabilities = async (extension: string, capabilities: Ca
 		extension,
 		capabilities,
 	})) as Capability[];
-	// the mount list leaves a development installation out, so the reload below
-	// cannot carry the new grant to the entry the browser gate reads
+	// the editor runs the browser's own entry for a dev extension, not its record,
+	// so the new grant has to reach that entry too
 	setDevCapabilities(extension, granted);
 	return granted;
 };
@@ -412,7 +397,7 @@ export const uninstallSummary = (extension: string) =>
 
 export const uninstallExtension = async (extension: string) => {
 	await call(`${METHOD}.uninstall_extension`, { extension });
-	await reloadExtensions();
+	await loadExtensions();
 };
 
 export type CatalogExtension = Pick<UserInstallation, "name" | "label" | "description" | "icon">;
@@ -493,5 +478,5 @@ export const getHubReleaseCapabilities = async (name: string, version: string): 
  */
 export const installFromHub = async (name: string, version: string, capabilities: Capability[]) => {
 	await call("builder.extensions.hub.install_from_hub", { name, version, capabilities });
-	await reloadExtensions();
+	await loadExtensions();
 };

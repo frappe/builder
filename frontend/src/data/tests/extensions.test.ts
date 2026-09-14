@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  *
- * What the editor runs is the enabled records plus the one dev extension, and
- * the two lists can name the same extension.
+ * The editor and the panel read one list of records. The editor runs the enabled
+ * ones plus the one dev extension, and the two can name the same extension.
  *
  * `devExtension.ts` listens for `pagehide` at module scope, so importing the
  * list at all needs a window.
@@ -45,13 +45,19 @@ vi.mock("frappe-ui", () => ({
 	setConfig: vi.fn(),
 }));
 
-const summary = (name: string) => ({
-	installation_id: `${name}-id`,
+/** One row of `get_user_installations`, which the editor and the panel both read. */
+const installationRow = (name: string, overrides: Partial<Record<string, unknown>> = {}) => ({
 	name,
+	installation_id: `${name}-id`,
 	label: name,
 	description: `${name} description`,
 	icon: `${name}.svg`,
+	version: "1.0.0",
+	source_url: "",
+	enabled: true,
+	...overrides,
 });
+const developmentRow = (name: string) => installationRow(name, { version: "0.0.0-dev", is_development: true });
 const document = (name: string, capabilities: string[] = []) => ({
 	extension: name,
 	label: name,
@@ -84,19 +90,6 @@ const seedInstallationDocument = (installationId: string, doc: ReturnType<typeof
 	documentResources.set(installationId, reactive({ doc, reload: vi.fn().mockResolvedValue(null) }));
 };
 
-/** One row `findInstallation` reads from `get_user_installations`, disabled or not. */
-const installationRow = (name: string, overrides: Partial<Record<string, unknown>> = {}) => ({
-	name,
-	installation_id: `${name}-id`,
-	label: name,
-	description: `${name} description`,
-	icon: `${name}.svg`,
-	version: "1.0.0",
-	source_url: "",
-	enabled: true,
-	...overrides,
-});
-
 /** The fields `useInstallationDetails` reads off the document that the mount list never needs. */
 const detailsDocument = (name: string, overrides: Partial<Record<string, unknown>> = {}) => ({
 	extension: name,
@@ -127,14 +120,14 @@ describe("installedExtensions", () => {
 	});
 
 	it("is the enabled records", () => {
-		resource.data = [summary("acme/icons")];
+		resource.data = [installationRow("acme/icons")];
 		seedInstallationDocument("acme/icons-id", document("acme/icons"));
 
 		expect(modules.list.value.map((extension) => extension.name)).toEqual(["acme/icons"]);
 	});
 
 	it("appends the dev extension", () => {
-		resource.data = [summary("acme/icons")];
+		resource.data = [installationRow("acme/icons")];
 		seedInstallationDocument("acme/icons-id", document("acme/icons"));
 		modules.dev.devExtension.value = development("acme/other");
 
@@ -142,7 +135,7 @@ describe("installedExtensions", () => {
 	});
 
 	it("replaces the installed record of the same name", () => {
-		resource.data = [summary("acme/icons"), summary("acme/other")];
+		resource.data = [installationRow("acme/icons"), installationRow("acme/other")];
 		seedInstallationDocument("acme/icons-id", document("acme/icons"));
 		seedInstallationDocument("acme/other-id", document("acme/other"));
 		modules.dev.devExtension.value = {
@@ -163,8 +156,29 @@ describe("installedExtensions", () => {
 		]);
 	});
 
+	it("never mounts a development record, which has no files", () => {
+		resource.data = [developmentRow("acme/icons")];
+		seedInstallationDocument("acme/icons-id", document("acme/icons"));
+
+		expect(modules.list.value).toEqual([]);
+	});
+
+	it("fetches the documents of the rows it mounts, and no others", async () => {
+		resource.fetch.mockResolvedValueOnce([
+			installationRow("acme/icons"),
+			installationRow("acme/off", { enabled: false }),
+			developmentRow("acme/dev"),
+		]);
+
+		await modules.data.loadExtensions();
+
+		expect(documentResources.has("acme/icons-id")).toBe(true);
+		expect(documentResources.has("acme/off-id")).toBe(false);
+		expect(documentResources.has("acme/dev-id")).toBe(false);
+	});
+
 	it("drops the dev extension when it stops, leaving the record behind", () => {
-		resource.data = [summary("acme/icons")];
+		resource.data = [installationRow("acme/icons")];
 		seedInstallationDocument("acme/icons-id", document("acme/icons"));
 		modules.dev.devExtension.value = development("acme/icons");
 		modules.dev.stopDevExtension();
@@ -211,6 +225,21 @@ describe("userInstallations", () => {
 		]);
 	});
 
+	it("hides a development record that no dev server runs this session", () => {
+		resource.data = [developmentRow("acme/stale"), installationRow("acme/icons")];
+
+		expect(modules.data.userInstallations.value.map((row) => row.name)).toEqual(["acme/icons"]);
+	});
+
+	it("shows what the dev server serves on the record the load made", () => {
+		resource.data = [developmentRow("acme/icons")];
+		modules.dev.devExtension.value = { ...development("acme/icons"), label: "Icons", version: "1.2.0" };
+
+		expect(modules.data.userInstallations.value).toMatchObject([
+			{ installation_id: "acme/icons-id", label: "Icons", version: "1.2.0", is_development: true },
+		]);
+	});
+
 	it("lends the same icon to the details page", async () => {
 		resource.data = [installationRow("acme/icons", { icon: undefined, install_state: "Failed" })];
 		const installation = modules.data.useInstallationDetails("acme/icons");
@@ -243,8 +272,12 @@ describe("useInstallationDetails", () => {
 		});
 
 	/** Reload creates the document and doctype-grants resources; fill them in once they exist. */
-	const openDetails = async (name: string, documentOverrides: Partial<Record<string, unknown>> = {}) => {
-		resource.data = [installationRow(name)];
+	const openDetails = async (
+		name: string,
+		documentOverrides: Partial<Record<string, unknown>> = {},
+		row = installationRow(name),
+	) => {
+		resource.data = [row];
 		const installation = modules.data.useInstallationDetails(name);
 		await installation.reload();
 
@@ -274,6 +307,14 @@ describe("useInstallationDetails", () => {
 			is_development: true,
 			readme: "# Icons\n\nDevelopment documentation.",
 		});
+	});
+
+	it("opens the record a dev server load made, which the server lists", async () => {
+		modules.dev.devExtension.value = running();
+
+		const details = await openDetails("acme/icons", {}, developmentRow("acme/icons"));
+
+		expect(details).toMatchObject({ label: "Icons", is_development: true, installed_on: "2026-09-03 10:00:00" });
 	});
 
 	/**

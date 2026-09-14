@@ -20,7 +20,6 @@ from builder.extensions.installations import (
 	set_granted_capabilities,
 	uninstall_extension,
 )
-from builder.extensions.registry import get_enabled_extensions
 from builder.extensions.resources import record_resource
 
 EXTENSION = "acme/managed"
@@ -46,17 +45,26 @@ class TestUserInstallations(FrappeTestCase):
 		self.assertEqual(listed[0]["version"], "2.1.0")
 		self.assertTrue(listed[0]["enabled"])
 
-	def test_keeps_a_disabled_installation_the_editor_drops(self):
+	def test_keeps_a_disabled_installation(self):
 		"""Hiding it would leave no way to turn it back on but the bench."""
 		make_installation(EXTENSION, enabled=0)
 
-		self.assertIn(EXTENSION, names(get_user_installations()))
-		self.assertNotIn(EXTENSION, names(get_enabled_extensions()))
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		self.assertFalse(listed["enabled"])
 
-	def test_leaves_out_a_development_installation(self):
-		make_installation(EXTENSION, version="0.0.0-dev")
+	def test_marks_a_development_installation(self):
+		"""The panel opens its record by id, so the list cannot leave it out."""
+		installation = make_installation(EXTENSION, version="0.0.0-dev")
 
-		self.assertNotIn(EXTENSION, names(get_user_installations()))
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		self.assertEqual(listed["installation_id"], installation.name)
+		self.assertTrue(listed["is_development"])
+
+	def test_does_not_mark_an_installed_release(self):
+		make_installation(EXTENSION, version="1.0.0")
+
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		self.assertFalse(listed["is_development"])
 
 	def test_leaves_out_another_users_installation(self):
 		make_installation(EXTENSION, user=make_user())
@@ -132,7 +140,6 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, False)
 
-		self.assertNotIn(EXTENSION, names(get_enabled_extensions()))
 		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
 		self.assertFalse(listed["enabled"])
 
@@ -148,7 +155,8 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, True)
 
-		self.assertIn(EXTENSION, names(get_enabled_extensions()))
+		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		self.assertTrue(listed["enabled"])
 
 
 class TestGrantedCapabilities(FrappeTestCase):

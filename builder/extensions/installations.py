@@ -3,10 +3,8 @@
 
 """What a user does with an extension they installed.
 
-`registry.py` is what the editor loads, so it lists only what mounts a frame.
-This is what the Extensions panel manages, so it lists a disabled installation
-too, and it answers with the version, the source and the README a row never
-shows.
+The editor and the Extensions panel read one list. The editor mounts the
+enabled rows, and the panel shows every row, so a user can turn one back on.
 
 Every method here finds the row through the session user. A caller names an
 extension and never a person.
@@ -35,15 +33,18 @@ NOT_INSTALLED = "You have not installed this extension."
 @frappe.whitelist()
 @has_page_read(NOT_INSTALLED)
 def get_user_installations() -> list[dict]:
-	"""Every installation of this user, the disabled ones included.
+	"""Every installation of this user, the disabled and development ones included.
 
 	A disabled extension has to stay visible. Hiding it would leave no way to turn
 	it back on but the bench. It sorts last, and the last edited sorts first in
 	each group.
+
+	A development installation is listed so the panel can open its record. The
+	browser runs its own entry for it, and hides a record no dev server serves.
 	"""
 	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
-		filters={"user": frappe.session.user, "version": ["!=", DEV_EXTENSION_VERSION]},
+		filters={"user": frappe.session.user},
 		fields=["name", "enabled", "install_state"],
 		order_by="modified desc",
 	)
@@ -170,6 +171,7 @@ def describe_installation(installation: str) -> dict:
 		"enabled": bool(row.enabled),
 		"install_state": row.install_state,
 		"install_error": row.install_error,
+		"is_development": row.version == DEV_EXTENSION_VERSION,
 	}
 
 

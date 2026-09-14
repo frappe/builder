@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""What the editor loads, and how an extension's code reaches a frame.
+"""How an extension's code reaches a frame, and how a dev server extension gets an installation.
 
 A frame sends no cookie, so no route can tell who is asking and one user's copy
 cannot be served safely by URL. The editor reads the entry here under its own
@@ -19,43 +19,6 @@ from builder.extensions.access import (
 	find_own_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.utils import has_page_read
-
-
-@frappe.whitelist()
-@has_page_read("You do not have permission to load extensions.")
-def get_enabled_extensions() -> list[dict]:
-	"""Summaries of this user's enabled extensions, used to discover their documents.
-
-	A development installation is left out. It has no files, and the browser adds
-	its own entry for it, so listing it here would give one extension two frames.
-	"""
-	installations = frappe.get_all(
-		INSTALLATION_DOCTYPE,
-		filters={
-			"user": frappe.session.user,
-			"enabled": 1,
-			"version": ["!=", DEV_EXTENSION_VERSION],
-		},
-		pluck="name",
-	)
-	return [describe_extension(name) for name in installations]
-
-
-def describe_extension(installation: str) -> dict:
-	"""Return the summary needed to discover and display an enabled extension.
-
-	The icon travels as a data URI. A URL would need a route that serves one user's
-	private files to an anonymous request, which this design refuses.
-	"""
-	extension = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
-	return {
-		"installation_id": extension.name,
-		"name": extension.extension,
-		"label": extension.label,
-		"description": extension.description,
-		"icon": extension.icon_data_uri,
-	}
 
 
 @frappe.whitelist()

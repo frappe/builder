@@ -39,7 +39,7 @@ export type ExtensionManifest = {
 	capabilities: Capability[];
 };
 
-/** One of this user's installations, as get_enabled_extensions returns it. */
+/** One extension this user runs, as the editor mounts it. */
 export type InstalledExtension = {
 	name: string; // "acme/icons"
 	label: string;

@@ -14,8 +14,8 @@ from builder.builder.tests.extension_fixtures import (
 	make_user,
 )
 from builder.extensions.constants import CAPABILITIES
+from builder.extensions.installations import get_user_installations
 from builder.extensions.registry import (
-	get_enabled_extensions,
 	get_extension_source,
 	install_dev_extension,
 	remove_dev_extension,
@@ -23,26 +23,11 @@ from builder.extensions.registry import (
 from builder.extensions.tokens import set_extension_tokens, unset_extension_token
 
 
-class TestGetEnabledExtensions(FrappeTestCase):
+class TestListedInstallation(FrappeTestCase):
+	"""What one row of the list carries for the editor to mount."""
+
 	def listed(self, name):
-		return next((row for row in get_enabled_extensions() if row["name"] == name), None)
-
-	def test_lists_an_extension_this_user_installed(self):
-		make_installation("acme/enabled")
-
-		self.assertIsNotNone(self.listed("acme/enabled"))
-
-	def test_leaves_out_one_this_user_switched_off(self):
-		make_installation("acme/off", enabled=0)
-
-		self.assertIsNone(self.listed("acme/off"))
-
-	def test_leaves_out_another_users_installation(self):
-		"""The whole point: an extension runs for the person who installed it."""
-		drop_installations("acme/theirs")
-		make_installation("acme/theirs", user=make_user())
-
-		self.assertIsNone(self.listed("acme/theirs"))
+		return next((row for row in get_user_installations() if row["name"] == name), None)
 
 	def test_two_users_can_run_different_versions(self):
 		drop_installations("acme/versioned")
@@ -54,12 +39,6 @@ class TestGetEnabledExtensions(FrappeTestCase):
 			INSTALLATION_DOCTYPE, {"user": make_user(), "extension": "acme/versioned"}, "version"
 		)
 		self.assertEqual(theirs, "2.0.0")
-
-	def test_leaves_out_a_development_installation(self):
-		"""It has no files, and the browser adds its own entry for it."""
-		make_installation("acme/dev", version="0.0.0-dev")
-
-		self.assertIsNone(self.listed("acme/dev"))
 
 	def test_names_the_extension(self):
 		make_installation("acme/named")
@@ -96,7 +75,7 @@ class TestExtensionIcon(FrappeTestCase):
 		"""No route serves one user's files, so the icon travels with the list."""
 		make_installation("acme/drawn", icon="icon.svg", source="export default {};")
 
-		listed = next(row for row in get_enabled_extensions() if row["name"] == "acme/drawn")
+		listed = next(row for row in get_user_installations() if row["name"] == "acme/drawn")
 		self.assertEqual(
 			listed["icon"], f"data:image/svg+xml;base64,{base64.b64encode(b'<svg />').decode()}"
 		)
@@ -104,7 +83,7 @@ class TestExtensionIcon(FrappeTestCase):
 	def test_is_none_when_the_package_ships_none(self):
 		make_installation("acme/plainer", source="export default {};")
 
-		listed = next(row for row in get_enabled_extensions() if row["name"] == "acme/plainer")
+		listed = next(row for row in get_user_installations() if row["name"] == "acme/plainer")
 		self.assertIsNone(listed["icon"])
 
 	def test_refuses_a_path_that_climbs_out_of_the_install_folder(self):

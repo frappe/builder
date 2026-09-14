@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
+import { loadExtensions } from "@/data/extensions";
 import { lastDevUrl, loadDevExtension, showDevExtensionDialog } from "@/extensions/devExtension";
 import { Button, FormControl, toast } from "frappe-ui";
 import { ref, watch } from "vue";
@@ -49,6 +50,8 @@ const load = async () => {
 	error.value = "";
 	try {
 		const extension = await loadDevExtension(url.value);
+		// the panel opens the record the load just made, so the list has to name it
+		await loadExtensions();
 		showDevExtensionDialog.value = false;
 		toast.success(`Loaded ${extension.label}`, {
 			description: extension.capabilities.length

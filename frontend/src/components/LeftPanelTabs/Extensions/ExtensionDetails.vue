@@ -215,6 +215,7 @@ const load = async () => {
 /** A hub entry seen through the same shape, minus what only an installation holds. */
 const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): InstallationDetails => ({
 	...hub,
+	installation_id: "",
 	source_url: hub.source_url ?? "",
 	enabled: false,
 	installed_on: "",
