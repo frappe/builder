@@ -460,12 +460,23 @@ export const getHubExtension = async (name: string): Promise<HubExtension> => {
 	};
 };
 
+/** What one exact release asks for. The listing carries no manifest, so this reads the release. */
+export const getHubReleaseCapabilities = async (name: string, version: string): Promise<Capability[]> => {
+	const { release } = await createResource({
+		url: `${hubUrl()}/${HUB_API}.get_extension_release`,
+		params: { extension_name: name, version },
+	}).fetch();
+	return release.manifest?.capabilities ?? [];
+};
+
 /**
  * Start a Hub install. The server answers with an "Installing" row and runs the
  * download in a background job, so this resolves fast. The row flips to "Ready"
  * or "Failed" on the `builder_extension_install` realtime event.
+ *
+ * `version` pins the release whose capabilities the user answered for.
  */
-export const installFromHub = async (name: string) => {
-	await call("builder.extensions.hub.install_from_hub", { name });
+export const installFromHub = async (name: string, version: string, capabilities: Capability[]) => {
+	await call("builder.extensions.hub.install_from_hub", { name, version, capabilities });
 	await reloadExtensions();
 };

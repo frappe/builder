@@ -238,8 +238,11 @@ def read_capped(response: requests.Response, limit: int) -> bytes:
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NOT_INSTALLABLE)
-def install_from_hub(name: str, version: str | None = None) -> dict:
+def install_from_hub(name: str, capabilities: list[str], version: str | None = None) -> dict:
 	"""Start a Hub install for the session user, and answer with its panel row.
+
+	`capabilities` is what the user allowed in the install dialog. The dialog reads
+	one exact release, so a caller sends that `version` with it.
 
 	The row comes back `Installing`. A background job downloads and checks the
 	package, then flips the row to `Ready` or `Failed` and sends a
@@ -265,11 +268,14 @@ def install_from_hub(name: str, version: str | None = None) -> dict:
 		version=version,
 		hub_url=hub_url,
 		user=frappe.session.user,
+		capabilities=capabilities,
 	)
 	return describe_installation(installation)
 
 
-def run_hub_install(installation: str, name: str, version: str, hub_url: str, user: str) -> None:
+def run_hub_install(
+	installation: str, name: str, version: str, hub_url: str, user: str, capabilities: list[str]
+) -> None:
 	"""Download, check and finish one pending installation, then send the result.
 
 	A failure rolls back the job's writes and marks the row `Failed` with the
@@ -278,7 +284,9 @@ def run_hub_install(installation: str, name: str, version: str, hub_url: str, us
 	try:
 		release = get_release(hub_url, name, version)
 		package = validate_package(download_package(release), name, release.version)
-		apply_release(frappe.get_doc(INSTALLATION_DOCTYPE, installation), hub_url, release, package)
+		apply_release(
+			frappe.get_doc(INSTALLATION_DOCTYPE, installation), hub_url, release, package, capabilities
+		)
 		state = "Ready"
 	except Exception as error:
 		frappe.db.rollback()
@@ -358,11 +366,13 @@ def create_pending_installation(name: str, version: str, listing: dict) -> str:
 	)
 
 
-def apply_release(doc, source_url: str, release: Release, package: ValidatedPackage) -> None:
+def apply_release(
+	doc, source_url: str, release: Release, package: ValidatedPackage, capabilities: list[str]
+) -> None:
 	"""Fill the pending row from the release and write the user's copy.
 
-	`requested_capabilities` holds the manifest's ask; `granted_capabilities`
-	starts empty, and the user grants from the panel.
+	`requested_capabilities` holds the manifest's ask. `granted_capabilities` holds
+	what the user allowed at install, kept inside that ask.
 	"""
 	manifest = package.manifest
 	doc.update(
@@ -374,7 +384,9 @@ def apply_release(doc, source_url: str, release: Release, package: ValidatedPack
 			"version": release.version,
 			"checksum": release.package_sha256[:12],
 			"requested_capabilities": frappe.as_json(manifest["capabilities"]),
-			"granted_capabilities": frappe.as_json([]),
+			"granted_capabilities": frappe.as_json(
+				[capability for capability in manifest["capabilities"] if capability in capabilities]
+			),
 			"install_state": "Ready",
 			"install_error": None,
 			"enabled": 1,

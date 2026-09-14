@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { setExtensionGrant, setGrantedCapabilities, type ExtensionGrant } from "@/data/extensions";
+import { setExtensionGrant, type ExtensionGrant } from "@/data/extensions";
 import {
 	capabilityDetails,
 	groupCapabilities,
@@ -78,7 +78,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	granted: [capabilities: Capability[]];
+	"update:granted": [capabilities: Capability[]];
 	doctypeGrants: [doctypeGrants: ExtensionGrant[]];
 }>();
 
@@ -131,19 +131,17 @@ const writeGrant = async (grant: ExtensionGrant, access: GrantAction[], denied =
  * Turning one off asks nothing: a narrower grant can break the extension and
  * nothing else. Turning one back on can reach every published page, so that
  * direction carries the warning.
+ *
+ * The parent decides where the list goes: an installation writes it, and the
+ * install dialog holds it until the user installs.
  */
 const answer = async (capability: Capability, allow: boolean) => {
 	if (allow && isSensitive(capability) && !(await confirmSensitive(capability))) return;
 
-	const next = allow
-		? [...props.granted, capability]
-		: props.granted.filter((granted) => granted !== capability);
-
-	try {
-		emit("granted", await setGrantedCapabilities(props.extension, next));
-	} catch (thrown) {
-		toast.error((thrown as Error).message);
-	}
+	emit(
+		"update:granted",
+		allow ? [...props.granted, capability] : props.granted.filter((granted) => granted !== capability),
+	);
 };
 
 const confirmSensitive = (capability: Capability) =>

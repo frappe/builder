@@ -38,7 +38,7 @@
 					icon-left="lucide-download"
 					label="Install"
 					:loading="working"
-					@click="install" />
+					@click="askInstall" />
 
 				<div v-else-if="details.is_development" class="flex gap-2">
 					<Button
@@ -68,7 +68,7 @@
 							icon-left="lucide-refresh-cw"
 							label="Retry"
 							:loading="working"
-							@click="install" />
+							@click="askInstall" />
 						<Button
 							variant="subtle"
 							theme="red"
@@ -111,7 +111,7 @@
 						:requested="details.requested_capabilities"
 						:granted="details.granted_capabilities"
 						:doctype-grants="details.doctype_grants"
-						@granted="refreshDetails"
+						@update:granted="grant"
 						@doctype-grants="refreshDetails" />
 				</section>
 
@@ -125,19 +125,30 @@
 				</div>
 			</div>
 		</div>
+
+		<ExtensionInstallDialog
+			v-if="details"
+			v-model:open="isInstallDialogOpen"
+			:extension="details.name"
+			:label="details.label ?? details.name"
+			:requested="releaseCapabilities"
+			@install="install" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import ExtensionActions from "@/components/LeftPanelTabs/Extensions/ExtensionActions.vue";
 import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/ExtensionCapabilities.vue";
+import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	installedExtensions,
 	useInstallationDetails,
 	getHubExtension,
+	getHubReleaseCapabilities,
 	installFromHub,
 	setExtensionEnabled,
+	setGrantedCapabilities,
 	uninstallExtension,
 	uninstallSummary,
 	type InstallationDetails,
@@ -146,6 +157,7 @@ import { stopDevExtension } from "@/extensions/devExtension";
 import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";
+import type { Capability } from "frappe-builder-extension-sdk/types";
 import { Badge, Button, LoadingIndicator, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 
@@ -210,12 +222,29 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	doctype_grants: [],
 });
 
-/** Serves the Marketplace "Install" and the "Retry" on a failed row. Retry stays
- * on the page to show progress; a fresh install goes back to the list. */
-const install = async () => {
+const isInstallDialogOpen = ref(false);
+const releaseCapabilities = ref<Capability[]>([]);
+
+/** Serves the Marketplace "Install" and the "Retry" on a failed row. The dialog
+ * lists what the exact release asks for, so the install pins that version. */
+const askInstall = async () => {
 	working.value = true;
 	try {
-		await installFromHub(props.extension);
+		releaseCapabilities.value = await getHubReleaseCapabilities(props.extension, details.value!.version);
+		isInstallDialogOpen.value = true;
+	} catch (thrown) {
+		toast.error((thrown as Error).message);
+	} finally {
+		working.value = false;
+	}
+};
+
+/** Retry stays on the page to show progress; a fresh install goes back to the list. */
+const install = async (capabilities: Capability[]) => {
+	isInstallDialogOpen.value = false;
+	working.value = true;
+	try {
+		await installFromHub(props.extension, details.value!.version, capabilities);
 		toast.success("Installing…");
 		if (props.isInstalled) await load();
 		else emit("back");
@@ -244,11 +273,20 @@ const discardInstall = async () => {
 watch([() => props.extension, () => props.isInstalled], load, { immediate: true });
 
 /**
- * `ExtensionCapabilities` already wrote the change and the underlying resources
- * are realtime, so this is only an immediate refresh rather than a wait for the
- * round trip — not the only thing that keeps `details` current.
+ * The underlying resources are realtime, so this is only an immediate refresh
+ * rather than a wait for the round trip — not the only thing that keeps
+ * `details` current.
  */
 const refreshDetails = () => activeInstallation.value?.reload();
+
+const grant = async (capabilities: Capability[]) => {
+	try {
+		await setGrantedCapabilities(props.extension, capabilities);
+		await refreshDetails();
+	} catch (thrown) {
+		toast.error((thrown as Error).message);
+	}
+};
 
 /** The install job finishes elsewhere. Reload this page when it touches this extension. */
 const onInstallDone = (event: { extension: string }) => {

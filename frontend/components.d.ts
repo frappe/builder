@@ -91,6 +91,7 @@ declare module 'vue' {
     ExtensionFrame: typeof import('./src/components/ExtensionFrame.vue')['default']
     ExtensionGrantDialog: typeof import('./src/components/ExtensionGrantDialog.vue')['default']
     ExtensionHost: typeof import('./src/components/ExtensionHost.vue')['default']
+    ExtensionInstallDialog: typeof import('./src/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue')['default']
     ExtensionList: typeof import('./src/components/LeftPanelTabs/Extensions/ExtensionList.vue')['default']
     ExtensionPopover: typeof import('./src/components/ExtensionPopover.vue')['default']
     ExtensionsTab: typeof import('./src/components/LeftPanelTabs/ExtensionsTab.vue')['default']
