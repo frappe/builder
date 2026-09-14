@@ -14,7 +14,8 @@
   "selected_model",
   "last_task_type",
   "last_interaction_on",
-  "is_running"
+  "is_running",
+  "last_turn_state"
  ],
  "fields": [
   {
@@ -68,13 +69,20 @@
    "fieldname": "is_running",
    "fieldtype": "Check",
    "label": "Is Running"
+  },
+  {
+   "fieldname": "last_turn_state",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Last Turn State",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-03 12:00:00.000000",
+ "modified": "2026-09-14 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Session",

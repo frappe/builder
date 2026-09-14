@@ -142,6 +142,7 @@
 							v-if="
 								message.metadata?.affectedBlocks?.length ||
 								message.metadata?.affectedScripts?.length ||
+								message.metadata?.revertable ||
 								message.metadata?.revertSnapshot ||
 								message.metadata?.debug
 							"
@@ -153,7 +154,9 @@
 								@select-block="selectBlockById"
 								@open-script="openScriptByName" />
 
-							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
+							<Tooltip
+								v-if="message.metadata?.revertable || message.metadata?.revertSnapshot"
+								text="Undo everything this AI edit changed">
 								<button
 									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
 									@click="revertTurn(message)">
@@ -718,9 +721,9 @@ function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
 		(debug.argsRepaired ?? 0) > 0 ||
-			(debug.toolFailures?.length ?? 0) > 0 ||
-			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds",
+		(debug.toolFailures?.length ?? 0) > 0 ||
+		(debug.finishReasons || []).includes("length") ||
+		debug.stopReason === "max_rounds",
 	);
 }
 

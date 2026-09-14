@@ -18,6 +18,7 @@ class BuilderAISession(Document):
 
 		last_interaction_on: DF.Datetime | None
 		last_task_type: DF.Data | None
+		last_turn_state: DF.LongText | None
 		page: DF.Link
 		selected_model: DF.Data | None
 		session_user: DF.Link
@@ -31,3 +32,4 @@ class BuilderAISession(Document):
 		enough to block deleting the page itself. on_trash runs before the link
 		check, so clearing them here is what lets both deletes through."""
 		frappe.db.delete("Builder AI Message", {"session": self.name})
+		frappe.db.delete("Builder AI Change", {"session": self.name})

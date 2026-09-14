@@ -11,6 +11,7 @@ the model can only *propose*.
 
 import frappe
 
+from builder.ai.journal import touch
 from builder.ai.session import AISession
 
 # Sensitive action kinds the confirm card understands. Kept explicit so an unknown
@@ -71,6 +72,7 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 
 def apply_home_page(payload: dict) -> str:
 	route = (payload.get("route") or "").strip().lstrip("/")
+	touch("Builder Settings", "Builder Settings")
 	frappe.db.set_single_value("Builder Settings", "home_page", route)
 	return frappe._("Home page set to /{0}").format(route)
 

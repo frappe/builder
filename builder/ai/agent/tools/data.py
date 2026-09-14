@@ -17,6 +17,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.journal import touch
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -209,6 +210,7 @@ def write_page_data_script(ctx, args: dict) -> str:
 			"'MMM dd'), frappe.utils.now_datetime, frappe.utils.add_days, frappe.utils.fmt_money). "
 			"Rewrite without imports."
 		)
+	touch("Builder Page", ctx.page_id)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
 

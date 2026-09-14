@@ -39,14 +39,14 @@ class BuilderComponent(StandardFileSync, Document):
 
 	def on_update(self):
 		# Skip the background cache-clear and version snapshot during bulk imports
-		# (install / migrate / import_doc). queue_action enqueues a job AND locks the
-		# doc, which can raise DocumentLockedError mid-import — e.g. when
-		# create_page_from_template import_doc's a hub template's components.
-		# ensure_component_version also walks nested components and prunes, which is
-		# unsafe when not all components are loaded yet. Versions are minted on the
-		# next real edit, so nothing is lost by skipping a fresh import.
+		# (install / migrate / import_doc). ensure_component_version walks nested
+		# components and prunes, which is unsafe when not all components are loaded
+		# yet. Versions are minted on the next real edit, so nothing is lost by
+		# skipping a fresh import.
 		if not is_bulk_import():
-			self.queue_action("clear_page_cache")
+			# Not queue_action: it locks the doc until the job runs, so a second save
+			# before the worker catches up raises DocumentLockedError.
+			frappe.enqueue_doc(self.doctype, self.name, "clear_page_cache", enqueue_after_commit=True)
 			ensure_component_version(self.name)
 		self.update_exported_component()
 		self.export_standard_files()

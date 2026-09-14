@@ -49,13 +49,19 @@ import time
 import frappe
 
 from builder.ai import llm, locks
+from builder.ai.agent.page_changes import (
+	block_label,
+	describe_block_changes,
+	describe_user_changes,
+	page_state,
+)
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
+from builder.ai.journal import TurnJournal
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
-from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.utils import to_compact_yaml
 
 logger = frappe.logger("builder.ai.agent.loop")
@@ -73,23 +79,8 @@ EVENT_PREFIX = "ai_chat"
 STREAM_MAX_ATTEMPTS = 3
 STREAM_BACKOFF_BASE = 1.0
 
-# Tools whose changes a pre-turn snapshot can revert. The snapshot captures blocks +
-# page data + client scripts, so block edits AND script create/edit are all undone by
-# one "Revert" — no separate "undo script" action. A turn touching none of these (clarify,
-# plan, no-op) creates no snapshot and gets no Revert button.
-SNAPSHOT_TOOLS = frozenset(
-	{
-		"add_block",
-		"update_block",
-		"update_blocks",
-		"remove_block",
-		"move_block",
-		"set_page_blocks",
-		"generate_page",
-		"set_page_script",
-		"update_script",
-	}
-)
+# Block ops the working tree applies; replayed onto the saved draft when the user edits mid-turn.
+PAGE_OPS = frozenset({"add_block", "update_block", "update_blocks", "remove_block", "move_block"})
 
 # Script tools ALWAYS apply through their server handlers, editor sessions included.
 # Applying them in the browser (frappe.client.insert from toolDispatch) lost scripts
@@ -258,10 +249,6 @@ TOOL_LABELS = {
 }
 
 
-def block_label(block: dict) -> str:
-	return block.get("blockName") or f"<{block.get('element') or 'div'}>"
-
-
 def readable_doctype(doctype: str | None) -> str:
 	if not doctype:
 		return "records"
@@ -388,10 +375,11 @@ class AgentRunner:
 		self.server_mutations = 0
 		# Every client op the tree accepted this turn (block edits, scripts, generation).
 		self.applied_operations: list[dict] = []
-		# Revert bookkeeping: pending_state is the page's pre-turn state, not yet
-		# snapshotted; revert_snapshot is its snapshot doc once the turn mutates.
-		self.pending_state: dict | None = None
-		self.revert_snapshot: str | None = None
+		# Every document this turn writes, for reverting it (see builder/ai/journal.py).
+		self.journal: TurnJournal | None = None
+		# Block ops applied since the tree was last loaded or replaced wholesale.
+		self.page_ops: list[dict] = []
+		self.user_edit_note = ""
 		# Per-turn debug trace (one entry per round) + why the turn ended. Persisted on
 		# the assistant message so the agent debugger can explain what the model did and
 		# why it stopped (e.g. "model_finished after 1 round, 2 tool calls").
@@ -480,15 +468,50 @@ class AgentRunner:
 			after_commit=after_commit,
 		)
 
-	def ensure_revert_snapshot(self) -> None:
-		"""Snapshot the page's pre-turn state the first time the turn mutates it —
-		before the mutation lands, so even a cancelled multi-round edit stays
-		revertable. One snapshot per turn."""
-		if self.pending_state is None or not self.page_id:
+	def absorb_user_edits(self) -> None:
+		"""Take in edits the user saved while this turn runs: the saved draft becomes the
+		tree with this turn's block ops replayed on top, so the next write keeps both."""
+		from builder.ai import page_writer
+
+		if not (self.page_id and self.tree and self.tree.root):
 			return
-		state, self.pending_state = self.pending_state, None
-		if snapshot := save_revert_snapshot(self.page_id, state):
-			self.revert_snapshot = snapshot
+		saved = page_writer.load_page_root(self.page_id)
+		if not saved or not describe_block_changes(self.tree.root, saved):
+			return
+		merged = WorkingTree(saved)
+		merged.replay(self.page_ops)
+		if lines := describe_block_changes(self.tree.root, merged.root):
+			self.user_edit_note = (
+				"While you were working, the user edited the page themselves. Their edits are kept; "
+				"build on them and don't undo them:\n" + "\n".join(f"- {line}" for line in lines)
+			)
+		self.tree.root = merged.root
+
+	def flush_user_edit_note(self, messages: list[dict]) -> None:
+		if self.user_edit_note:
+			messages.append({"role": "user", "content": self.user_edit_note})
+			self.user_edit_note = ""
+
+	def build_user_changes_context(self) -> str:
+		lines = describe_user_changes(AISession.turn_state(self.session_id), self.page_id, self.page_root())
+		if not lines:
+			return ""
+		return (
+			"Since your last turn the user changed these themselves. They are intentional: build on "
+			"them and never undo them unless asked.\n" + "\n".join(f"- {line}" for line in lines)
+		)
+
+	def save_turn_state(self) -> None:
+		"""Remember the page as this turn left it, so the next turn can tell Bob what the user changed."""
+		if not (self.session_id and self.page_id and self.tree and self.tree.root):
+			return
+		try:
+			previous = AISession.turn_state(self.session_id) or {}
+			keys = {tuple(key.split("::", 1)) for key in previous.get("docs") or {}}
+			keys |= set(self.journal.entries) if self.journal else set()
+			AISession.save_turn_state(self.session_id, page_state(self.page_id, self.tree.root, keys))
+		except Exception:
+			logger.warning("Could not save the turn state", exc_info=True)
 
 	@staticmethod
 	def cached_prompt_tokens(usage) -> int:
@@ -583,7 +606,12 @@ class AgentRunner:
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		blocks = [
+			self.build_open_page_context(),
+			self.build_page_context(),
+			self.build_user_changes_context(),
+			self.build_memory_context(),
+		]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -814,7 +842,7 @@ class AgentRunner:
 		self.pending_client_ops.append(op)
 
 	def drain_queued_ops(self) -> list[dict]:
-		"""Snapshot, sync the working tree, persist, and emit ops a server tool queued
+		"""Sync the working tree, persist, and emit ops a server tool queued
 		mid-handler (extract_component queues the rewritten page as set_page_blocks),
 		so the canvas updates live and later tools see the tree they already changed."""
 		from builder.ai import page_writer
@@ -822,14 +850,13 @@ class AgentRunner:
 		ops, self.pending_client_ops = self.pending_client_ops, []
 		if not ops:
 			return []
-		if any(op["tool_name"] in SNAPSHOT_TOOLS for op in ops):
-			self.ensure_revert_snapshot()
 		for op in ops:
 			if op["tool_name"] == "set_page_blocks":
 				# Repair childless component instances or they render as nothing
 				# (editor + published alike).
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
+				self.page_ops = []
 		self.applied_operations.extend(ops)
 		self.emit("tool_batch", operations=ops)
 		if self.page_id and self.tree and self.tree.root:
@@ -845,8 +872,7 @@ class AgentRunner:
 	def load_page(self, page_id: str) -> str:
 		"""Load the turn's page into the working tree (context, query tools and block
 		edits all read/write it), take the page lock for the rest of the turn so two
-		AI turns can't fight over one page, and capture the pre-edit state so the turn
-		stays revertable. Returns "" on success, or a FAILED reason."""
+		AI turns can't fight over one page. Returns "" on success, or a FAILED reason."""
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
@@ -857,7 +883,6 @@ class AgentRunner:
 			)
 		self.held_locks.append((key, token))
 		self.tree = WorkingTree(page_writer.load_page_root(page_id))
-		self.pending_state = capture_page_state(page_id)
 		return ""
 
 	# --- turn timeline ------------------------------------------------------
@@ -1004,8 +1029,6 @@ class AgentRunner:
 		results: dict[int, str] = {}
 		applied: list[dict] = []
 		for op in ops:
-			if op["tool_name"] in SNAPSHOT_TOOLS:
-				self.ensure_revert_snapshot()
 			content = self.tree.apply(op["tool_name"], op["args"])
 			results[id(op)] = content
 			# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
@@ -1015,6 +1038,8 @@ class AgentRunner:
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 			if not content.startswith("FAILED"):
 				applied.append(op)
+				if op["tool_name"] in PAGE_OPS:
+					self.page_ops.append(op)
 		if applied:
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
@@ -1074,8 +1099,6 @@ class AgentRunner:
 				self.emit("tool_batch", operations=ops)
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
-		if op["tool_name"] in SNAPSHOT_TOOLS:
-			self.ensure_revert_snapshot()
 		content = self.run_handler(tool, op)
 		self.end_activity(entry)
 		self.drain_queued_ops()
@@ -1153,8 +1176,13 @@ class AgentRunner:
 				return
 
 		try:
-			self.run_turn(started)
+			if self.session_id:
+				with TurnJournal(self.session_id) as self.journal:
+					self.run_turn(started)
+			else:
+				self.run_turn(started)
 		finally:
+			self.save_turn_state()
 			self.clear_cancel_flag()
 			for key, token in self.held_locks:
 				locks.release(key, token)
@@ -1196,6 +1224,7 @@ class AgentRunner:
 					self.stop_reason = "model_finished"
 					break
 
+				self.absorb_user_edits()
 				# Apply block/script ops FIRST — the canvas updates live, and a terminal
 				# tool in the same round can no longer silently discard them.
 				client_ops = [op for op in tool_operations if self.op_kind(op) == "client"]
@@ -1218,6 +1247,7 @@ class AgentRunner:
 					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
 				if turn_over:
 					return
+				self.flush_user_edit_note(messages)
 				self.flush_pending_images(messages)
 				self.checkpoint()
 			else:
@@ -1336,8 +1366,8 @@ class AgentRunner:
 				"trace": self.trace,
 			},
 		}
-		if self.revert_snapshot:
-			final_metadata["revertSnapshot"] = self.revert_snapshot
+		if self.journal and self.journal.entries:
+			final_metadata["revertable"] = True
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.
@@ -1407,13 +1437,13 @@ class AgentRunner:
 		if not self.page_id:
 			return ("FAILED: no page is open.", [])
 		entry = self.begin_activity(op["tool_name"], op["args"])
-		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])
 		self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
+		self.page_ops = []
 		return (
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
 			"calls for (set_page_script), fix obvious breakage with the block tools, verify "

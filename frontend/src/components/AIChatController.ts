@@ -380,7 +380,7 @@ export class AIChatController {
 			const session = result as { session_id: string; messages: ChatMessage[] };
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
-				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
 			this.scrollToBottom();
 			this.loadSessions();
@@ -677,9 +677,7 @@ export class AIChatController {
 		// but only onto the turn's own session, not one switched to meanwhile.
 		if (
 			this.sessionId.value === completedSession &&
-			(localMeta.affectedBlocks?.length ||
-				localMeta.affectedScripts?.length ||
-				localMeta.undoScripts?.length)
+			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
 		) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
@@ -893,26 +891,29 @@ export class AIChatController {
 		}
 	};
 
-	/** Revert an AI turn in ONE go: restore the page to the snapshot taken just before it
-	 * — blocks, page data AND client scripts (created ones get unlinked, edited ones
-	 * reverted) — and rewind the conversation, removing this message and everything after.
-	 * The pre-turn snapshot is the single source of truth; there is no separate undo. */
+	/** Revert an AI turn: the server undoes every document this turn and any later turn changed
+	 * (page, scripts, components and the pages they synced, tokens, settings, approved actions),
+	 * deletes what they created and rewinds the chat. The editor then reloads what it caches. */
 	revertTurn = async (message: ChatMessage) => {
-		const snapshot: string | undefined = message.metadata?.revertSnapshot;
-		if (!snapshot || !this.sessionId.value) return;
+		if (!this.sessionId.value) return;
 		const confirmed = await confirm(
-			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+			"Revert this AI edit? Everything this turn and any later turn changed goes back to how it was: the page, its scripts and settings, components and every page they were synced to (published pages included), design tokens, site settings, and anything created along the way, including DocTypes and their records. This message and everything after it are removed from the chat.",
 		);
 		if (!confirmed) return;
-		// 1. Rewind the conversation server-side (delete this turn + everything after).
-		await createResource({ url: "builder.ai.api.revert_to_message" })
-			.submit({ session_id: this.sessionId.value, message_id: message.id })
-			.catch(() => null);
-		// 2. Restore the page draft + scripts from the pre-turn snapshot. restore_snapshot
-		// re-applies blocks, page data and the client-script set/content, then re-fetches
-		// the page (which refreshes activePageScripts), so scripts revert in the same step.
-		await this.pageStore.restoreSnapshot(snapshot);
-		// 3. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
+		await this.pageStore.waitTillPageIsSaved();
+		const result = (await createResource({ url: "builder.ai.api.revert_to_message" })
+			.submit({
+				session_id: this.sessionId.value,
+				message_id: message.id,
+				// turns from before the change journal carry a page restore point instead
+				snapshot: message.metadata?.revertable ? null : message.metadata?.revertSnapshot,
+			})
+			.catch(() => null)) as { failures?: string[] } | null;
+		builderTokens.reload();
+		this.pageStore.setPage(this.pageId.value, false);
+		if (result?.failures?.length) {
+			toast.warning("Some changes could not be reverted", { description: result.failures.join("\n") });
+		}
 		await this.loadSession();
 		this.scrollToBottom();
 	};

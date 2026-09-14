@@ -15,6 +15,7 @@ import frappe
 import yaml
 
 from builder.ai.block_codec import BlockCodec
+from builder.ai.journal import touch
 from builder.ai.lucide import lucide_svg
 from builder.utils import compact_json
 
@@ -522,6 +523,7 @@ def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	"""Persist an edited block tree back to draft_blocks (same shape persist_page
 	writes). Used by the headless loop after each round of applied block ops; the
 	round's checkpoint commit is what makes a cancelled or crashed turn keep it."""
+	touch("Builder Page", page_id)
 	frappe.db.set_value(
 		"Builder Page", page_id, "draft_blocks", compact_json([root_block]), update_modified=True
 	)
@@ -541,5 +543,6 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	# repeatedly throughout a generation, so a timestamp-checked save loses the race
 	# arbitrarily often (a single retry was observed losing twice within 200ms). The
 	# generated result is authoritative and must land regardless.
+	touch("Builder Page", page_id)
 	frappe.db.set_value("Builder Page", page_id, updates, update_modified=True)
 	return blocks[0], data_script
