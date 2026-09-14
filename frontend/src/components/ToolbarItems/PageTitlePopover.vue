@@ -8,7 +8,7 @@
 				<div v-else class="flex items-center gap-1">
 					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
 						<span
-							class="lucide-home h-[14px] w-4"
+							class="lucide-home size-4"
 							aria-hidden="true"
 							v-if="pageStore.isHomePage(pageStore.activePage)" />
 					</Tooltip>
@@ -16,11 +16,6 @@
 						<span
 							class="lucide-shield-user size-4 text-ink-amber-6"
 							v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
-					</Tooltip>
-					<Tooltip :text="__('Publicly accessible')" :hoverDelay="0.6">
-						<span
-							class="lucide-globe mr-1 h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
-							v-if="pageStore.activePage?.published && !pageStore.activePage?.authenticated_access" />
 					</Tooltip>
 					<span
 						class="max-w-48 truncate text-base text-ink-gray-8"
@@ -33,6 +28,13 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
+				<Badge
+					theme="green"
+					size="sm"
+					v-if="pageStore.activePage?.published"
+					class="dark:bg-green-900 dark:text-green-400">
+					{{ __("Live") }}
+				</Badge>
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
@@ -54,7 +56,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
-import { Popover, Tooltip } from "frappe-ui";
+import { Badge, Popover, Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();
