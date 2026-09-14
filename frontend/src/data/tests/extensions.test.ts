@@ -16,6 +16,7 @@ let lastResourceConfig:
 	{ params?: Record<string, unknown>; transform?: (data: unknown) => unknown } | undefined;
 const documentResources = new Map<string, { doc: unknown; reload: ReturnType<typeof vi.fn> }>();
 const doctypeGrantsResources = new Map<string, { data: unknown; reload: ReturnType<typeof vi.fn> }>();
+let catalog: { data: { extensions: unknown[] } } | null = null;
 
 vi.mock("frappe-ui", () => ({
 	call,
@@ -29,6 +30,7 @@ vi.mock("frappe-ui", () => ({
 		return documentResource;
 	},
 	getCachedDocumentResource: (_doctype: string, name: string) => documentResources.get(name) ?? null,
+	getCachedResource: () => catalog,
 	createListResource: (config: { filters?: [string, string, string][] }) => {
 		const installationId = config.filters?.[0]?.[2] as string;
 		const doctypeGrantsResource = reactive({
@@ -177,6 +179,35 @@ describe("installedExtensions", () => {
 				capabilities: [],
 			},
 		]);
+	});
+});
+
+describe("userInstallations", () => {
+	beforeEach(async () => {
+		resource.data = null;
+		catalog = { data: { extensions: [{ name: "acme/icons", icon: "https://hub.example.com/icons.svg" }] } };
+		modules = await loadModule();
+	});
+
+	const iconOf = () => modules.data.userInstallations.value[0].icon;
+
+	it("borrows the catalog icon while the package is not written yet", () => {
+		resource.data = [installationRow("acme/icons", { icon: undefined, install_state: "Installing" })];
+		expect(iconOf()).toBe("https://hub.example.com/icons.svg");
+	});
+
+	it("keeps no icon for a ready package that ships none", () => {
+		resource.data = [installationRow("acme/icons", { icon: undefined, install_state: "Ready" })];
+		expect(iconOf()).toBeUndefined();
+	});
+
+	it("lends the same icon to the details page", async () => {
+		resource.data = [installationRow("acme/icons", { icon: undefined, install_state: "Failed" })];
+		const installation = modules.data.useInstallationDetails("acme/icons");
+		await installation.reload();
+		documentResources.get("acme/icons-id")!.doc = detailsDocument("acme/icons");
+
+		expect(installation.details.value!.icon).toBe("https://hub.example.com/icons.svg");
 	});
 });
 

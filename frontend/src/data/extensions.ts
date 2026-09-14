@@ -5,6 +5,7 @@ import {
 	createDocumentResource,
 	createListResource,
 	createResource,
+	getCachedResource,
 	getCachedDocumentResource,
 	onDocUpdate,
 } from "frappe-ui";
@@ -16,6 +17,7 @@ export const INSTALLATION_DOCTYPE = "Builder User Extension";
 const GRANT_DOCTYPE = "Builder Extension Grant";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
+const CATALOG_CACHE = "extensions-catalog";
 
 /** The Builder Hub this site reads its catalog from. */
 const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url ?? "") || "preview.frappe.cloud";
@@ -243,8 +245,18 @@ const installationsResource = createResource<UserInstallation[]>({
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
 
+/**
+ * The install job writes the package icon last, so an Installing or Failed row
+ * has none. It borrows the icon the Hub catalog showed before the install.
+ */
+const withCatalogIcon = (row: UserInstallation): UserInstallation => {
+	if (row.icon || !row.install_state || row.install_state === "Ready") return row;
+	const catalog: CatalogExtension[] = getCachedResource([CATALOG_CACHE, 1])?.data?.extensions ?? [];
+	return { ...row, icon: catalog.find((extension) => extension.name === row.name)?.icon };
+};
+
 export const userInstallations = computed<UserInstallation[]>(() => {
-	const installed: UserInstallation[] = installationsResource.data ?? [];
+	const installed = (installationsResource.data ?? []).map(withCatalogIcon);
 	const development = devExtension.value;
 	if (!development) return installed;
 
@@ -277,8 +289,10 @@ export const reloadExtensions = async () => {
 };
 
 /** The raw row `userInstallations` replaces for a running dev extension, kept for its `installation_id`. */
-const findInstallation = (extension: string) =>
-	(installationsResource.data ?? []).find((row) => row.name === extension);
+const findInstallation = (extension: string) => {
+	const row = (installationsResource.data ?? []).find((installation) => installation.name === extension);
+	return row && withCatalogIcon(row);
+};
 
 /**
  * Every installation this has already wired a doctype-grant subscription for.
@@ -414,6 +428,7 @@ export const getExtensionsCatalog = (page: number = 1) =>
 		url: `${hubUrl()}/${HUB_API}.get_catalog`,
 		params: { page },
 		auto: true,
+		cache: [CATALOG_CACHE, page],
 		initialData: { extensions: [] as CatalogExtension[] },
 		onError: (error: Error) => console.error("Could not load extensions list", error),
 	});
