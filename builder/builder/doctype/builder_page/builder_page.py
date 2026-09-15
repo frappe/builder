@@ -1352,23 +1352,6 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	if client_script is None:
 		client_script = {"js": block.get("blockClientScript")}
 
-	attrs = block.get("attributes") or {}
-	if (
-		"data-carousel-root" in attrs
-		or block.get("blockName") == "Carousel"
-		or block.get("blockId") == "crsl-root"
-	):
-		if not client_script or "applyGallery" not in (client_script.get("js") or ""):
-			try:
-				carousel_template = frappe.get_cached_doc("Block Template", "Carousel")
-				if carousel_template and carousel_template.block:
-					parsed = frappe.parse_json(carousel_template.block)
-					if parsed.get("clientScript"):
-						client_script = parsed.get("clientScript")
-			except Exception:
-				# Rendering must not break over a missing/invalid template; keep the block's own script
-				frappe.log_error(title="Failed to load Carousel block template")
-
 	scripts = [
 		{"script": client_script.get("js"), "type": "JavaScript"},
 		{"script": client_script.get("css"), "type": "CSS"},
