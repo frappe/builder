@@ -234,8 +234,9 @@ class TestBuilderPage(FrappeTestCase):
 		staging = insert_page("test-shared-dynamic/<slug>", "Staging Dynamic Content")
 		live = insert_page("test-shared-dynamic/<slug>", "Live Dynamic Content")
 		try:
-			staging.publish_to_staging()
 			live.publish()
+			# staged last, so it is the newest: default `modified desc` ordering would serve it
+			staging.publish_to_staging()
 			self.assertIn("Live Dynamic Content", get_response_content("/test-shared-dynamic/any"))
 		finally:
 			live.delete()

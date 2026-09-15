@@ -218,6 +218,8 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		async markAsStaging() {
+			const pageName = this.selectedPage as string;
+			const pageLoadToken = this.pageLoadToken;
 			const confirmed = await confirm(
 				__(
 					'Mark "{0}" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it.',
@@ -228,8 +230,12 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 			await this.waitTillPageIsSaved();
-			await webPages.runDocMethod.submit({ name: this.selectedPage as string, method: "mark_as_staging" });
-			this.activePage = await this.fetchActivePage(this.selectedPage as string);
+			await webPages.runDocMethod.submit({ name: pageName, method: "mark_as_staging" });
+			const page = await this.fetchActivePage(pageName);
+			// another page may have opened meanwhile, and its canvas autosaves to activePage
+			if (pageLoadToken === this.pageLoadToken && this.selectedPage === pageName) {
+				this.activePage = page;
+			}
 			toast.success(__("Page marked as staging"));
 			// marking the home page as staging clears it from Builder Settings
 			builderSettings.reload();
