@@ -2,7 +2,7 @@
 	<Badge v-if="page.published" theme="green" size="sm">
 		{{ __("Live") }}
 	</Badge>
-	<Badge v-else-if="page.staging" theme="amber" size="sm">
+	<Badge v-else-if="page.staging" theme="violet" size="sm">
 		{{ __("Staging") }}
 	</Badge>
 </template>
