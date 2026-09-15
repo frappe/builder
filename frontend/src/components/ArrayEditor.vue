@@ -34,6 +34,7 @@
 				</div>
 			</template>
 		</draggable>
+		<Button variant="outline" class="w-full" :label="__('Add')" iconLeft="plus" @click="addItem" />
 		<Button
 			v-if="itemType === 'image'"
 			variant="outline"
@@ -42,13 +43,6 @@
 			:label="isBulkUploading ? __('Uploading...') : __('Upload')"
 			iconLeft="upload"
 			@click="triggerBulkUpload" />
-		<Button
-			v-else
-			variant="outline"
-			class="w-full"
-			:label="__('Add')"
-			iconLeft="plus"
-			@click="addItem" />
 		<input
 			v-if="itemType === 'image'"
 			ref="bulkFileInput"
