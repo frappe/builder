@@ -67,6 +67,13 @@ class TestAssertExtensionAccess(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION)
 
+	def test_finds_a_switched_off_installation_unless_asked_for_enabled_only(self):
+		"""Managing an installation must reach a disabled one to turn it back on."""
+		installation = make_installation(EXTENSION, enabled=0)
+
+		self.assertEqual(find_installation(EXTENSION), installation.name)
+		self.assertIsNone(find_installation(EXTENSION, enabled_only=True))
+
 	def test_refuses_a_capability_the_user_did_not_grant(self):
 		make_installation(EXTENSION, capabilities=["page.read"])
 

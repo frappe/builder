@@ -18,7 +18,7 @@ from frappe import _
 from builder.extensions.access import (
 	GRANT_DOCTYPE,
 	INSTALLATION_DOCTYPE,
-	find_own_installation,
+	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
 from builder.extensions.data import ACCESS_FIELDS, read_answers, upsert_grant
@@ -169,7 +169,7 @@ def describe_installation(installation: str) -> dict:
 
 def own_installation(extension: str) -> str:
 	"""This user's installation of this extension, or a refusal naming it."""
-	installation = find_own_installation(extension)
+	installation = find_installation(extension)
 	if not installation:
 		frappe.throw(_('"{0}" is not installed for you.').format(extension), frappe.PermissionError)
 	return installation

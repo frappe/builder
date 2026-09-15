@@ -16,7 +16,7 @@ from frappe import _
 from builder.extensions.access import (
 	INSTALLATION_DOCTYPE,
 	assert_extension_access,
-	find_own_installation,
+	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
 
@@ -51,7 +51,7 @@ def install_dev_extension(extension: str, capabilities: list[str] | None = None)
 	frappe.has_permission("Builder Page", ptype="read", throw=True)
 
 	asked = json.dumps(capabilities or [])
-	existing = find_own_installation(extension)
+	existing = find_installation(extension)
 	if existing:
 		return refresh_dev_capabilities(existing, asked)
 
@@ -91,7 +91,7 @@ def remove_dev_extension(extension: str) -> None:
 	"""
 	assert_developer_mode()
 
-	installation = find_own_installation(extension)
+	installation = find_installation(extension)
 	if not installation:
 		return
 

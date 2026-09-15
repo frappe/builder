@@ -25,28 +25,18 @@ GRANT_DOCTYPE = "Builder Extension Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 
-def find_installation(extension: str) -> str | None:
-	"""The current user's enabled installation of this extension, or None.
+def find_installation(extension: str, enabled_only: bool = False) -> str | None:
+	"""The current user's installation of this extension, or None.
 
 	`publisher/name` is the whole identity: a user holds one installation of it at
-	most, whatever source the files came from.
+	most, whatever source the files came from. The gate sets `enabled_only`.
+	Managing an installation must reach a disabled one, because turning it back on
+	is the point.
 	"""
-	return frappe.db.get_value(
-		INSTALLATION_DOCTYPE,
-		{"user": frappe.session.user, "extension": extension, "enabled": 1},
-		"name",
-	)
-
-
-def find_own_installation(extension: str) -> str | None:
-	"""This user's installation, enabled or not.
-
-	The gate wants only the enabled one. Managing an installation has to reach a
-	disabled one, because turning it back on is the point.
-	"""
-	return frappe.db.get_value(
-		INSTALLATION_DOCTYPE, {"user": frappe.session.user, "extension": extension}, "name"
-	)
+	filters = {"user": frappe.session.user, "extension": extension}
+	if enabled_only:
+		filters["enabled"] = 1
+	return frappe.db.get_value(INSTALLATION_DOCTYPE, filters, "name")
 
 
 def assert_extension_access(extension: str, capability: str | None = None, writes: str | None = None) -> str:
@@ -62,7 +52,7 @@ def assert_extension_access(extension: str, capability: str | None = None, write
 
 	frappe.has_permission("Builder Page", ptype="read", throw=True)
 
-	installation = find_installation(extension)
+	installation = find_installation(extension, enabled_only=True)
 	if not installation:
 		frappe.throw(_('"{0}" is not installed for you.').format(extension), frappe.PermissionError)
 

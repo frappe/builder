@@ -34,7 +34,7 @@ import requests
 from frappe import _
 from frappe.utils import now_datetime, time_diff_in_seconds
 
-from builder.extensions.access import INSTALLATION_DOCTYPE, find_own_installation
+from builder.extensions.access import INSTALLATION_DOCTYPE, find_installation
 from builder.extensions.constants import (
 	DEFAULT_HUB_URL,
 	EXTENSION_NAME_PATTERN,
@@ -324,7 +324,7 @@ def assert_installable(name: str) -> None:
 	if not EXTENSION_NAME_PATTERN.match(name or ""):
 		frappe.throw(_("An extension name reads as publisher/name, in lowercase."))
 
-	existing = find_own_installation(name)
+	existing = find_installation(name)
 	if not existing:
 		return
 	state, source, touched = frappe.db.get_value(
@@ -351,7 +351,7 @@ def create_pending_installation(name: str, version: str, listing: dict) -> str:
 		"install_state": "Installing",
 		"install_error": None,
 	}
-	existing = find_own_installation(name)
+	existing = find_installation(name)
 	if existing:
 		frappe.db.set_value(INSTALLATION_DOCTYPE, existing, shown)
 		return existing

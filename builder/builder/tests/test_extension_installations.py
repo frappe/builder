@@ -9,7 +9,7 @@ from builder.builder.tests.extension_fixtures import (
 	make_installation,
 	make_user,
 )
-from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access, find_own_installation
+from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access, find_installation
 from builder.extensions.data import record_extension_grant
 from builder.extensions.installations import (
 	get_uninstall_summary,
@@ -295,7 +295,7 @@ class TestGrantAnswers(FrappeTestCase):
 
 	def test_not_asked_is_the_way_back_from_a_denial(self):
 		self.grant(access=["read"], denied=True)
-		installation = find_own_installation(EXTENSION)
+		installation = find_installation(EXTENSION)
 
 		set_extension_grant(EXTENSION, "Contact", answers())
 
