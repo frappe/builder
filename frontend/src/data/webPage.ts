@@ -12,6 +12,7 @@ const webPages = createListResource({
 		"meta_image",
 		"creation",
 		"published",
+		"staging",
 		"dynamic_route",
 		"modified_by",
 		"modified",

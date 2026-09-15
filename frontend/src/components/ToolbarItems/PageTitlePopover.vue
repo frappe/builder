@@ -15,7 +15,10 @@
 					<Tooltip :text="__('This page has limited access')" :hoverDelay="0.6">
 						<span
 							class="lucide-shield-user size-4 text-ink-amber-6"
-							v-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
+							v-if="
+								(pageStore.activePage?.published || pageStore.activePage?.staging) &&
+								pageStore.activePage?.authenticated_access
+							" />
 					</Tooltip>
 					<span
 						class="max-w-48 truncate text-base text-ink-gray-8"
@@ -28,17 +31,11 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
-				<Badge
-					theme="green"
-					size="sm"
-					v-if="pageStore.activePage?.published"
-					class="dark:bg-green-900 dark:text-green-400">
-					{{ __("Live") }}
-				</Badge>
+				<PageStatusBadge v-if="pageStore.activePage" :page="pageStore.activePage" />
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
-					v-if="pageStore.activePage && pageStore.activePage.published"
+					v-if="pageStore.activePage?.published || pageStore.activePage?.staging"
 					@click.stop="pageStore.openPageInBrowser(pageStore.activePage as BuilderPage)" />
 			</div>
 		</template>
@@ -52,11 +49,12 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageOptions from "@/components/PageOptions.vue";
+import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getTextContent } from "@/utils/helpers";
-import { Badge, Popover, Tooltip } from "frappe-ui";
+import { Popover, Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const pageStore = usePageStore();

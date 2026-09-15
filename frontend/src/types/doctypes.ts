@@ -119,6 +119,8 @@ export interface BuilderPage extends DocType {
   route?: string;
   /** Published: Check */
   published: 0 | 1;
+  /** Staging: Check */
+  staging: 0 | 1;
   /** Blocks: Long Text */
   blocks?: any;
   /** Page Preview: Data */

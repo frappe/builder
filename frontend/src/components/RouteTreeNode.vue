@@ -48,9 +48,7 @@
 							:hoverDelay="0.5">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
-						<Tooltip v-if="!node.page.published" :text="__('Not published')" :hoverDelay="0.5">
-							<span class="lucide-globe-x size-3.5 text-ink-gray-4" />
-						</Tooltip>
+						<PageStatusBadge :page="node.page" />
 					</span>
 				</div>
 
@@ -88,7 +86,9 @@
 					@click="onLoadMore(node.id, node.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
 					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, node.totalCount - node.loadedCount)]) }}
-					<span class="ml-0.5 text-ink-gray-3">{{ __("({0} remaining)", [node.totalCount - node.loadedCount]) }}</span>
+					<span class="ml-0.5 text-ink-gray-3">
+						{{ __("({0} remaining)", [node.totalCount - node.loadedCount]) }}
+					</span>
 				</button>
 			</div>
 		</section>
@@ -97,6 +97,7 @@
 
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { Tooltip } from "frappe-ui";

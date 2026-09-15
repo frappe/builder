@@ -69,7 +69,9 @@ class BuilderComponent(StandardFileSync, Document):
 			)
 
 	def clear_page_cache(self):
-		pages = frappe.get_all("Builder Page", filters={"published": 1}, fields=["name"])
+		from builder.builder.doctype.builder_page.builder_page import SERVED_PAGE_FILTERS
+
+		pages = frappe.get_all("Builder Page", or_filters=SERVED_PAGE_FILTERS, fields=["name"])
 		for page in pages:
 			page_doc = frappe.get_cached_doc("Builder Page", page.name)
 			if page_doc.is_component_used(self.component_id):
