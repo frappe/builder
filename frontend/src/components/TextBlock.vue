@@ -34,7 +34,7 @@ import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
-import { hasBuilderClipboardPayload } from "@/utils/builderBlockCopyPaste";
+import { hasCopiedBlocks } from "@/utils/builderBlockCopyPaste";
 import { setFontFromHTML } from "@/utils/fontManager";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
@@ -279,9 +279,9 @@ if (!props.preview) {
 						Selection,
 					],
 					enablePasteRules: false,
-					// copied blocks carry an empty text/html mirror that would replace the selection
+					// ignore copied blocks: their HTML is an empty span that would wipe the selected text
 					editorProps: {
-						handlePaste: (_view, event) => hasBuilderClipboardPayload(event),
+						handlePaste: (_view, event) => hasCopiedBlocks(event),
 					},
 					onUpdate({ editor }) {
 						let innerHTML = getInnerHTML(editor as Editor);
