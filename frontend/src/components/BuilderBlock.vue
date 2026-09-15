@@ -82,6 +82,23 @@ const isMounted = ref(false);
 
 const pageStore = usePageStore();
 
+// blockId is regenerated on every template insertion/copy, so the carousel root is
+// identified by the "data-carousel-root" attribute or blockName/id.
+function getCarouselRootBlock(block: Block): Block | null {
+	let current: Block | null = block;
+	while (current) {
+		if (
+			current.getAttributes?.()?.["data-carousel-root"] !== undefined ||
+			current.blockName === "Carousel" ||
+			current.blockId === "crsl-root"
+		) {
+			return current;
+		}
+		current = current.getParentBlock?.() || null;
+	}
+	return null;
+}
+
 const props = withDefaults(
 	defineProps<{
 		block: Block;
@@ -305,40 +322,20 @@ const styles = computed(() => {
 	});
 
 	// Reactive flex layout enforcement for Carousel track and slides
-	const getCarouselRoot = (block: Block): Block | null => {
-		let current: Block | null = block;
-		while (current) {
-			const propsMap = current.getBlockProps?.() || {};
-			if ("show_all_slides" in propsMap) {
-				return current;
-			}
-			current = current.getParentBlock?.() || null;
-		}
-		return null;
-	};
-
-	const carouselRoot = getCarouselRoot(props.block);
+	const carouselRoot = getCarouselRootBlock(props.block);
 	if (carouselRoot) {
-		const resolvedVal = valueResolver.getPropValue("show_all_slides", carouselRoot);
-		const rawVal = resolvedVal !== undefined ? resolvedVal : carouselRoot.getBlockProps?.()?.["show_all_slides"]?.value;
-		const showAll = rawVal == null || rawVal === "" ? true : (rawVal === true || rawVal === "true" || rawVal === 1 || rawVal === "1");
-
 		const isTrack =
 			props.block.getAttributes?.()?.["data-carousel-track"] !== undefined ||
-			props.block.getAttributes?.()?.["data-array-items"] === "slides" ||
-			props.block.blockId === "crsl-track";
+			props.block.getAttributes?.()?.["data-array-items"] === "slides";
 
 		const parentOfBlock = props.block.getParentBlock?.();
-		const isSlide =
-			(parentOfBlock &&
+		const isSlide = Boolean(
+			parentOfBlock &&
 				(parentOfBlock.getAttributes?.()?.["data-carousel-track"] !== undefined ||
-					parentOfBlock.getAttributes?.()?.["data-array-items"] === "slides" ||
-					parentOfBlock.blockId === "crsl-track")) ||
-			(props.block.blockId && props.block.blockId.startsWith("crsl-slide"));
+					parentOfBlock.getAttributes?.()?.["data-array-items"] === "slides"),
+		);
 
-		const isDot =
-			props.block.getAttributes?.()?.["data-carousel-dot"] !== undefined ||
-			(props.block.blockId && props.block.blockId.startsWith("crsl-dot"));
+		const isDot = props.block.getAttributes?.()?.["data-carousel-dot"] !== undefined;
 
 		if (isDot) {
 			styleMap.width = "12px";
@@ -351,38 +348,22 @@ const styles = computed(() => {
 		}
 
 		if (isTrack) {
-			if (showAll) {
-				styleMap.display = "flex";
-				styleMap.flexDirection = "column";
-				styleMap.flexWrap = "nowrap";
-				styleMap.overflowX = "hidden";
-				styleMap.overflowY = "auto";
-			} else {
-				styleMap.display = "flex";
-				styleMap.flexDirection = "row";
-				styleMap.flexWrap = "nowrap";
-				styleMap.overflowX = "auto";
-				styleMap.overflowY = "hidden";
-				styleMap.scrollbarWidth = "none";
-			}
+			styleMap.display = "flex";
+			styleMap.flexDirection = "row";
+			styleMap.flexWrap = "nowrap";
+			styleMap.overflowX = "auto";
+			styleMap.overflowY = "hidden";
+			styleMap.scrollbarWidth = "none";
 		}
 
 		if (isSlide) {
-			if (showAll) {
-				styleMap.width = "100%";
-				styleMap.minWidth = "100%";
-				styleMap.maxWidth = "100%";
-				styleMap.flexShrink = 0;
-				styleMap.flexGrow = 0;
-			} else {
-				styleMap.width = "100%";
-				styleMap.minWidth = "100%";
-				styleMap.maxWidth = "100%";
-				styleMap.height = "100%";
-				styleMap.minHeight = "100%";
-				styleMap.flexShrink = 0;
-				styleMap.flexGrow = 0;
-			}
+			styleMap.width = "100%";
+			styleMap.minWidth = "100%";
+			styleMap.maxWidth = "100%";
+			styleMap.height = "100%";
+			styleMap.minHeight = "100%";
+			styleMap.flexShrink = 0;
+			styleMap.flexGrow = 0;
 		}
 	}
 
@@ -485,20 +466,19 @@ const blockClientScript = computed(() => {
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
 
-	if (
-		props.block.blockId === "crsl-root" ||
-		props.block.blockName === "Carousel" ||
-		props.block.getAttributes?.()?.["data-carousel-track"] !== undefined ||
-		(props.block.getChildren?.() || []).some(
-			(c) => c.getAttributes?.()?.["data-carousel-track"] !== undefined,
-		)
-	) {
+	if (getCarouselRootBlock(props.block) === props.block) {
+		if (!blockTemplateStore.getBlockTemplate("Carousel")) {
+			blockTemplateStore.fetchBlockTemplate("Carousel");
+		}
 		const template = blockTemplateStore.getBlockTemplate("Carousel");
 		if (template?.block) {
 			try {
 				const parsed = JSON.parse(template.block);
 				if (parsed?.clientScript?.js) {
 					clientScript = parsed.clientScript;
+					if (props.block.clientScript?.js !== parsed.clientScript.js) {
+						props.block.clientScript = parsed.clientScript;
+					}
 				}
 			} catch {}
 		}
