@@ -23,9 +23,9 @@
 							{{ page.page_title || page.page_name }}
 						</p>
 					</div>
-            <UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
-              <p class="mt-1 block truncate text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
-                {{ sortedByCreation ? __("Created {0}", [timeAgo]) : __("Edited {0}", [timeAgo]) }}
+					<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
+						<p class="mt-1 block truncate text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
+							{{ sortedByCreation ? __("Created {0}", [timeAgo]) : __("Edited {0}", [timeAgo]) }}
 						</p>
 					</UseTimeAgo>
 				</span>
