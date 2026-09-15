@@ -31,21 +31,13 @@
 
 				<p v-if="details.description" class="text-p-sm text-ink-gray-7">{{ details.description }}</p>
 
-				<ExtensionInstallPrompt
-					v-if="isInstallPromptOpen"
-					:extension="details.name"
-					:label="details.label ?? details.name"
-					:requested="releaseCapabilities"
-					@install="install"
-					@cancel="isInstallPromptOpen = false" />
-
 				<Button
-					v-else-if="!isInstalled"
+					v-if="!isInstalled"
 					variant="solid"
 					size="sm"
 					icon-left="lucide-download"
 					label="Install"
-					:loading="working"
+					:loading="isAskingInstall"
 					@click="askInstall" />
 
 				<div v-else-if="details.is_development" class="flex gap-2">
@@ -75,7 +67,7 @@
 							size="sm"
 							icon-left="lucide-refresh-cw"
 							label="Retry"
-							:loading="working"
+							:loading="isAskingInstall"
 							@click="askInstall" />
 						<Button
 							variant="subtle"
@@ -133,13 +125,21 @@
 				</div>
 			</div>
 		</div>
+
+		<ExtensionInstallDialog
+			v-if="details"
+			v-model:open="isInstallDialogOpen"
+			:extension="details.name"
+			:label="details.label ?? details.name"
+			:requested="releaseCapabilities"
+			@install="install" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import ExtensionActions from "@/components/LeftPanelTabs/Extensions/ExtensionActions.vue";
 import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/ExtensionCapabilities.vue";
-import ExtensionInstallPrompt from "@/components/LeftPanelTabs/Extensions/ExtensionInstallPrompt.vue";
+import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	installedExtensions,
@@ -201,7 +201,7 @@ const installedOn = computed(() =>
 const load = async () => {
 	activeInstallation.value = null;
 	hubDetails.value = null;
-	isInstallPromptOpen.value = false;
+	isInstallDialogOpen.value = false;
 	error.value = "";
 	try {
 		if (isInstalled.value) {
@@ -228,16 +228,19 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	doctype_grants: [],
 });
 
-const isInstallPromptOpen = ref(false);
+const isInstallDialogOpen = ref(false);
 const releaseCapabilities = ref<Capability[]>([]);
 
-/** Serves the Marketplace "Install" and the "Retry" on a failed row. The prompt
+/** Install and Retry stay loading until the dialog closes, whichever way it closes. */
+const isAskingInstall = computed(() => working.value || isInstallDialogOpen.value);
+
+/** Serves the Marketplace "Install" and the "Retry" on a failed row. The dialog
  * lists what the exact release asks for, so the install pins that version. */
 const askInstall = async () => {
 	working.value = true;
 	try {
 		releaseCapabilities.value = await getHubReleaseCapabilities(props.extension, details.value!.version);
-		isInstallPromptOpen.value = true;
+		isInstallDialogOpen.value = true;
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	} finally {
@@ -250,7 +253,7 @@ const askInstall = async () => {
  * watch loads it. A retry keeps its row, so its details are reloaded here.
  */
 const install = async (capabilities: Capability[]) => {
-	isInstallPromptOpen.value = false;
+	isInstallDialogOpen.value = false;
 	working.value = true;
 	try {
 		await installFromHub(props.extension, details.value!.version, capabilities);
