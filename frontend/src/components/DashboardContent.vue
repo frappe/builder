@@ -3,9 +3,7 @@
 		<section class="m-auto mb-24 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
-				<div
-					v-if="!webPages.data?.length && !searchFilter && !statusFilter && !ownerFilter"
-					class="col-span-full">
+				<div v-if="!webPages.data?.length && !searchFilter && !statusFilter" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
 						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
@@ -62,7 +60,6 @@ import RouteTreeView from "@/components/RouteTreeView.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
-import { sessionUser } from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
@@ -77,7 +74,6 @@ const builderStore = useBuilderStore();
 const {
 	searchFilter,
 	statusFilter,
-	ownerFilter,
 	orderBy,
 	displayType,
 	selectionMode,
@@ -155,9 +151,6 @@ const fetchPages = () => {
 	} as any;
 	if (displayType.value !== "tree") {
 		Object.assign(filters, statusFilters[statusFilter.value as keyof typeof statusFilters]);
-		if (ownerFilter.value === "me") {
-			filters["owner"] = sessionUser.value;
-		}
 	}
 	const orFilters = {} as any;
 	if (searchFilter.value) {
@@ -235,7 +228,7 @@ const togglePageSelection = (page: BuilderPage) => {
 	}
 };
 
-watchDebounced([searchFilter, statusFilter, ownerFilter, orderBy], fetchPages, {
+watchDebounced([searchFilter, statusFilter, orderBy], fetchPages, {
 	debounce: 300,
 	immediate: true,
 });

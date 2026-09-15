@@ -38,15 +38,6 @@
 						{ label: __('Draft'), value: 'draft' },
 					]" />
 			</div>
-			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
-				<Select
-					v-model="ownerFilter"
-					:options="[
-						{ label: __('Created By'), value: '', disabled: true },
-						{ label: __('Created by anyone'), value: 'anyone' },
-						{ label: __('Created by me'), value: 'me' },
-					]" />
-			</div>
 			<div v-if="displayType === 'tree' && !selectionMode">
 				<Button
 					variant="subtle"
@@ -124,7 +115,6 @@ const {
 	treeExpanded,
 	displayType,
 	statusFilter,
-	ownerFilter,
 	orderBy,
 	expandTreeFn,
 	collapseTreeFn,
