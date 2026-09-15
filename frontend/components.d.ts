@@ -135,6 +135,7 @@ declare module 'vue' {
     PageOptions: typeof import('./src/components/PageOptions.vue')['default']
     PageRobots: typeof import('./src/components/Settings/PageRobots.vue')['default']
     PageScript: typeof import('./src/components/PageScript.vue')['default']
+    PageStatusBadge: typeof import('./src/components/PageStatusBadge.vue')['default']
     PageTitlePopover: typeof import('./src/components/ToolbarItems/PageTitlePopover.vue')['default']
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']

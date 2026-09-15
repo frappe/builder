@@ -127,7 +127,8 @@ commands.register({
 	description: __("Page"),
 	group: "Page",
 	condition: isBuilderRoute,
-	action: () => pageStore.publishPage(),
+	// like the publish button: a staging page stays on staging until Go Live
+	action: () => pageStore.publishPage(true, Boolean(pageStore.activePage?.staging)),
 });
 
 commands.register({
