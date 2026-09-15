@@ -9,8 +9,10 @@
 		<div
 			v-for="band in gapBands"
 			:key="band.key"
-			class="gap-handler pointer-events-none absolute z-10 flex bg-purple-400"
-			:style="band.style">
+			class="gap-handler absolute z-10 flex bg-purple-400"
+			:class="band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none'"
+			:style="band.style"
+			@mousedown.stop="handleGap($event, band.position)">
 			<div
 				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
@@ -72,6 +74,8 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 const CHILD_SELECTOR = ":scope > .__builder_component__";
 const HANDLE_MIN_SCALE = 0.5;
 const MIN_BAND = 2;
+// Below this many canvas pixels a band is too thin to grab reliably, so only its pill drags.
+const MIN_DRAGGABLE_BAND = 8;
 
 // Any of these moves the children, and with them the seams the bands are drawn on.
 const LAYOUT_STYLES = [
@@ -96,7 +100,8 @@ type Span = { y0: number; y1: number };
 type GapBand = {
 	key: string;
 	position: Position;
-	style: Record<string, string>;
+	draggable: boolean;
+	style: Record<string, string | undefined>;
 	handleStyle: Record<string, string | undefined>;
 };
 
@@ -212,7 +217,7 @@ const layout = computed(() => {
 
 // Scale a band into canvas pixels, then keep it at least MIN_BAND thick across the axis it
 // straddles, centred so it still sits over the real seam.
-const bandStyle = (band: Box, axis: "width" | "height") => {
+const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 	const left = band.x0 * canvasProps.scale;
 	const top = band.y0 * canvasProps.scale;
 	const width = (band.x1 - band.x0) * canvasProps.scale;
@@ -220,10 +225,14 @@ const bandStyle = (band: Box, axis: "width" | "height") => {
 	const thickness = Math.max(axis === "width" ? width : height, MIN_BAND);
 	const shift = (thickness - (axis === "width" ? width : height)) / 2;
 
-	return axis === "width"
-		? { left: `${left - shift}px`, top: `${top}px`, width: `${thickness}px`, height: `${height}px` }
-		: { left: `${left}px`, top: `${top - shift}px`, width: `${width}px`, height: `${thickness}px` };
+	const box =
+		axis === "width"
+			? { left: `${left - shift}px`, top: `${top}px`, width: `${thickness}px`, height: `${height}px` }
+			: { left: `${left}px`, top: `${top - shift}px`, width: `${width}px`, height: `${thickness}px` };
+	return { ...box, cursor: props.disableHandlers ? undefined : cursor };
 };
+
+const isDraggable = (gap: number) => gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
 // `place` is where the pill sits inside its band: centred across the thin axis so it
 // straddles the seam and stays grabbable at a zero gap, anchored along the long one.
@@ -254,10 +263,16 @@ const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 		// offsets are whole pixels, so a zero gap can measure slightly negative — clamp
 		// rather than skip, or the seam would never get a handle
 		const x1 = Math.max(box.x0, x0);
+		const draggable = isDraggable(x1 - x0);
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
-			style: bandStyle({ x0, x1, y0: content.y0, y1: content.y1 }, "width"),
+			draggable,
+			style: bandStyle(
+				{ x0, x1, y0: content.y0, y1: content.y1 },
+				"width",
+				draggable ? horizontalCursor.value : undefined,
+			),
 			handleStyle: handleStyle(
 				size,
 				{ left: `calc(50% - ${size.width / 2}px)`, top: `${centerY - size.height / 2}px` },
@@ -277,11 +292,17 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
 		const y0 = above.length ? bottomOf(above) : topOf(line);
 		const y1 = Math.max(topOf(line), y0);
+		const draggable = isDraggable(y1 - y0);
 
 		return {
 			key: `row-${index}`,
 			position: Position.Bottom,
-			style: bandStyle({ x0: content.x0, x1: content.x1, y0, y1 }, "height"),
+			draggable,
+			style: bandStyle(
+				{ x0: content.x0, x1: content.x1, y0, y1 },
+				"height",
+				draggable ? verticalCursor.value : undefined,
+			),
 			handleStyle: handleStyle(
 				size,
 				{ left: `calc(50% - ${size.width / 2}px)`, top: `calc(50% - ${size.height / 2}px)` },
