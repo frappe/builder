@@ -280,6 +280,9 @@ def run_hub_install(
 
 	A failure rolls back the job's writes and marks the row `Failed` with the
 	reason, so the panel can show it with a Retry.
+
+	A user who cancels deletes the row while the job runs, so the job fails to read
+	or save it. That is not a failure to report, and the job ends without a word.
 	"""
 	try:
 		release = get_release(hub_url, name, version)
@@ -290,6 +293,8 @@ def run_hub_install(
 		state = "Ready"
 	except Exception as error:
 		frappe.db.rollback()
+		if not frappe.db.exists(INSTALLATION_DOCTYPE, installation):
+			return
 		frappe.log_error(title="Hub extension install failed")
 		state = "Failed"
 		frappe.db.set_value(
