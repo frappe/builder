@@ -64,10 +64,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-14 21:00:00.000000",
+ "modified": "2026-09-15 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder Extension Grant",
+ "name": "Builder Extension DocType Grant",
  "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [

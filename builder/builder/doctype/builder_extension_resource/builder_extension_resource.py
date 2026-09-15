@@ -22,6 +22,6 @@ class BuilderExtensionResource(Document):
 
 	def autoname(self):
 		# a uuid, and the pair (extension, resource_name) is looked up by field, the
-		# way Builder Token and Builder Extension Grant are
+		# way Builder Token and Builder Extension DocType Grant are
 		if not self.name:
 			self.name = str(uuid.uuid4())

@@ -148,7 +148,7 @@ class TestExtensionRowScoping(FrappeTestCase):
 			).insert(),
 			frappe.get_doc(
 				{
-					"doctype": "Builder Extension Grant",
+					"doctype": "Builder Extension DocType Grant",
 					"installation": installation.name,
 					"document_type": "Contact",
 					"read_access": "allowed",

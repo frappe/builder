@@ -22,7 +22,7 @@ from builder.extensions.constants import (
 	VERSION_PATTERN,
 )
 
-GRANT_DOCTYPE = "Builder Extension Grant"
+GRANT_DOCTYPE = "Builder Extension DocType Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 

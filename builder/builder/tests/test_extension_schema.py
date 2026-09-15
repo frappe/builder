@@ -198,7 +198,7 @@ class TestExtensionSchema(FrappeTestCase):
 
 		delete_doctype("acme/schema", NAME)
 
-		self.assertFalse(frappe.db.exists("Builder Extension Grant", {"document_type": NAME}))
+		self.assertFalse(frappe.db.exists("Builder Extension DocType Grant", {"document_type": NAME}))
 
 	def test_lists_what_this_extension_made(self):
 		self.create()

@@ -7,7 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 from builder.builder.tests.extension_fixtures import make_installation, make_user
 
 
-class TestBuilderExtensionGrant(FrappeTestCase):
+class TestBuilderExtensionDocTypeGrant(FrappeTestCase):
 	"""One installation's answer about one doctype."""
 
 	def setUp(self):
@@ -19,7 +19,7 @@ class TestBuilderExtensionGrant(FrappeTestCase):
 	def grant(self, **values):
 		return frappe.get_doc(
 			{
-				"doctype": "Builder Extension Grant",
+				"doctype": "Builder Extension DocType Grant",
 				"installation": self.installation.name,
 				"document_type": "Contact",
 				**values,

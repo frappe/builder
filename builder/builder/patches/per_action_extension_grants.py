@@ -13,7 +13,7 @@ removed field, so the old values are still there to read.
 
 import frappe
 
-GRANT_DOCTYPE = "Builder Extension Grant"
+GRANT_DOCTYPE = "Builder Extension DocType Grant"
 OLD_FIELDS = {"can_read": "read_access", "can_write": "write_access", "can_delete": "delete_access"}
 
 

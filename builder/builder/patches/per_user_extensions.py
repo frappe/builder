@@ -42,7 +42,7 @@ def execute():
 			install_for_owner(old)
 
 	# every grant was site-wide, and one person's answer is not everybody's
-	frappe.db.delete("Builder Extension Grant")
+	frappe.db.delete("Builder Extension DocType Grant")
 	frappe.delete_doc("DocType", OLD_DOCTYPE, ignore_missing=True, force=True)
 
 

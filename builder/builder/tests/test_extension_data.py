@@ -55,7 +55,7 @@ class TestExtensionGrants(FrappeTestCase):
 
 		self.assertEqual(
 			frappe.db.get_value(
-				"Builder Extension Grant", {"document_type": "Contact"}, "installation"
+				"Builder Extension DocType Grant", {"document_type": "Contact"}, "installation"
 			),
 			self.extension.name,
 		)
@@ -117,7 +117,7 @@ class TestExtensionGrants(FrappeTestCase):
 		record_extension_grant("acme/data", "Contact", ["write"])
 
 		rows = frappe.get_all(
-			"Builder Extension Grant",
+			"Builder Extension DocType Grant",
 			filters={"installation": self.extension.name, "document_type": "Contact"},
 		)
 		self.assertEqual(len(rows), 1)
@@ -160,7 +160,7 @@ class TestExtensionGrants(FrappeTestCase):
 
 		# the two this test made, so a grant the site already held cannot fail it
 		kept = frappe.get_all(
-			"Builder Extension Grant",
+			"Builder Extension DocType Grant",
 			filters={"installation": ["in", [self.extension.name, theirs.name]]},
 			pluck="installation",
 		)

@@ -7,7 +7,7 @@ import frappe
 from frappe.model.document import Document
 
 
-class BuilderExtensionGrant(Document):
+class BuilderExtensionDocTypeGrant(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -31,7 +31,7 @@ class BuilderExtensionGrant(Document):
 			self.name = str(uuid.uuid4())
 
 
-TABLE = "tabBuilder Extension Grant"
+TABLE = "tabBuilder Extension DocType Grant"
 UNIQUE_INDEX = "unique_installation_doctype"
 OLD_UNIQUE_INDEX = "unique_user_extension_doctype"
 
@@ -49,5 +49,5 @@ def on_doctype_update():
 		frappe.db.sql_ddl(f"alter table `{TABLE}` drop index `{OLD_UNIQUE_INDEX}`")
 
 	frappe.db.add_unique(
-		"Builder Extension Grant", ["installation", "document_type"], constraint_name=UNIQUE_INDEX
+		"Builder Extension DocType Grant", ["installation", "document_type"], constraint_name=UNIQUE_INDEX
 	)

@@ -96,13 +96,13 @@ after_app_install = "builder.install.after_app_install"
 # get_all all answer with one user's rows. A System Manager sees them all.
 permission_query_conditions = {
 	"Builder User Extension": "builder.extensions.access.installation_conditions",
-	"Builder Extension Grant": "builder.extensions.access.grant_conditions",
+	"Builder Extension DocType Grant": "builder.extensions.access.grant_conditions",
 	"Builder Extension State": "builder.extensions.access.state_conditions",
 }
 
 has_permission = {
 	"Builder User Extension": "builder.extensions.access.owns_row",
-	"Builder Extension Grant": "builder.extensions.access.owns_through_installation",
+	"Builder Extension DocType Grant": "builder.extensions.access.owns_through_installation",
 	"Builder Extension State": "builder.extensions.access.owns_through_installation",
 }
 

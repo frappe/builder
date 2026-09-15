@@ -51,7 +51,7 @@ export type Grant = { doctype: string } & Record<Access, AccessAnswer>;
  */
 export const SENSITIVE_DOCTYPES = new Set([
 	"Builder User Extension",
-	"Builder Extension Grant",
+	"Builder Extension DocType Grant",
 	"Builder Extension State",
 	"Builder Token",
 	"User",

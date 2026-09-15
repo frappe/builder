@@ -15,7 +15,7 @@ import { builderSettings } from "@/data/builderSettings";
 
 const METHOD = "builder.extensions.installations";
 const INSTALLATION_DOCTYPE = "Builder User Extension";
-const GRANT_DOCTYPE = "Builder Extension Grant";
+const GRANT_DOCTYPE = "Builder Extension DocType Grant";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
 const CATALOG_CACHE = "extensions-catalog";
@@ -206,7 +206,7 @@ type UserInstallation = {
 	is_development?: boolean;
 };
 
-/** One doctype this user answered for, as `Builder Extension Grant` holds it. */
+/** One doctype this user answered for, as `Builder Extension DocType Grant` holds it. */
 type ExtensionGrant = {
 	document_type: string;
 	read_access: AccessAnswer;

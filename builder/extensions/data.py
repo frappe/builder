@@ -24,7 +24,7 @@ from frappe import _
 
 from builder.extensions.access import assert_extension_access
 
-GRANT_DOCTYPE = "Builder Extension Grant"
+GRANT_DOCTYPE = "Builder Extension DocType Grant"
 
 NOT_ASKED = "not asked"
 ALLOWED = "allowed"
