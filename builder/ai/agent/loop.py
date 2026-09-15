@@ -551,11 +551,11 @@ class AgentRunner:
 		if not self.page_id:
 			return ""
 		row = frappe.db.get_value(
-			"Builder Page", self.page_id, ["page_title", "route", "published"], as_dict=True
+			"Builder Page", self.page_id, ["page_title", "route", "published", "staging"], as_dict=True
 		)
 		if not row:
 			return ""
-		state = "published" if row.published else "draft"
+		state = "live" if row.published else "staging" if row.staging else "draft"
 		route = "/" + (row.route or "").lstrip("/")
 		return f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
 

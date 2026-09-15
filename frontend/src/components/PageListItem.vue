@@ -21,22 +21,23 @@
 								</p>
 							</div>
 							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
-								<div v-show="page.published">
-									<span
-										:title="__('Limited access')"
-										class="lucide-shield-user size-4 text-ink-amber-6"
-										v-if="page.authenticated_access" />
-									<span class="lucide-globe size-4" :title="__('Publicly accessible')" v-else />
-								</div>
-								<p class="max-w-[90%] truncate text-sm">
+								<span
+									:title="__('Limited access')"
+									class="lucide-shield-user size-4 shrink-0 text-ink-amber-6"
+									v-if="(page.published || page.staging) && page.authenticated_access" />
+								<p class="min-w-0 truncate text-sm" :title="page.route">
 									{{ page.route }}
 								</p>
 							</div>
 						</div>
 						<div class="flex items-baseline gap-2 text-ink-gray-6">
-							<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
+							<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
 								<p class="mt-1 block text-sm">
-									{{ __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname]) }}
+									{{
+										sortedByCreation
+											? __("Created {0} by {1}", [timeAgo, owner.fullname])
+											: __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname])
+									}}
 								</p>
 							</UseTimeAgo>
 						</div>
@@ -44,9 +45,7 @@
 				</div>
 			</div>
 			<div class="flex gap-2">
-				<Badge theme="green" v-if="page.published" class="dark:bg-green-900 dark:text-green-400">
-					{{ __("Published") }}
-				</Badge>
+				<PageStatusBadge :page="page" />
 				<Avatar
 					:shape="'circle'"
 					:image="owner.image"
@@ -68,11 +67,14 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import { useDashboardState } from "@/composables/useDashboardState";
+import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Badge } from "frappe-ui";
+import { Avatar } from "frappe-ui";
+import { computed } from "vue";
 
 const pageStore = usePageStore();
 
@@ -83,4 +85,7 @@ const props = defineProps<{
 
 const modifiedBy = getUserInfo(props.page.modified_by);
 const owner = getUserInfo(props.page.owner);
+const { orderBy } = useDashboardState();
+const sortedByCreation = computed(() => orderBy.value === "creation");
+const timestamp = computed(() => (sortedByCreation.value ? props.page.creation : props.page.modified));
 </script>

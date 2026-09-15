@@ -171,14 +171,7 @@ const menuElement = computed(() => menu.value?.$el);
 
 const isCanvasMoving = computed(() => Boolean(props.canvasProps?.panning || props.canvasProps?.scaling));
 
-// the option list is teleported to <body> and cannot follow the menu out of sight
-watch(isRepositioning, (hidden) => hidden && colorPicker.value?.hideOptions());
-
-// opening the popover focuses its input, which auto-opens the option list
-const openColorPicker = () => {
-	colorPicker.value?.togglePopover();
-	nextTick(() => requestAnimationFrame(() => colorPicker.value?.hideOptions()));
-};
+const openColorPicker = () => colorPicker.value?.togglePopover();
 
 const editorRef = computed(() => props.editor);
 const bubbleMenuPluginKey = "bubbleMenu";

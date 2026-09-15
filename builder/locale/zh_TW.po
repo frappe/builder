@@ -166,7 +166,7 @@ msgid "Add meta tags, styles, and scripts to page head"
 msgstr "在頁面 head 加入 meta 標籤、樣式與指令碼"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
-msgid "Add property"
+msgid "Add Property"
 msgstr "新增屬性"
 
 #: frontend/src/components/Settings/PageCode.vue:17
@@ -440,7 +440,7 @@ msgid "Back to all templates"
 msgstr "返回所有範本"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
-msgid "Back to builder"
+msgid "Back to Builder"
 msgstr "返回 Builder"
 
 #: frontend/src/components/BackgroundHandler.vue:8
@@ -835,7 +835,7 @@ msgid "Collapse All Layers"
 msgstr "收合所有圖層"
 
 #: frontend/src/components/RouteTreeView.vue:374
-msgid "Collapse node or move up in page tree"
+msgid "Collapse Node or Move Up in Page Tree"
 msgstr "收合節點或在頁面樹中往上移動"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
@@ -978,7 +978,7 @@ msgid "Container (c)"
 msgstr "容器（c）"
 
 #: frontend/src/utils/useBuilderEvents.ts:367
-msgid "Container mode"
+msgid "Container Mode"
 msgstr "容器模式"
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
@@ -1002,7 +1002,7 @@ msgid "Controls"
 msgstr "控制項"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
-msgid "Convert To Collection"
+msgid "Convert to Collection"
 msgstr "轉換為集合"
 
 #: frontend/src/utils/imageUtils.ts:33
@@ -1034,7 +1034,7 @@ msgid "Copy Style"
 msgstr "複製樣式"
 
 #: frontend/src/components/Commands/index.ts:262
-msgid "Copy block styles"
+msgid "Copy Block Styles"
 msgstr "複製區塊樣式"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
@@ -1274,15 +1274,15 @@ msgstr "刪除頁面"
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
-msgid "Delete selected blocks"
+msgid "Delete Selected Blocks"
 msgstr "刪除選取的區塊"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete variable"
+msgid "Delete Variable"
 msgstr "刪除變數"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete {0} variables"
+msgid "Delete {0} Variables"
 msgstr "刪除 {0} 個變數"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
@@ -1308,7 +1308,7 @@ msgid "Description"
 msgstr "說明"
 
 #: frontend/src/components/DashboardContent.vue:134
-msgid "Deselect pages"
+msgid "Deselect Pages"
 msgstr "取消選取頁面"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
@@ -1480,7 +1480,7 @@ msgid "Duplicate Page"
 msgstr "建立頁面複本"
 
 #: frontend/src/components/Commands/index.ts:281
-msgid "Duplicate block"
+msgid "Duplicate Block"
 msgstr "建立區塊複本"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
@@ -1683,7 +1683,7 @@ msgid "Execute Block Scripts in Editor"
 msgstr "在編輯器中執行區塊腳本"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
-msgid "Exit current mode"
+msgid "Exit Current Mode"
 msgstr "退出目前模式"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
@@ -1696,7 +1696,7 @@ msgid "Expand All Layers"
 msgstr "展開所有圖層"
 
 #: frontend/src/components/RouteTreeView.vue:355
-msgid "Expand node or move down in page tree"
+msgid "Expand Node or Move Down in Page Tree"
 msgstr "展開節點或在頁面樹中往下移動"
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
@@ -1861,7 +1861,7 @@ msgid "Fit Inside"
 msgstr "符合內部"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
-msgid "Fit canvas to screen"
+msgid "Fit Canvas to Screen"
 msgstr "使畫布符合螢幕"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
@@ -1874,7 +1874,7 @@ msgid "Focus Property Search"
 msgstr "聚焦屬性搜尋"
 
 #: frontend/src/components/Commands/index.ts:250
-msgid "Focus property search"
+msgid "Focus Property Search"
 msgstr "聚焦屬性搜尋"
 
 #: frontend/src/components/Settings/PageGeneral.vue:159
@@ -2112,7 +2112,7 @@ msgid "Highlight Blocks with Client Scripts"
 msgstr "醒目提示含用戶端指令碼的區塊"
 
 #: frontend/src/pages/PageBuilder.vue:192
-msgid "Hold for move mode"
+msgid "Hold for Move Mode"
 msgstr "按住以進入移動模式"
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
@@ -2190,7 +2190,7 @@ msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr "圖片過大，請使用小於5MB的圖片。"
 
 #: frontend/src/utils/useBuilderEvents.ts:376
-msgid "Image mode"
+msgid "Image Mode"
 msgstr "圖片模式"
 
 #: frontend/src/utils/imageUtils.ts:58
@@ -2629,7 +2629,7 @@ msgid "Move"
 msgstr "移動"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
-msgid "Move / hand mode"
+msgid "Move / Hand Mode"
 msgstr "移動／手形模式"
 
 #: frontend/src/components/DashboardHead.vue:9
@@ -2637,16 +2637,16 @@ msgid "Move To Folder"
 msgstr "移動至資料夾"
 
 #: frontend/src/components/RouteTreeView.vue:335
-msgid "Move down in page tree"
+msgid "Move Down in Page Tree"
 msgstr "在頁面樹中往下移動"
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
-msgid "Move to group"
+msgid "Move to Group"
 msgstr "移動至群組"
 
 #: frontend/src/components/RouteTreeView.vue:345
-msgid "Move up in page tree"
+msgid "Move Up in Page Tree"
 msgstr "在頁面樹中往上移動"
 
 #: frontend/src/components/Modals/TokenManager.vue:727
@@ -2988,7 +2988,7 @@ msgid "Open in New Tab"
 msgstr "在新分頁中開啟"
 
 #: frontend/src/components/RouteTreeView.vue:390
-msgid "Open page or toggle folder in page tree"
+msgid "Open Page or Toggle Folder in Page Tree"
 msgstr "開啟頁面或在頁面樹中切換資料夾"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
@@ -3501,7 +3501,7 @@ msgid "Remove Stop"
 msgstr "移除色標"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
-msgid "Remove from group"
+msgid "Remove from Group"
 msgstr "從群組移除"
 
 #: frontend/src/data/domains.ts:72
@@ -3597,7 +3597,7 @@ msgid "Reset Overrides"
 msgstr "重設覆寫"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
-msgid "Reset canvas zoom"
+msgid "Reset Canvas Zoom"
 msgstr "重設畫布縮放"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
@@ -3721,7 +3721,7 @@ msgid "Save"
 msgstr "儲存"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
-msgid "Save As Component"
+msgid "Save as Component"
 msgstr "另存為元件"
 
 #: frontend/src/stores/componentStore.ts:88
@@ -3746,7 +3746,7 @@ msgid "Save current version"
 msgstr "儲存目前版本"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
-msgid "Save page / component"
+msgid "Save Page / Component"
 msgstr "儲存頁面／元件"
 
 #: builder/ai/api.py:522
@@ -3828,7 +3828,7 @@ msgid "Search Template"
 msgstr "搜尋範本"
 
 #: frontend/src/components/Commands/index.ts:240
-msgid "Search blocks"
+msgid "Search Blocks"
 msgstr "搜尋區塊"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
@@ -3930,7 +3930,7 @@ msgid "Select default color"
 msgstr "選擇預設顏色"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
-msgid "Select mode"
+msgid "Select Mode"
 msgstr "選取模式"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
@@ -4066,7 +4066,7 @@ msgid "Show Right Panel"
 msgstr "顯示右側面板"
 
 #: frontend/src/components/Commands/index.ts:205
-msgid "Show keyboard shortcuts"
+msgid "Show Keyboard Shortcuts"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
@@ -4385,7 +4385,7 @@ msgid "Text Color"
 msgstr "文字顏色"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
-msgid "Text mode"
+msgid "Text Mode"
 msgstr "文字模式"
 
 #: builder/ai/presets.py:273
@@ -4545,15 +4545,15 @@ msgid "Toggle Theme"
 msgstr "切換佈景主題"
 
 #: frontend/src/components/Commands/index.ts:230
-msgid "Toggle canvas dark mode"
+msgid "Toggle Canvas Dark Mode"
 msgstr "切換畫布深色模式"
 
 #: frontend/src/components/Commands/index.ts:175
-msgid "Toggle left panel"
+msgid "Toggle Left Panel"
 msgstr "切換左側面板"
 
 #: frontend/src/components/Commands/index.ts:217
-msgid "Toggle panels"
+msgid "Toggle Panels"
 msgstr "切換面板"
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
@@ -5016,7 +5016,7 @@ msgid "Wrap"
 msgstr "換行"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
-msgid "Wrap In Container"
+msgid "Wrap in Container"
 msgstr "包在容器中"
 
 #: frontend/src/components/ShadowHandler.vue:153
@@ -5115,11 +5115,11 @@ msgid "Z-Index"
 msgstr "Z-Index"
 
 #: frontend/src/utils/useBuilderEvents.ts:346
-msgid "Zoom in"
+msgid "Zoom In"
 msgstr "放大"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
-msgid "Zoom out"
+msgid "Zoom Out"
 msgstr "縮小"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
