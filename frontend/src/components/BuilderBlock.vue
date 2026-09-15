@@ -466,7 +466,8 @@ const blockClientScript = computed(() => {
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
 
-	if (getCarouselRootBlock(props.block) === props.block) {
+	// Fallback only: never replace a script the user has authored or edited
+	if (!clientScript?.js && getCarouselRootBlock(props.block) === props.block) {
 		if (!blockTemplateStore.getBlockTemplate("Carousel")) {
 			blockTemplateStore.fetchBlockTemplate("Carousel");
 		}
@@ -476,7 +477,8 @@ const blockClientScript = computed(() => {
 				const parsed = JSON.parse(template.block);
 				if (parsed?.clientScript?.js) {
 					clientScript = parsed.clientScript;
-					if (props.block.clientScript?.js !== parsed.clientScript.js) {
+					// Persist so the published page runs it too; component scripts live on the component
+					if (!props.block.extendedFromComponent) {
 						props.block.clientScript = parsed.clientScript;
 					}
 				}
