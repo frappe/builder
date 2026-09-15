@@ -7,7 +7,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 /**
  * Builds `frappe-builder-extension-sdk`, the one module every extension frame loads.
  *
- * It lands in `builder/public/extension_sdk`, which the asset route serves under
+ * It lands in `builder/public/extension_sdk`, which Builder serves at
  * `/builder_extension_asset/sdk/` with the CORS header a null-origin frame needs.
  * The shell's import map names that same URL, so the SDK stays external to every
  * extension build and one module instance serves the frame and its extension.

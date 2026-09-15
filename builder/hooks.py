@@ -217,8 +217,8 @@ website_route_rules = [
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
 page_renderer = [
-	# extension assets first: it matches one fixed prefix and answers without touching a page
-	"builder.extensions.assets.ExtensionAsset",
+	# the extension SDK first: it matches one fixed route and answers without touching a page
+	"builder.extensions.sdk.ExtensionSDKRenderer",
 	"builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer",
 ]
 
