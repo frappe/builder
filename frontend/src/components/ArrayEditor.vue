@@ -1,28 +1,39 @@
 <template>
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
-		<div v-for="(item, index) in arr" :key="index" class="flex gap-2">
-			<ImageUploadInput
-				v-if="itemType === 'image'"
-				class="w-full"
-				:placeholder="__('Enter image URL or upload one')"
-				:modelValue="itemURL(item)"
-				:imageFit="(itemFit(item) || 'cover') as 'contain' | 'cover' | 'fill'"
-				:objectPosition="itemPosition(item)"
-				:targetRatio="targetRatio"
-				@update:modelValue="(val: string) => updateImageItem(index, { url: val })"
-				@update:imageFit="(val: string) => updateImageItem(index, { fit: val })"
-				@update:objectPosition="(val: string) => updateImageItem(index, { position: val })" />
-			<BuilderInput
-				v-else
-				:placeholder="__('Enter value')"
-				:modelValue="itemURL(item)"
-				@input="(val: string) => updateItem(index, val)" />
-			<Button
-				class="flex-shrink-0 text-xs"
-				variant="subtle"
-				icon="lucide-x"
-				@click="deleteItem(index)"></Button>
-		</div>
+		<draggable
+			:modelValue="indexedItems"
+			item-key="index"
+			handle=".drag-handle"
+			class="flex flex-col gap-2"
+			@update:modelValue="reorderItems">
+			<template #item="{ element: { item, index } }">
+				<div class="flex items-center gap-2">
+					<span
+						class="drag-handle lucide-grip-vertical size-3.5 flex-shrink-0 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+					<ImageUploadInput
+						v-if="itemType === 'image'"
+						class="w-full"
+						:placeholder="__('Enter image URL or upload one')"
+						:modelValue="itemURL(item)"
+						:imageFit="(itemFit(item) || 'cover') as 'contain' | 'cover' | 'fill'"
+						:objectPosition="itemPosition(item)"
+						:targetRatio="targetRatio"
+						@update:modelValue="(val: string) => updateImageItem(index, { url: val })"
+						@update:imageFit="(val: string) => updateImageItem(index, { fit: val })"
+						@update:objectPosition="(val: string) => updateImageItem(index, { position: val })" />
+					<BuilderInput
+						v-else
+						:placeholder="__('Enter value')"
+						:modelValue="itemURL(item)"
+						@input="(val: string) => updateItem(index, val)" />
+					<Button
+						class="flex-shrink-0 text-xs"
+						variant="subtle"
+						icon="lucide-x"
+						@click="deleteItem(index)"></Button>
+				</div>
+			</template>
+		</draggable>
 		<Button
 			v-if="itemType === 'image'"
 			variant="outline"
@@ -52,7 +63,8 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
+import draggable from "vuedraggable";
 import ImageUploadInput from "./ImageUploadInput.vue";
 import { uploadBuilderAsset } from "@/utils/helpers";
 import { toast } from "frappe-ui";
@@ -105,6 +117,13 @@ const updateImageItem = (index: number, patch: { url?: string; fit?: string; pos
 		newArr[index] = url;
 	}
 	emit("update:arr", newArr);
+};
+
+// items can be duplicate strings, so key draggable rows by their position
+const indexedItems = computed(() => props.arr.map((item, index) => ({ item, index })));
+
+const reorderItems = (items: Array<{ item: ArrayPropItem; index: number }>) => {
+	emit("update:arr", items.map(({ item }) => item));
 };
 
 const deleteItem = (index: number) => {
