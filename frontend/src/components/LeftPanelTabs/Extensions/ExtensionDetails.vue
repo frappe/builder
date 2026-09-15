@@ -40,6 +40,10 @@
 					:loading="isAskingInstall"
 					@click="askInstall" />
 
+				<div v-else-if="isWaitingForEntryFrame" class="flex h-7 items-center">
+					<LoadingIndicator class="size-4 text-ink-gray-5" />
+				</div>
+
 				<div v-else-if="details.is_development" class="flex gap-2">
 					<Button
 						v-if="mounted && canOpen(mounted)"
@@ -155,6 +159,7 @@ import {
 	type InstallationDetails,
 } from "@/data/extensions";
 import { stopDevExtension } from "@/extensions/devExtension";
+import { isEntryFrameReady } from "@/extensions/host/entryFrames";
 import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";
@@ -184,6 +189,9 @@ const isReady = computed(() => !isPending.value && !isFailed.value);
 
 /** The running record, which a disabled extension does not have. Its open target needs a frame. */
 const mounted = computed(() => installedExtensions.value.find((row) => row.name === props.extension));
+
+/** The entry registers the open target, so the buttons wait for it instead of moving when Open arrives. */
+const isWaitingForEntryFrame = computed(() => Boolean(mounted.value) && !isEntryFrameReady(props.extension));
 
 const open = () => mounted.value && openExtension(mounted.value);
 

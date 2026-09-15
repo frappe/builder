@@ -46,12 +46,19 @@ const emit = defineEmits<{
 	connect: [channel: PortChannel];
 	/** Names the channel that went away, so a caller can drop it by identity. */
 	disconnect: [channel: PortChannel];
+	/** The frame ran its slot, or could not load. A frame whose code throws sends neither. */
+	ready: [];
 }>();
 
 const store = useBuilderStore();
 const frame = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 let channel: PortChannel | null = null;
+
+const finishLoading = () => {
+	loading.value = false;
+	emit("ready");
+};
 
 const theme = () => (store.isDark ? "dark" : "light");
 
@@ -103,11 +110,11 @@ const connect = async () => {
 	const pair = new MessageChannel();
 	const opening = createPortChannel(pair.port1, props.dispatch);
 	channel = opening;
-	opening.listen("slot.ready", () => (loading.value = false));
+	opening.listen("slot.ready", finishLoading);
 
 	const message = await handshake().catch((error: Error) => {
 		console.error(`[builder] could not load "${props.extension}"`, error);
-		loading.value = false;
+		finishLoading();
 		return null;
 	});
 	// reading the source is a round trip, and the frame may have reloaded while it
