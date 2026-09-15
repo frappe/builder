@@ -23,8 +23,8 @@
 						role="button"
 						tabindex="0"
 						size="md"
-						@click="open(extension.name, true)"
-						@keydown.enter.self="open(extension.name, true)">
+						@click="open(extension.name)"
+						@keydown.enter.self="open(extension.name)">
 						<template #prefix>
 							<!-- one box whatever the file measures, so a stray icon cannot set the row height -->
 							<img
@@ -95,8 +95,8 @@
 					role="button"
 					tabindex="0"
 					size="md"
-					@click="open(extension.name, false)"
-					@keydown.enter.self="open(extension.name, false)">
+					@click="open(extension.name)"
+					@keydown.enter.self="open(extension.name)">
 					<template #prefix>
 						<img
 							v-if="extension.icon"
@@ -131,19 +131,14 @@
 
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
-import {
-	userInstallations,
-	getExtensionsCatalog,
-	CatalogExtension,
-	SelectedExtension,
-} from "@/data/extensions";
+import { userInstallations, getExtensionsCatalog, CatalogExtension } from "@/data/extensions";
 import { isDevExtension, showDevExtensionDialog, stopDevExtension } from "@/extensions/devExtension";
 import { Badge, Button, ItemListRow, LoadingIndicator, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 
-const emit = defineEmits<{ select: [selection: SelectedExtension] }>();
+const emit = defineEmits<{ select: [extension: string] }>();
 
-const open = (name: string, isInstalled: boolean) => emit("select", { name, isInstalled });
+const open = (extension: string) => emit("select", extension);
 
 // loading one runs code the editor never installed, so only a developer sees the button
 const isDeveloperMode = Boolean(window.is_developer_mode);

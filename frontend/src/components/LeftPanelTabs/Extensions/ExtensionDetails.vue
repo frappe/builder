@@ -151,6 +151,7 @@ import {
 	setGrantedCapabilities,
 	uninstallExtension,
 	uninstallSummary,
+	userInstallations,
 	type InstallationDetails,
 } from "@/data/extensions";
 import { stopDevExtension } from "@/extensions/devExtension";
@@ -161,7 +162,7 @@ import type { Capability } from "frappe-builder-extension-sdk/types";
 import { Badge, Button, LoadingIndicator, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 
-const props = defineProps<{ extension: string; isInstalled: boolean }>();
+const props = defineProps<{ extension: string }>();
 const emit = defineEmits<{ back: [] }>();
 
 const builderStore = useBuilderStore();
@@ -171,6 +172,9 @@ const hubDetails = ref<InstallationDetails | null>(null);
 const details = computed(() => activeInstallation.value?.details.value ?? hubDetails.value);
 const error = ref("");
 const working = ref(false);
+
+/** Read from the shared list, so a Hub install started on this page swaps it to the installation. */
+const isInstalled = computed(() => userInstallations.value.some((row) => row.name === props.extension));
 
 /** A Hub install is "Installing" until its job lands, then "Ready" or "Failed". An
  * install from any other path, and an older row, has no state and reads as ready. */
@@ -200,7 +204,7 @@ const load = async () => {
 	isInstallPromptOpen.value = false;
 	error.value = "";
 	try {
-		if (props.isInstalled) {
+		if (isInstalled.value) {
 			const installation = useInstallationDetails(props.extension);
 			activeInstallation.value = installation;
 			await installation.reload();
@@ -241,15 +245,17 @@ const askInstall = async () => {
 	}
 };
 
-/** Retry stays on the page to show progress; a fresh install goes back to the list. */
+/**
+ * Stays on the page. A fresh install adds a row, which flips `isInstalled`, and the
+ * watch loads it. A retry keeps its row, so its details are reloaded here.
+ */
 const install = async (capabilities: Capability[]) => {
 	isInstallPromptOpen.value = false;
 	working.value = true;
 	try {
 		await installFromHub(props.extension, details.value!.version, capabilities);
 		toast.success("Installing…");
-		if (props.isInstalled) await load();
-		else emit("back");
+		await refreshDetails();
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	} finally {
@@ -258,13 +264,13 @@ const install = async (capabilities: Capability[]) => {
 };
 
 /** Cancel a stuck install or clear a failed one. Neither made anything, so this
- * needs no uninstall summary or confirmation. */
+ * needs no uninstall summary or confirmation. Only a Hub install gets here, so the
+ * watch always has a Hub page to swap in. */
 const discardInstall = async () => {
 	working.value = true;
 	try {
 		await uninstallExtension(props.extension);
 		toast.success("Removed");
-		emit("back");
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	} finally {
@@ -272,7 +278,7 @@ const discardInstall = async () => {
 	}
 };
 
-watch([() => props.extension, () => props.isInstalled], load, { immediate: true });
+watch([() => props.extension, isInstalled], load, { immediate: true });
 
 /**
  * The underlying resources are realtime, so this is only an immediate refresh
@@ -321,9 +327,11 @@ const uninstall = async () => {
 	try {
 		const summary = await uninstallSummary(props.extension);
 		if (await confirm(uninstallMessage(summary), `Uninstall ${details.value?.label}?`)) {
+			const isFromHub = Boolean(details.value?.source_url);
 			await uninstallExtension(props.extension);
 			toast.success("Extension uninstalled");
-			emit("back");
+			// the watch swaps in the Hub page, and a directory install has none to show
+			if (!isFromHub) emit("back");
 		}
 	} catch (thrown) {
 		toast.error((thrown as Error).message);

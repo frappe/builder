@@ -402,12 +402,6 @@ const uninstallExtension = async (extension: string) => {
 
 type CatalogExtension = Pick<UserInstallation, "name" | "label" | "description" | "icon">;
 
-/** One row the Extensions panel opened, and whether this user has it installed. */
-type SelectedExtension = {
-	name: string;
-	isInstalled: boolean;
-};
-
 const getExtensionsCatalog = (page: number = 1) =>
 	createResource({
 		url: `${hubUrl()}/${HUB_API}.get_catalog`,
@@ -504,7 +498,6 @@ export type {
 	ExtensionGrant,
 	HubExtension,
 	InstallationDetails,
-	SelectedExtension,
 	UninstallSummary,
 	UserInstallation,
 };
