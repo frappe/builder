@@ -12,7 +12,7 @@
 					:src="page.meta_image || page.preview"
 					onerror="this.src='/assets/builder/images/fallback.png'"
 					class="block aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
-				<span class="absolute left-2 top-2">
+				<span class="absolute left-2 top-2 flex">
 					<PageStatusBadge :page="page" />
 				</span>
 			</div>
