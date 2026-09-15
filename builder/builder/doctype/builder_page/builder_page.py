@@ -1328,7 +1328,8 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 					if parsed.get("clientScript"):
 						client_script = parsed.get("clientScript")
 			except Exception:
-				pass
+				# Rendering must not break over a missing/invalid template; keep the block's own script
+				frappe.log_error(title="Failed to load Carousel block template")
 
 	scripts = [
 		{"script": client_script.get("js"), "type": "JavaScript"},
