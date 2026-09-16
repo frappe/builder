@@ -23,6 +23,15 @@ import { nextTick } from "vue";
 
 const { capture } = useTelemetry();
 
+/** Normalize query values to strings; repeated parameters use the first value. */
+function normalizeRouteVariables(values: Record<string, unknown>) {
+	const entries = Object.entries(values).map(([key, value]) => [
+		key,
+		String((Array.isArray(value) ? value[0] : value) ?? ""),
+	]);
+	return Object.fromEntries(entries) as { [key: string]: string };
+}
+
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
 		routeVariables: <{ [key: string]: string }>{},
@@ -40,7 +49,11 @@ const usePageStore = defineStore("pageStore", {
 		snapshotsVersion: 0,
 	}),
 	actions: {
-		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
+		async setPage(
+			pageName: string,
+			resetCanvas = true,
+			routeParams = null as Record<string, unknown> | null,
+		) {
 			this.settingPage = true;
 			if (!pageName) {
 				return;
@@ -63,7 +76,6 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 			this.activePage = page;
-
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
 			if (switchingPage) {
 				capture("builder_editor_opened", {
@@ -81,9 +93,9 @@ const usePageStore = defineStore("pageStore", {
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
-			this.routeVariables = JSON.parse(variables);
+			this.routeVariables = normalizeRouteVariables(JSON.parse(variables));
 			if (routeParams) {
-				Object.assign(this.routeVariables, routeParams);
+				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
 			}
 			await this.setPageData(this.activePage);
 
