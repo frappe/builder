@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-17 06:31\n"
+"PO-Revision-Date: 2026-09-17 07:58\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -392,7 +392,7 @@ msgstr "附加指令碼"
 
 #: frontend/src/components/Controls/SearchBlock.vue:229
 msgid "Attributes"
-msgstr "属性"
+msgstr "屬性"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -901,7 +901,7 @@ msgstr "組件 ID"
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr "组件名称"
+msgstr "組件名稱"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
@@ -1015,7 +1015,7 @@ msgstr "正在轉換..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr "已复制到剪贴板"
+msgstr "已複製到剪貼板"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
@@ -1322,7 +1322,7 @@ msgstr "設計權杖"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr "设计师"
+msgstr "設計師"
 
 #: frontend/src/components/BuilderCanvas.vue:232
 msgid "Desktop"
@@ -1361,7 +1361,7 @@ msgstr "Dimension"
 
 #: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
-msgstr "维度"
+msgstr "維度"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1867,7 +1867,7 @@ msgstr "將桌面調整為螢幕尺寸"
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr "固定金额"
+msgstr "固定金額"
 
 #: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
@@ -3535,7 +3535,7 @@ msgstr "垂直重複"
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
 #: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
-msgstr "替换"
+msgstr "替換"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
@@ -4341,7 +4341,7 @@ msgstr "目標組件"
 #. Label of the task_type (Data) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Task Type"
-msgstr "任务类型"
+msgstr "任務類型"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
@@ -4621,7 +4621,7 @@ msgstr "總網頁瀏覽次數"
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr "总访问量"
+msgstr "總訪問量"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
@@ -4817,7 +4817,7 @@ msgstr "上傳中 {0}%"
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr "上传中..."
+msgstr "上傳中..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
