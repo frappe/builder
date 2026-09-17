@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-03 04:10\n"
+"PO-Revision-Date: 2026-09-17 07:58\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Chinese Traditional\n"
 "MIME-Version: 1.0\n"
@@ -392,7 +392,7 @@ msgstr "附加指令碼"
 
 #: frontend/src/components/Controls/SearchBlock.vue:229
 msgid "Attributes"
-msgstr "属性"
+msgstr "屬性"
 
 #. Label of the authenticated_access (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -441,7 +441,7 @@ msgstr "返回所有範本"
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
 msgid "Back to Builder"
-msgstr "返回 Builder"
+msgstr "返回建構器"
 
 #: frontend/src/components/BackgroundHandler.vue:8
 msgid "Background"
@@ -901,7 +901,7 @@ msgstr "組件 ID"
 #: builder/builder/doctype/builder_component/builder_component.json
 #: frontend/src/utils/dialogs.ts:42
 msgid "Component Name"
-msgstr "组件名称"
+msgstr "組件名稱"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
@@ -1015,7 +1015,7 @@ msgstr "正在轉換..."
 
 #: frontend/src/components/Settings/GlobalDomains.vue:209
 msgid "Copied to clipboard"
-msgstr "已复制到剪贴板"
+msgstr "已複製到剪貼板"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:35
 msgid "Copy"
@@ -1283,7 +1283,7 @@ msgstr "刪除變數"
 
 #: frontend/src/components/Modals/TokenManager.vue:767
 msgid "Delete {0} Variables"
-msgstr "刪除 {0} 個變數"
+msgstr "刪除 {0} 變數"
 
 #: frontend/src/components/Modals/TokenManager.vue:758
 msgid "Deleted {0} token"
@@ -1322,7 +1322,7 @@ msgstr "設計權杖"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:129
 msgid "Designer"
-msgstr "设计师"
+msgstr "設計師"
 
 #: frontend/src/components/BuilderCanvas.vue:232
 msgid "Desktop"
@@ -1361,7 +1361,7 @@ msgstr "Dimension"
 
 #: frontend/src/components/Modals/TokenManager.vue:456
 msgid "Dimensions"
-msgstr "维度"
+msgstr "維度"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:6
 msgid "Direction"
@@ -1684,7 +1684,7 @@ msgstr "在編輯器中執行區塊腳本"
 
 #: frontend/src/utils/useBuilderEvents.ts:268
 msgid "Exit Current Mode"
-msgstr "退出目前模式"
+msgstr "退出當前模式"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
 #: frontend/src/components/DashboardHead.vue:49
@@ -1862,12 +1862,12 @@ msgstr "符合內部"
 
 #: frontend/src/utils/useBuilderEvents.ts:291
 msgid "Fit Canvas to Screen"
-msgstr "使畫布符合螢幕"
+msgstr "將桌面調整為螢幕尺寸"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
-msgstr "固定金额"
+msgstr "固定金額"
 
 #: frontend/src/components/Commands/index.ts:246
 msgid "Focus Property Search"
@@ -2113,7 +2113,7 @@ msgstr "醒目提示含用戶端指令碼的區塊"
 
 #: frontend/src/pages/PageBuilder.vue:192
 msgid "Hold for Move Mode"
-msgstr "按住以進入移動模式"
+msgstr "長按進入移動模式"
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
 #: frontend/src/utils/dialogs.ts:73
@@ -2191,7 +2191,7 @@ msgstr "圖片過大，請使用小於5MB的圖片。"
 
 #: frontend/src/utils/useBuilderEvents.ts:376
 msgid "Image Mode"
-msgstr "圖片模式"
+msgstr "影像模式"
 
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
@@ -2401,7 +2401,7 @@ msgstr "圖層 {0}"
 #: frontend/src/components/Commands/index.ts:159
 #: frontend/src/components/LeftPanelTabs/index.ts:44
 msgid "Layers"
-msgstr ""
+msgstr "圖層"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:125
 msgid "Layout"
@@ -2427,7 +2427,7 @@ msgstr "左"
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:102
 msgid "Letter"
-msgstr ""
+msgstr "Letter"
 
 #: frontend/src/components/Modals/TokenManager.vue:50
 #: frontend/src/utils/fontManager.ts:20
@@ -2458,7 +2458,7 @@ msgstr "連結"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:12
 msgid "Link To"
-msgstr ""
+msgstr "連結至"
 
 #: frontend/src/components/DashboardHead.vue:80
 msgid "List"
@@ -2630,7 +2630,7 @@ msgstr "移動"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
 msgid "Move / Hand Mode"
-msgstr "移動／手形模式"
+msgstr "移動 / 拖曳模式"
 
 #: frontend/src/components/DashboardHead.vue:9
 msgid "Move To Folder"
@@ -2643,7 +2643,7 @@ msgstr "在頁面樹中往下移動"
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
 msgid "Move to Group"
-msgstr "移動至群組"
+msgstr "移至群組"
 
 #: frontend/src/components/RouteTreeView.vue:345
 msgid "Move Up in Page Tree"
@@ -3326,7 +3326,7 @@ msgstr "屬性"
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:39
 #: frontend/src/components/ObjectEditor.vue:6
 msgid "Property"
-msgstr ""
+msgstr "屬性"
 
 #: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Protected Page"
@@ -3335,12 +3335,12 @@ msgstr "受保護的頁面"
 #. Label of the provider (Link) field in DocType 'Builder AI Model'
 #: builder/builder/doctype/builder_ai_model/builder_ai_model.json
 msgid "Provider"
-msgstr ""
+msgstr "提供者"
 
 #. Label of the provider_name (Data) field in DocType 'Builder AI Provider'
 #: builder/builder/doctype/builder_ai_provider/builder_ai_provider.json
 msgid "Provider Name"
-msgstr ""
+msgstr "提供者名稱"
 
 #. Label of the public_url (Read Only) field in DocType 'Builder Client Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
@@ -3395,11 +3395,11 @@ msgstr "放射狀"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:157
 msgid "Radius"
-msgstr ""
+msgstr "半徑"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Read Only"
-msgstr ""
+msgstr "唯讀"
 
 #: frontend/src/stores/canvasStore.ts:86
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
@@ -3408,7 +3408,7 @@ msgstr "唯讀預覽 · 使用 <b>還原</b> 以載入此版本。"
 #: frontend/src/components/BuilderCommandPalette.vue:291
 #: frontend/src/components/BuilderCommandPalette.vue:342
 msgid "Recent"
-msgstr ""
+msgstr "最近"
 
 #: frontend/src/components/Controls/GradientEditor.vue:178
 msgid "Recently used"
@@ -3445,7 +3445,7 @@ msgstr "已更新重新導向"
 #: frontend/src/components/Settings/index.ts:102
 #: frontend/src/components/Settings/index.ts:103
 msgid "Redirects"
-msgstr ""
+msgstr "重新導向"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:20
 msgid "Redirects to primary"
@@ -3454,7 +3454,7 @@ msgstr "重新導向至主要網域"
 #: frontend/src/components/Commands/index.ts:304
 #: frontend/src/components/Commands/index.ts:308
 msgid "Redo"
-msgstr ""
+msgstr "重做"
 
 #. Label of the reference_doctype (Link) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
@@ -3502,7 +3502,7 @@ msgstr "移除色標"
 
 #: frontend/src/components/Modals/TokenManager.vue:771
 msgid "Remove from Group"
-msgstr "從群組移除"
+msgstr "從群組中移除"
 
 #: frontend/src/data/domains.ts:72
 msgid "Removing {0}…"
@@ -3517,7 +3517,7 @@ msgstr "重新命名"
 #: frontend/src/components/BackgroundHandler.vue:96
 #: frontend/src/components/BackgroundHandler.vue:306
 msgid "Repeat"
-msgstr ""
+msgstr "重複"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:134
 msgid "Repeat Block"
@@ -3535,7 +3535,7 @@ msgstr "垂直重複"
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
 #: frontend/src/components/Controls/SearchBlock.vue:131
 msgid "Replace"
-msgstr "替换"
+msgstr "替換"
 
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:95
 msgid "Replace All"
@@ -3582,7 +3582,7 @@ msgstr "不允許對私人或內部位址發出請求。"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:35
 msgid "Resend"
-msgstr ""
+msgstr "重新寄送"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:159
 msgid "Reset Changes"
@@ -3598,7 +3598,7 @@ msgstr "重設覆寫"
 
 #: frontend/src/utils/useBuilderEvents.ts:279
 msgid "Reset Canvas Zoom"
-msgstr "重設畫布縮放"
+msgstr "重設桌面縮放比例"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
 msgid "Reset changes in child blocks as well?"
@@ -3624,7 +3624,7 @@ msgstr "受限制的"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:251
 msgid "Retry"
-msgstr ""
+msgstr "重試"
 
 #: frontend/src/data/domains.ts:76
 msgid "Retrying {0}"
@@ -3646,7 +3646,7 @@ msgstr "Robots"
 
 #: frontend/src/components/Settings/index.ts:111
 msgid "Robots.txt"
-msgstr ""
+msgstr "Robots.txt"
 
 #: frontend/src/components/Settings/PageRobots.vue:30
 msgid "Robots.txt Guide"
@@ -3680,7 +3680,7 @@ msgstr "路由樹"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:83
 msgid "Row"
-msgstr ""
+msgstr "列"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:91
 msgid "Row Dense"
@@ -3747,7 +3747,7 @@ msgstr "儲存目前版本"
 
 #: frontend/src/utils/useBuilderEvents.ts:228
 msgid "Save Page / Component"
-msgstr "儲存頁面／元件"
+msgstr "儲存頁面 / 元件"
 
 #: builder/ai/api.py:522
 msgid "Save the page before starting a chat session"
@@ -3778,7 +3778,7 @@ msgstr "腳本公共 URL"
 #. Script'
 #: builder/builder/doctype/builder_client_script/builder_client_script.json
 msgid "Script Type"
-msgstr ""
+msgstr "指令碼類型"
 
 #: frontend/src/components/PageClientScriptManager.vue:250
 msgid "Script cannot be empty"
@@ -3795,7 +3795,7 @@ msgstr "已成功儲存指令碼"
 #. Label of the scripting_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Scripting"
-msgstr ""
+msgstr "指令碼"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:32
 msgid "Scroll"
@@ -3878,11 +3878,11 @@ msgstr "搜尋你的區塊"
 #: frontend/src/components/CommandPalette.vue:26
 #: frontend/src/components/Controls/DynamicValueHandler.vue:9
 msgid "Search..."
-msgstr ""
+msgstr "搜尋…"
 
 #: frontend/src/components/CommandPalette.vue:74
 msgid "Searching..."
-msgstr ""
+msgstr "搜尋中…"
 
 #: builder/ai/agent/pending.py:145
 msgid "Seeded {0} sample record(s) into {1}"
@@ -3931,7 +3931,7 @@ msgstr "選擇預設顏色"
 
 #: frontend/src/utils/useBuilderEvents.ts:394
 msgid "Select Mode"
-msgstr "選取模式"
+msgstr "選擇模式"
 
 #: frontend/src/components/Modals/TokenManager.vue:372
 msgid "Select or type a group name"
@@ -3952,7 +3952,7 @@ msgstr "半粗"
 
 #: frontend/src/components/Settings/GlobalUsers.vue:76
 msgid "Send Invitation"
-msgstr ""
+msgstr "傳送邀請"
 
 #: frontend/src/utils/imageUtils.ts:31
 msgid "Serve Locally"
@@ -3989,7 +3989,7 @@ msgstr "設定背景"
 #: frontend/src/components/Controls/ColorInput.vue:172
 #: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
-msgstr ""
+msgstr "設定顏色"
 
 #: frontend/src/components/Controls/BasePropertyControl.vue:34
 #: frontend/src/components/Controls/BasePropertyControl.vue:261
@@ -4006,7 +4006,7 @@ msgstr "設定圖片"
 
 #: frontend/src/components/Settings/GlobalDomains.vue:237
 msgid "Set as Primary"
-msgstr ""
+msgstr "設為主要"
 
 #: frontend/src/components/Settings/PageGeneral.vue:97
 msgid "Set current page as Homepage"
@@ -4042,12 +4042,12 @@ msgstr "陰影顏色"
 
 #: frontend/src/components/MainMenu.vue:106
 msgid "Shortcuts"
-msgstr ""
+msgstr "捷徑"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:39
 #: frontend/src/components/BlockPropertySections/VideoOptionsSection.ts:43
 msgid "Show"
-msgstr ""
+msgstr "顯示"
 
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:35
 msgid "Show Children"
@@ -4067,7 +4067,7 @@ msgstr "顯示右側面板"
 
 #: frontend/src/components/Commands/index.ts:205
 msgid "Show Keyboard Shortcuts"
-msgstr ""
+msgstr "顯示鍵盤快速鍵"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
@@ -4092,7 +4092,7 @@ msgstr "大小"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:76
 msgid "Skip for now"
-msgstr ""
+msgstr "暫時略過"
 
 #: frontend/src/components/Modals/TokenManager.vue:1020
 msgid "Skipped {0} invalid entries"
@@ -4112,7 +4112,7 @@ msgstr "已跳過 {0} 個標準權杖（唯讀）"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:18
 msgid "Slow"
-msgstr ""
+msgstr "慢"
 
 #: frontend/src/components/ShadowHandler.vue:183
 msgid "Small"
@@ -4341,7 +4341,7 @@ msgstr "目標組件"
 #. Label of the task_type (Data) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 msgid "Task Type"
-msgstr "任务类型"
+msgstr "任務類型"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:4
 msgid "Template"
@@ -4621,7 +4621,7 @@ msgstr "總網頁瀏覽次數"
 
 #: frontend/src/composables/useAnalytics.ts:121
 msgid "Total Views"
-msgstr "总访问量"
+msgstr "總訪問量"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
@@ -4817,7 +4817,7 @@ msgstr "上傳中 {0}%"
 
 #: frontend/src/utils/helpers.ts:369
 msgid "Uploading..."
-msgstr "上传中..."
+msgstr "上傳中..."
 
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:124
 msgid "Uppercase"
@@ -5017,7 +5017,7 @@ msgstr "換行"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
 msgid "Wrap in Container"
-msgstr "包在容器中"
+msgstr "將其放入容器中"
 
 #: frontend/src/components/ShadowHandler.vue:153
 msgid "X Offset"
