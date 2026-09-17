@@ -446,10 +446,14 @@ defineExpose({
 	@apply border-blue-300 text-gray-700 dark:border-blue-900 dark:text-gray-500;
 }
 .block-selected {
-	@apply overflow-hidden bg-blue-100 border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+	@apply overflow-hidden bg-blue-100 dark:!bg-blue-950 border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+}
+
+.block-selected .block-tree {
+	@apply bg-surface-gray-1;
 }
 
 .block-selected .block-layer-item {
-	@apply bg-surface-gray-1 dark:bg-blue-900;
+	@apply bg-transparent;
 }
 </style>
