@@ -114,7 +114,7 @@
 				<div
 					class="mb-2 flex cursor-pointer items-center justify-between rounded px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
-					@click="canvasStore.activeCanvas?.scrollBlockIntoView(result)">
+					@click="canvasStore.selectBlock(result, null, true, true)">
 					<div class="line-clamp-2 flex-1">
 						{{ result.getBlockDescription() }}
 						<div class="mt-1 text-xs text-ink-gray-5">

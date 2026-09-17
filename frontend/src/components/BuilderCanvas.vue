@@ -213,6 +213,7 @@ const {
 	selectBlockRange,
 	selectedBlockIds,
 	isSelected,
+	selectBlock,
 	toggleBlockSelection,
 	selectedBlocks,
 } = useBlockSelection(block);
@@ -264,12 +265,11 @@ const {
 	clearCanvas,
 	getRootBlock,
 	setRootBlock,
-	selectBlock,
 	scrollBlockIntoView,
 	removeBlock,
 	findBlock,
 	isDirty,
-} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
+} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, selectBlock, history);
 
 const { followBuildEdge, followBlock } = useBuildFollow(canvasProps, canvasContainer, canvas);
 
