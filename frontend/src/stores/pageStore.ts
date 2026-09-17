@@ -24,7 +24,10 @@ import { nextTick } from "vue";
 const { capture } = useTelemetry();
 
 /** Normalize query values to strings; repeated parameters use the first value. */
-function normalizeRouteVariables(values: Record<string, unknown>) {
+function normalizeRouteVariables(values: unknown) {
+	if (!values || typeof values !== "object" || Array.isArray(values)) {
+		return {};
+	}
 	const entries = Object.entries(values).map(([key, value]) => [
 		key,
 		String((Array.isArray(value) ? value[0] : value) ?? ""),
