@@ -4,7 +4,7 @@
 			class="relative cursor-pointer overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-gray-2 p-1.5 shadow-sm transition duration-150 hover:border-outline-gray-3 hover:shadow-md"
 			@click="$emit('select', page)">
 			<img
-				:src="page.preview || fallbackImage"
+				:src="page.thumbnail || page.preview || fallbackImage"
 				:alt="page.page_title || page.name"
 				onerror="this.src='/assets/builder/images/fallback.png'"
 				class="aspect-video w-full rounded-md bg-surface-gray-1 object-cover object-top" />
