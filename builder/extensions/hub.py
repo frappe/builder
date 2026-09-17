@@ -138,7 +138,7 @@ def read_release(name: str, release: dict) -> Release:
 	if missing:
 		frappe.throw(_("The Hub release is missing {0}.").format(", ".join(sorted(missing))))
 
-	built = Release(
+	release = Release(
 		name=name,
 		version=release["version"],
 		protocol_version=int(release["protocol_version"]),
@@ -149,13 +149,13 @@ def read_release(name: str, release: dict) -> Release:
 		status=release["status"],
 	)
 
-	if built.status != "Published":
-		frappe.throw(_("This release is {0}, so it cannot be installed.").format(built.status))
-	if built.protocol_version > PROTOCOL_VERSION:
+	if release.status != "Published":
+		frappe.throw(_("This release is {0}, so it cannot be installed.").format(release.status))
+	if release.protocol_version > PROTOCOL_VERSION:
 		frappe.throw(_('"{0}" needs a newer Builder to run.').format(name))
-	if built.package_size > MAX_PACKAGE_BYTES:
+	if release.package_size > MAX_PACKAGE_BYTES:
 		frappe.throw(_("This release is larger than Builder installs."))
-	return built
+	return release
 
 
 def http() -> requests.Session:
