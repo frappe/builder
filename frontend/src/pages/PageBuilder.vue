@@ -136,7 +136,7 @@ import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
-import { prefetchBuilderSettings } from "@/utils/prefetch";
+import { prefetchBuilderSettings, prefetchTemplateGallery } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
 
@@ -313,6 +313,7 @@ onDeactivated(() => {
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
 	prefetchBuilderSettings();
+	prefetchTemplateGallery();
 });
 
 watchEffect(() => {
