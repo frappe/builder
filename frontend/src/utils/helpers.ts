@@ -71,6 +71,16 @@ function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
 }
 
+/** Escape a value for safe use in an HTML string.*/
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
 	if (typeof text !== "string") {
 		text = JSON.stringify(text);
@@ -983,6 +993,7 @@ export {
 	deepEqual,
 	detachBlockFromComponent,
 	diffArray,
+	escapeHtml,
 	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,

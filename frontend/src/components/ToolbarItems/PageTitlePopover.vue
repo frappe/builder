@@ -53,7 +53,7 @@ import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { getTextContent } from "@/utils/helpers";
+import { escapeHtml, getTextContent } from "@/utils/helpers";
 import { Popover, Tooltip } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -86,7 +86,9 @@ const routeString = computed(() => {
 			const previewValue = pageStore.routeVariables[variable];
 			return `<span class="${
 				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
-			} rounded-sm px-[5px] pb-[2px] text-sm">${previewValue || formattedPart}</span>`;
+			} rounded-sm px-[5px] pb-[2px] text-sm">${
+				previewValue ? escapeHtml(previewValue) : formattedPart
+			}</span>`;
 		} else {
 			return formattedPart;
 		}
