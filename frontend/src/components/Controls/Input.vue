@@ -42,7 +42,7 @@
 				</div>
 			</template>
 		</FormControl>
-		<span v-if="hasOverflow" class="input-overflow-fade" aria-hidden="true" />
+		<span v-if="hasOverflow" class="input-overflow-fade" :style="fadeStyle" aria-hidden="true" />
 	</div>
 </template>
 <script lang="ts" setup>
@@ -78,6 +78,8 @@ interface UseNumberInputOptions {
 }
 
 const isStrictNumber = computed(() => {
+	// Controls like grid Columns/Rows bind a plain number, not a string.
+	if (typeof data.value === "number") return Number.isFinite(data.value);
 	if (typeof data.value !== "string") return false;
 
 	return /^\d*\.?\d+(px|%|em|rem)?$/.test(data.value.trim());
@@ -95,9 +97,16 @@ const containerWidth = ref(Infinity);
 
 const hasOverflow = ref(false);
 
+const fadeStyle = ref({ top: "0px", height: "0px" });
+
 const checkOverflow = () => {
-	const input = containerRef.value?.querySelector("input");
+	const container = containerRef.value;
+	const input = container?.querySelector("input");
 	hasOverflow.value = !!input && input.scrollWidth > input.clientWidth;
+	if (!container || !input || !hasOverflow.value) return;
+	// the container also holds the label/description, so size the fade to the input row alone
+	const top = input.getBoundingClientRect().top - container.getBoundingClientRect().top;
+	fadeStyle.value = { top: `${top + 1}px`, height: `${input.offsetHeight - 2}px` };
 };
 
 const checkOverflowAfterRender = () => void nextTick(checkOverflow);
@@ -112,7 +121,12 @@ onMounted(() => {
 });
 
 const canShowArrows = computed(
-	() => !props.disabled && !props.hideArrows && hasNumber.value && isStrictNumber.value && containerWidth.value >= 60,
+	() =>
+		!props.disabled &&
+		!props.hideArrows &&
+		hasNumber.value &&
+		isStrictNumber.value &&
+		containerWidth.value >= 60,
 );
 
 const hasClearButton = computed(
@@ -207,7 +221,6 @@ input[type="number"] {
 
 	pointer-events: none;
 	position: absolute;
-	inset-block: 1px;
 	right: 0px;
 	z-index: 10;
 	width: 1rem;

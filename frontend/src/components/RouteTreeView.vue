@@ -36,7 +36,11 @@
 					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 					@click="loadMore('__root__', rootLoadMore.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
-					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount)]) }}
+					{{
+						__("Load {0} more", [
+							Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount),
+						])
+					}}
 					<span class="ml-0.5 text-ink-gray-3">
 						{{ __("({0} remaining)", [rootLoadMore.totalCount - rootLoadMore.loadedCount]) }}
 					</span>
@@ -100,7 +104,16 @@ type TrieNode = {
 const pagesResource = createListResource({
 	method: "GET",
 	doctype: "Builder Page",
-	fields: ["name", "route", "page_name", "page_title", "published", "authenticated_access", "project_folder"],
+	fields: [
+		"name",
+		"route",
+		"page_name",
+		"page_title",
+		"published",
+		"staging",
+		"authenticated_access",
+		"project_folder",
+	],
 	filters: { is_template: 0 },
 	orderBy: "route asc",
 	pageLength: 9999,
@@ -332,7 +345,7 @@ const treeActive = () => regularNodes().length > 0;
 useShortcut([
 	{
 		key: "ArrowDown",
-		description: __("Move down in page tree"),
+		description: __("Move Down in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -342,7 +355,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowUp",
-		description: __("Move up in page tree"),
+		description: __("Move Up in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -352,7 +365,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowRight",
-		description: __("Expand node or move down in page tree"),
+		description: __("Expand Node or Move Down in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -371,7 +384,7 @@ useShortcut([
 	},
 	{
 		key: "ArrowLeft",
-		description: __("Collapse node or move up in page tree"),
+		description: __("Collapse Node or Move Up in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {
@@ -387,7 +400,7 @@ useShortcut([
 	},
 	{
 		key: "Enter",
-		description: __("Open page or toggle folder in page tree"),
+		description: __("Open Page or Toggle Folder in Page Tree"),
 		group: __("Page Tree"),
 		condition: treeActive,
 		handler: () => {

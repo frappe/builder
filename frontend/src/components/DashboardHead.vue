@@ -1,9 +1,11 @@
 <template>
 	<div class="m-auto flex w-3/4 max-w-6xl items-center justify-between bg-surface-base px-3.5 py-5 pt-8">
-		<h1 class="text-2xl-semibold text-ink-gray-9">
+		<h1
+			class="text-2xl-semibold truncate text-ink-gray-9"
+			:title="builderStore.activeFolder || __('All Pages')">
 			{{ builderStore.activeFolder || __("All Pages") }}
 		</h1>
-		<div class="flex gap-2">
+		<div class="flex shrink-0 gap-2">
 			<div>
 				<Button variant="solid" v-if="selectionMode && selectedPages.size" @click="promptSelectFolder()">
 					{{ __("Move To Folder") }}
@@ -27,13 +29,13 @@
 			</div>
 			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
 				<Select
-					v-model="typeFilter"
+					v-model="statusFilter"
 					:options="[
-						{ label: __('Type'), value: '', disabled: true },
+						{ label: __('Status'), value: '', disabled: true },
 						{ label: __('All'), value: 'all' },
+						{ label: __('Live'), value: 'live' },
+						{ label: __('Staging'), value: 'staging' },
 						{ label: __('Draft'), value: 'draft' },
-						{ label: __('Published'), value: 'published' },
-						{ label: __('Unpublished'), value: 'unpublished' },
 					]" />
 			</div>
 			<div v-if="displayType === 'tree' && !selectionMode">
@@ -112,7 +114,7 @@ const {
 	selectedPages,
 	treeExpanded,
 	displayType,
-	typeFilter,
+	statusFilter,
 	orderBy,
 	expandTreeFn,
 	collapseTreeFn,

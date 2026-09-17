@@ -42,6 +42,7 @@ from builder.utils import (
 	camel_case_to_kebab_case,
 	clean_data,
 	compact_json,
+	count_blocks,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
@@ -59,6 +60,9 @@ DESKTOP_BREAKPOINT = 1024
 
 # Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
 KEEP_PUBLISH_SNAPSHOTS = 25
+
+# live and staging pages both render at their route (use as or_filters)
+SERVED_PAGE_FILTERS = {"published": 1, "staging": 1}
 
 
 class BuilderPageRenderer(DocumentPage):
@@ -140,6 +144,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		staging: DF.Check
 		template_group: DF.Data | None
 	# end: auto-generated types
 
@@ -160,7 +165,10 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
-		capture("builder_page_created", "builder")
+
+	# the name is only final after insert: naming wipes whatever before_insert set
+	def after_insert(self):
+		capture("builder_page_created", "builder", properties=self.creation_event_properties())
 
 	# every write path, not just insert: callers that hand over a block tree
 	# (paste, AI writes, the API) would otherwise fail on update with
@@ -189,6 +197,30 @@ class BuilderPage(WebsiteGenerator):
 				self.autoname()
 			self.route = f"pages/{self.name}"
 
+	def block_count(self) -> int:
+		return count_blocks(self.draft_blocks or self.blocks)
+
+	def creation_event_properties(self) -> dict:
+		block_count = self.block_count()
+		# template and duplicate are stamped by their api entry points; anything
+		# else arriving with content (paste, REST) is an import
+		return {
+			"page": self.name,
+			"source": self.flags.source or ("blank" if block_count <= 1 else "import"),
+			"template_page": self.flags.template_page,
+			"block_count": block_count,
+		}
+
+	def publish_event_properties(self, is_first_publish: bool) -> dict:
+		return {
+			"page": self.name,
+			"is_first_publish": is_first_publish,
+			"seconds_since_created": int(frappe.utils.time_diff_in_seconds(now(), self.creation)),
+			"block_count": self.block_count(),
+			"has_client_script": bool(self.client_scripts),
+			"has_data_script": bool(self.page_data_script),
+		}
+
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
 
@@ -216,10 +248,14 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
 			or self.has_value_changed("published_at")
+			or self.has_value_changed("staging")
 			or self.has_value_changed("disable_indexing")
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
+
+		if self.has_value_changed("published") and not self.published and not self.is_new():
+			capture("builder_page_unpublished", "builder", properties={"page": self.name})
 
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
@@ -345,23 +381,60 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def publish(self):
+		is_first_publish = not self.published and not self.published_at
 		self.published = 1
+		self.staging = 0
 		self.published_at = now()
-		if self.draft_blocks:
-			# snapshot the content going live; blocks (ideally) already carry componentVersion pins
-			# from when each component was used in the page (pinned at drag-drop), if not they are pinned now
-			take_snapshot(
-				"Builder Page",
-				self.name,
-				fields=["draft_blocks", "page_data_script"],
-				snapshot_type="Publish",
-				transform=pin_components_in_page_data,
-			)
-			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
-			self.blocks = self.draft_blocks
-			self.draft_blocks = None
+		self.promote_draft_blocks()
 		self.save()
-		capture("builder_page_published", "builder")
+		capture(
+			"builder_page_published", "builder", properties=self.publish_event_properties(is_first_publish)
+		)
+		self.enqueue_preview_image()
+		return self.route
+
+	@frappe.whitelist()
+	def publish_to_staging(self):
+		"""Serve the page at its route like a live page, but keep it out of search engines and
+		the sitemap (Frappe's sitemap lists only `published` pages). A live page moves there with
+		`mark_as_staging` instead, so a stale editor can't take a page off live by publishing."""
+		if self.published:
+			frappe.throw(frappe._("This page is live. Mark it as staging instead."))
+		self.staging = 1
+		self.promote_draft_blocks()
+		self.save()
+		capture("builder_page_staged", "builder", properties={"page": self.name})
+		self.enqueue_preview_image()
+		return self.route
+
+	@frappe.whitelist()
+	def mark_as_staging(self):
+		"""Move a live page to staging. Its live content stays at its route, and unpublished
+		edits stay in the draft."""
+		if not self.published:
+			frappe.throw(frappe._("Only a live page can be marked as staging."))
+		self.published = 0
+		self.staging = 1
+		self.save()
+		capture("builder_page_staged", "builder", properties={"page": self.name})
+
+	def promote_draft_blocks(self):
+		if not self.draft_blocks:
+			return
+		# snapshot the content being published; blocks (ideally) already carry componentVersion pins
+		# from when each component was used in the page (pinned at drag-drop), if not they are pinned now
+		take_snapshot(
+			"Builder Page",
+			self.name,
+			fields=["draft_blocks", "page_data_script"],
+			snapshot_type="Publish",
+			transform=pin_components_in_page_data,
+		)
+		prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
+		self.blocks = self.draft_blocks
+		self.draft_blocks = None
+
+	def enqueue_preview_image(self):
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -370,13 +443,11 @@ class BuilderPage(WebsiteGenerator):
 			enqueue_after_commit=True,
 		)
 
-		return self.route
-
 	@frappe.whitelist()
 	def unpublish(self):
 		self.published = 0
+		self.staging = 0
 		self.save()
-		capture("builder_page_unpublished", "builder")
 
 	@frappe.whitelist()
 	def create_manual_snapshot(self, label: str | None = None):
@@ -449,7 +520,7 @@ class BuilderPage(WebsiteGenerator):
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
-		context.disable_indexing = self.disable_indexing
+		context.disable_indexing = self.disable_indexing or self.staging
 
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
@@ -1715,18 +1786,18 @@ def extend_block(block, overridden_block):
 	return block
 
 
+# a live page keeps its route when a staging page shares it
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
-	try:
-		return frappe.db.get_value(
-			"Builder Page",
-			dict(route=route, published=1),
-			"name",
-			order_by="published_at desc, creation desc",
-			cache=True,
-		)
-	except frappe.DoesNotExistError:
-		pass
+	pages = frappe.get_all(
+		"Builder Page",
+		filters={"route": route},
+		or_filters=SERVED_PAGE_FILTERS,
+		order_by="published desc, published_at desc, creation desc",
+		limit=1,
+		pluck="name",
+	)
+	return pages[0] if pages else None
 
 
 @redis_cache(ttl=60 * 60)
@@ -1734,7 +1805,10 @@ def get_web_pages_with_dynamic_routes() -> list[dict]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],
-		filters=dict(published=1, dynamic_route=1),
+		filters={"dynamic_route": 1},
+		or_filters=SERVED_PAGE_FILTERS,
+		# the renderer serves the first match, so live pages come before staging ones
+		order_by="published desc, published_at desc, creation desc",
 		update={"doctype": "Builder Page"},
 	)
 

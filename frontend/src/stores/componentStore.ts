@@ -8,7 +8,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { alert, confirm, getBlockInstance, getBlockString } from "@/utils/helpers";
 import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
@@ -103,7 +103,7 @@ const useComponentStore = defineStore("componentStore", {
 			return webComponent.setValue
 				.submit({
 					name: componentName,
-					block: getBlockObject(block),
+					block: getBlockString(block),
 					component_data_script: doc?.component_data_script || "",
 				})
 				.then(async (data: BuilderComponent) => {

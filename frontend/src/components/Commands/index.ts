@@ -2,11 +2,11 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { useDark, useStorage, useToggle } from "@vueuse/core";
 import { nextTick, type Ref } from "vue";
-import { __ } from "@/translation";
 
 /** A key binding for a command. The description labels it in the shortcuts modal. */
 export type CommandKeys = {
@@ -63,7 +63,10 @@ export function commandShortcuts() {
 			...command.keys!,
 			group: commandGroupLabels[command.group] ?? __(command.group),
 			condition: command.condition,
-			handler: command.action,
+			handler: () => {
+				builderStore.blockContextMenu?.hideContextMenu();
+				command.action();
+			},
 		}));
 }
 
@@ -85,6 +88,9 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 
+// module scope: useStorage in the handler would leak a subscription per keypress
+const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessionStorage) as Ref<StyleCopy>;
+
 const setLayersTab = async () => {
 	builderStore.showLeftPanel = true;
 	builderStore.leftPanelActiveTab = "Layers";
@@ -105,10 +111,9 @@ commands.register({
 	name: "preview",
 	title: __("Preview Page"),
 	icon: "lucide-play",
-	description: __("Page"),
-	group: "Page",
+	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "p", ctrl: true, description: __("Preview") },
+	keys: { key: "p", ctrl: true, description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
 		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
@@ -122,7 +127,8 @@ commands.register({
 	description: __("Page"),
 	group: "Page",
 	condition: isBuilderRoute,
-	action: () => pageStore.publishPage(),
+	// like the publish button: a staging page stays on staging until Go Live
+	action: () => pageStore.publishPage(true, Boolean(pageStore.activePage?.staging)),
 });
 
 commands.register({
@@ -172,7 +178,7 @@ commands.register({
 	description: __("View"),
 	group: "View",
 	condition: isBuilderRoute,
-	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle left panel") },
+	keys: { key: "\\", ctrl: true, shift: true, description: __("Toggle Left Panel") },
 	action: () => (builderStore.showLeftPanel = !builderStore.showLeftPanel),
 });
 
@@ -202,7 +208,7 @@ commands.register({
 	description: __("General"),
 	group: "General",
 	condition: isBuilderRoute,
-	keys: { key: "?", description: __("Show keyboard shortcuts") },
+	keys: { key: "?", description: __("Show Keyboard Shortcuts") },
 	action: () => (builderStore.shortcutsModalOpen = true),
 });
 
@@ -214,7 +220,7 @@ commands.register({
 	icon: "lucide-panels-left-bottom",
 	group: "View",
 	inPalette: false,
-	keys: { key: "\\", ctrl: true, description: __("Toggle panels") },
+	keys: { key: "\\", ctrl: true, description: __("Toggle Panels") },
 	action: () => {
 		builderStore.showRightPanel = !builderStore.showRightPanel;
 		builderStore.showLeftPanel = builderStore.showRightPanel;
@@ -227,7 +233,7 @@ commands.register({
 	icon: "lucide-moon",
 	group: "View",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle canvas dark mode") },
+	keys: { key: "d", ctrl: true, shift: true, description: __("Toggle Canvas Dark Mode") },
 	action: () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode),
 });
 
@@ -237,7 +243,7 @@ commands.register({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, shift: true, description: __("Search blocks") },
+	keys: { key: "f", ctrl: true, shift: true, description: __("Search Blocks") },
 	action: () => (builderStore.showSearchBlock = true),
 });
 
@@ -247,7 +253,7 @@ commands.register({
 	icon: "lucide-search",
 	group: "General",
 	inPalette: false,
-	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus property search") },
+	keys: { key: "f", ctrl: true, allowInInput: true, description: __("Focus Property Search") },
 	action: () => {
 		document.querySelector(".properties-search-input")?.querySelector("input")?.focus();
 	},
@@ -259,15 +265,10 @@ commands.register({
 	icon: "lucide-clipboard-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "c", ctrl: true, shift: true, description: __("Copy block styles") },
+	keys: { key: "c", ctrl: true, shift: true, description: __("Copy Block Styles") },
 	action: () => {
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		const block = blockController.getSelectedBlocks()[0];
-		const copiedStyle = useStorage(
-			"copiedStyle",
-			{ blockId: "", style: {} },
-			sessionStorage,
-		) as Ref<StyleCopy>;
 		copiedStyle.value = { blockId: block.blockId, style: block.getStylesCopy() };
 	},
 });
@@ -278,7 +279,7 @@ commands.register({
 	icon: "lucide-copy",
 	group: "Edit",
 	inPalette: false,
-	keys: { key: "d", ctrl: true, description: __("Duplicate block") },
+	keys: { key: "d", ctrl: true, description: __("Duplicate Block") },
 	action: () => {
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
@@ -309,21 +310,5 @@ commands.register({
 	action: () => {
 		const canvas = canvasStore.activeCanvas;
 		if (canvas?.history?.canRedo) canvas.history.redo();
-	},
-});
-
-commands.register({
-	name: "delete-page",
-	title: __("Delete Page"),
-	icon: "lucide-trash-2",
-	group: "General",
-	inPalette: false,
-	// same binding as toggle-canvas-dark-mode, as it was before this registry
-	keys: { key: "d", ctrl: true, shift: true, description: __("Delete Page") },
-	condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
-	action: () => {
-		if (pageStore.activePage && !pageStore.activePage.is_standard) {
-			pageStore.deletePage(pageStore.activePage).then(() => router.push({ name: "home" }));
-		}
 	},
 });

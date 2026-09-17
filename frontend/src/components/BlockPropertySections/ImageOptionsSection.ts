@@ -17,16 +17,21 @@ const imageOptionsSectionProperties = [
 				allowDynamicValue: true,
 				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
+				objectPosition: (blockController.getStyle("objectPosition") as string) || "",
+				objectViewBox: (blockController.getStyle("objectViewBox") as string) || "",
+				targetRatio: blockController.getSelectedBlockAspectRatio(),
 				variants: [{ name: "dark", property: "darkSrc", label: __("Dark Mode") }],
 			};
 		},
 		events: {
 			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
 			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
+			"update:objectPosition": (val: string) => blockController.setStyle("objectPosition", val),
+			"update:objectViewBox": (val: string) => blockController.setStyle("objectViewBox", val),
 		},
 		searchKeyWords:
-			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
-		usedStyleProperties: ["object-fit"],
+			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme, Focus, Focal, Point, Crop, Zoom, Framing, Object Position, ObjectPosition, Object View Box",
+		usedStyleProperties: ["object-fit", "object-position", "object-view-box"],
 	},
 	{
 		component: Button,

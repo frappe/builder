@@ -21,13 +21,14 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-[-16px]">
+	<div>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			{{ __("Loading...") }}
 		</div>
+		<!-- padding on the chart itself would offset echarts' pointer hit-testing, so keep it flush -->
 		<AxisChart
 			v-else-if="data.data && data.data.length"
-			class="!h-[250px] !min-h-[200px]"
+			class="h-[250px] w-full"
 			:config="chartConfigData"
 			:events="chartEvents" />
 		<AnalyticsEmptyState

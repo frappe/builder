@@ -3,11 +3,11 @@
 		<Dropdown v-if="showDropdown" size="sm" :options="dropdownOptions">
 			<span
 				ref="dropdownTrigger"
-				class="lucide-plus-circle h-3 w-3 cursor-pointer text-ink-gray-7 hover:text-ink-gray-9"
+				class="lucide-plus-circle h-3 w-3 cursor-pointer text-ink-gray-4 hover:text-ink-gray-7 active:text-ink-gray-9"
 				aria-hidden="true" />
 		</Dropdown>
 		<InputLabel
-			class="truncate"
+			class="w-full truncate"
 			:title="label"
 			:class="{ 'cursor-ns-resize': enableSlider }"
 			@mousedown="$emit('mousedown', $event)">

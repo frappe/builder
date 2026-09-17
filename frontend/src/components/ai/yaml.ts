@@ -62,6 +62,30 @@ export function stripBindingPrefix(key: unknown): string {
 	return k;
 }
 
+/** One binding entry from a tool/YAML `bind` pair — the TS twin of
+ * page_writer.binding_entry. 'props.<name>' / 'component.<key>' select the
+ * source (comesFrom); anything else resolves against page data. */
+export function bindingEntry(property: string, field: string | null | undefined): BlockDataKey {
+	let key = String(field ?? "").trim();
+	let comesFrom: BlockDataKey["comesFrom"];
+	if (key.startsWith("props.")) {
+		key = key.slice("props.".length);
+		comesFrom = "props";
+	} else if (key.startsWith("component.")) {
+		key = key.slice("component.".length);
+		comesFrom = "componentData";
+	} else {
+		key = stripBindingPrefix(key);
+	}
+	const isContent = property === "innerHTML" || property === "text";
+	return {
+		key,
+		property: isContent ? "innerHTML" : property,
+		type: (isContent ? "key" : "attribute") as BlockDataKeyType,
+		...(comesFrom ? { comesFrom } : {}),
+	};
+}
+
 /** Convert the agent's compact block YAML into the editor's BlockOptions shape.
  * `isRoot` marks the top-level block of a generated page as the <body>; the editor
  * then derives blockId="root" from that (Block.isRoot() === originalElement "body").
@@ -92,9 +116,7 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	// bind by content ("key"); anything else binds an HTML attribute (e.g. href, src).
 	if (yamlBlock.bind && typeof yamlBlock.bind === "object" && !Array.isArray(yamlBlock.bind)) {
 		block.dynamicValues = Object.entries(yamlBlock.bind).map(([prop, field]) =>
-			prop === "innerHTML" || prop === "text"
-				? { key: stripBindingPrefix(field), property: "innerHTML", type: "key" }
-				: { key: stripBindingPrefix(field), property: prop, type: "attribute" },
+			bindingEntry(prop, field as string),
 		);
 	}
 	// A value that is EXACTLY one moustache ("{{ item.city }}") would go through Jinja

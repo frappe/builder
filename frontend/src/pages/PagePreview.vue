@@ -153,7 +153,7 @@ const transitionTheme = (toggle: () => void) => {
 
 useShortcut({
 	key: "Escape",
-	description: __("Back to builder"),
+	description: __("Back to Builder"),
 	group: __("Navigation"),
 	handler: () => {
 		if (router.currentRoute.value.name === "preview") {

@@ -3,13 +3,14 @@ import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import RealTimeHandler from "@/utils/realtimeHandler";
-import { useDark, useStorage } from "@vueuse/core";
+import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
+const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
 
 declare global {
 	interface Window {
@@ -57,18 +58,25 @@ const useBuilderStore = defineStore("builderStore", {
 			attribute: "data-theme",
 		}),
 		canvasDarkMode: useStorage("canvasDarkMode", false),
-		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,
 		// Set from ai_setup_state: a provider carrying its own key (Anthropic, a
 		// self-hosted gateway) is enough on its own, and the shared OpenRouter key in
 		// Builder Settings is the only thing the client can see for itself.
-		aiConfigured: false,
+		// null until the server answers; false means "asked, not configured"
+		aiConfigured: <boolean | null>null,
 	}),
 	getters: {
+		isSmallScreen(): boolean {
+			return belowLgBreakpoint.value;
+		},
 		isAIEnabled(): boolean {
-			return this.aiConfigured || !!builderSettings.doc?.ai_api_key;
+			return !!this.aiConfigured || !!builderSettings.doc?.ai_api_key;
+		},
+		// unknown until a positive signal or the server's verdict arrives
+		isAIStateKnown(): boolean {
+			return this.aiConfigured !== null || this.isAIEnabled;
 		},
 	},
 	actions: {

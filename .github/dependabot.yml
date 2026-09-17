@@ -1,9 +1,10 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directories:
-      - "/"
-      - "/frontend"
+    # only the root: yarn.lock lives here and covers the workspaces.
+    # Updating /frontend on its own bumps the manifest but leaves the lockfile
+    # stale, which breaks `yarn install`.
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"

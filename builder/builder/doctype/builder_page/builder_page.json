@@ -12,6 +12,7 @@
  "field_order": [
   "content_tab",
   "published",
+  "staging",
   "page_name",
   "route",
   "dynamic_route",
@@ -71,8 +72,16 @@
    "label": "Published"
   },
   {
+   "default": "0",
+   "description": "Served at its route, but hidden from search engines and the sitemap",
+   "fieldname": "staging",
+   "fieldtype": "Check",
+   "label": "Staging"
+  },
+  {
    "fieldname": "blocks",
    "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Blocks",
    "read_only": 1
   },
@@ -120,6 +129,7 @@
   {
    "fieldname": "draft_blocks",
    "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Draft Blocks",
    "read_only": 1
   },
@@ -262,7 +272,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 10:00:00.000000",
+ "modified": "2026-09-11 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

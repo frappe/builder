@@ -45,7 +45,10 @@
 					<span class="lucide-x size-3" aria-hidden="true" />
 				</button>
 			</span>
-			<InputLabel :class="{ 'cursor-ns-resize': enableSlider }" @mousedown="$emit('labelMousedown', $event)">
+			<InputLabel
+				class="w-full"
+				:class="{ 'cursor-ns-resize': enableSlider }"
+				@mousedown="$emit('labelMousedown', $event)">
 				{{ label }}
 			</InputLabel>
 		</div>

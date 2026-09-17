@@ -10,14 +10,30 @@ import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import {
 	confirm,
+	countBlocks,
 	generateId,
 	getBlockInstance,
 	getCopyWithoutParent,
 	getRouteVariables,
 } from "@/utils/helpers";
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
+import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
+
+const { capture } = useTelemetry();
+
+/** Normalize query values to strings; repeated parameters use the first value. */
+function normalizeRouteVariables(values: unknown) {
+	if (!values || typeof values !== "object" || Array.isArray(values)) {
+		return {};
+	}
+	const entries = Object.entries(values).map(([key, value]) => [
+		key,
+		String((Array.isArray(value) ? value[0] : value) ?? ""),
+	]);
+	return Object.fromEntries(entries) as { [key: string]: string };
+}
 
 const usePageStore = defineStore("pageStore", {
 	state: () => ({
@@ -36,12 +52,19 @@ const usePageStore = defineStore("pageStore", {
 		snapshotsVersion: 0,
 	}),
 	actions: {
-		async setPage(pageName: string, resetCanvas = true, routeParams = null as Object | null) {
+		async setPage(
+			pageName: string,
+			resetCanvas = true,
+			routeParams = null as Record<string, unknown> | null,
+		) {
 			this.settingPage = true;
 			if (!pageName) {
 				return;
 			}
 
+			// against the last page that actually loaded, so a retry after a failed
+			// fetch still counts as opening it
+			const switchingPage = pageName !== this.activePage?.name;
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -56,8 +79,14 @@ const usePageStore = defineStore("pageStore", {
 				return;
 			}
 			this.activePage = page;
-
 			const blocks = JSON.parse(page.draft_blocks || page.blocks || "[]");
+			if (switchingPage) {
+				capture("builder_editor_opened", {
+					page: page.name,
+					block_count: countBlocks(blocks),
+					is_published: Boolean(page.published),
+				});
+			}
 			this.editPage(!resetCanvas);
 			if (!Array.isArray(blocks)) {
 				const canvasStore = useCanvasStore();
@@ -67,9 +96,9 @@ const usePageStore = defineStore("pageStore", {
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
 			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
-			this.routeVariables = JSON.parse(variables);
+			this.routeVariables = normalizeRouteVariables(JSON.parse(variables));
 			if (routeParams) {
-				Object.assign(this.routeVariables, routeParams);
+				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
 			}
 			await this.setPageData(this.activePage);
 
@@ -186,12 +215,12 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async publishPage(openInBrowser = true) {
+		async publishPage(openInBrowser = true, staging = false) {
 			await this.waitTillPageIsSaved();
 			return webPages.runDocMethod
 				.submit({
 					name: this.selectedPage as string,
-					method: "publish",
+					method: staging ? "publish_to_staging" : "publish",
 					route_variables: this.routeVariables,
 				})
 				.then(async () => {
@@ -201,6 +230,30 @@ const usePageStore = defineStore("pageStore", {
 						this.openPageInBrowser(this.activePage as BuilderPage);
 					}
 				});
+		},
+
+		async markAsStaging() {
+			const pageName = this.selectedPage as string;
+			const pageLoadToken = this.pageLoadToken;
+			const confirmed = await confirm(
+				__(
+					'Mark "{0}" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it.',
+					[this.activePage?.page_title || __("this page")],
+				),
+			);
+			if (!confirmed) {
+				return;
+			}
+			await this.waitTillPageIsSaved();
+			await webPages.runDocMethod.submit({ name: pageName, method: "mark_as_staging" });
+			const page = await this.fetchActivePage(pageName);
+			// another page may have opened meanwhile, and its canvas autosaves to activePage
+			if (pageLoadToken === this.pageLoadToken && this.selectedPage === pageName) {
+				this.activePage = page;
+			}
+			toast.success(__("Page marked as staging"));
+			// marking the home page as staging clears it from Builder Settings
+			builderSettings.reload();
 		},
 
 		async revertChanges() {
@@ -259,11 +312,13 @@ const usePageStore = defineStore("pageStore", {
 				.submit({
 					name: targetName,
 					published: false,
+					staging: false,
 				})
 				.then(() => {
 					toast.success(__("Page unpublished"));
 					if (page) {
 						page.published = 0;
+						page.staging = 0;
 					} else {
 						this.setPage(this.selectedPage as string);
 					}

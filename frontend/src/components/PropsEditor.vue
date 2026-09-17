@@ -4,11 +4,11 @@
 			<template v-for="(value, name, index) in props.obj" :key="index">
 				<div
 					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
-					<Popover :offset="32" placement="right">
-						<template #target="{ open }">
+					<Popover :offset="32" side="right" align="center" bare>
+						<template #trigger>
 							<div
 								class="flex w-full cursor-pointer items-center justify-between"
-								@click.stop="
+								@click="
 									() => {
 										popupMode = 'edit';
 										popoverContentItemsRef[index]?.reset({
@@ -17,10 +17,9 @@
 											keepType: false,
 										});
 										keyBeingEdited = name as string;
-										open();
 									}
 								">
-								<div class="flex w-fit max-w-[60%] items-center gap-2 pl-2">
+								<div class="flex min-w-0 flex-1 items-center gap-2 pl-2">
 									<div class="icon">
 										<component
 											v-if="value.propOptions?.type"
@@ -38,14 +37,14 @@
 											"
 											class="h-4 w-4 text-ink-gray-4" />
 									</div>
-									<div class="flex max-w-full flex-col gap-1">
+									<div class="flex min-w-0 flex-1 flex-col gap-1">
 										<p class="text-sm-medium">
 											{{ value.label || name }}
 										</p>
-										<p class="max-w-24 truncate text-ellipsis text-xs text-ink-gray-4">
+										<p class="truncate text-xs text-ink-gray-4">
 											{{
 												value.propOptions?.options?.defaultValue
-													? ["array", "object"].includes(value.propOptions.options.type)
+													? ["array", "object"].includes(value.propOptions.type)
 														? JSON.stringify(value.propOptions?.options?.defaultValue)
 														: value.propOptions?.options?.defaultValue
 													: __("No Default Value")
@@ -58,11 +57,11 @@
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
 										icon="lucide-x"
-										@click="deleteObjectKey(name as string)" />
+										@click.stop="deleteObjectKey(name as string)" />
 								</div>
 							</div>
 						</template>
-						<template #body="{ open, close }">
+						<template #default="{ close }">
 							<PropsPopoverContent
 								ref="popoverContentItemsRef"
 								mode="edit"
@@ -79,8 +78,8 @@
 				</div>
 			</template>
 		</div>
-		<Popover ref="popOverRef" :offset="24" placement="right">
-			<template #target="{ open }">
+		<Popover :offset="24" side="right" align="center" bare>
+			<template #trigger>
 				<Button
 					class="w-full"
 					variant="subtle"
@@ -94,11 +93,10 @@
 							});
 							keyBeingEdited = null;
 							popupMode = 'add';
-							open();
 						}
 					"></Button>
 			</template>
-			<template #body="{ open, close }">
+			<template #default="{ close }">
 				<PropsPopoverContent
 					ref="popoverContentAddRef"
 					:mode="popupMode"
@@ -144,7 +142,6 @@ const events = Object.fromEntries(
 const popupMode = ref<"add" | "edit">("add");
 const keyBeingEdited = ref<string | null>(null);
 const propDetailsOfKeyBeingEdited = ref<BlockProps[string] | null>(null);
-const popOverRef = ref<typeof Popover | null>(null);
 const popoverContentAddRef = ref<typeof PropsPopoverContent | null>(null);
 const popoverContentItemsRef = ref<Array<typeof PropsPopoverContent | null>>([]);
 

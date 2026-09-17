@@ -1,4 +1,13 @@
 import BackgroundHandler from "@/components/BackgroundHandler.vue";
+import { cssUrl } from "@/utils/helpers";
+import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
+import { Button } from "frappe-ui";
+import { computed } from "vue";
+
+const backgroundImageURL = () => {
+	const bg = (blockController.getStyle("backgroundImage") as string) || "";
+	return bg && !bg.includes("gradient") ? bg.replace(/^url\(['"]?|['"]?\)$/g, "") : "";
+};
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
@@ -71,6 +80,26 @@ const styleSectionProperties = [
 		],
 		searchKeyWords:
 			"Background, BackgroundImage, Background Image, Background Position, Background Repeat, Background Size, BG, BGImage, BG Image, BGPosition, BG Position, BGRepeat, BG Repeat, BGSize, BG Size",
+	},
+	{
+		component: Button,
+		getProps: () => {
+			return {
+				class: "text-base self-end",
+			};
+		},
+		innerText: computed(() => getOptimizeButtonText(backgroundImageURL())),
+		searchKeyWords:
+			"Background, Local, Copy, Server, Download, Host, Store, Convert, webp, Convert to webp, image, url",
+		events: {
+			click: () =>
+				optimizeImage({
+					imageUrl: backgroundImageURL(),
+					onSuccess: (newUrl: string) =>
+						blockController.setStyle("backgroundImage", cssUrl(newUrl)),
+				}),
+		},
+		condition: () => shouldShowOptimizeButton(backgroundImageURL()),
 	},
 	{
 		component: StylePropertyControl,

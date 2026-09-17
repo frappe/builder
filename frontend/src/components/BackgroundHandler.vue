@@ -1,29 +1,33 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25">
-		<template #target="{ togglePopover }">
-			<div class="flex w-full items-center justify-between" @focusin="updateActiveState">
+	<Popover side="left" align="center" :offset="25" bare :open="isOpen" @update:open="onUpdateOpen">
+		<template #trigger>
+			<div
+				class="flex w-full items-center justify-between"
+				@focusin="handleFocusIn"
+				@click.capture="onAnchorClick">
 				<StylePropertyControl
 					propertyKey="background"
-					:component="BackgroundInput"
+					:component="Autocomplete"
 					:label="__('Background')"
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('Set Background')"
-					readonly
-					:selectOnFocus="false"
-					class="[&_input]:cursor-pointer"
-					@focus="togglePopover"
-					:getModelValue="() => getDisplayValue(null)"
-					:getVariantValue="(v: string) => getDisplayValue(v)"
+					:getOptions="getColorOptions"
+					:selectOnFocus="true"
+					:getModelValue="() => getValue(null)"
+					:getVariantValue="(v: string) => getValue(v)"
+					:getControlAttrs="getControlAttrs"
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
-						<div
-							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
+						<button
+							type="button"
+							class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+							:aria-label="__('Open background picker')"
 							@click="
 								() => {
 									activeState = variant;
-									togglePopover();
+									toggle();
 								}
 							"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
@@ -32,9 +36,9 @@
 				</StylePropertyControl>
 			</div>
 		</template>
-		<template #body>
+		<template #default>
 			<div
-				class="background-popover-body w-64 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+				class="background-popover-body w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
 					:options="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
@@ -47,6 +51,7 @@
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
 					<ColorPicker
+						ref="colorPickerRef"
 						renderMode="inline"
 						:modelValue="backgroundColor"
 						:showInput="true"
@@ -54,57 +59,64 @@
 				</div>
 
 				<!-- Image Tab -->
-				<div v-else-if="activeTab === 'image'" class="space-y-4">
-					<div
-						class="image-preview group relative h-24 w-full cursor-pointer overflow-hidden rounded bg-surface-gray-3"
-						:style="getPreviewStyle(activeState)">
-						<FileUploader
-							@success="setBGImage"
-							:uploadArgs="{
-								private: false,
-								folder: 'Home/Builder Uploads',
-								optimize: true,
-								upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-							}">
-							<template v-slot="{ openFileSelector }">
-								<div
-									class="absolute bottom-0 left-0 right-0 top-0 hidden place-items-center bg-gray-500 bg-opacity-20"
-									:class="{
-										'!grid': !backgroundImageURL,
-										'group-hover:grid': backgroundImageURL,
-									}">
-									<Button @click="openFileSelector">{{ __("Upload") }}</Button>
-								</div>
-							</template>
-						</FileUploader>
-					</div>
-					<div class="space-y-2">
-						<InlineInput
-							:label="__('Size')"
-							:modelValue="backgroundSize"
-							type="select"
-							:options="sizeOptions"
-							@update:modelValue="setBGSize" />
-						<InlineInput
-							:label="__('Position')"
-							:modelValue="backgroundPosition"
-							type="select"
-							:options="positionOptions"
-							@update:modelValue="setBGPosition" />
-						<InlineInput
-							:label="__('Repeat')"
-							:modelValue="backgroundRepeat"
-							type="select"
-							:options="repeatOptions"
-							@update:modelValue="setBGRepeat" />
-					</div>
-					<Button v-if="showServeLocallyButton" class="w-full" @click="serveBackgroundImageLocally">
-						{{ serveLocallyButtonText }}
-					</Button>
-					<Button v-if="backgroundImageURL" class="w-full" variant="subtle" @click="clearBGImage">
-						{{ __("Clear Image") }}
-					</Button>
-				</div>
+				<FileUploader
+					v-else-if="activeTab === 'image'"
+					@success="setBGImage"
+					:uploadArgs="{
+						private: false,
+						folder: 'Home/Builder Uploads',
+						optimize: true,
+						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
+					}">
+					<template v-slot="{ openFileSelector }">
+						<div class="space-y-3">
+							<TabButtons
+								:class="STRETCH_TABS"
+								:options="sizeTabOptions"
+								:modelValue="backgroundSize || 'auto'"
+								@update:modelValue="setBGSize" />
+							<ImageFocusInput
+								v-if="backgroundImageURL"
+								:imageSrc="backgroundImageURL"
+								:modelValue="backgroundPosition"
+								:targetRatio="selectedBlockRatio"
+								:fit="backgroundSize === 'contain' ? 'contain' : 'scale-down'"
+								:disabled="!bgFocusEnabled"
+								@update:modelValue="setBGPosition" />
+							<div
+								v-else
+								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+								{{ __("No image") }}
+							</div>
+							<TabButtons
+								v-if="!bgFocusEnabled && backgroundImageURL"
+								:class="STRETCH_TABS"
+								:options="repeatTabOptions"
+								:modelValue="backgroundRepeat || 'repeat'"
+								@update:modelValue="setBGRepeat" />
+							<div class="flex items-center gap-1.5">
+								<Button
+									class="flex-1"
+									variant="outline"
+									iconLeft="upload"
+									:label="backgroundImageURL ? __('Replace') : __('Upload')"
+									@click="openFileSelector" />
+								<Button
+									v-if="bgFocusEnabled"
+									variant="outline"
+									icon="rotate-ccw"
+									:title="__('Reset focal point')"
+									@click="setBGPosition('center')" />
+								<Button
+									v-if="backgroundImageURL"
+									variant="outline"
+									icon="trash"
+									:title="__('Clear image')"
+									@click="clearBGImage" />
+							</div>
+						</div>
+					</template>
+				</FileUploader>
 
 				<!-- Gradient Tab -->
 				<div v-else class="space-y-4">
@@ -130,54 +142,32 @@
 
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
-import InlineInput from "@/components/Controls/InlineInput.vue";
-import Input from "@/components/Controls/Input.vue";
+import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
+import { getColorVariableOptions } from "@/utils/colorOptions";
 import { cssUrl } from "@/utils/helpers";
-import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { STRETCH_TABS } from "@/utils/tabButtons";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
-import { computed, defineComponent, h, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
 const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
 
-// wraps Input to style the value like ColorInput does when it displays a variable name
-const BackgroundInput = defineComponent({
-	props: {
-		modelValue: { type: [String, Number, Boolean], default: "" },
-	},
-	setup(props, { attrs, slots }) {
-		const showsVariableName = computed(() => {
-			return (
-				!!props.modelValue &&
-				variables.value.some((builderToken) => builderToken.token_name === props.modelValue)
-			);
-		});
-		return () =>
-			h(
-				Input,
-				{
-					...attrs,
-					modelValue: props.modelValue,
-					class: [
-						attrs.class,
-						showsVariableName.value
-							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-6"
-							: "",
-					],
-				},
-				slots,
-			);
-	},
-});
-
 const activeState = ref<string | null>(null);
+const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
+
+// the picker renders inline here, so this popover owns the "closed" moment
+const handlePopoverToggle = (open: boolean) => {
+	if (!open) colorPickerRef.value?.commitRecentColor();
+};
+const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(handlePopoverToggle);
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
@@ -193,6 +183,14 @@ const updateActiveState = (e: FocusEvent) => {
 	} else if (mainPropRow) {
 		activeState.value = null;
 	}
+};
+
+// a gradient or image has no text worth editing, so focus goes straight to the picker
+const handleFocusIn = (e: FocusEvent) => {
+	updateActiveState(e);
+	const target = e.target as HTMLElement;
+	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
+	if (hasImage(activeState.value)) toggle();
 };
 
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {
@@ -217,6 +215,25 @@ watch(
 	{ immediate: true },
 );
 
+const hasImage = (state: string | null) =>
+	Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
+
+const getColorToken = (state: string | null) => {
+	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
+	return !hasImage(state) && color?.startsWith("var(--") ? color : null;
+};
+
+// the var() value, not the name, so the dropdown marks it as selected
+const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
+
+const getControlAttrs = (state: string | null) => ({
+	displayValue: getDisplayValue(state),
+	class: getColorToken(state) ? "[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-6" : "",
+});
+
+const getColorOptions = async (query: string) =>
+	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
+
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
@@ -238,6 +255,8 @@ const backgroundImageURL = computed(() => {
 });
 
 const backgroundSize = computed(() => blockController.getStyle(getStyleKey("backgroundSize")) as string);
+const bgFocusEnabled = computed(() => Boolean(backgroundImageURL.value) && backgroundSize.value === "cover");
+const selectedBlockRatio = computed(() => blockController.getSelectedBlockAspectRatio());
 const backgroundPosition = computed(
 	() => blockController.getStyle(getStyleKey("backgroundPosition")) as string,
 );
@@ -280,25 +299,17 @@ const getPreviewStyle = (state: string | null) => {
 	};
 };
 
-const sizeOptions = [
-	{ label: __("Contain"), value: "contain" },
-	{ label: __("Cover"), value: "cover" },
+const sizeTabOptions = [
+	{ label: __("Fill & crop"), value: "cover" },
+	{ label: __("Fit"), value: "contain" },
 	{ label: __("Auto"), value: "auto" },
 ];
 
-const positionOptions = [
-	{ label: __("Center"), value: "center" },
-	{ label: __("Top"), value: "top" },
-	{ label: __("Bottom"), value: "bottom" },
-	{ label: __("Left"), value: "left" },
-	{ label: __("Right"), value: "right" },
-];
-
-const repeatOptions = [
-	{ label: __("No Repeat"), value: "no-repeat" },
-	{ label: __("Repeat"), value: "repeat" },
-	{ label: __("Repeat X"), value: "repeat-x" },
-	{ label: __("Repeat Y"), value: "repeat-y" },
+const repeatTabOptions = [
+	{ label: "", value: "no-repeat", icon: "lucide-square", tooltip: __("No repeat") },
+	{ label: "", value: "repeat", icon: "lucide-grid-2x2", tooltip: __("Repeat") },
+	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal", tooltip: __("Repeat horizontally") },
+	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical", tooltip: __("Repeat vertically") },
 ];
 
 const setBGImage = (file: { file_url: string }) => {
@@ -315,26 +326,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGValue = (value: string) => {
-	const bgKey = getStyleKey("backgroundImage");
-	const colorKey = getStyleKey("backgroundColor");
-	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
-
-	let cleanURL = value;
-	if (value?.startsWith("url(")) {
-		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
+const parseBackground = (value: string) => {
+	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
+	if (CSS.supports("color", color)) return { color };
+	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
+		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
 	}
-	if (isValidHexValue(value)) {
-		blockController.setStyle(colorKey, `#${value}`);
-		blockController.setStyle(bgKey, null);
-	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-	} else {
-		blockController.setStyle(bgKey, cleanURL ? cssUrl(cleanURL) : null);
-		blockController.setStyle(colorKey, null);
-	}
+	return null;
 };
+
+const setBackground = (bgKey: string, colorKey: string, value: string | null) => {
+	const parsed = value ? parseBackground(value) : null;
+	if (value && !parsed) return;
+	blockController.setStyle(colorKey, parsed?.color ?? null);
+	blockController.setStyle(bgKey, parsed?.image ?? null);
+};
+
+const setBGValue = (value: string | null) =>
+	setBackground(getStyleKey("backgroundImage"), getStyleKey("backgroundColor"), value);
 
 const setBGColor = (color: string | null) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), color);
@@ -396,26 +405,10 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	// the trigger input is read-only, so a non-null value here can only come from
-	// the "copy current value to state" dropdown — copy the actual base styles
-	// instead of the display text (e.g. "Gradient", variable name, image file name)
+	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
+
+	// display text from the "copy current value to state" dropdown: copy the real base styles
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
-};
-
-const showServeLocallyButton = computed(() => shouldShowOptimizeButton(backgroundImageURL.value));
-const serveLocallyButtonText = computed(() => getOptimizeButtonText(backgroundImageURL.value));
-
-const serveBackgroundImageLocally = () => {
-	if (!backgroundImageURL.value) {
-		return;
-	}
-
-	return optimizeImage({
-		imageUrl: backgroundImageURL.value,
-		onSuccess: (newUrl: string) => {
-			blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(newUrl));
-		},
-	});
 };
 </script>

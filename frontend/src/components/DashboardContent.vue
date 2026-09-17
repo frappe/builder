@@ -3,7 +3,7 @@
 		<section class="m-auto mb-24 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
-				<div v-if="!webPages.data?.length && !searchFilter && !typeFilter" class="col-span-full">
+				<div v-if="!webPages.data?.length && !searchFilter && !statusFilter" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
 						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
@@ -73,7 +73,7 @@ const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
 const {
 	searchFilter,
-	typeFilter,
+	statusFilter,
 	orderBy,
 	displayType,
 	selectionMode,
@@ -131,7 +131,7 @@ watch(displayType, () => fetchPages());
 // remove selection mode when the escape key is pressed
 useShortcut({
 	key: "Escape",
-	description: __("Deselect pages"),
+	description: __("Deselect Pages"),
 	group: __("Dashboard"),
 	handler: () => {
 		selectedPages.value.clear();
@@ -139,18 +139,18 @@ useShortcut({
 	},
 });
 
+const statusFilters = {
+	live: { published: 1 },
+	staging: { staging: 1 },
+	draft: { published: 0, staging: 0 },
+};
+
 const fetchPages = () => {
 	const filters = {
 		is_template: 0,
 	} as any;
-	if (typeFilter.value && displayType.value !== "tree") {
-		if (typeFilter.value === "published") {
-			filters["published"] = true;
-		} else if (typeFilter.value === "unpublished") {
-			filters["published"] = false;
-		} else if (typeFilter.value === "draft") {
-			filters["draft_blocks"] = ["is", "set"];
-		}
+	if (displayType.value !== "tree") {
+		Object.assign(filters, statusFilters[statusFilter.value as keyof typeof statusFilters]);
 	}
 	const orFilters = {} as any;
 	if (searchFilter.value) {
@@ -228,7 +228,7 @@ const togglePageSelection = (page: BuilderPage) => {
 	}
 };
 
-watchDebounced([searchFilter, typeFilter, orderBy], fetchPages, {
+watchDebounced([searchFilter, statusFilter, orderBy], fetchPages, {
 	debounce: 300,
 	immediate: true,
 });

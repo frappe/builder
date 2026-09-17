@@ -98,6 +98,7 @@ declare module 'vue' {
     GlobalRedirects: typeof import('./src/components/Settings/GlobalRedirects.vue')['default']
     GlobalUsers: typeof import('./src/components/Settings/GlobalUsers.vue')['default']
     GradientEditor: typeof import('./src/components/Controls/GradientEditor.vue')['default']
+    ImageFocusInput: typeof import('./src/components/Controls/ImageFocusInput.vue')['default']
     ImageOptions: typeof import('./src/components/PropsOptions/ImageOptions.vue')['default']
     ImageUploader: typeof import('./src/components/Controls/ImageUploader.vue')['default']
     ImageUploadInput: typeof import('./src/components/ImageUploadInput.vue')['default']
@@ -134,6 +135,7 @@ declare module 'vue' {
     PageOptions: typeof import('./src/components/PageOptions.vue')['default']
     PageRobots: typeof import('./src/components/Settings/PageRobots.vue')['default']
     PageScript: typeof import('./src/components/PageScript.vue')['default']
+    PageStatusBadge: typeof import('./src/components/PageStatusBadge.vue')['default']
     PageTitlePopover: typeof import('./src/components/ToolbarItems/PageTitlePopover.vue')['default']
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']
@@ -177,6 +179,5 @@ declare module 'vue' {
     VersionHistory: typeof import('./src/components/VersionHistory.vue')['default']
     ViewerAvatars: typeof import('./src/components/ToolbarItems/ViewerAvatars.vue')['default']
     VisibilityInput: typeof import('./src/components/VisibilityInput.vue')['default']
-    WebPagePresetPicker: typeof import('./src/components/WebPagePresetPicker.vue')['default']
   }
 }

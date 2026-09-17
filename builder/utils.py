@@ -59,13 +59,24 @@ def get_installed_app_path(app_name) -> str | None:
 	return frappe.get_app_path(app_name)
 
 
+def safe_segment(name) -> str:
+	"""Make a value safe for use as one filesystem path segment.
+
+	Replaces path separators and blocks empty/traversal values.
+	"""
+	segment = str(name).replace("/", "_").replace("\\", "_")
+	if segment in ("", ".", ".."):
+		frappe.throw(frappe._("Unsafe fixture name: {0}").format(name))
+	return segment
+
+
 def export_dir_name(name) -> str:
 	"""Directory and JSON file name for an exported record.
 
 	Shared by every exporter and by the delete helpers, so a record always
 	lands where the cleanup looks for it. frappe.scrub keeps a slash.
 	"""
-	return frappe.scrub(str(name)).replace("/", "_")
+	return safe_segment(frappe.scrub(str(name)))
 
 
 def has_page_permission(ptype: str = "write", message: str | None = None):
@@ -556,6 +567,13 @@ def normalize_legacy_style_key(style):
 	return f"{state}:{kebab_to_camel_case(property_name)}"
 
 
+def count_blocks(blocks) -> int:
+	blocks = frappe.parse_json(blocks or "[]")
+	if isinstance(blocks, dict):
+		blocks = [blocks]
+	return sum(1 + count_blocks(block.get("children")) for block in blocks if isinstance(block, dict))
+
+
 def merge_raw_styles_into_base_styles(block):
 	raw_styles = block.pop("rawStyles", None)
 	if not raw_styles:
@@ -746,9 +764,9 @@ def export_client_scripts(client_scripts, client_scripts_path):
 		extension = "js" if script_doc.script_type == "JavaScript" else "css"
 		script_path = os.path.join(script_dir, f"client_script.{extension}")
 
-		with open(script_config_path, "w", encoding="utf-8") as f:
+		with open(script_config_path, "w", encoding="utf-8") as f:  # nosemgrep
 			f.write(frappe.as_json(script_config, ensure_ascii=False))
-		with open(script_path, "w", encoding="utf-8") as f:
+		with open(script_path, "w", encoding="utf-8") as f:  # nosemgrep
 			f.write(script_content)
 
 

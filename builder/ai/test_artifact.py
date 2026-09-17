@@ -1,8 +1,9 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent.artifact import brief_image_parts, image_url_resolves
+from builder.ai.agent.artifact import brief_image_parts, image_url_resolves, reference_geometry
 
 PUBLIC = "https://cdn.example.com/hero.png"
 PRIVATE = "https://internal.example.com/hero.png"
@@ -80,3 +81,19 @@ class TestBriefImageParts(FrappeTestCase):
 			parts = brief_image_parts(brief)
 
 		self.assertEqual(len(parts), 2)
+
+
+class TestReferenceGeometry(FrappeTestCase):
+	def test_no_reads_yields_nothing(self):
+		self.assertEqual(reference_geometry(SimpleNamespace(reference_reads=[])), "")
+
+	def test_single_read_stays_unlabelled(self):
+		out = reference_geometry(SimpleNamespace(reference_reads=["Page A: geometry"]))
+		self.assertIn("Page A: geometry", out)
+		self.assertNotIn("PRIMARY REFERENCE", out)
+
+	def test_first_read_is_primary_and_the_rest_secondary(self):
+		out = reference_geometry(SimpleNamespace(reference_reads=["Page A: geometry", "Page B: geometry"]))
+		self.assertLess(out.index("PRIMARY REFERENCE"), out.index("Page A: geometry"))
+		self.assertLess(out.index("SECONDARY REFERENCE"), out.index("Page B: geometry"))
+		self.assertEqual(out.count("PRIMARY REFERENCE"), 1)

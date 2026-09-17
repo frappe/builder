@@ -134,7 +134,7 @@
 				:placeholder="el.placeholder || ''"
 				:disabled="!interactive || disabled"
 				autocomplete="off"
-				@keydown.enter.prevent="submitCollected()" />
+				@keydown.enter.prevent="onInputEnter()" />
 
 			<!-- upload: the user's own image (logo, photo); URL rides the reply -->
 			<div v-else-if="el.kind === 'upload'" class="w-full">
@@ -313,6 +313,12 @@ const visibleElements = computed(() => {
 function goNext() {
 	if (isLastStep.value) return;
 	stepIndex.value += 1;
+}
+
+// Enter on a mid-card input answers THAT step, not the whole card.
+function onInputEnter() {
+	if (isStepped.value && !isLastStep.value) goNext();
+	else submitCollected();
 }
 
 function goBack() {

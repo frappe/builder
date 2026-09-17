@@ -42,6 +42,30 @@ def resolve_api_key(model: str | None = None) -> str:
 	return api_key
 
 
+def save_attached_image(data_url: str) -> str | None:
+	"""Persist a pasted image as a site file. The data URI only lives for the turn
+	it was sent on; the file URL is what later turns replay and briefs reference.
+	Private: it belongs to the chat (a mock may be confidential), and every reader —
+	replay, brief attachment, the chat thumbnail — goes through permissioned paths."""
+	try:
+		header, content = data_url.split(";base64,", 1)
+		ext = header.removeprefix("data:image/").split("+")[0] or "png"
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"ai-attachment-{frappe.generate_hash(length=10)}.{ext}",
+				"is_private": 1,
+				"folder": "Home/Builder Uploads",
+				"content": content,
+				"decode": True,
+			}
+		).insert(ignore_permissions=True)
+		return file.file_url
+	except Exception:
+		logger.warning("could not save the attached image as a file", exc_info=True)
+		return None
+
+
 @frappe.whitelist()
 @has_page_write()
 def run(
@@ -61,18 +85,25 @@ def run(
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	# Append the user turn + guard concurrency for an established session. The worker
-	# takes the atomic run lock; this check just gives a fast 429 instead of a queued
-	# rejection.
-	if session_id:
-		if AISession.is_session_running(session_id):
-			frappe.local.response.http_status_code = 429
-			return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
+	# Guard concurrency for an established session first — nothing may persist on the
+	# busy path. The worker takes the atomic run lock; this check just gives a fast
+	# 429 instead of a queued rejection.
+	if session_id and AISession.is_session_running(session_id):
+		frappe.local.response.http_status_code = 429
+		return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+
+	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
+	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
+	image_file_url = save_attached_image(image_url) if image_url else None
+
+	# Append the user turn for an established session.
+	if session_id:
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
 		if image_data:
-			msg_meta["attachedImageUrl"] = image_data
+			msg_meta["attachedImageUrl"] = image_file_url or image_data
 		# A card-composed reply (option tap, form submit) shows as this compact line
 		# in the chat; the full labelled text stays the message content for the model.
 		if display_text:
@@ -84,12 +115,11 @@ def run(
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
 	if image_data and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(
-			_("{0} can't view images — pick a vision-capable model or remove the image").format(
+			_("{0} can't view images. Pick a vision-capable model or remove the image.").format(
 				resolved_model
 			)
 		)
 	api_key = resolve_api_key(resolved_model)
-	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
@@ -108,9 +138,38 @@ def run(
 		enqueue_after_commit=True,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
+		image_file_url=image_file_url,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
+
+
+IMPROVE_PROMPT_INSTRUCTION = """You rewrite a user's draft prompt for a website-builder AI into a sharper version of ITSELF.
+Preserve every stated fact, constraint, language and the request's SCOPE: a small edit request stays a small edit request, only made clearer; a vague page or section request gains concrete specifics (purpose, audience, section list, tone, style direction).
+Write it as the user speaking, plain text, no headings or bullets unless the draft had them, under 120 words. Do not use em dashes. Output ONLY the rewritten prompt."""
+
+
+@frappe.whitelist()
+def improve_prompt(prompt: str, model: str | None = None) -> str:
+	"""One cheap completion that sharpens the composer draft in place — the user
+	reviews and edits the result before sending it."""
+	from builder.ai import llm
+
+	prompt = (prompt or "").strip()
+	if not prompt:
+		frappe.throw(_("Type a prompt first"))
+	resolved_model = ModelRegistry.get_default(model or "openrouter")
+	text = llm.complete(
+		resolved_model,
+		[
+			{"role": "system", "content": IMPROVE_PROMPT_INSTRUCTION},
+			{"role": "user", "content": prompt},
+		],
+		llm.TASK_PARAMS["simple"],
+		stream=False,
+		api_key=resolve_api_key(resolved_model),
+	)
+	return (text or "").strip()
 
 
 def ensure_session_owner(session_id: str) -> None:
@@ -142,7 +201,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
-		outcome = "Skipped — nothing was changed."
+		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
 		resumed = resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}

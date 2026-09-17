@@ -37,20 +37,41 @@ def set_page_settings(ctx, args: dict) -> str:
 		route = args["route"].strip().strip("/")
 		taken = frappe.db.get_value("Builder Page", {"route": route, "name": ("!=", ctx.page_id)})
 		if taken:
-			return f"FAILED: route '/{route}' is already used by page {taken} — pick another."
+			return (
+				f"FAILED: route '/{route}' is already used by page {taken} — read the site's "
+				"routes (query_records 'Builder Page') and fit this page into the hierarchy "
+				"instead of overwriting one."
+			)
 		updates["route"] = route
 	if not updates:
 		return "No recognised settings to update."
+	note = ""
 	if "route" in updates:
 		# A route change must run the doc lifecycle (dynamic-route detection,
 		# website cache clear) or the new URL won't resolve until a manual clear.
 		doc = frappe.get_doc("Builder Page", ctx.page_id)
 		doc.update(updates)
 		doc.save()
+		note = dynamic_route_note(doc)
 	else:
 		frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	emit_refetch(ctx, "page")
-	return f"Updated page settings: {', '.join(updates)}."
+	return f"Updated page settings: {', '.join(updates)}.{note}"
+
+
+def dynamic_route_note(doc) -> str:
+	"""Teach the param mechanism at the moment it becomes relevant — the follow-up
+	data script is written blind otherwise."""
+	if not doc.dynamic_route:
+		return ""
+	params = [a or b for a, b in re.findall(r"<(\w+)>|:(\w+)", doc.route)]
+	if not params:
+		return ""
+	return (
+		f" The route is DYNAMIC — {', '.join(params)} arrive(s) in the page data script as "
+		f"frappe.form_dict.{params[0]}; load the record from it there (write_page_data_script) "
+		"and bind the blocks to the keys you set."
+	)
 
 
 def emit_refetch(ctx, *resources: str) -> None:
@@ -148,7 +169,12 @@ set_page_settings_tool = Tool(
 			"page_title": {"type": "string"},
 			"route": {
 				"type": "string",
-				"description": "The page's URL path, e.g. 'bakery' or 'menu/drinks' (no leading slash needed).",
+				"description": (
+					"The page's URL path, e.g. 'bakery' or 'menu/drinks' (no leading slash needed). "
+					"A DYNAMIC route takes params in angle brackets — 'partners/<partner_id>' serves "
+					"/partners/acme with frappe.form_dict.partner_id = 'acme' available to the page "
+					"data script. Fit new routes into the site's existing hierarchy."
+				),
 			},
 			"meta_description": {"type": "string"},
 			"meta_image": {"type": "string"},

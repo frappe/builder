@@ -3,33 +3,45 @@
 		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
 			<div class="flex min-w-0 flex-col gap-1">
 				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<div class="truncate text-p-xs leading-4 text-ink-gray-5">
+				<!-- min-h holds the row while the title is still blank -->
+				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
 			</div>
 			<div v-if="builderStore.isAIEnabled" class="flex shrink-0 items-center gap-1">
-				<Tooltip text="New chat">
-					<Button variant="ghost" size="sm" icon="lucide-plus" :disabled="isSubmitting" @click="newSession" />
-				</Tooltip>
-				<!-- Button sits directly in the Dropdown slot: a Tooltip wrapper breaks
-				     the as-child trigger wiring (frappe-ui slot API). -->
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-plus"
+					tooltip="New chat"
+					:disabled="isSubmitting"
+					@click="newSession" />
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
-					<Button variant="ghost" size="sm" icon="lucide-history" title="Chats on this page" />
+					<Button variant="ghost" size="sm" icon="lucide-history" tooltip="Chats on this page" />
 				</Dropdown>
-				<Tooltip text="AI settings">
-					<Button
-						variant="ghost"
-						size="sm"
-						icon="lucide-settings-2"
-						@click="builderStore.openBuilderSettings('global_ai')" />
-				</Tooltip>
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-settings-2"
+					tooltip="AI settings"
+					@click="builderStore.openBuilderSettings('global_ai')" />
 			</div>
+		</div>
+
+		<!-- one element spans both waits (setup verdict + session load) so the
+		     shimmer never blinks; the delayed fade keeps fast loads flash-free -->
+		<div
+			v-if="!builderStore.isAIStateKnown || (isLoadingSession && !messages.length)"
+			class="flex flex-1 items-center justify-center pb-40">
+			<span class="bob-pill-in" style="animation-delay: 300ms">
+				<span class="animate-shine text-p-xs">Loading</span>
+			</span>
 		</div>
 
 		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
 		     full-height panel leaves it stranded low with nothing beneath it. -->
 		<div
-			v-if="!builderStore.isAIEnabled"
+			v-else-if="!builderStore.isAIEnabled"
 			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
@@ -59,7 +71,7 @@
 							<SparklesIcon class="bob-orb-spark relative z-10 size-7 text-ink-gray-8" />
 						</span>
 						<p class="text-sm font-medium text-ink-gray-8">
-							{{ pageHasContent ? "Describe a change" : "Describe your site" }}
+							{{ pageHasContent ? "What should we change?" : "Tell me what you're building" }}
 						</p>
 						<p class="text-p-xs text-ink-gray-5">Try one of these, or type your own below</p>
 					</div>
@@ -97,16 +109,27 @@
 							<AITurnTimeline
 								v-if="message.metadata?.steps?.length"
 								:steps="message.metadata.steps"
+								:working="stillWorking(message) && !assistantText(message)"
 								class="mb-2" />
 							<div
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
-							<!-- Turn running, nothing on the clock: the model is streaming a tool
-							     call's arguments (a page-sized edit takes a while) or opening the
-							     next round. Sits below the answer so it reads as the turn's own
-							     status, never as the reply shimmering while it's being read. -->
-							<div v-if="stillWorking(message)" class="animate-shine mt-1 w-fit text-p-xs">Working</div>
+							<!-- Turn running, nothing on the clock. Between rounds the shimmer is
+							     the timeline's own tail row (same geometry as the steps, so the
+							     next step replaces it in place, no layout shift); this standalone
+							     line covers only what the timeline can't — the answer already
+							     streaming (it sits below the reply as the turn's status, never the
+							     reply shimmering while it's read) or no steps yet. -->
+							<!-- mt-1 only under a streamed reply: standing alone it must sit exactly
+							     where the timeline's first row lands, or the label jumps 4px the
+							     moment "Working" becomes "Thinking". -->
+							<div
+								v-if="stillWorking(message) && (!!assistantText(message) || !message.metadata?.steps?.length)"
+								class="animate-shine w-fit text-p-xs text-ink-gray-5"
+								:class="assistantText(message) && 'mt-1'">
+								Working
+							</div>
 						</template>
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
@@ -130,51 +153,57 @@
 								@select-block="selectBlockById"
 								@open-script="openScriptByName" />
 
-							<button
-								v-if="message.metadata?.revertSnapshot"
-								class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
-								title="Revert the page to before this AI edit"
-								@click="revertTurn(message)">
-								<span class="lucide-rotate-ccw size-3" />
-								Revert
-							</button>
+							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
+								<button
+									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+									@click="revertTurn(message)">
+									<span class="lucide-rotate-ccw size-3" />
+									Revert
+								</button>
+							</Tooltip>
 							<!-- Time taken + debugger trigger (full breakdown lives in the debug panel) -->
 							<template v-if="message.metadata?.debug">
 								<div class="ml-auto flex items-center gap-2">
-									<span v-if="message.metadata.debug.elapsedMs" class="font-mono">
+									<span v-if="message.metadata.debug.elapsedMs">
 										took {{ formatDuration(message.metadata.debug.elapsedMs) }}
 									</span>
-									<button
-										class="inline-flex items-center transition-colors"
-										:class="
-											debugHasSignal(message.metadata.debug)
-												? 'text-ink-amber-8 hover:text-ink-amber-7'
-												: 'text-ink-gray-4 hover:text-ink-gray-7'
-										"
-										title="Inspect this turn (rounds, tools, tokens, why it stopped)"
-										@click="openDebug(message.metadata.debug)">
-										<span class="lucide-activity size-2.5" />
-									</button>
+									<Tooltip text="Inspect this turn (rounds, tools, tokens, why it stopped)">
+										<button
+											class="inline-flex items-center transition-colors"
+											:class="
+												debugHasSignal(message.metadata.debug)
+													? 'text-ink-amber-8 hover:text-ink-amber-7'
+													: 'text-ink-gray-4 hover:text-ink-gray-7'
+											"
+											@click="openDebug(message.metadata.debug)">
+											<span class="lucide-activity size-2.5" />
+										</button>
+									</Tooltip>
 								</div>
 							</template>
 						</div>
-						<!-- Sensitive action — needs the user's OK -->
+						<!-- Sensitive action — needs the user's OK. Calm neutral surface with a
+						     small amber eyebrow: the QUESTION is the content, and it appears once
+						     (the model-facing summary text is suppressed above), so the card
+						     reads as a decision, not an alarm. -->
 						<div
 							v-if="message.metadata?.status === 'pending_action'"
-							class="mt-2 w-full rounded-lg border border-outline-amber-2 bg-surface-amber-1 p-3">
-							<p class="text-p-sm font-medium text-ink-gray-8">Needs your OK</p>
-							<p class="mt-0.5 text-xs leading-snug text-ink-gray-6">
+							class="mt-2 w-full rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+							<p class="text-p-xs font-medium text-ink-amber-8">Needs your OK</p>
+							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
 							</p>
 							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
 								<Button
 									variant="solid"
+									size="sm"
 									:loading="confirmingAction"
 									@click="confirmPendingAction(message, 'apply')">
-									Apply
+									{{ applyLabel(message.metadata?.kind) }}
 								</Button>
 								<Button
 									variant="subtle"
+									size="sm"
 									:disabled="confirmingAction"
 									@click="confirmPendingAction(message, 'skip')">
 									Skip
@@ -228,14 +257,41 @@
 			</div>
 
 			<div class="border-t border-outline-gray-1 p-4">
-				<div v-if="selectedBlocks.length" class="mb-2 flex flex-wrap items-center gap-1.5">
-					<span class="text-xs text-ink-gray-5">Selections:</span>
+				<!-- Canvas selection alone sends nothing; attaching is the explicit act
+				     that scopes the request. -->
+				<div
+					v-if="attachedBlocks.length || attachableBlocks.length"
+					class="mb-2 flex flex-wrap items-center gap-1.5">
+					<span v-if="attachedBlocks.length" class="text-xs text-ink-gray-5">Context:</span>
 					<span
-						v-for="block in selectedBlocks"
-						:key="block.blockId"
+						v-for="block in attachedBlocks"
+						:key="block.id"
 						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-						<span class="block max-w-[8rem] truncate">{{ block.getBlockDescription() }}</span>
+						<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
+						<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
+						<Tooltip text="Remove from context">
+							<button
+								type="button"
+								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+								@click="chat.detachBlock(block.id)">
+								<span class="lucide-x h-3 w-3" />
+							</button>
+						</Tooltip>
 					</span>
+					<button
+						v-if="attachableBlocks.length"
+						type="button"
+						class="inline-flex items-center gap-1 rounded border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
+						@click="chat.attachSelection()">
+						<span class="lucide-plus h-3 w-3" />
+						<span class="block max-w-[10rem] truncate">
+							{{
+								attachableBlocks.length === 1
+									? attachableBlocks[0].getBlockDescription()
+									: `${attachableBlocks.length} selected blocks`
+							}}
+						</span>
+					</button>
 				</div>
 				<Transition name="fade">
 					<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
@@ -243,13 +299,14 @@
 							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
 							<img :src="imagePreviewUrl" class="h-3 w-3 rounded object-cover" alt="" />
 							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
-							<button
-								type="button"
-								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-								title="Remove image"
-								@click="clearImage">
-								<span class="lucide-x h-3 w-3" />
-							</button>
+							<Tooltip text="Remove image">
+								<button
+									type="button"
+									class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+									@click="clearImage">
+									<span class="lucide-x h-3 w-3" />
+								</button>
+							</Tooltip>
 						</span>
 					</div>
 				</Transition>
@@ -279,9 +336,9 @@
 						ref="promptInput"
 						v-model="prompt"
 						rows="1"
-						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
-						placeholder="Ask to create or edit this page..."
+						placeholder="Ask to create or edit this page…"
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
 					<Transition name="fade">
@@ -293,7 +350,7 @@
 							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 								<span class="lucide-image h-3.5 w-3.5" />
-								Drop image to attach
+								{{ __("Drop image to attach") }}
 							</div>
 						</div>
 					</Transition>
@@ -314,33 +371,22 @@
 								<span class="truncate text-xs">{{ modelLabel }}</span>
 							</button>
 						</Dropdown>
-						<Popover v-if="!messages.length" placement="top-start" :offset="6">
-							<template #target="{ togglePopover }">
-								<Tooltip :text="selectedPreset ? selectedPreset.name : 'Style Preset'" placement="top">
-									<button
-										class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
-										:class="{ 'bg-surface-gray-2 text-ink-gray-8': selectedPreset }"
-										@click="togglePopover">
-										<span class="lucide-layout size-3.5" />
-									</button>
-								</Tooltip>
-							</template>
-							<template #body>
-								<!-- Sized to the panel, not past it: w-96 overhung the chat panel and
-								     spilled over the canvas. -->
-								<div
-									class="w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-lg">
-									<WebPagePresetPicker v-model="selectedPreset" />
-								</div>
-							</template>
-						</Popover>
+						<Tooltip text="Improve prompt" placement="top">
+							<button
+								class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
+								:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
+								@click="chat.improvePrompt">
+								<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />
+								<span v-else class="lucide-wand-sparkles size-3.5" />
+							</button>
+						</Tooltip>
 					</div>
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
 						icon="lucide-square"
 						:loading="isCancelling"
-						:title="isCancelling ? 'Cancelling…' : 'Cancel generation'"
+						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
 					<Button
 						v-else
@@ -368,7 +414,6 @@ import { AIChatController, type ChatMessage } from "@/components/AIChatControlle
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
-import WebPagePresetPicker from "@/components/WebPagePresetPicker.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep } from "@/components/ai/types";
@@ -380,13 +425,16 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
-const { sessions, sessionId, switchSession, newSession, deleteSession } = chat;
+const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
 
 const currentSessionTitle = computed(() => {
+	// blank until loaded, not "New chat" flipping to the real title
+	if (!sessionId.value || !sessions.value.length) return "";
 	const current = sessions.value.find((s) => s.name === sessionId.value);
 	return current?.title || "New chat";
 });
@@ -427,7 +475,7 @@ const sessionOptions = computed(() => {
 	];
 });
 const { selectBlockById, openScriptByName } = chat;
-const { selectedBlocks } = chat;
+const { attachedBlocks, attachableBlocks } = chat;
 const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 
@@ -442,25 +490,46 @@ async function confirmPendingAction(message: ChatMessage, decision: "apply" | "s
 }
 
 /** Short human summary of a proposed sensitive action, shown on its confirm card. */
+/** The fields as the user would name them ("Name, Email, Message") — the card
+ * must say what gets stored, not count fields in engineering vocabulary. */
+function fieldNames(fields: any[]): string {
+	return (fields || [])
+		.map((f) => f?.label || f?.fieldname)
+		.filter(Boolean)
+		.join(", ");
+}
+
 function pendingPreview(m: Record<string, any>): string {
 	const p = m.payload || {};
+	const fields = fieldNames(p.fields);
 	switch (m.kind) {
 		case "create_doctype":
-			return `Create a new DocType “${p.name}” with ${(p.fields || []).length} field(s).`;
+			return `Create “${p.name}” to store this page's data${fields ? ` (${fields})` : ""}.`;
 		case "connect_form":
-			return `Save this form's submissions to a new “${p.doctype_name}” DocType (${
-				(p.fields || []).length
-			} field(s)). You'll see entries in Desk.`;
-		case "seed_sample_data":
-			return `Insert ${(p.rows || []).length} sample record(s) into “${p.doctype}”.`;
+			return `Save this form's submissions as “${p.doctype_name}” records${fields ? ` (${fields})` : ""}.`;
+		case "seed_sample_data": {
+			const n = (p.rows || []).length;
+			return `Add ${n} sample ${n === 1 ? "record" : "records"} to “${p.doctype}”.`;
+		}
 		case "global_settings":
-			return `Update site-wide settings (${Object.keys(p).join(", ")}). These load on every page.`;
+			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
 		case "home_page":
-			return `Set the site home page to “${p.route}”.`;
+			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
 		default:
 			return "Confirm this change?";
 	}
 }
+
+/** The apply button names the action it performs; a bare "Apply" makes the user
+ * re-read the card to know what they're agreeing to. */
+const APPLY_LABELS: Record<string, string> = {
+	create_doctype: "Create it",
+	connect_form: "Connect form",
+	seed_sample_data: "Add records",
+	home_page: "Set home page",
+	global_settings: "Apply",
+};
+const applyLabel = (kind?: string) => APPLY_LABELS[kind || ""] || "Apply";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -468,8 +537,11 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 
 /** The answer itself, without the timeline that led to it. A card message persists
  * its whole card as text so the model sees it on replay — the chat shows only the
- * lead-in and lets AIUISpec draw the rest. */
+ * lead-in and lets AIUISpec draw the rest. A pending-action message's content is
+ * the model-facing summary, and the card already asks the question in human terms;
+ * rendering both put the same ask on screen twice, once in jargon. */
 function assistantText(message: ChatMessage): string {
+	if (message.metadata?.status === "pending_action") return "";
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
 }
 
@@ -645,12 +717,10 @@ function openDebug(debug: Record<string, any>) {
 function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
-		debug.noopCorrected ||
-			(debug.argsRepaired ?? 0) > 0 ||
+		(debug.argsRepaired ?? 0) > 0 ||
 			(debug.toolFailures?.length ?? 0) > 0 ||
 			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds" ||
-			debug.stopReason === "noop_unbacked",
+			debug.stopReason === "max_rounds",
 	);
 }
 
@@ -665,20 +735,7 @@ function formatDuration(ms: number): string {
 	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
 }
 
-const selectedPreset = ref<{
-	id: string;
-	name: string;
-	category: string;
-	description: string;
-	icon: string;
-} | null>(null);
-
 const submitPrompt = () => {
-	if (selectedPreset.value) {
-		// Pass preset as a structured system-level parameter, not appended user text
-		chat.pendingStylePreset = `${selectedPreset.value.name}: ${selectedPreset.value.description}`;
-		selectedPreset.value = null;
-	}
 	chat.submitPrompt();
 };
 
@@ -697,6 +754,14 @@ onMounted(() => {
 	// is actually usable rather than inferring it from Builder Settings alone.
 	builderStore.refreshAIState();
 });
+
+// the chat usually loads behind the closed tab, where the scroll can't land
+watch(
+	() => builderStore.leftPanelActiveTab,
+	(tab) => {
+		if (tab === "Chat") chat.flushPendingScroll();
+	},
+);
 
 // Providers and models are configured in Settings, so the picker is stale the
 // moment that dialog closes. Refetch then rather than making every screen in
@@ -752,6 +817,11 @@ function toggleChips(messageId: string) {
 	--tw-prose-headings: var(--ink-gray-9);
 	--tw-prose-bold: var(--ink-gray-9);
 	--tw-prose-code: var(--ink-gray-8);
+	/* Code blocks: typography's pre defaults are fixed light-theme colors, so on
+	 * the dark panel a route tree rendered as barely-visible dark-on-dark. Pin
+	 * BOTH sides of the pair to theme-adaptive tokens (they flip together). */
+	--tw-prose-pre-code: var(--ink-gray-8);
+	--tw-prose-pre-bg: var(--surface-gray-2);
 	--tw-prose-links: var(--ink-gray-9);
 	--tw-prose-bullets: var(--ink-gray-4);
 	--tw-prose-hr: var(--outline-gray-1);

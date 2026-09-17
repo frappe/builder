@@ -1,11 +1,11 @@
 import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { dialog, FileUploadHandler, toast } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
-import { __ } from "@/translation";
 import {
 	addPxToNumber,
 	extractNumberAndUnit,
@@ -69,6 +69,16 @@ function getTextContent(html: string | null) {
 
 function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
+}
+
+/** Escape a value for safe use in an HTML string.*/
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
 function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
@@ -382,6 +392,42 @@ async function uploadBuilderAsset(file: File, silent = false) {
 		fileURL: fileDoc.file_url,
 		fileName: fileDoc.file_name,
 	};
+}
+
+function countBlocks(blocks: BlockOptions | BlockOptions[]): number {
+	const list = Array.isArray(blocks) ? blocks : [blocks];
+	return list.reduce((count, block) => count + 1 + countBlocks(block.children || []), 0);
+}
+
+const MAX_INLINE_SVG_SIZE = 20 * 1024;
+
+// a token-painted SVG has to stay inline: an <img> cannot read CSS variables
+function isOversizedSVG(svg: string) {
+	return svg.length > MAX_INLINE_SVG_SIZE && !svg.includes("var(--") && !svg.includes("currentColor");
+}
+
+async function uploadSVGAsFile(svg: string) {
+	const file = new File([svg], `${generateId()}.svg`, { type: "image/svg+xml" });
+	return uploadBuilderAsset(file);
+}
+
+async function convertSVGBlockToImage(block: Block) {
+	const svg = block.getInnerHTML() || "";
+	const { fileURL } = await uploadSVGAsFile(svg);
+	if (!fileURL) return;
+
+	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
+	const width = source?.getAttribute("width");
+	const height = source?.getAttribute("height");
+	if (width && !block.baseStyles?.width) block.setStyle("width", addPxToNumber(parseInt(width)));
+	if (height && !block.baseStyles?.height) block.setStyle("height", addPxToNumber(parseInt(height)));
+	// an inline <svg> letterboxes in its box, an <img> stretches
+	if (!block.baseStyles?.objectFit) block.setStyle("objectFit", "contain");
+
+	block.element = "img";
+	if (block.originalElement === "__raw_html__") block.originalElement = undefined;
+	block.setInnerHTML("");
+	block.setAttribute("src", fileURL);
 }
 
 // Naming every data URL image.png makes the server read an SVG or a GIF as a PNG,
@@ -939,10 +985,16 @@ export {
 	alert,
 	confirm,
 	copyToClipboard,
+	convertSVGBlockToImage,
+	countBlocks,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
+	deepEqual,
 	detachBlockFromComponent,
+	diffArray,
+	escapeHtml,
+	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
@@ -967,7 +1019,6 @@ export {
 	getRouteVariables,
 	getSpacing,
 	getStandardPropValue,
-	extractComponentId,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,
@@ -979,6 +1030,7 @@ export {
 	isHTMLString,
 	isInteractiveControl,
 	isJSONString,
+	isOversizedSVG,
 	isTargetEditable,
 	kebabToCamelCase,
 	mapToObject,
@@ -986,6 +1038,7 @@ export {
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
+	parseJSONWithFallback,
 	removeDefaultUnit,
 	replaceMapKey,
 	setSpacing,
@@ -998,8 +1051,6 @@ export {
 	toTitleCase,
 	triggerCopyEvent,
 	uploadBuilderAsset,
+	uploadSVGAsFile,
 	uploadUserFont,
-	parseJSONWithFallback,
-	deepEqual,
-	diffArray,
 };

@@ -314,8 +314,10 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	return image_url
 
 
-def assert_not_private_url(url: str) -> None:
-	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard)."""
+def assert_not_private_url(url: str) -> list[str]:
+	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard).
+	Returns the addresses it validated so a caller can PIN its connection to one — a
+	second DNS resolution at connect time can answer differently (DNS rebinding)."""
 	parsed = urlparse(url)
 	if parsed.scheme not in ("http", "https"):
 		frappe.throw(_("Only HTTP/HTTPS URLs are allowed for external images."), frappe.PermissionError)
@@ -326,12 +328,15 @@ def assert_not_private_url(url: str) -> None:
 		addr_infos = socket.getaddrinfo(hostname, None)
 	except socket.gaierror:
 		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
+	ips = []
 	for addr_info in addr_infos:
 		ip = ipaddress.ip_address(addr_info[4][0])
 		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
 			frappe.throw(
 				_("Requests to private or internal addresses are not allowed."), frappe.PermissionError
 			)
+		ips.append(str(ip))
+	return ips
 
 
 def check_app_permission():
@@ -434,7 +439,10 @@ def duplicate_page(page_name: str):
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
 	new_page.route = None
+	new_page.is_standard = 0
+	new_page.app = None
 	clone_client_scripts(page, new_page)
+	new_page.flags.source = "duplicate"
 	new_page.insert()
 	return new_page
 
@@ -478,7 +486,9 @@ def get_template_groups() -> list[dict]:
 		return []
 
 
-def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> str:
+def create_page_from_bundle(
+	bundle: dict, project_folder: str | None = None, template_page: str | None = None
+) -> str:
 	"""Create an editable page from a fetched hub bundle and return its name.
 
 	Installs shared components/variables/scripts/fonts, then builds the page
@@ -520,6 +530,8 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 		)
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+	new_page.flags.source = "template"
+	new_page.flags.template_page = template_page
 	new_page.insert()
 	# only fall back to async generation when the template carried no preview
 	if not preview:
@@ -546,7 +558,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		frappe.throw(frappe._("Could not load the selected template. Please try again."))
 
 	assert isinstance(bundle, dict)
-	return create_page_from_bundle(bundle, project_folder)
+	return create_page_from_bundle(bundle, project_folder, template_page)
 
 
 @frappe.whitelist()
@@ -571,7 +583,7 @@ def import_template_group(template_group: str, project_folder: str | None = None
 			continue
 		if not bundle or not bundle.get("page"):
 			continue
-		name = create_page_from_bundle(bundle, project_folder)
+		name = create_page_from_bundle(bundle, project_folder, page.get("name"))
 		created.append(name)
 
 	if not created:
@@ -757,3 +769,17 @@ def get_component_data(
 	)
 
 	return _get_component_data(component_name, props, script)
+
+
+@frappe.whitelist()
+@has_page_read("You do not have permission to submit the survey.")
+def identify_persona(role: str | None = None, use_case: str | None = None, source: str | None = None) -> None:
+	"""Attach the onboarding answers to the site's Pulse profile so every Builder
+	metric can be split by persona without joining events."""
+	if not any((role, use_case, source)):
+		return
+	try:
+		from frappe.utils.telemetry.pulse.client import identify
+	except ImportError:  # pulse identify shipped with frappe v16
+		return
+	identify({"builder_role": role, "builder_use_case": use_case, "builder_source": source})

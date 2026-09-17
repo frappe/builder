@@ -14,6 +14,7 @@ class AISession:
 	DOCTYPE = "Builder AI Session"
 	MESSAGE_DOCTYPE = "Builder AI Message"
 	CONTEXT_WINDOW = 10  # how many prior turns to feed back to the model
+	IMAGE_REPLAY_LIMIT = 2  # newest attached images re-shown to a vision model
 
 	def __init__(self, doc):
 		self._doc = doc
@@ -97,10 +98,12 @@ class AISession:
 		return None
 
 	@classmethod
-	def build_context_messages_from_id(cls, session_id: str | None) -> list[dict]:
+	def build_context_messages_from_id(
+		cls, session_id: str | None, include_images: bool = False
+	) -> list[dict]:
 		if not session_id or not frappe.db.exists(cls.DOCTYPE, session_id):
 			return []
-		return cls(frappe.get_doc(cls.DOCTYPE, session_id)).build_context_messages()
+		return cls(frappe.get_doc(cls.DOCTYPE, session_id)).build_context_messages(include_images)
 
 	# --- properties -------------------------------------------------------
 
@@ -175,13 +178,17 @@ class AISession:
 		)
 		return [self.row_to_message(r) for r in rows]
 
-	def build_context_messages(self) -> list[dict]:
+	def build_context_messages(self, include_images: bool = False) -> list[dict]:
 		"""Return the last N prior turns as proper role-tagged messages.
 
 		Excludes the current-turn user message (the agent loop appends a fresh
 		one) and transient chatter (running/error/cancelled turns). Durable
 		status notes — e.g. the outcome of a confirmed action — stay in, so the
-		model knows on later turns what was actually applied."""
+		model knows on later turns what was actually applied.
+
+		With include_images (vision consumers only), the newest attached images
+		ride their user turns again: a reference design pasted turns ago must
+		stay visible to the model — the message text alone loses it."""
 		# Fetch one extra (the current user message) and drop it.
 		rows = frappe.db.get_all(
 			self.MESSAGE_DOCTYPE,
@@ -192,8 +199,9 @@ class AISession:
 		)
 		# Skip the most recent row (current user msg) and reverse to chrono order.
 		history = list(reversed(rows[1:])) if rows else []
+		replay_images = self.image_rows_to_replay(history) if include_images else set()
 		out: list[dict] = []
-		for r in history:
+		for i, r in enumerate(history):
 			content = (r.get("content") or "").strip()
 			role = r.get("role")
 			if not content or role not in ("user", "assistant"):
@@ -208,8 +216,39 @@ class AISession:
 			# generator see what was proposed and approved.
 			if role == "assistant" and r.get("status") == "plan_summary":
 				content = self.plan_context_content(content, r.get("metadata_json"))
+			if i in replay_images and (image := self.replay_image_part(r)):
+				out.append({"role": role, "content": [{"type": "text", "text": content}, image]})
+				continue
 			out.append({"role": role, "content": content})
 		return out
+
+	def image_rows_to_replay(self, history: list[dict]) -> set[int]:
+		"""Indices of the newest user turns whose attachment should be re-shown,
+		bounded so a long session doesn't resend its whole image history."""
+		picked: set[int] = set()
+		for i in range(len(history) - 1, -1, -1):
+			row = history[i]
+			if row.get("role") != "user":
+				continue
+			if self.load_metadata(row.get("metadata_json")).get("attachedImageUrl"):
+				picked.add(i)
+				if len(picked) >= self.IMAGE_REPLAY_LIMIT:
+					break
+		return picked
+
+	def replay_image_part(self, row: dict) -> dict | None:
+		"""The stored attachment as a provider image part. A /files/ path is inlined
+		as a data URL (the provider can't fetch this host); a legacy data URI, from
+		before attachments were saved as files, rides as-is."""
+		url = self.load_metadata(row.get("metadata_json")).get("attachedImageUrl") or ""
+		if url.startswith("data:image/"):
+			return {"type": "image_url", "image_url": {"url": url}}
+		if url.startswith(("/files/", "/private/files/")):
+			from builder.ai.agent.artifact import read_site_image
+
+			if data_url := read_site_image(url):
+				return {"type": "image_url", "image_url": {"url": data_url}}
+		return None
 
 	@staticmethod
 	def plan_context_content(headline: str, metadata_json: str | None) -> str:
