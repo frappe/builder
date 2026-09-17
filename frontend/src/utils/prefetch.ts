@@ -6,6 +6,8 @@ import type { TemplateGroup } from "@/types/template";
 
 // kept referenced so the browser holds them in memory; the picker's cards then paint on open
 const warmedThumbnails = new Map<string, HTMLImageElement>();
+// the catalog has ~100 thumbnails; the cap only bites if it changes during a long session
+const MAX_WARMED_THUMBNAILS = 150;
 
 export function prefetchBuilderSettings() {
 	whenIdle(() => {
@@ -19,7 +21,11 @@ export function prefetchBuilderSettings() {
 export function prefetchTemplateGallery() {
 	whenIdle(async () => {
 		if (!templateGroups.fetched && !templateGroups.loading) {
-			await templateGroups.fetch();
+			try {
+				await templateGroups.fetch();
+			} catch {
+				// background warm-up; a failed fetch keeps the cached catalog, so warm that
+			}
 		}
 		const groups: TemplateGroup[] = templateGroups.data || [];
 		prefetchThumbnails(groups);
@@ -39,6 +45,11 @@ export function prefetchThumbnails(items: { thumbnail?: string }[]) {
 		image.src = thumbnail;
 		image.decode().catch(() => warmedThumbnails.delete(thumbnail));
 		warmedThumbnails.set(thumbnail, image);
+		if (warmedThumbnails.size > MAX_WARMED_THUMBNAILS) {
+			// a Map iterates in insertion order, so the first key is the oldest
+			const [oldest] = warmedThumbnails.keys();
+			warmedThumbnails.delete(oldest);
+		}
 	}
 }
 
