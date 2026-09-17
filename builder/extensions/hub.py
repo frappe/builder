@@ -158,26 +158,10 @@ def read_release(name: str, release: dict) -> Release:
 	return release
 
 
-def http() -> requests.Session:
-	"""A client that ignores the environment.
-
-	`trust_env=False` skips proxy autodetection, which on macOS reads the system
-	config through Objective-C and aborts a forked RQ worker. It also drops
-	`.netrc` and CA-bundle overrides, none of which a Hub call should use.
-	"""
-	session = requests.Session()
-	session.trust_env = False
-	session.headers["User-Agent"] = "FrappeBuilder/1.0"
-	return session
-
-
 def hub_get(hub_url: str, method: str, params: dict) -> dict:
 	"""One GET to a Builder Hub API method. Answers with its `message` payload."""
 	try:
-		with http() as client:
-			response = client.get(
-				f"{hub_url}/{HUB_API}.{method}", params=params, timeout=HUB_TIMEOUT
-			)
+		response = requests.get(f"{hub_url}/{HUB_API}.{method}", params=params, timeout=HUB_TIMEOUT)
 	except requests.RequestException:
 		frappe.throw(_("Could not reach the Builder Hub at {0}.").format(hub_url))
 
@@ -212,9 +196,7 @@ def download_package(release: Release) -> bytes:
 	address-checked yet, for the same reason `resolve_hub_url` is not.
 	"""
 	try:
-		with http() as client, client.get(
-			release.package_url, timeout=PACKAGE_TIMEOUT, stream=True
-		) as response:
+		with requests.get(release.package_url, timeout=PACKAGE_TIMEOUT, stream=True) as response:
 			if not response.ok:
 				frappe.throw(_("The package download failed ({0}).").format(response.status_code))
 			package_bytes = read_capped(response, release.package_size)
