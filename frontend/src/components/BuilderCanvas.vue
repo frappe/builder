@@ -214,6 +214,7 @@ const {
 	selectedBlockIds,
 	isSelected,
 	selectBlock,
+	removeNestedBlocks,
 	toggleBlockSelection,
 	selectedBlocks,
 } = useBlockSelection(block);
@@ -279,7 +280,9 @@ const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMar
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
+		selectedBlocks,
 		findBlock,
+		removeNestedBlocks,
 		setActiveBreakpoint,
 		setHoveredBreakpoint,
 	});
