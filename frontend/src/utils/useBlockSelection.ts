@@ -19,8 +19,22 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 		return selectedBlockIds.value.has(block.blockId);
 	};
 
+	function removeSelectedDescendants(block: Block) {
+		for (const selectedBlock of selectedBlocks.value) {
+			let parentBlock = selectedBlock.getParentBlock();
+			while (parentBlock) {
+				if (parentBlock.blockId === block.blockId) {
+					selectedBlockIds.value.delete(selectedBlock.blockId);
+					break;
+				}
+				parentBlock = parentBlock.getParentBlock();
+			}
+		}
+	}
+
 	const selectBlock = (block: Block, multiSelect = false) => {
 		if (multiSelect) {
+			removeSelectedDescendants(block);
 			selectedBlockIds.value.add(block.blockId);
 		} else {
 			selectedBlockIds.value = new Set([block.blockId]);
