@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-[88vh] max-h-[800px] overflow-hidden">
+	<div class="flex h-[88vh] max-h-[min(800px,calc(100vh-6rem))] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
 			<span class="text-lg-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
 			<div class="flex flex-col gap-0.5" v-for="group in visibleGroups" :key="group.title">
@@ -28,9 +28,11 @@
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5"></Button>
-			<KeepAlive v-if="settingsLoaded">
-				<component :is="selectedItemDoc?.component" class="pb-16" />
-			</KeepAlive>
+			<div v-if="settingsLoaded" class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
+				<KeepAlive>
+					<component :is="selectedItemDoc?.component" class="pb-16" />
+				</KeepAlive>
+			</div>
 			<div v-else class="flex items-center justify-center">
 				<span class="text-ink-gray-5">{{ __("Loading...") }}</span>
 			</div>
