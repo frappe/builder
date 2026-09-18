@@ -7,7 +7,7 @@
 		}"
 		@click.stop>
 		<div
-			class="padding-handler pointer-events-none absolute z-10 flex w-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute z-10 flex w-full bg-purple-300"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 			}"
@@ -23,7 +23,7 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute bottom-0 z-10 flex w-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute bottom-0 z-10 flex w-full bg-purple-300"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 			}"
@@ -39,7 +39,7 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute left-0 z-10 flex h-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute left-0 z-10 flex h-full bg-purple-300"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 			}"
@@ -55,7 +55,7 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute right-0 z-10 flex h-full bg-purple-400"
+			class="padding-handler pointer-events-none absolute right-0 z-10 flex h-full bg-purple-300"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 			}"

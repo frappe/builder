@@ -12,7 +12,7 @@
 			class="gap-handler absolute z-10 flex"
 			:class="[
 				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-400': band.filled },
+				{ 'bg-purple-300': band.filled },
 			]"
 			:style="band.style"
 			@mousedown.stop="handleGap($event, band.position)">
