@@ -170,13 +170,20 @@ const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
 
 const getPaddingValue = (position: Position) => getSpacingValue("padding", position);
 
+const contentShift = computed(() => ({
+	x: (leftPaddingHandlerWidth.value - rightPaddingHandlerWidth.value) / 2,
+	y: (topPaddingHandlerHeight.value - bottomPaddingHandlerHeight.value) / 2,
+}));
+
+const centered = (offset: number, size: number) => `calc(50% + ${offset - size / 2}px)`;
+
 const topHandle = computed(() => {
 	const { width, height } = longHandleSize.value;
 	return {
 		width,
 		height,
 		bottom: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		left: `calc(50% - ${width / 2}px)`,
+		left: centered(contentShift.value.x, width),
 	};
 });
 
@@ -186,7 +193,7 @@ const bottomHandle = computed(() => {
 		width,
 		height,
 		top: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		left: `calc(50% - ${width / 2}px)`,
+		left: centered(contentShift.value.x, width),
 	};
 });
 
@@ -196,7 +203,7 @@ const leftHandle = computed(() => {
 		width,
 		height,
 		right: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		top: `calc(50% - ${height / 2}px)`,
+		top: centered(contentShift.value.y, height),
 	};
 });
 
@@ -206,7 +213,7 @@ const rightHandle = computed(() => {
 		width,
 		height,
 		left: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		top: `calc(50% - ${height / 2}px)`,
+		top: centered(contentShift.value.y, height),
 	};
 });
 

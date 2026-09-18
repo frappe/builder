@@ -238,16 +238,10 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 
 const isDraggable = (gap: number) => gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
-// `place` is where the pill sits inside its band: centred across the thin axis so it
-// straddles the seam and stays grabbable at a zero gap, anchored along the long one.
-const handleStyle = (
-	size: { width: number; height: number },
-	place: { left: string; top: string },
-	cursor: string,
-) => ({
+const handleStyle = (size: { width: number; height: number }, cursor: string) => ({
 	borderWidth: handleBorderWidth.value,
-	left: place.left,
-	top: place.top,
+	left: `calc(50% - ${size.width / 2}px)`,
+	top: `calc(50% - ${size.height / 2}px)`,
 	width: `${size.width}px`,
 	height: `${size.height}px`,
 	cursor: props.disableHandlers ? undefined : cursor,
@@ -258,9 +252,6 @@ const handleStyle = (
 const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
 	const size = sideHandleSize.value;
-	// A band spans the whole content height, so centring the grab point in it would push the
-	// handle off-screen on a tall container. Sit it on the row these seams came from.
-	const centerY = ((topOf(widest) + bottomOf(widest)) / 2 - content.y0) * canvasProps.scale;
 
 	return widest.slice(1).map((box, index) => {
 		const x0 = widest[index].x1;
@@ -277,11 +268,7 @@ const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 				"width",
 				draggable ? horizontalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(
-				size,
-				{ left: `calc(50% - ${size.width / 2}px)`, top: `${centerY - size.height / 2}px` },
-				horizontalCursor.value,
-			),
+			handleStyle: handleStyle(size, horizontalCursor.value),
 		};
 	});
 };
@@ -309,11 +296,7 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 				"height",
 				draggable ? verticalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(
-				size,
-				{ left: `calc(50% - ${size.width / 2}px)`, top: `calc(50% - ${size.height / 2}px)` },
-				verticalCursor.value,
-			),
+			handleStyle: handleStyle(size, verticalCursor.value),
 		};
 	});
 };
