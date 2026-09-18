@@ -166,7 +166,7 @@ msgid "Add meta tags, styles, and scripts to page head"
 msgstr ""
 
 #: frontend/src/components/MoreStylesPanel.vue:168
-msgid "Add property"
+msgid "Add Property"
 msgstr ""
 
 #: frontend/src/components/Settings/PageCode.vue:17
@@ -439,7 +439,7 @@ msgid "Back to all templates"
 msgstr ""
 
 #: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
-msgid "Back to builder"
+msgid "Back to Builder"
 msgstr ""
 
 #: frontend/src/components/BackgroundHandler.vue:8
@@ -834,7 +834,7 @@ msgid "Collapse All Layers"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:374
-msgid "Collapse node or move up in page tree"
+msgid "Collapse Node or Move Up in Page Tree"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:125
@@ -977,7 +977,7 @@ msgid "Container (c)"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:367
-msgid "Container mode"
+msgid "Container Mode"
 msgstr ""
 
 #. Label of the content (Small Text) field in DocType 'Builder AI Memory'
@@ -1001,7 +1001,7 @@ msgid "Controls"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
-msgid "Convert To Collection"
+msgid "Convert to Collection"
 msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:33
@@ -1033,7 +1033,7 @@ msgid "Copy Style"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:262
-msgid "Copy block styles"
+msgid "Copy Block Styles"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:473
@@ -1273,15 +1273,15 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:240
 #: frontend/src/utils/useBuilderEvents.ts:254
-msgid "Delete selected blocks"
+msgid "Delete Selected Blocks"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete variable"
+msgid "Delete Variable"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:767
-msgid "Delete {0} variables"
+msgid "Delete {0} Variables"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:758
@@ -1307,7 +1307,7 @@ msgid "Description"
 msgstr "Descripción"
 
 #: frontend/src/components/DashboardContent.vue:134
-msgid "Deselect pages"
+msgid "Deselect Pages"
 msgstr ""
 
 #: frontend/src/components/LeftPanelTabs/index.ts:77
@@ -1479,7 +1479,7 @@ msgid "Duplicate Page"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:281
-msgid "Duplicate block"
+msgid "Duplicate Block"
 msgstr ""
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
@@ -1682,7 +1682,7 @@ msgid "Execute Block Scripts in Editor"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:268
-msgid "Exit current mode"
+msgid "Exit Current Mode"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
@@ -1695,7 +1695,7 @@ msgid "Expand All Layers"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:355
-msgid "Expand node or move down in page tree"
+msgid "Expand Node or Move Down in Page Tree"
 msgstr ""
 
 #: frontend/src/components/Settings/GlobalRedirects.vue:155
@@ -1860,7 +1860,7 @@ msgid "Fit Inside"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:291
-msgid "Fit canvas to screen"
+msgid "Fit Canvas to Screen"
 msgstr ""
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
@@ -1873,7 +1873,7 @@ msgid "Focus Property Search"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:250
-msgid "Focus property search"
+msgid "Focus Property Search"
 msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:159
@@ -2111,7 +2111,7 @@ msgid "Highlight Blocks with Client Scripts"
 msgstr ""
 
 #: frontend/src/pages/PageBuilder.vue:192
-msgid "Hold for move mode"
+msgid "Hold for Move Mode"
 msgstr ""
 
 #: frontend/src/components/Settings/PageGeneral.vue:200
@@ -2189,7 +2189,7 @@ msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:376
-msgid "Image mode"
+msgid "Image Mode"
 msgstr ""
 
 #: frontend/src/utils/imageUtils.ts:58
@@ -2628,7 +2628,7 @@ msgid "Move"
 msgstr "Mover"
 
 #: frontend/src/utils/useBuilderEvents.ts:402
-msgid "Move / hand mode"
+msgid "Move / Hand Mode"
 msgstr ""
 
 #: frontend/src/components/DashboardHead.vue:9
@@ -2636,16 +2636,16 @@ msgid "Move To Folder"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:335
-msgid "Move down in page tree"
+msgid "Move Down in Page Tree"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:365
 #: frontend/src/components/Modals/TokenManager.vue:769
-msgid "Move to group"
+msgid "Move to Group"
 msgstr ""
 
 #: frontend/src/components/RouteTreeView.vue:345
-msgid "Move up in page tree"
+msgid "Move Up in Page Tree"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:727
@@ -2987,7 +2987,7 @@ msgid "Open in New Tab"
 msgstr "Abrir en nueva pestaña"
 
 #: frontend/src/components/RouteTreeView.vue:390
-msgid "Open page or toggle folder in page tree"
+msgid "Open Page or Toggle Folder in Page Tree"
 msgstr ""
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
@@ -3500,7 +3500,7 @@ msgid "Remove Stop"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:771
-msgid "Remove from group"
+msgid "Remove from Group"
 msgstr ""
 
 #: frontend/src/data/domains.ts:72
@@ -3596,7 +3596,7 @@ msgid "Reset Overrides"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:279
-msgid "Reset canvas zoom"
+msgid "Reset Canvas Zoom"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:162
@@ -3720,7 +3720,7 @@ msgid "Save"
 msgstr "Guardar"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:218
-msgid "Save As Component"
+msgid "Save as Component"
 msgstr ""
 
 #: frontend/src/stores/componentStore.ts:88
@@ -3745,7 +3745,7 @@ msgid "Save current version"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:228
-msgid "Save page / component"
+msgid "Save Page / Component"
 msgstr ""
 
 #: builder/ai/api.py:522
@@ -3827,7 +3827,7 @@ msgid "Search Template"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:240
-msgid "Search blocks"
+msgid "Search Blocks"
 msgstr ""
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
@@ -3929,7 +3929,7 @@ msgid "Select default color"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:394
-msgid "Select mode"
+msgid "Select Mode"
 msgstr ""
 
 #: frontend/src/components/Modals/TokenManager.vue:372
@@ -4065,7 +4065,7 @@ msgid "Show Right Panel"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:205
-msgid "Show keyboard shortcuts"
+msgid "Show Keyboard Shortcuts"
 msgstr ""
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
@@ -4384,7 +4384,7 @@ msgid "Text Color"
 msgstr "Color del texto"
 
 #: frontend/src/utils/useBuilderEvents.ts:385
-msgid "Text mode"
+msgid "Text Mode"
 msgstr ""
 
 #: builder/ai/presets.py:273
@@ -4544,15 +4544,15 @@ msgid "Toggle Theme"
 msgstr "Cambiar tema"
 
 #: frontend/src/components/Commands/index.ts:230
-msgid "Toggle canvas dark mode"
+msgid "Toggle Canvas Dark Mode"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:175
-msgid "Toggle left panel"
+msgid "Toggle Left Panel"
 msgstr ""
 
 #: frontend/src/components/Commands/index.ts:217
-msgid "Toggle panels"
+msgid "Toggle Panels"
 msgstr ""
 
 #. Label of the token_name (Data) field in DocType 'Builder Token'
@@ -5015,7 +5015,7 @@ msgid "Wrap"
 msgstr ""
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:86
-msgid "Wrap In Container"
+msgid "Wrap in Container"
 msgstr ""
 
 #: frontend/src/components/ShadowHandler.vue:153
@@ -5114,11 +5114,11 @@ msgid "Z-Index"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:346
-msgid "Zoom in"
+msgid "Zoom In"
 msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:357
-msgid "Zoom out"
+msgid "Zoom Out"
 msgstr ""
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'

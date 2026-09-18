@@ -5,6 +5,8 @@ export interface TemplatePageSummary {
 	name: string;
 	page_title?: string;
 	preview?: string;
+	// small copy of preview for cards; missing from older hubs
+	thumbnail?: string;
 	// absolute url for remote hub templates; local "My Templates" have none
 	live_url?: string;
 	template_group?: string;
@@ -15,6 +17,7 @@ export interface TemplateGroup {
 	title: string;
 	description?: string;
 	preview?: string;
+	thumbnail?: string;
 	// hub manifest categories used to section the gallery (e.g. ["Marketing", "Portfolio"]);
 	// a group is shown under each of its categories
 	categories?: string[];

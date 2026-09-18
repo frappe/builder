@@ -71,6 +71,16 @@ function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
 }
 
+/** Escape a value for safe use in an HTML string.*/
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
 	if (typeof text !== "string") {
 		text = JSON.stringify(text);
@@ -382,6 +392,11 @@ async function uploadBuilderAsset(file: File, silent = false) {
 		fileURL: fileDoc.file_url,
 		fileName: fileDoc.file_name,
 	};
+}
+
+function countBlocks(blocks: BlockOptions | BlockOptions[]): number {
+	const list = Array.isArray(blocks) ? blocks : [blocks];
+	return list.reduce((count, block) => count + 1 + countBlocks(block.children || []), 0);
 }
 
 const MAX_INLINE_SVG_SIZE = 20 * 1024;
@@ -971,12 +986,14 @@ export {
 	confirm,
 	copyToClipboard,
 	convertSVGBlockToImage,
+	countBlocks,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
 	deepEqual,
 	detachBlockFromComponent,
 	diffArray,
+	escapeHtml,
 	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,

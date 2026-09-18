@@ -6,6 +6,7 @@
 					<img
 						class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
 						:title="user.fullname"
+						:alt="user.fullname"
 						:src="user.image"
 						v-if="user.image" />
 					<div

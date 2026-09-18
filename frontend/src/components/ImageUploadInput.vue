@@ -9,10 +9,18 @@
 			upload_endpoint: '/api/method/builder.api.upload_builder_asset',
 		}">
 		<template #default="{ openFileSelector }">
-			<Popover placement="left" class="!block w-full" :offset="popoverOffset">
-				<template #target="{ togglePopover }">
-					<div class="flex items-center justify-between">
-						<InputLabel v-if="label && labelPosition === 'left'">{{ label }}</InputLabel>
+			<Popover
+				side="left"
+				align="center"
+				:offset="popoverOffset"
+				bare
+				:open="isOpen"
+				@update:open="onUpdateOpen">
+				<template #trigger>
+					<div class="flex w-full items-center justify-between" @click.capture="onAnchorClick">
+						<InputLabel v-if="label && labelPosition === 'left'" class="w-1/3 min-w-[88px] shrink-0">
+							{{ label }}
+						</InputLabel>
 						<div class="relative w-full [&>div>div>div>div]:pe-0">
 							<BuilderInput
 								type="text"
@@ -26,7 +34,7 @@
 									<img
 										:src="currentImageURL || '/assets/builder/images/fallback.png'"
 										alt=""
-										@click="togglePopover"
+										@click="toggle"
 										class="h-4 w-4 cursor-pointer rounded border border-outline-gray-3 shadow-sm"
 										:style="{
 											'object-fit': imageFit || 'contain',
@@ -43,7 +51,7 @@
 						</div>
 					</div>
 				</template>
-				<template #body>
+				<template #default>
 					<div class="w-64 rounded-lg bg-surface-base p-3 shadow-lg">
 						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center">
 							<span class="text-sm font-semibold text-ink-gray-9">{{ __("Image") }}</span>
@@ -130,6 +138,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { STRETCH_TABS } from "@/utils/tabButtons";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { FileUploader, Popover, TabButtons } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -157,6 +166,7 @@ const props = withDefaults(
 );
 
 const builderStore = useBuilderStore();
+const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
 const fileUploaderRef = ref<{ inputRef: () => HTMLInputElement } | null>(null);
 
 watch(

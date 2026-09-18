@@ -241,6 +241,7 @@ TOOL_LABELS = {
 	"query_blocks": ("Searching the page", "Searched the page"),
 	"search_images": ("Searching for photos", "Searched for photos"),
 	"extract_component": ("Making a reusable component", "Made a reusable component"),
+	"edit_component": ("Updating a shared component", "Updated a shared component"),
 	"write_page_data_script": ("Connecting the page to data", "Connected the page to data"),
 	"list_doctypes": ("Looking for existing data", "Looked for existing data"),
 	"run_python": ("Looking up site data", "Looked up site data"),
@@ -551,11 +552,11 @@ class AgentRunner:
 		if not self.page_id:
 			return ""
 		row = frappe.db.get_value(
-			"Builder Page", self.page_id, ["page_title", "route", "published"], as_dict=True
+			"Builder Page", self.page_id, ["page_title", "route", "published", "staging"], as_dict=True
 		)
 		if not row:
 			return ""
-		state = "published" if row.published else "draft"
+		state = "live" if row.published else "staging" if row.staging else "draft"
 		route = "/" + (row.route or "").lstrip("/")
 		return f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
 

@@ -12,6 +12,7 @@
  "field_order": [
   "content_tab",
   "published",
+  "staging",
   "page_name",
   "route",
   "dynamic_route",
@@ -69,6 +70,13 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Published"
+  },
+  {
+   "default": "0",
+   "description": "Served at its route, but hidden from search engines and the sitemap",
+   "fieldname": "staging",
+   "fieldtype": "Check",
+   "label": "Staging"
   },
   {
    "fieldname": "blocks",
@@ -264,7 +272,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 17:40:00.000000",
+ "modified": "2026-09-11 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

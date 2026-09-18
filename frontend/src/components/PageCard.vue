@@ -5,34 +5,37 @@
 			:class="{
 				'!bg-surface-gray-2': selected,
 			}">
-			<img
-				width="250"
-				height="140"
-				:src="page.meta_image || page.preview"
-				onerror="this.src='/assets/builder/images/fallback.png'"
-				class="aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+			<div class="relative">
+				<img
+					width="250"
+					height="140"
+					:src="page.meta_image || page.preview"
+					onerror="this.src='/assets/builder/images/fallback.png'"
+					alt=""
+					class="block aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+				<span class="absolute left-2 top-2 flex">
+					<PageStatusBadge :page="page" />
+				</span>
+			</div>
 			<div class="flex items-center justify-between border-outline-gray-2">
-				<span class="inline-block max-w-[160px]">
+				<span class="inline-block min-w-0 max-w-[160px]">
 					<div class="flex items-center gap-1">
 						<p class="text-base-medium truncate text-ink-gray-7 group-hover:text-ink-gray-9">
 							{{ page.page_title || page.page_name }}
 						</p>
 					</div>
-					<UseTimeAgo v-slot="{ timeAgo }" :time="page.modified">
-						<p class="mt-1 block text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
-							{{ __("Edited {0}", [timeAgo]) }}
+					<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
+						<p class="mt-1 block truncate text-sm text-ink-gray-5 group-hover:text-ink-gray-6">
+							{{ sortedByCreation ? __("Created {0}", [timeAgo]) : __("Edited {0}", [timeAgo]) }}
 						</p>
 					</UseTimeAgo>
 				</span>
 				<div class="flex shrink-0 items-center gap-1.5">
 					<Tooltip
-						v-if="page.published && page.authenticated_access"
+						v-if="(page.published || page.staging) && page.authenticated_access"
 						:text="__('This page has limited access')"
 						:hoverDelay="0.5">
 						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
-					</Tooltip>
-					<Tooltip v-else-if="page.published" :text="__('Publicly accessible')" :hoverDelay="0.5">
-						<span class="lucide-globe size-3.5 text-ink-gray-5" />
 					</Tooltip>
 					<PageActionsDropdown :page="page" size="xs" placement="right">
 						<Button
@@ -50,15 +53,19 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
+import { useDashboardState } from "@/composables/useDashboardState";
+import PageStatusBadge from "@/components/PageStatusBadge.vue";
 import { BuilderPage } from "@/types/doctypes";
-import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Tooltip } from "frappe-ui";
+import { computed } from "vue";
 
 const props = defineProps<{
 	page: BuilderPage;
 	selected: boolean;
 }>();
 
-const user = getUserInfo(props.page.modified_by);
+const { orderBy } = useDashboardState();
+const sortedByCreation = computed(() => orderBy.value === "creation");
+const timestamp = computed(() => (sortedByCreation.value ? props.page.creation : props.page.modified));
 </script>

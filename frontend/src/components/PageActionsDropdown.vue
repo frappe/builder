@@ -14,13 +14,13 @@
 						label: __('View Page'),
 						onClick: () => pageStore.openPageInBrowser(props.page),
 						icon: 'lucide-globe',
-						condition: () => Boolean(props.page.published),
+						condition: () => Boolean(props.page.published || props.page.staging),
 					},
 					{
 						label: __('Unpublish'),
 						onClick: () => pageStore.unpublishPage(props.page),
 						icon: 'lucide-globe-x',
-						condition: () => Boolean(props.page.published),
+						condition: () => Boolean(props.page.published || props.page.staging),
 					},
 					{
 						label: __('View in Desk'),

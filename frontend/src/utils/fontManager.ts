@@ -93,7 +93,16 @@ async function carriesWeight(font: string, weight: string): Promise<boolean> {
 	return entry.variants.includes(weight) || (weight === "400" && entry.variants.includes("regular"));
 }
 
+/** A system font (Arial, Comic Sans MS) or an unregistered custom family is not on
+ * Google Fonts; requesting it anyway costs a round trip that ends in a CORS error. */
+async function inGoogleCatalog(font: string): Promise<boolean> {
+	const items = fontListItems.value.length ? fontListItems.value : await loadFontList().catch(() => []);
+	// a catalog that failed to load must not block every font
+	return !items.length || items.some((item) => item.family === font);
+}
+
 async function loadGoogleFont(font: string, weight?: string): Promise<string> {
+	if (!(await inGoogleCatalog(font))) return font;
 	if (weight && !(await carriesWeight(font, weight))) weight = undefined;
 	return new Promise<string>((resolve) => {
 		const attempt = (withWeight: boolean) => {

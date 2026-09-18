@@ -70,7 +70,7 @@ useShortcut(
 		.filter((tab) => tab.shortcut)
 		.map((tab) => ({
 			...tab.shortcut!,
-			description: `Show ${tab.label} panel`,
+			description: `Show ${tab.label} Panel`,
 			group: "View",
 			handler: () => select(tab),
 		})),

@@ -29,31 +29,25 @@
 						<div class="flex items-center gap-2">
 							<span class="flex items-center gap-2 text-base text-ink-gray-9">
 								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									aria-hidden="true"
+									v-if="isLiveOrStaging && pageStore.activePage?.authenticated_access" />
+								<span
 									class="lucide-check-circle size-4 text-ink-green-6"
 									aria-hidden="true"
-									v-if="pageStore.activePage?.published && !pageStore.activePage.authenticated_access" />
+									v-else-if="pageStore.activePage?.published" />
 								<span
-									class="lucide-shield-user size-4 text-ink-amber-6"
-									v-else-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
-								<span
-									class="lucide-alert-circle size-4 text-ink-gray-4"
+									class="lucide-flask-conical size-4 text-ink-amber-6"
 									aria-hidden="true"
-									v-else-if="!pageStore.activePage?.published" />
-								{{
-									pageStore.activePage?.published
-										? pageStore.activePage?.authenticated_access
-											? __("Published with limited access")
-											: __("Published")
-										: __("Draft")
-								}}
+									v-else-if="pageStore.activePage?.staging" />
+								<span class="lucide-alert-circle size-4 text-ink-gray-4" aria-hidden="true" v-else />
+								{{ statusLabel }}
 							</span>
 
 							<Button
 								variant="subtle"
-								@click="
-									pageStore.activePage?.published ? pageStore.unpublishPage() : pageStore.publishPage(false)
-								">
-								{{ pageStore.activePage?.published ? __("Unpublish") : __("Publish") }}
+								@click="isLiveOrStaging ? pageStore.unpublishPage() : pageStore.publishPage(false)">
+								{{ isLiveOrStaging ? __("Unpublish") : __("Publish") }}
 							</Button>
 						</div>
 					</div>
@@ -83,7 +77,11 @@
 								@upload="(url: string) => pageStore.updateActivePage('favicon', url)"
 								@remove="() => pageStore.updateActivePage('favicon', '')" />
 							<span class="text-p-sm text-ink-gray-6">
-								{{ __("Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO") }}
+								{{
+									__(
+										"Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO",
+									)
+								}}
 							</span>
 						</div>
 					</div>
@@ -190,6 +188,21 @@ import { computed } from "vue";
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const isDeveloperMode = computed(() => Boolean(window.is_developer_mode));
+
+const isLiveOrStaging = computed(() =>
+	Boolean(pageStore.activePage?.published || pageStore.activePage?.staging),
+);
+
+const statusLabel = computed(() => {
+	const page = pageStore.activePage;
+	if (page?.published) {
+		return page.authenticated_access ? __("Live with limited access") : __("Live");
+	}
+	if (page?.staging) {
+		return page.authenticated_access ? __("Staging with limited access") : __("Staging");
+	}
+	return __("Draft");
+});
 
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
