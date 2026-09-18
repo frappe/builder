@@ -13,6 +13,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.journal import touch
 
 PAGE_SETTING_FIELDS = {
 	"page_title",
@@ -54,6 +55,7 @@ def set_page_settings(ctx, args: dict) -> str:
 		doc.save()
 		note = dynamic_route_note(doc)
 	else:
+		touch("Builder Page", ctx.page_id)
 		frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}.{note}"

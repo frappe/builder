@@ -14,6 +14,7 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
+from builder.ai.journal import TurnJournal, revert_since
 from builder.ai.models import ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
@@ -207,7 +208,8 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
-	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	with TurnJournal(msg.session):
+		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
@@ -278,13 +280,21 @@ def cancel(session_id: str):
 
 @frappe.whitelist()
 @has_page_write()
-def revert_to_message(session_id: str, message_id: str):
-	"""Rewind the conversation to before the given turn: delete that turn's user
-	prompt, its assistant reply, and every message after it. The page itself is
-	restored separately by the client via the turn's snapshot."""
+def revert_to_message(session_id: str, message_id: str, snapshot: str | None = None):
+	"""Undo the turn that produced `message_id` and every later turn, then rewind the chat to
+	before it. Every document those turns changed goes back and everything they created is
+	deleted (see builder/ai/journal.py). `snapshot` is the page restore point that turns from
+	before the journal carry instead."""
 	session = AISession.get(session_id)
+	failures = revert_since(session_id, since) if (since := session.turn_start(message_id)) else []
+	if failures:
+		# Keep the turn in the chat so Revert can be retried for what failed.
+		return {"messages": session.get_messages(), "failures": failures}
+	if snapshot and session.page:
+		frappe.get_doc("Builder Page", session.page).restore_snapshot(snapshot)
 	session.truncate_from_turn(message_id)
-	return {"messages": session.get_messages()}
+	AISession.save_turn_state(session_id, None)
+	return {"messages": session.get_messages(), "failures": []}
 
 
 PROVIDER_FIELDS = (

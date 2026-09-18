@@ -244,12 +244,15 @@ def update_definition(component: str, mutate) -> None:
 
 	import frappe
 
+	from builder.ai.journal import touch
+
 	if not frappe.db.exists("Builder Component", component):
 		return
 	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component, "block") or "{}")
 	if not isinstance(definition, dict):
 		return
 	mutate(definition)
+	touch("Builder Component", component)
 	frappe.db.set_value("Builder Component", component, "block", json.dumps(definition), update_modified=True)
 
 

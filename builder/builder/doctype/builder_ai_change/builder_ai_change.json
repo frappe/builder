@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-14 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "session",
+  "reference_doctype",
+  "reference_name",
+  "action",
+  "before",
+  "after"
+ ],
+ "fields": [
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Session",
+   "options": "Builder AI Session",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reference DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reference Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Action",
+   "options": "Insert\nUpdate\nDelete",
+   "reqd": 1
+  },
+  {
+   "fieldname": "before",
+   "fieldtype": "Long Text",
+   "label": "Before"
+  },
+  {
+   "fieldname": "after",
+   "fieldtype": "Long Text",
+   "label": "After"
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-09-14 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder AI Change",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

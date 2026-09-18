@@ -350,15 +350,13 @@ class AISession:
 
 	# --- lifecycle --------------------------------------------------------
 
-	def truncate_from_turn(self, message_id: str):
-		"""Delete the turn that produced `message_id` and everything after it: the
-		assistant message, its triggering user prompt, and all later messages. Used by
-		the chat "revert" action to rewind the conversation alongside the page."""
+	def turn_start(self, message_id: str):
+		"""When the turn that produced `message_id` began: its user prompt, or the message itself."""
 		target = frappe.db.get_value(
 			self.MESSAGE_DOCTYPE, {"name": message_id, "session": self._doc.name}, "creation"
 		)
 		if not target:
-			return
+			return None
 		# The prompt that started this turn is the most recent user message at/before
 		# the assistant reply; deleting from there removes the whole exchange.
 		user_creation = frappe.db.get_value(
@@ -367,5 +365,23 @@ class AISession:
 			"creation",
 			order_by="creation desc",
 		)
-		cutoff = user_creation or target
-		frappe.db.delete(self.MESSAGE_DOCTYPE, {"session": self._doc.name, "creation": [">=", cutoff]})
+		return user_creation or target
+
+	def truncate_from_turn(self, message_id: str):
+		"""Delete the turn that produced `message_id` and everything after it: the
+		assistant message, its triggering user prompt, and all later messages. Used by
+		the chat "revert" action to rewind the conversation alongside the page."""
+		if cutoff := self.turn_start(message_id):
+			frappe.db.delete(self.MESSAGE_DOCTYPE, {"session": self._doc.name, "creation": [">=", cutoff]})
+
+	@classmethod
+	def turn_state(cls, session_id: str | None) -> dict | None:
+		"""The page as the last turn left it (see page_changes.page_state)."""
+		if not session_id:
+			return None
+		return cls.load_metadata(frappe.db.get_value(cls.DOCTYPE, session_id, "last_turn_state")) or None
+
+	@classmethod
+	def save_turn_state(cls, session_id: str, state: dict | None) -> None:
+		value = frappe.as_json(state, indent=None) if state else None
+		frappe.db.set_value(cls.DOCTYPE, session_id, "last_turn_state", value, update_modified=False)

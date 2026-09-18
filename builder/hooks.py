@@ -118,9 +118,14 @@ user_invitation = {
 # Hook on document methods and events
 
 doc_events = {
+	"*": {
+		"after_insert": "builder.ai.journal.record_insert",
+		"on_update": "builder.ai.journal.record_update",
+		"on_trash": "builder.ai.journal.record_delete",
+	},
 	"User Invitation": {
 		"after_insert": "builder.user_invitation.capture_user_invited",
-	}
+	},
 }
 
 # Scheduled Tasks
