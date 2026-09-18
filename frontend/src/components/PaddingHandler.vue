@@ -14,15 +14,8 @@
 			ref="topPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
-				:style="{
-					borderWidth: handleBorderWidth,
-					bottom: topHandle.bottom,
-					left: topHandle.left,
-					height: topHandle.height + 'px',
-					width: topHandle.width + 'px',
-					cursor: disableHandlers ? undefined : verticalCursor,
-				}"
+				v-show="showHandle(topPaddingHandlerHeight)"
+				:style="longHandle"
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
@@ -37,15 +30,8 @@
 			ref="bottomPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
-				:style="{
-					borderWidth: handleBorderWidth,
-					top: bottomHandle.top,
-					left: bottomHandle.left,
-					height: bottomHandle.height + 'px',
-					width: bottomHandle.width + 'px',
-					cursor: disableHandlers ? undefined : verticalCursor,
-				}"
+				v-show="showHandle(bottomPaddingHandlerHeight)"
+				:style="longHandle"
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
@@ -60,15 +46,8 @@
 			ref="leftPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
-				:style="{
-					borderWidth: handleBorderWidth,
-					right: leftHandle.right,
-					top: leftHandle.top,
-					height: leftHandle.height + 'px',
-					width: leftHandle.width + 'px',
-					cursor: disableHandlers ? undefined : horizontalCursor,
-				}"
+				v-show="showHandle(leftPaddingHandlerWidth)"
+				:style="sideHandle"
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
@@ -83,15 +62,8 @@
 			ref="rightPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
-				:style="{
-					borderWidth: handleBorderWidth,
-					left: rightHandle.left,
-					top: rightHandle.top,
-					height: rightHandle.height + 'px',
-					width: rightHandle.width + 'px',
-					cursor: disableHandlers ? undefined : horizontalCursor,
-				}"
+				v-show="showHandle(rightPaddingHandlerWidth)"
+				:style="sideHandle"
 				:class="{ hidden: updating }"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
 			<div class="m-auto text-sm text-purple-900" v-show="updating">
@@ -147,6 +119,8 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 
 const HANDLE_MIN_SCALE = 0.5;
 
+const showHandle = (band: number) => canvasProps.scale > HANDLE_MIN_SCALE && band > 0;
+
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
 });
@@ -175,47 +149,26 @@ const contentShift = computed(() => ({
 	y: (topPaddingHandlerHeight.value - bottomPaddingHandlerHeight.value) / 2,
 }));
 
-const centered = (offset: number, size: number) => `calc(50% + ${offset - size / 2}px)`;
-
-const topHandle = computed(() => {
-	const { width, height } = longHandleSize.value;
-	return {
-		width,
-		height,
-		bottom: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		left: centered(contentShift.value.x, width),
-	};
+// The pill sits in the middle of its band on both axes
+const handleStyle = (
+	size: { width: number; height: number },
+	offset: { x: number; y: number },
+	cursor: string,
+) => ({
+	borderWidth: handleBorderWidth.value,
+	left: `calc(50% + ${offset.x - size.width / 2}px)`,
+	top: `calc(50% + ${offset.y - size.height / 2}px)`,
+	width: `${size.width}px`,
+	height: `${size.height}px`,
+	cursor: props.disableHandlers ? undefined : cursor,
 });
+const longHandle = computed(() =>
+	handleStyle(longHandleSize.value, { x: contentShift.value.x, y: 0 }, verticalCursor.value),
+);
 
-const bottomHandle = computed(() => {
-	const { width, height } = longHandleSize.value;
-	return {
-		width,
-		height,
-		top: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		left: centered(contentShift.value.x, width),
-	};
-});
-
-const leftHandle = computed(() => {
-	const { width, height } = sideHandleSize.value;
-	return {
-		width,
-		height,
-		right: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		top: centered(contentShift.value.y, height),
-	};
-});
-
-const rightHandle = computed(() => {
-	const { width, height } = sideHandleSize.value;
-	return {
-		width,
-		height,
-		left: `clamp(-20px, calc(-10px * ${canvasProps.scale}), -6px)`,
-		top: centered(contentShift.value.y, height),
-	};
-});
+const sideHandle = computed(() =>
+	handleStyle(sideHandleSize.value, { x: 0, y: contentShift.value.y }, horizontalCursor.value),
+);
 
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;

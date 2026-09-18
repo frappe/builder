@@ -210,6 +210,10 @@ const layout = computed(() => {
 
 	return {
 		lines: clusterLines(boxes),
+		gap: {
+			column: getNumberFromPx(style.columnGap),
+			row: getNumberFromPx(style.rowGap),
+		},
 		content: {
 			x0: target.clientLeft + getNumberFromPx(style.paddingLeft),
 			y0: target.clientTop + getNumberFromPx(style.paddingTop),
@@ -249,15 +253,14 @@ const handleStyle = (size: { width: number; height: number }, cursor: string) =>
 
 // One band per column boundary, spanning the full content height. Every line shares the same
 // column-gap, so the fullest line carries all of the boundaries.
-const columnBands = (lines: Box[][], content: Box): GapBand[] => {
+const columnBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
 	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
 	const size = sideHandleSize.value;
 
 	return widest.slice(1).map((box, index) => {
 		const x0 = widest[index].x1;
 		const x1 = Math.max(box.x0, x0);
-		const gap = x1 - x0;
-		const draggable = isDraggable(gap);
+		const draggable = isDraggable(x1 - x0);
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
@@ -274,7 +277,7 @@ const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 };
 
 // One band per line boundary, spanning the full content width.
-const rowBands = (lines: Box[][], content: Box): GapBand[] => {
+const rowBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
 	const size = longHandleSize.value;
 
 	return lines.slice(1).map((line, index) => {
@@ -283,8 +286,7 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
 		const y0 = above.length ? bottomOf(above) : topOf(line);
 		const y1 = Math.max(topOf(line), y0);
-		const gap = y1 - y0;
-		const draggable = isDraggable(gap);
+		const draggable = isDraggable(y1 - y0);
 
 		return {
 			key: `row-${index}`,
@@ -303,8 +305,8 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 
 const gapBands = computed<GapBand[]>(() => {
 	if (!layout.value) return [];
-	const { lines, content } = layout.value;
-	return [...columnBands(lines, content), ...rowBands(lines, content)];
+	const { lines, content, gap } = layout.value;
+	return [...columnBands(lines, content, gap.column), ...rowBands(lines, content, gap.row)];
 });
 
 const getGapValue = (position: Position) => getSpacingValue("gap", position);
