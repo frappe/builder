@@ -77,10 +77,9 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 const CHILD_SELECTOR = ":scope > .__builder_component__";
 const HANDLE_MIN_SCALE = 0.5;
 const MIN_BAND = 2;
-// Below this many canvas pixels a band is too thin to grab reliably, so only its pill drags.
 const MIN_DRAGGABLE_BAND = 8;
 
-// Any of these moves the children, and with them the seams the bands are drawn on.
+// Changing any of these moves the children, so the bands have to be measured again.
 const LAYOUT_STYLES = [
 	"gap",
 	"rowGap",
@@ -93,13 +92,8 @@ const LAYOUT_STYLES = [
 	"gridTemplateRows",
 ] as const;
 
-// A box in the block's own (unscaled, unrotated) layout space, measured from the top-left of
-// its border box — the origin the editor host is anchored to.
 type Box = { x0: number; y0: number; x1: number; y1: number };
-// The vertical slice of one: a box's extent, or the band a line's members share.
 type Span = { y0: number; y1: number };
-// One drawn overlay: the strip plus the pill that drags it, in canvas pixels relative to the
-// editor host.
 type GapBand = {
 	key: string;
 	position: Position;
@@ -109,8 +103,7 @@ type GapBand = {
 	handleStyle: Record<string, string | undefined>;
 };
 
-// Child geometry isn't reactive: a resize or reflow moves the seams without touching any style
-// this component reads, so bumping this on each observed resize re-runs the measurement.
+// A resize moves the children without changing a style, so watch for it and measure again.
 const measured = ref(0);
 let resizeObserver: ResizeObserver | null = null;
 
@@ -139,8 +132,6 @@ const layoutOffset = (el: HTMLElement) => {
 	return { x, y };
 };
 
-// Position of a child's border box within the target's: summing both chains and subtracting
-// cancels what they share, but an offset starts at its offsetParent's *padding* edge.
 const offsetWithin = (child: HTMLElement, target: HTMLElement, targetOffset: { x: number; y: number }) => {
 	const { x, y } = layoutOffset(child);
 	const nested = child.offsetParent === target;
@@ -153,16 +144,13 @@ const offsetWithin = (child: HTMLElement, target: HTMLElement, targetOffset: { x
 const topOf = (line: Box[]) => Math.min(...line.map((box) => box.y0));
 const bottomOf = (line: Box[]) => Math.max(...line.map((box) => box.y1));
 
-// Two children share a visual line when they overlap vertically by more than half of the
-// shorter one — robust to ragged item heights in a wrapped flex or a grid.
+// Two children are on the same line if they overlap by more than half the shorter one.
 const sameLine = (a: Span, b: Span) => {
 	const overlap = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
 	const shorter = Math.min(a.y1 - a.y0, b.y1 - b.y0) || 1;
 	return overlap > shorter * 0.5;
 };
 
-// Group children into visual lines, top-to-bottom then left-to-right — DOM order isn't visual.
-// A box matches a line's *band* (its members' intersection), so a row-span can't chain rows.
 const clusterLines = (boxes: Box[]) => {
 	const lines: { boxes: Box[]; band: Span }[] = [];
 	[...boxes]
@@ -181,7 +169,6 @@ const clusterLines = (boxes: Box[]) => {
 };
 
 const layout = computed(() => {
-	// read the styles that move the children, so the bands re-measure on each edit
 	LAYOUT_STYLES.forEach((property) => void blockStyles.value[property]);
 	void props.targetBlock.getChildren().length;
 	void measured.value;
@@ -190,8 +177,6 @@ const layout = computed(() => {
 	if (!target?.isConnected) return null;
 
 	const style = getComputedStyle(target);
-	// Decide off the rendered display, not the block's own styles: a block laid out by a CSS class
-	// is still a flex/grid container, and gap only applies to those two.
 	if (!/^(inline-)?(flex|grid)$/.test(style.display)) return null;
 
 	const targetOffset = layoutOffset(target);
@@ -223,8 +208,7 @@ const layout = computed(() => {
 	};
 });
 
-// Scale a band into canvas pixels, then keep it at least MIN_BAND thick across the axis it
-// straddles, centred so it still sits over the real seam.
+// Turn a band into canvas pixels, kept thick enough to see and centred on the real seam.
 const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 	const left = band.x0 * canvasProps.scale;
 	const top = band.y0 * canvasProps.scale;
@@ -251,8 +235,7 @@ const handleStyle = (size: { width: number; height: number }, cursor: string) =>
 	cursor: props.disableHandlers ? undefined : cursor,
 });
 
-// One band per column boundary, spanning the full content height. Every line shares the same
-// column-gap, so the fullest line carries all of the boundaries.
+// One band per column boundary
 const columnBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
 	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
 	const size = sideHandleSize.value;
@@ -276,13 +259,11 @@ const columnBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
 	});
 };
 
-// One band per line boundary, spanning the full content width.
+// One band per boundary between lines, across the full content width.
 const rowBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
 	const size = longHandleSize.value;
 
 	return lines.slice(1).map((line, index) => {
-		// A row-spanning box straddles the seam instead of ending above it, so its bottom isn't
-		// where the gap starts: measure from the lowest edge that stops short of this line.
 		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
 		const y0 = above.length ? bottomOf(above) : topOf(line);
 		const y1 = Math.max(topOf(line), y0);
