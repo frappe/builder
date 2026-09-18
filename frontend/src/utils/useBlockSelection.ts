@@ -19,9 +19,24 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 		return selectedBlockIds.value.has(block.blockId);
 	};
 
+	function hasAncestorIn(blockIds: Set<string>, block: Block) {
+		let parentBlock = block.getParentBlock();
+		while (parentBlock) {
+			if (blockIds.has(parentBlock.blockId)) return true;
+			parentBlock = parentBlock.getParentBlock();
+		}
+		return false;
+	}
+
+	function removeNestedBlocks(blocks: Block[]) {
+		const blockIds = new Set(blocks.map((block) => block.blockId));
+		return blocks.filter((block) => !hasAncestorIn(blockIds, block));
+	}
+
 	const selectBlock = (block: Block, multiSelect = false) => {
 		if (multiSelect) {
-			selectedBlockIds.value.add(block.blockId);
+			const blocks = removeNestedBlocks([...selectedBlocks.value, block]);
+			selectedBlockIds.value = new Set(blocks.map((selectedBlock) => selectedBlock.blockId));
 		} else {
 			selectedBlockIds.value = new Set([block.blockId]);
 		}
@@ -66,6 +81,7 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 		selectedBlocks,
 		isSelected,
 		selectBlock,
+		removeNestedBlocks,
 		toggleBlockSelection,
 		clearSelection,
 		selectBlockRange,
