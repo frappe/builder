@@ -9,8 +9,11 @@
 		<div
 			v-for="band in gapBands"
 			:key="band.key"
-			class="gap-handler absolute z-10 flex bg-purple-400"
-			:class="band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none'"
+			class="gap-handler absolute z-10 flex"
+			:class="[
+				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-400': band.filled },
+			]"
 			:style="band.style"
 			@mousedown.stop="handleGap($event, band.position)">
 			<div
@@ -101,6 +104,7 @@ type GapBand = {
 	key: string;
 	position: Position;
 	draggable: boolean;
+	filled: boolean;
 	style: Record<string, string | undefined>;
 	handleStyle: Record<string, string | undefined>;
 };
@@ -260,14 +264,14 @@ const columnBands = (lines: Box[][], content: Box): GapBand[] => {
 
 	return widest.slice(1).map((box, index) => {
 		const x0 = widest[index].x1;
-		// offsets are whole pixels, so a zero gap can measure slightly negative — clamp
-		// rather than skip, or the seam would never get a handle
 		const x1 = Math.max(box.x0, x0);
-		const draggable = isDraggable(x1 - x0);
+		const gap = x1 - x0;
+		const draggable = isDraggable(gap);
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
 			draggable,
+			filled: gap > 0,
 			style: bandStyle(
 				{ x0, x1, y0: content.y0, y1: content.y1 },
 				"width",
@@ -292,12 +296,14 @@ const rowBands = (lines: Box[][], content: Box): GapBand[] => {
 		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
 		const y0 = above.length ? bottomOf(above) : topOf(line);
 		const y1 = Math.max(topOf(line), y0);
-		const draggable = isDraggable(y1 - y0);
+		const gap = y1 - y0;
+		const draggable = isDraggable(gap);
 
 		return {
 			key: `row-${index}`,
 			position: Position.Bottom,
 			draggable,
+			filled: gap > 0,
 			style: bandStyle(
 				{ x0: content.x0, x1: content.x1, y0, y1 },
 				"height",
