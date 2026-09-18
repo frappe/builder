@@ -233,10 +233,14 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 
 const isDraggable = (gap: number) => gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
-const handleStyle = (size: { width: number; height: number }, cursor: string) => ({
+const handleStyle = (
+	size: { width: number; height: number },
+	cursor: string,
+	top = `calc(50% - ${size.height / 2}px)`,
+) => ({
 	borderWidth: handleBorderWidth.value,
 	left: `calc(50% - ${size.width / 2}px)`,
-	top: `calc(50% - ${size.height / 2}px)`,
+	top,
 	width: `${size.width}px`,
 	height: `${size.height}px`,
 	cursor: props.disableHandlers ? undefined : cursor,
@@ -275,10 +279,21 @@ const rowSeams = (lines: Box[][]): Seam[] =>
 		return { from, to: Math.max(topOf(line), from) };
 	});
 
+// Middle of the row line at the content's centre, or the line above when the centre is a row gap —
+// a row band there would paint over the column pill.
+const columnPillY = (rows: Seam[], content: Box) => {
+	const middle = (content.y0 + content.y1) / 2;
+	const tops = [content.y0, ...rows.map((seam) => seam.to)];
+	const bottoms = [...rows.map((seam) => seam.from), content.y1];
+	const line = tops.findLastIndex((top) => top <= middle);
+	return (tops[line] + bottoms[line]) / 2;
+};
+
 // One band per seam, spanning the full content height.
-const columnBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
+const columnBands = (seams: Seam[], content: Box, gap: number, pillY: number): GapBand[] =>
 	seams.map((seam, index) => {
 		const draggable = isDraggable(seam.to - seam.from);
+		const size = sideHandleSize.value;
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
@@ -289,7 +304,11 @@ const columnBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
 				"width",
 				draggable ? horizontalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(sideHandleSize.value, horizontalCursor.value),
+			handleStyle: handleStyle(
+				size,
+				horizontalCursor.value,
+				`${(pillY - content.y0) * canvasProps.scale - size.height / 2}px`,
+			),
 		};
 	});
 
@@ -316,7 +335,10 @@ const gapBands = computed<GapBand[]>(() => {
 	const { lines, content, gap, tracks, reach } = layout.value;
 	const columns = trackSeams(tracks.column, content.x0, gap.column, reach.column) ?? columnSeams(lines);
 	const rows = trackSeams(tracks.row, content.y0, gap.row, reach.row) ?? rowSeams(lines);
-	return [...columnBands(columns, content, gap.column), ...rowBands(rows, content, gap.row)];
+	return [
+		...columnBands(columns, content, gap.column, columnPillY(rows, content)),
+		...rowBands(rows, content, gap.row),
+	];
 });
 
 const getGapValue = (position: Position) => getSpacingValue("gap", position);
