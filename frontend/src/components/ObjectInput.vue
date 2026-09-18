@@ -2,13 +2,13 @@
 	<Popover :offset="20" side="left" align="center" bare>
 		<template #trigger>
 			<div class="relative flex w-full gap-2">
-				<div class="flex w-1/3 min-w-[88px] shrink-0 items-center">
+				<div v-if="label" class="flex w-1/3 min-w-[88px] shrink-0 items-center">
 					<InputLabel class="w-full truncate">
 						{{ label }}
 					</InputLabel>
 				</div>
 				<div class="relative w-full">
-					<Button class="w-full" variant="subtle" icon="lucide-pencil" />
+					<Button class="!w-full w-full" variant="subtle" icon="lucide-pencil" />
 				</div>
 			</div>
 		</template>
