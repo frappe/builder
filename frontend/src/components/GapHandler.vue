@@ -94,6 +94,8 @@ const LAYOUT_STYLES = [
 
 type Box = { x0: number; y0: number; x1: number; y1: number };
 type Span = { y0: number; y1: number };
+// A gap to put a band on: where it starts and ends along one axis.
+type Seam = { from: number; to: number };
 type GapBand = {
 	key: string;
 	position: Position;
@@ -195,6 +197,11 @@ const layout = computed(() => {
 
 	return {
 		lines: clusterLines(boxes),
+		tracks: { column: style.gridTemplateColumns, row: style.gridTemplateRows },
+		reach: {
+			column: { from: Math.min(...boxes.map((b) => b.x0)), to: Math.max(...boxes.map((b) => b.x1)) },
+			row: { from: Math.min(...boxes.map((b) => b.y0)), to: Math.max(...boxes.map((b) => b.y1)) },
+		},
 		gap: {
 			column: getNumberFromPx(style.columnGap),
 			row: getNumberFromPx(style.rowGap),
@@ -235,59 +242,81 @@ const handleStyle = (size: { width: number; height: number }, cursor: string) =>
 	cursor: props.disableHandlers ? undefined : cursor,
 });
 
-// One band per column boundary
-const columnBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
-	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
-	const size = sideHandleSize.value;
+// A grid's tracks come back in pixels, so its seams are exact even where an item spans rows or
+// a cell is empty and the children show nothing.
+const trackSeams = (template: string, start: number, gap: number, reach: Seam): Seam[] | null => {
+	const sizes = template.match(/-?[\d.]+px/g);
+	if (!sizes || sizes.length < 2) return null;
 
+	let edge = start;
+	const seams = sizes.slice(0, -1).map((size) => {
+		edge += getNumberFromPx(size) + gap;
+		return { from: edge - gap, to: edge };
+	});
+	// auto-fill can leave tracks the children never reach, and those seams sit between nothing.
+	return seams.filter((seam) => seam.from >= reach.from && seam.to <= reach.to);
+};
+
+// One seam per column boundary, taken from the line with the most children.
+const columnSeams = (lines: Box[][]): Seam[] => {
+	const widest = lines.reduce((longest, line) => (line.length > longest.length ? line : longest));
 	return widest.slice(1).map((box, index) => {
-		const x0 = widest[index].x1;
-		const x1 = Math.max(box.x0, x0);
-		const draggable = isDraggable(x1 - x0);
+		const from = widest[index].x1;
+		return { from, to: Math.max(box.x0, from) };
+	});
+};
+
+// One seam per boundary between lines.
+const rowSeams = (lines: Box[][]): Seam[] =>
+	lines.slice(1).map((line, index) => {
+		// A tall item crosses the seam, so measure the gap from the lowest item that stops above it.
+		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
+		const from = above.length ? bottomOf(above) : topOf(line);
+		return { from, to: Math.max(topOf(line), from) };
+	});
+
+// One band per seam, spanning the full content height.
+const columnBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
+	seams.map((seam, index) => {
+		const draggable = isDraggable(seam.to - seam.from);
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
 			draggable,
 			filled: gap > 0,
 			style: bandStyle(
-				{ x0, x1, y0: content.y0, y1: content.y1 },
+				{ x0: seam.from, x1: seam.to, y0: content.y0, y1: content.y1 },
 				"width",
 				draggable ? horizontalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(size, horizontalCursor.value),
+			handleStyle: handleStyle(sideHandleSize.value, horizontalCursor.value),
 		};
 	});
-};
 
-// One band per boundary between lines, across the full content width.
-const rowBands = (lines: Box[][], content: Box, gap: number): GapBand[] => {
-	const size = longHandleSize.value;
-
-	return lines.slice(1).map((line, index) => {
-		const above = lines[index].filter((box) => !line.some((sibling) => sameLine(box, sibling)));
-		const y0 = above.length ? bottomOf(above) : topOf(line);
-		const y1 = Math.max(topOf(line), y0);
-		const draggable = isDraggable(y1 - y0);
-
+// One band per seam, across the full content width.
+const rowBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
+	seams.map((seam, index) => {
+		const draggable = isDraggable(seam.to - seam.from);
 		return {
 			key: `row-${index}`,
 			position: Position.Bottom,
 			draggable,
 			filled: gap > 0,
 			style: bandStyle(
-				{ x0: content.x0, x1: content.x1, y0, y1 },
+				{ x0: content.x0, x1: content.x1, y0: seam.from, y1: seam.to },
 				"height",
 				draggable ? verticalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(size, verticalCursor.value),
+			handleStyle: handleStyle(longHandleSize.value, verticalCursor.value),
 		};
 	});
-};
 
 const gapBands = computed<GapBand[]>(() => {
 	if (!layout.value) return [];
-	const { lines, content, gap } = layout.value;
-	return [...columnBands(lines, content, gap.column), ...rowBands(lines, content, gap.row)];
+	const { lines, content, gap, tracks, reach } = layout.value;
+	const columns = trackSeams(tracks.column, content.x0, gap.column, reach.column) ?? columnSeams(lines);
+	const rows = trackSeams(tracks.row, content.y0, gap.row, reach.row) ?? rowSeams(lines);
+	return [...columnBands(columns, content, gap.column), ...rowBands(rows, content, gap.row)];
 });
 
 const getGapValue = (position: Position) => getSpacingValue("gap", position);
