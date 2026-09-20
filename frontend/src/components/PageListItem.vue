@@ -5,7 +5,7 @@
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
-			<div class="flex w-[85%] gap-3">
+			<div class="flex w-[85%] gap-4">
 				<img
 					width="140"
 					height="82"
@@ -21,7 +21,7 @@
 									{{ page.page_title || page.page_name }}
 								</p>
 							</div>
-							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
+							<div class="mt-1 flex items-center gap-2 text-ink-gray-6">
 								<span
 									:title="__('Limited access')"
 									class="lucide-shield-user size-4 shrink-0 text-ink-amber-6"
@@ -31,22 +31,19 @@
 								</p>
 							</div>
 						</div>
-						<div class="flex items-baseline gap-2 text-ink-gray-6">
-							<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
-								<p class="mt-1 block text-sm">
-									{{
-										sortedByCreation
-											? __("Created {0} by {1}", [timeAgo, owner.fullname])
-											: __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname])
-									}}
-								</p>
-							</UseTimeAgo>
-						</div>
+						<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
+							<PageStatusLine
+								:page="page"
+								:time="
+									sortedByCreation
+										? __('Created {0} by {1}', [timeAgo, owner.fullname])
+										: __('Updated {0} by {1}', [timeAgo, modifiedBy.fullname])
+								" />
+						</UseTimeAgo>
 					</span>
 				</div>
 			</div>
 			<div class="flex gap-2">
-				<PageStatusBadge :page="page" />
 				<Avatar
 					:shape="'circle'"
 					:image="owner.image"
@@ -54,9 +51,10 @@
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
 					:title="__('Created by {0}', [owner.fullname])" />
-				<PageActionsDropdown :page="page" size="sm" placement="right">
+				<PageActionsDropdown :page="page" size="sm" placement="right" v-slot="{ open }">
 					<span
-						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
+						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+						:class="{ '!opacity-100': selected || open }"
 						aria-hidden="true"
 						@click.stop />
 				</PageActionsDropdown>
@@ -69,15 +67,12 @@
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
-import PageStatusBadge from "@/components/PageStatusBadge.vue";
-import usePageStore from "@/stores/pageStore";
+import PageStatusLine from "@/components/PageStatusLine.vue";
 import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar } from "frappe-ui";
 import { computed } from "vue";
-
-const pageStore = usePageStore();
 
 const props = defineProps<{
 	page: BuilderPage;
