@@ -44,7 +44,9 @@ const pagesWithUnpublishedChanges = createListResource({
 		staging: 1,
 	},
 	cache: "pages-with-unpublished-changes",
-	pageLength: 500,
+	// a truncated lookup would quietly show a pending page as fully published, so this
+	// matches the ceiling the route tree already fetches pages at
+	pageLength: 9999,
 });
 
 const templateGroups = createResource({
