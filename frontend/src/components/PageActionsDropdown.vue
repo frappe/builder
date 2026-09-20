@@ -38,8 +38,11 @@
 		]"
 		:size="size"
 		:placement="placement">
-		<!-- The slot content becomes the dropdown trigger (reka-ui as-child). -->
-		<slot />
+		<!-- The slot content becomes the dropdown trigger (reka-ui as-child).
+			 `open` goes through so a trigger that only shows on hover can stay put while its menu is up. -->
+		<template #default="triggerProps">
+			<slot v-bind="triggerProps" />
+		</template>
 	</Dropdown>
 </template>
 

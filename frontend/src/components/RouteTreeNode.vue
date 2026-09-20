@@ -69,13 +69,13 @@
 					<span class="truncate font-mono text-sm text-ink-gray-8">/{{ node.label }}</span>
 				</div>
 
-				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
+				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right" v-slot="{ open }">
 					<Button
 						icon="lucide-more-horizontal"
 						size="sm"
 						variant="ghost"
 						class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
-						:class="{ 'opacity-100': focusedNodeId === node.id }"
+						:class="{ '!opacity-100': focusedNodeId === node.id || open }"
 						@click.stop></Button>
 				</PageActionsDropdown>
 			</div>

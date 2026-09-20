@@ -37,7 +37,7 @@
 								:time="
 									sortedByCreation
 										? __('Created {0} by {1}', [timeAgo, owner.fullname])
-										: __('Last updated {0} by {1}', [timeAgo, modifiedBy.fullname])
+										: __('Updated {0} by {1}', [timeAgo, modifiedBy.fullname])
 								" />
 						</UseTimeAgo>
 					</span>
@@ -51,10 +51,10 @@
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
 					:title="__('Created by {0}', [owner.fullname])" />
-				<PageActionsDropdown :page="page" size="sm" placement="right">
+				<PageActionsDropdown :page="page" size="sm" placement="right" v-slot="{ open }">
 					<span
 						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
-						:class="{ '!opacity-100': selected }"
+						:class="{ '!opacity-100': selected || open }"
 						aria-hidden="true"
 						@click.stop />
 				</PageActionsDropdown>

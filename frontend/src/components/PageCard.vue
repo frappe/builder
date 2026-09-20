@@ -31,13 +31,13 @@
 						:hoverDelay="0.5">
 						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 					</Tooltip>
-					<PageActionsDropdown :page="page" size="xs" placement="right">
+					<PageActionsDropdown :page="page" size="xs" placement="right" v-slot="{ open }">
 						<Button
 							icon="lucide-more-horizontal"
 							size="sm"
 							variant="ghost"
 							class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
-							:class="{ '!opacity-100': selected }"
+							:class="{ '!opacity-100': selected || open }"
 							@click.stop></Button>
 					</PageActionsDropdown>
 				</div>
