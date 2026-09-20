@@ -29,6 +29,24 @@ const webPages = createListResource({
 	pageLength: 50,
 });
 
+// names of live/staged pages carrying edits that aren't published yet, kept out of
+// the main list so the heavy draft_blocks column never has to be fetched
+const pagesWithUnpublishedChanges = createListResource({
+	method: "GET",
+	doctype: "Builder Page",
+	fields: ["name"],
+	filters: {
+		is_template: 0,
+		draft_blocks: ["is", "set"],
+	},
+	orFilters: {
+		published: 1,
+		staging: 1,
+	},
+	cache: "pages-with-unpublished-changes",
+	pageLength: 500,
+});
+
 const templateGroups = createResource({
 	url: "builder.api.get_template_groups",
 	cache: "template-groups",
@@ -46,4 +64,4 @@ const searchablePages = createListResource({
 	pageLength: 10,
 });
 
-export { searchablePages, templateGroups, webPages };
+export { pagesWithUnpublishedChanges, searchablePages, templateGroups, webPages };

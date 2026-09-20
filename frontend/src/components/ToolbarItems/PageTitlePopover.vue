@@ -31,7 +31,7 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
-				<PageStatusBadge v-if="pageStore.activePage" :page="pageStore.activePage" />
+				<PageStatusPill v-if="pageStore.activePage" :page="pageStore.activePage" />
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageOptions from "@/components/PageOptions.vue";
-import PageStatusBadge from "@/components/PageStatusBadge.vue";
+import PageStatusPill from "@/components/PageStatusPill.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";

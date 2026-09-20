@@ -48,7 +48,7 @@
 							:hoverDelay="0.5">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
-						<PageStatusBadge :page="node.page" />
+						<PageStatusDot :page="node.page" />
 					</span>
 				</div>
 
@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
-import PageStatusBadge from "@/components/PageStatusBadge.vue";
+import PageStatusDot from "@/components/PageStatusDot.vue";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { Tooltip } from "frappe-ui";

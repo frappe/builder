@@ -31,22 +31,19 @@
 								</p>
 							</div>
 						</div>
-						<div class="flex items-baseline gap-2 text-ink-gray-6">
-							<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
-								<p class="mt-1 block text-sm">
-									{{
-										sortedByCreation
-											? __("Created {0} by {1}", [timeAgo, owner.fullname])
-											: __("Last updated {0} by {1}", [timeAgo, modifiedBy.fullname])
-									}}
-								</p>
-							</UseTimeAgo>
-						</div>
+						<UseTimeAgo v-slot="{ timeAgo }" :time="timestamp">
+							<PageStatusLine
+								:page="page"
+								:time="
+									sortedByCreation
+										? __('Created {0} by {1}', [timeAgo, owner.fullname])
+										: __('Last updated {0} by {1}', [timeAgo, modifiedBy.fullname])
+								" />
+						</UseTimeAgo>
 					</span>
 				</div>
 			</div>
 			<div class="flex gap-2">
-				<PageStatusBadge :page="page" />
 				<Avatar
 					:shape="'circle'"
 					:image="owner.image"
@@ -69,15 +66,12 @@
 import { __ } from "@/translation";
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
-import PageStatusBadge from "@/components/PageStatusBadge.vue";
-import usePageStore from "@/stores/pageStore";
+import PageStatusLine from "@/components/PageStatusLine.vue";
 import { BuilderPage } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
 import { UseTimeAgo } from "@vueuse/components";
 import { Avatar } from "frappe-ui";
 import { computed } from "vue";
-
-const pageStore = usePageStore();
 
 const props = defineProps<{
 	page: BuilderPage;

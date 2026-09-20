@@ -58,7 +58,7 @@ import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import RouteTreeView from "@/components/RouteTreeView.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
-import { webPages } from "@/data/webPage";
+import { pagesWithUnpublishedChanges, webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -85,8 +85,12 @@ const {
 onActivated(() => {
 	builderStore.realtime.doctype_subscribe("Builder Page");
 	builderStore.realtime.on("list_update", (e) => {
-		if (e.doctype == "Builder Page") fetchPages();
+		if (e.doctype !== "Builder Page") return;
+		fetchPages();
+		pagesWithUnpublishedChanges.fetch();
 	});
+	// publishing is the only thing that moves this set, so it skips the list's filters
+	pagesWithUnpublishedChanges.fetch();
 });
 
 onDeactivated(() => {
