@@ -97,7 +97,7 @@
 						class="w-fit text-p-sm text-ink-gray-8"
 						:class="
 							message.role === 'user'
-								? 'max-w-[88%] rounded-md border px-3 py-2 shadow-sm'
+								? 'max-w-[88%] rounded-5 border px-3 py-2 shadow-sm'
 								: 'w-full max-w-full'
 						">
 						<!-- ui-card messages persist the full card as text (for model replay);
@@ -188,7 +188,7 @@
 						     reads as a decision, not an alarm. -->
 						<div
 							v-if="message.metadata?.status === 'pending_action'"
-							class="mt-2 w-full rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3">
+							class="mt-2 w-full rounded-6 border border-outline-gray-2 bg-surface-gray-1 p-3">
 							<p class="text-p-xs font-medium text-ink-amber-8">Needs your OK</p>
 							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
@@ -230,21 +230,21 @@
 						<!-- image chip -->
 						<span
 							v-if="message.metadata?.attachedImageUrl"
-							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6">
-							<img :src="message.metadata.attachedImageUrl" class="h-3 w-3 rounded object-cover" alt="" />
+							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6">
+							<img :src="message.metadata.attachedImageUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
 							Image
 						</span>
 						<!-- block chips -->
 						<button
 							v-for="block in getVisibleChips(message)"
 							:key="block.id"
-							class="inline-flex items-center rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-8"
+							class="inline-flex items-center rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-8"
 							@click="selectBlockById(block.id)">
 							{{ block.label }}
 						</button>
 						<button
 							v-if="(message.metadata?.selectedBlockContext?.length ?? 0) > MAX_VISIBLE_CHIPS"
-							class="inline-flex items-center rounded bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-5 transition-colors hover:bg-surface-gray-3"
+							class="inline-flex items-center rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-5 transition-colors hover:bg-surface-gray-3"
 							@click="toggleChips(message.id)">
 							{{
 								expandedMessages.has(message.id)
@@ -266,7 +266,7 @@
 					<span
 						v-for="block in attachedBlocks"
 						:key="block.id"
-						class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
+						class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
 						<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
 						<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
 						<Tooltip text="Remove from context">
@@ -281,7 +281,7 @@
 					<button
 						v-if="attachableBlocks.length"
 						type="button"
-						class="inline-flex items-center gap-1 rounded border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
+						class="inline-flex items-center gap-1 rounded-4 border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
 						@click="chat.attachSelection()">
 						<span class="lucide-plus h-3 w-3" />
 						<span class="block max-w-[10rem] truncate">
@@ -296,8 +296,8 @@
 				<Transition name="fade">
 					<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
 						<span
-							class="inline-flex items-center gap-1 rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-							<img :src="imagePreviewUrl" class="h-3 w-3 rounded object-cover" alt="" />
+							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
+							<img :src="imagePreviewUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
 							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
 							<Tooltip text="Remove image">
 								<button
@@ -313,7 +313,7 @@
 				<!-- Say it before a prompt is typed, not after the send fails on the server. -->
 				<div
 					v-if="selectedModelUnusable"
-					class="mb-2 flex items-center gap-2 rounded-md bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
+					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
 					<span class="lucide-key-round size-3.5 shrink-0" />
 					<span class="flex-1">{{ modelLabel }} has no API key.</span>
 					<button
@@ -336,7 +336,7 @@
 						ref="promptInput"
 						v-model="prompt"
 						rows="1"
-						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting"
 						placeholder="Ask to create or edit this page…"
 						@keydown.meta.enter="submitPrompt"
@@ -347,7 +347,7 @@
 						     the target hung past the field. Same radius as the field, too. -->
 						<div
 							v-if="isDragging"
-							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
+							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-4 border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 								<span class="lucide-image h-3.5 w-3.5" />
 								{{ __("Drop image to attach") }}
@@ -366,14 +366,14 @@
 					<div class="flex items-center gap-0.5">
 						<Dropdown :options="modelOptions" side="top" :offset="6">
 							<button
-								class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8">
+								class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded-4 px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8">
 								<span class="lucide-cpu size-3.5 shrink-0" />
 								<span class="truncate text-xs">{{ modelLabel }}</span>
 							</button>
 						</Dropdown>
-						<Tooltip text="Improve prompt" placement="top">
+						<Tooltip text="Improve prompt" side="top">
 							<button
-								class="flex size-7 items-center justify-center rounded text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
+								class="flex size-7 items-center justify-center rounded-4 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
 								:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
 								@click="chat.improvePrompt">
 								<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />

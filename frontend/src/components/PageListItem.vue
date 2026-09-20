@@ -1,7 +1,7 @@
 <template>
 	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }" class="group block h-fit w-full">
 		<div
-			class="group relative flex w-full justify-between overflow-hidden rounded-2xl p-3 hover:cursor-pointer hover:bg-surface-gray-1"
+			class="group relative flex w-full justify-between overflow-hidden rounded-8 p-3 hover:cursor-pointer hover:bg-surface-gray-1"
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
@@ -12,7 +12,7 @@
 					:src="page.meta_image || page.preview"
 					alt=""
 					onerror="this.src='/assets/builder/images/fallback.png'"
-					class="block aspect-video w-36 flex-shrink-0 overflow-hidden rounded-lg bg-surface-gray-1 object-cover shadow-md" />
+					class="block aspect-video w-36 flex-shrink-0 overflow-hidden rounded-6 bg-surface-gray-1 object-cover shadow-md" />
 				<div class="flex flex-1 items-start justify-between overflow-hidden">
 					<span class="flex h-full w-full flex-col justify-between text-base">
 						<div>
@@ -51,7 +51,7 @@
 					class="[&>div]:bg-surface-gray-2 [&>div]:text-ink-gray-4 [&>div]:group-hover:bg-surface-gray-4 [&>div]:group-hover:text-ink-gray-6"
 					size="sm"
 					:title="__('Created by {0}', [owner.fullname])" />
-				<PageActionsDropdown :page="page" size="sm" placement="right" v-slot="{ open }">
+				<PageActionsDropdown :page="page" size="sm" align="end" v-slot="{ open }">
 					<span
 						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
 						:class="{ '!opacity-100': selected || open }"

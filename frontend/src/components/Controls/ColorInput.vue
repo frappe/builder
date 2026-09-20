@@ -45,7 +45,7 @@
 								<template #prefix>
 									<button
 										type="button"
-										class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+										class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
 										:aria-label="__('Open color picker')"
 										@click="togglePopover"
 										:style="{

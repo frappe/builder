@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-[88vh] max-h-[min(800px,calc(100vh-6rem))] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="text-lg-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
+			<span class="text-md-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
 			<div class="flex flex-col gap-0.5" v-for="group in visibleGroups" :key="group.title">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ group.title }}
@@ -22,7 +22,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
-			<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+			<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"

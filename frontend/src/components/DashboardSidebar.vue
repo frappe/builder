@@ -62,7 +62,7 @@
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
-							placement="right"
+							align="end"
 							:options="[
 								{
 									label: __('Rename'),
@@ -125,7 +125,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui";
-import { TrialBanner } from "frappe-ui/frappe";
+import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 

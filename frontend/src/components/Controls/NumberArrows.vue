@@ -4,7 +4,7 @@
 		class="pointer-events-none hidden flex-col gap-0 transition-opacity group-hover:pointer-events-auto group-hover:flex">
 		<button
 			type="button"
-			class="circle-cursor duration-250 -mb-[1.5px] flex h-3 w-5 items-center justify-center rounded text-ink-gray-5 transition-all ease-in-out active:-translate-y-[2px] active:text-ink-gray-9"
+			class="circle-cursor duration-250 -mb-[1.5px] flex h-3 w-5 items-center justify-center rounded-4 text-ink-gray-5 transition-all ease-in-out active:-translate-y-[2px] active:text-ink-gray-9"
 			@mousedown.prevent.stop="startHold('increment')"
 			@mouseup="stopHold"
 			@mouseleave="stopHold"
@@ -24,7 +24,7 @@
 		</button>
 		<button
 			type="button"
-			class="circle-cursor duration-250 -mt-[1.5px] flex h-3 w-5 items-center justify-center rounded text-ink-gray-5 transition-all ease-in-out active:translate-y-[2px] active:text-ink-gray-9"
+			class="circle-cursor duration-250 -mt-[1.5px] flex h-3 w-5 items-center justify-center rounded-4 text-ink-gray-5 transition-all ease-in-out active:translate-y-[2px] active:text-ink-gray-9"
 			@mousedown.prevent.stop="startHold('decrement')"
 			@mouseup="stopHold"
 			@mouseleave="stopHold"

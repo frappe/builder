@@ -4,7 +4,7 @@
 		class="fixed inset-0 z-[9999] grid place-content-center gap-4 bg-surface-base text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-3xl-semibold">{{ __("Screen too small") }}</h1>
+			<h1 class="text-p-2xl-semibold">{{ __("Screen too small") }}</h1>
 			<p class="text-p-base">{{ __("Please switch to a larger screen to edit") }}</p>
 		</div>
 	</div>
@@ -104,7 +104,7 @@
 	</Dialog>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
+	<KeyboardShortcutsDialog v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
 </template>
 
@@ -131,8 +131,8 @@ import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
+import { useDebounceFn } from "@vueuse/core";
+import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -187,26 +187,25 @@ provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: " ",
+		combo: "Space",
 		description: __("Hold for Move Mode"),
 		group: __("Tools"),
-		handler: () => {
+		onHold: () => {
 			if (!canvasStore.editableBlock) {
 				builderStore.mode = "move";
+			}
+		},
+		// on release, revert back to last mode
+		onRelease: () => {
+			if (builderStore.mode === "move") {
+				builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
 			}
 		},
 		preventDefault: true,
 	},
 ]);
-
-// When space is released, revert back to last mode
-useEventListener(document, "keyup", (e) => {
-	if (e.key === " " && builderStore.mode === "move") {
-		builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
-	}
-});
 
 async function saveAndExitFragmentMode(e: Event) {
 	if (canvasStore.fragmentData.fragmentType === "component") {
