@@ -36,7 +36,8 @@
 							icon="lucide-more-horizontal"
 							size="sm"
 							variant="ghost"
-							class="!text-ink-gray-5 hover:!text-ink-gray-9"
+							class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
+							:class="{ '!opacity-100': selected }"
 							@click.stop></Button>
 					</PageActionsDropdown>
 				</div>

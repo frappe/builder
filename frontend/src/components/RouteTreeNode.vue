@@ -1,8 +1,13 @@
 <template>
 	<template v-for="node in nodes" :key="node.id">
 		<section class="relative">
+			<!-- runs from the folder row down past its last child, so nesting stays readable -->
+			<span
+				v-if="node.hasChildren && node.expanded"
+				class="absolute bottom-0 w-0 border-l border-outline-gray-2"
+				:style="{ top: `${stickyRowHeight}px`, left: `${node.depth * 24 + 18}px` }" />
 			<div
-				class="group flex cursor-pointer select-none items-center gap-1.5 border-b border-outline-gray-1 px-1 hover:rounded-md hover:bg-surface-gray-1"
+				class="group flex cursor-pointer select-none items-center gap-1.5 rounded-md px-1 hover:bg-surface-gray-1"
 				:class="[
 					node.hasChildren ? 'sticky bg-surface-base shadow-[0_1px_0_var(--border-color)]' : '',
 					{ 'rounded-md !bg-surface-gray-2': focusedNodeId === node.id },
@@ -29,18 +34,16 @@
 				<span v-else class="size-6 w-7 shrink-0"></span>
 
 				<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
-					<code class="shrink-0 py-0.5 font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9">
-						/{{ node.label }}
-					</code>
+					<code class="shrink-0 py-0.5 font-mono text-sm text-ink-gray-8">/{{ node.label }}</code>
 					<span
 						v-if="node.page.page_title"
-						class="truncate text-sm text-ink-gray-4"
+						class="truncate text-sm text-ink-gray-5"
 						:title="node.page.page_title">
 						{{ node.page.page_title }}
 					</span>
-					<span class="ml-auto mr-1 flex shrink-0 items-center gap-1">
+					<span class="ml-auto flex shrink-0 items-center gap-2 pl-3">
 						<Tooltip v-if="isHomePage(node.page)" :text="__('Home page')" :hoverDelay="0.5">
-							<HomeIcon class="size-3.5 text-ink-green-6" />
+							<HomeIcon class="size-3.5 text-ink-gray-5" />
 						</Tooltip>
 						<Tooltip
 							v-if="node.page.authenticated_access"
@@ -48,12 +51,17 @@
 							:hoverDelay="0.5">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
-						<PageStatusDot :page="node.page" />
+						<!-- fixed width so the dots line up into a rail down the tree -->
+						<span class="flex w-36 shrink-0 items-center">
+							<UseTimeAgo v-slot="{ timeAgo }" :time="node.page.modified">
+								<PageStatusLine :page="node.page" :time="timeAgo" />
+							</UseTimeAgo>
+						</span>
 					</span>
 				</div>
 
 				<div v-else class="flex min-w-0 flex-1 items-center gap-1 py-0.5">
-					<span class="font-mono text-sm text-ink-gray-6 group-hover:text-ink-gray-9">/{{ node.label }}</span>
+					<span class="font-mono text-sm text-ink-gray-8">/{{ node.label }}</span>
 				</div>
 
 				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
@@ -61,7 +69,8 @@
 						icon="lucide-more-horizontal"
 						size="sm"
 						variant="ghost"
-						class="bg-surface-base !text-ink-gray-5 hover:!text-ink-gray-9"
+						class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
+						:class="{ 'opacity-100': focusedNodeId === node.id }"
 						@click.stop></Button>
 				</PageActionsDropdown>
 			</div>
@@ -97,9 +106,10 @@
 
 <script setup lang="ts">
 import PageActionsDropdown from "@/components/PageActionsDropdown.vue";
-import PageStatusDot from "@/components/PageStatusDot.vue";
+import PageStatusLine from "@/components/PageStatusLine.vue";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
+import { UseTimeAgo } from "@vueuse/components";
 import { Tooltip } from "frappe-ui";
 import HomeIcon from "~icons/lucide/house";
 

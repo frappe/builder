@@ -113,6 +113,7 @@ const pagesResource = createListResource({
 		"staging",
 		"authenticated_access",
 		"project_folder",
+		"modified",
 	],
 	filters: { is_template: 0 },
 	orderBy: "route asc",

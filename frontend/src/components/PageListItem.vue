@@ -5,7 +5,7 @@
 			:class="{
 				'bg-surface-gray-2': selected,
 			}">
-			<div class="flex w-[85%] gap-3">
+			<div class="flex w-[85%] gap-4">
 				<img
 					width="140"
 					height="82"
@@ -21,7 +21,7 @@
 									{{ page.page_title || page.page_name }}
 								</p>
 							</div>
-							<div class="mt-2 flex items-center gap-2 text-ink-gray-6">
+							<div class="mt-1 flex items-center gap-2 text-ink-gray-6">
 								<span
 									:title="__('Limited access')"
 									class="lucide-shield-user size-4 shrink-0 text-ink-amber-6"
@@ -53,7 +53,8 @@
 					:title="__('Created by {0}', [owner.fullname])" />
 				<PageActionsDropdown :page="page" size="sm" placement="right">
 					<span
-						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6"
+						class="lucide-more-horizontal h-4 w-4 font-bold text-ink-gray-6 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+						:class="{ '!opacity-100': selected }"
 						aria-hidden="true"
 						@click.stop />
 				</PageActionsDropdown>
