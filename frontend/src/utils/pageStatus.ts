@@ -11,7 +11,8 @@ export type PageStatus = {
 const LIVE = "text-ink-green-7";
 const STAGING = "text-ink-violet-8";
 const DRAFT = "text-ink-gray-4";
-// the dot paints itself from the text colour, so both shapes share one palette
+// the dot paints itself from the text colour, so both shapes share one palette.
+// Hollow reads as "something here isn't live": a draft, or edits waiting to publish.
 const FILLED = "bg-current";
 const HOLLOW = "border-[1.5px] border-current";
 
@@ -33,5 +34,5 @@ function liveStatus(label: string, color: string, pending: boolean): PageStatus 
 export function getPageStatus(page: BuilderPage): PageStatus {
 	if (page.published) return liveStatus(__("Live"), LIVE, hasUnpublishedChanges(page));
 	if (page.staging) return liveStatus(__("Staging"), STAGING, hasUnpublishedChanges(page));
-	return { label: __("Draft"), tooltip: __("Draft"), dotClass: `${FILLED} ${DRAFT}` };
+	return { label: __("Draft"), tooltip: __("Draft"), dotClass: `${HOLLOW} ${DRAFT}` };
 }
