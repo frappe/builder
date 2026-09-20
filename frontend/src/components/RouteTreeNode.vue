@@ -34,7 +34,12 @@
 				<span v-else class="size-6 w-7 shrink-0"></span>
 
 				<div v-if="node.page" class="flex min-w-0 flex-1 items-center gap-1.5 py-0.5">
-					<code class="shrink-0 py-0.5 font-mono text-sm text-ink-gray-8">/{{ node.label }}</code>
+					<!-- capped rather than shrinkable, so the title gives up room before the route does -->
+					<code
+						class="max-w-[50%] shrink-0 truncate py-0.5 font-mono text-sm text-ink-gray-8"
+						:title="`/${node.label}`">
+						/{{ node.label }}
+					</code>
 					<span
 						v-if="node.page.page_title"
 						class="truncate text-sm text-ink-gray-5"
@@ -61,7 +66,7 @@
 				</div>
 
 				<div v-else class="flex min-w-0 flex-1 items-center gap-1 py-0.5">
-					<span class="font-mono text-sm text-ink-gray-8">/{{ node.label }}</span>
+					<span class="truncate font-mono text-sm text-ink-gray-8">/{{ node.label }}</span>
 				</div>
 
 				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right">
