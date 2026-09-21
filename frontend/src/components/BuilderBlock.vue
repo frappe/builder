@@ -47,7 +47,6 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
-import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
@@ -75,29 +74,11 @@ import TextBlock from "./TextBlock.vue";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
-const blockTemplateStore = useBlockTemplateStore();
 const component = ref<HTMLElement | InstanceType<typeof TextBlock> | null>(null);
 const attrs = useAttrs();
 const isMounted = ref(false);
 
 const pageStore = usePageStore();
-
-// blockId is regenerated on every template insertion/copy, so the carousel root is
-// identified by the "data-carousel-root" attribute or blockName/id.
-function getCarouselRootBlock(block: Block): Block | null {
-	let current: Block | null = block;
-	while (current) {
-		if (
-			current.getAttributes?.()?.["data-carousel-root"] !== undefined ||
-			current.blockName === "Carousel" ||
-			current.blockId === "crsl-root"
-		) {
-			return current;
-		}
-		current = current.getParentBlock?.() || null;
-	}
-	return null;
-}
 
 const props = withDefaults(
 	defineProps<{
@@ -321,49 +302,6 @@ const styles = computed(() => {
 		}
 	});
 
-	// Reactive flex layout enforcement for Carousel track and slides
-	const carouselRoot = getCarouselRootBlock(props.block);
-	if (carouselRoot) {
-		const isTrack =
-			props.block.getAttributes?.()?.["data-carousel-track"] !== undefined ||
-			props.block.getAttributes?.()?.["data-array-items"] === "slides";
-
-		const parentOfBlock = props.block.getParentBlock?.();
-		// Pagination dots container also has data-array-items="slides", so only the track identifies slides
-		const isSlide = parentOfBlock?.getAttributes?.()?.["data-carousel-track"] !== undefined;
-
-		const isDot = props.block.getAttributes?.()?.["data-carousel-dot"] !== undefined;
-
-		if (isDot) {
-			styleMap.width = "12px";
-			styleMap.height = "12px";
-			styleMap.minWidth = "12px";
-			styleMap.minHeight = "12px";
-			styleMap.maxWidth = "12px";
-			styleMap.maxHeight = "12px";
-			styleMap.flexShrink = 0;
-		}
-
-		if (isTrack) {
-			styleMap.display = "flex";
-			styleMap.flexDirection = "row";
-			styleMap.flexWrap = "nowrap";
-			styleMap.overflowX = "auto";
-			styleMap.overflowY = "hidden";
-			styleMap.scrollbarWidth = "none";
-		}
-
-		if (isSlide) {
-			styleMap.width = "100%";
-			styleMap.minWidth = "100%";
-			styleMap.maxWidth = "100%";
-			styleMap.height = "100%";
-			styleMap.minHeight = "100%";
-			styleMap.flexShrink = 0;
-			styleMap.flexGrow = 0;
-		}
-	}
-
 	return styleMap;
 });
 
@@ -459,29 +397,9 @@ watch(resolvedComponentData, () => {
 });
 
 const blockClientScript = computed(() => {
-	let clientScript = props.block.extendedFromComponent
+	const clientScript = props.block.extendedFromComponent
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
-
-	// Fallback only: never replace a script the user has authored or edited
-	if (!clientScript?.js && getCarouselRootBlock(props.block) === props.block) {
-		if (!blockTemplateStore.getBlockTemplate("Carousel")) {
-			blockTemplateStore.fetchBlockTemplate("Carousel");
-		}
-		const template = blockTemplateStore.getBlockTemplate("Carousel");
-		if (template?.block) {
-			try {
-				const parsed = JSON.parse(template.block);
-				if (parsed?.clientScript?.js) {
-					clientScript = parsed.clientScript;
-					// Persist so the published page runs it too; component scripts live on the component
-					if (!props.block.extendedFromComponent) {
-						props.block.clientScript = parsed.clientScript;
-					}
-				}
-			} catch {}
-		}
-	}
 
 	const javascript = clientScript?.js || "";
 	const css = clientScript?.css || "";
