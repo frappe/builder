@@ -155,8 +155,16 @@ const usePageStore = defineStore("pageStore", {
 		async refreshActivePage(modified?: string) {
 			const pageName = this.selectedPage;
 			if (!pageName || this.savingPage || this.activePage?.modified === modified) return;
-			const page = await this.fetchActivePage(pageName);
+			// A plain request, not fetchActivePage: that shares one cached document whose
+			// doc is replaced on every reply, so two refreshes in flight read each other's.
+			const page: BuilderPage | null = await createResource({
+				url: "frappe.client.get",
+				params: { doctype: "Builder Page", name: pageName },
+			}).fetch();
 			if (!page || this.selectedPage !== pageName) return;
+			// an autosave and then a publish re-fetch together, and the older reply can
+			// land last, so keep the newest
+			if (this.activePage?.modified && (page.modified ?? "") < this.activePage.modified) return;
 			if (this.activePage) Object.assign(this.activePage, page);
 			else this.activePage = page;
 		},
