@@ -35,8 +35,7 @@
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
-import { toValue } from "@vueuse/core";
-import { Ref, ref } from "vue";
+import { Ref, ref, toValue } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();

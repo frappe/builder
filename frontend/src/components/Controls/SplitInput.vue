@@ -1,13 +1,13 @@
 <template>
 	<div class="w-full">
-		<div class="flex divide-x divide-outline-gray-2 overflow-hidden rounded">
+		<div class="flex divide-x divide-outline-gray-2 overflow-hidden rounded-4">
 			<Input
 				v-for="(split, index) in splits"
 				:key="`input-${index}`"
 				class="split-input min-w-0 flex-1 *:rounded-none *:p-2 *:text-center *:text-xs"
 				:class="{
-					'*:rounded-l': index == 0,
-					'*:rounded-r': index == splits.length - 1,
+					'*:rounded-l-4': index == 0,
+					'*:rounded-r-4': index == splits.length - 1,
 				}"
 				:modelValue="values[index]"
 				:aria-label="split.label"

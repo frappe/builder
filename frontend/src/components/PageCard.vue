@@ -1,7 +1,7 @@
 <template>
 	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl p-3 hover:bg-surface-elevation-1"
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-8 p-3 hover:bg-surface-elevation-1"
 			:class="{
 				'!bg-surface-gray-2': selected,
 			}">
@@ -11,7 +11,7 @@
 				:src="page.meta_image || page.preview"
 				onerror="this.src='/assets/builder/images/fallback.png'"
 				alt=""
-				class="block aspect-video w-full overflow-hidden rounded-md object-cover shadow dark:border dark:border-outline-gray-1" />
+				class="block aspect-video w-full overflow-hidden rounded-5 object-cover shadow dark:border dark:border-outline-gray-1" />
 			<div class="flex items-center gap-1">
 				<div class="min-w-0 flex-1">
 					<p class="text-base-medium truncate text-ink-gray-7 group-hover:text-ink-gray-9">
@@ -28,10 +28,10 @@
 					<Tooltip
 						v-if="(page.published || page.staging) && page.authenticated_access"
 						:text="__('This page has limited access')"
-						:hoverDelay="0.5">
+						:hoverDelay="500">
 						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 					</Tooltip>
-					<PageActionsDropdown :page="page" size="xs" placement="right" v-slot="{ open }">
+					<PageActionsDropdown :page="page" size="xs" align="end" v-slot="{ open }">
 						<Button
 							icon="lucide-more-horizontal"
 							size="sm"
