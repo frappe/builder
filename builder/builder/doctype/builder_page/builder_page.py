@@ -1015,7 +1015,11 @@ URL_SAFE_CHARS = "/:?#[]@!$&'()*+,;=%"
 
 
 def quote_url(url: str | None) -> str | None:
-	return frappe.utils.quote(url, safe=URL_SAFE_CHARS) if url else None
+	if not url:
+		return None
+	# In a data: URL "#" is payload (fill='#fff'), not a fragment.
+	safe = URL_SAFE_CHARS.replace("#", "") if url.startswith("data:") else URL_SAFE_CHARS
+	return frappe.utils.quote(url, safe=safe)
 
 
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:

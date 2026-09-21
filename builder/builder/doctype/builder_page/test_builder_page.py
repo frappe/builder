@@ -1416,7 +1416,7 @@ component.update({
 			element="img",
 			attributes={
 				"src": "/files/light.png",
-				"darkSrc": "data:image/svg+xml,%3Csvg width='5'%3E%3C/svg%3E",
+				"darkSrc": "data:image/svg+xml,%3Csvg width='5' fill='#fff'%3E%3C/svg%3E",
 			},
 		)
 		body.attach_children(absolute, inline)
@@ -1437,7 +1437,7 @@ component.update({
 				get_html_for(content, "tag", "source", only_content=False),
 			)
 			self.assertIn(
-				"srcset=\"data:image/svg+xml,%3Csvg%20width='5'%3E%3C/svg%3E\"",
+				"srcset=\"data:image/svg+xml,%3Csvg%20width='5'%20fill='%23fff'%3E%3C/svg%3E\"",
 				get_html_for(content, "tag", "source", index=1, only_content=False),
 			)
 		finally:
