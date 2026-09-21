@@ -46,7 +46,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
-import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
+import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
@@ -101,8 +101,6 @@ const selectItem = (value: string) => {
 if (!selectedItemDoc.value) {
 	selectedItem.value = props.onlyGlobal ? "global_general" : "page_general";
 }
-
-provide("selectSettingsTab", selectItem);
 
 watch(
 	() => props.initialTab,

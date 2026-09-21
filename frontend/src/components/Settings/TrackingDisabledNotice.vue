@@ -13,14 +13,9 @@
 				}}
 			</p>
 		</div>
-		<div class="flex items-center gap-3">
-			<Button variant="solid" :loading="websiteSettings.setValue?.loading" @click="enableTracking">
-				{{ __("Enable View Tracking") }}
-			</Button>
-			<Button v-if="selectSettingsTab" variant="ghost" @click="selectSettingsTab('global_general')">
-				{{ __("Open Global Settings") }}
-			</Button>
-		</div>
+		<Button variant="solid" :loading="websiteSettings.setValue?.loading" @click="enableTracking">
+			{{ __("Enable View Tracking") }}
+		</Button>
 	</div>
 </template>
 
@@ -28,9 +23,6 @@
 import { __ } from "@/translation";
 import { websiteSettings } from "@/data/websiteSettings";
 import { Button } from "frappe-ui";
-import { inject } from "vue";
-
-const selectSettingsTab = inject<((tab: string) => void) | null>("selectSettingsTab", null);
 
 const enableTracking = () => {
 	websiteSettings.setValue.submit({ enable_view_tracking: 1 });
