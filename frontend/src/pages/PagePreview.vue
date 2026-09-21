@@ -96,14 +96,38 @@ import { useRoute } from "vue-router";
 const { capture } = useTelemetry();
 
 const route = useRoute();
+const pageStore = usePageStore();
+const builderStore = useBuilderStore();
 const maxWidth = window.innerWidth * 0.92;
 const minWidth = 400;
 let previewRoute = ref("");
 const width = ref(maxWidth);
+
 // blocks clicks on the iframe until the first load settles
 const loading = ref(true);
-const pageStore = usePageStore();
-const builderStore = useBuilderStore();
+
+
+// shared by the header and the fullscreen toolbar
+const actions = computed(() => ({
+	back: {
+		icon: canGoBack.value ? "lucide-chevron-left" : "lucide-pencil",
+		label: canGoBack.value ? __("Back") : __("Edit"),
+		onClick: goBack,
+	},
+	reload: { icon: "lucide-rotate-cw", label: __("Reload"), onClick: setPreviewURL },
+	enterFullscreen: {
+		icon: "lucide-maximize-2",
+		label: __("Full screen"),
+		onClick: () => setFullscreen(true),
+	},
+	exitFullscreen: { icon: "lucide-panel-top", label: __("Show UI"), onClick: () => setFullscreen(false) },
+	detach: { icon: "lucide-external-link", label: __("Open in New Tab"), onClick: detachPreview },
+	darkMode: {
+		icon: isDark.value ? "lucide-sun" : "lucide-moon",
+		label: __("Toggle Dark Mode"),
+		onClick: toggleDarkMode,
+	},
+}));
 
 const deviceBreakpoints = [
 	{
@@ -124,13 +148,17 @@ const deviceBreakpoints = [
 ];
 
 const previewArea = ref<HTMLElement | null>(null);
+const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
+
+// separate ref as from editor it never opens in full screen
 const isFullscreen = ref(false);
-// the mode the user last chose, restored when the preview is opened by its own link
+// restored when the preview is opened by its own link
 const lastFullscreen = useStorage("previewFullscreen", false);
 const setFullscreen = (fullscreen: boolean) => {
 	isFullscreen.value = fullscreen;
 	lastFullscreen.value = fullscreen;
 };
+
 const goBack = () => {
 	if (pageStore.focusEditorTab()) return;
 	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
@@ -172,7 +200,6 @@ const activeBreakpoint = computed(() => {
 	return "desktop";
 });
 
-const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
 // Toggle the previewed PAGE's dark mode (shared with the canvas via
 // canvasDarkMode), not the Builder editor's UI theme.
 const isDark = computed(() => builderStore.canvasDarkMode);
@@ -294,28 +321,6 @@ const setPreviewURL = () => {
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
 };
-
-// shared by the header and the fullscreen toolbar
-const actions = computed(() => ({
-	back: {
-		icon: canGoBack.value ? "lucide-chevron-left" : "lucide-pencil",
-		label: canGoBack.value ? __("Back") : __("Edit"),
-		onClick: goBack,
-	},
-	reload: { icon: "lucide-rotate-cw", label: __("Reload"), onClick: setPreviewURL },
-	enterFullscreen: {
-		icon: "lucide-maximize-2",
-		label: __("Full screen"),
-		onClick: () => setFullscreen(true),
-	},
-	exitFullscreen: { icon: "lucide-panel-top", label: __("Show UI"), onClick: () => setFullscreen(false) },
-	detach: { icon: "lucide-external-link", label: __("Open in New Tab"), onClick: detachPreview },
-	darkMode: {
-		icon: isDark.value ? "lucide-sun" : "lucide-moon",
-		label: __("Toggle Dark Mode"),
-		onClick: toggleDarkMode,
-	},
-}));
 
 // detaching only makes sense with an editor to go back to
 const headerActions = computed(() => [
