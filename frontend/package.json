@@ -29,7 +29,7 @@
     "@framework/ui": "link:../../frappe/ui",
     "@codemirror/view": "^6.38.1",
     "@replit/codemirror-indentation-markers": "^6.5.3",
-    "@tiptap/extension-color": "^3.26.0",
+    "@tiptap/extension-color": "^3.31.3",
     "@tiptap/extension-font-family": "^3.31.3",
     "@tiptap/extension-text-style": "^3.26.0",
     "@tiptap/extension-underline": "^3.26.0",
@@ -65,7 +65,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-vue": "^10.11.0",
-    "mdn-data": "2.35.0",
+    "mdn-data": "2.36.0",
     "postcss": "^8.4.5",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.2.8",
@@ -74,7 +74,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10",
-    "web-features": "3.38.0"
+    "web-features": "3.39.0"
   },
   "peerDependencies": {}
 }
