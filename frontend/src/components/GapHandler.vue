@@ -11,17 +11,19 @@
 			:key="band.key"
 			class="gap-handler absolute z-10 flex"
 			:class="[
-				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': band.filled },
+				band.draggable && bandsVisible && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-300': band.filled && isActive(band.key) },
 			]"
 			:style="band.style"
-			@mousedown.stop="handleGap($event, band.position)">
+			@mouseenter="hoveredBand = band.key"
+			@mouseleave="hoveredBand = null"
+			@mousedown.stop="handleGap($event, band)">
 			<div
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
+				v-show="bandsVisible && canvasProps.scale > HANDLE_MIN_SCALE"
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				:class="{ hidden: updating }"
 				:style="band.handleStyle"
-				@mousedown.stop="handleGap($event, band.position)" />
+				@mousedown.stop="handleGap($event, band)" />
 			<div v-show="updating" class="m-auto text-sm text-purple-900">
 				{{ getGapValue(band.position) }}
 			</div>
@@ -39,12 +41,14 @@ const props = withDefaults(
 	defineProps<{
 		targetBlock: Block;
 		disableHandlers?: boolean;
+		showBands?: boolean;
 		onUpdate?: () => void;
 		breakpoint?: string;
 		target: HTMLElement | SVGElement;
 	}>(),
 	{
 		disableHandlers: false,
+		showBands: false,
 		breakpoint: "desktop",
 		onUpdate: undefined,
 	},
@@ -68,6 +72,14 @@ const {
 watchEffect(() => {
 	emit("update", updating.value);
 });
+
+// A drag can carry the pointer out of the block, so the handles stay while it runs.
+const bandsVisible = computed(() => props.showBands || updating.value);
+
+// A band is filled only while it or its pill is hovered, or it is being dragged.
+const hoveredBand = ref<string | null>(null);
+const draggedBand = ref<string | null>(null);
+const isActive = (key: string) => (updating.value ? draggedBand.value : hoveredBand.value) === key;
 
 const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
@@ -343,9 +355,11 @@ const gapBands = computed<GapBand[]>(() => {
 
 const getGapValue = (position: Position) => getSpacingValue("gap", position);
 
-const handleGap = (ev: MouseEvent, position: Position) => {
+const handleGap = (ev: MouseEvent, band: GapBand) => {
 	if (props.disableHandlers) return;
-	startSpacingDrag(ev, position, {
+	draggedBand.value = band.key;
+	hoveredBand.value = null;
+	startSpacingDrag(ev, band.position, {
 		property: "gap",
 		fallback: 0,
 		getRotation: () => rotation.value,
