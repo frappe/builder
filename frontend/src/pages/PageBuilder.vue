@@ -248,12 +248,20 @@ async function saveExpandedEditorContent(val: string) {
 	canvasStore.showEditorDialog = false;
 }
 
+// a publish from the detached preview tab lands here, and the toolbar's publish
+// button reads the page it changed
+const refreshOnRemoteSave = (event: { doctype: string; name: string; modified: string }) => {
+	if (event.doctype !== "Builder Page" || event.name !== pageStore.selectedPage) return;
+	pageStore.refreshActivePage(event.modified);
+};
+
 onActivated(async () => {
 	builderStore.realtime.on("doc_viewers", async (data: { users: [] }) => {
 		builderStore.viewers = await getUsersInfo(
 			data.users.filter((user: string) => user !== sessionUser.value),
 		);
 	});
+	builderStore.realtime.on("doc_update", refreshOnRemoteSave);
 	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
 	builderStore.realtime.doc_open("Builder Page", route.params.pageId as string);
 	if (route.params.pageId === pageStore.selectedPage) {
@@ -307,6 +315,7 @@ watch(
 onDeactivated(() => {
 	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
 	builderStore.realtime.off("doc_viewers", () => {});
+	builderStore.realtime.off("doc_update", refreshOnRemoteSave);
 	builderStore.viewers = [];
 });
 

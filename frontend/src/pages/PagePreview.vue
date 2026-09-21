@@ -331,8 +331,10 @@ const toolbarActions = computed(() => [
 	actions.value.darkMode,
 ]);
 
-const reloadOnPageSave = (event: { doctype: string; name: string }) => {
-	if (event.doctype === "Builder Page" && event.name === route.params.pageId) setPreviewURL();
+const reloadOnPageSave = (event: { doctype: string; name: string; modified: string }) => {
+	if (event.doctype !== "Builder Page" || event.name !== route.params.pageId) return;
+	pageStore.refreshActivePage(event.modified);
+	setPreviewURL();
 };
 
 onDeactivated(() => {
