@@ -1,5 +1,5 @@
 import { Socket } from "socket.io-client";
-import { getCurrentInstance } from "vue";
+import { createSocket } from "./socket";
 
 export default class RealTimeHandler {
 	open_docs: Set<string>;
@@ -7,7 +7,7 @@ export default class RealTimeHandler {
 	subscribing: boolean;
 	constructor() {
 		this.open_docs = new Set();
-		this.socket = getCurrentInstance()!.appContext.config.globalProperties.$socket;
+		this.socket = createSocket();
 		this.subscribing = false;
 	}
 

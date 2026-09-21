@@ -26,7 +26,7 @@
 					<InputLabel>{{ __("Value") }}</InputLabel>
 					<BuilderInput type="text" :modelValue="activeBuilderToken.value" readonly :hideClearButton="true">
 						<template v-if="activeBuilderToken.type === 'Color'" #prefix>
-							<div class="size-4 rounded shadow-md" :style="{ background: activeBuilderToken.value }" />
+							<div class="size-4 rounded-4 shadow-md" :style="{ background: activeBuilderToken.value }" />
 						</template>
 					</BuilderInput>
 				</div>

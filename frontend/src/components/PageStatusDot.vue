@@ -1,5 +1,5 @@
 <template>
-	<Tooltip :text="status.tooltip" :hoverDelay="0.5">
+	<Tooltip :text="status.tooltip" :hoverDelay="500">
 		<span class="size-1.5 shrink-0 rounded-full" :class="status.dotClass" />
 	</Tooltip>
 </template>

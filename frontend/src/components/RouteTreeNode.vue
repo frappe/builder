@@ -7,10 +7,10 @@
 				class="absolute bottom-0 w-0 border-l border-outline-gray-2"
 				:style="{ top: `${stickyRowHeight}px`, left: `${node.depth * 24 + 18}px` }" />
 			<div
-				class="group flex cursor-pointer select-none items-center gap-1.5 rounded-md px-1 hover:bg-surface-gray-1"
+				class="group flex cursor-pointer select-none items-center gap-1.5 rounded-5 px-1 hover:bg-surface-gray-1"
 				:class="[
 					node.hasChildren ? 'sticky bg-surface-base shadow-[0_1px_0_var(--border-color)]' : '',
-					{ 'rounded-md !bg-surface-gray-2': focusedNodeId === node.id },
+					{ 'rounded-5 !bg-surface-gray-2': focusedNodeId === node.id },
 				]"
 				:ref="
 					(el) => {
@@ -47,13 +47,13 @@
 						{{ node.page.page_title }}
 					</span>
 					<span class="ml-auto flex shrink-0 items-center gap-2 pl-3">
-						<Tooltip v-if="isHomePage(node.page)" :text="__('Home page')" :hoverDelay="0.5">
+						<Tooltip v-if="isHomePage(node.page)" :text="__('Home page')" :hoverDelay="500">
 							<HomeIcon class="size-3.5 text-ink-gray-5" />
 						</Tooltip>
 						<Tooltip
 							v-if="node.page.authenticated_access"
 							:text="__('This page has limited access')"
-							:hoverDelay="0.5">
+							:hoverDelay="500">
 							<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 						</Tooltip>
 						<!-- fixed width so the dots line up into a rail down the tree -->
@@ -69,7 +69,7 @@
 					<span class="truncate font-mono text-sm text-ink-gray-8">/{{ node.label }}</span>
 				</div>
 
-				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" placement="right" v-slot="{ open }">
+				<PageActionsDropdown v-if="node.page" :page="node.page" size="xs" align="end" v-slot="{ open }">
 					<Button
 						icon="lucide-more-horizontal"
 						size="sm"

@@ -28,7 +28,7 @@
 				@click="deleteObjectKey(key as string)"></Button>
 		</div>
 		<Button variant="outline" :label="__('Add')" @click="addObjectKey"></Button>
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+		<p class="rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>

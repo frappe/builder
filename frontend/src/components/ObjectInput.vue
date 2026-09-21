@@ -16,7 +16,7 @@
 			<div
 				@click.stop
 				@mousedown.stop
-				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
+				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-6 bg-surface-base p-4 shadow-lg">
 				<div class="text-sm text-ink-gray-8">{{ __("Items") }}</div>
 				<ObjectEditor :obj @update:obj="updateModelValue" />
 			</div>

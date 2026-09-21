@@ -5,7 +5,7 @@ import { BuilderSettings } from "@/types/doctypes";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import BlockLayers from "./components/BlockLayers.vue";
 
