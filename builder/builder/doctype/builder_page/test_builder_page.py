@@ -526,6 +526,24 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(block["innerHTML"].count("{{"), 1)
 		self.assertNotIn("else '{{", block["innerHTML"])
 
+	def test_dynamic_value_wins_over_data_key(self):
+		"""dataKey is the legacy home for a binding. When both record the same (property, type)
+		with different keys, the dynamicValues entry renders, as it does in the canvas."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "sector", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		self.assertEqual(block["innerHTML"].count("{{"), 1)
+		self.assertIn("sector", block["innerHTML"])
+		self.assertNotIn("industry", block["innerHTML"])
+
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
 		component_root = Block(element="div", blockId="comp-block-1")

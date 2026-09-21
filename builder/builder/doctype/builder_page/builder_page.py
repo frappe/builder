@@ -1413,12 +1413,14 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 	"""Apply dynamic content placeholders to block attributes and styles."""
 	block_data_key = block.get("dataKey", {}) or {}
-	dynamic_values = [block_data_key] if block_data_key else []
-	dynamic_values += block.get("dynamicValues", []) or []
+	dynamic_values = list(block.get("dynamicValues", []) or [])
+	if block_data_key:
+		dynamic_values.append(block_data_key)
 
-	# A binding can be recorded in both dataKey and dynamicValues (same property + type).
-	# Applying it twice nests the placeholder inside its own fallback (`{{ ... else '{{ ... }}' }}`),
-	# which leaks the raw expression when the value is falsy. Keep only the first per (property, type).
+	# A binding can be recorded in both dynamicValues and dataKey (the legacy field) for the same
+	# property + type. Applying it twice nests the placeholder inside its own fallback
+	# (`{{ ... else '{{ ... }}' }}`), which leaks the raw expression when the value is falsy. Keep the
+	# first per (property, type), so dynamicValues wins as it does in the canvas resolver.
 	seen = set()
 	deduped = []
 	for dv in dynamic_values:
