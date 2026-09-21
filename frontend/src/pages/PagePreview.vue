@@ -197,6 +197,16 @@ useShortcut({
 	condition: () => router.currentRoute.value.name === "preview",
 });
 
+// the same key that opens the preview from the editor takes you back
+useShortcut({
+	key: "p",
+	ctrl: true,
+	description: __("Back to Builder"),
+	group: __("Navigation"),
+	handler: goBack,
+	condition: () => router.currentRoute.value.name === "preview",
+});
+
 const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
 	try {
 		const win = previewWindow.value?.contentWindow;
