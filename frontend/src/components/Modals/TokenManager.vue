@@ -1025,26 +1025,15 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	// Warn user that existing variables will be updated
+	const counts = [newVariables.length, updateVariables.length];
 	const createAndUpdateMessage =
 		newVariables.length === 1
 			? updateVariables.length === 1
-				? __("Create {0} new token and update {1} existing token?", [
-						newVariables.length,
-						updateVariables.length,
-					])
-				: __("Create {0} new token and update {1} existing tokens?", [
-						newVariables.length,
-						updateVariables.length,
-					])
+				? __("Create {0} new token and update {1} existing token?", counts)
+				: __("Create {0} new token and update {1} existing tokens?", counts)
 			: updateVariables.length === 1
-				? __("Create {0} new tokens and update {1} existing token?", [
-						newVariables.length,
-						updateVariables.length,
-					])
-				: __("Create {0} new tokens and update {1} existing tokens?", [
-						newVariables.length,
-						updateVariables.length,
-					]);
+				? __("Create {0} new tokens and update {1} existing token?", counts)
+				: __("Create {0} new tokens and update {1} existing tokens?", counts);
 	const confirmationLines = [createAndUpdateMessage];
 	if (invalidCount > 0)
 		confirmationLines.push(
