@@ -1461,6 +1461,43 @@ component.update({
 		finally:
 			page.delete()
 
+	def test_dark_mode_img_keeps_absolute_and_data_urls(self):
+		body = Block(element="div", originalElement="body")
+		absolute = Block(
+			element="img",
+			attributes={"src": "/files/light.png", "darkSrc": "https://cdn.example.com/dark mode.png?v=2"},
+		)
+		inline = Block(
+			element="img",
+			attributes={
+				"src": "/files/light.png",
+				"darkSrc": "data:image/svg+xml,%3Csvg width='5' fill='#fff'%3E%3C/svg%3E",
+			},
+		)
+		body.attach_children(absolute, inline)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dark Mode Image URL Test",
+				"published": 1,
+				"route": "/dark-mode-image-url-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dark-mode-image-url-test")
+			self.assertIn(
+				'srcset="https://cdn.example.com/dark%20mode.png?v=2"',
+				get_html_for(content, "tag", "source", only_content=False),
+			)
+			self.assertIn(
+				"srcset=\"data:image/svg+xml,%3Csvg%20width='5'%20fill='%23fff'%3E%3C/svg%3E\"",
+				get_html_for(content, "tag", "source", index=1, only_content=False),
+			)
+		finally:
+			page.delete()
+
 	def test_nested_repeater_from_page_data(self):
 		body = Block(
 			element="div",

@@ -1009,6 +1009,19 @@ def get_dynamic_props_template(
 	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
 
 
+# Reserved characters and existing %-escapes pass through, so absolute and data: URLs
+# survive; only what a URL can't carry literally (spaces, non-ASCII) is encoded.
+URL_SAFE_CHARS = "/:?#[]@!$&'()*+,;=%"
+
+
+def quote_url(url: str | None) -> str | None:
+	if not url:
+		return None
+	# In a data: URL "#" is payload (fill='#fff'), not a fragment.
+	safe = URL_SAFE_CHARS.replace("#", "") if url.startswith("data:") else URL_SAFE_CHARS
+	return frappe.utils.quote(url, safe=safe)
+
+
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
 	"""Create HTML tag element with attributes, classes, and styling."""
 	soup = state["soup"]
@@ -1021,8 +1034,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 
 	if element == "img":
 		attributes = block.get("attributes", {})
-		dark_src = frappe.utils.quote(attributes.get("darkSrc")) if attributes.get("darkSrc") else None
-		light_src = frappe.utils.quote(attributes.get("src")) if attributes.get("src") else None
+		dark_src = quote_url(attributes.get("darkSrc"))
+		light_src = quote_url(attributes.get("src"))
 		if dark_src and light_src:
 			picture_tag = soup.new_tag("picture")
 
