@@ -15,7 +15,7 @@
 			ref="topPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="showHandle(topPaddingHandlerHeight)"
+				v-show="showHandle"
 				:style="longHandle"
 				:class="{ hidden: updating }"
 				@mouseenter="hoveredSide = Position.Top"
@@ -34,7 +34,7 @@
 			ref="bottomPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="showHandle(bottomPaddingHandlerHeight)"
+				v-show="showHandle"
 				:style="longHandle"
 				:class="{ hidden: updating }"
 				@mouseenter="hoveredSide = Position.Bottom"
@@ -53,7 +53,7 @@
 			ref="leftPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="showHandle(leftPaddingHandlerWidth)"
+				v-show="showHandle"
 				:style="sideHandle"
 				:class="{ hidden: updating }"
 				@mouseenter="hoveredSide = Position.Left"
@@ -72,7 +72,7 @@
 			ref="rightPaddingHandler">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				v-show="showHandle(rightPaddingHandlerWidth)"
+				v-show="showHandle"
 				:style="sideHandle"
 				:class="{ hidden: updating }"
 				@mouseenter="hoveredSide = Position.Right"
@@ -160,7 +160,7 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 
 const HANDLE_MIN_SCALE = 0.5;
 
-const showHandle = (band: number) => bandsVisible.value && canvasProps.scale > HANDLE_MIN_SCALE && band > 0;
+const showHandle = computed(() => bandsVisible.value && canvasProps.scale > HANDLE_MIN_SCALE);
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
@@ -217,7 +217,7 @@ const handlePadding = (ev: MouseEvent, position: Position) => {
 	hoveredSide.value = null;
 	startSpacingDrag(ev, position, {
 		property: "padding",
-		fallback: 5,
+		fallback: getNumberFromPx(getComputedStyle(props.target).getPropertyValue(`padding-${position}`)),
 		getRotation: () => rotation.value,
 		onUpdate: props.onUpdate,
 	});
