@@ -16,52 +16,52 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 	const type = propDetails.propOptions?.type || "string";
 	let map = {};
 	switch (type) {
-	case "boolean":
-		map = {
-			component: OptionToggle,
-			options: [
-				{ label: propDetails.propOptions?.options?.trueLabel || "True", value: true },
-				{ label: propDetails.propOptions?.options?.falseLabel || "False", value: false },
-			],
-		};
-		break;
-	case "select":
-		map = {
-			type: "select",
-			options:
+		case "boolean":
+			map = {
+				component: OptionToggle,
+				options: [
+					{ label: propDetails.propOptions?.options?.trueLabel || "True", value: true },
+					{ label: propDetails.propOptions?.options?.falseLabel || "False", value: false },
+				],
+			};
+			break;
+		case "select":
+			map = {
+				type: "select",
+				options:
 					propDetails.propOptions?.options?.options?.map((item: any) => ({
 						label: item,
 						value: item,
 					})) || [],
-		};
-		break;
-	case "image":
-		map = {
-			component: ImageUploadInput,
-			imageURL: blockController.getBlockProps()[propName].value as string,
-			imageFit:
+			};
+			break;
+		case "image":
+			map = {
+				component: ImageUploadInput,
+				imageURL: blockController.getBlockProps()[propName].value as string,
+				imageFit:
 					propDetails.propOptions?.options?.imageFit ||
 					(propDetails.propOptions?.options?.defaultImageFit as StyleValue),
-		};
-		break;
-	case "array":
-		map = {
-			component: ArrayInput,
-			itemType: propDetails.propOptions?.options?.itemType || "string",
-			targetRatio: blockController.getSelectedBlockAspectRatio(),
-		};
-		break;
-	case "color":
-		map = {
-			component: ColorInput,
-		};
-		break;
+			};
+			break;
+		case "array":
+			map = {
+				component: ArrayInput,
+				itemType: propDetails.propOptions?.options?.itemType || "string",
+				targetRatio: blockController.getSelectedBlockAspectRatio(),
+			};
+			break;
+		case "color":
+			map = {
+				component: ColorInput,
+			};
+			break;
 	}
 	map = {
 		propertyKey: propName,
 		label: propDetails.label || propName,
 		enableStates: false,
-		allowDynamicValue: propDetails.propOptions?.options?.allowDynamicValue ?? false,
+		allowDynamicValue: true,
 		dynamicValueFilterOptions: {
 			excludeOwnProps: true,
 		},
@@ -105,18 +105,18 @@ const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
 	let events: Record<string, Function> = {};
 	const type = propDetails.propOptions?.type || "string";
 	switch (type) {
-	case "image":
-		events = {
-			"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
-			"update:imageFit": (val: StyleValue) =>
-				blockController.setBlockProp(propName, {
-					propOptions: {
-						...propDetails.propOptions,
-						options: { ...propDetails.propOptions?.options, imageFit: val },
-					},
-				}),
-		};
-		break;
+		case "image":
+			events = {
+				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
+				"update:imageFit": (val: StyleValue) =>
+					blockController.setBlockProp(propName, {
+						propOptions: {
+							...propDetails.propOptions,
+							options: { ...propDetails.propOptions?.options, imageFit: val },
+						},
+					}),
+			};
+			break;
 	}
 	return events;
 };
