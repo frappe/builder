@@ -5115,11 +5115,11 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:346
 msgid "Zoom In"
-msgstr ""
+msgstr "Yaqinlashtirish"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom Out"
-msgstr ""
+msgstr "Uzoqlashtirish"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json

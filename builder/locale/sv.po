@@ -163,7 +163,7 @@ msgstr "Lägga till modell till denna leverantör först"
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr "Lägg till metataggar, stilar och skript till brevhuvud"
+msgstr "Lägg till metataggar, stilar och skript i sidans head-sektion"
 
 #: frontend/src/components/MoreStylesPanel.vue:168
 msgid "Add Property"
