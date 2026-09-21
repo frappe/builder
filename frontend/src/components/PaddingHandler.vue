@@ -96,14 +96,12 @@ const props = withDefaults(
 	defineProps<{
 		targetBlock: Block;
 		disableHandlers?: boolean;
-		showBands?: boolean;
 		onUpdate?: () => void;
 		breakpoint?: string;
 		target: HTMLElement | SVGElement;
 	}>(),
 	{
 		disableHandlers: false,
-		showBands: false,
 		breakpoint: "desktop",
 	},
 );
@@ -126,9 +124,6 @@ const {
 watchEffect(() => {
 	emit("update", updating.value);
 });
-
-// A drag can carry the pointer out of the block, so the handles stay while it runs.
-const bandsVisible = computed(() => props.showBands || updating.value);
 
 const topPaddingHandler = ref<HTMLElement>();
 const bottomPaddingHandler = ref<HTMLElement>();
@@ -160,7 +155,7 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 
 const HANDLE_MIN_SCALE = 0.5;
 
-const showHandle = computed(() => bandsVisible.value && canvasProps.scale > HANDLE_MIN_SCALE);
+const showHandle = computed(() => canvasProps.scale > HANDLE_MIN_SCALE);
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");

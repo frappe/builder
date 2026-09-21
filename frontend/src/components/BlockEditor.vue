@@ -11,7 +11,6 @@
 		:class="getStyleClasses">
 		<PaddingHandler
 			:data-block-id="block.blockId"
-			:show-bands="pointerInside"
 			v-show="showPaddingHandler"
 			:target-block="block"
 			:target="target"
@@ -20,7 +19,6 @@
 			:breakpoint="breakpoint" />
 		<GapHandler
 			:data-block-id="block.blockId"
-			:show-bands="pointerInside"
 			v-if="showGapHandler"
 			:target-block="block"
 			:target="target"
@@ -51,7 +49,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { addPxToNumber } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
-import { useMouseInElement } from "@vueuse/core";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
@@ -104,10 +101,6 @@ const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventClick = ref(false);
-
-// Padding and gap handles show only while the pointer is over the block.
-const { isOutside } = useMouseInElement(editor);
-const pointerInside = computed(() => !isOutside.value);
 
 const showPaddingHandler = computed(() => {
 	return (

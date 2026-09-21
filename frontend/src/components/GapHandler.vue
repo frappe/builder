@@ -11,7 +11,7 @@
 			:key="band.key"
 			class="gap-handler absolute z-10 flex"
 			:class="[
-				band.draggable && bandsVisible && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
+				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
 				{ 'bg-purple-300': band.filled && isActive(band.key) },
 			]"
 			:style="band.style"
@@ -19,7 +19,7 @@
 			@mouseleave="hoveredBand = null"
 			@mousedown.stop="handleGap($event, band)">
 			<div
-				v-show="bandsVisible && canvasProps.scale > HANDLE_MIN_SCALE"
+				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				:class="{ hidden: updating }"
 				:style="band.handleStyle"
@@ -41,14 +41,12 @@ const props = withDefaults(
 	defineProps<{
 		targetBlock: Block;
 		disableHandlers?: boolean;
-		showBands?: boolean;
 		onUpdate?: () => void;
 		breakpoint?: string;
 		target: HTMLElement | SVGElement;
 	}>(),
 	{
 		disableHandlers: false,
-		showBands: false,
 		breakpoint: "desktop",
 		onUpdate: undefined,
 	},
@@ -72,9 +70,6 @@ const {
 watchEffect(() => {
 	emit("update", updating.value);
 });
-
-// A drag can carry the pointer out of the block, so the handles stay while it runs.
-const bandsVisible = computed(() => props.showBands || updating.value);
 
 // A band is filled only while it or its pill is hovered, or it is being dragged.
 const hoveredBand = ref<string | null>(null);
