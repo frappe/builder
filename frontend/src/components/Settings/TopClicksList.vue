@@ -1,6 +1,6 @@
 <template>
 	<div v-if="loading || rows.length">
-		<h3 class="text-lg-medium mb-4 text-ink-gray-7">{{ __("Top Clicks") }}</h3>
+		<h3 class="text-md-medium mb-4 text-ink-gray-7">{{ __("Top Clicks") }}</h3>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
 			{{ __("Loading...") }}
 		</div>
@@ -24,7 +24,7 @@ import { findBlockInTree } from "@/utils/block/tree";
 import type { CTRElement } from "@/composables/useAnalytics";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { ListView } from "frappe-ui";
+import { ListView } from "frappe-ui/experimental";
 import { computed } from "vue";
 
 const props = defineProps<{ elements: CTRElement[]; loading?: boolean }>();

@@ -13,7 +13,7 @@ import {
 	uploadUserFont,
 } from "@/utils/helpers";
 import { useDropZone } from "@vueuse/core";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { Ref } from "vue";
 import blockController from "./blockController";
 
