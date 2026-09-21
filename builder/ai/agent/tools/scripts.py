@@ -10,6 +10,7 @@ feeds the result back so the model can read existing code before editing it.
 
 import json
 import logging
+import re
 
 import frappe
 
@@ -117,6 +118,8 @@ def apply_update_script(ctx, args: dict) -> str:
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
 	doc = frappe.get_doc("Builder Client Script", name)
+	if refusal := deletion_refusal(ctx, doc, args.get("script") or ""):
+		return refusal
 	doc.script = args.get("script") or ""
 	if args.get("script_type"):
 		doc.script_type = args["script_type"]
@@ -125,6 +128,43 @@ def apply_update_script(ctx, args: dict) -> str:
 	# write leaves every published page running the OLD script.
 	doc.save(ignore_permissions=True)
 	return f"Updated script '{name}'."
+
+
+# A rewrite may not drop more than half of a script's code unless this session
+# created the script: a model asked to "undo its changes" once blanked a page's
+# whole pricing script, taking down every page that loaded it.
+GUARDED_CODE_SIZE = 200
+MIN_KEPT_RATIO = 0.5
+
+
+def code_size(script: str) -> int:
+	"""Characters of actual code, so a stub that is only a comment counts as empty."""
+	script = re.sub(r"/\*.*?\*/", "", script or "", flags=re.S)
+	script = re.sub(r"(?m)^\s*//.*$", "", script)
+	return len(re.sub(r"\s+", "", script))
+
+
+def created_this_session(ctx, script_doc) -> bool:
+	session_id = getattr(ctx, "session_id", None)
+	started = session_id and frappe.db.get_value("Builder AI Session", session_id, "creation")
+	return bool(started) and script_doc.creation > started
+
+
+def deletion_refusal(ctx, script_doc, new_script: str) -> str | None:
+	before, after = code_size(script_doc.script), code_size(new_script)
+	if before < GUARDED_CODE_SIZE or after >= before * MIN_KEPT_RATIO:
+		return None
+	if created_this_session(ctx, script_doc):
+		return None
+	return (
+		f"FAILED: this would delete most of '{script_doc.name}' ({before} -> {after} characters "
+		"of code). It existed before this conversation, so most of it is code you did not "
+		"write. Edit it surgically: remove only the lines your own changes added and keep "
+		"everything else. Never replace a script with a stub or a comment. If the user wants "
+		"earlier AI turns undone, tell them to use Revert on that turn in the chat, which "
+		"restores the page and its scripts exactly. If they want this code gone, ask them "
+		"to confirm which parts first."
+	)
 
 
 set_page_script = Tool(
@@ -202,7 +242,9 @@ update_script = Tool(
 	side="client",
 	handler=apply_update_script,  # the loop applies script ops server-side
 	description=(
-		"Replace the source code of an existing page script. "
+		"Replace the source code of an existing page script. Pass the FULL new source, "
+		"keeping every part you were not asked to change; never replace a script with a "
+		"stub or a comment. "
 		"You MUST call get_page_scripts first and copy the exact 'script_name' value "
 		"from that response — do not guess or invent a name. "
 		"Same targeting rule as set_page_script: select by a class/attrs.id hook you add "
