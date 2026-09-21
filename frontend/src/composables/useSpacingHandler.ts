@@ -58,7 +58,7 @@ const shorthandCodec = (property: SpacingType): ShorthandCodec =>
 const slotIndex = (property: SpacingType, side: Position) =>
 	SPACING_PROPERTIES[property].slots === 4 ? sides[side].index : sides[side].axis === "y" ? 0 : 1;
 
-// Shared state and drag behaviour for the Margin, Padding and Gap handlers. The
+// Shared state and drag behaviour for the Padding and Gap handlers. The
 // per-slot positioning and value display differ and stay in each component.
 export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: () => string) {
 	const canvasProps = inject("canvasProps") as CanvasProps;
@@ -133,8 +133,8 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		{ property, fallback, getRotation, onUpdate }: SpacingDragOptions,
 	) => {
 		const { axis, outward } = sides[side];
-		// the handles sit on the block's edge, so dragging outward grows a margin but shrinks a
-		// padding. A gap handle sits in the gap itself, where outward simply widens it.
+		// a padding handle sits on the block's edge, so dragging outward shrinks it. A gap
+		// handle sits in the gap itself, where outward simply widens it.
 		const sign = property === "padding" ? -outward : outward;
 		const startValue = getNumberFromPx(getSpacingValue(property, side)) || fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };

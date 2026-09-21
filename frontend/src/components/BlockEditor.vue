@@ -27,13 +27,6 @@
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
-		<MarginHandler
-			v-show="showMarginHandler"
-			:target-block="block"
-			:target="target"
-			:on-update="updateTracker"
-			:disable-handlers="false"
-			:breakpoint="breakpoint" />
 		<BorderRadiusHandler
 			:data-block-id="block.blockId"
 			v-if="showBorderRadiusHandler"
@@ -65,7 +58,6 @@ import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import GapHandler from "./GapHandler.vue";
-import MarginHandler from "./MarginHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 import RotationHandler from "./RotationHandler.vue";
 
@@ -138,20 +130,6 @@ const showGapHandler = computed(() => {
 	return (
 		showPaddingHandler.value &&
 		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
-	);
-});
-
-const showMarginHandler = computed(() => {
-	return (
-		builderStore.mode === "select" &&
-		isBlockSelected.value &&
-		!props.block.isRoot() &&
-		!canvasStore.isDragging &&
-		!transforming.value &&
-		!props.editable &&
-		!props.readonly &&
-		!blockController.multipleBlocksSelected() &&
-		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
 
