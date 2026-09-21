@@ -26,8 +26,6 @@ const { capture } = useTelemetry();
 // a window name of its own, so detaching the preview does not take over the tab
 // that openPageInBrowser uses for the live page
 const DETACHED_PREVIEW_TAB = "builder-detached-preview";
-// main.ts resets window.name on every boot, so the tab carries its mark in the URL
-const DETACHED_PREVIEW_FLAG = "detached";
 
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
@@ -471,7 +469,6 @@ const usePageStore = defineStore("pageStore", {
 			const previewURL = router.resolve({
 				name: "preview",
 				params: { pageId },
-				query: { [DETACHED_PREVIEW_FLAG]: "1" },
 			}).href;
 			const tab = window.open(previewURL, DETACHED_PREVIEW_TAB);
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
@@ -479,18 +476,14 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		// the detached tab, while it is open and still shows this page
-		detachedPreviewFor(pageId: string) {
+		getDetachedPreview(pageId: string) {
 			if (this.detachedPreview?.tab.closed) this.detachedPreview = null;
 			if (this.detachedPreview?.pageId !== pageId) return null;
 			return this.detachedPreview.tab;
 		},
 
-		// The editor that detached this tab, while that tab is open. The flag proves
-		// this tab is a detached preview: any tab can have an opener, and the editor's
-		// own opener is whatever opened the editor.
+		// The tab that opened this preview, while it is still open.
 		getEditorTab() {
-			const query = new URLSearchParams(window.location.search);
-			if (!query.has(DETACHED_PREVIEW_FLAG)) return null;
 			const opener = window.opener as Window | null;
 			return opener && !opener.closed ? opener : null;
 		},
@@ -507,7 +500,7 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		openPreview(pageId: string) {
-			const tab = this.detachedPreviewFor(pageId);
+			const tab = this.getDetachedPreview(pageId);
 			if (tab) tab.focus();
 			else router.push({ name: "preview", params: { pageId } });
 		},
