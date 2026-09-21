@@ -116,7 +116,7 @@ commands.register({
 	keys: { key: "p", ctrl: true, description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
-		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
+		pageStore.openPreview(pageStore.selectedPage as string);
 	},
 });
 

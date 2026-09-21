@@ -19,9 +19,15 @@ import {
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { defineStore } from "pinia";
-import { nextTick } from "vue";
+import { markRaw, nextTick } from "vue";
 
 const { capture } = useTelemetry();
+
+// a window name of its own, so detaching the preview does not take over the tab
+// that openPageInBrowser uses for the live page
+const DETACHED_PREVIEW_TAB = "builder-detached-preview";
+// main.ts resets window.name on every boot, so the tab carries its mark in the URL
+const DETACHED_PREVIEW_FLAG = "detached";
 
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
@@ -50,6 +56,9 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
+		// the preview tab detached from the editor. A window handle does not survive
+		// a reload of the editor, so the preview then opens in place again.
+		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {
 		async setPage(
@@ -432,6 +441,51 @@ const usePageStore = defineStore("pageStore", {
 			this.routeVariables[variable] = value;
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
 			this.setPageData(this.activePage as BuilderPage);
+		},
+
+		detachPreview(pageId: string) {
+			const previewURL = router.resolve({
+				name: "preview",
+				params: { pageId },
+				query: { [DETACHED_PREVIEW_FLAG]: "1" },
+			}).href;
+			const tab = window.open(previewURL, DETACHED_PREVIEW_TAB);
+			if (tab) this.detachedPreview = markRaw({ tab, pageId });
+			tab?.focus();
+		},
+
+		// the detached tab, while it is open and still shows this page
+		detachedPreviewFor(pageId: string) {
+			if (this.detachedPreview?.tab.closed) this.detachedPreview = null;
+			if (this.detachedPreview?.pageId !== pageId) return null;
+			return this.detachedPreview.tab;
+		},
+
+		// The editor that detached this tab, while that tab is open. The flag proves
+		// this tab is a detached preview: any tab can have an opener, and the editor's
+		// own opener is whatever opened the editor.
+		getEditorTab() {
+			const query = new URLSearchParams(window.location.search);
+			if (!query.has(DETACHED_PREVIEW_FLAG)) return null;
+			const opener = window.opener as Window | null;
+			return opener && !opener.closed ? opener : null;
+		},
+
+		// Chrome ignores focus() on another tab, so the tab is raised the way
+		// openPageInBrowser raises one: by name, through window.open. An empty URL
+		// leaves the editor where it is, rather than reloading it.
+		focusEditorTab() {
+			const editorTab = this.getEditorTab();
+			if (!editorTab) return false;
+			if (editorTab.name) window.open("", editorTab.name);
+			editorTab.focus();
+			return true;
+		},
+
+		openPreview(pageId: string) {
+			const tab = this.detachedPreviewFor(pageId);
+			if (tab) tab.focus();
+			else router.push({ name: "preview", params: { pageId } });
 		},
 
 		openPageInBrowser(page: BuilderPage) {

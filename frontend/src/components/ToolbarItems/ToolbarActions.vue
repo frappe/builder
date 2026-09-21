@@ -14,11 +14,9 @@
 		<Tooltip :text="__('Settings')" :hoverDelay="0.6" arrow-class="mb-3">
 			<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 		</Tooltip>
-		<router-link :to="{ name: 'preview', params: { pageId: pageStore.selectedPage } }" :title="__('Preview')">
-			<Tooltip :text="__('Preview')" :hoverDelay="0.6" arrow-class="mb-3">
-				<Button variant="ghost" :icon="PlayIcon"></Button>
-			</Tooltip>
-		</router-link>
+		<Tooltip :text="__('Preview')" :hoverDelay="0.6" arrow-class="mb-3">
+			<Button variant="ghost" :icon="PlayIcon" :label="__('Preview')" @click="openPreview"></Button>
+		</Tooltip>
 	</div>
 </template>
 <script setup lang="ts">
@@ -50,4 +48,6 @@ const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
 	builderStore.showSettingsDialog = true;
 };
+
+const openPreview = () => pageStore.openPreview(pageStore.selectedPage as string);
 </script>

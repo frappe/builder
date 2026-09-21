@@ -8,7 +8,7 @@
 					:label="actions.back.label"
 					@click="actions.back.onClick" />
 				<Button
-					v-for="action in [actions.reload, actions.enterFullscreen]"
+					v-for="action in headerActions"
 					:key="action.label"
 					variant="ghost"
 					:icon="action.icon"
@@ -49,10 +49,7 @@
 			ref="previewArea"
 			class="relative flex flex-1 justify-center overflow-hidden bg-surface-gray-1"
 			:class="{ 'px-6 pt-6': !isFullscreen }">
-			<PreviewFullscreenToolbar
-				v-if="isFullscreen"
-				:container="previewArea"
-				:actions="[actions.back, actions.reload, actions.exitFullscreen, actions.darkMode]" />
+			<PreviewFullscreenToolbar v-if="isFullscreen" :container="previewArea" :actions="toolbarActions" />
 			<div class="relative h-full bg-white" :style="{ width: frameWidth }">
 				<iframe
 					:src="previewRoute"
@@ -134,7 +131,16 @@ const setFullscreen = (fullscreen: boolean) => {
 	isFullscreen.value = fullscreen;
 	lastFullscreen.value = fullscreen;
 };
-const goBack = () => router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
+const goBack = () => {
+	if (pageStore.focusEditorTab()) return;
+	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
+};
+
+// the preview moves to its own tab, so this one returns to the editor
+const detachPreview = () => {
+	pageStore.detachPreview(route.params.pageId as string);
+	goBack();
+};
 
 // a preview opened by its own link has no editor behind it, so the back button
 // offers to edit the page instead of going back to it
@@ -143,6 +149,10 @@ const isOpenedFromEditor = () => {
 	const previousPath = window.history.state?.back;
 	return typeof previousPath === "string" && router.resolve(previousPath).name === "builder";
 };
+
+// a detached preview keeps its editor one tab away, which is also a way back
+const hasEditorTab = ref(false);
+const canGoBack = computed(() => cameFromEditor.value || hasEditorTab.value);
 const frameWidth = computed(() => (isFullscreen.value ? "100%" : `${width.value}px`));
 
 const resizerSides = ["left", "right"] as const;
@@ -266,19 +276,38 @@ const setPreviewURL = () => {
 // shared by the header and the fullscreen toolbar
 const actions = computed(() => ({
 	back: {
-		icon: cameFromEditor.value ? "lucide-chevron-left" : "lucide-pencil",
-		label: cameFromEditor.value ? __("Back") : __("Edit"),
+		icon: canGoBack.value ? "lucide-chevron-left" : "lucide-pencil",
+		label: canGoBack.value ? __("Back") : __("Edit"),
 		onClick: goBack,
 	},
 	reload: { icon: "lucide-rotate-cw", label: __("Reload"), onClick: setPreviewURL },
-	enterFullscreen: { icon: "lucide-maximize-2", label: __("Full screen"), onClick: () => setFullscreen(true) },
+	enterFullscreen: {
+		icon: "lucide-maximize-2",
+		label: __("Full screen"),
+		onClick: () => setFullscreen(true),
+	},
 	exitFullscreen: { icon: "lucide-panel-top", label: __("Show UI"), onClick: () => setFullscreen(false) },
+	detach: { icon: "lucide-external-link", label: __("Open in New Tab"), onClick: detachPreview },
 	darkMode: {
 		icon: isDark.value ? "lucide-sun" : "lucide-moon",
 		label: __("Toggle Dark Mode"),
 		onClick: toggleDarkMode,
 	},
 }));
+
+// detaching only makes sense with an editor to go back to
+const headerActions = computed(() => [
+	actions.value.reload,
+	actions.value.enterFullscreen,
+	...(cameFromEditor.value ? [actions.value.detach] : []),
+]);
+
+const toolbarActions = computed(() => [
+	actions.value.back,
+	actions.value.reload,
+	actions.value.exitFullscreen,
+	actions.value.darkMode,
+]);
 
 const reloadOnPageSave = (event: { doctype: string; name: string }) => {
 	if (event.doctype === "Builder Page" && event.name === route.params.pageId) setPreviewURL();
@@ -291,6 +320,7 @@ onDeactivated(() => {
 
 onActivated(() => {
 	cameFromEditor.value = isOpenedFromEditor();
+	hasEditorTab.value = Boolean(pageStore.getEditorTab());
 	isFullscreen.value = cameFromEditor.value ? false : lastFullscreen.value;
 	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
 	builderStore.realtime.on("doc_update", reloadOnPageSave);
