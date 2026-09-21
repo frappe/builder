@@ -1412,50 +1412,20 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 	"""Apply dynamic content placeholders to block attributes and styles."""
-	block_data_key = block.get("dataKey", {}) or {}
-	dynamic_values = list(block.get("dynamicValues", []) or [])
-	if block_data_key:
-		dynamic_values.append(block_data_key)
-
-	# A binding can be recorded in both dynamicValues and dataKey (the legacy field) for the same
-	# property + type. Applying it twice nests the placeholder inside its own fallback
-	# (`{{ ... else '{{ ... }}' }}`), which leaks the raw expression when the value is falsy. Keep the
-	# first per (property, type), so dynamicValues wins as it does in the canvas resolver.
-	seen = set()
-	deduped = []
-	for dv in dynamic_values:
-		sig = (dv.get("property"), dv.get("type")) if isinstance(dv, dict) else (dv, "key")
-		if sig in seen:
-			continue
-		seen.add(sig)
-		deduped.append(dv)
-	dynamic_values = deduped
-
-	for dynamic_value_doc in dynamic_values:
-		original_key = dynamic_value_doc.get("key", "")
-
-		if not isinstance(dynamic_value_doc, dict):
-			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
-
-		if not dynamic_value_doc or not dynamic_value_doc.get("key"):
-			continue
-
-		key = get_dynamic_value_key(dynamic_value_doc, original_key, data_key)
-
-		property_name = dynamic_value_doc.get("property")
-		value_type = dynamic_value_doc.get("type")
+	for binding in group_bindings_by_target(block):
+		keys = resolve_binding_keys(binding, data_key)
+		property_name = binding[0].get("property")
+		value_type = binding[0].get("type")
 
 		if value_type == "attribute":
 			attributes = block.setdefault("attributes", {})
 			custom_attributes = block.setdefault("customAttributes", {})
 			if property_name in custom_attributes:
 				current_value = custom_attributes.get(property_name, "") or ""
-				custom_attributes[property_name] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(str(current_value))}' }}}}"
-				)
+				custom_attributes[property_name] = build_placeholder(keys, current_value, keep_empty=True)
 			else:
 				current_value = attributes.get(property_name, "")
-				attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+				attributes[property_name] = build_placeholder(keys, current_value)
 
 		elif value_type == "style":
 			attributes = block.setdefault("attributes", {})
@@ -1464,15 +1434,59 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 
 			css_property = camel_case_to_kebab_case(property_name)
 			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
-			attributes["style"] += (
-				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
-			)
+			attributes["style"] += f"{css_property}: {build_placeholder(keys, current_value)};"
 
 		elif value_type == "key" and not block.get("isRepeaterBlock"):
 			current_value = block.get(property_name, "")
-			block[property_name] = (
-				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(current_value)}' }}}}"
-			)
+			block[property_name] = build_placeholder(keys, current_value, keep_empty=True)
+
+
+def group_bindings_by_target(block: dict) -> list[list[dict]]:
+	"""Group a block's bindings by (property, type), highest precedence first.
+
+	The canvas resolver applies dataKey (the legacy single-binding field) first, then lets
+	dynamicValues overwrite it, keeping the earlier value where a key does not resolve.
+	"""
+	bindings = {}
+	for candidate in block.get("dynamicValues", []) or []:
+		if not isinstance(candidate, dict):
+			candidate = {"key": candidate, "type": "key", "property": candidate}
+		if not candidate.get("key"):
+			continue
+		# a later entry for the same target overrides the ones before it
+		bindings.setdefault((candidate.get("property"), candidate.get("type")), []).insert(0, candidate)
+
+	block_data_key = block.get("dataKey") or {}
+	if block_data_key.get("key"):
+		signature = (block_data_key.get("property"), block_data_key.get("type"))
+		bindings.setdefault(signature, []).append(block_data_key)
+
+	return list(bindings.values())
+
+
+def resolve_binding_keys(binding: list[dict], data_key: dict | None) -> list[str]:
+	"""Jinja keys for one target, in precedence order and without repeats."""
+	keys = []
+	for candidate in binding:
+		key = get_dynamic_value_key(candidate, candidate.get("key", ""), data_key)
+		if key not in keys:
+			keys.append(key)
+	return keys
+
+
+def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False) -> str:
+	"""Chain the keys into one placeholder so the first that resolves wins.
+
+	Chaining inside a single expression, rather than applying a placeholder per key, keeps the raw
+	expression out of its own fallback string, where it would leak to the page for falsy values.
+	"""
+	expression = f"'{escape_single_quotes(str(fallback_value))}'"
+	for key in reversed(keys):
+		if keep_empty:
+			expression = f"{key} if {key} or {key} in ['', 0] else {expression}"
+		else:
+			expression = f"{key} or {expression}"
+	return f"{{{{ {expression} }}}}"
 
 
 def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
