@@ -329,11 +329,8 @@ const styles = computed(() => {
 			props.block.getAttributes?.()?.["data-array-items"] === "slides";
 
 		const parentOfBlock = props.block.getParentBlock?.();
-		const isSlide = Boolean(
-			parentOfBlock &&
-				(parentOfBlock.getAttributes?.()?.["data-carousel-track"] !== undefined ||
-					parentOfBlock.getAttributes?.()?.["data-array-items"] === "slides"),
-		);
+		// Pagination dots container also has data-array-items="slides", so only the track identifies slides
+		const isSlide = parentOfBlock?.getAttributes?.()?.["data-carousel-track"] !== undefined;
 
 		const isDot = props.block.getAttributes?.()?.["data-carousel-dot"] !== undefined;
 
