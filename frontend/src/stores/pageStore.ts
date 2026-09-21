@@ -148,26 +148,6 @@ const usePageStore = defineStore("pageStore", {
 			});
 		},
 
-		// Another tab changed the page, so pull the new values in and keep the publish
-		// button honest. A save of our own already merged the same values, which the
-		// modified check catches, and an in-flight save owns the document until it ends.
-		async refreshActivePage(modified?: string) {
-			const pageName = this.selectedPage;
-			if (!pageName || this.savingPage || this.activePage?.modified === modified) return;
-			// A plain request, not fetchActivePage: that shares one cached document whose
-			// doc is replaced on every reply, so two refreshes in flight read each other's.
-			const page: BuilderPage | null = await createResource({
-				url: "frappe.client.get",
-				params: { doctype: "Builder Page", name: pageName },
-			}).fetch();
-			if (!page || this.selectedPage !== pageName) return;
-			// an autosave and then a publish re-fetch together, and the older reply can
-			// land last, so keep the newest
-			if (this.activePage?.modified && (page.modified ?? "") < this.activePage.modified) return;
-			if (this.activePage) Object.assign(this.activePage, page);
-			else this.activePage = page;
-		},
-
 		loadRouteVariables(pageName: string, routeParams: Record<string, unknown> | null = null) {
 			const stored = localStorage.getItem(`${pageName}:routeVariables`) || "{}";
 			this.routeVariables = normalizeRouteVariables(JSON.parse(stored));

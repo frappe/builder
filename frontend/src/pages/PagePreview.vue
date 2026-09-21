@@ -84,9 +84,11 @@ import { __ } from "@/translation";
 import PanelResizer from "@/components/PanelResizer.vue";
 import PreviewFullscreenToolbar from "@/components/PreviewFullscreenToolbar.vue";
 import PublishButton from "@/components/PublishButton.vue";
+import { webPages } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import { BuilderPage } from "@/types/doctypes";
 import { Button, useShortcut } from "frappe-ui";
 import { useTelemetry } from "frappe-ui/frappe";
 import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
@@ -105,7 +107,6 @@ const width = ref(maxWidth);
 
 // blocks clicks on the iframe until the first load settles
 const loading = ref(true);
-
 
 // shared by the header and the fullscreen toolbar
 const actions = computed(() => ({
@@ -338,8 +339,18 @@ const toolbarActions = computed(() => [
 
 const reloadOnPageSave = (event: { doctype: string; name: string; modified: string }) => {
 	if (event.doctype !== "Builder Page" || event.name !== route.params.pageId) return;
-	pageStore.refreshActivePage(event.modified);
 	setPreviewURL();
+	if (!cameFromEditor.value) syncPageStore();
+};
+
+// A detached or stand-alone preview has no editor tab to keep its page store current.
+const syncPageStore = () => {
+	const currentModified = pageStore.activePage?.modified;
+	webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[] | null) => {
+		if (currentModified !== doc?.[0]?.modified) {
+			pageStore.setPage(route.params.pageId as string, false, route.query);
+		}
+	});
 };
 
 onDeactivated(() => {
