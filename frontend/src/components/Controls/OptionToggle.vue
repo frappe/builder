@@ -40,9 +40,10 @@ defineEmits(["update:modelValue"]);
 
 // the value a block inherits when it doesn't set the property itself is outlined
 // rather than selected, so the panel never claims a style that isn't there.
-// frappe-ui owns the tab markup, so it goes in through the prefix slot.
+// frappe-ui owns the tab markup, so it goes in through the prefix slot. The slot
+// wrapper has no radius to inherit, so this repeats the sm subtle tab's 7px.
 const INHERITED_OUTLINE =
-	"pointer-events-none absolute inset-0 rounded-[inherit] outline-dashed outline-1 -outline-offset-1 outline-[color:var(--outline-gray-3)]";
+	"pointer-events-none absolute inset-0 rounded-[7px] outline-dashed outline-1 -outline-offset-1 outline-[color:var(--outline-gray-3)]";
 
 const isSet = computed(
 	() => props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "",
