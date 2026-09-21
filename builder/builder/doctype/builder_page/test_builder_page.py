@@ -526,6 +526,61 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(block["innerHTML"].count("{{"), 1)
 		self.assertNotIn("else '{{", block["innerHTML"])
 
+	def test_dynamic_value_wins_over_data_key(self):
+		"""dataKey is the legacy home for a binding. When both record the same (property, type)
+		with different keys, the dynamicValues key resolves first and dataKey stays behind it as a
+		fallback, the order the canvas resolves them in."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "sector", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		html = block["innerHTML"]
+		self.assertEqual(html.count("{{"), 1)
+		self.assertNotIn("else '{{", html)
+		self.assertLess(html.index("sector"), html.index("industry"))
+
+	def test_data_key_is_fallback_when_dynamic_value_is_unresolved(self):
+		"""With both fields bound to the same property, an unresolved dynamicValues key falls back to
+		the legacy dataKey before falling back to the static content."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+		industry.set_dynamic_value("sector", "key", "innerHTML")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Legacy Fallback Test",
+				"published": 1,
+				"route": "/legacy-fallback-test",
+				"page_data_script": 'data.update({"stories": [{"sector": "Retail", "industry": "Real Estate"}, {"industry": "Real Estate"}, {}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/legacy-fallback-test")
+			self.assertNotIn("{{", content)
+			# dynamicValues wins, then the legacy dataKey, then the static content
+			self.assertEqual("Retail", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", index=1, only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=2, only_content=True))
+		finally:
+			page.delete()
+
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
 		component_root = Block(element="div", blockId="comp-block-1")
