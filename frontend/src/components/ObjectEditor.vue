@@ -32,9 +32,9 @@
 					@click="deleteObjectKey(key as string)"></Button>
 			</div>
 		</div>
-    <Button variant="outline" class="shrink-0" :label="__('Add')" @click="addObjectKey"></Button>
-    <p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
-		  <span v-html="description"></span>
+		<Button variant="outline" class="shrink-0" :label="__('Add')" @click="addObjectKey"></Button>
+		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+			<span v-html="description"></span>
 		</p>
 	</div>
 </template>

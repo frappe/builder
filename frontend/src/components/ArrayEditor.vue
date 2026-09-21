@@ -13,9 +13,9 @@
 					@click="deleteItem(index)"></Button>
 			</div>
 		</div>
-    <Button variant="outline" class="w-full shrink-0" :label="__('Add')" @click="addItem"></Button>
-    <p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
-		  <span v-html="description"></span>
+		<Button variant="outline" class="w-full shrink-0" :label="__('Add')" @click="addItem"></Button>
+		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+			<span v-html="description"></span>
 		</p>
 	</div>
 </template>
