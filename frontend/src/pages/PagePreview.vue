@@ -246,6 +246,18 @@ const onPreviewLoad = () => {
 			document.dispatchEvent(new MouseEvent(type, event as MouseEvent)),
 		);
 	}
+	// A click inside the iframe moves keyboard focus there, and this document stops
+	// seeing the key. Hand it back, and keep it off the browser print dialog. The
+	// capture phase runs before the previewed page, which may stop the event.
+	previewDocument.addEventListener(
+		"keydown",
+		(event) => {
+			if (event.key.toLowerCase() !== "p" || !(event.ctrlKey || event.metaKey)) return;
+			event.preventDefault();
+			document.dispatchEvent(new KeyboardEvent("keydown", event));
+		},
+		{ capture: true },
+	);
 	applyColorSchemeToIframe(isDark.value ? "dark" : "light");
 	restoreScrollPosition();
 	previewDocument.addEventListener("scroll", saveScrollPosition, { passive: true });
