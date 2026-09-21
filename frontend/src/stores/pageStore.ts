@@ -130,7 +130,8 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						window.name = `editor-${pageName}`;
+						// the preview tab keeps the name it was opened under, so it can be raised by name
+						if (router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
