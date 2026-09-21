@@ -104,11 +104,7 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
-			this.routeVariables = normalizeRouteVariables(JSON.parse(variables));
-			if (routeParams) {
-				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
-			}
+			this.loadRouteVariables(page.name, routeParams);
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
@@ -151,6 +147,14 @@ const usePageStore = defineStore("pageStore", {
 					}
 				}, 50);
 			});
+		},
+
+		loadRouteVariables(pageName: string, routeParams: Record<string, unknown> | null = null) {
+			const stored = localStorage.getItem(`${pageName}:routeVariables`) || "{}";
+			this.routeVariables = normalizeRouteVariables(JSON.parse(stored));
+			if (routeParams) {
+				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
+			}
 		},
 
 		async setActivePage(pageName: string) {

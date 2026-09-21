@@ -341,10 +341,17 @@ onDeactivated(() => {
 });
 
 onActivated(() => {
+	const pageId = route.params.pageId as string;
 	cameFromEditor.value = isOpenedFromEditor();
 	hasEditorTab.value = Boolean(pageStore.getEditorTab());
 	isFullscreen.value = cameFromEditor.value ? false : lastFullscreen.value;
-	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
+	// a detached or bookmarked preview boots straight into this route, with no
+	// editor to load the page first, and the publish button nothing to publish
+	if (pageStore.activePage?.name !== pageId) {
+		pageStore.loadRouteVariables(pageId);
+		pageStore.setActivePage(pageId);
+	}
+	builderStore.realtime.doc_subscribe("Builder Page", pageId);
 	builderStore.realtime.on("doc_update", reloadOnPageSave);
 	setPreviewURL();
 	capture("builder_page_preview_viewed");
