@@ -160,8 +160,10 @@ const setFullscreen = (fullscreen: boolean) => {
 	lastFullscreen.value = fullscreen;
 };
 
-const goBack = () => {
+const goBack = async () => {
 	if (pageStore.focusEditorTab()) return;
+	// a stand-alone preview only fetched the page document, so the editor needs its canvas loaded
+	if (!canGoBack.value) await pageStore.setPage(route.params.pageId as string);
 	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
 };
 
