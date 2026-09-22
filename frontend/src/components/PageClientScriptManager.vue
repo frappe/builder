@@ -110,6 +110,7 @@
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
 			<CodeEditor
 				ref="scriptEditor"
+				:key="activeScript.name"
 				:modelValue="activeScript.script"
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
@@ -145,7 +146,7 @@ import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { getPageUsageMessage } from "@/utils/helpers";
 import { Combobox, createListResource, createResource, Dropdown, type ComboboxOptionValue } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
@@ -238,9 +239,6 @@ const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
 	scriptUsageResource.filters = [["Builder Page Client Script", "builder_script", "=", script.script_name]];
 	scriptUsageResource.reload();
-	nextTick(() => {
-		scriptEditor.value?.resetEditor(true);
-	});
 };
 
 const updateScript = (value: string) => {
