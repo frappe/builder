@@ -1200,7 +1200,9 @@ def render_repeater_children(
 	if get_repeater_item_type(block, state["standard_props_stack"]) == "image":
 		# image items are saved as a bare url until they carry more, e.g. a slide's own text
 		item = loop_info["loop_var"]
-		tag.append(f"{{% if {item} is not mapping %}}{{% set {item} = {{'url': {item} or ''}} %}}{{% endif %}}")
+		tag.append(
+			f"{{% if {item} is not mapping %}}{{% set {item} = {{'url': {item} or ''}} %}}{{% endif %}}"
+		)
 		child = copy.deepcopy(child)
 		bind_repeater_item_text(child)
 	child, component_id = extend_block_with_component(child)
@@ -1238,7 +1240,12 @@ def bind_repeater_item_text(block: dict):
 	if element in REPEATER_ITEM_TEXT_ELEMENTS and not block.get("children") and not is_bound:
 		block["dynamicValues"] = [
 			*dynamic_values,
-			{"key": f"item.{block.get('blockId')}", "comesFrom": "props", "type": "key", "property": "innerHTML"},
+			{
+				"key": f"item.{block.get('blockId')}",
+				"comesFrom": "props",
+				"type": "key",
+				"property": "innerHTML",
+			},
 		]
 	for child in block.get("children") or []:
 		if not child.get("isRepeaterBlock"):
