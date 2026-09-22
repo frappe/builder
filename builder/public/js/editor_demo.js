@@ -42,15 +42,12 @@
       src: demoURL,
       title: "Builder editor demo",
       inert: true,
+      sandbox:
+        "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+      allow: "clipboard-read; clipboard-write",
+      style:
+        "position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483647;opacity:0;pointer-events:none",
     });
-    frame.setAttribute(
-      "sandbox",
-      "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox",
-    );
-    frame.setAttribute("allow", "clipboard-read; clipboard-write");
-    frame.style.cssText =
-      "position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483647;" +
-      "opacity:0;pointer-events:none;color-scheme:light";
     document.body.append(frame);
   }
 

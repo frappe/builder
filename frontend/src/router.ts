@@ -102,24 +102,15 @@ let builder_path = window.builder_path || "/builder";
 if (builder_path.startsWith("{{")) {
 	builder_path = "/builder";
 }
-// named "builder" so the editor's own links resolve, but only to the demo's page
-const editorDemoRoutes = [
-	{
-		path: "/demo/:pageId",
-		name: "builder",
-		component: () => import("@/pages/PageBuilder.vue"),
-	},
-];
-
 const router = createRouter({
 	history: createWebHistory(builder_path),
-	routes: editorDemo ? editorDemoRoutes : routes,
+	// named "builder" so the editor's own links resolve, but only to the demo's page
+	routes: editorDemo
+		? [{ path: "/demo/:pageId", name: "builder", component: () => import("@/pages/PageBuilder.vue") }]
+		: routes,
 });
 
-if (editorDemo) {
-	const demoPage = editorDemo.page.name;
-	router.beforeEach((to) => to.params.pageId === demoPage);
-}
+if (editorDemo) router.beforeEach((to) => to.params.pageId === editorDemo?.page.name);
 
 export { sessionUser };
 export default router;

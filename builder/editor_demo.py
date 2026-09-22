@@ -27,7 +27,6 @@ CONTENT_SECURITY_POLICY = "; ".join(
 		# the font picker reads glyph subsets from Google Fonts
 		"connect-src https://fonts.googleapis.com",
 		"frame-src https:",
-		"worker-src 'self' blob:",
 		"form-action 'none'",
 		"base-uri 'none'",
 		"object-src 'none'",

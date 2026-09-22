@@ -38,7 +38,7 @@ class EditorDemoStage {
 			const desktop = this.canvas.canvasProps.breakpoints.find((bp) => bp.device === "desktop");
 			if (desktop && this.framed) desktop.width = window.innerWidth;
 			await nextFrame();
-			runPageScripts(editorDemo?.scripts || []);
+			runPageScripts(editorDemo?.scripts || [], this.page);
 		});
 		return this.started;
 	}
@@ -94,8 +94,12 @@ class EditorDemoStage {
 		return useCanvasStore().activeCanvas as NonNullable<ReturnType<typeof useCanvasStore>["activeCanvas"]>;
 	}
 
+	private get page() {
+		return document.querySelector<HTMLElement>(".canvas-container [data-breakpoint='desktop']")!;
+	}
+
 	private get canvasElement() {
-		return document.querySelector(".canvas-container [data-breakpoint='desktop']")!.parentElement!;
+		return this.page.parentElement!;
 	}
 
 	private get container() {
