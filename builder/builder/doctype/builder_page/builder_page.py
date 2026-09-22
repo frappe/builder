@@ -703,12 +703,16 @@ class BuilderPage(WebsiteGenerator):
 		# that clobbers the live request and drops its `after_response`, which
 		# then breaks sync_database. Save and restore the original request.
 		previous_request = getattr(frappe.local, "request", None)
-		previous_scheme = frappe.form_dict.get("prefers_color_scheme")
+		# The render gets its own form_dict: a scheme left behind (even as None) leaks
+		# into the caller's later renders, and dynamic routes quote every value.
+		previous_form_dict = frappe.local.form_dict
 		try:
 			set_request(method="GET", path=f"/{self.route or ''}")
 			frappe.local.request.for_preview = True
 			frappe.local.no_cache = 1
-			frappe.form_dict.prefers_color_scheme = color_scheme
+			frappe.local.form_dict = frappe._dict(previous_form_dict)
+			if color_scheme:
+				frappe.local.form_dict.prefers_color_scheme = color_scheme
 			renderer = BuilderPageRenderer(path="")
 			renderer.docname = self.name
 			renderer.doctype = "Builder Page"
@@ -716,7 +720,7 @@ class BuilderPage(WebsiteGenerator):
 			return str(renderer.render().data, "utf-8")
 		finally:
 			frappe.local.request = previous_request
-			frappe.form_dict.prefers_color_scheme = previous_scheme
+			frappe.local.form_dict = previous_form_dict
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
