@@ -3,7 +3,7 @@ import { syntaxTree } from "@codemirror/language";
 const BOOST_INDEX = 99;
 
 function getAllProperties(obj: Object) {
-	const props = new Set();
+	const props = new Set<string>();
 	let current = obj;
 
 	while (current && current !== Object.prototype) {
