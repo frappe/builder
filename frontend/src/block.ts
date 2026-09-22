@@ -150,7 +150,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -829,7 +829,8 @@ class Block implements BlockOptions {
 	getRepeaterProp() {
 		const key = this.getDataKey("key");
 		const propsRoot = this.getPropsRoot();
-		if (!this.isRepeater() || this.getDataKey("comesFrom") !== "props" || !key || !propsRoot) return undefined;
+		if (!this.isRepeater() || this.getDataKey("comesFrom") !== "props" || !key || !propsRoot)
+			return undefined;
 		return getStandardPropValue(key, propsRoot);
 	}
 	getRepeaterPropItems(): any[] {
@@ -856,6 +857,14 @@ class Block implements BlockOptions {
 		const items = [...this.getRepeaterPropItems()];
 		items.splice(this.getRepeaterPreviewIndex(), 1);
 		this.setRepeaterPropItems(items);
+	}
+	// order lists item indexes in their new order; the picked item stays picked wherever it lands
+	reorderRepeaterItems(order: number[]) {
+		const items = [...this.getRepeaterPropItems()];
+		const previewIndex = this.getRepeaterPreviewIndex();
+		items.splice(0, order.length, ...order.map((index) => items[index]));
+		this.setRepeaterPropItems(items);
+		if (previewIndex < order.length) this.setRepeaterPreviewIndex(order.indexOf(previewIndex));
 	}
 	setRepeaterItemValue(field: string, value: string) {
 		const items = [...this.getRepeaterPropItems()];

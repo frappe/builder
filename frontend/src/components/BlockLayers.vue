@@ -106,50 +106,58 @@
 							@click.stop="element.toggleVisibility()" />
 					</span>
 					<div v-if="canShowChildLayer(element)">
-						<template v-if="element.hasChildren() && element.getRepeaterPropItems().length">
-							<div
-								v-for="index in getRepeaterItemCount(element)"
-								:key="index - 1 === element.getRepeaterPreviewIndex() ? `active-${index}` : index"
-								:data-block-layer-id="
-									index - 1 === element.getRepeaterPreviewIndex() ? element.children[0].blockId : undefined
-								"
-								:data-indent="childIndent"
-								class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
-								:class="{
-									'block-selected':
-										index - 1 === element.getRepeaterPreviewIndex() && isSelected(element.children[0]),
-								}"
-								@click.stop="showRepeaterItem(element, index - 1, $event)"
-								@mouseover.stop="
-									!canvasStore.isDragging &&
-									canvasStore.activeCanvas?.setHoveredBlock(element.children[0].blockId)
-								"
-								@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
-								<span
-									class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
-									:style="{ paddingLeft: `${childIndent}px` }"
+						<draggable
+							v-if="element.hasChildren() && element.getRepeaterPropItems().length"
+							:modelValue="getRepeaterItemIndexes(element)"
+							:item-key="(index: number) => getRepeaterItemKey(element, index)"
+							:group="{ name: `repeater-${element.blockId}` }"
+							:disabled="readonly"
+							:delay="100"
+							:delay-on-touch-only="false"
+							ghost-class="opacity-50"
+							@update:modelValue="(order: number[]) => element.reorderRepeaterItems(order)">
+							<template #item="{ element: index }">
+								<div
+									:data-block-layer-id="
+										index === element.getRepeaterPreviewIndex() ? element.children[0].blockId : undefined
+									"
+									:data-indent="childIndent"
+									class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
 									:class="{
-										'!opacity-50': !element.children[0].isVisible() || isParentHidden || !element.isVisible(),
-									}">
-									<div>
-										<div class="scroll-into-view-anchor absolute ml-20"></div>
-									</div>
-									<span :class="[element.children[0].getIcon(), 'h-3 w-3']" aria-hidden="true" />
-									<span class="min-w-[2em] max-w-64 truncate">
-										{{ element.children[0].getBlockDescription() }} {{ index }}
+										'block-selected':
+											index === element.getRepeaterPreviewIndex() && isSelected(element.children[0]),
+										'hovered-block': isHoveredRepeaterItem(element, index),
+									}"
+									@click.stop="showRepeaterItem(element, index, $event)"
+									@mouseover.stop="!canvasStore.isDragging && hoverRepeaterItem(element, index)"
+									@mouseleave.stop="!canvasStore.isDragging && hoverRepeaterItem(null)">
+									<span
+										class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+										:style="{ paddingLeft: `${childIndent}px` }"
+										:class="{
+											'!opacity-50':
+												!element.children[0].isVisible() || isParentHidden || !element.isVisible(),
+										}">
+										<div>
+											<div class="scroll-into-view-anchor absolute ml-20"></div>
+										</div>
+										<span :class="[element.children[0].getIcon(), 'h-3 w-3']" aria-hidden="true" />
+										<span class="min-w-[2em] max-w-64 truncate">
+											{{ element.children[0].getBlockDescription() }} {{ index + 1 }}
+										</span>
 									</span>
-								</span>
-								<BlockLayers
-									v-if="index - 1 === element.getRepeaterPreviewIndex() && element.children[0].hasChildren()"
-									:blocks="element.children[0].children"
-									:ref="childLayer"
-									:indent="childIndent + 24"
-									:readonly="readonly"
-									:is-parent-hidden="
-										isParentHidden || !element.isVisible() || !element.children[0].isVisible()
-									" />
-							</div>
-						</template>
+									<BlockLayers
+										v-if="index === element.getRepeaterPreviewIndex() && element.children[0].hasChildren()"
+										:blocks="element.children[0].children"
+										:ref="childLayer"
+										:indent="childIndent + 24"
+										:readonly="readonly"
+										:is-parent-hidden="
+											isParentHidden || !element.isVisible() || !element.children[0].isVisible()
+										" />
+								</div>
+							</template>
+						</draggable>
 						<BlockLayers
 							v-else
 							:blocks="element.children"
@@ -322,10 +330,30 @@ const selectBlock = (block: Block, event: MouseEvent) => {
 
 const MAX_REPEATER_ITEMS = 100;
 
-const getRepeaterItemCount = (repeater: Block) =>
-	Math.min(repeater.getRepeaterPropItems().length, MAX_REPEATER_ITEMS);
+const getRepeaterItemIndexes = (repeater: Block) => [
+	...Array(Math.min(repeater.getRepeaterPropItems().length, MAX_REPEATER_ITEMS)).keys(),
+];
+
+// remount the picked row so the rows before it don't stay highlighted
+const getRepeaterItemKey = (repeater: Block, index: number) =>
+	index === repeater.getRepeaterPreviewIndex() ? `active-${index}` : index;
 
 const isSelected = (block: Block) => Boolean(canvasStore.activeCanvas?.selectedBlockIds.has(block.blockId));
+
+// only the picked item's row carries the template block's layer id, which LayersTab uses to
+// highlight the hovered block, so the other item rows track their own hover
+const hoveredRepeaterItem = ref<{ repeater: Block; index: number } | null>(null);
+
+const isHoveredRepeaterItem = (repeater: Block, index: number) =>
+	hoveredRepeaterItem.value?.repeater === repeater &&
+	hoveredRepeaterItem.value.index === index &&
+	index !== repeater.getRepeaterPreviewIndex();
+
+const hoverRepeaterItem = (repeater: Block | null, index = 0) => {
+	hoveredRepeaterItem.value = repeater && { repeater, index };
+	const isPicked = repeater && index === repeater.getRepeaterPreviewIndex();
+	canvasStore.activeCanvas?.setHoveredBlock(isPicked ? repeater.children[0].blockId : null);
+};
 
 const showRepeaterItem = (repeater: Block, index: number, event: MouseEvent) => {
 	repeater.setRepeaterPreviewIndex(index);
