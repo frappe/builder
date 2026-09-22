@@ -35,22 +35,6 @@
 			</template>
 		</draggable>
 		<Button variant="outline" class="w-full" :label="__('Add')" iconLeft="plus" @click="addItem" />
-		<Button
-			v-if="itemType === 'image'"
-			variant="outline"
-			class="w-full"
-			:loading="isBulkUploading"
-			:label="isBulkUploading ? __('Uploading...') : __('Upload')"
-			iconLeft="upload"
-			@click="triggerBulkUpload" />
-		<input
-			v-if="itemType === 'image'"
-			ref="bulkFileInput"
-			type="file"
-			multiple
-			accept="image/*"
-			class="hidden"
-			@change="handleBulkUpload" />
 		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
@@ -60,8 +44,6 @@
 import { computed, nextTick, ref } from "vue";
 import draggable from "vuedraggable";
 import ImageUploadInput from "./ImageUploadInput.vue";
-import { uploadBuilderAsset } from "@/utils/helpers";
-import { toast } from "frappe-ui";
 import { __ } from "@/translation";
 
 const props = defineProps<{
@@ -127,74 +109,6 @@ const deleteItem = (index: number) => {
 };
 
 const arrayEditor = ref<HTMLElement | null>(null);
-const bulkFileInput = ref<HTMLInputElement | null>(null);
-const isBulkUploading = ref(false);
-
-const triggerBulkUpload = () => {
-	bulkFileInput.value?.click();
-};
-
-const uploadFiles = async (files: FileList | File[]) => {
-	const uploadPromises = Array.from(files).map((file) => uploadBuilderAsset(file, true));
-	const results = await Promise.allSettled(uploadPromises);
-
-	const uploadedUrls: string[] = [];
-	let hasFailed = false;
-
-	for (const result of results) {
-		if (result.status === "fulfilled" && result.value?.fileURL) {
-			const url = result.value.fileURL;
-			if (typeof url === "string" && url.trim() !== "") {
-				uploadedUrls.push(url);
-			} else {
-				hasFailed = true;
-			}
-		} else {
-			hasFailed = true;
-		}
-	}
-
-	return { uploadedUrls, hasFailed };
-};
-
-const notifyUploadResults = (uploadedCount: number, hasFailed: boolean) => {
-	if (uploadedCount > 0) {
-		toast.success(__("Uploaded {0} image(s)", [uploadedCount]));
-	}
-	if (hasFailed) {
-		toast.error(__("Failed to upload images"));
-	}
-};
-
-const appendUploadedUrls = (urls: string[]) => {
-	const currentArr = props.arr.filter((item) => itemURL(item).trim() !== "");
-	const newArr = [...currentArr, ...urls];
-	emit("update:arr", newArr);
-};
-
-const handleBulkUpload = async (e: Event) => {
-	const target = e.target as HTMLInputElement;
-	const files = target.files;
-	if (!files || files.length === 0) return;
-
-	isBulkUploading.value = true;
-	try {
-		const { uploadedUrls, hasFailed } = await uploadFiles(files);
-
-		if (uploadedUrls.length > 0) {
-			appendUploadedUrls(uploadedUrls);
-		}
-
-		notifyUploadResults(uploadedUrls.length, hasFailed);
-	} catch (error) {
-		toast.error(__("Failed to upload images"));
-	} finally {
-		isBulkUploading.value = false;
-		if (target) {
-			target.value = "";
-		}
-	}
-};
 
 const pasteArray = (e: ClipboardEvent) => {
 	const passedArr = props.arr.filter((item) => itemURL(item).trim() !== "");
