@@ -104,11 +104,6 @@ const paletteCommands = computed<PaletteItem[]>(() =>
 	commands.visible.value.filter((command) => command.inPalette !== false).map(toPaletteItem),
 );
 
-function openSettings(tab: string) {
-	builderStore.settingsActiveTab = tab;
-	builderStore.showSettingsDialog = true;
-}
-
 // read from the same registry the settings dialog renders, so a pane registered
 // by an extension shows up here too
 const settingsCommands = computed<PaletteItem[]>(() =>
@@ -121,7 +116,7 @@ const settingsCommands = computed<PaletteItem[]>(() =>
 			description: __("Settings"),
 			icon: item.icon,
 			section: item.group === "Current Page" ? "page" : "global",
-			action: () => openSettings(item.name),
+			action: () => builderStore.openBuilderSettings(item.group, item.name),
 		})),
 );
 

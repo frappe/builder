@@ -48,6 +48,6 @@ const toggleVersionHistory = () => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	builderStore.showSettingsDialog = true;
+	builderStore.openBuilderSettings("Current Page");
 };
 </script>
