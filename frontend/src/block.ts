@@ -844,10 +844,20 @@ class Block implements BlockOptions {
 	setRepeaterPreviewIndex(index: number) {
 		useCanvasStore().repeaterPreviewIndex[this.blockId] = index;
 	}
-	setRepeaterItemValue(field: string, value: string) {
+	setRepeaterPropItems(items: ArrayPropItem[]) {
 		const key = this.getDataKey("key");
 		const propsRoot = this.getPropsRoot();
 		if (!propsRoot) return;
+		const props = propsRoot.getBlockProps();
+		propsRoot.setBlockProps({ ...props, [key]: { ...props[key], value: JSON.stringify(items) } });
+	}
+	// deleting a slide removes its item; the repeater's child is the template every item renders with
+	removeRepeaterItem() {
+		const items = [...this.getRepeaterPropItems()];
+		items.splice(this.getRepeaterPreviewIndex(), 1);
+		this.setRepeaterPropItems(items);
+	}
+	setRepeaterItemValue(field: string, value: string) {
 		const items = [...this.getRepeaterPropItems()];
 		const index = this.getRepeaterPreviewIndex();
 		const current = items[index];
@@ -858,8 +868,7 @@ class Block implements BlockOptions {
 			delete item[field];
 		}
 		items[index] = item;
-		const props = propsRoot.getBlockProps();
-		propsRoot.setBlockProps({ ...props, [key]: { ...props[key], value: JSON.stringify(items) } });
+		this.setRepeaterPropItems(items);
 	}
 	// text inside a repeater over image items (e.g. a carousel slide) keeps its own copy on
 	// each item, keyed by blockId, so reordering or removing items keeps text with its image.

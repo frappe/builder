@@ -244,6 +244,10 @@ export function useCanvasUtils(
 		if (!parentBlock) {
 			return;
 		}
+		if (parentBlock.getRepeaterPropItems().length) {
+			parentBlock.removeRepeaterItem();
+			return;
+		}
 		const nextSibling = block.getSiblingBlock("next");
 		if (canvasStore.activeCanvas?.activeBreakpoint === "desktop" || force) {
 			parentBlock.removeChild(block);
