@@ -329,6 +329,7 @@ class AgentRunner:
 		selected_block_ids: list[str] | None = None,
 		image_url: str | None = None,
 		image_file_url: str | None = None,
+		canvas_theme: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -343,6 +344,7 @@ class AgentRunner:
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.image_file_url = image_file_url
+		self.canvas_theme = canvas_theme
 		self.registry = registry or build_default_registry()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
@@ -546,9 +548,10 @@ class AgentRunner:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
 	def build_open_page_context(self) -> str:
-		"""The one fact the agent cannot discover for itself: WHICH page the user has
-		open. Everything else about the site is pulled on demand (run_python, read_page,
-		query_records) — nothing is pre-baked into the context."""
+		"""The facts the agent cannot discover for itself: WHICH page the user has
+		open, and the theme the editor shows it in. Everything else about the site is
+		pulled on demand (run_python, read_page, query_records) — nothing is pre-baked
+		into the context."""
 		if not self.page_id:
 			return ""
 		row = frappe.db.get_value(
@@ -558,7 +561,15 @@ class AgentRunner:
 			return ""
 		state = "live" if row.published else "staging" if row.staging else "draft"
 		route = "/" + (row.route or "").lstrip("/")
-		return f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
+		context = (
+			f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
+		)
+		if self.canvas_theme:
+			context += (
+				f" The user is viewing it in {self.canvas_theme} mode in the editor, so what they "
+				f"describe seeing is the {self.canvas_theme}-mode rendering."
+			)
+		return context
 
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
