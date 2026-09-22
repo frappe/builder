@@ -136,8 +136,8 @@ def run_preview_page(ctx, args: dict) -> str:
 	ctx.preview_count += 1
 	page = frappe.get_doc("Builder Page", page_id)
 	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
-	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else None
-	variant = f"{viewport}, {color_scheme or 'light'} mode"
+	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
+	variant = f"{viewport}, {color_scheme} mode"
 	try:
 		image = render_page_image(page, viewport, color_scheme)
 	except Exception:
@@ -256,33 +256,68 @@ def image_view_html(src: str) -> str:
 	)
 
 
+def image_is_viewable(src: str) -> bool:
+	"""Only what the user could open themselves reaches the renderer (and from there
+	an external model): data: images, public site files, private files they may read,
+	and hosts on the public internet."""
+	from urllib.parse import urlparse
+
+	from builder.api import assert_not_private_url
+
+	if src.startswith("data:image/"):
+		return True
+	parsed = urlparse(src)
+	if parsed.scheme in ("http", "https") and parsed.netloc != urlparse(frappe.utils.get_url()).netloc:
+		try:
+			assert_not_private_url(src)
+		except (frappe.PermissionError, frappe.ValidationError):
+			return False
+		return True
+	if parsed.path.startswith("/private/files/"):
+		name = frappe.db.get_value("File", {"file_url": parsed.path}, "name")
+		return bool(name) and frappe.get_doc("File", name).has_permission("read")
+	return parsed.path.startswith("/files/")
+
+
+def render_block_images(sources: dict[str, str]) -> list[dict] | None:
+	"""All the block's pictures, or None if any one fails: a half-attached pair would
+	leave the model unsure which variant it actually saw."""
+	from builder.html_preview_image import render
+
+	attachments = []
+	for label, src in sources.items():
+		try:
+			image = render(image_view_html(src), width=1024, height=768)
+		except Exception:
+			logger.warning("read_block: image render failed for %s", src[:200], exc_info=True)
+			return None
+		data_url = "data:image/webp;base64," + base64.b64encode(image).decode()
+		attachments.append({"caption": f"The block's {label}, on a grey backdrop:", "data_url": data_url})
+	return attachments
+
+
 def attach_block_images(ctx, block: dict) -> str:
 	"""Render an image block's picture, and its dark-mode variant, for the model to
 	look at. Goes through the page renderer, so SVG, data: and remote images work
 	too. Returns a line for the read_block result saying what was attached."""
 	from builder.ai.models import ModelRegistry
-	from builder.html_preview_image import render
 
 	attributes = block.get("attributes") or {}
 	sources = {"image": attributes.get("src"), "dark-mode image": attributes.get("darkSrc")}
 	sources = {label: src for label, src in sources.items() if src}
 	if block.get("element") != "img" or not sources:
 		return "This block has no image to show."
+	if not all(image_is_viewable(src) for src in sources.values()):
+		return "This image's address is private or internal, so it can't be shown to you."
 	if not ModelRegistry.supports_vision(ctx.loop_model):
 		return "Your selected model can't view images."
 	if ctx.image_views >= MAX_IMAGE_VIEWS_PER_TURN:
 		return "Image view limit reached for this turn."
 	ctx.image_views += 1
-	for label, src in sources.items():
-		try:
-			image = render(image_view_html(src), width=1024, height=768)
-		except Exception:
-			logger.warning("read_block: image render failed for %s", src[:200], exc_info=True)
-			return "The image could not be rendered; don't describe what you haven't seen."
-		data_url = "data:image/webp;base64," + base64.b64encode(image).decode()
-		ctx.pending_images.append(
-			{"caption": f"The block's {label}, on a grey backdrop:", "data_url": data_url}
-		)
+	attachments = render_block_images(sources)
+	if attachments is None:
+		return "The image could not be rendered; don't describe what you haven't seen."
+	ctx.pending_images.extend(attachments)
 	return f"Attached below: the block's {' and '.join(sources)}."
 
 

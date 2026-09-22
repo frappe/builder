@@ -30,6 +30,23 @@ class TestImageView(FrappeTestCase):
 		self.assertEqual(out, "This block has no image to show.")
 		render.assert_not_called()
 
+	def test_refuses_an_internal_address(self, render, _vision):
+		block = {"element": "img", "attributes": {"src": "http://127.0.0.1:8000/admin.png"}}
+
+		out = attach_block_images(make_ctx(), block)
+
+		self.assertIn("private or internal", out)
+		render.assert_not_called()
+
+	def test_attaches_nothing_when_one_render_fails(self, render, _vision):
+		render.side_effect = [b"webp", RuntimeError("renderer down")]
+		ctx = make_ctx()
+
+		out = attach_block_images(ctx, IMAGE)
+
+		self.assertIn("could not be rendered", out)
+		self.assertEqual(ctx.pending_images, [])
+
 	def test_stops_at_the_per_turn_limit(self, render, _vision):
 		ctx = make_ctx()
 		for _ in range(MAX_IMAGE_VIEWS_PER_TURN):
