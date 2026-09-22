@@ -52,11 +52,13 @@ USER_FIXABLE_ERRORS = {
 	"ContextWindowExceededError": "This conversation is too long for the selected model. Start a new chat, or pick a model with a larger context.",
 	"ContentPolicyViolationError": "The AI provider declined this request under its content policy.",
 	"RateLimitError": "The AI provider is limiting requests right now. Wait a minute and try again.",
+	"CodexCredentialError": "The ChatGPT sign-in is missing or has expired. Sign in with ChatGPT again in Settings, under AI.",
 }
 GENERIC_FAILURE = "Something went wrong while building your changes. Please try again."
 
 
 def user_facing_error(exc: BaseException) -> str:
+	"""A fixed, safe message for a failed turn: actionable when the user can fix it."""
 	for cls in type(exc).__mro__:
 		if message := USER_FIXABLE_ERRORS.get(cls.__name__):
 			return message

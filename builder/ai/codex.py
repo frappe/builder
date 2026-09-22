@@ -49,6 +49,11 @@ class CodexError(Exception):
 	pass
 
 
+# A missing, expired or unusable ChatGPT sign-in: the one Codex failure the user fixes.
+class CodexCredentialError(CodexError):
+	pass
+
+
 # Named so llm.is_retryable recognises them; it matches exception class names.
 class RateLimitError(Exception):
 	pass
@@ -477,7 +482,7 @@ def runtime_auth(provider: str) -> tuple[str, str]:
 		cred = refresh_credential(cred)
 		save_credential(provider, cred)
 	if not cred.get("account_id"):
-		raise CodexError(
+		raise CodexCredentialError(
 			"The ChatGPT credential is missing its account id. Sign in with ChatGPT again from AI settings."
 		)
 	return cred["access"], cred["account_id"]
@@ -486,7 +491,7 @@ def runtime_auth(provider: str) -> tuple[str, str]:
 def stored_credential(provider: str) -> dict:
 	raw = frappe.get_cached_doc("Builder AI Provider", provider).resolved_key()
 	if not raw:
-		raise CodexError("No ChatGPT credential is saved. Sign in with ChatGPT from AI settings.")
+		raise CodexCredentialError("No ChatGPT credential is saved. Sign in with ChatGPT from AI settings.")
 	return parse_credential(raw)
 
 
@@ -504,7 +509,7 @@ def parse_credential(raw: str) -> dict:
 	except ValueError:
 		data = None
 	if not isinstance(data, dict):
-		raise CodexError(
+		raise CodexCredentialError(
 			"That doesn't look like a ChatGPT credential. Sign in with ChatGPT, or paste the full contents of ~/.codex/auth.json."
 		)
 	if tokens := data.get("tokens"):
@@ -516,7 +521,9 @@ def parse_credential(raw: str) -> dict:
 			"account_id": tokens.get("account_id") or account_id_from_tokens(tokens.get("id_token"), access),
 		}
 	if not data.get("refresh"):
-		raise CodexError("The credential has no refresh token. Sign in with ChatGPT again from AI settings.")
+		raise CodexCredentialError(
+			"The credential has no refresh token. Sign in with ChatGPT again from AI settings."
+		)
 	return data
 
 
@@ -528,7 +535,9 @@ def refresh_credential(cred: dict) -> dict:
 		timeout=30,
 	)
 	if resp.status_code >= 400:
-		raise CodexError("The ChatGPT sign-in has expired. Sign in with ChatGPT again from AI settings.")
+		raise CodexCredentialError(
+			"The ChatGPT sign-in has expired. Sign in with ChatGPT again from AI settings."
+		)
 	data = resp.json()
 	access = data.get("access_token") or ""
 	return {
