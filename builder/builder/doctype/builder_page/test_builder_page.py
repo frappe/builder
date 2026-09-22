@@ -137,6 +137,13 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			frappe.local.request = previous
 
+	def test_get_preview_html_can_force_dark_mode(self):
+		html = self.page.get_preview_html(color_scheme="dark")
+
+		html_tag = html[html.index("<html") :].split(">", 1)[0]
+		self.assertIn('data-prefers-color-scheme="dark"', html_tag)
+		self.assertIsNone(frappe.form_dict.get("prefers_color_scheme"))
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")

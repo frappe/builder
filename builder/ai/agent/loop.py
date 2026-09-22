@@ -379,6 +379,8 @@ class AgentRunner:
 		self.live_text = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
+		# read_block show_image renders this turn — same bound.
+		self.image_views = 0
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
 		# Web tools this turn — bounded like every other read that costs context/latency.

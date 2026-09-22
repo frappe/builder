@@ -693,19 +693,22 @@ class BuilderPage(WebsiteGenerator):
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
-	def get_preview_html(self) -> str:
+	def get_preview_html(self, color_scheme: str | None = None) -> str:
 		"""Render this page in preview mode (uses draft_blocks when present), so a
 		preview can be generated for unpublished/draft pages too — not just for
-		pages reachable via their published route."""
+		pages reachable via their published route. `color_scheme` ("light"/"dark")
+		forces that mode, as the editor's preview does."""
 		# set_request() swaps frappe.local.request for a faked GET request. When
 		# this runs synchronously inside a real web request (e.g. run_doc_method),
 		# that clobbers the live request and drops its `after_response`, which
 		# then breaks sync_database. Save and restore the original request.
 		previous_request = getattr(frappe.local, "request", None)
+		previous_scheme = frappe.form_dict.get("prefers_color_scheme")
 		try:
 			set_request(method="GET", path=f"/{self.route or ''}")
 			frappe.local.request.for_preview = True
 			frappe.local.no_cache = 1
+			frappe.form_dict.prefers_color_scheme = color_scheme
 			renderer = BuilderPageRenderer(path="")
 			renderer.docname = self.name
 			renderer.doctype = "Builder Page"
@@ -713,6 +716,7 @@ class BuilderPage(WebsiteGenerator):
 			return str(renderer.render().data, "utf-8")
 		finally:
 			frappe.local.request = previous_request
+			frappe.form_dict.prefers_color_scheme = previous_scheme
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
