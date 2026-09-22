@@ -140,7 +140,7 @@ def collect_components(blocks: list) -> tuple[dict, dict]:
 
 def get_component(component_id: str, version: str | None = None) -> dict | None:
 	if resolved := resolve_component(component_id, version):
-		name = frappe.db.get_value("Builder Component", component_id, "component_name")
+		name = frappe.get_cached_value("Builder Component", component_id, "component_name")
 		# the block alone: the data script is server code
 		return {
 			"name": component_id,
