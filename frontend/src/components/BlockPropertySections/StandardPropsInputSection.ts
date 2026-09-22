@@ -89,8 +89,9 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			return value;
 		},
 		getPlaceholder: () => {
-			const defaultValue = propDetails.propOptions?.options?.defaultValue;
-			return defaultValue == null || defaultValue === "" ? null : String(defaultValue);
+			const { defaultValue, unit } = propDetails.propOptions?.options || {};
+			if (defaultValue == null || defaultValue === "") return null;
+			return unit ? `${defaultValue} ${unit}` : String(defaultValue);
 		},
 		defaultValue:
 			type == "boolean"
