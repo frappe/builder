@@ -3,6 +3,7 @@ import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import type { SettingsGroup } from "@/components/Settings";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
+import { editorDemo } from "@/utils/editorDemo";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
@@ -121,6 +122,10 @@ const useBuilderStore = defineStore("builderStore", {
 				});
 		},
 		openBuilderSettings(group: SettingsGroup, tab?: string) {
+			if (editorDemo) {
+				toast.info(__("Settings are not part of the demo"));
+				return;
+			}
 			if (tab) {
 				this.settingsActiveTab = tab;
 			}

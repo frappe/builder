@@ -120,6 +120,7 @@ class BuilderPage(WebsiteGenerator):
 			BuilderPageClientScript,
 		)
 
+		allow_editor_demo: DF.Check
 		app: DF.Literal[None]
 		authenticated_access: DF.Check
 		blocks: DF.LongText | None
@@ -250,6 +251,7 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("published_at")
 			or self.has_value_changed("staging")
 			or self.has_value_changed("disable_indexing")
+			or self.has_value_changed("allow_editor_demo")
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
@@ -577,6 +579,8 @@ class BuilderPage(WebsiteGenerator):
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
+		if self.allow_editor_demo and not context.preview:
+			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
 		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)

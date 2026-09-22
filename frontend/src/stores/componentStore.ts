@@ -9,6 +9,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { alert, confirm, getBlockInstance, getBlockString } from "@/utils/helpers";
+import { editorDemo } from "@/utils/editorDemo";
 import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
@@ -67,6 +68,10 @@ const useComponentStore = defineStore("componentStore", {
 	}),
 	actions: {
 		async editComponent(block?: Block | null, componentName?: string) {
+			if (editorDemo) {
+				toast.info(__("Components are shared across the site, so the demo can't edit them"));
+				return;
+			}
 			if (!block?.isExtendedFromComponent() && !componentName) {
 				return;
 			}

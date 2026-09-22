@@ -45,6 +45,7 @@
   "options_tab",
   "authenticated_access",
   "disable_indexing",
+  "allow_editor_demo",
   "project_folder"
  ],
  "fields": [
@@ -230,6 +231,13 @@
    "label": "Disable Indexing"
   },
   {
+   "default": "0",
+   "description": "Let visitors open this page in a sandboxed copy of the editor. Nothing they change is saved, but the page's full block structure becomes visible.",
+   "fieldname": "allow_editor_demo",
+   "fieldtype": "Check",
+   "label": "Allow Editor Demo"
+  },
+  {
    "fieldname": "project_folder",
    "fieldtype": "Link",
    "label": "Project Folder",
@@ -272,7 +280,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-11 16:00:00.000000",
+ "modified": "2026-09-22 15:10:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",
