@@ -320,7 +320,6 @@ const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
 };
 
-// DataLoaderBlock renders at most this many items
 const MAX_REPEATER_ITEMS = 100;
 
 const getRepeaterItemCount = (repeater: Block) =>
