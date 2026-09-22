@@ -1199,7 +1199,8 @@ def render_repeater_children(
 	child = block.get("children")[0]
 	if get_repeater_item_type(block, state["standard_props_stack"]) == "image":
 		# image items are saved as a bare url until they carry more, e.g. a slide's own text
-		tag.append("{% if item is not mapping %}{% set item = {'url': item or ''} %}{% endif %}")
+		item = loop_info["loop_var"]
+		tag.append(f"{{% if {item} is not mapping %}}{{% set {item} = {{'url': {item} or ''}} %}}{{% endif %}}")
 		child = copy.deepcopy(child)
 		bind_repeater_item_text(child)
 	child, component_id = extend_block_with_component(child)

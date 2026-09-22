@@ -24,14 +24,12 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import type Block from "@/block";
-import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 const pageStore = usePageStore();
-const canvasStore = useCanvasStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -120,10 +118,7 @@ const blockRepeaterData = computed(() => {
 
 // only one rendered item is editable; the rest are previews. Remounting on change (see :key) matters
 // because BuilderBlock reads `preview` once during setup
-const editableIndex = computed(() => {
-	const lastIndex = Math.max(Object.keys(blockRepeaterData.value || {}).length - 1, 0);
-	return Math.min(canvasStore.repeaterPreviewIndex[props.block.blockId] ?? 0, lastIndex);
-});
+const editableIndex = computed(() => props.block.getRepeaterPreviewIndex());
 
 const getRepeaterIndex = (index: number | string) => {
 	if (props.repeaterIndex !== undefined) {

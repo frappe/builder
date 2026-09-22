@@ -106,12 +106,51 @@
 							@click.stop="element.toggleVisibility()" />
 					</span>
 					<div v-if="canShowChildLayer(element)">
-						<RepeaterItemLayers
-							v-if="element.hasChildren() && element.getRepeaterPropItems().length"
-							:repeater="element"
-							:is-parent-hidden="isParentHidden || !element.isVisible()"
-							:indent="childIndent"
-							:readonly="readonly" />
+						<!-- one row per array item (e.g. carousel slides); the picked one is editable on the canvas -->
+						<template v-if="element.hasChildren() && element.getRepeaterPropItems().length">
+							<div
+								v-for="index in getRepeaterItemCount(element)"
+								:key="index"
+								:data-block-layer-id="
+									index - 1 === element.getRepeaterPreviewIndex() ? element.children[0].blockId : undefined
+								"
+								:data-indent="childIndent"
+								class="block-layer-item relative min-w-24 cursor-pointer select-none rounded border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
+								:class="{
+									'block-selected':
+										index - 1 === element.getRepeaterPreviewIndex() && isSelected(element.children[0]),
+								}"
+								@click.stop="showRepeaterItem(element, index - 1, $event)"
+								@mouseover.stop="
+									!canvasStore.isDragging &&
+									canvasStore.activeCanvas?.setHoveredBlock(element.children[0].blockId)
+								"
+								@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
+								<span
+									class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+									:style="{ paddingLeft: `${childIndent}px` }"
+									:class="{
+										'!opacity-50': !element.children[0].isVisible() || isParentHidden || !element.isVisible(),
+									}">
+									<div>
+										<div class="scroll-into-view-anchor absolute ml-20"></div>
+									</div>
+									<span :class="[element.children[0].getIcon(), 'h-3 w-3']" aria-hidden="true" />
+									<span class="min-w-[2em] max-w-64 truncate">
+										{{ element.children[0].getBlockDescription() }} {{ index }}
+									</span>
+								</span>
+								<BlockLayers
+									v-if="index - 1 === element.getRepeaterPreviewIndex() && element.children[0].hasChildren()"
+									:blocks="element.children[0].children"
+									:ref="childLayer"
+									:indent="childIndent + 24"
+									:readonly="readonly"
+									:is-parent-hidden="
+										isParentHidden || !element.isVisible() || !element.children[0].isVisible()
+									" />
+							</div>
+						</template>
 						<BlockLayers
 							v-else
 							:blocks="element.children"
@@ -143,7 +182,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
-import RepeaterItemLayers from "./RepeaterItemLayers.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 
@@ -281,6 +319,21 @@ const blockExitsInTree = (block: Block) => {
 
 const selectBlock = (block: Block, event: MouseEvent) => {
 	canvasStore.selectBlock(block, event, false, true);
+};
+
+// DataLoaderBlock renders at most this many items
+const MAX_REPEATER_ITEMS = 100;
+
+const getRepeaterItemCount = (repeater: Block) =>
+	Math.min(repeater.getRepeaterPropItems().length, MAX_REPEATER_ITEMS);
+
+const isSelected = (block: Block) => Boolean(canvasStore.activeCanvas?.selectedBlockIds.has(block.blockId));
+
+const showRepeaterItem = (repeater: Block, index: number, event: MouseEvent) => {
+	repeater.setRepeaterPreviewIndex(index);
+	// picking an item already scrolls it into view inside the repeater; panning the canvas too would
+	// measure the item while it is still being swapped in and move the canvas off to one side
+	canvasStore.selectBlock(repeater.children[0], event, false, false);
 };
 
 interface DragState {

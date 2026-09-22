@@ -841,6 +841,9 @@ class Block implements BlockOptions {
 		const lastIndex = Math.max(this.getRepeaterPropItems().length - 1, 0);
 		return Math.min(useCanvasStore().repeaterPreviewIndex[this.blockId] ?? 0, lastIndex);
 	}
+	setRepeaterPreviewIndex(index: number) {
+		useCanvasStore().repeaterPreviewIndex[this.blockId] = index;
+	}
 	setRepeaterItemValue(field: string, value: string) {
 		const key = this.getDataKey("key");
 		const propsRoot = this.getPropsRoot();
