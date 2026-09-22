@@ -84,7 +84,6 @@ declare module 'vue' {
     DynamicValueHandler: typeof import('./src/components/Controls/DynamicValueHandler.vue')['default']
     EditableSpan: typeof import('./src/components/EditableSpan.vue')['default']
     EditorDemoActions: typeof import('./src/components/EditorDemo/EditorDemoActions.vue')['default']
-    EditorDemoLayer: typeof import('./src/components/EditorDemo/EditorDemoLayer.vue')['default']
     EditorDemoLogo: typeof import('./src/components/EditorDemo/EditorDemoLogo.vue')['default']
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
     Files: typeof import('./src/components/Icons/Files.vue')['default']

@@ -83,7 +83,6 @@
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar data-panel="toolbar" class="absolute left-0 right-0 top-0"></BuilderToolbar>
-		<EditorDemoLayer v-if="editorDemo" />
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -120,7 +119,6 @@ import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { installEditorDemo } from "@/components/EditorDemo";
-import EditorDemoLayer from "@/components/EditorDemo/EditorDemoLayer.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";

@@ -4,7 +4,6 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { editorDemo, postToLauncher } from "@/utils/editorDemo";
 import { until } from "@vueuse/core";
-import { ref } from "vue";
 
 type Rect = { left: number; top: number; width: number; height: number };
 type CanvasView = { scale: number; translateX: number; translateY: number };
@@ -26,7 +25,6 @@ const motion = (ms: number) => (matchMedia("(prefers-reduced-motion: reduce)").m
  */
 class EditorDemoStage {
 	framed = window.parent !== window;
-	isOpen = ref(false);
 	private scrollY = 0;
 	// how far the published layout sits below the canvas copy, measured at the clicked link
 	private layoutOffset = 0;
@@ -73,7 +71,6 @@ class EditorDemoStage {
 		const duration = motion(640);
 		this.animateView(this.fitView(), duration, EASE_OUT);
 		this.slidePanels("in", motion(520));
-		this.isOpen.value = true;
 		// the ease-out has all but landed by now, so selecting here keeps the motion going
 		await wait(duration * 0.55);
 		this.setOverlaysHidden(false);
@@ -85,7 +82,6 @@ class EditorDemoStage {
 		if (!this.framed) return location.assign(`/${editorDemo?.page.route || ""}`);
 		const scrollY = this.scrollYAtFitTop();
 		const duration = motion(560);
-		this.isOpen.value = false;
 		this.canvas.clearSelection();
 		this.setOverlaysHidden(true);
 		this.animateView(this.viewAt(scrollY), duration, EASE_IN_OUT);
