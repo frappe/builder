@@ -9,7 +9,7 @@
 			<template #item="{ element: { item, index } }">
 				<div class="flex items-center gap-2">
 					<span
-						class="drag-handle lucide-grip-vertical size-3.5 flex-shrink-0 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+						class="drag-handle lucide-grip-vertical -ml-1 size-3.5 flex-shrink-0 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
 					<ImageUploadInput
 						v-if="itemType === 'image'"
 						class="w-full"
