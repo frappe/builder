@@ -11,6 +11,22 @@ def run(script, page_id="the-open-page"):
 	return run_python(SimpleNamespace(page_id=page_id), {"script": script})
 
 
+def sample_tree():
+	return {
+		"blockId": "root",
+		"element": "div",
+		"children": [
+			{
+				"blockId": "aws",
+				"element": "section",
+				"classes": ["plan"],
+				"children": [{"blockId": "db", "element": "div", "classes": ["plan"], "children": []}],
+			},
+			{"blockId": "footer", "element": "footer", "children": []},
+		],
+	}
+
+
 class TestRunPython(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -36,6 +52,22 @@ class TestRunPython(FrappeTestCase):
 
 	def test_exposes_the_open_page_id(self):
 		self.assertEqual(run("result = page_id"), "the-open-page")
+
+	def test_answers_across_the_open_pages_blocks(self):
+		ctx = SimpleNamespace(page_id="the-open-page", page_root=sample_tree)
+		script = "result = [(b['blockId'], b['parent'], b['depth']) for b in blocks if 'plan' in (b.get('classes') or [])]"
+
+		out = run_python(ctx, {"script": script})
+
+		self.assertEqual(frappe.parse_json(out), [["aws", "root", 1], ["db", "aws", 2]])
+
+	def test_a_snippet_cannot_change_the_turns_tree(self):
+		tree = sample_tree()
+		ctx = SimpleNamespace(page_id="the-open-page", page_root=lambda: tree)
+
+		run_python(ctx, {"script": "blocks[1]['classes'].append('x')\npage['children'] = []\nresult = 1"})
+
+		self.assertEqual(tree, sample_tree())
 
 	def test_writes_do_not_persist(self):
 		title = frappe.generate_hash(length=10)

@@ -10,6 +10,8 @@ anything a snippet nevertheless wrote — read-only by construction, not by
 convention.
 """
 
+import copy
+
 import frappe
 
 from builder.ai.agent.registry import Tool
@@ -67,7 +69,7 @@ def run_python(ctx, args: dict) -> str:
 		return "FAILED: pass `script` — Python that assigns the answer to `result`."
 	if not is_safe_exec_enabled():
 		return "FAILED: the script sandbox is disabled on this bench — use the other read tools."
-	_locals = {"page_id": ctx.page_id, "result": None}
+	_locals = {"page_id": ctx.page_id, **page_bindings(ctx), "result": None}
 	frappe.db.savepoint(SAVEPOINT)
 	try:
 		# Audited dynamic execution — the point of this tool. Server-script sandbox,
@@ -88,6 +90,27 @@ def run_python(ctx, args: dict) -> str:
 	return out
 
 
+def page_bindings(ctx) -> dict:
+	"""The open page's live block tree for a snippet: a copy, so the snippet can't
+	change the turn's tree, and the same blocks as a flat list, since a snippet can't
+	define recursive helpers (a def doesn't see names bound in the snippet)."""
+	root = ctx.page_root() if hasattr(ctx, "page_root") else None
+	page = copy.deepcopy(root) if root else None
+	return {"page": page, "blocks": flatten(page) if page else []}
+
+
+def flatten(root: dict) -> list[dict]:
+	blocks, stack = [], [(root, None, 0)]
+	while stack:
+		block, parent, depth = stack.pop()
+		children = block.get("children") or []
+		entry = {k: v for k, v in block.items() if k != "children"}
+		entry.update(parent=parent, depth=depth, children=[c.get("blockId") for c in children])
+		blocks.append(entry)
+		stack.extend((child, block.get("blockId"), depth + 1) for child in reversed(children))
+	return blocks
+
+
 run_python_tool = Tool(
 	name="run_python",
 	side="server",
@@ -99,9 +122,16 @@ run_python_tool = Tool(
 		"which page owns a route, the site's own URL (frappe.utils.get_url()), any setting "
 		"or record, cross-doctype questions. Available: frappe.get_all/get_list/get_doc, "
 		"frappe.db.get_value/get_single_value/count/exists, frappe.utils date/format "
-		"helpers, frappe.session.user, and `page_id` (the open page). No imports, no raw "
-		"SQL; nothing it writes persists, and reads answer with the current user's own "
-		"permissions. Orient yourself with it instead of guessing or asking the user."
+		"helpers, frappe.session.user, and `page_id` (the open page). The open page's "
+		"live block tree is bound too: `page` (the root block) and `blocks` (every block as "
+		"a flat list in document order, each with blockId (its ref), element, blockName, "
+		"classes, baseStyles/tabletStyles/mobileStyles, attributes, customAttributes, "
+		"innerHTML, plus parent, depth and children refs). A question about many blocks "
+		"(which carry a class, what their mobile display is, which use a token) is one "
+		"snippet over `blocks` returning only the answer, not a sweep of read_block calls. "
+		"No imports, no raw SQL; nothing it writes persists, and reads answer with the "
+		"current user's own permissions. Orient yourself with it instead of guessing or "
+		"asking the user."
 	),
 	parameters={
 		"type": "object",
