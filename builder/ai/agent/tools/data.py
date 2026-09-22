@@ -72,7 +72,7 @@ def query_records(ctx, args: dict) -> str:
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	meta = frappe.get_meta(dt)
-	return json.dumps([bounded(dt, meta, dict(r)) for r in rows], default=str)
+	return json.dumps([truncate_record(dt, meta, dict(r)) for r in rows], default=str)
 
 
 def get_document(ctx, args: dict) -> str:
@@ -113,7 +113,7 @@ def get_document(ctx, args: dict) -> str:
 	else:
 		# Drop internal fields and child tables so the read stays legible + cheap.
 		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
-	data = bounded(dt, meta, data, name=doc.name)
+	data = truncate_record(dt, meta, data, name=doc.name)
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
@@ -125,10 +125,11 @@ FIELD_CAP = 1000
 CODE_FIELD_CAP = 8000
 
 
-def bounded(dt: str, meta, data: dict, name: str | None = None) -> dict:
-	"""Bound a record's values so a read can't flood the model's context. A page's block
-	tree becomes a pointer to read_page, since a cut-off tree is unparseable; code fields
-	get a wider bound because they are usually what was asked for."""
+def truncate_record(dt: str, meta, data: dict, name: str | None = None) -> dict:
+	"""A copy of a record with its long values cut short, so a read can't flood the
+	model's context. A page's block tree is replaced by a pointer to read_page, since a
+	cut-off tree is unparseable; code fields keep more because they are usually what was
+	asked for."""
 	pointer = (
 		f"<a Builder Page block tree: read it with read_page('{name or data.get('name') or 'page'}'), "
 		"or search many pages' blocks with run_python>"
