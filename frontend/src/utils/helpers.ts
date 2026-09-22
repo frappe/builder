@@ -3,7 +3,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { dialog, FileUploadHandler, toast } from "frappe-ui";
+import { dialog, FileUploadHandler, toast, type DialogSize, type DialogTheme } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
 import {
@@ -27,10 +27,8 @@ async function confirm(message: string, title: string = __("Confirm")): Promise<
 		showDialog({
 			title,
 			message,
-			icon: {
-				name: "alert-circle",
-				appearance: "warning",
-			},
+			icon: "lucide-alert-circle",
+			theme: "amber",
 			actions: [
 				{
 					label: __("Cancel"),
@@ -69,6 +67,16 @@ function getTextContent(html: string | null) {
 
 function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
+}
+
+/** Escape a value for safe use in an HTML string.*/
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
 function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
@@ -670,21 +678,21 @@ interface DialogAction {
 interface DialogOptions {
 	title?: string;
 	message: string;
-	icon?: {
-		name: string;
-		appearance?: "warning" | "info" | "danger" | "success";
-	};
+	/** a `lucide-*` class name; the theme colours it */
+	icon?: string;
+	theme?: DialogTheme;
 	actions?: DialogAction[];
-	size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
+	size?: DialogSize;
 }
 
 function showDialog(options: DialogOptions): Promise<void> {
-	const appearanceToTheme = { warning: "yellow", info: "blue", danger: "red", success: "green" } as const;
 	return new Promise((resolve) => {
 		dialog.confirm({
 			title: options.title || "",
 			message: options.message,
 			size: options.size || "md",
+			icon: options.icon,
+			theme: options.theme,
 			actions: (options.actions || []).map((action) => ({
 				label: action.label,
 				variant: action.variant ?? "subtle",
@@ -696,9 +704,6 @@ function showDialog(options: DialogOptions): Promise<void> {
 				},
 			})),
 			onCancel: () => resolve(),
-			...(options.icon
-				? { icon: options.icon.name, theme: appearanceToTheme[options.icon.appearance ?? "info"] }
-				: {}),
 		});
 	});
 }
@@ -1029,6 +1034,7 @@ export {
 	deepEqual,
 	detachBlockFromComponent,
 	diffArray,
+	escapeHtml,
 	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,

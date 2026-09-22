@@ -54,6 +54,20 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertEqual(cta["attributes"], {"href": "/buy"})  # standard attr
 		self.assertEqual(cta["customAttributes"], {"data-test": "cta", "id": "buy-btn"})
 
+	def test_dark_mode_image_lands_where_the_renderer_reads_it(self):
+		self.tree.apply("update_block", {"block_id": "hero", "attributes": {"darkSrc": "/files/dark.png"}})
+
+		self.assertEqual(self.tree.resolve("hero")["attributes"]["darkSrc"], "/files/dark.png")
+
+	def test_dark_mode_image_replaces_one_filed_as_custom(self):
+		self.tree.resolve("hero")["customAttributes"] = {"darkSrc": "/files/old.png", "data-x": "1"}
+
+		self.tree.apply("update_block", {"block_id": "hero", "attributes": {"darkSrc": "/files/new.png"}})
+
+		hero = self.tree.resolve("hero")
+		self.assertEqual(hero["attributes"]["darkSrc"], "/files/new.png")
+		self.assertEqual(hero["customAttributes"], {"data-x": "1"})
+
 	def test_html_wins_over_text_and_classes_replace(self):
 		self.tree.apply(
 			"update_block",

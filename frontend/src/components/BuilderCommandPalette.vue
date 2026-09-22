@@ -20,7 +20,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
-import { useShortcut } from "frappe-ui";
+import { useKeyboardShortcut } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { CommandPaletteItem as CPItem } from "./CommandPalette.vue";
@@ -38,9 +38,8 @@ const router = useRouter();
 
 const isBuilderRoute = computed(() => route.name === "builder");
 
-useShortcut({
-	key: "k",
-	ctrl: true,
+useKeyboardShortcut({
+	combo: "Mod+K",
 	description: __("Open Command Palette"),
 	group: __("General"),
 	allowInInput: true,
@@ -105,11 +104,6 @@ const paletteCommands = computed<PaletteItem[]>(() =>
 	commands.visible.value.filter((command) => command.inPalette !== false).map(toPaletteItem),
 );
 
-function openSettings(tab: string) {
-	builderStore.settingsActiveTab = tab;
-	builderStore.showSettingsDialog = true;
-}
-
 // read from the same registry the settings dialog renders, so a pane registered
 // by an extension shows up here too
 const settingsCommands = computed<PaletteItem[]>(() =>
@@ -122,7 +116,7 @@ const settingsCommands = computed<PaletteItem[]>(() =>
 			description: __("Settings"),
 			icon: item.icon,
 			section: item.group === "Current Page" ? "page" : "global",
-			action: () => openSettings(item.name),
+			action: () => builderStore.openBuilderSettings(item.group, item.name),
 		})),
 );
 

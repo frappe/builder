@@ -43,6 +43,28 @@ TRANSIENT_ERROR_NAMES = frozenset(
 )
 
 
+# Failures the user can fix themselves, by class name (same MRO match as is_retryable).
+# Fixed wording only: the provider's own message can carry keys or internal ids.
+USER_FIXABLE_ERRORS = {
+	"AuthenticationError": "The AI provider rejected the API key. Update it in Settings, under AI.",
+	"PermissionDeniedError": "The AI provider refused this request for your account. Check the key's access in Settings, under AI.",
+	"NotFoundError": "The selected model isn't available from its provider. Pick another model and try again.",
+	"ContextWindowExceededError": "This conversation is too long for the selected model. Start a new chat, or pick a model with a larger context.",
+	"ContentPolicyViolationError": "The AI provider declined this request under its content policy.",
+	"RateLimitError": "The AI provider is limiting requests right now. Wait a minute and try again.",
+	"CodexCredentialError": "The ChatGPT sign-in is missing or has expired. Sign in with ChatGPT again in Settings, under AI.",
+}
+GENERIC_FAILURE = "Something went wrong while building your changes. Please try again."
+
+
+def user_facing_error(exc: BaseException) -> str:
+	"""A fixed, safe message for a failed turn: actionable when the user can fix it."""
+	for cls in type(exc).__mro__:
+		if message := USER_FIXABLE_ERRORS.get(cls.__name__):
+			return message
+	return GENERIC_FAILURE
+
+
 def is_retryable(exc: BaseException) -> bool:
 	"""True if this exception looks like a transient network/provider hiccup worth
 	retrying. Walks the class MRO and matches by name (see TRANSIENT_ERROR_NAMES)."""

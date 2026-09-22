@@ -1,7 +1,7 @@
 <template>
 	<div class="m-auto flex w-3/4 max-w-6xl items-center justify-between bg-surface-base px-3.5 py-5 pt-8">
 		<h1
-			class="text-2xl-semibold truncate text-ink-gray-9"
+			class="text-xl-semibold truncate text-ink-gray-9"
 			:title="builderStore.activeFolder || __('All Pages')">
 			{{ builderStore.activeFolder || __("All Pages") }}
 		</h1>
@@ -89,7 +89,6 @@
 							value: 'tree',
 							icon: ListTreeIcon,
 							hideLabel: true,
-							showTooltip: true,
 						},
 					]"
 					v-model="displayType"></OptionToggle>

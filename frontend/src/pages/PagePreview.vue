@@ -9,7 +9,7 @@
 			</router-link>
 			<div class="flex gap-1">
 				<div
-					class="w-auto cursor-pointer rounded-md p-1 px-[8px]"
+					class="w-auto cursor-pointer rounded-5 p-1 px-[8px]"
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
@@ -26,7 +26,7 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-4">
-				<Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="0.6">
+				<Tooltip :text="__('Toggle Dark Mode')" :hoverDelay="600">
 					<Button
 						variant="ghost"
 						:icon="isDark ? 'lucide-sun' : 'lucide-moon'"
@@ -50,13 +50,13 @@
 				:resizeSensitivity="2"
 				ref="leftPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
+				<div class="resize-handler-left h-full w-2 rounded-1 bg-surface-gray-2"></div>
 			</PanelResizer>
 			<iframe
 				:src="previewRoute"
 				frameborder="0"
 				v-if="previewRoute"
-				class="flex-1 rounded-sm"
+				class="flex-1 rounded-1"
 				ref="previewWindow"></iframe>
 			<div v-if="loading || resizing" class="absolute flex h-full w-full items-center justify-center"></div>
 			<PanelResizer
@@ -68,7 +68,7 @@
 				:resizeSensitivity="2"
 				ref="rightPanelRef"
 				@resize="(val) => (width = val)">
-				<div class="resize-handler-left h-full w-2 rounded-sm bg-surface-gray-2"></div>
+				<div class="resize-handler-left h-full w-2 rounded-1 bg-surface-gray-2"></div>
 			</PanelResizer>
 		</div>
 	</div>
@@ -80,8 +80,8 @@ import PublishButton from "@/components/PublishButton.vue";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { Tooltip, useShortcut } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { Tooltip, useKeyboardShortcut } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
@@ -151,8 +151,8 @@ const transitionTheme = (toggle: () => void) => {
 	}
 };
 
-useShortcut({
-	key: "Escape",
+useKeyboardShortcut({
+	combo: "Escape",
 	description: __("Back to Builder"),
 	group: __("Navigation"),
 	handler: () => {
@@ -160,7 +160,7 @@ useShortcut({
 			history.back();
 		}
 	},
-	condition: () => router.currentRoute.value.name === "preview",
+	enabled: () => router.currentRoute.value.name === "preview",
 });
 
 const applyColorSchemeToIframe = (scheme: "dark" | "light") => {

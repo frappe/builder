@@ -1,6 +1,8 @@
 <template>
 	<FileUploader
 		:file-types="image_type"
+		:private="false"
+		folder="Home/Builder Uploads"
 		class="text-base"
 		@success="
 			(file: FileDoc) => {
