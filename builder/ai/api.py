@@ -246,6 +246,7 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
+			canvas_theme=AISession.latest_canvas_theme(session_id),
 			enqueue_after_commit=True,
 		)
 		return True

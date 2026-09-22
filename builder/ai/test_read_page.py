@@ -177,6 +177,16 @@ class TestOpenPageContext(FrappeTestCase):
 
 		self.assertIn("viewing it in dark mode in the editor", runner.build_open_page_context())
 
+	def test_resume_recovers_the_latest_theme(self):
+		from builder.ai.session import AISession
+
+		session = AISession.create({"page": None})
+		session_id = session._doc.name
+		for theme in ("light", "dark"):
+			AISession.try_append_message(session_id, "user", "hi", metadata={"canvasTheme": theme})
+
+		self.assertEqual(AISession.latest_canvas_theme(session_id), "dark")
+
 
 class TestComponentContract(FrappeTestCase):
 	def test_lists_embedded_component_contracts(self):
