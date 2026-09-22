@@ -104,6 +104,9 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 	# Same standard/custom split the editor applies (toolDispatch.applyBlockUpdate).
 	for key, value in attrs.items():
 		target = "attributes" if key in STANDARD_ATTRS else "customAttributes"
+		if target == "attributes":
+			# An older write may have filed it as custom, where it would shadow this one.
+			block.get("customAttributes", {}).pop(key, None)
 		if value is None:
 			block.get(target, {}).pop(key, None)
 		else:

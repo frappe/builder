@@ -134,6 +134,17 @@ class AISession:
 			meta = {}
 		return meta if isinstance(meta, dict) else {}
 
+	@classmethod
+	def latest_canvas_theme(cls, session_id: str) -> str | None:
+		"""The editor theme the user's latest message was sent from."""
+		metadata_json = frappe.db.get_value(
+			cls.MESSAGE_DOCTYPE,
+			{"session": session_id, "role": "user"},
+			"metadata_json",
+			order_by="creation desc",
+		)
+		return cls.load_metadata(metadata_json).get("canvasTheme")
+
 	@staticmethod
 	def row_to_message(row: dict) -> dict:
 		"""Reshape a Builder AI Message DB row into the ChatMessage dict shape
