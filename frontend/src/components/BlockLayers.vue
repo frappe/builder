@@ -106,11 +106,10 @@
 							@click.stop="element.toggleVisibility()" />
 					</span>
 					<div v-if="canShowChildLayer(element)">
-						<!-- one row per array item (e.g. carousel slides); the picked one is editable on the canvas -->
 						<template v-if="element.hasChildren() && element.getRepeaterPropItems().length">
 							<div
 								v-for="index in getRepeaterItemCount(element)"
-								:key="index"
+								:key="index - 1 === element.getRepeaterPreviewIndex() ? `active-${index}` : index"
 								:data-block-layer-id="
 									index - 1 === element.getRepeaterPreviewIndex() ? element.children[0].blockId : undefined
 								"
