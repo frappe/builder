@@ -123,17 +123,6 @@
 						:description="__('Prevent search engines from indexing this page')"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
-					<hr class="w-full border-outline-gray-2" />
-					<Switch
-						size="sm"
-						:label="__('Editor Demo')"
-						:description="
-							__(
-								'Links to #editor-demo open this page in a sandboxed copy of the editor. Visitors can change anything, nothing is saved.',
-							)
-						"
-						:modelValue="Boolean(pageStore.activePage?.allow_editor_demo)"
-						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('allow_editor_demo', val)" />
 					<template v-if="isDeveloperMode || pageStore.activePage?.is_standard">
 						<hr class="w-full border-outline-gray-2" />
 						<Switch

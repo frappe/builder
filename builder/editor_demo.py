@@ -50,11 +50,11 @@ class EditorDemo:
 			return None
 		page = frappe.db.get_value(
 			"Builder Page",
-			{"name": page_name, "allow_editor_demo": 1, "published": 1, "authenticated_access": 0},
+			{"name": page_name, "published": 1, "authenticated_access": 0},
 			PAGE_FIELDS,
 			as_dict=True,
 		)
-		if not page:
+		if not page or not is_demo_page(page_name):
 			# a cached 404 would outlive the page being opted in later
 			frappe.local.no_cache = 1
 			raise frappe.PageDoesNotExistError
@@ -111,6 +111,11 @@ class EditorDemo:
 				order_by="idx",
 			),
 		}
+
+
+def is_demo_page(page_name: str) -> bool:
+	"""Pages opt in from the site config, e.g. `"builder_demo_pages": ["page-1a2b3c4d"]`."""
+	return page_name in (frappe.conf.builder_demo_pages or [])
 
 
 def collect_components(blocks: list) -> tuple[dict, dict]:

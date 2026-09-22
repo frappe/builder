@@ -45,7 +45,6 @@ class TestEditorDemo(FrappeTestCase):
 				"page_title": "Editor Demo",
 				"route": f"editor-demo-{frappe.generate_hash(length=6)}",
 				"published": 1,
-				"allow_editor_demo": 1,
 				"blocks": json.dumps(self.blocks),
 				"draft_blocks": json.dumps(
 					[{"blockId": "root", "element": "div", "innerHTML": "unpublished"}]
@@ -54,8 +53,10 @@ class TestEditorDemo(FrappeTestCase):
 				"client_scripts": [{"builder_script": self.script.name}],
 			}
 		).insert(ignore_permissions=True)
+		frappe.conf.builder_demo_pages = [self.page.name]
 
 	def tearDown(self):
+		frappe.conf.pop("builder_demo_pages", None)
 		frappe.db.rollback()
 
 	def open_demo(self):
@@ -66,7 +67,12 @@ class TestEditorDemo(FrappeTestCase):
 		self.assertIsNone(EditorDemo.from_app_path(f"page/{self.page.name}"))
 
 	def test_refuses_pages_that_are_not_public_and_opted_in(self):
-		for field, value in {"allow_editor_demo": 0, "published": 0, "authenticated_access": 1}.items():
+		frappe.conf.builder_demo_pages = []
+		with self.assertRaises(frappe.PageDoesNotExistError):
+			self.open_demo()
+
+		frappe.conf.builder_demo_pages = [self.page.name]
+		for field, value in {"published": 0, "authenticated_access": 1}.items():
 			with self.subTest(field=field):
 				original = self.page.get(field)
 				frappe.db.set_value("Builder Page", self.page.name, field, value)
