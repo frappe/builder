@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded-4 bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
@@ -20,6 +20,8 @@
 					autocomplete="off"
 					@focus="handleFocus"
 					@blur="handleBlur"
+					@keydown.down="arrowedToOption = true"
+					@keydown.up="arrowedToOption = true"
 					@keydown.enter="handleEnter"
 					:display-value="getDisplayValue"
 					:placeholder="placeholder"
@@ -54,7 +56,7 @@
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
 					ref="contentRef"
-					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
+					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-6 border border-outline-gray-2 bg-surface-base shadow-xl"
 					:class="[
 						referenceElementSelector ? 'fixed' : 'absolute',
 						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
@@ -78,9 +80,10 @@
 							<ComboboxItem
 								v-else
 								:value="option.value"
+								:data-value="option.value"
 								:disabled="option.disabled"
 								@mousedown.prevent
-								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
+								class="group flex cursor-default select-none items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
 								<MiddleTruncate :text="option.label" :style="resolveLabelStyle(option)" />
 								<component
@@ -186,6 +189,9 @@ const emit = defineEmits<{
 const containerRef = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const searchQuery = ref("");
+// Enter commits an option the user arrowed to, even over typed text; a highlight that only
+// followed the typing leaves Enter to submit what was typed
+const arrowedToOption = ref(false);
 const asyncOptions = ref<Option[]>([]);
 const hasValue = computed(() => props.modelValue != null && props.modelValue !== "");
 const comboboxInput = ref<ComponentPublicInstance | null>(null);
@@ -294,9 +300,9 @@ const handleEnter = (event: KeyboardEvent) => {
 	if (!props.allowArbitraryValue) return;
 	const highlightedItem = containerRef.value?.querySelector("[data-highlighted]");
 	const inputValue = getInputValue(event);
-	// let the combobox commit what is highlighted: nothing was typed over the
-	// current value (arrowing through the list), or what was typed is that option
-	if (highlightedItem && isUntouched(inputValue)) return;
+	// let the combobox commit what is highlighted: the user arrowed to it, nothing was
+	// typed over the current value, or what was typed is that option
+	if (highlightedItem && (arrowedToOption.value || isUntouched(inputValue))) return;
 	if (highlightedItem && inputValue) {
 		const highlightedValue = highlightedItem.getAttribute("data-value");
 		const matchingOption = allOptions.value.find((opt) => opt.value === highlightedValue);
@@ -322,7 +328,10 @@ const handleBlur = (event: FocusEvent) => {
 	emit("blur");
 };
 
-watch(searchQuery, (query) => props.getOptions && refreshOptions(query));
+watch(searchQuery, (query) => {
+	arrowedToOption.value = false;
+	if (props.getOptions) refreshOptions(query);
+});
 watch([searchQuery, () => props.modelValue, allOptions], () => nextTick(checkOverflow), { flush: "post" });
 // seed the search term with the option's label, not the raw value: it is what the
 // input shows, what filterOptions windows the list around, and what Enter compares
@@ -342,6 +351,7 @@ const setOptionsPosition = () => {
 
 watch(isOpen, (val) => {
 	if (val) setOptionsPosition();
+	else arrowedToOption.value = false;
 });
 
 watch(displayOptions, () => {

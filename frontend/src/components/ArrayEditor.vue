@@ -1,11 +1,13 @@
 <template>
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
-		<draggable
-			:modelValue="indexedItems"
-			item-key="index"
-			handle=".drag-handle"
-			class="flex flex-col gap-2"
-			@update:modelValue="reorderItems">
+    <draggable
+      v-if="arr.length"
+      :modelValue="indexedItems"
+      item-key="index"
+      handle=".drag-handle"
+      class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1"
+      :class="listClass"
+      @update:modelValue="reorderItems">
 			<template #item="{ element: { item, index } }">
 				<div class="flex items-center gap-2">
 					<span
@@ -34,8 +36,8 @@
 				</div>
 			</template>
 		</draggable>
-		<Button variant="outline" class="w-full" :label="__('Add')" iconLeft="plus" @click="addItem" />
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+		<Button variant="outline" class="w-full shrink-0" :label="__('Add')" iconLeft="plus" @click="addItem" />
+		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>
@@ -51,6 +53,7 @@ const props = defineProps<{
 	description?: string;
 	itemType?: "string" | "image";
 	targetRatio?: number;
+	listClass?: string;
 }>();
 
 const emit = defineEmits({

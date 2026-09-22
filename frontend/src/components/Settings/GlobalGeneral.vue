@@ -25,14 +25,14 @@
 		</div>
 		<hr class="w-full border-outline-gray-2" />
 		<div class="flex flex-col justify-between gap-5">
-			<span class="text-lg-semibold text-ink-gray-9">{{ __("Favicon") }}</span>
+			<span class="text-md-semibold text-ink-gray-9">{{ __("Favicon") }}</span>
 			<div class="flex flex-1 gap-5">
 				<div
-					class="flex items-center justify-center rounded border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
+					class="flex items-center justify-center rounded-4 border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
 					<img
 						:src="builderSettings.doc?.favicon || '/assets/builder/images/frappe_black.png'"
 						alt="Site Favicon"
-						class="size-6 rounded" />
+						class="size-6 rounded-4" />
 				</div>
 				<div class="flex flex-1 flex-col gap-2">
 					<ImageUploader

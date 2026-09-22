@@ -1,7 +1,7 @@
 import { createApp } from "vue";
 
 import { Button, FormControl, FrappeUI } from "frappe-ui";
-import { telemetryPlugin } from "frappe-ui/frappe";
+import { telemetryPlugin } from "@framework/ui/telemetry";
 import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";

@@ -40,12 +40,13 @@
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
 			<template #title>
 				<div class="flex w-full items-center justify-between gap-3 pr-2">
-					<span class="text-lg font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
+					<span class="text-md font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
 						:options="blockClientScriptTabs"
-						:class="['w-48', STRETCH_TABS]" />
+						fluid
+						class="w-48" />
 				</div>
 			</template>
 			<template #default>
@@ -74,7 +75,7 @@
 								type="JSON"
 								:label="__('Data Preview')"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
+								class="-mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>{{ __("Example:") }}</b> data.events = frappe.get_list("Event")<br><br>
@@ -132,7 +133,7 @@
 								type="JSON"
 								:label="__('Component Data Preview')"
 								:showLineNumbers="true"
-								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
+								class="-mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
 								<b>{{ __("Example:") }}</b> data.items = frappe.get_list("Item")<br><br>
@@ -154,9 +155,8 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { TabButtons, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";

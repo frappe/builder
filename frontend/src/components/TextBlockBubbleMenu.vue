@@ -7,7 +7,7 @@
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		:plugin-key="bubbleMenuPluginKey"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl"
+		class="rounded-5 border border-outline-gray-3 bg-surface-base p-1 text-md text-ink-gray-9 shadow-2xl"
 		:class="{ 'pointer-events-none !opacity-0': isRepositioning }">
 		<div
 			v-if="settingLink"
@@ -44,40 +44,40 @@
 		<div v-show="!settingLink" class="flex gap-1">
 			<button
 				@click="setHeading(1)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h1' }">
 				<code>H1</code>
 			</button>
 			<button
 				@click="setHeading(2)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h2' }">
 				<code>H2</code>
 			</button>
 			<button
 				@click="setHeading(3)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 				<code>H3</code>
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleBold().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleStrike().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<span class="lucide-strikethrough size-4" />
 			</button>
@@ -85,7 +85,7 @@
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleUnderline().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
 				<span class="lucide-underline size-4" />
 			</button>
@@ -98,7 +98,7 @@
 						enableLinkInput();
 					}
 				"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
@@ -111,10 +111,10 @@
 					:portal-to="menuElement"
 					placement="top">
 					<template #target>
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+						<button v-show="!block.isHeader()" class="rounded-4 px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
-									class="h-4 w-4 rounded shadow-sm"
+									class="h-4 w-4 rounded-4 shadow-sm"
 									@click="openColorPicker"
 									:style="{
 										background:
