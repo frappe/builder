@@ -827,6 +827,8 @@ function toggleChips(messageId: string) {
 	--tw-prose-hr: var(--outline-gray-1);
 	--tw-prose-quotes: var(--ink-gray-6);
 	--tw-prose-quote-borders: var(--outline-gray-2);
+	--tw-prose-th-borders: var(--outline-gray-2);
+	--tw-prose-td-borders: var(--outline-gray-1);
 }
 .ai-prose p:first-child {
 	margin-top: 0;
@@ -847,6 +849,11 @@ function toggleChips(messageId: string) {
 .ai-prose pre {
 	background: var(--surface-gray-2) !important;
 	border-radius: 0.375rem;
+}
+/* Tables scroll inside the narrow panel instead of overflowing it. */
+.ai-prose table {
+	display: block;
+	overflow-x: auto;
 }
 @keyframes shine {
 	from {

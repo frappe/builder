@@ -33,8 +33,14 @@ export function renderMarkdown(content: string): string {
 			"blockquote",
 			"hr",
 			"span",
+			"table",
+			"thead",
+			"tbody",
+			"tr",
+			"th",
+			"td",
 		],
-		ALLOWED_ATTR: ["href", "target", "rel", "class"],
+		ALLOWED_ATTR: ["href", "target", "rel", "class", "align"],
 		ADD_ATTR: ["target"],
 	});
 }
