@@ -1,3 +1,5 @@
+// first: in the editor demo it also walls off the site's storage before anything reads it
+import "./setupFrappeUIResource";
 import { createApp } from "vue";
 
 import { Button, FormControl, FrappeUI } from "frappe-ui";
@@ -5,11 +7,11 @@ import { telemetryPlugin } from "@framework/ui/telemetry";
 import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
-import "./setupFrappeUIResource";
 import translationPlugin, { ensureTranslations } from "./translation";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
+import { editorDemo } from "@/utils/editorDemo";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -21,7 +23,9 @@ app.use(pinia);
 ensureTranslations().then(() => {
 	app.use(router);
 	app.use(FrappeUI);
-	app.use(telemetryPlugin, { app_name: "builder" });
+	if (!editorDemo) {
+		app.use(telemetryPlugin, { app_name: "builder" });
+	}
 	app.use(translationPlugin);
 
 	window.name = "frappe-builder";

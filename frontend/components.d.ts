@@ -83,6 +83,8 @@ declare module 'vue' {
     DynamicValueDropdown: typeof import('./src/components/DynamicValueDropdown.vue')['default']
     DynamicValueHandler: typeof import('./src/components/Controls/DynamicValueHandler.vue')['default']
     EditableSpan: typeof import('./src/components/EditableSpan.vue')['default']
+    EditorDemoActions: typeof import('./src/components/EditorDemo/EditorDemoActions.vue')['default']
+    EditorDemoLogo: typeof import('./src/components/EditorDemo/EditorDemoLogo.vue')['default']
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
     Files: typeof import('./src/components/Icons/Files.vue')['default']
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']

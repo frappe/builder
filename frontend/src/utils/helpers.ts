@@ -3,6 +3,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import { dialog, FileUploadHandler, toast, type DialogSize, type DialogTheme } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
@@ -354,6 +355,10 @@ function getRouteVariables(route: string) {
 }
 
 async function uploadBuilderAsset(file: File, silent = false) {
+	if (editorDemo) {
+		// the demo has no server to upload to, so the image lives only in this tab
+		return { fileURL: URL.createObjectURL(file), fileName: file.name };
+	}
 	const uploader = new FileUploadHandler();
 	let fileDoc = {
 		file_url: "",
