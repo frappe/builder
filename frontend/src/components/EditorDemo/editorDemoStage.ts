@@ -1,4 +1,5 @@
 import { runPageScripts } from "@/components/EditorDemo/pageScripts";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { editorDemo, postToLauncher } from "@/utils/editorDemo";
@@ -43,8 +44,11 @@ class EditorDemoStage {
 		return this.started;
 	}
 
-	async prepare(scrollY: number, target?: Rect) {
+	async prepare(scrollY: number, target?: Rect, dark = false) {
 		await this.start();
+		// match the theme the page is showing, so the hand-off does not flip it
+		const builderStore = useBuilderStore();
+		builderStore.isDark = builderStore.canvasDarkMode = dark;
 		this.canvas.clearSelection();
 		this.setOverlaysHidden(true);
 		this.slidePanels("out", 0);

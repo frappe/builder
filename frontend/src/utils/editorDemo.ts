@@ -19,7 +19,7 @@ export type EditorDemoPayload = {
 };
 
 type Rect = { left: number; top: number; width: number; height: number };
-export type EditorDemoMessage = { type: string; scrollY?: number; target?: Rect };
+export type EditorDemoMessage = { type: string; scrollY?: number; target?: Rect; dark?: boolean };
 
 const MESSAGE_SOURCE = "builder-editor-demo";
 

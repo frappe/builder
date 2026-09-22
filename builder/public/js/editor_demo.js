@@ -28,6 +28,15 @@
     </style>`,
   );
 
+  // the theme the page is showing, from a manual toggle or the system setting
+  const isDark = () => {
+    const scheme = getComputedStyle(root).colorScheme;
+    return (
+      scheme === "dark" ||
+      (scheme.includes("dark") &&
+        matchMedia("(prefers-color-scheme: dark)").matches)
+    );
+  };
   const supported = () =>
     matchMedia("(min-width: 1024px) and (pointer: fine)").matches;
   const send = (message) =>
@@ -62,6 +71,7 @@
         type: "prepare",
         scrollY,
         target: { left, top, width, height },
+        dark: isDark(),
       },
       startedAt: performance.now(),
       timeout: setTimeout(giveUp, LOAD_TIMEOUT_MS),

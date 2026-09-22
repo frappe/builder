@@ -39,8 +39,8 @@ onMounted(() => {
 		editorDemoStage.isOpen.value = true;
 		return welcome();
 	}
-	onLauncherMessage(async ({ type, scrollY = 0, target }) => {
-		if (type === "prepare") editorDemoStage.prepare(scrollY, target);
+	onLauncherMessage(async ({ type, scrollY = 0, target, dark = false }) => {
+		if (type === "prepare") editorDemoStage.prepare(scrollY, target, dark);
 		if (type === "play") editorDemoStage.play().then(welcome);
 		if (type === "close") editorDemoStage.exit();
 	});
