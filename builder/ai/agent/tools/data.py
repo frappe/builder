@@ -126,11 +126,9 @@ CODE_FIELD_CAP = 8000
 
 
 def bounded(dt: str, meta, data: dict, name: str | None = None) -> dict:
-	"""Bound a record's values so no read can blow the context (100 pages' block JSON
-	once came to ~3M tokens in one query_records call). A page's block JSON would only
-	truncate into an unparseable stub, so it becomes a pointer to the tool that renders
-	it. Code fields carry the thing being asked for (a site stylesheet, head HTML), so
-	they get a wider bound."""
+	"""Bound a record's values so a read can't flood the model's context. A page's block
+	tree becomes a pointer to read_page, since a cut-off tree is unparseable; code fields
+	get a wider bound because they are usually what was asked for."""
 	pointer = (
 		f"<a Builder Page block tree: read it with read_page('{name or data.get('name') or 'page'}'), "
 		"or search many pages' blocks with run_python>"
