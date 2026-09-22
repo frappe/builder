@@ -280,6 +280,10 @@ if (!props.preview) {
 					enablePasteRules: false,
 					onUpdate({ editor }) {
 						let innerHTML = getInnerHTML(editor as Editor);
+						if (props.block.setRepeaterItemText(innerHTML)) {
+							dataChanged.value = true;
+							return;
+						}
 						if (props.block.getInnerHTML() === innerHTML) {
 							return;
 						}

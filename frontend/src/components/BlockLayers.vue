@@ -106,7 +106,14 @@
 							@click.stop="element.toggleVisibility()" />
 					</span>
 					<div v-if="canShowChildLayer(element)">
+						<RepeaterItemLayers
+							v-if="element.hasChildren() && element.getRepeaterPropItems().length"
+							:repeater="element"
+							:is-parent-hidden="isParentHidden || !element.isVisible()"
+							:indent="childIndent"
+							:readonly="readonly" />
 						<BlockLayers
+							v-else
 							:blocks="element.children"
 							:ref="childLayer"
 							:is-parent-hidden="isParentHidden || !element.isVisible()"
@@ -136,6 +143,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { nextTick, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
+import RepeaterItemLayers from "./RepeaterItemLayers.vue";
 
 type LayerInstance = InstanceType<typeof BlockLayers>;
 

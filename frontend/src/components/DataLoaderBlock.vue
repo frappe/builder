@@ -11,24 +11,27 @@
 			:componentData="repeatingFrom == 'componentData' ? _data : componentData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
-			:preview="Number(index) !== 0 || preview"
+			:preview="Number(index) !== editableIndex || preview"
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
 			:repeater-index="getRepeaterIndex(index)"
-			v-for="(_data, index) in blockRepeaterData" />
+			v-for="(_data, index) in blockRepeaterData"
+			:key="Number(index) === editableIndex ? `editable-${index}` : index" />
 	</component>
 </template>
 
 <script setup lang="ts">
 import { __ } from "@/translation";
 import type Block from "@/block";
+import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { getDataForKey, getStandardPropValue } from "@/utils/helpers";
 import { Ref, computed, ref } from "vue";
 import BuilderBlock from "./BuilderBlock.vue";
 
 const pageStore = usePageStore();
+const canvasStore = useCanvasStore();
 
 const props = withDefaults(
 	defineProps<{
@@ -113,6 +116,13 @@ const blockRepeaterData = computed(() => {
 	} else {
 		return [{}];
 	}
+});
+
+// only one rendered item is editable; the rest are previews. Remounting on change (see :key) matters
+// because BuilderBlock reads `preview` once during setup
+const editableIndex = computed(() => {
+	const lastIndex = Math.max(Object.keys(blockRepeaterData.value || {}).length - 1, 0);
+	return Math.min(canvasStore.repeaterPreviewIndex[props.block.blockId] ?? 0, lastIndex);
 });
 
 const getRepeaterIndex = (index: number | string) => {

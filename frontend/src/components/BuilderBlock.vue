@@ -469,17 +469,22 @@ watch(
 );
 
 // array item containers (e.g. carousel slides) aren't scrollable in the editor, so jump to the selected item
-watch(selectedInCanvas, async (selected) => {
-	if (!selected || props.preview) return;
-	await nextTick();
-	const element = target.value as HTMLElement | null;
-	const container = element?.parentElement?.closest("[data-array-items]") as HTMLElement | null;
-	const item = container && [...container.children].find((child) => child.contains(element));
-	if (!item) return;
-	const scale = canvasProps?.scale || 1;
-	const offset = item.getBoundingClientRect().left - container.getBoundingClientRect().left;
-	container.scrollLeft += offset / scale;
-});
+watch(
+	selectedInCanvas,
+	async (selected) => {
+		if (!selected || props.preview) return;
+		await nextTick();
+		const element = target.value as HTMLElement | null;
+		const container = element?.parentElement?.closest("[data-array-items]") as HTMLElement | null;
+		const item = container && [...container.children].find((child) => child.contains(element));
+		if (!item) return;
+		const scale = canvasProps?.scale || 1;
+		const offset = item.getBoundingClientRect().left - container.getBoundingClientRect().left;
+		container.scrollLeft += offset / scale;
+	},
+	// picking another item in the layers panel remounts it already selected
+	{ immediate: true },
+);
 
 // Note: All the block event listeners are delegated to parent for better scalability
 </script>

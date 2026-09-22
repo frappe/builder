@@ -826,6 +826,10 @@ const getPropValue = (
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
 	}
+	const [rootName, ...path] = propName.split(".");
+	if (path.length && defaultProps?.[rootName] !== undefined) {
+		return getDataForKey(Object(defaultProps[rootName].value), path.join("."));
+	}
 
 	let parentProps: BlockPropsWithTraceback | null = null;
 

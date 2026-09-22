@@ -147,6 +147,7 @@ declare module 'vue' {
     PublishButton: typeof import('./src/components/PublishButton.vue')['default']
     RangeInput: typeof import('./src/components/Controls/RangeInput.vue')['default']
     ReadOnlyBadge: typeof import('./src/components/ToolbarItems/ReadOnlyBadge.vue')['default']
+    RepeaterItemLayers: typeof import('./src/components/RepeaterItemLayers.vue')['default']
     RotationHandler: typeof import('./src/components/RotationHandler.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

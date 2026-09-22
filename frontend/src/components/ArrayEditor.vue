@@ -78,20 +78,13 @@ const updateItem = (index: number, value: string) => {
 	emit("update:arr", newArr);
 };
 
-const updateImageItem = (index: number, patch: { url?: string; fit?: string; position?: string }) => {
+// keep any other data saved on the item, such as a slide's own text
+const updateImageItem = (index: number, patch: Partial<ImageArrayItem>) => {
 	const newArr = [...props.arr];
 	const current = newArr[index];
-	const url = patch.url ?? itemURL(current);
-	const fit = patch.fit ?? itemFit(current);
-	const position = patch.position ?? itemPosition(current);
-	if (fit || position) {
-		const image: ImageArrayItem = { url };
-		if (fit) image.fit = fit;
-		if (position) image.position = position;
-		newArr[index] = image;
-	} else {
-		newArr[index] = url;
-	}
+	const image = { ...(typeof current === "string" ? { url: current } : current), ...patch } as ImageArrayItem;
+	Object.keys(image).forEach((key) => key !== "url" && !image[key] && delete image[key]);
+	newArr[index] = Object.keys(image).length > 1 ? image : image.url || "";
 	emit("update:arr", newArr);
 };
 
