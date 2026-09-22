@@ -131,15 +131,18 @@ def bounded(dt: str, meta, data: dict, name: str | None = None) -> dict:
 	truncate into an unparseable stub, so it becomes a pointer to the tool that renders
 	it. Code fields carry the thing being asked for (a site stylesheet, head HTML), so
 	they get a wider bound."""
-	if dt == "Builder Page":
-		for key in ("blocks", "draft_blocks"):
-			if data.get(key):
-				data[key] = (
-					f"<a Builder Page block tree: read it with read_page('{name or data.get('name') or 'page'}'), "
-					"or search many pages' blocks with run_python>"
-				)
+	pointer = (
+		f"<a Builder Page block tree: read it with read_page('{name or data.get('name') or 'page'}'), "
+		"or search many pages' blocks with run_python>"
+	)
+	block_fields = {"blocks", "draft_blocks"} if dt == "Builder Page" else set()
 	code_fields = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
-	return {k: truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP) for k, v in data.items()}
+	return {
+		k: pointer
+		if k in block_fields and v
+		else truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP)
+		for k, v in data.items()
+	}
 
 
 def truncate(value, cap: int):
