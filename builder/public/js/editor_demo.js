@@ -12,6 +12,8 @@
   // long enough to read as the page turning into blocks, short enough to feel instant
   const MIN_BLUEPRINT_MS = 260;
   const MAX_OUTLINES = 70;
+  // a demo that never reports ready would otherwise leave the page pulsing and ignore clicks
+  const LOAD_TIMEOUT_MS = 15000;
 
   let frame = null;
   let booted = false;
@@ -56,7 +58,12 @@
     preload();
     const { left, top, width, height } = trigger.getBoundingClientRect();
     const target = { left, top, width, height };
-    opening = { scrollY: window.scrollY, target, startedAt: performance.now() };
+    opening = {
+      scrollY: window.scrollY,
+      target,
+      startedAt: performance.now(),
+      timeout: setTimeout(giveUp, LOAD_TIMEOUT_MS),
+    };
     lastTrigger = trigger;
     press(trigger);
     blueprint = showBlueprint(
@@ -67,6 +74,7 @@
   }
 
   function reveal() {
+    clearTimeout(opening.timeout);
     const elapsed = performance.now() - opening.startedAt;
     opening = null;
     isOpen = true;
@@ -85,6 +93,16 @@
       },
       Math.max(0, MIN_BLUEPRINT_MS - elapsed),
     );
+  }
+
+  // drop the frame too, so the next click loads a fresh one
+  function giveUp() {
+    opening = null;
+    blueprint?.remove();
+    frame?.remove();
+    frame = null;
+    booted = false;
+    notify("The editor demo could not load. Try again in a moment.");
   }
 
   function close(scrollY) {

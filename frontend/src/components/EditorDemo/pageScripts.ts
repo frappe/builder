@@ -10,7 +10,11 @@ const DOCUMENT_ROOTS = /^(:root|html|body)\b/;
 // already fired in the editor, so the page's scripts would wait for them forever
 const LOAD_EVENTS = new Set(["DOMContentLoaded", "load", "readystatechange"]);
 
-/** Bring the page to life on the canvas the way the published page runs its client scripts. */
+/**
+ * Bring the page to life on the canvas the way the published page runs its client scripts.
+ * The proxies scope the scripts to the canvas, they are not a sandbox: these are the site's
+ * own scripts, which already run unrestricted on the live page hosting the demo.
+ */
 export function runPageScripts(scripts: PageScript[], page: HTMLElement) {
 	const byType = (type: string) => scripts.filter((script) => script.script_type === type);
 	adoptCanvasStyles(byType("CSS").map((script) => script.script));
