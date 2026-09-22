@@ -20,50 +20,30 @@
 </template>
 <script setup lang="ts">
 import { editorDemoStage } from "@/components/EditorDemo/editorDemoStage";
-import useCanvasStore from "@/stores/canvasStore";
 import { __ } from "@/translation";
 import { onLauncherMessage, postToLauncher } from "@/utils/editorDemo";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 
-const canvasStore = useCanvasStore();
 const showTip = ref(false);
-let stopListening = () => {};
-
-watch(
-	() => canvasStore.activeCanvas,
-	(canvas) => canvas && editorDemoStage.matchLauncherWidth(),
-	{ immediate: true },
-);
-
 let welcomed = false;
 
-async function welcome() {
+function welcome() {
 	if (welcomed) return;
-	welcomed = true;
-	showTip.value = true;
-	await new Promise((resolve) => setTimeout(resolve, 9000));
-	showTip.value = false;
+	welcomed = showTip.value = true;
+	setTimeout(() => (showTip.value = false), 9000);
 }
 
 onMounted(() => {
 	editorDemoStage.start();
 	if (!editorDemoStage.framed) {
 		editorDemoStage.isOpen.value = true;
-		welcome();
-		return;
+		return welcome();
 	}
-	stopListening = onLauncherMessage(async (message) => {
-		if (message.type === "prepare") {
-			await editorDemoStage.prepare(message.scrollY, message.target ?? null);
-		} else if (message.type === "play") {
-			await editorDemoStage.play();
-			welcome();
-		} else if (message.type === "close") {
-			editorDemoStage.exit();
-		}
+	onLauncherMessage(async ({ type, scrollY = 0, target }) => {
+		if (type === "prepare") editorDemoStage.prepare(scrollY, target);
+		if (type === "play") editorDemoStage.play().then(welcome);
+		if (type === "close") editorDemoStage.exit();
 	});
 	postToLauncher({ type: "booted" });
 });
-
-onUnmounted(() => stopListening());
 </script>

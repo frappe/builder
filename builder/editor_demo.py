@@ -5,7 +5,7 @@ It never talks to the server, so it only carries what the published page
 already renders and serves publicly, never drafts, the data script or other site data.
 """
 
-import os
+from glob import glob
 
 import frappe
 
@@ -37,16 +37,6 @@ CONTENT_SECURITY_POLICY = "; ".join(
 
 PAGE_FIELDS = ["name", "page_name", "page_title", "route", "blocks", "favicon", "modified"]
 TOKEN_FIELDS = ["name", "token_name", "value", "type", "is_standard", "dark_value", "group"]
-BLOCK_TEMPLATE_FIELDS = [
-	"name",
-	"template_name",
-	"category",
-	"preview",
-	"preview_width",
-	"preview_height",
-	"sort_order",
-	"block",
-]
 
 
 class EditorDemo:
@@ -101,16 +91,25 @@ class EditorDemo:
 		return payload
 
 	def build_payload(self) -> dict:
-		components, component_versions = collect_components(frappe.parse_json(self.page.blocks) or [])
-		used = frappe.as_json([self.page.blocks, components, component_versions])
+		components, versions = collect_components(frappe.parse_json(self.page.blocks) or [])
+		used = frappe.as_json([self.page.blocks, components, versions])
+		fonts = frappe.get_all("User Font", fields=["name", "font_name", "font_file"])
+		templates = frappe.get_module_path("builder", "builder_block_template")
 		return {
 			"page": {**self.page, "modified": str(self.page.modified), "published": 1},
 			"components": components,
-			"componentVersions": component_versions,
+			"componentVersions": versions,
 			"tokens": frappe.get_all("Builder Token", fields=TOKEN_FIELDS, order_by="creation desc"),
-			"fonts": [font for font in get_user_fonts() if font.font_name in used],
-			"blockTemplates": get_block_templates(),
-			"scripts": get_page_scripts(self.page.name),
+			"fonts": [font for font in fonts if font.font_name in used],
+			# the block templates Builder ships, read from the app rather than the site
+			"blockTemplates": [frappe.get_file_json(file) for file in sorted(glob(f"{templates}/*/*.json"))],
+			# already public: the published page links each of them as a file
+			"scripts": frappe.get_all(
+				"Builder Page Client Script",
+				filters={"parent": self.page.name, "parenttype": "Builder Page"},
+				fields=["builder_script.script_type as script_type", "builder_script.script as script"],
+				order_by="idx",
+			),
 		}
 
 
@@ -121,62 +120,27 @@ def collect_components(blocks: list) -> tuple[dict, dict]:
 
 	def visit(block):
 		component_id = block.get("extendedFromComponent")
-		if not component_id:
-			return
-		if component_id not in components:
+		if component_id and component_id not in components:
 			components[component_id] = get_component(component_id)
 			pending.append(components[component_id])
 		version = block.get("componentVersion")
-		if version and version not in versions:
+		if component_id and version and version not in versions:
 			versions[version] = get_component(component_id, version)
 			pending.append(versions[version])
 
 	while pending:
 		source = pending.pop()
-		if isinstance(source, dict) and "block" in source:
-			source = frappe.parse_json(source["block"])
-		walk_blocks(source, visit)
+		walk_blocks(frappe.parse_json(source["block"]) if isinstance(source, dict) else source, visit)
 	return {k: v for k, v in components.items() if v}, {k: v for k, v in versions.items() if v}
 
 
 def get_component(component_id: str, version: str | None = None) -> dict | None:
-	resolved = resolve_component(component_id, version)
-	if not resolved:
-		return None
-	return {
-		"name": component_id,
-		"component_id": component_id,
-		"component_name": frappe.db.get_value("Builder Component", component_id, "component_name"),
-		"block": resolved.get("block"),
-	}
-
-
-def get_page_scripts(page_name: str) -> list[frappe._dict]:
-	"""The page's client scripts in load order, already public as files the page links."""
-	names = frappe.get_all(
-		"Builder Page Client Script",
-		filters={"parent": page_name, "parenttype": "Builder Page"},
-		order_by="idx",
-		pluck="builder_script",
-	)
-	scripts = frappe.get_all(
-		"Builder Client Script", filters={"name": ("in", names)}, fields=["name", "script_type", "script"]
-	)
-	by_name = {script.name: script for script in scripts}
-	return [by_name[name] for name in names if name in by_name]
-
-
-def get_user_fonts() -> list[frappe._dict]:
-	return frappe.get_all("User Font", fields=["name", "font_name", "font_file"])
-
-
-def get_block_templates() -> list[dict]:
-	"""The block templates Builder ships, read from the app rather than the site."""
-	path = frappe.get_module_path("builder", "builder_block_template")
-	templates = []
-	for name in sorted(os.listdir(path)):
-		file = os.path.join(path, name, f"{name}.json")
-		if os.path.isfile(file):
-			template = frappe.get_file_json(file)
-			templates.append({key: template.get(key) for key in BLOCK_TEMPLATE_FIELDS})
-	return templates
+	if resolved := resolve_component(component_id, version):
+		name = frappe.db.get_value("Builder Component", component_id, "component_name")
+		# the block alone: the data script is server code
+		return {
+			"name": component_id,
+			"component_id": component_id,
+			"component_name": name,
+			"block": resolved["block"],
+		}

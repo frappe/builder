@@ -80,7 +80,7 @@ class TestEditorDemo(FrappeTestCase):
 		self.assertEqual(json.loads(payload["page"]["blocks"]), self.blocks)
 		self.assertNotIn("draft_blocks", payload["page"])
 		self.assertNotIn("client_scripts", payload["page"])
-		self.assertEqual([script.name for script in payload["scripts"]], [self.script.name])
+		self.assertEqual([script.script for script in payload["scripts"]], [self.script.script])
 		self.assertEqual(list(payload["components"]), [self.component.name])
 		self.assertNotIn("secret", frappe.as_json(payload))
 		self.assertNotIn("unpublished", frappe.as_json(payload))

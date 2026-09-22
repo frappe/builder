@@ -3,137 +3,103 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { editorDemo, postToLauncher } from "@/utils/editorDemo";
 import { until } from "@vueuse/core";
-import { nextTick, ref } from "vue";
+import { ref } from "vue";
 
 type Rect = { left: number; top: number; width: number; height: number };
 type CanvasView = { scale: number; translateX: number; translateY: number };
 
 const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
 const EASE_IN_OUT = "cubic-bezier(0.65, 0, 0.35, 1)";
-const INTRO_MS = 640;
-const OUTRO_MS = 560;
 // room around the page once it settles into the canvas
 const FIT_PADDING = 48;
-const PANEL_OFFSCREEN = {
-	toolbar: "translateY(-100%)",
-	left: "translateX(-100%)",
-	right: "translateX(100%)",
-};
+const OFFSCREEN = { toolbar: "translateY(-100%)", left: "translateX(-100%)", right: "translateX(100%)" };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-const motion = (ms: number) => (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms);
+const motion = (ms: number) => (matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms);
 
 /**
- * Hands the visitor over from the published page to the editor and back. The canvas
- * starts as a 1:1 copy of what they were looking at, then the chrome slides in while
- * the page settles to fit, so the page seems to turn into the editor in place.
+ * Hands the visitor over from the published page to the editor and back. The canvas starts
+ * as a 1:1 copy of what they were looking at, anchored on the link they clicked, then the
+ * chrome slides in while the page settles to fit, so the page turns into the editor in place.
  */
 class EditorDemoStage {
+	framed = window.parent !== window;
 	isOpen = ref(false);
 	private scrollY = 0;
 	// how far the published layout sits below the canvas copy, measured at the clicked link
 	private layoutOffset = 0;
-	private target: Rect | null = null;
-	private targetBlockId: string | null = null;
-	private started: Promise<unknown> | null = null;
+	private anchorBlockId?: string;
+	private started?: Promise<unknown>;
 
-	get framed() {
-		return window.parent !== window;
-	}
-
-	/** Once the canvas has the page, run the page's own scripts on it, as the live page does. */
+	/** Lay the page out at the launcher's width, then run its own scripts on the canvas. */
 	start() {
-		this.started ??= this.whenCanvasReady().then(() => {
-			runPageScripts(editorDemo?.scripts || [], this.pageElement);
-			return nextFrame();
+		this.started ??= this.whenCanvasReady().then(async () => {
+			const desktop = this.canvas.canvasProps.breakpoints.find((bp) => bp.device === "desktop");
+			if (desktop && this.framed) desktop.width = window.innerWidth;
+			await nextFrame();
+			runPageScripts(editorDemo?.scripts || []);
 		});
 		return this.started;
 	}
 
-	/**
-	 * Mirror the launcher's view of the page, scrolled to scrollY, with the chrome tucked away.
-	 * Page scripts can shift the published layout a little, so the clicked link is what gets
-	 * lined up exactly: it is where the visitor is looking.
-	 */
-	async prepare(scrollY: number, target: Rect | null) {
-		this.scrollY = scrollY;
-		this.layoutOffset = 0;
-		this.target = target;
+	async prepare(scrollY: number, target?: Rect) {
 		await this.start();
 		this.canvas.clearSelection();
 		this.setOverlaysHidden(true);
-		Object.entries(PANEL_OFFSCREEN).forEach(([panel, offscreen]) => {
-			const element = getPanel(panel);
-			if (element) element.style.transform = offscreen;
-		});
-		this.applyView(this.viewAt(this.scrollY));
+		this.slidePanels("out", 0);
+		this.scrollY = scrollY;
+		this.applyView(this.viewAt(scrollY));
 		await nextFrame();
-		const anchor = this.target && findAnchor(this.target);
-		this.targetBlockId = anchor?.dataset.blockId || null;
-		if (anchor && this.target) {
+		const anchor = target && findAnchor(target);
+		this.anchorBlockId = anchor?.dataset.blockId;
+		this.layoutOffset = 0;
+		if (anchor && target) {
 			const rect = anchor.getBoundingClientRect();
-			const translateX = this.canvas.canvasProps.translateX + this.target.left - rect.left;
-			this.layoutOffset = this.target.top - rect.top;
+			const translateX = this.canvas.canvasProps.translateX + target.left - rect.left;
+			this.layoutOffset = target.top - rect.top;
 			this.scrollY -= this.layoutOffset;
 			this.applyView({ ...this.viewAt(this.scrollY), translateX });
 			await nextFrame();
 		}
-		await imagesInView();
 		postToLauncher({ type: "ready" });
 	}
 
 	async play() {
-		const duration = motion(INTRO_MS);
-		this.canvasElement.style.transition = `transform ${duration}ms ${EASE_OUT}`;
-		this.applyView(this.fitView(this.scrollY));
+		const duration = motion(640);
+		this.animateView(this.fitView(), duration, EASE_OUT);
 		this.slidePanels("in", motion(520));
 		this.isOpen.value = true;
 		// the ease-out has all but landed by now, so selecting here keeps the motion going
 		await wait(duration * 0.55);
 		this.setOverlaysHidden(false);
-		const block = this.targetBlockId && this.canvas.findBlock(this.targetBlockId);
-		if (block) this.canvas.selectBlock(block);
-		await wait(duration * 0.45 + 20);
-		this.canvasElement.style.transition = "";
+		const anchor = this.anchorBlockId && this.canvas.findBlock(this.anchorBlockId);
+		if (anchor) this.canvas.selectBlock(anchor);
 	}
 
 	async exit() {
-		if (!this.framed) {
-			window.location.assign(`/${editorDemo?.page.route || ""}`);
-			return;
-		}
+		if (!this.framed) return location.assign(`/${editorDemo?.page.route || ""}`);
 		const scrollY = this.scrollYAtFitTop();
-		const duration = motion(OUTRO_MS);
+		const duration = motion(560);
 		this.isOpen.value = false;
 		this.canvas.clearSelection();
 		this.setOverlaysHidden(true);
-		this.canvasElement.style.transition = `transform ${duration}ms ${EASE_IN_OUT}`;
-		this.applyView(this.viewAt(scrollY));
+		this.animateView(this.viewAt(scrollY), duration, EASE_IN_OUT);
 		this.slidePanels("out", motion(420));
 		await wait(duration + 20);
-		this.canvasElement.style.transition = "";
 		postToLauncher({ type: "exit", scrollY: scrollY + this.layoutOffset });
-	}
-
-	/** Render the page at the launcher's width, so text wraps exactly as it did there. */
-	matchLauncherWidth() {
-		const desktop = this.canvas.canvasProps.breakpoints.find((bp) => bp.device === "desktop");
-		if (desktop && this.framed) desktop.width = window.innerWidth;
 	}
 
 	private get canvas() {
 		return useCanvasStore().activeCanvas as NonNullable<ReturnType<typeof useCanvasStore>["activeCanvas"]>;
 	}
 
-	private get pageElement() {
-		return document.querySelector<HTMLElement>(
-			".canvas-container [data-breakpoint='desktop']",
-		) as HTMLElement;
+	private get canvasElement() {
+		return document.querySelector(".canvas-container [data-breakpoint='desktop']")!.parentElement!;
 	}
 
-	private get canvasElement() {
-		return this.pageElement.parentElement as HTMLElement;
+	private get container() {
+		return this.canvasElement.closest(".canvas-container")!.getBoundingClientRect();
 	}
 
 	private async whenCanvasReady() {
@@ -142,16 +108,21 @@ class EditorDemoStage {
 		await until(
 			() =>
 				document.readyState === "complete" &&
-				Boolean(canvasStore.activeCanvas) &&
-				!canvasStore.activeCanvas?.canvasProps.settingCanvas &&
+				canvasStore.activeCanvas?.canvasProps.settingCanvas === false &&
 				!pageStore.settingPage,
 		).toBe(true);
 		await document.fonts.ready;
-		await nextFrame();
 	}
 
 	private applyView(view: CanvasView) {
 		Object.assign(this.canvas.canvasProps, view);
+	}
+
+	private animateView(view: CanvasView, duration: number, easing: string) {
+		const element = this.canvasElement;
+		element.style.transition = `transform ${duration}ms ${easing}`;
+		this.applyView(view);
+		setTimeout(() => (element.style.transition = ""), duration + 20);
 	}
 
 	// the canvas' own chrome (breakpoint label, zoom pill) hides while it pans or scales
@@ -180,63 +151,51 @@ class EditorDemoStage {
 		return { scale: 1, translateX: -left, translateY: -top - scrollY };
 	}
 
-	private fitView(scrollY: number): CanvasView {
-		const container = this.canvasElement.closest(".canvas-container")!.getBoundingClientRect();
-		const scale = Math.min(1, (container.width - FIT_PADDING * 2) / this.canvasElement.offsetWidth);
-		const { top } = this.origin();
-		return { scale, translateX: 0, translateY: (container.top + FIT_PADDING - top) / scale - scrollY };
+	private fitView(): CanvasView {
+		const scale = Math.min(1, (this.container.width - FIT_PADDING * 2) / this.canvasElement.offsetWidth);
+		const translateY = (this.container.top + FIT_PADDING - this.origin().top) / scale - this.scrollY;
+		return { scale, translateX: 0, translateY };
 	}
 
 	// the inverse of fitView, so opening and closing straight away lands where it started
 	private scrollYAtFitTop() {
-		const container = this.canvasElement.closest(".canvas-container")!.getBoundingClientRect();
 		const { scale, translateY } = this.canvas.canvasProps;
-		return Math.max(0, Math.round((container.top + FIT_PADDING - this.origin().top) / scale - translateY));
+		return Math.max(
+			0,
+			Math.round((this.container.top + FIT_PADDING - this.origin().top) / scale - translateY),
+		);
 	}
 
 	private slidePanels(direction: "in" | "out", duration: number) {
-		Object.entries(PANEL_OFFSCREEN).forEach(([panel, offscreen]) => {
-			const element = getPanel(panel);
-			if (!element) return;
-			const onscreen = "none";
-			element.style.transform = direction === "in" ? "" : offscreen;
+		for (const [panel, offscreen] of Object.entries(OFFSCREEN)) {
+			const element = document.querySelector<HTMLElement>(`[data-panel="${panel}"]`);
+			if (!element) continue;
+			const moving = direction === "in";
+			element.style.transform = moving ? "" : offscreen;
 			element.animate(
-				direction === "in"
-					? [{ transform: offscreen }, { transform: onscreen }]
-					: [{ transform: onscreen }, { transform: offscreen }],
+				{ transform: moving ? [offscreen, "none"] : ["none", offscreen] },
 				{
 					duration,
-					delay: direction === "in" ? motion(80) : 0,
-					easing: direction === "in" ? EASE_OUT : EASE_IN_OUT,
+					delay: moving ? motion(80) : 0,
+					easing: moving ? EASE_OUT : EASE_IN_OUT,
 					fill: "backwards",
 				},
 			);
-		});
+		}
 	}
-}
-
-function getPanel(panel: string) {
-	return document.querySelector<HTMLElement>(`[data-panel="${panel}"]`);
 }
 
 // the canvas copy of the link the visitor clicked, nearest to where they clicked it
 function findAnchor(target: Rect) {
-	const distance = (rect: DOMRect) => Math.hypot(rect.left - target.left, rect.top - target.top);
-	return Array.from(
-		document.querySelectorAll<HTMLElement>(".canvas [href='#editor-demo'], .canvas [data-editor-demo]"),
-	)
-		.map((element) => element.closest<HTMLElement>("[data-block-id]"))
-		.filter((element): element is HTMLElement => Boolean(element))
-		.sort((a, b) => distance(a.getBoundingClientRect()) - distance(b.getBoundingClientRect()))[0];
-}
-
-// a page whose images are still streaming in would give the hand-off away
-function imagesInView() {
-	const images = Array.from(document.querySelectorAll<HTMLImageElement>(".canvas img")).filter((image) => {
-		const rect = image.getBoundingClientRect();
-		return !image.complete && rect.bottom > 0 && rect.top < window.innerHeight;
-	});
-	return Promise.race([Promise.allSettled(images.map((image) => image.decode())), wait(1200)]);
+	const distance = (element: Element) => {
+		const rect = element.getBoundingClientRect();
+		return Math.hypot(rect.left - target.left, rect.top - target.top);
+	};
+	const links = document.querySelectorAll(".canvas [href='#editor-demo'], .canvas [data-editor-demo]");
+	return [...links]
+		.map((link) => link.closest<HTMLElement>("[data-block-id]"))
+		.filter((block): block is HTMLElement => Boolean(block))
+		.sort((a, b) => distance(a) - distance(b))[0];
 }
 
 export const editorDemoStage = new EditorDemoStage();
