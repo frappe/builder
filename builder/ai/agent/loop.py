@@ -1244,9 +1244,9 @@ class AgentRunner:
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
-			# Show a generic message to the user — raw provider/exception strings can
-			# leak internals (keys, model ids, stack detail). Full error is logged above.
-			self.fail_turn("Something went wrong while building your changes. Please try again.")
+			# Never the raw provider/exception string: it can leak internals (keys, model
+			# ids, stack detail). Full error is logged above.
+			self.fail_turn(llm.user_facing_error(e))
 			return
 
 		self.finish_turn(summary_text, started)
