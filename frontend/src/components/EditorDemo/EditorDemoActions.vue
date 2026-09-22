@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center gap-3">
-		<Tooltip :text="__('A sandboxed copy of this page. Nothing you change is saved.')" :hoverDelay="300">
+		<Tooltip :text="__('Changes aren\'t saved')" :hoverDelay="300">
 			<Badge variant="subtle" theme="blue">{{ __("Demo") }}</Badge>
 		</Tooltip>
 		<Button variant="solid" @click="editorDemoStage.exit()">{{ __("Exit demo") }}</Button>

@@ -24,7 +24,9 @@ class TestEditorDemo(FrappeTestCase):
 			script_type="JavaScript",
 			script="console.log('hello from the page')",
 		)
-		cta = {"blockId": "cta", "element": "a", "attributes": {"href": "#editor-demo"}}
+		self.token = insert("Builder Token", token_name="demo-ink", value="#111111")
+		self.unused_token = insert("Builder Token", token_name="demo-unused", value="#222222")
+		cta = {"blockId": "cta", "element": "a", "baseStyles": {"color": f"var(--{self.token.name})"}}
 		card = {"blockId": "card", "element": "div", "extendedFromComponent": self.component.name}
 		self.blocks = [{"blockId": "root", "element": "div", "children": [cta, card]}]
 		self.page = insert(
@@ -67,6 +69,7 @@ class TestEditorDemo(FrappeTestCase):
 		self.assertNotIn("draft_blocks", payload["page"])
 		self.assertEqual([script.script for script in payload["scripts"]], [self.script.script])
 		self.assertEqual(list(payload["components"]), [self.component.name])
+		self.assertEqual([token.name for token in payload["tokens"]], [self.token.name])
 		self.assertNotIn("secret", frappe.as_json(payload))
 		self.assertNotIn("unpublished", frappe.as_json(payload))
 

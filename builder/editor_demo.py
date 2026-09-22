@@ -93,12 +93,14 @@ class EditorDemo:
 		components, versions = collect_components(frappe.parse_json(self.page.blocks) or [])
 		used = frappe.as_json([self.page.blocks, components, versions])
 		fonts = frappe.get_all("User Font", fields=["name", "font_name", "font_file"])
+		tokens = frappe.get_all("Builder Token", fields=TOKEN_FIELDS, order_by="creation desc")
 		templates = frappe.get_module_path("builder", "builder_block_template")
 		return {
 			"page": {**self.page, "modified": str(self.page.modified), "published": 1},
 			"components": components,
 			"componentVersions": versions,
-			"tokens": frappe.get_all("Builder Token", fields=TOKEN_FIELDS, order_by="creation desc"),
+			# only what the page uses, referenced in its styles as var(--<token name>)
+			"tokens": [token for token in tokens if token.name in used],
 			"fonts": [font for font in fonts if font.font_name in used],
 			# the block templates Builder ships, read from the app rather than the site
 			"blockTemplates": [frappe.get_file_json(file) for file in sorted(glob(f"{templates}/*/*.json"))],
