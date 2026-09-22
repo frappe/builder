@@ -35,8 +35,23 @@ class TestImageView(FrappeTestCase):
 
 		out = attach_block_images(make_ctx(), block)
 
-		self.assertIn("private or internal", out)
+		self.assertIn("private, internal or unreachable", out)
 		render.assert_not_called()
+
+	def test_inlines_a_remote_image_instead_of_letting_the_renderer_fetch_it(self, render, _vision):
+		response = SimpleNamespace(
+			status_code=200,
+			headers={"content-type": "image/png"},
+			raw=SimpleNamespace(read=lambda size, decode_content: b"png-bytes"),
+		)
+		block = {"element": "img", "attributes": {"src": "https://images.example.com/hero.png"}}
+
+		with patch("builder.ai.agent.tools.web.fetch_public", return_value=(response, "")):
+			attach_block_images(make_ctx(), block)
+
+		rendered = render.call_args.args[0]
+		self.assertIn("data:image/png;base64,", rendered)
+		self.assertNotIn("images.example.com", rendered)
 
 	def test_attaches_nothing_when_one_render_fails(self, render, _vision):
 		render.side_effect = [b"webp", RuntimeError("renderer down")]

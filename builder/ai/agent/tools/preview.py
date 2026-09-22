@@ -256,27 +256,41 @@ def image_view_html(src: str) -> str:
 	)
 
 
-def image_is_viewable(src: str) -> bool:
-	"""Only what the user could open themselves reaches the renderer (and from there
-	an external model): data: images, public site files, private files they may read,
-	and hosts on the public internet."""
+def renderable_source(src: str) -> str | None:
+	"""What the renderer may load for an image, or None. Only what the user could
+	open themselves gets through (it ends up in front of an external model): data:
+	images, public site files, private files they may read, and public web images,
+	which are inlined so Chromium never dials the network for them."""
 	from urllib.parse import urlparse
 
-	from builder.api import assert_not_private_url
-
 	if src.startswith("data:image/"):
-		return True
+		return src
 	parsed = urlparse(src)
 	if parsed.scheme in ("http", "https") and parsed.netloc != urlparse(frappe.utils.get_url()).netloc:
-		try:
-			assert_not_private_url(src)
-		except (frappe.PermissionError, frappe.ValidationError):
-			return False
-		return True
+		return inline_remote_image(src)
 	if parsed.path.startswith("/private/files/"):
 		name = frappe.db.get_value("File", {"file_url": parsed.path}, "name")
-		return bool(name) and frappe.get_doc("File", name).has_permission("read")
-	return parsed.path.startswith("/files/")
+		return src if name and frappe.get_doc("File", name).has_permission("read") else None
+	return src if parsed.path.startswith("/files/") else None
+
+
+def inline_remote_image(src: str) -> str | None:
+	"""Fetched through read_url's guarded fetch (every redirect hop checked, the
+	connection pinned to the checked address), so neither a redirect nor a DNS
+	rebind can point the renderer at an internal host."""
+	from builder.ai.agent.tools.web import fetch_public
+
+	try:
+		response, _ = fetch_public(src)
+	except Exception:
+		return None
+	content_type = (response.headers.get("content-type") or "").split(";")[0].strip().lower()
+	if response.status_code >= 400 or not content_type.startswith("image/"):
+		return None
+	content = response.raw.read(MAX_IMAGE_BYTES + 1, decode_content=True)
+	if len(content) > MAX_IMAGE_BYTES:
+		return None
+	return f"data:{content_type};base64,{base64.b64encode(content).decode()}"
 
 
 def render_block_images(sources: dict[str, str]) -> list[dict] | None:
@@ -307,12 +321,13 @@ def attach_block_images(ctx, block: dict) -> str:
 	sources = {label: src for label, src in sources.items() if src}
 	if block.get("element") != "img" or not sources:
 		return "This block has no image to show."
-	if not all(image_is_viewable(src) for src in sources.values()):
-		return "This image's address is private or internal, so it can't be shown to you."
 	if not ModelRegistry.supports_vision(ctx.loop_model):
 		return "Your selected model can't view images."
 	if ctx.image_views >= MAX_IMAGE_VIEWS_PER_TURN:
 		return "Image view limit reached for this turn."
+	sources = {label: renderable_source(src) for label, src in sources.items()}
+	if None in sources.values():
+		return "This image's address is private, internal or unreachable, so it can't be shown to you."
 	ctx.image_views += 1
 	attachments = render_block_images(sources)
 	if attachments is None:
