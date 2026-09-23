@@ -1,13 +1,13 @@
 <template>
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
-    <draggable
-      v-if="arr.length"
-      :modelValue="indexedItems"
-      item-key="index"
-      handle=".drag-handle"
-      class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1"
-      :class="listClass"
-      @update:modelValue="reorderItems">
+		<draggable
+			v-if="arr.length"
+			:modelValue="indexedItems"
+			item-key="index"
+			handle=".drag-handle"
+			class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1"
+			:class="listClass"
+			@update:modelValue="reorderItems">
 			<template #item="{ element: { item, index } }">
 				<div class="flex items-center gap-2">
 					<span
@@ -95,7 +95,10 @@ const updateImageItem = (index: number, patch: Partial<ImageArrayItem>) => {
 const indexedItems = computed(() => props.arr.map((item, index) => ({ item, index })));
 
 const reorderItems = (items: Array<{ item: ArrayPropItem; index: number }>) => {
-	emit("update:arr", items.map(({ item }) => item));
+	emit(
+		"update:arr",
+		items.map(({ item }) => item),
+	);
 };
 
 const deleteItem = (index: number) => {

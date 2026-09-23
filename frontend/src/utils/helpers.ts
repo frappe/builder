@@ -895,7 +895,8 @@ const getPropValue = (
 					return fallback;
 				}
 			};
-			const hasValue = matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+			const hasValue =
+				matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
 			if (hasValue) {
 				return parse(matchingProp.value, defaultValue);
 			}
@@ -904,7 +905,8 @@ const getPropValue = (
 			}
 			return defaultValue;
 		}
-		const hasValue = matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+		const hasValue =
+			matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
 		return hasValue ? matchingProp.value : defaultValue;
 	}
 

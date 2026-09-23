@@ -30,10 +30,10 @@
 			<div
 				@click.stop
 				@mousedown.stop
-        class="flex flex-col gap-3 rounded-6 bg-surface-base p-4 shadow-lg"
-        :class="itemType === 'image' ? 'w-72' : 'w-60'">
-        <div class="shrink-0 text-sm text-ink-gray-8">{{ __("Items") }}</div>
-        <ArrayEditor listClass="max-h-[180px]" :arr :itemType :targetRatio @update:arr="updateModelValue" />
+				class="flex flex-col gap-3 rounded-6 bg-surface-base p-4 shadow-lg"
+				:class="itemType === 'image' ? 'w-72' : 'w-60'">
+				<div class="shrink-0 text-sm text-ink-gray-8">{{ __("Items") }}</div>
+				<ArrayEditor listClass="max-h-[180px]" :arr :itemType :targetRatio @update:arr="updateModelValue" />
 			</div>
 		</template>
 	</Popover>
