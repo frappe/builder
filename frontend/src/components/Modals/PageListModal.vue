@@ -11,11 +11,11 @@
 								pageId: page.name,
 							},
 						}">
-						<div class="flex items-start space-x-4 rounded p-2 hover:bg-surface-gray-2">
+						<div class="flex items-start space-x-4 rounded-4 p-2 hover:bg-surface-gray-2">
 							<img
 								:src="page.preview"
 								:alt="page.page_title"
-								class="h-16 w-26 rounded-lg border border-outline-gray-1" />
+								class="h-16 w-26 rounded-6 border border-outline-gray-1" />
 							<div>
 								<div class="font-bold text-ink-gray-8">{{ page.page_title }}</div>
 								<div class="text-sm text-gray-500">{{ page.route }}</div>

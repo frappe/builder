@@ -18,7 +18,7 @@
 			</AnalyticsOverview>
 			<div class="mt-8 flex flex-col gap-5 md:flex-row md:items-start">
 				<div v-if="analytics.loading || processedAnalyticsData.top_pages?.length" class="flex-1">
-					<h3 class="text-lg-medium mb-4 text-ink-gray-7">{{ __("Top Pages") }}</h3>
+					<h3 class="text-md-medium mb-4 text-ink-gray-7">{{ __("Top Pages") }}</h3>
 					<div
 						v-if="analytics.loading"
 						class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
@@ -56,7 +56,7 @@ import AnalyticsOverview from "@/components/Settings/AnalyticsOverview.vue";
 import TopReferrersList from "@/components/Settings/TopReferrersList.vue";
 import TrackingDisabledNotice from "@/components/Settings/TrackingDisabledNotice.vue";
 import { useAnalytics } from "@/composables/useAnalytics";
-import { ListView } from "frappe-ui";
+import { ListView } from "frappe-ui/experimental";
 
 const {
 	range,

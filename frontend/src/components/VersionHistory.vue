@@ -42,7 +42,7 @@
 			<template v-else>
 				<!-- current (working draft) -->
 				<button
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="canvasStore.previewSnapshotName === null ? 'bg-surface-gray-3' : 'hover:bg-surface-gray-2'"
 					@click="canvasStore.clearVersionPreview()">
 					<span class="mt-1.5 h-2 w-2 shrink-0 self-start rounded-full bg-gray-400" />
@@ -57,7 +57,7 @@
 				<!-- live published version, for pages published before any snapshot existed -->
 				<button
 					v-if="showPublishedVersion"
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="
 						canvasStore.previewSnapshotName === PUBLISHED_VERSION
 							? 'bg-surface-gray-3'
@@ -92,7 +92,7 @@
 				<button
 					v-for="snapshot in snapshots.data"
 					:key="snapshot.name"
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="
 						canvasStore.previewSnapshotName === snapshot.name
 							? 'bg-surface-gray-3'
@@ -227,7 +227,7 @@ onBeforeUnmount(() => canvasStore.clearVersionPreview());
 
 function toggleSaveRow() {
 	showSaveRow.value = !showSaveRow.value;
-	if (showSaveRow.value) nextTick(() => labelInput.value?.el?.focus?.());
+	if (showSaveRow.value) nextTick(() => labelInput.value?.focus());
 }
 
 async function saveVersion() {

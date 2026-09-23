@@ -2,6 +2,7 @@ import { createResource } from "frappe-ui";
 import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 import { __ } from "./translation";
+import { editorDemo } from "./utils/editorDemo";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -103,8 +104,13 @@ if (builder_path.startsWith("{{")) {
 }
 const router = createRouter({
 	history: createWebHistory(builder_path),
-	routes,
+	// named "builder" so the editor's own links resolve, but only to the demo's page
+	routes: editorDemo
+		? [{ path: "/demo/:pageId", name: "builder", component: () => import("@/pages/PageBuilder.vue") }]
+		: routes,
 });
+
+if (editorDemo) router.beforeEach((to) => to.params.pageId === editorDemo?.page.name);
 
 export { sessionUser };
 export default router;

@@ -19,7 +19,7 @@
 				</Button>
 				<div class="mb-2 flex flex-col gap-2">
 					<div class="flex items-center justify-between">
-						<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
+						<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
 						<Button
 							v-if="activeGroup"
 							variant="subtle"
@@ -52,8 +52,8 @@
 			<div v-else class="no-scrollbar flex-1 overflow-y-auto px-8 pb-8">
 				<div v-if="templateGroups.loading && !groups.length" class="grid gap-3 auto-fill-[190px]">
 					<div v-for="i in 6" :key="i" class="flex flex-col gap-2">
-						<div class="aspect-video w-full animate-pulse rounded-lg bg-surface-gray-2"></div>
-						<div class="h-3.5 w-2/3 animate-pulse rounded bg-surface-gray-2"></div>
+						<div class="aspect-video w-full animate-pulse rounded-6 bg-surface-gray-2"></div>
+						<div class="h-3.5 w-2/3 animate-pulse rounded-4 bg-surface-gray-2"></div>
 					</div>
 				</div>
 				<div v-else class="flex flex-col gap-5">
@@ -90,7 +90,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { TemplateGroup, TemplatePageSummary } from "@/types/template";
 import { Button, createResource, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, onMounted, ref, watch } from "vue";
 import BlankPageCard from "./BlankPageCard.vue";
 import TemplateGroupCard from "./TemplateGroupCard.vue";
