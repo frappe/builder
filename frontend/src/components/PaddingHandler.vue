@@ -110,6 +110,7 @@ const emit = defineEmits(["update"]);
 const {
 	canvasProps,
 	updating,
+	activeSides,
 	blockStyles,
 	getSpacingValue,
 	handleBorderWidth,
@@ -142,11 +143,9 @@ const overBand = {
 	[Position.Right]: pointerOver(rightPaddingHandler),
 };
 
-// A band is filled only while it or its pill is hovered, or it is being dragged.
 const hoveredSide = ref<Position | null>(null);
-const draggedSide = ref<Position | null>(null);
 const isActive = (side: Position) =>
-	updating.value ? draggedSide.value === side : hoveredSide.value === side || overBand[side].value;
+	updating.value ? activeSides.value.includes(side) : hoveredSide.value === side || overBand[side].value;
 
 const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
@@ -208,7 +207,6 @@ const sideHandle = computed(() =>
 
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
-	draggedSide.value = position;
 	hoveredSide.value = null;
 	startSpacingDrag(ev, position, {
 		property: "padding",

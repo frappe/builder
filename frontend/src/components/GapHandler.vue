@@ -12,11 +12,11 @@
 			class="gap-handler absolute z-10 flex"
 			:class="[
 				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': band.filled && isActive(band.key) },
+				{ 'bg-purple-300': band.filled && isActive(band.position) },
 			]"
 			:style="band.style"
-			@mouseenter="hoveredBand = band.key"
-			@mouseleave="hoveredBand = null"
+			@mouseenter="hoveredAxis = band.position"
+			@mouseleave="hoveredAxis = null"
 			@mousedown.stop="handleGap($event, band)">
 			<div
 				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
@@ -56,6 +56,7 @@ const emit = defineEmits(["update"]);
 const {
 	canvasProps,
 	updating,
+	activeSides,
 	blockStyles,
 	getSpacingValue,
 	handleBorderWidth,
@@ -71,10 +72,9 @@ watchEffect(() => {
 	emit("update", updating.value);
 });
 
-// A band is filled only while it or its pill is hovered, or it is being dragged.
-const hoveredBand = ref<string | null>(null);
-const draggedBand = ref<string | null>(null);
-const isActive = (key: string) => (updating.value ? draggedBand.value : hoveredBand.value) === key;
+const hoveredAxis = ref<Position | null>(null);
+const isActive = (position: Position) =>
+	updating.value ? activeSides.value.includes(position) : hoveredAxis.value === position;
 
 const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
@@ -352,8 +352,7 @@ const getGapValue = (position: Position) => getSpacingValue("gap", position);
 
 const handleGap = (ev: MouseEvent, band: GapBand) => {
 	if (props.disableHandlers) return;
-	draggedBand.value = band.key;
-	hoveredBand.value = null;
+	hoveredAxis.value = null;
 	startSpacingDrag(ev, band.position, {
 		property: "gap",
 		fallback: 0,

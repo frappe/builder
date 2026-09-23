@@ -63,6 +63,8 @@ const slotIndex = (property: SpacingType, side: Position) =>
 export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: () => string) {
 	const canvasProps = inject("canvasProps") as CanvasProps;
 	const updating = ref(false);
+	// The slots the current drag writes to, so every band showing one of them lights up.
+	const activeSides = ref<Position[]>([]);
 
 	const blockStyles = computed(() => {
 		const breakpoint = getBreakpoint();
@@ -141,6 +143,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 
 		event.preventDefault();
 		updating.value = true;
+		activeSides.value = sidesToUpdate(event, side);
 
 		startDrag({
 			cursor: window.getComputedStyle(event.target as HTMLElement).cursor,
@@ -152,10 +155,12 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 					getRotation(),
 				);
 				const value = Math.round(Math.max(startValue + sign * delta[axis], 0));
-				setSpacingShorthand(property, sidesToUpdate(moveEvent, side), value);
+				activeSides.value = sidesToUpdate(moveEvent, side);
+				setSpacingShorthand(property, activeSides.value, value);
 			},
 			onEnd: () => {
 				updating.value = false;
+				activeSides.value = [];
 			},
 		});
 	};
@@ -163,6 +168,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	return {
 		canvasProps,
 		updating,
+		activeSides,
 		blockStyles,
 		handleBorderWidth,
 		longHandleSize,
