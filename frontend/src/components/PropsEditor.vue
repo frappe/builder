@@ -1,9 +1,9 @@
 <template>
 	<div ref="propsEditor" class="flex flex-col gap-2">
-		<div class="flex flex-col gap-2 rounded-lg">
+		<div class="flex flex-col gap-2 rounded-6">
 			<template v-for="(value, name, index) in props.obj" :key="index">
 				<div
-					class="prop-list-item relative flex w-full flex-col rounded bg-surface-gray-1 p-2 text-ink-gray-6">
+					class="prop-list-item relative flex w-full flex-col rounded-4 bg-surface-gray-1 p-2 text-ink-gray-6">
 					<Popover :offset="32" side="right" align="center" bare>
 						<template #trigger>
 							<div
@@ -52,7 +52,7 @@
 										</p>
 									</div>
 								</div>
-								<div class="flex-shrink-0 gap-1 rounded">
+								<div class="flex-shrink-0 gap-1 rounded-4">
 									<Button
 										class="flex-shrink-0 bg-transparent text-xs text-ink-gray-6"
 										variant="subtle"
@@ -111,7 +111,7 @@
 					@update:prop="updateProp" />
 			</template>
 		</Popover>
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+		<p class="rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>

@@ -22,7 +22,7 @@
 					<template #prefix="{ variant }">
 						<button
 							type="button"
-							class="size-4 cursor-pointer rounded shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+							class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
 							:aria-label="__('Open background picker')"
 							@click="
 								() => {
@@ -38,7 +38,7 @@
 		</template>
 		<template #default>
 			<div
-				class="background-popover-body w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+				class="background-popover-body w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
 					:options="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
@@ -46,7 +46,8 @@
 						{ label: '', value: 'gradient', icon: 'lucide-aperture' },
 					]"
 					v-model="activeTab"
-					:class="['mb-3 w-full', STRETCH_TABS]" />
+					fluid
+					class="mb-3 w-full" />
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
@@ -62,16 +63,14 @@
 				<FileUploader
 					v-else-if="activeTab === 'image'"
 					@success="setBGImage"
-					:uploadArgs="{
-						private: false,
-						folder: 'Home/Builder Uploads',
-						optimize: true,
-						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-					}">
+					:private="false"
+					folder="Home/Builder Uploads"
+					:optimize="true"
+					uploadEndpoint="/api/method/builder.api.upload_builder_asset">
 					<template v-slot="{ openFileSelector }">
 						<div class="space-y-3">
 							<TabButtons
-								:class="STRETCH_TABS"
+								fluid
 								:options="sizeTabOptions"
 								:modelValue="backgroundSize || 'auto'"
 								@update:modelValue="setBGSize" />
@@ -85,12 +84,12 @@
 								@update:modelValue="setBGPosition" />
 							<div
 								v-else
-								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+								class="flex h-24 items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
 								{{ __("No image") }}
 							</div>
 							<TabButtons
 								v-if="!bgFocusEnabled && backgroundImageURL"
-								:class="STRETCH_TABS"
+								fluid
 								:options="repeatTabOptions"
 								:modelValue="backgroundRepeat || 'repeat'"
 								@update:modelValue="setBGRepeat" />
@@ -98,19 +97,19 @@
 								<Button
 									class="flex-1"
 									variant="outline"
-									iconLeft="upload"
+									iconLeft="lucide-upload"
 									:label="backgroundImageURL ? __('Replace') : __('Upload')"
 									@click="openFileSelector" />
 								<Button
 									v-if="bgFocusEnabled"
 									variant="outline"
-									icon="rotate-ccw"
+									icon="lucide-rotate-ccw"
 									:title="__('Reset focal point')"
 									@click="setBGPosition('center')" />
 								<Button
 									v-if="backgroundImageURL"
 									variant="outline"
-									icon="trash"
+									icon="lucide-trash-2"
 									:title="__('Clear image')"
 									@click="clearBGImage" />
 							</div>
@@ -152,9 +151,8 @@ import blockController from "@/utils/blockController";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { cssUrl } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
-import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
+import { FileUploader, Popover, Switch, TabButtons, type TabButtonValue } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
@@ -305,11 +303,12 @@ const sizeTabOptions = [
 	{ label: __("Auto"), value: "auto" },
 ];
 
+// icon-only tabs: frappe-ui labels each one with its `label`
 const repeatTabOptions = [
-	{ label: "", value: "no-repeat", icon: "lucide-square", tooltip: __("No repeat") },
-	{ label: "", value: "repeat", icon: "lucide-grid-2x2", tooltip: __("Repeat") },
-	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal", tooltip: __("Repeat horizontally") },
-	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical", tooltip: __("Repeat vertically") },
+	{ label: __("No repeat"), value: "no-repeat", icon: "lucide-square" },
+	{ label: __("Repeat"), value: "repeat", icon: "lucide-grid-2x2" },
+	{ label: __("Repeat horizontally"), value: "repeat-x", icon: "lucide-gallery-horizontal" },
+	{ label: __("Repeat vertically"), value: "repeat-y", icon: "lucide-gallery-vertical" },
 ];
 
 const setBGImage = (file: { file_url: string }) => {
@@ -357,7 +356,7 @@ const setGradient = (gradient: string) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), null);
 };
 
-const setBGSize = (value: string) => {
+const setBGSize = (value: TabButtonValue) => {
 	blockController.setStyle(getStyleKey("backgroundSize"), value);
 };
 
@@ -365,7 +364,7 @@ const setBGPosition = (value: string) => {
 	blockController.setStyle(getStyleKey("backgroundPosition"), value);
 };
 
-const setBGRepeat = (value: string) => {
+const setBGRepeat = (value: TabButtonValue) => {
 	blockController.setStyle(getStyleKey("backgroundRepeat"), value);
 };
 

@@ -175,6 +175,7 @@ export class ToolDispatcher {
 			Object.entries(args.attributes).forEach(([key, value]) => {
 				if (STANDARD_ATTRS.has(key)) {
 					block.setAttribute(key, value as string | undefined);
+					delete block.customAttributes[key];
 				} else {
 					block.customAttributes[key] = value as string | undefined;
 				}

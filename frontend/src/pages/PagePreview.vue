@@ -18,7 +18,7 @@
 			</div>
 			<div class="flex gap-1">
 				<div
-					class="w-auto cursor-pointer rounded-md p-1 px-[8px]"
+					class="w-auto cursor-pointer rounded-5 p-1 px-[8px]"
 					v-for="breakpoint in deviceBreakpoints"
 					:key="breakpoint.device"
 					:class="{
@@ -89,8 +89,8 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { Button, useShortcut } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { Button, useKeyboardShortcut } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
 import { Ref, computed, onActivated, onDeactivated, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -219,25 +219,24 @@ const toggleDarkMode = () => {
 	}
 };
 
-useShortcut({
-	key: "Escape",
+useKeyboardShortcut({
+	combo: "Escape",
 	description: __("Back to Builder"),
 	group: __("Navigation"),
 	handler: () => {
 		if (isFullscreen.value) setFullscreen(false);
 		else if (router.currentRoute.value.name === "preview") history.back();
 	},
-	condition: () => router.currentRoute.value.name === "preview",
+	enabled: () => router.currentRoute.value.name === "preview",
 });
 
 // the same key that opens the preview from the editor takes you back
-useShortcut({
-	key: "p",
-	ctrl: true,
+useKeyboardShortcut({
+	combo: "Mod+P",
 	description: __("Back to Builder"),
 	group: __("Navigation"),
 	handler: goBack,
-	condition: () => router.currentRoute.value.name === "preview",
+	enabled: () => router.currentRoute.value.name === "preview",
 });
 
 const applyColorSchemeToIframe = (scheme: "dark" | "light") => {

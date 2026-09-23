@@ -23,7 +23,7 @@
 		<div class="flex min-h-0 flex-1 flex-col px-8 pb-8">
 			<div
 				ref="frameContainer"
-				class="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-outline-gray-2">
+				class="relative min-h-0 flex-1 overflow-hidden rounded-6 border border-outline-gray-2">
 				<div v-if="loading" class="absolute inset-0 animate-pulse bg-surface-gray-2"></div>
 				<iframe
 					:src="src"

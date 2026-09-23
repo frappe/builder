@@ -4,14 +4,14 @@
 			{{ __("Saving template") }}
 		</span>
 		<ComponentUpdates />
-		<Tooltip v-if="hasVersionHistory" :text="__('Version History')" :hoverDelay="0.6" arrow-class="mb-3">
+		<Tooltip v-if="hasVersionHistory" :text="__('Version History')" :hoverDelay="600" :offset="12">
 			<Button
 				:variant="builderStore.showVersionHistory ? 'subtle' : 'ghost'"
 				icon="lucide-history"
 				:disabled="builderStore.readOnlyMode"
 				@click="toggleVersionHistory"></Button>
 		</Tooltip>
-		<Tooltip :text="__('Settings')" :hoverDelay="0.6" arrow-class="mb-3">
+		<Tooltip :text="__('Settings')" :hoverDelay="600" :offset="12">
 			<Button variant="ghost" @click="openSettings" :icon="SettingsGearIcon"></Button>
 		</Tooltip>
 		<Tooltip :text="__('Preview')" :hoverDelay="0.6" arrow-class="mb-3">
@@ -46,7 +46,7 @@ const toggleVersionHistory = () => {
 
 const openSettings = (e: MouseEvent) => {
 	(e.currentTarget as HTMLElement)?.blur();
-	builderStore.showSettingsDialog = true;
+	builderStore.openBuilderSettings("Current Page");
 };
 
 const openPreview = () => pageStore.openPreview(pageStore.selectedPage as string);

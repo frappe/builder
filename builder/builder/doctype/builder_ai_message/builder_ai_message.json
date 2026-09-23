@@ -66,6 +66,7 @@
   {
    "fieldname": "metadata_json",
    "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
    "label": "Metadata JSON"
   }
  ],
@@ -73,7 +74,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-05-29 12:00:00.000000",
+ "modified": "2026-09-22 07:50:19.476228",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Message",

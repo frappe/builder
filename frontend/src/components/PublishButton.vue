@@ -44,7 +44,7 @@
 			]"
 			size="sm"
 			class="flex-1 [&>div>div>div]:w-full"
-			placement="right">
+			align="end">
 			<Button
 				variant="solid"
 				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
