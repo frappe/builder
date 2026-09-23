@@ -237,7 +237,8 @@ const reloadOnPageSave = (event: { doctype: string; name: string }) => {
 
 onDeactivated(() => {
 	builderStore.realtime.off("doc_update", reloadOnPageSave);
-	builderStore.realtime.doc_unsubscribe("Builder Page", route.params.pageId as string);
+	// PageBuilder shares this subscription and outlives the preview, so it owns
+	// unsubscribing; tearing it down here would also cut the editor's updates
 });
 
 onActivated(() => {
