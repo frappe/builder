@@ -7,9 +7,23 @@
 						{{ label }}
 					</InputLabel>
 				</div>
-				<div class="relative w-full">
-					<Button class="!w-full w-full" variant="subtle" icon="lucide-pencil" />
-				</div>
+				<button
+					type="button"
+					class="group flex h-7 w-full min-w-0 items-center gap-2 rounded-4 bg-surface-gray-2 px-2 text-sm transition-colors hover:bg-surface-gray-3">
+					<div v-if="thumbnails.length" class="flex shrink-0 -space-x-1.5">
+						<img
+							v-for="(url, index) in thumbnails"
+							:key="index"
+							:src="url"
+							alt=""
+							class="size-4 rounded-4 object-cover ring-1 ring-surface-gray-2 group-hover:ring-surface-gray-3" />
+					</div>
+					<span class="truncate" :class="arr.length ? 'text-ink-gray-8' : 'text-ink-gray-4'">
+						{{ countLabel }}
+					</span>
+					<span
+						class="lucide-pencil ml-auto mr-1 size-3.5 shrink-0 text-ink-gray-7 group-hover:text-ink-gray-8" />
+				</button>
 			</div>
 		</template>
 		<template #default>
@@ -48,6 +62,20 @@ const arr = computed<ArrayPropItem[]>(() => {
 	} catch {
 		return [];
 	}
+});
+
+const thumbnails = computed(() => {
+	if (props.itemType !== "image") return [];
+	return arr.value
+		.map((item) => (typeof item === "string" ? item : item.url))
+		.filter(Boolean)
+		.slice(0, 3);
+});
+
+const countLabel = computed(() => {
+	const count = arr.value.length;
+	if (!count) return __("Add items");
+	return count === 1 ? __("1 item") : __("{0} items", [count]);
 });
 
 const updateModelValue = (value: ArrayPropItem[]) => {
