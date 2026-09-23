@@ -3,7 +3,7 @@
 		<Button
 			variant="solid"
 			:size="size"
-			:disabled="disabled"
+			:disabled="disabled || !activePageLoaded"
 			:label="publishButtonLabel"
 			:icon="iconOnly ? 'lucide-cloud-upload' : undefined"
 			:tooltip="iconOnly ? publishButtonLabel : undefined"
@@ -47,7 +47,7 @@
 			align="end">
 			<Button
 				variant="solid"
-				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
+				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode || !activePageLoaded"
 				icon="lucide-chevron-down"
 				class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 		</Dropdown>
@@ -60,6 +60,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
 import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 
 const props = defineProps<{
 	disabled?: boolean;
@@ -68,6 +69,7 @@ const props = defineProps<{
 	iconOnly?: boolean;
 }>();
 
+const route = useRoute();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
@@ -76,6 +78,10 @@ const publishing = ref(false);
 const showDropdown = computed(() => {
 	return !props.iconOnly && canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
+
+// a stand-alone preview sets activePage asynchronously, so a click before it
+// resolves would publish with another page's (or no) staging/published state
+const activePageLoaded = computed(() => pageStore.activePage?.name === route.params.pageId);
 
 // the main button keeps a live or staging page where it is; the menu moves it
 const isDraft = computed(() => !pageStore.activePage?.published && !pageStore.activePage?.staging);
