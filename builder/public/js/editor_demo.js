@@ -171,4 +171,17 @@
       (event) => event.target.closest?.(TRIGGER) && preload(),
     );
   }
+
+  // the editor takes a few seconds to boot, far more than a hover buys, so start it as
+  // soon as the page is loaded and someone is really here: crawlers never move or scroll
+  function warmUp() {
+    if (navigator.connection?.saveData) return;
+    const idle = window.requestIdleCallback || ((run) => setTimeout(run, 500));
+    const warm = () => idle(preload, { timeout: 2000 });
+    for (const type of ["pointermove", "scroll", "keydown"]) {
+      addEventListener(type, warm, { once: true, passive: true });
+    }
+  }
+  if (document.readyState === "complete") warmUp();
+  else addEventListener("load", warmUp);
 })();
