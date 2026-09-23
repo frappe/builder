@@ -10,7 +10,7 @@
  * | `bind`        | wrapper                   | who writes the block   |
  * | attribute     | AttributePropertyControl  | the wrapper, by default |
  * | style         | StylePropertyControl      | the wrapper, by default |
- * | none (B4)     | BasePropertyControl       | nobody: the extension acts |
+ * | none          | BasePropertyControl       | nobody: the extension acts |
  *
  * A `bind` control with no `action` synthesizes to a `propertyKey` and nothing
  * else, because both bound wrappers already carry the write. Only the two
@@ -60,7 +60,7 @@ export type Control = {
 	label?: string;
 	placeholder?: string;
 	bind?: Bind;
-	/** The extension's own value, when no block property holds it (B4). */
+	/** The extension's own value, when no block property holds it. */
 	value?: unknown;
 	action?: string;
 	options?: unknown;

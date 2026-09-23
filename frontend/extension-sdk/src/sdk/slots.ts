@@ -1,7 +1,7 @@
 /**
  * The five slot entries an extension registers, and running the one that arrived.
  *
- * The slot names are fixed and none is a name the author picks (D5).
+ * The slot names are fixed and none is a name the author picks.
  *
  * Every frame imports the same entry module, so all five registrations run in
  * every frame. Only the one the handshake named is then executed. That is how
@@ -15,7 +15,7 @@
 
 import type { ExtensionSlot } from "../types";
 
-/** The one element the shell gives a frame to paint into (D5). */
+/** The one element the shell gives a frame to paint into. */
 const ROOT_ID = "app";
 
 export type VisualSlot = Exclude<ExtensionSlot, "main">;
@@ -77,7 +77,7 @@ export const use = (adapter: Mounter) => {
  * The contract between the SDK and an extension's document.
  *
  * `component()` resolves to a module, and a module is inert: turning a component
- * into DOM needs a framework runtime. The extension already ships one (1.14),
+ * into DOM needs a framework runtime. The extension already ships one,
  * and the SDK ships none, so the extension does the mounting and the SDK only
  * calls it. That keeps `extension-sdk.js` small for an extension that draws
  * nothing at all.

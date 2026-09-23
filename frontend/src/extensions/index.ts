@@ -2,7 +2,7 @@
  * The one place the editor holds its live extensions.
  *
  * A module rather than a store: registry code reaches this, and a registry
- * module must not import Vue SFC scope (1.5, rule 1). The install list is a
+ * module must not import Vue SFC scope. The install list is a
  * resource, and lives with the others in `@/data`.
  *
  * The bridge itself lives in `host/bridge.ts`, so a surface can import it

@@ -78,7 +78,7 @@ const contextFor = (menu: BlockMenuContext): EditorContext => {
 };
 
 /**
- * What crosses the port (1.9). `target` is a DOM node and `block` is a class
+ * What crosses the port. `target` is a DOM node and `block` is a class
  * instance, so neither can travel. The extension receives an id and asks for
  * more with `block.get(blockId)`.
  */

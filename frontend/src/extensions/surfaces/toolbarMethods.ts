@@ -1,10 +1,10 @@
 /**
  * Tier A toolbar buttons. The extension sends a descriptor and Builder draws
- * its own `Button`, so the button cannot look foreign (1.8).
+ * its own `Button`, so the button cannot look foreign.
  *
  * Two rules apply, and both fail closed. `showWhen` decides whether the button
  * shows, `enableWhen` whether it responds, and each is combined with the flag
- * the extension pushes through `update` (D20).
+ * the extension pushes through `update`.
  *
  * The host does not disable a button under read-only mode on its own. It cannot
  * tell whether an action writes anything, so the extension states

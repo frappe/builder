@@ -61,7 +61,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * True for anything shaped like a port message, at any version.
  *
  * It checks only the fields that route a message. `params`, `result` and
- * `payload` belong to the method, and the host validates those per method (1.12).
+ * `payload` belong to the method, and the host validates those per method.
  */
 export const isPortMessage = (value: unknown): value is AnyVersionMessage => {
 	if (!isRecord(value) || typeof value.v !== "number") return false;

@@ -23,7 +23,7 @@
 <script setup lang="ts">
 /**
  * Tier A: the extension sends data and Builder draws the button out of its own
- * components, so it cannot look foreign (1.8).
+ * components, so it cannot look foreign.
  *
  * It knows nothing about extensions or the bridge. The descriptor the bridge
  * synthesizes passes `onClick`, so every extension-aware decision stays there.

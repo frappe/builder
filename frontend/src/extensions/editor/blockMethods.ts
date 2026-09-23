@@ -1,5 +1,5 @@
 /**
- * Reading and writing one block (1.12).
+ * Reading and writing one block.
  *
  * The context menu already hands an extension a `blockId`, and the snapshot
  * already carries `blockIds` for a multi-selection. Until now neither could be
@@ -263,7 +263,7 @@ const insert = (params: unknown) => {
 
 export const blockMethods: MethodTable = {
 	"block.get": { needs: "block.read", run: get },
-	// read-only is refused in the bridge, once, for every write capability (1.12)
+	// read-only is refused in the bridge, once, for every write capability
 	"block.update": { needs: "block.update", run: update },
 	// adding a block changes what the page is, not what one block holds, so it is
 	// its own grant. A user reading an install list can tell the two apart

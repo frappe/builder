@@ -2,7 +2,7 @@
  * The handlers this frame owns, and running the one the host asked for.
  *
  * A handler is a function, so it never crosses the port. The host holds only
- * the name, and calls back when a descriptor naming it is activated (B2).
+ * the name, and calls back when a descriptor naming it is activated.
  *
  * Apart from `namespaces.ts` so that `connect.ts` can dispatch requests without
  * the two importing each other.

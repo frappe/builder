@@ -1,5 +1,5 @@
 /**
- * An extension served from its author's dev server, for this session only (1.14).
+ * An extension served from its author's dev server, for this session only.
  *
  * It has no record and no files. The editor asks the dev server what it is
  * serving, and appends one entry to the installed list — which is all the rest of

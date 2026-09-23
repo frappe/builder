@@ -1,7 +1,7 @@
 <template>
 	<!--
 		The host owns the chrome here too, so every extension popover looks the
-		same (1.15). Unlike the dialog it is not modal: there is no backdrop, the
+		same. Unlike the dialog it is not modal: there is no backdrop, the
 		editor stays live behind it, and the user drags it out of their way.
 
 		`DraggablePopup` is what Builder's own token manager floats in, so the

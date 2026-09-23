@@ -1,11 +1,11 @@
 /**
- * Builder's live state, reduced to what an extension may read (1.11).
+ * Builder's live state, reduced to what an extension may read.
  *
  * A computed, so the 23 context menu items that read it during one render share
  * one evaluation, and so milestone 5 can watch it rather than keep a second copy.
  *
  * Stores resolve inside the getter. A registry module must not import Vue SFC
- * scope (1.5, rule 1), and resolving a store at import time would tie this
+ * scope, and resolving a store at import time would tie this
  * module to the order the editor loads in.
  */
 

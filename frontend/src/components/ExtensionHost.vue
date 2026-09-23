@@ -1,6 +1,6 @@
 <template>
 	<!--
-		The hidden entry frame of every installed extension (D9). It runs main.js
+		The hidden entry frame of every installed extension. It runs main.js
 		and paints nothing, so it is display:none. An extension's visible frames
 		are mounted by the surfaces that own them, never here.
 	-->
@@ -23,7 +23,7 @@
 		<!-- one for the whole editor: grants.ts queues, so one question stands at a time -->
 		<ExtensionGrantDialog />
 
-		<!-- one per extension, each rendering nothing until ui.openDialog (1.15) -->
+		<!-- one per extension, each rendering nothing until ui.openDialog -->
 		<ExtensionDialog
 			v-for="extension in installedExtensions"
 			:key="`dialog-${frameKey(extension)}`"
@@ -91,7 +91,7 @@ const frameKey = (extension: InstalledExtension) =>
 
 // unmounting a frame only closes its channel. What an extension registered
 // outlives it, so an extension that left the list, or that is now served from
-// somewhere else, is torn down by name first (B2)
+// somewhere else, is torn down by name first
 watch(installedExtensions, (current, previous) => {
 	previous
 		?.filter((extension) => !current.some((row) => frameKey(row) === frameKey(extension)))

@@ -1,7 +1,7 @@
 <template>
 	<!--
 		The host owns the chrome, so every extension dialog looks the same and only
-		the document inside it belongs to the extension (1.15). `Controls/Dialog.vue`
+		the document inside it belongs to the extension. `Controls/Dialog.vue`
 		is what Builder's own settings dialog uses, so the backdrop, Escape and the
 		click outside all come from there.
 	-->
@@ -43,7 +43,7 @@ const dispatch = computed(() => dispatcherFor(props.extension));
 
 /**
  * Escape, the close button and a click outside all end the same way: the pending
- * `openDialog` resolves with nothing, and the host does that itself (1.15).
+ * `openDialog` resolves with nothing, and the host does that itself.
  */
 const dismiss = () => dismissDialog(props.extension.name);
 </script>

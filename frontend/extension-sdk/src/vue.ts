@@ -1,5 +1,5 @@
 /**
- * `frappe-builder-extension-sdk/vue` — the optional Vue layer (1.14).
+ * `frappe-builder-extension-sdk/vue` — the optional Vue layer.
  *
  * It ships in the author's bundle, not in `extension-sdk.js`, because it needs a
  * Vue runtime and the SDK ships none. That is also why it imports the SDK by its

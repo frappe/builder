@@ -1,8 +1,8 @@
 /**
- * Actions: the functions an extension owns, and the host calls back into (B2).
+ * Actions: the functions an extension owns, and the host calls back into.
  *
  * A descriptor cannot carry a function across `postMessage`, so an extension
- * names an action and the host turns that name into a function (1.9). The
+ * names an action and the host turns that name into a function. The
  * handler itself never leaves the frame. Invoking one is the only path where
  * the host calls the extension, rather than the other way round.
  *
@@ -38,7 +38,7 @@ const unregister = (params: unknown, extension: InstalledExtension) => {
 
 /**
  * An action that resolves to nothing rejects, raises a toast and logs both
- * names, so a user sees a message and an author sees a stack (B2).
+ * names, so a user sees a message and an author sees a stack.
  */
 export const invokeAction = async (
 	extension: InstalledExtension,

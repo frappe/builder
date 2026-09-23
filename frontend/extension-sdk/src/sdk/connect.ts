@@ -12,7 +12,7 @@ import { runSlot, setActiveSlot } from "./slots";
 
 /**
  * The origin check lives here, not in the host: measured, every extension frame
- * reports `origin: "null"`, so a host-side allowlist separates nothing (1.12).
+ * reports `origin: "null"`, so a host-side allowlist separates nothing.
  *
  * Builder serves this file, so its own URL names the host origin — and names the
  * hostname Builder is actually being used on, which a value baked in at render
@@ -72,10 +72,10 @@ const start = async (message: ConnectMessage, port: MessagePort) => {
 	slotProps = message.props ?? {};
 	setActiveSlot(message.slot);
 
-	// the shell names no extension, so what to run arrives here (D5)
+	// the shell names no extension, so what to run arrives here
 	await runEntry(message);
 	// the props travel to the document the slot mounts, so a dialog can be opened
-	// with call-time arguments (1.15)
+	// with call-time arguments
 	await runSlot(slotProps);
 	// The iframe document loading is not enough: the extension's entry and its
 	// visual slot may still be importing. The host removes its loader only now.

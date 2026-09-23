@@ -8,7 +8,7 @@
  *
  * No method here needs a capability. A section with no bound control writes
  * nothing, so the grant belongs to the controls, and `readControls` checks it
- * on both doors into that list (B3).
+ * on both doors into that list.
  */
 
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
@@ -79,7 +79,7 @@ const sections = createSurfaceItems<Registration, PropertySection>({
 
 /**
  * Replacing the whole list is a patch of one field, so it reuses the merge and
- * re-register path every surface shares (1.5, rule 4).
+ * re-register path every surface shares.
  */
 const setControls = (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);

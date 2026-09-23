@@ -1,5 +1,5 @@
 /**
- * The editor snapshot, read once or pushed as it changes (1.11).
+ * The editor snapshot, read once or pushed as it changes.
  *
  * This is the first thing the host sends without being asked. Every other method
  * answers a request, so the message budget in `dispatcherFor` covers it. A push
@@ -69,7 +69,7 @@ const readFields = (params: unknown): ContextField[] => {
 
 /**
  * Nothing outside the subscribed fields ever travels, and nothing travels at all
- * unless one of them moved (1.11).
+ * unless one of them moved.
  *
  * Whether to send is decided per field. What to send is not: the payload carries
  * every subscribed field, so a handler can destructure them without guarding

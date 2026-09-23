@@ -1,12 +1,12 @@
 /**
- * The rule an extension declares, and the matcher the host runs at render (D20).
+ * The rule an extension declares, and the matcher the host runs at render.
  *
  * A `condition` runs inside a computed and must answer synchronously. An
  * extension lives in another realm, where every answer is asynchronous. So the
  * extension states a rule about host state, and the host answers it.
  *
- * The host owns the keys. Each names a field the snapshot already publishes
- * (1.11), so an author reads one spelling in both places. Grow this list one key
+ * The host owns the keys. Each names a field the snapshot already publishes,
+ * so an author reads one spelling in both places. Grow this list one key
  * at a time. Adding a key later is cheap. Removing one is not.
  */
 
@@ -50,7 +50,7 @@ export const matches = (rule: ShowWhenRule | undefined, context: EditorContext) 
 
 /**
  * An unknown key raises at registration and names the key. An ignored key would
- * make the item show everywhere, which is the wrong way to fail (D20).
+ * make the item show everywhere, which is the wrong way to fail.
  */
 export const assertRule = (rule: ShowWhenRule | undefined, field = "showWhen") => {
 	const unknown = Object.keys(rule ?? {}).filter((key) => !(key in READERS));

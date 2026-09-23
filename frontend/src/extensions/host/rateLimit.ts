@@ -1,5 +1,5 @@
 /**
- * A message budget per extension (1.12).
+ * A message budget per extension.
  *
  * An extension in a loop can flood `postMessage` and freeze the editor. A call
  * over budget is refused, never queued, so the work per message drops to a

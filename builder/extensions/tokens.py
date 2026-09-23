@@ -21,7 +21,7 @@ def set_extension_tokens(extension: str, tokens: list[dict]) -> None:
 	"""Create or update a Builder Token per entry, keyed by (extension, key).
 
 	`key` exists because Builder Token.name is a database-assigned uuid, so an
-	extension has no other way to name the same token twice (D6).
+	extension has no other way to name the same token twice.
 
 	Never deletes what a call leaves unmentioned. Dropping a token takes an
 	explicit unset.
@@ -33,7 +33,7 @@ def set_extension_tokens(extension: str, tokens: list[dict]) -> None:
 
 @frappe.whitelist()
 def unset_extension_token(extension: str, key: str) -> None:
-	"""Delete one token this extension created (D6).
+	"""Delete one token this extension created.
 
 	Quiet about a key that is not there: an extension dropping a palette it has
 	already dropped is not an error, and the end state is the one it asked for.

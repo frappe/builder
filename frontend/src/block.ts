@@ -391,7 +391,7 @@ class Block implements BlockOptions {
 		);
 	}
 	// breakpoint defaults to the one the user is looking at. An extension may name
-	// one, because it writes without a canvas in front of it (1.11)
+	// one, because it writes without a canvas in front of it
 	setStyle(style: styleProperty, value: StyleValue, breakpoint?: string) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;

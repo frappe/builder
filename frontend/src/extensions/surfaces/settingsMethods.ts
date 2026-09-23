@@ -1,12 +1,12 @@
 /**
- * One page in the settings dialog per extension (1.10), rendered as a frame
+ * One page in the settings dialog per extension, rendered as a frame
  * (Tier C). The same shape as the left panel tab. What differs is only where
  * the host puts it.
  *
  * The group is always "Global". `settingsGroups` is a fixed list of two, and
  * "Current Page" is about the page being edited, which an extension's own page
  * is not. There is no `settings.registerGroup`: a third group is a Builder
- * decision (1.10).
+ * decision.
  */
 
 import ExtensionFrame from "@/components/ExtensionFrame.vue";

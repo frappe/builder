@@ -8,7 +8,7 @@
 import { PROTOCOL_VERSION } from "frappe-builder-extension-sdk/types";
 import type { MethodTable } from "./capabilities";
 
-/** An extension ships on its own schedule, so it needs to know where it landed (1.10). */
+/** An extension ships on its own schedule, so it needs to know where it landed. */
 const getHostInfo = () => ({
 	version: window.builder_version,
 	protocol: PROTOCOL_VERSION,

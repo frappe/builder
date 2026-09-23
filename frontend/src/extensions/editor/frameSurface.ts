@@ -1,5 +1,5 @@
 /**
- * The bookkeeping a host-drawn frame surface repeats (1.15).
+ * The bookkeeping a host-drawn frame surface repeats.
  *
  * A dialog and a popover differ only in the chrome the host draws around them.
  * Both are opened by one frame and closed by another, both are keyed by the
@@ -17,7 +17,7 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
  * What the extension asks the host to draw around it. Both are optional, and an
- * unset one leaves the host's own starting size (1.15). The user resizes from
+ * unset one leaves the host's own starting size. The user resizes from
  * there either way, so this is a seed and not a lock.
  */
 export type FrameSize = { width?: number; height?: number };
@@ -42,7 +42,7 @@ export type OpenFrame = {
 	/** Set only by a sized surface. A dialog carries none, because none is read. */
 	size?: FrameSize;
 	/**
-	 * Travels to the frame at its connect handshake (B1).
+	 * Travels to the frame at its connect handshake.
 	 *
 	 * Raw, never reactive. The handshake is a `postMessage`, which clones what it
 	 * sends, and a Vue proxy cannot be cloned. These are plain JSON off the wire
@@ -75,7 +75,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 		open.delete(extension);
 	};
 
-	/** The host does this itself when the user closes it (1.15). */
+	/** The host does this itself when the user closes it. */
 	const dismiss = (extension: string) => settle(extension, undefined);
 
 	const hookTeardown = (extension: string) => {
@@ -88,7 +88,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	};
 
 	/**
-	 * A second call replaces the first (1.15). The first one's caller is settled
+	 * A second call replaces the first. The first one's caller is settled
 	 * with nothing, rather than left pending against a frame that is gone.
 	 */
 	const start = (params: unknown, extension: InstalledExtension) => {

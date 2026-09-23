@@ -10,7 +10,7 @@
  * records what that frame needs locally and sends nothing, so the host hears
  * each registration once however many frames are open.
  *
- * Nothing is validated here. The host validates every parameter (1.12), and a
+ * Nothing is validated here. The host validates every parameter, and a
  * copy of a rule on this side would be a second thing to keep in step.
  */
 
@@ -133,7 +133,7 @@ export type SettingsRegistration = {
 /** Which Builder control the host renders. A section holds values, not triggers. */
 export type ControlName = "text" | "number" | "select" | "toggle" | "color" | "range";
 
-/** One control in a property section (Tier B). The host renders it (B3, B4). */
+/** One control in a property section (Tier B). The host renders it. */
 export type Control = {
 	name: string;
 	control: ControlName;
@@ -141,7 +141,7 @@ export type Control = {
 	placeholder?: string;
 	/** The host writes the block itself. Needs the `block.update` capability. */
 	bind?: { attribute?: string; style?: string };
-	/** The extension's own value, when no block property holds it (B4). */
+	/** The extension's own value, when no block property holds it. */
 	value?: unknown;
 	/** An action to invoke after a bound write, or on every change when unbound. */
 	action?: ActionRef;
@@ -365,7 +365,7 @@ export const state = {
 	unset: (key: string) => call("state.unset", { key }),
 };
 
-/** One row in `Builder Token`, as an extension describes it (D6). */
+/** One row in `Builder Token`, as an extension describes it. */
 export type ExtensionToken = {
 	/** This extension's own stable id for the token. The record's name is a uuid. */
 	key: string;

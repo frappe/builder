@@ -3,7 +3,7 @@
 		<div v-if="loading" class="absolute inset-0 grid place-items-center bg-surface-base">
 			<LoadingIcon class="h-6 w-6 text-ink-gray-5" />
 		</div>
-		<!-- no allow-same-origin: the opaque origin is the whole isolation guarantee (1.7) -->
+		<!-- no allow-same-origin: the opaque origin is the whole isolation guarantee -->
 		<iframe
 			ref="frame"
 			:src="SHELL_URL"
@@ -26,7 +26,7 @@ import {
 import useBuilderStore from "@/stores/builderStore";
 import { onBeforeUnmount, ref, watch } from "vue";
 
-/** One document serves every extension and every slot, so it takes no segment (D5). */
+/** One document serves every extension and every slot, so it takes no segment. */
 const SHELL_URL = "/builder_extension";
 
 const props = defineProps<{

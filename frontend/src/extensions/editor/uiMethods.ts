@@ -1,5 +1,5 @@
 /**
- * The two frames the host draws for an extension (1.15).
+ * The two frames the host draws for an extension.
  *
  * The host owns the chrome, so every extension dialog and every popover looks
  * the same, and the extension owns only the document inside it.
@@ -50,7 +50,7 @@ export const startPopover = popover.start;
 export const uiMethods: MethodTable = {
 	// Toasts are rate limited by the bridge, but need no capability: they do not change editor state.
 	"ui.toast": { needs: null, run: showToast },
-	// a modal covers the editor, so it is the intrusive case (1.7)
+	// a modal covers the editor, so it is the intrusive case
 	"ui.openDialog": { needs: "ui.dialog", run: dialog.start },
 	"ui.closeDialog": { needs: "ui.dialog", run: dialog.finish },
 	// a popover leaves the editor usable, so it is not the same grant

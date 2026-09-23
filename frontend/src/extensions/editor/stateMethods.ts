@@ -1,5 +1,5 @@
 /**
- * Storage an extension owns outright (1.12). No capability gates it: the drawer
+ * Storage an extension owns outright. No capability gates it: the drawer
  * is not a write to the page, so a read-only page does not close it.
  *
  * One row per key, on the site. It used to be `localStorage`, which is per
@@ -76,7 +76,7 @@ const get = (_params: unknown, extension: InstalledExtension) =>
 
 /**
  * A patch, merged at the top level. `set` never removes what a call leaves
- * unmentioned (D6). An extension has up to five frames, and merging stops a panel
+ * unmentioned. An extension has up to five frames, and merging stops a panel
  * saving its query from erasing what the entry stored. The server keeps one row
  * per key, so two writing different keys never race.
  */
@@ -104,7 +104,7 @@ const unset = (params: unknown, extension: InstalledExtension) => {
 };
 
 export const stateMethods: MethodTable = {
-	// the extension's own drawer, so nothing here needs a grant (1.12)
+	// the extension's own drawer, so nothing here needs a grant
 	"state.get": { needs: null, run: get },
 	"state.set": { needs: null, run: set },
 	"state.unset": { needs: null, run: unset },

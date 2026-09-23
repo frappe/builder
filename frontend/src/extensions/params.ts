@@ -2,7 +2,7 @@
  * Reading what a frame sent.
  *
  * Every parameter arrives from another realm as unknown, and the host validates
- * all of them (1.12). A refusal carries a code, so the SDK can branch on it.
+ * all of them. A refusal carries a code, so the SDK can branch on it.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";

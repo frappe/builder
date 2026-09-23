@@ -1,5 +1,5 @@
 /**
- * Design tokens an extension creates at runtime (D6).
+ * Design tokens an extension creates at runtime.
  *
  * The only write in this milestone that leaves the browser. `block.update`
  * mutates the block tree in memory, and `state.set` writes `localStorage`. A
@@ -28,7 +28,7 @@ const invoke = (url: string, params: Record<string, unknown>) => createResource(
 
 /**
  * `key` is the extension's own stable id, because `Builder Token.name` is a
- * database-assigned uuid the extension never sees (D6). Everything else is what
+ * database-assigned uuid the extension never sees. Everything else is what
  * the doctype holds.
  */
 const readToken = (value: unknown) => {

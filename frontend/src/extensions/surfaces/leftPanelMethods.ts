@@ -1,8 +1,8 @@
 /**
- * One left panel tab per extension (1.10), rendered as a frame (Tier C).
+ * One left panel tab per extension, rendered as a frame (Tier C).
  *
  * The registry receives the same object shape a built-in tab produces, so
- * `BuilderLeftPanel.vue` needs no line that knows extensions exist (B6).
+ * `BuilderLeftPanel.vue` needs no line that knows extensions exist.
  */
 
 import ExtensionFrame from "@/components/ExtensionFrame.vue";

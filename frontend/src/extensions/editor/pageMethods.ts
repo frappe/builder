@@ -6,7 +6,7 @@
  * the ownership rules. This file holds the two the server cannot: the page is
  * the open one, and a create asks the user first.
  *
- * The snapshot deliberately leaves the tree out (1.11): it is large and it
+ * The snapshot deliberately leaves the tree out: it is large and it
  * changes on every keystroke, so an extension asks for it rather than being sent
  * it. `block.get` serves the extension that needs one node.
  *

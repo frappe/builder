@@ -107,7 +107,7 @@ export interface BuilderPageClientScript extends ChildDocType {
 	builder_script: string;
 }
 
-// Last updated: 2026-06-10 10:55:22.349246
+// Last updated: 2026-09-21 14:56:28.266708
 export interface BuilderClientScript extends DocType {
   /** Script: Code */
   script: string;
@@ -117,7 +117,7 @@ export interface BuilderClientScript extends DocType {
   public_url?: string;
 }
 
-// Last updated: 2026-08-17 17:40:00.000000
+// Last updated: 2026-09-11 16:00:00.000000
 export interface BuilderPage extends DocType {
   /** Page Name: Data */
   page_name?: string;

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Storage an extension owns outright (1.12).
+"""Storage an extension owns outright.
 
 No capability gates this. The extension's own drawer is not a write to the page,
 so a read-only page does not close it.
@@ -36,7 +36,7 @@ def get_state(extension: str) -> dict:
 def set_state(extension: str, state: dict) -> None:
 	"""A patch, merged at the top level.
 
-	`set` never removes what a call leaves unmentioned (D6). An extension has up to
+	`set` never removes what a call leaves unmentioned. An extension has up to
 	five frames, and merging stops a panel saving its query from erasing what the
 	entry stored. One row per key, so two writing different keys never race.
 	"""
@@ -91,9 +91,7 @@ def assert_room_for(extension: str, rows: dict, patch: dict) -> None:
 	if kept + incoming <= MAX_STATE_BYTES:
 		return
 
-	frappe.throw(
-		_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000)
-	)
+	frappe.throw(_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000))
 
 
 def write_row(installation: str, row, key: str, value) -> None:

@@ -1,5 +1,5 @@
 /**
- * The dialog, popover, and toast, from inside a frame (1.15).
+ * The dialog, popover, and toast, from inside a frame.
  *
  * Two frames are involved and neither knows about the other. One frame asks for
  * a dialog and waits. The host opens the dialog slot's document in a new frame,

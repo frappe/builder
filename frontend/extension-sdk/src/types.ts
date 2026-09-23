@@ -63,7 +63,7 @@ export type InstalledExtension = {
 export type Breakpoint = "desktop" | "tablet" | "mobile";
 
 /**
- * What the host publishes about the selection (1.11).
+ * What the host publishes about the selection.
  *
  * Every field but `count` describes one block, so every field but `count` is
  * defined only when exactly one block names it. With three blocks selected,
@@ -103,7 +103,7 @@ export type EditorSelection = {
 export type BlockFacts = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
- * The snapshot an extension reads instead of Builder's live state (1.11).
+ * The snapshot an extension reads instead of Builder's live state.
  *
  * A field enters this list only when a built-in `condition` already reads it.
  * Adding a field later is cheap. Removing one is not.

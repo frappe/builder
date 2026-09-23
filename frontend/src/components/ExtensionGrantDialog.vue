@@ -1,6 +1,6 @@
 <template>
 	<!--
-		The consent prompt, drawn by Builder and never by the extension (1.7). An
+		The consent prompt, drawn by Builder and never by the extension. An
 		extension frame cannot paint here, cannot read this, and cannot answer it.
 
 		One instance for the whole editor: `grants.ts` queues requests so only one

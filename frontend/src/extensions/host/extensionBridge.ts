@@ -30,7 +30,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 	const entryChannels = new Map<string, PortChannel>();
 	// every live frame of an extension, because a context push has more than one
 	// destination. The entry channel above stays separate: it is the one frame an
-	// action must reach, and it is chosen by arrival order rather than by liveness (B2)
+	// action must reach, and it is chosen by arrival order rather than by liveness
 	const channels = new Map<string, Set<PortChannel>>();
 	const budgets = new Map<string, Budget>();
 	const cleanups = new Map<string, Array<() => void>>();
@@ -47,7 +47,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 
 	/**
 	 * The first frame of an extension to connect is always its entry frame, because
-	 * no UI frame can exist before `main.js` has registered anything (B2).
+	 * no UI frame can exist before `main.js` has registered anything.
 	 */
 	const connect = (extension: string, channel: PortChannel) => {
 		if (!entryChannels.has(extension)) entryChannels.set(extension, channel);
@@ -100,7 +100,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 		isReadOnly = settings.isReadOnly ?? isReadOnly;
 	};
 
-	/** Milestone 4 records every cleanup the bridge needs when an extension leaves (B2). */
+	/** Milestone 4 records every cleanup the bridge needs when an extension leaves. */
 	const registerTeardown = (extensionName: string, cleanup: () => void) => {
 		const forExtension = cleanups.get(extensionName) ?? [];
 		cleanups.set(extensionName, forExtension);
@@ -109,7 +109,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 
 	/**
 	 * The bridge does not wait for a disabled or uninstalled extension to clean up
-	 * after itself, because its frames may never run again (B2).
+	 * after itself, because its frames may never run again.
 	 */
 	const teardown = (extensionName: string) => {
 		cleanups.get(extensionName)?.forEach((cleanup) => cleanup());

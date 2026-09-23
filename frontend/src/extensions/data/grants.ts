@@ -12,7 +12,7 @@
  * pile of dialogs. `data.getAccess` lets an extension check first and draw its
  * own "connect to Contacts" button.
  *
- * Nothing is cached. The record is the only owner of the answer (rule 22), and a
+ * Nothing is cached. The record is the only owner of the answer, and a
  * stale copy here would cost the user a second dialog for a grant they already
  * gave.
  */

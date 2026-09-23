@@ -7,7 +7,7 @@
  *
  * `update` merges and registers again. A registry item is a copy
  * (`createRegistry.ts:65`), so a value held anywhere else never reaches the
- * screen, and re-registering keeps the item's slot (1.5, rule 4).
+ * screen, and re-registering keeps the item's slot.
  */
 
 import type { RegistryEntry, createRegistry } from "@/utils/createRegistry";
