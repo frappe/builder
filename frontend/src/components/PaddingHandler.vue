@@ -7,12 +7,17 @@
 		}"
 		@click.stop>
 		<div
-			class="padding-handler pointer-events-none absolute z-10 flex w-full"
+			class="padding-handler absolute z-10 flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
+				cursor: isDraggable(topPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
-			:class="{ 'bg-purple-300': isActive(Position.Top) }"
-			ref="topPaddingHandler">
+			:class="[
+				isDraggable(topPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-300': isActive(Position.Top) },
+			]"
+			ref="topPaddingHandler"
+			@mousedown.stop="handlePadding($event, Position.Top)">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				v-show="showHandle"
@@ -26,12 +31,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute bottom-0 z-10 flex w-full"
+			class="padding-handler absolute bottom-0 z-10 flex w-full"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
+				cursor: isDraggable(bottomPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
-			:class="{ 'bg-purple-300': isActive(Position.Bottom) }"
-			ref="bottomPaddingHandler">
+			:class="[
+				isDraggable(bottomPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-300': isActive(Position.Bottom) },
+			]"
+			ref="bottomPaddingHandler"
+			@mousedown.stop="handlePadding($event, Position.Bottom)">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				v-show="showHandle"
@@ -45,12 +55,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute left-0 z-10 flex h-full"
+			class="padding-handler absolute left-0 z-10 flex h-full"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
+				cursor: isDraggable(leftPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
-			:class="{ 'bg-purple-300': isActive(Position.Left) }"
-			ref="leftPaddingHandler">
+			:class="[
+				isDraggable(leftPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-300': isActive(Position.Left) },
+			]"
+			ref="leftPaddingHandler"
+			@mousedown.stop="handlePadding($event, Position.Left)">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				v-show="showHandle"
@@ -64,12 +79,17 @@
 			</div>
 		</div>
 		<div
-			class="padding-handler pointer-events-none absolute right-0 z-10 flex h-full"
+			class="padding-handler absolute right-0 z-10 flex h-full"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
+				cursor: isDraggable(rightPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
-			:class="{ 'bg-purple-300': isActive(Position.Right) }"
-			ref="rightPaddingHandler">
+			:class="[
+				isDraggable(rightPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
+				{ 'bg-purple-300': isActive(Position.Right) },
+			]"
+			ref="rightPaddingHandler"
+			@mousedown.stop="handlePadding($event, Position.Right)">
 			<div
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				v-show="showHandle"
@@ -131,7 +151,7 @@ const bottomPaddingHandler = ref<HTMLElement>();
 const leftPaddingHandler = ref<HTMLElement>();
 const rightPaddingHandler = ref<HTMLElement>();
 
-// The bands let clicks through to the block, so their hover is read off the pointer position.
+// Thin bands let clicks through to the block, so their hover is read off the pointer position.
 const pointerOver = (band: Ref<HTMLElement | undefined>) => {
 	const { isOutside } = useMouseInElement(band);
 	return computed(() => !isOutside.value);
@@ -154,7 +174,10 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 
 const HANDLE_MIN_SCALE = 0.5;
 
+const MIN_DRAGGABLE_BAND = 8;
+
 const showHandle = computed(() => canvasProps.scale > HANDLE_MIN_SCALE);
+const isDraggable = (thickness: number) => !props.disableHandlers && thickness >= MIN_DRAGGABLE_BAND;
 
 const topPaddingHandlerHeight = computed(() => {
 	return getPadding("Top");
