@@ -1058,6 +1058,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
 			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
+			# browsers don't hide <source>, and display: contents on picture turns it into a flex/grid item
+			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
 			state["has_dual_mode_image"] = True
