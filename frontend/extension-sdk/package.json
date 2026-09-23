@@ -21,7 +21,6 @@
 		"skills",
 		"templates",
 		"vite.js",
-		"install_extension.py",
 		"README.md"
 	],
 	"exports": {

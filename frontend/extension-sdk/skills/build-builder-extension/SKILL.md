@@ -161,20 +161,6 @@ minimum Builder extension protocol the release needs.
 
 Builder holds one development extension per session, and a reload drops it.
 
-## Install it on a site
-
-Builder has no install API yet. Use `install_extension.py`, which ships with the SDK:
-
-```sh
-npm run build
-cd /path/to/bench/sites
-../env/bin/python \
-  /path/to/my-extension/node_modules/frappe-builder-extension-sdk/install_extension.py \
-  builder.localhost /path/to/my-extension
-```
-
-Run it again after every build.
-
 ## Publish it through Builder Hub
 
 1. Update the version and protocol in `manifest.json`.

@@ -805,12 +805,8 @@ Builder ignores unknown requested capabilities during development. Calls that ne
 
 Builder permits 100 requests per extension each second. It rejects excess requests with the `rate_limited` error code.
 
-Builder has no install API yet. To install a build on a site, use the script in
-[samplePlugin](../samplePlugin/install.py), which writes the files and inserts the
-`Builder Extension` record.
-
-Use `builder-extension package` only for release packaging. Builder installation remains a
-separate host operation.
+`builder-extension package` only builds the release package. A user installs a release
+from Builder Hub.
 
 ## Agent procedure
 
