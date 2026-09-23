@@ -8,6 +8,7 @@ import useComponentStore from "@/stores/componentStore.js";
 import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import {
 	confirm,
 	countBlocks,
@@ -127,7 +128,7 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						window.name = `editor-${pageName}`;
+						if (!editorDemo) window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
