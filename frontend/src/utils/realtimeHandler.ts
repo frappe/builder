@@ -3,11 +3,13 @@ import { editorDemo } from "./editorDemo";
 import { createSocket } from "./socket";
 
 export default class RealTimeHandler {
-	open_docs: Set<string>;
+	// counts subscribers per doc, so one consumer's unsubscribe does not drop
+	// a doc another consumer still has open
+	open_docs: Map<string, number>;
 	socket: Socket | null;
 	subscribing: boolean;
 	constructor() {
-		this.open_docs = new Set();
+		this.open_docs = new Map();
 		// the editor demo may not open connections, and has no one to collaborate with
 		this.socket = editorDemo ? null : createSocket();
 		this.subscribing = false;
@@ -45,10 +47,13 @@ export default class RealTimeHandler {
 	}
 
 	doc_subscribe(doctype: string, docname: string) {
-		if (this.subscribing) {
+		const key = `${doctype}:${docname}`;
+		const subscribers = this.open_docs.get(key);
+		if (subscribers) {
+			this.open_docs.set(key, subscribers + 1);
 			return;
 		}
-		if (this.open_docs.has(`${doctype}:${docname}`)) {
+		if (this.subscribing) {
 			return;
 		}
 
@@ -60,11 +65,20 @@ export default class RealTimeHandler {
 		}, 1000);
 
 		this.emit("doc_subscribe", doctype, docname);
-		this.open_docs.add(`${doctype}:${docname}`);
+		this.open_docs.set(key, 1);
 	}
 	doc_unsubscribe(doctype: string, docname: string) {
+		const key = `${doctype}:${docname}`;
+		const subscribers = this.open_docs.get(key);
+		if (!subscribers) {
+			return;
+		}
+		if (subscribers > 1) {
+			this.open_docs.set(key, subscribers - 1);
+			return;
+		}
+		this.open_docs.delete(key);
 		this.emit("doc_unsubscribe", doctype, docname);
-		return this.open_docs.delete(`${doctype}:${docname}`);
 	}
 	doc_open(doctype: string, docname: string) {
 		this.emit("doc_open", doctype, docname);
