@@ -359,8 +359,11 @@ const syncPageStore = () => {
 
 onDeactivated(() => {
 	builderStore.realtime.off("doc_update", reloadOnPageSave);
-	// PageBuilder shares this subscription and outlives the preview, so it owns
-	// unsubscribing; tearing it down here would also cut the editor's updates
+	// an editor sharing this tab reclaims the subscription when it reactivates and
+	// outlives the preview, so only unsubscribe when nothing here still owns it
+	if (!cameFromEditor.value) {
+		builderStore.realtime.doc_unsubscribe("Builder Page", route.params.pageId as string);
+	}
 });
 
 onActivated(() => {
