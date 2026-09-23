@@ -28,7 +28,8 @@
   {
    "fieldname": "public_url",
    "fieldtype": "Read Only",
-   "label": "Public URL"
+   "label": "Public URL",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -43,7 +44,7 @@
    "link_fieldname": "builder_script"
   }
  ],
- "modified": "2026-06-10 10:55:22.349246",
+ "modified": "2026-09-21 14:56:28.266708",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Client Script",

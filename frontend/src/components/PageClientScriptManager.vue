@@ -40,7 +40,7 @@
 
 								<Dropdown
 									class="script-options"
-									placement="right"
+									align="end"
 									v-if="activeScript === script && !builderStore.readOnlyMode"
 									:options="[
 										{
@@ -86,7 +86,7 @@
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
 							:placeholder="__('Attach Script')"
-							@update:modelValue="(value: string | null) => value && attachScript(value)">
+							@update:modelValue="onScriptSelected">
 							<template #trigger>
 								<Button class="w-full text-xs">{{ __("Attach Script") }}</Button>
 							</template>
@@ -102,7 +102,7 @@
 		</div>
 
 		<div
-			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			{{ __("Add Script") }}
 		</div>
@@ -110,6 +110,7 @@
 		<div v-if="activeScript" class="flex h-full w-full flex-col">
 			<CodeEditor
 				ref="scriptEditor"
+				:key="activeScript.name"
 				:modelValue="activeScript.script"
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
@@ -143,9 +144,9 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { getPageUsageMessage } from "@/utils/helpers";
-import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
-import { computed, nextTick, ref, watch } from "vue";
+import { Combobox, createListResource, createResource, Dropdown, type ComboboxOptionValue } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
+import { computed, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
 import CodeEditor from "./Controls/CodeEditor.vue";
@@ -238,9 +239,6 @@ const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
 	scriptUsageResource.filters = [["Builder Page Client Script", "builder_script", "=", script.script_name]];
 	scriptUsageResource.reload();
-	nextTick(() => {
-		scriptEditor.value?.resetEditor(true);
-	});
 };
 
 const updateScript = (value: string) => {
@@ -307,6 +305,10 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 					pageStore.activePageScripts.push(res);
 				});
 		});
+};
+
+const onScriptSelected = (value: ComboboxOptionValue | null | undefined) => {
+	if (typeof value === "string" && value) attachScript(value);
 };
 
 const attachScript = (builder_script_name: string) => {

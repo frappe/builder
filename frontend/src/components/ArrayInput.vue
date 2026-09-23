@@ -16,9 +16,9 @@
 			<div
 				@click.stop
 				@mousedown.stop
-				class="flex max-h-60 w-60 flex-col gap-3 overflow-auto rounded-lg bg-surface-base p-4 shadow-lg">
-				<div class="text-sm text-ink-gray-8">{{ __("Items") }}</div>
-				<ArrayEditor :arr @update:arr="updateModelValue" />
+				class="flex w-60 flex-col gap-3 rounded-6 bg-surface-base p-4 shadow-lg">
+				<div class="shrink-0 text-sm text-ink-gray-8">{{ __("Items") }}</div>
+				<ArrayEditor listClass="max-h-[180px]" :arr @update:arr="updateModelValue" />
 			</div>
 		</template>
 	</Popover>

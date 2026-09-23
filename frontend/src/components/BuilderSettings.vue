@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-[88vh] max-h-[min(800px,calc(100vh-6rem))] overflow-hidden">
 		<div class="flex w-48 shrink-0 flex-col gap-5 bg-surface-gray-1 p-4 px-2">
-			<span class="text-lg-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
+			<span class="text-md-semibold px-2 text-ink-gray-9">{{ __("Settings") }}</span>
 			<div class="flex flex-col gap-0.5" v-for="group in visibleGroups" :key="group.title">
 				<span class="text-base-medium mb-2 px-2 text-ink-gray-5">
 					{{ group.title }}
@@ -22,7 +22,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
-			<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+			<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"
@@ -40,17 +40,18 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { settingsGroupLabels, settingsGroups, settingsItems } from "@/components/Settings";
+import { settingsGroupLabels, settingsGroups, settingsItems, type SettingsGroup } from "@/components/Settings";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
-import { computed, onActivated, onMounted, provide, ref, watch } from "vue";
+import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
-	onlyGlobal?: boolean;
+	// limits the dialog to one group, e.g. the dashboard has no current page
+	group?: SettingsGroup | null;
 	initialTab?: string;
 }>();
 
@@ -58,11 +59,7 @@ const route = useRoute();
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
-const selectedItem = ref<string>(
-	props.initialTab ||
-		builderStore.settingsActiveTab ||
-		(props.onlyGlobal ? "global_general" : "page_general"),
-);
+const selectedItem = ref<string>(props.initialTab || builderStore.settingsActiveTab);
 const settingsLoaded = ref(false);
 
 onMounted(async () => {
@@ -79,7 +76,7 @@ onMounted(async () => {
 
 const visibleGroups = computed(() =>
 	settingsGroups
-		.filter((group) => !(props.onlyGlobal && group === "Current Page"))
+		.filter((group) => !props.group || group === props.group)
 		.map((group) => ({
 			title: settingsGroupLabels[group],
 			items: settingsItems.visible.value.filter((item) => item.group === group),
@@ -96,13 +93,11 @@ const selectItem = (value: string) => {
 	builderStore.settingsActiveTab = value;
 };
 
-// the remembered tab may not exist here (e.g. page tabs are hidden in onlyGlobal mode); fall back
-// locally without persisting so the editor keeps its last page-level selection
+// the remembered tab may belong to a hidden group; fall back locally without persisting
+// so the other group keeps its last selection
 if (!selectedItemDoc.value) {
-	selectedItem.value = props.onlyGlobal ? "global_general" : "page_general";
+	selectedItem.value = visibleGroups.value[0]?.items[0]?.name;
 }
-
-provide("selectSettingsTab", selectItem);
 
 watch(
 	() => props.initialTab,

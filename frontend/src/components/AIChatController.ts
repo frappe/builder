@@ -884,6 +884,7 @@ export class AIChatController {
 					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
 					...(displayText ? { display_text: displayText } : {}),
+					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
 				}),
 			}).submit();
 			const response = result as { session_id?: string; status?: string; message?: string };

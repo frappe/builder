@@ -62,7 +62,7 @@
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
-							placement="right"
+							align="end"
 							:options="[
 								{
 									label: __('Rename'),
@@ -97,7 +97,7 @@
 			<DialogDescription class="sr-only">
 				{{ __("Configure global settings for this builder project.") }}
 			</DialogDescription>
-			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
+			<BuilderSettings @close="showSettingsDialog = false" group="Global" bare />
 		</template>
 	</Dialog>
 </template>
@@ -125,7 +125,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui";
-import { TrialBanner } from "frappe-ui/frappe";
+import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 

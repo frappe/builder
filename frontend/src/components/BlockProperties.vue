@@ -1,6 +1,6 @@
 <template>
 	<div v-if="blockController.isBlockSelected()" class="isolate flex select-none flex-col pb-16">
-		<div class="sticky top-0 z-[1] mt-[-16px] flex w-full bg-surface-base py-3">
+		<div class="sticky top-0 z-30 mt-[-16px] flex w-full bg-surface-base py-3">
 			<BuilderInput
 				ref="searchInput"
 				type="text"
@@ -35,8 +35,7 @@
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
-import { toValue } from "@vueuse/core";
-import { Ref, ref } from "vue";
+import { Ref, ref, toValue } from "vue";
 import CollapsibleSection from "./CollapsibleSection.vue";
 
 const builderStore = useBuilderStore();
