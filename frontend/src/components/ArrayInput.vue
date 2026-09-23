@@ -7,23 +7,25 @@
 						{{ label }}
 					</InputLabel>
 				</div>
-				<button
-					type="button"
-					class="group flex h-7 w-full min-w-0 items-center gap-2 rounded-4 bg-surface-gray-2 px-2 text-sm transition-colors hover:bg-surface-gray-3">
-					<div v-if="thumbnails.length" class="flex shrink-0 -space-x-1.5">
-						<img
-							v-for="(url, index) in thumbnails"
-							:key="index"
-							:src="url"
-							alt=""
-							class="size-4 rounded-4 object-cover ring-1 ring-surface-gray-2 group-hover:ring-surface-gray-3" />
-					</div>
-					<span class="truncate" :class="arr.length ? 'text-ink-gray-8' : 'text-ink-gray-4'">
+				<Button variant="subtle" class="group w-full min-w-0 !justify-start !text-sm">
+					<template #prefix>
+						<div v-if="thumbnails.length" class="flex shrink-0 -space-x-1.5">
+							<img
+								v-for="(url, index) in thumbnails"
+								:key="index"
+								:src="url"
+								alt=""
+								class="size-4 rounded-4 object-cover ring-1 ring-surface-gray-2 group-hover:ring-surface-gray-3" />
+						</div>
+					</template>
+					<span :class="arr.length ? 'text-ink-gray-8' : 'text-ink-gray-4'">
 						{{ countLabel }}
 					</span>
-					<span
-						class="lucide-pencil ml-auto mr-1 size-3.5 shrink-0 text-ink-gray-7 group-hover:text-ink-gray-8" />
-				</button>
+					<template #suffix>
+						<span
+							class="lucide-pencil ml-auto mr-1 size-3.5 shrink-0 text-ink-gray-7 group-hover:text-ink-gray-8" />
+					</template>
+				</Button>
 			</div>
 		</template>
 		<template #default>
