@@ -23,8 +23,7 @@
 </template>
 <script lang="ts" setup>
 import PublishButton from "@/components/PublishButton.vue";
-import { placeWithinBounds } from "@/utils/floatingPosition";
-import { Position, StorageSerializers, useDraggable, useEventListener, useStorage } from "@vueuse/core";
+import { Position, StorageSerializers, clamp, useDraggable, useEventListener, useStorage } from "@vueuse/core";
 import { Button } from "frappe-ui";
 import { ref, watch } from "vue";
 
@@ -50,13 +49,18 @@ const { x, y, style, isDragging } = useDraggable(toolbar, {
 	onEnd: (position) => (savedPosition.value = { ...position }),
 });
 
+// places the toolbar at the saved position, or centered at the top, always inside the container
 const placeInsideContainer = () => {
 	const bounds = props.container?.getBoundingClientRect();
 	const size = toolbar.value?.getBoundingClientRect();
 	if (!bounds || !size) return;
-	const position = placeWithinBounds(bounds, size, savedPosition.value);
-	x.value = position.x;
-	y.value = position.y;
+	const margin = 12;
+	const target = savedPosition.value || {
+		x: bounds.left + (bounds.width - size.width) / 2,
+		y: bounds.top + margin,
+	};
+	x.value = clamp(target.x, bounds.left + margin, bounds.right - size.width - margin);
+	y.value = clamp(target.y, bounds.top + margin, bounds.bottom - size.height - margin);
 };
 
 watch(() => props.container, placeInsideContainer, { immediate: true, flush: "post" });
