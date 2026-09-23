@@ -145,7 +145,7 @@ let pauseId: PauseId | undefined = undefined;
 watch(
 	() => isEditable.value,
 	(editable) => {
-		editor.value?.setEditable(editable);
+		editor.value?.setEditable(editable, false);
 		if (editable) {
 			pauseId = canvasStore.activeCanvas?.history?.pause();
 			editor.value?.commands.focus("all");
@@ -298,7 +298,7 @@ if (!props.preview) {
 				});
 
 				props.block.setEditor(editor.value);
-				editor.value?.setEditable(isEditable.value);
+				editor.value?.setEditable(isEditable.value, false);
 			} else {
 				destroyEditor();
 			}
