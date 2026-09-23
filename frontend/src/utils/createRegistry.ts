@@ -1,23 +1,5 @@
 import { computed, markRaw, reactive, ref, toRaw } from "vue";
 
-const isComponentLike = (value: unknown): value is object =>
-	Boolean(value) &&
-	typeof value === "object" &&
-	("render" in (value as object) || "setup" in (value as object) || "__name" in (value as object));
-
-// items live in a reactive Map, which would proxy the component definitions they
-// carry (a tab's panel, a control, an icon) and make Vue warn on every render
-function withRawComponents<T extends object>(item: T): T {
-	for (const [key, value] of Object.entries(item)) {
-		if (isComponentLike(value)) {
-			(item as Record<string, unknown>)[key] = markRaw(value);
-		} else if (Array.isArray(value)) {
-			value.forEach((entry) => entry && typeof entry === "object" && withRawComponents(entry));
-		}
-	}
-	return item;
-}
-
 /**
  * Every registry item needs a stable identity, and may ask for a position
  * relative to another item's name.
@@ -38,8 +20,9 @@ export type RegistryItem = RegistryEntry & {
 };
 
 /**
- * A registry backs one editor surface. Built-in features and, later, extensions
- * register through the same function.
+ * A registry backs one editor surface. Builder registers its own items with
+ * `registerBuiltIn` and removes them with `unregisterBuiltIn`. A built-in name is
+ * locked: `register` and `unregister` cannot replace or remove it.
  *
  * Leave `before` and `after` unset in the common case: items then display in
  * registration order.
@@ -49,6 +32,7 @@ export type RegistryItem = RegistryEntry & {
  */
 export function createRegistry<T extends RegistryEntry>() {
 	const items = reactive(new Map<string, T>()) as Map<string, T>;
+	const builtInNames = new Set<string>();
 	const order = ref<string[]>([]);
 
 	// re-registering without an anchor keeps the slot the name already holds, so
@@ -77,9 +61,10 @@ export function createRegistry<T extends RegistryEntry>() {
 		return items.delete(name);
 	};
 
-	// returns its own unregister, so a caller never has to track names
-	const register = (item: T) => {
-		const registered = withRawComponents({ ...item });
+	const add = (item: T) => {
+		// Registry entries can carry Vue components. Keeping the snapshot raw stops
+		// the reactive Map from proxying those components before a surface renders it.
+		const registered = markRaw({ ...item });
 		items.set(item.name, registered);
 		place(registered);
 		// a later registration under the same name owns the entry, so this must not delete it
@@ -88,10 +73,37 @@ export function createRegistry<T extends RegistryEntry>() {
 		};
 	};
 
+	const guardBuiltIn = (name: string) => {
+		if (builtInNames.has(name)) throw new Error(`"${name}" is a built-in item and is read-only`);
+	};
+
+	/** Builder registers its own items here. A built-in name is then locked. */
+	const registerBuiltIn = (item: T) => {
+		builtInNames.add(item.name);
+		return add(item);
+	};
+
+	// returns its own unregister, so a caller never has to track names
+	const register = (item: T) => {
+		guardBuiltIn(item.name);
+		return add(item);
+	};
+
+	const unregister = (name: string) => {
+		guardBuiltIn(name);
+		return remove(name);
+	};
+
+	/** Builder removes its own items here, as the editor demo does. */
+	const unregisterBuiltIn = (name: string) => {
+		builtInNames.delete(name);
+		return remove(name);
+	};
+
 	const all = computed(() => order.value.map((name) => items.get(name) as T));
 
 	// condition runs at render, never at register, so it can read live state
 	const visible = computed(() => all.value.filter((item) => (item as RegistryItem).condition?.() ?? true));
 
-	return { register, unregister: remove, all, visible };
+	return { register, registerBuiltIn, unregister, unregisterBuiltIn, all, visible };
 }

@@ -32,6 +32,8 @@ export type BlockProperty = {
 };
 
 export type PropertySection = RegistryItem & {
+	/** What the header shows. An extension needs it: its name is `extension:name`. */
+	label?: string;
 	properties: BlockProperty[] | (() => BlockProperty[]);
 	collapsed?: boolean | ComputedRef<boolean>;
 };
@@ -63,4 +65,4 @@ const sections = [
 
 // registered at module load: stylePropertiesWithControls reads the registry
 // before the property panel mounts
-sections.forEach(propertySections.register);
+sections.forEach(propertySections.registerBuiltIn);
