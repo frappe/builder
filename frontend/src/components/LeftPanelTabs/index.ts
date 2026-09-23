@@ -1,4 +1,3 @@
-import BuilderAIChatPanel from "@/components/BuilderAIChatPanel.vue";
 import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
@@ -7,7 +6,7 @@ import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
-import type { Component } from "vue";
+import { defineAsyncComponent, type Component } from "vue";
 import { __ } from "@/translation";
 
 export type LeftPanelTab = RegistryItem & {
@@ -86,6 +85,7 @@ leftPanelTabs.register({
 	name: "Chat",
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",
-	component: BuilderAIChatPanel,
+	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
+	component: defineAsyncComponent(() => import("@/components/BuilderAIChatPanel.vue")),
 	shortcut: "Mod+Shift+O",
 });
