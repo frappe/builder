@@ -580,6 +580,9 @@ class BuilderPage(WebsiteGenerator):
 		context.page_name = self.name
 		if is_demo_page(self.name) and not context.preview:
 			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
+			# the file is served immutable for a year, so a build has to change its URL
+			version = frappe.utils.get_build_version()
+			context.editor_demo_script = f"/assets/builder/js/editor_demo.js?v={version}"
 		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
