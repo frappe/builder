@@ -19,7 +19,7 @@
 			@mouseleave="hoveredAxis = null"
 			@mousedown.stop="handleGap($event, band)">
 			<div
-				v-show="canvasProps.scale > HANDLE_MIN_SCALE"
+				v-show="showPill"
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
 				:class="{ hidden: updating }"
 				:style="band.handleStyle"
@@ -85,6 +85,8 @@ const CHILD_SELECTOR = ":scope > .__builder_component__";
 const HANDLE_MIN_SCALE = 0.5;
 const MIN_BAND = 2;
 const MIN_DRAGGABLE_BAND = 8;
+
+const showPill = computed(() => canvasProps.scale > HANDLE_MIN_SCALE);
 
 // Changing any of these moves the children, so the bands have to be measured again.
 const LAYOUT_STYLES = [
@@ -228,7 +230,10 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 	const top = band.y0 * canvasProps.scale;
 	const width = (band.x1 - band.x0) * canvasProps.scale;
 	const height = (band.y1 - band.y0) * canvasProps.scale;
-	const thickness = Math.max(axis === "width" ? width : height, MIN_BAND);
+	const thickness = Math.max(
+		axis === "width" ? width : height,
+		showPill.value ? MIN_BAND : MIN_DRAGGABLE_BAND,
+	);
 	const shift = (thickness - (axis === "width" ? width : height)) / 2;
 
 	const box =
@@ -238,7 +243,7 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 	return { ...box, cursor: props.disableHandlers ? undefined : cursor };
 };
 
-const isDraggable = (gap: number) => gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
+const isDraggable = (gap: number) => !showPill.value || gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
 const handleStyle = (
 	size: { width: number; height: number },
