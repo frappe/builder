@@ -1994,7 +1994,7 @@ def to_jinja_literal(obj):
 			# remove the {{ }} so Jinja receives the variable
 			inner = stripped[2:-2].strip()
 			return inner  # returned unquoted
-		return repr(obj)
+		return jinja_string_literal(obj)
 
 	if obj is True:
 		return "True"
@@ -2013,6 +2013,13 @@ def to_jinja_literal(obj):
 		return "[ " + ", ".join(str(to_jinja_literal(i)) for i in obj) + " ]"
 
 	return repr(obj)
+
+
+HTML_SPECIAL_CHAR_ESCAPES = str.maketrans({"<": "\\x3c", ">": "\\x3e", "&": "\\x26"})
+
+
+def jinja_string_literal(text: str) -> str:
+	return repr(text).translate(HTML_SPECIAL_CHAR_ESCAPES)
 
 
 def parse_static_value(value: str, prop_type: str) -> Any:
