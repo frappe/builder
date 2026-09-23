@@ -285,7 +285,7 @@ export function previewFontStyle(label: string): { fontFamily: string } | undefi
 	return family ? { fontFamily: JSON.stringify(family) } : undefined;
 }
 
-const ITALIC_MARKUP = /<(em|i)\b|font-style:\s*(italic|oblique)/i;
+const ITALIC_MARKUP = /<(em|i)\b|font-style\s*:\s*(italic|oblique)/i;
 
 /** Does a block's text need italic faces? Mirrors what the renderer requests for the
  * published page: its own font-style, or <em>/<i>/inline font-style in its HTML. */

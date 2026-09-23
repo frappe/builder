@@ -326,13 +326,14 @@ const loadEditor = computed(() => {
 const emit = defineEmits(["mounted"]);
 
 watchEffect(() => {
-	const block = props.block;
-	const italic = needsItalic(block.getStyle("fontStyle"), block.getInnerHTML());
-	let fontWeight = block.getStyle("fontWeight") as string;
+	const { block, breakpoint } = props;
+	const italic = needsItalic(block.getStyle("fontStyle", breakpoint), block.getInnerHTML());
+	let fontWeight = block.getStyle("fontWeight", breakpoint) as string;
 	// italic faces are cut per weight, so they need the weight the text inherits
-	if (italic && !fontWeight) fontWeight = block.getAncestorStyle("fontWeight") as string;
-	let fontFamily = block.getStyle("fontFamily") as string;
-	if (!fontFamily && (fontWeight || italic)) fontFamily = block.getAncestorStyle("fontFamily") as string;
+	if (italic && !fontWeight) fontWeight = block.getAncestorStyle("fontWeight", breakpoint) as string;
+	let fontFamily = block.getStyle("fontFamily", breakpoint) as string;
+	if (!fontFamily && (fontWeight || italic))
+		fontFamily = block.getAncestorStyle("fontFamily", breakpoint) as string;
 	setFont(fontFamily, fontWeight, italic);
 });
 
