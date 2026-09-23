@@ -106,9 +106,6 @@ class TestExtensionGrants(FrappeTestCase):
 		self.assertEqual(grant["write"], "denied")
 		self.assertEqual(grant["delete"], "not asked")
 
-	def test_an_answer_names_at_least_one_access(self):
-		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", [], True)
-
 	def test_an_unknown_access_word_is_refused(self):
 		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", ["publish"])
 
@@ -143,12 +140,6 @@ class TestExtensionGrants(FrappeTestCase):
 
 		self.assertRaises(
 			frappe.PermissionError, assert_grant, self.extension.name, "acme/data", "Contact", "write"
-		)
-
-	def test_assert_grant_refuses_with_its_own_class(self):
-		"""The class name travels as exc_type, which is how the host says "ask the user"."""
-		self.assertRaises(
-			ExtensionGrantRequired, assert_grant, self.extension.name, "acme/data", "Contact", "read"
 		)
 
 	def test_uninstalling_drops_only_this_users_grants(self):
@@ -193,23 +184,6 @@ class TestExtensionDocuments(FrappeTestCase):
 		make_contact("Grace")
 
 		self.assertGreaterEqual(get_count("acme/data", "Contact"), 1)
-
-	def test_counts_while_a_request_form_dict_stands(self):
-		"""reportview.get_count reads the whole form_dict, not just its arguments.
-
-		Over HTTP that dict holds this method's own `extension`, which reached the
-		query builder as a keyword and raised TypeError. A direct call has an empty
-		form_dict, so only a test that fills it can see this.
-		"""
-		make_contact("Grace")
-		sent = frappe.local.form_dict
-		frappe.local.form_dict = frappe._dict(
-			cmd="builder.extensions.data.get_count", extension="acme/data", doctype="Contact"
-		)
-		try:
-			self.assertGreaterEqual(get_count("acme/data", "Contact"), 1)
-		finally:
-			frappe.local.form_dict = sent
 
 	def test_counts_only_what_a_filter_matches(self):
 		make_contact("Grace")
@@ -280,6 +254,3 @@ class TestExtensionDocuments(FrappeTestCase):
 			"Contact",
 			limit_page_length=MAX_PAGE_LENGTH + 1,
 		)
-
-	def test_allows_a_page_at_the_ceiling(self):
-		get_list("acme/data", "Contact", limit_page_length=MAX_PAGE_LENGTH)

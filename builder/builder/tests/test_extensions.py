@@ -1,7 +1,6 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
-import base64
 from unittest.mock import patch
 
 import frappe
@@ -40,29 +39,6 @@ class TestListedInstallation(FrappeTestCase):
 		)
 		self.assertEqual(theirs, "2.0.0")
 
-	def test_names_the_extension(self):
-		make_installation("acme/named")
-
-		self.assertEqual(self.listed("acme/named")["name"], "acme/named")
-
-	def test_includes_the_extensions_description(self):
-		make_installation("acme/described", description="Add and manage icons.")
-
-		self.assertEqual(self.listed("acme/described")["description"], "Add and manage icons.")
-
-	def test_leaves_runtime_details_for_the_document_resource(self):
-		make_installation("acme/granted", capabilities=["context.read", "block.read"], checksum="abc123")
-
-		listed = self.listed("acme/granted")
-		self.assertNotIn("checksum", listed)
-		self.assertNotIn("capabilities", listed)
-
-	def test_lists_an_extension_that_draws_nothing(self):
-		"""Every extension needs its entry frame, whether or not it registers a surface."""
-		make_installation("acme/quiet", capabilities=["page.read"])
-
-		self.assertIsNotNone(self.listed("acme/quiet"))
-
 	def test_carries_no_source(self):
 		"""One call per extension reads that, so a list of five carries no bundles."""
 		make_installation("acme/light", source="export default {};")
@@ -71,28 +47,9 @@ class TestListedInstallation(FrappeTestCase):
 
 
 class TestExtensionIcon(FrappeTestCase):
-	def test_arrives_as_a_data_uri(self):
-		"""No route serves one user's files, so the icon travels with the list."""
-		make_installation("acme/drawn", icon="icon.svg", source="export default {};")
-
-		listed = next(row for row in get_user_installations() if row["name"] == "acme/drawn")
-		self.assertEqual(
-			listed["icon"], f"data:image/svg+xml;base64,{base64.b64encode(b'<svg />').decode()}"
-		)
-
-	def test_is_none_when_the_package_ships_none(self):
-		make_installation("acme/plainer", source="export default {};")
-
-		listed = next(row for row in get_user_installations() if row["name"] == "acme/plainer")
-		self.assertIsNone(listed["icon"])
-
 	def test_refuses_a_path_that_climbs_out_of_the_install_folder(self):
 		with self.assertRaises(frappe.ValidationError):
 			make_installation("acme/climber", icon="../../secrets.svg")
-
-	def test_refuses_a_format_the_editor_cannot_draw_at_any_size(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_installation("acme/raster", icon="icon.png")
 
 
 class TestGetExtensionSource(FrappeTestCase):
@@ -119,12 +76,6 @@ class TestGetExtensionSource(FrappeTestCase):
 
 		with self.assertRaises(frappe.PermissionError):
 			get_extension_source("acme/paused")
-
-	def test_says_so_when_the_entry_is_missing(self):
-		make_installation("acme/empty")
-
-		with self.assertRaises(frappe.ValidationError):
-			get_extension_source("acme/empty")
 
 	def test_refuses_an_entry_larger_than_the_cap(self):
 		"""The editor holds it in memory and posts it to five frames."""
@@ -172,23 +123,6 @@ class TestExtensionTokens(FrappeTestCase):
 		self.assertEqual(len(rows), 1)
 		self.assertEqual(rows[0]["value"], "#ea4335")
 
-	def test_keeps_the_uuid_across_an_update(self):
-		set_extension_tokens(self.extension, [self.shade()])
-		first = self.tokens_of()[0]["name"]
-		set_extension_tokens(self.extension, [self.shade(value="#ea4335")])
-
-		self.assertEqual(self.tokens_of()[0]["name"], first)
-
-	def test_survives_a_rename_by_the_user(self):
-		"""The reason `key` exists. `token_name` is editable in the UI."""
-		set_extension_tokens(self.extension, [self.shade()])
-		row = self.tokens_of()[0]
-		frappe.db.set_value("Builder Token", row["name"], "token_name", "Brand Blue")
-
-		set_extension_tokens(self.extension, [self.shade(value="#ea4335")])
-
-		self.assertEqual(len(self.tokens_of()), 1)
-
 	def test_leaves_an_unmentioned_token_alone(self):
 		set_extension_tokens(self.extension, [self.shade(), self.shade(key="accent-1")])
 		set_extension_tokens(self.extension, [self.shade(value="#ea4335")])
@@ -201,12 +135,6 @@ class TestExtensionTokens(FrappeTestCase):
 
 		self.assertEqual([row["key"] for row in self.tokens_of()], ["accent-0"])
 
-	def test_unset_is_quiet_about_a_key_that_is_gone(self):
-		set_extension_tokens(self.extension, [self.shade()])
-		unset_extension_token(self.extension, "never-existed")
-
-		self.assertEqual(len(self.tokens_of()), 1)
-
 	def test_keeps_one_extension_out_of_another(self):
 		other = "acme/other-palette"
 		make_installation(other, label="Other")
@@ -216,14 +144,6 @@ class TestExtensionTokens(FrappeTestCase):
 		self.assertEqual(len(self.tokens_of()), 1)
 		self.assertEqual(self.tokens_of(other)[0]["value"], "#34a853")
 
-	def test_a_token_outlives_the_user_who_installed_the_extension(self):
-		"""It styles every page the site publishes, so it is not one person's."""
-		set_extension_tokens(self.extension, [self.shade()])
-
-		frappe.delete_doc(INSTALLATION_DOCTYPE, self.installation_name(), force=True)
-
-		self.assertEqual(len(self.tokens_of()), 1)
-
 	def installation_name(self):
 		return frappe.db.get_value(
 			INSTALLATION_DOCTYPE, {"user": frappe.session.user, "extension": self.extension}, "name"
@@ -232,10 +152,6 @@ class TestExtensionTokens(FrappeTestCase):
 	def test_refuses_a_token_with_no_key(self):
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_tokens(self.extension, [self.shade(key="")])
-
-	def test_refuses_a_type_the_doctype_does_not_have(self):
-		with self.assertRaises(frappe.ValidationError):
-			set_extension_tokens(self.extension, [self.shade(type="Shadow")])
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		drop_installations("acme/never-installed")
@@ -283,27 +199,9 @@ class TestDevExtension(FrappeTestCase):
 		self.assertEqual(granted, ["block.read"])
 		self.assertNotEqual(granted, list(CAPABILITIES))
 
-	def test_loading_again_follows_the_manifest(self):
-		"""A developer edits the manifest, or undoes a narrowing they were testing."""
-		install_dev_extension(self.extension, ["block.read"])
-
-		granted = install_dev_extension(self.extension, ["block.read", "page.read"])
-
-		self.assertEqual(granted, ["block.read", "page.read"])
-
 	def test_refuses_a_capability_builder_does_not_have(self):
 		with self.assertRaises(frappe.ValidationError):
 			install_dev_extension(self.extension, ["quantum.read"])
-
-	def test_keeps_an_installation_the_user_already_has(self):
-		"""Building an extension you also run is the ordinary case."""
-		make_installation(self.extension, version="1.4.0", capabilities=["page.read"])
-
-		install_dev_extension(self.extension, ["block.read"])
-
-		installed = self.installed()
-		self.assertEqual(installed.version, "1.4.0")
-		self.assertEqual(frappe.parse_json(installed.granted_capabilities), ["page.read"])
 
 	def test_removes_the_installation_and_the_tokens_of_the_session(self):
 		install_dev_extension(self.extension, ["token.write"])

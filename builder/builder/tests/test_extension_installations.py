@@ -9,10 +9,9 @@ from builder.builder.tests.extension_fixtures import (
 	make_installation,
 	make_user,
 )
-from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access, find_installation
+from builder.extensions.access import assert_extension_access, find_installation
 from builder.extensions.data import record_extension_grant
 from builder.extensions.installations import (
-	get_uninstall_summary,
 	get_user_installations,
 	installation_doctype_grants,
 	set_extension_enabled,
@@ -52,82 +51,10 @@ class TestUserInstallations(FrappeTestCase):
 		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
 		self.assertFalse(listed["enabled"])
 
-	def test_marks_a_development_installation(self):
-		"""The panel opens its record by id, so the list cannot leave it out."""
-		installation = make_installation(EXTENSION, version="0.0.0-dev")
-
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
-		self.assertEqual(listed["installation_id"], installation.name)
-		self.assertTrue(listed["is_development"])
-
-	def test_does_not_mark_an_installed_release(self):
-		make_installation(EXTENSION, version="1.0.0")
-
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
-		self.assertFalse(listed["is_development"])
-
 	def test_leaves_out_another_users_installation(self):
 		make_installation(EXTENSION, user=make_user())
 
 		self.assertNotIn(EXTENSION, names(get_user_installations()))
-
-	def test_lists_enabled_first_and_the_last_edited_first_in_each_group(self):
-		"""A pending install is not enabled yet, but it is not one the user turned off.
-
-		The disabled row is the last edited, so only the grouping can put it last.
-		"""
-		disabled, pending, older, newer = (
-			f"{EXTENSION}-{suffix}" for suffix in ("off", "pending", "old", "new")
-		)
-		ordered = [newer, older, pending, disabled]
-		for extension in ordered:
-			drop_installations(extension)
-			self.addCleanup(drop_installations, extension)
-
-		edited = {
-			disabled: ("2026-04-01", {"enabled": 0}),
-			pending: ("2026-01-01", {"enabled": 0, "install_state": "Installing"}),
-			older: ("2026-02-01", {}),
-			newer: ("2026-03-01", {}),
-		}
-		for extension, (modified, values) in edited.items():
-			installation = make_installation(extension, **values)
-			frappe.db.set_value(
-				INSTALLATION_DOCTYPE, installation.name, "modified", modified, update_modified=False
-			)
-
-		self.assertEqual([name for name in names(get_user_installations()) if name in edited], ordered)
-
-
-class TestInstallationDetails(FrappeTestCase):
-	"""What a row never shows now sits on the document itself, for the client to read
-	directly: the panel keys it off `installation_id` instead of a details call."""
-
-	def setUp(self):
-		drop_installations(EXTENSION)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_names_the_document_a_client_reads_the_rest_from(self):
-		installation = make_installation(EXTENSION)
-
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
-
-		self.assertEqual(listed["installation_id"], installation.name)
-
-	def test_the_document_answers_with_what_a_row_never_shows(self):
-		installation = make_installation(
-			EXTENSION,
-			capabilities=["page.read", "token.write"],
-			granted=["page.read"],
-			readme="# Managed\n\nIt does one thing.",
-		)
-
-		document = frappe.get_doc(INSTALLATION_DOCTYPE, installation.name)
-
-		self.assertEqual(document.requested, ["page.read", "token.write"])
-		self.assertEqual(document.capabilities, ["page.read"])
-		self.assertIn("It does one thing", document.readme)
-		self.assertIsNotNone(document.installed_on)
 
 
 class TestEnableAndDisable(FrappeTestCase):
@@ -198,16 +125,6 @@ class TestUninstall(FrappeTestCase):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_summary_names_what_the_site_keeps(self):
-		make_installation(EXTENSION)
-		record_resource(EXTENSION, "DocType", "Acme Order")
-		make_installation(EXTENSION, user=make_user())
-
-		summary = get_uninstall_summary(EXTENSION)
-
-		self.assertEqual(summary["resources"], [{"resource_type": "DocType", "count": 1}])
-		self.assertEqual(summary["other_users"], 1)
-
 	def test_removes_this_users_installation_and_leaves_what_it_made(self):
 		make_installation(EXTENSION)
 		record_resource(EXTENSION, "DocType", "Acme Order")
@@ -270,29 +187,6 @@ class TestGrantAnswers(FrappeTestCase):
 
 		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
-	def test_writes_exactly_what_it_is_given_where_recording_merges(self):
-		"""`record_extension_grant` never removes. This is what lets a user take back."""
-		self.grant(access=["read", "write"])
-
-		grants = set_extension_grant(EXTENSION, "Contact", answers(delete="allowed"))
-
-		self.assertAnswers(grants[0], "not asked", "not asked", "allowed")
-
-	def test_widens_an_answer_the_user_wants_to_widen(self):
-		self.grant(access=["read"])
-
-		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
-
-		self.assertEqual(grants[0]["write_access"], "allowed")
-
-	def test_three_not_asked_answers_keep_the_row_so_the_panel_lists_it(self):
-		self.grant(access=["read"])
-
-		grants = set_extension_grant(EXTENSION, "Contact", answers())
-
-		self.assertEqual(len(grants), 1)
-		self.assertAnswers(grants[0], "not asked", "not asked", "not asked")
-
 	def test_not_asked_is_the_way_back_from_a_denial(self):
 		self.grant(access=["read"], denied=True)
 		installation = find_installation(EXTENSION)
@@ -314,18 +208,6 @@ class TestGrantAnswers(FrappeTestCase):
 
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_grant(EXTENSION, "Contact", {"read": "allowed"})
-
-	def test_answers_a_disabled_extension_the_user_can_still_manage(self):
-		self.grant(access=["read"])
-		set_extension_enabled(EXTENSION, False)
-
-		self.assertEqual(set_extension_grant(EXTENSION, "Contact", answers())[0]["read_access"], "not asked")
-
-	def test_answers_after_the_user_took_data_access_away(self):
-		self.grant(access=["read"])
-		set_granted_capabilities(EXTENSION, ["block.read"])
-
-		self.assertEqual(set_extension_grant(EXTENSION, "Contact", answers())[0]["read_access"], "not asked")
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):

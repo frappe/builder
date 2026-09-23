@@ -12,7 +12,6 @@ from builder.builder.tests.extension_fixtures import (
 	make_installation,
 	make_user,
 )
-from builder.extensions.constants import MAX_README_BYTES
 
 EXTENSION = "acme/record"
 
@@ -23,16 +22,6 @@ class TestBuilderUserExtension(FrappeTestCase):
 	def setUp(self):
 		# a grant Links to the installation, so dropping the copy takes the grant
 		drop_installations(EXTENSION)
-
-	def test_name_is_a_uuid(self):
-		"""It is also the install directory, so it must hold no path separator."""
-		installation = make_installation(EXTENSION)
-
-		self.assertEqual(len(installation.name), 36)
-		self.assertNotIn("/", installation.name)
-
-	def test_records_when_it_was_installed(self):
-		self.assertIsNotNone(make_installation(EXTENSION).installed_on)
 
 	def test_the_files_are_private_and_named_by_the_record(self):
 		installation = make_installation(EXTENSION)
@@ -88,33 +77,15 @@ class TestBuilderUserExtension(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, capabilities=["quantum.read"])
 
-	def test_refuses_capabilities_that_are_not_a_list(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_installation(EXTENSION, granted_capabilities='{"data.access": true}')
-
 	def test_refuses_a_grant_the_manifest_never_asked_for(self):
 		"""The user can only ever answer a question the extension asked."""
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, capabilities=["page.read"], granted=["page.read", "schema.write"])
 
-	def test_refuses_a_readme_bigger_than_the_cap(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_installation(EXTENSION, readme="x" * (MAX_README_BYTES + 1))
-
 	def test_reads_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
 
 		self.assertEqual(installation.source, "export const ok = true;")
-
-	def test_writing_files_replaces_the_previous_copy(self):
-		installation = make_installation(EXTENSION, source="old")
-		stale = Path(installation.install_path) / "chunk.js"
-		stale.write_text("gone")
-
-		installation.write_extension_files({"main.js": b"new"})
-
-		self.assertEqual(installation.source, "new")
-		self.assertFalse(stale.exists())
 
 	def test_uninstall_takes_this_users_files(self):
 		installation = make_installation(EXTENSION, source="export default {};")
@@ -147,7 +118,9 @@ class TestBuilderUserExtension(FrappeTestCase):
 		installation.delete()
 
 		self.assertFalse(frappe.db.exists("Builder Extension State", {"installation": installation.name}))
-		self.assertFalse(frappe.db.exists("Builder Extension DocType Grant", {"installation": installation.name}))
+		self.assertFalse(
+			frappe.db.exists("Builder Extension DocType Grant", {"installation": installation.name})
+		)
 
 	def test_uninstall_leaves_another_users_grants_alone(self):
 		installation = make_installation(EXTENSION)

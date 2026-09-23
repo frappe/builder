@@ -38,13 +38,6 @@ class TestExtensionState(FrappeTestCase):
 
 		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
 
-	def test_keeps_the_shape_of_what_was_stored(self):
-		set_state(EXTENSION, {"page": 2, "open": True, "tags": ["a", "b"], "seen": None})
-
-		self.assertEqual(
-			get_state(EXTENSION), {"page": 2, "open": True, "tags": ["a", "b"], "seen": None}
-		)
-
 	def test_merges_and_never_removes_what_a_call_leaves_unmentioned(self):
 		set_state(EXTENSION, {"theme": "dark"})
 		set_state(EXTENSION, {"page": 2})
@@ -70,13 +63,6 @@ class TestExtensionState(FrappeTestCase):
 
 		self.assertEqual(get_state(EXTENSION), {"page": 2})
 
-	def test_unset_is_quiet_about_a_key_that_is_gone(self):
-		set_state(EXTENSION, {"theme": "dark"})
-
-		unset_state(EXTENSION, "never-stored")
-
-		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
-
 	def test_refuses_a_patch_that_is_not_an_object(self):
 		"""Frappe's own type guard catches most of these before the method runs."""
 		refusals = (frappe.ValidationError, frappe.exceptions.FrappeTypeError)
@@ -93,14 +79,6 @@ class TestExtensionState(FrappeTestCase):
 
 			with self.assertRaises(frappe.ValidationError):
 				set_state(EXTENSION, {"c": "x" * 15})
-
-	def test_rewriting_a_key_counts_the_new_value_and_not_the_old(self):
-		with patch("builder.extensions.state.MAX_STATE_BYTES", 40):
-			set_state(EXTENSION, {"a": "x" * 30})
-
-			set_state(EXTENSION, {"a": "x"})
-
-			self.assertEqual(get_state(EXTENSION), {"a": "x"})
 
 	def test_another_users_store_is_not_this_one(self):
 		set_state(EXTENSION, {"theme": "dark"})

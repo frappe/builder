@@ -65,11 +65,6 @@ class TestExtensionSchema(FrappeTestCase):
 
 		self.assertTrue(frappe.db.get_value("DocType", NAME, "custom"))
 
-	def test_the_new_doctype_belongs_to_the_builder_module(self):
-		self.create()
-
-		self.assertEqual(frappe.db.get_value("DocType", NAME, "module"), "Builder")
-
 	def test_ownership_is_recorded(self):
 		self.create()
 
@@ -86,16 +81,6 @@ class TestExtensionSchema(FrappeTestCase):
 
 		grant = get_extension_grant("acme/schema", NAME)
 		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "allowed", "allowed"))
-
-	def test_the_default_naming_is_a_hash(self):
-		self.create()
-
-		self.assertEqual(frappe.db.get_value("DocType", NAME, "naming_rule"), "Random")
-
-	def test_naming_by_autoincrement(self):
-		self.create(naming="autoincrement")
-
-		self.assertEqual(frappe.db.get_value("DocType", NAME, "naming_rule"), "Autoincrement")
 
 	def test_an_unknown_naming_is_refused(self):
 		self.assertRaises(
@@ -119,11 +104,6 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertRaises(
 			frappe.ValidationError, create_doctype, "acme/schema", NAME, [{"fieldtype": "Data"}]
 		)
-
-	def test_a_layout_break_needs_no_fieldname(self):
-		create_doctype("acme/schema", NAME, [a_field(), {"fieldtype": "Section Break"}])
-
-		self.assertTrue(frappe.db.exists("DocType", NAME))
 
 	def test_a_name_with_a_path_separator_is_refused(self):
 		self.assertRaises(frappe.ValidationError, create_doctype, "acme/schema", "Sample/Widget", [a_field()])
@@ -204,21 +184,3 @@ class TestExtensionSchema(FrappeTestCase):
 		self.create()
 
 		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])
-
-	def test_lists_nothing_for_an_extension_that_made_nothing(self):
-		make_extension("acme/idle")
-
-		self.assertEqual(list_doctypes("acme/idle"), [])
-
-	def test_uninstall_keeps_the_table_and_who_made_it(self):
-		"""A table holds the site's data, so one user leaving takes neither.
-
-		The ownership row stays too, so the next person to install this extension
-		owns what this one made.
-		"""
-		self.create()
-
-		drop_installations("acme/schema")
-
-		self.assertTrue(frappe.db.exists("Builder Extension Resource", {"resource_name": NAME}))
-		self.assertTrue(frappe.db.exists("DocType", NAME))

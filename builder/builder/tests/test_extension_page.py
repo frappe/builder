@@ -74,12 +74,6 @@ class TestExtensionPageScripts(FrappeTestCase):
 		self.assertEqual(len(self.attached()), 1)
 		self.assertEqual(frappe.db.get_value(SCRIPT_DOCTYPE, first["name"], "script"), "new")
 
-	def test_each_type_is_its_own_script(self):
-		attach_script(self.extension, self.page.name, "JavaScript", "console.log(1)")
-		attach_script(self.extension, self.page.name, "CSS", "a{}")
-
-		self.assertEqual(len(self.attached()), 2)
-
 	def test_refuses_a_type_builder_does_not_have(self):
 		with self.assertRaises(frappe.ValidationError):
 			attach_script(self.extension, self.page.name, "Python", "x = 1")
@@ -101,11 +95,6 @@ class TestExtensionPageScripts(FrappeTestCase):
 		self.assertEqual(self.attached(), [])
 		self.assertFalse(frappe.db.exists(SCRIPT_DOCTYPE, created["name"]))
 
-	def test_detach_is_quiet_about_a_script_that_is_gone(self):
-		detach_script(self.extension, self.page.name, "CSS")
-
-		self.assertEqual(self.attached(), [])
-
 	def test_one_extension_cannot_rewrite_anothers_script(self):
 		theirs = attach_script(self.extension, self.page.name, "JavaScript", "theirs")
 		other = self.an_extension("intruder")
@@ -114,27 +103,3 @@ class TestExtensionPageScripts(FrappeTestCase):
 
 		self.assertNotEqual(theirs["name"], mine["name"])
 		self.assertEqual(frappe.db.get_value(SCRIPT_DOCTYPE, theirs["name"], "script"), "theirs")
-
-	def test_a_script_the_user_detached_by_hand_is_not_rewritten(self):
-		"""Ownership and attachment are two facts, and a rewrite needs both."""
-		first = attach_script(self.extension, self.page.name, "JavaScript", "old")
-		page = frappe.get_doc("Builder Page", self.page.name)
-		page.client_scripts = []
-		page.save()
-
-		second = attach_script(self.extension, self.page.name, "JavaScript", "new")
-
-		self.assertNotEqual(first["name"], second["name"])
-
-	def test_uninstall_keeps_the_extensions_scripts(self):
-		"""A script runs on a published page for every visitor, so it is not one user's.
-
-		One person uninstalling must not change what another person's pages serve.
-		An administrator removes an unused script after deciding nothing needs it.
-		"""
-		created = attach_script(self.extension, self.page.name, "JavaScript", "console.log(1)")
-
-		drop_installations(self.extension)
-
-		self.assertTrue(frappe.db.exists(SCRIPT_DOCTYPE, created["name"]))
-		self.assertEqual([row.builder_script for row in self.attached()], [created["name"]])

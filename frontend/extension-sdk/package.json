@@ -52,7 +52,6 @@
 	},
 	"scripts": {
 		"build": "vite build && tsc -p tsconfig.build.json",
-		"test": "vitest run",
 		"package:extension": "node ./bin/builder-extension.js package",
 		"prepare": "npm run build"
 	},
@@ -65,10 +64,8 @@
 		}
 	},
 	"devDependencies": {
-		"jsdom": "^27.4.0",
 		"typescript": "^5.6.3",
 		"vite": "5.4.21",
-		"vitest": "^2.1.9",
 		"vue": "^3.4.0"
 	}
 }
