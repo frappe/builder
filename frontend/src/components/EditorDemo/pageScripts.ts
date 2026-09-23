@@ -10,6 +10,13 @@ const DOCUMENT_ROOTS = /(^|[{},]\s*)(?:html|body|:root)(?=[\s{,.:#[>+~])/g;
  * the page. Later handlers see the editor's body, which the editor's own popovers need.
  */
 export function runPageScripts(scripts: EditorDemoPayload["scripts"], page: HTMLElement) {
+	// the canvas leaves out blocks the page hides, so a script wired to one of them throws
+	// where the published page would not: the page's own code meeting a partial copy of itself
+	const report = (event: ErrorEvent) => {
+		event.preventDefault();
+		console.warn("Page script did not find what it expects on the canvas:", event.error);
+	};
+	window.addEventListener("error", report);
 	Object.defineProperty(document, "body", { get: () => page, configurable: true });
 	for (const { script_type, script } of scripts) {
 		const isCSS = script_type === "CSS";
@@ -23,4 +30,5 @@ export function runPageScripts(scripts: EditorDemoPayload["scripts"], page: HTML
 	document.dispatchEvent(new Event("DOMContentLoaded", { bubbles: true }));
 	window.dispatchEvent(new Event("load"));
 	Reflect.deleteProperty(document, "body");
+	window.removeEventListener("error", report);
 }
