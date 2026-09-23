@@ -20,11 +20,16 @@
     "beforeend",
     `<style>
       @keyframes editor-demo-outline { from { outline-color: transparent } }
+      @keyframes editor-demo-waiting { 50% { outline-color: rgb(59 130 246 / 0.15) } }
       [data-editor-demo-opening] :is(${BLOCKS}) {
         outline: 1px solid rgb(59 130 246 / 0.7); outline-offset: -1px;
         animation: editor-demo-outline 0.2s ease-out calc(var(--ripple) * 1ms) backwards;
       }
-      [data-editor-demo-opening] [data-editor-demo-clicked] { outline-width: 2px; }
+      /* on a slow connection the editor takes a moment, so the click keeps a pulse */
+      [data-editor-demo-opening] [data-editor-demo-clicked] {
+        outline-width: 2px;
+        animation: editor-demo-waiting 1.2s ease-in-out 0.5s infinite;
+      }
     </style>`,
   );
 
@@ -123,12 +128,12 @@
     }, delay);
   }
 
-  // drop the frame too, so the next click loads a fresh one
+  // on a slow connection the editor may still be loading: hand the visitor over to it
+  // as an ordinary page, where the browser shows the wait, rather than drop their click
   function giveUp() {
     opening = null;
     hideBlueprint();
-    frame.remove();
-    frame = booted = null;
+    location.assign(demoURL);
   }
 
   function close(scrollY) {
@@ -171,4 +176,19 @@
       (event) => event.target.closest?.(TRIGGER) && preload(),
     );
   }
+
+  // the editor takes a few seconds to boot, far more than a hover buys, so start it as
+  // soon as the page is loaded and someone is really here: crawlers never move or scroll
+  let visitorIsHere;
+  function warmUp() {
+    visitorIsHere = true;
+    if (document.readyState !== "complete" || navigator.connection?.saveData)
+      return;
+    const idle = window.requestIdleCallback || ((run) => setTimeout(run, 500));
+    idle(preload, { timeout: 2000 });
+  }
+  for (const type of ["pointermove", "scroll", "keydown"]) {
+    addEventListener(type, warmUp, { once: true, passive: true });
+  }
+  addEventListener("load", () => visitorIsHere && warmUp());
 })();
