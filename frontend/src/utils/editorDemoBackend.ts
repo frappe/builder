@@ -1,5 +1,5 @@
 import { __ } from "@/translation";
-import type { EditorDemoPayload } from "@/utils/editorDemo";
+import { trackDemoUsage, type EditorDemoPayload } from "@/utils/editorDemo";
 
 type Doc = Record<string, any>;
 
@@ -43,6 +43,7 @@ export function createEditorDemoBackend(payload: EditorDemoPayload) {
 		"Builder Settings": [{ name: "Builder Settings", execute_block_scripts_in_editor: "Unrestricted" }],
 		"Website Settings": [{ name: "Website Settings" }],
 	};
+	let edited = false;
 	const find = (doctype: string, name: string) =>
 		docs[doctype]?.find((doc) => doc.name === name) ?? refuse(__("{0} {1} not found", [doctype, name]));
 
@@ -59,6 +60,10 @@ export function createEditorDemoBackend(payload: EditorDemoPayload) {
 			const values = typeof fieldname === "string" ? { [fieldname]: value } : fieldname;
 			const isPage = doctype === "Builder Page" && name === payload.page.name;
 			if (!isPage || "published" in values || "staging" in values) refuse();
+			if (!edited && "draft_blocks" in values) {
+				edited = true;
+				trackDemoUsage("edited");
+			}
 			return Object.assign(find(doctype, name), values);
 		},
 		run_doc_method: ({ method }) =>

@@ -13,7 +13,7 @@
   // a demo that never reports ready must not leave the page outlined, ignoring clicks
   const LOAD_TIMEOUT_MS = 15000;
   const root = document.documentElement;
-  let frame, booted, opening, isOpen, trigger;
+  let frame, booted, opening, isOpen, trigger, shownAt, pulse;
 
   // outlines ripple out from the click over the page's blocks, as the editor draws them
   document.head.insertAdjacentHTML(
@@ -50,6 +50,47 @@
       location.origin,
     );
 
+  // the demo cannot reach the network, so its usage is reported from here, through
+  // the pulse client the site's own telemetry uses, when the site has it turned on
+  function telemetry() {
+    pulse ??= fetch(
+      "/api/method/frappe.utils.telemetry.pulse.client.boot_config",
+    )
+      .then((response) => response.json())
+      .then(async ({ message: config }) => {
+        if (!config?.enabled) return null;
+        const { PulseClient } = await import(config.client_url);
+        const client = new PulseClient({
+          host: config.host,
+          apiKey: config.key,
+          site: config.site,
+          user: config.user,
+          team: config.team,
+          enabled: true,
+        });
+        await client.init();
+        return client;
+      })
+      .catch(() => null);
+    return pulse;
+  }
+
+  const track = (event, properties) =>
+    telemetry().then((client) => {
+      client?.capture(`builder_editor_demo_${event}`, "builder", {
+        route: location.pathname,
+        ...properties,
+      });
+      return client;
+    });
+
+  // send the event before leaving: pulse's own unload flush would send it twice
+  const leave = (tracked) =>
+    Promise.race([
+      tracked.then((client) => client?.flush()),
+      new Promise((resolve) => setTimeout(resolve, 800)),
+    ]).then(() => location.assign(demoURL));
+
   function preload() {
     if (frame || !supported()) return;
     frame = Object.assign(document.createElement("iframe"), {
@@ -67,7 +108,8 @@
 
   function open(link) {
     // the editor itself explains that it needs a larger screen
-    if (!supported()) return location.assign(demoURL);
+    if (!supported()) return leave(track("opened", { supported: false }));
+    track("opened", { supported: true, preloaded: Boolean(booted) });
     preload();
     trigger = link;
     const { left, top, width, height } = link.getBoundingClientRect();
@@ -108,12 +150,12 @@
 
   function reveal() {
     clearTimeout(opening.timeout);
-    const delay = Math.max(
-      0,
-      MIN_BLUEPRINT_MS - (performance.now() - opening.startedAt),
-    );
+    const waited = performance.now() - opening.startedAt;
+    const delay = Math.max(0, MIN_BLUEPRINT_MS - waited);
     opening = null;
     isOpen = true;
+    shownAt = performance.now();
+    track("shown", { wait_ms: Math.round(waited) });
     setTimeout(() => {
       frame.inert = false;
       frame.style.pointerEvents = "auto";
@@ -133,11 +175,14 @@
   function giveUp() {
     opening = null;
     hideBlueprint();
-    location.assign(demoURL);
+    leave(track("timed_out", { wait_ms: LOAD_TIMEOUT_MS }));
   }
 
   function close(scrollY) {
     isOpen = false;
+    track("closed", {
+      duration_s: Math.round((performance.now() - shownAt) / 1000),
+    });
     root.style.overflow = "";
     window.scrollTo({ top: scrollY, behavior: "instant" });
     Object.assign(frame.style, {
@@ -160,6 +205,8 @@
     }
     if (data.type === "ready" && opening) reveal();
     if (data.type === "exit" && isOpen) close(Number(data.scrollY) || 0);
+    if (data.type === "track" && typeof data.event === "string")
+      track(data.event);
   });
   window.addEventListener("popstate", () => isOpen && send({ type: "close" }));
 

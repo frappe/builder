@@ -19,7 +19,13 @@ export type EditorDemoPayload = {
 };
 
 type Rect = { left: number; top: number; width: number; height: number };
-export type EditorDemoMessage = { type: string; scrollY?: number; target?: Rect; dark?: boolean };
+export type EditorDemoMessage = {
+	type: string;
+	scrollY?: number;
+	target?: Rect;
+	dark?: boolean;
+	event?: string;
+};
 
 const MESSAGE_SOURCE = "builder-editor-demo";
 
@@ -58,6 +64,11 @@ if (editorDemo) {
 
 export function postToLauncher(message: EditorDemoMessage) {
 	window.parent.postMessage({ source: MESSAGE_SOURCE, ...message }, window.location.origin);
+}
+
+// the demo has no network of its own, so the launcher reports usage for it
+export function trackDemoUsage(event: string) {
+	postToLauncher({ type: "track", event });
 }
 
 export function onLauncherMessage(handler: (message: EditorDemoMessage) => void) {
