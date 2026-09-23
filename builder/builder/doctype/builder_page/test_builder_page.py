@@ -1463,6 +1463,9 @@ component.update({
 				in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
+				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
