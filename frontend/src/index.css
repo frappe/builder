@@ -1,5 +1,36 @@
 @import "frappe-ui/style.css";
 
+/* The same files published pages load, rather than the build's hashed copies of them,
+   so the editor, its canvas and any page the visitor came from share one download. */
+@font-face {
+	font-family: InterVar;
+	font-weight: 100 900;
+	font-display: swap;
+	font-style: normal;
+	src: url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2");
+}
+@font-face {
+	font-family: InterVar;
+	font-weight: 100 900;
+	font-display: swap;
+	font-style: italic;
+	src: url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2");
+}
+@font-face {
+	font-family: Inter;
+	font-weight: 100 900;
+	font-display: swap;
+	font-style: normal;
+	src: url("/assets/builder/fonts/Inter/Inter.var.woff2?v=3.19") format("woff2");
+}
+@font-face {
+	font-family: Inter;
+	font-weight: 100 900;
+	font-display: swap;
+	font-style: italic;
+	src: url("/assets/builder/fonts/Inter/Inter-Italic.var.woff2?v=3.19") format("woff2");
+}
+
 @layer base {
 	ul,
 	ol {
@@ -72,7 +103,7 @@ p:empty::before {
 	background-color: var(--gray-950);
 }
 
-[contenteditable=true]:focus-visible {
+[contenteditable=true]:not(.cm-content):focus-visible {
 	outline: 1px solid var(--outline-gray-4);
 	outline-offset: 3px;
 	border-radius: 2px;
@@ -107,6 +138,8 @@ div:has(> [role='switch']) label[data-slot='label'] {
 	--tw-prose-hr: var(--outline-gray-1);
 	--tw-prose-quotes: var(--ink-gray-6);
 	--tw-prose-quote-borders: var(--outline-gray-2);
+	--tw-prose-th-borders: var(--outline-gray-2);
+	--tw-prose-td-borders: var(--outline-gray-1);
 }
 .markdown-body p:first-child {
 	margin-top: 0;
@@ -127,4 +160,9 @@ div:has(> [role='switch']) label[data-slot='label'] {
 .markdown-body pre {
 	background: var(--surface-gray-2) !important;
 	border-radius: 0.375rem;
+}
+/* Tables scroll inside a narrow panel instead of overflowing it. */
+.markdown-body table {
+	display: block;
+	overflow-x: auto;
 }

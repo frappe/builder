@@ -31,11 +31,11 @@
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
 				<span class="text-sm text-ink-gray-7">{{ __("Social Preview") }}</span>
-				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
+				<div class="flex flex-1 flex-col rounded-4 border border-outline-gray-2">
 					<img
 						:src="pageStore.activePage?.meta_image || pageStore.activePage?.preview"
 						alt=""
-						class="h-40 w-full rounded-t object-cover" />
+						class="h-40 w-full rounded-t-4 object-cover" />
 					<div class="flex flex-1 flex-col gap-1 border-t border-outline-gray-2 p-2">
 						<span class="text-base text-ink-gray-6">{{ pageStore.activePage?.route }}</span>
 						<span class="text-base-medium mt-2 text-ink-gray-9">

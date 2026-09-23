@@ -14,12 +14,12 @@
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto pb-16">
-			<div v-if="loadError" class="rounded bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
+			<div v-if="loadError" class="rounded-4 bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
 				Could not load models: {{ loadError }}
 			</div>
 			<div
 				v-else-if="!grouped.length"
-				class="flex flex-col items-center gap-1 rounded border border-dashed border-outline-gray-2 py-8">
+				class="flex flex-col items-center gap-1 rounded-4 border border-dashed border-outline-gray-2 py-8">
 				<p class="text-p-sm text-ink-gray-7">No providers yet</p>
 				<p class="text-p-xs text-ink-gray-5">
 					Run bench migrate to get the shipped shortlist, or add a provider.

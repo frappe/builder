@@ -8,8 +8,8 @@
 	-->
 	<Dialog v-if="prompt" :modelValue="true" size="sm" @update:modelValue="deny">
 		<template #body>
-			<div class="bg-surface-modal p-5">
-				<h3 class="text-lg-semibold text-ink-gray-9">{{ prompt.extension.label }} wants access</h3>
+			<div class="bg-surface-elevation-2 p-5">
+				<h3 class="text-md-semibold text-ink-gray-9">{{ prompt.extension.label }} wants access</h3>
 
 				<!-- the period is part of the interpolation, not a node beside it: a
 					newline between a closing tag and a bare "." becomes a text node, and
@@ -26,7 +26,7 @@
 					{{ floor }}
 				</p>
 
-				<div v-if="prompt.sensitive" class="mt-4 rounded bg-surface-red-1 p-3">
+				<div v-if="prompt.sensitive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
 					<p v-if="prompt.kind === 'schema'" class="text-p-sm text-ink-red-6">
 						Dropping a doctype drops its table and every record in it. Nothing here can undo that.
 					</p>

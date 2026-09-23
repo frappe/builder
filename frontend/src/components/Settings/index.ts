@@ -123,7 +123,8 @@ const panes: SettingsPane[] = [
 		icon: "lucide-globe",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalDomains.vue"),
-		condition: () => Boolean(window.is_fc_site || window.is_developer_mode),
+		// the boot data renders the Python bool, so "False" is a truthy string
+		condition: () => window.is_fc_site === "True",
 	},
 	{
 		name: "global_analytics",

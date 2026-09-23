@@ -4,7 +4,7 @@
 			{
 				group: 'Actions',
 				hideLabel: true,
-				items: [
+				options: [
 					{
 						label: __('Duplicate'),
 						onClick: () => pageStore.duplicatePage(props.page),
@@ -14,13 +14,13 @@
 						label: __('View Page'),
 						onClick: () => pageStore.openPageInBrowser(props.page),
 						icon: 'lucide-globe',
-						condition: () => Boolean(props.page.published),
+						condition: () => Boolean(props.page.published || props.page.staging),
 					},
 					{
 						label: __('Unpublish'),
 						onClick: () => pageStore.unpublishPage(props.page),
 						icon: 'lucide-globe-x',
-						condition: () => Boolean(props.page.published),
+						condition: () => Boolean(props.page.published || props.page.staging),
 					},
 					{
 						label: __('View in Desk'),
@@ -37,9 +37,12 @@
 			},
 		]"
 		:size="size"
-		:placement="placement">
-		<!-- The slot content becomes the dropdown trigger (reka-ui as-child). -->
-		<slot />
+		:align="align">
+		<!-- The slot content becomes the dropdown trigger (reka-ui as-child).
+			 `open` goes through so a trigger that only shows on hover can stay put while its menu is up. -->
+		<template #default="triggerProps">
+			<slot v-bind="triggerProps" />
+		</template>
 	</Dropdown>
 </template>
 
@@ -56,11 +59,11 @@ const props = withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
-		placement?: "left" | "right" | "center";
+		align?: "start" | "center" | "end";
 	}>(),
 	{
 		size: "md",
-		placement: "left",
+		align: "start",
 	},
 );
 </script>

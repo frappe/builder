@@ -1,5 +1,5 @@
 <template>
-	<div class="divide-y divide-outline-gray-1 overflow-hidden rounded-lg border border-outline-gray-1">
+	<div class="divide-y divide-outline-gray-1 overflow-hidden rounded-6 border border-outline-gray-1">
 		<section v-for="group in groups" :key="group.name" class="divide-y divide-outline-gray-1">
 			<header class="bg-surface-gray-1 px-3 py-2">
 				<p class="text-xs font-medium" :class="group.sensitive ? 'text-ink-red-6' : 'text-ink-gray-8'">
@@ -52,7 +52,6 @@
 						<div v-for="access in ACCESS" :key="access" class="flex items-center justify-between gap-2">
 							<span class="text-xs capitalize text-ink-gray-6">{{ access }}</span>
 							<TabButtons
-								:class="COMPACT_TABS"
 								:options="ANSWER_BUTTONS"
 								:model-value="answersOf(grant)[access]"
 								@update:model-value="
@@ -77,7 +76,6 @@ import {
 	type CapabilityGroup,
 } from "@/extensions/capabilityClasses";
 import { confirm } from "@/utils/helpers";
-import { COMPACT_TABS } from "@/utils/tabButtons";
 import type { Capability } from "frappe-builder-extension-sdk/types";
 import { Button, Dropdown, Switch, TabButtons, toast } from "frappe-ui";
 import { computed } from "vue";

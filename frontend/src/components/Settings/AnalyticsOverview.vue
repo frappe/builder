@@ -1,22 +1,22 @@
 <template>
 	<div class="my-5 flex flex-col gap-4 text-ink-gray-9">
 		<div class="flex items-center justify-between gap-4">
-			<span class="text-lg-medium">{{ __("Overview") }}</span>
+			<span class="text-md-medium">{{ __("Overview") }}</span>
 			<div class="flex gap-2">
 				<slot name="filters"></slot>
 			</div>
 		</div>
 		<div class="flex gap-8">
 			<div class="flex flex-col gap-2">
-				<span class="text-4xl">{{ loading ? "-" : shortenNumber(data.total_unique_views) }}</span>
+				<span class="text-3xl">{{ loading ? "-" : shortenNumber(data.total_unique_views) }}</span>
 				<span class="text-sm text-ink-gray-7">{{ __("Unique Visitors") }}</span>
 			</div>
 			<div class="flex flex-col gap-2">
-				<span class="text-4xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
+				<span class="text-3xl">{{ loading ? "-" : shortenNumber(data.total_views) }}</span>
 				<span class="text-sm text-ink-gray-7">{{ __("Total Pageviews") }}</span>
 			</div>
 			<div v-if="ctr !== undefined" class="flex flex-col gap-2">
-				<span class="text-4xl">{{ loading ? "-" : `${ctr}%` }}</span>
+				<span class="text-3xl">{{ loading ? "-" : `${ctr}%` }}</span>
 				<span class="text-sm text-ink-gray-7">{{ __("Click-through Rate") }}</span>
 			</div>
 		</div>
@@ -43,7 +43,7 @@ import { __ } from "@/translation";
 import AnalyticsEmptyState from "@/components/Settings/AnalyticsEmptyState.vue";
 import type { AnalyticsResponse } from "@/composables/useAnalytics";
 import { shortenNumber } from "@/utils/helpers";
-import { AxisChart } from "frappe-ui";
+import { AxisChart } from "frappe-ui/experimental";
 import { computed } from "vue";
 
 const props = defineProps<{

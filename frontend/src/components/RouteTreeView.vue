@@ -56,7 +56,7 @@ import { __ } from "@/translation";
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/doctypes";
-import { createListResource, useShortcut } from "frappe-ui";
+import { createListResource, useKeyboardShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 
@@ -104,7 +104,17 @@ type TrieNode = {
 const pagesResource = createListResource({
 	method: "GET",
 	doctype: "Builder Page",
-	fields: ["name", "route", "page_name", "page_title", "published", "authenticated_access", "project_folder"],
+	fields: [
+		"name",
+		"route",
+		"page_name",
+		"page_title",
+		"published",
+		"staging",
+		"authenticated_access",
+		"project_folder",
+		"modified",
+	],
 	filters: { is_template: 0 },
 	orderBy: "route asc",
 	pageLength: 9999,
@@ -333,32 +343,32 @@ function focusNode(idx: number, nodes: Node[]) {
 
 const treeActive = () => regularNodes().length > 0;
 
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: "ArrowDown",
+		combo: "ArrowDown",
 		description: __("Move Down in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(idx === -1 ? 0 : idx + 1, nodes);
 		},
 	},
 	{
-		key: "ArrowUp",
+		combo: "ArrowUp",
 		description: __("Move Up in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(Math.max(0, idx - 1), nodes);
 		},
 	},
 	{
-		key: "ArrowRight",
+		combo: "ArrowRight",
 		description: __("Expand Node or Move Down in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -374,10 +384,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "ArrowLeft",
+		combo: "ArrowLeft",
 		description: __("Collapse Node or Move Up in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -390,10 +400,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "Enter",
+		combo: "Enter",
 		description: __("Open Page or Toggle Folder in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];

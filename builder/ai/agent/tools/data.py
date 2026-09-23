@@ -71,7 +71,8 @@ def query_records(ctx, args: dict) -> str:
 		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
-	return json.dumps([dict(r) for r in rows], default=str)
+	meta = frappe.get_meta(dt)
+	return json.dumps([truncate_record(dt, meta, dict(r)) for r in rows], default=str)
 
 
 def get_document(ctx, args: dict) -> str:
@@ -112,16 +113,7 @@ def get_document(ctx, args: dict) -> str:
 	else:
 		# Drop internal fields and child tables so the read stays legible + cheap.
 		data = {k: v for k, v in data.items() if not k.startswith("_") and not isinstance(v, list)}
-	# A page's block JSON would only truncate into an unparseable stub here — point at
-	# the tool that renders it properly instead.
-	if dt == "Builder Page":
-		for key in ("blocks", "draft_blocks"):
-			if data.get(key):
-				data[key] = f"<a Builder Page block tree — read it with read_page('{doc.name}')>"
-	# Bound long values so a read never blows the context. Code fields carry the
-	# thing being asked for (a site stylesheet, head HTML) — they get a wider bound.
-	code_fields = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
-	data = {k: truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP) for k, v in data.items()}
+	data = truncate_record(dt, meta, data, name=doc.name)
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
@@ -131,6 +123,25 @@ def get_document(ctx, args: dict) -> str:
 
 FIELD_CAP = 1000
 CODE_FIELD_CAP = 8000
+
+
+def truncate_record(dt: str, meta, data: dict, name: str | None = None) -> dict:
+	"""A copy of a record with its long values cut short, so a read can't flood the
+	model's context. A page's block tree is replaced by a pointer to read_page, since a
+	cut-off tree is unparseable; code fields keep more because they are usually what was
+	asked for."""
+	pointer = (
+		f"<a Builder Page block tree: read it with read_page('{name or data.get('name') or 'page'}'), "
+		"or search many pages' blocks with run_python>"
+	)
+	block_fields = {"blocks", "draft_blocks"} if dt == "Builder Page" else set()
+	code_fields = {f.fieldname for f in meta.fields if f.fieldtype == "Code"}
+	return {
+		k: pointer
+		if k in block_fields and v
+		else truncate(v, CODE_FIELD_CAP if k in code_fields else FIELD_CAP)
+		for k, v in data.items()
+	}
 
 
 def truncate(value, cap: int):
@@ -309,7 +320,12 @@ get_doctype_schema_tool = Tool(
 query_records_tool = Tool(
 	name="query_records",
 	side="server",
-	description="Fetch records from a DocType (like frappe.get_all) to see real data. Provide fields and optional filters.",
+	description=(
+		"Fetch records from a DocType (like frappe.get_all) to see real data. Provide fields "
+		"and optional filters. Long values come back cut short and page block trees as a "
+		"pointer, so to search INSIDE many records' long fields (page blocks, component "
+		"blocks, scripts) use run_python and return only the matches."
+	),
 	parameters={
 		"type": "object",
 		"properties": {

@@ -2,8 +2,8 @@
 	<!-- Collects the capabilities granted at install, and nothing else. -->
 	<Dialog :modelValue="open" size="sm" @update:modelValue="(value: boolean) => emit('update:open', value)">
 		<template #body>
-			<div class="bg-surface-modal p-5">
-				<h3 class="text-lg-semibold text-ink-gray-9">Install {{ label }}?</h3>
+			<div class="bg-surface-elevation-2 p-5">
+				<h3 class="text-md-semibold text-ink-gray-9">Install {{ label }}?</h3>
 				<p class="pt-2 text-p-sm text-ink-gray-6">
 					<template v-if="requested.length">
 						Turn off what you do not want it to do. You can change this later in its details.

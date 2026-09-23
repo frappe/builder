@@ -13,11 +13,11 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		:action-label="__('Add Token')"
+		:action-label="readonly ? undefined : __('Add Token')"
 		:action-handler="addNewVariable"
 		placement="top-left">
 		<template #header>
-			<h2 class="text-lg-semibold py-2">{{ __("Design Tokens") }}</h2>
+			<h2 class="text-md-semibold py-2">{{ __("Design Tokens") }}</h2>
 		</template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
@@ -37,7 +37,7 @@
 						type="text"
 						:placeholder="__('Search tokens')"
 						class="w-full"
-						icon-left="search" />
+						icon-left="lucide-search" />
 				</div>
 
 				<!-- a floor under the list so a short tab does not shrink the whole panel -->
@@ -69,7 +69,7 @@
 								<div
 									v-if="row.isNew"
 									data-row
-									class="rounded py-2"
+									class="rounded-4 py-2"
 									:class="rowGridClass"
 									@keydown.esc.stop.prevent="() => (newVariable = null)"
 									@focusout="(e) => handleNewRowFocusOut(e, row)"
@@ -191,7 +191,7 @@
 										<Tooltip
 											v-if="row.is_standard"
 											:text="__('This is a standard variable. It cannot be modified or deleted.')"
-											placement="top">
+											side="top">
 											<span
 												class="lucide-info ml-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
 												aria-hidden="true" />
@@ -214,7 +214,7 @@
 											{{ row.token_name || __("unnamed") }}
 										</div>
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
-										<Tooltip v-if="row.name" :text="__('Copy var(--{0})', [row.name])" placement="top">
+										<Tooltip v-if="row.name" :text="__('Copy var(--{0})', [row.name])" side="top">
 											<div
 												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
@@ -281,7 +281,7 @@
 										]"
 										@dblclick="startEdit(row, 'value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
@@ -325,7 +325,7 @@
 										]"
 										@dblclick="startEdit(row, 'dark_value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
@@ -398,9 +398,14 @@
 					</template>
 				</Dialog>
 
-				<div class="flex items-center pt-4">
+				<div v-if="!readonly" class="flex items-center pt-4">
 					<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
-					<Button @click="triggerCSVUpload" variant="outline" theme="gray" size="sm" icon-left="upload">
+					<Button
+						@click="triggerCSVUpload"
+						variant="outline"
+						theme="gray"
+						size="sm"
+						icon-left="lucide-upload">
 						{{ __("Upload CSV") }}
 					</Button>
 					<button
@@ -429,9 +434,11 @@ import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch, type ComponentPublicInstance } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	modelValue: boolean;
 	container?: HTMLElement | null;
+	// browse only: tokens are shared by the whole site
+	readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -502,14 +509,14 @@ const rowGridClass = computed(() =>
 		: "grid grid-cols-[minmax(0,1fr)_200px] items-center gap-x-2 px-1",
 );
 
-const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
+const cellBoxClass = "w-full min-w-0 rounded-1 px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
 const editableInputClass =
 	"border-none bg-surface-base text-ink-gray-8 outline-none ring-2 ring-outline-gray-3 placeholder:text-ink-gray-4 focus:outline-none focus:ring-2 focus:ring-outline-gray-3";
 const cellTextClass = (row: Row) =>
 	row.is_standard ? "truncate text-ink-gray-8" : "cursor-default truncate text-ink-gray-8";
 // color cells render the swatch and the value as a single unit
-const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-sm px-2 py-1 text-sm";
+const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-1 px-2 py-1 text-sm";
 const colorValueInputClass =
 	"w-full min-w-0 border-none bg-transparent p-0 text-sm text-ink-gray-8 outline-none placeholder:text-ink-gray-4 focus:outline-none focus:ring-0";
 
@@ -607,7 +614,7 @@ const isEditing = (row: Row, field: EditableField) =>
 	editingCell.value?.rowId === row.id && editingCell.value?.field === field;
 
 const startEdit = (row: Row, field: EditableField) => {
-	if (row.is_standard || row.isNew) return;
+	if (props.readonly || row.is_standard || row.isNew) return;
 	editingCell.value = { rowId: row.id, field };
 };
 
@@ -729,7 +736,7 @@ const handleRowMouseDown = (e: MouseEvent, row: Row) => {
 };
 
 const handleRowContextMenu = (e: MouseEvent, row: Row) => {
-	if (row.isNew || row.is_standard) return;
+	if (props.readonly || row.isNew || row.is_standard) return;
 	isNewRowContextMenu.value = false;
 	if (!selectedIds.value.has(row.id)) {
 		selectedIds.value = new Set([row.id]);
@@ -1027,26 +1034,15 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	// Warn user that existing variables will be updated
+	const counts = [newVariables.length, updateVariables.length];
 	const createAndUpdateMessage =
 		newVariables.length === 1
 			? updateVariables.length === 1
-				? __("Create {0} new token and update {1} existing token?", [
-						newVariables.length,
-						updateVariables.length,
-					])
-				: __("Create {0} new token and update {1} existing tokens?", [
-						newVariables.length,
-						updateVariables.length,
-					])
+				? __("Create {0} new token and update {1} existing token?", counts)
+				: __("Create {0} new token and update {1} existing tokens?", counts)
 			: updateVariables.length === 1
-				? __("Create {0} new tokens and update {1} existing token?", [
-						newVariables.length,
-						updateVariables.length,
-					])
-				: __("Create {0} new tokens and update {1} existing tokens?", [
-						newVariables.length,
-						updateVariables.length,
-					]);
+				? __("Create {0} new tokens and update {1} existing token?", counts)
+				: __("Create {0} new tokens and update {1} existing tokens?", counts);
 	const confirmationLines = [createAndUpdateMessage];
 	if (invalidCount > 0)
 		confirmationLines.push(

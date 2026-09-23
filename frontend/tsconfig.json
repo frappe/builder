@@ -16,14 +16,23 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "allowJs": true,
     "paths": {
       "@/*": [
         "src/*"
       ],
-      "tslib" : ["/node_modules/tslib/tslib.d.ts"],
-      "vue": ["../node_modules/vue"]
+      "@framework/ui": ["../../frappe/ui/src/index.ts"],
+      "@framework/ui/*": ["../../frappe/ui/src/*"],
+      "tslib": ["../node_modules/tslib/tslib.d.ts"],
+      "vue": ["../node_modules/vue"],
+      // @framework/ui is linked from the frappe repo beside this one, so its own
+      // bare imports have no node_modules to walk up to
+      "vue-router": ["../node_modules/vue-router"],
+      "frappe-ui": ["../node_modules/frappe-ui/src/index.ts"],
+      "frappe-ui/icons": ["../node_modules/frappe-ui/icons/index.ts"],
+      "frappe-ui/experimental": ["../node_modules/frappe-ui/experimental.ts"],
+      "frappe-ui/*": ["../node_modules/frappe-ui/*"]
     },
     "lib": [
       "esnext",

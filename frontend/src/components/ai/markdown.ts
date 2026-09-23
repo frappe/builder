@@ -40,7 +40,7 @@ export function renderMarkdown(content: string): string {
 			"th",
 			"td",
 		],
-		ALLOWED_ATTR: ["href", "target", "rel", "class"],
+		ALLOWED_ATTR: ["href", "target", "rel", "class", "align"],
 		ADD_ATTR: ["target"],
 	});
 }

@@ -8,7 +8,7 @@
 				type="text"
 				:placeholder="__('Search redirects')"
 				class="w-full"
-				icon-left="search" />
+				icon-left="lucide-search" />
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
@@ -44,12 +44,8 @@
 					<span class="min-w-0 flex-1 truncate" v-html="highlight(field, row[field])" />
 					<span
 						v-if="field === 'to' && (row.status !== '301' || row.forward)"
-						class="flex shrink-0 items-center gap-1 rounded bg-surface-gray-3 px-1.5 py-0.5 text-xs text-ink-gray-5"
-						:title="
-							row.forward
-								? __('HTTP {0} · forwards query parameters', [row.status])
-								: __('HTTP {0}', [row.status])
-						">
+						class="flex shrink-0 items-center gap-1 rounded-4 bg-surface-gray-3 px-1.5 py-0.5 text-xs text-ink-gray-5"
+						:title="row.forward ? __('HTTP {0} · forwards query parameters', [row.status]) : __('HTTP {0}', [row.status])">
 						<span v-if="row.status !== '301'" class="tabular-nums">{{ row.status }}</span>
 						<span v-if="row.forward" class="lucide-arrow-right-left size-3" aria-hidden="true" />
 					</span>

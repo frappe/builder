@@ -27,7 +27,7 @@
 		<Dialog :title="__('Get Started')" size="4xl" v-model="showInfoDialog">
 			<template #default>
 				<iframe
-					class="h-[60vh] w-full rounded-sm"
+					class="h-[60vh] w-full rounded-1"
 					src="https://www.youtube-nocookie.com/embed/videoseries?si=8NvOFXFq6ntafauO&amp;controls=0&amp;list=PL3lFfCEoMxvwZsBfCgk6vLKstZx204xe3"
 					:title="__('Frappe Builder - Get Started')"
 					frameborder="0"
@@ -42,6 +42,7 @@
 				</DialogDescription>
 				<BuilderSettings
 					:initial-tab="builderStore.settingsActiveTab"
+					:group="builderStore.settingsGroup"
 					@close="builderStore.showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>

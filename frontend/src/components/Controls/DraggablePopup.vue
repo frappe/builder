@@ -5,7 +5,7 @@
 			<div class="fixed z-50" @mousedown.stop>
 				<div
 					ref="popoverContent"
-					class="fixed flex flex-col gap-1 overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-2xl"
+					class="fixed flex flex-col gap-1 overflow-hidden rounded-6 border border-outline-gray-2 bg-surface-base shadow-2xl"
 					:class="{ 'transition-all duration-300 ease-in-out': isTransitioning }"
 					:style="{
 						width: popupWidth + 'px',

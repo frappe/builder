@@ -7,9 +7,9 @@
 	-->
 	<Dialog v-if="dialog" :modelValue="true" size="lg" @update:modelValue="dismiss">
 		<template #body>
-			<div class="bg-surface-modal p-5">
+			<div class="bg-surface-elevation-2 p-5">
 				<div class="flex items-center justify-between pb-4">
-					<h3 class="text-lg-semibold text-ink-gray-9">{{ dialog.title }}</h3>
+					<h3 class="text-md-semibold text-ink-gray-9">{{ dialog.title }}</h3>
 					<Button icon="lucide-x" variant="ghost" @click="dismiss" />
 				</div>
 				<ExtensionFrame
