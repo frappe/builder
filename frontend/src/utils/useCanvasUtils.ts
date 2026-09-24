@@ -158,7 +158,7 @@ export function useCanvasUtils(
 		}
 	}
 
-	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
+	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true, keepViewport = false) {
 		if (!resetHistory && canvasHistory.value?.silentSetSource) {
 			// swap the root without recording it or disposing the stack (version preview)
 			canvasHistory.value.silentSetSource(newBlock);
@@ -171,7 +171,7 @@ export function useCanvasUtils(
 		}
 		if (resetCanvas) {
 			nextTick(() => {
-				setScaleAndTranslate();
+				if (!keepViewport) setScaleAndTranslate();
 				toggleDirty(false);
 			});
 		}
