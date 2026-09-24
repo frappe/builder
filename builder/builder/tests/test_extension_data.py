@@ -112,13 +112,17 @@ class TestExtensionGrants(FrappeTestCase):
 		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "not asked", "denied"))
 
 	def test_an_answer_nobody_defined_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"read": "maybe"})
+		self.assertRaises(
+			frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"read": "maybe"}
+		)
 
 	def test_a_call_with_no_answers_is_refused(self):
 		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {})
 
 	def test_an_unknown_access_word_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"publish": "allowed"})
+		self.assertRaises(
+			frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"publish": "allowed"}
+		)
 
 	def test_one_grant_per_installation_and_doctype(self):
 		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})

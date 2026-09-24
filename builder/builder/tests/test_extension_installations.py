@@ -14,8 +14,8 @@ from builder.extensions.data import record_doctype_grant
 from builder.extensions.installations import (
 	get_user_installations,
 	installation_doctype_grants,
-	set_extension_enabled,
 	set_doctype_grant,
+	set_extension_enabled,
 	set_granted_capabilities,
 	uninstall_extension,
 )
@@ -166,9 +166,7 @@ class TestGrantAnswers(FrappeTestCase):
 		record_doctype_grant(EXTENSION, "Contact", answers)
 
 	def assertAnswers(self, row, read, write, delete):
-		self.assertEqual(
-			(row["read"], row["write"], row["delete"]), (read, write, delete)
-		)
+		self.assertEqual((row["read"], row["write"], row["delete"]), (read, write, delete))
 
 	def test_narrows_one_access_and_keeps_the_rest(self):
 		self.grant({"read": "allowed", "write": "allowed", "delete": "allowed"})
