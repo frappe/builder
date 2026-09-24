@@ -16,8 +16,7 @@
 				v-show="showPill"
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				:class="[band.filled ? 'opacity-40' : 'opacity-80', { hidden: updating }]"
-				:style="band.handleStyle"
-				@mousedown.stop="handleGap($event, band)" />
+				:style="band.handleStyle" />
 			<div v-show="updating" class="m-auto text-sm text-purple-900 opacity-70">
 				{{ getGapValue(band.position) }}
 			</div>
@@ -249,14 +248,11 @@ const pillSize = (size: { width: number; height: number }, gap: number) => {
 	return { width: size.width * growth, height: size.height * growth };
 };
 
-const handleStyle = (
-	size: { width: number; height: number },
-	cursor: string,
-	top = `calc(50% - ${size.height / 2}px)`,
-) => ({
+// The pill is centred in its band 
+const handleStyle = (size: { width: number; height: number }, cursor: string, centreY?: number) => ({
 	borderWidth: handleBorderWidth.value,
 	left: `calc(50% - ${size.width / 2}px)`,
-	top,
+	top: centreY === undefined ? `calc(50% - ${size.height / 2}px)` : `${centreY - size.height / 2}px`,
 	width: `${size.width}px`,
 	height: `${size.height}px`,
 	cursor: props.disableHandlers ? undefined : cursor,
@@ -295,48 +291,44 @@ const rowSeams = (lines: Box[][]): Seam[] =>
 		return { from, to: Math.max(topOf(line), from) };
 	});
 
-const columnPillY = (rows: Seam[], content: Box) => (content.y0 + (rows[0]?.from ?? content.y1)) / 2;
+// A column's pill sits level with the middle of the first line, measured from the band's top.
+const columnPillY = (rows: Seam[], content: Box) =>
+	(((rows[0]?.from ?? content.y1) - content.y0) / 2) * canvasProps.scale;
 
-// One band per seam, spanning the full content height.
-const columnBands = (seams: Seam[], content: Box, gap: number, pillY: number): GapBand[] =>
-	seams.map((seam, index) => {
+type Axis = "column" | "row";
+
+// Column seams are vertical bands between side-by-side children, row seams horizontal ones between lines.
+const axisBands = {
+	column: {
+		position: Position.Right,
+		thickness: "width",
+		cursor: horizontalCursor,
+		handleSize: sideHandleSize,
+	},
+	row: { position: Position.Bottom, thickness: "height", cursor: verticalCursor, handleSize: longHandleSize },
+} as const;
+
+const seamBox = (axis: Axis, seam: Seam, content: Box): Box =>
+	axis === "column"
+		? { x0: seam.from, x1: seam.to, y0: content.y0, y1: content.y1 }
+		: { x0: content.x0, x1: content.x1, y0: seam.from, y1: seam.to };
+
+// One band per seam, stretched across the whole content box.
+const seamBands = (axis: Axis, seams: Seam[], content: Box, gap: number, pillY?: number): GapBand[] => {
+	const { position, thickness, cursor, handleSize } = axisBands[axis];
+	const size = pillSize(handleSize.value, gap);
+	return seams.map((seam, index) => {
 		const draggable = isDraggable(seam.to - seam.from);
-		const size = pillSize(sideHandleSize.value, gap);
 		return {
-			key: `column-${index}`,
-			position: Position.Right,
+			key: `${axis}-${index}`,
+			position,
 			draggable,
 			filled: gap > 0,
-			style: bandStyle(
-				{ x0: seam.from, x1: seam.to, y0: content.y0, y1: content.y1 },
-				"width",
-				draggable ? horizontalCursor.value : undefined,
-			),
-			handleStyle: handleStyle(
-				size,
-				horizontalCursor.value,
-				`${(pillY - content.y0) * canvasProps.scale - size.height / 2}px`,
-			),
+			style: bandStyle(seamBox(axis, seam, content), thickness, draggable ? cursor.value : undefined),
+			handleStyle: handleStyle(size, cursor.value, pillY),
 		};
 	});
-
-// One band per seam, across the full content width.
-const rowBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
-	seams.map((seam, index) => {
-		const draggable = isDraggable(seam.to - seam.from);
-		return {
-			key: `row-${index}`,
-			position: Position.Bottom,
-			draggable,
-			filled: gap > 0,
-			style: bandStyle(
-				{ x0: content.x0, x1: content.x1, y0: seam.from, y1: seam.to },
-				"height",
-				draggable ? verticalCursor.value : undefined,
-			),
-			handleStyle: handleStyle(pillSize(longHandleSize.value, gap), verticalCursor.value),
-		};
-	});
+};
 
 const gapBands = computed<GapBand[]>(() => {
 	if (!layout.value) return [];
@@ -344,8 +336,8 @@ const gapBands = computed<GapBand[]>(() => {
 	const columns = trackSeams(tracks.column, content.x0, gap.column, reach.column) ?? columnSeams(lines);
 	const rows = trackSeams(tracks.row, content.y0, gap.row, reach.row) ?? rowSeams(lines);
 	return [
-		...columnBands(columns, content, gap.column, columnPillY(rows, content)),
-		...rowBands(rows, content, gap.row),
+		...seamBands("column", columns, content, gap.column, columnPillY(rows, content)),
+		...seamBands("row", rows, content, gap.row),
 	];
 });
 
