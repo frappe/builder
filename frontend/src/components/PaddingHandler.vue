@@ -26,7 +26,7 @@
 				@mouseenter="hoveredSide = Position.Top"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
-			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating && isActive(Position.Top)">
 				{{ getPaddingValue(Position.Top) }}
 			</div>
 		</div>
@@ -47,7 +47,7 @@
 				@mouseenter="hoveredSide = Position.Bottom"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
-			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating && isActive(Position.Bottom)">
 				{{ getPaddingValue(Position.Bottom) }}
 			</div>
 		</div>
@@ -68,7 +68,7 @@
 				@mouseenter="hoveredSide = Position.Left"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
-			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating && isActive(Position.Left)">
 				{{ getPaddingValue(Position.Left) }}
 			</div>
 		</div>
@@ -89,7 +89,7 @@
 				@mouseenter="hoveredSide = Position.Right"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
-			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating && isActive(Position.Right)">
 				{{ getPaddingValue(Position.Right) }}
 			</div>
 		</div>

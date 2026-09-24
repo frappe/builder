@@ -22,7 +22,7 @@
 				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				:class="[band.filled ? 'opacity-40' : 'opacity-80', { hidden: updating }]"
 				:style="band.handleStyle" />
-			<div v-show="updating" class="m-auto text-sm text-purple-900 opacity-70">
+			<div v-show="updating && isActive(band.position)" class="m-auto text-sm text-purple-900 opacity-70">
 				{{ getGapValue(band.position) }}
 			</div>
 		</div>
