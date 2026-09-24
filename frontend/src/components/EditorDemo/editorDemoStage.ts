@@ -109,11 +109,14 @@ class EditorDemoStage {
 	private async whenCanvasReady() {
 		const canvasStore = useCanvasStore();
 		const pageStore = usePageStore();
+		// until() looks again only when something reactive changes, and readyState is not
+		// reactive: with it in the condition, a canvas that is ready before the page has
+		// finished loading is never noticed, and the demo never opens
+		if (document.readyState !== "complete") {
+			await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+		}
 		await until(
-			() =>
-				document.readyState === "complete" &&
-				canvasStore.activeCanvas?.canvasProps.settingCanvas === false &&
-				!pageStore.settingPage,
+			() => canvasStore.activeCanvas?.canvasProps.settingCanvas === false && !pageStore.settingPage,
 		).toBe(true);
 		await document.fonts.ready;
 	}

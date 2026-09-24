@@ -1463,6 +1463,9 @@ component.update({
 				in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
+				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
@@ -1609,8 +1612,8 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request,
-		with 400 italic always included as a fallback instance."""
+		"""Fonts used in italic get the ital axis in the same single request, at
+		every weight the family is used at, since <em>/<i> inherit their weight."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {
@@ -1623,7 +1626,7 @@ component.update({
 		self.assertEqual(
 			urls,
 			[
-				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap",
 				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
 			],
