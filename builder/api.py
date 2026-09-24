@@ -1,5 +1,6 @@
 import ipaddress
 import os
+import re
 import socket
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
@@ -432,12 +433,25 @@ def clone_client_scripts(source_page, new_page) -> None:
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 
 
+def get_copy_title(title: str) -> str:
+	"""Numbers copies like "Home (Copy)", "Home (Copy 2)" so copying a copy doesn't stack suffixes."""
+	label = _("Copy")
+	suffix = rf" \({re.escape(label)}(?: (\d+))?\)$"
+	base = re.sub(suffix, "", title)
+	siblings = frappe.get_all(
+		"Builder Page", filters={"page_title": ["like", f"{base} ({label}%"]}, pluck="page_title"
+	)
+	numbers = [int(m.group(1) or 1) for t in siblings if (m := re.fullmatch(re.escape(base) + suffix, t))]
+	return f"{base} ({label} {max(numbers) + 1})" if numbers else f"{base} ({label})"
+
+
 @frappe.whitelist()
 @has_page_write("You do not have permission to duplicate a page.")
 def duplicate_page(page_name: str):
 	page = frappe.get_doc("Builder Page", page_name)
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
+	new_page.page_title = get_copy_title(page.page_title or page.page_name)
 	new_page.route = None
 	new_page.is_standard = 0
 	new_page.app = None

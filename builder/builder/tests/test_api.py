@@ -186,3 +186,14 @@ class TestDuplicatePage(FrappeTestCase):
 
 		self.assertFalse(duplicate.is_standard)
 		self.assertFalse(duplicate.app)
+		self.assertEqual(duplicate.page_title, "Standard (Copy)")
+
+	def test_copies_of_copies_are_numbered(self):
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Numbered"}).insert()
+		first = duplicate_page(page.name)
+		second = duplicate_page(first.name)
+		third = duplicate_page(page.name)
+
+		self.assertEqual(first.page_title, "Numbered (Copy)")
+		self.assertEqual(second.page_title, "Numbered (Copy 2)")
+		self.assertEqual(third.page_title, "Numbered (Copy 3)")

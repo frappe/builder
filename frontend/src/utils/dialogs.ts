@@ -125,3 +125,18 @@ export function promptSelectFolder() {
 		},
 	});
 }
+
+export function promptRenamePage(page: BuilderPage) {
+	dialog.prompt({
+		title: __("Rename Page"),
+		size: "sm",
+		confirmLabel: __("Rename"),
+		fields: [{ name: "page_title", label: __("Page Title"), required: true, defaultValue: page.page_title || "" }],
+		onConfirm: async ({ values }) => {
+			const pageTitle = values.page_title.trim();
+			if (!pageTitle || pageTitle === page.page_title) return;
+			await webPages.setValue.submit({ name: page.name, page_title: pageTitle });
+			page.page_title = pageTitle;
+		},
+	});
+}
