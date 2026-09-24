@@ -19,7 +19,6 @@ from builder.extensions.installations import (
 	set_granted_capabilities,
 	uninstall_extension,
 )
-from builder.extensions.resources import record_resource
 
 EXTENSION = "acme/managed"
 
@@ -125,14 +124,12 @@ class TestUninstall(FrappeTestCase):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_removes_this_users_installation_and_leaves_what_it_made(self):
+	def test_removes_this_users_installation(self):
 		make_installation(EXTENSION)
-		record_resource(EXTENSION, "DocType", "Acme Order")
 
 		uninstall_extension(EXTENSION)
 
 		self.assertNotIn(EXTENSION, names(get_user_installations()))
-		self.assertTrue(frappe.db.exists("Builder Extension Resource", {"extension": EXTENSION}))
 
 	def test_leaves_another_users_installation_standing(self):
 		other = make_user()

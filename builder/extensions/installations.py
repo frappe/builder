@@ -10,8 +10,6 @@ Every method here finds the row through the session user. A caller names an
 extension and never a person.
 """
 
-from collections import Counter
-
 import frappe
 from frappe import _
 
@@ -24,7 +22,6 @@ from builder.extensions.constants import DEV_EXTENSION_VERSION
 from builder.extensions.data import ACCESSES, ANSWERS, upsert_grant
 from builder.utils import has_page_read
 
-RESOURCE_DOCTYPE = "Builder Extension Resource"
 TOKEN_DOCTYPE = "Builder Token"
 
 NOT_INSTALLED = "You have not installed this extension."
@@ -127,14 +124,11 @@ def set_granted_capabilities(extension: str, capabilities: list[str]) -> list[st
 def get_uninstall_summary(extension: str) -> dict:
 	"""What the site keeps when this user removes the extension.
 
-	A doctype holds the site's data, a token styles every page, and a client script
-	runs for every visitor, so uninstalling takes none of the three. Naming them
+	A token styles every page, so uninstalling does not take it. Naming the count
 	here is what lets a user read that before they answer.
 	"""
 	own_installation(extension)
-	made = Counter(frappe.get_all(RESOURCE_DOCTYPE, filters={"extension": extension}, pluck="resource_type"))
 	return {
-		"resources": [{"resource_type": kind, "count": made[kind]} for kind in sorted(made)],
 		"tokens": frappe.db.count(TOKEN_DOCTYPE, {"extension": extension}),
 		"other_users": frappe.db.count(
 			INSTALLATION_DOCTYPE, {"extension": extension, "user": ["!=", frappe.session.user]}
@@ -147,8 +141,8 @@ def get_uninstall_summary(extension: str) -> dict:
 def uninstall_extension(extension: str) -> None:
 	"""This user's copy, their grants and their stored state, and nothing else.
 
-	`on_trash` takes all three. What the extension made stays, and
-	`get_uninstall_summary` names it before the user answers.
+	`on_trash` takes all three. The tokens the extension made stay, and
+	`get_uninstall_summary` names them before the user answers.
 	"""
 	frappe.delete_doc(INSTALLATION_DOCTYPE, own_installation(extension))
 
