@@ -3,16 +3,13 @@
 
 """What one extension may do to one doctype, for one installation.
 
-Three gates stand between an extension and a document. The capability says the
-extension may work with site data at all, and the user answers that at install.
-The grant here says which doctype, and the same user answers it while the editor
-runs. Frappe's own permission says whether that user may do it, and it is the
-only one that cannot be widened: nothing in this module passes
-`ignore_permissions`.
+Three gates stand between an extension and a document:
+1. The capability says the extension may work with site data at all (`data.access`).
+2. The grant here says which doctype, and which of read, write and delete. The same user answers each one on its own while the editor runs.
+3. Frappe's own permission says whether that user may do it, and it is theonly one that cannot be widened: nothing in this module passes`ignore_permissions`.
 
 Every gate belongs to one installation, the way `Builder Extension State` does.
-One user allowing an extension to read Contact says nothing about the next user,
-who is asked again, and nothing about a second copy of that extension.
+One user allowing an extension to read Contact says nothing about the next user, neither about a second copy of that extension.
 
 A grant is asked for, never assumed. `data.requestAccess` in the browser is the
 one path that opens a dialog, and every other call refuses without a grant.
@@ -180,7 +177,7 @@ def get_list(
 
 	`frappe.client` does the query and the permission check, so an extension
 	reaches exactly the rows the user reaches, with the field-level rules the
-	user has. The grant is the extra gate in front of that, never a way past it.
+	user has. The grant is the extra gate in front of that'.
 
 	`or_filters` and `group_by` are here because `createListResource` sends them
 	on every fetch. Dropping a filter quietly would answer with more rows than
