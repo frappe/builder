@@ -59,8 +59,8 @@ def record_doctype_grant(extension: str, doctype: str, answers: dict | None = No
 	"""Write what the user answered in the Builder dialog.
 
 	Answers only the access the call names, each on its own, and leaves the rest
-	as it stands. That is the rule `set_extension_tokens` follows too. Denying
-	delete does not take back a read the user already allowed.
+	as it stands. Denying delete does not take back a read the user already
+	allowed.
 	"""
 	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
 	assert_answers(answers)

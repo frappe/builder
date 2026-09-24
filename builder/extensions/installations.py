@@ -22,8 +22,6 @@ from builder.extensions.constants import DEV_EXTENSION_VERSION
 from builder.extensions.data import ACCESSES, assert_answers, upsert_doctype_grant
 from builder.utils import has_page_read
 
-TOKEN_DOCTYPE = "Builder Token"
-
 NOT_INSTALLED = "You have not installed this extension."
 
 
@@ -103,30 +101,12 @@ def set_granted_capabilities(extension: str, capabilities: list[str]) -> list[st
 	return installation.capabilities
 
 
-@frappe.whitelist()
-@has_page_read(NOT_INSTALLED)
-def get_uninstall_summary(extension: str) -> dict:
-	"""What the site keeps when this user removes the extension.
-
-	A token styles every page, so uninstalling does not take it. Naming the count
-	here is what lets a user read that before they answer.
-	"""
-	own_installation(extension)
-	return {
-		"tokens": frappe.db.count(TOKEN_DOCTYPE, {"extension": extension}),
-		"other_users": frappe.db.count(
-			INSTALLATION_DOCTYPE, {"extension": extension, "user": ["!=", frappe.session.user]}
-		),
-	}
-
-
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NOT_INSTALLED)
 def uninstall_extension(extension: str) -> None:
 	"""This user's copy, their grants and their stored state, and nothing else.
 
-	`on_trash` takes all three. The tokens the extension made stay, and
-	`get_uninstall_summary` names them before the user answers.
+	`on_trash` takes all three.
 	"""
 	frappe.delete_doc(INSTALLATION_DOCTYPE, own_installation(extension))
 

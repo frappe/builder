@@ -53,8 +53,8 @@ def set_state(extension: str, state: dict) -> None:
 def unset_state(extension: str, key: str) -> None:
 	"""Drop one key.
 
-	Quiet about a key that is not there, the way `unset_extension_token` is. An
-	extension clearing what it has already cleared is not an error.
+	Quiet about a key that is not there. An extension clearing what it has already
+	cleared is not an error.
 	"""
 	installation = assert_extension_access(extension)
 	row = read_rows(installation).get(key)

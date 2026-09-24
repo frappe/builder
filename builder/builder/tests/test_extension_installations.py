@@ -12,7 +12,6 @@ from builder.builder.tests.extension_fixtures import (
 from builder.extensions.access import assert_extension_access, find_installation
 from builder.extensions.data import record_doctype_grant
 from builder.extensions.installations import (
-	get_uninstall_summary,
 	get_user_installations,
 	installation_doctype_grants,
 	set_doctype_grant,
@@ -209,29 +208,3 @@ class TestGrantAnswers(FrappeTestCase):
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			set_doctype_grant(EXTENSION, "Contact", answers())
-
-
-class TestUninstallSummary(FrappeTestCase):
-	def setUp(self):
-		drop_installations(EXTENSION)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_counts_the_tokens_and_the_other_users_who_keep_the_extension(self):
-		make_installation(EXTENSION)
-		make_installation(EXTENSION, user=make_user())
-		frappe.get_doc(
-			{
-				"doctype": "Builder Token",
-				"token_name": "acme-accent",
-				"value": "#ff0000",
-				"extension": EXTENSION,
-			}
-		).insert()
-
-		summary = get_uninstall_summary(EXTENSION)
-
-		self.assertEqual(summary, {"tokens": 1, "other_users": 1})
-
-	def test_refuses_an_extension_this_user_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			get_uninstall_summary(EXTENSION)
