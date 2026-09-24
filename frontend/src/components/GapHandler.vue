@@ -102,12 +102,15 @@ const LAYOUT_STYLES = [
 	"padding",
 	"gridTemplateColumns",
 	"gridTemplateRows",
+	"justifyContent",
+	"alignContent",
 ] as const;
 
 type Box = { x0: number; y0: number; x1: number; y1: number };
 type Span = { y0: number; y1: number };
 // A gap to put a band on: where it starts and ends along one axis.
 type Seam = { from: number; to: number };
+type Track = { template: string; align: string };
 type GapBand = {
 	key: string;
 	position: Position;
@@ -209,7 +212,10 @@ const layout = computed(() => {
 
 	return {
 		lines: clusterLines(boxes),
-		tracks: { column: style.gridTemplateColumns, row: style.gridTemplateRows },
+		tracks: {
+			column: { template: style.gridTemplateColumns, align: style.justifyContent },
+			row: { template: style.gridTemplateRows, align: style.alignContent },
+		},
 		reach: {
 			column: { from: Math.min(...boxes.map((b) => b.x0)), to: Math.max(...boxes.map((b) => b.x1)) },
 			row: { from: Math.min(...boxes.map((b) => b.y0)), to: Math.max(...boxes.map((b) => b.y1)) },
@@ -262,16 +268,30 @@ const handleStyle = (size: { width: number; height: number }, cursor: string, ce
 	cursor: props.disableHandlers ? undefined : cursor,
 });
 
+const trackDistribution = (align: string, free: number, count: number) => {
+	if (free <= 0) return { offset: 0, spread: 0 };
+	const keyword = align.replace(/^(safe|unsafe)\s+/, "");
+	if (keyword === "center") return { offset: free / 2, spread: 0 };
+	if (["end", "flex-end", "right"].includes(keyword)) return { offset: free, spread: 0 };
+	if (keyword === "space-between") return { offset: 0, spread: free / (count - 1) };
+	if (keyword === "space-around") return { offset: free / count / 2, spread: free / count };
+	if (keyword === "space-evenly") return { offset: free / (count + 1), spread: free / (count + 1) };
+	return { offset: 0, spread: 0 };
+};
+
 // A grid's tracks come back in pixels, so its seams are exact even where an item spans rows or
 // a cell is empty and the children show nothing.
-const trackSeams = (template: string, start: number, gap: number, reach: Seam): Seam[] | null => {
-	const sizes = template.match(/-?[\d.]+px/g);
+const trackSeams = (track: Track, from: number, to: number, gap: number, reach: Seam): Seam[] | null => {
+	const sizes = track.template.match(/-?[\d.]+px/g)?.map(getNumberFromPx);
 	if (!sizes || sizes.length < 2) return null;
 
-	let edge = start;
+	const used = sizes.reduce((sum, size) => sum + size, 0) + gap * (sizes.length - 1);
+	const { offset, spread } = trackDistribution(track.align, to - from - used, sizes.length);
+	const width = gap + spread;
+	let edge = from + offset;
 	const seams = sizes.slice(0, -1).map((size) => {
-		edge += getNumberFromPx(size) + gap;
-		return { from: edge - gap, to: edge };
+		edge += size + width;
+		return { from: edge - width, to: edge };
 	});
 	// auto-fill can leave tracks the children never reach, and those seams sit between nothing.
 	return seams.filter((seam) => seam.from >= reach.from && seam.to <= reach.to);
@@ -337,8 +357,9 @@ const seamBands = (axis: Axis, seams: Seam[], content: Box, gap: number, pillY?:
 const gapBands = computed<GapBand[]>(() => {
 	if (!layout.value) return [];
 	const { lines, content, gap, tracks, reach } = layout.value;
-	const columns = trackSeams(tracks.column, content.x0, gap.column, reach.column) ?? columnSeams(lines);
-	const rows = trackSeams(tracks.row, content.y0, gap.row, reach.row) ?? rowSeams(lines);
+	const columns =
+		trackSeams(tracks.column, content.x0, content.x1, gap.column, reach.column) ?? columnSeams(lines);
+	const rows = trackSeams(tracks.row, content.y0, content.y1, gap.row, reach.row) ?? rowSeams(lines);
 	return [
 		...seamBands("column", columns, content, gap.column, columnPillY(rows, content)),
 		...seamBands("row", rows, content, gap.row),
