@@ -22,7 +22,7 @@ export const folderPages = createListResource({
 // bumped after any page change so every page list refreshes from the server
 export const pagesVersion = ref(0);
 
-export function notifyPagesChanged() {
+function notifyPagesChanged() {
 	pagesVersion.value++;
 	webPages.reload();
 }
@@ -61,7 +61,7 @@ async function setPageValue(page: BuilderPage, field: keyof BuilderPage, value: 
 	notifyPagesChanged();
 }
 
-export const movePage = (page: BuilderPage, folder: string) => {
+const movePage = (page: BuilderPage, folder: string) => {
 	if ((page.project_folder || "") !== folder) setPageValue(page, "project_folder", folder);
 };
 
@@ -149,7 +149,7 @@ export function pageMenu(page: BuilderPage) {
 }
 
 // onCreate lets a flow like "Move to > New folder" continue with the new folder
-export function promptNewFolder(onCreate?: (folder: string) => void) {
+function promptNewFolder(onCreate?: (folder: string) => void) {
 	dialog.prompt({
 		title: __("New Folder"),
 		size: "sm",

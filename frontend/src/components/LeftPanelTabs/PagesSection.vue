@@ -44,7 +44,7 @@ import PageRow from "@/components/LeftPanelTabs/PageRow.vue";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
-import { createPageIn, folderPages, pagesVersion } from "@/utils/pageTree";
+import { createPageIn, folderPages, pagesVersion } from "@/utils/pageActions";
 import { Button } from "frappe-ui";
 import { useStorage } from "@vueuse/core";
 import { computed, ref, watch } from "vue";

@@ -30,7 +30,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { ContextMenu, ItemListRow } from "frappe-ui";
 import { computed } from "vue";
-import { openPage, pageMenu, shortTitle } from "@/utils/pageTree";
+import { openPage, pageMenu, shortTitle } from "@/utils/pageActions";
 
 const props = defineProps<{
 	page: BuilderPage;
