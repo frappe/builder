@@ -99,7 +99,7 @@ const mainMenuOptions = [
 			},
 			{
 				label: __("Settings"),
-				onClick: () => builderStore.openBuilderSettings("Global"),
+				onClick: () => (builderStore.showSettingsDialog = true),
 				icon: "lucide-settings",
 			},
 			{

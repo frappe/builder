@@ -42,7 +42,6 @@
 				</DialogDescription>
 				<BuilderSettings
 					:initial-tab="builderStore.settingsActiveTab"
-					:group="builderStore.settingsGroup"
 					@close="builderStore.showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
