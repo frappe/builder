@@ -58,13 +58,13 @@ import PageCard from "@/components/PageCard.vue";
 import PageListItem from "@/components/PageListItem.vue";
 import RouteTreeView from "@/components/RouteTreeView.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
-import { webPages } from "@/data/webPage";
+import { pagesWithUnpublishedChanges, webPages } from "@/data/webPage";
 import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
-import { useShortcut } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useKeyboardShortcut } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
@@ -85,8 +85,12 @@ const {
 onActivated(() => {
 	builderStore.realtime.doctype_subscribe("Builder Page");
 	builderStore.realtime.on("list_update", (e) => {
-		if (e.doctype == "Builder Page") fetchPages();
+		if (e.doctype !== "Builder Page") return;
+		fetchPages();
+		pagesWithUnpublishedChanges.fetch();
 	});
+	// publishing is the only thing that moves this set, so it skips the list's filters
+	pagesWithUnpublishedChanges.fetch();
 });
 
 onDeactivated(() => {
@@ -129,8 +133,8 @@ watch(
 watch(displayType, () => fetchPages());
 
 // remove selection mode when the escape key is pressed
-useShortcut({
-	key: "Escape",
+useKeyboardShortcut({
+	combo: "Escape",
 	description: __("Deselect Pages"),
 	group: __("Dashboard"),
 	handler: () => {

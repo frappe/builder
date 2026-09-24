@@ -137,6 +137,16 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			frappe.local.request = previous
 
+	def test_get_preview_html_can_force_dark_mode(self):
+		form_dict = frappe.local.form_dict
+
+		html = self.page.get_preview_html(color_scheme="dark")
+
+		html_tag = html[html.index("<html") :].split(">", 1)[0]
+		self.assertIn('data-prefers-color-scheme="dark"', html_tag)
+		self.assertIs(frappe.local.form_dict, form_dict)
+		self.assertNotIn("prefers_color_scheme", frappe.form_dict)
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
@@ -525,6 +535,61 @@ class TestBuilderPage(FrappeTestCase):
 
 		self.assertEqual(block["innerHTML"].count("{{"), 1)
 		self.assertNotIn("else '{{", block["innerHTML"])
+
+	def test_dynamic_value_wins_over_data_key(self):
+		"""dataKey is the legacy home for a binding. When both record the same (property, type)
+		with different keys, the dynamicValues key resolves first and dataKey stays behind it as a
+		fallback, the order the canvas resolves them in."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "sector", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		html = block["innerHTML"]
+		self.assertEqual(html.count("{{"), 1)
+		self.assertNotIn("else '{{", html)
+		self.assertLess(html.index("sector"), html.index("industry"))
+
+	def test_data_key_is_fallback_when_dynamic_value_is_unresolved(self):
+		"""With both fields bound to the same property, an unresolved dynamicValues key falls back to
+		the legacy dataKey before falling back to the static content."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+		industry.set_dynamic_value("sector", "key", "innerHTML")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Legacy Fallback Test",
+				"published": 1,
+				"route": "/legacy-fallback-test",
+				"page_data_script": 'data.update({"stories": [{"sector": "Retail", "industry": "Real Estate"}, {"industry": "Real Estate"}, {}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/legacy-fallback-test")
+			self.assertNotIn("{{", content)
+			# dynamicValues wins, then the legacy dataKey, then the static content
+			self.assertEqual("Retail", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", index=1, only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=2, only_content=True))
+		finally:
+			page.delete()
 
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
@@ -1398,11 +1463,51 @@ component.update({
 				in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
+				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
 			self.assertTrue("--builder-image-dim: brightness(0.85) contrast(1.05)" in content)
 			self.assertTrue("img { filter: var(--builder-image-dim, none) }" in content)
+		finally:
+			page.delete()
+
+	def test_dark_mode_img_keeps_absolute_and_data_urls(self):
+		body = Block(element="div", originalElement="body")
+		absolute = Block(
+			element="img",
+			attributes={"src": "/files/light.png", "darkSrc": "https://cdn.example.com/dark mode.png?v=2"},
+		)
+		inline = Block(
+			element="img",
+			attributes={
+				"src": "/files/light.png",
+				"darkSrc": "data:image/svg+xml,%3Csvg width='5' fill='#fff'%3E%3C/svg%3E",
+			},
+		)
+		body.attach_children(absolute, inline)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dark Mode Image URL Test",
+				"published": 1,
+				"route": "/dark-mode-image-url-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dark-mode-image-url-test")
+			self.assertIn(
+				'srcset="https://cdn.example.com/dark%20mode.png?v=2"',
+				get_html_for(content, "tag", "source", only_content=False),
+			)
+			self.assertIn(
+				"srcset=\"data:image/svg+xml,%3Csvg%20width='5'%20fill='%23fff'%3E%3C/svg%3E\"",
+				get_html_for(content, "tag", "source", index=1, only_content=False),
+			)
 		finally:
 			page.delete()
 
@@ -1507,8 +1612,8 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request,
-		with 400 italic always included as a fallback instance."""
+		"""Fonts used in italic get the ital axis in the same single request, at
+		every weight the family is used at, since <em>/<i> inherit their weight."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {
@@ -1521,7 +1626,7 @@ component.update({
 		self.assertEqual(
 			urls,
 			[
-				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap",
 				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
 			],

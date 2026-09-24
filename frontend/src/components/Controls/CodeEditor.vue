@@ -5,22 +5,23 @@
 			<span v-if="isDirty" class="text-[10px] text-gray-600">●</span>
 			<slot name="label-suffix"></slot>
 		</span>
+		<!-- -m-0.5 p-0.5 keeps the focus ring clear of the overflow clip resize-y needs -->
 		<div
-			:style="{
-				'min-height': height,
-			}"
-			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden !rounded border border-outline-gray-2 bg-surface-gray-2">
+			:style="{ minHeight: height }"
+			class="-m-0.5 flex h-[30vh] max-h-[80vh] resize-y overflow-hidden p-0.5"
+			@keydown.stop
+			@copy.stop
+			@cut.stop
+			@paste.stop>
 			<CodeMirrorEditor
-				ref="editor"
-				:mode
+				v-model="draft"
 				:type
-				:readonly="readonly"
-				:allow-save="showSaveButton"
+				:mode
+				:readonly
 				:show-line-numbers
-				:initial-value="getModelValue()"
-				@change="handleChange"
-				@save="handleSave"
-				@blur="handleBlur" />
+				:autofocus
+				@change="commit"
+				@save="save" />
 		</div>
 		<div v-if="actionButton" class="absolute bottom-1.5 right-1.5 flex gap-1">
 			<Button
@@ -32,19 +33,14 @@
 				:disabled="readonly"></Button>
 		</div>
 		<span class="mt-1 text-p-xs text-ink-gray-6" v-show="description" v-html="description"></span>
-		<Button
-			v-if="showSaveButton"
-			variant="solid"
-			@click="emit('save', editor.getEditorValue())"
-			class="mt-3"
-			:disabled="!isDirty || readonly">
+		<Button v-if="showSaveButton" variant="solid" @click="save" class="mt-3" :disabled="!isDirty || readonly">
 			{{ __("Save") }}
 		</Button>
 	</div>
 </template>
 <script setup lang="ts">
 import { __ } from "@/translation";
-import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
+import { computed, defineAsyncComponent, ref, watch } from "vue";
 
 // keeps the CodeMirror stack out of the main editor bundle
 const CodeMirrorEditor = defineAsyncComponent(() => import("./CodeMirror/CodeMirrorEditor.vue"));
@@ -73,93 +69,46 @@ const props = withDefaults(
 		readonly: false,
 		height: "250px",
 		showLineNumbers: false,
-		autofocus: true,
+		autofocus: false,
 		showSaveButton: false,
 		description: "",
 	},
 );
 
 const emit = defineEmits(["save", "update:modelValue"]);
-const editor = ref<VNodeRef | null>(null);
 
-const isDirty = ref(false);
-
-const handleBlur = (value: string) => {
+const modelText = computed(() => {
+	const value = props.modelValue ?? "";
+	if (props.type !== "JSON" && typeof value !== "object") return value as string;
 	try {
-		let processedValue = value;
-		if (props.type === "JSON" && value) {
-			processedValue = JSON.parse(value);
-		}
+		return JSON.stringify(value, null, 2);
+	} catch {
+		return String(value);
+	}
+});
 
-		// Compare the raw string values instead of processed vs model
-		if (value === getModelValue()) {
-			return;
-		}
-		if (!props.showSaveButton && !props.readonly) {
-			emit("update:modelValue", processedValue);
-			isDirty.value = false; // Reset dirty state after blur save
-		}
-	} catch (e) {
-		// Silently handle JSON parse errors or other issues
-	}
-};
+const draft = ref(modelText.value);
+const isDirty = computed(() => draft.value !== modelText.value);
 
-const getModelValue = () => {
-	let value = props.modelValue ?? "";
-	try {
-		if (props.type === "JSON" || typeof value === "object") {
-			value = JSON.stringify(value, null, 2);
-		}
-	} catch (e) {
-		// do nothing
-	}
-	return value as string;
-};
+watch(modelText, (text) => (draft.value = text));
 
-const handleChange = (value: string) => {
-	if (props.type === "JSON" && value) {
-		value = JSON.parse(value);
-	}
-	if (value === getModelValue()) {
-		isDirty.value = false;
-		return;
-	} else if (!props.readonly) {
-		isDirty.value = true;
-	}
-};
-
-const handleSave = (value: string) => {
-	if (props.readonly) return;
-
-	if (props.type === "JSON" && value) {
-		value = JSON.parse(value);
-	}
-	if (props.showSaveButton) {
-		emit("save", value);
-	} else {
-		emit("update:modelValue", value);
-	}
-};
-
-function resetEditor(resetHistory = false) {
-	const value = getModelValue();
-	if (editor.value && editor.value.resetEditor) {
-		// reset from inside the editor component to avoid recreating state
-		editor.value.resetEditor({ content: value, resetHistory, autofocus: props.autofocus });
-		isDirty.value = false;
-	} else {
-		console.error("Editor not available!");
-	}
-	// aceEditor?.clearSelection(); // TODO: implement in codemirror
-	isDirty.value = false;
+function parse(text: string) {
+	return props.type === "JSON" && text ? JSON.parse(text) : text;
 }
 
-watch(
-	() => props.modelValue,
-	() => {
-		resetEditor();
-	},
-);
+function commit() {
+	if (props.showSaveButton || props.readonly || !isDirty.value) return;
+	try {
+		emit("update:modelValue", parse(draft.value));
+	} catch {
+		// invalid JSON stays in the editor until it parses
+	}
+}
 
-defineExpose({ resetEditor, isDirty });
+function save() {
+	if (props.readonly) return;
+	emit(props.showSaveButton ? "save" : "update:modelValue", parse(draft.value));
+}
+
+defineExpose({ isDirty });
 </script>

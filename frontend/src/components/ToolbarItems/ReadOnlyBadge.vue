@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center gap-2">
-		<Badge variant="subtle" theme="orange">
+		<Badge variant="subtle" theme="amber">
 			{{ pageStore.activePage?.is_template ? __("Template") : __("Read Only") }}
 		</Badge>
 		<Button

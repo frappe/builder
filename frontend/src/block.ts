@@ -658,6 +658,14 @@ class Block implements BlockOptions {
 	getParentBlock(): Block | null {
 		return this.parentBlock || null;
 	}
+	getAncestorStyle(style: styleProperty, breakpoint?: string): StyleValue | undefined {
+		let parent = this.getParentBlock();
+		while (parent) {
+			const value = parent.getStyle(style, breakpoint);
+			if (value) return value;
+			parent = parent.getParentBlock();
+		}
+	}
 	selectParentBlock() {
 		const parentBlock = this.getParentBlock();
 		if (parentBlock) {

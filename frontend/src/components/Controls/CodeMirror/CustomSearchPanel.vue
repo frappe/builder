@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="absolute right-0 top-0 flex rounded-md border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
+		class="absolute right-0 top-0 flex rounded-5 border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
 		@keydown.esc.stop="closePanel">
 		<div v-if="enableReplace" class="flex items-center border-r border-outline-gray-2">
 			<Button
@@ -162,16 +162,13 @@ function toggleWholeWord() {
 	commit();
 }
 
-function closePanel(e?: KeyboardEvent | Event) {
-	const closestCmEditor = (e?.target as HTMLElement)?.closest(".cm-editor") as HTMLElement;
-	const closestCmContent = closestCmEditor.querySelector(".cm-content") as HTMLElement;
-	closestCmContent?.classList.remove("@md/editor:!pt-10", "!pt-20");
+function closePanel() {
 	closeSearchPanel(view);
 }
 
 onMounted(() => {
 	nextTick(() => {
-		inputRef.value?.el?.focus();
+		inputRef.value?.focus();
 	});
 });
 </script>

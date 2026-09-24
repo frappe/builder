@@ -14,7 +14,7 @@
 		<div
 			ref="componentContainer"
 			:class="{
-				'pt-2': !showSearchInput,
+				'pt-1': !showSearchInput,
 			}">
 			<div v-show="!components.length" class="text-base italic text-gray-600">
 				{{ __("No components saved") }}
@@ -38,6 +38,7 @@
 					<span class="block truncate">{{ component.component_name }}</span>
 					<template #suffix>
 						<span
+							v-if="!editorDemo"
 							class="lucide-trash size-3 cursor-pointer text-ink-gray-5"
 							:class="draggingComponentName === component.name ? 'hidden' : 'hidden group-hover:block'"
 							aria-hidden="true"
@@ -54,6 +55,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
+import { editorDemo } from "@/utils/editorDemo";
 import { useEventListener } from "@vueuse/core";
 import { ItemListRow } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";

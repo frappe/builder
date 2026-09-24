@@ -1,11 +1,13 @@
 import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
+import type { SettingsGroup } from "@/components/Settings";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
+import { editorDemo } from "@/utils/editorDemo";
 import RealTimeHandler from "@/utils/realtimeHandler";
 import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import BlockLayers from "./components/BlockLayers.vue";
 
@@ -60,6 +62,7 @@ const useBuilderStore = defineStore("builderStore", {
 		canvasDarkMode: useStorage("canvasDarkMode", false),
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
+		settingsGroup: <SettingsGroup | null>null,
 		openImageUpload: false,
 		// Set from ai_setup_state: a provider carrying its own key (Anthropic, a
 		// self-hosted gateway) is enough on its own, and the shared OpenRouter key in
@@ -118,10 +121,15 @@ const useBuilderStore = defineStore("builderStore", {
 					builderSettings.reload();
 				});
 		},
-		openBuilderSettings(tab?: string) {
+		openBuilderSettings(group: SettingsGroup, tab?: string) {
+			if (editorDemo) {
+				toast.info(__("Settings are not part of the demo"));
+				return;
+			}
 			if (tab) {
 				this.settingsActiveTab = tab;
 			}
+			this.settingsGroup = group;
 			this.showSettingsDialog = true;
 		},
 	},

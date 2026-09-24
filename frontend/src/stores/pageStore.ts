@@ -8,6 +8,7 @@ import useComponentStore from "@/stores/componentStore.js";
 import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import {
 	confirm,
 	countBlocks,
@@ -17,7 +18,7 @@ import {
 	getRouteVariables,
 } from "@/utils/helpers";
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import { nextTick } from "vue";
 
@@ -65,6 +66,8 @@ const usePageStore = defineStore("pageStore", {
 			// against the last page that actually loaded, so a retry after a failed
 			// fetch still counts as opening it
 			const switchingPage = pageName !== this.activePage?.name;
+			// going from one open page to another keeps the canvas zoom and pan
+			const keepViewport = switchingPage && Boolean(this.activePage);
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -105,7 +108,7 @@ const usePageStore = defineStore("pageStore", {
 			const canvasStore = useCanvasStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
-			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
 			if (page.client_scripts?.length) {
 				// Fetch full script documents for each script
@@ -127,7 +130,7 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						window.name = `editor-${pageName}`;
+						if (!editorDemo) window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
