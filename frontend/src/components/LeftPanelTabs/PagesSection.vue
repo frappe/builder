@@ -76,7 +76,8 @@ const pages = computed<BuilderPage[]>(() => {
 	const rows = (folderPages.data ?? [])
 		.map((page: BuilderPage) => (active && page.name === active.name ? { ...page, ...active } : page))
 		.filter((page: BuilderPage) => (page.project_folder || "") === folder.value);
-	if (!active || (active.project_folder || "") !== folder.value) return rows;
+	// templates stay out of the list like on the server, even when one is the open page
+	if (!active || active.is_template || (active.project_folder || "") !== folder.value) return rows;
 	const others = rows.filter((page) => page.name !== active.name);
 	if (!matchesSearch(active)) return others;
 	return others.length === rows.length ? [active, ...others] : rows;
