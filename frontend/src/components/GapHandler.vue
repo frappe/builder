@@ -1,18 +1,12 @@
 <template>
-	<div
-		class="group"
-		:class="{
-			'opacity-40': !updating,
-			'opacity-70': updating,
-		}"
-		@click.stop>
+	<div class="group" @click.stop>
 		<div
 			v-for="band in gapBands"
 			:key="band.key"
 			class="gap-handler absolute z-10 flex"
 			:class="[
 				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': band.filled && isActive(band.position) },
+				band.filled && isActive(band.position) && bandFill,
 			]"
 			:style="band.style"
 			@mouseenter="hoveredAxis = band.position"
@@ -20,11 +14,11 @@
 			@mousedown.stop="handleGap($event, band)">
 			<div
 				v-show="showPill"
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
-				:class="{ hidden: updating }"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				:class="[band.filled ? 'opacity-40' : 'opacity-80', { hidden: updating }]"
 				:style="band.handleStyle"
 				@mousedown.stop="handleGap($event, band)" />
-			<div v-show="updating" class="m-auto text-sm text-purple-900">
+			<div v-show="updating" class="m-auto text-sm text-purple-900 opacity-70">
 				{{ getGapValue(band.position) }}
 			</div>
 		</div>
@@ -33,7 +27,12 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
-import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import {
+	EMPTY_SPACING_PILL_GROWTH,
+	HANDLE_MIN_SCALE,
+	Position,
+	useSpacingHandler,
+} from "@/composables/useSpacingHandler";
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 
@@ -73,6 +72,7 @@ watchEffect(() => {
 });
 
 const hoveredAxis = ref<Position | null>(null);
+const bandFill = computed(() => (updating.value ? "bg-purple-300/70" : "bg-purple-300/40"));
 const isActive = (position: Position) =>
 	updating.value ? activeSides.value.includes(position) : hoveredAxis.value === position;
 
@@ -82,7 +82,6 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 );
 
 const CHILD_SELECTOR = ":scope > .__builder_component__";
-const HANDLE_MIN_SCALE = 0.5;
 const MIN_BAND = 2;
 const MIN_DRAGGABLE_BAND = 8;
 
@@ -245,6 +244,11 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 
 const isDraggable = (gap: number) => !showPill.value || gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
+const pillSize = (size: { width: number; height: number }, gap: number) => {
+	const growth = gap > 0 ? 1 : EMPTY_SPACING_PILL_GROWTH;
+	return { width: size.width * growth, height: size.height * growth };
+};
+
 const handleStyle = (
 	size: { width: number; height: number },
 	cursor: string,
@@ -291,21 +295,13 @@ const rowSeams = (lines: Box[][]): Seam[] =>
 		return { from, to: Math.max(topOf(line), from) };
 	});
 
-// Middle of the row line at the content's centre, or the line above when the centre is a row gap —
-// a row band there would paint over the column pill.
-const columnPillY = (rows: Seam[], content: Box) => {
-	const middle = (content.y0 + content.y1) / 2;
-	const tops = [content.y0, ...rows.map((seam) => seam.to)];
-	const bottoms = [...rows.map((seam) => seam.from), content.y1];
-	const line = tops.findLastIndex((top) => top <= middle);
-	return (tops[line] + bottoms[line]) / 2;
-};
+const columnPillY = (rows: Seam[], content: Box) => (content.y0 + (rows[0]?.from ?? content.y1)) / 2;
 
 // One band per seam, spanning the full content height.
 const columnBands = (seams: Seam[], content: Box, gap: number, pillY: number): GapBand[] =>
 	seams.map((seam, index) => {
 		const draggable = isDraggable(seam.to - seam.from);
-		const size = sideHandleSize.value;
+		const size = pillSize(sideHandleSize.value, gap);
 		return {
 			key: `column-${index}`,
 			position: Position.Right,
@@ -338,7 +334,7 @@ const rowBands = (seams: Seam[], content: Box, gap: number): GapBand[] =>
 				"height",
 				draggable ? verticalCursor.value : undefined,
 			),
-			handleStyle: handleStyle(longHandleSize.value, verticalCursor.value),
+			handleStyle: handleStyle(pillSize(longHandleSize.value, gap), verticalCursor.value),
 		};
 	});
 

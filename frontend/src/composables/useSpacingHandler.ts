@@ -58,6 +58,10 @@ const shorthandCodec = (property: SpacingType): ShorthandCodec =>
 const slotIndex = (property: SpacingType, side: Position) =>
 	SPACING_PROPERTIES[property].slots === 4 ? sides[side].index : sides[side].axis === "y" ? 0 : 1;
 
+// A side with no spacing has no band to grab, so its pill grows  to stand out.
+export const EMPTY_SPACING_PILL_GROWTH = 1.75;
+export const HANDLE_MIN_SCALE = 0.4;
+
 // Shared state and drag behaviour for the Padding and Gap handlers. The
 // per-slot positioning and value display differ and stay in each component.
 export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: () => string) {

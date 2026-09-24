@@ -1,104 +1,98 @@
 <template>
-	<div
-		class="group"
-		:class="{
-			'opacity-40': !updating,
-			'opacity-70': updating,
-		}"
-		@click.stop>
+	<div class="group" @click.stop>
 		<div
-			class="padding-handler absolute z-10 flex w-full"
+			class="padding-handler absolute flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 				cursor: isDraggable(topPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
 			:class="[
 				isDraggable(topPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': isActive(Position.Top) },
+				isActive(Position.Top) && bandFill,
 			]"
 			ref="topPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Top)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
-				:style="longHandle"
-				:class="{ hidden: updating }"
+				:style="pillStyle(Position.Top)"
+				:class="[isEmpty(Position.Top) ? 'opacity-80' : 'opacity-40', { hidden: updating }]"
 				@mouseenter="hoveredSide = Position.Top"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Top)" />
-			<div class="m-auto text-sm text-purple-900" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
 				{{ getPaddingValue(Position.Top) }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute bottom-0 z-10 flex w-full"
+			class="padding-handler absolute bottom-0 flex w-full"
 			:style="{
 				height: bottomPaddingHandlerHeight + 'px',
 				cursor: isDraggable(bottomPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
 			:class="[
 				isDraggable(bottomPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': isActive(Position.Bottom) },
+				isActive(Position.Bottom) && bandFill,
 			]"
 			ref="bottomPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Bottom)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
-				:style="longHandle"
-				:class="{ hidden: updating }"
+				:style="pillStyle(Position.Bottom)"
+				:class="[isEmpty(Position.Bottom) ? 'opacity-80' : 'opacity-40', { hidden: updating }]"
 				@mouseenter="hoveredSide = Position.Bottom"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Bottom)" />
-			<div class="m-auto text-sm text-purple-900" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
 				{{ getPaddingValue(Position.Bottom) }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute left-0 z-10 flex h-full"
+			class="padding-handler absolute left-0 flex h-full"
 			:style="{
 				width: leftPaddingHandlerWidth + 'px',
 				cursor: isDraggable(leftPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
 			:class="[
 				isDraggable(leftPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': isActive(Position.Left) },
+				isActive(Position.Left) && bandFill,
 			]"
 			ref="leftPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Left)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
-				:style="sideHandle"
-				:class="{ hidden: updating }"
+				:style="pillStyle(Position.Left)"
+				:class="[isEmpty(Position.Left) ? 'opacity-80' : 'opacity-40', { hidden: updating }]"
 				@mouseenter="hoveredSide = Position.Left"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Left)" />
-			<div class="m-auto text-sm text-purple-900" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
 				{{ getPaddingValue(Position.Left) }}
 			</div>
 		</div>
 		<div
-			class="padding-handler absolute right-0 z-10 flex h-full"
+			class="padding-handler absolute right-0 flex h-full"
 			:style="{
 				width: rightPaddingHandlerWidth + 'px',
 				cursor: isDraggable(rightPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
 			:class="[
 				isDraggable(rightPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
-				{ 'bg-purple-300': isActive(Position.Right) },
+				isActive(Position.Right) && bandFill,
 			]"
 			ref="rightPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Right)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
-				:style="sideHandle"
-				:class="{ hidden: updating }"
+				:style="pillStyle(Position.Right)"
+				:class="[isEmpty(Position.Right) ? 'opacity-80' : 'opacity-40', { hidden: updating }]"
 				@mouseenter="hoveredSide = Position.Right"
 				@mouseleave="hoveredSide = null"
 				@mousedown.stop="handlePadding($event, Position.Right)" />
-			<div class="m-auto text-sm text-purple-900" v-show="updating">
+			<div class="m-auto text-sm text-purple-900 opacity-70" v-show="updating">
 				{{ getPaddingValue(Position.Right) }}
 			</div>
 		</div>
@@ -107,7 +101,12 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
-import { Position, useSpacingHandler } from "@/composables/useSpacingHandler";
+import {
+	EMPTY_SPACING_PILL_GROWTH,
+	HANDLE_MIN_SCALE,
+	Position,
+	useSpacingHandler,
+} from "@/composables/useSpacingHandler";
 import { useMouseInElement } from "@vueuse/core";
 import { Ref, computed, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
@@ -164,6 +163,7 @@ const overBand = {
 };
 
 const hoveredSide = ref<Position | null>(null);
+const bandFill = computed(() => (updating.value ? "bg-purple-300/70" : "bg-purple-300/40"));
 const isActive = (side: Position) =>
 	updating.value ? activeSides.value.includes(side) : hoveredSide.value === side || overBand[side].value;
 
@@ -171,8 +171,6 @@ const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
 	() => props.targetBlock,
 );
-
-const HANDLE_MIN_SCALE = 0.5;
 
 const MIN_DRAGGABLE_BAND = 8;
 
@@ -220,13 +218,24 @@ const handleStyle = (
 	height: `${size.height}px`,
 	cursor: props.disableHandlers ? undefined : cursor,
 });
-const longHandle = computed(() =>
-	handleStyle(longHandleSize.value, { x: contentShift.value.x, y: 0 }, verticalCursor.value),
-);
+const bandThickness = {
+	[Position.Top]: topPaddingHandlerHeight,
+	[Position.Bottom]: bottomPaddingHandlerHeight,
+	[Position.Left]: leftPaddingHandlerWidth,
+	[Position.Right]: rightPaddingHandlerWidth,
+};
+const isEmpty = (side: Position) => bandThickness[side].value === 0;
 
-const sideHandle = computed(() =>
-	handleStyle(sideHandleSize.value, { x: 0, y: contentShift.value.y }, horizontalCursor.value),
-);
+const pillStyle = (side: Position) => {
+	const isLong = side === Position.Top || side === Position.Bottom;
+	const size = isLong ? longHandleSize.value : sideHandleSize.value;
+	const growth = isEmpty(side) ? EMPTY_SPACING_PILL_GROWTH : 1;
+	return handleStyle(
+		{ width: size.width * growth, height: size.height * growth },
+		isLong ? { x: contentShift.value.x, y: 0 } : { x: 0, y: contentShift.value.y },
+		isLong ? verticalCursor.value : horizontalCursor.value,
+	);
+};
 
 const handlePadding = (ev: MouseEvent, position: Position) => {
 	if (props.disableHandlers) return;
