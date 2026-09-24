@@ -15,6 +15,7 @@ from builder.extensions.data import (
 	DoctypeGrantRequired,
 	assert_doctype_grant,
 	delete_doc,
+	forget_doctype_grant,
 	get_count,
 	get_doc,
 	get_doctype_grant,
@@ -171,6 +172,17 @@ class TestExtensionGrants(FrappeTestCase):
 			pluck="installation",
 		)
 		self.assertEqual(kept, [theirs.name])
+
+	def test_forgetting_a_grant_asks_about_every_access_again(self):
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed", "delete": "denied"})
+
+		forget_doctype_grant(self.extension.name, "Contact")
+
+		grant = get_doctype_grant("acme/data", "Contact")
+		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("not asked",) * 3)
+
+	def test_forgetting_a_doctype_nobody_answered_is_quiet(self):
+		forget_doctype_grant(self.extension.name, "Contact")
 
 
 def make_contact(first_name="Ada"):

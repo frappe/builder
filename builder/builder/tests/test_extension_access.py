@@ -119,6 +119,11 @@ class TestExtensionRowScoping(FrappeTestCase):
 			self.assertIn(INSTALLATION_DOCTYPE, condition)
 			self.assertIn(frappe.db.escape(theirs), condition)
 
+	def test_a_system_manager_owns_what_hangs_off_any_installation(self):
+		row = frappe._dict(installation=make_installation("acme/scoped-admin", user=make_user()).name)
+
+		self.assertTrue(owns_through_installation(row, user="Administrator"))
+
 	def test_a_user_may_read_their_own_row(self):
 		theirs = make_user()
 		installation = make_installation("acme/scoped", user=theirs)

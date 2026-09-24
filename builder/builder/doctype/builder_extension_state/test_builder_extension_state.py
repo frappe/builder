@@ -11,7 +11,12 @@ from builder.builder.tests.extension_fixtures import (
 	make_installation,
 	make_user,
 )
-from builder.extensions.state import STATE_DOCTYPE, get_state, set_state, unset_state
+from builder.builder.doctype.builder_extension_state.builder_extension_state import (
+	TABLE,
+	UNIQUE_INDEX,
+	on_doctype_update,
+)
+from builder.extensions.state import STATE_DOCTYPE, get_state, read_patch, set_state, unset_state
 
 EXTENSION = "acme/remembers"
 
@@ -102,3 +107,16 @@ class TestExtensionState(FrappeTestCase):
 		self.installation.delete()
 
 		self.assertEqual(frappe.get_all(STATE_DOCTYPE, filters={"key": "theme"}), [])
+
+	def test_a_patch_that_is_not_an_object_is_refused_past_the_type_guard(self):
+		for sent in ('"dark"', "[1]", "3"):
+			with self.assertRaises(frappe.ValidationError, msg=sent):
+				read_patch(sent)
+
+	def test_the_unique_index_is_rebuilt_when_it_is_missing(self):
+		frappe.db.sql_ddl(f"alter table `{TABLE}` drop index `{UNIQUE_INDEX}`")
+
+		on_doctype_update()
+		on_doctype_update()
+
+		self.assertTrue(frappe.db.has_index(TABLE, UNIQUE_INDEX))
