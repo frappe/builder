@@ -3,16 +3,22 @@
 		<SidebarHeader title="Builder" :logo="builderLogo" :menuItems="appMenuItems" class="px-1.5" />
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
-			<nav class="space-y-0.5">
+			<BuilderInput
+				class="mb-2"
+				type="text"
+				:placeholder="__('Search pages')"
+				v-model="searchFilter"
+				@input="(value: string) => (searchFilter = value)">
+				<template #prefix>
+					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
+				</template>
+			</BuilderInput>
+			<nav>
 				<SidebarItem
+					icon="lucide-files"
 					:label="__('All Pages')"
-					:active="!builderStore.activeFolder"
-					@click="setFolderActive('')">
-					<template #prefix><FilesIcon class="size-4" /></template>
-				</SidebarItem>
-				<SidebarItem :label="__('Settings')" @click="showSettingsDialog = true">
-					<template #prefix><SettingsIcon class="size-4" /></template>
-				</SidebarItem>
+					:active="!searchFilter && dashboardView === 'all'"
+					@click="openDashboardView('all')" />
 			</nav>
 
 			<div class="mt-5 flex h-7 items-center justify-between">
@@ -20,69 +26,35 @@
 				<Button
 					variant="ghost"
 					size="sm"
-					icon="lucide-plus text-ink-gray-5"
-					:label="__('New folder')"
-					@click="promptCreateFolder()" />
+					icon="lucide-plus"
+					:aria-label="__('New folder')"
+					:tooltip="__('New folder')"
+					@click="newFolder" />
 			</div>
-
 			<p
 				v-if="!builderProjectFolder.data?.length"
 				class="mt-0.5 flex h-7 items-center pl-2 text-sm text-ink-gray-5">
 				{{ __("No folders yet") }}
 			</p>
 			<nav class="mt-0.5 space-y-0.5">
-				<SidebarItem
-					v-for="project in builderProjectFolder.data"
-					:key="project.folder_name"
-					icon="lucide-folder"
-					:label="project.folder_name"
-					:active="isFolderActive(project.folder_name)"
-					@click="setFolderActive(project.folder_name)">
-					<EditableSpan
-						v-model="project.folder_name"
-						:editable="renamingFolder === project.folder_name"
-						:onChange="
-							async (newName) => {
-								await renameFolder(newName, project);
-								renamingFolder = '';
-							}
+				<ContextMenu
+					v-for="folder in builderProjectFolder.data"
+					:key="folder.folder_name"
+					:options="folderMenu(folder)">
+					<SidebarItem
+						icon="lucide-folder"
+						:label="folder.folder_name"
+						:active="
+							!searchFilter && dashboardView === 'folder' && builderStore.activeFolder === folder.folder_name
 						"
-						@blur="renamingFolder = ''"
-						class="w-full truncate text-sm capitalize">
-						{{ project.folder_name }}
-					</EditableSpan>
-					<template #suffix>
-						<Button
-							v-if="isFolderActive(project.folder_name) && project.is_standard"
-							variant="ghost"
-							size="sm"
-							icon="lucide-info"
-							disabled
-							:tooltip="__('System generated folder cannot be edited or deleted')"
-							class="cursor-pointer" />
-						<Dropdown
-							v-else-if="isFolderActive(project.folder_name)"
-							align="end"
-							:options="[
-								{
-									label: __('Rename'),
-									onClick: () => {
-										renamingFolder = project.folder_name;
-									},
-									icon: 'lucide-edit',
-								},
-								{
-									label: __('Delete Folder'),
-									onClick: () => deleteFolder(project.folder_name),
-									icon: 'lucide-trash',
-								},
-							]">
-							<template v-slot="{ open }">
-								<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open" />
-							</template>
-						</Dropdown>
-					</template>
-				</SidebarItem>
+						@click="openDashboardView('folder', folder.folder_name)">
+						<template #suffix>
+							<span class="mr-2 text-sm text-ink-gray-4">
+								{{ folderPageCount(folder.folder_name) || "" }}
+							</span>
+						</template>
+					</SidebarItem>
+				</ContextMenu>
 			</nav>
 		</ScrollArea>
 
@@ -104,20 +76,16 @@
 <script lang="ts" setup>
 import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
-import EditableSpan from "@/components/EditableSpan.vue";
-import FilesIcon from "@/components/Icons/Files.vue";
-import SettingsIcon from "@/components/Icons/SettingsGear.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
-import { BuilderProjectFolder } from "@/types/doctypes";
-import { promptCreateFolder } from "@/utils/dialogs";
-import { confirm } from "@/utils/helpers";
+import { folderMenu, folderPageCount, promptNewFolder } from "@/utils/pageActions";
 import { useDark, useToggle } from "@vueuse/core";
 import {
+	Button,
+	ContextMenu,
 	createResource,
 	Dialog,
-	Dropdown,
 	ScrollArea,
 	Sidebar,
 	SidebarHeader,
@@ -135,8 +103,9 @@ const isDark = useDark({
 });
 const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
-const { showTemplatesDialog } = useDashboardState();
-const renamingFolder = ref("");
+const { showTemplatesDialog, searchFilter, dashboardView, openDashboardView } = useDashboardState();
+// a folder remembered from an older session must not steer new pages from another view
+if (dashboardView.value !== "folder") builderStore.activeFolder = "";
 
 const apps = createResource({
 	url: "builder.api.get_apps",
@@ -198,54 +167,9 @@ const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
 	},
 ]);
 
-const isFolderActive = (folderName: string) => {
-	return builderStore.activeFolder === folderName;
-};
-const setFolderActive = (folderName: string) => {
-	builderStore.activeFolder = folderName;
-};
+// a folder made here opens straight away, so the next step is adding pages to it
+const newFolder = () => promptNewFolder((folder) => openDashboardView("folder", folder));
 
-const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectFolder) => {
-	if (!newFolderName) return;
-	return createResource({
-		url: "frappe.client.rename_doc",
-	})
-		.submit({
-			doctype: "Builder Project Folder",
-			old_name: targetFolder.folder_name,
-			new_name: newFolderName,
-		})
-		.then(() => {
-			builderProjectFolder.data = (builderProjectFolder.data ?? []).map((folder: BuilderProjectFolder) => {
-				if (folder.folder_name === builderStore.activeFolder) {
-					folder.folder_name = newFolderName;
-				}
-				return folder;
-			});
-			setFolderActive(newFolderName);
-		});
-};
-
-const deleteFolder = async (folderName: string) => {
-	const confirmed = await confirm(
-		__(
-			'Are you sure you want to delete this folder? All the pages under this folder will be visible under "All Pages"',
-		),
-	);
-	if (!confirmed) return;
-	await createResource({
-		url: "builder.api.delete_folder",
-		method: "POST",
-		params: {
-			folder_name: folderName,
-		},
-		auto: true,
-	});
-	builderProjectFolder.data = (builderProjectFolder.data ?? []).filter(
-		(folder: BuilderProjectFolder) => folder.folder_name !== folderName,
-	);
-	setFolderActive("");
-};
 const showSettingsDialog = ref(false);
 const builderVersion = (window as any).builder_version;
 </script>

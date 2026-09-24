@@ -1,48 +1,5 @@
 <template>
-	<Dropdown
-		:options="[
-			{
-				group: 'Actions',
-				hideLabel: true,
-				options: [
-					{
-						label: __('Rename'),
-						onClick: () => promptRenamePage(props.page),
-						icon: 'lucide-pencil',
-					},
-					{
-						label: __('Duplicate'),
-						onClick: () => pageStore.duplicatePage(props.page),
-						icon: 'lucide-copy',
-					},
-					{
-						label: __('View Page'),
-						onClick: () => pageStore.openPageInBrowser(props.page),
-						icon: 'lucide-globe',
-						condition: () => Boolean(props.page.published || props.page.staging),
-					},
-					{
-						label: __('Unpublish'),
-						onClick: () => pageStore.unpublishPage(props.page),
-						icon: 'lucide-globe-x',
-						condition: () => Boolean(props.page.published || props.page.staging),
-					},
-					{
-						label: __('View in Desk'),
-						onClick: () => openInDesk(props.page),
-						icon: 'lucide-arrow-up-right',
-					},
-					{
-						label: __('Delete'),
-						onClick: () => pageStore.deletePage(props.page),
-						icon: 'lucide-trash',
-						condition: () => !props.page.is_standard,
-					},
-				],
-			},
-		]"
-		:size="size"
-		:align="align">
+	<Dropdown v-model:open="open" :options="pageMenu(page)" :size="size" :align="align">
 		<!-- The slot content becomes the dropdown trigger (reka-ui as-child).
 			 `open` goes through so a trigger that only shows on hover can stay put while its menu is up. -->
 		<template #default="triggerProps">
@@ -52,16 +9,14 @@
 </template>
 
 <script setup lang="ts">
-import { __ } from "@/translation";
-import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { promptRenamePage } from "@/utils/dialogs";
-import { openInDesk } from "@/utils/helpers";
+import { pageMenu } from "@/utils/pageActions";
 import { Dropdown } from "frappe-ui";
 
-const pageStore = usePageStore();
+// the card opens this same menu on right-click
+const open = defineModel<boolean>("open", { default: false });
 
-const props = withDefaults(
+withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
