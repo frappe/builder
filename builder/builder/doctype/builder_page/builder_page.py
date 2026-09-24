@@ -580,6 +580,9 @@ class BuilderPage(WebsiteGenerator):
 		context.page_name = self.name
 		if is_demo_page(self.name) and not context.preview:
 			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
+			# the file is served immutable for a year, so a build has to change its URL
+			version = frappe.utils.get_build_version()
+			context.editor_demo_script = f"/assets/builder/js/editor_demo.js?v={version}"
 		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
@@ -1055,6 +1058,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
 			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
+			# browsers don't hide <source>, and display: contents on picture turns it into a flex/grid item
+			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
 			state["has_dual_mode_image"] = True
@@ -1726,14 +1731,15 @@ def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family.
 
-	Families used in italic get the `ital` axis with 400 always included as a
-	fallback instance. css2 silently drops tuples a family doesn't ship, so
-	no font catalog is needed."""
+	Families used in italic get the `ital` axis at every weight the family is
+	used at: an <em> or <i> inherits whatever weight surrounds it, which the
+	renderer doesn't track. Faces only download when text uses them, and css2
+	silently drops tuples a family doesn't ship, so no font catalog is needed."""
 	normalize_font_weights(font_map)
 	urls = []
 	for font, options in font_map.items():
 		family = quote_plus(font)
-		italics = sorted({400, *(int(weight) for weight in options.get("italics", []))})
+		italics = sorted({*options["weights"], *(int(weight) for weight in options.get("italics", []))})
 		if options.get("italics"):
 			tuples = [f"0,{weight}" for weight in options["weights"]]
 			tuples += [f"1,{weight}" for weight in italics]
