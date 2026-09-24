@@ -1,33 +1,14 @@
 <template>
 	<div class="m-auto flex w-3/4 max-w-6xl items-center justify-between bg-surface-base px-3.5 py-5 pt-8">
-		<h1
-			class="text-xl-semibold truncate text-ink-gray-9"
-			:title="builderStore.activeFolder || __('All Pages')">
-			{{ builderStore.activeFolder || __("All Pages") }}
+		<h1 class="text-xl-semibold flex min-w-0 items-center gap-1.5 text-ink-gray-9">
+			<span
+				v-if="dashboardView === 'folder' && !searchFilter"
+				class="lucide-folder size-5 shrink-0 text-ink-gray-5"
+				aria-hidden="true" />
+			<span class="truncate" :title="title">{{ title }}</span>
 		</h1>
 		<div class="flex shrink-0 gap-2">
-			<div>
-				<Button variant="solid" v-if="selectionMode && selectedPages.size" @click="promptSelectFolder()">
-					{{ __("Move To Folder") }}
-				</Button>
-			</div>
-			<div class="relative flex" v-show="!selectionMode">
-				<BuilderInput
-					class="w-48"
-					type="text"
-					:placeholder="__('Filter by title or route')"
-					v-model="searchFilter"
-					@input="
-						(value: string) => {
-							searchFilter = value;
-						}
-					">
-					<template #prefix>
-						<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
-					</template>
-				</BuilderInput>
-			</div>
-			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
+			<div class="max-md:hidden" v-show="displayType !== 'tree'">
 				<Select
 					v-model="statusFilter"
 					:options="[
@@ -38,7 +19,7 @@
 						{ label: __('Draft'), value: 'draft' },
 					]" />
 			</div>
-			<div v-if="displayType === 'tree' && !selectionMode">
+			<div v-if="displayType === 'tree'">
 				<Button
 					variant="subtle"
 					size="sm"
@@ -51,7 +32,7 @@
 					{{ treeExpanded ? __("Collapse") : __("Expand") }}
 				</Button>
 			</div>
-			<div class="max-sm:hidden" v-show="displayType !== 'tree' && !selectionMode">
+			<div class="max-sm:hidden" v-show="displayType !== 'tree'">
 				<Select
 					v-model="orderBy"
 					:options="[
@@ -102,20 +83,29 @@ import { __ } from "@/translation";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";
-import { promptSelectFolder } from "@/utils/dialogs";
 import { Button, Select } from "frappe-ui";
+import { computed } from "vue";
 import ListTreeIcon from "~icons/lucide/list-tree";
 
 const builderStore = useBuilderStore();
 const {
 	searchFilter,
-	selectionMode,
-	selectedPages,
 	treeExpanded,
 	displayType,
 	statusFilter,
 	orderBy,
 	expandTreeFn,
 	collapseTreeFn,
+	dashboardView,
 } = useDashboardState();
+
+const viewTitles = {
+	all: __("All Pages"),
+};
+
+const title = computed(() => {
+	if (searchFilter.value) return __("Results for “{0}”", [searchFilter.value]);
+	if (dashboardView.value === "folder") return builderStore.activeFolder;
+	return viewTitles[dashboardView.value];
+});
 </script>
