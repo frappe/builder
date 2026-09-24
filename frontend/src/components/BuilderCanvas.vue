@@ -213,6 +213,8 @@ const {
 	selectBlockRange,
 	selectedBlockIds,
 	isSelected,
+	selectBlock,
+	removeNestedBlocks,
 	toggleBlockSelection,
 	selectedBlocks,
 } = useBlockSelection(block);
@@ -264,12 +266,11 @@ const {
 	clearCanvas,
 	getRootBlock,
 	setRootBlock,
-	selectBlock,
 	scrollBlockIntoView,
 	removeBlock,
 	findBlock,
 	isDirty,
-} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
+} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, selectBlock, history);
 
 const { followBuildEdge, followBlock } = useBuildFollow(canvasProps, canvasContainer, canvas);
 
@@ -279,7 +280,9 @@ const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMar
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
+		selectedBlocks,
 		findBlock,
+		removeNestedBlocks,
 		setActiveBreakpoint,
 		setHoveredBreakpoint,
 	});
