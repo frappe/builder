@@ -2,15 +2,18 @@
 	<div class="flex items-center">
 		<Button
 			variant="solid"
-			:disabled="disabled"
+			:size="size"
+			:disabled="disabled || !activePageLoaded"
+			:label="publishButtonLabel"
+			:icon="iconOnly ? 'lucide-cloud-upload' : undefined"
+			:tooltip="iconOnly ? publishButtonLabel : undefined"
 			@click="publish(Boolean(pageStore.activePage?.staging))"
 			class="border-0"
 			:class="{
 				'rounded-br-none rounded-tr-none': showDropdown,
+				'!rounded-full': iconOnly,
 			}"
-			:loading="publishing">
-			{{ publishButtonLabel }}
-		</Button>
+			:loading="publishing" />
 		<Dropdown
 			v-if="showDropdown"
 			:options="[
@@ -44,7 +47,7 @@
 			align="end">
 			<Button
 				variant="solid"
-				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
+				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode || !activePageLoaded"
 				icon="lucide-chevron-down"
 				class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 		</Dropdown>
@@ -57,19 +60,28 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { Dropdown } from "frappe-ui";
 import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 
-defineProps<{
+const props = defineProps<{
 	disabled?: boolean;
+	size?: "sm" | "md";
+	// drops the label and the menu: one round icon button, for the floating toolbar
+	iconOnly?: boolean;
 }>();
 
+const route = useRoute();
 const pageStore = usePageStore();
 const canvasStore = useCanvasStore();
 const builderStore = useBuilderStore();
 
 const publishing = ref(false);
 const showDropdown = computed(() => {
-	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
+	return !props.iconOnly && canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
+
+// a stand-alone preview sets activePage asynchronously, so a click before it
+// resolves would publish with another page's (or no) staging/published state
+const activePageLoaded = computed(() => pageStore.activePage?.name === route.params.pageId);
 
 // the main button keeps a live or staging page where it is; the menu moves it
 const isDraft = computed(() => !pageStore.activePage?.published && !pageStore.activePage?.staging);

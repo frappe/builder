@@ -114,7 +114,7 @@ commands.register({
 	keys: { combo: "Mod+P", description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
-		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
+		pageStore.openPreview(pageStore.selectedPage as string);
 	},
 });
 

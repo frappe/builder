@@ -20,9 +20,13 @@ import {
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
-import { nextTick } from "vue";
+import { markRaw, nextTick } from "vue";
 
 const { capture } = useTelemetry();
+
+// a window name of its own, so detaching the preview does not take over the tab
+// that openPageInBrowser uses for the live page
+const DETACHED_PREVIEW_TAB = "builder-detached-preview";
 
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
@@ -51,6 +55,9 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
+		// the preview tab detached from the editor. A window handle does not survive
+		// a reload of the editor, so the preview then opens in place again.
+		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {
 		async setPage(
@@ -98,11 +105,7 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
-			this.routeVariables = normalizeRouteVariables(JSON.parse(variables));
-			if (routeParams) {
-				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
-			}
+			this.loadRouteVariables(page.name, routeParams);
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
@@ -130,7 +133,8 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						if (!editorDemo) window.name = `editor-${pageName}`;
+						// the preview tab keeps the name it was opened under, so it can be raised by name
+						if (router.currentRoute.value.name === "builder" || !editorDemo) window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
@@ -145,6 +149,14 @@ const usePageStore = defineStore("pageStore", {
 					}
 				}, 50);
 			});
+		},
+
+		loadRouteVariables(pageName: string, routeParams: Record<string, unknown> | null = null) {
+			const stored = localStorage.getItem(`${pageName}:routeVariables`) || "{}";
+			this.routeVariables = normalizeRouteVariables(JSON.parse(stored));
+			if (routeParams) {
+				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
+			}
 		},
 
 		async setActivePage(pageName: string) {
@@ -435,6 +447,46 @@ const usePageStore = defineStore("pageStore", {
 			this.routeVariables[variable] = value;
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
 			this.setPageData(this.activePage as BuilderPage);
+		},
+
+		detachPreview(pageId: string) {
+			const previewURL = router.resolve({
+				name: "preview",
+				params: { pageId },
+			}).href;
+			const tab = window.open(previewURL, DETACHED_PREVIEW_TAB);
+			if (tab) this.detachedPreview = markRaw({ tab, pageId });
+			tab?.focus();
+		},
+
+		// the detached tab, while it is open and still shows this page
+		getDetachedPreview(pageId: string) {
+			if (this.detachedPreview?.tab.closed) this.detachedPreview = null;
+			if (this.detachedPreview?.pageId !== pageId) return null;
+			return this.detachedPreview.tab;
+		},
+
+		// The tab that opened this preview, while it is still open.
+		getEditorTab() {
+			const opener = window.opener as Window | null;
+			return opener && !opener.closed ? opener : null;
+		},
+
+		// Chrome ignores focus() on another tab, so the tab is raised the way
+		// openPageInBrowser raises one: by name, through window.open. An empty URL
+		// leaves the editor where it is, rather than reloading it.
+		focusEditorTab() {
+			const editorTab = this.getEditorTab();
+			if (!editorTab) return false;
+			if (editorTab.name) window.open("", editorTab.name);
+			editorTab.focus();
+			return true;
+		},
+
+		openPreview(pageId: string) {
+			const tab = this.getDetachedPreview(pageId);
+			if (tab) tab.focus();
+			else router.push({ name: "preview", params: { pageId } });
 		},
 
 		openPageInBrowser(page: BuilderPage) {

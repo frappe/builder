@@ -144,6 +144,7 @@ declare module 'vue' {
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']
     Play: typeof import('./src/components/Icons/Play.vue')['default']
+    PreviewFullscreenToolbar: typeof import('./src/components/PreviewFullscreenToolbar.vue')['default']
     PropertyControlInput: typeof import('./src/components/Controls/PropertyControlInput.vue')['default']
     PropertyLabel: typeof import('./src/components/Controls/PropertyLabel.vue')['default']
     PropsEditor: typeof import('./src/components/PropsEditor.vue')['default']
