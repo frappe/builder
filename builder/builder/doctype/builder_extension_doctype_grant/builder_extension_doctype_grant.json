@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-08-20 10:00:00.000000",
- "description": "What one extension may do to one doctype, for one installation. The user answers read, write and delete in the Builder editor, not here, and no answer can exceed the user's own Frappe permissions. An admin can change an answer here. Set every answer to not asked, or delete the grant, to let the extension ask again.",
+ "description": "What one extension may do to one doctype, for the whole site. An extension manager answers read, write and delete in the Builder editor, or here. No answer can exceed a user's own Frappe permissions, because every call still runs as the user who makes it. Set every answer to not asked, or delete the grant, to let the extension ask again.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -13,13 +13,13 @@
  ],
  "fields": [
   {
-   "description": "The installation this grant belongs to. It identifies the user, the source, and the extension.",
+   "description": "The installation this grant belongs to.",
    "fieldname": "installation",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Installation",
-   "options": "Builder User Extension",
+   "options": "Builder Extension",
    "read_only": 1,
    "reqd": 1
   },
@@ -64,7 +64,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-15 12:00:00.000000",
+ "modified": "2026-09-24 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension DocType Grant",
@@ -84,11 +84,8 @@
    "write": 1
   },
   {
-   "create": 1,
-   "delete": 1,
    "read": 1,
-   "role": "Website Manager",
-   "write": 1
+   "role": "Website Manager"
   }
  ],
  "row_format": "Dynamic",

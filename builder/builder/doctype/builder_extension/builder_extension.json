@@ -1,11 +1,10 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One user's installation of one extension, with its own build, version, and permissions. Deleting it removes the user's copy, grants, and extension state, but keeps any doctype, token, or client script the extension made.",
+ "description": "One extension installed on this site, with its build, version and capabilities. Deleting it removes its files, doctype grants and extension state, but keeps any doctype, token or client script the extension made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "user",
   "extension",
   "source_url",
   "enabled",
@@ -23,17 +22,6 @@
  ],
  "fields": [
   {
-   "description": "The server sets this from the session. It never reads this value from a caller.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
    "description": "The extension's namespaced identity, in the form \"publisher/name\".",
    "fieldname": "extension",
    "fieldtype": "Data",
@@ -41,7 +29,8 @@
    "in_standard_filter": 1,
    "label": "Extension",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "description": "Where the files came from. Shown in the panel, but not part of the extension's identity. Empty for an extension installed from a directory.",
@@ -53,7 +42,7 @@
   },
   {
    "default": "1",
-   "description": "Off stops this user's frames. It stops nobody else's.",
+   "description": "Off stops this extension for every user.",
    "fieldname": "enabled",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -86,7 +75,7 @@
    "label": "Readme"
   },
   {
-   "description": "The release this user runs. Another user can run another one.",
+   "description": "The release this site runs.",
    "fieldname": "version",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -108,7 +97,7 @@
    "read_only": 1
   },
   {
-   "description": "JSON list of capability keys this user granted. A key absent here is not granted.",
+   "description": "JSON list of capability keys an extension manager granted. A key absent here is not granted.",
    "fieldname": "granted_capabilities",
    "fieldtype": "Small Text",
    "label": "Granted Capabilities"
@@ -141,10 +130,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 14:00:00.000000",
+ "modified": "2026-09-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
- "name": "Builder User Extension",
+ "name": "Builder Extension",
  "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
@@ -161,11 +150,8 @@
    "write": 1
   },
   {
-   "create": 1,
-   "delete": 1,
    "read": 1,
-   "role": "Website Manager",
-   "write": 1
+   "role": "Website Manager"
   }
  ],
  "row_format": "Dynamic",

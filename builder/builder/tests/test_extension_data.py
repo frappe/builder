@@ -9,6 +9,7 @@ from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
 	make_user,
+	set_extension_manager_role,
 )
 from builder.extensions.data import (
 	MAX_PAGE_LENGTH,
@@ -45,13 +46,13 @@ class TestExtensionGrants(FrappeTestCase):
 			grant, {"doctype": "Contact", "read": "not asked", "write": "not asked", "delete": "not asked"}
 		)
 
-	def test_an_extension_this_user_has_not_installed_is_refused(self):
+	def test_an_extension_the_site_has_not_installed_is_refused(self):
 		"""The capability gate runs first, so there is nothing to answer about."""
 		drop_installations("acme/absent")
 
 		self.assertRaises(frappe.PermissionError, get_doctype_grant, "acme/absent", "Contact")
 
-	def test_the_grant_belongs_to_the_copy_that_answered(self):
+	def test_the_grant_belongs_to_the_installation(self):
 		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 		self.assertEqual(
@@ -61,16 +62,22 @@ class TestExtensionGrants(FrappeTestCase):
 			self.extension.name,
 		)
 
-	def test_another_user_is_asked_again(self):
-		"""One person's answer is not everybody's."""
+	def test_a_grant_covers_every_user(self):
 		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
-		theirs = make_user()
-		make_extension(user=theirs)
 
-		frappe.set_user(theirs)
+		frappe.set_user(make_user())
 		self.addCleanup(frappe.set_user, "Administrator")
 
-		self.assertEqual(get_doctype_grant("acme/data", "Contact")["read"], "not asked")
+		self.assertEqual(get_doctype_grant("acme/data", "Contact")["read"], "allowed")
+
+	def test_a_user_who_cannot_manage_cannot_answer(self):
+		"""The browser shows this refusal as "ask an extension manager"."""
+		set_extension_manager_role(self, None)
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		with self.assertRaises(frappe.PermissionError):
+			record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 	def test_recording_a_grant_allows_what_was_asked(self):
 		grant = record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
@@ -158,9 +165,9 @@ class TestExtensionGrants(FrappeTestCase):
 			frappe.PermissionError, assert_doctype_grant, self.extension.name, "acme/data", "Contact", "write"
 		)
 
-	def test_uninstalling_drops_only_this_users_grants(self):
+	def test_uninstalling_drops_only_this_extensions_grants(self):
 		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
-		theirs = make_extension(user=make_user())
+		theirs = make_extension("acme/other")
 		upsert_doctype_grant(theirs.name, "Contact", {"read": "allowed"})
 
 		frappe.delete_doc(INSTALLATION_DOCTYPE, self.extension.name)
@@ -203,6 +210,16 @@ class TestExtensionDocuments(FrappeTestCase):
 		rows = get_list("acme/data", "Contact", fields=["name", "first_name"])
 
 		self.assertIn("Grace", [row.first_name for row in rows])
+
+	def test_a_grant_never_widens_the_users_own_permission(self):
+		"""The site allows the extension. Frappe still checks the user who is calling."""
+		make_contact()
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertFalse(frappe.has_permission("Contact", "read"))
+		with self.assertRaises(frappe.PermissionError):
+			get_list("acme/data", "Contact")
 
 	def test_a_list_needs_a_read_grant(self):
 		self.assertRaises(DoctypeGrantRequired, get_list, "acme/data", "ToDo")

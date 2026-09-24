@@ -89,19 +89,15 @@ after_app_install = "builder.install.after_app_install"
 # -----------
 # Permissions evaluated in scripted ways
 
-# An extension belongs to the user who installed it. These make Desk agree with
-# what the whitelisted methods already enforce, so a list view, a report and a
-# get_all all answer with one user's rows. A System Manager sees them all.
+# An extension is installed for the site, but its stored state is one user's.
+# These make Desk agree with what `state.py` already enforces, so a list view, a
+# report and a get_all all answer with one user's state. A System Manager sees it all.
 permission_query_conditions = {
-	"Builder User Extension": "builder.extensions.access.installation_conditions",
-	"Builder Extension DocType Grant": "builder.extensions.access.doctype_grant_conditions",
 	"Builder Extension State": "builder.extensions.access.state_conditions",
 }
 
 has_permission = {
-	"Builder User Extension": "builder.extensions.access.owns_row",
-	"Builder Extension DocType Grant": "builder.extensions.access.owns_through_installation",
-	"Builder Extension State": "builder.extensions.access.owns_through_installation",
+	"Builder Extension State": "builder.extensions.access.owns_state",
 }
 
 user_invitation = {

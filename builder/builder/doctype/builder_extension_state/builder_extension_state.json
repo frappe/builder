@@ -6,18 +6,30 @@
  "engine": "InnoDB",
  "field_order": [
   "installation",
+  "user",
   "state_key",
   "state_value"
  ],
  "fields": [
   {
-   "description": "The installation that stored this value. It names the user, so this record needs no separate owner.",
+   "description": "The installation that stored this value.",
    "fieldname": "installation",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Installation",
-   "options": "Builder User Extension",
+   "options": "Builder Extension",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The user this value belongs to. The server sets it from the session, and never reads it from a caller.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
    "read_only": 1,
    "reqd": 1
   },
@@ -38,7 +50,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-24 12:00:00.000000",
+ "modified": "2026-09-24 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension State",

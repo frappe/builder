@@ -8,11 +8,12 @@ from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
 	make_user,
+	set_extension_manager_role,
 )
 from builder.extensions.access import assert_extension_access, find_installation
 from builder.extensions.data import record_doctype_grant
 from builder.extensions.installations import (
-	get_user_installations,
+	get_installations,
 	installation_doctype_grants,
 	set_doctype_grant,
 	set_extension_enabled,
@@ -27,17 +28,22 @@ def names(installations: list[dict]) -> list[str]:
 	return [installation["name"] for installation in installations]
 
 
-class TestUserInstallations(FrappeTestCase):
+def become_a_user_who_cannot_manage(test_case):
+	set_extension_manager_role(test_case, None)
+	frappe.set_user(make_user())
+
+
+class TestInstallations(FrappeTestCase):
 	"""The listing the Extensions panel reads, which the editor's own list cannot be."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_lists_this_users_installation(self):
+	def test_lists_the_sites_installation(self):
 		make_installation(EXTENSION, version="2.1.0")
 
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION]
+		listed = [row for row in get_installations() if row["name"] == EXTENSION]
 
 		self.assertEqual(len(listed), 1)
 		self.assertEqual(listed[0]["version"], "2.1.0")
@@ -47,13 +53,14 @@ class TestUserInstallations(FrappeTestCase):
 		"""Hiding it would leave no way to turn it back on but the bench."""
 		make_installation(EXTENSION, enabled=0)
 
-		listed = next(row for row in get_user_installations() if row["name"] == EXTENSION)
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertFalse(listed["enabled"])
 
-	def test_leaves_out_another_users_installation(self):
-		make_installation(EXTENSION, user=make_user())
+	def test_every_builder_user_sees_the_same_list(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
 
-		self.assertNotIn(EXTENSION, names(get_user_installations()))
+		self.assertIn(EXTENSION, names(get_installations()))
 
 
 class TestEnableAndDisable(FrappeTestCase):
@@ -66,7 +73,7 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, False)
 
-		listed = next(row for row in get_user_installations() if row["name"] == EXTENSION)
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertFalse(listed["enabled"])
 
 	def test_disabling_closes_the_gate(self):
@@ -81,8 +88,24 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, True)
 
-		listed = next(row for row in get_user_installations() if row["name"] == EXTENSION)
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertTrue(listed["enabled"])
+
+	def test_a_user_with_the_manager_role_can_switch_it(self):
+		make_installation(EXTENSION)
+		set_extension_manager_role(self, "Website Manager")
+		frappe.set_user(make_user())
+
+		set_extension_enabled(EXTENSION, False)
+
+		self.assertFalse(frappe.db.get_value("Builder Extension", {"extension": EXTENSION}, "enabled"))
+
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
+
+		with self.assertRaises(frappe.PermissionError):
+			set_extension_enabled(EXTENSION, False)
 
 
 class TestGrantedCapabilities(FrappeTestCase):
@@ -118,29 +141,34 @@ class TestGrantedCapabilities(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			set_granted_capabilities(EXTENSION, ["quantum.read"])
 
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
+
+		with self.assertRaises(frappe.PermissionError):
+			set_granted_capabilities(EXTENSION, [])
+
 
 class TestUninstall(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_removes_this_users_installation(self):
+	def test_removes_the_sites_installation(self):
 		make_installation(EXTENSION)
 
 		uninstall_extension(EXTENSION)
 
-		self.assertNotIn(EXTENSION, names(get_user_installations()))
+		self.assertNotIn(EXTENSION, names(get_installations()))
 
-	def test_leaves_another_users_installation_standing(self):
-		other = make_user()
-		make_installation(EXTENSION, user=other)
+	def test_refuses_a_user_who_cannot_manage(self):
 		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
 
-		uninstall_extension(EXTENSION)
+		with self.assertRaises(frappe.PermissionError):
+			uninstall_extension(EXTENSION)
 
-		self.assertTrue(frappe.db.exists("Builder User Extension", {"extension": EXTENSION, "user": other}))
-
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
 
@@ -150,11 +178,11 @@ def answers(read="not asked", write="not asked", delete="not asked") -> dict:
 
 
 class TestGrantAnswers(FrappeTestCase):
-	"""Changing what a user already answered for, one access at a time.
+	"""Changing what a manager already answered for, one access at a time.
 
-	The gate is the user's own installation, never the extension's access. They
-	must reach an answer after disabling the extension or turning `data.access`
-	off, which is when they most want it back.
+	The gate is the manager right, never the extension's access. A manager must
+	reach an answer after disabling the extension or turning `data.access` off,
+	which is when they most want it back.
 	"""
 
 	def setUp(self):
@@ -205,6 +233,13 @@ class TestGrantAnswers(FrappeTestCase):
 
 		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
+		with self.assertRaises(frappe.PermissionError):
+			set_doctype_grant(EXTENSION, "Contact", answers())
+
+	def test_refuses_a_user_who_cannot_manage(self):
+		self.grant({"read": "allowed"})
+		become_a_user_who_cannot_manage(self)
+
 		with self.assertRaises(frappe.PermissionError):
 			set_doctype_grant(EXTENSION, "Contact", answers())

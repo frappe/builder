@@ -6,9 +6,10 @@
 No capability gates this. The extension's own drawer is not a write to the page,
 so a read-only page does not close it.
 
-One row per key, on the site. The store used to be `localStorage`, which is per
-browser, so two people sharing a machine shared every extension's state. Here it
-follows the user between machines.
+One row per user and key, on the site. The extension is installed for the whole
+site, but what it stores is one user's. The store used to be `localStorage`, which
+is per browser, so two people sharing a machine shared every extension's state.
+Here it follows the user between machines.
 
 A development extension still uses the browser. Its installation goes on every
 `pagehide`, so a row here would not survive the reload an author needs.
@@ -63,13 +64,15 @@ def unset_state(extension: str, key: str) -> None:
 
 
 def read_rows(installation: str) -> dict:
-	"""Every stored key, by key.
+	"""Every key this user stored, by key.
 
 	One query, not one per key. A store is capped under a megabyte, so reading it
 	whole costs less than the round trips.
 	"""
 	rows = frappe.get_all(
-		STATE_DOCTYPE, filters={"installation": installation}, fields=["name", "state_key", "state_value"]
+		STATE_DOCTYPE,
+		filters={"installation": installation, "user": frappe.session.user},
+		fields=["name", "state_key", "state_value"],
 	)
 	return {row.state_key: row for row in rows}
 
@@ -102,5 +105,11 @@ def write_row(installation: str, row, key: str, value) -> None:
 		return
 
 	frappe.get_doc(
-		{"doctype": STATE_DOCTYPE, "installation": installation, "state_key": key, "state_value": stored}
+		{
+			"doctype": STATE_DOCTYPE,
+			"installation": installation,
+			"user": frappe.session.user,
+			"state_key": key,
+			"state_value": stored,
+		}
 	).insert()

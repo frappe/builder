@@ -1,15 +1,19 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""What one extension may do to one doctype, for one installation.
+"""What one extension may do to one doctype, for the whole site.
 
 Three gates stand between an extension and a document:
 1. The capability says the extension may work with site data at all (`data.access`).
-2. The doctype grant here says which doctype, and which of read, write and delete. The same user answers each one on its own while the editor runs.
-3. Frappe's own permission says whether that user may do it, and it is theonly one that cannot be widened: nothing in this module passes`ignore_permissions`.
+2. The doctype grant here says which doctype, and which of read, write and delete.
+   An extension manager answers each one on its own while the editor runs.
+3. Frappe's own permission says whether the user who is calling may do it. It is
+   the only gate that cannot be widened: no document an extension reads or writes
+   passes `ignore_permissions`.
 
-Every gate belongs to one installation, the way `Builder Extension State` does.
-One user allowing an extension to read Contact says nothing about the next user, neither about a second copy of that extension.
+The first two gates belong to the site. The third belongs to each user, so a
+grant is a ceiling and never adds access. A manager allowing an extension to read
+Contact lets a user read only the contacts that user can already read.
 
 A doctype grant is asked for, never assumed. `data.requestAccess` in the browser is the
 one path that opens a dialog, and every other call refuses without one.
@@ -19,7 +23,7 @@ import frappe
 import frappe.client
 from frappe import _
 
-from builder.extensions.access import assert_extension_access
+from builder.extensions.access import assert_extension_access, assert_extension_manager
 
 GRANT_DOCTYPE = "Builder Extension DocType Grant"
 
@@ -28,7 +32,7 @@ ALLOWED = "allowed"
 DENIED = "denied"
 ANSWERS = (NOT_ASKED, ALLOWED, DENIED)
 
-# each access holds its own answer, so a user can allow read and deny delete
+# each access holds its own answer, so a manager can allow read and deny delete
 ACCESSES = ("read", "write", "delete")
 
 # a page of rows, and the ceiling one call can ask for. The server owns this
@@ -49,20 +53,22 @@ class DoctypeGrantRequired(frappe.PermissionError):
 
 @frappe.whitelist()
 def get_doctype_grant(extension: str, doctype: str) -> dict:
-	"""What this extension may already do to this doctype, for this user."""
+	"""What this extension may already do to this doctype, on this site."""
 	installation = assert_extension_access(extension, "data.access")
 	return describe_doctype_grant(installation, doctype)
 
 
 @frappe.whitelist()
 def record_doctype_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
-	"""Write what the user answered in the Builder dialog.
+	"""Write what an extension manager answered in the Builder dialog.
 
 	Answers only the access the call names, each on its own, and leaves the rest
-	as it stands. Denying delete does not take back a read the user already
-	allowed.
+	as it stands. Denying delete does not take back a read the manager already
+	allowed. A user who is not a manager is refused, so the browser tells them to
+	ask one.
 	"""
-	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
+	installation = assert_extension_access(extension, "data.access")
+	assert_extension_manager()
 	assert_answers(answers)
 	upsert_doctype_grant(installation, doctype, answers)
 	return describe_doctype_grant(installation, doctype)
@@ -106,13 +112,16 @@ def assert_answers(answers: dict | None) -> None:
 def upsert_doctype_grant(installation: str, doctype: str, values: dict) -> None:
 	"""Write an answer, merging into whatever stands.
 
-	Both callers merge: `record_doctype_grant` writes what the user answered,
+	Both callers merge: `record_doctype_grant` writes what a manager answered,
 	and `schema.grant_everything` writes a full grant on a table the extension
 	just made. Neither removes what its call leaves unmentioned.
+
+	A grant is Builder's own record, and each caller checks its right first, so
+	the doctype permission is not asked again.
 	"""
 	name = find_doctype_grant(installation, doctype)
 	if name:
-		frappe.get_doc(GRANT_DOCTYPE, name).update(values).save()
+		frappe.get_doc(GRANT_DOCTYPE, name).update(values).save(ignore_permissions=True)
 		return
 
 	frappe.get_doc(
@@ -122,7 +131,7 @@ def upsert_doctype_grant(installation: str, doctype: str, values: dict) -> None:
 			"document_type": doctype,
 			**values,
 		}
-	).insert()
+	).insert(ignore_permissions=True)
 
 
 def forget_doctype_grant(installation: str, doctype: str) -> None:
@@ -133,11 +142,11 @@ def forget_doctype_grant(installation: str, doctype: str) -> None:
 	"""
 	name = find_doctype_grant(installation, doctype)
 	if name:
-		frappe.delete_doc(GRANT_DOCTYPE, name)
+		frappe.delete_doc(GRANT_DOCTYPE, name, ignore_permissions=True)
 
 
 def assert_doctype_grant(installation: str, extension: str, doctype: str, access: str) -> None:
-	"""What this user allowed for this doctype. Refuses loudly, and names what is missing.
+	"""What a manager allowed for this doctype. Refuses loudly, and names what is missing.
 
 	Called from the server rather than trusted to the browser, so the grant is
 	checked on the same side as the write it guards. `extension` names the

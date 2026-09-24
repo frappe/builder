@@ -1,11 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
-"""What every extension test needs: one user's installation, and its files.
+"""What every extension test needs: the site's installation, its files, and users.
 
-An extension used to be one site record, so a test could make one in three lines.
-It is now a record per user with its own copy of the entry, so the setup lives
-here rather than in each of the seven files that need it.
+The setup lives here rather than in each of the files that need it.
 """
 
 import json
@@ -17,19 +15,16 @@ from frappe.utils import get_files_path
 
 from builder.extensions.constants import CAPABILITIES, ENTRY_FILE, EXTENSIONS_FOLDER
 
-INSTALLATION_DOCTYPE = "Builder User Extension"
+INSTALLATION_DOCTYPE = "Builder Extension"
 
 
-def make_installation(
-	extension="acme/listed", user=None, capabilities=None, granted=None, source=None, **values
-):
-	"""This user's installation of one extension, with files when a source is given.
+def make_installation(extension="acme/listed", capabilities=None, granted=None, source=None, **values):
+	"""The site's installation of one extension, with files when a source is given.
 
 	`capabilities` is what the manifest asked for, and every one of them is granted
 	unless `granted` narrows it. Both default to every capability, so a test that is
 	not about the gate lists none.
 	"""
-	user = user or frappe.session.user
 	requested = list(CAPABILITIES) if capabilities is None else list(capabilities)
 	allowed = requested if granted is None else list(granted)
 	fields = {
@@ -42,12 +37,12 @@ def make_installation(
 		**values,
 	}
 
-	name = find_installation(extension, user)
+	name = find_installation(extension)
 	if name:
 		installation = frappe.get_doc(INSTALLATION_DOCTYPE, name).update(fields).save()
 	else:
 		installation = frappe.get_doc(
-			{"doctype": INSTALLATION_DOCTYPE, "user": user, "extension": extension, **fields}
+			{"doctype": INSTALLATION_DOCTYPE, "extension": extension, **fields}
 		).insert()
 
 	if source is not None:
@@ -55,13 +50,8 @@ def make_installation(
 	return installation
 
 
-def find_installation(extension, user=None):
-	"""One user's installation of one extension."""
-	return frappe.db.get_value(
-		INSTALLATION_DOCTYPE,
-		{"user": user or frappe.session.user, "extension": extension},
-		"name",
-	)
+def find_installation(extension):
+	return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": extension}, "name")
 
 
 def write_source(installation, source: str):
@@ -73,7 +63,7 @@ def write_source(installation, source: str):
 
 
 def drop_installations(extension: str):
-	"""Every user's installation of one extension, for a test that starts clean."""
+	"""The site's installation of one extension, for a test that starts clean."""
 	for name in frappe.get_all(INSTALLATION_DOCTYPE, filters={"extension": extension}, pluck="name"):
 		frappe.delete_doc(INSTALLATION_DOCTYPE, name, force=True)
 	remove_orphan_installs()
@@ -97,7 +87,7 @@ def remove_orphan_installs():
 
 
 def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
-	"""A second Builder user, to show that an installation is one person's.
+	"""A second Builder user.
 
 	Website Manager gives read on Builder Page, the check the gate makes before it
 	looks for an installation. Pass no roles for a user the gate turns away.
@@ -113,3 +103,10 @@ def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
 			}
 		).insert(ignore_permissions=True)
 	return email
+
+
+def set_extension_manager_role(test_case, role: str | None):
+	"""Name the manager role for one test, and put the old one back after it."""
+	previous = frappe.db.get_single_value("Builder Settings", "extension_manager_role", cache=False)
+	frappe.db.set_single_value("Builder Settings", "extension_manager_role", role)
+	test_case.addCleanup(frappe.db.set_single_value, "Builder Settings", "extension_manager_role", previous)

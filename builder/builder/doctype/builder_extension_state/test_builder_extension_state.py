@@ -94,14 +94,24 @@ class TestExtensionState(FrappeTestCase):
 				set_state(EXTENSION, {"k" * 40: 1})
 
 	def test_another_users_store_is_not_this_one(self):
+		"""The installation is the site's. What it stores is each user's."""
 		set_state(EXTENSION, {"theme": "dark"})
-		theirs = make_user()
-		make_installation(EXTENSION, user=theirs)
 
-		frappe.set_user(theirs)
+		frappe.set_user(make_user())
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertEqual(get_state(EXTENSION), {})
+
+	def test_two_users_store_one_key_separately(self):
+		set_state(EXTENSION, {"theme": "dark"})
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		set_state(EXTENSION, {"theme": "light"})
+		self.assertEqual(get_state(EXTENSION), {"theme": "light"})
+
+		frappe.set_user("Administrator")
+		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		drop_installations("acme/absent")

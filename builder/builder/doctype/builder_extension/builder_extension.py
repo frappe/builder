@@ -26,7 +26,7 @@ GRANT_DOCTYPE = "Builder Extension DocType Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 
-class BuilderUserExtension(Document):
+class BuilderExtension(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -48,14 +48,12 @@ class BuilderUserExtension(Document):
 		readme: DF.LongText | None
 		requested_capabilities: DF.SmallText | None
 		source_url: DF.Data | None
-		user: DF.Link
 		version: DF.Data
 	# end: auto-generated types
 
 	def autoname(self):
-		# a uuid, and (user, extension) is looked up by field, the way Builder Token
-		# looks up (extension, key). The name is also the install directory, so it
-		# must hold no separator
+		# a uuid, and the extension is looked up by field. The name is also the
+		# install directory, so it must hold no separator
 		if not self.name:
 			self.name = str(uuid.uuid4())
 
@@ -76,12 +74,12 @@ class BuilderUserExtension(Document):
 
 	@property
 	def install_path(self) -> str:
-		"""This user's own copy. Private, so nothing but Builder reads it."""
+		"""The site's one copy. Private, so nothing but Builder reads it."""
 		return get_files_path(f"{EXTENSIONS_FOLDER}/{self.name}", is_private=True)
 
 	@property
 	def capabilities(self) -> list[str]:
-		"""What this user allowed. Every gate reads this list and no other."""
+		"""What an extension manager allowed. Every gate reads this list and no other."""
 		return self.capability_list("granted_capabilities")
 
 	@property
@@ -164,7 +162,7 @@ class BuilderUserExtension(Document):
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
 
 	def write_extension_files(self, files: dict[str, bytes]):
-		"""Replace this user's copy with the files a frame loads.
+		"""Replace the installed copy with the files a frame loads.
 
 		Keyed by path under the install root, so `main.js` lands where `source`
 		reads it. Replaces the whole directory, so a rebuild leaves nothing of the
@@ -178,7 +176,6 @@ class BuilderUserExtension(Document):
 			target.write_bytes(content)
 
 	def delete_extension_files(self):
-		"""This user's copy alone. Another user's copy is another directory."""
 		shutil.rmtree(self.install_path, ignore_errors=True)
 
 	def delete_extension_state(self):
@@ -187,24 +184,10 @@ class BuilderUserExtension(Document):
 			frappe.delete_doc(STATE_DOCTYPE, state, ignore_permissions=True)
 
 	def delete_doctype_grants(self):
-		"""What this user allowed this copy, and nobody else's answer.
+		"""Every doctype answer for this installation.
 
 		Nothing the extension made goes with it. A doctype, a token and a client
-		script all serve the site, so all three outlive one user leaving.
+		script all serve the site, so all three outlive the extension.
 		"""
 		for grant in frappe.get_all(GRANT_DOCTYPE, filters={"installation": self.name}, pluck="name"):
 			frappe.delete_doc(GRANT_DOCTYPE, grant, ignore_permissions=True)
-
-
-TABLE = "tabBuilder User Extension"
-UNIQUE_INDEX = "unique_user_extension"
-
-
-def on_doctype_update():
-	"""One installation per user and extension.
-
-	`publisher/name` is the whole identity. A second install of one name, from any
-	source, is refused, so `source_url` stays a plain record of where the files
-	came from and never scopes a lookup.
-	"""
-	frappe.db.add_unique("Builder User Extension", ["user", "extension"], constraint_name=UNIQUE_INDEX)

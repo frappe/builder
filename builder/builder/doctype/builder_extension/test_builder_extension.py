@@ -7,11 +7,6 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.doctype.builder_user_extension.builder_user_extension import (
-	TABLE,
-	UNIQUE_INDEX,
-	on_doctype_update,
-)
 from builder.builder.tests.extension_fixtures import (
 	INSTALLATION_DOCTYPE,
 	drop_installations,
@@ -21,11 +16,11 @@ from builder.builder.tests.extension_fixtures import (
 )
 
 EXTENSION = "acme/record"
-INSTALLATION_MODULE = "builder.builder.doctype.builder_user_extension.builder_user_extension"
+INSTALLATION_MODULE = "builder.builder.doctype.builder_extension.builder_extension"
 
 
-class TestBuilderUserExtension(FrappeTestCase):
-	"""The one extension record. There is no site-wide one."""
+class TestBuilderExtension(FrappeTestCase):
+	"""The site's one record of an extension."""
 
 	def setUp(self):
 		# a grant Links to the installation, so dropping the copy takes the grant
@@ -37,13 +32,12 @@ class TestBuilderUserExtension(FrappeTestCase):
 		self.assertIn("/private/files/extensions/", installation.install_path)
 		self.assertTrue(installation.install_path.endswith(installation.name))
 
-	def test_one_installation_per_user_and_extension(self):
+	def test_one_installation_per_extension(self):
 		make_installation(EXTENSION)
 
 		second = frappe.get_doc(
 			{
 				"doctype": INSTALLATION_DOCTYPE,
-				"user": frappe.session.user,
 				"extension": EXTENSION,
 				"version": "2.0.0",
 			}
@@ -57,20 +51,12 @@ class TestBuilderUserExtension(FrappeTestCase):
 		second = frappe.get_doc(
 			{
 				"doctype": INSTALLATION_DOCTYPE,
-				"user": frappe.session.user,
 				"extension": EXTENSION,
 				"version": "2.0.0",
 				"source_url": "https://other.example",
 			}
 		)
 		self.assertRaises(Exception, second.insert)
-
-	def test_two_users_hold_the_same_extension_separately(self):
-		mine = make_installation(EXTENSION)
-		theirs = make_installation(EXTENSION, user=make_user(), version="2.0.0")
-
-		self.assertNotEqual(mine.name, theirs.name)
-		self.assertNotEqual(mine.install_path, theirs.install_path)
 
 	def test_refuses_a_name_that_is_not_publisher_slash_name(self):
 		for name in ("icons", "Acme/Icons", "acme/icons/extra", ""):
@@ -86,7 +72,7 @@ class TestBuilderUserExtension(FrappeTestCase):
 			make_installation(EXTENSION, capabilities=["quantum.read"])
 
 	def test_refuses_a_grant_the_manifest_never_asked_for(self):
-		"""The user can only ever answer a question the extension asked."""
+		"""A manager can only ever answer a question the extension asked."""
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, capabilities=["page.read"], granted=["page.read", "schema.write"])
 
@@ -95,7 +81,7 @@ class TestBuilderUserExtension(FrappeTestCase):
 
 		self.assertEqual(installation.source, "export const ok = true;")
 
-	def test_uninstall_takes_this_users_files(self):
+	def test_uninstall_takes_the_files(self):
 		installation = make_installation(EXTENSION, source="export default {};")
 		install_path = Path(installation.install_path)
 		self.assertTrue(install_path.is_dir())
@@ -106,16 +92,18 @@ class TestBuilderUserExtension(FrappeTestCase):
 		frappe.db.after_commit.run()
 		self.assertFalse(install_path.exists())
 
-	def test_uninstall_takes_this_users_state_and_grants(self):
+	def test_uninstall_takes_every_users_state_and_the_grants(self):
 		installation = make_installation(EXTENSION)
-		frappe.get_doc(
-			{
-				"doctype": "Builder Extension State",
-				"installation": installation.name,
-				"state_key": "theme",
-				"state_value": '"dark"',
-			}
-		).insert()
+		for user in ("Administrator", make_user()):
+			frappe.get_doc(
+				{
+					"doctype": "Builder Extension State",
+					"installation": installation.name,
+					"user": user,
+					"state_key": "theme",
+					"state_value": '"dark"',
+				}
+			).insert()
 		frappe.get_doc(
 			{
 				"doctype": "Builder Extension DocType Grant",
@@ -132,9 +120,9 @@ class TestBuilderUserExtension(FrappeTestCase):
 			frappe.db.exists("Builder Extension DocType Grant", {"installation": installation.name})
 		)
 
-	def test_uninstall_leaves_another_users_grants_alone(self):
+	def test_uninstall_leaves_another_extensions_grants_alone(self):
 		installation = make_installation(EXTENSION)
-		theirs = make_installation(EXTENSION, user=make_user())
+		theirs = make_installation("acme/other-record")
 		frappe.get_doc(
 			{
 				"doctype": "Builder Extension DocType Grant",
@@ -207,11 +195,3 @@ class TestInstallationValidation(FrappeTestCase):
 		with patch(f"{INSTALLATION_MODULE}.MAX_README_BYTES", 3):
 			with self.assertRaises(frappe.ValidationError):
 				make_installation(EXTENSION, readme="four")
-
-
-class TestInstallationIndex(FrappeTestCase):
-	def test_adds_the_unique_index_once(self):
-		on_doctype_update()
-		on_doctype_update()
-
-		self.assertTrue(frappe.db.has_index(TABLE, UNIQUE_INDEX))

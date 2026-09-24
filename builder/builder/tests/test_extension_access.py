@@ -5,18 +5,16 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.tests.extension_fixtures import (
-	INSTALLATION_DOCTYPE,
 	drop_installations,
 	make_installation,
 	make_user,
+	set_extension_manager_role,
 )
 from builder.extensions.access import (
 	assert_extension_access,
-	doctype_grant_conditions,
-	find_installation,
-	installation_conditions,
-	owns_row,
-	owns_through_installation,
+	assert_extension_manager,
+	is_extension_manager,
+	owns_state,
 	state_conditions,
 )
 
@@ -35,6 +33,12 @@ class TestAssertExtensionAccess(FrappeTestCase):
 
 		self.assertEqual(assert_extension_access(EXTENSION, "data.access"), installation.name)
 
+	def test_every_builder_user_reaches_the_sites_installation(self):
+		installation = make_installation(EXTENSION)
+		frappe.set_user(make_user())
+
+		self.assertEqual(assert_extension_access(EXTENSION), installation.name)
+
 	def test_refuses_a_guest(self):
 		make_installation(EXTENSION)
 		frappe.set_user("Guest")
@@ -44,30 +48,23 @@ class TestAssertExtensionAccess(FrappeTestCase):
 
 	def test_refuses_a_user_who_cannot_read_a_builder_page(self):
 		"""Builder access is the second gate, checked before any installation."""
-		outsider = make_user("extension-outsider@example.com", roles=())
-		make_installation(EXTENSION, user=outsider)
-		frappe.set_user(outsider)
+		make_installation(EXTENSION)
+		frappe.set_user(make_user("extension-outsider@example.com", roles=()))
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION)
 
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION)
 
-	def test_refuses_another_users_installation(self):
-		make_installation(EXTENSION, user=make_user())
-
-		with self.assertRaises(frappe.PermissionError):
-			assert_extension_access(EXTENSION)
-
-	def test_refuses_an_installation_the_user_switched_off(self):
+	def test_refuses_an_installation_that_is_switched_off(self):
 		make_installation(EXTENSION, enabled=0)
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION)
 
-	def test_refuses_a_capability_the_user_did_not_grant(self):
+	def test_refuses_a_capability_that_was_not_granted(self):
 		make_installation(EXTENSION, capabilities=["page.read"])
 
 		with self.assertRaises(frappe.PermissionError):
@@ -86,74 +83,51 @@ class TestAssertExtensionAccess(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, writes="DocType")
 
-	def test_reads_the_user_from_the_session_and_not_from_a_caller(self):
-		"""No argument names a user, which is what stops a browser choosing one."""
-		make_installation(EXTENSION)
-		theirs = make_user()
-		frappe.set_user(theirs)
 
-		self.assertIsNone(find_installation(EXTENSION))
-
-
-class TestExtensionRowScoping(FrappeTestCase):
-	"""What Desk, a report and a get_all see. The methods enforce this too."""
+class TestExtensionManager(FrappeTestCase):
+	"""Who may change the site's extensions. Builder Settings names the role."""
 
 	def setUp(self):
 		self.addCleanup(frappe.set_user, "Administrator")
 
+	def test_a_system_manager_always_is_one(self):
+		set_extension_manager_role(self, None)
+
+		self.assertTrue(is_extension_manager("Administrator"))
+
+	def test_a_user_with_the_named_role_is_one(self):
+		set_extension_manager_role(self, "Website Manager")
+
+		self.assertTrue(is_extension_manager(make_user()))
+
+	def test_a_user_without_the_named_role_is_not(self):
+		set_extension_manager_role(self, None)
+
+		self.assertFalse(is_extension_manager(make_user()))
+
+	def test_refuses_a_user_who_is_not_one(self):
+		set_extension_manager_role(self, None)
+		frappe.set_user(make_user())
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_manager()
+
+
+class TestStateRowScoping(FrappeTestCase):
+	"""What Desk, a report and a get_all see of stored state. `state.py` enforces this too."""
+
 	def test_a_system_manager_sees_every_row(self):
-		for conditions in (installation_conditions, doctype_grant_conditions, state_conditions):
-			self.assertEqual(conditions("Administrator"), "")
+		self.assertEqual(state_conditions("Administrator"), "")
 
 	def test_another_user_sees_only_their_own(self):
 		theirs = make_user()
 
-		self.assertIn(frappe.db.escape(theirs), installation_conditions(theirs))
+		self.assertIn(frappe.db.escape(theirs), state_conditions(theirs))
 
-	def test_a_grant_and_state_are_scoped_through_their_installation(self):
-		"""Neither names a user, so the condition goes through the record that does."""
+	def test_a_user_owns_only_their_own_row(self):
 		theirs = make_user()
+		row = frappe._dict(user=theirs)
 
-		for conditions in (doctype_grant_conditions, state_conditions):
-			condition = conditions(theirs)
-			self.assertIn(INSTALLATION_DOCTYPE, condition)
-			self.assertIn(frappe.db.escape(theirs), condition)
-
-	def test_a_system_manager_owns_what_hangs_off_any_installation(self):
-		row = frappe._dict(installation=make_installation("acme/scoped-admin", user=make_user()).name)
-
-		self.assertTrue(owns_through_installation(row, user="Administrator"))
-
-	def test_a_user_may_read_their_own_row(self):
-		theirs = make_user()
-		installation = make_installation("acme/scoped", user=theirs)
-
-		self.assertTrue(owns_row(installation, user=theirs))
-		self.assertFalse(owns_row(installation, user="Guest"))
-
-	def test_a_user_may_read_what_hangs_off_their_own_installation(self):
-		"""One rule for both, because a grant and a state row belong the same way."""
-		theirs = make_user()
-		installation = make_installation("acme/scoped-state", user=theirs)
-		rows = [
-			frappe.get_doc(
-				{
-					"doctype": "Builder Extension State",
-					"installation": installation.name,
-					"state_key": "theme",
-					"state_value": '"dark"',
-				}
-			).insert(),
-			frappe.get_doc(
-				{
-					"doctype": "Builder Extension DocType Grant",
-					"installation": installation.name,
-					"document_type": "Contact",
-					"read_access": "allowed",
-				}
-			).insert(),
-		]
-
-		for row in rows:
-			self.assertTrue(owns_through_installation(row, user=theirs))
-			self.assertFalse(owns_through_installation(row, user="Guest"))
+		self.assertTrue(owns_state(row, user=theirs))
+		self.assertTrue(owns_state(row, user="Administrator"))
+		self.assertFalse(owns_state(row, user="Guest"))
