@@ -58,21 +58,12 @@ def get_extension_grant(extension: str, doctype: str) -> dict:
 def record_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
 	"""Write what the user answered in the Builder dialog.
 
-	Answers only the access the call names, each allowed or denied on its own,
-	and leaves the rest as it stands. That is the rule `set_extension_tokens`
-	follows too. Denying delete does not take back a read the user already allowed.
+	Answers only the access the call names, each on its own, and leaves the rest
+	as it stands. That is the rule `set_extension_tokens` follows too. Denying
+	delete does not take back a read the user already allowed.
 	"""
 	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
-
-	if not answers:
-		frappe.throw(_("Name the access this answers: read, write or delete."))
-	unknown = sorted(set(answers) - set(ACCESSES))
-	if unknown:
-		frappe.throw(_("Unknown access: {0}").format(", ".join(unknown)))
-	unknown = sorted(str(answer) for answer in answers.values() if answer not in (ALLOWED, DENIED))
-	if unknown:
-		frappe.throw(_("Answer allowed or denied, not: {0}").format(", ".join(unknown)))
-
+	assert_answers(answers)
 	upsert_grant(installation, doctype, answers)
 	return describe_grant(installation, doctype)
 
@@ -98,6 +89,18 @@ def find_extension_grant(installation: str, doctype: str) -> str | None:
 	return frappe.db.get_value(
 		GRANT_DOCTYPE, {"installation": installation, "document_type": doctype}, "name"
 	)
+
+
+def assert_answers(answers: dict | None) -> None:
+	"""Refuses an empty call, an access nobody defined and an answer nobody defined."""
+	if not answers:
+		frappe.throw(_("Name the access this answers: read, write or delete."))
+	unknown = sorted(set(answers) - set(ACCESSES))
+	if unknown:
+		frappe.throw(_("Unknown access: {0}").format(", ".join(unknown)))
+	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
+	if unknown:
+		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
 
 
 def upsert_grant(installation: str, doctype: str, values: dict) -> None:

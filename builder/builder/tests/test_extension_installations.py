@@ -200,11 +200,12 @@ class TestGrantAnswers(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_grant(EXTENSION, "Contact", answers(read="maybe"))
 
-	def test_refuses_answers_that_leave_an_access_out(self):
-		self.grant({"read": "allowed"})
+	def test_answers_only_the_access_it_names(self):
+		self.grant({"read": "allowed", "write": "allowed"})
 
-		with self.assertRaises(frappe.ValidationError):
-			set_extension_grant(EXTENSION, "Contact", {"read": "allowed"})
+		grants = set_extension_grant(EXTENSION, "Contact", {"write": "denied"})
+
+		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):

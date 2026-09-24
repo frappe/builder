@@ -111,8 +111,8 @@ class TestExtensionGrants(FrappeTestCase):
 
 		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "not asked", "denied"))
 
-	def test_an_answer_other_than_allowed_or_denied_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {"read": "not asked"})
+	def test_an_answer_nobody_defined_is_refused(self):
+		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {"read": "maybe"})
 
 	def test_a_call_with_no_answers_is_refused(self):
 		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {})

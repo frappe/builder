@@ -19,7 +19,7 @@ from builder.extensions.access import (
 	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.data import ACCESSES, ANSWERS, upsert_grant
+from builder.extensions.data import ACCESSES, assert_answers, upsert_grant
 from builder.utils import has_page_read
 
 TOKEN_DOCTYPE = "Builder Token"
@@ -68,31 +68,15 @@ def installation_doctype_grants(installation: str) -> list[dict]:
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NOT_INSTALLED)
 def set_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> list[dict]:
-	"""Write the three answers for one doctype, and answer with every grant after it.
-
-	`record_extension_grant` merges, because an extension asking for more must not
-	drop what it already has. This writes exactly what it is given: the user
-	narrows a grant here, and merging would never let them.
-
-	The row stays when all three answers are "not asked", so the panel keeps
-	listing the doctype. The extension asks again about each access, the way it
-	does when no grant names the doctype. A denial stops the asking for that access.
+	"""Write the answers a call names for one doctype, and answer with every grant after it.
 
 	The gate is the user's own installation, not the extension's access. They most
 	want an answer back after they disable the extension or turn `data.access`
 	off, and the extension gate refuses both.
 	"""
 	installation = own_installation(extension)
-
-	answers = answers or {}
-	if set(answers) != set(ACCESSES):
-		frappe.throw(_("Answer read, write and delete."))
-	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
-	if unknown:
-		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
-
+	assert_answers(answers)
 	upsert_grant(installation, doctype, answers)
-
 	return installation_doctype_grants(installation)
 
 
