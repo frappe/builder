@@ -453,6 +453,9 @@ def duplicate_page(page_name: str):
 	del new_page.page_name
 	new_page.page_title = get_copy_title(page.page_title or page.page_name)
 	new_page.route = None
+	new_page.published = 0
+	new_page.staging = 0
+	new_page.published_at = None
 	new_page.is_standard = 0
 	new_page.app = None
 	clone_client_scripts(page, new_page)
