@@ -104,5 +104,10 @@ watch(
 );
 
 watch(pagesVersion, loadFolderPages);
+// a title or route edited from page settings saves on its own, so re-query once it has landed
+watch(
+	() => [pageStore.activePage?.page_title, pageStore.activePage?.route],
+	useDebounceFn(() => search.value && loadFolderPages(), 800),
+);
 watch(search, useDebounceFn(loadFolderPages, 300));
 </script>
