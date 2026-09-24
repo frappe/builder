@@ -14,7 +14,7 @@
 		<div
 			ref="componentContainer"
 			:class="{
-				'pt-2': !showSearchInput,
+				'pt-1': !showSearchInput,
 			}">
 			<div v-show="!components.length" class="text-base italic text-gray-600">
 				{{ __("No components saved") }}
