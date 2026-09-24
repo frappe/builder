@@ -216,7 +216,7 @@ def get_list(
 		order_by=order_by,
 		group_by=group_by,
 		limit_start=limit_start,
-		limit_page_length=read_page_length(limit_page_length),
+		limit_page_length=get_page_length(limit_page_length),
 	)
 
 
@@ -275,7 +275,7 @@ def delete_doc(extension: str, doctype: str, name: str) -> None:
 	frappe.client.delete(doctype, name)
 
 
-def read_page_length(limit_page_length: int) -> int:
+def get_page_length(limit_page_length: int) -> int:
 	"""Frappe reads 0 as "every row", which is the one answer no extension may ask for."""
 	if not 1 <= limit_page_length <= MAX_PAGE_LENGTH:
 		frappe.throw(_("Ask for 1 to {0} rows at a time.").format(MAX_PAGE_LENGTH))
