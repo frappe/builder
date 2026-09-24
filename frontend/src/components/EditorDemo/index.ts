@@ -24,12 +24,12 @@ const hiddenBlockMenuOptions = [
 ];
 
 export function installEditorDemo() {
-	hiddenToolbarItems.forEach(toolbarItems.unregister);
-	hiddenLeftPanelTabs.forEach(leftPanelTabs.unregister);
-	hiddenCommands.forEach(commands.unregister);
-	hiddenBlockMenuOptions.forEach(blockContextMenuOptions.unregister);
-	toolbarItems.register({ name: "demo-logo", region: "left", component: EditorDemoLogo, before: "modes" });
-	toolbarItems.register({ name: "demo-actions", region: "right", component: EditorDemoActions });
+	hiddenToolbarItems.forEach((name) => toolbarItems.unregisterBuiltIn(name));
+	hiddenLeftPanelTabs.forEach((name) => leftPanelTabs.unregisterBuiltIn(name));
+	hiddenCommands.forEach((name) => commands.unregisterBuiltIn(name));
+	hiddenBlockMenuOptions.forEach((name) => blockContextMenuOptions.unregisterBuiltIn(name));
+	toolbarItems.registerBuiltIn({ name: "demo-logo", region: "left", component: EditorDemoLogo, before: "modes" });
+	toolbarItems.registerBuiltIn({ name: "demo-actions", region: "right", component: EditorDemoActions });
 
 	onMounted(() => {
 		editorDemoStage.start();
