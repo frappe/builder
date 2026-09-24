@@ -75,7 +75,7 @@
 								type="JSON"
 								:label="__('Data Preview')"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3"
+								class="-mt-5 w-1/3 [&>div>div]:bg-surface-base"
 								height="calc(100% - 110px)"
 								description='Use Data Script to provide dynamic data to your web page.<br>
 								<b>{{ __("Example:") }}</b> data.events = frappe.get_list("Event")<br><br>
@@ -133,7 +133,7 @@
 								type="JSON"
 								:label="__('Component Data Preview')"
 								:showLineNumbers="true"
-								class="-mt-5 w-1/3"
+								class="[&>div>div]:bg-surface-white -mt-5 w-1/3"
 								height="calc(100% - 110px)"
 								description='Use Component Data Script to provide dynamic data to your component.<br>
 								<b>{{ __("Example:") }}</b> data.items = frappe.get_list("Item")<br><br>

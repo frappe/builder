@@ -162,7 +162,10 @@ function toggleWholeWord() {
 	commit();
 }
 
-function closePanel() {
+function closePanel(e?: KeyboardEvent | Event) {
+	const closestCmEditor = (e?.target as HTMLElement)?.closest(".cm-editor") as HTMLElement;
+	const closestCmContent = closestCmEditor.querySelector(".cm-content") as HTMLElement;
+	closestCmContent?.classList.remove("@md/editor:!pt-10", "!pt-20");
 	closeSearchPanel(view);
 }
 
