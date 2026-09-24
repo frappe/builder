@@ -8,6 +8,7 @@ import useComponentStore from "@/stores/componentStore.js";
 import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import {
 	confirm,
 	countBlocks,
@@ -72,6 +73,8 @@ const usePageStore = defineStore("pageStore", {
 			// against the last page that actually loaded, so a retry after a failed
 			// fetch still counts as opening it
 			const switchingPage = pageName !== this.activePage?.name;
+			// going from one open page to another keeps the canvas zoom and pan
+			const keepViewport = switchingPage && Boolean(this.activePage);
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -108,7 +111,7 @@ const usePageStore = defineStore("pageStore", {
 			const canvasStore = useCanvasStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
-			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
 			if (page.client_scripts?.length) {
 				// Fetch full script documents for each script
@@ -131,7 +134,7 @@ const usePageStore = defineStore("pageStore", {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
 						// the preview tab keeps the name it was opened under, so it can be raised by name
-						if (router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
+						if (router.currentRoute.value.name === "builder" || !editorDemo) window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();

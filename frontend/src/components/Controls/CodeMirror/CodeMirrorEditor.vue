@@ -1,126 +1,205 @@
 <template>
-	<CodeEditor v-model="model" :extensions :autofocus @change="emit('change')">
-		<CodeEditorContent class="code-mirror-editor w-full @container/editor" />
-	</CodeEditor>
+	<div
+		class="code-mirror-editor relative @container/editor"
+		ref="editorContainer"
+		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+
 import codeCompletions from "@/data/codeCompletions";
-import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
+import { createStartingState } from "@/utils/createCodeMirrorState";
 import { getDefaultPropsList, getParentProps } from "@/utils/helpers";
-import jsCompletionsFromGlobalScope from "@/utils/jsGlobalCompletion";
-import customPythonCompletions from "@/utils/pythonCustomCompletion";
-import type { CompletionSource } from "@codemirror/autocomplete";
-import { EditorState } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
-import { indentationMarkers } from "@replit/codemirror-indentation-markers";
-import { computedAsync } from "@vueuse/core";
-import { CodeEditor, CodeEditorContent, CodeKit, loadLanguage } from "frappe-ui/code-editor";
-import { computed, createApp } from "vue";
-import CustomSearchPanel from "./CustomSearchPanel.vue";
-
-type CodeType = "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
-
-const model = defineModel<string>({ required: true });
+import { openSearchPanel } from "@codemirror/search";
+import { Compartment } from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { useDark } from "@vueuse/core";
+import { EditorView } from "codemirror";
+import { tomorrow } from "thememirror";
 
 const props = defineProps<{
-	type: CodeType;
+	type: "Python" | "JavaScript" | "HTML" | "CSS" | "JSON";
 	mode?: "block" | "page" | "component";
+	initialValue?: string;
 	readonly: boolean;
+	allowSave: boolean;
 	showLineNumbers: boolean;
-	autofocus: boolean;
 }>();
+
+const editorContainer = ref<HTMLDivElement | null>(null);
+let editor: EditorView | null = null;
+let disposed = false;
+const theme = new Compartment();
 
 const emit = defineEmits<{
-	change: [];
-	save: [];
+	(e: "change", value: string): void;
+	(e: "save", value: string): void;
+	(e: "blur", value: string): void;
 }>();
 
-const builderStore = useBuilderStore();
+const isDark = useDark({
+	attribute: "data-theme",
+});
 
-const blockProps = computed(() => {
+const getPythonCompletions = async () => {
+	return codeCompletions.data || {};
+};
+
+const getEditorValue = () => {
+	if (editor) {
+		return editor.state.doc.toString();
+	}
+	return "";
+};
+
+const resetEditor = async (params: { content: string; resetHistory: boolean; autofocus: boolean }) => {
+	if (!editor) return;
+
+	if (params.resetHistory) {
+		const { startState } = await createStartingState({
+			props,
+			pythonCompletions: await getPythonCompletions(),
+			onSaveCallback: () => emit("save", getEditorValue()),
+			onChangeCallback: () => emit("change", getEditorValue()),
+			onBlurCallback: (value: string) => emit("blur", value),
+			initialValue: params.content,
+			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+			mode: props.mode,
+			blockProps: allBlockProps.value,
+		});
+		// teardown can land while the state above is being built
+		if (!editor) return;
+		editor.setState(startState);
+	} else {
+		editor.dispatch({
+			changes: {
+				from: 0,
+				to: editor.state.doc.length,
+				insert: params.content,
+			},
+		});
+	}
+
+	params.autofocus && editor.focus();
+	(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
+};
+
+const handleKeyDown = (e: KeyboardEvent) => {
+	e.stopImmediatePropagation();
+	if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		const closestCmEditor = (e?.target as HTMLElement)?.closest(".cm-editor") as HTMLElement;
+		const closestCmContent = closestCmEditor.querySelector(".cm-content") as HTMLElement;
+		closestCmContent?.classList.add("@md/editor:!pt-10", "!pt-20");
+		if (editor) {
+			openSearchPanel(editor);
+		}
+	}
+};
+
+watch(isDark, (newVal) => {
+	if (editor) {
+		editor.dispatch({
+			effects: theme.reconfigure(newVal ? oneDark : tomorrow),
+		});
+	}
+});
+
+const allBlockProps = computed(() => {
 	const currentBlock = blockController.getFirstSelectedBlock();
+
 	if (!currentBlock || typeof currentBlock.getBlockProps !== "function") return {};
 
+	const ownBlockProps = currentBlock.getBlockProps();
+	const inheritedBlockProps = getParentProps(currentBlock);
+	const defaultProps = getDefaultPropsList(currentBlock);
+
 	return {
-		...getDefaultPropsList(currentBlock),
-		...getParentProps(currentBlock),
-		...currentBlock.getBlockProps(),
+		...defaultProps,
+		...inheritedBlockProps,
+		...ownBlockProps,
 	};
 });
 
-const completionSources: Partial<Record<CodeType, CompletionSource>> = {
-	JavaScript: (context) =>
-		jsCompletionsFromGlobalScope(context, props.mode === "block" ? blockProps.value : {}),
-	Python: (context) => customPythonCompletions(context, codeCompletions.data || {}),
-};
+onMounted(async () => {
+	if (!editorContainer.value) {
+		console.warn("CodeMirror: editor container not found, skipping mount");
+		return;
+	}
 
-function createSearchPanel(view: EditorView) {
-	const dom = document.createElement("div");
-	dom.classList.add("@container");
-	const app = createApp(CustomSearchPanel);
-	app.provide("view", view);
-	app.provide("enableReplace", !props.readonly);
-	app.mount(dom);
-	return { dom, top: true, destroy: () => app.unmount() };
-}
+	const pythonCompletions = await getPythonCompletions();
+	const { startState } = await createStartingState({
+		props,
+		pythonCompletions,
+		onSaveCallback: () => emit("save", getEditorValue()),
+		onChangeCallback: () => emit("change", getEditorValue()),
+		onBlurCallback: (value: string) => emit("blur", value),
+		extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+		mode: props.mode,
+		blockProps: allBlockProps.value,
+	});
 
-const staticExtensions = [
-	indentationMarkers({
-		colors: {
-			light: "var(--outline-gray-2)",
-			dark: "var(--outline-gray-2)",
-			activeLight: "var(--outline-gray-4)",
-			activeDark: "var(--outline-gray-4)",
-		},
-	}),
-	keymap.of([
-		{
-			key: "Mod-s",
-			run: () => {
-				emit("save");
-				return true;
-			},
-		},
-	]),
-];
+	// unmounted mid-await: building the view now would orphan it in a detached container
+	if (disposed) return;
 
-const kit = computed(() =>
-	CodeKit.configure({
-		lineNumbers: props.showLineNumbers ? {} : false,
-		search: { createPanel: createSearchPanel },
-	}),
-);
-
-const language = computedAsync(() => loadLanguage(props.type.toLowerCase()), null);
-
-const completions = computed(() => {
-	const source = completionSources[props.type];
-	return source ? EditorState.languageData.of(() => [{ autocomplete: source }]) : [];
+	editor = new EditorView({
+		state: startState,
+		parent: editorContainer.value,
+	});
 });
 
-const extensions = computed(() => [
-	kit.value,
-	language.value ?? [],
-	completions.value,
-	props.showLineNumbers ? EditorView.lineWrapping : [],
-	// not :editable, a non-editable view can't take focus and loses Cmd-F search
-	EditorState.readOnly.of(props.readonly),
-	// selection colours key off this; the frappe chrome doesn't theme them
-	EditorView.darkTheme.of(builderStore.isDark),
-	...staticExtensions,
-]);
+// CodeMirror keeps its view tree, DOM and document observer alive until told otherwise
+onBeforeUnmount(() => {
+	disposed = true;
+	editor?.destroy();
+	editor = null;
+});
+
+defineExpose({
+	resetEditor,
+	getEditorValue,
+});
 </script>
 
 <style>
-/* the search panel floats over the first lines */
-.code-mirror-editor .cm-editor:has(.cm-panels-top) .cm-content {
-	padding-top: 5rem;
+.code-mirror-editor {
+	width: 100%;
+	border-radius: 5px;
+	display: flex;
+	flex: 1;
 }
 
-@container editor (min-width: 28rem) {
-	.code-mirror-editor .cm-editor:has(.cm-panels-top) .cm-content {
-		padding-top: 2.5rem;
-	}
+.cm-editor {
+	height: 100%;
+	width: 100%;
+	flex: 1;
 }
+
+.cm-focused {
+	outline: none !important;
+}
+
+.cm-activeLine {
+	background-color: rgb(190 190 190 / 15%) !important;
+}
+
+.cm-editor {
+	background-color: var(--surface-gray-1, #ffffff) !important;
+}
+
+.cm-gutters {
+	background-color: var(--surface-gray-2) !important;
+	border: none;
+}
+
+.cm-activeLineGutter {
+	background-color: var(--surface-gray-4) !important;
+}
+
+.cm-gutters {
+	color: var(--ink-gray-4) !important;
+}
+/* TODO make the search bar better looking */
 </style>
