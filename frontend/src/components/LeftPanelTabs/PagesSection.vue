@@ -44,7 +44,7 @@ import PageRow from "@/components/LeftPanelTabs/PageRow.vue";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
-import { createPageIn, sitePages } from "@/utils/pageTree";
+import { createPageIn, folderPages, pagesVersion } from "@/utils/pageTree";
 import { Button } from "frappe-ui";
 import { useStorage } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
@@ -61,7 +61,7 @@ const folder = computed(() => pageStore.activePage?.project_folder || "");
 // the open page's row mirrors unsaved title, route and folder edits
 const pages = computed<BuilderPage[]>(() => {
 	const active = pageStore.activePage;
-	return (sitePages.data ?? [])
+	return (folderPages.data ?? [])
 		.map((page: BuilderPage) => (active && page.name === active.name ? { ...page, ...active } : page))
 		.filter((page: BuilderPage) => (page.project_folder || "") === folder.value);
 });
@@ -85,13 +85,20 @@ const routeLabel = (page: BuilderPage) => `/${(page.route || "").slice(routePref
 
 const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 
+function loadFolderPages() {
+	folderPages.update({ filters: { is_template: 0, project_folder: folder.value } });
+	folderPages.reload();
+}
+
+// the list only overlays the open page, so the page just left must come fresh from the server
 watch(
-	() => pageStore.activePage?.name,
-	(name) => {
+	[() => pageStore.activePage?.name, folder],
+	([name]) => {
 		search.value = "";
-		// the list only overlays the open page, so the page just left must come from the server fresh
-		if (name) sitePages.reload();
+		if (name && folder.value) loadFolderPages();
 	},
 	{ immediate: true },
 );
+
+watch(pagesVersion, loadFolderPages);
 </script>

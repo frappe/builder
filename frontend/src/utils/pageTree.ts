@@ -1,36 +1,40 @@
 import builderProjectFolder from "@/data/builderProjectFolder";
 import router from "@/router";
+import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { webPages } from "@/data/webPage";
 import { createListResource, createResource, dialog } from "frappe-ui";
+import { ref } from "vue";
 
-export const sitePages = createListResource({
+// the pages of one folder, the one the open page lives in; PagesSection points it at that folder
+export const folderPages = createListResource({
 	method: "GET",
 	doctype: "Builder Page",
-	fields: [
-		"name",
-		"page_name",
-		"page_title",
-		"route",
-		"project_folder",
-		"published",
-		"staging",
-		"is_standard",
-	],
-	filters: { is_template: 0 },
+	fields: ["name", "page_name", "page_title", "route", "project_folder", "published", "staging", "is_standard"],
+	filters: { is_template: 0, project_folder: "" },
 	// creation order keeps a template's pages in the order the template lists them
 	orderBy: "creation asc",
-	pageLength: 9999,
-	cache: "site-pages",
-	auto: true,
+	pageLength: 500,
 });
+
+// bumped after any page change so every page list refreshes from the server
+export const pagesVersion = ref(0);
+
+export function notifyPagesChanged() {
+	pagesVersion.value++;
+	webPages.reload();
+}
 
 const isOpen = (page: BuilderPage) => page.name === usePageStore().activePage?.name;
 
-export function openPage(page: BuilderPage) {
-	if (!isOpen(page)) router.push({ name: "builder", params: { pageId: page.name } });
+export async function openPage(page: BuilderPage) {
+	if (isOpen(page)) return;
+	const pageStore = usePageStore();
+	// a page switch mid-debounce would save the old edits onto whichever page is loaded by then
+	if (pageStore.savingPage) await pageStore.waitTillPageIsSaved();
+	router.push({ name: "builder", params: { pageId: page.name } });
 }
 
 // template titles repeat the site name ("Rooms · Tide House"), the folder already says it
@@ -54,9 +58,7 @@ async function setPageValue(page: BuilderPage, field: keyof BuilderPage, value: 
 			value,
 		});
 	}
-	// the dashboard lists pages through its own resource, so both refresh
-	sitePages.reload();
-	webPages.reload();
+	notifyPagesChanged();
 }
 
 export const movePage = (page: BuilderPage, folder: string) => {
@@ -76,10 +78,18 @@ function renamePage(page: BuilderPage) {
 async function deletePage(page: BuilderPage) {
 	const wasOpen = isOpen(page);
 	await usePageStore().deletePage(page);
-	await sitePages.reload();
-	if (wasOpen && !sitePages.data?.some((row: BuilderPage) => row.name === page.name)) {
-		router.push({ name: "home" });
-	}
+	const remaining = await createResource({ url: "frappe.client.get_count" }).submit({
+		doctype: "Builder Page",
+		filters: { name: page.name },
+	});
+	if (remaining) return;
+	notifyPagesChanged();
+	if (wasOpen) router.push({ name: "home" });
+}
+
+// protected pages and a read-only editor must not be renamed, moved or deleted from here
+function isLocked(page: BuilderPage) {
+	return (Boolean(page.is_standard) && !window.is_developer_mode) || (isOpen(page) && useBuilderStore().readOnlyMode);
 }
 
 const folderNames = (): string[] =>
@@ -101,9 +111,19 @@ export function pageMenu(page: BuilderPage) {
 			group: __("Page"),
 			hideLabel: true,
 			options: [
-				{ label: __("Rename"), icon: "lucide-pencil", onClick: () => renamePage(page) },
+				{
+					label: __("Rename"),
+					icon: "lucide-pencil",
+					condition: () => !isLocked(page),
+					onClick: () => renamePage(page),
+				},
 				{ label: __("Duplicate"), icon: "lucide-copy", onClick: () => pageStore.duplicatePage(page) },
-				{ label: __("Move to"), icon: "lucide-folder-input", submenu: moveTargets },
+				{
+					label: __("Move to"),
+					icon: "lucide-folder-input",
+					condition: () => !isLocked(page),
+					submenu: moveTargets,
+				},
 				{
 					label: __("View Live Page"),
 					icon: "lucide-globe",
@@ -120,7 +140,7 @@ export function pageMenu(page: BuilderPage) {
 					label: __("Delete"),
 					icon: "lucide-trash",
 					theme: "red" as const,
-					condition: () => !page.is_standard,
+					condition: () => !page.is_standard && !isLocked(page),
 					onClick: () => deletePage(page),
 				},
 			],
