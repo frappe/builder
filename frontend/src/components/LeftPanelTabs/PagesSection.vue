@@ -24,16 +24,19 @@
 		</div>
 		<template v-if="open">
 			<BuilderInput
-				v-if="pages.length > SEARCH_THRESHOLD"
+				v-if="showSearch"
 				class="my-1"
 				type="text"
 				:placeholder="__('Search pages')"
 				v-model="search"
 				@input="(value: string) => (search = value)" />
 			<div class="max-h-[30vh] overflow-y-auto">
-				<PageRow v-for="page in visiblePages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
-				<p v-if="search && !visiblePages.length" class="px-2 py-1 text-sm text-ink-gray-5">
+				<PageRow v-for="page in pages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
+				<p v-if="search && !pages.length" class="px-2 py-1 text-sm text-ink-gray-5">
 					{{ __("No pages match.") }}
+				</p>
+				<p v-else-if="!search && isCapped" class="px-2 py-1 text-p-sm text-ink-gray-5">
+					{{ __("Showing the first {0} pages. Search to find the rest.", [FOLDER_PAGE_LIMIT]) }}
 				</p>
 			</div>
 		</template>
@@ -44,9 +47,9 @@ import PageRow from "@/components/LeftPanelTabs/PageRow.vue";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
-import { createPageIn, folderPages, pagesVersion } from "@/utils/pageActions";
+import { createPageIn, FOLDER_PAGE_LIMIT, folderPages, pagesVersion } from "@/utils/pageActions";
 import { Button } from "frappe-ui";
-import { useStorage } from "@vueuse/core";
+import { useDebounceFn, useStorage } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 
 const SEARCH_THRESHOLD = 10;
@@ -73,20 +76,20 @@ const routePrefix = computed(() => {
 	return pages.value.every((page) => page.route?.startsWith(`${first}/`)) ? `${first}/` : "";
 });
 
-const visiblePages = computed(() => {
-	const query = search.value.trim().toLowerCase();
-	if (!query) return pages.value;
-	return pages.value.filter(
-		(page) => page.page_title?.toLowerCase().includes(query) || page.route?.toLowerCase().includes(query),
-	);
-});
+// search runs on the server, so it also reaches pages past the loaded limit
+const showSearch = computed(() => Boolean(search.value) || pages.value.length > SEARCH_THRESHOLD);
+const isCapped = computed(() => (folderPages.data?.length ?? 0) >= FOLDER_PAGE_LIMIT);
 
 const routeLabel = (page: BuilderPage) => `/${(page.route || "").slice(routePrefix.value.length)}`;
 
 const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 
 function loadFolderPages() {
-	folderPages.update({ filters: { is_template: 0, project_folder: folder.value } });
+	const query = search.value.trim();
+	folderPages.update({
+		filters: { is_template: 0, project_folder: folder.value },
+		orFilters: query ? { page_title: ["like", `%${query}%`], route: ["like", `%${query}%`] } : {},
+	});
 	folderPages.reload();
 }
 
@@ -101,4 +104,5 @@ watch(
 );
 
 watch(pagesVersion, loadFolderPages);
+watch(search, useDebounceFn(loadFolderPages, 300));
 </script>

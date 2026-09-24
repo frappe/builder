@@ -8,6 +8,8 @@ import { webPages } from "@/data/webPage";
 import { createListResource, createResource, dialog } from "frappe-ui";
 import { ref } from "vue";
 
+export const FOLDER_PAGE_LIMIT = 500;
+
 // the pages of one folder, the one the open page lives in; PagesSection points it at that folder
 export const folderPages = createListResource({
 	method: "GET",
@@ -16,7 +18,7 @@ export const folderPages = createListResource({
 	filters: { is_template: 0, project_folder: "" },
 	// creation order keeps a template's pages in the order the template lists them
 	orderBy: "creation asc",
-	pageLength: 500,
+	pageLength: FOLDER_PAGE_LIMIT,
 });
 
 // bumped after any page change so every page list refreshes from the server
