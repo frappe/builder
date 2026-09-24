@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && yarn build:sdk",
+    "build:sdk": "vite build --config vite.sdk.config.mts",
     "build:reset": "tailwindcss -c ./tailwind.reset.config.js -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "generate:css-metadata": "node ./scripts/generate-css-property-metadata.mjs",
     "preview": "vite preview",
@@ -37,6 +38,7 @@
     "@types/dompurify": "^3.2.0",
     "@vueuse/components": "^14.4.0",
     "@vueuse/core": "^14.4.0",
+    "frappe-builder-extension-sdk": "link:./extension-sdk",
     "dompurify": "^3.4.5",
     "frappe-ui": "1.0.0-beta.76",
     "js-yaml": "^5.2.3",

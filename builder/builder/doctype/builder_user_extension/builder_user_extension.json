@@ -1,0 +1,177 @@
+{
+ "actions": [],
+ "creation": "2026-09-02 12:00:00.000000",
+ "description": "One user's installation of one extension, with its own build, version, and permissions. Deleting it removes the user's copy, grants, and extension state, but keeps any doctype, token, or client script the extension made.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "extension",
+  "source_url",
+  "enabled",
+  "label",
+  "description",
+  "icon",
+  "readme",
+  "version",
+  "checksum",
+  "requested_capabilities",
+  "granted_capabilities",
+  "installed_on",
+  "install_state",
+  "install_error"
+ ],
+ "fields": [
+  {
+   "description": "The server sets this from the session. It never reads this value from a caller.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The extension's namespaced identity, in the form \"publisher/name\".",
+   "fieldname": "extension",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Extension",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Where the files came from. Shown in the panel, but not part of the extension's identity. Empty for an extension installed from a directory.",
+   "fieldname": "source_url",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Source URL",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Off stops this user's frames. It stops nobody else's.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "description": "A brief summary shown below the label in the Extensions panel.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "description": "One SVG file in the install root, such as icon.svg. The editor draws it beside the extension.",
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "description": "The extension's README, in Markdown. Builder Hub sends it, or the installer reads it from the author's folder.",
+   "fieldname": "readme",
+   "fieldtype": "Long Text",
+   "ignore_xss_filter": 1,
+   "label": "Readme"
+  },
+  {
+   "description": "The release this user runs. Another user can run another one.",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "description": "A hash of the installed files. It also keys the editor frame, so a rebuild remounts the frame.",
+   "fieldname": "checksum",
+   "fieldtype": "Data",
+   "label": "Checksum",
+   "read_only": 1
+  },
+  {
+   "description": "JSON list of capability keys the manifest asked for. A grant cannot reach outside this list.",
+   "fieldname": "requested_capabilities",
+   "fieldtype": "Small Text",
+   "label": "Requested Capabilities",
+   "read_only": 1
+  },
+  {
+   "description": "JSON list of capability keys this user granted. A key absent here is not granted.",
+   "fieldname": "granted_capabilities",
+   "fieldtype": "Small Text",
+   "label": "Granted Capabilities"
+  },
+  {
+   "fieldname": "installed_on",
+   "fieldtype": "Datetime",
+   "label": "Installed On",
+   "read_only": 1
+  },
+  {
+   "default": "Ready",
+   "description": "A Hub install starts as Installing while a background job downloads it. It then becomes Ready or Failed. Every other install path is Ready right away.",
+   "fieldname": "install_state",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Install State",
+   "options": "Installing\nReady\nFailed",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.install_state == \"Failed\"",
+   "description": "Why the last Hub install did not finish. Shown in the panel with a Retry.",
+   "fieldname": "install_error",
+   "fieldtype": "Small Text",
+   "label": "Install Error",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-07 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder User Extension",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Website Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "label"
+}

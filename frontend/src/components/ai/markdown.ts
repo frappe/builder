@@ -12,7 +12,7 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 	}
 });
 
-/** Markdown → sanitized HTML for AI chat messages (editor panel + dashboard chat). */
+/** Markdown → sanitized HTML for AI chat messages and an extension's README. */
 export function renderMarkdown(content: string): string {
 	return DOMPurify.sanitize(marked.parse(content) as string, {
 		ALLOWED_TAGS: [

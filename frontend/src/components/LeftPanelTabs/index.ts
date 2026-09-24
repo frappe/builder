@@ -2,6 +2,7 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
+import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
@@ -12,6 +13,7 @@ import { __ } from "@/translation";
 export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
+	usesRuntimeIcon?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
@@ -31,7 +33,7 @@ export const leftPanelTabs = createRegistry<LeftPanelTab>();
 // the route chunk imports this after pinia is installed, so the lookup resolves
 const builderStore = useBuilderStore();
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Blocks",
 	label: __("Insert"),
 	icon: "lucide-plus",
@@ -39,7 +41,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+I",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Layers",
 	label: __("Layers"),
 	icon: LayersIcon,
@@ -47,7 +49,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+L",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Assets",
 	label: __("Components"),
 	icon: "lucide-box",
@@ -55,7 +57,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+A",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Code",
 	label: __("Code"),
 	icon: "lucide-code",
@@ -72,7 +74,7 @@ leftPanelTabs.register({
 });
 
 // not a tab. It toggles a modal, so it declares an action and its own active state
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "tokens",
 	label: __("Design Tokens"),
 	icon: "lucide-aperture",
@@ -88,4 +90,11 @@ leftPanelTabs.register({
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
 	component: defineAsyncComponent(() => import("@/components/BuilderAIChatPanel.vue")),
 	shortcut: "Mod+Shift+O",
+});
+
+leftPanelTabs.registerBuiltIn({
+	name: "Extensions",
+	label: "Extensions",
+	icon: "lucide-plug",
+	component: ExtensionsTab,
 });

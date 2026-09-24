@@ -1,0 +1,68 @@
+{#
+	The document every extension frame loads. It is the same for every extension
+	and every slot, so it takes no route parameter and needs no Python.
+
+	The frame is sandboxed without allow-same-origin, so it runs at an opaque
+	origin. The SDK learns which slot it is, and which entry to import, from the
+	connect handshake the host sends. See docs/extensions/asset-serving.md.
+
+	script-src names both 'self' and the site URL on purpose. 'self' covers a site
+	reached on a second hostname, where the site URL would name the wrong origin.
+	The site URL covers a browser that does not match 'self' at an opaque origin.
+
+	blob: is what runs an installed extension. No route can serve one user's copy
+	of it, because this frame sends no session, so the host reads the file under
+	its own and posts the code in the handshake. The SDK turns that string into a
+	module through a Blob URL. Nothing else here loosens: an extension still
+	reaches no origin but the site's own.
+
+	extension_dev_origins adds localhost on any port, but only where the site runs
+	in developer mode. An extension loaded from a dev server imports its entry from
+	there, and its hot reload opens a websocket back to it. Both are refused by the
+	policy above, and neither can name its port in advance.
+
+	An import map is an inline script, so script-src blocks it without a hash or a
+	nonce. The map never changes, so it takes a hash. Both the hash and the script
+	body come from import_map below, which is what stops the two drifting apart.
+	Render it with `safe`: escaping the quotes would break the JSON and the hash.
+#}
+{%- set import_map = '{"imports":{"frappe-builder-extension-sdk":"/builder_extension_asset/sdk/extension-sdk.js"}}' -%}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'none';
+				script-src 'self' blob: {{ frappe.utils.get_url() }} {{ csp_hash(import_map) }} {{ extension_dev_origins("http", "https") }};
+				style-src 'self' {{ frappe.utils.get_url() }} 'unsafe-inline';
+				img-src 'self' {{ frappe.utils.get_url() }} data: blob:;
+				font-src 'self' {{ frappe.utils.get_url() }} data:;
+				connect-src 'self' {{ frappe.utils.get_url() }} {{ extension_dev_origins("http", "https", "ws", "wss") }};
+				base-uri 'none';
+				form-action 'none'" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Builder Extension</title>
+		<script type="importmap">{{ import_map | safe }}</script>
+		<!--
+			The frame is the whole viewport, so the element an extension mounts into
+			has to be the frame's own size. Without this, `height: 100%` in a slot's
+			document resolves against `auto` and the frame scrolls as one page,
+			instead of the slot scrolling the part it means to.
+		-->
+		<style>
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+			}
+			#app {
+				height: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script type="module" src="/builder_extension_asset/sdk/extension-sdk.js"></script>
+	</body>
+</html>

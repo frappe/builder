@@ -3,8 +3,12 @@
 		class="flex w-full min-w-0 items-center rounded-4 px-2 py-2 text-sm text-ink-gray-8"
 		:class="{ 'bg-surface-gray-2': active }">
 		<!-- lucide string icon (e.g. "lucide-search") -->
+		<RuntimeLucideIcon
+			v-if="item.usesRuntimeIcon && typeof item.icon === 'string'"
+			:name="item.icon"
+			:class="['mr-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']" />
 		<span
-			v-if="item.icon && typeof item.icon === 'string'"
+			v-else-if="item.icon && typeof item.icon === 'string'"
 			:class="[item.icon, 'mr-2.5 size-3.5 shrink-0', active ? 'text-ink-gray-7' : 'text-ink-gray-5']"
 			aria-hidden="true" />
 		<!-- component icon -->
@@ -29,6 +33,7 @@ withDefaults(
 			title: string;
 			description?: string;
 			icon?: string | object;
+			usesRuntimeIcon?: boolean;
 			[key: string]: unknown;
 		};
 		active?: boolean;

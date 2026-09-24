@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import inspect
 import os
 import re
@@ -838,6 +840,31 @@ def combine(a, b):
 
 def hash(s):
 	return f"{frappe.generate_hash(length=6)}-{s}"
+
+
+def csp_hash(content: str) -> str:
+	"""The script-src source expression that allows one inline script.
+
+	A hash suits content that never changes, where a nonce would make the page
+	uncacheable for nothing. The content must reach the page byte for byte, so
+	render it from the same variable the hash is taken from.
+	"""
+	digest = hashlib.sha256(content.encode()).digest()
+	return f"'sha256-{base64.b64encode(digest).decode()}'"
+
+
+def extension_dev_origins(*schemes: str) -> str:
+	"""CSP sources for an extension served from a dev server on this machine.
+
+	Empty unless the site runs in developer mode, so no production site widens
+	its policy. A dev server picks its own port and nothing can predict it, so a
+	source names the host and leaves the port open.
+	"""
+	if not frappe.conf.developer_mode:
+		return ""
+
+	hosts = ("localhost", "127.0.0.1")
+	return " ".join(f"{scheme}://{host}:*" for scheme in schemes for host in hosts)
 
 
 def to_safe_json(data):

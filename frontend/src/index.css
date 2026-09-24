@@ -120,3 +120,49 @@ p:empty::before {
 div:has(> [role='switch']) label[data-slot='label'] {
 	@apply font-medium text-ink-gray-8;
 }
+
+/* Rendered Markdown, wherever `renderMarkdown` output lands: an AI reply, and an
+   extension's README. Typography's own `code` decoration prints literal
+   backticks, and its `pre` colors are fixed light-theme values that leave a code
+   block dark on dark. Both sides of each pair are pinned to theme tokens, so
+   they flip together. */
+.markdown-body {
+	--tw-prose-body: var(--ink-gray-8);
+	--tw-prose-headings: var(--ink-gray-9);
+	--tw-prose-bold: var(--ink-gray-9);
+	--tw-prose-code: var(--ink-gray-8);
+	--tw-prose-pre-code: var(--ink-gray-8);
+	--tw-prose-pre-bg: var(--surface-gray-2);
+	--tw-prose-links: var(--ink-gray-9);
+	--tw-prose-bullets: var(--ink-gray-4);
+	--tw-prose-hr: var(--outline-gray-1);
+	--tw-prose-quotes: var(--ink-gray-6);
+	--tw-prose-quote-borders: var(--outline-gray-2);
+	--tw-prose-th-borders: var(--outline-gray-2);
+	--tw-prose-td-borders: var(--outline-gray-1);
+}
+.markdown-body p:first-child {
+	margin-top: 0;
+}
+.markdown-body p:last-child {
+	margin-bottom: 0;
+}
+.markdown-body code {
+	background: var(--surface-gray-2);
+	border-radius: 0.25rem;
+	padding: 0.1em 0.35em;
+	font-size: 0.8em;
+}
+.markdown-body code::before,
+.markdown-body code::after {
+	content: none;
+}
+.markdown-body pre {
+	background: var(--surface-gray-2) !important;
+	border-radius: 0.375rem;
+}
+/* Tables scroll inside a narrow panel instead of overflowing it. */
+.markdown-body table {
+	display: block;
+	overflow-x: auto;
+}

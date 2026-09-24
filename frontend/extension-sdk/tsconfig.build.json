@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"allowJs": true,
+		"skipLibCheck": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"rootDir": "src",
+		"outDir": "dist",
+		"types": []
+	},
+	"include": ["src/**/*.ts", "src/**/*.js"],
+	"exclude": ["src/**/tests/**"]
+}

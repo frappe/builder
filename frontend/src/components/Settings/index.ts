@@ -8,8 +8,11 @@ export type SettingsItem = RegistryItem & {
 	label: string;
 	title: string;
 	icon: string;
+	usesRuntimeIcon?: boolean;
 	group: SettingsGroup;
 	component: Component;
+	/** What the pane receives. An extension's frame needs its record; a built-in pane needs nothing. */
+	props?: () => Record<string, unknown>;
 	disabled?: boolean;
 	/** an async pane exposes its loader, so prefetch can warm it while the editor idles */
 	load?: () => Promise<unknown>;
@@ -141,6 +144,14 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalDeveloper.vue"),
 	},
 	{
+		name: "global_extension",
+		label: __("Extensions"),
+		title: __("Extensions Settings"),
+		icon: "lucide-plug",
+		group: "Global",
+		load: () => import("@/components/Settings/GlobalExtensions.vue"),
+	},
+	{
 		name: "global_ai",
 		label: __("AI"),
 		title: __("AI Settings"),
@@ -150,7 +161,9 @@ const panes: SettingsPane[] = [
 	},
 ];
 
-panes.forEach((pane) => settingsItems.register({ ...pane, component: defineAsyncComponent(pane.load) }));
+panes.forEach((pane) =>
+	settingsItems.registerBuiltIn({ ...pane, component: defineAsyncComponent(pane.load) }),
+);
 
 // warmed on idle by prefetchBuilderSettings, so the first open never waits on a chunk
 export const preloadSettingsPanes = () =>

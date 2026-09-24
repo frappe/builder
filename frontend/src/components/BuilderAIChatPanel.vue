@@ -113,7 +113,7 @@
 								class="mb-2" />
 							<div
 								v-if="assistantText(message)"
-								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
+								class="markdown-body prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
 							<!-- Turn running, nothing on the clock. Between rounds the shimmer is
 							     the timeline's own tail row (same geometry as the steps, so the
@@ -812,49 +812,6 @@ function toggleChips(messageId: string) {
 </script>
 
 <style>
-.ai-prose {
-	--tw-prose-body: var(--ink-gray-8);
-	--tw-prose-headings: var(--ink-gray-9);
-	--tw-prose-bold: var(--ink-gray-9);
-	--tw-prose-code: var(--ink-gray-8);
-	/* Code blocks: typography's pre defaults are fixed light-theme colors, so on
-	 * the dark panel a route tree rendered as barely-visible dark-on-dark. Pin
-	 * BOTH sides of the pair to theme-adaptive tokens (they flip together). */
-	--tw-prose-pre-code: var(--ink-gray-8);
-	--tw-prose-pre-bg: var(--surface-gray-2);
-	--tw-prose-links: var(--ink-gray-9);
-	--tw-prose-bullets: var(--ink-gray-4);
-	--tw-prose-hr: var(--outline-gray-1);
-	--tw-prose-quotes: var(--ink-gray-6);
-	--tw-prose-quote-borders: var(--outline-gray-2);
-	--tw-prose-th-borders: var(--outline-gray-2);
-	--tw-prose-td-borders: var(--outline-gray-1);
-}
-.ai-prose p:first-child {
-	margin-top: 0;
-}
-.ai-prose p:last-child {
-	margin-bottom: 0;
-}
-.ai-prose code {
-	background: var(--surface-gray-2);
-	border-radius: 0.25rem;
-	padding: 0.1em 0.35em;
-	font-size: 0.8em;
-}
-.ai-prose code::before,
-.ai-prose code::after {
-	content: none;
-}
-.ai-prose pre {
-	background: var(--surface-gray-2) !important;
-	border-radius: 0.375rem;
-}
-/* Tables scroll inside the narrow panel instead of overflowing it. */
-.ai-prose table {
-	display: block;
-	overflow-x: auto;
-}
 @keyframes shine {
 	from {
 		background-position: 200% center;

@@ -1,6 +1,6 @@
-import { ref } from "vue";
+import { isReactive, ref } from "vue";
 import { describe, expect, it } from "vitest";
-import { createRegistry, type RegistryItem } from "./createRegistry";
+import { createRegistry, type RegistryItem } from "../createRegistry";
 
 type TestItem = RegistryItem & { label?: string };
 
@@ -115,6 +115,39 @@ describe("createRegistry", () => {
 
 		expect(registry.visible.value).toHaveLength(1);
 		expect(registry.visible.value[0].label).toBe("new");
+	});
+
+	it("keeps a component entry raw", () => {
+		const registry = createRegistry<TestItem & { component: object }>();
+		const component = { render: () => null };
+		registry.register({ name: "menu", component });
+
+		expect(isReactive(registry.all.value[0].component)).toBe(false);
+	});
+
+	it("refuses to replace a built-in item", () => {
+		const registry = createRegistry<TestItem>();
+		registry.registerBuiltIn({ name: "Layers", label: "built-in" });
+
+		expect(() => registry.register({ name: "Layers", label: "extension" })).toThrow(/read-only/);
+		expect(registry.visible.value[0].label).toBe("built-in");
+	});
+
+	it("refuses to unregister a built-in item", () => {
+		const registry = createRegistry<TestItem>();
+		registry.registerBuiltIn({ name: "Layers" });
+
+		expect(() => registry.unregister("Layers")).toThrow(/read-only/);
+		expect(names(registry.visible.value)).toEqual(["Layers"]);
+	});
+
+	it("lets a built-in register again under the same name", () => {
+		const registry = createRegistry<TestItem>();
+		registry.registerBuiltIn({ name: "Layers", label: "first" });
+		registry.registerBuiltIn({ name: "Layers", label: "second" });
+
+		expect(registry.visible.value).toHaveLength(1);
+		expect(registry.visible.value[0].label).toBe("second");
 	});
 
 	// two surfaces install the same built-in set, so this must not reshuffle
