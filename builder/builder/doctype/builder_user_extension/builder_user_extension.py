@@ -71,7 +71,8 @@ class BuilderUserExtension(Document):
 	def on_trash(self):
 		self.delete_extension_state()
 		self.delete_doctype_grants()
-		self.delete_extension_files()
+		# the rows roll back with a failed delete, and files would not
+		frappe.db.after_commit.add(self.delete_extension_files)
 
 	@property
 	def install_path(self) -> str:
@@ -197,7 +198,6 @@ class BuilderUserExtension(Document):
 
 TABLE = "tabBuilder User Extension"
 UNIQUE_INDEX = "unique_user_extension"
-SOURCE_SCOPED_INDEX = "unique_user_source_extension"
 
 
 def on_doctype_update():
@@ -207,7 +207,4 @@ def on_doctype_update():
 	source, is refused, so `source_url` stays a plain record of where the files
 	came from and never scopes a lookup.
 	"""
-	if frappe.db.has_index(TABLE, SOURCE_SCOPED_INDEX):
-		frappe.db.sql_ddl(f"alter table `{TABLE}` drop index `{SOURCE_SCOPED_INDEX}`")
-
 	frappe.db.add_unique("Builder User Extension", ["user", "extension"], constraint_name=UNIQUE_INDEX)

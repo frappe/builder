@@ -5,7 +5,6 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.doctype.builder_extension_doctype_grant.builder_extension_doctype_grant import (
-	OLD_UNIQUE_INDEX,
 	TABLE,
 	UNIQUE_INDEX,
 	on_doctype_update,
@@ -13,12 +12,8 @@ from builder.builder.doctype.builder_extension_doctype_grant.builder_extension_d
 
 
 class TestBuilderExtensionDocTypeGrant(FrappeTestCase):
-	def test_drops_the_index_that_shared_one_answer_between_copies(self):
-		frappe.db.sql_ddl(
-			f"alter table `{TABLE}` add unique index `{OLD_UNIQUE_INDEX}` (`installation`, `document_type`)"
-		)
-
+	def test_adds_the_unique_index_once(self):
+		on_doctype_update()
 		on_doctype_update()
 
-		self.assertFalse(frappe.db.has_index(TABLE, OLD_UNIQUE_INDEX))
 		self.assertTrue(frappe.db.has_index(TABLE, UNIQUE_INDEX))

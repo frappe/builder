@@ -8,7 +8,6 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.doctype.builder_user_extension.builder_user_extension import (
-	SOURCE_SCOPED_INDEX,
 	TABLE,
 	UNIQUE_INDEX,
 	on_doctype_update,
@@ -102,7 +101,9 @@ class TestBuilderUserExtension(FrappeTestCase):
 		self.assertTrue(install_path.is_dir())
 
 		installation.delete()
+		self.assertTrue(install_path.is_dir(), "files must wait for the commit")
 
+		frappe.db.after_commit.run()
 		self.assertFalse(install_path.exists())
 
 	def test_uninstall_takes_this_users_state_and_grants(self):
@@ -111,8 +112,8 @@ class TestBuilderUserExtension(FrappeTestCase):
 			{
 				"doctype": "Builder Extension State",
 				"installation": installation.name,
-				"key": "theme",
-				"value": '"dark"',
+				"state_key": "theme",
+				"state_value": '"dark"',
 			}
 		).insert()
 		frappe.get_doc(
@@ -209,12 +210,8 @@ class TestInstallationValidation(FrappeTestCase):
 
 
 class TestInstallationIndex(FrappeTestCase):
-	def test_drops_the_index_that_scoped_a_lookup_by_source(self):
-		frappe.db.sql_ddl(
-			f"alter table `{TABLE}` add unique index `{SOURCE_SCOPED_INDEX}` (`user`, `extension`)"
-		)
-
+	def test_adds_the_unique_index_once(self):
+		on_doctype_update()
 		on_doctype_update()
 
-		self.assertFalse(frappe.db.has_index(TABLE, SOURCE_SCOPED_INDEX))
 		self.assertTrue(frappe.db.has_index(TABLE, UNIQUE_INDEX))

@@ -140,8 +140,8 @@ class TestExtensionRowScoping(FrappeTestCase):
 				{
 					"doctype": "Builder Extension State",
 					"installation": installation.name,
-					"key": "theme",
-					"value": '"dark"',
+					"state_key": "theme",
+					"state_value": '"dark"',
 				}
 			).insert(),
 			frappe.get_doc(

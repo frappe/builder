@@ -29,7 +29,7 @@ STATE_DOCTYPE = "Builder Extension State"
 def get_state(extension: str) -> dict:
 	"""Everything this extension stored for this user."""
 	installation = assert_extension_access(extension)
-	return {key: frappe.parse_json(row.value or "null") for key, row in read_rows(installation).items()}
+	return {key: frappe.parse_json(row.state_value or "null") for key, row in read_rows(installation).items()}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -69,9 +69,9 @@ def read_rows(installation: str) -> dict:
 	whole costs less than the round trips.
 	"""
 	rows = frappe.get_all(
-		STATE_DOCTYPE, filters={"installation": installation}, fields=["name", "key", "value"]
+		STATE_DOCTYPE, filters={"installation": installation}, fields=["name", "state_key", "state_value"]
 	)
-	return {row.key: row for row in rows}
+	return {row.state_key: row for row in rows}
 
 
 def read_patch(state) -> dict:
@@ -82,12 +82,13 @@ def read_patch(state) -> dict:
 
 
 def assert_room_for(extension: str, rows: dict, patch: dict) -> None:
-	"""The cap is on the whole store, not one key.
+	"""The cap is on the whole store, not one key, and counts key names too.
 
-	A per-key cap would let an extension write a thousand small keys.
+	A per-key cap would let an extension write a thousand small keys. A cap on
+	values alone would let it hide most of its data in long key names.
 	"""
-	kept = sum(len(row.value or "") for key, row in rows.items() if key not in patch)
-	incoming = sum(len(json.dumps(value)) for value in patch.values())
+	kept = sum(len(key) + len(row.state_value or "") for key, row in rows.items() if key not in patch)
+	incoming = sum(len(key) + len(json.dumps(value)) for key, value in patch.items())
 	if kept + incoming <= MAX_STATE_BYTES:
 		return
 
@@ -97,9 +98,9 @@ def assert_room_for(extension: str, rows: dict, patch: dict) -> None:
 def write_row(installation: str, row, key: str, value) -> None:
 	stored = json.dumps(value)
 	if row:
-		frappe.db.set_value(STATE_DOCTYPE, row.name, "value", stored)
+		frappe.db.set_value(STATE_DOCTYPE, row.name, "state_value", stored)
 		return
 
 	frappe.get_doc(
-		{"doctype": STATE_DOCTYPE, "installation": installation, "key": key, "value": stored}
+		{"doctype": STATE_DOCTYPE, "installation": installation, "state_key": key, "state_value": stored}
 	).insert()

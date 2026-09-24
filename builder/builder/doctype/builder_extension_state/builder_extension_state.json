@@ -6,8 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "installation",
-  "key",
-  "value"
+  "state_key",
+  "state_value"
  ],
  "fields": [
   {
@@ -22,7 +22,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "key",
+   "fieldname": "state_key",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Key",
@@ -30,7 +30,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "value",
+   "fieldname": "state_value",
    "fieldtype": "JSON",
    "label": "Value"
   }
@@ -38,7 +38,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-02 14:05:00.000000",
+ "modified": "2026-09-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension State",
@@ -69,5 +69,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "key"
+ "title_field": "state_key"
 }
