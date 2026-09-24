@@ -66,6 +66,8 @@ const usePageStore = defineStore("pageStore", {
 			// against the last page that actually loaded, so a retry after a failed
 			// fetch still counts as opening it
 			const switchingPage = pageName !== this.activePage?.name;
+			// going from one open page to another keeps the canvas zoom and pan
+			const keepViewport = switchingPage && Boolean(this.activePage);
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -106,7 +108,7 @@ const usePageStore = defineStore("pageStore", {
 			const canvasStore = useCanvasStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
-			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
 			if (page.client_scripts?.length) {
 				// Fetch full script documents for each script

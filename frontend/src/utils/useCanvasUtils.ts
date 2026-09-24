@@ -158,7 +158,7 @@ export function useCanvasUtils(
 		}
 	}
 
-	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
+	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true, keepViewport = false) {
 		if (!resetHistory && canvasHistory.value?.silentSetSource) {
 			// swap the root without recording it or disposing the stack (version preview)
 			canvasHistory.value.silentSetSource(newBlock);
@@ -171,7 +171,7 @@ export function useCanvasUtils(
 		}
 		if (resetCanvas) {
 			nextTick(() => {
-				setScaleAndTranslate();
+				keepViewport ? keepCanvasInView() : setScaleAndTranslate();
 				toggleDirty(false);
 			});
 		}
@@ -203,6 +203,18 @@ export function useCanvasUtils(
 			canvasProps.translateY = diffY / scale;
 		}
 		canvasProps.settingCanvas = false;
+	};
+
+	// a kept viewport can point past the end of a shorter page, so bring it back to the top at the same zoom
+	const keepCanvasInView = async () => {
+		await nextTick();
+		canvasBound.update();
+		const offScreenY = canvasBound.bottom < containerBound.top || canvasBound.top > containerBound.bottom;
+		const offScreenX = canvasBound.right < containerBound.left || canvasBound.left > containerBound.right;
+		if (offScreenX) canvasProps.translateX = 0;
+		if (!offScreenY) return;
+		const scale = canvasProps.scale;
+		canvasProps.translateY += (containerBound.top - canvasBound.top + 300 * scale) / scale;
 	};
 
 	function selectBlock(_block: Block, multiSelect = false) {
