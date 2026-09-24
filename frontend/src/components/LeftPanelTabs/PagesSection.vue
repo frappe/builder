@@ -61,12 +61,25 @@ const search = ref("");
 // the open page's folder is the "file" here: its pages are the ones listed
 const folder = computed(() => pageStore.activePage?.project_folder || "");
 
-// the open page's row mirrors unsaved title, route and folder edits
+const matchesSearch = (page: BuilderPage) => {
+	const query = search.value.trim().toLowerCase();
+	return (
+		!query ||
+		Boolean(page.page_title?.toLowerCase().includes(query) || page.route?.toLowerCase().includes(query))
+	);
+};
+
+// the open page's row mirrors its unsaved title, route and folder, and is matched against the
+// search here, since the server may not have its latest title or route yet
 const pages = computed<BuilderPage[]>(() => {
 	const active = pageStore.activePage;
-	return (folderPages.data ?? [])
+	const rows = (folderPages.data ?? [])
 		.map((page: BuilderPage) => (active && page.name === active.name ? { ...page, ...active } : page))
 		.filter((page: BuilderPage) => (page.project_folder || "") === folder.value);
+	if (!active || (active.project_folder || "") !== folder.value) return rows;
+	const others = rows.filter((page) => page.name !== active.name);
+	if (!matchesSearch(active)) return others;
+	return others.length === rows.length ? [active, ...others] : rows;
 });
 
 // a shared first segment ("tide/") is implied by the folder, so rows show the rest
@@ -104,10 +117,5 @@ watch(
 );
 
 watch(pagesVersion, loadFolderPages);
-// a title or route edited from page settings saves on its own, so re-query once it has landed
-watch(
-	() => [pageStore.activePage?.page_title, pageStore.activePage?.route],
-	useDebounceFn(() => search.value && loadFolderPages(), 800),
-);
 watch(search, useDebounceFn(loadFolderPages, 300));
 </script>
