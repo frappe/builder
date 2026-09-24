@@ -1,15 +1,21 @@
 <template>
 	<div class="group" @click.stop>
+		<div class="pointer-events-none" :class="fillOpacity">
+			<div
+				v-for="side in Object.values(Position)"
+				v-show="isActive(side)"
+				:key="side"
+				class="absolute bg-purple-300"
+				:class="fillPlacement[side]"
+				:style="fillSize(side)" />
+		</div>
 		<div
 			class="padding-handler absolute flex w-full"
 			:style="{
 				height: topPaddingHandlerHeight + 'px',
 				cursor: isDraggable(topPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
-			:class="[
-				isDraggable(topPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
-				isActive(Position.Top) && bandFill,
-			]"
+			:class="isDraggable(topPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none'"
 			ref="topPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Top)">
 			<div
@@ -30,10 +36,7 @@
 				height: bottomPaddingHandlerHeight + 'px',
 				cursor: isDraggable(bottomPaddingHandlerHeight) ? verticalCursor : undefined,
 			}"
-			:class="[
-				isDraggable(bottomPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none',
-				isActive(Position.Bottom) && bandFill,
-			]"
+			:class="isDraggable(bottomPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none'"
 			ref="bottomPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Bottom)">
 			<div
@@ -54,10 +57,7 @@
 				width: leftPaddingHandlerWidth + 'px',
 				cursor: isDraggable(leftPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
-			:class="[
-				isDraggable(leftPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
-				isActive(Position.Left) && bandFill,
-			]"
+			:class="isDraggable(leftPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none'"
 			ref="leftPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Left)">
 			<div
@@ -78,10 +78,7 @@
 				width: rightPaddingHandlerWidth + 'px',
 				cursor: isDraggable(rightPaddingHandlerWidth) ? horizontalCursor : undefined,
 			}"
-			:class="[
-				isDraggable(rightPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none',
-				isActive(Position.Right) && bandFill,
-			]"
+			:class="isDraggable(rightPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none'"
 			ref="rightPaddingHandler"
 			@mousedown.stop="handlePadding($event, Position.Right)">
 			<div
@@ -163,7 +160,13 @@ const overBand = {
 };
 
 const hoveredSide = ref<Position | null>(null);
-const bandFill = computed(() => (updating.value ? "bg-purple-300/70" : "bg-purple-300/40"));
+const fillOpacity = computed(() => (updating.value ? "opacity-70" : "opacity-40"));
+const fillPlacement = {
+	[Position.Top]: "left-0 top-0 w-full",
+	[Position.Bottom]: "bottom-0 left-0 w-full",
+	[Position.Left]: "left-0 top-0 h-full",
+	[Position.Right]: "right-0 top-0 h-full",
+};
 const isActive = (side: Position) =>
 	updating.value ? activeSides.value.includes(side) : hoveredSide.value === side || overBand[side].value;
 
@@ -223,6 +226,10 @@ const bandThickness = {
 	[Position.Bottom]: bottomPaddingHandlerHeight,
 	[Position.Left]: leftPaddingHandlerWidth,
 	[Position.Right]: rightPaddingHandlerWidth,
+};
+const fillSize = (side: Position) => {
+	const isLong = side === Position.Top || side === Position.Bottom;
+	return { [isLong ? "height" : "width"]: `${bandThickness[side].value}px` };
 };
 const isEmpty = (side: Position) => bandThickness[side].value === 0;
 

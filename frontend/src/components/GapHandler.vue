@@ -1,13 +1,18 @@
 <template>
 	<div class="group" @click.stop>
+		<div class="pointer-events-none" :class="fillOpacity">
+			<div
+				v-for="band in gapBands"
+				v-show="band.filled && isActive(band.position)"
+				:key="band.key"
+				class="absolute bg-purple-300"
+				:style="band.style" />
+		</div>
 		<div
 			v-for="band in gapBands"
 			:key="band.key"
 			class="gap-handler absolute z-10 flex"
-			:class="[
-				band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none',
-				band.filled && isActive(band.position) && bandFill,
-			]"
+			:class="band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none'"
 			:style="band.style"
 			@mouseenter="hoveredAxis = band.position"
 			@mouseleave="hoveredAxis = null"
@@ -71,7 +76,7 @@ watchEffect(() => {
 });
 
 const hoveredAxis = ref<Position | null>(null);
-const bandFill = computed(() => (updating.value ? "bg-purple-300/70" : "bg-purple-300/40"));
+const fillOpacity = computed(() => (updating.value ? "opacity-70" : "opacity-40"));
 const isActive = (position: Position) =>
 	updating.value ? activeSides.value.includes(position) : hoveredAxis.value === position;
 
@@ -248,7 +253,6 @@ const pillSize = (size: { width: number; height: number }, gap: number) => {
 	return { width: size.width * growth, height: size.height * growth };
 };
 
-// The pill is centred in its band 
 const handleStyle = (size: { width: number; height: number }, cursor: string, centreY?: number) => ({
 	borderWidth: handleBorderWidth.value,
 	left: `calc(50% - ${size.width / 2}px)`,
