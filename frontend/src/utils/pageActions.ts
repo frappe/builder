@@ -41,7 +41,7 @@ export const folderPageCount = (folder: string): number =>
 // bumped after any page change so every page list refreshes from the server
 export const pagesVersion = ref(0);
 
-function notifyPagesChanged({ reloadDashboard = true } = {}) {
+export function notifyPagesChanged({ reloadDashboard = true } = {}) {
 	pagesVersion.value++;
 	folderCounts.reload();
 	if (reloadDashboard) webPages.reload();

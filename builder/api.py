@@ -3,6 +3,7 @@ import os
 import re
 import socket
 from io import BytesIO
+from itertools import count
 from types import FunctionType, MethodType, ModuleType
 from typing import Any
 from urllib.parse import unquote, urlparse
@@ -501,7 +502,10 @@ def get_template_groups() -> list[dict]:
 
 
 def create_page_from_bundle(
-	bundle: dict, project_folder: str | None = None, template_page: str | None = None
+	bundle: dict,
+	project_folder: str | None = None,
+	template_page: str | None = None,
+	route: str | None = None,
 ) -> str:
 	"""Create an editable page from a fetched hub bundle and return its name.
 
@@ -531,6 +535,7 @@ def create_page_from_bundle(
 			"body_html": page.get("body_html"),
 			"meta_description": page.get("meta_description"),
 			"project_folder": project_folder or None,
+			"route": route,
 		}
 	)
 	for cs in bundle.get("client_scripts") or []:
@@ -577,8 +582,11 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 
 @frappe.whitelist()
 @has_page_write("You do not have permission to create pages.")
-def import_template_group(template_group: str, project_folder: str | None = None) -> list[str]:
-	"""Import all pages from a template group and return their names."""
+def import_template_group(template_group: str) -> dict:
+	"""Import all pages of a template group into a new folder and return it with the page names.
+
+	Pages keep their template paths under one shared route prefix, so the group's relative
+	nav links (href="rooms") resolve between the imported pages."""
 	groups = get_template_groups()
 	group = next((g for g in groups if g.get("name") == template_group), None)
 	if not group:
@@ -588,6 +596,16 @@ def import_template_group(template_group: str, project_folder: str | None = None
 	if not pages:
 		frappe.throw(frappe._("No pages found in this template group."))
 
+	slug = frappe.scrub(template_group).replace("_", "-")
+	folder, prefix = create_import_folder(group.get("title") or template_group, slug)
+	created = import_group_pages(pages, template_group, folder, prefix)
+	if not created:
+		frappe.throw(frappe._("Could not import any pages from this template group."))
+
+	return {"folder": folder, "pages": created}
+
+
+def import_group_pages(pages: list[dict], template_group: str, folder: str, prefix: str) -> list[str]:
 	created = []
 	for page in pages:
 		try:
@@ -597,13 +615,43 @@ def import_template_group(template_group: str, project_folder: str | None = None
 			continue
 		if not bundle or not bundle.get("page"):
 			continue
-		name = create_page_from_bundle(bundle, project_folder, page.get("name"))
-		created.append(name)
-
-	if not created:
-		frappe.throw(frappe._("Could not import any pages from this template group."))
-
+		path = template_path(bundle["page"].get("route") or page.get("name"), template_group)
+		created.append(create_page_from_bundle(bundle, folder, page.get("name"), f"{prefix}/{path}"))
 	return created
+
+
+def template_path(route: str, template_group: str) -> str:
+	"""The route below the hub's templates/<group>/, so nested template pages keep distinct paths."""
+	route = route.strip("/")
+	hub_prefix = f"templates/{template_group}/"
+	return route.removeprefix(hub_prefix) if route.startswith(hub_prefix) else route.rsplit("/", 1)[-1]
+
+
+def create_import_folder(title: str, slug: str) -> tuple[str, str]:
+	"""Create a folder for an import and take its route prefix from the same suffix.
+
+	The folder name is the doctype's primary key, so two concurrent imports can never
+	claim the same folder, and with it the same prefix."""
+	for suffix in count(1):
+		name, prefix = (title, slug) if suffix == 1 else (f"{title} {suffix}", f"{slug}-{suffix}")
+		if frappe.db.exists("Builder Project Folder", name) or is_route_prefix_taken(prefix):
+			continue
+		if insert_folder(name):
+			return name, prefix
+
+
+def insert_folder(name: str) -> bool:
+	frappe.db.savepoint("builder_import_folder")
+	try:
+		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": name}).insert()
+	except frappe.DuplicateEntryError:
+		frappe.db.rollback(save_point="builder_import_folder")
+		return False
+	return True
+
+
+def is_route_prefix_taken(prefix: str) -> bool:
+	return bool(frappe.db.exists("Builder Page", {"route": ["like", f"{prefix}/%"]}))
 
 
 @frappe.whitelist()
