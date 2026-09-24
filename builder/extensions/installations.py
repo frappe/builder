@@ -21,7 +21,7 @@ from builder.extensions.access import (
 	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.data import ACCESS_FIELDS, read_answers, upsert_grant
+from builder.extensions.data import ACCESSES, ANSWERS, upsert_grant
 from builder.utils import has_page_read
 
 RESOURCE_DOCTYPE = "Builder Extension Resource"
@@ -63,7 +63,7 @@ def installation_doctype_grants(installation: str) -> list[dict]:
 	return frappe.get_all(
 		GRANT_DOCTYPE,
 		filters={"installation": installation},
-		fields=["document_type", *ACCESS_FIELDS.values()],
+		fields=["document_type", *ACCESSES],
 		order_by="document_type asc",
 	)
 
@@ -86,7 +86,15 @@ def set_extension_grant(extension: str, doctype: str, answers: dict | None = Non
 	off, and the extension gate refuses both.
 	"""
 	installation = own_installation(extension)
-	upsert_grant(installation, doctype, read_answers(answers))
+
+	answers = answers or {}
+	if set(answers) != set(ACCESSES):
+		frappe.throw(_("Answer read, write and delete."))
+	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
+	if unknown:
+		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
+
+	upsert_grant(installation, doctype, answers)
 
 	return installation_doctype_grants(installation)
 

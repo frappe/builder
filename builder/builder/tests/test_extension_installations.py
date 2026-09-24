@@ -164,31 +164,31 @@ class TestGrantAnswers(FrappeTestCase):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def grant(self, **values):
+	def grant(self, answers):
 		make_installation(EXTENSION)
-		record_extension_grant(EXTENSION, "Contact", **values)
+		record_extension_grant(EXTENSION, "Contact", answers)
 
 	def assertAnswers(self, row, read, write, delete):
 		self.assertEqual(
-			(row["read_access"], row["write_access"], row["delete_access"]), (read, write, delete)
+			(row["read"], row["write"], row["delete"]), (read, write, delete)
 		)
 
 	def test_narrows_one_access_and_keeps_the_rest(self):
-		self.grant(access=["read", "write", "delete"])
+		self.grant({"read": "allowed", "write": "allowed", "delete": "allowed"})
 
 		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
 
 		self.assertAnswers(grants[0], "allowed", "allowed", "not asked")
 
 	def test_denies_one_access_and_keeps_the_rest(self):
-		self.grant(access=["read", "write"])
+		self.grant({"read": "allowed", "write": "allowed"})
 
 		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "denied"))
 
 		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
 	def test_not_asked_is_the_way_back_from_a_denial(self):
-		self.grant(access=["read"], denied=True)
+		self.grant({"read": "denied"})
 		installation = find_installation(EXTENSION)
 
 		set_extension_grant(EXTENSION, "Contact", answers())
@@ -198,13 +198,13 @@ class TestGrantAnswers(FrappeTestCase):
 		)
 
 	def test_refuses_an_answer_it_does_not_know(self):
-		self.grant(access=["read"])
+		self.grant({"read": "allowed"})
 
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_grant(EXTENSION, "Contact", answers(read="maybe"))
 
 	def test_refuses_answers_that_leave_an_access_out(self):
-		self.grant(access=["read"])
+		self.grant({"read": "allowed"})
 
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_grant(EXTENSION, "Contact", {"read": "allowed"})

@@ -32,7 +32,7 @@ DENIED = "denied"
 ANSWERS = (NOT_ASKED, ALLOWED, DENIED)
 
 # each access holds its own answer, so a user can allow read and deny delete
-ACCESS_FIELDS = {"read": "read_access", "write": "write_access", "delete": "delete_access"}
+ACCESSES = ("read", "write", "delete")
 
 # a page of rows, and the ceiling one call can ask for. The server owns this
 # number: it is the side protecting the database, and a copy in the browser
@@ -58,46 +58,26 @@ def get_extension_grant(extension: str, doctype: str) -> dict:
 
 
 @frappe.whitelist()
-def record_extension_grant(
-	extension: str, doctype: str, access: list[str] | None = None, denied: bool = False
-) -> dict:
+def record_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
 	"""Write what the user answered in the Builder dialog.
 
-	The browser is the only witness to that answer. The dialog is host chrome, and
-	an extension frame cannot reach this method at all: it runs at an opaque origin
-	and carries no session cookie, so the host is the only caller.
-
-	Answers only the access the call names, and leaves the rest as it stands.
-	That is the rule `set_extension_tokens` follows too. Denying delete does not
-	take back a read the user already allowed.
+	Answers only the access the call names, each allowed or denied on its own,
+	and leaves the rest as it stands. That is the rule `set_extension_tokens`
+	follows too. Denying delete does not take back a read the user already allowed.
 	"""
 	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
-	answer = DENIED if denied else ALLOWED
 
-	values = {ACCESS_FIELDS[name]: answer for name in read_access(access)}
-	upsert_grant(installation, doctype, values)
-	return describe_grant(installation, doctype)
-
-
-def read_access(access: list[str] | None) -> set[str]:
-	access = set(access or [])
-	if not access:
+	if not answers:
 		frappe.throw(_("Name the access this answers: read, write or delete."))
-	unknown = sorted(access - set(ACCESS_FIELDS))
+	unknown = sorted(set(answers) - set(ACCESSES))
 	if unknown:
 		frappe.throw(_("Unknown access: {0}").format(", ".join(unknown)))
-	return access
-
-
-def read_answers(answers: dict | None) -> dict:
-	"""One answer for each access, keyed the way the grant stores them."""
-	answers = answers or {}
-	if set(answers) != set(ACCESS_FIELDS):
-		frappe.throw(_("Answer read, write and delete."))
-	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
+	unknown = sorted(str(answer) for answer in answers.values() if answer not in (ALLOWED, DENIED))
 	if unknown:
-		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
-	return {ACCESS_FIELDS[name]: answer for name, answer in answers.items()}
+		frappe.throw(_("Answer allowed or denied, not: {0}").format(", ".join(unknown)))
+
+	upsert_grant(installation, doctype, answers)
+	return describe_grant(installation, doctype)
 
 
 def describe_grant(installation: str, doctype: str) -> dict:
@@ -106,14 +86,14 @@ def describe_grant(installation: str, doctype: str) -> dict:
 		frappe.db.get_value(
 			GRANT_DOCTYPE,
 			{"installation": installation, "document_type": doctype},
-			list(ACCESS_FIELDS.values()),
+			list(ACCESSES),
 			as_dict=True,
 		)
 		or {}
 	)
 	return {
 		"doctype": doctype,
-		**{name: grant.get(field, NOT_ASKED) for name, field in ACCESS_FIELDS.items()},
+		**{name: grant.get(name, NOT_ASKED) for name in ACCESSES},
 	}
 
 

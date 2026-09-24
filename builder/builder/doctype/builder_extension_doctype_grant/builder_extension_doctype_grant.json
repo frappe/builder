@@ -7,9 +7,9 @@
  "field_order": [
   "installation",
   "document_type",
-  "read_access",
-  "write_access",
-  "delete_access"
+  "read",
+  "write",
+  "delete"
  ],
  "fields": [
   {
@@ -35,7 +35,7 @@
   },
   {
    "default": "not asked",
-   "fieldname": "read_access",
+   "fieldname": "read",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Read",
@@ -44,7 +44,7 @@
   },
   {
    "default": "not asked",
-   "fieldname": "write_access",
+   "fieldname": "write",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Write",
@@ -53,7 +53,7 @@
   },
   {
    "default": "not asked",
-   "fieldname": "delete_access",
+   "fieldname": "delete",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Delete",

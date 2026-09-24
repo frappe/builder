@@ -111,7 +111,7 @@ class TestBuilderUserExtension(FrappeTestCase):
 				"doctype": "Builder Extension DocType Grant",
 				"installation": installation.name,
 				"document_type": "Contact",
-				"read_access": "allowed",
+				"read": "allowed",
 			}
 		).insert()
 
@@ -130,7 +130,7 @@ class TestBuilderUserExtension(FrappeTestCase):
 				"doctype": "Builder Extension DocType Grant",
 				"installation": theirs.name,
 				"document_type": "Contact",
-				"read_access": "allowed",
+				"read": "allowed",
 			}
 		).insert()
 
