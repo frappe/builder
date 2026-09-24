@@ -5,14 +5,14 @@
 
 Three gates stand between an extension and a document:
 1. The capability says the extension may work with site data at all (`data.access`).
-2. The grant here says which doctype, and which of read, write and delete. The same user answers each one on its own while the editor runs.
+2. The doctype grant here says which doctype, and which of read, write and delete. The same user answers each one on its own while the editor runs.
 3. Frappe's own permission says whether that user may do it, and it is theonly one that cannot be widened: nothing in this module passes`ignore_permissions`.
 
 Every gate belongs to one installation, the way `Builder Extension State` does.
 One user allowing an extension to read Contact says nothing about the next user, neither about a second copy of that extension.
 
-A grant is asked for, never assumed. `data.requestAccess` in the browser is the
-one path that opens a dialog, and every other call refuses without a grant.
+A doctype grant is asked for, never assumed. `data.requestAccess` in the browser is the
+one path that opens a dialog, and every other call refuses without one.
 """
 
 import frappe
@@ -38,7 +38,7 @@ DEFAULT_PAGE_LENGTH = 20
 MAX_PAGE_LENGTH = 500
 
 
-class ExtensionGrantRequired(frappe.PermissionError):
+class DoctypeGrantRequired(frappe.PermissionError):
 	"""No grant covers this doctype yet.
 
 	Its own class because the class name travels to the browser as `exc_type`,
@@ -48,14 +48,14 @@ class ExtensionGrantRequired(frappe.PermissionError):
 
 
 @frappe.whitelist()
-def get_extension_grant(extension: str, doctype: str) -> dict:
+def get_doctype_grant(extension: str, doctype: str) -> dict:
 	"""What this extension may already do to this doctype, for this user."""
 	installation = assert_extension_access(extension, "data.access")
-	return describe_grant(installation, doctype)
+	return describe_doctype_grant(installation, doctype)
 
 
 @frappe.whitelist()
-def record_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
+def record_doctype_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
 	"""Write what the user answered in the Builder dialog.
 
 	Answers only the access the call names, each on its own, and leaves the rest
@@ -64,11 +64,11 @@ def record_extension_grant(extension: str, doctype: str, answers: dict | None = 
 	"""
 	installation = assert_extension_access(extension, "data.access", writes=GRANT_DOCTYPE)
 	assert_answers(answers)
-	upsert_grant(installation, doctype, answers)
-	return describe_grant(installation, doctype)
+	upsert_doctype_grant(installation, doctype, answers)
+	return describe_doctype_grant(installation, doctype)
 
 
-def describe_grant(installation: str, doctype: str) -> dict:
+def describe_doctype_grant(installation: str, doctype: str) -> dict:
 	"""One answer for each access. A doctype nobody answered has no row, so each is not asked."""
 	grant = (
 		frappe.db.get_value(
@@ -85,7 +85,7 @@ def describe_grant(installation: str, doctype: str) -> dict:
 	}
 
 
-def find_extension_grant(installation: str, doctype: str) -> str | None:
+def find_doctype_grant(installation: str, doctype: str) -> str | None:
 	return frappe.db.get_value(
 		GRANT_DOCTYPE, {"installation": installation, "document_type": doctype}, "name"
 	)
@@ -103,14 +103,14 @@ def assert_answers(answers: dict | None) -> None:
 		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
 
 
-def upsert_grant(installation: str, doctype: str, values: dict) -> None:
+def upsert_doctype_grant(installation: str, doctype: str, values: dict) -> None:
 	"""Write an answer, merging into whatever stands.
 
-	Both callers merge: `record_extension_grant` writes what the user answered,
+	Both callers merge: `record_doctype_grant` writes what the user answered,
 	and `schema.grant_everything` writes a full grant on a table the extension
 	just made. Neither removes what its call leaves unmentioned.
 	"""
-	name = find_extension_grant(installation, doctype)
+	name = find_doctype_grant(installation, doctype)
 	if name:
 		frappe.get_doc(GRANT_DOCTYPE, name).update(values).save()
 		return
@@ -125,18 +125,18 @@ def upsert_grant(installation: str, doctype: str, values: dict) -> None:
 	).insert()
 
 
-def forget_grant(installation: str, doctype: str) -> None:
+def forget_doctype_grant(installation: str, doctype: str) -> None:
 	"""Drop every answer, so the next request asks about each access again.
 
 	A dropped doctype forgets its own, so a doctype remade under the same name
 	inherits nothing.
 	"""
-	name = find_extension_grant(installation, doctype)
+	name = find_doctype_grant(installation, doctype)
 	if name:
 		frappe.delete_doc(GRANT_DOCTYPE, name)
 
 
-def assert_grant(installation: str, extension: str, doctype: str, access: str) -> None:
+def assert_doctype_grant(installation: str, extension: str, doctype: str, access: str) -> None:
 	"""What this user allowed for this doctype. Refuses loudly, and names what is missing.
 
 	Called from the server rather than trusted to the browser, so the grant is
@@ -144,12 +144,12 @@ def assert_grant(installation: str, extension: str, doctype: str, access: str) -
 	refusal, because the message travels to the author and an installation name
 	is a uuid.
 	"""
-	if describe_grant(installation, doctype)[access] == ALLOWED:
+	if describe_doctype_grant(installation, doctype)[access] == ALLOWED:
 		return
 
 	frappe.throw(
 		_('"{0}" was not granted {1} access to {2}.').format(extension, access, doctype),
-		ExtensionGrantRequired,
+		DoctypeGrantRequired,
 	)
 
 
@@ -161,7 +161,7 @@ def assert_data_access(extension: str, doctype: str, access: str) -> None:
 	both.
 	"""
 	installation = assert_extension_access(extension, "data.access")
-	assert_grant(installation, extension, doctype, access)
+	assert_doctype_grant(installation, extension, doctype, access)
 
 
 @frappe.whitelist()

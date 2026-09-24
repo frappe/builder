@@ -12,17 +12,17 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.data import (
 	MAX_PAGE_LENGTH,
-	ExtensionGrantRequired,
-	assert_grant,
+	DoctypeGrantRequired,
+	assert_doctype_grant,
 	delete_doc,
 	get_count,
 	get_doc,
-	get_extension_grant,
+	get_doctype_grant,
 	get_list,
 	insert_doc,
-	record_extension_grant,
+	record_doctype_grant,
 	update_doc,
-	upsert_grant,
+	upsert_doctype_grant,
 )
 
 
@@ -38,7 +38,7 @@ class TestExtensionGrants(FrappeTestCase):
 		frappe.db.rollback()
 
 	def test_an_ungranted_doctype_allows_nothing(self):
-		grant = get_extension_grant("acme/data", "Contact")
+		grant = get_doctype_grant("acme/data", "Contact")
 
 		self.assertEqual(
 			grant, {"doctype": "Contact", "read": "not asked", "write": "not asked", "delete": "not asked"}
@@ -48,10 +48,10 @@ class TestExtensionGrants(FrappeTestCase):
 		"""The capability gate runs first, so there is nothing to answer about."""
 		drop_installations("acme/absent")
 
-		self.assertRaises(frappe.PermissionError, get_extension_grant, "acme/absent", "Contact")
+		self.assertRaises(frappe.PermissionError, get_doctype_grant, "acme/absent", "Contact")
 
 	def test_the_grant_belongs_to_the_copy_that_answered(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 		self.assertEqual(
 			frappe.db.get_value(
@@ -62,67 +62,67 @@ class TestExtensionGrants(FrappeTestCase):
 
 	def test_another_user_is_asked_again(self):
 		"""One person's answer is not everybody's."""
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 		theirs = make_user()
 		make_extension(user=theirs)
 
 		frappe.set_user(theirs)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-		self.assertEqual(get_extension_grant("acme/data", "Contact")["read"], "not asked")
+		self.assertEqual(get_doctype_grant("acme/data", "Contact")["read"], "not asked")
 
 	def test_recording_a_grant_allows_what_was_asked(self):
-		grant = record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		grant = record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 		self.assertEqual(grant["read"], "allowed")
 		self.assertEqual(grant["write"], "not asked")
 
 	def test_a_second_grant_merges_with_the_first(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
-		grant = record_extension_grant("acme/data", "Contact", {"write": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
+		grant = record_doctype_grant("acme/data", "Contact", {"write": "allowed"})
 
 		self.assertEqual(grant["read"], "allowed")
 		self.assertEqual(grant["write"], "allowed")
 
 	def test_allowing_replaces_an_earlier_denial_of_the_same_access(self):
-		record_extension_grant("acme/data", "Contact", {"read": "denied"})
-		grant = record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "denied"})
+		grant = record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 		self.assertEqual(grant["read"], "allowed")
 
 	def test_a_denial_answers_only_the_access_it_names(self):
-		record_extension_grant("acme/data", "Contact", {"delete": "denied"})
-		grant = get_extension_grant("acme/data", "Contact")
+		record_doctype_grant("acme/data", "Contact", {"delete": "denied"})
+		grant = get_doctype_grant("acme/data", "Contact")
 
 		self.assertEqual(grant["delete"], "denied")
 		self.assertEqual(grant["read"], "not asked")
 
 	def test_a_denial_leaves_earlier_access_alone(self):
 		"""Refusing write does not take back the read the user already allowed."""
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
-		grant = record_extension_grant("acme/data", "Contact", {"write": "denied"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
+		grant = record_doctype_grant("acme/data", "Contact", {"write": "denied"})
 
 		self.assertEqual(grant["read"], "allowed")
 		self.assertEqual(grant["write"], "denied")
 		self.assertEqual(grant["delete"], "not asked")
 
 	def test_one_call_can_allow_and_deny_different_accesses(self):
-		grant = record_extension_grant("acme/data", "Contact", {"read": "allowed", "delete": "denied"})
+		grant = record_doctype_grant("acme/data", "Contact", {"read": "allowed", "delete": "denied"})
 
 		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "not asked", "denied"))
 
 	def test_an_answer_nobody_defined_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {"read": "maybe"})
+		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"read": "maybe"})
 
 	def test_a_call_with_no_answers_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {})
+		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {})
 
 	def test_an_unknown_access_word_is_refused(self):
-		self.assertRaises(frappe.ValidationError, record_extension_grant, "acme/data", "Contact", {"publish": "allowed"})
+		self.assertRaises(frappe.ValidationError, record_doctype_grant, "acme/data", "Contact", {"publish": "allowed"})
 
 	def test_one_grant_per_installation_and_doctype(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
-		record_extension_grant("acme/data", "Contact", {"write": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"write": "allowed"})
 
 		rows = frappe.get_all(
 			"Builder Extension DocType Grant",
@@ -132,31 +132,31 @@ class TestExtensionGrants(FrappeTestCase):
 
 	def test_a_grant_is_scoped_to_one_extension(self):
 		make_extension("acme/other")
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
-		self.assertEqual(get_extension_grant("acme/other", "Contact")["read"], "not asked")
+		self.assertEqual(get_doctype_grant("acme/other", "Contact")["read"], "not asked")
 
 	def test_a_grant_is_scoped_to_one_doctype(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
-		self.assertEqual(get_extension_grant("acme/data", "ToDo")["read"], "not asked")
+		self.assertEqual(get_doctype_grant("acme/data", "ToDo")["read"], "not asked")
 
-	def test_assert_grant_passes_what_was_granted(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+	def test_assert_doctype_grant_passes_what_was_granted(self):
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
-		assert_grant(self.extension.name, "acme/data", "Contact", "read")
+		assert_doctype_grant(self.extension.name, "acme/data", "Contact", "read")
 
-	def test_assert_grant_refuses_what_was_not(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+	def test_assert_doctype_grant_refuses_what_was_not(self):
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 
 		self.assertRaises(
-			frappe.PermissionError, assert_grant, self.extension.name, "acme/data", "Contact", "write"
+			frappe.PermissionError, assert_doctype_grant, self.extension.name, "acme/data", "Contact", "write"
 		)
 
 	def test_uninstalling_drops_only_this_users_grants(self):
-		record_extension_grant("acme/data", "Contact", {"read": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed"})
 		theirs = make_extension(user=make_user())
-		upsert_grant(theirs.name, "Contact", {"read": "allowed"})
+		upsert_doctype_grant(theirs.name, "Contact", {"read": "allowed"})
 
 		frappe.delete_doc(INSTALLATION_DOCTYPE, self.extension.name)
 
@@ -176,7 +176,7 @@ def make_contact(first_name="Ada"):
 class TestExtensionDocuments(FrappeTestCase):
 	def setUp(self):
 		self.extension = make_extension()
-		record_extension_grant("acme/data", "Contact", {"read": "allowed", "write": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"read": "allowed", "write": "allowed"})
 
 	def tearDown(self):
 		frappe.db.rollback()
@@ -189,7 +189,7 @@ class TestExtensionDocuments(FrappeTestCase):
 		self.assertIn("Grace", [row.first_name for row in rows])
 
 	def test_a_list_needs_a_read_grant(self):
-		self.assertRaises(ExtensionGrantRequired, get_list, "acme/data", "ToDo")
+		self.assertRaises(DoctypeGrantRequired, get_list, "acme/data", "ToDo")
 
 	def test_counts_without_fetching(self):
 		make_contact("Grace")
@@ -219,9 +219,9 @@ class TestExtensionDocuments(FrappeTestCase):
 		self.assertEqual(inserted["doctype"], "Contact")
 
 	def test_an_insert_needs_a_write_grant(self):
-		record_extension_grant("acme/data", "ToDo", {"read": "allowed"})
+		record_doctype_grant("acme/data", "ToDo", {"read": "allowed"})
 
-		self.assertRaises(ExtensionGrantRequired, insert_doc, "acme/data", "ToDo", {})
+		self.assertRaises(DoctypeGrantRequired, insert_doc, "acme/data", "ToDo", {})
 
 	def test_updates_a_document(self):
 		contact = make_contact("Ada")
@@ -243,11 +243,11 @@ class TestExtensionDocuments(FrappeTestCase):
 		"""Write is not enough. Losing a record is not the same as changing one."""
 		contact = make_contact("Ada")
 
-		self.assertRaises(ExtensionGrantRequired, delete_doc, "acme/data", "Contact", contact.name)
+		self.assertRaises(DoctypeGrantRequired, delete_doc, "acme/data", "Contact", contact.name)
 
 	def test_deletes_with_the_delete_grant(self):
 		contact = make_contact("Ada")
-		record_extension_grant("acme/data", "Contact", {"delete": "allowed"})
+		record_doctype_grant("acme/data", "Contact", {"delete": "allowed"})
 
 		delete_doc("acme/data", "Contact", contact.name)
 

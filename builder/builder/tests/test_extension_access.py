@@ -13,7 +13,7 @@ from builder.builder.tests.extension_fixtures import (
 from builder.extensions.access import (
 	assert_extension_access,
 	find_installation,
-	grant_conditions,
+	doctype_grant_conditions,
 	installation_conditions,
 	owns_row,
 	owns_through_installation,
@@ -102,7 +102,7 @@ class TestExtensionRowScoping(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_a_system_manager_sees_every_row(self):
-		for conditions in (installation_conditions, grant_conditions, state_conditions):
+		for conditions in (installation_conditions, doctype_grant_conditions, state_conditions):
 			self.assertEqual(conditions("Administrator"), "")
 
 	def test_another_user_sees_only_their_own(self):
@@ -114,7 +114,7 @@ class TestExtensionRowScoping(FrappeTestCase):
 		"""Neither names a user, so the condition goes through the record that does."""
 		theirs = make_user()
 
-		for conditions in (grant_conditions, state_conditions):
+		for conditions in (doctype_grant_conditions, state_conditions):
 			condition = conditions(theirs)
 			self.assertIn(INSTALLATION_DOCTYPE, condition)
 			self.assertIn(frappe.db.escape(theirs), condition)

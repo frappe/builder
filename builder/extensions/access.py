@@ -109,7 +109,7 @@ def installation_conditions(user: str | None = None) -> str:
 	return scoped_to_user(INSTALLATION_DOCTYPE, user)
 
 
-def grant_conditions(user: str | None = None) -> str:
+def doctype_grant_conditions(user: str | None = None) -> str:
 	return scoped_to_installation(GRANT_DOCTYPE, user)
 
 

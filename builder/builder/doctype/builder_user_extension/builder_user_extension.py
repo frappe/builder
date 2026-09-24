@@ -70,7 +70,7 @@ class BuilderUserExtension(Document):
 
 	def on_trash(self):
 		self.delete_extension_state()
-		self.delete_extension_grants()
+		self.delete_doctype_grants()
 		self.delete_extension_files()
 
 	@property
@@ -185,7 +185,7 @@ class BuilderUserExtension(Document):
 		for state in frappe.get_all(STATE_DOCTYPE, filters={"installation": self.name}, pluck="name"):
 			frappe.delete_doc(STATE_DOCTYPE, state, ignore_permissions=True)
 
-	def delete_extension_grants(self):
+	def delete_doctype_grants(self):
 		"""What this user allowed this copy, and nobody else's answer.
 
 		Nothing the extension made goes with it. A doctype, a token and a client

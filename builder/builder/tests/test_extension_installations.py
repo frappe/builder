@@ -10,12 +10,12 @@ from builder.builder.tests.extension_fixtures import (
 	make_user,
 )
 from builder.extensions.access import assert_extension_access, find_installation
-from builder.extensions.data import record_extension_grant
+from builder.extensions.data import record_doctype_grant
 from builder.extensions.installations import (
 	get_user_installations,
 	installation_doctype_grants,
 	set_extension_enabled,
-	set_extension_grant,
+	set_doctype_grant,
 	set_granted_capabilities,
 	uninstall_extension,
 )
@@ -163,7 +163,7 @@ class TestGrantAnswers(FrappeTestCase):
 
 	def grant(self, answers):
 		make_installation(EXTENSION)
-		record_extension_grant(EXTENSION, "Contact", answers)
+		record_doctype_grant(EXTENSION, "Contact", answers)
 
 	def assertAnswers(self, row, read, write, delete):
 		self.assertEqual(
@@ -173,14 +173,14 @@ class TestGrantAnswers(FrappeTestCase):
 	def test_narrows_one_access_and_keeps_the_rest(self):
 		self.grant({"read": "allowed", "write": "allowed", "delete": "allowed"})
 
-		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
+		grants = set_doctype_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
 
 		self.assertAnswers(grants[0], "allowed", "allowed", "not asked")
 
 	def test_denies_one_access_and_keeps_the_rest(self):
 		self.grant({"read": "allowed", "write": "allowed"})
 
-		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "denied"))
+		grants = set_doctype_grant(EXTENSION, "Contact", answers("allowed", "denied"))
 
 		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
@@ -188,7 +188,7 @@ class TestGrantAnswers(FrappeTestCase):
 		self.grant({"read": "denied"})
 		installation = find_installation(EXTENSION)
 
-		set_extension_grant(EXTENSION, "Contact", answers())
+		set_doctype_grant(EXTENSION, "Contact", answers())
 
 		self.assertAnswers(
 			installation_doctype_grants(installation)[0], "not asked", "not asked", "not asked"
@@ -198,15 +198,15 @@ class TestGrantAnswers(FrappeTestCase):
 		self.grant({"read": "allowed"})
 
 		with self.assertRaises(frappe.ValidationError):
-			set_extension_grant(EXTENSION, "Contact", answers(read="maybe"))
+			set_doctype_grant(EXTENSION, "Contact", answers(read="maybe"))
 
 	def test_answers_only_the_access_it_names(self):
 		self.grant({"read": "allowed", "write": "allowed"})
 
-		grants = set_extension_grant(EXTENSION, "Contact", {"write": "denied"})
+		grants = set_doctype_grant(EXTENSION, "Contact", {"write": "denied"})
 
 		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
-			set_extension_grant(EXTENSION, "Contact", answers())
+			set_doctype_grant(EXTENSION, "Contact", answers())

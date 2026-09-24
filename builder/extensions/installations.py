@@ -19,7 +19,7 @@ from builder.extensions.access import (
 	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.data import ACCESSES, assert_answers, upsert_grant
+from builder.extensions.data import ACCESSES, assert_answers, upsert_doctype_grant
 from builder.utils import has_page_read
 
 TOKEN_DOCTYPE = "Builder Token"
@@ -67,7 +67,7 @@ def installation_doctype_grants(installation: str) -> list[dict]:
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NOT_INSTALLED)
-def set_extension_grant(extension: str, doctype: str, answers: dict | None = None) -> list[dict]:
+def set_doctype_grant(extension: str, doctype: str, answers: dict | None = None) -> list[dict]:
 	"""Write the answers a call names for one doctype, and answer with every grant after it.
 
 	The gate is the user's own installation, not the extension's access. They most
@@ -76,7 +76,7 @@ def set_extension_grant(extension: str, doctype: str, answers: dict | None = Non
 	"""
 	installation = own_installation(extension)
 	assert_answers(answers)
-	upsert_grant(installation, doctype, answers)
+	upsert_doctype_grant(installation, doctype, answers)
 	return installation_doctype_grants(installation)
 
 
