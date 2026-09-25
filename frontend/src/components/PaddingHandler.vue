@@ -182,11 +182,10 @@ const fillSize = (side: Position) => {
 	const isLong = side === Position.Top || side === Position.Bottom;
 	return { [isLong ? "height" : "width"]: `${bandThickness[side].value}px` };
 };
-const isEmpty = (side: Position) => bandThickness[side].value === 0;
-
-// The selection ring (ring-2 ring-inset in BlockEditor) is drawn inside the edge, so a
-// pill on an empty band is nudged inward by half its width to sit centred on the line.
-const RING_CENTRE_INSET = 1;
+// Pills stay fully inside the selection ring (ring-2 ring-inset in BlockEditor), so a
+// thin or empty band pushes its pill inward instead of centring it on the edge.
+const RING_WIDTH = 2;
+const RING_GAP = 2;
 const inwardDirection = {
 	[Position.Top]: 1,
 	[Position.Bottom]: -1,
@@ -197,7 +196,9 @@ const inwardDirection = {
 const pillStyle = (side: Position) => {
 	const isLong = side === Position.Top || side === Position.Bottom;
 	const size = isLong ? longHandleSize.value : sideHandleSize.value;
-	const inset = isEmpty(side) ? RING_CENTRE_INSET * inwardDirection[side] : 0;
+	const thickness = isLong ? size.height : size.width;
+	const minCentre = RING_WIDTH + RING_GAP + thickness / 2;
+	const inset = Math.max(0, minCentre - bandThickness[side].value / 2) * inwardDirection[side];
 	return handleStyle(
 		size,
 		isLong ? { x: 0, y: inset } : { x: inset, y: 0 },
