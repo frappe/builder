@@ -9,9 +9,9 @@
 					class="lucide-chevron-right size-3.5 shrink-0 text-ink-gray-5 transition-transform"
 					:class="{ 'rotate-90': open }"
 					aria-hidden="true" />
-				<span class="flex min-w-0 items-center gap-1">
-					<span class="font-medium">{{ __("Pages") }}</span>
-					<span class="truncate text-ink-gray-5">· {{ folder }}</span>
+				<span class="flex min-w-0 items-center gap-1.5">
+					<span class="lucide-folder size-3.5 shrink-0 text-ink-gray-5" aria-hidden="true" />
+					<span class="truncate font-medium">{{ folder }}</span>
 				</span>
 			</button>
 			<Button
