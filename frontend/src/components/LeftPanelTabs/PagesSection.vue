@@ -31,7 +31,8 @@
 				:placeholder="__('Search pages')"
 				v-model="search"
 				@input="(value: string) => (search = value)" />
-			<div class="no-scrollbar -mx-1 max-h-[30vh] space-y-0.5 overflow-y-auto">
+			<!-- the padding leaves room for the rows' shadow and focus ring, which overflow would clip -->
+			<div class="no-scrollbar -mx-2 -my-1 max-h-[30vh] space-y-0.5 overflow-y-auto p-1">
 				<PageRow v-for="page in pages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
 				<p v-if="search && !pages.length" class="px-2 py-1 text-sm text-ink-gray-5">
 					{{ __("No pages match.") }}

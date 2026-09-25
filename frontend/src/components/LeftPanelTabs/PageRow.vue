@@ -1,6 +1,8 @@
 <template>
 	<ContextMenu :options="menu">
+		<!-- SidebarItem rings only its button, which stops short of the route, so the whole row takes the ring -->
 		<SidebarItem
+			class="[&:has(button:focus-visible)]:focus-ring [&_button]:!outline-none"
 			:active="page.name === pageStore.activePage?.name"
 			:title="`${page.page_title}\n/${page.route}`"
 			@click="openPage(page)">
