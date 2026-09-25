@@ -195,5 +195,5 @@ class TestDuplicatePage(FrappeTestCase):
 		third = duplicate_page(page.name)
 
 		self.assertEqual(first.page_title, "Numbered (Copy)")
-		self.assertEqual(second.page_title, "Numbered (Copy 2)")
-		self.assertEqual(third.page_title, "Numbered (Copy 3)")
+		self.assertEqual(second.page_title, "Numbered (Copy) 1")
+		self.assertEqual(third.page_title, "Numbered (Copy) 2")
