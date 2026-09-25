@@ -1,11 +1,15 @@
 <template>
 	<div class="group" @click.stop>
-		<div class="pointer-events-none" :class="fillOpacity">
+		<CursorTooltip v-if="updating" purple :position="cursorPosition">
+			{{ getGapValue(activeSides[0]) }}
+		</CursorTooltip>
+		<!-- clipped to stay inside the 2px selection ring, which is drawn under the bands -->
+		<div class="pointer-events-none absolute inset-0 opacity-70 [clip-path:inset(2px)]">
 			<div
 				v-for="band in gapBands"
 				v-show="band.filled && isActive(band.position)"
 				:key="band.key"
-				class="absolute bg-purple-300"
+				class="absolute bg-purple-200"
 				:style="band.style" />
 		</div>
 		<div
@@ -14,17 +18,12 @@
 			class="gap-handler absolute z-10 flex"
 			:class="band.draggable && !disableHandlers ? 'pointer-events-auto' : 'pointer-events-none'"
 			:style="band.style"
-			@mouseenter="hoveredAxis = band.position"
-			@mouseleave="hoveredAxis = null"
 			@mousedown.stop="handleGap($event, band)">
 			<div
 				v-show="showPill"
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-900 bg-purple-400 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
-				:class="[band.filled ? 'opacity-40' : 'opacity-80', { hidden: updating }]"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-400 bg-purple-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				:class="{ hidden: updating }"
 				:style="band.handleStyle" />
-			<div v-show="updating && isActive(band.position)" class="m-auto text-sm text-purple-900 opacity-70">
-				{{ getGapValue(band.position) }}
-			</div>
 		</div>
 	</div>
 </template>
@@ -39,6 +38,7 @@ import {
 } from "@/composables/useSpacingHandler";
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
+import CursorTooltip from "./CursorTooltip.vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -60,6 +60,7 @@ const {
 	canvasProps,
 	updating,
 	activeSides,
+	cursorPosition,
 	blockStyles,
 	getSpacingValue,
 	handleBorderWidth,
@@ -75,10 +76,7 @@ watchEffect(() => {
 	emit("update", updating.value);
 });
 
-const hoveredAxis = ref<Position | null>(null);
-const fillOpacity = computed(() => (updating.value ? "opacity-70" : "opacity-40"));
-const isActive = (position: Position) =>
-	updating.value ? activeSides.value.includes(position) : hoveredAxis.value === position;
+const isActive = (position: Position) => updating.value && activeSides.value.includes(position);
 
 const { rotation, horizontalCursor, verticalCursor } = useRotatedCursors(
 	() => props.target as Element,
@@ -370,7 +368,6 @@ const getGapValue = (position: Position) => getSpacingValue("gap", position);
 
 const handleGap = (ev: MouseEvent, band: GapBand) => {
 	if (props.disableHandlers) return;
-	hoveredAxis.value = null;
 	startSpacingDrag(ev, band.position, {
 		property: "gap",
 		fallback: 0,

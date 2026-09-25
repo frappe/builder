@@ -69,6 +69,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	const updating = ref(false);
 	// The slots the current drag writes to, so every band showing one of them lights up.
 	const activeSides = ref<Position[]>([]);
+	const cursorPosition = ref({ x: 0, y: 0 });
 
 	const blockStyles = computed(() => {
 		const breakpoint = getBreakpoint();
@@ -146,6 +147,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();
+		cursorPosition.value = startPoint;
 		updating.value = true;
 		activeSides.value = sidesToUpdate(event, side);
 
@@ -153,6 +155,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 			cursor: window.getComputedStyle(event.target as HTMLElement).cursor,
 			onMove: (moveEvent) => {
 				onUpdate?.();
+				cursorPosition.value = { x: moveEvent.clientX, y: moveEvent.clientY };
 				const delta = toLocalDelta(
 					moveEvent.clientX - startPoint.x,
 					moveEvent.clientY - startPoint.y,
@@ -173,6 +176,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		canvasProps,
 		updating,
 		activeSides,
+		cursorPosition,
 		blockStyles,
 		handleBorderWidth,
 		longHandleSize,
