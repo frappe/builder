@@ -49,7 +49,7 @@ import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { createPageIn, FOLDER_PAGE_LIMIT, folderPages, pagesVersion } from "@/utils/pageActions";
 import { Button } from "frappe-ui";
-import { useDebounceFn, useStorage } from "@vueuse/core";
+import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 
 const SEARCH_THRESHOLD = 10;
@@ -57,6 +57,16 @@ const SEARCH_THRESHOLD = 10;
 const pageStore = usePageStore();
 const open = useStorage("pagesSectionExpanded", false);
 const search = ref("");
+
+// capture phase, since a selected block stops the press to start a reorder drag
+useEventListener(
+	document,
+	"pointerdown",
+	(event) => {
+		if ((event.target as Element).closest?.("[data-builder-canvas] [data-block-id]")) open.value = false;
+	},
+	{ capture: true },
+);
 
 // the open page's folder is the "file" here: its pages are the ones listed
 const folder = computed(() => pageStore.activePage?.project_folder || "");
