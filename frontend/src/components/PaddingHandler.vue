@@ -4,12 +4,12 @@
 			{{ getPaddingValue(activeSides[0]) }}
 		</CursorTooltip>
 		<!-- clipped to stay inside the 2px selection ring, which is drawn under the bands -->
-		<div class="pointer-events-none absolute inset-0 opacity-70 [clip-path:inset(2px)]">
+		<div class="pointer-events-none absolute inset-0 opacity-30 [clip-path:inset(2px)]">
 			<div
 				v-for="side in Object.values(Position)"
 				v-show="isActive(side)"
 				:key="side"
-				class="absolute bg-purple-200"
+				class="absolute bg-purple-400"
 				:class="fillPlacement[side]"
 				:style="fillSize(side)" />
 		</div>

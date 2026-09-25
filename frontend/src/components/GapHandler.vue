@@ -4,12 +4,12 @@
 			{{ getGapValue(activeSides[0]) }}
 		</CursorTooltip>
 		<!-- clipped to stay inside the 2px selection ring, which is drawn under the bands -->
-		<div class="pointer-events-none absolute inset-0 opacity-70 [clip-path:inset(2px)]">
+		<div class="pointer-events-none absolute inset-0 opacity-30 [clip-path:inset(2px)]">
 			<div
 				v-for="band in gapBands"
 				v-show="band.filled && isActive(band.position)"
 				:key="band.key"
-				class="absolute bg-purple-200"
+				class="absolute bg-purple-400"
 				:style="band.style" />
 		</div>
 		<div
