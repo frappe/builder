@@ -186,6 +186,10 @@ const getStyleClasses = computed(() => {
 	} else {
 		classes.push("ring-blue-400");
 	}
+	// hover editors mount later, so without this their ring paints over the selection's handles
+	if (isBlockSelected.value) {
+		classes.push("z-10");
+	}
 	if (
 		isBlockSelected.value &&
 		builderStore.mode === "select" &&
