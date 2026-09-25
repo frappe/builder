@@ -3,7 +3,10 @@
 		<section class="m-auto mb-24 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
-				<div v-if="!webPages.data?.length && !searchFilter && !statusFilter" class="col-span-full">
+				<p v-if="showsEmptyState && dashboardView === 'folder'" class="px-3 text-base text-ink-gray-5">
+					{{ __("No pages in this folder yet.") }}
+				</p>
+				<div v-else-if="showsEmptyState" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
 						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
@@ -15,29 +18,25 @@
 				<div class="grid-col grid gap-3 auto-fill-[210px]" v-if="displayType === 'grid'">
 					<PageCard
 						v-for="page in webPages.data"
-						:selected="selectedPages.has(page.name)"
-						@click.capture="($event: MouseEvent) => handleClick($event, page)"
 						:key="page.page_name"
-						:page="page"
-						v-on-click-and-hold="() => enableSelectionMode(page)"></PageCard>
+						@click.capture="handleClick(page)"
+						:page="page"></PageCard>
 				</div>
 				<!-- list -->
 				<div v-if="displayType === 'list'">
 					<PageListItem
-						@click.capture="($event: MouseEvent) => handleClick($event, page)"
 						v-for="page in webPages.data"
-						:selected="selectedPages.has(page.name)"
 						:key="page.page_name"
-						:page="page"
-						v-on-click-and-hold="() => enableSelectionMode(page)"></PageListItem>
+						@click.capture="handleClick(page)"
+						:page="page"></PageListItem>
 				</div>
 				<!-- tree -->
-				<div v-if="displayType === 'tree'">
+				<div v-if="displayType === 'tree' && !showsEmptyState">
 					<RouteTreeView
 						ref="routeTreeRef"
 						class="pl-2 pr-3"
 						:search-filter="searchFilter"
-						:active-folder="builderStore.activeFolder" />
+						:active-folder="searchFilter ? '' : builderStore.activeFolder" />
 				</div>
 			</div>
 			<Button
@@ -59,28 +58,18 @@ import PageListItem from "@/components/PageListItem.vue";
 import RouteTreeView from "@/components/RouteTreeView.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { pagesWithUnpublishedChanges, webPages } from "@/data/webPage";
-import vOnClickAndHold from "@/directives/vOnClickAndHold";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
 import { watchDebounced } from "@vueuse/core";
-import { useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
-import { onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 
 const routeTreeRef = ref<InstanceType<typeof RouteTreeView>>();
 
 const { capture } = useTelemetry();
 const builderStore = useBuilderStore();
-const {
-	searchFilter,
-	statusFilter,
-	orderBy,
-	displayType,
-	selectionMode,
-	selectedPages,
-	expandTreeFn,
-	collapseTreeFn,
-} = useDashboardState();
+const { searchFilter, statusFilter, orderBy, displayType, expandTreeFn, collapseTreeFn, dashboardView } =
+	useDashboardState();
 
 onActivated(() => {
 	builderStore.realtime.doctype_subscribe("Builder Page");
@@ -107,6 +96,11 @@ onUnmounted(() => {
 	collapseTreeFn.value = null;
 });
 
+const hasNoPages = computed(() => !webPages.loading && Array.isArray(webPages.data) && !webPages.data.length);
+const filteringByStatus = computed(() => Boolean(statusFilter.value) && statusFilter.value !== "all");
+// the tree has its own "no pages" line, so it steps aside while the empty message shows
+const showsEmptyState = computed(() => hasNoPages.value && !searchFilter.value && !filteringByStatus.value);
+
 const orderMap = {
 	creation: "creation desc",
 	modified: "modified desc",
@@ -130,18 +124,7 @@ watch(
 	() => fetchPages(),
 );
 
-watch(displayType, () => fetchPages());
-
-// remove selection mode when the escape key is pressed
-useKeyboardShortcut({
-	combo: "Escape",
-	description: __("Deselect Pages"),
-	group: __("Dashboard"),
-	handler: () => {
-		selectedPages.value.clear();
-		selectionMode.value = false;
-	},
-});
+watch([displayType, dashboardView], () => fetchPages());
 
 const statusFilters = {
 	live: { published: 1 },
@@ -161,9 +144,8 @@ const fetchPages = () => {
 		orFilters["page_title"] = ["like", `%${searchFilter.value}%`];
 		orFilters["route"] = ["like", `%${searchFilter.value}%`];
 	}
-	if (builderStore.activeFolder) {
-		filters["project_folder"] = builderStore.activeFolder;
-	}
+	// search looks across every page, the views only narrow an unsearched list
+	if (!searchFilter.value) Object.assign(filters, viewFilters());
 
 	webPages.update({
 		filters,
@@ -173,63 +155,17 @@ const fetchPages = () => {
 	webPages.fetch();
 };
 
+function viewFilters() {
+	if (dashboardView.value === "folder") return { project_folder: builderStore.activeFolder };
+	return {};
+}
+
 const loadMore = () => {
 	webPages.next();
 };
 
-const firstHold = ref(false);
-
-const handleClick = (e: MouseEvent, page: BuilderPage) => {
-	if (selectionMode.value) {
-		e.preventDefault();
-		e.stopPropagation();
-		if (firstHold.value) {
-			firstHold.value = false;
-			return;
-		}
-		if (e.shiftKey) {
-			const pages = webPages.data || [];
-			// select all pages between the last selected page and the current page
-			const lastSelectedPage = selectedPages.value.size
-				? pages.find((p: BuilderPage) => p.name === Array.from(selectedPages.value)[0])
-				: null;
-			if (lastSelectedPage) {
-				const lastSelectedPageIndex = pages.indexOf(lastSelectedPage);
-				const currentPageIndex = pages.indexOf(page);
-				const start = Math.min(lastSelectedPageIndex, currentPageIndex);
-				const end = Math.max(lastSelectedPageIndex, currentPageIndex);
-				for (let i = start; i <= end; i++) {
-					const p = pages[i];
-					selectedPages.value.add(p.name);
-				}
-			}
-		} else if (e.ctrlKey || e.metaKey) {
-			togglePageSelection(page);
-		} else {
-			selectedPages.value.clear();
-			togglePageSelection(page);
-		}
-	} else {
-		capture("builder_page_opened", { page_name: page.page_name });
-	}
-};
-
-const enableSelectionMode = (page: BuilderPage) => {
-	selectionMode.value = true;
-	firstHold.value = true;
-	togglePageSelection(page);
-};
-
-const togglePageSelection = (page: BuilderPage) => {
-	if (selectedPages.value.has(page.name)) {
-		selectedPages.value.delete(page.name);
-	} else {
-		selectedPages.value.add(page.name);
-	}
-	// Disable selection mode if no pages are selected
-	if (!selectedPages.value.size) {
-		selectionMode.value = false;
-	}
+const handleClick = (page: BuilderPage) => {
+	capture("builder_page_opened", { page_name: page.page_name });
 };
 
 watchDebounced([searchFilter, statusFilter, orderBy], fetchPages, {

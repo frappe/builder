@@ -1,15 +1,12 @@
 import type Block from "@/block";
-import { useDashboardState } from "@/composables/useDashboardState";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import webComponent from "@/data/webComponent";
-import { webPages } from "@/data/webPage";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
+import { BuilderComponent } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import { createResource, dialog } from "frappe-ui";
+import { dialog } from "frappe-ui";
 import { __ } from "@/translation";
 
 // Imperative dialogs that replace single-purpose modal components. Each opens
@@ -79,64 +76,6 @@ export function promptCreateComponent(block: Block) {
 				await componentStore.pinComponentInstance(updatedBlock, componentData.name);
 				pageStore.savePage();
 			}
-		},
-	});
-}
-
-export function promptSelectFolder() {
-	const { selectedPages, selectionMode } = useDashboardState();
-	const builderStore = useBuilderStore();
-	const options = [
-		{ label: __("Home"), value: "" },
-		...(builderProjectFolder.data || []).map((p: BuilderProjectFolder) => ({
-			label: p.folder_name as string,
-			value: p.folder_name as string,
-		})),
-	];
-	dialog.prompt({
-		title: __("Select Folder"),
-		size: "sm",
-		fields: [
-			{
-				name: "folder",
-				type: "select",
-				label: __("Folder"),
-				defaultValue: builderStore.activeFolder || "",
-				options,
-			},
-		],
-		onConfirm: async ({ values }) => {
-			const folder = values.folder;
-			if (folder === builderStore.activeFolder) return;
-			await createResource({
-				method: "POST",
-				url: "builder.api.update_page_folder",
-			}).submit({
-				pages: Array.from(selectedPages.value),
-				folder_name: folder,
-			});
-			for (const pageName of selectedPages.value) {
-				const page = webPages.data?.find((p: BuilderPage) => p.name === pageName);
-				if (page) page.project_folder = folder;
-			}
-			selectedPages.value.clear();
-			selectionMode.value = false;
-			builderStore.activeFolder = folder;
-		},
-	});
-}
-
-export function promptRenamePage(page: BuilderPage) {
-	dialog.prompt({
-		title: __("Rename Page"),
-		size: "sm",
-		confirmLabel: __("Rename"),
-		fields: [{ name: "page_title", label: __("Page Title"), required: true, defaultValue: page.page_title || "" }],
-		onConfirm: async ({ values }) => {
-			const pageTitle = values.page_title.trim();
-			if (!pageTitle || pageTitle === page.page_title) return;
-			await webPages.setValue.submit({ name: page.name, page_title: pageTitle });
-			page.page_title = pageTitle;
 		},
 	});
 }
