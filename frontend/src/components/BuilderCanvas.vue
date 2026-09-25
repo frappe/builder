@@ -86,8 +86,9 @@
 					:data="pageStore.pageData" />
 			</div>
 		</div>
+		<!-- isolate keeps editor z-indexes from lifting handles above the side panels -->
 		<div
-			class="overlay absolute"
+			class="overlay absolute isolate"
 			:class="{ 'pointer-events-none': isOverDropZone }"
 			id="overlay"
 			ref="overlay" />
