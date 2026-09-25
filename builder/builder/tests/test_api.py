@@ -6,7 +6,14 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
-from builder.api import duplicate_page, import_remote_assets, import_remote_fonts
+from builder.api import (
+	create_import_folder,
+	duplicate_page,
+	import_remote_assets,
+	import_remote_fonts,
+	import_template_group,
+	insert_folder,
+)
 
 FONT = "https://cdn.example.com/inter.woff2"
 
@@ -197,3 +204,48 @@ class TestDuplicatePage(FrappeTestCase):
 		self.assertEqual(first.page_title, "Numbered (Copy)")
 		self.assertEqual(second.page_title, "Numbered (Copy) 1")
 		self.assertEqual(third.page_title, "Numbered (Copy) 2")
+
+
+GROUP = {
+	"name": "zz-harbour",
+	"title": "Zz Harbour",
+	"pages": [{"name": "zz_harbour_home"}, {"name": "zz_harbour_rooms"}, {"name": "zz_harbour_guide"}],
+}
+ROUTES = {
+	"zz_harbour_home": "templates/zz-harbour/home",
+	"zz_harbour_rooms": "templates/zz-harbour/rooms",
+	"zz_harbour_guide": "templates/zz-harbour/guides/arrival",
+}
+
+
+def fake_hub_get(method, page=None):
+	return {"page": {"page_title": page, "route": ROUTES[page], "blocks": [{"element": "div"}]}}
+
+
+@patch("builder.api.hub_get", fake_hub_get)
+@patch("builder.api.get_template_groups", lambda: [GROUP])
+class TestImportTemplateGroup(FrappeTestCase):
+	# each test counts folders and prefixes from scratch
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def import_routes(self):
+		result = import_template_group("zz-harbour")
+		routes = frappe.get_all("Builder Page", {"name": ["in", result["pages"]]}, pluck="route")
+		return result["folder"], sorted(routes)
+
+	def test_imports_into_a_new_folder_under_one_route_prefix(self):
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour")
+		self.assertEqual(routes, ["zz-harbour/guides/arrival", "zz-harbour/home", "zz-harbour/rooms"])
+
+	def test_a_repeat_import_takes_the_next_folder_and_prefix(self):
+		self.import_routes()
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour 2")
+		self.assertTrue(all(route.startswith("zz-harbour-2/") for route in routes))
+
+	def test_a_taken_folder_name_is_skipped_and_the_transaction_survives(self):
+		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": "Zz Harbour"}).insert()
+		self.assertFalse(insert_folder("Zz Harbour"))
+		self.assertEqual(create_import_folder("Zz Harbour", "zz-harbour"), ("Zz Harbour 2", "zz-harbour-2"))

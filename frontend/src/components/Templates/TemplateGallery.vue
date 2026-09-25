@@ -84,7 +84,9 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
-import { templateGroups, webPages } from "@/data/webPage";
+import builderProjectFolder from "@/data/builderProjectFolder";
+import { notifyPagesChanged } from "@/utils/pageActions";
+import { templateGroups } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -111,7 +113,8 @@ const props = withDefaults(
 	},
 );
 
-const { showTemplatesDialog, lastTemplateGroup, templateCategoryFilter } = useDashboardState();
+const { openDashboardView, showTemplatesDialog, lastTemplateGroup, templateCategoryFilter } =
+	useDashboardState();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 const { capture } = useTelemetry();
@@ -183,6 +186,12 @@ const createBlankPage = (source: "gallery" | "template_group" = "gallery") => {
 	router.push({ name: "builder", params: { pageId: "new" } });
 };
 
+// from the editor a new page joins the open page's folder, from the dashboard the selected one
+const targetFolder = () =>
+	router.currentRoute.value.name === "builder"
+		? pageStore.activePage?.project_folder
+		: builderStore.activeFolder;
+
 const creatingPage = ref(false);
 const useTemplate = (page: TemplatePageSummary) => {
 	if (creatingPage.value) return;
@@ -192,7 +201,7 @@ const useTemplate = (page: TemplatePageSummary) => {
 	})
 		.submit({
 			template_page: page.name,
-			project_folder: builderStore.activeFolder || undefined,
+			project_folder: targetFolder() || undefined,
 		})
 		.then((newPageName: string) => {
 			capture("builder_page_template_used", {
@@ -222,21 +231,20 @@ const importAll = () => {
 	const promise = createResource({
 		url: "builder.api.import_template_group",
 	})
-		.submit({
-			template_group: activeGroup.value.name,
-			project_folder: builderStore.activeFolder || undefined,
-		})
-		.then((pageNames: string[]) => {
+		.submit({ template_group: activeGroup.value.name })
+		.then(({ folder, pages }: { folder: string; pages: string[] }) => {
 			capture("builder_template_group_imported", {
-				pages: pageNames,
+				pages,
 				template_group: activeGroup.value!.name,
-				page_count: pageNames.length,
+				page_count: pages.length,
 			});
 			showTemplatesDialog.value = false;
-			// land on the dashboard with the freshly imported pages so the user can
-			// pick which one to open (Import all creates several pages at once)
-			webPages.reload();
-			router.push({ name: "home" });
+			builderProjectFolder.reload();
+			notifyPagesChanged();
+			openDashboardView("folder", folder);
+			builderStore.leftPanelActiveTab = "Layers";
+			router.push({ name: "builder", params: { pageId: pages[0] }, force: true });
+			pageStore.setPage(pages[0]);
 		});
 	toast.promise(promise, {
 		loading: __("Adding all pages..."),

@@ -56,6 +56,7 @@ import { __ } from "@/translation";
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/doctypes";
+import { pagesVersion } from "@/utils/pageActions";
 import { createListResource, useKeyboardShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
@@ -298,6 +299,8 @@ function isHomePage(page: BuilderPage): boolean {
 function refresh() {
 	pagesResource.reload();
 }
+
+watch(pagesVersion, refresh);
 
 function setNodeRef(nodeId: string, element: HTMLElement | null) {
 	if (element) {

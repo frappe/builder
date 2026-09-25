@@ -1,11 +1,14 @@
 import builderProjectFolder from "@/data/builderProjectFolder";
+import { builderSettings } from "@/data/builderSettings";
 import router from "@/router";
+import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { webPages } from "@/data/webPage";
-import { createListResource, createResource, dialog } from "frappe-ui";
+import { confirm, openInDesk } from "@/utils/helpers";
+import { createListResource, createResource, dialog, toast } from "frappe-ui";
 import { ref } from "vue";
 
 export const FOLDER_PAGE_LIMIT = 500;
@@ -21,12 +24,27 @@ export const folderPages = createListResource({
 	pageLength: FOLDER_PAGE_LIMIT,
 });
 
+// page counts per folder for the dashboard sidebar, one grouped query instead of loading every page
+export const folderCounts = createListResource({
+	method: "GET",
+	doctype: "Builder Page",
+	fields: ["project_folder", { COUNT: "*", as: "page_count" }],
+	filters: { is_template: 0, project_folder: ["is", "set"] },
+	groupBy: "project_folder",
+	pageLength: 1000,
+	auto: true,
+});
+
+export const folderPageCount = (folder: string): number =>
+	folderCounts.data?.find((row: { project_folder: string }) => row.project_folder === folder)?.page_count ?? 0;
+
 // bumped after any page change so every page list refreshes from the server
 export const pagesVersion = ref(0);
 
-function notifyPagesChanged() {
+export function notifyPagesChanged({ reloadDashboard = true } = {}) {
 	pagesVersion.value++;
-	webPages.reload();
+	folderCounts.reload();
+	if (reloadDashboard) webPages.reload();
 }
 
 const isOpen = (page: BuilderPage) => page.name === usePageStore().activePage?.name;
@@ -42,6 +60,16 @@ export async function openPage(page: BuilderPage) {
 // template titles repeat the site name ("Rooms · Tide House"), the folder already says it
 export const shortTitle = (page: BuilderPage) =>
 	(page.page_title || page.page_name || "").split(/\s+[·|—]\s+/)[0];
+
+// the site homepage when the folder holds it, else the page the folder was started with
+async function openFolder(folder: string) {
+	const homeRoute = builderSettings.doc?.home_page;
+	const [home] = homeRoute ? await firstPageIn(folder, { route: homeRoute }) : [];
+	const page = home ?? (await firstPageIn(folder))[0];
+	if (!page) return createPageIn(folder);
+	useBuilderStore().leftPanelActiveTab = "Layers";
+	router.push({ name: "builder", params: { pageId: page.name } });
+}
 
 export function createPageIn(folder: string) {
 	router.push({ name: "builder", params: { pageId: "new" }, query: folder ? { folder } : {} });
@@ -149,6 +177,13 @@ export function pageMenu(page: BuilderPage) {
 					condition: () => Boolean(page.published || page.staging),
 					onClick: () => pageStore.openPageInBrowser(page),
 				},
+				{
+					label: __("Unpublish"),
+					icon: "lucide-globe-x",
+					condition: () => Boolean(page.published || page.staging) && !isLocked(page),
+					onClick: () => pageStore.unpublishPage(page),
+				},
+				{ label: __("View in Desk"), icon: "lucide-arrow-up-right", onClick: () => openInDesk(page) },
 			],
 		},
 		{
@@ -168,7 +203,7 @@ export function pageMenu(page: BuilderPage) {
 }
 
 // onCreate lets a flow like "Move to > New folder" continue with the new folder
-function promptNewFolder(onCreate?: (folder: string) => void) {
+export function promptNewFolder(onCreate?: (folder: string) => void) {
 	dialog.prompt({
 		title: __("New Folder"),
 		size: "sm",
@@ -179,4 +214,81 @@ function promptNewFolder(onCreate?: (folder: string) => void) {
 			onCreate?.(values.folder_name);
 		},
 	});
+}
+
+async function renameFolder(folder: string) {
+	dialog.prompt({
+		title: __("Rename Folder"),
+		size: "sm",
+		confirmLabel: __("Rename"),
+		fields: [{ name: "name", label: __("Folder Name"), required: true, defaultValue: folder }],
+		onConfirm: async ({ values }) => {
+			await createResource({ url: "frappe.client.rename_doc" }).submit({
+				doctype: "Builder Project Folder",
+				old_name: folder,
+				new_name: values.name,
+			});
+			const pageStore = usePageStore();
+			// rename_doc rewrites the link on every page, the open page's copy is still the old name
+			if (pageStore.activePage?.project_folder === folder) pageStore.activePage.project_folder = values.name;
+			await builderProjectFolder.reload();
+			// a dashboard showing this folder refetches when its filter changes, a reload here would race it
+			const builderStore = useBuilderStore();
+			const showingFolder = builderStore.activeFolder === folder;
+			if (showingFolder) builderStore.activeFolder = values.name;
+			notifyPagesChanged({ reloadDashboard: !showingFolder });
+		},
+	});
+}
+
+async function deleteFolder(folder: string) {
+	const confirmed = await confirm(
+		__("Delete the folder {0}? Its pages are kept and move to No folder.", [folder]),
+	);
+	if (!confirmed) return;
+	await createResource({ url: "builder.api.delete_folder" }).submit({ folder_name: folder });
+	const pageStore = usePageStore();
+	if (pageStore.activePage?.project_folder === folder) pageStore.activePage.project_folder = "";
+	// a dashboard showing the deleted folder falls back to all pages, where its pages now live
+	const { dashboardView, openDashboardView } = useDashboardState();
+	if (dashboardView.value === "folder" && useBuilderStore().activeFolder === folder) openDashboardView("all");
+	await builderProjectFolder.reload();
+	notifyPagesChanged();
+	toast.success(__("Folder deleted"));
+}
+
+export function folderMenu(folder: BuilderProjectFolder) {
+	return [
+		{
+			group: __("Folder"),
+			hideLabel: true,
+			options: [
+				{
+					label: __("Open in Editor"),
+					icon: "lucide-square-pen",
+					onClick: () => openFolder(folder.folder_name),
+				},
+				{ label: __("New Page"), icon: "lucide-plus", onClick: () => createPageIn(folder.folder_name) },
+				{
+					label: __("Rename"),
+					icon: "lucide-pencil",
+					condition: () => !folder.is_standard,
+					onClick: () => renameFolder(folder.folder_name),
+				},
+			],
+		},
+		{
+			group: __("Danger"),
+			hideLabel: true,
+			options: [
+				{
+					label: __("Delete Folder"),
+					icon: "lucide-trash",
+					theme: "red" as const,
+					condition: () => !folder.is_standard,
+					onClick: () => deleteFolder(folder.folder_name),
+				},
+			],
+		},
+	];
 }

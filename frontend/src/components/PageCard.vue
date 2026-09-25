@@ -1,10 +1,9 @@
 <template>
-	<router-link :to="{ name: 'builder', params: { pageId: page.page_name } }">
+	<router-link
+		:to="{ name: 'builder', params: { pageId: page.page_name } }"
+		@contextmenu.prevent="menuOpen = true">
 		<div
-			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-8 p-3 hover:bg-surface-elevation-1"
-			:class="{
-				'!bg-surface-gray-2': selected,
-			}">
+			class="group relative flex w-full cursor-pointer flex-col gap-2 rounded-8 p-3 hover:bg-surface-elevation-1">
 			<img
 				width="250"
 				height="140"
@@ -31,15 +30,18 @@
 						:hoverDelay="500">
 						<span class="lucide-shield-user size-3.5 text-ink-amber-6" />
 					</Tooltip>
-					<PageActionsDropdown :page="page" size="xs" align="end" v-slot="{ open }">
-						<Button
-							icon="lucide-more-horizontal"
-							size="sm"
-							variant="ghost"
-							class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
-							:class="{ '!opacity-100': selected || open }"
-							@click.stop></Button>
-					</PageActionsDropdown>
+					<!-- the menu sits inside the card link, so its clicks must not follow it -->
+					<div class="contents" @click.stop.prevent>
+						<PageActionsDropdown v-model:open="menuOpen" :page="page" size="xs" align="end" v-slot="{ open }">
+							<Button
+								icon="lucide-more-horizontal"
+								size="sm"
+								variant="ghost"
+								class="!text-ink-gray-5 opacity-0 hover:!text-ink-gray-9 focus-visible:opacity-100 group-hover:opacity-100"
+								:class="{ '!opacity-100': open }"
+								@click.stop></Button>
+						</PageActionsDropdown>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -53,14 +55,14 @@ import PageStatusLine from "@/components/PageStatusLine.vue";
 import { BuilderPage } from "@/types/doctypes";
 import { UseTimeAgo } from "@vueuse/components";
 import { Tooltip } from "frappe-ui";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps<{
 	page: BuilderPage;
-	selected: boolean;
 }>();
 
 const { orderBy } = useDashboardState();
+const menuOpen = ref(false);
 const sortedByCreation = computed(() => orderBy.value === "creation");
 const timestamp = computed(() => (sortedByCreation.value ? props.page.creation : props.page.modified));
 </script>
