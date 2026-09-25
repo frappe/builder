@@ -435,8 +435,10 @@ def clone_client_scripts(source_page, new_page) -> None:
 
 
 def get_copy_title(title: str) -> str:
-	"""Numbers copies like "Home (Copy)", "Home (Copy) 1" so copying a copy doesn't stack suffixes."""
-	base = re.sub(r" \(Copy\)(?: \d+)?$", "", title)
+	"""Numbers copies like "Home (Copy)", "Home (Copy) 1" so copying a copy doesn't stack suffixes.
+
+	The "(Copy 2)" alternative matches titles made before the number moved out of the parens."""
+	base = re.sub(r" \(Copy(?: \d+)?\)(?: \d+)?$", "", title)
 	return append_number_if_name_exists("Builder Page", f"{base} (Copy)", "page_title", separator=" ")
 
 
