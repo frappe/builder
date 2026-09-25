@@ -164,11 +164,6 @@ const getPadding = (side: "Top" | "Left" | "Right" | "Bottom") => {
 
 const getPaddingValue = (position: Position) => getSpacingValue("padding", position);
 
-const contentShift = computed(() => ({
-	x: (leftPaddingHandlerWidth.value - rightPaddingHandlerWidth.value) / 2,
-	y: (topPaddingHandlerHeight.value - bottomPaddingHandlerHeight.value) / 2,
-}));
-
 // The pill sits in the middle of its band on both axes
 const handleStyle = (
 	size: { width: number; height: number },
@@ -211,7 +206,7 @@ const pillStyle = (side: Position) => {
 	const inset = isEmpty(side) ? RING_CENTRE_INSET * inwardDirection[side] : 0;
 	return handleStyle(
 		{ width: size.width * growth, height: size.height * growth },
-		isLong ? { x: contentShift.value.x, y: inset } : { x: inset, y: contentShift.value.y },
+		isLong ? { x: 0, y: inset } : { x: inset, y: 0 },
 		isLong ? verticalCursor.value : horizontalCursor.value,
 	);
 };
