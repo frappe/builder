@@ -31,7 +31,7 @@
 				:placeholder="__('Search pages')"
 				v-model="search"
 				@input="(value: string) => (search = value)" />
-			<div class="-mx-1 max-h-[30vh] space-y-0.5 overflow-y-auto">
+			<div class="no-scrollbar -mx-2 -my-1 max-h-[30vh] space-y-0.5 overflow-y-auto p-1">
 				<PageRow v-for="page in pages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
 				<p v-if="search && !pages.length" class="px-2 py-1 text-sm text-ink-gray-5">
 					{{ __("No pages match.") }}
@@ -109,13 +109,17 @@ const routeLabel = (page: BuilderPage) => `/${(page.route || "").slice(routePref
 
 const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 
+let loadedQuery = "";
+
 function loadFolderPages() {
+	if (!open.value) return void (folderPages.data = null);
 	const query = search.value.trim();
+	loadedQuery = query;
 	folderPages.update({
 		filters: { is_template: 0, project_folder: folder.value },
 		orFilters: query ? { page_title: ["like", `%${query}%`], route: ["like", `%${query}%`] } : {},
 	});
-	folderPages.reload();
+	folderPages.reload().then(() => !open.value && (folderPages.data = null));
 }
 
 // the list only overlays the open page, so the page just left must come fresh from the server
@@ -128,6 +132,9 @@ watch(
 	{ immediate: true },
 );
 
-watch(pagesVersion, loadFolderPages);
-watch(search, useDebounceFn(loadFolderPages, 300));
+watch([open, pagesVersion], loadFolderPages);
+watch(
+	search,
+	useDebounceFn(() => search.value.trim() !== loadedQuery && loadFolderPages(), 300),
+);
 </script>

@@ -1,6 +1,7 @@
 <template>
 	<ContextMenu :options="menu">
 		<SidebarItem
+			class="[&:has(button:focus-visible)]:focus-ring [&_button]:!outline-none"
 			:active="page.name === pageStore.activePage?.name"
 			:title="`${page.page_title}\n/${page.route}`"
 			@click="openPage(page)">
