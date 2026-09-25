@@ -205,17 +205,20 @@ const usePageStore = defineStore("pageStore", {
 			const confirmed = await confirm(
 				__("Are you sure you want to delete page: {0}?", [page.page_title || page.page_name]),
 			);
-			if (confirmed) {
-				await toast.promise(webPages.delete.submit(page.name), {
-					loading: __("Deleting page"),
-					success: () => {
-						return __("Page deleted");
-					},
-					error: () => {
-						return __("Page deletion failed");
-					},
-				});
-			}
+			if (!confirmed) return false;
+			const deletion = webPages.delete.submit(page.name);
+			// toast.promise returns the toast id, not the promise
+			toast.promise(deletion, {
+				loading: __("Deleting page"),
+				success: () => {
+					return __("Page deleted");
+				},
+				error: () => {
+					return __("Page deletion failed");
+				},
+			});
+			await deletion;
+			return true;
 		},
 
 		async publishPage(openInBrowser = true, staging = false) {
