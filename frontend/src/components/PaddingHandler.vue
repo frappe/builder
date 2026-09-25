@@ -1,6 +1,6 @@
 <template>
 	<div class="group" @click.stop>
-		<CursorTooltip v-if="updating" purple :position="cursorPosition">
+		<CursorTooltip v-if="updating" tone="blue" :position="cursorPosition">
 			{{ getPaddingValue(activeSides[0]) }}
 		</CursorTooltip>
 		<!-- clipped to stay inside the 2px selection ring, which is drawn under the bands -->
@@ -9,7 +9,7 @@
 				v-for="side in Object.values(Position)"
 				v-show="isActive(side)"
 				:key="side"
-				class="absolute bg-purple-400"
+				class="absolute bg-blue-400"
 				:class="fillPlacement[side]"
 				:style="fillSize(side)" />
 		</div>
@@ -22,7 +22,7 @@
 			:class="isDraggable(topPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none'"
 			@mousedown.stop="handlePadding($event, Position.Top)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-400 bg-purple-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-blue-400 bg-blue-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
 				:style="pillStyle(Position.Top)"
 				:class="{ hidden: updating }"
@@ -37,7 +37,7 @@
 			:class="isDraggable(bottomPaddingHandlerHeight) ? 'pointer-events-auto' : 'pointer-events-none'"
 			@mousedown.stop="handlePadding($event, Position.Bottom)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-400 bg-purple-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-blue-400 bg-blue-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
 				:style="pillStyle(Position.Bottom)"
 				:class="{ hidden: updating }"
@@ -52,7 +52,7 @@
 			:class="isDraggable(leftPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none'"
 			@mousedown.stop="handlePadding($event, Position.Left)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-400 bg-purple-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-blue-400 bg-blue-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
 				:style="pillStyle(Position.Left)"
 				:class="{ hidden: updating }"
@@ -67,7 +67,7 @@
 			:class="isDraggable(rightPaddingHandlerWidth) ? 'pointer-events-auto' : 'pointer-events-none'"
 			@mousedown.stop="handlePadding($event, Position.Right)">
 			<div
-				class="pointer-events-auto absolute z-20 rounded-full border-2 border-purple-400 bg-purple-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
+				class="pointer-events-auto absolute z-20 rounded-full border-2 border-blue-400 bg-blue-300 before:absolute before:-inset-2 before:content-[''] hover:scale-125"
 				v-show="showHandle"
 				:style="pillStyle(Position.Right)"
 				:class="{ hidden: updating }"

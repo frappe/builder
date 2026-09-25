@@ -1,6 +1,6 @@
 <template>
 	<div class="group" @click.stop>
-		<CursorTooltip v-if="updating" purple :position="cursorPosition">
+		<CursorTooltip v-if="updating" tone="purple" :position="cursorPosition">
 			{{ getGapValue(activeSides[0]) }}
 		</CursorTooltip>
 		<!-- clipped to stay inside the 2px selection ring, which is drawn under the bands -->
