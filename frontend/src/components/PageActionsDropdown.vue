@@ -6,6 +6,11 @@
 				hideLabel: true,
 				options: [
 					{
+						label: __('Rename'),
+						onClick: () => promptRenamePage(props.page),
+						icon: 'lucide-pencil',
+					},
+					{
 						label: __('Duplicate'),
 						onClick: () => pageStore.duplicatePage(props.page),
 						icon: 'lucide-copy',
@@ -50,6 +55,7 @@
 import { __ } from "@/translation";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
+import { promptRenamePage } from "@/utils/dialogs";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
 
