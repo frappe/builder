@@ -632,12 +632,14 @@ def create_import_folder(title: str, slug: str) -> tuple[str, str]:
 
 	The folder name is the doctype's primary key, so two concurrent imports can never
 	claim the same folder, and with it the same prefix."""
+	taken_names, taken_prefixes = taken_folder_names(title), taken_route_prefixes(slug)
 	for suffix in count(1):
 		name, prefix = (title, slug) if suffix == 1 else (f"{title} {suffix}", f"{slug}-{suffix}")
-		if frappe.db.exists("Builder Project Folder", name) or is_route_prefix_taken(prefix):
+		if name in taken_names or prefix in taken_prefixes:
 			continue
 		if insert_folder(name):
 			return name, prefix
+		taken_names.add(name)
 
 
 def insert_folder(name: str) -> bool:
@@ -650,8 +652,15 @@ def insert_folder(name: str) -> bool:
 	return True
 
 
-def is_route_prefix_taken(prefix: str) -> bool:
-	return bool(frappe.db.exists("Builder Page", {"route": ["like", f"{prefix}/%"]}))
+def taken_folder_names(title: str) -> set[str]:
+	return set(
+		frappe.get_all("Builder Project Folder", filters={"name": ["like", f"{title}%"]}, pluck="name")
+	)
+
+
+def taken_route_prefixes(slug: str) -> set[str]:
+	routes = frappe.get_all("Builder Page", filters={"route": ["like", f"{slug}%/%"]}, pluck="route")
+	return {route.split("/")[0] for route in routes}
 
 
 @frappe.whitelist()
