@@ -121,7 +121,8 @@ function loadFolderPages() {
 		filters: { is_template: 0, project_folder: folder.value },
 		orFilters: query ? { page_title: ["like", `%${query}%`], route: ["like", `%${query}%`] } : {},
 	});
-	folderPages.reload();
+	// a load that lands after the section collapsed must not refill the list
+	folderPages.reload().then(() => !open.value && (folderPages.data = null));
 }
 
 // the list only overlays the open page, so the page just left must come fresh from the server
