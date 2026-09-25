@@ -426,7 +426,7 @@ def clone_client_scripts(source_page, new_page) -> None:
 	new_page.client_scripts = []
 	for script in client_scripts:
 		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
-		new_script = frappe.copy_doc(builder_script)
+		new_script = frappe.copy_doc(builder_script, ignore_no_copy=False)
 		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
@@ -439,6 +439,8 @@ def duplicate_page(page_name: str):
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
 	new_page.route = None
+	new_page.is_standard = 0
+	new_page.app = None
 	clone_client_scripts(page, new_page)
 	new_page.flags.source = "duplicate"
 	new_page.insert()

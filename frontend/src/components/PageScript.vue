@@ -40,12 +40,13 @@
 		<Dialog class="overscroll-none" :title="dialogTitle" size="7xl" :isDirty="isDirty" v-model="showDialog">
 			<template #title>
 				<div class="flex w-full items-center justify-between gap-3 pr-2">
-					<span class="text-lg font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
+					<span class="text-md font-semibold text-ink-gray-9">{{ dialogTitle }}</span>
 					<TabButtons
 						v-if="showBlockClientScriptToggle"
 						v-model="activeBlockClientScript"
 						:options="blockClientScriptTabs"
-						:class="['w-48', STRETCH_TABS]" />
+						fluid
+						class="w-48" />
 				</div>
 			</template>
 			<template #default>
@@ -154,9 +155,8 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { TabButtons, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, defineComponent, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";

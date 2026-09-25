@@ -3,26 +3,27 @@
 		<template #trigger>
 			<div
 				class="flex w-full items-center justify-between"
-				@focusin="updateActiveState"
+				@focusin="handleFocusIn"
 				@click.capture="onAnchorClick">
 				<StylePropertyControl
 					propertyKey="background"
-					:component="BackgroundInput"
+					:component="Autocomplete"
 					:label="__('Background')"
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('Set Background')"
-					readonly
-					:selectOnFocus="false"
-					class="[&_input]:cursor-pointer"
-					@focus="toggle"
-					:getModelValue="() => getDisplayValue(null)"
-					:getVariantValue="(v: string) => getDisplayValue(v)"
+					:getOptions="getColorOptions"
+					:selectOnFocus="true"
+					:getModelValue="() => getValue(null)"
+					:getVariantValue="(v: string) => getValue(v)"
+					:getControlAttrs="getControlAttrs"
 					:setVariantValue="handleSetVariant"
 					:setModelValue="(val: string) => setBGValue(val)">
 					<template #prefix="{ variant }">
-						<div
-							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded shadow-md"
+						<button
+							type="button"
+							class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+							:aria-label="__('Open background picker')"
 							@click="
 								() => {
 									activeState = variant;
@@ -37,7 +38,7 @@
 		</template>
 		<template #default>
 			<div
-				class="background-popover-body w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+				class="background-popover-body w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 				<TabButtons
 					:options="[
 						{ label: '', value: 'color', icon: 'lucide-droplet' },
@@ -45,7 +46,8 @@
 						{ label: '', value: 'gradient', icon: 'lucide-aperture' },
 					]"
 					v-model="activeTab"
-					:class="['mb-3 w-full', STRETCH_TABS]" />
+					fluid
+					class="mb-3 w-full" />
 
 				<!-- Color Tab -->
 				<div v-if="activeTab === 'color'" class="w-full space-y-4">
@@ -61,16 +63,14 @@
 				<FileUploader
 					v-else-if="activeTab === 'image'"
 					@success="setBGImage"
-					:uploadArgs="{
-						private: false,
-						folder: 'Home/Builder Uploads',
-						optimize: true,
-						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-					}">
+					:private="false"
+					folder="Home/Builder Uploads"
+					:optimize="true"
+					uploadEndpoint="/api/method/builder.api.upload_builder_asset">
 					<template v-slot="{ openFileSelector }">
 						<div class="space-y-3">
 							<TabButtons
-								:class="STRETCH_TABS"
+								fluid
 								:options="sizeTabOptions"
 								:modelValue="backgroundSize || 'auto'"
 								@update:modelValue="setBGSize" />
@@ -84,12 +84,12 @@
 								@update:modelValue="setBGPosition" />
 							<div
 								v-else
-								class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+								class="flex h-24 items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
 								{{ __("No image") }}
 							</div>
 							<TabButtons
 								v-if="!bgFocusEnabled && backgroundImageURL"
-								:class="STRETCH_TABS"
+								fluid
 								:options="repeatTabOptions"
 								:modelValue="backgroundRepeat || 'repeat'"
 								@update:modelValue="setBGRepeat" />
@@ -97,19 +97,19 @@
 								<Button
 									class="flex-1"
 									variant="outline"
-									iconLeft="upload"
+									iconLeft="lucide-upload"
 									:label="backgroundImageURL ? __('Replace') : __('Upload')"
 									@click="openFileSelector" />
 								<Button
 									v-if="bgFocusEnabled"
 									variant="outline"
-									icon="rotate-ccw"
+									icon="lucide-rotate-ccw"
 									:title="__('Reset focal point')"
 									@click="setBGPosition('center')" />
 								<Button
 									v-if="backgroundImageURL"
 									variant="outline"
-									icon="trash"
+									icon="lucide-trash-2"
 									:title="__('Clear image')"
 									@click="clearBGImage" />
 							</div>
@@ -141,52 +141,22 @@
 
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
 import ImageFocusInput from "@/components/Controls/ImageFocusInput.vue";
-import Input from "@/components/Controls/Input.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import useBuilderStore from "@/stores/builderStore";
 import blockController from "@/utils/blockController";
+import { getColorVariableOptions } from "@/utils/colorOptions";
 import { cssUrl } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
-import { FileUploader, Popover, Switch, TabButtons } from "frappe-ui";
-import { computed, defineComponent, h, ref, watch } from "vue";
+import { FileUploader, Popover, Switch, TabButtons, type TabButtonValue } from "frappe-ui";
+import { computed, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
 const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
-
-// wraps Input to style the value like ColorInput does when it displays a variable name
-const BackgroundInput = defineComponent({
-	props: {
-		modelValue: { type: [String, Number, Boolean], default: "" },
-	},
-	setup(props, { attrs, slots }) {
-		const showsVariableName = computed(() => {
-			return (
-				!!props.modelValue &&
-				variables.value.some((builderToken) => builderToken.token_name === props.modelValue)
-			);
-		});
-		return () =>
-			h(
-				Input,
-				{
-					...attrs,
-					modelValue: props.modelValue,
-					class: [
-						attrs.class,
-						showsVariableName.value
-							? "[&_input]:font-mono [&_input]:text-sm [&_input]:text-ink-violet-6"
-							: "",
-					],
-				},
-				slots,
-			);
-	},
-});
 
 const activeState = ref<string | null>(null);
 const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
@@ -213,6 +183,14 @@ const updateActiveState = (e: FocusEvent) => {
 	}
 };
 
+// a gradient or image has no text worth editing, so focus goes straight to the picker
+const handleFocusIn = (e: FocusEvent) => {
+	updateActiveState(e);
+	const target = e.target as HTMLElement;
+	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
+	if (hasImage(activeState.value)) toggle();
+};
+
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {
 	return state ? `${state}:${prop}` : prop;
 };
@@ -234,6 +212,25 @@ watch(
 	},
 	{ immediate: true },
 );
+
+const hasImage = (state: string | null) =>
+	Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
+
+const getColorToken = (state: string | null) => {
+	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
+	return !hasImage(state) && color?.startsWith("var(--") ? color : null;
+};
+
+// the var() value, not the name, so the dropdown marks it as selected
+const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
+
+const getControlAttrs = (state: string | null) => ({
+	displayValue: getDisplayValue(state),
+	class: getColorToken(state) ? "[&>div>div>input]:text-sm [&>div>div>input]:text-ink-violet-6" : "",
+});
+
+const getColorOptions = async (query: string) =>
+	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 
 const getDisplayValue = (state: string | null) => {
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
@@ -306,11 +303,12 @@ const sizeTabOptions = [
 	{ label: __("Auto"), value: "auto" },
 ];
 
+// icon-only tabs: frappe-ui labels each one with its `label`
 const repeatTabOptions = [
-	{ label: "", value: "no-repeat", icon: "lucide-square", tooltip: __("No repeat") },
-	{ label: "", value: "repeat", icon: "lucide-grid-2x2", tooltip: __("Repeat") },
-	{ label: "", value: "repeat-x", icon: "lucide-gallery-horizontal", tooltip: __("Repeat horizontally") },
-	{ label: "", value: "repeat-y", icon: "lucide-gallery-vertical", tooltip: __("Repeat vertically") },
+	{ label: __("No repeat"), value: "no-repeat", icon: "lucide-square" },
+	{ label: __("Repeat"), value: "repeat", icon: "lucide-grid-2x2" },
+	{ label: __("Repeat horizontally"), value: "repeat-x", icon: "lucide-gallery-horizontal" },
+	{ label: __("Repeat vertically"), value: "repeat-y", icon: "lucide-gallery-vertical" },
 ];
 
 const setBGImage = (file: { file_url: string }) => {
@@ -327,26 +325,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const setBGValue = (value: string) => {
-	const bgKey = getStyleKey("backgroundImage");
-	const colorKey = getStyleKey("backgroundColor");
-	const isValidHexValue = (value: string) => /^([0-9A-F]{3}){1,2}$/i.test(value);
-
-	let cleanURL = value;
-	if (value?.startsWith("url(")) {
-		cleanURL = value.replace(/^url\(['"]?|['"]?\)$/g, "");
+const parseBackground = (value: string) => {
+	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
+	if (CSS.supports("color", color)) return { color };
+	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
+		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
 	}
-	if (isValidHexValue(value)) {
-		blockController.setStyle(colorKey, `#${value}`);
-		blockController.setStyle(bgKey, null);
-	} else if (value?.startsWith("#") || value?.startsWith("rgb") || value?.startsWith("hsl")) {
-		blockController.setStyle(colorKey, value);
-		blockController.setStyle(bgKey, null);
-	} else {
-		blockController.setStyle(bgKey, cleanURL ? cssUrl(cleanURL) : null);
-		blockController.setStyle(colorKey, null);
-	}
+	return null;
 };
+
+const setBackground = (bgKey: string, colorKey: string, value: string | null) => {
+	const parsed = value ? parseBackground(value) : null;
+	if (value && !parsed) return;
+	blockController.setStyle(colorKey, parsed?.color ?? null);
+	blockController.setStyle(bgKey, parsed?.image ?? null);
+};
+
+const setBGValue = (value: string | null) =>
+	setBackground(getStyleKey("backgroundImage"), getStyleKey("backgroundColor"), value);
 
 const setBGColor = (color: string | null) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), color);
@@ -360,7 +356,7 @@ const setGradient = (gradient: string) => {
 	blockController.setStyle(getStyleKey("backgroundColor"), null);
 };
 
-const setBGSize = (value: string) => {
+const setBGSize = (value: TabButtonValue) => {
 	blockController.setStyle(getStyleKey("backgroundSize"), value);
 };
 
@@ -368,7 +364,7 @@ const setBGPosition = (value: string) => {
 	blockController.setStyle(getStyleKey("backgroundPosition"), value);
 };
 
-const setBGRepeat = (value: string) => {
+const setBGRepeat = (value: TabButtonValue) => {
 	blockController.setStyle(getStyleKey("backgroundRepeat"), value);
 };
 
@@ -408,9 +404,9 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	// the trigger input is read-only, so a non-null value here can only come from
-	// the "copy current value to state" dropdown — copy the actual base styles
-	// instead of the display text (e.g. "Gradient", variable name, image file name)
+	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
+
+	// display text from the "copy current value to state" dropdown: copy the real base styles
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };

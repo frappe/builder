@@ -1,34 +1,39 @@
 <template>
 	<div ref="objectEditor" class="flex flex-col gap-2" @paste="pasteObj">
-		<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
-			<div class="min-w-0 flex-1">
-				<BuilderInput
-					:placeholder="__('Property')"
-					:modelValue="key"
-					@update:modelValue="(val: string) => replaceKey(key, val)" />
-			</div>
-			<DynamicValueDropdown
-				v-if="allowDynamicValues"
-				class="min-w-0 flex-1"
-				:modelValue="value"
-				:dynamicValue="getDynamicValueForKey(key)"
-				@update:modelValue="(val: string) => updateObjectValue(key, val)"
-				@setDynamicValue="(val) => setDynamicValueForKey(key, val.key, val.comesFrom)"
-				@clearDynamicValue="() => clearDynamicValueForKey(key)" />
-			<div v-else class="min-w-0 flex-1">
-				<BuilderInput
-					:placeholder="__('Value')"
+		<div
+			v-if="Object.keys(obj).length"
+			class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1"
+			:class="listClass">
+			<div v-for="(value, key, index) in obj" :key="index" class="flex gap-2">
+				<div class="min-w-0 flex-1">
+					<BuilderInput
+						:placeholder="__('Property')"
+						:modelValue="key"
+						@update:modelValue="(val: string) => replaceKey(key, val)" />
+				</div>
+				<DynamicValueDropdown
+					v-if="allowDynamicValues"
+					class="min-w-0 flex-1"
 					:modelValue="value"
-					@update:modelValue="(val: string) => updateObjectValue(key, val)" />
+					:dynamicValue="getDynamicValueForKey(key)"
+					@update:modelValue="(val: string) => updateObjectValue(key, val)"
+					@setDynamicValue="(val) => setDynamicValueForKey(key, val.key, val.comesFrom)"
+					@clearDynamicValue="() => clearDynamicValueForKey(key)" />
+				<div v-else class="min-w-0 flex-1">
+					<BuilderInput
+						:placeholder="__('Value')"
+						:modelValue="value"
+						@update:modelValue="(val: string) => updateObjectValue(key, val)" />
+				</div>
+				<Button
+					class="flex-shrink-0 text-xs"
+					variant="subtle"
+					icon="lucide-x"
+					@click="deleteObjectKey(key as string)"></Button>
 			</div>
-			<Button
-				class="flex-shrink-0 text-xs"
-				variant="subtle"
-				icon="lucide-x"
-				@click="deleteObjectKey(key as string)"></Button>
 		</div>
-		<Button variant="outline" :label="__('Add')" @click="addObjectKey"></Button>
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+		<Button variant="outline" class="shrink-0" :label="__('Add')" @click="addObjectKey"></Button>
+		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>
@@ -42,6 +47,7 @@ import { nextTick, ref } from "vue";
 const props = defineProps<{
 	obj: Record<string, string>;
 	description?: string;
+	listClass?: string;
 	allowDynamicValues?: boolean;
 }>();
 

@@ -4,13 +4,13 @@
 			'color-picker-container flex flex-col gap-2',
 			renderMode === 'inline'
 				? 'w-full'
-				: 'w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
+				: 'w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
 		]">
 		<div
 			ref="colorMap"
 			:style="colorMapStyle"
 			@mousedown.prevent="handleSelectorMove"
-			class="relative m-auto h-24 w-full rounded-md"
+			class="relative m-auto h-24 w-full rounded-5"
 			@click.prevent="setColor">
 			<div
 				@mousedown.stop.prevent="handleSelectorMove"
@@ -19,7 +19,7 @@
 		</div>
 		<div
 			ref="hueMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-3 w-full rounded-5"
 			@click="setHue"
 			@mousedown.prevent="handleHueSelectorMove"
 			:style="hueMapStyle">
@@ -27,7 +27,7 @@
 		</div>
 		<div
 			ref="alphaMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-3 w-full rounded-5"
 			@click="setAlpha"
 			@mousedown.prevent="handleAlphaSelectorMove"
 			:style="alphaMapStyle">
@@ -42,23 +42,19 @@
 				:style="{ background: color }"></div>
 			<EyeDropperIcon v-if="isSupported" class="text-ink-gray-7" @click="() => open()" />
 		</div>
-		<Autocomplete
+		<Input
 			v-if="showInput"
-			ref="autocompleteRef"
+			type="text"
+			class="mt-2 [&_input]:text-sm"
 			:modelValue="displayValue"
-			class="mt-2 w-full text-sm [&>div>div>input]:text-sm"
 			:placeholder="__('Set Color')"
-			:getOptions="getOptions"
-			referenceElementSelector=".color-picker-container"
 			@update:modelValue="handleInputChange" />
 	</div>
 </template>
 <script setup lang="ts">
-import Autocomplete from "@/components/Controls/Autocomplete.vue";
+import Input from "@/components/Controls/Input.vue";
 import EyeDropperIcon from "@/components/Icons/EyeDropper.vue";
-import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { getColorVariableOptions } from "@/utils/colorOptions";
 import { HSVToHex, HexToHSV, getRGB } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { clamp, useElementBounding, useEyeDropper, useStorage } from "@vueuse/core";
@@ -66,14 +62,12 @@ import { Ref, StyleValue, computed, nextTick, onBeforeUnmount, ref, watch } from
 
 type CSSColorValue = HashString | RGBString | `var(--${string})`;
 
-const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
-const builderStore = useBuilderStore();
+const { resolveVariableValue, getVariableName } = useBuilderToken();
 const canvasStore = useCanvasStore();
 
 const colorMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const hueMap = ref(null) as unknown as Ref<HTMLDivElement>;
 const alphaMap = ref(null) as unknown as Ref<HTMLDivElement>;
-const autocompleteRef = ref<InstanceType<typeof Autocomplete> | null>(null);
 
 const {
 	width: colorMapWidth,
@@ -137,9 +131,6 @@ const displayValue = computed(() => {
 	}
 	return props.modelValue;
 });
-
-const getOptions = async (query: string) =>
-	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -391,7 +382,6 @@ watch(
 
 defineExpose({
 	syncPositions: () => setSelectorPosition(modelColor.value),
-	hideOptions: () => autocompleteRef.value?.hideOptions(),
 	commitRecentColor,
 });
 </script>

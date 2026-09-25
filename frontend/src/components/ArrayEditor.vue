@@ -1,18 +1,20 @@
 <template>
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
-		<div v-for="(item, index) in arr" :key="index" class="flex gap-2">
-			<BuilderInput
-				:placeholder="__('Enter value')"
-				:modelValue="item"
-				@input="(val: string) => updateItem(index, val)" />
-			<Button
-				class="flex-shrink-0 text-xs"
-				variant="subtle"
-				icon="lucide-x"
-				@click="deleteItem(index)"></Button>
+		<div v-if="arr.length" class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1" :class="listClass">
+			<div v-for="(item, index) in arr" :key="index" class="flex gap-2">
+				<BuilderInput
+					:placeholder="__('Enter value')"
+					:modelValue="item"
+					@input="(val: string) => updateItem(index, val)" />
+				<Button
+					class="flex-shrink-0 text-xs"
+					variant="subtle"
+					icon="lucide-x"
+					@click="deleteItem(index)"></Button>
+			</div>
 		</div>
-		<Button variant="outline" class="w-full" :label="__('Add')" @click="addItem"></Button>
-		<p class="rounded-sm bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
+		<Button variant="outline" class="w-full shrink-0" :label="__('Add')" @click="addItem"></Button>
+		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>
@@ -23,6 +25,7 @@ import { nextTick, ref } from "vue";
 const props = defineProps<{
 	arr: Array<string>;
 	description?: string;
+	listClass?: string;
 }>();
 
 const emit = defineEmits({
