@@ -77,9 +77,18 @@ function renamePage(page: BuilderPage) {
 	});
 }
 
-// the page after it in its folder's list, else the one before
-function neighbourOf(page: BuilderPage) {
-	if (!page.project_folder) return;
+function firstPageIn(folder: string, extraFilters = {}): Promise<BuilderPage[]> {
+	return createResource({ url: "frappe.client.get_list" }).submit({
+		doctype: "Builder Page",
+		fields: ["name"],
+		filters: { is_template: 0, project_folder: folder, ...extraFilters },
+		order_by: "creation asc",
+		limit_page_length: 1,
+	});
+}
+
+// the page after it in its folder's loaded list, else the one before
+function loadedNeighbour(page: BuilderPage) {
 	const siblings = (folderPages.data ?? []).filter((row: BuilderPage) => row.project_folder === page.project_folder);
 	const index = siblings.findIndex((row: BuilderPage) => row.name === page.name);
 	if (index === -1) return;
@@ -88,11 +97,13 @@ function neighbourOf(page: BuilderPage) {
 
 export async function deletePage(page: BuilderPage) {
 	const wasOpen = isOpen(page);
-	const neighbour = wasOpen ? neighbourOf(page) : undefined;
+	const neighbour = wasOpen ? loadedNeighbour(page) : undefined;
 	if (!(await usePageStore().deletePage(page))) return;
 	notifyPagesChanged();
 	if (!wasOpen) return;
-	router.push(neighbour ? { name: "builder", params: { pageId: neighbour.name } } : { name: "home" });
+	// a search or the row limit can leave the loaded list without the folder's other pages
+	const next = neighbour ?? (page.project_folder ? (await firstPageIn(page.project_folder))[0] : undefined);
+	router.push(next ? { name: "builder", params: { pageId: next.name } } : { name: "home" });
 }
 
 // protected pages and a read-only editor must not be renamed, moved or deleted from here

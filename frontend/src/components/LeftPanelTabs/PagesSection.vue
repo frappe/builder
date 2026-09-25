@@ -4,6 +4,7 @@
 			<button
 				class="flex min-w-0 items-center gap-2 rounded-4 py-1 pr-1 text-sm text-ink-gray-7 hover:text-ink-gray-9"
 				:aria-expanded="open"
+				:aria-label="__('Pages in {0}', [folder])"
 				@click="open = !open">
 				<span
 					class="lucide-chevron-right size-3.5 shrink-0 text-ink-gray-5 transition-transform"
