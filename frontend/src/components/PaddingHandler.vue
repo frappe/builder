@@ -78,12 +78,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
-import {
-	EMPTY_SPACING_PILL_GROWTH,
-	HANDLE_MIN_SCALE,
-	Position,
-	useSpacingHandler,
-} from "@/composables/useSpacingHandler";
+import { HANDLE_MIN_SCALE, Position, useSpacingHandler } from "@/composables/useSpacingHandler";
 import { computed, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 import CursorTooltip from "./CursorTooltip.vue";
@@ -202,10 +197,9 @@ const inwardDirection = {
 const pillStyle = (side: Position) => {
 	const isLong = side === Position.Top || side === Position.Bottom;
 	const size = isLong ? longHandleSize.value : sideHandleSize.value;
-	const growth = isEmpty(side) ? EMPTY_SPACING_PILL_GROWTH : 1;
 	const inset = isEmpty(side) ? RING_CENTRE_INSET * inwardDirection[side] : 0;
 	return handleStyle(
-		{ width: size.width * growth, height: size.height * growth },
+		size,
 		isLong ? { x: 0, y: inset } : { x: inset, y: 0 },
 		isLong ? verticalCursor.value : horizontalCursor.value,
 	);

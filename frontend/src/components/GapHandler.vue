@@ -30,12 +30,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { useRotatedCursors } from "@/composables/useRotatedCursors";
-import {
-	EMPTY_SPACING_PILL_GROWTH,
-	HANDLE_MIN_SCALE,
-	Position,
-	useSpacingHandler,
-} from "@/composables/useSpacingHandler";
+import { HANDLE_MIN_SCALE, Position, useSpacingHandler } from "@/composables/useSpacingHandler";
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { getNumberFromPx } from "../utils/helpers";
 import CursorTooltip from "./CursorTooltip.vue";
@@ -252,11 +247,6 @@ const bandStyle = (band: Box, axis: "width" | "height", cursor?: string) => {
 
 const isDraggable = (gap: number) => !showPill.value || gap * canvasProps.scale >= MIN_DRAGGABLE_BAND;
 
-const pillSize = (size: { width: number; height: number }, gap: number) => {
-	const growth = gap > 0 ? 1 : EMPTY_SPACING_PILL_GROWTH;
-	return { width: size.width * growth, height: size.height * growth };
-};
-
 const handleStyle = (size: { width: number; height: number }, cursor: string, centreY?: number) => ({
 	borderWidth: handleBorderWidth.value,
 	left: `calc(50% - ${size.width / 2}px)`,
@@ -338,7 +328,7 @@ const seamBox = (axis: Axis, seam: Seam, content: Box): Box =>
 // One band per seam, stretched across the whole content box.
 const seamBands = (axis: Axis, seams: Seam[], content: Box, gap: number, pillY?: number): GapBand[] => {
 	const { position, thickness, cursor, handleSize } = axisBands[axis];
-	const size = pillSize(handleSize.value, gap);
+	const size = handleSize.value;
 	return seams.map((seam, index) => {
 		const draggable = isDraggable(seam.to - seam.from);
 		return {
