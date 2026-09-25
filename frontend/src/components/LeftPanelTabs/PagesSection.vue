@@ -31,7 +31,6 @@
 				:placeholder="__('Search pages')"
 				v-model="search"
 				@input="(value: string) => (search = value)" />
-			<!-- the padding leaves room for the rows' shadow and focus ring, which overflow would clip -->
 			<div class="no-scrollbar -mx-2 -my-1 max-h-[30vh] space-y-0.5 overflow-y-auto p-1">
 				<PageRow v-for="page in pages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
 				<p v-if="search && !pages.length" class="px-2 py-1 text-sm text-ink-gray-5">
@@ -113,7 +112,6 @@ const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 let loadedQuery = "";
 
 function loadFolderPages() {
-	// while collapsed, clear the list instead of loading it, so nothing reads a stale copy
 	if (!open.value) return void (folderPages.data = null);
 	const query = search.value.trim();
 	loadedQuery = query;
@@ -121,7 +119,6 @@ function loadFolderPages() {
 		filters: { is_template: 0, project_folder: folder.value },
 		orFilters: query ? { page_title: ["like", `%${query}%`], route: ["like", `%${query}%`] } : {},
 	});
-	// a load that lands after the section collapsed must not refill the list
 	folderPages.reload().then(() => !open.value && (folderPages.data = null));
 }
 
@@ -136,7 +133,6 @@ watch(
 );
 
 watch([open, pagesVersion], loadFolderPages);
-// a page switch clears the search and loads right away, so skip a query that is already loaded
 watch(
 	search,
 	useDebounceFn(() => search.value.trim() !== loadedQuery && loadFolderPages(), 300),

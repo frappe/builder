@@ -1,6 +1,5 @@
 <template>
 	<ContextMenu :options="menu">
-		<!-- SidebarItem rings only its button, which stops short of the route, so the whole row takes the ring -->
 		<SidebarItem
 			class="[&:has(button:focus-visible)]:focus-ring [&_button]:!outline-none"
 			:active="page.name === pageStore.activePage?.name"
