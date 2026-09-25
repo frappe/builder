@@ -9,7 +9,7 @@
 			@click="openPage(page)"
 			@keydown.enter="openPage(page)">
 			<template #prefix>
-				<PageStatusDot :page="page" />
+				<span class="mr-1 flex"><PageStatusDot :page="page" /></span>
 			</template>
 			<span class="flex min-w-0 items-center gap-1.5">
 				<span class="truncate">{{ shortTitle(page) }}</span>
