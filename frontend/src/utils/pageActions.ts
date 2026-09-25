@@ -77,16 +77,22 @@ function renamePage(page: BuilderPage) {
 	});
 }
 
-async function deletePage(page: BuilderPage) {
+// the page after it in its folder's list, else the one before
+function neighbourOf(page: BuilderPage) {
+	if (!page.project_folder) return;
+	const siblings = (folderPages.data ?? []).filter((row: BuilderPage) => row.project_folder === page.project_folder);
+	const index = siblings.findIndex((row: BuilderPage) => row.name === page.name);
+	if (index === -1) return;
+	return siblings[index + 1] ?? siblings[index - 1];
+}
+
+export async function deletePage(page: BuilderPage) {
 	const wasOpen = isOpen(page);
-	await usePageStore().deletePage(page);
-	const remaining = await createResource({ url: "frappe.client.get_count" }).submit({
-		doctype: "Builder Page",
-		filters: { name: page.name },
-	});
-	if (remaining) return;
+	const neighbour = wasOpen ? neighbourOf(page) : undefined;
+	if (!(await usePageStore().deletePage(page))) return;
 	notifyPagesChanged();
-	if (wasOpen) router.push({ name: "home" });
+	if (!wasOpen) return;
+	router.push(neighbour ? { name: "builder", params: { pageId: neighbour.name } } : { name: "home" });
 }
 
 // protected pages and a read-only editor must not be renamed, moved or deleted from here

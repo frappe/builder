@@ -21,6 +21,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { triggerCopyEvent } from "@/utils/helpers";
+import { deletePage } from "@/utils/pageActions";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { useRouter } from "vue-router";
@@ -78,10 +79,7 @@ const mainMenuOptions = [
 			{
 				label: __("Delete Page"),
 				onClick: () => {
-					if (!pageStore.activePage) return;
-					pageStore.deletePage(pageStore.activePage).then(() => {
-						router.push({ name: "home" });
-					});
+					if (pageStore.activePage) deletePage(pageStore.activePage);
 				},
 				icon: "lucide-trash-2",
 				condition: () => !Boolean(pageStore.activePage?.is_standard),
