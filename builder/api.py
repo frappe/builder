@@ -439,7 +439,7 @@ def get_copy_title(title: str) -> str:
 	suffix = rf" \({re.escape(label)}(?: (\d+))?\)$"
 	base = re.sub(suffix, "", title)
 	siblings = frappe.get_all(
-		"Builder Page", filters={"page_title": ["like", f"{base} ({label}%"]}, pluck="page_title"
+		"Builder Page", filters={"page_title": ["like", f"{base} ({label}%"]}, pluck="page_title", limit=1
 	)
 	numbers = [int(m.group(1) or 1) for t in siblings if (m := re.fullmatch(re.escape(base) + suffix, t))]
 	return f"{base} ({label} {max(numbers) + 1})" if numbers else f"{base} ({label})"
