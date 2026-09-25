@@ -112,7 +112,7 @@ const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 let loadedQuery = "";
 
 function loadFolderPages() {
-	// a collapsed section loads when expanded; clearing keeps a stale list from being read meanwhile
+	// while collapsed, clear the list instead of loading it, so nothing reads a stale copy
 	if (!open.value) return void (folderPages.data = null);
 	const query = search.value.trim();
 	loadedQuery = query;
@@ -134,7 +134,7 @@ watch(
 );
 
 watch([open, pagesVersion], loadFolderPages);
-// a page switch clears the search and loads at once, so skip the query already loaded
+// a page switch clears the search and loads right away, so skip a query that is already loaded
 watch(
 	search,
 	useDebounceFn(() => search.value.trim() !== loadedQuery && loadFolderPages(), 300),
