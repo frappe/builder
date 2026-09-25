@@ -31,7 +31,7 @@
 				:placeholder="__('Search pages')"
 				v-model="search"
 				@input="(value: string) => (search = value)" />
-			<div class="-mx-1 max-h-[30vh] space-y-0.5 overflow-y-auto">
+			<div class="no-scrollbar -mx-1 max-h-[30vh] space-y-0.5 overflow-y-auto">
 				<PageRow v-for="page in pages" :key="page.name" :page="page" :route-label="routeLabel(page)" />
 				<p v-if="search && !pages.length" class="px-2 py-1 text-sm text-ink-gray-5">
 					{{ __("No pages match.") }}
@@ -109,8 +109,13 @@ const routeLabel = (page: BuilderPage) => `/${(page.route || "").slice(routePref
 
 const newPageLabel = computed(() => __("New page in {0}", [folder.value]));
 
+let loadedQuery = "";
+
 function loadFolderPages() {
+	// a collapsed section loads when expanded; clearing keeps a stale list from being read meanwhile
+	if (!open.value) return void (folderPages.data = null);
 	const query = search.value.trim();
+	loadedQuery = query;
 	folderPages.update({
 		filters: { is_template: 0, project_folder: folder.value },
 		orFilters: query ? { page_title: ["like", `%${query}%`], route: ["like", `%${query}%`] } : {},
@@ -128,6 +133,10 @@ watch(
 	{ immediate: true },
 );
 
-watch(pagesVersion, loadFolderPages);
-watch(search, useDebounceFn(loadFolderPages, 300));
+watch([open, pagesVersion], loadFolderPages);
+// a page switch clears the search and loads at once, so skip the query already loaded
+watch(
+	search,
+	useDebounceFn(() => search.value.trim() !== loadedQuery && loadFolderPages(), 300),
+);
 </script>
