@@ -88,12 +88,12 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	// narrow. The dimensions are identical for all three properties; only the offsets
 	// (set per-component) differ.
 	const longHandleSize = computed(() => ({
-		width: clamp(28 * canvasProps.scale, 14, 56),
-		height: clamp(7 * canvasProps.scale, 3.5, 14),
+		width: clamp(28 * canvasProps.scale, 14, 36),
+		height: clamp(7 * canvasProps.scale, 3.5, 9),
 	}));
 	const sideHandleSize = computed(() => ({
-		width: clamp(7 * canvasProps.scale, 3.5, 14),
-		height: clamp(28 * canvasProps.scale, 14, 56),
+		width: clamp(7 * canvasProps.scale, 3.5, 9),
+		height: clamp(28 * canvasProps.scale, 14, 36),
 	}));
 
 	const styleKey = (property: SpacingType, side: Position) =>
