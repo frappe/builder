@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-23 13:35\n"
+"PO-Revision-Date: 2026-09-26 15:28\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Croatian\n"
 "MIME-Version: 1.0\n"
@@ -1010,7 +1010,7 @@ msgstr ""
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:54
 msgid "Convert to Image File ({0} KB)"
-msgstr ""
+msgstr "Pretvori u Slikovnu Datoteku ({0} KB)"
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -1132,11 +1132,11 @@ msgstr "Izradio/la {0}"
 
 #: frontend/src/components/PageCard.vue:24
 msgid "Created {0}"
-msgstr ""
+msgstr "Izrađeno {0}"
 
 #: frontend/src/components/PageListItem.vue:39
 msgid "Created {0} by {1}"
-msgstr ""
+msgstr "Izrađeno {0} od {1}"
 
 #: frontend/src/components/Modals/TokenManager.vue:1104
 msgid "Created {0} token"
@@ -1825,7 +1825,7 @@ msgstr "Ispuni & Obreži"
 #: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/ImageUploadInput.vue:182
 msgid "Fill & crop"
-msgstr ""
+msgstr "Ispuni & Obreži"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:67
 msgid "Filter Builder Pages"
@@ -2037,7 +2037,7 @@ msgstr "Globalni stil koji će se učitati na svaku stranicu izgrađenu pomoću 
 
 #: frontend/src/components/PublishButton.vue:24
 msgid "Go Live"
-msgstr ""
+msgstr "Idi Uživo"
 
 #: frontend/src/components/Commands/index.ts:100
 msgid "Go to Dashboard"
@@ -2341,7 +2341,7 @@ msgstr "Prilagodi"
 
 #: frontend/src/utils/dialogs.ts:29
 msgid "Keep Inline"
-msgstr ""
+msgstr "Održi u Liniji"
 
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:102
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:11
@@ -2386,7 +2386,7 @@ msgstr "Veliko"
 
 #: frontend/src/utils/dialogs.ts:23
 msgid "Large SVG"
-msgstr ""
+msgstr "Veliki SVG"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -2503,7 +2503,7 @@ msgstr "Uživo"
 
 #: frontend/src/components/Settings/PageGeneral.vue:199
 msgid "Live with limited access"
-msgstr ""
+msgstr "Uživo s ograničenim pristupom"
 
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
@@ -2553,11 +2553,11 @@ msgstr "Marža"
 
 #: frontend/src/stores/pageStore.ts:241
 msgid "Mark \"{0}\" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it."
-msgstr ""
+msgstr "Označi \"{0}\" kao pripravno? Ostaje dostupno putem poveznice, ali tražilice i mapa web-mjesta ga prestaju prikazivati."
 
 #: frontend/src/components/PublishButton.vue:30
 msgid "Mark as Staging"
-msgstr ""
+msgstr "Označi kao Pripravno"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Marketer"
@@ -2842,7 +2842,7 @@ msgstr "Još nema tokena fonta"
 #: frontend/src/components/BackgroundHandler.vue:88
 #: frontend/src/components/ImageUploadInput.vue:79
 msgid "No image"
-msgstr ""
+msgstr "Nema slike"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
@@ -2882,7 +2882,7 @@ msgstr "Nema preusmjeravanja koja odgovaraju \"{0}\""
 
 #: frontend/src/components/BackgroundHandler.vue:308
 msgid "No repeat"
-msgstr ""
+msgstr "Bez ponavljanja"
 
 #: frontend/src/components/Controls/SearchBlock.vue:375
 #: frontend/src/components/Controls/SearchBlock.vue:401
@@ -2982,7 +2982,7 @@ msgstr "Za vanjske slike dopušteni su samo HTTP/HTTPS URL-ovi."
 
 #: builder/builder/doctype/builder_page/builder_page.py:415
 msgid "Only a live page can be marked as staging."
-msgstr ""
+msgstr "Samo aktivna stranica može biti odabrana kao probna."
 
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
@@ -3025,11 +3025,11 @@ msgstr "Otvori Stranicu ili Prebaci Mapu u Stablu Stranica"
 
 #: frontend/src/components/BackgroundHandler.vue:26
 msgid "Open background picker"
-msgstr ""
+msgstr "Otvori izbornik pozadine"
 
 #: frontend/src/components/Controls/ColorInput.vue:49
 msgid "Open color picker"
-msgstr ""
+msgstr "Otvori izbornik boja"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
@@ -3171,7 +3171,7 @@ msgstr "Stranica duplicirana"
 
 #: frontend/src/stores/pageStore.ts:254
 msgid "Page marked as staging"
-msgstr ""
+msgstr "Stranica označena kao probna"
 
 #: builder/www/404.html:25 frontend/src/stores/pageStore.ts:76
 msgid "Page not found"
@@ -3190,7 +3190,7 @@ msgstr "Stranice"
 #: frontend/src/utils/useBuilderEvents.ts:339
 #: frontend/src/utils/useBuilderEvents.ts:350
 msgid "Pan Canvas"
-msgstr ""
+msgstr "Panoniraj Radni Prostor"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Paste Style"
@@ -3403,7 +3403,7 @@ msgstr "Objavi Stranicu"
 
 #: frontend/src/components/PublishButton.vue:18
 msgid "Publish to Staging"
-msgstr ""
+msgstr "Objavi u Probno"
 
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3558,11 +3558,11 @@ msgstr "Ponovi Blok"
 
 #: frontend/src/components/BackgroundHandler.vue:310
 msgid "Repeat horizontally"
-msgstr ""
+msgstr "Ponovi vodoravno"
 
 #: frontend/src/components/BackgroundHandler.vue:311
 msgid "Repeat vertically"
-msgstr ""
+msgstr "Ponovi okomito"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:70
 #: frontend/src/components/BackgroundHandler.vue:101
@@ -3642,7 +3642,7 @@ msgstr "Poništi promjene i u podređenim blokovima?"
 #: frontend/src/components/BackgroundHandler.vue:107
 #: frontend/src/components/ImageUploadInput.vue:108
 msgid "Reset focal point"
-msgstr ""
+msgstr "Poništi žarišnu točku"
 
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
@@ -3997,7 +3997,7 @@ msgstr "Posluži Lokalno"
 #. Description of the 'Staging' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Served at its route, but hidden from search engines and the sitemap"
-msgstr ""
+msgstr "Posluženo na svojoj ruti, ali skriveno od tražilica i karte stranice"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
@@ -4239,11 +4239,11 @@ msgstr "Stog"
 #: frontend/src/components/Settings/PageGeneral.vue:202
 #: frontend/src/utils/pageStatus.ts:36
 msgid "Staging"
-msgstr ""
+msgstr "Priprema"
 
 #: frontend/src/components/Settings/PageGeneral.vue:202
 msgid "Staging with limited access"
-msgstr ""
+msgstr "Priprema s ograničenim pristupom"
 
 #: frontend/src/components/Settings/PageGeneral.vue:130
 msgid "Standard Page"
@@ -4492,7 +4492,7 @@ msgstr "Tanki"
 
 #: frontend/src/utils/dialogs.ts:26
 msgid "This SVG is {0} KB. Kept inline it is stored in the page itself, which makes saving and editing slower. Upload it as a file instead?"
-msgstr ""
+msgstr "Ovaj SVG ima {0} KB. Kada se čuva u tekstu, pohranjuje se na samoj stranici, što usporava spremanje i uređivanje. Želite li ga umjesto toga prenijeti kao datoteku?"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
@@ -4526,7 +4526,7 @@ msgstr "Ova stranica ima ograničen pristup"
 
 #: builder/builder/doctype/builder_page/builder_page.py:402
 msgid "This page is live. Mark it as staging instead."
-msgstr ""
+msgstr "Ova stranica je aktivna. Umjesto toga, označite je kao probnu."
 
 #: frontend/src/components/Settings/PageGeneral.vue:273
 msgid "This page will be exported to {0} app as standard page"
@@ -4767,7 +4767,7 @@ msgstr "Poništi Objavu"
 
 #: frontend/src/utils/pageStatus.ts:29
 msgid "Unpublished changes"
-msgstr ""
+msgstr "Neobjavljene promjene"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
@@ -4778,7 +4778,7 @@ msgstr "Neograničen"
 
 #: builder/utils.py:69
 msgid "Unsafe fixture name: {0}"
-msgstr ""
+msgstr "Naziv nesigurnog dodatka: {0}"
 
 #: frontend/src/components/BlockPropertySections/StyleSection.ts:25
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120
@@ -4816,7 +4816,7 @@ msgstr "Ažurirane postavke sustava: {0}"
 
 #: frontend/src/components/PageListItem.vue:40
 msgid "Updated {0} by {1}"
-msgstr ""
+msgstr "Ažurirano {0} od {1}"
 
 #: frontend/src/components/Modals/TokenManager.vue:1108
 msgid "Updated {0} token"
@@ -4857,7 +4857,7 @@ msgstr "Učitaj Meta sliku"
 
 #: frontend/src/utils/dialogs.ts:28
 msgid "Upload as File"
-msgstr ""
+msgstr "Otpremi kao datoteku"
 
 #: frontend/src/utils/helpers.ts:382
 msgid "Uploaded"
