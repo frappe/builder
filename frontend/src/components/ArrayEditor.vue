@@ -20,6 +20,8 @@
 						:imageFit="(itemFit(item) || 'cover') as 'contain' | 'cover' | 'fill'"
 						:objectPosition="itemPosition(item)"
 						:targetRatio="targetRatio"
+						multiple
+						@update:images="(urls: string[]) => setImagesFrom(index, urls)"
 						@update:modelValue="(val: string) => updateImageItem(index, { url: val })"
 						@update:imageFit="(val: string) => updateImageItem(index, { fit: val })"
 						@update:objectPosition="(val: string) => updateImageItem(index, { position: val })" />
@@ -75,6 +77,12 @@ const addItem = async () => {
 	}
 };
 
+const setImagesFrom = (index: number, urls: string[]) => {
+	const newArr = [...props.arr];
+	newArr.splice(index, 1, imageItem(newArr[index], { url: urls[0] }), ...urls.slice(1));
+	emit("update:arr", newArr);
+};
+
 const updateItem = (index: number, value: string) => {
 	const newArr = [...props.arr];
 	newArr[index] = value;
@@ -82,12 +90,15 @@ const updateItem = (index: number, value: string) => {
 };
 
 // keep any other data saved on the item, such as a slide's own text
-const updateImageItem = (index: number, patch: Partial<ImageArrayItem>) => {
-	const newArr = [...props.arr];
-	const current = newArr[index];
+const imageItem = (current: ArrayPropItem | undefined, patch: Partial<ImageArrayItem>): ArrayPropItem => {
 	const image = { ...(typeof current === "string" ? { url: current } : current), ...patch } as ImageArrayItem;
 	Object.keys(image).forEach((key) => key !== "url" && !image[key] && delete image[key]);
-	newArr[index] = Object.keys(image).length > 1 ? image : image.url || "";
+	return Object.keys(image).length > 1 ? image : image.url || "";
+};
+
+const updateImageItem = (index: number, patch: Partial<ImageArrayItem>) => {
+	const newArr = [...props.arr];
+	newArr[index] = imageItem(newArr[index], patch);
 	emit("update:arr", newArr);
 };
 
