@@ -9,7 +9,6 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import { __ } from "@/translation";
 
 const componentMap = {
-	array: ArrayInput,
 	object: ObjectInput,
 };
 
@@ -45,6 +44,13 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 					(propDetails.propOptions?.options?.defaultImageFit as StyleValue),
 			};
 			break;
+		case "array":
+			map = {
+				component: ArrayInput,
+				itemType: propDetails.propOptions?.options?.itemType || "string",
+				targetRatio: blockController.getSelectedBlockAspectRatio(),
+			};
+			break;
 		case "color":
 			map = {
 				component: ColorInput,
@@ -75,16 +81,17 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			});
 		},
 		setModelValue: (value: any) => {
-			if (value === "") value = null;
-			blockController.setBlockProp(propName, { value });
+			const modelValue = value === "" ? null : value;
+			blockController.setBlockProp(propName, { value: modelValue });
 		},
 		getModelValue: () => {
 			const value = blockController.getFirstSelectedBlock().getBlockProps()[propName]?.value;
 			return value;
 		},
 		getPlaceholder: () => {
-			const defaultValue = propDetails.propOptions?.options?.defaultValue;
-			return defaultValue == null || defaultValue === "" ? null : String(defaultValue);
+			const { defaultValue, unit } = propDetails.propOptions?.options || {};
+			if (defaultValue == null || defaultValue === "") return null;
+			return unit ? `${defaultValue} ${unit}` : String(defaultValue);
 		},
 		defaultValue:
 			type == "boolean"
@@ -104,7 +111,10 @@ const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
 				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
 				"update:imageFit": (val: StyleValue) =>
 					blockController.setBlockProp(propName, {
-						propOptions: { options: { ...propDetails.propOptions?.options, imageFit: val } },
+						propOptions: {
+							...propDetails.propOptions,
+							options: { ...propDetails.propOptions?.options, imageFit: val },
+						},
 					}),
 			};
 			break;
@@ -127,9 +137,7 @@ const getStandardPropsInputSection = () => {
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
 		const propType = propDetails.propOptions?.type;
-		const component =
-			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) ||
-			BasePropertyControl;
+		const component = (propType === "object" ? componentMap[propType] : undefined) || BasePropertyControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;

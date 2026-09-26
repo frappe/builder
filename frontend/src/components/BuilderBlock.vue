@@ -298,13 +298,6 @@ const styles = computed(() => {
 
 	Object.keys(styleMap).forEach((key) => {
 		if (key.startsWith("hover:")) {
-			// state style preview on hover
-			// if (!isHovered.value) {
-			// 	delete styleMap[key];
-			// } else {
-			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
-			// 	delete styleMap[key];
-			// }
 			delete styleMap[key];
 		}
 	});
@@ -402,6 +395,7 @@ const blockClientScript = computed(() => {
 	const clientScript = props.block.extendedFromComponent
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
+
 	const javascript = clientScript?.js || "";
 	const css = clientScript?.css || "";
 	// null (not an empty object) so scriptless blocks skip canvas registration
@@ -437,7 +431,7 @@ watch(
 		});
 		onCleanup(cleanup);
 	},
-	{ immediate: true },
+	{ immediate: true, flush: "post" },
 );
 
 const isEditable = computed(() => {
@@ -466,6 +460,24 @@ watch(
 		}, 200);
 		onCleanup(() => clearTimeout(timeout));
 	},
+	{ immediate: true },
+);
+
+// array item containers (e.g. carousel slides) aren't scrollable in the editor, so jump to the selected item
+watch(
+	selectedInCanvas,
+	async (selected) => {
+		if (!selected || props.preview) return;
+		await nextTick();
+		const element = target.value as HTMLElement | null;
+		const container = element?.parentElement?.closest("[data-array-items]") as HTMLElement | null;
+		const item = container && [...container.children].find((child) => child.contains(element));
+		if (!item) return;
+		const scale = canvasProps?.scale || 1;
+		const offset = item.getBoundingClientRect().left - container.getBoundingClientRect().left;
+		container.scrollLeft += offset / scale;
+	},
+	// picking another item in the layers panel remounts it already selected
 	{ immediate: true },
 );
 

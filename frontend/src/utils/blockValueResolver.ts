@@ -87,6 +87,11 @@ class BlockValueResolver {
 				values[value.property!] = this.resolve(value) ?? values[value.property!];
 			});
 
+		const itemField = type === "key" ? this.block.getRepeaterItemField() : null;
+		if (itemField) {
+			values.innerHTML = this.getPropValue(`item.${itemField}`) || values.innerHTML;
+		}
+
 		return values;
 	}
 

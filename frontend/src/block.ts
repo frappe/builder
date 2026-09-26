@@ -18,6 +18,7 @@ import {
 	getBlockInstance,
 	getNumberFromPx,
 	getSpacing,
+	getStandardPropValue,
 	getTextContent,
 	handleBase64Attribute,
 	isHTMLString,
@@ -149,7 +150,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -832,6 +833,84 @@ class Block implements BlockOptions {
 	isRepeater() {
 		return Boolean(this.isRepeaterBlock);
 	}
+	// the array prop a repeater loops over, e.g. a carousel's slides
+	getRepeaterProp() {
+		const key = this.getDataKey("key");
+		const propsRoot = this.getPropsRoot();
+		if (!this.isRepeater() || this.getDataKey("comesFrom") !== "props" || !key || !propsRoot)
+			return undefined;
+		return getStandardPropValue(key, propsRoot);
+	}
+	getRepeaterPropItems(): any[] {
+		const items = this.getRepeaterProp()?.value;
+		return Array.isArray(items) ? items : [];
+	}
+	// the item picked in the layers panel, which is the one rendered editable on the canvas
+	getRepeaterPreviewIndex(): number {
+		const lastIndex = Math.max(this.getRepeaterPropItems().length - 1, 0);
+		return Math.min(useCanvasStore().repeaterPreviewIndex[this.blockId] ?? 0, lastIndex);
+	}
+	setRepeaterPreviewIndex(index: number) {
+		useCanvasStore().repeaterPreviewIndex[this.blockId] = index;
+	}
+	setRepeaterPropItems(items: ArrayPropItem[]) {
+		const key = this.getDataKey("key");
+		const propsRoot = this.getPropsRoot();
+		if (!propsRoot) return;
+		const props = propsRoot.getBlockProps();
+		propsRoot.setBlockProps({ ...props, [key]: { ...props[key], value: JSON.stringify(items) } });
+	}
+	// deleting a slide removes its item; the repeater's child is the template every item renders with
+	removeRepeaterItem() {
+		const items = [...this.getRepeaterPropItems()];
+		items.splice(this.getRepeaterPreviewIndex(), 1);
+		this.setRepeaterPropItems(items);
+	}
+	// order lists item indexes in their new order; the picked item stays picked wherever it lands
+	reorderRepeaterItems(order: number[]) {
+		const items = [...this.getRepeaterPropItems()];
+		const previewIndex = this.getRepeaterPreviewIndex();
+		items.splice(0, order.length, ...order.map((index) => items[index]));
+		this.setRepeaterPropItems(items);
+		if (previewIndex < order.length) this.setRepeaterPreviewIndex(order.indexOf(previewIndex));
+	}
+	setRepeaterItemValue(field: string, value: string) {
+		const items = [...this.getRepeaterPropItems()];
+		const index = this.getRepeaterPreviewIndex();
+		const current = items[index];
+		const item = current && typeof current === "object" ? { ...current } : { url: current || "" };
+		if (value) {
+			item[field] = value;
+		} else {
+			delete item[field];
+		}
+		items[index] = item;
+		this.setRepeaterPropItems(items);
+	}
+	// text inside a repeater over image items (e.g. a carousel slide) keeps its own copy on
+	// each item, keyed by blockId, so reordering or removing items keeps text with its image.
+	// The server applies the same rule in bind_repeater_item_text
+	getRepeaterItemField(): string | null {
+		const repeater = this.getRepeaterParent();
+		const isTextLike = this.isText() || this.isLink() || this.isButton();
+		if (!repeater || !isTextLike || this.hasChildren()) return null;
+		const boundKey = this.getDynamicKey("innerHTML", "key");
+		if (boundKey && boundKey !== `item.${this.blockId}`) return null;
+		return repeater.getRepeaterProp()?.options?.itemType === "image" ? this.blockId : null;
+	}
+	getRepeaterItemText(): string | null {
+		const field = this.getRepeaterItemField();
+		if (!field) return null;
+		const repeater = this.getRepeaterParent()!;
+		const item = repeater.getRepeaterPropItems()[repeater.getRepeaterPreviewIndex()];
+		return (item && typeof item === "object" && item[field]) || null;
+	}
+	setRepeaterItemText(innerHTML: string): boolean {
+		const field = this.getRepeaterItemField();
+		if (!field) return false;
+		this.getRepeaterParent()!.setRepeaterItemValue(field, innerHTML);
+		return true;
+	}
 	getDataKey(key: keyof BlockDataKey): string {
 		let dataKey = (this.dataKey && this.dataKey[key]) || "";
 		if (!dataKey && this.isExtendedFromComponent()) {
@@ -865,6 +944,10 @@ class Block implements BlockOptions {
 		const editor = this.getEditor();
 		if (editor && editor.isEditable) {
 			return editor.getText();
+		}
+		const itemText = this.getRepeaterItemText();
+		if (itemText) {
+			return getTextContent(itemText);
 		}
 		return this.getTextContent() || "";
 	}
@@ -1092,7 +1175,26 @@ class Block implements BlockOptions {
 		const propsRoot = this.getPropsRoot();
 		if (!propsRoot) return { ...(this.props || {}) };
 		const referenceProps = propsRoot.extendedFromComponent ? propsRoot.referenceComponent?.props || {} : {};
-		return { ...referenceProps, ...(propsRoot.props || {}) };
+		const mergedProps: BlockProps = { ...referenceProps };
+		for (const [key, propDetails] of Object.entries(propsRoot.props || {})) {
+			if (mergedProps[key]) {
+				mergedProps[key] = {
+					...mergedProps[key],
+					...propDetails,
+					propOptions: {
+						...mergedProps[key].propOptions,
+						...(propDetails.propOptions || {}),
+						options: {
+							...mergedProps[key].propOptions?.options,
+							...(propDetails.propOptions?.options || {}),
+						},
+					},
+				};
+			} else {
+				mergedProps[key] = propDetails;
+			}
+		}
+		return mergedProps;
 	}
 	setBlockProps(props: BlockProps) {
 		const propsRoot = this.getPropsRoot() || this;

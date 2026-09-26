@@ -1225,8 +1225,15 @@ def render_repeater_children(
 	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
 
 	tag.append(f"{{% for {loop_info['loop_var']} in {loop_info['iterator_key']} %}}")
-
 	child = block.get("children")[0]
+	if get_repeater_item_type(block, state["standard_props_stack"]) == "image":
+		# image items are saved as a bare url until they carry more, e.g. a slide's own text
+		item = loop_info["loop_var"]
+		tag.append(
+			f"{{% if {item} is not mapping %}}{{% set {item} = {{'url': {item} or ''}} %}}{{% endif %}}"
+		)
+		child = copy.deepcopy(child)
+		bind_repeater_item_text(child)
 	child, component_id = extend_block_with_component(child)
 
 	child_props = process_block_props(child, loop_info["data_key"], state["standard_props_stack"])
@@ -1244,6 +1251,41 @@ def render_repeater_children(
 	cleanup_props_stack(child_props, state["standard_props_stack"])
 
 	tag.append("{% endfor %}")
+
+
+REPEATER_ITEM_TEXT_ELEMENTS = {
+	*("span", "p", "b", "label", "a", "cite", "li", "strong", "em", "i", "blockquote", "summary", "button"),
+	*("h1", "h2", "h3", "h4", "h5", "h6"),
+}
+
+
+def bind_repeater_item_text(block: dict):
+	"""Text inside a repeater over image items reads its own copy from each item, keyed by blockId.
+
+	Mirrors Block.getRepeaterItemField in the editor."""
+	element = block.get("originalElement") or block.get("element")
+	dynamic_values = block.get("dynamicValues") or []
+	is_bound = any(dv.get("property") == "innerHTML" and dv.get("type") == "key" for dv in dynamic_values)
+	if element in REPEATER_ITEM_TEXT_ELEMENTS and not block.get("children") and not is_bound:
+		block["dynamicValues"] = [
+			*dynamic_values,
+			{
+				"key": f"item.{block.get('blockId')}",
+				"comesFrom": "props",
+				"type": "key",
+				"property": "innerHTML",
+			},
+		]
+	for child in block.get("children") or []:
+		if not child.get("isRepeaterBlock"):
+			bind_repeater_item_text(child)
+
+
+def get_repeater_item_type(block: dict, props_stack: dict) -> str | None:
+	data_key = block.get("dataKey") or {}
+	if data_key.get("comesFrom") != "props" or data_key.get("key") not in props_stack:
+		return None
+	return props_stack[data_key["key"]][-1].get("propOptions", {}).get("options", {}).get("itemType")
 
 
 def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict:
@@ -1380,6 +1422,7 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	client_script = block.get("clientScript")
 	if client_script is None:
 		client_script = {"js": block.get("blockClientScript")}
+
 	scripts = [
 		{"script": client_script.get("js"), "type": "JavaScript"},
 		{"script": client_script.get("css"), "type": "CSS"},
@@ -1960,7 +2003,7 @@ def to_jinja_literal(obj):
 			# remove the {{ }} so Jinja receives the variable
 			inner = stripped[2:-2].strip()
 			return inner  # returned unquoted
-		return repr(obj)
+		return jinja_string_literal(obj)
 
 	if obj is True:
 		return "True"
@@ -1979,6 +2022,13 @@ def to_jinja_literal(obj):
 		return "[ " + ", ".join(str(to_jinja_literal(i)) for i in obj) + " ]"
 
 	return repr(obj)
+
+
+HTML_SPECIAL_CHAR_ESCAPES = str.maketrans({"<": "\\x3c", ">": "\\x3e", "&": "\\x26"})
+
+
+def jinja_string_literal(text: str) -> str:
+	return repr(text).translate(HTML_SPECIAL_CHAR_ESCAPES)
 
 
 def parse_static_value(value: str, prop_type: str) -> Any:

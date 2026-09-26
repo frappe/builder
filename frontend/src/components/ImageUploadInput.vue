@@ -100,8 +100,9 @@
 								class="flex-1"
 								variant="outline"
 								iconLeft="lucide-upload"
+								:loading="uploading"
 								:label="currentImageURL ? __('Replace') : __('Upload')"
-								@click="openFileSelector" />
+								@click="selectImages(openFileSelector)" />
 							<Button
 								variant="outline"
 								icon="lucide-rotate-ccw"
@@ -135,8 +136,9 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
+import { uploadBuilderAsset } from "@/utils/helpers";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
-import { FileUploader, Popover, TabButtons, type TabButtonValue } from "frappe-ui";
+import { FileUploader, Popover, TabButtons, toast, type TabButtonValue } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -153,6 +155,7 @@ const props = withDefaults(
 		targetRatio?: number;
 		description?: string;
 		popoverOffset?: number;
+		multiple?: boolean;
 	}>(),
 	{
 		labelPosition: "left",
@@ -163,6 +166,7 @@ const props = withDefaults(
 );
 
 const builderStore = useBuilderStore();
+const uploading = ref(false);
 const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
 const fileUploaderRef = ref<{ inputRef: () => HTMLInputElement } | null>(null);
 
@@ -186,10 +190,33 @@ const fitOptions = [
 
 const emit = defineEmits([
 	"update:imageFit",
+	"update:images",
 	"update:modelValue",
 	"update:objectPosition",
 	"update:objectViewBox",
 ]);
+
+const selectImages = (openFileSelector: () => void) => {
+	if (!props.multiple) return openFileSelector();
+	const input = document.createElement("input");
+	input.type = "file";
+	input.accept = "image/*";
+	input.multiple = true;
+	input.onchange = () => uploadImages(Array.from(input.files || []));
+	input.click();
+};
+
+const uploadImages = async (files: File[]) => {
+	if (!files.length) return;
+	uploading.value = true;
+	const uploads = await Promise.all(files.map((file) => uploadBuilderAsset(file, true)));
+	uploading.value = false;
+	const urls = uploads.map(({ fileURL }) => fileURL).filter(Boolean);
+	if (urls.length < files.length) {
+		toast.error(__("Could not upload {0} of {1} images", [files.length - urls.length, files.length]));
+	}
+	if (urls.length) emit("update:images", urls);
+};
 
 const resetFocus = () => {
 	emit("update:objectPosition", "");
