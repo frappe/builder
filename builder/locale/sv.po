@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
-"POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-09-20 21:02\n"
+"POT-Creation-Date: 2026-09-21 06:42+0000\n"
+"PO-Revision-Date: 2026-09-21 18:27\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -18,28 +18,28 @@ msgstr ""
 "X-Crowdin-File-ID: 177\n"
 "Language: sv_SE\n"
 
-#: frontend/src/components/Modals/TokenManager.vue:965
+#: frontend/src/components/Modals/TokenManager.vue:1042
 msgid "({0} invalid entries skipped)"
 msgstr "({0} ogiltiga poster hoppades över)"
 
-#: frontend/src/components/Modals/TokenManager.vue:965
+#: frontend/src/components/Modals/TokenManager.vue:1041
 msgid "({0} invalid entry skipped)"
 msgstr "({0} ogiltig post hoppas över)"
 
-#: frontend/src/components/RouteTreeNode.vue:91
-#: frontend/src/components/RouteTreeView.vue:41
+#: frontend/src/components/RouteTreeNode.vue:104
+#: frontend/src/components/RouteTreeView.vue:45
 msgid "({0} remaining)"
 msgstr "({0} återstår)"
 
-#: frontend/src/components/Modals/TokenManager.vue:966
+#: frontend/src/components/Modals/TokenManager.vue:1047
 msgid "({0} standard token skipped)"
 msgstr "({0} standard token hoppas över)"
 
-#: frontend/src/components/Modals/TokenManager.vue:966
+#: frontend/src/components/Modals/TokenManager.vue:1048
 msgid "({0} standard tokens skipped)"
 msgstr "({0} standard tokens hoppades över)"
 
-#: frontend/src/components/ShadowHandler.vue:134
+#: frontend/src/components/ShadowHandler.vue:137
 msgid "+ Add Shadow Layer"
 msgstr "+ Lägg till Skugg Lager"
 
@@ -59,7 +59,7 @@ msgstr "307 - Tillfällig Omdirigering"
 msgid "308 - Permanent Redirect"
 msgstr "308 - Permanent Omdirigering"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:141
+#: frontend/src/pages/PagePersonaSurvey.vue:142
 msgid "A booking site for my clinic"
 msgstr "Bokning sida för min klinik"
 
@@ -67,7 +67,7 @@ msgstr "Bokning sida för min klinik"
 msgid "A record points to wrong IP: {0}"
 msgstr "Post pekar på fel IP adress: {0}"
 
-#: frontend/src/components/Settings/index.ts:144
+#: frontend/src/components/Settings/index.ts:145
 msgid "AI"
 msgstr "AI"
 
@@ -78,15 +78,15 @@ msgstr "AI API Nyckel"
 
 #. Label of the ai_section (Section Break) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
-#: frontend/src/components/Settings/index.ts:145
+#: frontend/src/components/Settings/index.ts:146
 msgid "AI Settings"
 msgstr "AI Inställningar"
 
-#: builder/ai/session.py:90
+#: builder/ai/session.py:91
 msgid "AI session does not belong to this page"
 msgstr "AI session tillhör inte denna sida"
 
-#: builder/ai/session.py:85
+#: builder/ai/session.py:86
 msgid "AI session not found"
 msgstr "AI session hittades inte"
 
@@ -106,7 +106,7 @@ msgstr "API Nyckel"
 msgid "API key for the selected AI model provider"
 msgstr "API nyckel för vald AI modell leverantör"
 
-#: builder/ai/api.py:609
+#: builder/ai/api.py:640
 msgid "API key is valid"
 msgstr "API nyckel är giltig"
 
@@ -122,7 +122,7 @@ msgstr "Aktiv"
 #: frontend/src/components/ArrayEditor.vue:14
 #: frontend/src/components/MoreStylesPanel.vue:43
 #: frontend/src/components/ObjectEditor.vue:30
-#: frontend/src/components/PropsEditor.vue:87
+#: frontend/src/components/PropsEditor.vue:86
 msgid "Add"
 msgstr "Lägg till"
 
@@ -139,6 +139,10 @@ msgstr "Lägg till Anpassade Meta Taggar"
 msgid "Add Domain"
 msgstr "Lägg till Domän"
 
+#: frontend/src/components/MoreStylesPanel.vue:168
+msgid "Add Property"
+msgstr "Lägga till Egenskap"
+
 #: frontend/src/components/Settings/GlobalRedirects.vue:28
 #: frontend/src/components/Settings/GlobalRedirects.vue:68
 #: frontend/src/components/Settings/GlobalRedirects.vue:69
@@ -149,7 +153,7 @@ msgstr "Lägg till Omdirigering"
 msgid "Add Script"
 msgstr "Lägg till Skript"
 
-#: frontend/src/components/Modals/TokenManager.vue:15
+#: frontend/src/components/Modals/TokenManager.vue:16
 msgid "Add Token"
 msgstr "Lägg till Token"
 
@@ -157,17 +161,13 @@ msgstr "Lägg till Token"
 msgid "Add a block to repeat"
 msgstr "Lägg till block att upprepa"
 
-#: builder/ai/api.py:589
+#: builder/ai/api.py:620
 msgid "Add a model to this provider first"
 msgstr "Lägga till modell till denna leverantör först"
 
 #: frontend/src/components/Settings/PageCode.vue:7
 msgid "Add meta tags, styles, and scripts to page head"
-msgstr "Lägg till metataggar, stilar och skript i sidans head-sektion"
-
-#: frontend/src/components/MoreStylesPanel.vue:168
-msgid "Add Property"
-msgstr "Lägga till Egenskap"
+msgstr "Lägg till metataggar, stilar och skript till brevhuvud"
 
 #: frontend/src/components/Settings/PageCode.vue:17
 msgid "Add scripts to page body"
@@ -181,7 +181,7 @@ msgstr "Tillagt i slutet av brödtext. För att lägga till skript."
 msgid "Added to end of head. For meta tags, styles, and scripts."
 msgstr "Läggs till i slutet av rubrik. För metataggar, stilar och skript."
 
-#: frontend/src/components/Templates/TemplateGallery.vue:240
+#: frontend/src/components/Templates/TemplateGallery.vue:242
 msgid "Adding all pages..."
 msgstr "Lägger till alla sidor..."
 
@@ -203,11 +203,11 @@ msgstr "Administratör"
 msgid "Advanced"
 msgstr "Avancerad"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:133
+#: frontend/src/pages/PagePersonaSurvey.vue:134
 msgid "Agency / Freelancer"
 msgstr "Byrå / Frilansare"
 
-#: frontend/src/utils/helpers.ts:50
+#: frontend/src/utils/helpers.ts:48
 msgid "Alert"
 msgstr "Varna"
 
@@ -215,12 +215,13 @@ msgstr "Varna"
 msgid "Align"
 msgstr "Justera"
 
-#: frontend/src/components/DashboardHead.vue:33
+#: frontend/src/components/DashboardHead.vue:35
 #: frontend/src/components/Templates/TemplateGallery.vue:65
 msgid "All"
 msgstr "Alla"
 
-#: frontend/src/components/DashboardHead.vue:4
+#: frontend/src/components/DashboardHead.vue:5
+#: frontend/src/components/DashboardHead.vue:6
 #: frontend/src/components/DashboardSidebar.vue:8
 msgid "All Pages"
 msgstr "Alla Sidor"
@@ -233,7 +234,7 @@ msgstr "Alla Egenskaper"
 msgid "All client scripts are executed in preview mode and on published pages."
 msgstr "Alla klientskript körs i förhandsvisningsläge och på publicerade sidor."
 
-#: frontend/src/components/Templates/TemplateGallery.vue:241
+#: frontend/src/components/Templates/TemplateGallery.vue:243
 msgid "All pages added"
 msgstr "Alla sidor tillagda"
 
@@ -247,11 +248,11 @@ msgstr "Alla bilder som laddas upp till Arbetsyta konverteras automatiskt till W
 msgid "All the images uploaded via Builder will be converted to WebP for better page performance"
 msgstr "Alla bilder som laddas upp via Builder kommer att konverteras till WebP för bättre sida prestanda"
 
-#: frontend/src/components/DashboardHead.vue:60
+#: frontend/src/components/DashboardHead.vue:62
 msgid "Alphabetically (A-Z)"
 msgstr "Alfabetisk (A-Z)"
 
-#: frontend/src/components/DashboardHead.vue:64
+#: frontend/src/components/DashboardHead.vue:66
 msgid "Alphabetically (Z-A)"
 msgstr "Alfabetisk (Z-A)"
 
@@ -263,7 +264,7 @@ msgstr "Redan medlem: {0}"
 msgid "Already invited: {0}"
 msgstr "Redan inbjuden: {0}"
 
-#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:71
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:76
 msgid "Alt Text"
 msgstr "Alt Text"
 
@@ -281,17 +282,17 @@ msgid "An icon file with .ico extension. Should be 16 x 16 px.<br>You can genera
 msgstr "En ikon fil med filändelse .ico. Ska vara 16 x 16 px.<br>Kan skapas med hjälp av <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>"
 
 #: frontend/src/components/Settings/index.ts:68
-#: frontend/src/components/Settings/index.ts:127
+#: frontend/src/components/Settings/index.ts:128
 msgid "Analytics"
 msgstr "Statistik"
 
-#: builder/ai/api.py:70
+#: builder/ai/api.py:95
 msgid "Another AI request is still processing. Please wait."
 msgstr "En annan AI begäran bearbetas fortfarande. Vänta."
 
 #. Label of the app (Select) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:140
+#: frontend/src/components/Settings/PageGeneral.vue:138
 msgid "App"
 msgstr "App"
 
@@ -300,7 +301,7 @@ msgid "App {0} is not installed"
 msgstr "App {0} är inte installerad"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:46
-#: frontend/src/components/Settings/PageGeneral.vue:86
+#: frontend/src/components/Settings/PageGeneral.vue:81
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
 msgstr "Visas bredvid titeln i din webbläsarflik. Rekommenderad storlek är 32x32 px i PNG eller ICO"
 
@@ -329,7 +330,7 @@ msgstr "Är du säker på att du vill avbryta inbjudan till {0}?"
 msgid "Are you sure you want to delete component: {0}?"
 msgstr "Är du säker på att du vill ta bort komponent: {0}?"
 
-#: frontend/src/stores/pageStore.ts:174
+#: frontend/src/stores/pageStore.ts:203
 msgid "Are you sure you want to delete page: {0}?"
 msgstr "Är du säker på att du vill ta bort sida: {0}?"
 
@@ -345,11 +346,11 @@ msgstr "Är du säker på att du vill ta bort denna mapp? Alla sidor under denna
 msgid "Are you sure you want to delete this redirect?"
 msgstr "Är du säker på att du vill ta bort denna omdirigering?"
 
-#: frontend/src/components/Modals/TokenManager.vue:744
+#: frontend/src/components/Modals/TokenManager.vue:808
 msgid "Are you sure you want to delete {0} token?"
 msgstr "Är du säker du vill ta bort {0} token?"
 
-#: frontend/src/components/Modals/TokenManager.vue:744
+#: frontend/src/components/Modals/TokenManager.vue:809
 msgid "Are you sure you want to delete {0} tokens?"
 msgstr "Är du säker på att du vill ta bort {0} tokens?"
 
@@ -361,11 +362,11 @@ msgstr "Är du säker på att du vill avsluta utan att spara?"
 msgid "Are you sure you want to replace {0} with {1}?"
 msgstr "Är du säker på att du vill ersätta {0} med {1}?"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:183
+#: frontend/src/components/BlockContextMenuOptions/index.ts:197
 msgid "Are you sure you want to reset?"
 msgstr "Är du säker på att du vill återställa?"
 
-#: frontend/src/stores/pageStore.ts:251
+#: frontend/src/stores/pageStore.ts:304
 msgid "Are you sure you want to unpublish \"{0}\"? It will no longer be accessible on the website."
 msgstr "Är du säker på att du vill ångra publicering av \"{0}\"? Den kommer inte längre att vara tillgänglig på webbplatsen."
 
@@ -377,10 +378,6 @@ msgstr "Aria Etikett"
 msgid "Array"
 msgstr "Matris"
 
-#: frontend/src/components/ArrayInput.vue:20
-msgid "Array Items:"
-msgstr "Matris Element:"
-
 #: builder/ai/agent/pending.py:114
 msgid "At least one field is required"
 msgstr "Minst ett fält erfordras"
@@ -390,7 +387,7 @@ msgstr "Minst ett fält erfordras"
 msgid "Attach Script"
 msgstr "Bifoga Skript"
 
-#: frontend/src/components/Controls/SearchBlock.vue:229
+#: frontend/src/components/Controls/SearchBlock.vue:228
 msgid "Attributes"
 msgstr "Egenskaper"
 
@@ -399,10 +396,10 @@ msgstr "Egenskaper"
 msgid "Authenticated Access"
 msgstr "Autentiserad Åtkomst"
 
-#: frontend/src/components/BackgroundHandler.vue:293
+#: frontend/src/components/BackgroundHandler.vue:303
 #: frontend/src/components/BlockGridLayoutHandler.vue:13
 #: frontend/src/components/BlockPositionHandler.vue:11
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:20
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:29
 #: frontend/src/components/DimensionInput.vue:9
 msgid "Auto"
 msgstr "Automatiskt"
@@ -427,6 +424,10 @@ msgstr "Automatisk uppspelning"
 msgid "Back"
 msgstr "Tillbaka"
 
+#: frontend/src/pages/PagePreview.vue:156
+msgid "Back to Builder"
+msgstr "Tillbaka till Webb Redigerare"
+
 #: frontend/src/components/MainMenu.vue:52
 msgid "Back to Dashboard"
 msgstr "Tillbaka till Översikt"
@@ -439,11 +440,11 @@ msgstr "Hem"
 msgid "Back to all templates"
 msgstr "Tillbaka till alla mallar"
 
-#: frontend/src/pages/PagePreview.vue:8 frontend/src/pages/PagePreview.vue:156
-msgid "Back to Builder"
+#: frontend/src/pages/PagePreview.vue:8
+msgid "Back to builder"
 msgstr "Tillbaka till Webb Redigerare"
 
-#: frontend/src/components/BackgroundHandler.vue:8
+#: frontend/src/components/BackgroundHandler.vue:11
 msgid "Background"
 msgstr "Bakgrund"
 
@@ -481,7 +482,7 @@ msgstr "Tom Sida"
 msgid "Block"
 msgstr "Block"
 
-#: frontend/src/components/PageScript.vue:107
+#: frontend/src/components/PageScript.vue:108
 msgid "Block CSS"
 msgstr "Block CSS"
 
@@ -494,13 +495,9 @@ msgstr "Blockera Klient Skript"
 msgid "Block ID"
 msgstr "Block ID"
 
-#: frontend/src/components/PageScript.vue:95
+#: frontend/src/components/PageScript.vue:96
 msgid "Block JavaScript"
 msgstr "Block JavaScript"
-
-#: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:147
-msgid "Block Options"
-msgstr "Blockera Alternativ"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Block Props"
@@ -528,9 +525,13 @@ msgstr "Block mall sparad!"
 msgid "Blocks"
 msgstr "Block"
 
-#: frontend/src/components/ShadowHandler.vue:155
+#: frontend/src/components/ShadowHandler.vue:159
 msgid "Blur"
 msgstr "Blur"
+
+#: frontend/src/components/LeftPanelTabs/index.ts:87
+msgid "Bob AI"
+msgstr "Bob AI"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
@@ -547,19 +548,18 @@ msgstr "Fet"
 msgid "Boolean"
 msgstr "Booleansk"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:91
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:120
 msgid "Border Color"
 msgstr "Kantfärg"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:133
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:162
 msgid "Border Style"
 msgstr "Kantstil"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:116
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:145
 msgid "Border Width"
 msgstr "Kantbredd"
 
-#: frontend/src/components/BackgroundHandler.vue:299
 #: frontend/src/components/BlockPositionHandler.vue:61
 msgid "Bottom"
 msgstr "Botten"
@@ -579,7 +579,7 @@ msgstr "Botten Vänster"
 msgid "Bottom Right"
 msgstr "Botten Höger"
 
-#: frontend/src/components/BuilderCommandPalette.vue:88
+#: frontend/src/components/BuilderCommandPalette.vue:87
 msgid "Browse all settings"
 msgstr "Bläddra bland alla inställningar"
 
@@ -674,15 +674,15 @@ msgstr "CNAME post pekar på fel destination: {0}"
 msgid "CSS"
 msgstr "CSS"
 
-#: frontend/src/components/Controls/SearchBlock.vue:243
+#: frontend/src/components/Controls/SearchBlock.vue:242
 msgid "CSS Classes"
 msgstr "CSS Klasser"
 
-#: frontend/src/components/Modals/TokenManager.vue:900
+#: frontend/src/components/Modals/TokenManager.vue:966
 msgid "CSV must contain 'Token Name' and 'Light Mode' columns"
 msgstr "CSV fil måste innehålla kolumnerna ”Token Name” och ”Light Mode”"
 
-#: frontend/src/components/Modals/TokenManager.vue:888
+#: frontend/src/components/Modals/TokenManager.vue:954
 msgid "CSV must have at least a header row and one data row"
 msgstr "CSV fil måste innehålla minst en rubrikrad och en datarad"
 
@@ -690,7 +690,7 @@ msgstr "CSV fil måste innehålla minst en rubrikrad och en datarad"
 msgid "CTR"
 msgstr "CTR"
 
-#: frontend/src/utils/helpers.ts:36
+#: frontend/src/utils/helpers.ts:34
 msgid "Cancel"
 msgstr "Annullera"
 
@@ -708,16 +708,16 @@ msgstr "Kan inte ta bort rotblock"
 msgid "Canonical URL"
 msgstr "Kanonisk URL"
 
-#: frontend/src/utils/useBuilderEvents.ts:280
-#: frontend/src/utils/useBuilderEvents.ts:292
-#: frontend/src/utils/useBuilderEvents.ts:302
-#: frontend/src/utils/useBuilderEvents.ts:313
-#: frontend/src/utils/useBuilderEvents.ts:324
-#: frontend/src/utils/useBuilderEvents.ts:335
-#: frontend/src/utils/useBuilderEvents.ts:347
-#: frontend/src/utils/useBuilderEvents.ts:358
+#: frontend/src/utils/useBuilderEvents.ts:298
+#: frontend/src/utils/useBuilderEvents.ts:308
+#: frontend/src/utils/useBuilderEvents.ts:318
+#: frontend/src/utils/useBuilderEvents.ts:329
+#: frontend/src/utils/useBuilderEvents.ts:340
+#: frontend/src/utils/useBuilderEvents.ts:351
+#: frontend/src/utils/useBuilderEvents.ts:362
+#: frontend/src/utils/useBuilderEvents.ts:372
 msgid "Canvas"
-msgstr "Duk"
+msgstr "Arbetsyta"
 
 #. Label of the capability_section (Section Break) field in DocType 'Builder AI
 #. Model'
@@ -735,7 +735,6 @@ msgstr "Aktivera"
 msgid "Category"
 msgstr "Kategori"
 
-#: frontend/src/components/BackgroundHandler.vue:297
 #: frontend/src/components/BlockGridLayoutHandler.vue:67
 #: frontend/src/components/BlockGridLayoutHandler.vue:125
 #: frontend/src/components/BlockGridLayoutHandler.vue:188
@@ -753,7 +752,7 @@ msgstr "Centrera Vänster"
 msgid "Center Right"
 msgstr "Centrera Höger"
 
-#: frontend/src/components/Controls/ImageUploader.vue:13
+#: frontend/src/components/Controls/ImageUploader.vue:15
 msgid "Change"
 msgstr "Ändra"
 
@@ -769,19 +768,19 @@ msgstr "Välj mall för att komma igång snabbt, eller börja från grund."
 msgid "Class"
 msgstr "Klass"
 
-#: frontend/src/components/BackgroundHandler.vue:114
+#: frontend/src/components/BackgroundHandler.vue:124
 msgid "Clear Gradient"
 msgstr "Rensa Gradient"
 
-#: frontend/src/components/BackgroundHandler.vue:106
-msgid "Clear Image"
-msgstr "Rensa Bild"
-
-#: frontend/src/components/Controls/SearchBlock.vue:59
+#: frontend/src/components/Controls/SearchBlock.vue:58
 msgid "Clear all filters"
 msgstr "Rensa alla filter"
 
-#: frontend/src/components/Modals/TokenManager.vue:355
+#: frontend/src/components/BackgroundHandler.vue:113
+msgid "Clear image"
+msgstr "Rensa bild"
+
+#: frontend/src/components/Modals/TokenManager.vue:379
 msgid "Click 'Add Token' to create your first one."
 msgstr "Klicka på \"Lägg till Token\" för att skapa."
 
@@ -804,7 +803,7 @@ msgstr "Klient Skript"
 msgid "Client Scripts"
 msgstr "Klient Skript"
 
-#: frontend/src/components/BackgroundHandler.vue:124
+#: frontend/src/components/BackgroundHandler.vue:134
 msgid "Clip Background to Text"
 msgstr "Klipp Bakgrund till Text"
 
@@ -816,7 +815,7 @@ msgstr "Stäng"
 msgid "Close (Esc)"
 msgstr "Stäng (Esc)"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:60
+#: frontend/src/components/LeftPanelTabs/index.ts:61
 #: frontend/src/components/Settings/index.ts:52
 #: frontend/src/components/Settings/index.ts:94
 msgid "Code"
@@ -826,15 +825,15 @@ msgstr "Kod"
 msgid "Col Span"
 msgstr "Kolumn Spann"
 
-#: frontend/src/components/DashboardHead.vue:49
+#: frontend/src/components/DashboardHead.vue:51
 msgid "Collapse"
 msgstr "Fäll In"
 
-#: frontend/src/components/Commands/index.ts:157
+#: frontend/src/components/Commands/index.ts:161
 msgid "Collapse All Layers"
 msgstr "Minimera Alla Lager"
 
-#: frontend/src/components/RouteTreeView.vue:374
+#: frontend/src/components/RouteTreeView.vue:388
 msgid "Collapse Node or Move Up in Page Tree"
 msgstr "Minimera Nod eller Flytta Upp i Sidoträd"
 
@@ -848,7 +847,7 @@ msgstr "Samling"
 msgid "Color"
 msgstr "Färg"
 
-#: frontend/src/components/Modals/TokenManager.vue:454
+#: frontend/src/components/Modals/TokenManager.vue:485
 msgid "Colors"
 msgstr "Färger"
 
@@ -872,7 +871,7 @@ msgstr "Kolumner"
 msgid "Command Palette"
 msgstr "Kommando Palett"
 
-#: frontend/src/components/BuilderCommandPalette.vue:312
+#: frontend/src/components/BuilderCommandPalette.vue:311
 msgid "Commands"
 msgstr "Kommandon"
 
@@ -881,7 +880,7 @@ msgid "Component Client Script"
 msgstr "Komponent Klient Skript"
 
 #: frontend/src/components/PageScript.vue:23
-#: frontend/src/components/PageScript.vue:133
+#: frontend/src/components/PageScript.vue:134
 msgid "Component Data Preview"
 msgstr "Komponent Data Förhandsvisning"
 
@@ -899,9 +898,13 @@ msgstr "Komponent ID"
 
 #. Label of the component_name (Data) field in DocType 'Builder Component'
 #: builder/builder/doctype/builder_component/builder_component.json
-#: frontend/src/utils/dialogs.ts:42
+#: frontend/src/utils/dialogs.ts:59
 msgid "Component Name"
 msgstr "Komponent Namn"
+
+#: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:149
+msgid "Component Options"
+msgstr "Komponent Alternativ"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
@@ -927,11 +930,11 @@ msgstr "Komponent sparad!"
 msgid "Component synced in all the pages!"
 msgstr "Komponent synkroniserad på alla sidor!"
 
-#: frontend/src/components/ComponentUpdates.vue:19
+#: frontend/src/components/ComponentUpdates.vue:18
 msgid "Component updates"
 msgstr "Komponent uppdateringar"
 
-#: frontend/src/components/ComponentUpdates.vue:4
+#: frontend/src/components/ComponentUpdates.vue:2
 msgid "Component updates available"
 msgstr "Komponent uppdateringar tillgängliga"
 
@@ -939,7 +942,7 @@ msgstr "Komponent uppdateringar tillgängliga"
 msgid "Component {0} was deleted and will not render"
 msgstr "Komponent {0} har tagits bort och kommer inte att visas"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:52
+#: frontend/src/components/LeftPanelTabs/index.ts:53
 msgid "Components"
 msgstr "Komponenter"
 
@@ -955,7 +958,7 @@ msgstr "Konfigurera system inställningar för detta projekt."
 msgid "Configure page and global settings for this project."
 msgstr "Konfigurera sida och system inställningar för detta projekt."
 
-#: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:41
+#: frontend/src/utils/helpers.ts:25 frontend/src/utils/helpers.ts:39
 msgid "Confirm"
 msgstr "Bekräfta"
 
@@ -969,15 +972,11 @@ msgstr "Ansluten"
 msgid "Connection"
 msgstr "Anslutning"
 
-#: frontend/src/components/BackgroundHandler.vue:291
-msgid "Contain"
-msgstr "Innehåller"
-
 #: frontend/src/components/ToolbarItems/ModeSwitcher.vue:22
 msgid "Container (c)"
 msgstr "Behållare (c)"
 
-#: frontend/src/utils/useBuilderEvents.ts:367
+#: frontend/src/utils/useBuilderEvents.ts:381
 msgid "Container Mode"
 msgstr "Behållare Läge"
 
@@ -988,7 +987,7 @@ msgstr "Behållare Läge"
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:22
-#: frontend/src/components/Controls/SearchBlock.vue:198
+#: frontend/src/components/Controls/SearchBlock.vue:197
 msgid "Content"
 msgstr "Innehåll "
 
@@ -1001,9 +1000,17 @@ msgstr "Kontext Fönster"
 msgid "Controls"
 msgstr "Kontroller"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:61
+#: frontend/src/components/BlockContextMenuOptions/index.ts:75
 msgid "Convert to Collection"
 msgstr "Konvertera till Samling"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:42
+msgid "Convert to Image File"
+msgstr "Konvertera till Bildfil"
+
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:54
+msgid "Convert to Image File ({0} KB)"
+msgstr "Konvertera till Bildfil ({0} KB)"
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -1017,11 +1024,12 @@ msgstr "Konverterar..."
 msgid "Copied to clipboard"
 msgstr "Kopierad till urklipp"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:35
+#: frontend/src/components/BlockContextMenuOptions/index.ts:49
 msgid "Copy"
 msgstr "Kopiera"
 
-#: frontend/src/components/Commands/index.ts:258
+#: frontend/src/components/Commands/index.ts:262
+#: frontend/src/components/Commands/index.ts:266
 msgid "Copy Block Styles"
 msgstr "Kopiera Block Stilar"
 
@@ -1029,40 +1037,36 @@ msgstr "Kopiera Block Stilar"
 msgid "Copy Page"
 msgstr "Kopiera Sida"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:40
+#: frontend/src/components/BlockContextMenuOptions/index.ts:54
 msgid "Copy Style"
 msgstr "Kopiera Stil"
-
-#: frontend/src/components/Commands/index.ts:262
-msgid "Copy Block Styles"
-msgstr "Kopiera Block Stilar"
 
 #: frontend/src/utils/useBuilderEvents.ts:473
 msgid "Copy entire page?"
 msgstr "Kopiera hela sida?"
 
-#: frontend/src/components/Modals/TokenManager.vue:205
+#: frontend/src/components/Modals/TokenManager.vue:217
 msgid "Copy var(--{0})"
 msgstr "Kopiera var(--{0})"
 
-#: frontend/src/components/Templates/TemplateGallery.vue:242
+#: frontend/src/components/Templates/TemplateGallery.vue:244
 msgid "Could not add pages"
 msgstr "Kunde inte lägga till sidor"
 
-#: frontend/src/components/Templates/TemplateGallery.vue:210
+#: frontend/src/components/Templates/TemplateGallery.vue:211
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:36
 msgid "Could not create page from template"
 msgstr "Kunde inte skapa sida från mall"
 
-#: builder/api.py:583
+#: builder/api.py:590
 msgid "Could not import any pages from this template group."
 msgstr "Kunde inte importera några sidor från denna mallgrupp."
 
-#: builder/api.py:551
+#: builder/api.py:558
 msgid "Could not load the selected template. Please try again."
 msgstr "Kunde inte ladda vald mall. Försök igen."
 
-#: builder/ai/api.py:320
+#: builder/ai/api.py:351
 msgid "Could not reach {0}: {1}"
 msgstr "Kunde inte nå {0}: {1}"
 
@@ -1070,7 +1074,7 @@ msgstr "Kunde inte nå {0}: {1}"
 msgid "Could not resolve hostname: {0}"
 msgstr "Kunde inte lösa värdnamn: {0}"
 
-#: frontend/src/components/Modals/TokenManager.vue:443
+#: frontend/src/components/Modals/TokenManager.vue:474
 msgid "Couldn't copy to clipboard"
 msgstr "Kunde inte kopiera till urklipp"
 
@@ -1082,23 +1086,19 @@ msgstr "Kunde inte nå servern. Kontrollera att adress är korrekt och att den �
 msgid "Count"
 msgstr "Antal"
 
-#: frontend/src/components/BackgroundHandler.vue:292
-msgid "Cover"
-msgstr "Omslag"
-
 #: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Create"
 msgstr "Skapa"
 
-#: frontend/src/utils/dialogs.ts:23
+#: frontend/src/utils/dialogs.ts:40
 msgid "Create Folder"
 msgstr "Skapa Mapp"
 
-#: frontend/src/utils/dialogs.ts:21
+#: frontend/src/utils/dialogs.ts:38
 msgid "Create New Folder"
 msgstr "Skapa Ny Mapp"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:275
+#: frontend/src/utils/builderBlockCopyPaste.ts:277
 msgid "Create New Page"
 msgstr "Skapa Ny Sida"
 
@@ -1106,19 +1106,19 @@ msgstr "Skapa Ny Sida"
 msgid "Create a new page"
 msgstr "Skapa ny sida"
 
-#: frontend/src/components/Modals/TokenManager.vue:959
+#: frontend/src/components/Modals/TokenManager.vue:1032
 msgid "Create {0} new token and update {1} existing token?"
 msgstr "Skapa {0} ny token och uppdatera {1} befintlig token?"
 
-#: frontend/src/components/Modals/TokenManager.vue:960
+#: frontend/src/components/Modals/TokenManager.vue:1033
 msgid "Create {0} new token and update {1} existing tokens?"
 msgstr "Skapa {0} ny token och uppdatera {1} befintliga tokens?"
 
-#: frontend/src/components/Modals/TokenManager.vue:962
+#: frontend/src/components/Modals/TokenManager.vue:1035
 msgid "Create {0} new tokens and update {1} existing token?"
 msgstr "Skapa {0} nya tokens och uppdatera {1} befintlig token?"
 
-#: frontend/src/components/Modals/TokenManager.vue:963
+#: frontend/src/components/Modals/TokenManager.vue:1036
 msgid "Create {0} new tokens and update {1} existing tokens?"
 msgstr "Skapa {0} nya tokens och uppdatera {1} befintliga tokens?"
 
@@ -1126,15 +1126,23 @@ msgstr "Skapa {0} nya tokens och uppdatera {1} befintliga tokens?"
 msgid "Created DocType {0} with {1} field(s)"
 msgstr "Skapade DocType {0} med {1} fält"
 
-#: frontend/src/components/PageListItem.vue:56
+#: frontend/src/components/PageListItem.vue:53
 msgid "Created by {0}"
 msgstr "Skapad av {0}"
 
-#: frontend/src/components/Modals/TokenManager.vue:1016
+#: frontend/src/components/PageCard.vue:24
+msgid "Created {0}"
+msgstr "Skapad {0}"
+
+#: frontend/src/components/PageListItem.vue:39
+msgid "Created {0} by {1}"
+msgstr "Skapade {0} av {1}"
+
+#: frontend/src/components/Modals/TokenManager.vue:1104
 msgid "Created {0} token"
 msgstr "Skapade {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1016
+#: frontend/src/components/Modals/TokenManager.vue:1104
 msgid "Created {0} tokens"
 msgstr "Skapade {0} tokens"
 
@@ -1142,11 +1150,11 @@ msgstr "Skapade {0} tokens"
 msgid "Creating an editable copy..."
 msgstr "Skapar redigerbar kopia..."
 
-#: frontend/src/components/Templates/TemplateGallery.vue:208
+#: frontend/src/components/Templates/TemplateGallery.vue:209
 msgid "Creating page from template..."
 msgstr "Skapar sida från mall..."
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:247
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:276
 msgid "Crosshair"
 msgstr "Korshår"
 
@@ -1162,13 +1170,13 @@ msgstr "Aktuell version"
 msgid "Currently live"
 msgstr "Just nu Realtid"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:239
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:268
 msgid "Cursor"
 msgstr "Markör"
 
-#: frontend/src/components/Controls/FontInput.vue:130
+#: frontend/src/components/Controls/FontInput.vue:140
 #: frontend/src/components/Settings/AnalyticsFilters.vue:57
-#: frontend/src/components/ShadowHandler.vue:186
+#: frontend/src/components/ShadowHandler.vue:191
 msgid "Custom"
 msgstr "Anpassad"
 
@@ -1180,15 +1188,15 @@ msgstr "Anpassade Domäner"
 msgid "DNS is verified but SSL certificate provisioning failed. Please retry."
 msgstr "DNS har verifierats, men utfärdande av SSL certifikat misslyckades. Försök igen."
 
-#: frontend/src/components/Modals/TokenManager.vue:51
+#: frontend/src/components/Modals/TokenManager.vue:52
 msgid "Dark"
 msgstr "Mörk"
 
-#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:20
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:23
 msgid "Dark Mode"
 msgstr "Mörk Läge"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:34
+#: frontend/src/components/Modals/NewBuilderToken.vue:42
 msgid "Dark Mode Color"
 msgstr "Mörk Läge Färg"
 
@@ -1197,17 +1205,17 @@ msgstr "Mörk Läge Färg"
 msgid "Dark Value"
 msgstr "Mörkt Värde"
 
-#: frontend/src/components/DashboardContent.vue:135
+#: frontend/src/components/DashboardContent.vue:139
 msgid "Dashboard"
 msgstr "Översikt"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:138
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:167
 msgid "Dashed"
 msgstr "Streckad"
 
 #. Label of the data (Code) field in DocType 'Builder Snapshot'
 #: builder/builder/doctype/builder_snapshot/builder_snapshot.json
-#: frontend/src/components/Controls/SearchBlock.vue:178
+#: frontend/src/components/Controls/SearchBlock.vue:177
 msgid "Data"
 msgstr "Data"
 
@@ -1215,7 +1223,7 @@ msgstr "Data"
 msgid "Data Key"
 msgstr "Data Nyckel"
 
-#: frontend/src/components/PageScript.vue:75
+#: frontend/src/components/PageScript.vue:76
 msgid "Data Preview"
 msgstr "Data Förhandsvisning"
 
@@ -1227,8 +1235,8 @@ msgstr "Data Skript"
 msgid "Data script saved"
 msgstr "Data skript sparad"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:243
-#: frontend/src/components/Controls/FontInput.vue:134
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:272
+#: frontend/src/components/Controls/FontInput.vue:144
 msgid "Default"
 msgstr "Standard"
 
@@ -1259,7 +1267,7 @@ msgstr "Standard Språk"
 msgid "Default Value"
 msgstr "Förvald Värde"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:260
+#: frontend/src/components/BlockContextMenuOptions/index.ts:274
 #: frontend/src/components/PageActionsDropdown.vue:31
 msgid "Delete"
 msgstr "Ta bort"
@@ -1272,28 +1280,28 @@ msgstr "Ta bort Mapp"
 msgid "Delete Page"
 msgstr "Ta bort Sida"
 
-#: frontend/src/utils/useBuilderEvents.ts:240
-#: frontend/src/utils/useBuilderEvents.ts:254
+#: frontend/src/utils/useBuilderEvents.ts:259
+#: frontend/src/utils/useBuilderEvents.ts:273
 msgid "Delete Selected Blocks"
 msgstr "Ta bort Valda Block"
 
-#: frontend/src/components/Modals/TokenManager.vue:767
+#: frontend/src/components/Modals/TokenManager.vue:833
 msgid "Delete Variable"
 msgstr "Ta bort Variabel"
 
-#: frontend/src/components/Modals/TokenManager.vue:767
+#: frontend/src/components/Modals/TokenManager.vue:833
 msgid "Delete {0} Variables"
 msgstr "Ta bort {0} Variabler"
 
-#: frontend/src/components/Modals/TokenManager.vue:758
+#: frontend/src/components/Modals/TokenManager.vue:824
 msgid "Deleted {0} token"
 msgstr "Tog bort {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:758
+#: frontend/src/components/Modals/TokenManager.vue:824
 msgid "Deleted {0} tokens"
 msgstr "Tog bort {0} tokens"
 
-#: frontend/src/stores/pageStore.ts:178
+#: frontend/src/stores/pageStore.ts:207
 msgid "Deleting page"
 msgstr "Tar bort sida"
 
@@ -1307,28 +1315,28 @@ msgstr "Tar bort omdirigering..."
 msgid "Description"
 msgstr "Beskrivning"
 
-#: frontend/src/components/DashboardContent.vue:134
+#: frontend/src/components/DashboardContent.vue:138
 msgid "Deselect Pages"
 msgstr "Avmarkera Sidor"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:77
-#: frontend/src/components/Modals/TokenManager.vue:19
+#: frontend/src/components/LeftPanelTabs/index.ts:78
+#: frontend/src/components/Modals/TokenManager.vue:20
 msgid "Design Tokens"
 msgstr "Design Tokens"
 
-#: frontend/src/components/Controls/FontInput.vue:127
+#: frontend/src/components/Controls/FontInput.vue:137
 msgid "Design tokens"
 msgstr "Design tokens"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:129
+#: frontend/src/pages/PagePersonaSurvey.vue:130
 msgid "Designer"
 msgstr "Designer"
 
-#: frontend/src/components/BuilderCanvas.vue:232
+#: frontend/src/components/BuilderCanvas.vue:233
 msgid "Desktop"
 msgstr "Skrivbord"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:225
+#: frontend/src/components/BlockContextMenuOptions/index.ts:239
 msgid "Detach Component"
 msgstr "Lossa Komponent"
 
@@ -1338,8 +1346,8 @@ msgstr "Lossa Komponent"
 msgid "Detected automatically. 200,000 is assumed when unknown."
 msgstr "Detekteras automatiskt. 200 000 antas vid okänt värde."
 
-#: frontend/src/components/Settings/index.ts:136
-#: frontend/src/pages/PagePersonaSurvey.vue:130
+#: frontend/src/components/Settings/index.ts:137
+#: frontend/src/pages/PagePersonaSurvey.vue:131
 msgid "Developer"
 msgstr "Utvecklare"
 
@@ -1349,7 +1357,7 @@ msgstr "Utvecklare"
 msgid "Developer Options"
 msgstr "Utveckling Alternativ"
 
-#: frontend/src/components/Settings/index.ts:137
+#: frontend/src/components/Settings/index.ts:138
 msgid "Developer Settings"
 msgstr "Utvecklarinställningar"
 
@@ -1359,7 +1367,7 @@ msgstr "Utvecklarinställningar"
 msgid "Dimension"
 msgstr "Dimension"
 
-#: frontend/src/components/Modals/TokenManager.vue:456
+#: frontend/src/components/Modals/TokenManager.vue:487
 msgid "Dimensions"
 msgstr "Dimensioner"
 
@@ -1376,7 +1384,7 @@ msgstr "Inaktivera Automatiskt Mörkt Läge"
 
 #. Label of the disable_indexing (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:124
+#: frontend/src/components/Settings/PageGeneral.vue:122
 msgid "Disable Indexing"
 msgstr "Inaktivera Indexering"
 
@@ -1402,7 +1410,7 @@ msgstr "Distribution"
 msgid "Do you want to copy the entire page including settings and scripts?"
 msgstr "Vill du kopiera hela sida inklusive inställningar och skript?"
 
-#: frontend/src/utils/helpers.ts:516
+#: frontend/src/utils/helpers.ts:560
 msgid "Do you want to upload the font \"{0}\"?"
 msgstr "Vill du ladda upp typsnitt \"{0}\"?"
 
@@ -1441,22 +1449,23 @@ msgstr "Domäner"
 msgid "Don't Execute"
 msgstr "Kör Inte"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:182
-#: frontend/src/utils/builderBlockCopyPaste.ts:293
-#: frontend/src/utils/builderBlockCopyPaste.ts:314
+#: frontend/src/utils/builderBlockCopyPaste.ts:184
+#: frontend/src/utils/builderBlockCopyPaste.ts:295
+#: frontend/src/utils/builderBlockCopyPaste.ts:316
 msgid "Done"
 msgstr "Klart"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:139
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:168
 msgid "Dotted"
 msgstr "Prickad"
 
-#: frontend/src/components/Modals/TokenManager.vue:386
+#: frontend/src/components/Modals/TokenManager.vue:415
 msgid "Download sample"
 msgstr "Ladda ner exempel"
 
-#: frontend/src/components/DashboardHead.vue:34
-#: frontend/src/components/Settings/PageGeneral.vue:47
+#: frontend/src/components/DashboardHead.vue:38
+#: frontend/src/components/Settings/PageGeneral.vue:204
+#: frontend/src/utils/pageStatus.ts:37
 msgid "Draft"
 msgstr "Utkast"
 
@@ -1465,29 +1474,30 @@ msgstr "Utkast"
 msgid "Draft Blocks"
 msgstr "Utkast Block"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:55
+#: frontend/src/components/BuilderAIChatPanel.vue:353
+msgid "Drop image to attach"
+msgstr "Dra och släpp bild för att bifoga"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:69
 #: frontend/src/components/PageActionsDropdown.vue:9
 msgid "Duplicate"
 msgstr "Duplicera"
 
-#: frontend/src/components/Commands/index.ts:277
+#: frontend/src/components/Commands/index.ts:276
+#: frontend/src/components/Commands/index.ts:280
 msgid "Duplicate Block"
 msgstr "Duplicera Block"
 
-#: frontend/src/components/Commands/index.ts:130
+#: frontend/src/components/Commands/index.ts:134
 #: frontend/src/components/MainMenu.vue:74
 msgid "Duplicate Page"
 msgstr "Duplicera Sida"
-
-#: frontend/src/components/Commands/index.ts:281
-msgid "Duplicate Block"
-msgstr "Duplicera Block"
 
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:11
 msgid "Duplicate to edit"
 msgstr "Duplicera för att redigera"
 
-#: frontend/src/stores/pageStore.ts:161
+#: frontend/src/stores/pageStore.ts:190
 msgid "Duplicating page"
 msgstr "Duplicerar sida"
 
@@ -1508,10 +1518,10 @@ msgstr "Lätt In och Ut"
 msgid "Ease Out"
 msgstr "Lätt Ut"
 
-#: frontend/src/components/Commands/index.ts:45
+#: frontend/src/components/Commands/index.ts:43
 #: frontend/src/utils/colorOptions.ts:80
-#: frontend/src/utils/useBuilderEvents.ts:241
-#: frontend/src/utils/useBuilderEvents.ts:255
+#: frontend/src/utils/useBuilderEvents.ts:260
+#: frontend/src/utils/useBuilderEvents.ts:274
 msgid "Edit"
 msgstr "Redigera"
 
@@ -1523,11 +1533,11 @@ msgstr "Redigera Blockera Klient Skript"
 msgid "Edit CSS"
 msgstr "Redigera CSS"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:202
+#: frontend/src/components/BlockContextMenuOptions/index.ts:216
 msgid "Edit Component"
 msgstr "Redigera Komponent"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:29
+#: frontend/src/components/BlockContextMenuOptions/index.ts:36
 #: frontend/src/pages/PageBuilder.vue:224
 msgid "Edit HTML"
 msgstr "Redigera HTML"
@@ -1544,7 +1554,7 @@ msgstr "Redigera Token"
 msgid "Edit template"
 msgstr "Redigera mall"
 
-#: frontend/src/components/PageCard.vue:23
+#: frontend/src/components/PageCard.vue:24
 msgid "Edited {0}"
 msgstr "Redigerad {0}"
 
@@ -1566,7 +1576,7 @@ msgid "Email addresses"
 msgstr "E-post adresser"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:55
-#: frontend/src/components/Settings/TrackingDisabledNotice.vue:18
+#: frontend/src/components/Settings/TrackingDisabledNotice.vue:17
 msgid "Enable View Tracking"
 msgstr "Aktivera Visning Spårning"
 
@@ -1585,7 +1595,7 @@ msgstr "Aktiverar omdirigering…"
 msgid "End"
 msgstr "Slut"
 
-#: builder/ai/api.py:382
+#: builder/ai/api.py:413
 msgid "Enter a model id to test with"
 msgstr "Ange modell id att testa med"
 
@@ -1663,8 +1673,8 @@ msgstr "Fel vid uppdatering av omdirigering"
 msgid "Exact path"
 msgstr "Exakt sökväg"
 
-#: frontend/src/components/PageScript.vue:80
-#: frontend/src/components/PageScript.vue:138
+#: frontend/src/components/PageScript.vue:81
+#: frontend/src/components/PageScript.vue:139
 msgid "Example:"
 msgstr "Exempel:"
 
@@ -1682,20 +1692,20 @@ msgstr "Kör Blockera Klient Skript i Redigerare"
 msgid "Execute Block Scripts in Editor"
 msgstr "Kör Block Skript i Redigerare"
 
-#: frontend/src/utils/useBuilderEvents.ts:268
+#: frontend/src/utils/useBuilderEvents.ts:287
 msgid "Exit Current Mode"
 msgstr "Avsluta Aktuell Läge"
 
-#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:24
-#: frontend/src/components/DashboardHead.vue:49
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:33
+#: frontend/src/components/DashboardHead.vue:51
 msgid "Expand"
 msgstr "Expandera"
 
-#: frontend/src/components/Commands/index.ts:144
+#: frontend/src/components/Commands/index.ts:148
 msgid "Expand All Layers"
 msgstr "Maximera Alla Lager"
 
-#: frontend/src/components/RouteTreeView.vue:355
+#: frontend/src/components/RouteTreeView.vue:369
 msgid "Expand Node or Move Down in Page Tree"
 msgstr "Expandera Nod eller Flytta Ner i Sidoträd"
 
@@ -1723,19 +1733,19 @@ msgstr "Misslyckades med att konvertera bilden till WebP"
 msgid "Failed to copy"
 msgstr "Kunde inte kopiera"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:99
+#: frontend/src/components/Modals/NewBuilderToken.vue:108
 msgid "Failed to create token"
 msgstr "Misslyckades med att skapa token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1018
+#: frontend/src/components/Modals/TokenManager.vue:1113
 msgid "Failed to create {0} token"
 msgstr "Misslyckades med att skapa {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1018
+#: frontend/src/components/Modals/TokenManager.vue:1114
 msgid "Failed to create {0} tokens"
 msgstr "Misslyckades med att skapa {0} tokens"
 
-#: frontend/src/components/Modals/TokenManager.vue:755
+#: frontend/src/components/Modals/TokenManager.vue:820
 msgid "Failed to delete \"{0}\""
 msgstr "Misslyckades med att ta bort \"{0}\""
 
@@ -1743,7 +1753,7 @@ msgstr "Misslyckades med att ta bort \"{0}\""
 msgid "Failed to pull image to local"
 msgstr "Misslyckades med att hämta bild lokalt"
 
-#: frontend/src/components/Modals/TokenManager.vue:879
+#: frontend/src/components/Modals/TokenManager.vue:945
 msgid "Failed to read CSV file"
 msgstr "Kunde inte läsa CSV fil"
 
@@ -1761,27 +1771,27 @@ msgstr "Kunde inte spara komponent"
 msgid "Failed to save script"
 msgstr "Kunde inte spara skript"
 
-#: frontend/src/components/PageClientScriptManager.vue:397
+#: frontend/src/components/PageClientScriptManager.vue:401
 msgid "Failed to update script order"
 msgstr "Kunde inte uppdatera skript ordning"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:99
+#: frontend/src/components/Modals/NewBuilderToken.vue:108
 msgid "Failed to update token"
 msgstr "Misslyckades med att uppdatera token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1019
+#: frontend/src/components/Modals/TokenManager.vue:1119
 msgid "Failed to update {0} token"
 msgstr "Misslyckades med att uppdatera {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1019
+#: frontend/src/components/Modals/TokenManager.vue:1120
 msgid "Failed to update {0} tokens"
 msgstr "Misslyckades med att uppdatera {0} tokens"
 
-#: frontend/src/utils/helpers.ts:376
+#: frontend/src/utils/helpers.ts:384
 msgid "Failed to upload"
 msgstr "Kunde inte ladda upp"
 
-#: frontend/src/utils/helpers.ts:555
+#: frontend/src/utils/helpers.ts:599
 msgid "Failed to upload font"
 msgstr "Kunde inte ladda upp typsnitt"
 
@@ -1803,13 +1813,18 @@ msgstr "Snabb"
 #: builder/builder/doctype/builder_settings/builder_settings.json
 #: frontend/src/components/Settings/GlobalGeneral.vue:28
 #: frontend/src/components/Settings/GlobalGeneral.vue:39
-#: frontend/src/components/Settings/PageGeneral.vue:65
-#: frontend/src/components/Settings/PageGeneral.vue:80
+#: frontend/src/components/Settings/PageGeneral.vue:59
+#: frontend/src/components/Settings/PageGeneral.vue:74
 msgid "Favicon"
 msgstr "Favicon"
 
-#: frontend/src/components/ImageUploadInput.vue:74
+#: frontend/src/components/ImageUploadInput.vue:120
 msgid "Fill & Crop"
+msgstr "Fyll & Beskär"
+
+#: frontend/src/components/BackgroundHandler.vue:301
+#: frontend/src/components/ImageUploadInput.vue:182
+msgid "Fill & crop"
 msgstr "Fyll & Beskär"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:67
@@ -1820,15 +1835,15 @@ msgstr "Filtrera Sidor"
 msgid "Filter by route"
 msgstr "Filtrera efter sökväg"
 
-#: frontend/src/components/DashboardHead.vue:16
+#: frontend/src/components/DashboardHead.vue:18
 msgid "Filter by title or route"
 msgstr "Filtrera efter titel eller sökväg"
 
-#: frontend/src/components/Controls/SearchBlock.vue:44
+#: frontend/src/components/Controls/SearchBlock.vue:43
 msgid "Filter search results by:"
 msgstr "Filtrera sökresultat efter:"
 
-#: frontend/src/components/Controls/SearchBlock.vue:27
+#: frontend/src/components/Controls/SearchBlock.vue:26
 msgid "Filters"
 msgstr "Filter"
 
@@ -1852,39 +1867,41 @@ msgstr "Sök Föregående (Shift+Enter)"
 msgid "Find..."
 msgstr "Sök..."
 
+#: frontend/src/components/BackgroundHandler.vue:302
+#: frontend/src/components/ImageUploadInput.vue:183
+msgid "Fit"
+msgstr "Anpassa"
+
+#: frontend/src/utils/useBuilderEvents.ts:307
+msgid "Fit Canvas to Screen"
+msgstr "Anpassa Arbetsyta till Skärm"
+
 #: frontend/src/components/DimensionInput.vue:13
 msgid "Fit Content"
 msgstr "Anpassa Innehåll"
 
-#: frontend/src/components/ImageUploadInput.vue:73
+#: frontend/src/components/ImageUploadInput.vue:119
 msgid "Fit Inside"
 msgstr "Anpassa Insidan"
-
-#: frontend/src/utils/useBuilderEvents.ts:291
-msgid "Fit Canvas to Screen"
-msgstr "Anpassa Arbetsyta till Skärm"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:12
 #: frontend/src/components/BlockPositionHandler.vue:15
 msgid "Fixed"
 msgstr "Fast Pris"
 
-#: frontend/src/components/Commands/index.ts:246
-msgid "Focus Property Search"
-msgstr "Fokusera Egenskap Sökning"
-
 #: frontend/src/components/Commands/index.ts:250
+#: frontend/src/components/Commands/index.ts:254
 msgid "Focus Property Search"
 msgstr "Fokusera Egenskap Sökning"
 
-#: frontend/src/components/Settings/PageGeneral.vue:159
-#: frontend/src/utils/dialogs.ts:86
+#: frontend/src/components/Settings/PageGeneral.vue:157
+#: frontend/src/utils/dialogs.ts:103
 msgid "Folder"
 msgstr "Mapp"
 
 #. Label of the folder_name (Data) field in DocType 'Builder Project Folder'
 #: builder/builder/doctype/builder_project_folder/builder_project_folder.json
-#: frontend/src/utils/dialogs.ts:24
+#: frontend/src/utils/dialogs.ts:41
 msgid "Folder Name"
 msgstr "Mapp Namn"
 
@@ -1897,11 +1914,11 @@ msgstr "Mappar"
 msgid "Font"
 msgstr "Typsnitt"
 
-#: frontend/src/utils/helpers.ts:509
+#: frontend/src/utils/helpers.ts:553
 msgid "Font \"{0}\" already exists in the project"
 msgstr "Typsnitt \"{0}\" finns redan i projekt"
 
-#: frontend/src/utils/helpers.ts:554
+#: frontend/src/utils/helpers.ts:598
 msgid "Font \"{0}\" uploaded successfully"
 msgstr "Typsnitt \"{0}\" har laddats upp"
 
@@ -1915,7 +1932,7 @@ msgstr "Typsnitt Fil"
 msgid "Font Name"
 msgstr "Typsnitt Namn"
 
-#: frontend/src/components/Modals/TokenManager.vue:455
+#: frontend/src/components/Modals/TokenManager.vue:486
 msgid "Fonts"
 msgstr "Typsnitt"
 
@@ -1937,15 +1954,15 @@ msgstr "Formulär delar"
 msgid "Forward query parameters"
 msgstr "Vidarebefordra sökparametrar"
 
-#: frontend/src/components/Controls/SearchBlock.vue:322
+#: frontend/src/components/Controls/SearchBlock.vue:321
 msgid "Found in: {0}"
 msgstr "Hittades i: {0}"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:131
+#: frontend/src/pages/PagePersonaSurvey.vue:132
 msgid "Founder / Business owner"
 msgstr "Grundare / Affärsägare"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:118
+#: frontend/src/pages/PagePersonaSurvey.vue:119
 msgid "Frappe / ERPNext"
 msgstr "System / Affärssystem"
 
@@ -1962,7 +1979,7 @@ msgstr "Frappe Builder - Kom Igång"
 msgid "Free"
 msgstr "Gratis"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:117
+#: frontend/src/pages/PagePersonaSurvey.vue:118
 msgid "Friend / colleague"
 msgstr "Vän / kollega"
 
@@ -1970,16 +1987,16 @@ msgstr "Vän / kollega"
 msgid "Gap"
 msgstr "Gap"
 
-#: frontend/src/components/BuilderCommandPalette.vue:45
-#: frontend/src/components/BuilderCommandPalette.vue:79
-#: frontend/src/components/Commands/index.ts:44
-#: frontend/src/components/Commands/index.ts:202
+#: frontend/src/components/BuilderCommandPalette.vue:44
+#: frontend/src/components/BuilderCommandPalette.vue:78
+#: frontend/src/components/Commands/index.ts:42
+#: frontend/src/components/Commands/index.ts:206
 #: frontend/src/components/Settings/index.ts:44
 #: frontend/src/components/Settings/index.ts:45
 #: frontend/src/components/Settings/index.ts:78
 #: frontend/src/components/Settings/index.ts:79
-#: frontend/src/utils/useBuilderEvents.ts:229
-#: frontend/src/utils/useBuilderEvents.ts:269
+#: frontend/src/utils/useBuilderEvents.ts:248
+#: frontend/src/utils/useBuilderEvents.ts:288
 msgid "General"
 msgstr "Allmänt"
 
@@ -1991,7 +2008,7 @@ msgstr "Genvägar"
 msgid "Give this provider a name"
 msgstr "Namnge denna leverantör"
 
-#: frontend/src/components/BuilderCommandPalette.vue:264
+#: frontend/src/components/BuilderCommandPalette.vue:263
 #: frontend/src/components/Settings/index.ts:29
 msgid "Global"
 msgstr "System"
@@ -2004,7 +2021,7 @@ msgstr "Webb Redigerare Inställningar"
 msgid "Global Code"
 msgstr "System Kod"
 
-#: frontend/src/utils/dialogs.ts:46
+#: frontend/src/utils/dialogs.ts:63
 msgid "Global Component"
 msgstr "System Komponent"
 
@@ -2018,16 +2035,20 @@ msgstr "System skript som laddas med varje sida som skapas med Webb Redigerare"
 msgid "Global style that will be loaded with every page built with Frappe Builder"
 msgstr "System stil som laddas med varje sida som skapas med Webb Redigerare"
 
-#: frontend/src/components/Commands/index.ts:96
+#: frontend/src/components/PublishButton.vue:24
+msgid "Go Live"
+msgstr "Aktivera"
+
+#: frontend/src/components/Commands/index.ts:100
 msgid "Go to Dashboard"
 msgstr "Gå till Översikt"
 
-#: frontend/src/components/BackgroundHandler.vue:231
+#: frontend/src/components/BackgroundHandler.vue:239
 msgid "Gradient"
 msgstr "Gradient"
 
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:44
-#: frontend/src/components/DashboardHead.vue:74
+#: frontend/src/components/DashboardHead.vue:76
 msgid "Grid"
 msgstr "Rutnät"
 
@@ -2048,7 +2069,7 @@ msgstr "Grupp namn för den här radio knapp. Radio knappar med samma namn grupp
 msgid "Grow"
 msgstr "Väx"
 
-#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:14
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:23
 #: frontend/src/pages/PageBuilder.vue:223
 msgid "HTML"
 msgstr "HTML"
@@ -2057,7 +2078,7 @@ msgstr "HTML"
 msgid "HTML Attributes"
 msgstr "HTML Egenskap"
 
-#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:39
+#: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:68
 msgid "HTML Options"
 msgstr "HTML Alternativ"
 
@@ -2086,7 +2107,7 @@ msgstr "Höjd"
 msgid "Help"
 msgstr "Hjälp"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:28
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:37
 msgid "Hidden"
 msgstr "Dold "
 
@@ -2095,7 +2116,7 @@ msgstr "Dold "
 msgid "Hide"
 msgstr "Dölj"
 
-#: frontend/src/components/Commands/index.ts:170
+#: frontend/src/components/Commands/index.ts:174
 msgid "Hide Left Panel"
 msgstr "Dölj Vänster Panel"
 
@@ -2103,20 +2124,16 @@ msgstr "Dölj Vänster Panel"
 msgid "Hide Replace"
 msgstr "Dölj Ersätt"
 
-#: frontend/src/components/Commands/index.ts:181
+#: frontend/src/components/Commands/index.ts:185
 msgid "Hide Right Panel"
 msgstr "Dölj Höger Panel"
 
-#: frontend/src/utils/useBuilderEvents.ts:413
-msgid "Highlight Blocks with Client Scripts"
-msgstr "Framhäv Block med Klient Skript"
-
-#: frontend/src/pages/PageBuilder.vue:192
+#: frontend/src/pages/PageBuilder.vue:193
 msgid "Hold for Move Mode"
 msgstr "Håll för Flytt Läge"
 
-#: frontend/src/components/Settings/PageGeneral.vue:200
-#: frontend/src/utils/dialogs.ts:73
+#: frontend/src/components/Settings/PageGeneral.vue:213
+#: frontend/src/utils/dialogs.ts:90
 msgid "Home"
 msgstr "Hem"
 
@@ -2125,7 +2142,7 @@ msgstr "Hem"
 msgid "Home Page"
 msgstr "Webbplats"
 
-#: frontend/src/components/RouteTreeNode.vue:42
+#: frontend/src/components/RouteTreeNode.vue:50
 msgid "Home page"
 msgstr "Startsida"
 
@@ -2134,11 +2151,11 @@ msgid "Home page set to /{0}"
 msgstr "Startsida angiven till /{0}"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:5
-#: frontend/src/components/Settings/PageGeneral.vue:96
+#: frontend/src/components/Settings/PageGeneral.vue:94
 msgid "Homepage"
 msgstr "Startsida"
 
-#: frontend/src/stores/builderStore.ts:96
+#: frontend/src/stores/builderStore.ts:99
 msgid "Homepage set successfully"
 msgstr "Startsida konfigurerad"
 
@@ -2146,21 +2163,22 @@ msgstr "Startsida konfigurerad"
 msgid "Horizontal"
 msgstr "Horisontell"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:111
+#: frontend/src/pages/PagePersonaSurvey.vue:112
 msgid "How did you hear about Builder?"
 msgstr "Hur fick du höra talas om Webb Redigerare?"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:113
+#: frontend/src/pages/PagePersonaSurvey.vue:114
 msgid "I heard from the community"
 msgstr "Jag har hört från gemenskap"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:127
+#: frontend/src/pages/PagePersonaSurvey.vue:128
 msgid "I'm a student building my first site"
 msgstr "Jag är student och bygger min första webbplats"
 
 #. Label of the meta_image (Attach Image) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/BackgroundHandler.vue:235
+#: frontend/src/components/BackgroundHandler.vue:243
+#: frontend/src/components/ImageUploadInput.vue:55
 #: frontend/src/components/PropsPopoverContent.vue:173
 msgid "Image"
 msgstr "Bild"
@@ -2169,11 +2187,15 @@ msgstr "Bild"
 msgid "Image (i)"
 msgstr "Bild (i)"
 
-#: frontend/src/components/ImageUploadInput.vue:68
+#: frontend/src/components/ImageUploadInput.vue:114
 msgid "Image Fit"
 msgstr "Bildanpassning"
 
-#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:83
+#: frontend/src/utils/useBuilderEvents.ts:390
+msgid "Image Mode"
+msgstr "Bild Läge"
+
+#: frontend/src/components/BlockPropertySections/ImageOptionsSection.ts:88
 msgid "Image Options"
 msgstr "Bildalternativ"
 
@@ -2189,10 +2211,6 @@ msgstr "Bild konverterad till WebP"
 msgid "Image is too large. Please use an image smaller than 5 MB."
 msgstr "Bilden är för stor. Använd en bild som är mindre än 5 MB."
 
-#: frontend/src/utils/useBuilderEvents.ts:376
-msgid "Image Mode"
-msgstr "Bild Läge"
-
 #: frontend/src/utils/imageUtils.ts:58
 msgid "Image pulled to local"
 msgstr "Bild hämtad lokalt"
@@ -2201,11 +2219,11 @@ msgstr "Bild hämtad lokalt"
 msgid "Input Options"
 msgstr "Inmatning Alternativ"
 
-#: frontend/src/components/LeftPanelTabs/index.ts:36
+#: frontend/src/components/LeftPanelTabs/index.ts:37
 msgid "Insert"
 msgstr "Infoga"
 
-#: frontend/src/components/ShadowHandler.vue:113
+#: frontend/src/components/ShadowHandler.vue:116
 msgid "Inset Shadow"
 msgstr "Infälld Skugga"
 
@@ -2215,7 +2233,7 @@ msgstr "Infälld Skugga"
 msgid "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites."
 msgstr "Intern flagga: aktiveras när introduktion enkäte för persona visats. Gäller hela webbplatsen (”Webb Redigerare Inställningar” är ”Singel”) —lämplig ersättning för inställning ”per användare” på webbplatser med provperioder för enstaka användare."
 
-#: frontend/src/pages/PagePersonaSurvey.vue:147
+#: frontend/src/pages/PagePersonaSurvey.vue:148
 msgid "Internal tool / dashboard"
 msgstr "Interna Verktyg / Översikt"
 
@@ -2299,16 +2317,21 @@ msgstr "Är Unik"
 msgid "Item Width"
 msgstr "Artikel Bredd"
 
+#: frontend/src/components/ArrayInput.vue:20
+#: frontend/src/components/ObjectInput.vue:20
+msgid "Items"
+msgstr "Artiklar"
+
 #: frontend/src/components/PageClientScriptManager.vue:75
 #: frontend/src/components/PageScript.vue:193
 msgid "JavaScript"
 msgstr "Javascript"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:112
+#: frontend/src/pages/PagePersonaSurvey.vue:113
 msgid "Just curious, it helps us know what's working."
 msgstr "Bara nyfiken, det hjälper oss att veta vad som fungerar."
 
-#: frontend/src/pages/PagePersonaSurvey.vue:148
+#: frontend/src/pages/PagePersonaSurvey.vue:149
 msgid "Just exploring"
 msgstr "Bara utforskar"
 
@@ -2316,13 +2339,17 @@ msgstr "Bara utforskar"
 msgid "Justify"
 msgstr "Justera"
 
+#: frontend/src/utils/dialogs.ts:29
+msgid "Keep Inline"
+msgstr "Behåll Inline"
+
 #: frontend/src/components/BlockPropertySections/CollectionOptionsSection.ts:102
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:11
 #: frontend/src/components/PropsPopoverContent.vue:16
 msgid "Key"
 msgstr "Nyckel"
 
-#: frontend/src/components/Commands/index.ts:200
+#: frontend/src/components/Commands/index.ts:204
 msgid "Keyboard Shortcuts"
 msgstr "Kort Kommando"
 
@@ -2353,9 +2380,13 @@ msgstr "Språk"
 msgid "Language code for HTML (e.g., en, es, fr, de). Uses default if unset."
 msgstr "Språkkod för HTML (t.ex. en, es, fr, de). Standardvärde används om inget värde anges."
 
-#: frontend/src/components/ShadowHandler.vue:185
+#: frontend/src/components/ShadowHandler.vue:190
 msgid "Large"
 msgstr "Stor"
+
+#: frontend/src/utils/dialogs.ts:23
+msgid "Large SVG"
+msgstr "Stor SVG"
 
 #: frontend/src/components/Settings/AnalyticsFilters.vue:55
 msgid "Last 30 Days"
@@ -2365,7 +2396,7 @@ msgstr "Senaste 30 Dagar"
 msgid "Last 7 Days"
 msgstr "Senaste 7 Dagar"
 
-#: frontend/src/components/DashboardHead.vue:57
+#: frontend/src/components/DashboardHead.vue:59
 msgid "Last Created"
 msgstr "Senast Skapad"
 
@@ -2375,7 +2406,7 @@ msgstr "Senast Skapad"
 msgid "Last Interaction On"
 msgstr "Senaste Interaktion"
 
-#: frontend/src/components/DashboardHead.vue:58
+#: frontend/src/components/DashboardHead.vue:60
 msgid "Last Modified"
 msgstr "Senast Ändrad"
 
@@ -2384,22 +2415,18 @@ msgstr "Senast Ändrad"
 msgid "Last Task Type"
 msgstr "Senaste Uppgift Typ"
 
-#: frontend/src/components/PageListItem.vue:39
-msgid "Last updated {0} by {1}"
-msgstr "Senast uppdaterad {0} av {1}"
-
 #: frontend/src/components/BlockPropertySections/EditorConfigSection.ts:22
 msgid "Layer Icon"
 msgstr "Lager Ikon"
 
-#: frontend/src/components/ShadowHandler.vue:64
+#: frontend/src/components/ShadowHandler.vue:67
 msgid "Layer {0}"
 msgstr "Lager {0}"
 
-#: frontend/src/components/Commands/index.ts:42
-#: frontend/src/components/Commands/index.ts:146
-#: frontend/src/components/Commands/index.ts:159
-#: frontend/src/components/LeftPanelTabs/index.ts:44
+#: frontend/src/components/Commands/index.ts:40
+#: frontend/src/components/Commands/index.ts:150
+#: frontend/src/components/Commands/index.ts:163
+#: frontend/src/components/LeftPanelTabs/index.ts:45
 msgid "Layers"
 msgstr "Lager"
 
@@ -2419,7 +2446,6 @@ msgstr "Lämna tomt för att återgå till OpenRouter nyckel i Inställningar."
 msgid "Leave off unless the model accepts image input. Sending an image to a text-only model fails the whole turn."
 msgstr "Lämna inaktiverad om inte modell accepterar bild inmatning. Att skicka bild till endast text modell misslyckas allt."
 
-#: frontend/src/components/BackgroundHandler.vue:300
 #: frontend/src/components/BlockPositionHandler.vue:31
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:153
 msgid "Left"
@@ -2429,12 +2455,12 @@ msgstr "Vänster"
 msgid "Letter"
 msgstr "Letter"
 
-#: frontend/src/components/Modals/TokenManager.vue:50
+#: frontend/src/components/Modals/TokenManager.vue:51
 #: frontend/src/utils/fontManager.ts:20
 msgid "Light"
 msgstr "Ljus"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:27
+#: frontend/src/components/Modals/NewBuilderToken.vue:35
 msgid "Light Mode Color"
 msgstr "Ljus Läge Färg"
 
@@ -2460,7 +2486,7 @@ msgstr "Länk"
 msgid "Link To"
 msgstr "Länk Till"
 
-#: frontend/src/components/DashboardHead.vue:80
+#: frontend/src/components/DashboardHead.vue:82
 msgid "List"
 msgstr "Lista"
 
@@ -2469,12 +2495,21 @@ msgstr "Lista"
 msgid "LiteLLM Provider"
 msgstr "LiteLLM Leverantör"
 
+#: frontend/src/components/DashboardHead.vue:36
+#: frontend/src/components/Settings/PageGeneral.vue:199
+#: frontend/src/utils/pageStatus.ts:35
+msgid "Live"
+msgstr "Live"
+
+#: frontend/src/components/Settings/PageGeneral.vue:199
+msgid "Live with limited access"
+msgstr "Aktiv med begränsad åtkomst"
+
 #: frontend/src/components/DashboardContent.vue:49
 msgid "Load More"
 msgstr "Ladda Mer"
 
-#: frontend/src/components/RouteTreeNode.vue:90
-#: frontend/src/components/RouteTreeView.vue:39
+#: frontend/src/components/RouteTreeNode.vue:102
 msgid "Load {0} more"
 msgstr "Ladda {0} mer"
 
@@ -2486,7 +2521,7 @@ msgstr "Laddar domäner…"
 msgid "Loading pages…"
 msgstr "Laddar sidor…"
 
-#: frontend/src/components/BuilderSettings.vue:35
+#: frontend/src/components/BuilderSettings.vue:37
 #: frontend/src/components/Settings/AnalyticsOverview.vue:26
 #: frontend/src/components/Settings/GlobalAnalytics.vue:25
 #: frontend/src/components/Settings/TopClicksList.vue:5
@@ -2503,7 +2538,7 @@ msgstr "Slinga"
 msgid "Lowercase"
 msgstr "Gemen"
 
-#: frontend/src/components/Settings/PageGeneral.vue:134
+#: frontend/src/components/Settings/PageGeneral.vue:132
 msgid "Make this page a standard page that can be exported to an app"
 msgstr "Gör denna sida till en standardsida som kan exporteras till app"
 
@@ -2516,11 +2551,19 @@ msgstr "Mappa sökväg parametrar till formulär variabler. Exempel: <code>/prof
 msgid "Margin"
 msgstr "Marginal"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:132
+#: frontend/src/stores/pageStore.ts:241
+msgid "Mark \"{0}\" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it."
+msgstr "Välj \"{0}\" som testmiljö? Den förblir tillgänglig via sin länk, men sökmotorer och webbplatskarta slutar lista den."
+
+#: frontend/src/components/PublishButton.vue:30
+msgid "Mark as Staging"
+msgstr "Välj som Testmiljö"
+
+#: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Marketer"
 msgstr "Marknadsförare"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:143
+#: frontend/src/pages/PagePersonaSurvey.vue:144
 msgid "Marketing / landing site"
 msgstr "Marknadsföring / landning webbplats"
 
@@ -2554,7 +2597,7 @@ msgstr "Max. Värde"
 msgid "Media"
 msgstr "Media"
 
-#: frontend/src/components/ShadowHandler.vue:184
+#: frontend/src/components/ShadowHandler.vue:189
 #: frontend/src/utils/fontManager.ts:22
 msgid "Medium"
 msgstr "Medium"
@@ -2606,7 +2649,7 @@ msgstr "Min. Artiklar"
 msgid "Min. Value"
 msgstr "Min. Värde"
 
-#: frontend/src/components/BuilderCanvas.vue:247
+#: frontend/src/components/BuilderCanvas.vue:248
 msgid "Mobile"
 msgstr "Mobil"
 
@@ -2623,37 +2666,37 @@ msgstr "Modell ID erfordras"
 msgid "More Styles"
 msgstr "Fler Stilar"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:245
-#: frontend/src/components/Modals/TokenManager.vue:367
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:274
+#: frontend/src/components/Modals/TokenManager.vue:391
 msgid "Move"
 msgstr "Flytta"
 
-#: frontend/src/utils/useBuilderEvents.ts:402
+#: frontend/src/utils/useBuilderEvents.ts:416
 msgid "Move / Hand Mode"
 msgstr "Flytta / Manuell Läge"
 
-#: frontend/src/components/DashboardHead.vue:9
-msgid "Move To Folder"
-msgstr "Flytta till Mapp"
-
-#: frontend/src/components/RouteTreeView.vue:335
+#: frontend/src/components/RouteTreeView.vue:349
 msgid "Move Down in Page Tree"
 msgstr "Flytta Ner i Sidoträd"
 
-#: frontend/src/components/Modals/TokenManager.vue:365
-#: frontend/src/components/Modals/TokenManager.vue:769
-msgid "Move to Group"
-msgstr "Flytta till Grupp"
+#: frontend/src/components/DashboardHead.vue:11
+msgid "Move To Folder"
+msgstr "Flytta till Mapp"
 
-#: frontend/src/components/RouteTreeView.vue:345
+#: frontend/src/components/RouteTreeView.vue:359
 msgid "Move Up in Page Tree"
 msgstr "Flytta Upp i Sidoträd"
 
-#: frontend/src/components/Modals/TokenManager.vue:727
+#: frontend/src/components/Modals/TokenManager.vue:389
+#: frontend/src/components/Modals/TokenManager.vue:835
+msgid "Move to Group"
+msgstr "Flytta till Grupp"
+
+#: frontend/src/components/Modals/TokenManager.vue:783
 msgid "Moved {0} token to \"{1}\""
 msgstr "Flyttade {0} token till \"{1}\""
 
-#: frontend/src/components/Modals/TokenManager.vue:727
+#: frontend/src/components/Modals/TokenManager.vue:784
 msgid "Moved {0} tokens to \"{1}\""
 msgstr "Flyttade {0} tokens till \"{1}\""
 
@@ -2661,13 +2704,13 @@ msgstr "Flyttade {0} tokens till \"{1}\""
 msgid "Muted"
 msgstr "Dämpad"
 
-#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:22
-#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:23
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:25
+#: frontend/src/components/ToolbarItems/PageTitlePopover.vue:26
 msgid "My Page"
 msgstr "Min Sida"
 
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:54
-#: frontend/src/components/Modals/TokenManager.vue:48
+#: frontend/src/components/Modals/TokenManager.vue:49
 msgid "Name"
 msgstr "Namn"
 
@@ -2685,10 +2728,10 @@ msgstr "Namnge denna version (valfritt)"
 msgid "Namespace for this provider's model names, e.g. <code>openrouter</code> gives <code>openrouter/anthropic/claude-sonnet-5</code>. Derived from the name when left empty."
 msgstr "Namnrymd för denna leverantör modell namn, t.ex. <code>openrouter</code> ger <code>openrouter/anthropic/claude-sonnet-5</code>. Härstammar från namn när det lämnas tomt."
 
-#: frontend/src/components/BuilderCommandPalette.vue:62
+#: frontend/src/components/BuilderCommandPalette.vue:61
 #: frontend/src/components/CommandPalette.vue:92
-#: frontend/src/components/Commands/index.ts:40
-#: frontend/src/components/Commands/index.ts:98
+#: frontend/src/components/Commands/index.ts:38
+#: frontend/src/components/Commands/index.ts:102
 msgid "Navigate"
 msgstr "Navigera"
 
@@ -2700,7 +2743,7 @@ msgstr "Navigering"
 msgid "New"
 msgstr "Ny"
 
-#: frontend/src/utils/dialogs.ts:36
+#: frontend/src/utils/dialogs.ts:53
 msgid "New Component"
 msgstr "Ny Komponent"
 
@@ -2729,7 +2772,7 @@ msgstr "Ny mapp"
 msgid "New page"
 msgstr "Ny sida"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:93
+#: frontend/src/components/Modals/NewBuilderToken.vue:101
 msgid "New token created"
 msgstr "Ny token skapad"
 
@@ -2751,13 +2794,9 @@ msgstr "Nej"
 msgid "No DNS record found for this domain."
 msgstr "Ingen DNS post hittades för denna domän."
 
-#: frontend/src/components/PropsEditor.vue:51
+#: frontend/src/components/PropsEditor.vue:50
 msgid "No Default Value"
 msgstr "Inget Standard Värde"
-
-#: frontend/src/components/BackgroundHandler.vue:305
-msgid "No Repeat"
-msgstr "Ingen Upprepning"
 
 #: frontend/src/components/Controls/DynamicValueHandler.vue:24
 #: frontend/src/components/Controls/DynamicValueHandler.vue:38
@@ -2768,7 +2807,7 @@ msgstr "Inget Värde Angivet"
 msgid "No Wrap"
 msgstr "Ingen Radbrytning"
 
-#: frontend/src/components/Modals/TokenManager.vue:428
+#: frontend/src/components/Modals/TokenManager.vue:459
 msgid "No color tokens yet"
 msgstr "Inga färg tokens ännu"
 
@@ -2784,7 +2823,7 @@ msgstr "Inga komponenter sparade"
 msgid "No custom domains added yet."
 msgstr "Inga anpassade domäner har lagts till ännu."
 
-#: frontend/src/components/Modals/TokenManager.vue:430
+#: frontend/src/components/Modals/TokenManager.vue:461
 msgid "No dimension tokens yet"
 msgstr "Inga dimension tokens ännu"
 
@@ -2796,9 +2835,14 @@ msgstr "Inga dynamiska värden hittades. Lägg till med hjälp av"
 msgid "No folders yet"
 msgstr "Inga mappar ännu"
 
-#: frontend/src/components/Modals/TokenManager.vue:429
+#: frontend/src/components/Modals/TokenManager.vue:460
 msgid "No font tokens yet"
 msgstr "Inga teckensnitt tokens ännu"
+
+#: frontend/src/components/BackgroundHandler.vue:88
+#: frontend/src/components/ImageUploadInput.vue:79
+msgid "No image"
+msgstr "Ingen bild"
 
 #: frontend/src/components/DashboardContent.vue:12
 msgid "No matching pages found."
@@ -2816,7 +2860,7 @@ msgstr "Inga medlemmar stämmer med \"{0}\""
 msgid "No members yet. Invite someone to give them access to Builder."
 msgstr "Inga medlemmar ännu. Bjud in någon att ge dem åtkomst till Webb Redigerare."
 
-#: builder/api.py:568
+#: builder/api.py:575
 msgid "No pages found in this template group."
 msgstr "Inga sidor hittades i denna mallgrupp."
 
@@ -2824,7 +2868,7 @@ msgstr "Inga sidor hittades i denna mallgrupp."
 msgid "No pages found."
 msgstr "Inga sidor hittades."
 
-#: builder/ai/api.py:169
+#: builder/ai/api.py:200
 msgid "No pending action on this message"
 msgstr "Ingen väntande åtgärd på detta meddelande"
 
@@ -2836,8 +2880,12 @@ msgstr "Ingen behörighet att förhandsvisa denna sida"
 msgid "No redirects match \"{0}\""
 msgstr "Inga omdirigeringar stämmer med ”{0}”"
 
-#: frontend/src/components/Controls/SearchBlock.vue:376
-#: frontend/src/components/Controls/SearchBlock.vue:398
+#: frontend/src/components/BackgroundHandler.vue:308
+msgid "No repeat"
+msgstr "Ingen upprepning"
+
+#: frontend/src/components/Controls/SearchBlock.vue:375
+#: frontend/src/components/Controls/SearchBlock.vue:401
 msgid "No replacements made"
 msgstr "Inga ersättningar gjorda"
 
@@ -2845,7 +2893,7 @@ msgstr "Inga ersättningar gjorda"
 msgid "No results for \"{0}\""
 msgstr "Inga resultat för ”{0}”"
 
-#: frontend/src/components/Controls/SearchBlock.vue:141
+#: frontend/src/components/Controls/SearchBlock.vue:140
 msgid "No results found"
 msgstr "Inga resultat hittades"
 
@@ -2853,15 +2901,15 @@ msgstr "Inga resultat hittades"
 msgid "No saved versions yet. A version is captured every time you publish, or when you save one manually."
 msgstr "Inga sparade versioner ännu. En version sparas varje gång du publicerar, eller när du sparar den manuellt."
 
-#: frontend/src/components/Modals/TokenManager.vue:349
+#: frontend/src/components/Modals/TokenManager.vue:373
 msgid "No tokens found"
 msgstr "Inga tokens hittades"
 
-#: frontend/src/components/Modals/TokenManager.vue:354
+#: frontend/src/components/Modals/TokenManager.vue:378
 msgid "No tokens match \"{0}\". Try a different search term."
 msgstr "Inga tokens stämmer med \"{0}\". Försök med en annan sökterm."
 
-#: frontend/src/components/Settings/AnalyticsOverview.vue:35
+#: frontend/src/components/Settings/AnalyticsOverview.vue:36
 msgid "No views in this period"
 msgstr "Inga visningar under denna period"
 
@@ -2869,10 +2917,10 @@ msgstr "Inga visningar under denna period"
 msgid "No, just blocks"
 msgstr "Nej, bara block"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:158
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:187
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:15
-#: frontend/src/components/ShadowHandler.vue:11
-#: frontend/src/components/ShadowHandler.vue:182
+#: frontend/src/components/ShadowHandler.vue:14
+#: frontend/src/components/ShadowHandler.vue:187
 msgid "None"
 msgstr "Ingen"
 
@@ -2880,17 +2928,13 @@ msgstr "Ingen"
 msgid "Normal"
 msgstr "Normal"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:248
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:277
 msgid "Not Allowed"
 msgstr "Ej Tillåtet"
 
 #: builder/www/404.html:6
 msgid "Not Found"
 msgstr "Hittades Inte"
-
-#: frontend/src/components/RouteTreeNode.vue:51
-msgid "Not published"
-msgstr "Ej publicerad"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:42
 msgid "Not used in any page"
@@ -2912,11 +2956,7 @@ msgstr "Nummer"
 msgid "Object"
 msgstr "Objekt"
 
-#: frontend/src/components/ObjectInput.vue:20
-msgid "Object Items:"
-msgstr "Objekt Element:"
-
-#: frontend/src/utils/helpers.ts:54
+#: frontend/src/utils/helpers.ts:52
 msgid "Ok"
 msgstr "Ok"
 
@@ -2932,7 +2972,7 @@ msgstr "På Fokus"
 msgid "On Hover"
 msgstr "På Hovring"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:144
+#: frontend/src/pages/PagePersonaSurvey.vue:145
 msgid "Online store / E-commerce"
 msgstr "Webbutik / E-handel"
 
@@ -2940,17 +2980,21 @@ msgstr "Webbutik / E-handel"
 msgid "Only HTTP/HTTPS URLs are allowed for external images."
 msgstr "Endast HTTP/HTTPS URL: er är tillåtna för externa bilder."
 
+#: builder/builder/doctype/builder_page/builder_page.py:415
+msgid "Only a live page can be marked as staging."
+msgstr "Endast en aktiv sida kan väljas som testmiljö."
+
 #. Description of the 'Authenticated Access' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Only allow logged-in users to view this page."
 msgstr "Tillåt endast inloggade användare att visa denna sida."
 
-#: frontend/src/components/Settings/PageGeneral.vue:118
+#: frontend/src/components/Settings/PageGeneral.vue:116
 msgid "Only logged-in users can access this page"
 msgstr "Endast inloggade användare kan komma åt denna sida"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:42
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:51
 msgid "Opacity"
 msgstr "Genomskinlighet"
 
@@ -2971,13 +3015,21 @@ msgstr "Öppna"
 msgid "Open Code Tab"
 msgstr "Öppna Kod Flik"
 
-#: frontend/src/components/BuilderCommandPalette.vue:44
+#: frontend/src/components/BuilderCommandPalette.vue:43
 msgid "Open Command Palette"
 msgstr "Öppna Kommando Palett"
 
-#: frontend/src/components/Settings/TrackingDisabledNotice.vue:21
-msgid "Open Global Settings"
-msgstr "Öppna System Inställningar"
+#: frontend/src/components/RouteTreeView.vue:404
+msgid "Open Page or Toggle Folder in Page Tree"
+msgstr "Öppna Sida eller Visa/Dölj Mapp i Sidoträd"
+
+#: frontend/src/components/BackgroundHandler.vue:26
+msgid "Open background picker"
+msgstr "Öppna bakgrundsväljare"
+
+#: frontend/src/components/Controls/ColorInput.vue:49
+msgid "Open color picker"
+msgstr "Öppna färgväljare"
 
 #: builder/builder/doctype/builder_page/builder_page.js:9
 msgid "Open in Builder"
@@ -2986,10 +3038,6 @@ msgstr "Öppna i Webb Redigerare"
 #: frontend/src/components/TextBlockBubbleMenu.vue:39
 msgid "Open in New Tab"
 msgstr "Öppna i Ny Flik"
-
-#: frontend/src/components/RouteTreeView.vue:390
-msgid "Open Page or Toggle Folder in Page Tree"
-msgstr "Öppna Sida eller Visa/Dölj Mapp i Sidoträd"
 
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:46
 msgid "Opens in"
@@ -3010,25 +3058,25 @@ msgstr "Alternativ "
 msgid "Order"
 msgstr "Order"
 
-#: frontend/src/components/ImageUploadInput.vue:76
+#: frontend/src/components/ImageUploadInput.vue:122
 msgid "Original Size"
 msgstr "Original Storlek"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:120
-#: frontend/src/pages/PagePersonaSurvey.vue:134
-#: frontend/src/pages/PagePersonaSurvey.vue:149
+#: frontend/src/pages/PagePersonaSurvey.vue:121
+#: frontend/src/pages/PagePersonaSurvey.vue:135
+#: frontend/src/pages/PagePersonaSurvey.vue:150
 msgid "Other"
 msgstr "Annat"
 
-#: frontend/src/components/ShadowHandler.vue:113
+#: frontend/src/components/ShadowHandler.vue:116
 msgid "Outset Shadow"
 msgstr "Utgångspunkt Skugga"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:201
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:230
 msgid "Overflow X"
 msgstr "Överfyllning X"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:220
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:249
 msgid "Overflow Y"
 msgstr "Överfyllning Y"
 
@@ -3042,12 +3090,11 @@ msgstr "Fyllning"
 
 #. Label of the page (Link) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
-#: frontend/src/components/BuilderCommandPalette.vue:260
-#: frontend/src/components/Commands/index.ts:41
-#: frontend/src/components/Commands/index.ts:108
-#: frontend/src/components/Commands/index.ts:122
-#: frontend/src/components/Commands/index.ts:132
-#: frontend/src/pages/PageBuilder.vue:33
+#: frontend/src/components/BuilderCommandPalette.vue:259
+#: frontend/src/components/Commands/index.ts:39
+#: frontend/src/components/Commands/index.ts:125
+#: frontend/src/components/Commands/index.ts:136
+#: frontend/src/pages/PageBuilder.vue:37
 msgid "Page"
 msgstr "Sida"
 
@@ -3063,7 +3110,7 @@ msgstr "Klient Skript"
 msgid "Page Code"
 msgstr "Kod"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:153
+#: frontend/src/utils/builderBlockCopyPaste.ts:154
 msgid "Page Copied"
 msgstr "Kopierad"
 
@@ -3097,70 +3144,65 @@ msgstr "Sida Sökväg"
 msgid "Page Title"
 msgstr "Sida Benämning"
 
-#: frontend/src/components/RouteTreeView.vue:336
-#: frontend/src/components/RouteTreeView.vue:346
-#: frontend/src/components/RouteTreeView.vue:356
-#: frontend/src/components/RouteTreeView.vue:375
-#: frontend/src/components/RouteTreeView.vue:391
+#: frontend/src/components/RouteTreeView.vue:350
+#: frontend/src/components/RouteTreeView.vue:360
+#: frontend/src/components/RouteTreeView.vue:370
+#: frontend/src/components/RouteTreeView.vue:389
+#: frontend/src/components/RouteTreeView.vue:405
 msgid "Page Tree"
 msgstr "Träd"
 
-#: frontend/src/components/Templates/TemplateGallery.vue:209
+#: frontend/src/components/Templates/TemplateGallery.vue:210
 #: frontend/src/components/ToolbarItems/ReadOnlyBadge.vue:35
 msgid "Page created"
 msgstr "Sida skapad"
 
-#: frontend/src/stores/pageStore.ts:180
+#: frontend/src/stores/pageStore.ts:209
 msgid "Page deleted"
 msgstr "Sida borttagen"
 
-#: frontend/src/stores/pageStore.ts:183
+#: frontend/src/stores/pageStore.ts:212
 msgid "Page deletion failed"
 msgstr "Sida borttagning misslyckades"
 
-#: frontend/src/stores/pageStore.ts:167
+#: frontend/src/stores/pageStore.ts:196
 msgid "Page duplicated"
 msgstr "Sida duplicerad"
 
-#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:53
+#: frontend/src/stores/pageStore.ts:254
+msgid "Page marked as staging"
+msgstr "Sida vald som testmiljö"
+
+#: builder/www/404.html:25 frontend/src/stores/pageStore.ts:76
 msgid "Page not found"
 msgstr "Sida hittades inte"
 
-#: frontend/src/stores/pageStore.ts:264
+#: frontend/src/stores/pageStore.ts:318
 msgid "Page unpublished"
 msgstr "Sida publicering ångrad"
 
-#: frontend/src/components/BuilderCommandPalette.vue:279
+#: frontend/src/components/BuilderCommandPalette.vue:278
 msgid "Pages"
 msgstr "Sidor"
 
-#: frontend/src/utils/useBuilderEvents.ts:334
-msgid "Pan canvas down"
-msgstr "Rulla arbetsyta ner"
+#: frontend/src/utils/useBuilderEvents.ts:317
+#: frontend/src/utils/useBuilderEvents.ts:328
+#: frontend/src/utils/useBuilderEvents.ts:339
+#: frontend/src/utils/useBuilderEvents.ts:350
+msgid "Pan Canvas"
+msgstr "Panorera Arbetsyta"
 
-#: frontend/src/utils/useBuilderEvents.ts:312
-msgid "Pan canvas left"
-msgstr "Rulla arbetsyta vänster"
-
-#: frontend/src/utils/useBuilderEvents.ts:301
-msgid "Pan canvas right"
-msgstr "Rulla arbetsyta höger"
-
-#: frontend/src/utils/useBuilderEvents.ts:323
-msgid "Pan canvas up"
-msgstr "Rulla arbetsyta upp"
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:47
+#: frontend/src/components/BlockContextMenuOptions/index.ts:61
 msgid "Paste Style"
 msgstr "Klistra in Stil"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:271
+#: frontend/src/utils/builderBlockCopyPaste.ts:273
 msgid "Pasting a page!"
 msgstr "Klistrar in sida!"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:174
-#: frontend/src/utils/builderBlockCopyPaste.ts:278
-#: frontend/src/utils/builderBlockCopyPaste.ts:300
+#: frontend/src/utils/builderBlockCopyPaste.ts:176
+#: frontend/src/utils/builderBlockCopyPaste.ts:280
+#: frontend/src/utils/builderBlockCopyPaste.ts:302
 msgid "Pasting..."
 msgstr "Klistrar in..."
 
@@ -3173,7 +3215,7 @@ msgstr "Sökväg"
 msgid "Pending Invites ({0})"
 msgstr "Väntande iIbjudningar ({0})"
 
-#: builder/ai/api.py:162
+#: builder/ai/api.py:193
 msgid "Pending action not found"
 msgstr "Väntande åtgärd hittades inte"
 
@@ -3182,22 +3224,22 @@ msgstr "Väntande åtgärd hittades inte"
 msgid "Persona Survey Done"
 msgstr "Persona Undersökning Klar"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:186
+#: frontend/src/pages/PagePersonaSurvey.vue:187
 msgid "Pick a starting point"
 msgstr "Välj startpunkt"
 
-#: frontend/src/components/Settings/AnalyticsOverview.vue:36
+#: frontend/src/components/Settings/AnalyticsOverview.vue:37
 msgid "Pick a wider date range, or share your page to start collecting data."
 msgstr "Välj bredare datum intervall eller dela din sida för att börja samla in data."
 
-#: builder/ai/api.py:442
+#: builder/ai/api.py:473
 msgid "Pick at least one model"
 msgstr "Välj minst en modell"
 
-#: frontend/src/components/Modals/TokenManager.vue:100
-#: frontend/src/components/Modals/TokenManager.vue:145
-#: frontend/src/components/Modals/TokenManager.vue:269
-#: frontend/src/components/Modals/TokenManager.vue:315
+#: frontend/src/components/Modals/TokenManager.vue:101
+#: frontend/src/components/Modals/TokenManager.vue:157
+#: frontend/src/components/Modals/TokenManager.vue:293
+#: frontend/src/components/Modals/TokenManager.vue:339
 msgid "Pick color"
 msgstr "Välj färg"
 
@@ -3213,28 +3255,28 @@ msgstr "Placering"
 msgid "Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
 msgstr "Konfigurera OpenRouter API nyckel i Inställningar → AI, eller en API nyckel på modellens leverantör"
 
-#: builder/builder/doctype/builder_page/builder_page.py:88
+#: builder/builder/doctype/builder_page/builder_page.py:92
 msgid "Please log in to view this page."
 msgstr "Logga in för att se denna sida."
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:64
-#: frontend/src/components/BlockContextMenuOptions/index.ts:143
+#: frontend/src/components/BlockContextMenuOptions/index.ts:78
+#: frontend/src/components/BlockContextMenuOptions/index.ts:157
 msgid "Please select a collection"
 msgstr "Välj samling"
 
-#: frontend/src/components/Settings/PageGeneral.vue:254
+#: frontend/src/components/Settings/PageGeneral.vue:267
 msgid "Please select an app for this standard page"
 msgstr "Välj app för denna standard sida"
 
-#: builder/ai/api.py:595
+#: builder/ai/api.py:626
 msgid "Please set an OpenRouter API key"
 msgstr "Ange OpenRouter API nyckel"
 
-#: frontend/src/pages/PageBuilder.vue:6
+#: frontend/src/pages/PageBuilder.vue:8
 msgid "Please switch to a larger screen to edit"
 msgstr "Byt till större skärm för att redigera"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:244
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:273
 msgid "Pointer"
 msgstr "Pekare"
 
@@ -3242,11 +3284,10 @@ msgstr "Pekare"
 msgid "Points your root domain directly to the server. Use @ as the host name."
 msgstr "Pekar om din rotdomän direkt till servern. Använd @ som värdnamn."
 
-#: frontend/src/pages/PagePersonaSurvey.vue:145
+#: frontend/src/pages/PagePersonaSurvey.vue:146
 msgid "Portfolio / personal site"
 msgstr "Portfölj / personlig webbplats"
 
-#: frontend/src/components/BackgroundHandler.vue:90
 #: frontend/src/components/BlockPropertySections/PositionSection.ts:17
 msgid "Position"
 msgstr "Position"
@@ -3255,7 +3296,7 @@ msgstr "Position"
 msgid "Poster"
 msgstr "Affisch"
 
-#: frontend/src/components/ShadowHandler.vue:57
+#: frontend/src/components/ShadowHandler.vue:60
 msgid "Presets"
 msgstr "Förval"
 
@@ -3266,7 +3307,7 @@ msgstr "Förhindra Klick Emulering"
 #. Description of the 'Disable Indexing' (Check) field in DocType 'Builder
 #. Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/Settings/PageGeneral.vue:125
+#: frontend/src/components/Settings/PageGeneral.vue:123
 msgid "Prevent search engines from indexing this page"
 msgstr "Förhindra sökmotorer från att indexera denna sida"
 
@@ -3280,11 +3321,10 @@ msgstr "Förhindrar att klick händelser emuleras i redigerare för block med Bl
 
 #. Label of the preview (Data) field in DocType 'Block Template'
 #: builder/builder/doctype/block_template/block_template.json
-#: frontend/src/components/Commands/index.ts:111
-#: frontend/src/components/Templates/TemplateGroupCard.vue:16
+#: frontend/src/components/Templates/TemplateGroupCard.vue:19
 #: frontend/src/components/Templates/TemplatePageCard.vue:16
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:10
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:11
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:17
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:18
 msgid "Preview"
 msgstr "Förhandsvisa"
 
@@ -3301,7 +3341,8 @@ msgstr "Förhandsvisa Bild"
 msgid "Preview Image is mandatory"
 msgstr "Förhandsvisning bild erfordras"
 
-#: frontend/src/components/Commands/index.ts:106
+#: frontend/src/components/Commands/index.ts:110
+#: frontend/src/components/Commands/index.ts:114
 msgid "Preview Page"
 msgstr "Förhandsvisa Sida"
 
@@ -3328,7 +3369,7 @@ msgstr "Egenskaper"
 msgid "Property"
 msgstr "Egenskap"
 
-#: frontend/src/components/Settings/PageGeneral.vue:116
+#: frontend/src/components/Settings/PageGeneral.vue:114
 msgid "Protected Page"
 msgstr "Skyddad Sida"
 
@@ -3347,28 +3388,25 @@ msgstr "Leverantör Namn"
 msgid "Public URL"
 msgstr "Offentlig URL"
 
-#: frontend/src/components/PageListItem.vue:29
-msgid "Publicly accessible"
-msgstr "Allmänt Tillgänglig"
-
-#: frontend/src/components/PublishButton.vue:74
-#: frontend/src/components/Settings/PageGeneral.vue:56
+#: frontend/src/components/PublishButton.vue:79
+#: frontend/src/components/Settings/PageGeneral.vue:50
 msgid "Publish"
 msgstr "Publicera"
 
-#: frontend/src/components/PublishButton.vue:76
+#: frontend/src/components/PublishButton.vue:79
 msgid "Publish Changes"
 msgstr "Publicera Ändringar"
 
-#: frontend/src/components/Commands/index.ts:120
+#: frontend/src/components/Commands/index.ts:123
 msgid "Publish Page"
 msgstr "Publicera Sida"
 
+#: frontend/src/components/PublishButton.vue:18
+msgid "Publish to Staging"
+msgstr "Publicera till Testmiljö"
+
 #. Label of the published (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
-#: frontend/src/components/DashboardHead.vue:35
-#: frontend/src/components/PageListItem.vue:48
-#: frontend/src/components/Settings/PageGeneral.vue:46
 msgid "Published"
 msgstr "Publicerad"
 
@@ -3381,10 +3419,6 @@ msgstr "Publicerad"
 msgid "Published version"
 msgstr "Publicerad version"
 
-#: frontend/src/components/Settings/PageGeneral.vue:45
-msgid "Published with limited access"
-msgstr "Publicerad med begränsad åtkomst"
-
 #: frontend/src/utils/imageUtils.ts:57
 msgid "Pulling..."
 msgstr "Laddar..."
@@ -3393,7 +3427,7 @@ msgstr "Laddar..."
 msgid "Radial"
 msgstr "Radiell"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:157
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:186
 msgid "Radius"
 msgstr "Radie"
 
@@ -3405,12 +3439,12 @@ msgstr "Skrivskyddat"
 msgid "Read-only preview · Use <b>Restore</b> to load this version."
 msgstr "Skrivskyddad förhandsvisning · Använd <b>Återställ</b> för att ladda denna version."
 
-#: frontend/src/components/BuilderCommandPalette.vue:291
-#: frontend/src/components/BuilderCommandPalette.vue:342
+#: frontend/src/components/BuilderCommandPalette.vue:290
+#: frontend/src/components/BuilderCommandPalette.vue:341
 msgid "Recent"
 msgstr "Senaste"
 
-#: frontend/src/components/Controls/GradientEditor.vue:178
+#: frontend/src/components/Controls/GradientEditor.vue:189
 msgid "Recently used"
 msgstr "Nyligen använd"
 
@@ -3451,8 +3485,8 @@ msgstr "Omdirigeringar"
 msgid "Redirects to primary"
 msgstr "Omdirigerar till primär"
 
-#: frontend/src/components/Commands/index.ts:304
-#: frontend/src/components/Commands/index.ts:308
+#: frontend/src/components/Commands/index.ts:303
+#: frontend/src/components/Commands/index.ts:307
 msgid "Redo"
 msgstr "Återskapa"
 
@@ -3470,7 +3504,7 @@ msgstr "Referens Namn"
 msgid "Regex capture"
 msgstr "Regex insamling"
 
-#: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:267
+#: frontend/src/utils/fontManager.ts:21 frontend/src/utils/fontManager.ts:290
 msgid "Regular"
 msgstr "Regelbunden"
 
@@ -3478,13 +3512,13 @@ msgstr "Regelbunden"
 msgid "Relative"
 msgstr "Relativ"
 
-#: frontend/src/components/Controls/ImageUploader.vue:15
-#: frontend/src/components/Modals/TokenManager.vue:764
+#: frontend/src/components/Controls/ImageUploader.vue:17
+#: frontend/src/components/Modals/TokenManager.vue:830
 #: frontend/src/components/MoreStylesPanel.vue:206
 msgid "Remove"
 msgstr "Ta bort"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:76
+#: frontend/src/components/BlockContextMenuOptions/index.ts:90
 msgid "Remove Collection"
 msgstr "Ta bort Samling"
 
@@ -3496,11 +3530,11 @@ msgstr "Ta bort Domän"
 msgid "Remove Script"
 msgstr "Ta bort Skript"
 
-#: frontend/src/components/Controls/GradientEditor.vue:49
+#: frontend/src/components/Controls/GradientEditor.vue:52
 msgid "Remove Stop"
 msgstr "Ta bort Stopp"
 
-#: frontend/src/components/Modals/TokenManager.vue:771
+#: frontend/src/components/Modals/TokenManager.vue:837
 msgid "Remove from Group"
 msgstr "Ta bort från Grupp"
 
@@ -3508,32 +3542,33 @@ msgstr "Ta bort från Grupp"
 msgid "Removing {0}…"
 msgstr "Tar bort {0}…"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:238
+#: frontend/src/components/BlockContextMenuOptions/index.ts:252
 #: frontend/src/components/DashboardSidebar.vue:68
 #: frontend/src/components/PageClientScriptManager.vue:47
 msgid "Rename"
 msgstr "Ändra Namn"
 
-#: frontend/src/components/BackgroundHandler.vue:96
-#: frontend/src/components/BackgroundHandler.vue:306
+#: frontend/src/components/BackgroundHandler.vue:309
 msgid "Repeat"
 msgstr "Upprepa"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:134
+#: frontend/src/components/BlockContextMenuOptions/index.ts:148
 msgid "Repeat Block"
 msgstr "Upprepa Block"
 
-#: frontend/src/components/BackgroundHandler.vue:307
-msgid "Repeat X"
-msgstr "Upprepa X"
+#: frontend/src/components/BackgroundHandler.vue:310
+msgid "Repeat horizontally"
+msgstr "Upprepa horisontellt"
 
-#: frontend/src/components/BackgroundHandler.vue:308
-msgid "Repeat Y"
-msgstr "Upprepa Y"
+#: frontend/src/components/BackgroundHandler.vue:311
+msgid "Repeat vertically"
+msgstr "Upprepa vertikalt"
 
 #: builder/builder/doctype/builder_settings/builder_settings.js:70
+#: frontend/src/components/BackgroundHandler.vue:101
 #: frontend/src/components/Controls/CodeMirror/CustomSearchPanel.vue:81
-#: frontend/src/components/Controls/SearchBlock.vue:131
+#: frontend/src/components/Controls/SearchBlock.vue:130
+#: frontend/src/components/ImageUploadInput.vue:103
 msgid "Replace"
 msgstr "Ersätt"
 
@@ -3541,7 +3576,7 @@ msgstr "Ersätt"
 msgid "Replace All"
 msgstr "Ersätt Alla"
 
-#: frontend/src/components/Controls/SearchBlock.vue:92
+#: frontend/src/components/Controls/SearchBlock.vue:91
 msgid "Replace All ({0} matches)"
 msgstr "Ersätt alla ({0} träffar)"
 
@@ -3558,21 +3593,21 @@ msgstr "Ersätt Nästa"
 msgid "Replace With"
 msgstr "Ersätt Med"
 
-#: frontend/src/components/Controls/SearchBlock.vue:78
+#: frontend/src/components/Controls/SearchBlock.vue:77
 msgid "Replace with..."
 msgstr "Ersätt med..."
 
-#: frontend/src/components/Controls/SearchBlock.vue:374
+#: frontend/src/components/Controls/SearchBlock.vue:373
 msgid "Replaced in {0}"
 msgstr "Ersatt i {0}"
 
-#: frontend/src/components/Controls/SearchBlock.vue:97
-#: frontend/src/components/Controls/SearchBlock.vue:395
+#: frontend/src/components/Controls/SearchBlock.vue:96
+#: frontend/src/components/Controls/SearchBlock.vue:396
 msgid "Replaced in {0} block"
 msgstr "Ersatt i {0} block"
 
-#: frontend/src/components/Controls/SearchBlock.vue:98
-#: frontend/src/components/Controls/SearchBlock.vue:395
+#: frontend/src/components/Controls/SearchBlock.vue:97
+#: frontend/src/components/Controls/SearchBlock.vue:397
 msgid "Replaced in {0} blocks"
 msgstr "Ersatt i {0} block"
 
@@ -3584,25 +3619,30 @@ msgstr "Förfrågningar till privata eller interna adresser är inte tillåtna."
 msgid "Resend"
 msgstr "Skicka igen"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:159
-msgid "Reset Changes"
-msgstr "Återställ ändringar"
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:181
-msgid "Reset Component"
-msgstr "Återställ Komponent"
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:150
-msgid "Reset Overrides"
-msgstr "Återställ Åsidosättningar"
-
-#: frontend/src/utils/useBuilderEvents.ts:279
+#: frontend/src/utils/useBuilderEvents.ts:297
 msgid "Reset Canvas Zoom"
 msgstr "Återställ Arbetsyta Zoom"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:162
+#: frontend/src/components/BlockContextMenuOptions/index.ts:173
+msgid "Reset Changes"
+msgstr "Återställ ändringar"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:195
+msgid "Reset Component"
+msgstr "Återställ Komponent"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:164
+msgid "Reset Overrides"
+msgstr "Återställ Åsidosättningar"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:176
 msgid "Reset changes in child blocks as well?"
 msgstr "Återställa även ändringar i underordnade block?"
+
+#: frontend/src/components/BackgroundHandler.vue:107
+#: frontend/src/components/ImageUploadInput.vue:108
+msgid "Reset focal point"
+msgstr "Återställ fokuspunkt"
 
 #: frontend/src/components/VersionHistory.vue:86
 #: frontend/src/components/VersionHistory.vue:123
@@ -3634,7 +3674,6 @@ msgstr "Försöker igen {0}"
 msgid "Retrying {0}…"
 msgstr "Försök igen {0}…"
 
-#: frontend/src/components/BackgroundHandler.vue:301
 #: frontend/src/components/BlockPositionHandler.vue:52
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:165
 msgid "Right"
@@ -3658,7 +3697,7 @@ msgstr "Robots.txt Guide"
 msgid "Role"
 msgstr "Roll"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:258
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:287
 msgid "Rotation"
 msgstr "Rotation"
 
@@ -3674,7 +3713,7 @@ msgstr "Sökväg"
 msgid "Route Prefix"
 msgstr "Rutt Prefix"
 
-#: frontend/src/components/DashboardHead.vue:86
+#: frontend/src/components/DashboardHead.vue:88
 msgid "Route Tree"
 msgstr "Sökväg Träd"
 
@@ -3698,7 +3737,7 @@ msgstr "Rad Spann"
 msgid "Rows"
 msgstr "Rader"
 
-#: frontend/src/utils/useBuilderEvents.ts:130
+#: frontend/src/utils/useBuilderEvents.ts:141
 msgid "SVG with inlined image in it is not supported. Please paste it as PNG instead."
 msgstr "SVG med inbäddad bild stöds inte. Klistra in som PNG istället."
 
@@ -3706,7 +3745,7 @@ msgstr "SVG med inbäddad bild stöds inte. Klistra in som PNG istället."
 msgid "Same Tab"
 msgstr "Samma Flik"
 
-#: frontend/src/components/Modals/TokenManager.vue:1048
+#: frontend/src/components/Modals/TokenManager.vue:1160
 msgid "Sample CSV downloaded"
 msgstr "Exempel på CSV fil nedladdad"
 
@@ -3715,27 +3754,31 @@ msgstr "Exempel på CSV fil nedladdad"
 #: frontend/src/components/PropsPopoverContent.vue:46
 #: frontend/src/components/Settings/GlobalRedirects.vue:69
 #: frontend/src/components/VersionHistory.vue:27
-#: frontend/src/pages/PageBuilder.vue:46 frontend/src/stores/canvasStore.ts:172
-#: frontend/src/utils/dialogs.ts:38
+#: frontend/src/pages/PageBuilder.vue:50 frontend/src/stores/canvasStore.ts:172
+#: frontend/src/utils/dialogs.ts:55
 msgid "Save"
 msgstr "Spara"
-
-#: frontend/src/components/BlockContextMenuOptions/index.ts:218
-msgid "Save as Component"
-msgstr "Spara som Komponent"
 
 #: frontend/src/stores/componentStore.ts:88
 msgid "Save Component"
 msgstr "Spara Komponent"
 
+#: frontend/src/utils/useBuilderEvents.ts:247
+msgid "Save Page / Component"
+msgstr "Spara sida / Komponent"
+
 #: frontend/src/stores/blockTemplateStore.ts:44
 msgid "Save Template"
 msgstr "Spara Mall"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:209
+#: frontend/src/components/BlockContextMenuOptions/index.ts:223
 #: frontend/src/components/Modals/NewBlockTemplate.vue:3
 msgid "Save as Block Template"
 msgstr "Spara som Block Mall"
+
+#: frontend/src/components/BlockContextMenuOptions/index.ts:232
+msgid "Save as Component"
+msgstr "Spara som Komponent"
 
 #: frontend/src/components/Controls/ColorInput.vue:38
 msgid "Save as Token"
@@ -3745,11 +3788,7 @@ msgstr "Spara som Token"
 msgid "Save current version"
 msgstr "Spara aktuell version"
 
-#: frontend/src/utils/useBuilderEvents.ts:228
-msgid "Save Page / Component"
-msgstr "Spara sida / Komponent"
-
-#: builder/ai/api.py:522
+#: builder/ai/api.py:553
 msgid "Save the page before starting a chat session"
 msgstr "Spara sidan innan du startar chatt session"
 
@@ -3757,7 +3796,7 @@ msgstr "Spara sidan innan du startar chatt session"
 msgid "Saving template"
 msgstr "Sparar mall"
 
-#: frontend/src/pages/PageBuilder.vue:5
+#: frontend/src/pages/PageBuilder.vue:7
 msgid "Screen too small"
 msgstr "Skärm är för liten"
 
@@ -3784,7 +3823,7 @@ msgstr "Skript Typ"
 msgid "Script cannot be empty"
 msgstr "Skript kan inte vara tomt"
 
-#: frontend/src/components/PageClientScriptManager.vue:393
+#: frontend/src/components/PageClientScriptManager.vue:397
 msgid "Script order updated"
 msgstr "Skript ordning uppdaterad"
 
@@ -3797,16 +3836,16 @@ msgstr "Skript sparad"
 msgid "Scripting"
 msgstr "Skript"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:32
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:41
 msgid "Scroll"
 msgstr "Bläddra"
 
-#: frontend/src/components/Controls/Autocomplete.vue:171
+#: frontend/src/components/Controls/Autocomplete.vue:178
 #: frontend/src/components/Controls/SearchBlock.vue:7
 msgid "Search"
 msgstr "Sök"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:115
+#: frontend/src/pages/PagePersonaSurvey.vue:116
 msgid "Search (Google)"
 msgstr "Sök (Google)"
 
@@ -3814,22 +3853,19 @@ msgstr "Sök (Google)"
 msgid "Search Block"
 msgstr "Sök Block"
 
-#: frontend/src/components/Commands/index.ts:236
+#: frontend/src/components/Commands/index.ts:240
+#: frontend/src/components/Commands/index.ts:244
 msgid "Search Blocks"
 msgstr "Sök Block"
 
-#: frontend/src/components/BuilderCommandPalette.vue:60
-#: frontend/src/components/BuilderCommandPalette.vue:69
+#: frontend/src/components/BuilderCommandPalette.vue:59
+#: frontend/src/components/BuilderCommandPalette.vue:68
 msgid "Search Page"
 msgstr "Sök Sida"
 
 #: frontend/src/components/BuilderBlockTemplates.vue:37
 msgid "Search Template"
 msgstr "Sök Mall"
-
-#: frontend/src/components/Commands/index.ts:240
-msgid "Search Blocks"
-msgstr "Sök Block"
 
 #: frontend/src/components/Controls/SearchBlock.vue:17
 msgid "Search blocks..."
@@ -3839,7 +3875,7 @@ msgstr "Sök Block..."
 msgid "Search by name or email"
 msgstr "Sök efter namn eller e-post adress"
 
-#: frontend/src/components/BuilderCommandPalette.vue:70
+#: frontend/src/components/BuilderCommandPalette.vue:69
 msgid "Search by name or route..."
 msgstr "Sök efter namn eller sökväg..."
 
@@ -3851,7 +3887,7 @@ msgstr "Sökkommandon..."
 msgid "Search component"
 msgstr "Sök komponent"
 
-#: frontend/src/components/Controls/SearchBlock.vue:70
+#: frontend/src/components/Controls/SearchBlock.vue:69
 msgid "Search inside selected block only"
 msgstr "Sök endast inom valt block"
 
@@ -3863,15 +3899,15 @@ msgstr "Sök egenskaper"
 msgid "Search redirects"
 msgstr "Sök omdirigeringar"
 
-#: frontend/src/components/BuilderCommandPalette.vue:87
+#: frontend/src/components/BuilderCommandPalette.vue:86
 msgid "Search settings..."
 msgstr "Sökinställningar..."
 
-#: frontend/src/components/Modals/TokenManager.vue:37
+#: frontend/src/components/Modals/TokenManager.vue:38
 msgid "Search tokens"
 msgstr "Sök tokens"
 
-#: frontend/src/components/Controls/SearchBlock.vue:108
+#: frontend/src/components/Controls/SearchBlock.vue:107
 msgid "Search your blocks"
 msgstr "Sök i dina block"
 
@@ -3901,15 +3937,19 @@ msgstr "Välj (v)"
 msgid "Select All Matches (Alt+Enter)"
 msgstr "Välj Alla Träffar (Alt+Enter)"
 
-#: frontend/src/components/Settings/PageGeneral.vue:226
+#: frontend/src/components/Settings/PageGeneral.vue:239
 msgid "Select App"
 msgstr "Välj App"
 
-#: frontend/src/utils/dialogs.ts:80
+#: frontend/src/utils/dialogs.ts:97
 msgid "Select Folder"
 msgstr "Välj Mapp"
 
-#: frontend/src/components/Templates/TemplateGroupCard.vue:13
+#: frontend/src/utils/useBuilderEvents.ts:408
+msgid "Select Mode"
+msgstr "Välj Läge"
+
+#: frontend/src/components/Templates/TemplateGroupCard.vue:16
 msgid "Select Template"
 msgstr "Välj Mall"
 
@@ -3929,15 +3969,11 @@ msgstr "Välj datum intervall"
 msgid "Select default color"
 msgstr "Välj standard färg"
 
-#: frontend/src/utils/useBuilderEvents.ts:394
-msgid "Select Mode"
-msgstr "Välj Läge"
-
-#: frontend/src/components/Modals/TokenManager.vue:372
+#: frontend/src/components/Modals/TokenManager.vue:396
 msgid "Select or type a group name"
 msgstr "Välj eller skriv grupp namn"
 
-#: frontend/src/components/Settings/PageGeneral.vue:142
+#: frontend/src/components/Settings/PageGeneral.vue:140
 msgid "Select the app for this standard page"
 msgstr "Välj app för denna standard sida"
 
@@ -3958,6 +3994,11 @@ msgstr "Skicka Inbjudan"
 msgid "Serve Locally"
 msgstr "Servera Lokalt"
 
+#. Description of the 'Staging' (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+msgid "Served at its route, but hidden from search engines and the sitemap"
+msgstr "Serveras på sin rutt, men dold från sökmotorer och webbplatskarta"
+
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
 #: builder/builder/doctype/builder_component/builder_component.json
@@ -3974,19 +4015,19 @@ msgstr "Session"
 msgid "Session User"
 msgstr "Session Användare"
 
-#: builder/ai/api.py:147
+#: builder/ai/api.py:178
 msgid "Session not found"
 msgstr "Session hittades inte"
 
-#: frontend/src/components/Settings/PageGeneral.vue:110
+#: frontend/src/components/Settings/PageGeneral.vue:108
 msgid "Set As Homepage"
 msgstr "Ange som Startsida"
 
-#: frontend/src/components/BackgroundHandler.vue:11
+#: frontend/src/components/BackgroundHandler.vue:14
 msgid "Set Background"
 msgstr "Ange Bakgrund"
 
-#: frontend/src/components/Controls/ColorInput.vue:172
+#: frontend/src/components/Controls/ColorInput.vue:174
 #: frontend/src/components/Controls/ColorPickerContent.vue:50
 msgid "Set Color"
 msgstr "Ange Färg"
@@ -3996,11 +4037,11 @@ msgstr "Ange Färg"
 msgid "Set Dynamic Value"
 msgstr "Ange Dynamiskt Värde"
 
-#: frontend/src/components/Controls/FontInput.vue:47
+#: frontend/src/components/Controls/FontInput.vue:76
 msgid "Set Font"
 msgstr "Ange Typsnitt"
 
-#: frontend/src/components/ImageUploadInput.vue:107
+#: frontend/src/components/ImageUploadInput.vue:159
 msgid "Set Image"
 msgstr "Ange Bild"
 
@@ -4008,11 +4049,11 @@ msgstr "Ange Bild"
 msgid "Set as Primary"
 msgstr "Ange som Primär"
 
-#: frontend/src/components/Settings/PageGeneral.vue:97
+#: frontend/src/components/Settings/PageGeneral.vue:95
 msgid "Set current page as Homepage"
 msgstr "Ange aktuell sida som Startsida"
 
-#: frontend/src/components/Settings/PageGeneral.vue:160
+#: frontend/src/components/Settings/PageGeneral.vue:158
 msgid "Set folder to organize your page"
 msgstr "Ange mapp för att organisera din sida"
 
@@ -4020,23 +4061,23 @@ msgstr "Ange mapp för att organisera din sida"
 msgid "Set separately"
 msgstr "Ange separat"
 
-#: frontend/src/components/BuilderCommandPalette.vue:77
-#: frontend/src/components/BuilderCommandPalette.vue:86
-#: frontend/src/components/BuilderCommandPalette.vue:122
-#: frontend/src/components/BuilderCommandPalette.vue:321
+#: frontend/src/components/BuilderCommandPalette.vue:76
+#: frontend/src/components/BuilderCommandPalette.vue:85
+#: frontend/src/components/BuilderCommandPalette.vue:121
+#: frontend/src/components/BuilderCommandPalette.vue:320
 #: frontend/src/components/BuilderSettings.vue:4
 #: frontend/src/components/DashboardSidebar.vue:13
 #: frontend/src/components/DashboardSidebar.vue:186
 #: frontend/src/components/MainMenu.vue:101
-#: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:14
 msgid "Settings"
 msgstr "Inställningar"
 
-#: frontend/src/components/ShadowHandler.vue:8
+#: frontend/src/components/ShadowHandler.vue:11
 msgid "Shadow"
 msgstr "Skugga"
 
-#: frontend/src/components/ShadowHandler.vue:124
+#: frontend/src/components/ShadowHandler.vue:127
 msgid "Shadow Color"
 msgstr "Skugga Färg"
 
@@ -4053,7 +4094,11 @@ msgstr "Visa"
 msgid "Show Children"
 msgstr "Visa Underordnade"
 
-#: frontend/src/components/Commands/index.ts:170
+#: frontend/src/components/Commands/index.ts:209
+msgid "Show Keyboard Shortcuts"
+msgstr "Visa Kort Kommando"
+
+#: frontend/src/components/Commands/index.ts:174
 msgid "Show Left Panel"
 msgstr "Visa Vänster Panel"
 
@@ -4061,19 +4106,15 @@ msgstr "Visa Vänster Panel"
 msgid "Show Replace"
 msgstr "Visa Ersätt"
 
-#: frontend/src/components/Commands/index.ts:181
+#: frontend/src/components/Commands/index.ts:185
 msgid "Show Right Panel"
 msgstr "Visa Höger Panel"
-
-#: frontend/src/components/Commands/index.ts:205
-msgid "Show Keyboard Shortcuts"
-msgstr "Visa Kort Kommando"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"
 msgstr "Krymp"
 
-#: frontend/src/components/Settings/index.ts:128
+#: frontend/src/components/Settings/index.ts:129
 msgid "Site Analytics"
 msgstr "Webbplats Statistik"
 
@@ -4085,7 +4126,6 @@ msgstr "Webbplats är återigen tillgänglig"
 msgid "Site is in read-only mode"
 msgstr "Webbplats är i skrivskyddat läge"
 
-#: frontend/src/components/BackgroundHandler.vue:84
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:76
 msgid "Size"
 msgstr "SStorlek"
@@ -4094,19 +4134,19 @@ msgstr "SStorlek"
 msgid "Skip for now"
 msgstr "Hoppa över för tillfället"
 
-#: frontend/src/components/Modals/TokenManager.vue:1020
+#: frontend/src/components/Modals/TokenManager.vue:1126
 msgid "Skipped {0} invalid entries"
 msgstr "Hoppade över {0} ogiltiga poster"
 
-#: frontend/src/components/Modals/TokenManager.vue:1020
+#: frontend/src/components/Modals/TokenManager.vue:1125
 msgid "Skipped {0} invalid entry"
 msgstr "Hoppade över {0} ogiltig post"
 
-#: frontend/src/components/Modals/TokenManager.vue:1021
+#: frontend/src/components/Modals/TokenManager.vue:1131
 msgid "Skipped {0} standard token (read-only)"
 msgstr "Hoppade över {0} standard token (skrivskyddad)"
 
-#: frontend/src/components/Modals/TokenManager.vue:1021
+#: frontend/src/components/Modals/TokenManager.vue:1132
 msgid "Skipped {0} standard tokens (read-only)"
 msgstr "Hoppade över {0} standard tokens (skrivskyddad)"
 
@@ -4114,7 +4154,7 @@ msgstr "Hoppade över {0} standard tokens (skrivskyddad)"
 msgid "Slow"
 msgstr "Långsam"
 
-#: frontend/src/components/ShadowHandler.vue:183
+#: frontend/src/components/ShadowHandler.vue:188
 msgid "Small"
 msgstr "Liten"
 
@@ -4127,7 +4167,7 @@ msgstr "Jämn"
 msgid "Snapshot Type"
 msgstr "Ögonblicksbild Typ"
 
-#: builder/builder/doctype/builder_page/builder_page.py:401
+#: builder/builder/doctype/builder_page/builder_page.py:472
 msgid "Snapshot does not belong to this page"
 msgstr "Ögonblicksbild tillhör inte denna sida"
 
@@ -4135,11 +4175,11 @@ msgstr "Ögonblicksbild tillhör inte denna sida"
 msgid "Social Preview"
 msgstr "Social Förhandsvisning"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:119
+#: frontend/src/pages/PagePersonaSurvey.vue:120
 msgid "Social media"
 msgstr "Sociala medier"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:137
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:166
 msgid "Solid"
 msgstr "Solid"
 
@@ -4147,7 +4187,7 @@ msgstr "Solid"
 msgid "Something went wrong"
 msgstr "Något gick fel"
 
-#: frontend/src/components/DashboardHead.vue:56
+#: frontend/src/components/DashboardHead.vue:58
 msgid "Sort"
 msgstr "Sortera"
 
@@ -4185,7 +4225,7 @@ msgstr "Ange regler för att styra hur sökmotorer interagerar med din webbplats
 msgid "Speed"
 msgstr "Hastighet"
 
-#: frontend/src/components/ShadowHandler.vue:156
+#: frontend/src/components/ShadowHandler.vue:160
 msgid "Spread"
 msgstr "Sprid"
 
@@ -4193,7 +4233,19 @@ msgstr "Sprid"
 msgid "Stack"
 msgstr "Stack"
 
-#: frontend/src/components/Settings/PageGeneral.vue:132
+#. Label of the staging (Check) field in DocType 'Builder Page'
+#: builder/builder/doctype/builder_page/builder_page.json
+#: frontend/src/components/DashboardHead.vue:37
+#: frontend/src/components/Settings/PageGeneral.vue:202
+#: frontend/src/utils/pageStatus.ts:36
+msgid "Staging"
+msgstr "Testmiljö"
+
+#: frontend/src/components/Settings/PageGeneral.vue:202
+msgid "Staging with limited access"
+msgstr "Testmiljö med begränsad åtkomst"
+
+#: frontend/src/components/Settings/PageGeneral.vue:130
 msgid "Standard Page"
 msgstr "Standard Sida"
 
@@ -4222,7 +4274,7 @@ msgstr "Börja från tom sida eller välj mall."
 msgid "Start from scratch"
 msgstr "Börja från grunden"
 
-#: frontend/src/components/BuilderCommandPalette.vue:71
+#: frontend/src/components/BuilderCommandPalette.vue:70
 msgid "Start typing to search pages"
 msgstr "Börja skriva för att söka på sidor"
 
@@ -4230,6 +4282,7 @@ msgstr "Börja skriva för att söka på sidor"
 #. Label of the status (Select) field in DocType 'Builder AI Session'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
 #: builder/builder/doctype/builder_ai_session/builder_ai_session.json
+#: frontend/src/components/DashboardHead.vue:34
 #: frontend/src/components/Settings/PageGeneral.vue:28
 msgid "Status"
 msgstr "Status"
@@ -4240,7 +4293,8 @@ msgstr "Fast"
 
 #: frontend/src/components/BlockGridLayoutHandler.vue:59
 #: frontend/src/components/DimensionInput.vue:17
-#: frontend/src/components/ImageUploadInput.vue:75
+#: frontend/src/components/ImageUploadInput.vue:121
+#: frontend/src/components/ImageUploadInput.vue:184
 msgid "Stretch"
 msgstr "Sträck"
 
@@ -4255,8 +4309,8 @@ msgstr "Struktur"
 
 #. Label of the style (Code) field in DocType 'Builder Settings'
 #: builder/builder/doctype/builder_settings/builder_settings.json
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:273
-#: frontend/src/components/Controls/SearchBlock.vue:214
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:302
+#: frontend/src/components/Controls/SearchBlock.vue:213
 #: frontend/src/components/Settings/GlobalCode.vue:31
 msgid "Style"
 msgstr "Stil"
@@ -4272,15 +4326,15 @@ msgstr "Stil Offentlig URL"
 msgid "Supports Vision"
 msgstr "Stöder Vision"
 
-#: frontend/src/components/Commands/index.ts:191
+#: frontend/src/components/Commands/index.ts:195
 msgid "Switch to Dark Mode"
 msgstr "Byt till Mörkt Läge"
 
-#: frontend/src/components/Commands/index.ts:191
+#: frontend/src/components/Commands/index.ts:195
 msgid "Switch to Light Mode"
 msgstr "Byt till Ljust Läge"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:174
+#: frontend/src/components/BlockContextMenuOptions/index.ts:188
 msgid "Sync Component"
 msgstr "Synkronisera Komponent"
 
@@ -4319,12 +4373,12 @@ msgstr "Systemskapad mapp kan inte redigeras eller tas bort"
 msgid "Tab Index"
 msgstr "Flik Index"
 
-#: frontend/src/components/BuilderCanvas.vue:240
+#: frontend/src/components/BuilderCanvas.vue:241
 msgid "Tablet"
 msgstr "Surfplatta"
 
 #: frontend/src/components/BlockPropertySections/AccessibilitySection.ts:11
-#: frontend/src/components/Controls/SearchBlock.vue:171
+#: frontend/src/components/Controls/SearchBlock.vue:170
 msgid "Tag"
 msgstr "Tagg"
 
@@ -4358,21 +4412,21 @@ msgstr "Mall Grupp"
 msgid "Template Name"
 msgstr "Mall Namn"
 
-#: builder/api.py:564
+#: builder/api.py:571
 msgid "Template group not found."
 msgstr "Mall grupp hittades inte"
 
-#: builder/builder/doctype/builder_page/builder_page.py:310
+#: builder/builder/doctype/builder_page/builder_page.py:346
 msgid "Template pages can only be deleted in developer mode."
 msgstr "Mallsidor kan bara raderas i utvecklarläge."
 
-#: builder/builder/doctype/builder_page/builder_page.py:203
+#: builder/builder/doctype/builder_page/builder_page.py:235
 msgid "Template pages can only be modified in developer mode."
 msgstr "Mallsidor kan bara ändras i utvecklarläge."
 
 #. Label of the text (Data) field in DocType 'Builder Page Click'
 #: builder/builder/doctype/builder_page_click/builder_page_click.json
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:246
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:275
 msgid "Text"
 msgstr "Text"
 
@@ -4380,11 +4434,11 @@ msgstr "Text"
 msgid "Text (t)"
 msgstr "Text (t)"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:81
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:110
 msgid "Text Color"
 msgstr "Text Färg"
 
-#: frontend/src/utils/useBuilderEvents.ts:385
+#: frontend/src/utils/useBuilderEvents.ts:399
 msgid "Text Mode"
 msgstr "Text Läge"
 
@@ -4424,11 +4478,11 @@ msgstr "URL version av denna sida som rekommenderas för sökmotorer. Om inget a
 msgid "The provider litellm should call. Defaults to <code>openai</code> when an API Base is set (any OpenAI-compatible gateway), else <code>openrouter</code>."
 msgstr "Leverantören LiteLLM bör anropas. Standard värde är <code>openai</code> när en API Bas är angiven (vilken OpenAI kompatibel brandvägg som helst), annars <code>openrouter</code>."
 
-#: frontend/src/stores/pageStore.ts:354
+#: frontend/src/stores/pageStore.ts:409
 msgid "There was an error while fetching page data"
 msgstr "Ett fel uppstod vid hämtning av sidans data"
 
-#: frontend/src/components/ComponentUpdates.vue:28
+#: frontend/src/components/ComponentUpdates.vue:27
 msgid "These components changed since this page was last updated. Update to use the latest."
 msgstr "Dessa komponenter har ändrats sedan sidan senast uppdaterades. Uppdatera för att använda den senaste version."
 
@@ -4436,23 +4490,27 @@ msgstr "Dessa komponenter har ändrats sedan sidan senast uppdaterades. Uppdater
 msgid "Thin"
 msgstr "Tunn"
 
+#: frontend/src/utils/dialogs.ts:26
+msgid "This SVG is {0} KB. Kept inline it is stored in the page itself, which makes saving and editing slower. Upload it as a file instead?"
+msgstr "Denna SVG är {0} KB. Om den hålls inbäddad lagras den på själva sidan, vilket gör det långsammare att spara och redigera. Ladda upp den som en fil istället?"
+
 #: frontend/src/components/Settings/AnalyticsFilters.vue:56
 msgid "This Year"
 msgstr "I År"
 
-#: builder/ai/api.py:167
+#: builder/ai/api.py:198
 msgid "This action does not belong to you"
 msgstr "Denna åtgärd tillhör inte dig"
 
-#: builder/ai/api.py:149
+#: builder/ai/api.py:180
 msgid "This chat belongs to another user"
 msgstr "Denna chatt tillhör annan användare"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:126
+#: frontend/src/pages/PagePersonaSurvey.vue:127
 msgid "This helps us personalise your Builder experience"
 msgstr "Detta hjälper oss att anpassa din upplevelse"
 
-#: frontend/src/components/Modals/TokenManager.vue:181
+#: frontend/src/components/Modals/TokenManager.vue:193
 msgid "This is a standard variable. It cannot be modified or deleted."
 msgstr "Detta är en standard variabel. Den kan inte ändras eller tas bort."
 
@@ -4460,20 +4518,25 @@ msgstr "Detta är en standard variabel. Den kan inte ändras eller tas bort."
 msgid "This is the homepage for your site"
 msgstr "Detta är startsida för din webbplats"
 
-#: frontend/src/components/RouteTreeNode.vue:47
+#: frontend/src/components/PageCard.vue:30
+#: frontend/src/components/RouteTreeNode.vue:55
 #: frontend/src/components/ToolbarItems/PageTitlePopover.vue:15
 msgid "This page has limited access"
 msgstr "Denna sida har begränsad åtkomst"
 
-#: frontend/src/components/Settings/PageGeneral.vue:260
+#: builder/builder/doctype/builder_page/builder_page.py:402
+msgid "This page is live. Mark it as staging instead."
+msgstr "Denna sida är live. Välj den som testmiljö istället."
+
+#: frontend/src/components/Settings/PageGeneral.vue:273
 msgid "This page will be exported to {0} app as standard page"
 msgstr "Denna sida kommer att exporteras till {0} app som standard sida"
 
-#: frontend/src/stores/builderStore.ts:106
+#: frontend/src/stores/builderStore.ts:109
 msgid "This page will no longer be the homepage"
 msgstr "Denna sida kommer inte längre att vara startsida"
 
-#: builder/ai/api.py:306
+#: builder/ai/api.py:337
 msgid "This provider has no API Base to ask"
 msgstr "Denna leverantör har ingen API Bas att fråga"
 
@@ -4499,13 +4562,9 @@ msgstr "Detta kommer att läggas till i slutet av &lt;head&gt;"
 msgid "This will load this version into the editor as your current draft. Your live page won't change until you publish. Continue?"
 msgstr "Detta laddar denna version i redigerare som aktuell utkast. Aktiv sida ändras inte förrän du publicerar. Vill du fortsätta?"
 
-#: frontend/src/stores/pageStore.ts:208
+#: frontend/src/stores/pageStore.ts:261
 msgid "This will revert all changes made to the page since the last publish. Are you sure you want to continue?"
 msgstr "Detta återställer alla ändringar som gjorts på sidan sedan senaste publicering. Är du säker på att du vill fortsätta?"
-
-#: frontend/src/composables/useAnalytics.ts:118
-msgid "Timeline"
-msgstr "Tidslinje"
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:46
 msgid "Timing"
@@ -4523,7 +4582,8 @@ msgstr "Benämning"
 msgid "Today"
 msgstr "Idag"
 
-#: frontend/src/components/Commands/index.ts:226
+#: frontend/src/components/Commands/index.ts:230
+#: frontend/src/components/Commands/index.ts:234
 msgid "Toggle Canvas Dark Mode"
 msgstr "Byt Arbetsyta Mörkt Läge"
 
@@ -4535,7 +4595,12 @@ msgstr "Byt Arbetsyta Mörkt Läge (⌘⇧D)"
 msgid "Toggle Dark Mode"
 msgstr "Byt Mörkt Läge"
 
-#: frontend/src/components/Commands/index.ts:213
+#: frontend/src/components/Commands/index.ts:179
+msgid "Toggle Left Panel"
+msgstr "Byt Vänster Panel"
+
+#: frontend/src/components/Commands/index.ts:217
+#: frontend/src/components/Commands/index.ts:221
 msgid "Toggle Panels"
 msgstr "Byt Paneler"
 
@@ -4544,46 +4609,33 @@ msgstr "Byt Paneler"
 msgid "Toggle Theme"
 msgstr "Byt Tema"
 
-#: frontend/src/components/Commands/index.ts:230
-msgid "Toggle Canvas Dark Mode"
-msgstr "Byt Arbetsyta Mörkt Läge"
-
-#: frontend/src/components/Commands/index.ts:175
-msgid "Toggle Left Panel"
-msgstr "Byt Vänster Panel"
-
-#: frontend/src/components/Commands/index.ts:217
-msgid "Toggle Panels"
-msgstr "Byt Paneler"
-
 #. Label of the token_name (Data) field in DocType 'Builder Token'
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/Modals/NewBuilderToken.vue:20
 msgid "Token Name"
 msgstr "Token Namn"
 
-#: frontend/src/components/Modals/TokenManager.vue:840
+#: frontend/src/components/Modals/TokenManager.vue:906
 msgid "Token created"
 msgstr "Token skapad"
 
-#: frontend/src/components/Modals/TokenManager.vue:79
+#: frontend/src/components/Modals/TokenManager.vue:80
 msgid "Token name"
 msgstr "Token namn"
 
-#: frontend/src/components/Modals/NewBuilderToken.vue:90
+#: frontend/src/components/Modals/NewBuilderToken.vue:98
 msgid "Token updated"
 msgstr "Token uppdaterad"
 
-#: frontend/src/pages/PageBuilder.vue:193
-#: frontend/src/utils/useBuilderEvents.ts:368
-#: frontend/src/utils/useBuilderEvents.ts:377
-#: frontend/src/utils/useBuilderEvents.ts:386
-#: frontend/src/utils/useBuilderEvents.ts:395
-#: frontend/src/utils/useBuilderEvents.ts:403
+#: frontend/src/pages/PageBuilder.vue:194
+#: frontend/src/utils/useBuilderEvents.ts:382
+#: frontend/src/utils/useBuilderEvents.ts:391
+#: frontend/src/utils/useBuilderEvents.ts:400
+#: frontend/src/utils/useBuilderEvents.ts:409
+#: frontend/src/utils/useBuilderEvents.ts:417
 msgid "Tools"
 msgstr "Verktyg"
 
-#: frontend/src/components/BackgroundHandler.vue:298
 #: frontend/src/components/BlockPositionHandler.vue:23
 msgid "Top"
 msgstr "Topp"
@@ -4619,10 +4671,6 @@ msgstr "Topp Höger"
 msgid "Total Pageviews"
 msgstr "Totalt antal sidvisningar"
 
-#: frontend/src/composables/useAnalytics.ts:121
-msgid "Total Views"
-msgstr "Totalt Visningar"
-
 #: frontend/src/components/BlockPropertySections/LinkSection.ts:77
 msgid "Track Clicks"
 msgstr "Spåra Klick"
@@ -4647,7 +4695,7 @@ msgstr "Övergång"
 msgid "True Label"
 msgstr "Sann Etikett"
 
-#: frontend/src/components/Controls/SearchBlock.vue:142
+#: frontend/src/components/Controls/SearchBlock.vue:141
 msgid "Try different keywords or adjust your filters"
 msgstr "Testa andra sökord eller justera dina filter"
 
@@ -4660,12 +4708,11 @@ msgstr "Aktivera visningsspårning för att börja samla in uppgifter om sidvisn
 #: frontend/src/components/BlockPropertySections/DataKeySection.ts:25
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:11
 #: frontend/src/components/BlockPropertySections/LayoutSection.ts:36
-#: frontend/src/components/DashboardHead.vue:32
 #: frontend/src/components/PropsPopoverContent.vue:24
 msgid "Type"
 msgstr "Typ "
 
-#: builder/ai/api.py:129
+#: builder/ai/api.py:160
 msgid "Type a prompt first"
 msgstr "Skriv prompt först"
 
@@ -4683,16 +4730,16 @@ msgstr "URL"
 msgid "URL Variables"
 msgstr "URL Variabler"
 
-#: frontend/src/components/Commands/index.ts:291
-#: frontend/src/components/Commands/index.ts:295
+#: frontend/src/components/Commands/index.ts:290
+#: frontend/src/components/Commands/index.ts:294
 msgid "Undo"
 msgstr "Ångra"
 
-#: frontend/src/components/Modals/TokenManager.vue:729
+#: frontend/src/components/Modals/TokenManager.vue:789
 msgid "Ungrouped {0} token"
 msgstr "Ogrupperad {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:729
+#: frontend/src/components/Modals/TokenManager.vue:790
 msgid "Ungrouped {0} tokens"
 msgstr "Ogrupperade {0} tokens"
 
@@ -4700,7 +4747,7 @@ msgstr "Ogrupperade {0} tokens"
 msgid "Unique Visitors"
 msgstr "Unika Besökare"
 
-#: builder/ai/api.py:84
+#: builder/ai/api.py:115
 msgid "Unknown AI model: {0}"
 msgstr "Okänd AI modell: {0}"
 
@@ -4708,19 +4755,19 @@ msgstr "Okänd AI modell: {0}"
 msgid "Unknown pending action: {0}"
 msgstr "Okänd väntande åtgärd: {0}"
 
-#: builder/ai/api.py:379 builder/ai/api.py:439
+#: builder/ai/api.py:410 builder/ai/api.py:470
 msgid "Unknown provider: {0}"
 msgstr "Okänd leverantör: {0}"
 
 #: frontend/src/components/PageActionsDropdown.vue:20
-#: frontend/src/components/PublishButton.vue:31
-#: frontend/src/components/Settings/PageGeneral.vue:56
+#: frontend/src/components/PublishButton.vue:36
+#: frontend/src/components/Settings/PageGeneral.vue:50
 msgid "Unpublish"
 msgstr "Ångra Publicering"
 
-#: frontend/src/components/DashboardHead.vue:36
-msgid "Unpublished"
-msgstr "Opublicerad"
+#: frontend/src/utils/pageStatus.ts:29
+msgid "Unpublished changes"
+msgstr "Opublicerade ändringar"
 
 #. Option for the 'Execute Block Scripts in Editor' (Select) field in DocType
 #. 'Builder Settings'
@@ -4729,16 +4776,16 @@ msgstr "Opublicerad"
 msgid "Unrestricted"
 msgstr "Obegränsad"
 
-#: builder/template_sync.py:55
-msgid "Unsafe template fixture name: {0}"
-msgstr "Osäker mall tillägg namn: {0}"
+#: builder/utils.py:69
+msgid "Unsafe fixture name: {0}"
+msgstr "Osäker tillägg namn: {0}"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:16
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:25
 #: frontend/src/components/BlockPropertySections/TypographySection.ts:120
 msgid "Unset"
 msgstr "Återställ"
 
-#: frontend/src/components/Settings/PageGeneral.vue:110
+#: frontend/src/components/Settings/PageGeneral.vue:108
 msgid "Unset Homepage"
 msgstr "Återställ Startsida"
 
@@ -4746,20 +4793,20 @@ msgstr "Återställ Startsida"
 msgid "Untitled"
 msgstr "Namnlös"
 
-#: frontend/src/components/ComponentUpdates.vue:46
+#: frontend/src/components/ComponentUpdates.vue:47
 #: frontend/src/components/Modals/NewBuilderToken.vue:9
 msgid "Update"
 msgstr "Uppdatera"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:297
+#: frontend/src/utils/builderBlockCopyPaste.ts:299
 msgid "Update Current Page"
 msgstr "Uppdatera Aktuell Sida"
 
-#: frontend/src/components/ComponentUpdates.vue:23
+#: frontend/src/components/ComponentUpdates.vue:22
 msgid "Update all"
 msgstr "Uppdatera alla"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:194
+#: frontend/src/components/BlockContextMenuOptions/index.ts:208
 msgid "Update to Latest Component"
 msgstr "Uppdatera till senaste komponent"
 
@@ -4767,11 +4814,15 @@ msgstr "Uppdatera till senaste komponent"
 msgid "Updated global settings: {0}"
 msgstr "Uppdaterade standard inställningar: {0}"
 
-#: frontend/src/components/Modals/TokenManager.vue:1017
+#: frontend/src/components/PageListItem.vue:40
+msgid "Updated {0} by {1}"
+msgstr "Uppdaterade {0} av {1}"
+
+#: frontend/src/components/Modals/TokenManager.vue:1108
 msgid "Updated {0} token"
 msgstr "Uppdaterade {0} token"
 
-#: frontend/src/components/Modals/TokenManager.vue:1017
+#: frontend/src/components/Modals/TokenManager.vue:1108
 msgid "Updated {0} tokens"
 msgstr "Uppdaterade {0} tokens"
 
@@ -4783,19 +4834,20 @@ msgstr "Uppdaterar primär domän…"
 msgid "Updating redirect..."
 msgstr "Uppdaterar omdirigering..."
 
-#: frontend/src/components/BackgroundHandler.vue:77
-#: frontend/src/components/Controls/ImageUploader.vue:13
-#: frontend/src/components/ImageUploadInput.vue:64
+#: frontend/src/components/BackgroundHandler.vue:101
+#: frontend/src/components/Controls/ImageUploader.vue:15
+#: frontend/src/components/ImageUploadInput.vue:95
+#: frontend/src/components/ImageUploadInput.vue:103
 #: frontend/src/components/Modals/NewBlockTemplate.vue:50
 msgid "Upload"
 msgstr "Ladda upp"
 
-#: frontend/src/components/Modals/TokenManager.vue:380
+#: frontend/src/components/Modals/TokenManager.vue:409
 msgid "Upload CSV"
 msgstr "Ladda upp CSV"
 
 #: frontend/src/components/Controls/FontUploader.vue:6
-#: frontend/src/utils/helpers.ts:517
+#: frontend/src/utils/helpers.ts:561
 msgid "Upload Font"
 msgstr "Ladda upp teckensnitt"
 
@@ -4803,19 +4855,23 @@ msgstr "Ladda upp teckensnitt"
 msgid "Upload Meta Image"
 msgstr "Ladda upp Meta Bild"
 
-#: frontend/src/utils/helpers.ts:374
+#: frontend/src/utils/dialogs.ts:28
+msgid "Upload as File"
+msgstr "Ladda upp som Fil"
+
+#: frontend/src/utils/helpers.ts:382
 msgid "Uploaded"
 msgstr "Uppladdad"
 
-#: frontend/src/utils/helpers.ts:553
+#: frontend/src/utils/helpers.ts:597
 msgid "Uploading font..."
 msgstr "Laddar upp teckensnitt..."
 
-#: frontend/src/components/Controls/ImageUploader.vue:13
+#: frontend/src/components/Controls/ImageUploader.vue:15
 msgid "Uploading {0}%"
 msgstr "Ladda Upp {0}%"
 
-#: frontend/src/utils/helpers.ts:369
+#: frontend/src/utils/helpers.ts:377
 msgid "Uploading..."
 msgstr "Ladda Upp..."
 
@@ -4874,7 +4930,8 @@ msgstr "Användare"
 #: builder/builder/doctype/builder_token/builder_token.json
 #: frontend/src/components/BlockPropertySections/InputOptionsSection.ts:69
 #: frontend/src/components/DynamicValueDropdown.vue:6
-#: frontend/src/components/Modals/TokenManager.vue:53
+#: frontend/src/components/Modals/NewBuilderToken.vue:26
+#: frontend/src/components/Modals/TokenManager.vue:54
 #: frontend/src/components/ObjectEditor.vue:20
 msgid "Value"
 msgstr "Värde"
@@ -4892,12 +4949,12 @@ msgstr "Verifierar DNS för {0}…"
 msgid "Version"
 msgstr "Version"
 
-#: frontend/src/components/PublishButton.vue:23
+#: frontend/src/components/ToolbarItems/ToolbarActions.vue:7
 #: frontend/src/components/VersionHistory.vue:7
 msgid "Version History"
 msgstr "Version Historik"
 
-#: frontend/src/stores/pageStore.ts:244
+#: frontend/src/stores/pageStore.ts:297
 msgid "Version restored"
 msgstr "Version återställd"
 
@@ -4921,11 +4978,10 @@ msgstr "Video Alternativ"
 msgid "Video URL"
 msgstr "Video URL"
 
-#: frontend/src/components/Commands/index.ts:43
-#: frontend/src/components/Commands/index.ts:172
-#: frontend/src/components/Commands/index.ts:183
-#: frontend/src/components/Commands/index.ts:193
-#: frontend/src/utils/useBuilderEvents.ts:414
+#: frontend/src/components/Commands/index.ts:41
+#: frontend/src/components/Commands/index.ts:176
+#: frontend/src/components/Commands/index.ts:187
+#: frontend/src/components/Commands/index.ts:197
 msgid "View"
 msgstr "Visa"
 
@@ -4942,10 +4998,11 @@ msgid "View tracking is off"
 msgstr "Visa spårning är inaktiverad"
 
 #: frontend/src/components/Settings/GlobalAnalytics.vue:32
+#: frontend/src/composables/useAnalytics.ts:139
 msgid "Views"
 msgstr "Visningar"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:24
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:33
 msgid "Visible"
 msgstr "Synlig"
 
@@ -4954,20 +5011,20 @@ msgstr "Synlig"
 msgid "Visitor ID"
 msgstr "Besökare"
 
-#: frontend/src/components/Modals/TokenManager.vue:967
+#: frontend/src/components/Modals/TokenManager.vue:1052
 msgid "WARNING: Updating will overwrite the existing values for the listed variables."
 msgstr "VARNING: Uppdatering kommer att skriva över befintliga värden för angivna variabler."
 
-#: frontend/src/utils/useBuilderEvents.ts:129
+#: frontend/src/utils/useBuilderEvents.ts:140
 #: frontend/src/utils/useCanvasUtils.ts:234
 msgid "Warning"
 msgstr "Varning"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:140
+#: frontend/src/pages/PagePersonaSurvey.vue:141
 msgid "We'll point you to the right starting templates"
 msgstr "Vi hänvisar dig till rätta start mallar"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:146
+#: frontend/src/pages/PagePersonaSurvey.vue:147
 msgid "Web app UI"
 msgstr "Web app UI"
 
@@ -4994,11 +5051,11 @@ msgstr "Webbplats Ansvarig"
 msgid "Weight"
 msgstr "Vikt"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:139
+#: frontend/src/pages/PagePersonaSurvey.vue:140
 msgid "What do you want to build first?"
 msgstr "Vad vill du skapa först?"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:125
+#: frontend/src/pages/PagePersonaSurvey.vue:126
 msgid "Which one best describes you?"
 msgstr "Vilket alternativ stämmer bäst in på dig?"
 
@@ -5015,15 +5072,15 @@ msgstr "Arbetsutkast · opublicerade ändringar"
 msgid "Wrap"
 msgstr "Radbryt"
 
-#: frontend/src/components/BlockContextMenuOptions/index.ts:86
+#: frontend/src/components/BlockContextMenuOptions/index.ts:100
 msgid "Wrap in Container"
 msgstr "Förpacka i Behållare"
 
-#: frontend/src/components/ShadowHandler.vue:153
+#: frontend/src/components/ShadowHandler.vue:157
 msgid "X Offset"
 msgstr "X Förskjutning"
 
-#: frontend/src/components/ShadowHandler.vue:154
+#: frontend/src/components/ShadowHandler.vue:158
 msgid "Y Offset"
 msgstr "Y Förskjutning"
 
@@ -5042,19 +5099,19 @@ msgstr "Ja"
 msgid "You"
 msgstr "Du"
 
-#: frontend/src/utils/builderBlockCopyPaste.ts:272
+#: frontend/src/utils/builderBlockCopyPaste.ts:274
 msgid "You are about to paste a page with settings and scripts. Do you want to update the current page or create a new one?"
 msgstr "Du håller på att klistra in sida med inställningar och skript. Vill du uppdatera aktuell sida eller skapa ny?"
 
-#: builder/ai/api.py:160
+#: builder/ai/api.py:191
 msgid "You are not permitted to apply this change"
 msgstr "Du har inte behörighet att tillämpa denna ändring"
 
-#: builder/ai/api.py:302
+#: builder/ai/api.py:333
 msgid "You are not permitted to manage AI models"
 msgstr "Du har inte behörighet att hantera AI modeller"
 
-#: builder/ai/api.py:274
+#: builder/ai/api.py:305
 msgid "You are not permitted to manage AI providers"
 msgstr "Du har inte behörighet att hantera AI leverantörer"
 
@@ -5062,19 +5119,19 @@ msgstr "Du har inte behörighet att hantera AI leverantörer"
 msgid "You can continue editing."
 msgstr "Du kan fortsätta redigera."
 
-#: frontend/src/components/TextBlockBubbleMenu.vue:269
+#: frontend/src/components/TextBlockBubbleMenu.vue:262
 msgid "You cannot add link inside a button block"
 msgstr "Du kan inte lägga till länk inuti knapp block"
 
-#: frontend/src/components/TextBlockBubbleMenu.vue:268
+#: frontend/src/components/TextBlockBubbleMenu.vue:261
 msgid "You cannot add link inside a link block"
 msgstr "Du kan inte lägga till länk inuti länk block"
 
-#: frontend/src/components/TextBlockBubbleMenu.vue:267
+#: frontend/src/components/TextBlockBubbleMenu.vue:260
 msgid "You cannot make heading a link"
 msgstr "Du kan inte ändra rubrik till länk"
 
-#: builder/ai/session.py:88
+#: builder/ai/session.py:89
 msgid "You do not have access to this AI session"
 msgstr "Du har inte behörighet till denna AI session"
 
@@ -5082,11 +5139,11 @@ msgstr "Du har inte behörighet till denna AI session"
 msgid "You do not have permission to access this page"
 msgstr "Du har inte behörighet att komma åt denna sida"
 
-#: builder/utils.py:85
+#: builder/utils.py:96
 msgid "You do not have permission to modify pages"
 msgstr "Du har inte behörighet att ändra sidor"
 
-#: builder/utils.py:87
+#: builder/utils.py:98
 msgid "You do not have permission to read pages"
 msgstr "Du har inte behörighet att läsa sidor"
 
@@ -5102,25 +5159,33 @@ msgstr "Du har ändringar som inte har sparats. Är du säker på att du vill fo
 msgid "You have unsaved changes. Please save before leaving."
 msgstr "Du har ändringar som inte har sparats. Spara innan du lämnar sidan."
 
-#: frontend/src/pages/PagePersonaSurvey.vue:185
+#: frontend/src/pages/PagePersonaSurvey.vue:186
 msgid "You're all set{0}. Pick a starting point"
 msgstr "Nu är du redo{0}. Välj startpunkt"
 
-#: frontend/src/pages/PagePersonaSurvey.vue:116
+#: frontend/src/pages/PagePersonaSurvey.vue:117
 msgid "YouTube"
 msgstr "Youtube"
 
-#: frontend/src/components/BlockPropertySections/StyleSection.ts:187
+#: frontend/src/components/BlockPropertySections/StyleSection.ts:216
 msgid "Z-Index"
 msgstr "Z-Index"
 
-#: frontend/src/utils/useBuilderEvents.ts:346
+#: frontend/src/utils/useBuilderEvents.ts:361
 msgid "Zoom In"
 msgstr "Zooma In"
 
-#: frontend/src/utils/useBuilderEvents.ts:357
+#: frontend/src/utils/useBuilderEvents.ts:371
 msgid "Zoom Out"
 msgstr "Zooma Ut"
+
+#: frontend/src/components/Controls/ImageFocusInput.vue:50
+msgid "Zoom in"
+msgstr "Zooma in"
+
+#: frontend/src/components/Controls/ImageFocusInput.vue:36
+msgid "Zoom out"
+msgstr "Zooma ut"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json
@@ -5158,7 +5223,7 @@ msgstr "t.ex. yourdomain.com"
 msgid "e.g., primary, accent, background"
 msgstr "t.ex. primärt, betoning, bakgrund"
 
-#: frontend/src/utils/helpers.ts:918
+#: frontend/src/utils/helpers.ts:959
 msgid "not used in any pages"
 msgstr "används inte på någon sida"
 
@@ -5171,7 +5236,7 @@ msgstr "eller"
 msgid "status"
 msgstr "status"
 
-#: frontend/src/stores/pageStore.ts:249
+#: frontend/src/stores/pageStore.ts:302
 msgid "this page"
 msgstr "denna sida"
 
@@ -5180,15 +5245,15 @@ msgstr "denna sida"
 msgid "unknown"
 msgstr "okänd"
 
-#: frontend/src/components/Modals/TokenManager.vue:202
+#: frontend/src/components/Modals/TokenManager.vue:214
 msgid "unnamed"
 msgstr "namnlös"
 
-#: frontend/src/utils/helpers.ts:920
+#: frontend/src/utils/helpers.ts:961
 msgid "used in 1 page"
 msgstr "använd på 1 sida"
 
-#: frontend/src/utils/helpers.ts:920
+#: frontend/src/utils/helpers.ts:961
 msgid "used in {0} pages"
 msgstr "använd på {0} sidor"
 
@@ -5201,7 +5266,7 @@ msgstr "används på {0}+ sidor"
 msgid "user"
 msgstr "användare"
 
-#: frontend/src/components/ToolbarItems/ViewerAvatars.vue:40
+#: frontend/src/components/ToolbarItems/ViewerAvatars.vue:41
 msgid "{0} & {1} others"
 msgstr "{0} & {1} andra"
 
@@ -5209,15 +5274,15 @@ msgstr "{0} & {1} andra"
 msgid "{0} added successfully"
 msgstr "{0} har lagts till"
 
-#: builder/ai/api.py:87
+#: builder/ai/api.py:118
 msgid "{0} can't view images. Pick a vision-capable model or remove the image."
 msgstr "{0} kan inte visa bilder. Välj modell med vision funktion eller ta bort bild."
 
-#: frontend/src/components/Modals/TokenManager.vue:951
+#: frontend/src/components/Modals/TokenManager.vue:1021
 msgid "{0} entries were invalid"
 msgstr "{0} poster var ogiltiga"
 
-#: frontend/src/components/Modals/TokenManager.vue:951
+#: frontend/src/components/Modals/TokenManager.vue:1020
 msgid "{0} entry was invalid"
 msgstr "{0} posten var ogiltig"
 
@@ -5233,11 +5298,11 @@ msgstr "{0} instanser"
 msgid "{0} models still use this provider: {1}"
 msgstr "{0} modeller använder fortfarande denna leverantör: {1}"
 
-#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+#: frontend/src/components/Templates/TemplateGroupCard.vue:30
 msgid "{0} page"
 msgstr "{0} sida"
 
-#: frontend/src/components/Templates/TemplateGroupCard.vue:25
+#: frontend/src/components/Templates/TemplateGroupCard.vue:31
 msgid "{0} pages"
 msgstr "{0} sidor"
 
