@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-26 15:28\n"
+"PO-Revision-Date: 2026-09-26 17:06\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Croatian\n"
 "MIME-Version: 1.0\n"
@@ -531,7 +531,7 @@ msgstr "Zamagli"
 
 #: frontend/src/components/LeftPanelTabs/index.ts:87
 msgid "Bob AI"
-msgstr ""
+msgstr "Bob AI"
 
 #. Label of the body_html (Code) field in DocType 'Builder Page'
 #. Label of the body_html (Code) field in DocType 'Builder Settings'
@@ -778,7 +778,7 @@ msgstr "Obriši sve filtere"
 
 #: frontend/src/components/BackgroundHandler.vue:113
 msgid "Clear image"
-msgstr ""
+msgstr "Očisti sliku"
 
 #: frontend/src/components/Modals/TokenManager.vue:379
 msgid "Click 'Add Token' to create your first one."
@@ -904,7 +904,7 @@ msgstr "Naziv komponente"
 
 #: frontend/src/components/BlockPropertySections/StandardPropsInputSection.ts:149
 msgid "Component Options"
-msgstr ""
+msgstr "Opcije Komponente"
 
 #: frontend/src/components/PageScript.vue:33
 msgid "Component Props"
@@ -1006,7 +1006,7 @@ msgstr "Pretvori u Kolekciju"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:42
 msgid "Convert to Image File"
-msgstr ""
+msgstr "Pretvori u Slikovnu Datoteku"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:54
 msgid "Convert to Image File ({0} KB)"
