@@ -23,7 +23,6 @@ class TestBuilderExtension(FrappeTestCase):
 	"""The site's one record of an extension."""
 
 	def setUp(self):
-		# a grant Links to the installation, so dropping the copy takes the grant
 		drop_installations(EXTENSION)
 
 	def test_the_files_are_private_and_named_by_the_record(self):
@@ -92,7 +91,7 @@ class TestBuilderExtension(FrappeTestCase):
 		frappe.db.after_commit.run()
 		self.assertFalse(install_path.exists())
 
-	def test_uninstall_takes_every_users_state_and_the_grants(self):
+	def test_uninstall_takes_every_users_state(self):
 		installation = make_installation(EXTENSION)
 		for user in ("Administrator", make_user()):
 			frappe.get_doc(
@@ -104,37 +103,10 @@ class TestBuilderExtension(FrappeTestCase):
 					"state_value": '"dark"',
 				}
 			).insert()
-		frappe.get_doc(
-			{
-				"doctype": "Builder Extension DocType Grant",
-				"installation": installation.name,
-				"document_type": "Contact",
-				"read": "allowed",
-			}
-		).insert()
 
 		installation.delete()
 
 		self.assertFalse(frappe.db.exists("Builder Extension State", {"installation": installation.name}))
-		self.assertFalse(
-			frappe.db.exists("Builder Extension DocType Grant", {"installation": installation.name})
-		)
-
-	def test_uninstall_leaves_another_extensions_grants_alone(self):
-		installation = make_installation(EXTENSION)
-		theirs = make_installation("acme/other-record")
-		frappe.get_doc(
-			{
-				"doctype": "Builder Extension DocType Grant",
-				"installation": theirs.name,
-				"document_type": "Contact",
-				"read": "allowed",
-			}
-		).insert()
-
-		installation.delete()
-
-		self.assertTrue(frappe.db.exists("Builder Extension DocType Grant", {"installation": theirs.name}))
 
 
 class TestInstalledFiles(FrappeTestCase):

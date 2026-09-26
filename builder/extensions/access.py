@@ -24,7 +24,6 @@ import frappe
 from frappe import _
 
 INSTALLATION_DOCTYPE = "Builder Extension"
-GRANT_DOCTYPE = "Builder Extension DocType Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 

@@ -10,12 +10,9 @@ from builder.builder.tests.extension_fixtures import (
 	make_user,
 	set_extension_manager_role,
 )
-from builder.extensions.access import assert_extension_access, find_installation
-from builder.extensions.data import record_doctype_grant
+from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
 	get_installations,
-	installation_doctype_grants,
-	set_doctype_grant,
 	set_extension_enabled,
 	set_granted_capabilities,
 	uninstall_extension,
@@ -171,75 +168,3 @@ class TestUninstall(FrappeTestCase):
 	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
-
-
-def answers(read="not asked", write="not asked", delete="not asked") -> dict:
-	return {"read": read, "write": write, "delete": delete}
-
-
-class TestGrantAnswers(FrappeTestCase):
-	"""Changing what a manager already answered for, one access at a time.
-
-	The gate is the manager right, never the extension's access. A manager must
-	reach an answer after disabling the extension or turning `data.access` off,
-	which is when they most want it back.
-	"""
-
-	def setUp(self):
-		drop_installations(EXTENSION)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def grant(self, answers):
-		make_installation(EXTENSION)
-		record_doctype_grant(EXTENSION, "Contact", answers)
-
-	def assertAnswers(self, row, read, write, delete):
-		self.assertEqual((row["read"], row["write"], row["delete"]), (read, write, delete))
-
-	def test_narrows_one_access_and_keeps_the_rest(self):
-		self.grant({"read": "allowed", "write": "allowed", "delete": "allowed"})
-
-		grants = set_doctype_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
-
-		self.assertAnswers(grants[0], "allowed", "allowed", "not asked")
-
-	def test_denies_one_access_and_keeps_the_rest(self):
-		self.grant({"read": "allowed", "write": "allowed"})
-
-		grants = set_doctype_grant(EXTENSION, "Contact", answers("allowed", "denied"))
-
-		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
-
-	def test_not_asked_is_the_way_back_from_a_denial(self):
-		self.grant({"read": "denied"})
-		installation = find_installation(EXTENSION)
-
-		set_doctype_grant(EXTENSION, "Contact", answers())
-
-		self.assertAnswers(
-			installation_doctype_grants(installation)[0], "not asked", "not asked", "not asked"
-		)
-
-	def test_refuses_an_answer_it_does_not_know(self):
-		self.grant({"read": "allowed"})
-
-		with self.assertRaises(frappe.ValidationError):
-			set_doctype_grant(EXTENSION, "Contact", answers(read="maybe"))
-
-	def test_answers_only_the_access_it_names(self):
-		self.grant({"read": "allowed", "write": "allowed"})
-
-		grants = set_doctype_grant(EXTENSION, "Contact", {"write": "denied"})
-
-		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
-
-	def test_refuses_an_extension_the_site_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			set_doctype_grant(EXTENSION, "Contact", answers())
-
-	def test_refuses_a_user_who_cannot_manage(self):
-		self.grant({"read": "allowed"})
-		become_a_user_who_cannot_manage(self)
-
-		with self.assertRaises(frappe.PermissionError):
-			set_doctype_grant(EXTENSION, "Contact", answers())

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One extension installed on this site, with its build, version and capabilities. Deleting it removes its files, doctype grants and extension state, but keeps any doctype, token or client script the extension made.",
+ "description": "One extension installed on this site, with its build, version and capabilities. Deleting it removes its files and extension state, but keeps any doctype, token or client script the extension made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -90,7 +90,7 @@
    "read_only": 1
   },
   {
-   "description": "JSON list of capability keys the manifest asked for. A grant cannot reach outside this list.",
+   "description": "JSON list of capability keys the manifest asked for. A manager can grant only keys from this list.",
    "fieldname": "requested_capabilities",
    "fieldtype": "Small Text",
    "label": "Requested Capabilities",

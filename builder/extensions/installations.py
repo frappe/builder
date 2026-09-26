@@ -15,13 +15,11 @@ import frappe
 from frappe import _
 
 from builder.extensions.access import (
-	GRANT_DOCTYPE,
 	INSTALLATION_DOCTYPE,
 	assert_extension_manager,
 	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.data import ACCESSES, assert_answers, upsert_doctype_grant
 from builder.utils import has_page_read
 
 NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
@@ -54,32 +52,6 @@ def is_turned_off(row: dict) -> bool:
 	return not row.enabled and row.install_state in (None, "", "Ready")
 
 
-def installation_doctype_grants(installation: str) -> list[dict]:
-	"""Every doctype a manager answered for, as the panel lists them."""
-	return frappe.get_all(
-		GRANT_DOCTYPE,
-		filters={"installation": installation},
-		fields=["document_type", *ACCESSES],
-		order_by="document_type asc",
-	)
-
-
-@frappe.whitelist(methods=["POST"])
-@has_page_read(NO_BUILDER_ACCESS)
-def set_doctype_grant(extension: str, doctype: str, answers: dict | None = None) -> list[dict]:
-	"""Write the answers a call names for one doctype, and answer with every grant after it.
-
-	The gate is the manager right, not the extension's access. A manager most
-	wants an answer back after they disable the extension or turn `data.access`
-	off, and the extension gate refuses both.
-	"""
-	assert_extension_manager()
-	installation = get_installation(extension)
-	assert_answers(answers)
-	upsert_doctype_grant(installation, doctype, answers)
-	return installation_doctype_grants(installation)
-
-
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def set_extension_enabled(extension: str, enabled: bool) -> None:
@@ -108,10 +80,7 @@ def set_granted_capabilities(extension: str, capabilities: list[str]) -> list[st
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def uninstall_extension(extension: str) -> None:
-	"""The site's copy, its grants and every user's stored state.
-
-	`on_trash` takes all three.
-	"""
+	"""The site's copy and every user's stored state. `on_trash` takes both."""
 	assert_extension_manager()
 	frappe.delete_doc(INSTALLATION_DOCTYPE, get_installation(extension), ignore_permissions=True)
 

@@ -1,176 +1,31 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""What one extension may do to one doctype, for the whole site.
+"""The documents an extension reads and writes, for the whole site.
 
-Three gates stand between an extension and a document:
+Two gates stand between an extension and a document:
 1. The capability says the extension may work with site data at all (`data.access`).
-2. The doctype grant here says which doctype, and which of read, write and delete.
-   An extension manager answers each one on its own while the editor runs.
-3. Frappe's own permission says whether the user who is calling may do it. It is
+   An extension manager grants it for the whole site.
+2. Frappe's own permission says whether the user who is calling may do it. It is
    the only gate that cannot be widened: no document an extension reads or writes
    passes `ignore_permissions`.
 
-The first two gates belong to the site. The third belongs to each user, so a
-grant is a ceiling and never adds access. A manager allowing an extension to read
-Contact lets a user read only the contacts that user can already read.
-
-A doctype grant is asked for, never assumed. `data.requestAccess` in the browser is the
-one path that opens a dialog, and every other call refuses without one.
+The first gate belongs to the site and the second to each user, so granting
+`data.access` never adds access. A user reaches only the documents that user can
+already reach.
 """
 
 import frappe
 import frappe.client
 from frappe import _
 
-from builder.extensions.access import assert_extension_access, assert_extension_manager
-
-GRANT_DOCTYPE = "Builder Extension DocType Grant"
-
-NOT_ASKED = "not asked"
-ALLOWED = "allowed"
-DENIED = "denied"
-ANSWERS = (NOT_ASKED, ALLOWED, DENIED)
-
-# each access holds its own answer, so a manager can allow read and deny delete
-ACCESSES = ("read", "write", "delete")
+from builder.extensions.access import assert_extension_access
 
 # a page of rows, and the ceiling one call can ask for. The server owns this
 # number: it is the side protecting the database, and a copy in the browser
 # would be a second owner of one rule
 DEFAULT_PAGE_LENGTH = 20
 MAX_PAGE_LENGTH = 500
-
-
-class DoctypeGrantRequired(frappe.PermissionError):
-	"""No grant covers this doctype yet.
-
-	Its own class because the class name travels to the browser as `exc_type`,
-	which is how the host tells "ask the user" apart from "the user cannot do
-	this at all". Every other refusal here is an ordinary permission error.
-	"""
-
-
-@frappe.whitelist()
-def get_doctype_grant(extension: str, doctype: str) -> dict:
-	"""What this extension may already do to this doctype, on this site."""
-	installation = assert_extension_access(extension, "data.access")
-	return describe_doctype_grant(installation, doctype)
-
-
-@frappe.whitelist()
-def record_doctype_grant(extension: str, doctype: str, answers: dict | None = None) -> dict:
-	"""Write what an extension manager answered in the Builder dialog.
-
-	Answers only the access the call names, each on its own, and leaves the rest
-	as it stands. Denying delete does not take back a read the manager already
-	allowed. A user who is not a manager is refused, so the browser tells them to
-	ask one.
-	"""
-	installation = assert_extension_access(extension, "data.access")
-	assert_extension_manager()
-	assert_answers(answers)
-	upsert_doctype_grant(installation, doctype, answers)
-	return describe_doctype_grant(installation, doctype)
-
-
-def describe_doctype_grant(installation: str, doctype: str) -> dict:
-	"""One answer for each access. A doctype nobody answered has no row, so each is not asked."""
-	grant = (
-		frappe.db.get_value(
-			GRANT_DOCTYPE,
-			{"installation": installation, "document_type": doctype},
-			list(ACCESSES),
-			as_dict=True,
-		)
-		or {}
-	)
-	return {
-		"doctype": doctype,
-		**{name: grant.get(name, NOT_ASKED) for name in ACCESSES},
-	}
-
-
-def find_doctype_grant(installation: str, doctype: str) -> str | None:
-	return frappe.db.get_value(
-		GRANT_DOCTYPE, {"installation": installation, "document_type": doctype}, "name"
-	)
-
-
-def assert_answers(answers: dict | None) -> None:
-	"""Refuses an empty call, an access nobody defined and an answer nobody defined."""
-	if not answers:
-		frappe.throw(_("Name the access this answers: read, write or delete."))
-	unknown = sorted(set(answers) - set(ACCESSES))
-	if unknown:
-		frappe.throw(_("Unknown access: {0}").format(", ".join(unknown)))
-	unknown = sorted(str(answer) for answer in answers.values() if answer not in ANSWERS)
-	if unknown:
-		frappe.throw(_("Unknown answer: {0}").format(", ".join(unknown)))
-
-
-def upsert_doctype_grant(installation: str, doctype: str, values: dict) -> None:
-	"""Write an answer, merging into whatever stands.
-
-	Both callers merge: `record_doctype_grant` writes what a manager answered,
-	and `schema.grant_everything` writes a full grant on a table the extension
-	just made. Neither removes what its call leaves unmentioned.
-
-	A grant is Builder's own record, and each caller checks its right first, so
-	the doctype permission is not asked again.
-	"""
-	name = find_doctype_grant(installation, doctype)
-	if name:
-		frappe.get_doc(GRANT_DOCTYPE, name).update(values).save(ignore_permissions=True)
-		return
-
-	frappe.get_doc(
-		{
-			"doctype": GRANT_DOCTYPE,
-			"installation": installation,
-			"document_type": doctype,
-			**values,
-		}
-	).insert(ignore_permissions=True)
-
-
-def forget_doctype_grant(installation: str, doctype: str) -> None:
-	"""Drop every answer, so the next request asks about each access again.
-
-	A dropped doctype forgets its own, so a doctype remade under the same name
-	inherits nothing.
-	"""
-	name = find_doctype_grant(installation, doctype)
-	if name:
-		frappe.delete_doc(GRANT_DOCTYPE, name, ignore_permissions=True)
-
-
-def assert_doctype_grant(installation: str, extension: str, doctype: str, access: str) -> None:
-	"""What a manager allowed for this doctype. Refuses loudly, and names what is missing.
-
-	Called from the server rather than trusted to the browser, so the grant is
-	checked on the same side as the write it guards. `extension` names the
-	refusal, because the message travels to the author and an installation name
-	is a uuid.
-	"""
-	if describe_doctype_grant(installation, doctype)[access] == ALLOWED:
-		return
-
-	frappe.throw(
-		_('"{0}" was not granted {1} access to {2}.').format(extension, access, doctype),
-		DoctypeGrantRequired,
-	)
-
-
-def assert_data_access(extension: str, doctype: str, access: str) -> None:
-	"""Both gates, in the order they have to run.
-
-	The capability says this extension may touch site data at all. The grant says
-	which doctype. Neither replaces the other, and Frappe checks the user after
-	both.
-	"""
-	installation = assert_extension_access(extension, "data.access")
-	assert_doctype_grant(installation, extension, doctype, access)
 
 
 @frappe.whitelist()
@@ -189,14 +44,14 @@ def get_list(
 
 	`frappe.client` does the query and the permission check, so an extension
 	reaches exactly the rows the user reaches, with the field-level rules the
-	user has. The grant is the extra gate in front of that'.
+	user has.
 
 	`or_filters` and `group_by` are here because `createListResource` sends them
 	on every fetch. Dropping a filter quietly would answer with more rows than
 	the caller asked for, which is a correctness bug rather than a missing
 	feature.
 	"""
-	assert_data_access(extension, doctype, "read")
+	assert_extension_access(extension, "data.access")
 	return frappe.client.get_list(
 		doctype=doctype,
 		fields=fields,
@@ -222,7 +77,7 @@ def get_count(extension: str, doctype: str, filters: dict | list | None = None) 
 	`frappe.db.count` instead would be simpler and wrong: it skips the user
 	permission row filters, so the number would count rows the user cannot read.
 	"""
-	assert_data_access(extension, doctype, "read")
+	assert_extension_access(extension, "data.access")
 
 	sent = frappe.local.form_dict
 	frappe.local.form_dict = frappe._dict()
@@ -235,32 +90,27 @@ def get_count(extension: str, doctype: str, filters: dict | list | None = None) 
 @frappe.whitelist()
 def get_doc(extension: str, doctype: str, name: str) -> dict:
 	"""One whole document, child tables included."""
-	assert_data_access(extension, doctype, "read")
+	assert_extension_access(extension, "data.access")
 	return frappe.client.get(doctype=doctype, name=name)
 
 
 @frappe.whitelist(methods=["POST"])
 def insert_doc(extension: str, doctype: str, doc: dict | None = None) -> dict:
-	"""The doctype comes from the checked argument, never from the payload.
-
-	Without the overwrite an extension could pass `doctype="Contact"` for the
-	grant check and a `doc` naming `User`, and the gate would guard nothing.
-	"""
-	assert_data_access(extension, doctype, "write")
+	"""The doctype comes from the argument, never from the payload."""
+	assert_extension_access(extension, "data.access")
 	return frappe.client.insert({**(doc or {}), "doctype": doctype})
 
 
 @frappe.whitelist(methods=["POST"])
 def update_doc(extension: str, doctype: str, name: str, doc: dict | None = None) -> dict:
 	"""A patch, not a replacement. `set_value` refuses the framework's own fields."""
-	assert_data_access(extension, doctype, "write")
+	assert_extension_access(extension, "data.access")
 	return frappe.client.set_value(doctype, name, doc or {})
 
 
 @frappe.whitelist(methods=["POST"])
 def delete_doc(extension: str, doctype: str, name: str) -> None:
-	"""Its own grant, because losing a record is not the same as changing one."""
-	assert_data_access(extension, doctype, "delete")
+	assert_extension_access(extension, "data.access")
 	frappe.client.delete(doctype, name)
 
 

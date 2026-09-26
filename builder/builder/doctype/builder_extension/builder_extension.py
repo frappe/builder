@@ -22,7 +22,6 @@ from builder.extensions.constants import (
 	VERSION_PATTERN,
 )
 
-GRANT_DOCTYPE = "Builder Extension DocType Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 
@@ -68,7 +67,6 @@ class BuilderExtension(Document):
 
 	def on_trash(self):
 		self.delete_extension_state()
-		self.delete_doctype_grants()
 		# the rows roll back with a failed delete, and files would not
 		frappe.db.after_commit.add(self.delete_extension_files)
 
@@ -182,12 +180,3 @@ class BuilderExtension(Document):
 		"""A state row Links to this record, so Frappe refuses the delete while one stands."""
 		for state in frappe.get_all(STATE_DOCTYPE, filters={"installation": self.name}, pluck="name"):
 			frappe.delete_doc(STATE_DOCTYPE, state, ignore_permissions=True)
-
-	def delete_doctype_grants(self):
-		"""Every doctype answer for this installation.
-
-		Nothing the extension made goes with it. A doctype, a token and a client
-		script all serve the site, so all three outlive the extension.
-		"""
-		for grant in frappe.get_all(GRANT_DOCTYPE, filters={"installation": self.name}, pluck="name"):
-			frappe.delete_doc(GRANT_DOCTYPE, grant, ignore_permissions=True)
