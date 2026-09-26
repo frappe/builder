@@ -89,13 +89,16 @@ after_app_install = "builder.install.after_app_install"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# "Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# "Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+# An extension is installed for the site, but its stored state is one user's.
+# These make Desk agree with what `state.py` already enforces, so a list view, a
+# report and a get_all all answer with one user's state. A System Manager sees it all.
+permission_query_conditions = {
+	"Builder Extension State": "builder.extensions.access.state_conditions",
+}
+
+has_permission = {
+	"Builder Extension State": "builder.extensions.access.owns_state",
+}
 
 user_invitation = {
 	"allowed_roles": {
