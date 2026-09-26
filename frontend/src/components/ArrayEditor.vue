@@ -21,7 +21,7 @@
 						:objectPosition="itemPosition(item)"
 						:targetRatio="targetRatio"
 						multiple
-						@update:images="(urls: string[]) => setImagesFrom(index, urls)"
+						@update:images="(urls: string[]) => setImagesFrom(item, index, urls)"
 						@update:modelValue="(val: string) => updateImageItem(index, { url: val })"
 						@update:imageFit="(val: string) => updateImageItem(index, { fit: val })"
 						@update:objectPosition="(val: string) => updateImageItem(index, { position: val })" />
@@ -77,9 +77,15 @@ const addItem = async () => {
 	}
 };
 
-const setImagesFrom = (index: number, urls: string[]) => {
+// the row can move or go while its upload runs, so find it again before writing
+const setImagesFrom = (item: ArrayPropItem, index: number, urls: string[]) => {
 	const newArr = [...props.arr];
-	newArr.splice(index, 1, imageItem(newArr[index], { url: urls[0] }), ...urls.slice(1));
+	const target = newArr[index] === item ? index : newArr.indexOf(item);
+	if (target === -1) {
+		emit("update:arr", [...newArr, ...urls]);
+		return;
+	}
+	newArr.splice(target, 1, imageItem(item, { url: urls[0] }), ...urls.slice(1));
 	emit("update:arr", newArr);
 };
 
