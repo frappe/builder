@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-25 09:31\n"
+"PO-Revision-Date: 2026-09-27 06:33\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -1006,11 +1006,11 @@ msgstr "Pretvori u Kolekciju"
 
 #: frontend/src/components/BlockContextMenuOptions/index.ts:42
 msgid "Convert to Image File"
-msgstr "Konvertuj u Slikovnu Datoteku"
+msgstr "Pretvori u Slikovnu Datoteku"
 
 #: frontend/src/components/BlockPropertySections/HTMLOptionsSection.ts:54
 msgid "Convert to Image File ({0} KB)"
-msgstr "Konvertuj u Slikovnu Datoteku ({0} KB)"
+msgstr "Pretvori u Slikovnu Datoteku ({0} KB)"
 
 #: frontend/src/utils/imageUtils.ts:33
 msgid "Convert to WebP"
@@ -2553,11 +2553,11 @@ msgstr "Marža"
 
 #: frontend/src/stores/pageStore.ts:241
 msgid "Mark \"{0}\" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it."
-msgstr "Označiti \"{0}\" kao probnu? Ostaje dostupno putem linka, ali pretraživači i mapa sajta ga prestaju prikazivati."
+msgstr "Odaberi \"{0}\" kao probnu? Ostaje dostupno putem linka, ali pretraživači i mapa sajta ga prestaju prikazivati."
 
 #: frontend/src/components/PublishButton.vue:30
 msgid "Mark as Staging"
-msgstr "Označi kao Probna"
+msgstr "Odaberi kao Probna"
 
 #: frontend/src/pages/PagePersonaSurvey.vue:133
 msgid "Marketer"
@@ -3230,7 +3230,7 @@ msgstr "Odaberi početnu tačku"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:37
 msgid "Pick a wider date range, or share your page to start collecting data."
-msgstr "Odaberite širi raspon datuma ili podijelite svoju stranicu da biste počeli prikupljati podatke."
+msgstr "Odaberi širi raspon datuma ili podijelite svoju stranicu da biste počeli prikupljati podatke."
 
 #: builder/ai/api.py:473
 msgid "Pick at least one model"
