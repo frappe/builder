@@ -1921,17 +1921,19 @@ def is_safe_data_key(key) -> bool:
 
 
 def jinja_safe_key(key, missing="{}"):
-	# convert a.b to (a or {}).get('b', {}) to avoid undefined error in jinja;
-	# the last segment falls back to `missing`
+	# convert a.b to (a or {})['b'] to avoid undefined error in jinja; subscripts fall back to
+	# attributes, so objects and dates resolve too, and the last segment falls back to `missing`
 	if not is_safe_data_key(key):
 		# render nothing rather than emitting a broken Jinja expression
 		return missing
 	keys = key.split(".")
 	expr = f"({keys[0]} or {{}})"
 	for k in keys[1:-1]:
-		expr = f"{expr}.get('{k}', {{}})"
+		expr = f"({expr}['{k}'] or {{}})"
 	if len(keys) > 1:
-		expr = f"{expr}.get('{keys[-1]}', {missing})"
+		last = f"{expr}['{keys[-1]}']"
+		# the attribute fallback can land on a method, like str.title or dict.items
+		expr = f"({missing} if {last} is callable else {last})"
 	return expr
 
 

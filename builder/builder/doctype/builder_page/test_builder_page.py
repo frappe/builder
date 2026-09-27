@@ -434,6 +434,33 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_dotted_keys_read_attributes_of_non_mapping_values(self):
+		body = Block(element="div", originalElement="body")
+		year = Block(element="h1", innerHTML="No year")
+		year.set_dynamic_value("hero.date.year", "key", "innerHTML")
+		text_root = Block(element="h2", innerHTML="Fallback")
+		text_root.set_dynamic_value("tagline.title", "key", "innerHTML")
+		body.attach_children(year, text_root)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Attribute Keys Test",
+				"published": 1,
+				"route": "/dotted-attribute-keys-test",
+				"page_data_script": (
+					'data.update({"hero": {"date": frappe.utils.getdate("2026-01-02")}, "tagline": "Plain"})'
+				),
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-attribute-keys-test")
+			self.assertEqual("2026", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertEqual("Fallback", get_html_for(content, "tag", "h2", only_content=True))
+		finally:
+			page.delete()
+
 	def component_with_dynamic_title(self, key):
 		prop = {
 			"label": "Title",
