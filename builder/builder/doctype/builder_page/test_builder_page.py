@@ -437,7 +437,7 @@ class TestBuilderPage(FrappeTestCase):
 	def test_dotted_keys_read_attributes_of_non_mapping_values(self):
 		body = Block(element="div", originalElement="body")
 		year = Block(element="h1", innerHTML="No year")
-		year.set_dynamic_value("hero.date.year", "key", "innerHTML")
+		year.set_dynamic_value("post.creation.year", "key", "innerHTML")
 		text_root = Block(element="h2", innerHTML="Fallback")
 		text_root.set_dynamic_value("tagline.title", "key", "innerHTML")
 		body.attach_children(year, text_root)
@@ -448,7 +448,9 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/dotted-attribute-keys-test",
 				"page_data_script": (
-					'data.update({"hero": {"date": frappe.utils.getdate("2026-01-02")}, "tagline": "Plain"})'
+					'post = frappe.db.get_all("Builder Page", fields=["creation"], '
+					'filters={"page_title": "Dotted Attribute Keys Test"})[0]\n'
+					'data.update({"post": post, "tagline": "Plain"})'
 				),
 				"blocks": body.as_json(wrap_in_array=True),
 			}
@@ -456,7 +458,8 @@ class TestBuilderPage(FrappeTestCase):
 
 		try:
 			content = get_response_content("/dotted-attribute-keys-test")
-			self.assertEqual("2026", get_html_for(content, "tag", "h1", only_content=True))
+			year = str(frappe.utils.get_datetime(page.creation).year)
+			self.assertEqual(year, get_html_for(content, "tag", "h1", only_content=True))
 			self.assertEqual("Fallback", get_html_for(content, "tag", "h2", only_content=True))
 		finally:
 			page.delete()
