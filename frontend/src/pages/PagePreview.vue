@@ -170,10 +170,10 @@ const goBack = async () => {
 	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
 };
 
-// the preview moves to its own tab, so this one returns to the editor
+// the preview moves to its own tab, so this one returns to the editor;
+// a blocked popup leaves this the only preview, so stay put instead
 const detachPreview = () => {
-	pageStore.detachPreview(route.params.pageId as string);
-	goBack();
+	if (pageStore.detachPreview(route.params.pageId as string)) goBack();
 };
 
 // a preview opened by its own link has no editor behind it, so the back button

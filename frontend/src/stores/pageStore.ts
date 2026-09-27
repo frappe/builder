@@ -457,9 +457,12 @@ const usePageStore = defineStore("pageStore", {
 				name: "preview",
 				params: { pageId },
 			}).href;
-			const tab = window.open(previewURL, DETACHED_PREVIEW_TAB);
+			// name the tab per page: a shared name would let one editor's detached
+			// tab get renavigated (and hijacked) by another editor detaching a different page
+			const tab = window.open(previewURL, `${DETACHED_PREVIEW_TAB}-${pageId}`);
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
 			tab?.focus();
+			return tab;
 		},
 
 		// the detached tab, while it is open and still shows this page
