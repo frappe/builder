@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-21 18:27\n"
+"PO-Revision-Date: 2026-09-27 06:33\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -2553,7 +2553,7 @@ msgstr "Marginal"
 
 #: frontend/src/stores/pageStore.ts:241
 msgid "Mark \"{0}\" as staging? It stays reachable by its link, but search engines and the sitemap stop listing it."
-msgstr "Välj \"{0}\" som testmiljö? Den förblir tillgänglig via sin länk, men sökmotorer och webbplatskarta slutar lista den."
+msgstr "Välj \"{0}\" som testmiljö? Den förblir tillgänglig via sin länk, men söksystem och webbplatskarta slutar lista den."
 
 #: frontend/src/components/PublishButton.vue:30
 msgid "Mark as Staging"
@@ -3045,7 +3045,7 @@ msgstr "Öppnar i"
 
 #: frontend/src/components/Settings/PageMeta.vue:57
 msgid "Optional. Set this to specify a preferred version of this page for search engines."
-msgstr "Valfritt. Ange detta för att specificera önskad version av denna sida för sökmotorer."
+msgstr "Valfritt. Ange detta för att specificera önskad version av denna sida för söksystem."
 
 #. Label of the options_tab (Tab Break) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
@@ -3309,7 +3309,7 @@ msgstr "Förhindra Klick Emulering"
 #: builder/builder/doctype/builder_page/builder_page.json
 #: frontend/src/components/Settings/PageGeneral.vue:123
 msgid "Prevent search engines from indexing this page"
-msgstr "Förhindra sökmotorer från att indexera denna sida"
+msgstr "Förhindra söksystem från att indexera denna sida"
 
 #: frontend/src/components/Settings/GlobalGeneral.vue:78
 msgid "Prevent the site from automatically switching to dark mode"
@@ -3997,7 +3997,7 @@ msgstr "Servera Lokalt"
 #. Description of the 'Staging' (Check) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "Served at its route, but hidden from search engines and the sitemap"
-msgstr "Serveras på sin rutt, men dold från sökmotorer och webbplatskarta"
+msgstr "Serveras på sin rutt, men dold från söksystem och webbplatskarta"
 
 #. Description of the 'Component Data Script' (Code) field in DocType 'Builder
 #. Component'
@@ -4219,7 +4219,7 @@ msgstr "Mellanrum"
 
 #: frontend/src/components/Settings/PageRobots.vue:31
 msgid "Specify rules to control how search engines interact with your site. For more details, visit {0}."
-msgstr "Ange regler för att styra hur sökmotorer interagerar med din webbplats. För mer information, besök {0}."
+msgstr "Ange regler för att styra hur söksystem interagerar med din webbplats. För mer information, besök {0}."
 
 #: frontend/src/components/BlockPropertySections/TransitionSection.ts:10
 msgid "Speed"
@@ -4470,7 +4470,7 @@ msgstr "Modell Id hos leverantör, t.ex. <code>anthropic/claude-sonnet-5</code> 
 #. Description of the 'Canonical URL' (Data) field in DocType 'Builder Page'
 #: builder/builder/doctype/builder_page/builder_page.json
 msgid "The preferred URL version of this page for search engines. If not set, the current page URL will be used."
-msgstr "URL version av denna sida som rekommenderas för sökmotorer. Om inget anges kommer aktuella sidans URL att användas."
+msgstr "URL version av denna sida som rekommenderas för söksystem. Om inget anges kommer aktuella sidans URL att användas."
 
 #. Description of the 'LiteLLM Provider' (Data) field in DocType 'Builder AI
 #. Provider'
