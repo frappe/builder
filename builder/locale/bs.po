@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-27 06:33\n"
+"PO-Revision-Date: 2026-09-27 06:43\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Bosnian\n"
 "MIME-Version: 1.0\n"
@@ -3230,7 +3230,7 @@ msgstr "Odaberi početnu tačku"
 
 #: frontend/src/components/Settings/AnalyticsOverview.vue:37
 msgid "Pick a wider date range, or share your page to start collecting data."
-msgstr "Odaberi širi raspon datuma ili podijelite svoju stranicu da biste počeli prikupljati podatke."
+msgstr "Odaberite širi raspon datuma ili podijelite svoju stranicu da biste počeli prikupljati podatke."
 
 #: builder/ai/api.py:473
 msgid "Pick at least one model"
