@@ -298,8 +298,9 @@ watch(
 				page_title: "My Page",
 				draft_blocks: [getRootBlockTemplate()],
 			} as BuilderPage;
-			if (builderStore.activeFolder) {
-				pageInfo["project_folder"] = builderStore.activeFolder;
+			const folder = (to.query.folder as string) || builderStore.activeFolder;
+			if (folder) {
+				pageInfo["project_folder"] = folder;
 			}
 			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });

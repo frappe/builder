@@ -215,14 +215,6 @@ export function useCanvasUtils(
 		canvasProps.translateY += (containerBound.top - canvasBound.top + 300 * scale) / scale;
 	};
 
-	function selectBlock(_block: Block, multiSelect = false) {
-		if (multiSelect) {
-			selectedBlockIds.value.add(_block.blockId);
-		} else {
-			selectedBlockIds.value = new Set([_block.blockId]);
-		}
-	}
-
 	const toggleDirty = (dirty: boolean | null = null) => {
 		if (dirty === null) {
 			isDirty.value = !isDirty.value;

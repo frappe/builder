@@ -380,6 +380,179 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def dotted_key_blocks(self):
+		body = Block(element="div", originalElement="body")
+		heading = Block(element="h1", innerHTML="Fallback title")
+		heading.set_dynamic_value("hero.title", "key", "innerHTML")
+		link = Block(element="a", innerHTML="Link", attributes={"href": "/fallback"})
+		link.set_dynamic_value("hero.link", "attribute", "href")
+		note = Block(element="p", innerHTML="Only with hero")
+		note.visibilityCondition = {"key": "hero.show", "comesFrom": "dataScript"}
+		body.attach_children(heading, link, note)
+		return body
+
+	def test_dotted_keys_without_their_root_fall_back(self):
+		"""Blocks pasted from another page keep bindings like `hero.title`. A page whose
+		data script does not define `hero` must render the fallbacks, not fail."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Fallback Test",
+				"published": 1,
+				"route": "/dotted-keys-fallback-test",
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-fallback-test")
+			self.assertEqual("Fallback title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="/fallback"', get_html_for(content, "tag", "a"))
+			self.assertNotIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_resolve_from_page_data(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Test",
+				"published": 1,
+				"route": "/dotted-keys-test",
+				"page_data_script": (
+					'data.update({"hero": {"title": "Real title", "link": "https://example.com", "show": True}})'
+				),
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-test")
+			self.assertEqual("Real title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="https://example.com"', get_html_for(content, "tag", "a"))
+			self.assertIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_read_attributes_of_non_mapping_values(self):
+		body = Block(element="div", originalElement="body")
+		year = Block(element="h1", innerHTML="No year")
+		year.set_dynamic_value("post.creation.year", "key", "innerHTML")
+		text_root = Block(element="h2", innerHTML="Fallback")
+		text_root.set_dynamic_value("tagline.title", "key", "innerHTML")
+		body.attach_children(year, text_root)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Attribute Keys Test",
+				"published": 1,
+				"route": "/dotted-attribute-keys-test",
+				"page_data_script": (
+					'post = frappe.db.get_all("Builder Page", fields=["creation"], '
+					'filters={"page_title": "Dotted Attribute Keys Test"})[0]\n'
+					'data.update({"post": post, "tagline": "Plain"})'
+				),
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-attribute-keys-test")
+			year = str(frappe.utils.get_datetime(page.creation).year)
+			self.assertEqual(year, get_html_for(content, "tag", "h1", only_content=True))
+			self.assertEqual("Fallback", get_html_for(content, "tag", "h2", only_content=True))
+		finally:
+			page.delete()
+
+	def component_with_dynamic_title(self, key):
+		prop = {
+			"label": "Title",
+			"isStandard": True,
+			"isDynamic": False,
+			"isPassedDown": False,
+			"comesFrom": None,
+			"value": "Default Title",
+			"propOptions": {
+				"isRequired": False,
+				"type": "string",
+				"options": {"defaultValue": "Default Title"},
+			},
+		}
+		root = Block(
+			element="div", blockId="dynamic-prop-root", clientScript={"js": "void 0;"}, props={"title": prop}
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": root.as_json()}).insert()
+		instance = Block(
+			extendedFromComponent=component.name,
+			props={"title": {**prop, "isDynamic": True, "comesFrom": "dataScript", "value": key}},
+		)
+		return component, instance
+
+	def test_dynamic_prop_without_its_root_uses_the_default(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Fallback Test",
+				"published": 1,
+				"route": "/dynamic-prop-fallback-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-fallback-test")
+			self.assertIn('"title": "Default Title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_resolves_from_page_data(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Test",
+				"published": 1,
+				"route": "/dynamic-prop-test",
+				"page_data_script": 'data.update({"hero": {"title": "Real title"}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-test")
+			self.assertIn('"title": "Real title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_keeps_an_empty_object(self):
+		component, instance = self.component_with_dynamic_title("hero.meta")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Empty Object Test",
+				"published": 1,
+				"route": "/dynamic-prop-empty-object-test",
+				"page_data_script": 'data.update({"hero": {"meta": {}}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-empty-object-test")
+			self.assertIn('"title": {}', content)
+		finally:
+			page.delete()
+			component.delete()
+
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
 			element="div",

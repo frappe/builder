@@ -1,5 +1,6 @@
 import ipaddress
 import os
+import re
 import socket
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
@@ -13,6 +14,7 @@ from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
+from frappe.model.naming import append_number_if_name_exists
 from frappe.utils.caching import redis_cache
 from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
 from PIL import Image
@@ -432,13 +434,25 @@ def clone_client_scripts(source_page, new_page) -> None:
 		new_page.append("client_scripts", {"builder_script": new_script.name})
 
 
+def get_copy_title(title: str) -> str:
+	"""Numbers copies like "Home (Copy)", "Home (Copy) 1" so copying a copy doesn't stack suffixes.
+
+	The "(Copy 2)" alternative matches titles made before the number moved out of the parens."""
+	base = re.sub(r" \(Copy(?: \d+)?\)(?: \d+)?$", "", title)
+	return append_number_if_name_exists("Builder Page", f"{base} (Copy)", "page_title", separator=" ")
+
+
 @frappe.whitelist()
 @has_page_write("You do not have permission to duplicate a page.")
 def duplicate_page(page_name: str):
 	page = frappe.get_doc("Builder Page", page_name)
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
+	new_page.page_title = get_copy_title(page.page_title or page.page_name)
 	new_page.route = None
+	new_page.published = 0
+	new_page.staging = 0
+	new_page.published_at = None
 	new_page.is_standard = 0
 	new_page.app = None
 	clone_client_scripts(page, new_page)
