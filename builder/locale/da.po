@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-09-21 06:42+0000\n"
-"PO-Revision-Date: 2026-09-23 10:55\n"
+"PO-Revision-Date: 2026-09-27 06:43\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Danish\n"
 "MIME-Version: 1.0\n"
@@ -5172,11 +5172,11 @@ msgstr ""
 
 #: frontend/src/utils/useBuilderEvents.ts:361
 msgid "Zoom In"
-msgstr ""
+msgstr "Zoom ind"
 
 #: frontend/src/utils/useBuilderEvents.ts:371
 msgid "Zoom Out"
-msgstr ""
+msgstr "Zoom ud"
 
 #: frontend/src/components/Controls/ImageFocusInput.vue:50
 msgid "Zoom in"
