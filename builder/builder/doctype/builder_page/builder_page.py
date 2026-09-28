@@ -19,6 +19,7 @@ from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
+from werkzeug.routing import Map
 
 from builder.builder.component_versions import (
 	collect_restore_warnings,
@@ -82,7 +83,7 @@ class BuilderPageRenderer(DocumentPage):
 					self.validate_access()
 					return True
 			except ValueError:
-				return False
+				continue
 
 		return False
 
@@ -224,6 +225,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
+		self.validate_route_variables()
 
 		# pages of shipped template groups can only be edited in developer mode
 		if (
@@ -235,6 +237,18 @@ class BuilderPage(WebsiteGenerator):
 			frappe.throw(
 				frappe._("Template pages can only be modified in developer mode."),
 				frappe.PermissionError,
+			)
+
+	def validate_route_variables(self):
+		if not self.route or not (":" in self.route or "<" in self.route):
+			return
+		try:
+			Map([ColonRule(f"/{self.route}", endpoint=self.name)])
+		except ValueError:
+			frappe.throw(
+				frappe._(
+					"Route variables can only use letters, numbers and underscores, like :slug or <slug>"
+				)
 			)
 
 	def on_update(self):
