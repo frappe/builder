@@ -1,75 +1,58 @@
 # Block JSON
 
-`blocks` and `draft_blocks` hold a JSON array with one root block. `page.py pull` gives you that array pretty-printed; `push` stores it compact.
-
-## Root
+`blocks` and `draft_blocks` hold a JSON array with one root block.
 
 ```json
 {"blockId": "root", "blockName": "body", "element": "div", "originalElement": "body",
- "baseStyles": {"display": "flex", "flexDirection": "column", "alignItems": "center", "flexShrink": 0,
-                "backgroundColor": "#f4efe6"},
- "children": [...sections...]}
+ "baseStyles": {"display": "flex", "flexDirection": "column", "alignItems": "center"}, "children": []}
 ```
 
-`originalElement: "body"` is what makes the renderer inject page scripts and the CSRF token, so keep it. Give the root the page's background: it backs every gap. Each top-level section takes `width: "100%"` and does its own layout inside.
+`originalElement: "body"` is load-bearing: without it the page silently drops its JS client scripts, `window.page_data`, the CSRF token and `body_html`.
 
 ## Fields
 
-| Field | Notes |
-|---|---|
-| `blockId` | Unique in the tree. For new blocks, any short random string. |
-| `element` | The tag. `p` renders as `div` on the published page, so script selectors target classes, never tags. |
-| `originalElement` | Rendered **instead of** `element` when set. Drop it when you change a block's element (except `body` and `__raw_html__`). |
-| `blockName` | The layers-panel label. Name every block you add. |
-| `baseStyles` / `tabletStyles` / `mobileStyles` | Desktop first. The tablet and mobile maps hold only the overrides. |
-| `attributes` | `src`, `darkSrc`, `alt`, `href`, `title`, `value`, `type`, `placeholder`, `target`, `rel`. |
-| `customAttributes` | Everything else: `id`, `data-*`, `aria-*`, `role`. |
-| `classes` | Extra classes, your hooks for scripts and CSS. |
-| `innerHTML` | Content of a text block; may hold inline HTML. |
-| `children` | Child blocks. |
+- `originalElement` renders instead of `element`; change both or drop it.
+- `p` renders as `div`, and each block's `fb-` class changes on every render, so scripts and CSS select classes you set in `classes`.
+- `attributes` holds `src`, `darkSrc`, `alt`, `href`, `target`, `rel`, `placeholder`, `type`, `value`, `title`; `customAttributes` everything else (`id`, `data-*`, `aria-*`, `role`). `darkSrc` works only in `attributes`, and wraps the image in `<picture>`.
+- Text in `innerHTML` shows in the editor only on `span h1-h6 p b label a cite li strong em i blockquote summary button`; on a `div` it renders live but is invisible in the canvas.
+- Raw markup (SVG, embeds): `element: "div"`, `originalElement: "__raw_html__"`, markup in `innerHTML`.
+- Images: `frappectl file upload <path>`, or `method call builder.api.import_remote_assets -F 'urls:=["https://..."]'` to copy remote images into the site (returns old URL -> new URL).
 
 ## Styles
 
-- camelCase property names, CSS values as strings with units (`"padding": "24px"`). Keyword values stay in CSS form (`"justifyContent": "space-between"`).
-- State styles are prefixed keys: `"hover:backgroundColor"`, `"focus:borderColor"`. A styled input pairs `"focus:outline": "none"` with a visible replacement.
-- Don't rely on key order. Server-side rewrites (component sync, snapshot restore, list-valued writes) store keys sorted, and then a shorthand that sorts after a longhand overrides it (`borderWidth` after `borderLeft`, `borderRadius` after `borderBottomLeftRadius`, `gap` after `columnGap`). Write longhands only, or order-independent values.
-- Gradients go in `backgroundImage`, colours in `backgroundColor`. The editor canvas drops a `background` shorthand that holds `var()`, although the published page keeps it.
-- `fontFamily` is one bare Google Fonts family name (`"Fraunces"`); the page loads it automatically. Use no quotes, no fallback stack and never `inherit`, which the font loader requests as a font called "inherit".
-- `var(--token)` takes no fallback. The fallback goes stale when the token is edited.
-- Anything `position: absolute`/`sticky`, sized in `vw`, or placed with grid areas ships its `mobileStyles` fallback in the same block.
+- camelCase or kebab-case keys both work. Values are CSS strings with units: a bare number is emitted as-is (`width: 100` does nothing).
+- Breakpoints: `tabletStyles` apply at 1023px and below, `mobileStyles` at 576px and below. The editor frames are 1400, 800 and 420 wide.
+- States are prefixed keys with one colon: `hover:color`, `focus:borderColor`, `before:content` (quote the value: `"'x'"`). `::before` doesn't work.
+- Unbalanced parentheses in a value get escaped and the rule breaks.
+- `fontFamily` is one bare Google Fonts family (`"Fraunces"`); it loads automatically. A stack (`"Inter, sans-serif"`) or `inherit` is mangled into a bad font request.
+- `background` with a `var()` works live but the editor canvas drops it; use `backgroundColor`/`backgroundImage`.
+- Key order is not kept (see SKILL.md traps): never pair a shorthand with its longhand.
 
-## Text
+## Tokens
 
-Text shows in the canvas only on text elements: `span h1-h6 p b label a cite li strong em i blockquote summary button`. Text on a `div` is invisible in the editor, although the published page shows it. Every block is block-level, so a multi-colour sentence or highlighted code is **one** block whose `innerHTML` carries inline `<span style="color:...">` runs, never one block per word. Code goes in a `pre`.
-
-## Images
-
-`element: "img"`, `attributes.src` and `alt`, with `objectFit` and explicit dimensions or `aspectRatio`. A dark-mode image is `attributes.darkSrc` beside `src`; Builder swaps it in by itself. Upload local files with `frappectl file upload <path>`, and import remote images into the site with `frappectl method call builder.api.import_remote_assets -F 'urls:=["https://..."]'`, which returns old URL → site URL. Never hotlink.
-
-## Icons and raw HTML
-
-- Lucide icon: `element: "svg"`, `customAttributes: {"data-lucide": "arrow-right"}`, `innerHTML` = the icon's SVG from `https://unpkg.com/lucide-static/icons/<name>.svg` with the `class` attribute removed and `width`/`height` set to `100%`. `baseStyles`: `display: inline-flex, alignItems: center, justifyContent: center, lineHeight: 0, flexShrink: 0`, plus `width`, `height` and `color` (the stroke follows `color`).
-- An embed, illustration or other raw markup: `element: "div"`, `originalElement: "__raw_html__"`, markup in `innerHTML`. Draw abstract art this way, never a real subject (product, food, person); use a photo for those.
-- Code goes in client scripts (see `data-and-scripts.md`), not `script` or `style` blocks, which publish as raw tags outside the page's script list.
+A `Builder Token` is referenced as `var(--<doc name>)`; its `token_name` is only a label and resolves to nothing. Create one with an explicit `name` to know its handle: `{"name": "acme-ink", "token_name": "Ink", "type": "Color", "value": "#1d1b16", "dark_value": "#f4efe6"}`. `dark_value` applies when the visitor's system is in dark mode.
 
 ## Bindings
-
-A binding pulls a value into a block at render time. `{{ x }}` typed into `innerHTML` runs as Jinja on the published page but shows raw in the editor, so bind instead.
 
 ```json
 "dataKey": {"key": "title", "comesFrom": "dataScript", "type": "key", "property": "innerHTML"}
 ```
 
-- `comesFrom`: `dataScript` (the page data script's `data.<key>`), `props` (a component prop), `componentData` (a component data script's `component.<key>`).
-- `type`: `key` for a block field (`innerHTML`), `attribute` for `src`/`href`/`data-*` (`property` names it), `style` for a camelCase style.
-- The primary binding sits in `dataKey`; further ones go in `dynamicValues` (a list of the same shape), one per property.
-- A key is a bare dotted identifier (`title`, `event.city`). Formatting and conditions are computed in the data script and bound as a plain key.
-- The block's authored value is the fallback when the key is missing, so give bound text real placeholder copy.
+- `comesFrom`: `dataScript` (page data), `props` or `componentData` (inside components). `type`: `key` for `innerHTML`, `attribute` for `href`/`src`/`data-*`, `style` for a CSS property. Further bindings go in `dynamicValues`, same shape.
+- Keys are bare dotted paths. A top-level `post.title` 500s the page when `post` is missing; set it to `{}` in the data script. No concatenation: compute values in the data script.
+- Fallbacks: text bindings show `0` and `""` but fall back to the block's own text on `None`; attribute and style bindings fall back on any falsy value.
+- A style binding is inline, so it beats `tabletStyles`/`mobileStyles`.
 
 ## Repeaters
 
-`isRepeaterBlock: true`, `dataKey: {"key": "events", "comesFrom": "dataScript"}`, and exactly one child: the template, rendered once per record. Inside the template, bind the record's fields by bare name (`"key": "city"`).
+`isRepeaterBlock: true`, `dataKey: {"key": "events", "comesFrom": "dataScript"}`, and one child template; extra children are dropped.
+
+- The source must be a list of dicts. A dict or a list of strings renders in the editor but 500s live.
+- Inside, keys are relative to the item (`"key": "city"`). A nested repeater binds its own list key. Page-level keys are out of reach inside a repeater; copy what the item needs onto it.
 
 ## Visibility
 
-`visibilityCondition: {"key": "has_discount", "comesFrom": "dataScript"}` removes the block from the published page when the value is falsy. The canvas only dims it.
+`visibilityCondition: {"key": "has_events", "comesFrom": "dataScript"}` removes the block live when falsy.
+
+- Live, the key may be an expression with `==`, `!=`, `and`, `or`, `not`; `<` and `>` fail the page. The canvas only tests truthiness, so prefer a boolean computed in the data script.
+- A condition on a repeater's direct child is ignored; put it on a block inside the template.

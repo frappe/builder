@@ -1,52 +1,55 @@
 # Components
 
-A `Builder Component` is one block tree (`block`, a JSON string holding a single root block) that pages embed as **instances**. `component_id` is also the doc name; `component_name` is the label. An optional `component_data_script` computes values per instance on the server.
+A `Builder Component` stores one block tree in `block` (a JSON string) and an optional `component_data_script`. Its doc name is its `component_id`. Pages embed it as an **instance**: a block with `extendedFromComponent` whose children are a **skeleton** of refs (`referenceBlockId` = a definition blockId, `isChildOfComponent` = the component id). The server renders the definition through the skeleton, so an instance without one renders empty, and definition blocks missing from it don't render. Get a correct instance from `builder.py instance <id> --props '{...}'`.
 
-Build any self-contained unit that could live on another page (header, footer, pricing card, tabs, a slider) as a component, with its behaviour inside it. Chrome that is shared across pages is always a component.
-
-## Instances
-
-```json
-{"blockId": "x81k", "element": "div", "blockName": "Site Header",
- "extendedFromComponent": "<component id>",
- "props": {...per-instance prop entries...},
- "children": [
-   {"blockId": "p2a9", "isChildOfComponent": "<component id>", "referenceBlockId": "<definition block id>", "children": [...]}
- ]}
-```
-
-- The instance's children are a **skeleton**: one ref per definition block, mirroring its nesting, each with a fresh `blockId`, `isChildOfComponent` and `referenceBlockId`. The server renders definition blocks through these refs, so an instance without a skeleton publishes empty. Copy `isRepeaterBlock: true` onto the ref of any definition repeater, or the canvas shows a single row.
-- A ref may override `innerHTML`, styles (merged), `attributes`, `customAttributes`, `classes` (appended), `visibilityCondition`, bindings and `clientScript`. That is how a shared header gets this page's active nav item. Everything else comes from the definition.
-- Editor-dropped instances also pin `componentVersion` (a snapshot of the component). A pinned instance keeps rendering that version until it is re-pinned; an unpinned one renders the live component.
-- The simplest correct instance: pull a page that already embeds the component and copy that instance with fresh blockIds.
-
-## Changing a component
-
-- Update `block` with `frappectl doc update "Builder Component" <id> --input ...`. Keep existing blockIds: every page's skeleton points at them.
-- Saving the component changes every unpinned instance on live pages at once; there is no draft. Then run `frappectl -s <p> method call builder.api.sync_component -F component_id=<id>`, which adds refs for new blocks and pins every instance to the new version, in both the draft and the live `blocks`, so pinned instances catch up too. Get the human's yes first, list the affected pages (`doc list "Builder Page" -f 'blocks like %<id>%'`), and keep the old `block` and `component_data_script` for rollback.
-- Change shared chrome on the component itself, never page by page. An override on one page's ref is for that page only.
-
-## Extracting a section into a component
-
-Create the component with the section as its `block` root (the root sizes itself, and never carries `position`, `left` or `top`). Then replace the section on the page with an instance whose skeleton mirrors that root's children. Do the same on every other page that repeats the section.
+`examples/tabs/` is a complete component (props, data script, repeaters, script with keyboard support, scoped CSS) that renders and behaves the same live and in the editor: `builder.py create tabs --from <skill-dir>/examples/tabs --name Tabs`.
 
 ## Props
 
-Declare props on the definition root under `props.<name>`:
+Declared on the definition root under `props.<name>`, in the shape the editor writes:
 
 ```json
-{"label": "Heading", "isStandard": true, "isDynamic": false, "isPassedDown": true, "comesFrom": null, "value": null,
- "propOptions": {"type": "string", "isRequired": false, "options": {"defaultValue": "Questions"}, "dependencies": {}}}
+"title": {"label": "Title", "isStandard": true, "isDynamic": false, "isPassedDown": true, "comesFrom": null, "value": null,
+          "propOptions": {"type": "string", "isRequired": false, "options": {"defaultValue": "Hello"}, "dependencies": {}}}
 ```
 
-- Types: `string`, `select` (`options.options` list), `number`, `boolean` (default `"true"`/`"false"` as strings), `array`, `object`, `color`, `image`.
-- An instance entry repeats the whole declaration with `value` set. Array and object values are JSON **strings**; a real list crashes the canvas. The definition's `value` stays `null`.
-- Name props in snake_case. The data script sees `props` as a dict with attribute access, so `props.items`, `props.keys` or `props.get` there is the dict method; read with `props.get("items")`, or avoid those names.
-- Bind a mirroring block to it (`"comesFrom": "props"`, `"key": "title"`) rather than hardcoding the text. For a varying collection, a repeater over an array prop lets each page add or remove entries; baked child blocks don't.
-- Records with several fields ride as delimited array rows (`"Quote | Name | Role"`). The data script splits them into `component.<list>`, and a repeater binds with `"comesFrom": "componentData"`.
+- Types: `string`, `select` (`options.options` list), `number`, `boolean` (`defaultValue` `"true"`/`"false"`), `array`, `object`, `color`, `image`.
+- Keep `isPassedDown: true`: without it the definition's own children can't see the prop live, though the editor shows it.
+- An instance entry is the whole declaration with `value` set (`instance` builds it). A bare `{"value": ...}` works in the editor and falls back to the static text live.
+- Number props render live as floats (`29.0`); format them in the data script if they are shown.
+- A repeater over a prop needs an `array` (or `object`) prop; over any other type it fails the page.
+- For records with several fields, take an array of delimited rows (`"Label | Body"`) and split them in the data script, as the tabs example does.
 
-## Data script and client script
+## Data script
 
-- `component_data_script` gets `props` (resolved, typed) and fills `component`. It runs once per instance, as the visitor. Only `component.component_data` reaches the client script.
-- A block's `clientScript: {"js": ..., "css": ...}` runs once per rendered instance. `js` is a function body with `this` = the instance element and `(component_data, props)` as arguments; `css` is scoped to that block. Select through `this.querySelector` and class hooks, set state from `props` before wiring listeners, and return a cleanup function (the editor re-runs scripts).
-- In the editor, scripts run sandboxed: guard timers and listeners behind `typeof window !== "undefined"`, and write with `textContent`, `classList` or `replaceChildren` rather than `innerHTML`.
+`component_data_script` runs once per instance per render, with `props` (resolved values) and an empty `component` to fill. Bindings and repeaters read `component.<key>` (`comesFrom: "componentData"`); the client script receives only `component.component_data`. The same two-executor rules as page data scripts apply (`data-and-scripts.md`), and props is a dict with attribute access, so read list props with `props.get("items")`.
+
+A page whose data comes only from component data scripts is still HTML-cached for 30 minutes (`live-and-cached.md`).
+
+## Client script and scoped CSS
+
+`clientScript: {"js": ..., "css": ...}` on a block runs once per rendered instance: `js` is the body of an async function with `this` = the block's element and `(component_data, props)` as arguments; it runs inline while the page parses, before page scripts. `css` is scoped to the block.
+
+- Style the root with `&`, not `:scope` (the editor ignores `:scope`). Plain selectors match descendants.
+- Scope every query to `this`: several instances share one page.
+- Props that contain `<` or `&` arrive HTML-escaped (`&lt;`, `&amp;`) in the script.
+- `window.events.dispatch(name, data)` / `events.listen(name, callback)` connect components.
+
+The editor runs the same script in a sandbox, re-running it when props change. There, `window`, `setTimeout`, `document.createElement`, `parentElement`, setting `innerHTML`, and click listeners all throw; keydown listeners, `textContent`, `classList`, `dataset`, `fetch` and `events` work. So: build structure with blocks and repeaters, paint every state from `props` first, then wire behaviour behind `const live = typeof window !== "undefined"`. A script on an `img` still gets the element as `this`, but its CSS scope is lost.
+
+## Instances and overrides
+
+A skeleton ref can override the definition block it points at, per page: styles merge per key, `classes` append, `attributes` merge, `innerHTML` replaces non-empty text (an empty string can't blank it), `display: none` hides it. An instance root's `clientScript: {"js": ""}` disables the definition's script live, not in the editor.
+
+- Blocks you add to a skeleton render too, until a sync drops them.
+- A component nested in another: the outer definition's overrides of the inner component's blocks are not applied, and a prop set on the inner instance shows live but not in the editor. The inner script's `props` also receives an ancestor's value for a same-named prop, so give nested props distinct names.
+- A component can bind page data (`comesFrom: "dataScript"`), but then it only works on that page.
+- A deleted component's instances render nothing, without an error.
+
+## Changing a component
+
+1. `pull component/<id>`, edit `block.json`, keep every existing blockId (push refuses dropped ids: instance skeletons point at them).
+2. `push`: live at once for unpinned instances (pages written over the API, which carry no `componentVersion`).
+3. `sync <id>`: pins every instance (pinned or not) to the new version, adds refs for new blocks, drops blocks the definition doesn't have, keeps overrides, and rewrites both `draft_blocks` and the live `blocks` of every embedding page. Editor-dropped instances carry a `componentVersion` pin and only change after this.
+
+Use `usage <id>` first, and wait about 15 seconds after publishing a page before saving a component it uses; see `live-and-cached.md`.

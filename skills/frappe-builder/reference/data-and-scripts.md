@@ -2,51 +2,72 @@
 
 ## Page data script
 
-`page_data_script` is restricted Python that runs on every render and fills `data`; blocks bind to its keys (see `blocks.md`).
+`page_data_script` runs on every render and fills `data`; blocks bind to its keys. It has no draft.
 
 ```python
-data.events = frappe.get_all("Event", filters={"event_type": "Public"}, fields=["name", "subject", "starts_on"], order_by="starts_on asc", limit=12)
-for event in data.events:
-	event.date_label = frappe.utils.format_date(event.starts_on, "d MMM")
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+events = frappe.db.get_all("Event", filters={"event_type": "Public"}, fields=["name", "subject", "starts_on"], order_by="starts_on asc", limit=12)
+for event in events:
+	day = str(event["starts_on"])[:10]
+	event["date_label"] = day[8:10] + " " + MONTHS[int(day[5:7]) - 1]
+	event["url"] = "/events/" + event["name"]
+data.events = events
+data.has_events = len(events) > 0
 ```
 
-- It runs as the visitor, usually Guest. `frappe.get_all` reads without permission checks, so filter to what is public. `frappe.get_list` raises PermissionError for guests, and `frappe.get_doc` hands back a Document, which can't be subscripted.
-- Use `frappe.utils.parse_json`; `frappe.parse_json` is not exposed. Tuple unpacking fails under the restricted executor; index instead.
-- `redirect("/path")` is available. Any exception, even a RestrictedPython compile error such as a name starting with `_`, fails the whole page with a 500, so guard lookups that can miss.
-- Test by previewing the draft (`builder.api.get_page_preview_html`), which runs the script. `frappectl doctype show <DocType>` gives you the real field names first.
+Sites with server scripts enabled run it with Frappe's safe API; sites without (common on hosted sites) with a smaller one. Write for both:
+
+| Works in both | Only with server scripts on |
+|---|---|
+| `frappe.db.get_all(dt, filters=, fields=, order_by=, limit=)` | `frappe.get_all`, `frappe.get_list` |
+| `frappe.db.count`, `frappe.db.exists`, `frappe.db.get_single_value` | `frappe.db.get_value`, `frappe.db.sql` |
+| `frappe.get_doc(dt, name).get("field")` | `doc["field"]`, Document methods |
+| `json`, `frappe.form_dict`, `frappe.session.user`, `def`, `lambda`, comprehensions, `try` | `frappe.utils.*`, `frappe.throw`, exception classes |
+
+In both:
+- It runs as the visitor, usually Guest. `frappe.db.get_all` skips permission checks, so filter to public records; `frappe.db.get_list` raises for Guests.
+- No imports, no tuple unpacking (`a, b = x`), no names starting with `_` (so no `frappe._`), no `.strftime()`, no SQL functions in `fields`.
+- A `def` can't see the script's top-level names; pass them in.
+- Any exception fails the page. `redirect("/path")` returns a 302.
+
+`data` merges into the page's template context: `data.style` wipes every block style, `data.preview` drops the token stylesheet; name keys after your content. `data.title` sets `<title>`.
+
+`window.page_data` holds only `data.page_data`, and a date or Decimal inside it fails the page (convert with `str()`). For a single value, bind it to a `data-*` attribute and read `element.dataset`.
 
 ## Dynamic routes
 
-A route with a parameter (`events/:event` or `events/<event>`) matches every value. The data script reads it as `frappe.form_dict.event`, loads that record, and handles a value that matches nothing. Put detail pages under their collection's route and link them from the collection's repeater (bind `href`).
+A route like `events/:event` matches every value; the script reads `frappe.form_dict.event`, which also beats a query parameter of the same name.
+
+- A static route beats a dynamic one; of two dynamic routes that match, the last published wins.
+- Nothing 404s on its own: an unknown value renders with empty bindings. Check the record and `redirect("/404")`, or show an empty state. (`frappe.get_doc` on a missing name gives Guests a 403; `raise frappe.PageDoesNotExistError()` shows the not-found page with status 200.)
+- `canonical_url` is rendered as Jinja: `https://example.com/events/{{ frappe.form_dict.event }}`.
+- The draft preview takes route values as query parameters, except `page`, which it uses itself.
 
 ## Client scripts
 
-A `Builder Client Script` is a JS or CSS file the page links. It is created once and attached by name, so one script can serve many pages:
+A `Builder Client Script` (`script_type` `JavaScript` or `CSS`) is a file pages link by name; one script can serve many pages.
 
 ```sh
 frappectl -s <p> doc create "Builder Client Script" --input script.json   # {"name": "Events Filter", "script_type": "JavaScript", "script": "..."}
-frappectl -s <p> doc update "Builder Page" <page> --input links.json      # {"client_scripts": [{"builder_script": "Events Filter"}, ...]}
+frappectl -s <p> doc update "Builder Page" <page> --input links.json      # {"client_scripts": [{"builder_script": "Events Filter"}]}
 ```
 
-- The `client_scripts` list you send replaces the page's list, so include the scripts already attached.
-- Give each script a descriptive `name`. JS and CSS are separate scripts, and JS never injects `<style>`.
-- Scripts run at the end of `<body>`, so the page's elements already exist. `window.page_data` is empty. To hand server values to JS, bind them to a `data-*` attribute (a `type: "attribute"` binding), then read `element.dataset`.
-- Toggle your own classes with `classList`. Assigning `className` removes the block's generated `fb-` class, and with it every style set on the block.
-- Select elements by the classes you set on blocks.
-- Published pages have no Frappe JS; call APIs with `fetch('/api/method/...')` and the `X-Frappe-CSRF-Token: frappe.csrf_token` header.
-- Always save a script through `doc update`: saving regenerates the file the page links (`public_url`, with a `?v=` hash). A page without a data script keeps its cached HTML, and the old `?v=`, for up to 30 minutes; `live-and-cached.md` has the check.
-- Behaviour that belongs to a reusable widget goes in a component's own `clientScript` instead; see `components.md`.
+- The `client_scripts` list you send replaces the page's list.
+- Order live: component scripts run inline as their blocks parse; then the Builder Settings script; then page JS in list order, with the whole DOM present. CSS: block styles, then the Builder Settings style, then page CSS, which wins at equal specificity.
+- Toggle classes with `classList`: assigning `className` drops the block's `fb-` class and all its styles.
+- Published pages have no Frappe JS: `fetch('/api/method/...')` with the `X-Frappe-CSRF-Token: frappe.csrf_token` header.
+- Page and site-wide scripts don't run in the editor canvas.
 
 ## Forms that save
 
-Visitors are guests, so a form can't insert into a DocType directly. The safe chain is Frappe's Web Form, whose `accept` endpoint is guest-allowed, rate-limited and restricted to its fields:
+Guests can't insert into a DocType directly; a Web Form's `accept` endpoint can:
 
-1. A private custom DocType for the submissions (`custom: 1`, `naming_rule: "Random"`, permissions for System Manager only). Use Data, Small Text, Text, Int, Float, Check, Date or Datetime fields; store dropdown answers as Data, because option labels rarely match the submitted values. Field names avoid Frappe's reserved names (`name`, `owner`, `parent`, `idx`, ...).
-2. A `Web Form` on it: `published: 1`, `login_required: 0`, `allow_multiple: 1`, with the same fields.
-3. A client script on the page that collects the inputs and POSTs `{"web_form": "<web form name>", "data": {...}}` to `/api/method/frappe.website.doctype.web_form.web_form.accept`, then shows a confirmation.
+1. A custom DocType for submissions (`custom: 1`, `naming_rule: "Random"`, System Manager permissions only). Store dropdown answers as Data.
+2. A `Web Form` on it: `title`, `published: 1`, `login_required: 0`, `allow_multiple: 1`, the same fields. It also serves its own page at its route.
+3. Page JS that POSTs `{"web_form": "<name>", "data": {...}}` with the CSRF header to `/api/method/frappe.website.doctype.web_form.web_form.accept`.
 
-Creating the DocType needs System Manager and the human's yes. Afterwards, tell them where submissions land: `/app/<doctype-slug>`. Style each input's focus state along with it.
+Submissions land at `/app/<doctype-slug>`.
 
-## Site-wide code and settings
+## Site-wide
 
-`Builder Settings` holds `style` and `script` (loaded on every Builder page), `head_html`/`body_html` (every page; a page's own `head_html`/`body_html` add to them), `home_page` (the route served at `/`), `favicon`, and `disable_auto_dark_mode`. Every change here reaches every page: ask first, and read the current value before you replace it.
+`Builder Settings` holds `style` and `script` (every Builder page), `head_html`/`body_html` (every page) and `home_page` (the route served at `/`).
