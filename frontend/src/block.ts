@@ -68,6 +68,33 @@ const mergeLegacyRawStyles = (baseStyles: BlockStyleMap, rawStyles?: BlockStyleM
 	return baseStyles;
 };
 
+const withoutColor = (style: string) =>
+	style
+		.split(";")
+		.filter((declaration) => declaration.split(":")[0].trim().toLowerCase() !== "color")
+		.join(";")
+		.trim();
+
+// textStyle marks also keep the raw style attribute, which would write the old colour back
+const clearEditorTextColor = (editor: Editor) => {
+	const { from, to } = editor.state.selection;
+	editor
+		.chain()
+		.selectAll()
+		.unsetColor()
+		.setTextSelection({ from, to })
+		.command(({ tr }) => {
+			tr.doc.descendants((node, pos) => {
+				const mark = node.marks.find((m) => m.type.name === "textStyle" && m.attrs.style);
+				if (!mark) return;
+				const style = withoutColor(mark.attrs.style) || null;
+				tr.addMark(pos, pos + node.nodeSize, mark.type.create({ ...mark.attrs, style }));
+			});
+			return true;
+		})
+		.run();
+};
+
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -742,8 +769,7 @@ class Block implements BlockOptions {
 		this.setStyle("color", color);
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			const { from, to } = editor.state.selection;
-			editor.chain().selectAll().unsetColor().setTextSelection({ from, to }).run();
+			clearEditorTextColor(editor);
 			return;
 		}
 		const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
