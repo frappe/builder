@@ -1973,9 +1973,10 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 			return str(value)
 		case "number":
 			try:
-				return float(value)
+				number = float(value)
 			except (ValueError, TypeError):
 				return None
+			return int(number) if number.is_integer() else number
 		case "boolean":
 			if isinstance(value, bool):
 				return value

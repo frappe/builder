@@ -252,6 +252,14 @@ class TestBuilderPage(FrappeTestCase):
 			live.delete()
 			staging.delete()
 
+	def test_number_props_keep_whole_numbers_whole(self):
+		from builder.builder.doctype.builder_page.builder_page import parse_static_value
+
+		self.assertEqual(parse_static_value("29", "number"), 29)
+		self.assertIsInstance(parse_static_value(29.0, "number"), int)
+		self.assertEqual(parse_static_value("2.5", "number"), 2.5)
+		self.assertIsNone(parse_static_value("abc", "number"))
+
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
 		try:
@@ -1488,9 +1496,7 @@ component.update({
 				"Default Header Title",
 				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
-				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
-			)
+			self.assertEqual("25", get_html_for(content_with_default_values, "tag", "h4", only_content=True))
 			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
 
 			self.assertEqual(
@@ -1498,7 +1504,7 @@ component.update({
 				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
 			)
 			self.assertEqual(
-				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
+				"29", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
 			)
 			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
 		finally:
