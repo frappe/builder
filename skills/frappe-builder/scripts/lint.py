@@ -94,8 +94,12 @@ class Linter:
 				self.roots[0],
 				'page root needs originalElement "body", or the page drops its scripts',
 			)
+		seen: dict[str, str] = {}
 		for root in self.roots:
 			for block in root.walk():
+				if block.blockId and block.blockId in seen:
+					self.add("error", block, f"duplicate blockId, also at {seen[block.blockId]}")
+				seen.setdefault(block.blockId or "", block.path)
 				self.check_block(block)
 		return self.issues
 

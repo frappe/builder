@@ -24,6 +24,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -40,6 +41,12 @@ class Frappectl:
 		if result.returncode:
 			sys.exit("\n".join(filter(None, [result.stderr.strip() or f"frappectl {args[0]} failed", hint])))
 		return json.loads(result.stdout) if result.stdout.strip() else None
+
+	def run_input(self, data: dict, *args: str, hint: str = "") -> object:
+		with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
+			json.dump(data, handle)
+			handle.flush()
+			return self.run(*args, "--input", handle.name, hint=hint)
 
 	def get(self, doctype: str, name: str) -> dict:
 		return self.run("doc", "get", doctype, name)
@@ -219,12 +226,7 @@ def cmd_create(ctl: Frappectl, args):
 	}
 	if script_path.exists():
 		doc["component_data_script"] = script_path.read_text()
-	input_path = source / "create.json"
-	input_path.write_text(json.dumps(doc))
-	try:
-		created = ctl.run("doc", "create", "Builder Component", "--input", str(input_path))
-	finally:
-		input_path.unlink()
+	created = ctl.run_input(doc, "doc", "create", "Builder Component")
 	target = ComponentTarget(Path(args.dir) / f"component-{created['name']}")
 	target.write(created)
 	print(f"created component {created['name']}; workdir {target.workdir}")
@@ -307,15 +309,10 @@ def cmd_push(ctl: Frappectl, args):
 		)
 	snapshot_page(ctl, target)
 	update = target.update()
-	update_path = target.workdir / "update.json"
-	update_path.write_text(json.dumps(update))
-	try:
-		ctl.run(
-			"doc", "update", target.doctype, target.doc["name"], "--input", str(update_path),
-			hint="Someone saved it after your pull: pull into another --dir, merge, push from there.",
-		)  # fmt: skip
-	finally:
-		update_path.unlink()
+	ctl.run_input(
+		update, "doc", "update", target.doctype, target.doc["name"],
+		hint="Someone saved it after your pull: pull into another --dir, merge, push from there.",
+	)  # fmt: skip
 	target.refresh(ctl)
 	report_push(ctl, target, update)
 
