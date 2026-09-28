@@ -172,8 +172,11 @@ def latest_version(component_id: str) -> str | None:
 
 @request_cache
 def get_live_component(component_id: str) -> dict | None:
-	# not the document cache: a render that started before a save can put the old
-	# version back into it after the save cleared it
+	"""Read the component from the database once per request.
+
+	Not from the document cache: a render that started before a save can put the old
+	version back into it after the save cleared it.
+	"""
 	return frappe.db.get_value("Builder Component", component_id, COMPONENT_VERSION_FIELDS, as_dict=True)
 
 
