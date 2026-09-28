@@ -254,7 +254,8 @@ class TestBuilderPage(FrappeTestCase):
 			staging.delete()
 
 	def test_route_variables_must_be_identifiers(self):
-		self.assertRaises(frappe.ValidationError, insert_page, "test-bad-route/:my-slug", "Bad Route")
+		for route in ("test-bad-route/:my-slug", "test-bad-route/<foo:slug>"):
+			self.assertRaises(frappe.ValidationError, insert_page, route, "Bad Route")
 
 	def test_a_malformed_dynamic_route_does_not_hide_other_dynamic_pages(self):
 		valid = insert_page("test-valid-dynamic/:slug", "Valid Dynamic Content")

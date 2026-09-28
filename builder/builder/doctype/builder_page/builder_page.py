@@ -82,7 +82,7 @@ class BuilderPageRenderer(DocumentPage):
 					self.docname = d.name
 					self.validate_access()
 					return True
-			except ValueError:
+			except (ValueError, LookupError):
 				continue
 
 		return False
@@ -244,7 +244,7 @@ class BuilderPage(WebsiteGenerator):
 			return
 		try:
 			Map([ColonRule(f"/{self.route}", endpoint=self.name)])
-		except ValueError:
+		except (ValueError, LookupError):
 			frappe.throw(
 				frappe._(
 					"Route variables can only use letters, numbers and underscores, like :slug or <slug>"
