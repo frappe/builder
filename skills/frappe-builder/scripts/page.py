@@ -60,8 +60,10 @@ SHORTHANDS = {
 	"placeItems": ["alignItems", "justifyItems"],
 	"placeContent": ["alignContent", "justifyContent"],
 	"placeSelf": ["alignSelf", "justifySelf"],
+	"borderRadius": [f"border{v}{h}Radius" for v in ("Top", "Bottom") for h in ("Left", "Right")],
+	"flexFlow": ["flexDirection", "flexWrap"],
 }
-# JSON depth the oldest sites' CHECK (json_valid(...)) constraint rejects
+# JSON depth of the stored array that the oldest sites' CHECK (json_valid(...)) constraint rejects
 MAX_JSON_DEPTH = 32
 
 
@@ -80,11 +82,17 @@ class Frappectl:
 		return self.run("doc", "list", doctype, *flags, "--fields", "name,route", "--limit", "2")
 
 	def find_page(self, ref: str) -> str:
-		route = urlparse(ref).path.strip("/") if "://" in ref else ref.strip("/")
+		route = (urlparse(ref).path.strip("/") if "://" in ref else ref.strip("/")) or self.home_route()
 		for filters in ({"name": ref}, {"route": route}):
 			if pages := self.list_names("Builder Page", **filters):
 				return pages[0]["name"]
 		sys.exit(f"No Builder Page with name or route '{ref}'")
+
+	def home_route(self) -> str:
+		settings = self.run("doc", "get", "Builder Settings", "Builder Settings")
+		if not settings.get("home_page"):
+			sys.exit("The site has no Builder home page (Builder Settings.home_page)")
+		return settings["home_page"].strip("/")
 
 
 class Block:
@@ -144,7 +152,7 @@ class Linter:
 					self.add("error", block, f"duplicate blockId, also at {seen[block.blockId]}")
 				seen.setdefault(block.blockId or "", block.path)
 				self.check_block(block)
-		depth = json_depth(self.roots[0].data) if self.roots else 0
+		depth = json_depth([root.data for root in self.roots])
 		if depth >= MAX_JSON_DEPTH:
 			self.issues.append(
 				("warn", "-", f"JSON depth {depth}: older sites reject saves past {MAX_JSON_DEPTH - 1}")
@@ -405,9 +413,21 @@ def refresh(ctl: Frappectl, workdir: Path, doc: dict):
 def cmd_publish(ctl: Frappectl, args):
 	workdir = Path(args.workdir)
 	doc = json.loads((workdir / "doc.json").read_text())
+	if not matches_site(workdir, ctl.run("doc", "get", "Builder Page", doc["name"])):
+		sys.exit(
+			"The page's draft differs from this workdir: push your edits, or pull to review"
+			" someone else's, before you publish"
+		)
 	route = ctl.run("method", "call", "publish", "--doctype", "Builder Page", "--name", doc["name"])
 	refresh(ctl, workdir, doc)
 	print(f"published {doc['name']} at /{route}")
+
+
+def matches_site(workdir: Path, fresh: dict) -> bool:
+	pending = parse_blocks(fresh.get("draft_blocks")) or parse_blocks(fresh.get("blocks"))
+	script = workdir / "data_script.py"
+	script_matches = not script.exists() or script.read_text() == (fresh.get("page_data_script") or "")
+	return script_matches and parse_blocks((workdir / "blocks.json").read_text()) == pending
 
 
 def main():

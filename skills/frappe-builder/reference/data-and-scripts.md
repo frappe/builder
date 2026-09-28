@@ -34,7 +34,7 @@ frappectl -s <p> doc update "Builder Page" <page> --input links.json      # {"cl
 - Toggle your own classes with `classList`. Assigning `className` removes the block's generated `fb-` class, and with it every style set on the block.
 - Select elements by the classes you set on blocks.
 - Published pages have no Frappe JS; call APIs with `fetch('/api/method/...')` and the `X-Frappe-CSRF-Token: frappe.csrf_token` header.
-- Always save a script through `doc update`: saving regenerates the file the page links (`public_url`, with a `?v=` hash). If the live page still loads the old `?v=`, save the script once more.
+- Always save a script through `doc update`: saving regenerates the file the page links (`public_url`, with a `?v=` hash). A page without a data script keeps its cached HTML, and the old `?v=`, for up to 30 minutes; `live-and-cached.md` has the check.
 - Behaviour that belongs to a reusable widget goes in a component's own `clientScript` instead; see `components.md`.
 
 ## Forms that save

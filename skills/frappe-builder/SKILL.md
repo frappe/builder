@@ -54,7 +54,7 @@ Only the block tree has a draft. The data script, page settings, attached script
 - A new page: `frappectl -s <p> doc create "Builder Page" --set page_title=... --set route=...`, then pull. It starts as `[]`; the root block shape is in `reference/blocks.md`.
 - Page settings (`page_title`, `route`, `meta_description`, `meta_image`, `head_html`, `authenticated_access`) are plain fields: `frappectl doc update "Builder Page" <page> --set field=value < /dev/null`. Set them before you pull, or pull again after: any save moves the page's `modified`, and push refuses a workdir that is behind.
 - Preview the draft: `frappectl -s <p> api method/builder.api.get_page_preview_html -F page=<page>` returns the rendered HTML (the data script runs too). Check that the copy you wrote is there, repeaters are filled, and there is no `{{` and no "error building this page". A human can open `/builder/page/<page>` to see it.
-- After publishing, fetch `https://<site>/<route>` and check it the same way.
+- After publishing, fetch `https://<site>/<route>` and check it the same way. If a live change doesn't show, read `reference/live-and-cached.md` before you change anything again.
 - Roll back: the first push after each pull saves a manual snapshot labelled "Before agent edit". `frappectl doc list "Builder Snapshot" -f reference_name=<page> --order-by "creation desc"`, then `method call restore_snapshot --doctype "Builder Page" --name <page> -F snapshot=<id>` puts it back into the draft.
 
 Lint errors in blocks you didn't change were there before you: name them to the human and push with `--force` rather than rewriting their work.
@@ -78,3 +78,4 @@ Done when lint shows no errors in what you changed, the preview or the live rout
 - `reference/blocks.md`: the raw block JSON: fields, styles, responsive, text, images, icons, raw HTML, bindings, repeaters, visibility.
 - `reference/data-and-scripts.md`: page data scripts, dynamic routes, client scripts, forms that save, site-wide code.
 - `reference/components.md`: component definitions, props, instances, and syncing a changed component into every page.
+- `reference/live-and-cached.md`: which writes are draft and which are live, the caches between a save and a visitor, and how to tell which one is serving an old page.

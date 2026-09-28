@@ -32,7 +32,7 @@
 
 - camelCase property names, CSS values as strings with units (`"padding": "24px"`). Keyword values stay in CSS form (`"justifyContent": "space-between"`).
 - State styles are prefixed keys: `"hover:backgroundColor"`, `"focus:borderColor"`. A styled input pairs `"focus:outline": "none"` with a visible replacement.
-- Keys are stored sorted, so their order in your JSON is lost. A shorthand that sorts after a longhand overrides it (`borderWidth` after `borderLeft`, `gap` after `columnGap`). Write longhands only, or order-independent values.
+- Don't rely on key order. Server-side rewrites (component sync, snapshot restore, list-valued writes) store keys sorted, and then a shorthand that sorts after a longhand overrides it (`borderWidth` after `borderLeft`, `borderRadius` after `borderBottomLeftRadius`, `gap` after `columnGap`). Write longhands only, or order-independent values.
 - Gradients go in `backgroundImage`, colours in `backgroundColor`. The editor canvas drops a `background` shorthand that holds `var()`, although the published page keeps it.
 - `fontFamily` is one bare Google Fonts family name (`"Fraunces"`); the page loads it automatically. Use no quotes, no fallback stack and never `inherit`, which the font loader requests as a font called "inherit".
 - `var(--token)` takes no fallback. The fallback goes stale when the token is edited.
