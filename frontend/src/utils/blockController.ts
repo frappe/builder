@@ -201,7 +201,7 @@ const blockController = {
 	getParentBlock: () => {
 		return canvasStore.activeCanvas?.selectedBlocks[0]?.getParentBlock();
 	},
-	setTextColor: (color: StyleValue) => {
+	setTextColor: (color: string | null) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setTextColor(color);
 		});

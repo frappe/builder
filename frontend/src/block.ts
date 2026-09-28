@@ -738,19 +738,19 @@ class Block implements BlockOptions {
 		activeEditor = editor;
 		activeEditorBlockId = editor ? this.blockId : null;
 	}
-	setTextColor(color: StyleValue) {
+	setTextColor(color: string | null) {
+		this.setStyle("color", color);
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			if (color) editor.chain().setColor(String(color)).run();
-			else editor.chain().unsetColor().run();
-		} else {
-			this.setStyle("color", color);
-			const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
-			innerHTMLDOM.querySelectorAll("*").forEach((el) => {
-				(el as HTMLElement).style.color = "";
-			});
-			this.innerHTML = innerHTMLDOM.body.innerHTML;
+			const { from, to } = editor.state.selection;
+			editor.chain().selectAll().unsetColor().setTextSelection({ from, to }).run();
+			return;
 		}
+		const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
+		innerHTMLDOM.querySelectorAll("*").forEach((el) => {
+			(el as HTMLElement).style.color = "";
+		});
+		this.innerHTML = innerHTMLDOM.body.innerHTML;
 	}
 	isHTML() {
 		return this.originalElement === "__raw_html__";
