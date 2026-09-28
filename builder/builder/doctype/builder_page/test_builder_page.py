@@ -258,6 +258,7 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertEqual(parse_static_value("29", "number"), 29)
 		self.assertIsInstance(parse_static_value(29.0, "number"), int)
 		self.assertEqual(parse_static_value("2.5", "number"), 2.5)
+		self.assertEqual(parse_static_value("1e23", "number"), 1e23)
 		self.assertIsNone(parse_static_value("abc", "number"))
 
 	def test_live_page_cannot_move_to_staging(self):
