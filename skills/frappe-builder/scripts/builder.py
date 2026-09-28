@@ -39,7 +39,8 @@ class Frappectl:
 	def run(self, *args: str, hint: str = "") -> object:
 		result = subprocess.run([*self.base, *args], capture_output=True, text=True, stdin=subprocess.DEVNULL)
 		if result.returncode:
-			sys.exit("\n".join(filter(None, [result.stderr.strip() or f"frappectl {args[0]} failed", hint])))
+			message = result.stderr.strip() or f"frappectl {args[0]} failed"
+			sys.exit(f"{message}\n{hint}" if hint else message)
 		return json.loads(result.stdout) if result.stdout.strip() else None
 
 	def run_input(self, data: dict, *args: str, hint: str = "") -> object:
@@ -259,8 +260,8 @@ def print_outline(block: Block, depth: int = 0):
 		print_outline(child, depth + 1)
 
 
-def cmd_outline(args):
-	for index, root in enumerate(roots_of(tree_file(args.target))):
+def cmd_outline(target: str):
+	for index, root in enumerate(roots_of(tree_file(target))):
 		print_outline(Block(root, str(index)))
 
 
@@ -400,7 +401,7 @@ def main():
 	args = parser.parse_args()
 
 	if args.command == "outline":
-		return cmd_outline(args)
+		return cmd_outline(args.target)
 	ctl = Frappectl(args.site)
 	if args.command == "lint":
 		site_aware = args.site or os.environ.get("FRAPPE_SITE")
