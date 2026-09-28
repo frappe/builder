@@ -10,7 +10,7 @@ from frappe.modules.export_file import export_to_files
 from frappe.utils.telemetry import capture
 from frappe.website.utils import clear_website_cache
 
-from builder.builder.component_versions import ensure_component_version
+from builder.builder.component_versions import ensure_component_version, get_live_component
 from builder.export_import_standard_page import StandardFileSync
 from builder.utils import Block, compact_json, execute_script, is_bulk_import
 
@@ -233,9 +233,8 @@ def get_component_data(
 		A dict containing the component's data
 	"""
 
-	try:
-		component_doc = frappe.get_cached_doc("Builder Component", component_name)
-	except frappe.DoesNotExistError:
+	component_doc = get_live_component(component_name)
+	if component_doc is None:
 		return {}
 
 	if script is None:

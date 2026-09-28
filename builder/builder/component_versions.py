@@ -20,6 +20,7 @@ not just the block layout.
 import copy
 
 import frappe
+from frappe.utils.caching import request_cache
 
 from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 	get_snapshot_data,
@@ -169,6 +170,13 @@ def latest_version(component_id: str) -> str | None:
 	return names[0] if names else None
 
 
+@request_cache
+def get_live_component(component_id: str) -> dict | None:
+	# not the document cache: a render that started before a save can put the old
+	# version back into it after the save cleared it
+	return frappe.db.get_value("Builder Component", component_id, COMPONENT_VERSION_FIELDS, as_dict=True)
+
+
 def resolve_component(component_id: str, pinned_version: str | None = None) -> dict | None:
 	"""Return the component's fields as a dict, honoring a pinned version.
 
@@ -189,9 +197,7 @@ def resolve_component(component_id: str, pinned_version: str | None = None) -> d
 		)
 		if data:
 			return frappe.parse_json(data)
-	values = frappe.get_cached_value(
-		"Builder Component", component_id, COMPONENT_VERSION_FIELDS, as_dict=True
-	)
+	values = get_live_component(component_id)
 	if values is None:
 		return None
 	return {

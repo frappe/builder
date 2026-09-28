@@ -1,10 +1,13 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.component_versions import ensure_component_version, resolve_component
+from builder.builder.doctype.builder_component.builder_component import get_component_data
 
 
 def header_block(title: str) -> str:
@@ -67,3 +70,15 @@ class TestBuilderComponent(FrappeTestCase):
 		self.assertEqual(
 			frappe.db.get_value("Builder Component", component.name, "block"), header_block("Three")
 		)
+
+	def test_render_ignores_a_stale_document_cache(self):
+		component = make_component("Saved")
+		stale = frappe._dict(block=header_block("Stale"), component_data_script="component.v = 'stale'")
+		with (
+			patch("frappe.get_cached_value", return_value=stale),
+			patch("frappe.get_cached_doc", return_value=stale),
+		):
+			resolved = resolve_component(component.name)
+			data = get_component_data(component.name)
+		self.assertEqual(frappe.parse_json(resolved["block"])["children"][0]["innerHTML"], "Saved")
+		self.assertEqual(data, {})
