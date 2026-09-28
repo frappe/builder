@@ -1,5 +1,6 @@
 import ipaddress
 import os
+import re
 import socket
 from io import BytesIO
 from types import FunctionType, MethodType, ModuleType
@@ -8,10 +9,12 @@ from urllib.parse import unquote, urlparse
 
 import frappe
 import requests
+from frappe import _
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
+from frappe.model.naming import append_number_if_name_exists
 from frappe.utils.caching import redis_cache
 from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
 from PIL import Image
@@ -36,7 +39,7 @@ def is_site_read_only() -> bool:
 @frappe.whitelist()
 def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
-		frappe.throw("No permission to preview this page")
+		frappe.throw(_("No permission to preview this page"))
 
 	# to load preview without publishing
 	frappe.form_dict.update(kwargs)
@@ -74,6 +77,148 @@ def upload_builder_asset():
 
 
 @frappe.whitelist()
+@has_page_write("You do not have permission to import assets.")
+def import_remote_assets(urls: list[str] | str) -> dict[str, str]:
+	"""Pull remote images into this site and return {original_url: local_url}.
+
+	A page that arrives from somewhere else (a paste from another site, an import)
+	points at images it does not own. They break when the source moves, cannot be
+	optimised, and leak traffic to a third party. URLs that cannot be fetched are
+	left out so the caller keeps the original.
+	"""
+	if isinstance(urls, str):
+		urls = frappe.parse_json(urls)
+
+	imported = {}
+	for url in list(dict.fromkeys(urls))[:MAX_IMPORTED_ASSETS]:
+		if not isinstance(url, str) or not url.startswith("http"):
+			continue
+		try:
+			imported[url] = import_remote_asset(url)
+		except Exception:
+			frappe.log_error(title="Builder: remote asset import failed", message=frappe.get_traceback())
+	return imported
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to import fonts.")
+def import_remote_fonts(fonts: list[dict] | str) -> dict[str, str]:
+	"""Recreate remote webfonts as User Fonts and return {family: file_url}.
+
+	A font that keeps loading from the site it was copied from is the one asset most
+	likely to fail outright, since a self hosted font is usually served without the
+	CORS headers a cross origin webfont needs. Recreating it here also puts the family
+	in Builder's font picker, so it can be used on blocks that never had it.
+	"""
+	if isinstance(fonts, str):
+		fonts = frappe.parse_json(fonts)
+
+	imported = {}
+	for font in fonts[:MAX_IMPORTED_FONTS]:
+		family = (font or {}).get("family", "").strip()
+		url = (font or {}).get("url", "")
+		if not family or not isinstance(url, str) or not url.startswith("http"):
+			continue
+		try:
+			imported[family] = import_remote_font(family, url)
+		except Exception:
+			frappe.log_error(title="Builder: remote font import failed", message=frappe.get_traceback())
+	return imported
+
+
+MAX_IMPORTED_FONTS = 12
+MAX_FONT_BYTES = 6 * 1024 * 1024
+FONT_EXTENSIONS = ("woff2", "woff", "ttf", "otf")
+
+
+def import_remote_font(family: str, url: str) -> str:
+	existing = frappe.db.get_value("User Font", {"font_name": family}, "font_file")
+	if existing:
+		return existing
+
+	assert_not_private_url(url)
+	extension = next((e for e in FONT_EXTENSIONS if urlparse(url).path.lower().endswith(f".{e}")), None)
+	if not extension:
+		frappe.throw(f"Not a font file: {url}")
+
+	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	if len(response.content) > MAX_FONT_BYTES:
+		frappe.throw(f"Font is larger than {MAX_FONT_BYTES // (1024 * 1024)}MB: {url}")
+
+	file = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{frappe.scrub(family)}.{extension}",
+			"is_private": 0,
+			"folder": "Home/Builder Uploads/Fonts",
+			"content": response.content,
+		}
+	).insert()
+	frappe.get_doc({"doctype": "User Font", "font_name": family, "font_file": file.file_url}).insert()
+	return file.file_url
+
+
+MAX_IMPORTED_ASSETS = 200
+MAX_ASSET_BYTES = 12 * 1024 * 1024
+# formats that lose something on a webp round trip (animation, vector text)
+KEEP_AS_IS = {"image/svg+xml": "svg", "image/gif": "gif"}
+# the canvas never draws more than a couple of thousand pixels across, even at 2x
+MAX_IMAGE_EDGE = 2048
+
+
+def import_remote_asset(url: str) -> str:
+	import hashlib
+
+	assert_not_private_url(url)
+	digest = hashlib.md5(url.encode()).hexdigest()[:10]
+	# the name is derived from the URL, so importing the same asset twice reuses the file
+	stem = f"builder-import-{digest}"
+	existing = frappe.db.get_value("File", {"file_name": ["like", f"{stem}.%"]}, "file_url")
+	if existing:
+		return existing
+
+	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	content = response.content
+	if len(content) > MAX_ASSET_BYTES:
+		frappe.throw(f"Asset is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
+
+	content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+	extension = KEEP_AS_IS.get(content_type) or guess_keep_as_is_extension(url)
+	if extension:
+		return save_imported_asset(f"{stem}.{extension}", content)
+
+	image = Image.open(BytesIO(content))
+	if image.mode not in ("RGB", "RGBA"):
+		image = image.convert("RGBA" if "A" in image.mode else "RGB")
+	buffer = BytesIO()
+	image.save(buffer, "WEBP")
+	return save_imported_asset(f"{stem}.webp", buffer.getvalue())
+
+
+def guess_keep_as_is_extension(url: str) -> str | None:
+	path = urlparse(url).path.lower()
+	for extension in KEEP_AS_IS.values():
+		if path.endswith(f".{extension}"):
+			return extension
+	return None
+
+
+def save_imported_asset(file_name: str, content: bytes) -> str:
+	file = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": file_name,
+			"is_private": 0,
+			"folder": "Home/Builder Uploads",
+			"content": content,
+		}
+	).insert()
+	return file.file_url
+
+
+@frappe.whitelist()
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
 	"""
 	Convert image to webp format.
@@ -91,6 +236,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		return filename.split(".")[-1].lower() if "." in filename else ""
 
 	def save_as_webp(image, path: str) -> None:
+		# a 5000px original costs ~100MB decoded and thrashes the browser's image cache,
+		# so the canvas re-decodes it on every pan; thumbnail() only ever shrinks
+		image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE))
 		image.save(path, "WEBP")
 
 	def to_webp_url(url: str, extn: str) -> str:
@@ -168,22 +316,29 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	return image_url
 
 
-def assert_not_private_url(url: str) -> None:
-	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard)."""
+def assert_not_private_url(url: str) -> list[str]:
+	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard).
+	Returns the addresses it validated so a caller can PIN its connection to one — a
+	second DNS resolution at connect time can answer differently (DNS rebinding)."""
 	parsed = urlparse(url)
 	if parsed.scheme not in ("http", "https"):
-		frappe.throw("Only HTTP/HTTPS URLs are allowed for external images.", frappe.PermissionError)
+		frappe.throw(_("Only HTTP/HTTPS URLs are allowed for external images."), frappe.PermissionError)
 	hostname = parsed.hostname
 	if not hostname:
-		frappe.throw("Invalid URL: missing hostname.", frappe.ValidationError)
+		frappe.throw(_("Invalid URL: missing hostname."), frappe.ValidationError)
 	try:
 		addr_infos = socket.getaddrinfo(hostname, None)
 	except socket.gaierror:
-		frappe.throw(f"Could not resolve hostname: {hostname}", frappe.ValidationError)
+		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
+	ips = []
 	for addr_info in addr_infos:
 		ip = ipaddress.ip_address(addr_info[4][0])
 		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
-			frappe.throw("Requests to private or internal addresses are not allowed.", frappe.PermissionError)
+			frappe.throw(
+				_("Requests to private or internal addresses are not allowed."), frappe.PermissionError
+			)
+		ips.append(str(ip))
+	return ips
 
 
 def check_app_permission():
@@ -273,10 +428,18 @@ def clone_client_scripts(source_page, new_page) -> None:
 	new_page.client_scripts = []
 	for script in client_scripts:
 		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
-		new_script = frappe.copy_doc(builder_script)
+		new_script = frappe.copy_doc(builder_script, ignore_no_copy=False)
 		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+
+
+def get_copy_title(title: str) -> str:
+	"""Numbers copies like "Home (Copy)", "Home (Copy) 1" so copying a copy doesn't stack suffixes.
+
+	The "(Copy 2)" alternative matches titles made before the number moved out of the parens."""
+	base = re.sub(r" \(Copy(?: \d+)?\)(?: \d+)?$", "", title)
+	return append_number_if_name_exists("Builder Page", f"{base} (Copy)", "page_title", separator=" ")
 
 
 @frappe.whitelist()
@@ -285,8 +448,15 @@ def duplicate_page(page_name: str):
 	page = frappe.get_doc("Builder Page", page_name)
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
+	new_page.page_title = get_copy_title(page.page_title or page.page_name)
 	new_page.route = None
+	new_page.published = 0
+	new_page.staging = 0
+	new_page.published_at = None
+	new_page.is_standard = 0
+	new_page.app = None
 	clone_client_scripts(page, new_page)
+	new_page.flags.source = "duplicate"
 	new_page.insert()
 	return new_page
 
@@ -330,7 +500,9 @@ def get_template_groups() -> list[dict]:
 		return []
 
 
-def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> str:
+def create_page_from_bundle(
+	bundle: dict, project_folder: str | None = None, template_page: str | None = None
+) -> str:
 	"""Create an editable page from a fetched hub bundle and return its name.
 
 	Installs shared components/variables/scripts/fonts, then builds the page
@@ -372,6 +544,8 @@ def create_page_from_bundle(bundle: dict, project_folder: str | None = None) -> 
 		)
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+	new_page.flags.source = "template"
+	new_page.flags.template_page = template_page
 	new_page.insert()
 	# only fall back to async generation when the template carried no preview
 	if not preview:
@@ -398,7 +572,7 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 		frappe.throw(frappe._("Could not load the selected template. Please try again."))
 
 	assert isinstance(bundle, dict)
-	return create_page_from_bundle(bundle, project_folder)
+	return create_page_from_bundle(bundle, project_folder, template_page)
 
 
 @frappe.whitelist()
@@ -423,7 +597,7 @@ def import_template_group(template_group: str, project_folder: str | None = None
 			continue
 		if not bundle or not bundle.get("page"):
 			continue
-		name = create_page_from_bundle(bundle, project_folder)
+		name = create_page_from_bundle(bundle, project_folder, page.get("name"))
 		created.append(name)
 
 	if not created:
@@ -609,3 +783,17 @@ def get_component_data(
 	)
 
 	return _get_component_data(component_name, props, script)
+
+
+@frappe.whitelist()
+@has_page_read("You do not have permission to submit the survey.")
+def identify_persona(role: str | None = None, use_case: str | None = None, source: str | None = None) -> None:
+	"""Attach the onboarding answers to the site's Pulse profile so every Builder
+	metric can be split by persona without joining events."""
+	if not any((role, use_case, source)):
+		return
+	try:
+		from frappe.utils.telemetry.pulse.client import identify
+	except ImportError:  # pulse identify shipped with frappe v16
+		return
+	identify({"builder_role": role, "builder_use_case": use_case, "builder_source": source})

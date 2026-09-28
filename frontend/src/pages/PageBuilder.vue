@@ -1,12 +1,16 @@
 <template>
-	<div v-show="isSmallScreen" class="grid h-screen w-screen place-content-center gap-4 text-ink-gray-9">
+	<div
+		v-if="builderStore.isSmallScreen"
+		class="fixed inset-0 z-[9999] grid place-content-center gap-4 bg-surface-base text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-3xl-semibold">Screen too small</h1>
-			<p class="text-p-base">Please switch to a larger screen to edit</p>
+			<h1 class="text-p-2xl-semibold">{{ __("Screen too small") }}</h1>
+			<p class="text-p-base">{{ __("Please switch to a larger screen to edit") }}</p>
 		</div>
 	</div>
-	<div v-show="!isSmallScreen" class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
+	<div
+		v-show="!builderStore.isSmallScreen"
+		class="page-builder relative h-screen overflow-hidden bg-surface-gray-1">
 		<!-- Canvas layer (bottom) - comes first in DOM -->
 		<BuilderCanvas
 			ref="fragmentCanvas"
@@ -30,7 +34,7 @@
 			<template v-slot:header>
 				<div class="flex items-center justify-between bg-surface-base p-2 text-sm text-ink-gray-8 shadow-sm">
 					<div class="flex items-center gap-1 pl-2 text-xs">
-						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">Page</a>
+						<a @click="canvasStore.exitFragmentMode" class="cursor-pointer">{{ __("Page") }}</a>
 						<span class="lucide-chevron-right h-3 w-3" aria-hidden="true" />
 						<span class="flex items-center gap-2">
 							{{ canvasStore.fragmentData.fragmentName }}
@@ -43,7 +47,7 @@
 						</span>
 					</div>
 					<Button variant="solid" class="text-xs" @click="saveAndExitFragmentMode">
-						{{ canvasStore.fragmentData.saveActionLabel || "Save" }}
+						{{ canvasStore.fragmentData.saveActionLabel || __("Save") }}
 					</Button>
 				</div>
 			</template>
@@ -70,13 +74,15 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
+			data-panel="left"
 			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
+			data-panel="right"
 			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
-		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
+		<BuilderToolbar data-panel="toolbar" class="absolute left-0 right-0 top-0"></BuilderToolbar>
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -98,33 +104,21 @@
 				required />
 		</template>
 	</Dialog>
-	<AIPageGeneratorModal
-		v-model="showAIGeneratorDialog"
-		v-if="builderStore.isAIEnabled"
-		:pageId="route.params.pageId as string"
-		:mode="aiMode"
-		:blockContext="modifyBlockContext"
-		@generated="handleGeneratedBlocks"
-		@streaming="handleStreamingBlocks"
-		@modified="handleModifiedBlocks"
-		@modifyStreaming="handleModifyStreamingBlocks"
-		@generating="isAIGenerating = $event"
-		ref="aiGeneratorModal"></AIPageGeneratorModal>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="shortcutsModalOpen" />
+	<KeyboardShortcutsDialog v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
 </template>
 
 <script setup lang="ts">
-import type Block from "@/block";
-import AIPageGeneratorModal from "@/components/AIPageGeneratorModal.vue";
+import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import { installEditorDemo } from "@/components/EditorDemo";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
@@ -135,22 +129,20 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
+import { editorDemo } from "@/utils/editorDemo";
 import blockController from "@/utils/blockController";
+import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
-import { getBlockInstance, getBlockObject, getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
+import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { breakpointsTailwind, useBreakpoints, useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
+import { useDebounceFn } from "@vueuse/core";
+import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
-import { prefetchBuilderSettings } from "@/utils/prefetch";
+import { prefetchBuilderSettings, prefetchTemplateGallery } from "@/utils/prefetch";
 
 const expandedEditor = ref<null | InstanceType<typeof CodeEditor>>(null);
-const aiGeneratorModal = ref<null | InstanceType<typeof AIPageGeneratorModal>>(null);
-
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isSmallScreen = breakpoints.smaller("lg");
 
 const route = useRoute();
 const router = useRouter();
@@ -161,99 +153,6 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
-const showAIGeneratorDialog = ref(false);
-const aiMode = ref<"generate" | "modify">("generate");
-const modifyBlockContext = ref<Record<string, any> | null>(null);
-const modifyBlockId = ref<string | null>(null);
-const isAIGenerating = ref(false);
-
-provide("showAIGenerator", () => {
-	aiMode.value = "generate";
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	showAIGeneratorDialog.value = true;
-});
-
-const editWithAIFn = (block: Block) => {
-	aiMode.value = "modify";
-	modifyBlockContext.value = getBlockObject(block);
-	modifyBlockId.value = block.blockId;
-	showAIGeneratorDialog.value = true;
-};
-provide("editWithAI", editWithAIFn);
-
-const runDirectAI = (block: Block, type: "rewrite_text" | "replace_image", customPrompt?: string) => {
-	const blockObj = getBlockObject(block);
-	aiMode.value = "modify";
-	modifyBlockId.value = block.blockId;
-	modifyBlockContext.value = blockObj;
-	aiGeneratorModal.value?.executeDirect(blockObj, type, customPrompt);
-};
-provide("runDirectAI", runDirectAI);
-
-const handleGeneratedBlocks = () => {
-	pageStore.savePage();
-};
-
-const handleStreamingBlocks = (block: BlockOptions) => {
-	if (!block) return;
-
-	try {
-		pageStore.pageBlocks = [getBlockInstance(block)];
-		canvasStore.activeCanvas?.setRootBlock(pageStore.pageBlocks[0] as Block, false);
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
-
-const replaceBlockInTree = (root: Block, targetId: string, replacement: BlockOptions): boolean => {
-	if (!root || !replacement) return false;
-	if (root.blockId === targetId) {
-		root.element = replacement.element || root.element;
-		root.baseStyles = replacement.baseStyles || root.baseStyles;
-		root.mobileStyles = replacement.mobileStyles || root.mobileStyles;
-		root.tabletStyles = replacement.tabletStyles || root.tabletStyles;
-		root.classes = replacement.classes || root.classes;
-
-		if (replacement.attributes) {
-			root.attributes = { ...root.attributes, ...replacement.attributes };
-		}
-
-		if (replacement.innerText !== undefined) root.innerText = replacement.innerText;
-		if (replacement.innerHTML !== undefined) root.innerHTML = replacement.innerHTML;
-
-		if (replacement.children) {
-			root.children.splice(
-				0,
-				root.children.length,
-				...replacement.children.map((child) => getBlockInstance(child as BlockOptions)),
-			);
-		}
-		return true;
-	}
-	return root.children?.some((child: Block) => replaceBlockInTree(child, targetId, replacement)) || false;
-};
-
-const handleModifiedBlocks = () => {
-	pageStore.savePage();
-	modifyBlockContext.value = null;
-	modifyBlockId.value = null;
-	aiMode.value = "generate";
-};
-
-const handleModifyStreamingBlocks = (block: BlockOptions) => {
-	const targetId = block?.blockId || modifyBlockId.value;
-	if (!block || !targetId) return;
-
-	try {
-		const rootBlock = pageStore.pageBlocks[0] as Block;
-		if (rootBlock) {
-			replaceBlockInTree(rootBlock, targetId, block);
-		}
-	} catch {
-		// Partial block may still be invalid, skip this frame
-	}
-};
 
 watch(
 	[
@@ -290,74 +189,30 @@ const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
+if (editorDemo) {
+	installEditorDemo();
+}
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-const shortcutsModalOpen = ref(false);
-
-provide("showShortcuts", () => {
-	shortcutsModalOpen.value = true;
-});
-
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: " ",
-		description: "Hold for move mode",
-		group: "Tools",
-		handler: () => {
+		combo: "Space",
+		description: __("Hold for Move Mode"),
+		group: __("Tools"),
+		onHold: () => {
 			if (!canvasStore.editableBlock) {
 				builderStore.mode = "move";
 			}
 		},
+		// on release, revert back to last mode
+		onRelease: () => {
+			if (builderStore.mode === "move") {
+				builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
+			}
+		},
 		preventDefault: true,
 	},
-	{
-		key: "?",
-		description: "Show keyboard shortcuts",
-		group: "General",
-		handler: () => {
-			shortcutsModalOpen.value = true;
-		},
-	},
-	{
-		key: "i",
-		ctrl: true,
-		description: "Edit block with AI",
-		group: "Edit",
-		condition: () =>
-			builderStore.isAIEnabled &&
-			!blockController.isRoot() &&
-			!blockController.multipleBlocksSelected() &&
-			!builderStore.readOnlyMode,
-		handler: () => {
-			const block = blockController.getSelectedBlocks()[0];
-			if (block) {
-				editWithAIFn?.(block);
-			}
-		},
-	},
-	{
-		key: "d",
-		ctrl: true,
-		shift: true,
-		description: "Delete Page",
-		group: "General",
-		handler: () => {
-			if (pageStore.activePage && !pageStore.activePage.is_standard) {
-				pageStore.deletePage(pageStore.activePage).then(() => {
-					router.push({ name: "home" });
-				});
-			}
-		},
-		condition: () => Boolean(pageStore.activePage && !pageStore.activePage.is_standard),
-	},
 ]);
-
-// When space is released, revert back to last mode
-useEventListener(document, "keyup", (e) => {
-	if (e.key === " " && builderStore.mode === "move") {
-		builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
-	}
-});
 
 async function saveAndExitFragmentMode(e: Event) {
 	if (canvasStore.fragmentData.fragmentType === "component") {
@@ -372,15 +227,15 @@ let expandedEditorOptions = computed(() => {
 	let title, label;
 	let type: "HTML" | "JavaScript" | "CSS" = "HTML";
 	if (canvasStore.editingContentType === "html") {
-		title = "HTML";
-		label = "Edit HTML";
+		title = __("HTML");
+		label = __("Edit HTML");
 	} else if (canvasStore.editingContentType === "js") {
-		title = "Block Client Script";
-		label = "Edit Block Client Script";
+		title = __("Block Client Script");
+		label = __("Edit Block Client Script");
 		type = "JavaScript";
 	} else if (canvasStore.editingContentType === "css") {
-		title = "CSS";
-		label = "Edit CSS";
+		title = __("CSS");
+		label = __("Edit CSS");
 		type = "CSS";
 	}
 	return { title, label, type };
@@ -414,9 +269,26 @@ onActivated(async () => {
 		await webPages.fetchOne.submit(route.params.pageId as string);
 	}
 	if (route.params.pageId && route.params.pageId !== "new") {
-		pageStore.setPage(route.params.pageId as string, true, route.query);
+		await pageStore.setPage(route.params.pageId as string, true, route.query);
+		offerPendingAssetImport(route.params.pageId as string);
 	}
 });
+
+// In-editor navigation to ANOTHER page (the build pill's "View"/"Go back" links):
+// the component is reused, so onActivated never refires — swap the page here or
+// the URL changes while the canvas keeps showing the previous page.
+watch(
+	() => route.params.pageId,
+	(pageId, oldPageId) => {
+		if (!pageId || pageId === "new" || pageId === pageStore.selectedPage) return;
+		if (oldPageId && oldPageId !== "new") {
+			builderStore.realtime.doc_close("Builder Page", oldPageId as string);
+		}
+		builderStore.realtime.doc_subscribe("Builder Page", pageId as string);
+		builderStore.realtime.doc_open("Builder Page", pageId as string);
+		pageStore.setPage(pageId as string, true, route.query);
+	},
+);
 
 watch(
 	route,
@@ -426,8 +298,9 @@ watch(
 				page_title: "My Page",
 				draft_blocks: [getRootBlockTemplate()],
 			} as BuilderPage;
-			if (builderStore.activeFolder) {
-				pageInfo["project_folder"] = builderStore.activeFolder;
+			const folder = (to.query.folder as string) || builderStore.activeFolder;
+			if (folder) {
+				pageInfo["project_folder"] = folder;
 			}
 			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
@@ -446,7 +319,10 @@ onDeactivated(() => {
 
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
-	prefetchBuilderSettings();
+	if (!editorDemo) {
+		prefetchBuilderSettings();
+		prefetchTemplateGallery();
+	}
 });
 
 watchEffect(() => {
@@ -469,8 +345,8 @@ watch(
 			!pageStore.settingPage &&
 			canvasStore.editingMode === "page" &&
 			!builderStore.readOnlyMode &&
-			!pageCanvas.value?.canvasProps?.settingCanvas &&
-			!isAIGenerating.value
+			!builderStore.aiBuildingCanvas &&
+			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			pageStore.savingPage = true;
 			debouncedPageSave();

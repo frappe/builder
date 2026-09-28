@@ -3,6 +3,7 @@ import InlineInput from "@/components/Controls/InlineInput.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
+import { __ } from "@/translation";
 
 const getEditorConfig = (): BlockEditorConfig => {
 	return blockController.getFirstSelectedBlock()?.editorConfig || {};
@@ -18,7 +19,7 @@ const editorConfigSectionProperties = [
 	{
 		component: InlineInput,
 		getProps: () => ({
-			label: "Layer Icon",
+			label: __("Layer Icon"),
 			modelValue: getEditorConfig().icon || "",
 			placeholder: "e.g. play-circle",
 		}),
@@ -31,12 +32,12 @@ const editorConfigSectionProperties = [
 		component: BasePropertyControl,
 		getProps: () => ({
 			propertyKey: "showChildrenInEditor",
-			label: "Show Children",
+			label: __("Show Children"),
 			component: OptionToggle,
 			enableStates: false,
 			options: [
-				{ label: "Show", value: true },
-				{ label: "Hide", value: false },
+				{ label: __("Show"), value: true },
+				{ label: __("Hide"), value: false },
 			],
 			getModelValue: () => {
 				const val = getEditorConfig().showChildrenInEditor;
@@ -49,7 +50,7 @@ const editorConfigSectionProperties = [
 ];
 
 export default {
-	name: "Editor Config",
+	name: __("Editor Config"),
 	properties: editorConfigSectionProperties,
 	collapsed: true,
 	condition: () => {

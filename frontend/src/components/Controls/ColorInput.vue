@@ -14,7 +14,7 @@
 			">
 			<template #target="{ togglePopover, isOpen }">
 				<div class="flex items-center justify-between">
-					<InputLabel v-if="label">{{ label }}</InputLabel>
+					<InputLabel v-if="label" class="w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
 					<div class="relative w-full">
 						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
 							<Autocomplete
@@ -25,9 +25,9 @@
 								}"
 								v-bind="events"
 								ref="colorInput"
+								:selectOnFocus="true"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="() => !isCssVariable && togglePopover()"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
@@ -35,7 +35,7 @@
 								:actionButton="
 									modelValue && !isCssVariable && props.showColorVariableOptions
 										? {
-												label: 'Save as Token',
+												label: __('Save as Token'),
 												icon: 'lucide-plus',
 												handler: openVariableDialog,
 											}
@@ -43,14 +43,16 @@
 								"
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
-									<div
-										class="size-4 cursor-pointer rounded shadow-md"
+									<button
+										type="button"
+										class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+										:aria-label="__('Open color picker')"
 										@click="togglePopover"
 										:style="{
 											background: modelValue
 												? resolvedColor
 												: `url(/assets/builder/images/color-circle.png) center / contain`,
-										}"></div>
+										}"></button>
 								</template>
 							</Autocomplete>
 						</Tooltip>
@@ -62,6 +64,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import NewBuilderToken from "@/components/Modals/NewBuilderToken.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -168,7 +171,7 @@ const props = withDefaults(
 	}>(),
 	{
 		modelValue: null,
-		placeholder: "Set Color",
+		placeholder: __("Set Color"),
 		placement: "left",
 		showColorVariableOptions: true,
 		showPickerOnMount: false,
@@ -230,9 +233,7 @@ const handleClose = () => {
 };
 
 const openVariableDialog = () => {
-	newVariable.value = {
-		value: props.modelValue || "",
-	};
+	newVariable.value = { type: "Color", value: props.modelValue || "" };
 	showVariableDialog.value = true;
 };
 

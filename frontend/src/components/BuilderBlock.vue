@@ -11,6 +11,7 @@
 		:readonly="readonly"
 		:style="styles"
 		ref="component">
+		<template v-if="optionText != null">{{ optionText }}</template>
 		<BuilderBlock
 			:data="data"
 			:componentData="resolvedComponentData"
@@ -49,8 +50,8 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import componentController from "@/utils/componentController.js";
-import { setFont } from "@/utils/fontManager";
-import { extractComponentId } from "@/utils/helpers";
+import { needsItalic, setFont } from "@/utils/fontManager";
+import { extractComponentId, getTextContent } from "@/utils/helpers";
 import type { BlockClientScriptEmulator } from "@/utils/scriptSandbox";
 import { useDraggableBlock } from "@/utils/useDraggableBlock";
 import {
@@ -180,6 +181,13 @@ const valueResolver = new BlockValueResolver({
 	data: () => props.data ?? null,
 	componentData: () => resolvedComponentData.value ?? null,
 	defaultProps: () => props.defaultProps ?? null,
+});
+
+// option supports only text content, so its label renders as a text node instead of going through TextBlock
+const optionText = computed(() => {
+	if (props.block.getElement() !== "option") return null;
+	const resolved = valueResolver.applyDynamicValues("key", { innerHTML: null }).innerHTML;
+	return getTextContent(String(resolved ?? props.block.getInnerHTML() ?? ""));
 });
 
 const attributes = computed(() => {
@@ -318,20 +326,15 @@ const loadEditor = computed(() => {
 const emit = defineEmits(["mounted"]);
 
 watchEffect(() => {
-	let fontFamily = props.block.getStyle("fontFamily") as string;
-	const fontWeight = props.block.getStyle("fontWeight") as string;
-	if (!fontFamily && fontWeight) {
-		let parent = props.block.getParentBlock();
-		while (parent) {
-			const parentFont = parent.getStyle("fontFamily") as string;
-			if (parentFont) {
-				fontFamily = parentFont;
-				break;
-			}
-			parent = parent.getParentBlock();
-		}
-	}
-	setFont(fontFamily, fontWeight);
+	const { block, breakpoint } = props;
+	const italic = needsItalic(block.getStyle("fontStyle", breakpoint), block.getInnerHTML());
+	let fontWeight = block.getStyle("fontWeight", breakpoint) as string;
+	// italic faces are cut per weight, so they need the weight the text inherits
+	if (italic && !fontWeight) fontWeight = block.getAncestorStyle("fontWeight", breakpoint) as string;
+	let fontFamily = block.getStyle("fontFamily", breakpoint) as string;
+	if (!fontFamily && (fontWeight || italic))
+		fontFamily = block.getAncestorStyle("fontFamily", breakpoint) as string;
+	setFont(fontFamily, fontWeight, italic);
 });
 
 onMounted(async () => {
@@ -428,7 +431,7 @@ watch(
 			javascript:
 				settingPage || (waitsForComponentData && !editingComponentId.value && !dataReady)
 					? ""
-					: clientScript.javascript ?? "",
+					: (clientScript.javascript ?? ""),
 			componentData: componentData ?? {},
 			props: resolvedProps,
 		});

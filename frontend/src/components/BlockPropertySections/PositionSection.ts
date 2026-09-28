@@ -1,6 +1,7 @@
 import BlockPositionHandler from "@/components/BlockPositionHandler.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const positionSectionProperties = [
 	{
@@ -13,7 +14,7 @@ const positionSectionProperties = [
 ];
 
 export default {
-	name: "Position",
+	name: __("Position"),
 	properties: positionSectionProperties,
 	condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
 	collapsed: computed(() => {

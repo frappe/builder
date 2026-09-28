@@ -6,6 +6,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { setFont as _setFont, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
+import { __ } from "@/translation";
 
 const setFont = (font: string) => {
 	_setFont(font, null).then(() => {
@@ -18,7 +19,7 @@ const typographySectionProperties = [
 		component: BasePropertyControl,
 		getProps: () => {
 			return {
-				label: "Content",
+				label: __("Content"),
 				propertyKey: "innerHTML",
 				controlType: "key",
 				// @ts-ignore
@@ -37,7 +38,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Family",
+				label: __("Family"),
 				component: FontInput,
 				propertyKey: "fontFamily",
 				getModelValue: () => blockController.getFontFamily(),
@@ -51,7 +52,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Weight",
+				label: __("Weight"),
 				propertyKey: "fontWeight",
 				component: Autocomplete,
 				// static options were never query-filtered, so ignore the search
@@ -72,7 +73,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Size",
+				label: __("Size"),
 				propertyKey: "fontSize",
 				enableSlider: true,
 				minValue: 1,
@@ -86,7 +87,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Height",
+				label: __("Height"),
 				propertyKey: "lineHeight",
 				enableSlider: true,
 			};
@@ -98,7 +99,7 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Letter",
+				label: __("Letter"),
 				propertyKey: "letterSpacing",
 				enableSlider: true,
 			};
@@ -110,25 +111,25 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Transform",
+				label: __("Transform"),
 				propertyKey: "textTransform",
 				type: "select",
 				options: [
 					{
 						value: "unset",
-						label: "Unset",
+						label: __("Unset"),
 					},
 					{
 						value: "uppercase",
-						label: "Uppercase",
+						label: __("Uppercase"),
 					},
 					{
 						value: "lowercase",
-						label: "Lowercase",
+						label: __("Lowercase"),
 					},
 					{
 						value: "capitalize",
-						label: "Capitalize",
+						label: __("Capitalize"),
 					},
 				],
 				setModelValue: (val: string) => {
@@ -144,30 +145,30 @@ const typographySectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: "Align",
+				label: __("Align"),
 				propertyKey: "textAlign",
 				component: OptionToggle,
 				options: [
 					{
-						label: "Left",
+						label: __("Left"),
 						value: "left",
 						icon: "lucide-align-left",
 						hideLabel: true,
 					},
 					{
-						label: "Center",
+						label: __("Center"),
 						value: "center",
 						icon: "lucide-align-center",
 						hideLabel: true,
 					},
 					{
-						label: "Right",
+						label: __("Right"),
 						value: "right",
 						icon: "lucide-align-right",
 						hideLabel: true,
 					},
 					{
-						label: "Justify",
+						label: __("Justify"),
 						value: "justify",
 						icon: "lucide-align-justify",
 						hideLabel: true,
@@ -182,7 +183,7 @@ const typographySectionProperties = [
 ];
 
 export default {
-	name: "Typography",
+	name: __("Typography"),
 	properties: typographySectionProperties,
 	condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
 };

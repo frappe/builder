@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.integrations.frappe_providers.frappecloud_billing import get_base_url, get_headers
 from frappe.utils.telemetry import capture
 
@@ -31,7 +32,7 @@ def fc_call(method: str, **params):
 				error = None
 		else:
 			error = body.get("exception") or body.get("message")
-		frappe.throw(error or f"FC API returned {response.status_code}")
+		frappe.throw(error or _("FC API returned {0}").format(response.status_code))
 
 	return response.json().get("message")
 

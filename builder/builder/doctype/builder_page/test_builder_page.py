@@ -51,6 +51,21 @@ component.update({
 """
 
 
+def insert_page(route, heading):
+	return frappe.get_doc(
+		{
+			"doctype": "Builder Page",
+			"page_title": heading,
+			"route": route,
+			"draft_blocks": Block(
+				element="div",
+				originalElement="body",
+				children=[Block(element="h1", innerHTML=heading)],
+			).as_json(wrap_in_array=True),
+		}
+	).insert()
+
+
 class TestBuilderPage(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -122,9 +137,37 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			frappe.local.request = previous
 
+	def test_get_preview_html_can_force_dark_mode(self):
+		form_dict = frappe.local.form_dict
+
+		html = self.page.get_preview_html(color_scheme="dark")
+
+		html_tag = html[html.index("<html") :].split(">", 1)[0]
+		self.assertIn('data-prefers-color-scheme="dark"', html_tag)
+		self.assertIs(frappe.local.form_dict, form_dict)
+		self.assertNotIn("prefers_color_scheme", frappe.form_dict)
+
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
+
+	def test_blocks_can_be_saved_as_a_list(self):
+		"""Callers that hand over a block tree (paste, AI writes, the API) pass a list.
+		Only insert used to compact it, so updating a page threw "cannot be a list"."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "List Blocks",
+				"blocks": [{"element": "div", "originalElement": "body", "blockId": "root"}],
+			}
+		).insert()
+		self.assertIsInstance(page.blocks, str)
+
+		page.blocks = [{"element": "section", "blockId": "updated"}]
+		page.save()
+		self.assertIsInstance(page.reload().blocks, str)
+		self.assertIn("section", page.blocks)
+		page.delete()
 
 	def test_dynamic_route(self):
 		from frappe.utils import get_html_for_route
@@ -144,6 +187,94 @@ class TestBuilderPage(FrappeTestCase):
 		self.page.publish()
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
+
+	def test_staging_page_is_served_but_kept_out_of_search(self):
+		from frappe.www.sitemap import get_public_pages_from_doctypes
+
+		noindex = '<meta name="robots" content="noindex, nofollow">'
+		page = insert_page("test-staging-page", "Staging Content")
+		try:
+			page.publish_to_staging()
+			content = get_response_content("/test-staging-page")
+			self.assertIn("Staging Content", content)
+			self.assertIn(noindex, content)
+			get_public_pages_from_doctypes.clear_cache()
+			self.assertNotIn("test-staging-page", get_public_pages_from_doctypes())
+
+			page.publish()
+			self.assertFalse(page.staging)
+			self.assertNotIn(noindex, get_response_content("/test-staging-page"))
+			get_public_pages_from_doctypes.clear_cache()
+			self.assertIn("test-staging-page", get_public_pages_from_doctypes())
+		finally:
+			page.delete()
+
+	def test_unpublish_takes_a_staging_page_offline(self):
+		page = insert_page("test-staging-unpublish", "Staging Content")
+		try:
+			page.publish_to_staging()
+			page.unpublish()
+			self.assertFalse(page.staging)
+			self.assertEqual(get_response("/test-staging-unpublish").status_code, 404)
+		finally:
+			page.delete()
+
+	def test_live_page_keeps_its_route_when_a_staging_page_shares_it(self):
+		from frappe.utils import add_to_date, now_datetime
+		from frappe.website.utils import clear_cache as clear_page_cache
+
+		from builder.builder.doctype.builder_page.builder_page import find_page_with_path
+
+		route = "test-shared-route"
+		live = insert_page(route, "Live Content")
+		staging = insert_page(route, "Staging Content")
+		try:
+			live.publish()
+			staging.publish_to_staging()
+			# a staging page that was live more recently still can't take the route
+			staging.db_set("published_at", add_to_date(now_datetime(), days=1))
+			find_page_with_path.clear_cache()
+			clear_page_cache(route)
+			self.assertIn("Live Content", get_response_content(f"/{route}"))
+		finally:
+			live.delete()
+			staging.delete()
+
+	def test_live_page_keeps_a_dynamic_route_when_a_staging_page_shares_it(self):
+		staging = insert_page("test-shared-dynamic/<slug>", "Staging Dynamic Content")
+		live = insert_page("test-shared-dynamic/<slug>", "Live Dynamic Content")
+		try:
+			live.publish()
+			# staged last, so it is the newest: default `modified desc` ordering would serve it
+			staging.publish_to_staging()
+			self.assertIn("Live Dynamic Content", get_response_content("/test-shared-dynamic/any"))
+		finally:
+			live.delete()
+			staging.delete()
+
+	def test_live_page_cannot_move_to_staging(self):
+		page = insert_page("test-live-to-staging", "Live Content")
+		try:
+			page.publish()
+			self.assertRaises(frappe.ValidationError, page.publish_to_staging)
+			self.assertTrue(page.reload().published)
+		finally:
+			page.delete()
+
+	def test_mark_as_staging_moves_a_live_page_and_keeps_its_draft(self):
+		noindex = '<meta name="robots" content="noindex, nofollow">'
+		page = insert_page("test-mark-as-staging", "Live Content")
+		try:
+			page.publish()
+			page.db_set("draft_blocks", page.blocks)
+			page.reload().mark_as_staging()
+			self.assertFalse(page.published)
+			self.assertTrue(page.staging)
+			self.assertTrue(page.draft_blocks)
+			self.assertIn(noindex, get_response_content("/test-mark-as-staging"))
+			self.assertRaises(frappe.ValidationError, page.mark_as_staging)
+		finally:
+			page.delete()
 
 	def test_client_script(self):
 		client_script_js = frappe.get_doc(
@@ -249,6 +380,179 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def dotted_key_blocks(self):
+		body = Block(element="div", originalElement="body")
+		heading = Block(element="h1", innerHTML="Fallback title")
+		heading.set_dynamic_value("hero.title", "key", "innerHTML")
+		link = Block(element="a", innerHTML="Link", attributes={"href": "/fallback"})
+		link.set_dynamic_value("hero.link", "attribute", "href")
+		note = Block(element="p", innerHTML="Only with hero")
+		note.visibilityCondition = {"key": "hero.show", "comesFrom": "dataScript"}
+		body.attach_children(heading, link, note)
+		return body
+
+	def test_dotted_keys_without_their_root_fall_back(self):
+		"""Blocks pasted from another page keep bindings like `hero.title`. A page whose
+		data script does not define `hero` must render the fallbacks, not fail."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Fallback Test",
+				"published": 1,
+				"route": "/dotted-keys-fallback-test",
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-fallback-test")
+			self.assertEqual("Fallback title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="/fallback"', get_html_for(content, "tag", "a"))
+			self.assertNotIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_resolve_from_page_data(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Test",
+				"published": 1,
+				"route": "/dotted-keys-test",
+				"page_data_script": (
+					'data.update({"hero": {"title": "Real title", "link": "https://example.com", "show": True}})'
+				),
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-test")
+			self.assertEqual("Real title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="https://example.com"', get_html_for(content, "tag", "a"))
+			self.assertIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_read_attributes_of_non_mapping_values(self):
+		body = Block(element="div", originalElement="body")
+		year = Block(element="h1", innerHTML="No year")
+		year.set_dynamic_value("post.creation.year", "key", "innerHTML")
+		text_root = Block(element="h2", innerHTML="Fallback")
+		text_root.set_dynamic_value("tagline.title", "key", "innerHTML")
+		body.attach_children(year, text_root)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Attribute Keys Test",
+				"published": 1,
+				"route": "/dotted-attribute-keys-test",
+				"page_data_script": (
+					'post = frappe.db.get_all("Builder Page", fields=["creation"], '
+					'filters={"page_title": "Dotted Attribute Keys Test"})[0]\n'
+					'data.update({"post": post, "tagline": "Plain"})'
+				),
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-attribute-keys-test")
+			year = str(frappe.utils.get_datetime(page.creation).year)
+			self.assertEqual(year, get_html_for(content, "tag", "h1", only_content=True))
+			self.assertEqual("Fallback", get_html_for(content, "tag", "h2", only_content=True))
+		finally:
+			page.delete()
+
+	def component_with_dynamic_title(self, key):
+		prop = {
+			"label": "Title",
+			"isStandard": True,
+			"isDynamic": False,
+			"isPassedDown": False,
+			"comesFrom": None,
+			"value": "Default Title",
+			"propOptions": {
+				"isRequired": False,
+				"type": "string",
+				"options": {"defaultValue": "Default Title"},
+			},
+		}
+		root = Block(
+			element="div", blockId="dynamic-prop-root", clientScript={"js": "void 0;"}, props={"title": prop}
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": root.as_json()}).insert()
+		instance = Block(
+			extendedFromComponent=component.name,
+			props={"title": {**prop, "isDynamic": True, "comesFrom": "dataScript", "value": key}},
+		)
+		return component, instance
+
+	def test_dynamic_prop_without_its_root_uses_the_default(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Fallback Test",
+				"published": 1,
+				"route": "/dynamic-prop-fallback-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-fallback-test")
+			self.assertIn('"title": "Default Title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_resolves_from_page_data(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Test",
+				"published": 1,
+				"route": "/dynamic-prop-test",
+				"page_data_script": 'data.update({"hero": {"title": "Real title"}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-test")
+			self.assertIn('"title": "Real title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_keeps_an_empty_object(self):
+		component, instance = self.component_with_dynamic_title("hero.meta")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Empty Object Test",
+				"published": 1,
+				"route": "/dynamic-prop-empty-object-test",
+				"page_data_script": 'data.update({"hero": {"meta": {}}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-empty-object-test")
+			self.assertIn('"title": {}', content)
+		finally:
+			page.delete()
+			component.delete()
+
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
 			element="div",
@@ -285,6 +589,66 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertTrue("Item 2" in get_html_for(content, "tag", "h2", index=1))
 			self.assertTrue("$20" in get_html_for(content, "tag", "span", index=1))
 
+		finally:
+			page.delete()
+
+	def test_repeater_with_malformed_data_key_renders_empty(self):
+		# A corrupt dataKey.key (e.g. an array stringified to "[object Object],...") must
+		# not crash the page render with an invalid-Jinja error — the repeater should just
+		# render no rows.
+		body = Block(element="div", originalElement="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True)
+		item_name = Block(element="h2")
+
+		repeater_block.attach_data_key("[object Object],[object Object]", "innerHTML")
+		item_name.set_dynamic_value("name", "key", "innerHTML")
+
+		repeater_block.attach_children(item_name)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Malformed Repeater Test",
+				"published": 1,
+				"route": "/malformed-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/malformed-repeater-test")
+			self.assertIn("Malformed Repeater Test", content)  # page rendered, no 500
+			self.assertNotIn("[object Object]", content)
+			self.assertNotIn("key_invalid", content)
+		finally:
+			page.delete()
+
+	def test_repeater_block_with_empty_data_key(self):
+		"""A repeater with an empty data key must render as a plain container.
+		An empty key compiles to `{% for key_ in ( or {}) %}`, a Jinja syntax
+		error that 417s the whole page."""
+		body = Block(element="div", originalElement="body")
+		repeater_block = Block(element="div", isRepeaterBlock=True)
+		heading = Block(element="h2", innerHTML="Static child")
+
+		repeater_block.attach_data_key("", "dataKey")
+		repeater_block.attach_children(heading)
+		body.attach_children(repeater_block)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Empty Repeater Test",
+				"published": 1,
+				"route": "/empty-repeater-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/empty-repeater-test")
+			self.assertTrue("Static child" in get_html_for(content, "tag", "h2"))
 		finally:
 			page.delete()
 
@@ -344,6 +708,61 @@ class TestBuilderPage(FrappeTestCase):
 
 		self.assertEqual(block["innerHTML"].count("{{"), 1)
 		self.assertNotIn("else '{{", block["innerHTML"])
+
+	def test_dynamic_value_wins_over_data_key(self):
+		"""dataKey is the legacy home for a binding. When both record the same (property, type)
+		with different keys, the dynamicValues key resolves first and dataKey stays behind it as a
+		fallback, the order the canvas resolves them in."""
+		from builder.builder.doctype.builder_page.builder_page import set_dynamic_content_placeholders
+
+		block = {
+			"innerHTML": "FALLBACK",
+			"dataKey": {"key": "industry", "property": "innerHTML", "type": "key"},
+			"dynamicValues": [
+				{"key": "sector", "property": "innerHTML", "type": "key", "comesFrom": "dataScript"}
+			],
+		}
+		set_dynamic_content_placeholders(block, {"key": "key_stories", "comesFrom": "dataScript"})
+
+		html = block["innerHTML"]
+		self.assertEqual(html.count("{{"), 1)
+		self.assertNotIn("else '{{", html)
+		self.assertLess(html.index("sector"), html.index("industry"))
+
+	def test_data_key_is_fallback_when_dynamic_value_is_unresolved(self):
+		"""With both fields bound to the same property, an unresolved dynamicValues key falls back to
+		the legacy dataKey before falling back to the static content."""
+		body = Block(element="div", originalElement="body")
+		repeater = Block(element="div", isRepeaterBlock=True)
+		repeater.attach_data_key("stories", "dataKey")
+
+		industry = Block(element="h2", innerHTML="FALLBACK")
+		industry.attach_data_key("industry", "innerHTML", type="key")
+		industry.set_dynamic_value("sector", "key", "innerHTML")
+
+		repeater.attach_children(industry)
+		body.attach_children(repeater)
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Legacy Fallback Test",
+				"published": 1,
+				"route": "/legacy-fallback-test",
+				"page_data_script": 'data.update({"stories": [{"sector": "Retail", "industry": "Real Estate"}, {"industry": "Real Estate"}, {}]})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/legacy-fallback-test")
+			self.assertNotIn("{{", content)
+			# dynamicValues wins, then the legacy dataKey, then the static content
+			self.assertEqual("Retail", get_html_for(content, "tag", "h2", only_content=True))
+			self.assertEqual("Real Estate", get_html_for(content, "tag", "h2", index=1, only_content=True))
+			self.assertEqual("FALLBACK", get_html_for(content, "tag", "h2", index=2, only_content=True))
+		finally:
+			page.delete()
 
 	def test_component_dynamic_values(self):
 		"Test dynamic values in component with and without overrides"
@@ -1217,11 +1636,51 @@ component.update({
 				in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
+				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
 			)
 			self.assertTrue("--builder-image-dim: brightness(0.85) contrast(1.05)" in content)
 			self.assertTrue("img { filter: var(--builder-image-dim, none) }" in content)
+		finally:
+			page.delete()
+
+	def test_dark_mode_img_keeps_absolute_and_data_urls(self):
+		body = Block(element="div", originalElement="body")
+		absolute = Block(
+			element="img",
+			attributes={"src": "/files/light.png", "darkSrc": "https://cdn.example.com/dark mode.png?v=2"},
+		)
+		inline = Block(
+			element="img",
+			attributes={
+				"src": "/files/light.png",
+				"darkSrc": "data:image/svg+xml,%3Csvg width='5' fill='#fff'%3E%3C/svg%3E",
+			},
+		)
+		body.attach_children(absolute, inline)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dark Mode Image URL Test",
+				"published": 1,
+				"route": "/dark-mode-image-url-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dark-mode-image-url-test")
+			self.assertIn(
+				'srcset="https://cdn.example.com/dark%20mode.png?v=2"',
+				get_html_for(content, "tag", "source", only_content=False),
+			)
+			self.assertIn(
+				"srcset=\"data:image/svg+xml,%3Csvg%20width='5'%20fill='%23fff'%3E%3C/svg%3E\"",
+				get_html_for(content, "tag", "source", index=1, only_content=False),
+			)
 		finally:
 			page.delete()
 
@@ -1326,8 +1785,8 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request,
-		with 400 italic always included as a fallback instance."""
+		"""Fonts used in italic get the ital axis in the same single request, at
+		every weight the family is used at, since <em>/<i> inherit their weight."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {
@@ -1340,7 +1799,7 @@ component.update({
 		self.assertEqual(
 			urls,
 			[
-				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap",
 				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
 			],

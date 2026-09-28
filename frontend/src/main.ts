@@ -1,31 +1,43 @@
+// first: in the editor demo it also walls off the site's storage before anything reads it
+import "./setupFrappeUIResource";
 import { createApp } from "vue";
 
 import { Button, FormControl, FrappeUI } from "frappe-ui";
-import { telemetryPlugin } from "frappe-ui/frappe";
+import { telemetryPlugin } from "@framework/ui/telemetry";
 import { createPinia } from "pinia";
 import "./index.css";
 import router from "./router";
-import "./setupFrappeUIResource";
+import translationPlugin, { ensureTranslations } from "./translation";
 
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
+import { editorDemo } from "@/utils/editorDemo";
 
 const app = createApp(App);
 const pinia = createPinia();
 
-app.use(router);
-app.use(FrappeUI);
+// pinia first: installing the router starts the first navigation, and a route
+// chunk looks up stores as it loads
 app.use(pinia);
-app.use(telemetryPlugin, { app_name: "builder" });
 
-window.name = "frappe-builder";
-app.config.globalProperties.window = window;
+ensureTranslations().then(() => {
+	app.use(router);
+	app.use(FrappeUI);
+	if (!editorDemo) {
+		app.use(telemetryPlugin, { app_name: "builder" });
+		// the demo runs inside the published page, where these names would capture its edit link
+		window.name = "frappe-builder";
+	}
+	app.use(translationPlugin);
 
-app.component("Button", Button);
-app.component("FormControl", FormControl);
-app.component("BuilderInput", Input);
+	app.config.globalProperties.window = window;
 
-app.mount("#app");
+	app.component("Button", Button);
+	app.component("FormControl", FormControl);
+	app.component("BuilderInput", Input);
+
+	app.mount("#app");
+});
 
 declare global {
 	interface Window {

@@ -1,6 +1,7 @@
 <!-- TODO: Refactor; split into manageable smaller files -->
 <template>
 	<DraggablePopup
+		class="token-manager-popup"
 		:modelValue="modelValue"
 		@update:modelValue="
 			(val) => {
@@ -12,16 +13,20 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		action-label="Add Token"
+		:action-label="readonly ? undefined : __('Add Token')"
 		:action-handler="addNewVariable"
 		placement="top-left">
-		<template #header><h2 class="text-lg-semibold py-2">Design Tokens</h2></template>
+		<template #header>
+			<h2 class="text-md-semibold py-2">{{ __("Design Tokens") }}</h2>
+		</template>
 		<template #content>
 			<div @keydown.esc="clearSelection">
 				<div class="mb-2">
 					<TabButtons
 						:modelValue="activeType"
-						@update:modelValue="(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))"
+						@update:modelValue="
+							(val?: unknown) => (activeType = tokenType({ type: val as BuilderToken['type'] }))
+						"
 						:options="typeTabOptions" />
 				</div>
 				<div class="mb-3">
@@ -30,9 +35,9 @@
 						@input="(val: string) => (searchQuery = val)"
 						@update:modelValue="(val: string) => (searchQuery = val)"
 						type="text"
-						placeholder="Search tokens"
+						:placeholder="__('Search tokens')"
 						class="w-full"
-						icon-left="search" />
+						icon-left="lucide-search" />
 				</div>
 
 				<!-- a floor under the list so a short tab does not shrink the whole panel -->
@@ -41,12 +46,12 @@
 					<div
 						class="sticky top-0 z-10 border-b border-outline-gray-1 bg-surface-base pb-2 pt-1 text-sm text-ink-gray-5"
 						:class="rowGridClass">
-						<div class="pl-2">Name</div>
+						<div class="pl-2">{{ __("Name") }}</div>
 						<template v-if="isColorType">
-							<div class="border-l border-outline-gray-1 pl-2">Light</div>
-							<div class="border-l border-outline-gray-1 pl-2">Dark</div>
+							<div class="border-l border-outline-gray-1 pl-2">{{ __("Light") }}</div>
+							<div class="border-l border-outline-gray-1 pl-2">{{ __("Dark") }}</div>
 						</template>
-						<div v-else class="border-l border-outline-gray-1 pl-2">Value</div>
+						<div v-else class="border-l border-outline-gray-1 pl-2">{{ __("Value") }}</div>
 					</div>
 
 					<template v-for="group in displayGroups" :key="group.group ?? '__flat__'">
@@ -64,7 +69,7 @@
 								<div
 									v-if="row.isNew"
 									data-row
-									class="rounded py-2"
+									class="rounded-4 py-2"
 									:class="rowGridClass"
 									@keydown.esc.stop.prevent="() => (newVariable = null)"
 									@focusout="(e) => handleNewRowFocusOut(e, row)"
@@ -72,7 +77,7 @@
 									<input
 										type="text"
 										:value="row.token_name"
-										placeholder="Token name"
+										:placeholder="__('Token name')"
 										:class="[cellBoxClass, editableInputClass]"
 										data-new-name
 										@mousedown.stop
@@ -93,7 +98,7 @@
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@click="togglePopover"></button>
 											</template>
@@ -110,9 +115,20 @@
 										v-else
 										:class="[
 											colorCellBoxClass,
-											'border-l border-outline-gray-1 bg-surface-base ring-2 ring-outline-gray-3',
+											'border-l border-outline-gray-1',
+											isFontType ? '' : 'bg-surface-base ring-2 ring-outline-gray-3',
 										]">
+										<FontInput
+											v-if="isFontType"
+											class="w-full"
+											familiesOnly
+											referenceElementSelector=".token-manager-popup"
+											:modelValue="row.value || null"
+											:placeholder="VALUE_PLACEHOLDERS.Font"
+											@mousedown.stop
+											@update:modelValue="(value: string | null) => updateRowValue(row, value, 'light')" />
 										<input
+											v-else
 											type="text"
 											:value="row.value"
 											:placeholder="VALUE_PLACEHOLDERS[activeType]"
@@ -138,7 +154,7 @@
 													:style="{
 														backgroundColor: resolveVariableValue(row.dark_value || row.value || ''),
 													}"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@click="togglePopover"></button>
 											</template>
@@ -174,8 +190,8 @@
 									<div class="flex min-w-0 items-center gap-1.5">
 										<Tooltip
 											v-if="row.is_standard"
-											text="This is a standard variable. It cannot be modified or deleted."
-											placement="top">
+											:text="__('This is a standard variable. It cannot be modified or deleted.')"
+											side="top">
 											<span
 												class="lucide-info ml-1 h-3.5 w-3.5 shrink-0 text-ink-gray-5"
 												aria-hidden="true" />
@@ -195,12 +211,12 @@
 											v-else
 											:class="[cellBoxClass, cellTextClass(row), row.token_name ? '' : 'text-ink-gray-4']"
 											@dblclick="startEdit(row, 'token_name')">
-											{{ row.token_name || "unnamed" }}
+											{{ row.token_name || __("unnamed") }}
 										</div>
 										<!-- Copy the token's CSS handle: var(--<id>) — paste it into any style -->
-										<Tooltip v-if="row.name" :text="`Copy var(--${row.name})`" placement="top">
+										<Tooltip v-if="row.name" :text="__('Copy var(--{0})', [row.name])" side="top">
 											<div
-												class="ml-auto mr-1 invisible shrink-0 group-hover/row:visible"
+												class="invisible ml-auto mr-1 shrink-0 group-hover/row:visible"
 												:class="{ '!visible': copiedId === row.id }">
 												<Button
 													variant="ghost"
@@ -218,13 +234,25 @@
 										:class="[
 											colorCellBoxClass,
 											'rounded-l-none border-l border-outline-gray-1',
-											isEditing(row, 'value')
+											isEditing(row, 'value') && !isFontType
 												? 'bg-surface-base ring-2 ring-outline-gray-3'
 												: cellTextClass(row),
 										]"
 										@dblclick="startEdit(row, 'value')">
+										<FontInput
+											v-if="isEditing(row, 'value') && isFontType"
+											class="w-full"
+											familiesOnly
+											referenceElementSelector=".token-manager-popup"
+											:modelValue="row.value || null"
+											:placeholder="VALUE_PLACEHOLDERS.Font"
+											:ref="focusEditInput"
+											@mousedown.stop
+											@update:modelValue="(value: string | null) => commitFontEdit(row, value)"
+											@focusout="(e: FocusEvent) => handleFontEditFocusOut(e, row)"
+											@keydown.esc.stop.prevent="() => cancelEdit(row)" />
 										<input
-											v-if="isEditing(row, 'value')"
+											v-else-if="isEditing(row, 'value')"
 											type="text"
 											:value="row.value"
 											:placeholder="VALUE_PLACEHOLDERS[activeType]"
@@ -253,7 +281,7 @@
 										]"
 										@dblclick="startEdit(row, 'value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
@@ -262,7 +290,7 @@
 												<button
 													class="h-4 w-4 shrink-0 rounded-full border border-outline-gray-2"
 													:style="{ backgroundColor: resolveVariableValue(row.value || '') }"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@dblclick.stop
 													@click="togglePopover"></button>
@@ -297,7 +325,7 @@
 										]"
 										@dblclick="startEdit(row, 'dark_value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
@@ -308,7 +336,7 @@
 													:style="{
 														backgroundColor: resolveVariableValue(row.dark_value || row.value || ''),
 													}"
-													title="Pick color"
+													:title="__('Pick color')"
 													@mousedown.stop
 													@dblclick.stop
 													@click="togglePopover"></button>
@@ -342,13 +370,13 @@
 					</template>
 					<div v-if="!hasRows" class="py-10 text-center">
 						<div class="text-base-medium text-ink-gray-7">
-							{{ searchQuery.trim() ? "No tokens found" : `No ${activeType.toLowerCase()} tokens yet` }}
+							{{ searchQuery.trim() ? __("No tokens found") : emptyTypeMessage }}
 						</div>
 						<div class="mt-1 text-sm text-ink-gray-5">
 							{{
 								searchQuery.trim()
-									? `No tokens match "${searchQuery}". Try a different search term.`
-									: "Click 'Add Token' to create your first one."
+									? __('No tokens match "{0}". Try a different search term.', [searchQuery])
+									: __("Click 'Add Token' to create your first one.")
 							}}
 						</div>
 					</div>
@@ -358,28 +386,33 @@
 
 				<Dialog
 					v-model="showGroupDialog"
-					title="Move to group"
+					:title="__('Move to Group')"
 					size="sm"
-					:actions="[{ label: 'Move', variant: 'solid', onClick: confirmGroupDialog }]">
+					:actions="[{ label: __('Move'), variant: 'solid', onClick: confirmGroupDialog }]">
 					<template #default>
 						<Autocomplete
 							:modelValue="moveTargetGroup"
 							:options="groupOptions"
-							placeholder="Select or type a group name"
+							:placeholder="__('Select or type a group name')"
 							@update:modelValue="(val: string | null) => (moveTargetGroup = val || '')" />
 					</template>
 				</Dialog>
 
-				<div class="flex items-center pt-4">
+				<div v-if="!readonly" class="flex items-center pt-4">
 					<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
-					<Button @click="triggerCSVUpload" variant="outline" theme="gray" size="sm" icon-left="upload">
-						Upload CSV
+					<Button
+						@click="triggerCSVUpload"
+						variant="outline"
+						theme="gray"
+						size="sm"
+						icon-left="lucide-upload">
+						{{ __("Upload CSV") }}
 					</Button>
 					<button
 						@click="downloadSampleCSV"
 						variant="subtle"
 						class="ml-2 text-xs text-blue-600 underline hover:text-blue-700">
-						Download sample
+						{{ __("Download sample") }}
 					</button>
 				</div>
 			</div>
@@ -388,10 +421,12 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import FontInput from "@/components/Controls/FontInput.vue";
 import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
@@ -399,9 +434,11 @@ import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	modelValue: boolean;
 	container?: HTMLElement | null;
+	// browse only: tokens are shared by the whole site
+	readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -419,6 +456,12 @@ const {
 const csvFileInput = ref<HTMLInputElement>();
 const activeType = ref<"Color" | "Font" | "Dimension">("Color");
 const isColorType = computed(() => activeType.value === "Color");
+const isFontType = computed(() => activeType.value === "Font");
+const emptyTypeMessage = computed(() => {
+	if (activeType.value === "Color") return __("No color tokens yet");
+	if (activeType.value === "Font") return __("No font tokens yet");
+	return __("No dimension tokens yet");
+});
 
 // Copy a token's CSS handle — var(--<doc-id>) — for pasting into any style field.
 const copiedId = ref<string | null>(null);
@@ -430,7 +473,7 @@ const copyHandle = async (row: Row) => {
 		copiedId.value = row.id;
 		setTimeout(() => (copiedId.value = null), 1200);
 	} catch {
-		toast.error("Couldn't copy to clipboard");
+		toast.error(__("Couldn't copy to clipboard"));
 	}
 };
 // Total tokens per type — shown as a count pill on each tab (search-independent
@@ -441,9 +484,9 @@ const tokenCounts = computed<Record<string, number>>(() => {
 	return counts;
 });
 const TYPE_TABS = [
-	{ label: "Colors", value: "Color" },
-	{ label: "Fonts", value: "Font" },
-	{ label: "Dimensions", value: "Dimension" },
+	{ label: __("Colors"), value: "Color" },
+	{ label: __("Fonts"), value: "Font" },
+	{ label: __("Dimensions"), value: "Dimension" },
 ] as const;
 const typeTabOptions = computed(() =>
 	TYPE_TABS.map((tab) => ({
@@ -466,14 +509,14 @@ const rowGridClass = computed(() =>
 		: "grid grid-cols-[minmax(0,1fr)_200px] items-center gap-x-2 px-1",
 );
 
-const cellBoxClass = "w-full min-w-0 rounded-sm px-2 py-1 text-sm";
+const cellBoxClass = "w-full min-w-0 rounded-1 px-2 py-1 text-sm";
 // the focus: variants out-rank @tailwindcss/forms' blue [type='text']:focus ring/border
 const editableInputClass =
 	"border-none bg-surface-base text-ink-gray-8 outline-none ring-2 ring-outline-gray-3 placeholder:text-ink-gray-4 focus:outline-none focus:ring-2 focus:ring-outline-gray-3";
 const cellTextClass = (row: Row) =>
 	row.is_standard ? "truncate text-ink-gray-8" : "cursor-default truncate text-ink-gray-8";
 // color cells render the swatch and the value as a single unit
-const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-sm px-2 py-1 text-sm";
+const colorCellBoxClass = "flex w-full min-w-0 items-center gap-1.5 rounded-1 px-2 py-1 text-sm";
 const colorValueInputClass =
 	"w-full min-w-0 border-none bg-transparent p-0 text-sm text-ink-gray-8 outline-none placeholder:text-ink-gray-4 focus:outline-none focus:ring-0";
 
@@ -564,14 +607,19 @@ const isEditing = (row: Row, field: EditableField) =>
 	editingCell.value?.rowId === row.id && editingCell.value?.field === field;
 
 const startEdit = (row: Row, field: EditableField) => {
-	if (row.is_standard || row.isNew) return;
+	if (props.readonly || row.is_standard || row.isNew) return;
 	editingCell.value = { rowId: row.id, field };
 };
 
 const focusEditInput = (el: Element | ComponentPublicInstance | null) => {
-	if (el instanceof HTMLInputElement) {
-		el.focus();
-		el.select();
+	// component refs (FontInput) expose their root element; focus the input inside it
+	const input =
+		el instanceof HTMLInputElement
+			? el
+			: ((el as ComponentPublicInstance | null)?.$el as HTMLElement | undefined)?.querySelector?.("input");
+	if (input) {
+		input.focus();
+		input.select();
 	}
 };
 
@@ -602,6 +650,22 @@ const cancelEdit = (row: Row) => {
 	exitEdit(row);
 };
 
+// the font dropdown commits through update:modelValue, not through input blur
+const commitFontEdit = (row: Row, value: string | null) => {
+	if (!isEditing(row, "value")) return;
+	exitEdit(row);
+	if ((row.value || "") === (value || "")) return;
+	updateRowValue(row, value, "light");
+};
+
+const handleFontEditFocusOut = (e: FocusEvent, row: Row) => {
+	const wrapper = e.currentTarget as HTMLElement;
+	const next = e.relatedTarget as HTMLElement | null;
+	// the options list is teleported to body, so it never sits inside the wrapper
+	if (next && (wrapper.contains(next) || next.closest(".combobox-content"))) return;
+	cancelEdit(row);
+};
+
 const commitAndEditNext = (row: Row, field: EditableField, e: KeyboardEvent) => {
 	// bounded: tab moves name -> group -> light -> dark, then exits
 	const next = e.shiftKey ? undefined : EDIT_ORDER[EDIT_ORDER.indexOf(field) + 1];
@@ -614,7 +678,9 @@ const commitAndEditNext = (row: Row, field: EditableField, e: KeyboardEvent) => 
 // create the variable once focus leaves the new row entirely (Tab-ing between its cells is fine)
 const handleNewRowFocusOut = (e: FocusEvent, row: Row) => {
 	const rowEl = e.currentTarget as HTMLElement;
-	if (e.relatedTarget && rowEl.contains(e.relatedTarget as Node)) return;
+	const related = e.relatedTarget as HTMLElement | null;
+	// the font dropdown's options render outside the row (teleported to body)
+	if (related && (rowEl.contains(related) || related.closest(".combobox-content"))) return;
 	createVariable(row);
 };
 
@@ -663,7 +729,7 @@ const handleRowMouseDown = (e: MouseEvent, row: Row) => {
 };
 
 const handleRowContextMenu = (e: MouseEvent, row: Row) => {
-	if (row.isNew || row.is_standard) return;
+	if (props.readonly || row.isNew || row.is_standard) return;
 	isNewRowContextMenu.value = false;
 	if (!selectedIds.value.has(row.id)) {
 		selectedIds.value = new Set([row.id]);
@@ -713,9 +779,19 @@ const moveSelectedToGroup = async (group: string) => {
 		row.group = group;
 		await saveVariable(row);
 	}
-	toast.success(
-		group ? `Moved ${rows.length} token(s) to "${group}"` : `Ungrouped ${rows.length} token(s)`,
-	);
+	if (group) {
+		toast.success(
+			rows.length === 1
+				? __('Moved {0} token to "{1}"', [rows.length, group])
+				: __('Moved {0} tokens to "{1}"', [rows.length, group]),
+		);
+	} else {
+		toast.success(
+			rows.length === 1
+				? __("Ungrouped {0} token", [rows.length])
+				: __("Ungrouped {0} tokens", [rows.length]),
+		);
+	}
 };
 
 const uniqueCopyName = (name: string) => {
@@ -729,7 +805,11 @@ const uniqueCopyName = (name: string) => {
 const deleteSelected = async () => {
 	const rows = selectedRows();
 	if (!rows.length) return;
-	const confirmed = await confirm(`Are you sure you want to delete ${rows.length} token(s)?`);
+	const deleteMessage =
+		rows.length === 1
+			? __("Are you sure you want to delete {0} token?", [rows.length])
+			: __("Are you sure you want to delete {0} tokens?", [rows.length]);
+	const confirmed = await confirm(deleteMessage);
 	if (!confirmed) return;
 
 	let deleted = 0;
@@ -739,27 +819,28 @@ const deleteSelected = async () => {
 			rowObjects.delete(row.name!);
 			deleted++;
 		} catch (error) {
-			toast.error(`Failed to delete "${row.token_name}"`);
+			toast.error(__('Failed to delete "{0}"', [row.token_name]));
 		}
 	}
-	if (deleted) toast.success(`Deleted ${deleted} token(s)`);
+	if (deleted)
+		toast.success(deleted === 1 ? __("Deleted {0} token", [deleted]) : __("Deleted {0} tokens", [deleted]));
 	clearSelection();
 };
 
 const contextMenuOptions = computed(() => {
 	if (isNewRowContextMenu.value) {
-		return [{ label: "Remove", action: () => (newVariable.value = null) }];
+		return [{ label: __("Remove"), action: () => (newVariable.value = null) }];
 	}
 	const count = selectedIds.value.size;
-	const suffix = count > 1 ? ` ${count} variables` : " variable";
+	const deleteLabel = count > 1 ? __("Delete {0} Variables", [count]) : __("Delete Variable");
 	return [
-		{ label: "Move to group", action: openGroupDialog },
+		{ label: __("Move to Group"), action: openGroupDialog },
 		{
-			label: "Remove from group",
+			label: __("Remove from Group"),
 			action: () => moveSelectedToGroup(""),
 			condition: () => selectedRows().some((row) => row.group),
 		},
-		{ label: `Delete${suffix}`, action: deleteSelected },
+		{ label: deleteLabel, action: deleteSelected },
 	];
 });
 
@@ -824,7 +905,7 @@ const createVariable = async (row: Row) => {
 		});
 		newVariable.value = null;
 		await nextTick();
-		toast.success("Token created");
+		toast.success(__("Token created"));
 		return createdVariable;
 	} catch (error) {
 		toast.error((error as Error).message || "Failed to create variable");
@@ -863,7 +944,7 @@ const handleCSVUpload = (event: Event) => {
 			const csvText = e.target?.result as string;
 			parseCSVAndAddVariables(csvText);
 		} catch (error) {
-			toast.error("Failed to read CSV file");
+			toast.error(__("Failed to read CSV file"));
 		}
 	};
 	reader.readAsText(file);
@@ -872,7 +953,7 @@ const handleCSVUpload = (event: Event) => {
 const parseCSVAndAddVariables = async (csvText: string) => {
 	const lines = csvText.trim().split("\n");
 	if (lines.length < 2) {
-		toast.error("CSV must have at least a header row and one data row");
+		toast.error(__("CSV must have at least a header row and one data row"));
 		return;
 	}
 
@@ -884,7 +965,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	const typeIndex = headers.findIndex((h) => h.includes("type"));
 
 	if (nameIndex === -1 || lightIndex === -1) {
-		toast.error("CSV must contain 'Token Name' and 'Light Mode' columns");
+		toast.error(__("CSV must contain 'Token Name' and 'Light Mode' columns"));
 		return;
 	}
 
@@ -935,25 +1016,44 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	}
 
 	if (newVariables.length === 0 && updateVariables.length === 0) {
-		if (invalidCount > 0) toast.error(`${invalidCount} entries were invalid`);
+		if (invalidCount > 0)
+			toast.error(
+				invalidCount === 1
+					? __("{0} entry was invalid", [invalidCount])
+					: __("{0} entries were invalid", [invalidCount]),
+			);
 		if (csvFileInput.value) csvFileInput.value.value = "";
 		return;
 	}
 
 	// Warn user that existing variables will be updated
-	const skippedNotes = [
-		invalidCount > 0 ? `${invalidCount} invalid entries skipped` : "",
-		standardCount > 0 ? `${standardCount} standard token(s) skipped` : "",
-	]
-		.filter(Boolean)
-		.join(", ");
-	const confirmed = await confirm(
-		`Create ${newVariables.length} new token(s) and update ${
-			updateVariables.length
-		} existing token(s)?${
-			skippedNotes ? ` (${skippedNotes})` : ""
-		}\n\nWARNING: Updating will overwrite the existing values for the listed variables.`,
+	const counts = [newVariables.length, updateVariables.length];
+	const createAndUpdateMessage =
+		newVariables.length === 1
+			? updateVariables.length === 1
+				? __("Create {0} new token and update {1} existing token?", counts)
+				: __("Create {0} new token and update {1} existing tokens?", counts)
+			: updateVariables.length === 1
+				? __("Create {0} new tokens and update {1} existing token?", counts)
+				: __("Create {0} new tokens and update {1} existing tokens?", counts);
+	const confirmationLines = [createAndUpdateMessage];
+	if (invalidCount > 0)
+		confirmationLines.push(
+			invalidCount === 1
+				? __("({0} invalid entry skipped)", [invalidCount])
+				: __("({0} invalid entries skipped)", [invalidCount]),
+		);
+	if (standardCount > 0)
+		confirmationLines.push(
+			standardCount === 1
+				? __("({0} standard token skipped)", [standardCount])
+				: __("({0} standard tokens skipped)", [standardCount]),
+		);
+	confirmationLines.push(
+		"",
+		__("WARNING: Updating will overwrite the existing values for the listed variables."),
 	);
+	const confirmed = await confirm(confirmationLines.join("\n"));
 
 	if (!confirmed) {
 		if (csvFileInput.value) csvFileInput.value.value = "";
@@ -1001,12 +1101,38 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
-	if (createdCount > 0) toast.success(`Created ${createdCount} token(s)`);
-	if (updatedCount > 0) toast.success(`Updated ${updatedCount} token(s)`);
-	if (createErrors > 0) toast.error(`Failed to create ${createErrors} token(s)`);
-	if (updateErrors > 0) toast.error(`Failed to update ${updateErrors} token(s)`);
-	if (invalidCount > 0) toast.warning(`Skipped ${invalidCount} invalid entries`);
-	if (standardCount > 0) toast.warning(`Skipped ${standardCount} standard token(s) (read-only)`);
+	if (createdCount > 0)
+		toast.success(
+			createdCount === 1 ? __("Created {0} token", [createdCount]) : __("Created {0} tokens", [createdCount]),
+		);
+	if (updatedCount > 0)
+		toast.success(
+			updatedCount === 1 ? __("Updated {0} token", [updatedCount]) : __("Updated {0} tokens", [updatedCount]),
+		);
+	if (createErrors > 0)
+		toast.error(
+			createErrors === 1
+				? __("Failed to create {0} token", [createErrors])
+				: __("Failed to create {0} tokens", [createErrors]),
+		);
+	if (updateErrors > 0)
+		toast.error(
+			updateErrors === 1
+				? __("Failed to update {0} token", [updateErrors])
+				: __("Failed to update {0} tokens", [updateErrors]),
+		);
+	if (invalidCount > 0)
+		toast.warning(
+			invalidCount === 1
+				? __("Skipped {0} invalid entry", [invalidCount])
+				: __("Skipped {0} invalid entries", [invalidCount]),
+		);
+	if (standardCount > 0)
+		toast.warning(
+			standardCount === 1
+				? __("Skipped {0} standard token (read-only)", [standardCount])
+				: __("Skipped {0} standard tokens (read-only)", [standardCount]),
+		);
 
 	if (csvFileInput.value) csvFileInput.value.value = "";
 };
@@ -1033,6 +1159,6 @@ const downloadSampleCSV = () => {
 	document.body.appendChild(link);
 	link.click();
 	document.body.removeChild(link);
-	toast.success("Sample CSV downloaded");
+	toast.success(__("Sample CSV downloaded"));
 };
 </script>

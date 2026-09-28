@@ -3,10 +3,11 @@
 		iconLeft="lucide-plus"
 		class="w-full rounded-none text-xs text-ink-gray-8"
 		@click="openFileSelector">
-		Upload Font
+		{{ __("Upload Font") }}
 	</Button>
 </template>
 <script lang="ts" setup>
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { uploadUserFont } from "@/utils/helpers";
 import { nextTick } from "vue";

@@ -33,6 +33,7 @@ from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 	take_snapshot,
 )
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
+from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -42,9 +43,11 @@ from builder.utils import (
 	camel_case_to_kebab_case,
 	clean_data,
 	compact_json,
+	count_blocks,
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
+	is_bulk_import,
 	is_component_used,
 	merge_raw_styles_into_base_styles,
 	normalize_legacy_raw_styles,
@@ -58,6 +61,9 @@ DESKTOP_BREAKPOINT = 1024
 
 # Number of "Publish" snapshots retained per page (manual snapshots are never auto-pruned)
 KEEP_PUBLISH_SNAPSHOTS = 25
+
+# live and staging pages both render at their route (use as or_filters)
+SERVED_PAGE_FILTERS = {"published": 1, "staging": 1}
 
 
 class BuilderPageRenderer(DocumentPage):
@@ -84,7 +90,7 @@ class BuilderPageRenderer(DocumentPage):
 		if self.docname:
 			self.doc = frappe.get_cached_doc(self.doctype, self.docname)
 			if self.doc.authenticated_access and frappe.session.user == "Guest":
-				raise frappe.PermissionError("Please log in to view this page.")
+				raise frappe.PermissionError(frappe._("Please log in to view this page."))
 
 	def set_canonical_url(self):
 		if not self.doc:
@@ -139,6 +145,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		staging: DF.Check
 		template_group: DF.Data | None
 	# end: auto-generated types
 
@@ -159,7 +166,16 @@ class BuilderPage(WebsiteGenerator):
 		self.process_blocks()
 		self.set_preview()
 		self.set_default_values()
-		capture("builder_page_created", "builder")
+
+	# the name is only final after insert: naming wipes whatever before_insert set
+	def after_insert(self):
+		capture("builder_page_created", "builder", properties=self.creation_event_properties())
+
+	# every write path, not just insert: callers that hand over a block tree
+	# (paste, AI writes, the API) would otherwise fail on update with
+	# "Value for Blocks cannot be a list"
+	def before_save(self):
+		self.process_blocks()
 
 	def process_blocks(self):
 		for block_type in ["blocks", "draft_blocks"]:
@@ -181,6 +197,30 @@ class BuilderPage(WebsiteGenerator):
 			if not self.name:
 				self.autoname()
 			self.route = f"pages/{self.name}"
+
+	def block_count(self) -> int:
+		return count_blocks(self.draft_blocks or self.blocks)
+
+	def creation_event_properties(self) -> dict:
+		block_count = self.block_count()
+		# template and duplicate are stamped by their api entry points; anything
+		# else arriving with content (paste, REST) is an import
+		return {
+			"page": self.name,
+			"source": self.flags.source or ("blank" if block_count <= 1 else "import"),
+			"template_page": self.flags.template_page,
+			"block_count": block_count,
+		}
+
+	def publish_event_properties(self, is_first_publish: bool) -> dict:
+		return {
+			"page": self.name,
+			"is_first_publish": is_first_publish,
+			"seconds_since_created": int(frappe.utils.time_diff_in_seconds(now(), self.creation)),
+			"block_count": self.block_count(),
+			"has_client_script": bool(self.client_scripts),
+			"has_data_script": bool(self.page_data_script),
+		}
 
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
@@ -209,10 +249,14 @@ class BuilderPage(WebsiteGenerator):
 			or self.has_value_changed("route")
 			or self.has_value_changed("published")
 			or self.has_value_changed("published_at")
+			or self.has_value_changed("staging")
 			or self.has_value_changed("disable_indexing")
 			or self.has_value_changed("blocks")
 		):
 			self.clear_route_cache()
+
+		if self.has_value_changed("published") and not self.published and not self.is_new():
+			capture("builder_page_unpublished", "builder", properties={"page": self.name})
 
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
@@ -231,15 +275,70 @@ class BuilderPage(WebsiteGenerator):
 				self.template_group, target_app=frappe.conf.get("template_target_app") or "builder"
 			)
 
-		if frappe.conf.developer_mode and self.is_standard and self.app:
-			export_page_as_standard(self.name, target_app=self.app)
+		self.export_standard_files()
+
+		previous_app = doc_before.app if (doc_before := self.get_doc_before_save()) else None
+		if previous_app and (not self.is_standard or previous_app != self.app):
+			self.cleanup_standard_page_exports(previous_app)
 
 	def clear_route_cache(self):
 		get_web_pages_with_dynamic_routes.clear_cache()
 		find_page_with_path.clear_cache()
 		clear_cache(self.route)
 
+	def cleanup_standard_page_exports(self, app: str) -> None:
+		"""Delete this page's exported files, and its orphaned dependencies, from the given app."""
+		if not app or not frappe.conf.developer_mode:
+			return
+		doc_before = self.get_doc_before_save()
+
+		from builder.export_import_standard_page import (
+			delete_standard_client_script_files,
+			delete_standard_component_files,
+			delete_standard_font_files,
+			delete_standard_page_files,
+			delete_standard_variable_files,
+			extract_components_from_blocks,
+			extract_fonts_from_blocks,
+			extract_variables_from_blocks,
+		)
+
+		def delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files) -> None:
+			"""Delete a dependency's exported files unless another standard page in the app still references it."""
+			# blocks name fonts and tokens with no record; the export skips those too
+			if not frappe.db.exists(doctype, identifier):
+				return
+			referencing_pages = frappe.get_doc(doctype, identifier).get_referencing_pages(
+				filters={"is_standard": 1}, fields=["name", "app"]
+			)
+			referencing_apps = [page.app for page in referencing_pages if page.name != self.name]
+			if app not in referencing_apps:
+				delete_files(identifier, app)
+
+		delete_standard_page_files(self.page_name, app)
+
+		client_scripts = doc_before.client_scripts if doc_before else self.client_scripts
+		blocks = frappe.parse_json(self.draft_blocks or self.blocks)
+
+		dependencies = [
+			(
+				"Builder Client Script",
+				[row.builder_script for row in client_scripts],
+				delete_standard_client_script_files,
+			),
+			("Builder Component", extract_components_from_blocks(blocks), delete_standard_component_files),
+			("Builder Token", extract_variables_from_blocks(blocks), delete_standard_variable_files),
+			("User Font", extract_fonts_from_blocks(blocks), delete_standard_font_files),
+		]
+
+		for doctype, identifiers, delete_files in dependencies:
+			for identifier in identifiers:
+				delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
+
 	def on_trash(self):
+		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
+			frappe.delete_doc("Builder AI Session", session, ignore_missing=True)
+
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:
 				delete_template_page_fixture(self, app=frappe.conf.get("template_target_app") or "builder")
@@ -252,6 +351,23 @@ class BuilderPage(WebsiteGenerator):
 		frappe.db.delete(
 			"Builder Snapshot", {"reference_doctype": "Builder Page", "reference_name": self.name}
 		)
+
+		if self.is_standard and self.app and frappe.conf.developer_mode:
+			self.cleanup_standard_page_exports(self.app)
+
+	def after_rename(self, old: str, new: str, merge: bool = False) -> None:
+		if not (self.is_standard and self.app and frappe.conf.developer_mode):
+			return
+		from builder.export_import_standard_page import delete_standard_page_files
+
+		# rename_doc skips on_update, and the exported JSON holds the old name
+		delete_standard_page_files(old, self.app)
+		self.export_standard_files()
+
+	def export_standard_files(self) -> None:
+		if not (frappe.conf.developer_mode and self.is_standard and self.app) or is_bulk_import():
+			return
+		export_page_as_standard(self.name, target_app=self.app)
 
 	def add_comment(self, comment_type="Comment", text=None, comment_email=None, comment_by=None):
 		if comment_type in ["Attachment Removed", "Attachment"]:
@@ -266,23 +382,60 @@ class BuilderPage(WebsiteGenerator):
 
 	@frappe.whitelist()
 	def publish(self):
+		is_first_publish = not self.published and not self.published_at
 		self.published = 1
+		self.staging = 0
 		self.published_at = now()
-		if self.draft_blocks:
-			# snapshot the content going live; blocks (ideally) already carry componentVersion pins
-			# from when each component was used in the page (pinned at drag-drop), if not they are pinned now
-			take_snapshot(
-				"Builder Page",
-				self.name,
-				fields=["draft_blocks", "page_data_script"],
-				snapshot_type="Publish",
-				transform=pin_components_in_page_data,
-			)
-			prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
-			self.blocks = self.draft_blocks
-			self.draft_blocks = None
+		self.promote_draft_blocks()
 		self.save()
-		capture("builder_page_published", "builder")
+		capture(
+			"builder_page_published", "builder", properties=self.publish_event_properties(is_first_publish)
+		)
+		self.enqueue_preview_image()
+		return self.route
+
+	@frappe.whitelist()
+	def publish_to_staging(self):
+		"""Serve the page at its route like a live page, but keep it out of search engines and
+		the sitemap (Frappe's sitemap lists only `published` pages). A live page moves there with
+		`mark_as_staging` instead, so a stale editor can't take a page off live by publishing."""
+		if self.published:
+			frappe.throw(frappe._("This page is live. Mark it as staging instead."))
+		self.staging = 1
+		self.promote_draft_blocks()
+		self.save()
+		capture("builder_page_staged", "builder", properties={"page": self.name})
+		self.enqueue_preview_image()
+		return self.route
+
+	@frappe.whitelist()
+	def mark_as_staging(self):
+		"""Move a live page to staging. Its live content stays at its route, and unpublished
+		edits stay in the draft."""
+		if not self.published:
+			frappe.throw(frappe._("Only a live page can be marked as staging."))
+		self.published = 0
+		self.staging = 1
+		self.save()
+		capture("builder_page_staged", "builder", properties={"page": self.name})
+
+	def promote_draft_blocks(self):
+		if not self.draft_blocks:
+			return
+		# snapshot the content being published; blocks (ideally) already carry componentVersion pins
+		# from when each component was used in the page (pinned at drag-drop), if not they are pinned now
+		take_snapshot(
+			"Builder Page",
+			self.name,
+			fields=["draft_blocks", "page_data_script"],
+			snapshot_type="Publish",
+			transform=pin_components_in_page_data,
+		)
+		prune_snapshots("Builder Page", self.name, keep=KEEP_PUBLISH_SNAPSHOTS, snapshot_type="Publish")
+		self.blocks = self.draft_blocks
+		self.draft_blocks = None
+
+	def enqueue_preview_image(self):
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -291,13 +444,11 @@ class BuilderPage(WebsiteGenerator):
 			enqueue_after_commit=True,
 		)
 
-		return self.route
-
 	@frappe.whitelist()
 	def unpublish(self):
 		self.published = 0
+		self.staging = 0
 		self.save()
-		capture("builder_page_unpublished", "builder")
 
 	@frappe.whitelist()
 	def create_manual_snapshot(self, label: str | None = None):
@@ -329,7 +480,26 @@ class BuilderPage(WebsiteGenerator):
 		self.draft_blocks = blocks
 		if "page_data_script" in data:
 			self.page_data_script = data.get("page_data_script")
+		# AI snapshots also capture client scripts (publish/manual ones don't), so a single
+		# revert restores them: re-set the page's links to the pre-turn set (this unlinks any
+		# scripts the turn created) and restore each captured script's content (this reverts
+		# scripts the turn edited).
+		if "client_scripts" in data:
+			self.set(
+				"client_scripts",
+				[{"builder_script": s.get("builder_script")} for s in (data.get("client_scripts") or [])],
+			)
 		self.save()
+		for name, content in (data.get("_ai_scripts") or {}).items():
+			if not frappe.db.exists("Builder Client Script", name):
+				continue
+			# Save through the doc (NOT db.set_value): on_update regenerates the public JS/CSS
+			# file the published page actually loads (via public_url). A bare db write reverts
+			# the field but leaves the stale file, so publish would keep serving the old script.
+			script_doc = frappe.get_doc("Builder Client Script", name)
+			script_doc.script = content.get("script")
+			script_doc.script_type = content.get("script_type")
+			script_doc.save(ignore_permissions=True)
 		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
 
 	@frappe.whitelist()
@@ -351,7 +521,7 @@ class BuilderPage(WebsiteGenerator):
 	def get_context(self, context):
 		# delete default favicon
 		del context.favicon
-		context.disable_indexing = self.disable_indexing
+		context.disable_indexing = self.disable_indexing or self.staging
 
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
@@ -383,6 +553,12 @@ class BuilderPage(WebsiteGenerator):
 
 		content, style, fonts, has_dual_mode_image = get_block_html(blocks)
 
+		# Propagate the root block's background to html/body. Otherwise a full-bleed
+		# (e.g. all-black) page paints only its root <div>, and everything the div
+		# doesn't cover — the preview screenshot's canvas, a short page's tail,
+		# overscroll — falls through to the browser's default white.
+		context.page_background = get_root_background(blocks)
+
 		if self.dynamic_route or page_data or self.page_data_script:
 			context.no_cache = 1
 		context.has_dual_mode_image = has_dual_mode_image
@@ -402,6 +578,11 @@ class BuilderPage(WebsiteGenerator):
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
+		if is_demo_page(self.name) and not context.preview:
+			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
+			# the file is served immutable for a year, so a build has to change its URL
+			version = frappe.utils.get_build_version()
+			context.editor_demo_script = f"/assets/builder/js/editor_demo.js?v={version}"
 		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
@@ -518,19 +699,26 @@ class BuilderPage(WebsiteGenerator):
 		)
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
-	def get_preview_html(self) -> str:
+	def get_preview_html(self, color_scheme: str | None = None) -> str:
 		"""Render this page in preview mode (uses draft_blocks when present), so a
 		preview can be generated for unpublished/draft pages too — not just for
-		pages reachable via their published route."""
+		pages reachable via their published route. `color_scheme` ("light"/"dark")
+		forces that mode, as the editor's preview does."""
 		# set_request() swaps frappe.local.request for a faked GET request. When
 		# this runs synchronously inside a real web request (e.g. run_doc_method),
 		# that clobbers the live request and drops its `after_response`, which
 		# then breaks sync_database. Save and restore the original request.
 		previous_request = getattr(frappe.local, "request", None)
+		# The render gets its own form_dict: a scheme left behind (even as None) leaks
+		# into the caller's later renders, and dynamic routes quote every value.
+		previous_form_dict = frappe.local.form_dict
 		try:
 			set_request(method="GET", path=f"/{self.route or ''}")
 			frappe.local.request.for_preview = True
 			frappe.local.no_cache = 1
+			frappe.local.form_dict = frappe._dict(previous_form_dict)
+			if color_scheme:
+				frappe.local.form_dict.prefers_color_scheme = color_scheme
 			renderer = BuilderPageRenderer(path="")
 			renderer.docname = self.name
 			renderer.doctype = "Builder Page"
@@ -538,6 +726,7 @@ class BuilderPage(WebsiteGenerator):
 			return str(renderer.render().data, "utf-8")
 		finally:
 			frappe.local.request = previous_request
+			frappe.local.form_dict = previous_form_dict
 
 	def set_custom_font(self, context, font_map):
 		all_user_fonts = get_all_user_fonts()
@@ -608,6 +797,19 @@ def get_block_data(
 	if isinstance(_locals["block"], dict):
 		block_data = frappe._dict({k: v for k, v in _locals["block"].items() if prev_block_data.get(k) != v})
 	return block_data
+
+
+def get_root_background(blocks: str | list) -> str | None:
+	"""The page's root (body) block background, to paint html/body so a full-bleed
+	page has no white gaps. Returns a CSS value (color, var(--token), or gradient)
+	or None when the root sets no background. `background`/`backgroundImage` (a
+	gradient) win over a plain `backgroundColor`."""
+	data = blocks if isinstance(blocks, list) else frappe.parse_json(blocks or "[]")
+	root = (data[0] if data else None) if isinstance(data, list) else data
+	if not isinstance(root, dict):
+		return None
+	styles = root.get("baseStyles") or {}
+	return styles.get("background") or styles.get("backgroundImage") or styles.get("backgroundColor") or None
 
 
 def get_block_html(blocks: str | list) -> tuple[str, str, dict, bool]:
@@ -802,23 +1004,41 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	return value if not is_empty else "undefined"
 
 
+def get_binding_key(key: str, comes_from: str, data_key: dict | None, missing: str = "{}") -> str:
+	"""Jinja expression for a bound key that survives a missing root."""
+	if comes_from == "props":
+		return jinja_safe_key(f"props.{key}", missing)
+	if comes_from == "componentData":
+		return jinja_safe_key(f"component.{key}", missing)
+	if data_key:
+		return jinja_safe_key(f"{extract_data_key(data_key)}.{key}", missing)
+	# a flat key keeps 0 and "" as-is; only a dotted path raises when its root is undefined
+	if is_safe_data_key(key) and "." not in key:
+		return key
+	return jinja_safe_key(key, missing)
+
+
 def get_dynamic_props_template(
 	prop_value: str, comes_from: str, data_key: dict | None, default_value: Any
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
-	if comes_from == "props":
-		key = jinja_safe_key(f"props.{prop_value}")
-	elif comes_from == "componentData":
-		key = jinja_safe_key(f"component.{prop_value}")
-	else:  # dataScript
-		if data_key:
-			base_key = extract_data_key(data_key)
-			key = jinja_safe_key(f"{base_key}.{prop_value}")
-		else:
-			key = prop_value
-
+	# props tell a missing path apart from an empty object, so the chain ends in none
+	key = get_binding_key(prop_value, comes_from, data_key, missing="none")
 	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+	return f"{{{{ {key} if {key} is defined and {key} is not none else '{fallback}' }}}}"
+
+
+# Reserved characters and existing %-escapes pass through, so absolute and data: URLs
+# survive; only what a URL can't carry literally (spaces, non-ASCII) is encoded.
+URL_SAFE_CHARS = "/:?#[]@!$&'()*+,;=%"
+
+
+def quote_url(url: str | None) -> str | None:
+	if not url:
+		return None
+	# In a data: URL "#" is payload (fill='#fff'), not a fragment.
+	safe = URL_SAFE_CHARS.replace("#", "") if url.startswith("data:") else URL_SAFE_CHARS
+	return frappe.utils.quote(url, safe=safe)
 
 
 def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
@@ -833,8 +1053,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 
 	if element == "img":
 		attributes = block.get("attributes", {})
-		dark_src = frappe.utils.quote(attributes.get("darkSrc")) if attributes.get("darkSrc") else None
-		light_src = frappe.utils.quote(attributes.get("src")) if attributes.get("src") else None
+		dark_src = quote_url(attributes.get("darkSrc"))
+		light_src = quote_url(attributes.get("src"))
 		if dark_src and light_src:
 			picture_tag = soup.new_tag("picture")
 
@@ -843,6 +1063,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
 			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
+			# browsers don't hide <source>, and display: contents on picture turns it into a flex/grid item
+			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
 			state["has_dual_mode_image"] = True
@@ -968,7 +1190,9 @@ def set_italics_from_html(soup, font_map, ancestor_font: str | None = None):
 
 def is_repeater_block(block: dict) -> bool:
 	"""Check if block is a repeater (loop) block."""
-	return bool(block.get("isRepeaterBlock") and block.get("children") and block.get("dataKey"))
+	return bool(
+		block.get("isRepeaterBlock") and block.get("children") and (block.get("dataKey") or {}).get("key")
+	)
 
 
 def render_children(
@@ -1032,7 +1256,7 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 	Get loop information (variable name, iterator, data_key).
 
 	Returns:
-	    Dict with keys: loop_var, iterator_key, data_key
+		Dict with keys: loop_var, iterator_key, data_key
 	"""
 	data_key_config = block.get("dataKey", {})
 	iterator_key = data_key_config.get("key")
@@ -1061,6 +1285,14 @@ def get_loop_info(block: dict, data_key: dict | None, props_stack: dict) -> dict
 			full_key = f"{extract_data_key(data_key)}.{iterator_key}"
 		else:
 			full_key = iterator_key
+
+		if not is_safe_data_key(full_key):
+			loop_var = f"key_invalid_{block.get('blockId', 'x')}"
+			return {
+				"loop_var": loop_var,
+				"iterator_key": "[]",
+				"data_key": {"key": loop_var, "comesFrom": "dataScript"},
+			}
 
 		loop_var = f"key_{full_key.replace('.', '__')}"
 
@@ -1105,15 +1337,7 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	if not key:
 		return None
 
-	# Get key based on source
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{key}")
-	else:  # dataScript
-		if data_key:
-			return f"{extract_data_key(data_key)}.{key}"
-		return key
+	return get_binding_key(key, comes_from, data_key)
 
 
 def escape_raw_text_end_tag(content: str, tag: str) -> str:
@@ -1214,48 +1438,20 @@ def append_child_with_context(parent: bs.Tag, child: bs.Tag, context: dict):
 
 def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 	"""Apply dynamic content placeholders to block attributes and styles."""
-	block_data_key = block.get("dataKey", {}) or {}
-	dynamic_values = [block_data_key] if block_data_key else []
-	dynamic_values += block.get("dynamicValues", []) or []
-
-	# A binding can be recorded in both dataKey and dynamicValues (same property + type).
-	# Applying it twice nests the placeholder inside its own fallback (`{{ ... else '{{ ... }}' }}`),
-	# which leaks the raw expression when the value is falsy. Keep only the first per (property, type).
-	seen = set()
-	deduped = []
-	for dv in dynamic_values:
-		sig = (dv.get("property"), dv.get("type")) if isinstance(dv, dict) else (dv, "key")
-		if sig in seen:
-			continue
-		seen.add(sig)
-		deduped.append(dv)
-	dynamic_values = deduped
-
-	for dynamic_value_doc in dynamic_values:
-		original_key = dynamic_value_doc.get("key", "")
-
-		if not isinstance(dynamic_value_doc, dict):
-			dynamic_value_doc = {"key": dynamic_value_doc, "type": "key", "property": dynamic_value_doc}
-
-		if not dynamic_value_doc or not dynamic_value_doc.get("key"):
-			continue
-
-		key = get_dynamic_value_key(dynamic_value_doc, original_key, data_key)
-
-		property_name = dynamic_value_doc.get("property")
-		value_type = dynamic_value_doc.get("type")
+	for binding in group_bindings_by_target(block):
+		keys = resolve_binding_keys(binding, data_key)
+		property_name = binding[0].get("property")
+		value_type = binding[0].get("type")
 
 		if value_type == "attribute":
 			attributes = block.setdefault("attributes", {})
 			custom_attributes = block.setdefault("customAttributes", {})
 			if property_name in custom_attributes:
 				current_value = custom_attributes.get(property_name, "") or ""
-				custom_attributes[property_name] = (
-					f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(str(current_value))}' }}}}"
-				)
+				custom_attributes[property_name] = build_placeholder(keys, current_value, keep_empty=True)
 			else:
 				current_value = attributes.get(property_name, "")
-				attributes[property_name] = f"{{{{ {key} or '{escape_single_quotes(current_value)}' }}}}"
+				attributes[property_name] = build_placeholder(keys, current_value)
 
 		elif value_type == "style":
 			attributes = block.setdefault("attributes", {})
@@ -1264,31 +1460,59 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 
 			css_property = camel_case_to_kebab_case(property_name)
 			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
-			attributes["style"] += (
-				f"{css_property}: {{{{ {key} or '{escape_single_quotes(current_value)}' }}}};"
-			)
+			attributes["style"] += f"{css_property}: {build_placeholder(keys, current_value)};"
 
 		elif value_type == "key" and not block.get("isRepeaterBlock"):
 			current_value = block.get(property_name, "")
-			block[property_name] = (
-				f"{{{{ {key} if {key} or {key} in ['', 0] else '{escape_single_quotes(current_value)}' }}}}"
-			)
+			block[property_name] = build_placeholder(keys, current_value, keep_empty=True)
 
 
-def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
-	"""Get the Jinja key for a dynamic value."""
-	comes_from = dynamic_value_doc.get("comesFrom", "dataScript")
+def group_bindings_by_target(block: dict) -> list[list[dict]]:
+	"""Group a block's bindings by (property, type), highest precedence first.
 
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{original_key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{original_key}")
-	else:  # dataScript
-		key = dynamic_value_doc.get("key")
-		if data_key:
-			key = f"{extract_data_key(data_key)}.{key}"
-			return jinja_safe_key(key)
-		return key
+	The canvas resolver applies dataKey (the legacy single-binding field) first, then lets
+	dynamicValues overwrite it, keeping the earlier value where a key does not resolve.
+	"""
+	bindings = {}
+	for candidate in block.get("dynamicValues", []) or []:
+		if not isinstance(candidate, dict):
+			candidate = {"key": candidate, "type": "key", "property": candidate}
+		if not candidate.get("key"):
+			continue
+		# a later entry for the same target overrides the ones before it
+		bindings.setdefault((candidate.get("property"), candidate.get("type")), []).insert(0, candidate)
+
+	block_data_key = block.get("dataKey") or {}
+	if block_data_key.get("key"):
+		signature = (block_data_key.get("property"), block_data_key.get("type"))
+		bindings.setdefault(signature, []).append(block_data_key)
+
+	return list(bindings.values())
+
+
+def resolve_binding_keys(binding: list[dict], data_key: dict | None) -> list[str]:
+	"""Jinja keys for one target, in precedence order and without repeats."""
+	keys = []
+	for candidate in binding:
+		key = get_binding_key(candidate.get("key", ""), candidate.get("comesFrom", "dataScript"), data_key)
+		if key not in keys:
+			keys.append(key)
+	return keys
+
+
+def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False) -> str:
+	"""Chain the keys into one placeholder so the first that resolves wins.
+
+	Chaining inside a single expression, rather than applying a placeholder per key, keeps the raw
+	expression out of its own fallback string, where it would leak to the page for falsy values.
+	"""
+	expression = f"'{escape_single_quotes(str(fallback_value))}'"
+	for key in reversed(keys):
+		if keep_empty:
+			expression = f"{key} if {key} or {key} in ['', 0] else {expression}"
+		else:
+			expression = f"{key} or {expression}"
+	return f"{{{{ {expression} }}}}"
 
 
 def wrap_html_with_context(html: str, context: dict) -> str:
@@ -1296,7 +1520,7 @@ def wrap_html_with_context(html: str, context: dict) -> str:
 	Wrap HTML with Jinja context variables.
 
 	#### Returns:
-	    HTML string
+		HTML string
 	"""
 	all_props_literal = to_jinja_literal(context["all_props"])
 	passed_down_literal = to_jinja_literal(context["passed_down_props"])
@@ -1488,14 +1712,15 @@ def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family.
 
-	Families used in italic get the `ital` axis with 400 always included as a
-	fallback instance. css2 silently drops tuples a family doesn't ship, so
-	no font catalog is needed."""
+	Families used in italic get the `ital` axis at every weight the family is
+	used at: an <em> or <i> inherits whatever weight surrounds it, which the
+	renderer doesn't track. Faces only download when text uses them, and css2
+	silently drops tuples a family doesn't ship, so no font catalog is needed."""
 	normalize_font_weights(font_map)
 	urls = []
 	for font, options in font_map.items():
 		family = quote_plus(font)
-		italics = sorted({400, *(int(weight) for weight in options.get("italics", []))})
+		italics = sorted({*options["weights"], *(int(weight) for weight in options.get("italics", []))})
 		if options.get("italics"):
 			tuples = [f"0,{weight}" for weight in options["weights"]]
 			tuples += [f"1,{weight}" for weight in italics]
@@ -1588,18 +1813,18 @@ def extend_block(block, overridden_block):
 	return block
 
 
+# a live page keeps its route when a staging page shares it
 @redis_cache(ttl=60 * 60)
 def find_page_with_path(route):
-	try:
-		return frappe.db.get_value(
-			"Builder Page",
-			dict(route=route, published=1),
-			"name",
-			order_by="published_at desc, creation desc",
-			cache=True,
-		)
-	except frappe.DoesNotExistError:
-		pass
+	pages = frappe.get_all(
+		"Builder Page",
+		filters={"route": route},
+		or_filters=SERVED_PAGE_FILTERS,
+		order_by="published desc, published_at desc, creation desc",
+		limit=1,
+		pluck="name",
+	)
+	return pages[0] if pages else None
 
 
 @redis_cache(ttl=60 * 60)
@@ -1607,7 +1832,10 @@ def get_web_pages_with_dynamic_routes() -> list[dict]:
 	return frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],
-		filters=dict(published=1, dynamic_route=1),
+		filters={"dynamic_route": 1},
+		or_filters=SERVED_PAGE_FILTERS,
+		# the renderer serves the first match, so live pages come before staging ones
+		order_by="published desc, published_at desc, creation desc",
 		update={"doctype": "Builder Page"},
 	)
 
@@ -1682,14 +1910,31 @@ def extract_data_key(data_key):
 	return None
 
 
-def jinja_safe_key(key):
-	# convert a.b to (a or {}).get('b', {})
-	# to avoid undefined error in jinja
-	keys = (key or "").split(".")
-	key = f"({keys[0]} or {{}})"
-	for k in keys[1:]:
-		key = f"{key}.get('{k}', {{}})"
-	return key
+# A data key is a dotted path of Jinja-safe identifiers (e.g. "features" or "props.items").
+# Anything else (spaces, commas, brackets — e.g. an array stringified to "[object Object],...")
+# would generate invalid Jinja and crash the page render.
+SAFE_DATA_KEY = re.compile(r"^\w[\w.]*$")
+
+
+def is_safe_data_key(key) -> bool:
+	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
+
+
+def jinja_safe_key(key, missing="{}"):
+	# convert a.b to (a or {})['b'] to avoid undefined error in jinja; subscripts fall back to
+	# attributes, so objects and dates resolve too, and the last segment falls back to `missing`
+	if not is_safe_data_key(key):
+		# render nothing rather than emitting a broken Jinja expression
+		return missing
+	keys = key.split(".")
+	expr = f"({keys[0]} or {{}})"
+	for k in keys[1:-1]:
+		expr = f"({expr}['{k}'] or {{}})"
+	if len(keys) > 1:
+		last = f"{expr}['{keys[-1]}']"
+		# the attribute fallback can land on a method, like str.title or dict.items
+		expr = f"({missing} if {last} is callable else {last})"
+	return expr
 
 
 def to_jinja_literal(obj):

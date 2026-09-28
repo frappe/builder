@@ -1,22 +1,22 @@
 <template>
 	<div v-if="loading || rows?.length">
-		<h3 class="text-lg-medium mb-4 text-ink-gray-7">Top Referrers</h3>
+		<h3 class="text-md-medium mb-4 text-ink-gray-7">{{ __("Top Referrers") }}</h3>
 		<div v-if="loading" class="flex h-[200px] items-center justify-center py-8 text-sm text-ink-gray-4">
-			Loading...
+			{{ __("Loading...") }}
 		</div>
 		<ListView
 			v-else
 			class="!w-auto"
 			:columns="[
 				{
-					label: 'Domain',
+					label: __('Domain'),
 					key: 'domain',
 					width: '60%',
 					prefix: ({ row }: { row: any }) => {
 						return h('img', {
 							src: `https://${row.domain}/favicon.ico`,
 							alt: row.domain,
-							class: 'inline-block mr-2 w-5 h-5 align-middle rounded',
+							class: 'inline-block mr-2 w-5 h-5 align-middle rounded-4',
 							onError: (e: Event) => {
 								const img = e.target as HTMLImageElement | null;
 								if (img) {
@@ -26,7 +26,7 @@
 						});
 					},
 				},
-				{ label: 'Count', key: 'count', align: 'right' },
+				{ label: __('Count'), key: 'count', align: 'right' },
 			]"
 			:options="{ selectable: false, emptyState: {} }"
 			:rows="rows"
@@ -35,7 +35,8 @@
 </template>
 
 <script setup lang="ts">
-import { ListView } from "frappe-ui";
+import { __ } from "@/translation";
+import { ListView } from "frappe-ui/experimental";
 import { h } from "vue";
 
 defineProps<{ rows?: Array<{ domain: string; count: number | string }>; loading?: boolean }>();

@@ -1,13 +1,14 @@
 <template>
+	<!-- opacity, not v-show: display:none blurs the picker and tiptap then hides the menu -->
 	<bubble-menu
 		ref="menu"
 		:editor="editor"
 		:append-to="overlayElement"
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		:plugin-key="bubbleMenuPluginKey"
-		v-show="!canvasProps?.panning && !canvasProps?.scaling"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl">
+		class="rounded-5 border border-outline-gray-3 bg-surface-base p-1 text-md text-ink-gray-9 shadow-2xl"
+		:class="{ 'pointer-events-none !opacity-0': isRepositioning }">
 		<div
 			v-if="settingLink"
 			class="flex flex-col gap-2 p-1"
@@ -35,7 +36,7 @@
 			</div>
 			<Input
 				type="checkbox"
-				:label="'Open in New Tab'"
+				:label="__('Open in New Tab')"
 				class="text-xs"
 				v-model="openInNewTab"
 				@change="() => setLink(textLink, false)"></Input>
@@ -43,40 +44,40 @@
 		<div v-show="!settingLink" class="flex gap-1">
 			<button
 				@click="setHeading(1)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h1' }">
 				<code>H1</code>
 			</button>
 			<button
 				@click="setHeading(2)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h2' }">
 				<code>H2</code>
 			</button>
 			<button
 				@click="setHeading(3)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 				<code>H3</code>
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleBold().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleStrike().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<span class="lucide-strikethrough size-4" />
 			</button>
@@ -84,7 +85,7 @@
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleUnderline().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
 				<span class="lucide-underline size-4" />
 			</button>
@@ -97,7 +98,7 @@
 						enableLinkInput();
 					}
 				"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
@@ -106,17 +107,15 @@
 					:modelValue="selectedColor"
 					@update:modelValue="setTextColor"
 					:show-input="true"
+					ref="colorPicker"
+					:portal-to="menuElement"
 					placement="top">
-					<template #target="{ togglePopover, isOpen }">
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+					<template #target>
+						<button v-show="!block.isHeader()" class="rounded-4 px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
-									class="h-4 w-4 rounded shadow-sm"
-									@click="
-										() => {
-											togglePopover();
-										}
-									"
+									class="h-4 w-4 rounded-4 shadow-sm"
+									@click="openColorPicker"
 									:style="{
 										background:
 											editor?.isActive('textStyle') && editor?.getAttributes('textStyle').color
@@ -143,10 +142,11 @@
 import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
+import { __ } from "@/translation";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
-import { debouncedWatch } from "@vueuse/core";
+import { useTimeoutFn } from "@vueuse/core";
 import { debounce, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
 
@@ -159,9 +159,19 @@ const props = defineProps<{
 }>();
 
 const settingLink = ref(false);
+const isRepositioning = ref(false);
 const textLink = ref("");
 const openInNewTab = ref(false);
 const linkInput = ref(null) as Ref<typeof Input | null>;
+const menu = ref(null) as Ref<{ $el: HTMLElement } | null>;
+const colorPicker = ref(null) as Ref<InstanceType<typeof ColorPicker> | null>;
+
+// popover lives inside the menu so tiptap's focus check keeps the menu open
+const menuElement = computed(() => menu.value?.$el);
+
+const isCanvasMoving = computed(() => Boolean(props.canvasProps?.panning || props.canvasProps?.scaling));
+
+const openColorPicker = () => colorPicker.value?.togglePopover();
 
 const editorRef = computed(() => props.editor);
 const bubbleMenuPluginKey = "bubbleMenu";
@@ -228,24 +238,16 @@ const setHeading = (level: 1 | 2 | 3) => {
 const isEntireTextSelected = () => {
 	if (!props.editor) return false;
 	const { from, to } = props.editor.state.selection;
-	const textContent = props.editor.state.doc.textContent;
-	const textLength = textContent.length;
-	return from === 0 && to >= textLength;
+	return from === 0 && to >= props.editor.state.doc.textContent.length;
 };
 
 const setTextColor = debounce((color: string | undefined) => {
-	const colorValue = color as string;
-	if (!colorValue) {
-		props.editor?.chain().focus().setColor(colorValue).run();
-		if (isEntireTextSelected()) {
-			props.block.setStyle("color", "");
-		}
-		return;
-	}
-
-	props.editor?.chain().focus().setColor(colorValue).run();
+	props.editor
+		?.chain()
+		.setColor(color as string)
+		.run();
 	if (isEntireTextSelected()) {
-		props.block.setStyle("color", colorValue);
+		props.block.setStyle("color", color || "");
 	}
 }, 50);
 
@@ -255,9 +257,9 @@ const handleKeydown = (e: KeyboardEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
 		const blockWarnings = {
-			isHeader: "You cannot make heading a link",
-			isLink: "You cannot add link inside a link block",
-			isButton: "You cannot add link inside a button block",
+			isHeader: __("You cannot make heading a link"),
+			isLink: __("You cannot add link inside a link block"),
+			isButton: __("You cannot add link inside a button block"),
 		};
 
 		const blockType = Object.entries(blockWarnings).find(([type]) => (props.block as any)[type]());
@@ -282,14 +284,24 @@ watch(
 	{ immediate: true },
 );
 
-debouncedWatch(
-	() => [props.canvasProps?.panning, props.canvasProps?.scaling],
-	() => {
-		nextTick(() => {
-			props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
-		});
-	},
+const { start: scheduleShowMenu, stop: cancelShowMenu } = useTimeoutFn(
+	() => (isRepositioning.value = false),
+	20,
 );
+
+const hideMenu = () => {
+	cancelShowMenu();
+	isRepositioning.value = true;
+};
+
+const showMenuAtNewPosition = () => {
+	nextTick(() => {
+		props.editor?.commands.setMeta(bubbleMenuPluginKey, "updatePosition");
+		scheduleShowMenu();
+	});
+};
+
+watch(isCanvasMoving, (moving) => (moving ? hideMenu() : showMenuAtNewPosition()));
 
 defineExpose({
 	handleKeydown,

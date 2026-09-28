@@ -1,39 +1,40 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Min. Value"
+			:label="__('Min. Value')"
 			:modelValue="minValue"
 			@update:modelValue="handleMinValueChange"
 			@input="handleMinValueChange"
-			placeholder="Enter min value"></InlineInput>
+			:placeholder="__('Enter min value')"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Max. Value"
+			:label="__('Max. Value')"
 			:modelValue="maxValue"
 			@update:modelValue="handleMaxValueChange"
-			placeholder="Enter max value"></InlineInput>
+			:placeholder="__('Enter max value')"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="Default Value"
+			:label="__('Default Value')"
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
 			@input="handleDefaultValueChange"
 			@update:model-value="handleMaxValueChange"
-			placeholder="Enter max value"></InlineInput>
+			:placeholder="__('Enter max value')"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="Default Value"
+			:label="__('Default Value')"
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
 			@input="handleDefaultValueChange"
-			placeholder="Enter default value"></InlineInput>
+			:placeholder="__('Enter default value')"></InlineInput>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import InlineInput from "@/components/Controls/InlineInput.vue";
@@ -102,7 +103,7 @@ function useNumericOption(key: string) {
 				defaultValue: defaultValue.value,
 			});
 		} else {
-			toast.error("Invalid option configuration!");
+			toast.error(__("Invalid option configuration!"));
 		}
 	}
 

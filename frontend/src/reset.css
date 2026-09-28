@@ -49,6 +49,33 @@
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
+
+	/* @tailwindcss/forms paints a hardcoded blue focus ring plus a blue border on
+	   every focused field: a full blue box even around underline-only inputs, clashing
+	   with any page design that isn't blue. Keep focus visible but design-neutral:
+	   no ring, the field's existing borders darken to the text colour instead (the
+	   caret already marks focus in text fields). Pages layer their own treatment via
+	   focus: block styles, which come later in the document and win. */
+	[multiple]:focus,
+	[type="date"]:focus,
+	[type="datetime-local"]:focus,
+	[type="email"]:focus,
+	[type="month"]:focus,
+	[type="number"]:focus,
+	[type="password"]:focus,
+	[type="search"]:focus,
+	[type="tel"]:focus,
+	[type="text"]:focus,
+	[type="time"]:focus,
+	[type="url"]:focus,
+	[type="week"]:focus,
+	input:where(:not([type])):focus,
+	select:focus,
+	textarea:focus {
+		--tw-ring-shadow: 0 0 #0000;
+		--tw-ring-offset-shadow: 0 0 #0000;
+		border-color: currentColor;
+	}
 }
 
 p:empty:before {

@@ -6,6 +6,7 @@ import OptionToggle from "../Controls/OptionToggle.vue";
 import ImageUploadInput from "../ImageUploadInput.vue";
 import ObjectInput from "../ObjectInput.vue";
 import useCanvasStore from "@/stores/canvasStore.js";
+import { __ } from "@/translation";
 
 const componentMap = {
 	array: ArrayInput,
@@ -51,6 +52,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			break;
 	}
 	map = {
+		propertyKey: propName,
 		label: propDetails.label || propName,
 		enableStates: false,
 		allowDynamicValue: true,
@@ -81,7 +83,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			return value;
 		},
 		getPlaceholder: () => {
-			return propDetails.propOptions?.options?.defaultValue || null;
+			const defaultValue = propDetails.propOptions?.options?.defaultValue;
+			return defaultValue == null || defaultValue === "" ? null : String(defaultValue);
 		},
 		defaultValue:
 			type == "boolean"
@@ -143,7 +146,7 @@ const getStandardPropsInputSection = () => {
 };
 
 export default {
-	name: "Block Options",
+	name: __("Component Options"),
 	properties: getStandardPropsInputSection,
 	collapsed: false,
 	condition: () =>

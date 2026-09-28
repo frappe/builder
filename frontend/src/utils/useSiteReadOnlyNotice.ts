@@ -2,6 +2,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { frappeRequest, toast } from "frappe-ui";
 import { nextTick, onMounted, watch } from "vue";
+import { __ } from "@/translation";
 
 const TOAST_ID = "site-read-only-mode";
 const POLL_INTERVAL = 10 * 1000;
@@ -12,10 +13,12 @@ export function useSiteReadOnlyNotice() {
 	let poll: number | null = null;
 
 	function showNotice() {
-		toast.warning("Site is in read-only mode", {
+		toast.warning(__("Site is in read-only mode"), {
 			id: TOAST_ID,
 			duration: Infinity,
-			description: "Editing is disabled while the site is being updated. Please try again in a few minutes.",
+			description: __(
+				"Editing is disabled while the site is being updated. Please try again in a few minutes.",
+			),
 		});
 	}
 
@@ -37,7 +40,7 @@ export function useSiteReadOnlyNotice() {
 	function onSiteBackOnline() {
 		stopPolling();
 		toast.dismiss(TOAST_ID);
-		toast.success("Site is back online", { description: "You can continue editing." });
+		toast.success(__("Site is back online"), { description: __("You can continue editing.") });
 		if (pageStore.selectedPage) nextTick(() => pageStore.savePage());
 	}
 

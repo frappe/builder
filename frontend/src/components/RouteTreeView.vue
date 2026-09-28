@@ -1,12 +1,12 @@
 <template>
 	<div class="isolate">
 		<div v-if="pagesResource.loading && !pages.length" class="px-3 py-6 text-center text-sm text-ink-gray-4">
-			Loading pages…
+			{{ __("Loading pages…") }}
 		</div>
 		<div
 			v-else-if="!pagesResource.loading && !pages.length"
 			class="px-3 py-6 text-center text-sm text-ink-gray-4">
-			No pages found.
+			{{ __("No pages found.") }}
 		</div>
 
 		<div
@@ -36,9 +36,13 @@
 					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 					@click="loadMore('__root__', rootLoadMore.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
-					Load {{ Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount) }} more
+					{{
+						__("Load {0} more", [
+							Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount),
+						])
+					}}
 					<span class="ml-0.5 text-ink-gray-3">
-						({{ rootLoadMore.totalCount - rootLoadMore.loadedCount }} remaining)
+						{{ __("({0} remaining)", [rootLoadMore.totalCount - rootLoadMore.loadedCount]) }}
 					</span>
 				</button>
 			</div>
@@ -47,11 +51,12 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 // TODO: Refactor to meke it generic, this has lots of unnecessary coupling, props usage and hacky implementation
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/doctypes";
-import { createListResource, useShortcut } from "frappe-ui";
+import { createListResource, useKeyboardShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 
@@ -99,7 +104,17 @@ type TrieNode = {
 const pagesResource = createListResource({
 	method: "GET",
 	doctype: "Builder Page",
-	fields: ["name", "route", "page_name", "page_title", "published", "authenticated_access", "project_folder"],
+	fields: [
+		"name",
+		"route",
+		"page_name",
+		"page_title",
+		"published",
+		"staging",
+		"authenticated_access",
+		"project_folder",
+		"modified",
+	],
 	filters: { is_template: 0 },
 	orderBy: "route asc",
 	pageLength: 9999,
@@ -328,32 +343,32 @@ function focusNode(idx: number, nodes: Node[]) {
 
 const treeActive = () => regularNodes().length > 0;
 
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: "ArrowDown",
-		description: "Move down in page tree",
-		group: "Page Tree",
-		condition: treeActive,
+		combo: "ArrowDown",
+		description: __("Move Down in Page Tree"),
+		group: __("Page Tree"),
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(idx === -1 ? 0 : idx + 1, nodes);
 		},
 	},
 	{
-		key: "ArrowUp",
-		description: "Move up in page tree",
-		group: "Page Tree",
-		condition: treeActive,
+		combo: "ArrowUp",
+		description: __("Move Up in Page Tree"),
+		group: __("Page Tree"),
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(Math.max(0, idx - 1), nodes);
 		},
 	},
 	{
-		key: "ArrowRight",
-		description: "Expand node or move down in page tree",
-		group: "Page Tree",
-		condition: treeActive,
+		combo: "ArrowRight",
+		description: __("Expand Node or Move Down in Page Tree"),
+		group: __("Page Tree"),
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -369,10 +384,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "ArrowLeft",
-		description: "Collapse node or move up in page tree",
-		group: "Page Tree",
-		condition: treeActive,
+		combo: "ArrowLeft",
+		description: __("Collapse Node or Move Up in Page Tree"),
+		group: __("Page Tree"),
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -385,10 +400,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "Enter",
-		description: "Open page or toggle folder in page tree",
-		group: "Page Tree",
-		condition: treeActive,
+		combo: "Enter",
+		description: __("Open Page or Toggle Folder in Page Tree"),
+		group: __("Page Tree"),
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];

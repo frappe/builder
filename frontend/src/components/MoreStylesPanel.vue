@@ -19,8 +19,8 @@
 		<Combobox
 			ref="propertyCombobox"
 			:options="propertyOptions"
-			placeholder="Add CSS property"
-			empty-text="No matching properties"
+			:placeholder="__('Add CSS property')"
+			:empty-text="__('No matching properties')"
 			open-on-focus
 			@update:query="propertySearch = $event"
 			@update:modelValue="addProperty">
@@ -40,7 +40,7 @@
 			<template #item-add-property="{ query }">
 				<span class="flex min-w-0 items-center gap-2">
 					<span class="min-w-0 truncate text-sm text-ink-gray-8">
-						Add
+						{{ __("Add") }}
 						<code class="font-mono text-xs text-ink-gray-6">{{ query }}</code>
 					</span>
 				</span>
@@ -50,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ContextMenu from "@/components/ContextMenu.vue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
@@ -67,8 +68,13 @@ import {
 	getStylePropertiesWithoutControls,
 	isStylePropertyWithControls,
 } from "@/utils/stylePropertiesWithControls";
-import { isInteractiveControl, normalizeCSSPropertyName, toStyleProperty, toTitleCase } from "@/utils/helpers";
-import { Combobox } from "frappe-ui";
+import {
+	isInteractiveControl,
+	normalizeCSSPropertyName,
+	toStyleProperty,
+	toTitleCase,
+} from "@/utils/helpers";
+import { Combobox, type ComboboxOptionValue, type SelectionExposed } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
 const STATES = ["hover", "active", "focus"];
@@ -77,7 +83,7 @@ const canvasStore = useCanvasStore();
 const propertySearch = ref("");
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
 const contextMenuProperty = ref<string | null>(null);
-const propertyCombobox = ref<{ reset: () => void } | null>(null);
+const propertyCombobox = ref<SelectionExposed | null>(null);
 
 // rows added from the picker stay visible until they are removed, even without a value
 const addedProperties = reactive(new Set<string>());
@@ -159,7 +165,7 @@ const propertyOptions = computed(() => [
 	{
 		type: "custom" as const,
 		key: "add-property",
-		label: "Add property",
+		label: __("Add Property"),
 		slot: "add-property",
 		condition: ({ query }: { query: string }) => canAddProperty(query),
 		onClick: ({ query }: { query: string }) => addProperty(query),
@@ -176,11 +182,11 @@ const focusProperty = async (property: string) => {
 
 const resetPropertyPicker = () => {
 	propertySearch.value = "";
-	nextTick(() => propertyCombobox.value?.reset());
+	nextTick(() => propertyCombobox.value?.clear());
 };
 
-const addProperty = (property: string | null) => {
-	const normalizedProperty = normalizeCSSPropertyName(property);
+const addProperty = (property: ComboboxOptionValue | null | undefined) => {
+	const normalizedProperty = normalizeCSSPropertyName(property?.toString());
 	if (normalizedProperty && canAddProperty(normalizedProperty)) {
 		addedProperties.add(normalizedProperty);
 		focusProperty(normalizedProperty);
@@ -197,7 +203,7 @@ const removeProperty = (property: string) => {
 
 const contextMenuOptions = [
 	{
-		label: "Remove",
+		label: __("Remove"),
 		action: () => contextMenuProperty.value && removeProperty(contextMenuProperty.value),
 	},
 ];

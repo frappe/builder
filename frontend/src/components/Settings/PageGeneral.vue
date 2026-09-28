@@ -5,13 +5,13 @@
 				<div class="flex gap-5">
 					<BuilderInput
 						type="text"
-						label="Page Title"
+						:label="__('Page Title')"
 						:modelValue="pageStore.activePage?.page_title"
 						:hideClearButton="true"
 						@update:modelValue="(val: string) => pageStore.updateActivePage('page_title', val)" />
 					<BuilderInput
 						type="text"
-						label="Page Route"
+						:label="__('Page Route')"
 						class="[&>p]:text-p-xs"
 						:modelValue="pageStore.activePage?.route"
 						:hideClearButton="true"
@@ -19,41 +19,35 @@
 				</div>
 				<div class="flex flex-col gap-3 text-base">
 					<div class="flex">
-						<span class="w-20 text-ink-gray-6">URL</span>
+						<span class="w-20 text-ink-gray-6">{{ __("URL") }}</span>
 						<a class="font-medium text-ink-gray-8 hover:underline" target="_blank" :href="fullURL">
 							{{ fullURL }}
 						</a>
 					</div>
 					<div class="flex items-center">
-						<span class="w-20 text-ink-gray-6">Status</span>
+						<span class="w-20 text-ink-gray-6">{{ __("Status") }}</span>
 						<div class="flex items-center gap-2">
 							<span class="flex items-center gap-2 text-base text-ink-gray-9">
 								<span
+									class="lucide-shield-user size-4 text-ink-amber-6"
+									aria-hidden="true"
+									v-if="isLiveOrStaging && pageStore.activePage?.authenticated_access" />
+								<span
 									class="lucide-check-circle size-4 text-ink-green-6"
 									aria-hidden="true"
-									v-if="pageStore.activePage?.published && !pageStore.activePage.authenticated_access" />
+									v-else-if="pageStore.activePage?.published" />
 								<span
-									class="lucide-shield-user size-4 text-ink-amber-6"
-									v-else-if="pageStore.activePage?.published && pageStore.activePage?.authenticated_access" />
-								<span
-									class="lucide-alert-circle size-4 text-ink-gray-4"
+									class="lucide-flask-conical size-4 text-ink-amber-6"
 									aria-hidden="true"
-									v-else-if="!pageStore.activePage?.published" />
-								{{
-									pageStore.activePage?.published
-										? pageStore.activePage?.authenticated_access
-											? "Published with limited access"
-											: "Published"
-										: "Draft"
-								}}
+									v-else-if="pageStore.activePage?.staging" />
+								<span class="lucide-alert-circle size-4 text-ink-gray-4" aria-hidden="true" v-else />
+								{{ statusLabel }}
 							</span>
 
 							<Button
 								variant="subtle"
-								@click="
-									pageStore.activePage?.published ? pageStore.unpublishPage() : pageStore.publishPage(false)
-								">
-								{{ pageStore.activePage?.published ? "Unpublish" : "Publish" }}
+								@click="isLiveOrStaging ? pageStore.unpublishPage() : pageStore.publishPage(false)">
+								{{ isLiveOrStaging ? __("Unpublish") : __("Publish") }}
 							</Button>
 						</div>
 					</div>
@@ -62,10 +56,10 @@
 				<hr class="w-full border-outline-gray-2" />
 
 				<div class="flex flex-col justify-between gap-5">
-					<span class="text-lg-semibold text-ink-gray-9">Favicon</span>
+					<span class="text-md-semibold text-ink-gray-9">{{ __("Favicon") }}</span>
 					<div class="flex flex-1 gap-5">
 						<div
-							class="flex items-center justify-center rounded border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
+							class="flex items-center justify-center rounded-4 border border-outline-gray-1 bg-surface-gray-2 px-20 py-5">
 							<img
 								:src="
 									pageStore.activePage?.favicon ||
@@ -73,17 +67,21 @@
 									'/assets/builder/images/frappe_black.png'
 								"
 								alt="Favicon"
-								class="size-6 rounded" />
+								class="size-6 rounded-4" />
 						</div>
 						<div class="flex flex-1 flex-col gap-2">
 							<ImageUploader
-								label="Favicon"
+								:label="__('Favicon')"
 								image_type="image/ico"
 								:image_url="pageStore.activePage?.favicon"
 								@upload="(url: string) => pageStore.updateActivePage('favicon', url)"
 								@remove="() => pageStore.updateActivePage('favicon', '')" />
 							<span class="text-p-sm text-ink-gray-6">
-								Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO
+								{{
+									__(
+										"Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO",
+									)
+								}}
 							</span>
 						</div>
 					</div>
@@ -93,8 +91,8 @@
 					<!-- homepage -->
 					<div class="flex items-center justify-between">
 						<div class="flex flex-col gap-2">
-							<span class="text-base-medium text-ink-gray-9">Homepage</span>
-							<p class="text-base text-ink-gray-5">Set current page as Homepage</p>
+							<span class="text-base-medium text-ink-gray-9">{{ __("Homepage") }}</span>
+							<p class="text-base text-ink-gray-5">{{ __("Set current page as Homepage") }}</p>
 						</div>
 						<Button
 							variant="subtle"
@@ -107,38 +105,40 @@
 									}
 								}
 							">
-							{{ pageStore.isHomePage(pageStore.activePage) ? "Unset Homepage" : "Set As Homepage" }}
+							{{ pageStore.isHomePage(pageStore.activePage) ? __("Unset Homepage") : __("Set As Homepage") }}
 						</Button>
 					</div>
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
-						label="Protected Page"
+						:label="__('Protected Page')"
 						:disabled="pageStore.isHomePage(pageStore.activePage)"
-						description="Only logged-in users can access this page"
+						:description="__('Only logged-in users can access this page')"
 						:modelValue="Boolean(pageStore.activePage?.authenticated_access)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('authenticated_access', val)" />
 					<hr class="w-full border-outline-gray-2" />
 					<Switch
 						size="sm"
-						label="Disable Indexing"
-						description="Prevent search engines from indexing this page"
+						:label="__('Disable Indexing')"
+						:description="__('Prevent search engines from indexing this page')"
 						:modelValue="Boolean(pageStore.activePage?.disable_indexing)"
 						@update:modelValue="(val: Boolean) => pageStore.updateActivePage('disable_indexing', val)" />
 					<template v-if="isDeveloperMode || pageStore.activePage?.is_standard">
 						<hr class="w-full border-outline-gray-2" />
 						<Switch
 							size="sm"
-							label="Standard Page"
+							:label="__('Standard Page')"
 							:disabled="!isDeveloperMode && pageStore.activePage?.is_standard"
-							description="Make this page a standard page that can be exported to an app"
+							:description="__('Make this page a standard page that can be exported to an app')"
 							:modelValue="Boolean(pageStore.activePage?.is_standard)"
 							@update:modelValue="handleStandardPageToggle" />
 						<hr v-if="pageStore.activePage?.is_standard" class="w-full border-outline-gray-2" />
 						<div v-if="pageStore.activePage?.is_standard" class="flex items-center justify-between">
 							<div class="flex flex-col gap-2">
-								<span class="text-base-medium text-ink-gray-9">App</span>
-								<p class="max-w-xs text-p-sm text-ink-gray-7">Select the app for this standard page</p>
+								<span class="text-base-medium text-ink-gray-9">{{ __("App") }}</span>
+								<p class="max-w-xs text-p-sm text-ink-gray-7">
+									{{ __("Select the app for this standard page") }}
+								</p>
 							</div>
 							<div>
 								<BuilderInput
@@ -154,8 +154,8 @@
 					<hr class="w-full border-outline-gray-2" v-if="!pageStore.activePage?.is_standard" />
 					<div class="flex items-center justify-between" v-if="!pageStore.activePage?.is_standard">
 						<div class="flex flex-col gap-2">
-							<span class="text-base-medium text-ink-gray-9">Folder</span>
-							<p class="max-w-xs text-p-sm text-ink-gray-7">Set folder to organize your page</p>
+							<span class="text-base-medium text-ink-gray-9">{{ __("Folder") }}</span>
+							<p class="max-w-xs text-p-sm text-ink-gray-7">{{ __("Set folder to organize your page") }}</p>
 						</div>
 						<div>
 							<BuilderInput
@@ -174,6 +174,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
@@ -187,13 +188,29 @@ import { computed } from "vue";
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const isDeveloperMode = computed(() => Boolean(window.is_developer_mode));
+
+const isLiveOrStaging = computed(() =>
+	Boolean(pageStore.activePage?.published || pageStore.activePage?.staging),
+);
+
+const statusLabel = computed(() => {
+	const page = pageStore.activePage;
+	if (page?.published) {
+		return page.authenticated_access ? __("Live with limited access") : __("Live");
+	}
+	if (page?.staging) {
+		return page.authenticated_access ? __("Staging with limited access") : __("Staging");
+	}
+	return __("Draft");
+});
+
 const fullURL = computed(
 	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );
 
 const folderOptions = computed(() => {
 	const homeOption = {
-		label: "Home",
+		label: __("Home"),
 		value: "",
 	};
 
@@ -219,7 +236,7 @@ const installedAppsResource = createResource({
 
 const appOptions = computed(() => {
 	const defaultOption = {
-		label: "Select App",
+		label: __("Select App"),
 		value: "",
 	};
 
@@ -247,13 +264,13 @@ const notifyStandardPageExport = () => {
 	const activePage = pageStore.activePage;
 
 	if (!activePage?.app && activePage?.is_standard) {
-		toast.warning("Please select an app for this standard page");
+		toast.warning(__("Please select an app for this standard page"));
 		return;
 	}
 
 	if (activePage?.is_standard) {
 		const appName = toTitleCase(activePage?.app || "");
-		toast.success(`This page will be exported to ${appName} app as standard page`);
+		toast.success(__("This page will be exported to {0} app as standard page", [appName]));
 	}
 };
 </script>

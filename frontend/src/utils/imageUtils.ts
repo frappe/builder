@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import { createResource } from "frappe-ui";
 import { toast } from "frappe-ui";
 
@@ -27,9 +28,9 @@ export const getOptimizeButtonText = (imageUrl: string | null): string => {
 	}
 
 	if (isExternalImage(imageUrl)) {
-		return "Serve Locally";
+		return __("Serve Locally");
 	} else if (isConvertibleToWebP(imageUrl)) {
-		return "Convert to WebP";
+		return __("Convert to WebP");
 	}
 	return "";
 };
@@ -53,9 +54,9 @@ export const optimizeImage = ({ imageUrl, onSuccess }: ImageOptimizationOptions)
 			onSuccess(res);
 		}),
 		{
-			loading: isExternal ? "Pulling..." : "Converting...",
-			success: () => (isExternal ? "Image pulled to local" : "Image converted to WebP"),
-			error: () => (isExternal ? "Failed to pull image to local" : "Failed to convert image to WebP"),
+			loading: isExternal ? __("Pulling...") : __("Converting..."),
+			success: () => (isExternal ? __("Image pulled to local") : __("Image converted to WebP")),
+			error: () => (isExternal ? __("Failed to pull image to local") : __("Failed to convert image to WebP")),
 		},
 	);
 };

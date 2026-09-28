@@ -195,7 +195,12 @@ scheduler_events = {
 # "builder.auth.validate"
 # ]
 
-builder_path = frappe.conf.builder_path or "builder"
+try:
+	builder_path = frappe.conf.builder_path or "builder"
+except RuntimeError:
+	# frappe.conf is unbound when hooks are imported without a site,
+	# as done by `bench generate-pot-file --app builder`.
+	builder_path = "builder"
 website_route_rules = [
 	{"from_route": f"/{builder_path}/<path:app_path>", "to_route": "_builder"},
 	{"from_route": f"/{builder_path}", "to_route": "_builder"},

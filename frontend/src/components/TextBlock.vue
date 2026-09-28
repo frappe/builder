@@ -34,12 +34,14 @@ import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
+import { hasCopiedBlocks } from "@/utils/builderBlockCopyPaste";
 import { setFontFromHTML } from "@/utils/fontManager";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
+import { Selection } from "@tiptap/extensions";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
@@ -273,8 +275,14 @@ if (!props.preview) {
 						FontFamily,
 						FontFamilyPasteRule,
 						Underline,
+						// keeps the selection visible when focus moves to menu controls
+						Selection,
 					],
 					enablePasteRules: false,
+					// ignore copied blocks: their HTML is an empty span that would wipe the selected text
+					editorProps: {
+						handlePaste: (_view, event) => hasCopiedBlocks(event),
+					},
 					onUpdate({ editor }) {
 						let innerHTML = getInnerHTML(editor as Editor);
 						if (props.block.getInnerHTML() === innerHTML) {
@@ -318,7 +326,10 @@ const handleEscKey = () => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
-	if ((e.target as HTMLElement).closest(".canvas-container")) {
+	const target = e.target as HTMLElement;
+	// #overlay holds builder chrome (bubble menu). Using it is not leaving the block.
+	if (target.closest("#overlay")) return;
+	if (target.closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}
 };
@@ -339,6 +350,20 @@ defineExpose({
 }
 :is(span, a, b, i, em, strong, cite, label).__text_block__ :deep(.ProseMirror p) {
 	display: inline;
+}
+
+/* the native highlight is hidden while unfocused; matches index.html's selection color */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) .selection) {
+	background-color: theme("colors.gray.500 / 30%");
+	/* an inline background covers ~1.25em, not the line box; padding overflows, so nothing shifts */
+	padding-block: calc((1lh - 1.25em) / 2);
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+/* the extension injects this only when injectCSS is on; without it Safari/Firefox double up */
+.__text_block__ :deep(.ProseMirror:not(.ProseMirror-focused) *::selection) {
+	background: transparent;
 }
 
 .__text_block__ :deep([contenteditable="true"]) {

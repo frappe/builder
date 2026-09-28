@@ -1,5 +1,13 @@
 declare type StyleValue = string | number | boolean | null | undefined;
 
+declare module "csstype" {
+	interface Properties {
+		// crops an img/video to a sub-rect; Chromium + Safari render it, Firefox
+		// falls back to the uncropped cover fit
+		objectViewBox?: string;
+	}
+}
+
 declare type styleProperty = keyof CSSProperties | `__${string}`;
 
 declare interface BlockStyleMap {
@@ -90,13 +98,6 @@ declare interface StyleCopy {
 	style: BlockStyleObjects;
 }
 
-declare interface ContextMenuOption {
-	label: string;
-	action: CallableFunction;
-	condition?: () => boolean;
-	disabled?: () => boolean;
-}
-
 declare interface ComponentData {
 	name: string;
 	doctype?: string;
@@ -110,7 +111,15 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-declare type LeftSidebarTabOption = "Blocks" | "Layers" | "Assets" | "Code" | "variables";
+// the literals keep autocomplete; the string widens it for extension tabs
+declare type LeftSidebarTabOption =
+	| "Blocks"
+	| "Layers"
+	| "Assets"
+	| "Code"
+	| "Chat"
+	| "variables"
+	| (string & {});
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
 

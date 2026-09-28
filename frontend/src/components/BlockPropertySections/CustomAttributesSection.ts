@@ -1,6 +1,7 @@
 import ObjectEditor from "@/components/ObjectEditor.vue";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const customAttributesSectionProperties = [
 	{
@@ -19,7 +20,7 @@ const customAttributesSectionProperties = [
 ];
 
 export default {
-	name: "HTML Attributes",
+	name: __("HTML Attributes"),
 	properties: customAttributesSectionProperties,
 	collapsed: computed(() => {
 		return Object.keys(blockController.getCustomAttributes()).length === 0;

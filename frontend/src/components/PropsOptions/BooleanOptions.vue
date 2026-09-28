@@ -1,23 +1,23 @@
 <template>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="True Label"
+			:label="__('True Label')"
 			class="w-full"
 			:modelValue="trueLabel"
 			@update:modelValue="handleTrueLabelChange"
-			placeholder="Enter true label display"></InlineInput>
+			:placeholder="__('Enter true label display')"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="False Label"
+			:label="__('False Label')"
 			class="w-full"
 			:modelValue="falseLabel"
 			@update:modelValue="handleFalseLabelChange"
-			placeholder="Enter false label display"></InlineInput>
+			:placeholder="__('Enter false label display')"></InlineInput>
 	</div>
 	<div class="flex items-center justify-between">
 		<InlineInput
-			label="Default Value"
+			:label="__('Default Value')"
 			class="w-full"
 			type="select"
 			:options="[
@@ -32,7 +32,7 @@
 			]"
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
-			placeholder="Enter default value"></InlineInput>
+			:placeholder="__('Enter default value')"></InlineInput>
 	</div>
 </template>
 

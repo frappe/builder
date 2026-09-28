@@ -20,3 +20,25 @@ class UserFont(Document):
 
 	def on_trash(self):
 		get_all_user_fonts.clear_cache()
+
+	def get_referencing_pages(self, filters: dict | None = None, fields: list[str] | None = None):
+		filters = filters or {}
+		fields = fields or ["name"]
+		# blocks hold a font as the "fontFamily" style key, compact from the frontend and
+		# spaced from frappe.as_json; inline CSS uses font-family
+		patterns = [
+			f'%"fontFamily":"{self.font_name}"%',
+			f'%"fontFamily": "{self.font_name}"%',
+			f"%font-family:{self.font_name}%",
+		]
+
+		return frappe.get_all(
+			"Builder Page",
+			filters=filters,
+			fields=fields,
+			or_filters=[
+				[block_field, "like", pattern]
+				for block_field in ("blocks", "draft_blocks")
+				for pattern in patterns
+			],
+		)

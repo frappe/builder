@@ -11,7 +11,7 @@
 						'row-span-2': blockTemplate?.preview_height === 2,
 					}">
 					<div
-						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded-md border border-transparent bg-surface-gray-1 p-2 pt-3"
+						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded-5 border border-transparent bg-surface-gray-1 p-2 pt-3"
 						draggable="true"
 						@click="selectBlockTemplate(blockTemplate)"
 						@dblclick="is_developer_mode && blockTemplateStore.editBlockTemplate(blockTemplate.name)"
@@ -22,7 +22,7 @@
 							:class="{
 								'w-14': !blockTemplate?.preview_width || blockTemplate?.preview_width == 1,
 							}">
-							<img :src="blockTemplate.preview" class="pointer-events-none" />
+							<img :src="blockTemplate.preview" alt="" class="pointer-events-none" />
 						</div>
 						<p class="text-wrap text-center text-sm text-ink-gray-6">
 							{{ blockTemplate.template_name }}
@@ -34,7 +34,7 @@
 		<div v-show="blockTemplates.length > 10 || blockTemplateFilter" class="sticky top-0 bg-surface-base py-3">
 			<BuilderInput
 				type="text"
-				placeholder="Search Template"
+				:placeholder="__('Search Template')"
 				v-model="blockTemplateFilter"
 				@input="
 					(value: string) => {
@@ -45,6 +45,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -93,7 +94,7 @@ const sections = computed(() => {
 	return categories
 		.map((category) => {
 			return {
-				sectionName: category as string,
+				sectionName: __(category),
 				blocks: getFilteredBlockTemplates(category) as BlockTemplate[],
 			};
 		})

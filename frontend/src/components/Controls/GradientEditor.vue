@@ -1,21 +1,22 @@
 <template>
-	<div class="select-none space-y-4">
+	<div class="select-none space-y-3">
 		<!-- Type & Angle -->
 		<div class="flex items-center gap-3">
 			<TabButtons
 				:options="[
-					{ label: 'Linear', value: 'linear-gradient' },
-					{ label: 'Radial', value: 'radial-gradient' },
+					{ label: __('Linear'), value: 'linear-gradient' },
+					{ label: __('Radial'), value: 'radial-gradient' },
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
-				:class="['flex-1', STRETCH_TABS]" />
+				fluid
+				class="flex-1" />
 		</div>
 
 		<div class="flex items-center gap-4">
 			<!-- Gradient Preview / Stop Bar -->
 			<div
-				class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
+				class="shadow-inner relative h-5 w-full rounded-4 border border-outline-gray-2"
 				:style="barPreviewStyle"
 				ref="barRef">
 				<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
@@ -24,17 +25,23 @@
 					:key="index"
 					class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
 					:style="{ left: stop.position + '%' }">
-					<Popover placement="top" :offset="10">
-						<template #target="{ togglePopover }">
+					<Popover
+						side="top"
+						align="center"
+						:offset="10"
+						bare
+						:open="openStop === index"
+						@update:open="(open: boolean) => setStopOpen(index, open)">
+						<template #trigger>
 							<div
 								class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
 								:style="{ backgroundColor: stop.color }"
-								@mousedown="handleStopMouseDown(index, $event)"
-								@click="(e) => !hasMoved && togglePopover()" />
+								@mousedown="handleStopMouseDown(index, $event)" />
 						</template>
-						<template #body="{ close }">
-							<div class="rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+						<template #default="{ close }">
+							<div class="w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
+									:ref="(el) => (stopPickerRefs[index] = el)"
 									renderMode="inline"
 									:showInput="true"
 									:modelValue="stop.color"
@@ -42,7 +49,7 @@
 								<div class="mt-2 flex items-center gap-2">
 									<Button
 										variant="subtle"
-										label="Remove Stop"
+										:label="__('Remove Stop')"
 										class="w-full"
 										:disabled="gradient.stops.length <= 2"
 										@click="
@@ -76,25 +83,25 @@
 			</div>
 		</div>
 
-		<!-- Presets -->
-		<div class="flex flex-wrap gap-2">
+		<!-- Recently used gradients, falling back to the built-in presets -->
+		<div class="flex flex-wrap gap-1.5">
 			<div
-				v-for="preset in presets"
-				:key="preset.name"
-				class="size-6 cursor-pointer rounded-full border border-outline-gray-2 shadow-sm transition-colors hover:border-outline-gray-4"
-				:style="{ background: preset.gradient }"
-				@click="applyPreset(preset.gradient)"
-				:title="preset.name" />
+				v-for="swatch in gradientSwatches"
+				:key="swatch.gradient"
+				class="size-5 cursor-pointer rounded-full shadow-sm"
+				:style="{ background: swatch.gradient }"
+				@click="applyPreset(swatch.gradient)"
+				:title="swatch.name" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
-import { useMouseInElement, useMousePressed } from "@vueuse/core";
-import { STRETCH_TABS } from "@/utils/tabButtons";
+import { useMouseInElement, useMousePressed, useStorage } from "@vueuse/core";
 import { Popover, TabButtons } from "frappe-ui";
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
 import ColorPicker from "./ColorPicker.vue";
 import Input from "./Input.vue";
@@ -108,6 +115,23 @@ const emit = defineEmits(["update:modelValue"]);
 const barRef = ref<HTMLElement | null>(null);
 const draggingIdx = ref<number | null>(null);
 const hasMoved = ref(false);
+
+// each stop's picker renders inline, so this popover owns its "closed" moment,
+// the same way BackgroundHandler does for the background picker
+const stopPickerRefs: Record<number, any> = {};
+
+const openStop = ref<number | null>(null);
+
+// a drag ends with a click on the handle; that click must not open the picker
+const setStopOpen = (index: number, open: boolean) => {
+	if (open && hasMoved.value) return;
+	if (open) {
+		openStop.value = index;
+		return;
+	}
+	if (openStop.value === index) openStop.value = null;
+	stopPickerRefs[index]?.commitRecentColor();
+};
 
 const { elementX } = useMouseInElement(barRef);
 const { pressed } = useMousePressed();
@@ -152,11 +176,45 @@ const presets = [
 	{ name: "Royal", gradient: "linear-gradient(135deg, #141e30 0%, #243b55 100%)" },
 ];
 
+// flush must be "sync": the default "pre" write runs in a scope-bound watcher, so
+// a value set while the editor is unmounting never reaches localStorage
+const recentGradients = useStorage<string[]>("builderRecentGradients", [], localStorage, {
+	flush: "sync",
+});
+
+// recents fill the row first, presets seed whatever space is left over
+const gradientSwatches = computed(() => {
+	const seen = new Set<string>();
+	const swatches: { name: string; gradient: string }[] = [];
+	const recent = recentGradients.value.map((gradient) => ({ name: __("Recently used"), gradient }));
+
+	for (const swatch of [...recent, ...presets]) {
+		if (seen.has(swatch.gradient)) continue;
+		seen.add(swatch.gradient);
+		swatches.push(swatch);
+		if (swatches.length === presets.length) break;
+	}
+	return swatches;
+});
+
+// only gradients the user actually applied are banked, not the untouched default
+let lastGradient: string | null = null;
+
+onBeforeUnmount(() => {
+	if (!lastGradient) return;
+	const value = lastGradient;
+	recentGradients.value = [value, ...recentGradients.value.filter((g) => g !== value)].slice(
+		0,
+		presets.length,
+	);
+});
+
 const applyPreset = (presetGradient: string) => {
 	const parsed = parseGradient(presetGradient);
 	if (parsed) {
 		gradient.value = parsed;
-		emit("update:modelValue", stringifyGradient(parsed));
+		lastGradient = stringifyGradient(parsed);
+		emit("update:modelValue", lastGradient);
 	}
 };
 
@@ -217,7 +275,8 @@ watch(
 );
 
 const emitUpdate = () => {
-	emit("update:modelValue", stringifyGradient(gradient.value));
+	lastGradient = stringifyGradient(gradient.value);
+	emit("update:modelValue", lastGradient);
 };
 
 const updateType = (type: any) => {

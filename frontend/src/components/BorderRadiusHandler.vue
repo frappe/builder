@@ -3,6 +3,7 @@
 
 	<div
 		ref="handler"
+		v-bind="$attrs"
 		class="border-radius-resize pointer-events-auto absolute h-[10px] w-[10px] cursor-pointer rounded-full border-2 border-blue-400 bg-white"
 		:class="{
 			hidden: !isHandlerVisible,
@@ -25,6 +26,9 @@ const props = defineProps<{
 	targetBlock: Block;
 	target: HTMLElement | SVGElement;
 }>();
+
+// the tooltip renders beside the handle, so attributes go to the handle explicitly
+defineOptions({ inheritAttrs: false });
 
 const updating = ref(false);
 const cursorPosition = ref({ x: 0, y: 0 });
@@ -97,9 +101,7 @@ const handleRounded = (ev: MouseEvent) => {
 				MIN_POSITION.left = -(handleDimensions.width / 2);
 			}
 
-			const radius = Math.round(
-				Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)),
-			);
+			const radius = Math.round(Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)));
 
 			props.targetBlock.setStyle("borderRadius", `${radius}px`);
 			setHandlerPosition(radius);

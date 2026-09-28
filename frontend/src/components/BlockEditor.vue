@@ -17,8 +17,9 @@
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
-		<MarginHandler
-			v-show="showMarginHandler"
+		<GapHandler
+			:data-block-id="block.blockId"
+			v-if="showGapHandler"
 			:target-block="block"
 			:target="target"
 			:on-update="updateTracker"
@@ -53,7 +54,7 @@ import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
-import MarginHandler from "./MarginHandler.vue";
+import GapHandler from "./GapHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 import RotationHandler from "./RotationHandler.vue";
 
@@ -115,17 +116,13 @@ const showPaddingHandler = computed(() => {
 	);
 });
 
-const showMarginHandler = computed(() => {
+// A gap needs two children to sit between. Whether the block is actually a flex or grid
+// container is decided inside the handler, off the rendered display — isFlex()/isGrid()
+// read only the block's own styles and miss a layout that comes from a CSS class.
+const showGapHandler = computed(() => {
 	return (
-		builderStore.mode === "select" &&
-		isBlockSelected.value &&
-		!props.block.isRoot() &&
-		!canvasStore.isDragging &&
-		!transforming.value &&
-		!props.editable &&
-		!props.readonly &&
-		!blockController.multipleBlocksSelected() &&
-		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
+		showPaddingHandler.value &&
+		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
 	);
 });
 
@@ -188,6 +185,10 @@ const getStyleClasses = computed(() => {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");
+	}
+	// hover editors mount later, so without this their ring paints over the selection's handles
+	if (isBlockSelected.value) {
+		classes.push("z-10");
 	}
 	if (
 		isBlockSelected.value &&

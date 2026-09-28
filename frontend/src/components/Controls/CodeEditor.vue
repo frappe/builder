@@ -9,7 +9,7 @@
 			:style="{
 				'min-height': height,
 			}"
-			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden !rounded border border-outline-gray-2 bg-surface-gray-2">
+			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden !rounded-4 border border-outline-gray-2 bg-surface-gray-2">
 			<CodeMirrorEditor
 				ref="editor"
 				:mode
@@ -38,11 +38,12 @@
 			@click="emit('save', editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty || readonly">
-			Save
+			{{ __("Save") }}
 		</Button>
 	</div>
 </template>
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
 
 // keeps the CodeMirror stack out of the main editor bundle

@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import { confirm } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
 import { Dialog } from "frappe-ui";
@@ -45,14 +46,14 @@ const toggleDialog = (value: boolean) => {
 useEventListener("beforeunload", (e) => {
 	if (attrs?.isDirty) {
 		e.preventDefault();
-		e.returnValue = "You have unsaved changes. Please save before leaving.";
+		e.returnValue = __("You have unsaved changes. Please save before leaving.");
 	}
 });
 
 const showConfirmationDialog = async () => {
 	waitingForResponse = true;
 	if (attrs.isDirty) {
-		return await confirm("You have unsaved changes. Are you sure you want to leave?").then((res) => {
+		return await confirm(__("You have unsaved changes. Are you sure you want to leave?")).then((res) => {
 			if (res) {
 				emit("update:modelValue", false);
 			}

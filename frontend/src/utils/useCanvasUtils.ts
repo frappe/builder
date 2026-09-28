@@ -7,6 +7,7 @@ import { useCanvasHistory } from "@/utils/useCanvasHistory";
 import { useElementBounding } from "@vueuse/core";
 import { nextTick, reactive, ref, Ref } from "vue";
 import { toast } from "frappe-ui";
+import { __ } from "@/translation";
 
 const canvasStore = useCanvasStore();
 
@@ -16,6 +17,7 @@ export function useCanvasUtils(
 	canvas: Ref<HTMLElement | null>,
 	rootBlock: Ref<Block>,
 	selectedBlockIds: Ref<Set<string>>,
+	selectBlock: (block: Block, multiSelect?: boolean) => void,
 	canvasHistory: Ref<null | any>,
 ) {
 	const isDirty = ref(false);
@@ -29,9 +31,6 @@ export function useCanvasUtils(
 	) {
 		// wait for editor to render
 		await new Promise((resolve) => setTimeout(resolve, 100));
-		if (!selectedBlockIds.value.has(blockToFocus.blockId)) {
-			selectBlock(blockToFocus);
-		}
 		await nextTick();
 		// single nextTick is not enough, adding this to ensure the DOM is updated after selection
 		await nextTick();
@@ -157,7 +156,7 @@ export function useCanvasUtils(
 		}
 	}
 
-	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true) {
+	function setRootBlock(newBlock: Block, resetCanvas = false, resetHistory = true, keepViewport = false) {
 		if (!resetHistory && canvasHistory.value?.silentSetSource) {
 			// swap the root without recording it or disposing the stack (version preview)
 			canvasHistory.value.silentSetSource(newBlock);
@@ -170,7 +169,7 @@ export function useCanvasUtils(
 		}
 		if (resetCanvas) {
 			nextTick(() => {
-				setScaleAndTranslate();
+				keepViewport ? keepCanvasInView() : setScaleAndTranslate();
 				toggleDirty(false);
 			});
 		}
@@ -204,13 +203,17 @@ export function useCanvasUtils(
 		canvasProps.settingCanvas = false;
 	};
 
-	function selectBlock(_block: Block, multiSelect = false) {
-		if (multiSelect) {
-			selectedBlockIds.value.add(_block.blockId);
-		} else {
-			selectedBlockIds.value = new Set([_block.blockId]);
-		}
-	}
+	// a kept viewport can point past the end of a shorter page, so bring it back to the top at the same zoom
+	const keepCanvasInView = async () => {
+		await nextTick();
+		canvasBound.update();
+		const offScreenY = canvasBound.bottom < containerBound.top || canvasBound.top > containerBound.bottom;
+		const offScreenX = canvasBound.right < containerBound.left || canvasBound.left > containerBound.right;
+		if (offScreenX) canvasProps.translateX = 0;
+		if (!offScreenY) return;
+		const scale = canvasProps.scale;
+		canvasProps.translateY += (containerBound.top - canvasBound.top + 300 * scale) / scale;
+	};
 
 	const toggleDirty = (dirty: boolean | null = null) => {
 		if (dirty === null) {
@@ -230,8 +233,8 @@ export function useCanvasUtils(
 
 	function removeBlock(block: Block, force: boolean = false) {
 		if (block.blockId === "root") {
-			toast.warning("Warning", {
-				description: "Cannot delete root block",
+			toast.warning(__("Warning"), {
+				description: __("Cannot delete root block"),
 			});
 			return;
 		}
@@ -273,7 +276,6 @@ export function useCanvasUtils(
 		zoomOut,
 		toggleMode,
 		setRootBlock,
-		selectBlock,
 		toggleDirty,
 		findBlock,
 		removeBlock,

@@ -1,27 +1,28 @@
 <template>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Min. Items"
+			:label="__('Min. Items')"
 			:modelValue="minItems"
 			@update:modelValue="handleMinItemsChange"
 			@input="handleMinItemsChange"
-			placeholder="Enter min number of items"></InlineInput>
+			:placeholder="__('Enter min number of items')"></InlineInput>
 	</div>
 	<div v-if="false" class="flex items-center justify-between">
 		<InlineInput
-			label="Max. Items"
+			:label="__('Max. Items')"
 			:modelValue="maxItems"
 			@update:modelValue="handleMaxItemsChange"
 			@input="handleMaxItemsChange"
-			placeholder="Enter max number of items"></InlineInput>
+			:placeholder="__('Enter max number of items')"></InlineInput>
 	</div>
 	<div class="flex flex-col gap-3">
-		<InputLabel class="w-[88px] shrink-0">Default Items</InputLabel>
+		<InputLabel class="w-[88px] shrink-0">{{ __("Default Items") }}</InputLabel>
 		<ObjectEditor :obj="obj" @update:obj="handleObjChange" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import { __ } from "@/translation";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import ObjectEditor from "../ObjectEditor.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
@@ -118,7 +119,7 @@ function useObjectOption(key: string, isNumeric: boolean = false) {
 				defaultValue: obj.value,
 			});
 		} else {
-			toast.error("Invalid option configuration!");
+			toast.error(__("Invalid option configuration!"));
 		}
 	}
 
@@ -133,7 +134,7 @@ function useObjectOption(key: string, isNumeric: boolean = false) {
 				defaultValue: obj.value,
 			});
 		} else {
-			toast.error("Invalid option configuration!");
+			toast.error(__("Invalid option configuration!"));
 		}
 	}
 

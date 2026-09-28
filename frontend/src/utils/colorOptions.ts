@@ -1,3 +1,4 @@
+import { __ } from "@/translation";
 import { BuilderToken } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
 import { tokenType } from "@/utils/useBuilderToken";
@@ -56,7 +57,7 @@ export function getColorVariableOptions(
 					setup() {
 						return () =>
 							h("div", {
-								class: "h-4 w-4 rounded shadow-sm border border-outline-gray-1 flex-shrink-0",
+								class: "h-4 w-4 rounded-4 shadow-sm border border-outline-gray-1 flex-shrink-0",
 								style: { background: isDark ? resolvedDarkColor : resolvedLightColor },
 							});
 					},
@@ -76,7 +77,7 @@ export function getColorVariableOptions(
 													onEdit(builderToken);
 												},
 											},
-											"Edit",
+											__("Edit"),
 										);
 								},
 							}),

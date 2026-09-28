@@ -42,18 +42,8 @@ from builder.utils import (
 	export_client_scripts,
 	extract_components_from_blocks,
 	make_records,
+	safe_segment,
 )
-
-
-def safe_segment(name):
-	"""Make a value safe for use as one filesystem path segment.
-
-	Replaces path separators and blocks empty/traversal values.
-	"""
-	segment = str(name).replace("/", "_").replace("\\", "_")
-	if segment in ("", ".", ".."):
-		frappe.throw(frappe._("Unsafe template fixture name: {0}").format(name))
-	return segment
 
 
 def get_templates_root(app="builder"):
@@ -189,7 +179,9 @@ def export_template_group(group, target_app="builder"):
 		blocks = export_template_page(page_doc, paths["pages"], group_folder, target_app=target_app)
 		components.update(extract_components_from_blocks(blocks))
 		fonts.update(extract_fonts_from_blocks(blocks))
-		export_client_scripts(page_doc, paths["client_scripts"])
+		export_client_scripts(
+			[row.builder_script for row in page_doc.client_scripts], paths["client_scripts"]
+		)
 
 	for component_id in components:
 		component_blocks = export_template_component(

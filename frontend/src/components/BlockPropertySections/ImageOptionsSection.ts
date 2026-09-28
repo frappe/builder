@@ -4,6 +4,7 @@ import blockController from "@/utils/blockController";
 import { getOptimizeButtonText, optimizeImage, shouldShowOptimizeButton } from "@/utils/imageUtils";
 import { Button } from "frappe-ui";
 import { computed } from "vue";
+import { __ } from "@/translation";
 
 const imageOptionsSectionProperties = [
 	{
@@ -12,20 +13,25 @@ const imageOptionsSectionProperties = [
 			return {
 				component: ImageUploadInput,
 				propertyKey: "src",
-				label: "Image URL",
+				label: __("Image URL"),
 				allowDynamicValue: true,
 				popoverOffset: 120,
 				imageFit: blockController.getStyle("objectFit"),
-				variants: [{ name: "dark", property: "darkSrc", label: "Dark Mode" }],
+				objectPosition: (blockController.getStyle("objectPosition") as string) || "",
+				objectViewBox: (blockController.getStyle("objectViewBox") as string) || "",
+				targetRatio: blockController.getSelectedBlockAspectRatio(),
+				variants: [{ name: "dark", property: "darkSrc", label: __("Dark Mode") }],
 			};
 		},
 		events: {
 			"update:imageURL": (val: string) => blockController.setAttribute("src", val),
 			"update:imageFit": (val: StyleValue) => blockController.setStyle("objectFit", val),
+			"update:objectPosition": (val: string) => blockController.setStyle("objectPosition", val),
+			"update:objectViewBox": (val: string) => blockController.setStyle("objectViewBox", val),
 		},
 		searchKeyWords:
-			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme",
-		usedStyleProperties: ["object-fit"],
+			"Image, URL, Src, Fit, ObjectFit, Object Fit, Fill, Contain, Cover, Dark, Mode, Dark Mode, Theme, Focus, Focal, Point, Crop, Zoom, Framing, Object Position, ObjectPosition, Object View Box",
+		usedStyleProperties: ["object-fit", "object-position", "object-view-box"],
 	},
 	{
 		component: Button,
@@ -67,7 +73,7 @@ const imageOptionsSectionProperties = [
 		getProps: () => {
 			return {
 				propertyKey: "alt",
-				label: "Alt Text",
+				label: __("Alt Text"),
 				allowDynamicValue: true,
 				getModelValue: () => blockController.getAttribute("alt") || "",
 				setModelValue: (val: string) => blockController.setAttribute("alt", val),
@@ -79,7 +85,7 @@ const imageOptionsSectionProperties = [
 ];
 
 export default {
-	name: "Image Options",
+	name: __("Image Options"),
 	properties: imageOptionsSectionProperties,
 	condition: () => blockController.isImage(),
 };

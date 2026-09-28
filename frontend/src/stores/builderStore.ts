@@ -1,14 +1,17 @@
+import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
+import { editorDemo } from "@/utils/editorDemo";
 import RealTimeHandler from "@/utils/realtimeHandler";
-import { useDark, useStorage } from "@vueuse/core";
-import { toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
+import { createResource, toast } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
+const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
 
 declare global {
 	interface Window {
@@ -28,7 +31,7 @@ const useBuilderStore = defineStore("builderStore", {
 		showSearchBlock: false,
 		builderLayout: {
 			rightPanelWidth: 275,
-			leftPanelWidth: 250,
+			leftPanelWidth: 300,
 			scriptEditorHeight: 300,
 			optionsPanelWidth: 57,
 		},
@@ -37,9 +40,16 @@ const useBuilderStore = defineStore("builderStore", {
 		showLeftPanel: <boolean>true,
 		showVersionHistory: <boolean>false,
 		showHTMLDialog: false,
+		openClientScript: <string | null>null,
 		showDataScriptDialog: <"page" | null>null,
+		showBlockTemplateDialog: false,
+		showTokenManager: false,
+		shortcutsModalOpen: false,
 		realtime: new RealTimeHandler(),
 		readOnlyMode: false,
+		// An AI build is streaming onto the canvas: the server owns the draft, so the
+		// editor's autosave must stand down (it would persist the partial preview).
+		aiBuildingCanvas: false,
 		// site-level maintenance/migration state, not the editor's edit lock
 		isSiteInReadOnlyMode: window.is_read_only_mode === "True",
 		viewers: <UserInfo[]>[],
@@ -49,17 +59,34 @@ const useBuilderStore = defineStore("builderStore", {
 			attribute: "data-theme",
 		}),
 		canvasDarkMode: useStorage("canvasDarkMode", false),
-		highlightBlocksWithClientScripts: false,
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,
+		// Set from ai_setup_state: a provider carrying its own key (Anthropic, a
+		// self-hosted gateway) is enough on its own, and the shared OpenRouter key in
+		// Builder Settings is the only thing the client can see for itself.
+		// null until the server answers; false means "asked, not configured"
+		aiConfigured: <boolean | null>null,
 	}),
 	getters: {
+		isSmallScreen(): boolean {
+			return belowLgBreakpoint.value;
+		},
 		isAIEnabled(): boolean {
-			return !!builderSettings.doc?.ai_api_key;
+			return !!this.aiConfigured || !!builderSettings.doc?.ai_api_key;
+		},
+		// unknown until a positive signal or the server's verdict arrives
+		isAIStateKnown(): boolean {
+			return this.aiConfigured !== null || this.isAIEnabled;
 		},
 	},
 	actions: {
+		async refreshAIState() {
+			const state = (await createResource({ url: "builder.ai.api.ai_setup_state" })
+				.submit()
+				.catch(() => null)) as { configured?: boolean } | null;
+			this.aiConfigured = !!state?.configured;
+		},
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;
 		},
@@ -70,7 +97,7 @@ const useBuilderStore = defineStore("builderStore", {
 				})
 				.then(() => {
 					capture("builder_homepage_set");
-					toast.success("Homepage set successfully");
+					toast.success(__("Homepage set successfully"));
 				});
 		},
 		unsetHomePage() {
@@ -80,7 +107,7 @@ const useBuilderStore = defineStore("builderStore", {
 				})
 				.then(() => {
 					capture("builder_homepage_unset");
-					toast.success("This page will no longer be the homepage");
+					toast.success(__("This page will no longer be the homepage"));
 				});
 		},
 		updateBuilderSettings(key: keyof BuilderSettings, value: any) {
@@ -92,8 +119,15 @@ const useBuilderStore = defineStore("builderStore", {
 					builderSettings.reload();
 				});
 		},
-		openBuilderSettings() {
-			window.open("/app/builder-settings", "_blank");
+		openBuilderSettings(tab?: string) {
+			if (editorDemo) {
+				toast.info(__("Settings are not part of the demo"));
+				return;
+			}
+			if (tab) {
+				this.settingsActiveTab = tab;
+			}
+			this.showSettingsDialog = true;
 		},
 	},
 });
