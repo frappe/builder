@@ -252,6 +252,16 @@ class TestBuilderPage(FrappeTestCase):
 			live.delete()
 			staging.delete()
 
+	def test_page_data_for_scripts_can_hold_dates(self):
+		page = insert_page("test-page-data-dates", "Dates")
+		try:
+			page.page_data_script = "data.page_data = {'when': frappe.db.get_all('Role', fields=['creation'], limit=1)[0]['creation']}"
+			page.save()
+			page.publish()
+			self.assertIn('window.page_data = {"when": "', get_response_content("/test-page-data-dates"))
+		finally:
+			page.delete()
+
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
 		try:
