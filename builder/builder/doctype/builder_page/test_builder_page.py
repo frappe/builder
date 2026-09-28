@@ -252,13 +252,26 @@ class TestBuilderPage(FrappeTestCase):
 			live.delete()
 			staging.delete()
 
-	def test_page_data_for_scripts_can_hold_dates(self):
+	def test_page_data_for_scripts_can_hold_dates_and_decimals(self):
+		from datetime import date, datetime
+		from decimal import Decimal
+		from unittest.mock import patch
+
 		page = insert_page("test-page-data-dates", "Dates")
+		page_data = {
+			"page_data": {
+				"at": datetime(2026, 1, 2, 3, 4, 5),
+				"on": date(2026, 1, 2),
+				"price": Decimal("9.5"),
+			}
+		}
 		try:
-			page.page_data_script = "data.page_data = {'when': frappe.db.get_all('Role', fields=['creation'], limit=1)[0]['creation']}"
-			page.save()
 			page.publish()
-			self.assertIn('window.page_data = {"when": "', get_response_content("/test-page-data-dates"))
+			with patch.object(type(page), "_get_page_data", return_value=frappe._dict(page_data)):
+				content = get_response_content("/test-page-data-dates")
+			self.assertIn('"at": "2026-01-02 03:04:05"', content)
+			self.assertIn('"on": "2026-01-02"', content)
+			self.assertIn('"price": 9.5', content)
 		finally:
 			page.delete()
 
