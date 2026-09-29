@@ -858,6 +858,14 @@ class Block implements BlockOptions {
 		items.splice(this.getRepeaterPreviewIndex(), 1);
 		this.setRepeaterPropItems(items);
 	}
+	// duplicating a slide copies its item, own text included, and picks the copy
+	duplicateRepeaterItem() {
+		const items = [...this.getRepeaterPropItems()];
+		const index = this.getRepeaterPreviewIndex();
+		items.splice(index + 1, 0, items[index]);
+		this.setRepeaterPropItems(items);
+		this.setRepeaterPreviewIndex(index + 1);
+	}
 	// order lists item indexes in their new order; the picked item stays picked wherever it lands
 	reorderRepeaterItems(order: number[]) {
 		const items = [...this.getRepeaterPropItems()];
@@ -1073,6 +1081,10 @@ class Block implements BlockOptions {
 	}
 	duplicateBlock() {
 		if (this.isRoot()) {
+			return;
+		}
+		if (this.parentBlock?.getRepeaterPropItems().length) {
+			this.parentBlock.duplicateRepeaterItem();
 			return;
 		}
 		const canvasStore = useCanvasStore();
