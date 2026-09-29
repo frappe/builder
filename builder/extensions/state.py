@@ -115,7 +115,17 @@ def write_rows(installation: str, changes: dict) -> None:
 	)
 	frappe.db.bulk_insert(
 		STATE_DOCTYPE,
-		["name", "creation", "modified", "owner", "modified_by", "installation", "user", "state_key", "state_value"],
+		[
+			"name",
+			"creation",
+			"modified",
+			"owner",
+			"modified_by",
+			"installation",
+			"user",
+			"state_key",
+			"state_value",
+		],
 		[
 			(str(uuid.uuid4()), now, now, user, user, installation, user, key, json.dumps(value))
 			for key, value in changes.items()

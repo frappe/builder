@@ -91,6 +91,8 @@ def is_extension_manager(user: str | None = None) -> bool:
 def assert_extension_manager() -> None:
 	if not is_extension_manager():
 		frappe.throw(
-			_("Only an extension manager can change extensions. Builder Settings can name an additional role."),
+			_(
+				"Only an extension manager can change extensions. Builder Settings can name an additional role."
+			),
 			frappe.PermissionError,
 		)
