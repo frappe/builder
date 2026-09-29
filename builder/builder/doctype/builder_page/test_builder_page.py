@@ -5,6 +5,7 @@
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
@@ -251,6 +252,25 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			live.delete()
 			staging.delete()
+
+	def test_route_variables_must_be_identifiers(self):
+		for route in ("test-bad-route/:my-slug", "test-bad-route/<foo:slug>"):
+			self.assertRaises(frappe.ValidationError, insert_page, route, "Bad Route")
+
+	def test_a_malformed_dynamic_route_does_not_hide_other_dynamic_pages(self):
+		valid = insert_page("test-valid-dynamic/:slug", "Valid Dynamic Content")
+		malformed = insert_page("test-malformed-dynamic", "Malformed")
+		try:
+			valid.publish()
+			malformed.publish()
+			# a route saved before validation existed
+			malformed.db_set({"route": "test-malformed-dynamic/:my-slug", "dynamic_route": 1})
+			malformed.clear_route_cache()
+			set_request(method="GET", path="/test-valid-dynamic/any")
+			self.assertIn("Valid Dynamic Content", get_response_content("/test-valid-dynamic/any"))
+		finally:
+			valid.delete()
+			malformed.delete()
 
 	def test_page_data_for_scripts_can_hold_dates_and_decimals(self):
 		from datetime import date, datetime
