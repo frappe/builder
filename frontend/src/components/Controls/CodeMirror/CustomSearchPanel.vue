@@ -1,13 +1,13 @@
 <template>
 	<div
-		class="absolute right-0 top-0 flex rounded-md border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
+		class="absolute right-0 top-0 flex rounded-5 border border-outline-gray-3 bg-surface-gray-1 shadow-lg"
 		@keydown.esc.stop="closePanel">
 		<div v-if="enableReplace" class="flex items-center border-r border-outline-gray-2">
 			<Button
 				variant="ghost"
 				size="sm"
 				class="h-full rounded-r-none"
-				:tooltip="showReplace ? 'Hide Replace' : 'Show Replace'"
+				:tooltip="showReplace ? __('Hide Replace') : __('Show Replace')"
 				@click="toggleReplace">
 				<span
 					:class="[showReplace ? 'lucide-chevron-down' : 'lucide-chevron-right', 'h-4 w-4']"
@@ -111,6 +111,7 @@ import {
 	setSearchQuery,
 } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
+import { __ } from "@/translation";
 import { Button, TextInput } from "frappe-ui";
 import { inject, nextTick, onMounted, ref } from "vue";
 
@@ -170,7 +171,7 @@ function closePanel(e?: KeyboardEvent | Event) {
 
 onMounted(() => {
 	nextTick(() => {
-		inputRef.value?.el?.focus();
+		inputRef.value?.focus();
 	});
 });
 </script>

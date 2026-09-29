@@ -1,10 +1,11 @@
 <template>
-	<Popover placement="left" class="!block w-full" :offset="25" @close="endStatePreview">
-		<template #target="{ togglePopover, isOpen }">
+	<Popover side="left" align="center" :offset="25" bare :open="isOpen" @update:open="onUpdateOpen">
+		<template #trigger>
 			<div
 				class="flex w-full items-center justify-between"
 				@focusin="updateActiveState"
-				@click="$event.target instanceof HTMLInputElement && togglePopover(true)">
+				@click.capture="onAnchorClick"
+				@click="$event.target instanceof HTMLInputElement && open()">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -12,16 +13,16 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('None')"
-					@focus="canOpenOnFocus() && togglePopover(true)"
+					@focus="canOpenOnFocus() && open()"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
 					:setVariantValue="handleSetVariant"
 					@update:modelValue="setBoxShadow">
 					<template #prefix="{ variant }">
 						<div
-							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded border border-outline-gray-1 shadow-sm"
+							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded-4 border border-outline-gray-1 shadow-sm"
 							@pointerdown="rememberPopoverState(variant, isOpen)"
-							@click="togglePopoverForState(variant, togglePopover)"
+							@click="togglePopoverForState(variant, toggle)"
 							:style="{
 								backgroundColor: shadowConfigs[0]?.color ?? 'transparent',
 							}" />
@@ -29,12 +30,12 @@
 				</StylePropertyControl>
 			</div>
 		</template>
-		<template #body>
+		<template #default>
 			<div
-				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-lg border border-outline-gray-1 bg-surface-base p-3 shadow-xl">
+				class="shadow-popover-body max-h-[80vh] w-64 select-none overflow-y-auto rounded-6 border border-outline-gray-1 bg-surface-base p-3 shadow-xl">
 				<div class="mb-3 space-y-3">
 					<div
-						class="flex h-24 w-full items-center justify-center overflow-hidden rounded-md border border-outline-gray-1 bg-surface-base"
+						class="flex h-24 w-full items-center justify-center overflow-hidden rounded-5 border border-outline-gray-1 bg-surface-base"
 						style="
 							background-image: conic-gradient(
 								var(--surface-gray-1) 90deg,
@@ -45,7 +46,7 @@
 							background-size: 16px 16px;
 						">
 						<div
-							class="size-10 rounded bg-white shadow-sm transition-shadow duration-200"
+							class="size-10 rounded-4 bg-white shadow-sm transition-shadow duration-200"
 							:style="{ boxShadow: currentPreviewShadow }" />
 					</div>
 					<Input
@@ -57,10 +58,10 @@
 				</div>
 
 				<div class="space-y-4">
-					<div v-for="(shadow, index) in shadowConfigs" :key="index" class="space-y-2 rounded-md">
+					<div v-for="(shadow, index) in shadowConfigs" :key="index" class="space-y-2 rounded-5">
 						<div class="flex items-center justify-between">
 							<span class="text-[10px] font-bold uppercase tracking-wider text-ink-gray-4">
-								Layer {{ index + 1 }}
+								{{ __("Layer {0}", [index + 1]) }}
 							</span>
 							<Button
 								icon="lucide-x"
@@ -71,7 +72,7 @@
 						</div>
 						<div class="flex gap-2">
 							<div
-								class="relative flex aspect-square w-[64px] cursor-crosshair items-center justify-center overflow-hidden rounded border border-outline-gray-2 bg-surface-base p-1"
+								class="relative flex aspect-square w-[64px] cursor-crosshair items-center justify-center overflow-hidden rounded-4 border border-outline-gray-2 bg-surface-base p-1"
 								style="
 									background-image: conic-gradient(
 										var(--surface-gray-1) 90deg,
@@ -87,7 +88,7 @@
 								<div
 									class="bg-outline-gray-2 pointer-events-none absolute inset-y-0 left-1/2 w-px opacity-50" />
 								<div
-									class="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-outline-gray-1 bg-white shadow transition-shadow"
+									class="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-1 border border-outline-gray-1 bg-white shadow transition-shadow"
 									:style="{
 										left: getPickerPos(shadow.x),
 										top: getPickerPos(shadow.y),
@@ -109,15 +110,15 @@
 							</div>
 						</div>
 						<div class="flex items-center gap-2">
-							<Tooltip :text="shadow.inset ? 'Inset Shadow' : 'Outset Shadow'">
+							<Tooltip :text="shadow.inset ? __('Inset Shadow') : __('Outset Shadow')">
 								<OptionToggle
 									class="!w-auto [&>div]:!h-7 [&>div]:min-w-[40px]"
-									:modelValue="shadow.inset"
+									:modelValue="shadow.inset ? 'inset' : 'outset'"
 									:options="[
-										{ label: 'O', value: false },
-										{ label: 'I', value: true },
+										{ label: 'O', value: 'outset' },
+										{ label: 'I', value: 'inset' },
 									]"
-									@update:modelValue="(val: any) => updateShadow(index, 'inset', val)" />
+									@update:modelValue="(val) => updateShadow(index, 'inset', val === 'inset')" />
 							</Tooltip>
 							<div class="flex-1">
 								<Tooltip :text="__('Shadow Color')">
@@ -130,7 +131,7 @@
 					</div>
 				</div>
 				<div class="mt-3">
-					<Button class="w-full" variant="subtle" @click="addShadow">+ Add Shadow Layer</Button>
+					<Button class="w-full" variant="subtle" @click="addShadow">{{ __("+ Add Shadow Layer") }}</Button>
 				</div>
 			</div>
 		</template>
@@ -146,6 +147,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { useStatePopover } from "@/composables/useStatePopover";
 import { useEventListener } from "@vueuse/core";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { Button, Popover, Tooltip } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
 
@@ -158,6 +160,9 @@ const SHADOW_CONTROLS = [
 
 const { activeState, rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } =
 	useStatePopover();
+const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(
+	(isOpening) => !isOpening && endStatePreview(),
+);
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;

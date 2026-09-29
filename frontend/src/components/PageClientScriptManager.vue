@@ -40,7 +40,7 @@
 
 								<Dropdown
 									class="script-options"
-									placement="right"
+									align="end"
 									v-if="activeScript === script && !builderStore.readOnlyMode"
 									:options="[
 										{
@@ -56,9 +56,7 @@
 											icon: 'lucide-trash',
 										},
 									]">
-									<template v-slot="{ open }">
-										<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click="open"></Button>
-									</template>
+									<Button icon="lucide-more-horizontal" size="sm" variant="ghost" @click.stop></Button>
 								</Dropdown>
 							</a>
 						</template>
@@ -88,7 +86,7 @@
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
 							:options="clientScriptOptions"
 							:placeholder="__('Attach Script')"
-							@update:modelValue="(value: string | null) => value && attachScript(value)">
+							@update:modelValue="onScriptSelected">
 							<template #trigger>
 								<Button class="w-full text-xs">{{ __("Attach Script") }}</Button>
 							</template>
@@ -104,7 +102,7 @@
 		</div>
 
 		<div
-			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			{{ __("Add Script") }}
 		</div>
@@ -145,8 +143,8 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import { getPageUsageMessage } from "@/utils/helpers";
-import { Combobox, createListResource, createResource, Dropdown } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { Combobox, createListResource, createResource, Dropdown, type ComboboxOptionValue } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import draggable from "vuedraggable";
@@ -189,6 +187,15 @@ const attachedScriptResource = createListResource({
 	orderBy: "`tabBuilder Page Client Script`.idx asc",
 	auto: true,
 	onSuccess: (data: attachedScript[]) => {
+		const pendingName = builderStore.openClientScript;
+		if (pendingName) {
+			builderStore.openClientScript = null;
+			const target = data.find((s: attachedScript) => s.script_name === pendingName);
+			if (target) {
+				selectScript(target);
+				return;
+			}
+		}
 		if (data && data.length > 0 && !activeScript.value) {
 			selectScript(data[0]);
 		}
@@ -302,6 +309,10 @@ const addScript = (scriptType: "JavaScript" | "CSS") => {
 		});
 };
 
+const onScriptSelected = (value: ComboboxOptionValue | null | undefined) => {
+	if (typeof value === "string" && value) attachScript(value);
+};
+
 const attachScript = (builder_script_name: string) => {
 	if (builderStore.readOnlyMode) return;
 
@@ -393,6 +404,21 @@ const onScriptReorder = () => {
 		});
 };
 
+const selectScriptByName = (name: string) => {
+	const target = attachedScriptResource.data?.find((s: attachedScript) => s.script_name === name);
+	if (target) selectScript(target);
+};
+
+// Handle openClientScript when data is already loaded (component already mounted)
+watch(
+	() => builderStore.openClientScript,
+	(name) => {
+		if (!name || !attachedScriptResource.data?.length) return;
+		builderStore.openClientScript = null;
+		selectScriptByName(name);
+	},
+);
+
 watch(
 	() => props.page,
 	async () => {
@@ -405,7 +431,7 @@ watch(
 	},
 );
 
-defineExpose({ scriptEditor });
+defineExpose({ scriptEditor, selectScriptByName });
 </script>
 
 <style scoped>

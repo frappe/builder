@@ -46,7 +46,7 @@ const toggleDialog = (value: boolean) => {
 useEventListener("beforeunload", (e) => {
 	if (attrs?.isDirty) {
 		e.preventDefault();
-		e.returnValue = "You have unsaved changes. Please save before leaving.";
+		e.returnValue = __("You have unsaved changes. Please save before leaving.");
 	}
 });
 

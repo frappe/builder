@@ -7,7 +7,7 @@
 		:options="{ strategy: 'absolute', placement: 'bottom' }"
 		:plugin-key="bubbleMenuPluginKey"
 		v-if="editor"
-		class="rounded-md border border-outline-gray-3 bg-surface-base p-1 text-lg text-ink-gray-9 shadow-2xl"
+		class="rounded-5 border border-outline-gray-3 bg-surface-base p-1 text-md text-ink-gray-9 shadow-2xl"
 		:class="{ 'pointer-events-none !opacity-0': isRepositioning }">
 		<div
 			v-if="settingLink"
@@ -36,7 +36,7 @@
 			</div>
 			<Input
 				type="checkbox"
-				:label="'Open in New Tab'"
+				:label="__('Open in New Tab')"
 				class="text-xs"
 				v-model="openInNewTab"
 				@change="() => setLink(textLink, false)"></Input>
@@ -44,40 +44,40 @@
 		<div v-show="!settingLink" class="flex gap-1">
 			<button
 				@click="setHeading(1)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h1' }">
 				<code>H1</code>
 			</button>
 			<button
 				@click="setHeading(2)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h2' }">
 				<code>H2</code>
 			</button>
 			<button
 				@click="setHeading(3)"
-				class="rounded px-2 py-1 text-sm hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 text-sm hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': block.getElement() === 'h3' }">
 				<code>H3</code>
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleBold().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('bold') }">
 				<span class="lucide-bold h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleItalic().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('italic') }">
 				<span class="lucide-italic h-3 w-3" aria-hidden="true" />
 			</button>
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleStrike().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('strike') }">
 				<span class="lucide-strikethrough size-4" />
 			</button>
@@ -85,7 +85,7 @@
 			<button
 				v-show="!block.isHeader()"
 				@click="editor?.chain().focus().toggleUnderline().run()"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('underline') }">
 				<span class="lucide-underline size-4" />
 			</button>
@@ -98,7 +98,7 @@
 						enableLinkInput();
 					}
 				"
-				class="rounded px-2 py-1 hover:bg-surface-gray-2"
+				class="rounded-4 px-2 py-1 hover:bg-surface-gray-2"
 				:class="{ 'bg-surface-gray-3': editor.isActive('link') }">
 				<span class="lucide-link h-3 w-3" aria-hidden="true" />
 			</button>
@@ -111,10 +111,10 @@
 					:portal-to="menuElement"
 					placement="top">
 					<template #target>
-						<button v-show="!block.isHeader()" class="rounded px-2 py-1 hover:bg-surface-gray-2">
+						<button v-show="!block.isHeader()" class="rounded-4 px-2 py-1 hover:bg-surface-gray-2">
 							<div class="p-1">
 								<div
-									class="h-4 w-4 rounded shadow-sm"
+									class="h-4 w-4 rounded-4 shadow-sm"
 									@click="openColorPicker"
 									:style="{
 										background:
@@ -142,6 +142,7 @@
 import type Block from "@/block";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import Input from "@/components/Controls/Input.vue";
+import { __ } from "@/translation";
 import type { Editor } from "@tiptap/vue-3";
 import { BubbleMenu } from "@tiptap/vue-3/menus";
 import { vOnClickOutside } from "@vueuse/components";
@@ -170,14 +171,7 @@ const menuElement = computed(() => menu.value?.$el);
 
 const isCanvasMoving = computed(() => Boolean(props.canvasProps?.panning || props.canvasProps?.scaling));
 
-// the option list is teleported to <body> and cannot follow the menu out of sight
-watch(isRepositioning, (hidden) => hidden && colorPicker.value?.hideOptions());
-
-// opening the popover focuses its input, which auto-opens the option list
-const openColorPicker = () => {
-	colorPicker.value?.togglePopover();
-	nextTick(() => requestAnimationFrame(() => colorPicker.value?.hideOptions()));
-};
+const openColorPicker = () => colorPicker.value?.togglePopover();
 
 const editorRef = computed(() => props.editor);
 const bubbleMenuPluginKey = "bubbleMenu";
@@ -263,9 +257,9 @@ const handleKeydown = (e: KeyboardEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
 		const blockWarnings = {
-			isHeader: "You cannot make heading a link",
-			isLink: "You cannot add link inside a link block",
-			isButton: "You cannot add link inside a button block",
+			isHeader: __("You cannot make heading a link"),
+			isLink: __("You cannot add link inside a link block"),
+			isButton: __("You cannot add link inside a button block"),
 		};
 
 		const blockType = Object.entries(blockWarnings).find(([type]) => (props.block as any)[type]());

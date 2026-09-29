@@ -16,6 +16,23 @@ import { __ } from "@/translation";
 // a frappe-ui prompt that auto-closes once `onConfirm` resolves; throwing from
 // onConfirm surfaces the error inline and keeps the dialog open.
 
+// dismissing resolves false, so a stray Esc never uploads
+export function promptOversizedSVG(bytes: number): Promise<boolean> {
+	return new Promise((resolve) => {
+		dialog.confirm({
+			title: __("Large SVG"),
+			message: __(
+				"This SVG is {0} KB. Kept inline it is stored in the page itself, which makes saving and editing slower. Upload it as a file instead?",
+				[String(Math.round(bytes / 1024))],
+			),
+			confirmLabel: __("Upload as File"),
+			cancelLabel: __("Keep Inline"),
+			onConfirm: () => resolve(true),
+			onCancel: () => resolve(false),
+		});
+	});
+}
+
 export function promptCreateFolder() {
 	dialog.prompt({
 		title: __("Create New Folder"),
@@ -105,6 +122,21 @@ export function promptSelectFolder() {
 			selectedPages.value.clear();
 			selectionMode.value = false;
 			builderStore.activeFolder = folder;
+		},
+	});
+}
+
+export function promptRenamePage(page: BuilderPage) {
+	dialog.prompt({
+		title: __("Rename Page"),
+		size: "sm",
+		confirmLabel: __("Rename"),
+		fields: [{ name: "page_title", label: __("Page Title"), required: true, defaultValue: page.page_title || "" }],
+		onConfirm: async ({ values }) => {
+			const pageTitle = values.page_title.trim();
+			if (!pageTitle || pageTitle === page.page_title) return;
+			await webPages.setValue.submit({ name: page.name, page_title: pageTitle });
+			page.page_title = pageTitle;
 		},
 	});
 }

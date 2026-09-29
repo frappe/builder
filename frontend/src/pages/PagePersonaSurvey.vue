@@ -30,7 +30,7 @@
 						<LucideChevronLeft class="size-4" />
 					</template>
 				</Button>
-				<h1 class="text-2xl font-bold text-ink-gray-9">{{ activeQuestion.heading }}</h1>
+				<h1 class="text-xl font-bold text-ink-gray-9">{{ activeQuestion.heading }}</h1>
 				<p class="text-base text-ink-gray-6">{{ activeQuestion.subtitle }}</p>
 			</div>
 
@@ -84,14 +84,15 @@ import { useDashboardState } from "@/composables/useDashboardState";
 import { builderSettings } from "@/data/builderSettings";
 import { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
-import { Button, Textarea } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { Button, Textarea, call } from "frappe-ui";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, reactive, ref } from "vue";
 import LucideChevronLeft from "~icons/lucide/chevron-left";
 
-// Pulse is event-only (no person properties), but every event carries the
-// (anonymized, stable) user id, so this single event can be joined to the
-// rest of the user's funnel for persona-wise segmentation.
+// Every event carries the (anonymized, stable) user id, so this single event can
+// be joined to the rest of the user's funnel for persona-wise segmentation. The
+// answers are also attached to the site's Pulse profile (identify_persona) so
+// site-level metrics split by persona without a join.
 const telemetry = useTelemetry();
 const { templateCategoryFilter } = useDashboardState();
 // Dev benches have telemetry off; ?persona_survey=test logs the payload instead.
@@ -108,9 +109,9 @@ const questions: {
 }[] = [
 	{
 		key: "source",
-		heading: "How did you hear about Builder?",
-		subtitle: "Just curious, it helps us know what's working.",
-		otherPlaceholder: "I heard from the community",
+		heading: __("How did you hear about Builder?"),
+		subtitle: __("Just curious, it helps us know what's working."),
+		otherPlaceholder: __("I heard from the community"),
 		options: [
 			{ value: "search", label: __("Search (Google)") },
 			{ value: "youtube", label: __("YouTube") },
@@ -122,9 +123,9 @@ const questions: {
 	},
 	{
 		key: "role",
-		heading: "Which one best describes you?",
-		subtitle: "This helps us personalise your Builder experience",
-		otherPlaceholder: "I'm a student building my first site",
+		heading: __("Which one best describes you?"),
+		subtitle: __("This helps us personalise your Builder experience"),
+		otherPlaceholder: __("I'm a student building my first site"),
 		options: [
 			{ value: "designer", label: __("Designer") },
 			{ value: "developer", label: __("Developer") },
@@ -136,9 +137,9 @@ const questions: {
 	},
 	{
 		key: "use_case",
-		heading: "What do you want to build first?",
-		subtitle: "We'll point you to the right starting templates",
-		otherPlaceholder: "A booking site for my clinic",
+		heading: __("What do you want to build first?"),
+		subtitle: __("We'll point you to the right starting templates"),
+		otherPlaceholder: __("A booking site for my clinic"),
 		options: [
 			{ value: "marketing_site", label: __("Marketing / landing site") },
 			{ value: "ecommerce", label: __("Online store / E-commerce") },
@@ -198,7 +199,7 @@ function select(value: string) {
 	// stray double-click can't skip past the following question
 	answers[activeQuestion.value.key] = value;
 	// preventScroll: focusing the still-clipped textarea would scroll-jump the page
-	if (value === "other") nextTick(() => otherInput.value?.el?.focus({ preventScroll: true }));
+	if (value === "other") nextTick(() => otherInput.value?.focus({ preventScroll: true }));
 }
 
 function goBack() {
@@ -250,5 +251,12 @@ function finishQuestions(skipped = false) {
 	} catch (e) {
 		console.error("[persona-survey] failed to capture", e);
 	}
+	call("builder.api.identify_persona", {
+		role: props.role,
+		use_case: props.use_case,
+		source: props.source,
+	}).catch((e: unknown) => {
+		console.error("[persona-survey] failed to identify", e);
+	});
 }
 </script>

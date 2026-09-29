@@ -84,9 +84,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 			if (angleChange < -180) angleChange += 360;
 			rotation = (rotation + angleChange) % 360;
 			previousPointerAngle = pointerAngle;
-			const finalRotation = mouseMoveEvent.shiftKey
-				? Math.round(rotation / 15) * 15
-				: Math.round(rotation);
+			const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
 			currentRotation.value = finalRotation;
 			props.targetBlock.setActiveStyle("rotate", `${finalRotation}deg`);
 			// the cursor SVG only needs rebuilding when the rounded/snapped angle actually

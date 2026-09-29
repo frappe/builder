@@ -5,7 +5,7 @@
 		@keydown="handleKeyDown"></div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import codeCompletions from "@/data/codeCompletions";
 import blockController from "@/utils/blockController";
@@ -29,6 +29,7 @@ const props = defineProps<{
 
 const editorContainer = ref<HTMLDivElement | null>(null);
 let editor: EditorView | null = null;
+let disposed = false;
 const theme = new Compartment();
 
 const emit = defineEmits<{
@@ -53,35 +54,35 @@ const getEditorValue = () => {
 };
 
 const resetEditor = async (params: { content: string; resetHistory: boolean; autofocus: boolean }) => {
-	if (editor) {
-		if (params.resetHistory) {
-			editor.setState(
-				(
-					await createStartingState({
-						props,
-						pythonCompletions: await getPythonCompletions(),
-						onSaveCallback: () => emit("save", getEditorValue()),
-						onChangeCallback: () => emit("change", getEditorValue()),
-						onBlurCallback: (value: string) => emit("blur", value),
-						initialValue: params.content,
-						extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
-						mode: props.mode,
-						blockProps: allBlockProps.value,
-					})
-				).startState,
-			);
-		} else {
-			editor.dispatch({
-				changes: {
-					from: 0,
-					to: editor.state.doc.length,
-					insert: params.content,
-				},
-			});
-		}
-		params.autofocus && editor.focus();
-		(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
+	if (!editor) return;
+
+	if (params.resetHistory) {
+		const { startState } = await createStartingState({
+			props,
+			pythonCompletions: await getPythonCompletions(),
+			onSaveCallback: () => emit("save", getEditorValue()),
+			onChangeCallback: () => emit("change", getEditorValue()),
+			onBlurCallback: (value: string) => emit("blur", value),
+			initialValue: params.content,
+			extraExtensions: [theme.of(isDark.value ? oneDark : tomorrow)],
+			mode: props.mode,
+			blockProps: allBlockProps.value,
+		});
+		// teardown can land while the state above is being built
+		if (!editor) return;
+		editor.setState(startState);
+	} else {
+		editor.dispatch({
+			changes: {
+				from: 0,
+				to: editor.state.doc.length,
+				insert: params.content,
+			},
+		});
 	}
+
+	params.autofocus && editor.focus();
+	(editor.dom.querySelector(".cm-content") as HTMLElement)?.classList.remove("@md/editor:!pt-10", "!pt-20");
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -140,10 +141,20 @@ onMounted(async () => {
 		blockProps: allBlockProps.value,
 	});
 
+	// unmounted mid-await: building the view now would orphan it in a detached container
+	if (disposed) return;
+
 	editor = new EditorView({
 		state: startState,
 		parent: editorContainer.value,
 	});
+});
+
+// CodeMirror keeps its view tree, DOM and document observer alive until told otherwise
+onBeforeUnmount(() => {
+	disposed = true;
+	editor?.destroy();
+	editor = null;
 });
 
 defineExpose({

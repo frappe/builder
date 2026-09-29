@@ -13,10 +13,8 @@
 				}
 			">
 			<template #target="{ togglePopover, isOpen }">
-				<div
-					class="flex items-center justify-between"
-					@click="$event.target instanceof HTMLInputElement && !isCssVariable && togglePopover(true)">
-					<InputLabel v-if="label">{{ label }}</InputLabel>
+				<div class="flex items-center justify-between">
+					<InputLabel v-if="label" class="w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
 					<div class="relative w-full">
 						<Tooltip :text="isCssVariable ? resolvedColor : undefined">
 							<Autocomplete
@@ -27,9 +25,9 @@
 								}"
 								v-bind="events"
 								ref="colorInput"
+								:selectOnFocus="true"
 								:referenceElementSelector="autocompleteReferenceElementSelector"
 								@keydown.enter="handleEnter"
-								@focus="!isCssVariable && canOpenOnFocus() && togglePopover(true)"
 								:placeholder="displayPlaceholder"
 								:modelValue="modelValue"
 								:displayValue="displayValue"
@@ -45,15 +43,17 @@
 								"
 								@update:modelValue="handleColorUpdate">
 								<template #prefix>
-									<div
-										class="size-4 cursor-pointer rounded shadow-md"
+									<button
+										type="button"
+										class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
+										:aria-label="__('Open color picker')"
 										@pointerdown="rememberPopoverState(null, isOpen)"
 										@click="togglePopoverForState(null, togglePopover)"
 										:style="{
 											background: modelValue
 												? resolvedColor
 												: `url(/assets/builder/images/color-circle.png) center / contain`,
-										}"></div>
+										}"></button>
 								</template>
 							</Autocomplete>
 						</Tooltip>
@@ -90,7 +90,7 @@ const colorInput = ref<typeof Autocomplete | null>(null);
 const colorPickerRef = ref<typeof ColorPicker | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
 // each instance edits one state, so its swatch always toggles the same picker
-const { rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } = useStatePopover();
+const { rememberPopoverState, togglePopoverForState, endStatePreview } = useStatePopover();
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderToken> | null>(null);
 const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
@@ -243,9 +243,7 @@ const handleClose = () => {
 };
 
 const openVariableDialog = () => {
-	newVariable.value = {
-		value: props.modelValue || "",
-	};
+	newVariable.value = { type: "Color", value: props.modelValue || "" };
 	showVariableDialog.value = true;
 };
 

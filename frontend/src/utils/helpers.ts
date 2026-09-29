@@ -1,11 +1,12 @@
 import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { dialog, FileUploadHandler, toast } from "frappe-ui";
+import { editorDemo } from "@/utils/editorDemo";
+import { dialog, FileUploadHandler, toast, type DialogSize, type DialogTheme } from "frappe-ui";
 import { reactive, toRaw } from "vue";
 import { getRGB, HexToHSV, HSVToHex } from "./colors";
-import { __ } from "@/translation";
 import {
 	addPxToNumber,
 	extractNumberAndUnit,
@@ -28,10 +29,8 @@ async function confirm(message: string, title: string = __("Confirm")): Promise<
 		showDialog({
 			title,
 			message,
-			icon: {
-				name: "alert-circle",
-				appearance: "warning",
-			},
+			icon: "lucide-alert-circle",
+			theme: "amber",
 			actions: [
 				{
 					label: __("Cancel"),
@@ -70,6 +69,16 @@ function getTextContent(html: string | null) {
 
 function isHTMLString(str: string) {
 	return /<[a-z][\s\S]*>/i.test(str);
+}
+
+/** Escape a value for safe use in an HTML string.*/
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
 function copyToClipboard(text: string | object, e: ClipboardEvent, copyFormat = "text/plain") {
@@ -347,6 +356,10 @@ function getRouteVariables(route: string) {
 }
 
 async function uploadBuilderAsset(file: File, silent = false) {
+	if (editorDemo) {
+		// the demo has no server to upload to, so the image lives only in this tab
+		return { fileURL: URL.createObjectURL(file), fileName: file.name };
+	}
 	const uploader = new FileUploadHandler();
 	let fileDoc = {
 		file_url: "",
@@ -385,6 +398,60 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	};
 }
 
+function countBlocks(blocks: BlockOptions | BlockOptions[]): number {
+	const list = Array.isArray(blocks) ? blocks : [blocks];
+	return list.reduce((count, block) => count + 1 + countBlocks(block.children || []), 0);
+}
+
+const MAX_INLINE_SVG_SIZE = 20 * 1024;
+
+// a token-painted SVG has to stay inline: an <img> cannot read CSS variables
+function isOversizedSVG(svg: string) {
+	return svg.length > MAX_INLINE_SVG_SIZE && !svg.includes("var(--") && !svg.includes("currentColor");
+}
+
+async function uploadSVGAsFile(svg: string) {
+	const file = new File([svg], `${generateId()}.svg`, { type: "image/svg+xml" });
+	return uploadBuilderAsset(file);
+}
+
+async function convertSVGBlockToImage(block: Block) {
+	const svg = block.getInnerHTML() || "";
+	const { fileURL } = await uploadSVGAsFile(svg);
+	if (!fileURL) return;
+
+	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
+	const width = source?.getAttribute("width");
+	const height = source?.getAttribute("height");
+	if (width && !block.baseStyles?.width) block.setStyle("width", addPxToNumber(parseInt(width)));
+	if (height && !block.baseStyles?.height) block.setStyle("height", addPxToNumber(parseInt(height)));
+	// an inline <svg> letterboxes in its box, an <img> stretches
+	if (!block.baseStyles?.objectFit) block.setStyle("objectFit", "contain");
+
+	block.element = "img";
+	if (block.originalElement === "__raw_html__") block.originalElement = undefined;
+	block.setInnerHTML("");
+	block.setAttribute("src", fileURL);
+}
+
+// Naming every data URL image.png makes the server read an SVG or a GIF as a PNG,
+// which fails on upload. The MIME type in the data URL already tells us what it is.
+const DATA_URL_EXTENSIONS: Record<string, string> = {
+	"image/svg+xml": "svg",
+	"image/jpeg": "jpg",
+	"image/jpg": "jpg",
+	"image/webp": "webp",
+	"image/gif": "gif",
+	"image/avif": "avif",
+	"image/png": "png",
+};
+
+function dataURLFileName(dataURL: string, baseName: string) {
+	const mime = dataURL.match(/^data:(.*?)(;|,)/)?.[1] || "";
+	const extension = DATA_URL_EXTENSIONS[mime.toLowerCase()] || "png";
+	return `${baseName.replace(/\.[a-z0-9]+$/i, "")}.${extension}`;
+}
+
 function dataURLtoFile(dataurl: string, filename: string) {
 	try {
 		let arr = dataurl.split(",");
@@ -418,10 +485,10 @@ function dataURLtoFile(dataurl: string, filename: string) {
 	}
 }
 
-function handleBase64Attribute(block: Block, attrName: string, fileName: string) {
+function handleBase64Attribute(block: Block, attrName: string, baseName: string) {
 	const attrValue = block.getAttribute(attrName) as string;
 	if (attrValue?.startsWith("data:image")) {
-		const file = dataURLtoFile(attrValue, fileName);
+		const file = dataURLtoFile(attrValue, dataURLFileName(attrValue, baseName));
 		if (file) {
 			block.setAttribute(attrName, "");
 			uploadBuilderAsset(file, true).then((obj) => {
@@ -461,7 +528,10 @@ async function getFontNameFromFile(file: File): Promise<string> {
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = await decompressFontIfWoff2(arrayBuffer, file.name.endsWith(".woff2"));
 	const opentype = await import("opentype.js");
-	return opentype.parse(buffer).names.fullName.en;
+	// opentype 2 splits the name table per platform, so there is no flat names.fullName
+	const names = opentype.parse(buffer).names as Record<string, any>;
+	const table = names.windows || names.macintosh || names;
+	return table.fullName?.en || table.fontFamily?.en || file.name.replace(/\.[^.]+$/, "");
 }
 
 type UploadUserFontOptions = {
@@ -604,21 +674,21 @@ interface DialogAction {
 interface DialogOptions {
 	title?: string;
 	message: string;
-	icon?: {
-		name: string;
-		appearance?: "warning" | "info" | "danger" | "success";
-	};
+	/** a `lucide-*` class name; the theme colours it */
+	icon?: string;
+	theme?: DialogTheme;
 	actions?: DialogAction[];
-	size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
+	size?: DialogSize;
 }
 
 function showDialog(options: DialogOptions): Promise<void> {
-	const appearanceToTheme = { warning: "yellow", info: "blue", danger: "red", success: "green" } as const;
 	return new Promise((resolve) => {
 		dialog.confirm({
 			title: options.title || "",
 			message: options.message,
 			size: options.size || "md",
+			icon: options.icon,
+			theme: options.theme,
 			actions: (options.actions || []).map((action) => ({
 				label: action.label,
 				variant: action.variant ?? "subtle",
@@ -630,9 +700,6 @@ function showDialog(options: DialogOptions): Promise<void> {
 				},
 			})),
 			onCancel: () => resolve(),
-			...(options.icon
-				? { icon: options.icon.name, theme: appearanceToTheme[options.icon.appearance ?? "info"] }
-				: {}),
 		});
 	});
 }
@@ -919,9 +986,16 @@ export {
 	alert,
 	confirm,
 	copyToClipboard,
+	convertSVGBlockToImage,
+	countBlocks,
 	cssUrl,
+	dataURLFileName,
 	dataURLtoFile,
+	deepEqual,
 	detachBlockFromComponent,
+	diffArray,
+	escapeHtml,
+	extractComponentId,
 	extractNumberAndUnit,
 	findNearestSiblingIndex,
 	generateId,
@@ -947,7 +1021,6 @@ export {
 	getRouteVariables,
 	getSpacing,
 	getStandardPropValue,
-	extractComponentId,
 	getTextContent,
 	getVideoBlock,
 	handleBase64Attribute,
@@ -959,6 +1032,7 @@ export {
 	isHTMLString,
 	isInteractiveControl,
 	isJSONString,
+	isOversizedSVG,
 	isTargetEditable,
 	kebabToCamelCase,
 	mapToObject,
@@ -966,6 +1040,7 @@ export {
 	normalizeValueWithUnits,
 	openInDesk,
 	parseAndSetBackground,
+	parseJSONWithFallback,
 	removeDefaultUnit,
 	replaceMapKey,
 	setSpacing,
@@ -978,8 +1053,6 @@ export {
 	toTitleCase,
 	triggerCopyEvent,
 	uploadBuilderAsset,
+	uploadSVGAsFile,
 	uploadUserFont,
-	parseJSONWithFallback,
-	deepEqual,
-	diffArray,
 };

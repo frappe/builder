@@ -12,14 +12,18 @@
 				type="text"
 				class="w-full text-sm [&>label]:w-[60%] [&>label]:min-w-[180px] [&>p]:text-p-xs"
 				:label="__('Route')"
-				:description="__('The URL path for this page. For variables, use colon (e.g. /users/:id)')"
 				:modelValue="pageStore.activePage?.route"
 				:disabled="builderStore.readOnlyMode"
 				:hideClearButton="true"
-				@update:modelValue="(val: string) => updateActivePage('route', val)" />
+				@update:modelValue="(val: string) => updateActivePage('route', val)">
+				<template #description>
+					{{ __("The URL path for this page. For variables, use a colon, like") }}
+					<code class="font-mono text-ink-gray-7">/users/:id</code>
+				</template>
+			</BuilderInput>
 			<!-- Dynamic Route Variables -->
 			<CollapsibleSection
-				sectionName="URL Variables"
+				:sectionName="__('URL Variables')"
 				v-if="dynamicVariables.length"
 				class="w-full [&>div>h3]:!text-xs [&>div>h3]:!text-ink-gray-5">
 				<BuilderInput
@@ -37,6 +41,7 @@
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
 import usepageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { BuilderPage } from "@/types/doctypes";
 import { getRouteVariables } from "@/utils/helpers";
 import { useDebounceFn } from "@vueuse/core";

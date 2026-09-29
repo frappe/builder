@@ -9,7 +9,13 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="tab of tabs" :key="tab.name" :text="tab.label" placement="right">
+			<Tooltip v-for="tab of tabs" :key="tab.name" side="right">
+				<template #content>
+					<span class="flex items-center gap-1.5">
+						{{ tab.label }}
+						<KeyboardShortcut v-if="tab.shortcut" :combo="tab.shortcut" class="!text-xs !text-ink-gray-4" />
+					</span>
+				</template>
 				<Button
 					:icon="tab.icon"
 					size="md"
@@ -33,14 +39,18 @@
 			</template>
 		</div>
 
-		<TokenManager v-model="builderStore.showTokenManager" :container="miniSidebar" />
+		<TokenManager
+			v-model="builderStore.showTokenManager"
+			:container="miniSidebar"
+			:readonly="Boolean(editorDemo)" />
 	</div>
 </template>
 <script setup lang="ts">
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
 import TokenManager from "@/components/Modals/TokenManager.vue";
+import { editorDemo } from "@/utils/editorDemo";
 import useBuilderStore from "@/stores/builderStore";
-import { Tooltip } from "frappe-ui";
+import { KeyboardShortcut, Tooltip, useKeyboardShortcut } from "frappe-ui";
 import { reactive, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import PanelResizer from "./PanelResizer.vue";
@@ -60,6 +70,18 @@ const select = (tab: LeftPanelTab) => {
 	builderStore.leftPanelActiveTab = tab.name;
 	builderStore.showTokenManager = false;
 };
+
+// read once at setup, so a tab registered later gets no binding until reload
+useKeyboardShortcut(
+	tabs.value
+		.filter((tab) => tab.shortcut)
+		.map((tab) => ({
+			combo: tab.shortcut!,
+			description: `Show ${tab.label} Panel`,
+			group: "View",
+			handler: () => select(tab),
+		})),
+);
 
 // a non-lazy tab mounts as soon as it registers, a lazy one on first open
 watchEffect(() => {

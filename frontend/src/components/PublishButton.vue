@@ -3,12 +3,7 @@
 		<Button
 			variant="solid"
 			:disabled="disabled"
-			@click="
-				() => {
-					publishing = true;
-					pageStore.publishPage().finally(() => (publishing = false));
-				}
-			"
+			@click="publish(Boolean(pageStore.activePage?.staging))"
 			class="border-0"
 			:class="{
 				'rounded-br-none rounded-tr-none': showDropdown,
@@ -20,31 +15,38 @@
 			v-if="showDropdown"
 			:options="[
 				{
-					label: __('Version History'),
-					onClick: () => {
-						builderStore.showRightPanel = true;
-						builderStore.showVersionHistory = true;
-					},
-					icon: 'lucide-history',
+					label: __('Publish to Staging'),
+					onClick: () => publish(true),
+					condition: () => isDraft,
+					icon: 'lucide-flask-conical',
+				},
+				{
+					label: __('Go Live'),
+					onClick: () => publish(false),
+					condition: () => Boolean(pageStore.activePage?.staging),
+					icon: 'lucide-rocket',
+				},
+				{
+					label: __('Mark as Staging'),
+					onClick: () => pageStore.markAsStaging(),
+					condition: () => Boolean(pageStore.activePage?.published),
+					icon: 'lucide-flask-conical',
 				},
 				{
 					label: __('Unpublish'),
 					onClick: () => pageStore.unpublishPage(),
-					condition: () => Boolean(pageStore.activePage?.published),
+					condition: () => Boolean(pageStore.activePage?.published || pageStore.activePage?.staging),
 					icon: 'lucide-cloud-off',
 				},
 			]"
 			size="sm"
 			class="flex-1 [&>div>div>div]:w-full"
-			placement="right">
-			<template v-slot="{ open }">
-				<Button
-					variant="solid"
-					@click="open"
-					:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
-					icon="lucide-chevron-down"
-					class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
-			</template>
+			align="end">
+			<Button
+				variant="solid"
+				:disabled="Boolean(pageStore.activePage?.is_template) || builderStore.readOnlyMode"
+				icon="lucide-chevron-down"
+				class="!w-6 justify-start rounded-bl-none rounded-tl-none border-0 pr-0 text-xs"></Button>
 		</Dropdown>
 	</div>
 </template>
@@ -69,14 +71,16 @@ const showDropdown = computed(() => {
 	return canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 
+// the main button keeps a live or staging page where it is; the menu moves it
+const isDraft = computed(() => !pageStore.activePage?.published && !pageStore.activePage?.staging);
+
 const publishButtonLabel = computed(() => {
-	if (
-		(pageStore.activePage?.draft_blocks && !pageStore.activePage?.published) ||
-		!pageStore.activePage?.draft_blocks
-	) {
-		return __("Publish");
-	} else {
-		return __("Publish Changes");
-	}
+	const page = pageStore.activePage;
+	return (page?.published || page?.staging) && page?.draft_blocks ? __("Publish Changes") : __("Publish");
 });
+
+const publish = (staging: boolean) => {
+	publishing.value = true;
+	pageStore.publishPage(true, staging).finally(() => (publishing.value = false));
+};
 </script>

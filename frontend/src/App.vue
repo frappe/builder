@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
+import { __ } from "@/translation";
 import { UseDark } from "@vueuse/components";
 import { useTitle } from "@vueuse/core";
 import { useSiteReadOnlyNotice } from "@/utils/useSiteReadOnlyNotice";
@@ -29,7 +30,7 @@ provide("sessionUser", sessionUser);
 
 const title = computed(() => {
 	return pageStore.activePage && route.name !== "home"
-		? `${pageStore.activePage.page_title || "Untitled"} | Builder`
+		? `${pageStore.activePage.page_title || __("Untitled")} | Builder`
 		: "Frappe Builder";
 });
 

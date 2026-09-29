@@ -202,7 +202,7 @@ const blockController = {
 	getParentBlock: () => {
 		return canvasStore.activeCanvas?.selectedBlocks[0]?.getParentBlock();
 	},
-	setTextColor: (color: string) => {
+	setTextColor: (color: string | null) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setTextColor(color);
 		});
@@ -293,6 +293,13 @@ const blockController = {
 	},
 	canHaveChildren: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().canHaveChildren();
+	},
+	// rendered aspect ratio of the first selected block's canvas element
+	getSelectedBlockAspectRatio: (): number | undefined => {
+		const block = canvasStore.activeCanvas?.selectedBlocks[0];
+		if (!block) return undefined;
+		const el = document.querySelector(`[data-block-id="${block.blockId}"]`) as HTMLElement | null;
+		return el && el.offsetHeight ? el.offsetWidth / el.offsetHeight : undefined;
 	},
 	convertToLink: async () => {
 		const blocks = blockController.getSelectedBlocks();

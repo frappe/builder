@@ -11,7 +11,7 @@
 
 			<TabButtons
 				class="shrink-0"
-				:modelValue="split"
+				:modelValue="split ? 'split' : 'uniform'"
 				:options="resolvedSplitOptions"
 				@update:modelValue="setSplitValue" />
 		</div>
@@ -33,9 +33,10 @@
 <script lang="ts" setup>
 import Input from "@/components/Controls/Input.vue";
 import SplitInput from "@/components/Controls/SplitInput.vue";
+import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { expandBoxShorthand } from "@/utils/cssUtils";
-import { TabButtons, type TabButton } from "frappe-ui";
+import { TabButtons, type TabButton, type TabButtonValue } from "frappe-ui";
 import type { HTMLAttributes } from "vue";
 import { computed, ref, useAttrs, watch } from "vue";
 
@@ -44,7 +45,7 @@ defineOptions({ inheritAttrs: false });
 type InputValue = string | number | boolean | null;
 type InputAttrs = Record<string, unknown>;
 type SplitConfig = string | { label?: string; attrs?: InputAttrs };
-type SplitOption = Omit<TabButton, "value"> & { value: boolean };
+type SplitOption = Omit<TabButton, "value"> & { value: "uniform" | "split" };
 
 const props = withDefaults(
 	defineProps<{
@@ -66,8 +67,8 @@ const props = withDefaults(
 	{
 		modelValue: "",
 		placeholder: "",
-		uniformTitle: "Use for all",
-		splitTitle: "Set separately",
+		uniformTitle: __("Use for all"),
+		splitTitle: __("Set separately"),
 		splitIcon: "lucide-scan",
 		splits: 0,
 		toControlValues: (value: unknown) => (Array.isArray(value) ? value : [value as InputValue]),
@@ -86,7 +87,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style } as HTMLAttributes));
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }) as HTMLAttributes);
 const controlAttrs = computed(() =>
 	Object.fromEntries(Object.entries(attrs).filter(([key]) => !["class", "style"].includes(key))),
 );
@@ -110,26 +111,17 @@ const displayValue = computed(() => {
 });
 
 const defaultSplitOptions = computed<SplitOption[]>(() => [
-	{
-		label: props.uniformTitle,
-		value: false,
-		icon: "lucide-square",
-		tooltip: props.uniformTitle,
-	},
-	{
-		label: props.splitTitle,
-		value: true,
-		icon: props.splitIcon,
-		tooltip: props.splitTitle,
-	},
+	// icon-only tabs: frappe-ui labels them with `label`
+	{ label: props.uniformTitle, value: "uniform", icon: "lucide-square" },
+	{ label: props.splitTitle, value: "split", icon: props.splitIcon },
 ]);
 
 const resolvedSplitOptions = computed(() => props.splitOptions ?? defaultSplitOptions.value);
 
-const setSplitValue = (value: string | number | boolean | undefined) => {
-	if (typeof value !== "boolean") return;
-	if (!value) emit("update:modelValue", props.getMergedValue(splitValues.value));
-	forceSplit.value = value;
+const setSplitValue = (value: TabButtonValue) => {
+	const wantsSplit = value === "split";
+	if (!wantsSplit) emit("update:modelValue", props.getMergedValue(splitValues.value));
+	forceSplit.value = wantsSplit;
 };
 
 const setIndividualValue = (value: unknown) => emit("update:modelValue", value as InputValue);

@@ -8,7 +8,8 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
-import { alert, confirm, getBlockInstance, getBlockObject } from "@/utils/helpers";
+import { alert, confirm, getBlockInstance, getBlockString } from "@/utils/helpers";
+import { editorDemo } from "@/utils/editorDemo";
 import { createDocumentResource, createResource, toast } from "frappe-ui";
 import { defineStore } from "pinia";
 import { markRaw } from "vue";
@@ -67,6 +68,10 @@ const useComponentStore = defineStore("componentStore", {
 	}),
 	actions: {
 		async editComponent(block?: Block | null, componentName?: string) {
+			if (editorDemo) {
+				toast.info(__("Components are shared across the site, so the demo can't edit them"));
+				return;
+			}
 			if (!block?.isExtendedFromComponent() && !componentName) {
 				return;
 			}
@@ -85,7 +90,7 @@ const useComponentStore = defineStore("componentStore", {
 				componentBlock,
 				"component",
 				(block: Block) => this.saveComponent(block, componentName),
-				"Save Component",
+				__("Save Component"),
 				component.component_name,
 				component.name,
 				true,
@@ -103,7 +108,7 @@ const useComponentStore = defineStore("componentStore", {
 			return webComponent.setValue
 				.submit({
 					name: componentName,
-					block: getBlockObject(block),
+					block: getBlockString(block),
 					component_data_script: doc?.component_data_script || "",
 				})
 				.then(async (data: BuilderComponent) => {
@@ -122,14 +127,14 @@ const useComponentStore = defineStore("componentStore", {
 									auto: true,
 								});
 								await toast.promise(componentResource.promise!, {
-									loading: "Syncing component in all the pages...",
+									loading: __("Syncing component in all the pages..."),
 									success: () => {
 										pageStore.fetchActivePage().then(() => {
 											pageStore.setPage(pageStore.activePage?.name as string);
 										});
-										return "Component synced in all the pages!";
+										return __("Component synced in all the pages!");
 									},
-									error: () => "Error syncing component in all the pages!",
+									error: () => __("Error syncing component in all the pages!"),
 								});
 							},
 						},
@@ -438,9 +443,7 @@ const useComponentStore = defineStore("componentStore", {
 			if (this.isComponentUsed(component.name)) {
 				alert(__("Component is used in current page. You cannot delete it."));
 			} else {
-				const confirmed = await confirm(
-					`Are you sure you want to delete component: ${component.component_name}?`,
-				);
+				const confirmed = await confirm(__("Are you sure you want to delete component: {0}?", [component.component_name]));
 				if (confirmed) {
 					webComponent.delete.submit(component.name).then(() => {
 						this.componentMap.delete(component.name);

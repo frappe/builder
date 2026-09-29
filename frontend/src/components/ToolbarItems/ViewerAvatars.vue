@@ -1,11 +1,12 @@
 <template>
 	<div class="group flex hover:gap-1">
 		<div v-for="user in builderStore.viewers" :key="user.fullname">
-			<Tooltip :text="currentlyViewedByText" :hoverDelay="0.6" arrow-class="mb-3">
+			<Tooltip :text="currentlyViewedByText" :hoverDelay="600" :offset="12">
 				<div class="ml-[-10px] h-6 w-6 cursor-pointer transition-all group-hover:ml-0">
 					<img
 						class="h-full w-full rounded-full border-2 border-orange-400 object-cover shadow-sm"
 						:title="user.fullname"
+						:alt="user.fullname"
 						:src="user.image"
 						v-if="user.image" />
 					<div
@@ -21,6 +22,7 @@
 </template>
 <script setup lang="ts">
 import useBuilderStore from "@/stores/builderStore";
+import { __ } from "@/translation";
 import { Tooltip } from "frappe-ui";
 import { computed } from "vue";
 
@@ -36,7 +38,7 @@ const currentlyViewedByText = computed(() => {
 	} else if (count === 2) {
 		return `${names.join(" & ")}`;
 	} else {
-		return `${names.slice(0, 2).join(", ")} & ${count - 2} others`;
+		return __("{0} & {1} others", [names.slice(0, 2).join(", "), count - 2]);
 	}
 });
 </script>

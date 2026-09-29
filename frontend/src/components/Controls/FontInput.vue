@@ -3,24 +3,15 @@
 		<Tooltip :text="isCssVariable ? resolvedFont : undefined">
 			<Autocomplete
 				ref="fontInput"
-				class="[&>div>input]:pl-9"
-				:class="{
-					'[&>div>div>input]:text-ink-violet-6 [&>div>input]:font-mono': isCssVariable,
-				}"
 				:modelValue="modelValue"
 				:displayValue="displayValue"
 				:placeholder="displayPlaceholder"
 				:getOptions="getOptions"
 				:actionButton="{ component: FontUploader }"
-				@update:modelValue="handleUpdate">
-				<template #prefix>
-					<div
-						class="flex size-4 items-center justify-center rounded bg-surface-gray-3 text-xs leading-none text-ink-gray-7 shadow-sm"
-						:style="{ fontFamily: resolvedFont }">
-						A
-					</div>
-				</template>
-			</Autocomplete>
+				:inputStyle="inputStyle"
+				:referenceElementSelector="referenceElementSelector"
+				:optionsMinWidth="240"
+				@update:modelValue="handleUpdate" />
 		</Tooltip>
 	</div>
 </template>
@@ -41,10 +32,12 @@ const props = withDefaults(
 	defineProps<{
 		modelValue?: string | null;
 		placeholder?: string;
+		// only real font families: token editors must not point a token at another token
+		familiesOnly?: boolean;
+		referenceElementSelector?: string;
 	}>(),
 	{
 		modelValue: null,
-		placeholder: __("Set Font"),
 	},
 );
 
@@ -54,22 +47,20 @@ type FontOption = {
 	label: string;
 	value: string;
 	labelStyle?: () => { fontFamily: string } | undefined;
+	previewFont?: string;
 };
 
 const { fontTokens, resolveVariableValue, getVariableName } = useBuilderToken();
 const fontInput = ref<typeof Autocomplete | null>(null);
 
-const isCssVariable = computed(
-	() =>
-		typeof props.modelValue === "string" &&
-		(props.modelValue.startsWith("var(--") || props.modelValue.startsWith("--")),
-);
+const isToken = (value?: string | null): value is string =>
+	typeof value === "string" && (value.startsWith("var(--") || value.startsWith("--"));
 
-// resolve a Font token to its real family so the specimen renders in it
-const resolvedFont = computed(() => {
-	if (!props.modelValue) return "inherit";
-	return isCssVariable.value ? resolveVariableValue(props.modelValue) : props.modelValue;
-});
+const isCssVariable = computed(() => isToken(props.modelValue));
+
+// a Font token stands in for a family; an unknown one resolves to itself, leaving none
+const toFamily = (value: string) => (isToken(value) ? resolveVariableValue(value) : value);
+const resolvedFont = computed(() => (props.modelValue ? toFamily(props.modelValue) : "inherit"));
 
 // show the token's friendly name instead of the raw var(--uuid), mirroring the color field
 const displayValue = computed(() => {
@@ -82,10 +73,19 @@ const displayValue = computed(() => {
 // a cascading/inherited placeholder may itself be a token — show its name, not var(--uuid)
 const displayPlaceholder = computed(() => {
 	const p = props.placeholder;
-	if (typeof p === "string" && (p.startsWith("var(--") || p.startsWith("--"))) {
-		return getVariableName(p) ?? p;
-	}
-	return p;
+	if (!p) return __("Set Font");
+	return isToken(p) ? (getVariableName(p) ?? p) : p;
+});
+
+// the field doubles as a specimen: whatever it shows — the family that is set, the name of
+// the token standing in for one, or the inherited value behind the placeholder — is
+// rendered in the family it resolves to. Each of them is applied on the canvas, so the
+// full face is loaded and covers a token name as readily as a family name.
+const inputStyle = computed(() => {
+	const value = props.modelValue || props.placeholder;
+	const family = value && toFamily(value);
+	// an unresolved token is still var(--uuid): no family to set
+	return family && !isToken(family) ? { fontFamily: family } : undefined;
 });
 
 const handleUpdate = (val: string | null) => emit("update:modelValue", val);
@@ -98,6 +98,7 @@ const getOptions = async (filterString: string) => {
 		label: family,
 		value: family,
 		labelStyle: () => previewFontStyle(family),
+		previewFont: family,
 	});
 	// a token's name is what the field shows when one is picked, and it matches no
 	// family: filtering the font lists by it would leave only the token to choose from
@@ -106,13 +107,22 @@ const getOptions = async (filterString: string) => {
 	// Font design tokens first: picking one stores var(--id), so retheming the
 	// token updates every block bound to it. The family is part of the label, so
 	// it stays searchable.
-	const tokenOptions = filterOptions(
-		fontTokens.value.map((token: BuilderToken) => ({
-			label: `${token.token_name || token.value} (${token.value})`,
-			value: `var(--${token.name})`,
-		})),
-		filterString,
-	);
+	const tokenOptions = props.familiesOnly
+		? []
+		: filterOptions(
+				fontTokens.value.map((token: BuilderToken) => {
+					const label = `${token.token_name || token.value} (${token.value})`;
+					// previewed against the whole label, since it carries the token's name as well
+					// as the family, and a subset cut to the family alone could not render it
+					return {
+						label,
+						value: `var(--${token.name})`,
+						labelStyle: () => previewFontStyle(label),
+						previewFont: token.value as string,
+					};
+				}),
+				filterString,
+			);
 	const userFontOptions = filterOptions(
 		(userFonts.data || []).map((font: UserFont) => toOption(font.font_name as string)),
 		fontQuery,
@@ -135,9 +145,10 @@ const getOptions = async (filterString: string) => {
 		options.push(...defaultFontOptions);
 	}
 
-	// separators and design tokens are the only entries without a preview: a token's
-	// label carries its name too, which the family's own subset cannot render
-	enqueuePreviewLoad(options.filter((o) => o.labelStyle).map((o) => o.value));
+	// separators are the only entries without a preview
+	enqueuePreviewLoad(
+		options.flatMap((o) => (o.previewFont ? [{ font: o.previewFont, label: o.label }] : [])),
+	);
 	return options;
 };
 

@@ -1,5 +1,4 @@
 import type Block from "@/block";
-import useAIStore from "@/stores/aiStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
@@ -7,7 +6,14 @@ import type { ContextMenuOption } from "@/types/blockContextMenu";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { createRegistry } from "@/utils/createRegistry";
 import { promptCreateComponent } from "@/utils/dialogs";
-import { confirm, detachBlockFromComponent, getBlockCopy, triggerCopyEvent } from "@/utils/helpers";
+import {
+	confirm,
+	convertSVGBlockToImage,
+	detachBlockFromComponent,
+	getBlockCopy,
+	isOversizedSVG,
+	triggerCopyEvent,
+} from "@/utils/helpers";
 import { useStorage } from "@vueuse/core";
 import { toast } from "frappe-ui";
 import { nextTick, type Ref } from "vue";
@@ -21,37 +27,22 @@ const copiedStyle = useStorage("copiedStyle", { blockId: "", style: {} }, sessio
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 const componentStore = useComponentStore();
-const aiStore = useAIStore();
 
 const readOnly = () => builderStore.readOnlyMode;
 
 const options: ContextMenuOption[] = [
 	{
-		name: "edit-with-ai",
-		label: __("Edit with AI"),
-		action: ({ block }) => aiStore.editWithAI(block),
-		condition: ({ block }) => builderStore.isAIEnabled && !block.isRoot(),
-		disabled: readOnly,
-	},
-	{
-		name: "rewrite-ai",
-		label: __("Rewrite (AI)"),
-		action: ({ block }) => aiStore.runDirectAI(block, "rewrite_text", "Rewrite the content"),
-		condition: ({ block }) => builderStore.isAIEnabled && block.isText() && !block.isRoot(),
-		disabled: readOnly,
-	},
-	{
-		name: "replace-image-ai",
-		label: __("Replace Image (AI)"),
-		action: ({ block }) => aiStore.runDirectAI(block, "replace_image", "Replace image"),
-		condition: ({ block }) => builderStore.isAIEnabled && block.isImage() && !block.isRoot(),
-		disabled: readOnly,
-	},
-	{
 		name: "edit-html",
 		label: __("Edit HTML"),
 		action: ({ block }) => canvasStore.editHTML(block),
 		condition: ({ block }) => block.isHTML(),
+	},
+	{
+		name: "convert-svg-to-image-file",
+		label: __("Convert to Image File"),
+		action: ({ block }) => convertSVGBlockToImage(block),
+		condition: ({ block }) => block.isSVG() && isOversizedSVG(block.getInnerHTML() || ""),
+		disabled: readOnly,
 	},
 	{
 		name: "copy",
@@ -81,7 +72,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "convert-to-collection",
-		label: __("Convert To Collection"),
+		label: __("Convert to Collection"),
 		action: ({ block }) => {
 			block.isRepeaterBlock = true;
 			toast.warning(__("Please select a collection"));
@@ -106,7 +97,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "wrap-in-container",
-		label: __("Wrap In Container"),
+		label: __("Wrap in Container"),
 		action: ({ block }) => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = block.getParentBlock();
@@ -238,7 +229,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "save-component",
-		label: __("Save As Component"),
+		label: __("Save as Component"),
 		action: ({ block }) => promptCreateComponent(block),
 		condition: ({ block }) => !block.isExtendedFromComponent(),
 		disabled: readOnly,

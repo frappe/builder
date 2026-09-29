@@ -14,7 +14,8 @@ const lastTemplateGroup = useStorage("lastTemplateGroup", "") as Ref<string>;
 const templateCategoryFilter = useStorage("templateCategoryFilter", "") as Ref<string>;
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
-const typeFilter = useStorage("typeFilter", "") as Ref<"" | "draft" | "published" | "unpublished" | "all">;
+// a fresh key: values saved under the old "typeFilter" key (published/unpublished) no longer exist
+const statusFilter = useStorage("pageStatusFilter", "") as Ref<"" | "all" | "live" | "staging" | "draft">;
 const orderBy = useStorage("orderBy", "creation") as Ref<
 	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
 >;
@@ -32,7 +33,7 @@ export function useDashboardState() {
 		lastTemplateGroup,
 		templateCategoryFilter,
 		displayType,
-		typeFilter,
+		statusFilter,
 		orderBy,
 		expandTreeFn,
 		collapseTreeFn,

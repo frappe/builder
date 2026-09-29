@@ -42,18 +42,8 @@ from builder.utils import (
 	export_client_scripts,
 	extract_components_from_blocks,
 	make_records,
+	safe_segment,
 )
-
-
-def safe_segment(name):
-	"""Make a value safe for use as one filesystem path segment.
-
-	Replaces path separators and blocks empty/traversal values.
-	"""
-	segment = str(name).replace("/", "_").replace("\\", "_")
-	if segment in ("", ".", ".."):
-		frappe.throw(frappe._("Unsafe template fixture name: {0}").format(name))
-	return segment
 
 
 def get_templates_root(app="builder"):

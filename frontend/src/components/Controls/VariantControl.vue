@@ -31,6 +31,7 @@
 					</button>
 				</span>
 				<InputLabel
+					class="w-full"
 					:class="{ 'cursor-ns-resize': enableSlider }"
 					@mousedown="$emit('labelMousedown', $event)">
 					{{ label }}
