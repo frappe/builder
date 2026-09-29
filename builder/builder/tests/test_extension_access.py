@@ -14,8 +14,6 @@ from builder.extensions.access import (
 	assert_extension_access,
 	assert_extension_manager,
 	is_extension_manager,
-	owns_state,
-	state_conditions,
 )
 
 EXTENSION = "acme/gated"
@@ -117,23 +115,3 @@ class TestExtensionManager(FrappeTestCase):
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_manager()
-
-
-class TestStateRowScoping(FrappeTestCase):
-	"""What Desk, a report and a get_all see of stored state. `state.py` enforces this too."""
-
-	def test_a_system_manager_sees_every_row(self):
-		self.assertEqual(state_conditions("Administrator"), "")
-
-	def test_another_user_sees_only_their_own(self):
-		theirs = make_user()
-
-		self.assertIn(frappe.db.escape(theirs), state_conditions(theirs))
-
-	def test_a_user_owns_only_their_own_row(self):
-		theirs = make_user()
-		row = frappe._dict(user=theirs)
-
-		self.assertTrue(owns_state(row, user=theirs))
-		self.assertTrue(owns_state(row, user="Administrator"))
-		self.assertFalse(owns_state(row, user="Guest"))

@@ -13,6 +13,9 @@ Here it follows the user between machines.
 
 A development extension still uses the browser. Its installation goes on every
 `pagehide`, so a row here would not survive the reload an author needs.
+
+These methods are the only way in. Each opens with `assert_extension_access`,
+so the writes skip the doctype permission, which only a System Manager holds.
 """
 
 import json
@@ -60,7 +63,7 @@ def unset_state(extension: str, key: str) -> None:
 	installation = assert_extension_access(extension)
 	row = read_rows(installation).get(key)
 	if row:
-		frappe.delete_doc(STATE_DOCTYPE, row.name)
+		frappe.delete_doc(STATE_DOCTYPE, row.name, ignore_permissions=True)
 
 
 def read_rows(installation: str) -> dict:
@@ -112,4 +115,4 @@ def write_row(installation: str, row, key: str, value) -> None:
 			"state_key": key,
 			"state_value": stored,
 		}
-	).insert()
+	).insert(ignore_permissions=True)

@@ -24,7 +24,6 @@ import frappe
 from frappe import _
 
 INSTALLATION_DOCTYPE = "Builder Extension"
-STATE_DOCTYPE = "Builder Extension State"
 
 
 def find_installation(extension: str, enabled_only: bool = False) -> str | None:
@@ -95,24 +94,3 @@ def assert_extension_manager() -> None:
 			_("Only an extension manager can change extensions. Builder Settings can name an additional role."),
 			frappe.PermissionError,
 		)
-
-
-# Desk sees what `state.py` enforces. hooks.py registers these, so a list view,
-# a report and a get_all all answer with one user's state.
-
-
-def is_system_manager(user: str) -> bool:
-	return "System Manager" in frappe.get_roles(user)
-
-
-def state_conditions(user: str | None = None) -> str:
-	user = user or frappe.session.user
-	if is_system_manager(user):
-		return ""
-	state = frappe.qb.DocType(STATE_DOCTYPE)
-	return (state.user == user).get_sql(quote_char="`", with_namespace=True)
-
-
-def owns_state(doc, ptype=None, user=None, debug=False) -> bool:
-	user = user or frappe.session.user
-	return doc.user == user or is_system_manager(user)

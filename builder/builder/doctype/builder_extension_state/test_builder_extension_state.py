@@ -14,6 +14,7 @@ from builder.builder.doctype.builder_extension_state.builder_extension_state imp
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
+	make_page_reader,
 	make_user,
 )
 from builder.extensions.state import STATE_DOCTYPE, get_state, read_patch, set_state, unset_state
@@ -112,6 +113,20 @@ class TestExtensionState(FrappeTestCase):
 
 		frappe.set_user("Administrator")
 		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
+
+	def test_a_user_without_a_manager_role_stores_and_drops_keys(self):
+		"""Only a System Manager holds the doctype permission. The gate lets this user in."""
+		frappe.set_user(make_page_reader(self))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		set_state(EXTENSION, {"theme": "dark", "page": 2})
+		unset_state(EXTENSION, "theme")
+
+		self.assertEqual(get_state(EXTENSION), {"page": 2})
+
+	def test_only_a_system_manager_reaches_the_doctype_directly(self):
+		"""The generic REST routes skip the gate, the store cap and the session user."""
+		self.assertFalse(frappe.has_permission(STATE_DOCTYPE, "read", user=make_user()))
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):
 		drop_installations("acme/absent")

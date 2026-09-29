@@ -110,6 +110,8 @@ def make_page_reader(test_case, role="Blogger", email="extension-reader@example.
 	permission = frappe.get_doc(
 		{"doctype": "Custom DocPerm", "parent": "Builder Page", "role": role, "permlevel": 0, "read": 1}
 	).insert(ignore_permissions=True)
+	# Cleanups run last in, first out, so the cache clears after the row goes.
+	test_case.addCleanup(frappe.clear_cache, doctype="Builder Page")
 	test_case.addCleanup(frappe.delete_doc, "Custom DocPerm", permission.name, force=True, ignore_permissions=True)
 	frappe.clear_cache(doctype="Builder Page")
 	return make_user(email, roles=(role,))
