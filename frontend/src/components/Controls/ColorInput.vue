@@ -1,5 +1,5 @@
 <template>
-	<div ref="rootRef">
+	<div>
 		<ColorPicker
 			ref="colorPickerRef"
 			:placement="placement"
@@ -47,8 +47,7 @@
 										type="button"
 										class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
 										:aria-label="__('Open color picker')"
-										@pointerdown="rememberPopoverState(null, isOpen)"
-										@click="togglePopoverForState(null, togglePopover)"
+										@click="togglePopover"
 										:style="{
 											background: modelValue
 												? resolvedColor
@@ -73,7 +72,6 @@ import { BuilderToken } from "@/types/doctypes";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { getRGB } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { useStatePopover } from "@/composables/useStatePopover";
 import { Tooltip } from "frappe-ui";
 import { computed, ComputedRef, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 import ColorPicker from "./ColorPicker.vue";
@@ -88,9 +86,6 @@ const events = Object.fromEntries(
 
 const colorInput = ref<typeof Autocomplete | null>(null);
 const colorPickerRef = ref<typeof ColorPicker | null>(null);
-const rootRef = ref<HTMLElement | null>(null);
-// each instance edits one state, so its swatch always toggles the same picker
-const { rememberPopoverState, togglePopoverForState, endStatePreview } = useStatePopover();
 const showVariableDialog = ref(false);
 const newVariable = ref<Partial<BuilderToken> | null>(null);
 const { variables, resolveVariableValue, getVariableName } = useBuilderToken();
@@ -234,11 +229,6 @@ const handleClose = () => {
 	}
 	if (typeof events.onBlur === "function") {
 		events.onBlur();
-	}
-	// only a property row owns a state preview, a picker inside another popover
-	// belongs to the editor that opened it
-	if (rootRef.value?.closest("[data-variant], [data-property]")) {
-		endStatePreview();
 	}
 };
 

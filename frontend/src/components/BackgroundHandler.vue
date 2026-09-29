@@ -24,8 +24,8 @@
 							type="button"
 							class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
 							:aria-label="__('Open background picker')"
-							@pointerdown="rememberPopoverState(variant, isOpen)"
-							@click="togglePopoverForState(variant, toggle)"
+							@mousedown.prevent
+							@click="toggleForState(variant)"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
 							:style="getPreviewStyle(variant)" />
 					</template>
@@ -147,7 +147,6 @@ import blockController from "@/utils/blockController";
 import { getColorVariableOptions } from "@/utils/colorOptions";
 import { cssUrl } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { useStatePopover } from "@/composables/useStatePopover";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { FileUploader, Popover, Switch, TabButtons, type TabButtonValue } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -155,17 +154,21 @@ import { computed, ref, watch } from "vue";
 const builderStore = useBuilderStore();
 const { getVariableName, resolveVariableValue, variables } = useBuilderToken();
 
-const { activeState, rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } =
-	useStatePopover();
+const activeState = ref<string | null>(null);
 const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
 
 // the picker renders inline here, so this popover owns the "closed" moment
 const handlePopoverToggle = (open: boolean) => {
-	if (open) return;
-	colorPickerRef.value?.commitRecentColor();
-	endStatePreview();
+	if (!open) colorPickerRef.value?.commitRecentColor();
 };
 const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(handlePopoverToggle);
+
+// the swatch keeps focus off itself, so activeState still names the state the popover shows
+const toggleForState = (state: string | null) => {
+	const isOpenForState = isOpen.value && activeState.value === state;
+	activeState.value = state;
+	toggle(!isOpenForState);
+};
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
@@ -188,7 +191,7 @@ const handleFocusIn = (e: FocusEvent) => {
 	updateActiveState(e);
 	const target = e.target as HTMLElement;
 	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
-	if (hasImage(activeState.value) && canOpenOnFocus()) open();
+	if (hasImage(activeState.value)) open();
 };
 
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {

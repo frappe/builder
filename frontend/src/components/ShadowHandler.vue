@@ -13,7 +13,7 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('None')"
-					@focus="canOpenOnFocus() && open()"
+					@focus="open"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -21,8 +21,7 @@
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded-4 border border-outline-gray-1 shadow-sm"
-							@pointerdown="rememberPopoverState(variant, isOpen)"
-							@click="togglePopoverForState(variant, toggle)"
+							@click="toggleForState(variant)"
 							:style="{
 								backgroundColor: shadowConfigs[0]?.color ?? 'transparent',
 							}" />
@@ -145,7 +144,6 @@ import Input from "@/components/Controls/Input.vue";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { useStatePopover } from "@/composables/useStatePopover";
 import { useEventListener } from "@vueuse/core";
 import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
 import { Button, Popover, Tooltip } from "frappe-ui";
@@ -158,11 +156,14 @@ const SHADOW_CONTROLS = [
 	{ key: "spread", label: __("Spread"), prefix: "S" },
 ] as const;
 
-const { activeState, rememberPopoverState, togglePopoverForState, canOpenOnFocus, endStatePreview } =
-	useStatePopover();
-const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(
-	(isOpening) => !isOpening && endStatePreview(),
-);
+const activeState = ref<string | null>(null);
+const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
+
+const toggleForState = (state: string | null) => {
+	const isOpenForState = isOpen.value && activeState.value === state;
+	activeState.value = state;
+	toggle(!isOpenForState);
+};
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;

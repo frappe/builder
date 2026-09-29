@@ -69,7 +69,7 @@
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { useEventListener } from "@vueuse/core";
 import type { Component } from "vue";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const props = defineProps<{
 	label: string;
@@ -90,83 +90,38 @@ const emit = defineEmits<{
 	(e: "keydown", event: KeyboardEvent): void;
 	(e: "labelMousedown", event: MouseEvent): void;
 	(e: "clear"): void;
-	(e: "blur"): void;
+	(e: "endPreview"): void;
 }>();
 
 const isTopLabel = computed(() => props.labelPlacement === "top");
 
 const rowRef = ref<HTMLElement | null>(null);
-const panelSelector = "[data-slot='content']";
 
-const hasFocus = () => rowRef.value?.contains(document.activeElement) ?? false;
-const focusField = () => rowRef.value?.querySelector<HTMLElement>("input, select")?.focus();
+// Menus and popovers opened from the row render outside it.
+const isInRow = (target: EventTarget | null) =>
+	target instanceof Element &&
+	(!!rowRef.value?.contains(target) || !!target.closest("[data-slot='content']"));
 
-// Reclaim focus after a label dropdown closes, until another element owns it.
-let claimingFocus = false;
-
-const endPreview = () => {
-	claimingFocus = false;
-	emit("blur");
-};
-
-const keepFocus = (framesLeft: number) => {
-	claimingFocus = framesLeft > 0 && !!props.isActive;
-	if (!claimingFocus) return;
-	if (document.activeElement === document.body) focusField();
-	requestAnimationFrame(() => keepFocus(framesLeft - 1));
-};
-
-// Panels render outside the row, so preserve the preview until they close.
-let watchedPanel: Element | null = null;
-let lastMouseDown: MouseEvent | null = null;
-
-useEventListener(document, "mousedown", (event: MouseEvent) => (lastMouseDown = event), {
-	capture: true,
-});
-
-// Row presses and prevented canvas-handle presses retain the preview.
-const shouldKeepPreview = () => {
-	const press = lastMouseDown;
-	return !!press && (press.defaultPrevented || rowRef.value?.contains(press.target as Node));
-};
-
-const waitForPanelClose = (panel: Element) => {
-	if (watchedPanel === panel) return;
-	watchedPanel = panel;
-	lastMouseDown = null;
-	const waitForClose = () => {
-		if (watchedPanel !== panel) return;
-		if (panel.isConnected) return requestAnimationFrame(waitForClose);
-		watchedPanel = null;
-		claimingFocus = false;
-		// Another control now owns the state.
-		if (!props.isActive || hasFocus()) return;
-		if (shouldKeepPreview()) return focusField();
-		endPreview();
-	};
-	requestAnimationFrame(waitForClose);
-};
-
-// A focusout ends the preview unless a panel is closing.
+// Focus that goes nowhere is a menu or popover closing, not the user leaving.
 const handleFocusOut = (event: FocusEvent) => {
-	const relatedTarget = event.relatedTarget as Element | null;
-	if (rowRef.value?.contains(relatedTarget)) return;
-	const panel = relatedTarget?.closest?.(panelSelector) || document.querySelector(panelSelector);
-	if (panel) return waitForPanelClose(panel);
-	// Focus that goes nowhere is a panel opening or a dropdown closing. A press inside
-	// the row keeps editing this state, so it is not the user leaving.
-	if (!relatedTarget && (claimingFocus || shouldKeepPreview())) return;
-	endPreview();
+	if (event.relatedTarget && !isInRow(event.relatedTarget)) emit("endPreview");
 };
 
-// An active canvas preview needs the field focused for row styling.
-watch(
-	() => props.isActive,
-	(isActive) => {
-		if (!isActive || hasFocus()) return;
-		focusField();
-		keepFocus(20);
+// Canvas handles edit the previewed state and prevent their press, but only after
+// this capture listener runs, so read the press once its dispatch is done.
+useEventListener(
+	document,
+	"mousedown",
+	(event: MouseEvent) => {
+		if (!props.isActive || isInRow(event.target)) return;
+		setTimeout(() => event.defaultPrevented || emit("endPreview"));
 	},
-	{ immediate: true, flush: "post" },
+	{ capture: true },
 );
+
+// A row added from the label menu is ready to type into. Rows that a press
+// activates leave focus to that press, so a swatch does not open the field's list.
+onMounted(() => {
+	if (props.isActive) rowRef.value?.querySelector<HTMLElement>("input, select")?.focus();
+});
 </script>

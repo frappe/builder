@@ -79,7 +79,7 @@
 			@update:modelValue="(v: any) => updateVariantValue(variant.name, v)"
 			@keydown="(e: KeyboardEvent) => handleKeyDown(e, variant.name)"
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
-			@blur="clearActiveVariant"
+			@endPreview="endVariantPreview(variant.property)"
 			@clear="clearVariant(variant.name)">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 				<slot :name="name" v-bind="{ ...slotData, variant: variant.name }" />
@@ -259,6 +259,13 @@ const setActiveVariant = (property: string) => {
 const clearActiveVariant = () => {
 	blockController.getSelectedBlocks().forEach((block) => {
 		block.activeState = null;
+	});
+};
+
+// The press that ends one preview can start another, so clear only this one.
+const endVariantPreview = (property: string) => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		if (block.activeState === property) block.activeState = null;
 	});
 };
 
