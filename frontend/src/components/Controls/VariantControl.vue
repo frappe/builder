@@ -96,11 +96,11 @@ const emit = defineEmits<{
 const isTopLabel = computed(() => props.labelPlacement === "top");
 
 const rowRef = ref<HTMLElement | null>(null);
+const panelSelector = "[data-slot='content']";
 
 // Menus and popovers opened from the row render outside it.
 const isInRow = (target: EventTarget | null) =>
-	target instanceof Element &&
-	(!!rowRef.value?.contains(target) || !!target.closest("[data-slot='content']"));
+	target instanceof Element && (!!rowRef.value?.contains(target) || !!target.closest(panelSelector));
 
 // Focus that goes nowhere is a menu or popover closing, not the user leaving.
 const handleFocusOut = (event: FocusEvent) => {
@@ -118,6 +118,14 @@ useEventListener(
 	},
 	{ capture: true },
 );
+
+// Escape out of a menu or popover means the user is done with this state. A swatch
+// click also closes the popover, but it stays in the row, so it keeps the preview.
+// This listens in the bubble phase like the popover, so both see the same Escape.
+useEventListener(document, "keydown", (event: KeyboardEvent) => {
+	if (event.key !== "Escape" || !props.isActive) return;
+	if (document.querySelector(panelSelector)) emit("endPreview");
+});
 
 // A row added from the label menu is ready to type into. Rows that a press
 // activates leave focus to that press, so a swatch does not open the field's list.
