@@ -248,6 +248,9 @@ def get_component_data(
 	if not script:
 		return {}
 
+	# the output depends on live data, so the page must not be served from the page cache
+	frappe.local.no_cache = 1
+
 	_locals = dict(
 		component=frappe._dict(),
 		props=frappe._dict(props or {}),
