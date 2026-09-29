@@ -109,7 +109,8 @@ def state_conditions(user: str | None = None) -> str:
 	user = user or frappe.session.user
 	if is_system_manager(user):
 		return ""
-	return f"`tab{STATE_DOCTYPE}`.`user` = {frappe.db.escape(user)}"
+	state = frappe.qb.DocType(STATE_DOCTYPE)
+	return (state.user == user).get_sql(quote_char="`", with_namespace=True)
 
 
 def owns_state(doc, ptype=None, user=None, debug=False) -> bool:
