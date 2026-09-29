@@ -1988,9 +1988,11 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 			return str(value)
 		case "number":
 			try:
-				return float(value)
+				number = float(value)
 			except (ValueError, TypeError):
 				return None
+			# past 2**53 floats aren't exact, so an int would print digits the value doesn't have
+			return int(number) if number.is_integer() and abs(number) < 2**53 else number
 		case "boolean":
 			if isinstance(value, bool):
 				return value

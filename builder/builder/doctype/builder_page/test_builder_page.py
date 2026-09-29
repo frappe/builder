@@ -253,6 +253,15 @@ class TestBuilderPage(FrappeTestCase):
 			live.delete()
 			staging.delete()
 
+	def test_number_props_keep_whole_numbers_whole(self):
+		from builder.builder.doctype.builder_page.builder_page import parse_static_value
+
+		self.assertEqual(parse_static_value("29", "number"), 29)
+		self.assertIsInstance(parse_static_value(29.0, "number"), int)
+		self.assertEqual(parse_static_value("2.5", "number"), 2.5)
+		self.assertEqual(parse_static_value("1e23", "number"), 1e23)
+		self.assertIsNone(parse_static_value("abc", "number"))
+
 	def test_route_variables_must_be_identifiers(self):
 		for route in ("test-bad-route/:my-slug", "test-bad-route/<foo:slug>"):
 			self.assertRaises(frappe.ValidationError, insert_page, route, "Bad Route")
@@ -1531,9 +1540,7 @@ component.update({
 				"Default Header Title",
 				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
-				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
-			)
+			self.assertEqual("25", get_html_for(content_with_default_values, "tag", "h4", only_content=True))
 			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
 
 			self.assertEqual(
@@ -1541,7 +1548,7 @@ component.update({
 				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
 			)
 			self.assertEqual(
-				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
+				"29", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
 			)
 			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
 		finally:
