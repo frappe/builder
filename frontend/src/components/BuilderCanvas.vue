@@ -485,7 +485,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+	blockStyles.set(registrationKey, script.css ? `@scope (${selector}) { ${script.css} }` : "");
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	let cleanup = () => {};
