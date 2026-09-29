@@ -15,10 +15,12 @@ A development extension still uses the browser. Its installation goes on every
 `pagehide`, so a row here would not survive the reload an author needs.
 
 These methods are the only way in. Each opens with `assert_extension_access`,
-so the writes skip the doctype permission, which only a System Manager holds.
+so the writes skip the doctype permission and the document, which only a System
+Manager reaches directly.
 """
 
 import json
+import uuid
 
 import frappe
 from frappe import _
@@ -48,9 +50,7 @@ def set_state(extension: str, state: dict) -> None:
 	changes = read_changes(state)
 	rows = read_rows(installation)
 	assert_room_for(extension, rows, changes)
-
-	for key, value in changes.items():
-		write_row(installation, rows.get(key), key, value)
+	write_rows(installation, changes)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -101,18 +101,23 @@ def assert_room_for(extension: str, rows: dict, changes: dict) -> None:
 	frappe.throw(_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000))
 
 
-def write_row(installation: str, row, key: str, value) -> None:
-	stored = json.dumps(value)
-	if row:
-		frappe.db.set_value(STATE_DOCTYPE, row.name, "state_value", stored)
+def write_rows(installation: str, changes: dict) -> None:
+	"""Drop the changed keys, then insert them again, so the query count stays the same for any size.
+
+	The bulk insert skips the document, so this sets what `insert()` would.
+	"""
+	if not changes:
 		return
 
-	frappe.get_doc(
-		{
-			"doctype": STATE_DOCTYPE,
-			"installation": installation,
-			"user": frappe.session.user,
-			"state_key": key,
-			"state_value": stored,
-		}
-	).insert(ignore_permissions=True)
+	user, now = frappe.session.user, frappe.utils.now_datetime()
+	frappe.db.delete(
+		STATE_DOCTYPE, {"installation": installation, "user": user, "state_key": ("in", list(changes))}
+	)
+	frappe.db.bulk_insert(
+		STATE_DOCTYPE,
+		["name", "creation", "modified", "owner", "modified_by", "installation", "user", "state_key", "state_value"],
+		[
+			(str(uuid.uuid4()), now, now, user, user, installation, user, key, json.dumps(value))
+			for key, value in changes.items()
+		],
+	)

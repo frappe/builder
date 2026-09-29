@@ -64,6 +64,13 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(get_state(EXTENSION), {"theme": "light"})
 		self.assertEqual(self.rows(), ["theme"])
 
+	def test_many_keys_take_as_few_queries_as_one(self):
+		"""The installation, the stored rows, one delete and one insert."""
+		with self.assertQueryCount(4):
+			set_state(EXTENSION, {str(number): number for number in range(200)})
+
+		self.assertEqual(len(self.rows()), 200)
+
 	def test_unset_drops_one_key_and_keeps_the_rest(self):
 		set_state(EXTENSION, {"theme": "dark", "page": 2})
 
