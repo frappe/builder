@@ -150,7 +150,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-							componentStore.getComponentBlock(this.isChildOfComponent as string)
+						  componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -1170,26 +1170,7 @@ class Block implements BlockOptions {
 		const propsRoot = this.getPropsRoot();
 		if (!propsRoot) return { ...(this.props || {}) };
 		const referenceProps = propsRoot.extendedFromComponent ? propsRoot.referenceComponent?.props || {} : {};
-		const mergedProps: BlockProps = { ...referenceProps };
-		for (const [key, propDetails] of Object.entries(propsRoot.props || {})) {
-			if (mergedProps[key]) {
-				mergedProps[key] = {
-					...mergedProps[key],
-					...propDetails,
-					propOptions: {
-						...mergedProps[key].propOptions,
-						...(propDetails.propOptions || {}),
-						options: {
-							...mergedProps[key].propOptions?.options,
-							...(propDetails.propOptions?.options || {}),
-						},
-					},
-				};
-			} else {
-				mergedProps[key] = propDetails;
-			}
-		}
-		return mergedProps;
+		return { ...referenceProps, ...(propsRoot.props || {}) };
 	}
 	setBlockProps(props: BlockProps) {
 		const propsRoot = this.getPropsRoot() || this;

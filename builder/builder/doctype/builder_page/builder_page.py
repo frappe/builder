@@ -1384,7 +1384,6 @@ def attach_client_script(tag: bs.Tag, block: dict, state: dict):
 	client_script = block.get("clientScript")
 	if client_script is None:
 		client_script = {"js": block.get("blockClientScript")}
-
 	scripts = [
 		{"script": client_script.get("js"), "type": "JavaScript"},
 		{"script": client_script.get("css"), "type": "CSS"},

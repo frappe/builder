@@ -368,9 +368,9 @@ async function uploadBuilderAsset(file: File, silent = false) {
 	await new Promise((resolve) => {
 		if (silent) {
 			upload
-				.then((data: any) => {
-					fileDoc.file_name = data?.file_name || data?.message?.file_name || "";
-					fileDoc.file_url = data?.file_url || data?.message?.file_url || "";
+				.then((data: { file_name: string; file_url: string }) => {
+					fileDoc.file_name = data.file_name;
+					fileDoc.file_url = data.file_url;
 					resolve(fileDoc);
 				})
 				.catch((err: any) => {
@@ -381,9 +381,9 @@ async function uploadBuilderAsset(file: File, silent = false) {
 		}
 		toast.promise(upload, {
 			loading: __("Uploading..."),
-			success: (data: any) => {
-				fileDoc.file_name = data?.file_name || data?.message?.file_name || "";
-				fileDoc.file_url = data?.file_url || data?.message?.file_url || "";
+			success: (data: { file_name: string; file_url: string }) => {
+				fileDoc.file_name = data.file_name;
+				fileDoc.file_url = data.file_url;
 				resolve(fileDoc);
 				return __("Uploaded");
 			},
@@ -888,7 +888,6 @@ const getPropValue = (
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
 			const parse = (raw: any, fallback: any) => {
-				if (typeof raw === "boolean" || typeof raw === "number") return raw;
 				try {
 					return JSON.parse(raw);
 				} catch {
@@ -925,26 +924,18 @@ const getStandardPropValue = (
 				if (PARSEABLE_STANDARD_TYPES.includes(value.propOptions?.type || "string")) {
 					let parsedValue: any = null;
 					if (hasValue) {
-						if (typeof value.value === "boolean" || typeof value.value === "number") {
+						try {
+							parsedValue = JSON.parse(value.value);
+						} catch {
 							parsedValue = value.value;
-						} else {
-							try {
-								parsedValue = JSON.parse(value.value);
-							} catch {
-								parsedValue = value.value;
-							}
 						}
 					} else {
 						const def = value.propOptions?.options?.defaultValue;
 						if (def !== undefined && def !== null) {
-							if (def === "true") parsedValue = true;
-							else if (def === "false") parsedValue = false;
-							else {
-								try {
-									parsedValue = JSON.parse(def);
-								} catch {
-									parsedValue = def;
-								}
+							try {
+								parsedValue = JSON.parse(def);
+							} catch {
+								parsedValue = def;
 							}
 						}
 					}

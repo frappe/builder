@@ -298,6 +298,13 @@ const styles = computed(() => {
 
 	Object.keys(styleMap).forEach((key) => {
 		if (key.startsWith("hover:")) {
+			// state style preview on hover
+			// if (!isHovered.value) {
+			// 	delete styleMap[key];
+			// } else {
+			// 	styleMap[key.replace("hover:", "")] = styleMap[key];
+			// 	delete styleMap[key];
+			// }
 			delete styleMap[key];
 		}
 	});
@@ -400,7 +407,6 @@ const blockClientScript = computed(() => {
 	const clientScript = props.block.extendedFromComponent
 		? props.block.referenceComponent?.clientScript
 		: props.block.clientScript;
-
 	const javascript = clientScript?.js || "";
 	const css = clientScript?.css || "";
 	// null (not an empty object) so scriptless blocks skip canvas registration

@@ -84,8 +84,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			});
 		},
 		setModelValue: (value: any) => {
-			const modelValue = value === "" ? null : value;
-			blockController.setBlockProp(propName, { value: modelValue });
+			if (value === "") value = null;
+			blockController.setBlockProp(propName, { value });
 		},
 		getModelValue: () => {
 			const value = blockController.getFirstSelectedBlock().getBlockProps()[propName]?.value;
