@@ -47,7 +47,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber } from "@/utils/helpers";
+import { addPxToNumber, getRenderedPosition } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -295,8 +295,7 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
-	const startTop = (props.target as HTMLElement).offsetTop || 0;
+	const { left: startLeft, top: startTop } = getRenderedPosition(props.target as HTMLElement);
 
 	moving.value = true;
 	guides.showX();

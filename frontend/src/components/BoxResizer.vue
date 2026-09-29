@@ -36,7 +36,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { startDrag } from "@/utils/cursor";
 import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
-import { getNumberFromPx } from "@/utils/helpers";
+import { getNumberFromPx, getRenderedPosition } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -144,8 +144,7 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const target = props.target as HTMLElement;
 	const startHeight = target.offsetHeight;
 	const startWidth = target.offsetWidth;
-	const startTop = target.offsetTop;
-	const startLeft = target.offsetLeft;
+	const { left: startLeft, top: startTop } = getRenderedPosition(target);
 	const ownRotation = parseFloat(getComputedStyle(target).rotate) || 0;
 	const blockStartWidth = props.targetBlock.getActiveStyleValue("width") as string;
 	const blockStartHeight = props.targetBlock.getActiveStyleValue("height") as string;

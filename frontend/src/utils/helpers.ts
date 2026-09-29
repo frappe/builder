@@ -634,6 +634,15 @@ function getBlock(e: MouseEvent) {
 	return canvasStore.activeCanvas?.findBlock(blockInfo.blockId);
 }
 
+// offsetLeft and offsetTop reach the border edge, but left and top place the margin edge
+function getRenderedPosition(element: HTMLElement) {
+	const style = getComputedStyle(element);
+	return {
+		left: element.offsetLeft - getNumberFromPx(style.marginLeft),
+		top: element.offsetTop - getNumberFromPx(style.marginTop),
+	};
+}
+
 function getRootBlockTemplate() {
 	return getBlockInstance(getBlockTemplate("body"));
 }
@@ -1013,6 +1022,7 @@ export {
 	getPageUsageMessage,
 	getParentProps,
 	getPropValue,
+	getRenderedPosition,
 	getRepeaterScopedData,
 	getRGB,
 	getRootBlockTemplate,
