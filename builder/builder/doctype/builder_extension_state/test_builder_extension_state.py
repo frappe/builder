@@ -17,7 +17,7 @@ from builder.builder.tests.extension_fixtures import (
 	make_page_reader,
 	make_user,
 )
-from builder.extensions.state import STATE_DOCTYPE, get_state, read_patch, set_state, unset_state
+from builder.extensions.state import STATE_DOCTYPE, get_state, read_changes, set_state, unset_state
 
 EXTENSION = "acme/remembers"
 
@@ -71,7 +71,7 @@ class TestExtensionState(FrappeTestCase):
 
 		self.assertEqual(get_state(EXTENSION), {"page": 2})
 
-	def test_refuses_a_patch_that_is_not_an_object(self):
+	def test_refuses_changes_that_are_not_an_object(self):
 		"""Frappe's own type guard catches most of these before the method runs."""
 		refusals = (frappe.ValidationError, frappe.exceptions.FrappeTypeError)
 		for sent in ("dark", ["dark"], 3):
@@ -141,10 +141,10 @@ class TestExtensionState(FrappeTestCase):
 
 		self.assertEqual(frappe.get_all(STATE_DOCTYPE, filters={"state_key": "theme"}), [])
 
-	def test_a_patch_that_is_not_an_object_is_refused_past_the_type_guard(self):
+	def test_changes_that_are_not_an_object_are_refused_past_the_type_guard(self):
 		for sent in ('"dark"', "[1]", "3"):
 			with self.assertRaises(frappe.ValidationError, msg=sent):
-				read_patch(sent)
+				read_changes(sent)
 
 	def test_adds_the_unique_index_once(self):
 		on_doctype_update()

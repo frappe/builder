@@ -86,7 +86,7 @@ class TestExtensionDocuments(FrappeTestCase):
 
 		self.assertEqual(frappe.db.get_value("Contact", contact.name, "first_name"), "Ada L")
 
-	def test_an_update_is_a_patch_not_a_replacement(self):
+	def test_an_update_changes_only_the_fields_it_names(self):
 		contact = frappe.get_doc(
 			{"doctype": "Contact", "first_name": "Ada", "last_name": "Lovelace"}
 		).insert()

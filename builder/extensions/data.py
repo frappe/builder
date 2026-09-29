@@ -103,7 +103,7 @@ def insert_doc(extension: str, doctype: str, doc: dict | None = None) -> dict:
 
 @frappe.whitelist(methods=["POST"])
 def update_doc(extension: str, doctype: str, name: str, doc: dict | None = None) -> dict:
-	"""A patch, not a replacement. `set_value` refuses the framework's own fields."""
+	"""Only the fields `doc` names change. `set_value` refuses the framework's own fields."""
 	assert_extension_access(extension, "data.access")
 	return frappe.client.set_value(doctype, name, doc or {})
 

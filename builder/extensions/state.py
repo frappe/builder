@@ -38,18 +38,18 @@ def get_state(extension: str) -> dict:
 
 @frappe.whitelist(methods=["POST"])
 def set_state(extension: str, state: dict) -> None:
-	"""A patch, merged at the top level.
+	"""Only the keys that change, merged at the top level.
 
 	`set` never removes what a call leaves unmentioned. An extension has up to
 	five frames, and merging stops a panel saving its query from erasing what the
 	entry stored. One row per key, so two writing different keys never race.
 	"""
 	installation = assert_extension_access(extension)
-	patch = read_patch(state)
+	changes = read_changes(state)
 	rows = read_rows(installation)
-	assert_room_for(extension, rows, patch)
+	assert_room_for(extension, rows, changes)
 
-	for key, value in patch.items():
+	for key, value in changes.items():
 		write_row(installation, rows.get(key), key, value)
 
 
@@ -80,21 +80,21 @@ def read_rows(installation: str) -> dict:
 	return {row.state_key: row for row in rows}
 
 
-def read_patch(state) -> dict:
-	patch = frappe.parse_json(state)
-	if not isinstance(patch, dict):
+def read_changes(state) -> dict:
+	changes = frappe.parse_json(state)
+	if not isinstance(changes, dict):
 		frappe.throw(_('"state" must be an object.'))
-	return patch
+	return changes
 
 
-def assert_room_for(extension: str, rows: dict, patch: dict) -> None:
+def assert_room_for(extension: str, rows: dict, changes: dict) -> None:
 	"""The cap is on the whole store, not one key, and counts key names too.
 
 	A per-key cap would let an extension write a thousand small keys. A cap on
 	values alone would let it hide most of its data in long key names.
 	"""
-	kept = sum(len(key) + len(row.state_value or "") for key, row in rows.items() if key not in patch)
-	incoming = sum(len(key) + len(json.dumps(value)) for key, value in patch.items())
+	kept = sum(len(key) + len(row.state_value or "") for key, row in rows.items() if key not in changes)
+	incoming = sum(len(key) + len(json.dumps(value)) for key, value in changes.items())
 	if kept + incoming <= MAX_STATE_BYTES:
 		return
 
