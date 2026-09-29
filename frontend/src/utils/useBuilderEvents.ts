@@ -113,7 +113,7 @@ export function useBuilderEvents(
 							imageBlock.setAttribute("src", res.fileURL);
 						}
 					}
-				});
+				}).catch(() => {});
 			}
 			return;
 		}

@@ -418,7 +418,9 @@ async function uploadSVGAsFile(svg: string) {
 
 async function convertSVGBlockToImage(block: Block) {
 	const svg = block.getInnerHTML() || "";
-	const { fileURL } = await uploadSVGAsFile(svg);
+	const upload = await uploadSVGAsFile(svg).catch(() => null);
+	if (!upload) return;
+	const { fileURL } = upload;
 
 	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
 	const width = source?.getAttribute("width");
