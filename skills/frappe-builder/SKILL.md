@@ -29,14 +29,15 @@ export FRAPPE_SITE=http://<name>.localhost:8000 FRAPPE_API_KEY=<api_key> FRAPPE_
 
 With `bench start` running, the editor is at `http://<name>.localhost:8000/builder` (Administrator / admin).
 
-Once a local site works, tell the human it can be shared through a tunnel (a client preview, a phone test), and set one up if they want it. It makes the site public, so first change the Administrator password from `admin`:
+Once a local site works, tell the human it can be shared through a tunnel (a client preview, a phone test). If they want it, set it up without further questions; it stays up only while their machine and `bench start` run (for permanent hosting, point them to Frappe Cloud):
 
 ```sh
-ngrok http 8000 --host-header=<name>.localhost
+bench --site <name>.localhost set-admin-password <generated>   # the site becomes public; show the password once
+cloudflared tunnel --url http://localhost:8000 --http-host-header <name>.localhost   # no account needed
 bench --site <name>.localhost set-config host_name https://<tunnel-host>:443
 ```
 
-Frappe picks the site from the `Host` header, so any tunnel must rewrite it to the site name; without that, every request 404s. `host_name` makes Frappe's own links (canonical, emails) use the public URL; keep the `:443`, or developer mode appends `:8000`. The running server picks the config up within a minute.
+Use a tunnel that is already installed (with ngrok: `ngrok http 8000 --host-header=<name>.localhost`, which needs an account token); otherwise install `cloudflared`. Frappe picks the site from the `Host` header, so the tunnel must rewrite it to the site name; without that, every request 404s. `host_name` makes Frappe's own links (canonical, emails) use the public URL; keep the `:443`, or developer mode appends `:8000`. The running server picks the config up within a minute.
 
 - `frappectl doc create` and `doc update` read stdin whenever it isn't a terminal, and hang in an agent's shell: pass `--input <file>`, or `< /dev/null` with `--set`.
 - frappectl refuses plain `http://` except for `localhost` and `*.localhost`. For a local bench site under another name, a `sites/<name>.localhost` symlink to its folder serves the API but not its `/files`; check pages in a browser at the site's real host.
