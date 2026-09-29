@@ -21,7 +21,7 @@
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
   "extensions_section",
-  "extension_manager_role",
+  "additional_extension_manager_role",
   "ai_section",
   "ai_api_key",
   "persona_survey_done"
@@ -126,11 +126,10 @@
    "label": "Extensions"
   },
   {
-   "default": "Website Manager",
-   "description": "Users with this role can install, turn on or off, grant and uninstall extensions for the whole site. A System Manager always can. Leave empty to allow only System Managers.",
-   "fieldname": "extension_manager_role",
+   "description": "Users with this role can also install, turn on or off, grant and uninstall extensions for the whole site. System Managers and Website Managers always can.",
+   "fieldname": "additional_extension_manager_role",
    "fieldtype": "Link",
-   "label": "Extension Manager Role",
+   "label": "Additional Extension Manager Role",
    "options": "Role"
   },
   {

@@ -8,7 +8,7 @@ from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
 	make_user,
-	set_extension_manager_role,
+	set_additional_manager_role,
 )
 from builder.extensions.access import (
 	assert_extension_access,
@@ -85,29 +85,35 @@ class TestAssertExtensionAccess(FrappeTestCase):
 
 
 class TestExtensionManager(FrappeTestCase):
-	"""Who may change the site's extensions. Builder Settings names the role."""
+	"""Who may change the site's extensions. Builder Settings can name an additional role."""
 
 	def setUp(self):
 		self.addCleanup(frappe.set_user, "Administrator")
+		self.outsider = make_user("extension-outsider@example.com", roles=())
 
-	def test_a_system_manager_always_is_one(self):
-		set_extension_manager_role(self, None)
+	def test_a_system_manager_is_one(self):
+		set_additional_manager_role(self, None)
 
 		self.assertTrue(is_extension_manager("Administrator"))
 
-	def test_a_user_with_the_named_role_is_one(self):
-		set_extension_manager_role(self, "Website Manager")
+	def test_a_website_manager_is_one(self):
+		set_additional_manager_role(self, None)
 
 		self.assertTrue(is_extension_manager(make_user()))
 
-	def test_a_user_without_the_named_role_is_not(self):
-		set_extension_manager_role(self, None)
+	def test_a_user_with_the_additional_role_is_one(self):
+		set_additional_manager_role(self, "Blogger")
 
-		self.assertFalse(is_extension_manager(make_user()))
+		self.assertTrue(is_extension_manager(make_user("extension-blogger@example.com", roles=("Blogger",))))
+
+	def test_a_user_without_any_of_these_roles_is_not(self):
+		set_additional_manager_role(self, "Blogger")
+
+		self.assertFalse(is_extension_manager(self.outsider))
 
 	def test_refuses_a_user_who_is_not_one(self):
-		set_extension_manager_role(self, None)
-		frappe.set_user(make_user())
+		set_additional_manager_role(self, None)
+		frappe.set_user(self.outsider)
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_manager()

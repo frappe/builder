@@ -105,8 +105,18 @@ def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
 	return email
 
 
-def set_extension_manager_role(test_case, role: str | None):
+def make_page_reader(test_case, role="Blogger", email="extension-reader@example.com"):
+	"""A user who reads Builder Pages through `role` alone: no System Manager, no Website Manager."""
+	permission = frappe.get_doc(
+		{"doctype": "Custom DocPerm", "parent": "Builder Page", "role": role, "permlevel": 0, "read": 1}
+	).insert(ignore_permissions=True)
+	test_case.addCleanup(frappe.delete_doc, "Custom DocPerm", permission.name, force=True, ignore_permissions=True)
+	frappe.clear_cache(doctype="Builder Page")
+	return make_user(email, roles=(role,))
+
+
+def set_additional_manager_role(test_case, role: str | None):
 	"""Name the manager role for one test, and put the old one back after it."""
-	previous = frappe.db.get_single_value("Builder Settings", "extension_manager_role", cache=False)
-	frappe.db.set_single_value("Builder Settings", "extension_manager_role", role)
-	test_case.addCleanup(frappe.db.set_single_value, "Builder Settings", "extension_manager_role", previous)
+	previous = frappe.db.get_single_value("Builder Settings", "additional_extension_manager_role", cache=False)
+	frappe.db.set_single_value("Builder Settings", "additional_extension_manager_role", role)
+	test_case.addCleanup(frappe.db.set_single_value, "Builder Settings", "additional_extension_manager_role", previous)

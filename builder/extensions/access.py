@@ -82,16 +82,17 @@ def assert_capability(installation: str, extension: str, capability: str | None)
 
 
 def is_extension_manager(user: str | None = None) -> bool:
-	"""A System Manager, or a user with the role Builder Settings names."""
-	roles = frappe.get_roles(user)
-	manager_role = frappe.db.get_single_value("Builder Settings", "extension_manager_role", cache=False)
-	return "System Manager" in roles or manager_role in roles
+	"""A System Manager, a Website Manager, or a user with the role Builder Settings names."""
+	additional_role = frappe.db.get_single_value(
+		"Builder Settings", "additional_extension_manager_role", cache=False
+	)
+	return bool({"System Manager", "Website Manager", additional_role} & set(frappe.get_roles(user)))
 
 
 def assert_extension_manager() -> None:
 	if not is_extension_manager():
 		frappe.throw(
-			_("Only an extension manager can change extensions. Builder Settings names the role."),
+			_("Only an extension manager can change extensions. Builder Settings can name an additional role."),
 			frappe.PermissionError,
 		)
 
