@@ -37,6 +37,14 @@
 					</code>
 				</span>
 			</template>
+			<template #item-edit-property="{ query }">
+				<span class="flex min-w-0 items-center gap-2">
+					<span class="min-w-0 truncate text-sm text-ink-gray-8">
+						{{ __("Edit") }}
+						<code class="font-mono text-xs text-ink-gray-6">{{ query }}</code>
+					</span>
+				</span>
+			</template>
 			<template #item-add-property="{ query }">
 				<span class="flex min-w-0 items-center gap-2">
 					<span class="min-w-0 truncate text-sm text-ink-gray-8">
@@ -74,7 +82,7 @@ import {
 	toStyleProperty,
 	toTitleCase,
 } from "@/utils/helpers";
-import { Combobox, type ComboboxOptionValue, type SelectionExposed } from "frappe-ui";
+import { Combobox, toast, type ComboboxOptionValue, type SelectionExposed } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
 const STATES = ["hover", "active", "focus"];
@@ -147,6 +155,11 @@ const canAddProperty = (property: string | null | undefined) => {
 	);
 };
 
+const hasDedicatedControl = (property: string | null | undefined) => {
+	const normalizedProperty = normalizeCSSPropertyName(property);
+	return isValidCSSPropertyName(normalizedProperty) && isStylePropertyWithControls(normalizedProperty);
+};
+
 const normalizedPropertySearch = computed(() => normalizeCSSPropertyName(propertySearch.value));
 
 const searchablePropertyOptions = computed(() =>
@@ -164,6 +177,14 @@ const propertyOptions = computed(() => [
 	...searchablePropertyOptions.value,
 	{
 		type: "custom" as const,
+		key: "edit-property",
+		label: __("Edit Property"),
+		slot: "edit-property",
+		condition: ({ query }: { query: string }) => hasDedicatedControl(query),
+		onClick: ({ query }: { query: string }) => editProperty(query),
+	},
+	{
+		type: "custom" as const,
 		key: "add-property",
 		label: __("Add Property"),
 		slot: "add-property",
@@ -176,8 +197,16 @@ const focusProperty = async (property: string) => {
 	await nextTick();
 	const selector = `[data-property="${String(toStyleProperty(property))}"]`;
 	const row = document.querySelector(selector) as HTMLElement | null;
-	row?.scrollIntoView({ block: "nearest" });
+	row?.scrollIntoView({ block: "center" });
 	row?.querySelector("input")?.focus();
+	return Boolean(row);
+};
+
+const editProperty = async (property: string) => {
+	const normalizedProperty = normalizeCSSPropertyName(property);
+	resetPropertyPicker();
+	if (await focusProperty(normalizedProperty)) return;
+	toast.info(__("{0} has its own control in the sections above.", [normalizedProperty]));
 };
 
 const resetPropertyPicker = () => {
