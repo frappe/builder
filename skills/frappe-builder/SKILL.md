@@ -13,11 +13,15 @@ A Builder site is a set of documents: `Builder Page` (a block tree in `blocks` =
 2. `frappectl auth list`. If the site has no profile, ask the human to run `frappectl auth login https://<site> --name <short-name>` (it opens their browser). Headless: `FRAPPE_SITE`, `FRAPPE_API_KEY` and `FRAPPE_API_SECRET` in the environment replace a profile, and then you leave `-s` out.
 3. `frappectl -s <p> api method/frappe.utils.change_log.get_versions` must list `builder`. The user needs the Website Manager role; creating a DocType (for forms) needs System Manager.
 
-No site yet? Install bench's prerequisites ([docs](https://docs.frappe.io/framework/user/en/installation)); the `frappe-app-dev` skill (`npx skills add frappe/skills --skill frappe-app-dev`) covers bench and site basics. Local setups use the `develop` branch of both Frappe and Builder:
+No site yet? Local setups use the `develop` branch of both Frappe and Builder; the `frappe-app-dev` skill (`npx skills add frappe/skills --skill frappe-app-dev`) covers bench and site basics.
+
+1. Look for a bench first: `bench find ~` lists them, and `bench version` inside one shows each app's version and branch. If one runs Frappe 16 or later, ask the human whether to use it or create a new bench; reusing one skips the slow `bench init`.
+2. On a bench that already has Builder, update it: check `git -C apps/builder status` is clean and on `develop` (ask the human if not), then `bench update --pull --patch --build --apps builder` (it migrates every site on the bench).
+3. Otherwise install bench's prerequisites ([docs](https://docs.frappe.io/framework/user/en/installation)) and create one, then add Builder and a site:
 
 ```sh
-bench init --frappe-branch develop frappe-bench && cd frappe-bench   # or reuse a bench on develop
-bench get-app builder --branch develop
+bench init --frappe-branch develop frappe-bench && cd frappe-bench   # new bench only
+bench get-app builder --branch develop                               # if apps/builder is missing
 bench new-site <name>.localhost --admin-password admin --install-app builder
 bench --site <name>.localhost execute frappe.core.doctype.user.user.generate_keys --args '["Administrator"]'
 export FRAPPE_SITE=http://<name>.localhost:8000 FRAPPE_API_KEY=<api_key> FRAPPE_API_SECRET=<api_secret>
