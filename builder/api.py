@@ -14,7 +14,6 @@ from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
 from frappe.core.doctype.file.utils import delete_file
 from frappe.model.document import Document
-from frappe.model.naming import append_number_if_name_exists
 from frappe.utils.caching import redis_cache
 from frappe.utils.safe_exec import NamespaceDict, get_safe_globals
 from PIL import Image
@@ -435,11 +434,16 @@ def clone_client_scripts(source_page, new_page) -> None:
 
 
 def get_copy_title(title: str) -> str:
-	"""Numbers copies like "Home (Copy)", "Home (Copy) 1" so copying a copy doesn't stack suffixes.
+	"""Numbers copies like "Home (Copy)", "Home (Copy 2)" so copying a copy doesn't stack suffixes.
 
-	The "(Copy 2)" alternative matches titles made before the number moved out of the parens."""
+	The trailing number alternative strips titles made while the number sat outside the parens."""
 	base = re.sub(r" \(Copy(?: \d+)?\)(?: \d+)?$", "", title)
-	return append_number_if_name_exists("Builder Page", f"{base} (Copy)", "page_title", separator=" ")
+	siblings = frappe.get_all(
+		"Builder Page", filters={"page_title": ["like", f"{base} (Copy%"]}, pluck="page_title"
+	)
+	pattern = rf"{re.escape(base)} \(Copy(?: (\d+))?\)"
+	numbers = [int(m.group(1) or 1) for t in siblings if (m := re.fullmatch(pattern, t))]
+	return f"{base} (Copy {max(numbers) + 1})" if numbers else f"{base} (Copy)"
 
 
 @frappe.whitelist()

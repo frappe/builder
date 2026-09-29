@@ -272,6 +272,29 @@ class TestBuilderPage(FrappeTestCase):
 			valid.delete()
 			malformed.delete()
 
+	def test_page_data_for_scripts_can_hold_dates_and_decimals(self):
+		from datetime import date, datetime
+		from decimal import Decimal
+		from unittest.mock import patch
+
+		page = insert_page("test-page-data-dates", "Dates")
+		page_data = {
+			"page_data": {
+				"at": datetime(2026, 1, 2, 3, 4, 5),
+				"on": date(2026, 1, 2),
+				"price": Decimal("9.5"),
+			}
+		}
+		try:
+			page.publish()
+			with patch.object(type(page), "_get_page_data", return_value=frappe._dict(page_data)):
+				content = get_response_content("/test-page-data-dates")
+			self.assertIn('"at": "2026-01-02 03:04:05"', content)
+			self.assertIn('"on": "2026-01-02"', content)
+			self.assertIn('"price": 9.5', content)
+		finally:
+			page.delete()
+
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
 		try:
