@@ -880,8 +880,7 @@ class Block implements BlockOptions {
 		this.setRepeaterPropItems(items);
 	}
 	// text inside a repeater over image items (e.g. a carousel slide) keeps its own copy on
-	// each item, keyed by blockId, so reordering or removing items keeps text with its image.
-	// The server applies the same rule in bind_repeater_item_text
+	// each item, keyed by blockId, so reordering or removing items keeps text with its image
 	getRepeaterItemField(): string | null {
 		const repeater = this.getRepeaterParent();
 		const isTextLike = this.isText() || this.isLink() || this.isButton();
@@ -901,6 +900,10 @@ class Block implements BlockOptions {
 		const field = this.getRepeaterItemField();
 		if (!field) return false;
 		this.getRepeaterParent()!.setRepeaterItemValue(field, innerHTML);
+		// the saved binding is what renders each item's own text, in the editor and on the server
+		if (!this.getDynamicKey("innerHTML", "key")) {
+			this.setDynamicValue("innerHTML", "key", `item.${field}`, "props");
+		}
 		return true;
 	}
 	getDataKey(key: keyof BlockDataKey): string {
