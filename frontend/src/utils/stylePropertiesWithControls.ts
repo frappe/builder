@@ -1,40 +1,53 @@
-import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
+import { propertySections, type BlockProperty, type PropertySection } from "@/components/BlockPropertySections";
 import { isValidCSSPropertyName } from "@/utils/cssMetadata";
 import { stripStatePrefix, toCSSProperty } from "@/utils/helpers";
 
 const getSectionProperties = (section: PropertySection) =>
 	typeof section.properties === "function" ? section.properties() : section.properties;
 
-const addSectionProperties = (section: PropertySection, properties: Set<string>) => {
+// descriptors may read block state that is unavailable here; usedStyleProperties covers those
+const getControlProperty = (property: BlockProperty) => {
+	let props: Record<string, unknown> | undefined;
+	try {
+		props = property.getProps?.();
+	} catch {
+		return null;
+	}
+	const propertyKey = props?.propertyKey || props?.property;
+	return typeof propertyKey === "string" ? toCSSProperty(propertyKey) : null;
+};
+
+// a used style property maps to its control's property, e.g. margin-top to margin
+const addSectionProperties = (section: PropertySection, controlProperties: Map<string, string>) => {
 	getSectionProperties(section).forEach((property) => {
-		property.usedStyleProperties?.forEach((styleProperty) => properties.add(styleProperty));
-		// descriptors may read block state that is unavailable here; usedStyleProperties covers those
-		let props: Record<string, unknown> | undefined;
-		try {
-			props = property.getProps?.();
-		} catch {
-			return;
-		}
-		const propertyKey = props?.propertyKey || props?.property;
-		if (typeof propertyKey === "string") properties.add(toCSSProperty(propertyKey));
+		const controlProperty = getControlProperty(property);
+		property.usedStyleProperties?.forEach((styleProperty) =>
+			controlProperties.set(styleProperty, controlProperty || styleProperty),
+		);
+		if (controlProperty) controlProperties.set(controlProperty, controlProperty);
 	});
 };
 
-let cachedStyleProperties: Set<string> | null = null;
+let cachedControlProperties: Map<string, string> | null = null;
 
 // properties owned by a dedicated Builder control, so More Styles must not offer them
-const getStylePropertiesWithControls = () => {
-	if (!cachedStyleProperties) {
-		cachedStyleProperties = new Set();
+const getControlProperties = () => {
+	if (!cachedControlProperties) {
+		cachedControlProperties = new Map();
 		// all, not visible: a section's condition reads block state, unavailable here
 		propertySections.all.value.forEach((section) =>
-			addSectionProperties(section, cachedStyleProperties as Set<string>),
+			addSectionProperties(section, cachedControlProperties as Map<string, string>),
 		);
 	}
-	return cachedStyleProperties;
+	return cachedControlProperties;
 };
 
-const isStylePropertyWithControls = (property: string) => getStylePropertiesWithControls().has(property);
+const getStylePropertiesWithControls = () => new Set(getControlProperties().keys());
+
+const isStylePropertyWithControls = (property: string) => getControlProperties().has(property);
+
+// the property key of the control that edits this property
+const getControlStyleProperty = (property: string) => getControlProperties().get(property);
 
 // properties on a block that only More Styles can edit
 const getStylePropertiesWithoutControls = (styleMap: BlockStyleMap) => {
@@ -46,4 +59,9 @@ const getStylePropertiesWithoutControls = (styleMap: BlockStyleMap) => {
 	return properties;
 };
 
-export { getStylePropertiesWithControls, getStylePropertiesWithoutControls, isStylePropertyWithControls };
+export {
+	getControlStyleProperty,
+	getStylePropertiesWithControls,
+	getStylePropertiesWithoutControls,
+	isStylePropertyWithControls,
+};

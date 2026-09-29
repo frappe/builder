@@ -72,6 +72,7 @@ import {
 	type StyleControlConfig,
 } from "@/utils/cssMetadata";
 import {
+	getControlStyleProperty,
 	getStylePropertiesWithControls,
 	getStylePropertiesWithoutControls,
 	isStylePropertyWithControls,
@@ -196,7 +197,10 @@ const propertyOptions = computed(() => [
 const focusProperty = async (property: string) => {
 	await nextTick();
 	const selector = `[data-property="${String(toStyleProperty(property))}"]`;
-	const row = document.querySelector(selector) as HTMLElement | null;
+	// the inspector search hides sections but keeps their rows in the DOM
+	const row = Array.from(document.querySelectorAll<HTMLElement>(selector)).find((element) =>
+		element.checkVisibility(),
+	);
 	row?.scrollIntoView({ block: "center" });
 	row?.querySelector("input")?.focus();
 	return Boolean(row);
@@ -205,7 +209,7 @@ const focusProperty = async (property: string) => {
 const editProperty = async (property: string) => {
 	const normalizedProperty = normalizeCSSPropertyName(property);
 	resetPropertyPicker();
-	if (await focusProperty(normalizedProperty)) return;
+	if (await focusProperty(getControlStyleProperty(normalizedProperty) || normalizedProperty)) return;
 	toast.info(__("{0} has its own control in the sections above.", [normalizedProperty]));
 };
 
