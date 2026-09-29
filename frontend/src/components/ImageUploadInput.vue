@@ -209,9 +209,9 @@ const selectImages = (openFileSelector: () => void) => {
 const uploadImages = async (files: File[]) => {
 	if (!files.length) return;
 	uploading.value = true;
-	const uploads = await Promise.all(files.map((file) => uploadBuilderAsset(file, true)));
+	const uploads = await Promise.allSettled(files.map((file) => uploadBuilderAsset(file, true)));
 	uploading.value = false;
-	const urls = uploads.map(({ fileURL }) => fileURL).filter(Boolean);
+	const urls = uploads.flatMap((upload) => (upload.status === "fulfilled" ? upload.value.fileURL : []));
 	if (urls.length < files.length) {
 		toast.error(__("Could not upload {0} of {1} images", [files.length - urls.length, files.length]));
 	}

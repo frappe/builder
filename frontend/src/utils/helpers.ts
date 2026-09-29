@@ -365,7 +365,8 @@ async function uploadBuilderAsset(file: File, silent = false) {
 		folder: "Home/Builder Uploads",
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
-	await new Promise((resolve) => {
+	// a failed upload rejects, so callers never write an empty URL into the page
+	await new Promise((resolve, reject) => {
 		if (silent) {
 			upload
 				.then((data: { file_name: string; file_url: string }) => {
@@ -373,10 +374,7 @@ async function uploadBuilderAsset(file: File, silent = false) {
 					fileDoc.file_url = data.file_url;
 					resolve(fileDoc);
 				})
-				.catch((err: any) => {
-					console.error("Failed to upload builder asset:", err);
-					resolve(fileDoc);
-				});
+				.catch(reject);
 			return;
 		}
 		toast.promise(upload, {
@@ -388,8 +386,7 @@ async function uploadBuilderAsset(file: File, silent = false) {
 				return __("Uploaded");
 			},
 			error: (err: any) => {
-				console.error("Failed to upload builder asset:", err);
-				resolve(fileDoc);
+				reject(err);
 				return __("Failed to upload");
 			},
 			duration: 500,
@@ -422,7 +419,6 @@ async function uploadSVGAsFile(svg: string) {
 async function convertSVGBlockToImage(block: Block) {
 	const svg = block.getInnerHTML() || "";
 	const { fileURL } = await uploadSVGAsFile(svg);
-	if (!fileURL) return;
 
 	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
 	const width = source?.getAttribute("width");
@@ -495,9 +491,9 @@ function handleBase64Attribute(block: Block, attrName: string, baseName: string)
 		const file = dataURLtoFile(attrValue, dataURLFileName(attrValue, baseName));
 		if (file) {
 			block.setAttribute(attrName, "");
-			uploadBuilderAsset(file, true).then((obj) => {
-				block.setAttribute(attrName, obj.fileURL);
-			});
+			uploadBuilderAsset(file, true)
+				.then((obj) => block.setAttribute(attrName, obj.fileURL))
+				.catch(() => block.setAttribute(attrName, attrValue));
 		}
 	}
 }

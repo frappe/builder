@@ -244,7 +244,7 @@ export function useCanvasUtils(
 		if (!parentBlock) {
 			return;
 		}
-		if (parentBlock.getRepeaterPropItems().length) {
+		if (block.isRepeaterItemTemplate()) {
 			parentBlock.removeRepeaterItem();
 			return;
 		}

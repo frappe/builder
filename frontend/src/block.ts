@@ -228,9 +228,9 @@ class Block implements BlockOptions {
 
 			if (file) {
 				this.setStyle("backgroundImage", "");
-				uploadBuilderAsset(file, true).then((obj) => {
-					this.setStyle("backgroundImage", cssUrl(obj.fileURL));
-				});
+				uploadBuilderAsset(file, true)
+					.then((obj) => this.setStyle("backgroundImage", cssUrl(obj.fileURL)))
+					.catch(() => this.setStyle("backgroundImage", bgImage));
 			}
 		}
 	}
@@ -858,6 +858,11 @@ class Block implements BlockOptions {
 		items.splice(this.getRepeaterPreviewIndex(), 1);
 		this.setRepeaterPropItems(items);
 	}
+	// only a repeater's first child renders, once per item, so acting on it means acting on the picked item
+	isRepeaterItemTemplate(): boolean {
+		const repeater = this.parentBlock;
+		return Boolean(repeater?.getRepeaterPropItems().length && repeater.children[0]?.blockId === this.blockId);
+	}
 	// duplicating a slide copies its item, own text included, and picks the copy
 	duplicateRepeaterItem() {
 		const items = [...this.getRepeaterPropItems()];
@@ -1083,8 +1088,8 @@ class Block implements BlockOptions {
 		if (this.isRoot()) {
 			return;
 		}
-		if (this.parentBlock?.getRepeaterPropItems().length) {
-			this.parentBlock.duplicateRepeaterItem();
+		if (this.isRepeaterItemTemplate()) {
+			this.parentBlock!.duplicateRepeaterItem();
 			return;
 		}
 		const canvasStore = useCanvasStore();
