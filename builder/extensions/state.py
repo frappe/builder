@@ -47,13 +47,16 @@ def set_state(extension: str, state: dict) -> None:
 	"""
 	installation = assert_extension_access(extension)
 	changes = read_changes(state)
+	writes_before = frappe.db.transaction_writes
 	try:
 		merge_changes(extension, installation, changes)
 	except (frappe.QueryDeadlockError, frappe.UniqueValidationError):
 		# Two frames made this user's first write at once, so neither had a row to
 		# lock. The database ends one transaction: MariaDB with a deadlock, Postgres
-		# with a duplicate. This request wrote nothing else, and the other frame's
-		# row exists now, so merging again is safe.
+		# with a duplicate. The other frame's row exists now, so merging again is
+		# safe, but only when the rollback takes no earlier write with it.
+		if writes_before:
+			raise
 		frappe.db.rollback()
 		frappe.clear_messages()
 		merge_changes(extension, installation, changes)

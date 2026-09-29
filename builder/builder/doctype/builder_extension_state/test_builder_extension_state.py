@@ -82,6 +82,7 @@ class TestExtensionState(FrappeTestCase):
 		with (
 			patch.object(state, "write_row", lose_the_first_attempt),
 			patch.object(frappe.db, "rollback") as rollback,
+			patch.object(frappe.db, "transaction_writes", 0),
 		):
 			set_state(EXTENSION, {"page": 2})
 
@@ -92,10 +93,25 @@ class TestExtensionState(FrappeTestCase):
 	def test_retries_a_lost_race_only_once(self):
 		with (
 			patch.object(state, "write_row", side_effect=frappe.QueryDeadlockError),
-			patch.object(frappe.db, "rollback"),
+			patch.object(frappe.db, "rollback") as rollback,
+			patch.object(frappe.db, "transaction_writes", 0),
 		):
 			with self.assertRaises(frappe.QueryDeadlockError):
 				set_state(EXTENSION, {"page": 2})
+
+		rollback.assert_called_once()
+
+	def test_a_lost_race_after_earlier_writes_is_not_retried(self):
+		"""A rollback would discard those writes, so the failure goes to the caller."""
+		with (
+			patch.object(state, "write_row", side_effect=frappe.QueryDeadlockError),
+			patch.object(frappe.db, "rollback") as rollback,
+			patch.object(frappe.db, "transaction_writes", 1),
+		):
+			with self.assertRaises(frappe.QueryDeadlockError):
+				set_state(EXTENSION, {"page": 2})
+
+		rollback.assert_not_called()
 
 	def test_unset_drops_one_key_and_keeps_the_rest(self):
 		set_state(EXTENSION, {"theme": "dark", "page": 2})

@@ -177,6 +177,8 @@ class BuilderExtension(Document):
 		shutil.rmtree(self.install_path, ignore_errors=True)
 
 	def delete_extension_state(self):
-		"""A state row Links to this record, so Frappe refuses the delete while one stands."""
-		for state in frappe.get_all(STATE_DOCTYPE, filters={"installation": self.name}, pluck="name"):
-			frappe.delete_doc(STATE_DOCTYPE, state, ignore_permissions=True)
+		"""A state row Links to this record, so Frappe refuses the delete while one stands.
+
+		One query for every user's row. A state row has no hooks, files or versions to clear.
+		"""
+		frappe.db.delete(STATE_DOCTYPE, {"installation": self.name})
