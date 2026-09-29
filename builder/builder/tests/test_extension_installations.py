@@ -5,6 +5,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.tests.extension_fixtures import (
+	TEST_ROLE,
 	drop_installations,
 	make_installation,
 	make_page_reader,
@@ -90,7 +91,7 @@ class TestEnableAndDisable(FrappeTestCase):
 
 	def test_a_user_with_the_additional_role_can_switch_it(self):
 		make_installation(EXTENSION)
-		set_additional_manager_role(self, "Blogger")
+		set_additional_manager_role(self, TEST_ROLE)
 		frappe.set_user(make_page_reader(self))
 
 		set_extension_enabled(EXTENSION, False)
