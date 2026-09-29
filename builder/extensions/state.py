@@ -46,10 +46,17 @@ def set_state(extension: str, state: dict) -> None:
 	entry stored.
 	"""
 	installation = assert_extension_access(extension)
-	row = read_row(installation, for_update=True)
-	values = read_values(row)
-	values.update(read_changes(state))
-	write_row(extension, installation, row, values)
+	changes = read_changes(state)
+	try:
+		merge_changes(extension, installation, changes)
+	except (frappe.QueryDeadlockError, frappe.UniqueValidationError):
+		# Two frames made this user's first write at once, so neither had a row to
+		# lock. The database ends one transaction: MariaDB with a deadlock, Postgres
+		# with a duplicate. This request wrote nothing else, and the other frame's
+		# row exists now, so merging again is safe.
+		frappe.db.rollback()
+		frappe.clear_messages()
+		merge_changes(extension, installation, changes)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -65,6 +72,13 @@ def unset_state(extension: str, key: str) -> None:
 	if key in values:
 		del values[key]
 		write_row(extension, installation, row, values)
+
+
+def merge_changes(extension: str, installation: str, changes: dict) -> None:
+	row = read_row(installation, for_update=True)
+	values = read_values(row)
+	values.update(changes)
+	write_row(extension, installation, row, values)
 
 
 def read_row(installation: str, for_update: bool = False):

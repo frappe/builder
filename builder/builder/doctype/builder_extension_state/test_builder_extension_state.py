@@ -17,9 +17,11 @@ from builder.builder.tests.extension_fixtures import (
 	make_page_reader,
 	make_user,
 )
+from builder.extensions import state
 from builder.extensions.state import STATE_DOCTYPE, get_state, read_changes, set_state, unset_state
 
 EXTENSION = "acme/remembers"
+real_write_row = state.write_row
 
 
 class TestExtensionState(FrappeTestCase):
@@ -65,6 +67,35 @@ class TestExtensionState(FrappeTestCase):
 			set_state(EXTENSION, {str(number): number for number in range(200)})
 
 		self.assertEqual(len(get_state(EXTENSION)), 201)
+
+	def test_a_first_write_that_loses_the_race_merges_into_the_winner(self):
+		"""Neither frame had a row to lock, so MariaDB ends one with a deadlock."""
+		attempts = []
+
+		def lose_the_first_attempt(*args):
+			attempts.append(args)
+			if len(attempts) == 1:
+				real_write_row(EXTENSION, self.installation.name, None, {"theme": "dark"})
+				raise frappe.QueryDeadlockError
+			real_write_row(*args)
+
+		with (
+			patch.object(state, "write_row", lose_the_first_attempt),
+			patch.object(frappe.db, "rollback") as rollback,
+		):
+			set_state(EXTENSION, {"page": 2})
+
+		rollback.assert_called_once()
+		self.assertEqual(get_state(EXTENSION), {"theme": "dark", "page": 2})
+		self.assertEqual(len(self.rows()), 1)
+
+	def test_retries_a_lost_race_only_once(self):
+		with (
+			patch.object(state, "write_row", side_effect=frappe.QueryDeadlockError),
+			patch.object(frappe.db, "rollback"),
+		):
+			with self.assertRaises(frappe.QueryDeadlockError):
+				set_state(EXTENSION, {"page": 2})
 
 	def test_unset_drops_one_key_and_keeps_the_rest(self):
 		set_state(EXTENSION, {"theme": "dark", "page": 2})
