@@ -595,7 +595,8 @@ class BuilderPage(WebsiteGenerator):
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
-		context.page_data = clean_data(context.page_data)
+		# tojson can't serialize dates or decimals; frappe's encoder can
+		context.page_data = frappe.parse_json(frappe.as_json(clean_data(context.page_data)))
 		context["__content"] = render_template(context.__content, context)
 
 	def set_meta_tags(self, context, page_data=None):
