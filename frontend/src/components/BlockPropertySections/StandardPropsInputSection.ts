@@ -49,6 +49,9 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 				component: ArrayInput,
 				itemType: propDetails.propOptions?.options?.itemType || "string",
 				targetRatio: blockController.getSelectedBlockAspectRatio(),
+				listLabel: propDetails.label || propName,
+				// array values are stored as JSON strings, and the control only takes primitives
+				defaultValue: JSON.stringify(propDetails.propOptions?.options?.defaultValue ?? []),
 			};
 			break;
 		case "color":

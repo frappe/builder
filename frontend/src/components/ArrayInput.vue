@@ -1,12 +1,7 @@
 <template>
 	<Popover :offset="20" side="left" align="center" bare>
 		<template #trigger>
-			<div class="relative flex w-full gap-2">
-				<div v-if="label" class="flex w-1/3 min-w-[88px] shrink-0 items-center">
-					<InputLabel class="w-full truncate">
-						{{ label }}
-					</InputLabel>
-				</div>
+			<div class="relative flex w-full">
 				<Button variant="subtle" class="group w-full min-w-0 !justify-start !text-sm">
 					<template #prefix>
 						<div v-if="thumbnails.length" class="flex shrink-0 -space-x-1.5">
@@ -21,10 +16,6 @@
 					<span :class="arr.length ? 'text-ink-gray-8' : 'text-ink-gray-4'">
 						{{ countLabel }}
 					</span>
-					<template #suffix>
-						<span
-							class="lucide-pencil ml-auto mr-1 size-3.5 shrink-0 text-ink-gray-7 group-hover:text-ink-gray-8" />
-					</template>
 				</Button>
 			</div>
 		</template>
@@ -34,7 +25,7 @@
 				@mousedown.stop
 				class="flex flex-col gap-3 rounded-6 bg-surface-base p-4 shadow-lg"
 				:class="itemType === 'image' ? 'w-72' : 'w-60'">
-				<div class="shrink-0 text-sm text-ink-gray-8">{{ __("Items") }}</div>
+				<div class="shrink-0 text-sm text-ink-gray-8">{{ listLabel || __("Items") }}</div>
 				<ArrayEditor listClass="max-h-[180px]" :arr :itemType :targetRatio @update:arr="updateModelValue" />
 			</div>
 		</template>
@@ -51,6 +42,7 @@ const props = defineProps<{
 	modelValue?: string;
 	itemType?: "string" | "image";
 	targetRatio?: number;
+	listLabel?: string;
 }>();
 
 const emit = defineEmits({
@@ -74,10 +66,12 @@ const thumbnails = computed(() => {
 		.slice(0, 3);
 });
 
+// listLabel names the list in plural ("Slides"), so a single item drops its trailing s
 const countLabel = computed(() => {
 	const count = arr.value.length;
-	if (!count) return __("Add items");
-	return count === 1 ? __("1 item") : __("{0} items", [count]);
+	const itemLabel = props.listLabel?.toLowerCase() || __("items");
+	if (!count) return __("Add {0}", [itemLabel]);
+	return count === 1 ? `1 ${itemLabel.replace(/s$/, "")}` : `${count} ${itemLabel}`;
 });
 
 const updateModelValue = (value: ArrayPropItem[]) => {
