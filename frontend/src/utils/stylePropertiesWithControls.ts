@@ -1,4 +1,8 @@
-import { propertySections, type BlockProperty, type PropertySection } from "@/components/BlockPropertySections";
+import {
+	propertySections,
+	type BlockProperty,
+	type PropertySection,
+} from "@/components/BlockPropertySections";
 import { isValidCSSPropertyName } from "@/utils/cssMetadata";
 import { stripStatePrefix, toCSSProperty } from "@/utils/helpers";
 
@@ -17,12 +21,16 @@ const getControlProperty = (property: BlockProperty) => {
 	return typeof propertyKey === "string" ? toCSSProperty(propertyKey) : null;
 };
 
-// a used style property maps to its control's property, e.g. margin-top to margin
+// a used style property maps to its control's property, e.g. margin-top to margin.
+// the control's own property must be a used style, so image styles do not map to "src"
 const addSectionProperties = (section: PropertySection, controlProperties: Map<string, string>) => {
 	getSectionProperties(section).forEach((property) => {
 		const controlProperty = getControlProperty(property);
-		property.usedStyleProperties?.forEach((styleProperty) =>
-			controlProperties.set(styleProperty, controlProperty || styleProperty),
+		const usedStyleProperties = property.usedStyleProperties || [];
+		const styleControlProperty =
+			controlProperty && usedStyleProperties.includes(controlProperty) ? controlProperty : null;
+		usedStyleProperties.forEach((styleProperty) =>
+			controlProperties.set(styleProperty, styleControlProperty || styleProperty),
 		);
 		if (controlProperty) controlProperties.set(controlProperty, controlProperty);
 	});
