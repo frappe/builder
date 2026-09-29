@@ -9,7 +9,7 @@ import {
 	expandGapShorthand,
 } from "@/utils/cssUtils";
 import { startDrag } from "@/utils/cursor";
-import { getNumberInUnit } from "@/utils/helpers";
+import { getNumberFromPx } from "@/utils/helpers";
 import { toLocalDelta } from "@/utils/rotation";
 import { clamp } from "@vueuse/core";
 import { computed, inject, ref } from "vue";
@@ -140,7 +140,7 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		// a padding handle sits on the block's edge, so dragging outward shrinks it. A gap
 		// handle sits in the gap itself, where outward simply widens it.
 		const sign = property === "padding" ? -outward : outward;
-		const startValue = getNumberInUnit(getSpacingValue(property, side), "px") ?? fallback;
+		const startValue = getNumberFromPx(getSpacingValue(property, side)) || fallback;
 		const startPoint = { x: event.clientX, y: event.clientY };
 
 		event.preventDefault();

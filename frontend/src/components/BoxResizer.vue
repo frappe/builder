@@ -36,7 +36,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { startDrag } from "@/utils/cursor";
 import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
-import { getNumberFromPx, getNumberInUnit } from "@/utils/helpers";
+import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -132,12 +132,8 @@ const targetHeight = computed(() => {
 });
 
 const fontSize = computed(() => {
-	const activeFontSize = props.targetBlock.getActiveStyleValue("fontSize");
-	// A non-px font size (em, rem) only resolves through the rendered style.
-	const fontSize =
-		getNumberInUnit(activeFontSize, "px") ??
-		getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size"));
-	return Math.round(fontSize);
+	props.targetBlock.getActiveStyleValue("fontSize"); // to trigger reactivity
+	return Math.round(getNumberFromPx(getComputedStyle(props.target).getPropertyValue("font-size")));
 });
 
 // For the left/top side, the opposite edge is kept visually fixed by shifting top/left the same
