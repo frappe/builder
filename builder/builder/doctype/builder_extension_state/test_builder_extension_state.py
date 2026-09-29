@@ -34,9 +34,7 @@ class TestExtensionState(FrappeTestCase):
 		self.installation = make_installation(EXTENSION)
 
 	def rows(self):
-		return frappe.get_all(
-			STATE_DOCTYPE, filters={"installation": self.installation.name}, pluck="state_key"
-		)
+		return frappe.get_all(STATE_DOCTYPE, filters={"installation": self.installation.name}, pluck="name")
 
 	def test_answers_with_nothing_before_anything_is_stored(self):
 		self.assertEqual(get_state(EXTENSION), {})
@@ -52,24 +50,21 @@ class TestExtensionState(FrappeTestCase):
 
 		self.assertEqual(get_state(EXTENSION), {"theme": "dark", "page": 2})
 
-	def test_one_row_per_key_so_two_frames_never_race(self):
+	def test_one_row_holds_the_whole_store(self):
 		set_state(EXTENSION, {"theme": "dark", "page": 2})
-
-		self.assertEqual(sorted(self.rows()), ["page", "theme"])
-
-	def test_rewrites_a_key_in_place(self):
-		set_state(EXTENSION, {"theme": "dark"})
 		set_state(EXTENSION, {"theme": "light"})
 
-		self.assertEqual(get_state(EXTENSION), {"theme": "light"})
-		self.assertEqual(self.rows(), ["theme"])
+		self.assertEqual(get_state(EXTENSION), {"theme": "light", "page": 2})
+		self.assertEqual(len(self.rows()), 1)
 
 	def test_many_keys_take_as_few_queries_as_one(self):
-		"""The installation, the stored rows, one delete and one insert."""
-		with self.assertQueryCount(4):
+		"""The installation, the locked row and one update."""
+		set_state(EXTENSION, {"first": 1})
+
+		with self.assertQueryCount(3):
 			set_state(EXTENSION, {str(number): number for number in range(200)})
 
-		self.assertEqual(len(self.rows()), 200)
+		self.assertEqual(len(get_state(EXTENSION)), 201)
 
 	def test_unset_drops_one_key_and_keeps_the_rest(self):
 		set_state(EXTENSION, {"theme": "dark", "page": 2})
@@ -87,9 +82,9 @@ class TestExtensionState(FrappeTestCase):
 
 	def test_the_cap_is_on_the_whole_store_and_not_one_key(self):
 		"""A per-key cap would let an extension write a thousand small keys."""
-		# each entry counts its one-letter key, and a value serializes to its
-		# length plus the two quotes
-		with patch("builder.extensions.state.MAX_STATE_BYTES", 40):
+		# the store serializes as {"a": "xxx..."}: 24 characters for one entry,
+		# 48 for two and 72 for three
+		with patch("builder.extensions.state.MAX_STATE_BYTES", 50):
 			set_state(EXTENSION, {"a": "x" * 15})
 			set_state(EXTENSION, {"b": "x" * 15})
 
@@ -146,7 +141,7 @@ class TestExtensionState(FrappeTestCase):
 
 		self.installation.delete()
 
-		self.assertEqual(frappe.get_all(STATE_DOCTYPE, filters={"state_key": "theme"}), [])
+		self.assertEqual(self.rows(), [])
 
 	def test_changes_that_are_not_an_object_are_refused_past_the_type_guard(self):
 		for sent in ('"dark"', "[1]", "3"):

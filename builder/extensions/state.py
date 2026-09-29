@@ -6,21 +6,20 @@
 No capability gates this. The extension's own drawer is not a write to the page,
 so a read-only page does not close it.
 
-One row per user and key, on the site. The extension is installed for the whole
-site, but what it stores is one user's. The store used to be `localStorage`, which
-is per browser, so two people sharing a machine shared every extension's state.
-Here it follows the user between machines.
+One row per user and installation, holding the whole store as one JSON object.
+The extension is installed for the whole site, but what it stores is one user's.
+The store used to be `localStorage`, which is per browser, so two people sharing
+a machine shared every extension's state. Here it follows the user between
+machines.
 
 A development extension still uses the browser. Its installation goes on every
 `pagehide`, so a row here would not survive the reload an author needs.
 
 These methods are the only way in. Each opens with `assert_extension_access`,
-so the writes skip the doctype permission and the document, which only a System
-Manager reaches directly.
+so the writes skip the doctype permission, which only a System Manager holds.
 """
 
 import json
-import uuid
 
 import frappe
 from frappe import _
@@ -35,7 +34,7 @@ STATE_DOCTYPE = "Builder Extension State"
 def get_state(extension: str) -> dict:
 	"""Everything this extension stored for this user."""
 	installation = assert_extension_access(extension)
-	return {key: frappe.parse_json(row.state_value or "null") for key, row in read_rows(installation).items()}
+	return read_values(read_row(installation))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -44,13 +43,13 @@ def set_state(extension: str, state: dict) -> None:
 
 	`set` never removes what a call leaves unmentioned. An extension has up to
 	five frames, and merging stops a panel saving its query from erasing what the
-	entry stored. One row per key, so two writing different keys never race.
+	entry stored.
 	"""
 	installation = assert_extension_access(extension)
-	changes = read_changes(state)
-	rows = read_rows(installation)
-	assert_room_for(extension, rows, changes)
-	write_rows(installation, changes)
+	row = read_row(installation, for_update=True)
+	values = read_values(row)
+	values.update(read_changes(state))
+	write_row(extension, installation, row, values)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -61,23 +60,30 @@ def unset_state(extension: str, key: str) -> None:
 	cleared is not an error.
 	"""
 	installation = assert_extension_access(extension)
-	row = read_rows(installation).get(key)
-	if row:
-		frappe.delete_doc(STATE_DOCTYPE, row.name, ignore_permissions=True)
+	row = read_row(installation, for_update=True)
+	values = read_values(row)
+	if key in values:
+		del values[key]
+		write_row(extension, installation, row, values)
 
 
-def read_rows(installation: str) -> dict:
-	"""Every key this user stored, by key.
+def read_row(installation: str, for_update: bool = False):
+	"""This user's row, or None before the first write.
 
-	One query, not one per key. A store is capped under a megabyte, so reading it
-	whole costs less than the round trips.
+	`for_update` locks the row until the request commits. Two frames that merge at
+	the same time then run one after the other, and neither loses the other's keys.
 	"""
-	rows = frappe.get_all(
+	return frappe.db.get_value(
 		STATE_DOCTYPE,
-		filters={"installation": installation, "user": frappe.session.user},
-		fields=["name", "state_key", "state_value"],
+		{"installation": installation, "user": frappe.session.user},
+		["name", "state"],
+		as_dict=True,
+		for_update=for_update,
 	)
-	return {row.state_key: row for row in rows}
+
+
+def read_values(row) -> dict:
+	return frappe.parse_json(row.state) if row and row.state else {}
 
 
 def read_changes(state) -> dict:
@@ -87,47 +93,21 @@ def read_changes(state) -> dict:
 	return changes
 
 
-def assert_room_for(extension: str, rows: dict, changes: dict) -> None:
-	"""The cap is on the whole store, not one key, and counts key names too.
+def write_row(extension: str, installation: str, row, values: dict) -> None:
+	"""The cap is on the whole store, key names included, not on one key."""
+	stored = json.dumps(values)
+	if len(stored) > MAX_STATE_BYTES:
+		frappe.throw(_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000))
 
-	A per-key cap would let an extension write a thousand small keys. A cap on
-	values alone would let it hide most of its data in long key names.
-	"""
-	kept = sum(len(key) + len(row.state_value or "") for key, row in rows.items() if key not in changes)
-	incoming = sum(len(key) + len(json.dumps(value)) for key, value in changes.items())
-	if kept + incoming <= MAX_STATE_BYTES:
+	if row:
+		frappe.db.set_value(STATE_DOCTYPE, row.name, "state", stored)
 		return
 
-	frappe.throw(_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000))
-
-
-def write_rows(installation: str, changes: dict) -> None:
-	"""Drop the changed keys, then insert them again, so the query count stays the same for any size.
-
-	The bulk insert skips the document, so this sets what `insert()` would.
-	"""
-	if not changes:
-		return
-
-	user, now = frappe.session.user, frappe.utils.now_datetime()
-	frappe.db.delete(
-		STATE_DOCTYPE, {"installation": installation, "user": user, "state_key": ("in", list(changes))}
-	)
-	frappe.db.bulk_insert(
-		STATE_DOCTYPE,
-		[
-			"name",
-			"creation",
-			"modified",
-			"owner",
-			"modified_by",
-			"installation",
-			"user",
-			"state_key",
-			"state_value",
-		],
-		[
-			(str(uuid.uuid4()), now, now, user, user, installation, user, key, json.dumps(value))
-			for key, value in changes.items()
-		],
-	)
+	frappe.get_doc(
+		{
+			"doctype": STATE_DOCTYPE,
+			"installation": installation,
+			"user": frappe.session.user,
+			"state": stored,
+		}
+	).insert(ignore_permissions=True)

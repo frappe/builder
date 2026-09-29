@@ -99,8 +99,7 @@ class TestBuilderExtension(FrappeTestCase):
 					"doctype": "Builder Extension State",
 					"installation": installation.name,
 					"user": user,
-					"state_key": "theme",
-					"state_value": '"dark"',
+					"state": '{"theme": "dark"}',
 				}
 			).insert()
 

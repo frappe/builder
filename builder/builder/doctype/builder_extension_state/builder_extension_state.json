@@ -1,18 +1,17 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One value an extension stored for one user. Only that extension reads it, and no capability gates it. It lives on the server, not the browser, so it follows the user between machines.",
+ "description": "Everything one extension stored for one user, as one JSON object. Only that extension reads it, and no capability gates it. It lives on the server, not the browser, so it follows the user between machines.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "installation",
   "user",
-  "state_key",
-  "state_value"
+  "state"
  ],
  "fields": [
   {
-   "description": "The installation that stored this value.",
+   "description": "The installation that stored this state.",
    "fieldname": "installation",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -23,7 +22,7 @@
    "reqd": 1
   },
   {
-   "description": "The user this value belongs to. The server sets it from the session, and never reads it from a caller.",
+   "description": "The user this state belongs to. The server sets it from the session, and never reads it from a caller.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -34,23 +33,16 @@
    "reqd": 1
   },
   {
-   "fieldname": "state_key",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Key",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "state_value",
+   "fieldname": "state",
    "fieldtype": "JSON",
-   "label": "Value"
+   "label": "State",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-29 12:00:00.000000",
+ "modified": "2026-09-29 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension State",
@@ -73,6 +65,5 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": [],
- "title_field": "state_key"
+ "states": []
 }
