@@ -8,6 +8,7 @@ Degrades to a plain "preview unavailable" tool result when no renderer is
 reachable — a missing Chromium must never fail the turn."""
 
 import base64
+import html
 import logging
 
 import frappe
@@ -18,8 +19,10 @@ logger = frappe.logger("builder.ai.agent.preview")
 logger.setLevel(logging.INFO)
 
 MAX_PREVIEWS_PER_TURN = 2  # hard cost bound — a screenshot loop can't run away
+MAX_IMAGE_VIEWS_PER_TURN = 3
 MAX_IMAGE_BYTES = 3 * 1024 * 1024  # mirrors BlockCodec.validate_image_data's cap
-PREVIEW_WIDTH = 1280
+VIEWPORT_WIDTHS = {"desktop": 1280, "tablet": 768, "mobile": 390}
+COLOR_SCHEMES = ("light", "dark")
 # The viewport we capture into. Chromium screenshots the viewport, not the
 # document, so this has to clear a whole generated page — they run 2500-6000px.
 # Whatever the page doesn't fill is blank, and gets trimmed off below.
@@ -33,10 +36,11 @@ TILE_HEIGHT = 2000
 MAX_TILES = 3
 
 
-def render_page_image(page) -> bytes:
+def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
 	from builder.html_preview_image import render
 
-	return render(page.get_preview_html(), width=PREVIEW_WIDTH, height=CAPTURE_HEIGHT)
+	markup = page.get_preview_html(color_scheme=color_scheme)
+	return render(markup, width=VIEWPORT_WIDTHS[viewport], height=CAPTURE_HEIGHT)
 
 
 # How far a pixel may drift from the background before it counts as content. The
@@ -93,7 +97,7 @@ def refresh_page_thumbnail(page) -> None:
 	)
 
 
-def attach_to_model(ctx, page, image: bytes) -> tuple[int, bool]:
+def attach_to_model(ctx, page, image: bytes, variant: str) -> tuple[int, bool]:
 	"""Attach the page as a run of readable screenfuls, top to bottom. Returns
 	(tiles attached, whether they cover the whole page)."""
 	try:
@@ -109,7 +113,7 @@ def attach_to_model(ctx, page, image: bytes) -> tuple[int, bool]:
 		where = f" — part {index} of {len(tiles)}, top to bottom" if len(tiles) > 1 else ""
 		ctx.pending_images.append(
 			{
-				"caption": f"Screenshot of draft page '{title}'{where}:",
+				"caption": f"Screenshot of draft page '{title}' ({variant}){where}:",
 				"data_url": "data:image/webp;base64," + base64.b64encode(tile).decode(),
 			}
 		)
@@ -131,8 +135,11 @@ def run_preview_page(ctx, args: dict) -> str:
 		return "Preview limit reached for this turn — proceed with what you have."
 	ctx.preview_count += 1
 	page = frappe.get_doc("Builder Page", page_id)
+	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
+	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
+	variant = f"{viewport}, {color_scheme} mode"
 	try:
-		image = render_page_image(page)
+		image = render_page_image(page, viewport, color_scheme)
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -150,13 +157,13 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Screenshot saved as the page's thumbnail, but your selected model can't view "
 			"images — skip the visual check and continue."
 		)
-	attached, complete = attach_to_model(ctx, page, image)
+	attached, complete = attach_to_model(ctx, page, image, variant)
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
 	extent = (
-		f"The page is attached below as {attached} images, top to bottom — review ALL of them."
+		f"The page is attached below as {attached} images ({variant}), top to bottom — review ALL of them."
 		if attached > 1
-		else "Screenshot attached below."
+		else f"Screenshot attached below ({variant})."
 	)
 	if not complete:
 		extent += " They stop before the end of the page; anything past that you have NOT seen."
@@ -213,7 +220,10 @@ preview_page = Tool(
 		"screenshots. Also "
 		"works on ANOTHER page (pass its page_id) to study it as a visual reference — do "
 		"that BEFORE designing a page that must match it, paired with read_page for the "
-		"exact values. If the renderer is unavailable, continue without it."
+		"exact values. If the renderer is unavailable, continue without it. Pick "
+		"viewport and color_scheme to check the case you changed: a mobile fix at mobile, "
+		"a dark-mode change in dark. Never report a mobile or dark-mode change as done "
+		"from a desktop light capture."
 	),
 	parameters={
 		"type": "object",
@@ -222,8 +232,108 @@ preview_page = Tool(
 				"type": "string",
 				"description": "The page to screenshot. Defaults to the page you have open.",
 			},
+			"viewport": {
+				"type": "string",
+				"enum": list(VIEWPORT_WIDTHS),
+				"description": "Screen width to render at: desktop (1280px, default), tablet (768px) or mobile (390px).",
+			},
+			"color_scheme": {
+				"type": "string",
+				"enum": list(COLOR_SCHEMES),
+				"description": "Render in light (default) or dark mode.",
+			},
 		},
 	},
 )
+
+
+def image_view_html(src: str) -> str:
+	return (
+		'<!doctype html><html><body style="margin:0;height:100vh;display:grid;'
+		'place-items:center;background:#808080">'
+		f'<img style="width:100%;height:100%;object-fit:contain" src="{html.escape(src, quote=True)}">'
+		"</body></html>"
+	)
+
+
+def renderable_source(src: str) -> str | None:
+	"""What the renderer may load for an image, or None. Only what the user could
+	open themselves gets through (it ends up in front of an external model): data:
+	images, public site files, private files they may read, and public web images,
+	which are inlined so Chromium never dials the network for them."""
+	from urllib.parse import urlparse
+
+	if src.startswith("data:image/"):
+		return src
+	parsed = urlparse(src)
+	if parsed.scheme in ("http", "https") and parsed.netloc != urlparse(frappe.utils.get_url()).netloc:
+		return inline_remote_image(src)
+	if parsed.path.startswith("/private/files/"):
+		name = frappe.db.get_value("File", {"file_url": parsed.path}, "name")
+		return src if name and frappe.get_doc("File", name).has_permission("read") else None
+	return src if parsed.path.startswith("/files/") else None
+
+
+def inline_remote_image(src: str) -> str | None:
+	"""Fetched through read_url's guarded fetch (every redirect hop checked, the
+	connection pinned to the checked address), so neither a redirect nor a DNS
+	rebind can point the renderer at an internal host."""
+	from builder.ai.agent.tools.web import fetch_public
+
+	try:
+		response, _ = fetch_public(src)
+	except Exception:
+		return None
+	content_type = (response.headers.get("content-type") or "").split(";")[0].strip().lower()
+	if response.status_code >= 400 or not content_type.startswith("image/"):
+		return None
+	content = response.raw.read(MAX_IMAGE_BYTES + 1, decode_content=True)
+	if len(content) > MAX_IMAGE_BYTES:
+		return None
+	return f"data:{content_type};base64,{base64.b64encode(content).decode()}"
+
+
+def render_block_images(sources: dict[str, str]) -> list[dict] | None:
+	"""All the block's pictures, or None if any one fails: a half-attached pair would
+	leave the model unsure which variant it actually saw."""
+	from builder.html_preview_image import render
+
+	attachments = []
+	for label, src in sources.items():
+		try:
+			image = render(image_view_html(src), width=1024, height=768)
+		except Exception:
+			logger.warning("read_block: image render failed for %s", src[:200], exc_info=True)
+			return None
+		data_url = "data:image/webp;base64," + base64.b64encode(image).decode()
+		attachments.append({"caption": f"The block's {label}, on a grey backdrop:", "data_url": data_url})
+	return attachments
+
+
+def attach_block_images(ctx, block: dict) -> str:
+	"""Render an image block's picture, and its dark-mode variant, for the model to
+	look at. Goes through the page renderer, so SVG, data: and remote images work
+	too. Returns a line for the read_block result saying what was attached."""
+	from builder.ai.models import ModelRegistry
+
+	attributes = block.get("attributes") or {}
+	sources = {"image": attributes.get("src"), "dark-mode image": attributes.get("darkSrc")}
+	sources = {label: src for label, src in sources.items() if src}
+	if block.get("element") != "img" or not sources:
+		return "This block has no image to show."
+	if not ModelRegistry.supports_vision(ctx.loop_model):
+		return "Your selected model can't view images."
+	if ctx.image_views >= MAX_IMAGE_VIEWS_PER_TURN:
+		return "Image view limit reached for this turn."
+	sources = {label: renderable_source(src) for label, src in sources.items()}
+	if None in sources.values():
+		return "This image's address is private, internal or unreachable, so it can't be shown to you."
+	ctx.image_views += 1
+	attachments = render_block_images(sources)
+	if attachments is None:
+		return "The image could not be rendered; don't describe what you haven't seen."
+	ctx.pending_images.extend(attachments)
+	return f"Attached below: the block's {' and '.join(sources)}."
+
 
 TOOLS = [preview_page]

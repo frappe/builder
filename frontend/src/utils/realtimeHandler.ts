@@ -1,13 +1,15 @@
 import { Socket } from "socket.io-client";
-import { getCurrentInstance } from "vue";
+import { editorDemo } from "./editorDemo";
+import { createSocket } from "./socket";
 
 export default class RealTimeHandler {
 	open_docs: Set<string>;
-	socket: Socket;
+	socket: Socket | null;
 	subscribing: boolean;
 	constructor() {
 		this.open_docs = new Set();
-		this.socket = getCurrentInstance()!.appContext.config.globalProperties.$socket;
+		// the editor demo may not open connections, and has no one to collaborate with
+		this.socket = editorDemo ? null : createSocket();
 		this.subscribing = false;
 	}
 
@@ -24,7 +26,7 @@ export default class RealTimeHandler {
 	}
 
 	emit(event: string, ...args: any[]) {
-		this.socket.emit(event, ...args);
+		this.socket?.emit(event, ...args);
 	}
 
 	doctype_subscribe(doctype: string) {

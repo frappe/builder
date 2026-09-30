@@ -19,10 +19,9 @@
 				@input="setQuery"
 				@keydown.enter="handlePrimaryAction" />
 
-			<Popover class="relative inline-block text-left">
-				<template #target="{ isOpen, togglePopover }">
+			<Popover bare>
+				<template #trigger="{ open }">
 					<Button
-						@click="togglePopover"
 						icon="lucide-filter"
 						:label="__('Filters')"
 						:class="[
@@ -35,18 +34,18 @@
 							{{ selectedFiltersCount }}
 						</span>
 						<span
-							:class="[isOpen ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
+							:class="[open ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
 							aria-hidden="true" />
 					</Button>
 				</template>
-				<template #body>
-					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
+				<template #default>
+					<div class="w-48 rounded-6 bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
 						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
 								:key="filter.name"
-								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
+								class="flex cursor-pointer items-center rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
 								<Checkbox
 									:modelValue="filter.selected"
 									@update:modelValue="toggleFilter(filter)"
@@ -113,9 +112,9 @@
 			<!-- Search Results -->
 			<div v-for="(result, index) in results" :key="result.blockId">
 				<div
-					class="mb-2 flex cursor-pointer items-center justify-between rounded px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
+					class="mb-2 flex cursor-pointer items-center justify-between rounded-4 px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
-					@click="canvasStore.activeCanvas?.scrollBlockIntoView(result)">
+					@click="canvasStore.selectBlock(result, null, true, true)">
 					<div class="line-clamp-2 flex-1">
 						{{ result.getBlockDescription() }}
 						<div class="mt-1 text-xs text-ink-gray-5">
@@ -392,7 +391,11 @@ const replaceAll = () => {
 	});
 
 	if (totalReplacements > 0) {
-		toast.success(totalReplacements === 1 ? __("Replaced in {0} block", [totalReplacements]) : __("Replaced in {0} blocks", [totalReplacements]));
+		toast.success(
+			totalReplacements === 1
+				? __("Replaced in {0} block", [totalReplacements])
+				: __("Replaced in {0} blocks", [totalReplacements]),
+		);
 		performSearch();
 	} else {
 		toast.error(__("No replacements made"));

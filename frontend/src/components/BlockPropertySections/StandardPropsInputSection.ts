@@ -52,6 +52,7 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			break;
 	}
 	map = {
+		propertyKey: propName,
 		label: propDetails.label || propName,
 		enableStates: false,
 		allowDynamicValue: true,
@@ -82,7 +83,8 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			return value;
 		},
 		getPlaceholder: () => {
-			return propDetails.propOptions?.options?.defaultValue || null;
+			const defaultValue = propDetails.propOptions?.options?.defaultValue;
+			return defaultValue == null || defaultValue === "" ? null : String(defaultValue);
 		},
 		defaultValue:
 			type == "boolean"

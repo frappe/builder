@@ -100,7 +100,8 @@ export function copyBuilderBlocks(
 		// Handle component children and create copy
 		let blockCopy = null;
 		if (!Boolean(block.extendedFromComponent) && block.isChildOfComponent) {
-			blockCopy = detachBlockFromComponent(block, null);
+			// detaching returns a live Block, and its parent links can't be turned into JSON
+			blockCopy = getCopyWithoutParent(detachBlockFromComponent(block, null));
 		} else {
 			blockCopy = getCopyWithoutParent(block);
 		}
@@ -149,7 +150,7 @@ export function copyBuilderBlocks(
 		};
 		dataToCopy.pageScripts = pageStore.activePageScripts;
 	}
-	copyToClipboard(dataToCopy, e, "builder-copied-blocks");
+	writeCopiedBlocks(e, dataToCopy);
 	copyEntirePage && toast.success(__("Page Copied"));
 }
 
@@ -157,10 +158,11 @@ export function copyBuilderBlocks(
  * The "builder-copied-blocks" clipboard type and the shape below are a public
  * contract: the Copy to Frappe Builder browser extension writes this payload from
  * any web page (github.com/surajshetty3416/copy-to-builder, see its CONTRACT.md).
+ * It is also written as HTML, so blocks copied in one browser paste in another.
  * Adding keys is safe, renaming or removing the ones it writes is not.
  */
 export async function pasteBuilderBlocks(e: ClipboardEvent, currentSiteURL: string): Promise<void> {
-	const data = e.clipboardData?.getData("builder-copied-blocks") as string;
+	const data = readCopiedBlocks(e);
 	if (!data || !isJSONString(data)) return;
 
 	const clipboardData = JSON.parse(data) as BuilderClipboardData;
@@ -593,4 +595,33 @@ function generateHash(initialId: string, siteURL: string, appendHash = false): s
 		const shortHash = Math.abs(hash).toString(36).slice(0, 8);
 		return `${initialId}_${shortHash}`;
 	}
+}
+
+// Chrome and Firefox can't read each other's custom clipboard types, so copied
+// blocks are also written as HTML, which both browsers can read.
+const COPIED_BLOCKS_ATTRIBUTE = "data-builder-copied-blocks";
+
+function writeCopiedBlocks(e: ClipboardEvent, data: BuilderClipboardData) {
+	const json = JSON.stringify(data);
+	const span = document.createElement("span");
+	span.setAttribute(COPIED_BLOCKS_ATTRIBUTE, json);
+
+	copyToClipboard(json, e, "builder-copied-blocks");
+	copyToClipboard(span.outerHTML, e, "text/html");
+}
+
+function readCopiedBlocks(e: ClipboardEvent): string {
+	const json = e.clipboardData?.getData("builder-copied-blocks");
+	if (json) return json;
+
+	const html = e.clipboardData?.getData("text/html") || "";
+	if (!html.includes(COPIED_BLOCKS_ATTRIBUTE)) return "";
+
+	const doc = new DOMParser().parseFromString(html, "text/html");
+	const span = doc.querySelector(`[${COPIED_BLOCKS_ATTRIBUTE}]`);
+	return span?.getAttribute(COPIED_BLOCKS_ATTRIBUTE) || "";
+}
+
+export function hasCopiedBlocks(e: ClipboardEvent): boolean {
+	return Boolean(readCopiedBlocks(e));
 }

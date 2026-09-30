@@ -72,7 +72,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "convert-to-collection",
-		label: __("Convert To Collection"),
+		label: __("Convert to Collection"),
 		action: ({ block }) => {
 			block.isRepeaterBlock = true;
 			toast.warning(__("Please select a collection"));
@@ -97,7 +97,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "wrap-in-container",
-		label: __("Wrap In Container"),
+		label: __("Wrap in Container"),
 		action: ({ block }) => {
 			const newBlockObj = getBlockTemplate("fit-container");
 			const parentBlock = block.getParentBlock();
@@ -229,7 +229,7 @@ const options: ContextMenuOption[] = [
 	},
 	{
 		name: "save-component",
-		label: __("Save As Component"),
+		label: __("Save as Component"),
 		action: ({ block }) => promptCreateComponent(block),
 		condition: ({ block }) => !block.isExtendedFromComponent(),
 		disabled: readOnly,

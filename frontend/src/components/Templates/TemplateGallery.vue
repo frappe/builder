@@ -19,7 +19,7 @@
 				</Button>
 				<div class="mb-2 flex flex-col gap-2">
 					<div class="flex items-center justify-between">
-						<h2 class="text-2xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
+						<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ heading }}</h2>
 						<Button
 							v-if="activeGroup"
 							variant="subtle"
@@ -52,8 +52,8 @@
 			<div v-else class="no-scrollbar flex-1 overflow-y-auto px-8 pb-8">
 				<div v-if="templateGroups.loading && !groups.length" class="grid gap-3 auto-fill-[190px]">
 					<div v-for="i in 6" :key="i" class="flex flex-col gap-2">
-						<div class="aspect-video w-full animate-pulse rounded-lg bg-surface-gray-2"></div>
-						<div class="h-3.5 w-2/3 animate-pulse rounded bg-surface-gray-2"></div>
+						<div class="aspect-video w-full animate-pulse rounded-6 bg-surface-gray-2"></div>
+						<div class="h-3.5 w-2/3 animate-pulse rounded-4 bg-surface-gray-2"></div>
 					</div>
 				</div>
 				<div v-else class="flex flex-col gap-5">
@@ -84,13 +84,15 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
-import { templateGroups, webPages } from "@/data/webPage";
+import builderProjectFolder from "@/data/builderProjectFolder";
+import { notifyPagesChanged } from "@/utils/pageActions";
+import { templateGroups } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { TemplateGroup, TemplatePageSummary } from "@/types/template";
 import { Button, createResource, toast } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, onMounted, ref, watch } from "vue";
 import BlankPageCard from "./BlankPageCard.vue";
 import TemplateGroupCard from "./TemplateGroupCard.vue";
@@ -183,6 +185,12 @@ const createBlankPage = (source: "gallery" | "template_group" = "gallery") => {
 	router.push({ name: "builder", params: { pageId: "new" } });
 };
 
+// from the editor a new page joins the open page's folder, from the dashboard the selected one
+const targetFolder = () =>
+	router.currentRoute.value.name === "builder"
+		? pageStore.activePage?.project_folder
+		: builderStore.activeFolder;
+
 const creatingPage = ref(false);
 const useTemplate = (page: TemplatePageSummary) => {
 	if (creatingPage.value) return;
@@ -192,7 +200,7 @@ const useTemplate = (page: TemplatePageSummary) => {
 	})
 		.submit({
 			template_page: page.name,
-			project_folder: builderStore.activeFolder || undefined,
+			project_folder: targetFolder() || undefined,
 		})
 		.then((newPageName: string) => {
 			capture("builder_page_template_used", {
@@ -222,21 +230,20 @@ const importAll = () => {
 	const promise = createResource({
 		url: "builder.api.import_template_group",
 	})
-		.submit({
-			template_group: activeGroup.value.name,
-			project_folder: builderStore.activeFolder || undefined,
-		})
-		.then((pageNames: string[]) => {
+		.submit({ template_group: activeGroup.value.name })
+		.then(({ folder, pages }: { folder: string; pages: string[] }) => {
 			capture("builder_template_group_imported", {
-				pages: pageNames,
+				pages,
 				template_group: activeGroup.value!.name,
-				page_count: pageNames.length,
+				page_count: pages.length,
 			});
 			showTemplatesDialog.value = false;
-			// land on the dashboard with the freshly imported pages so the user can
-			// pick which one to open (Import all creates several pages at once)
-			webPages.reload();
-			router.push({ name: "home" });
+			builderProjectFolder.reload();
+			notifyPagesChanged();
+			builderStore.activeFolder = folder;
+			builderStore.leftPanelActiveTab = "Layers";
+			router.push({ name: "builder", params: { pageId: pages[0] }, force: true });
+			pageStore.setPage(pages[0]);
 		});
 	toast.promise(promise, {
 		loading: __("Adding all pages..."),

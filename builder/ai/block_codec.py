@@ -8,7 +8,7 @@ from frappe import _
 
 from builder.utils import to_compact_yaml
 
-STANDARD_ATTRS = {"src", "alt", "href", "title", "value", "type", "placeholder"}
+STANDARD_ATTRS = {"src", "darkSrc", "alt", "href", "title", "value", "type", "placeholder"}
 
 
 class BlockCodec:

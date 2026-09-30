@@ -3,7 +3,8 @@
 `extract_component` promotes an already-designed block on the open page. No
 LLM call — the copy is pixel-exact, which is the point: shared chrome (header,
 footer, CTA banner) must be identical on every page, and after extraction it
-lives in ONE place every page embeds."""
+lives in ONE place every page embeds. `edit_component` changes that one place and
+syncs every page that embeds it."""
 
 import copy
 
@@ -56,8 +57,8 @@ def run_extract_component(ctx, args: dict) -> str:
 	return (
 		f"Extracted '{name}' as Builder Component {component_id}; the block is now an instance of it. "
 		f"Embed it on any page as a block {{el: div, component: {component_id}}} — its inner blocks are "
-		f"no longer page blocks, so later changes to it go through the component (edit the "
-		f"Builder Component doc), not block edits."
+		f"no longer page blocks, so later changes to it go through the component "
+		f"(edit_component), not block edits."
 	)
 
 
@@ -80,6 +81,96 @@ def create_component_doc(name: str, block: dict) -> str:
 		}
 	).insert(ignore_permissions=True)
 	return component_id
+
+
+EDIT_OPS = ("update_block", "update_blocks", "add_block", "remove_block", "move_block")
+
+
+def run_edit_component(ctx, args: dict) -> str:
+	"""Apply block ops to a Builder Component's own definition, save it and sync every page that embeds it."""
+	from builder.ai.agent.tree import ComponentTree
+
+	component_id = (args.get("component_id") or "").strip()
+	ops = [op for op in args.get("ops") or [] if isinstance(op, dict)]
+	if not component_id or not ops:
+		return "FAILED: pass component_id and at least one op."
+	if not frappe.db.exists("Builder Component", component_id):
+		return f"FAILED: Builder Component '{component_id}' not found. query_records('Builder Component') lists them."
+	component = frappe.get_doc("Builder Component", component_id)
+	if not component.has_permission("write"):
+		return "FAILED: you don't have permission to edit Builder Components."
+	tree = ComponentTree(frappe.parse_json(component.block or "{}"), component_id)
+	if not isinstance(tree.root, dict) or not tree.root:
+		return f"FAILED: component {component_id} has no readable block tree."
+	results = [apply_component_op(tree, op) for op in ops]
+	report = "\n".join(results)
+	if all("FAILED" in result for result in results):
+		return f"FAILED: nothing changed.\n{report}"
+	component.block = compact_json(tree.root)
+	component.save()
+	pages = component.sync_component()
+	refresh_open_page(ctx, pages)
+	return f"Saved component {component_id} and synced {len(pages)} page(s) that embed it, published ones included.\n{report}"
+
+
+def apply_component_op(tree, op: dict) -> str:
+	"""Run one {tool, args} op on the component tree, prefixing the result with the tool name."""
+	tool = op.get("tool")
+	if tool not in EDIT_OPS:
+		return f"{tool}: FAILED: not an edit op. Use one of {', '.join(EDIT_OPS)}."
+	return f"{tool}: {tree.apply(tool, op.get('args') or {})}"
+
+
+def refresh_open_page(ctx, synced_pages: list[str]) -> None:
+	"""The sync rewrote the open page in the database; point the working tree and canvas at it."""
+	from builder.ai.page_writer import load_page_root
+
+	page_id = getattr(ctx, "page_id", None)
+	if page_id in synced_pages and (root := load_page_root(page_id)):
+		ctx.queue_client_op({"tool_name": "set_page_blocks", "args": {"blocks": root}})
+
+
+edit_component_tool = Tool(
+	name="edit_component",
+	side="server",
+	description=(
+		"Change a Builder Component's OWN definition and sync it to every page that embeds it. This "
+		"is how shared chrome changes site-wide: rename or add a nav link, restyle the footer, declare "
+		"a new prop. Block edits on a page's child_of refs only override that one page. Refs here are "
+		"the component's internal refs: the `ref`s get_document('Builder Component', id) shows, which "
+		"are also the `of` values on a page's child_of refs. Each op is {tool, args}: tool is "
+		"update_block, update_blocks, add_block, remove_block or move_block, and args are that tool's "
+		"usual arguments. On the component root, update_block `props` declare the component's props "
+		"with their defaults, and client_script works on any block. Put every change to one component "
+		"in ONE call. Published pages that embed it update immediately."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"component_id": {
+				"type": "string",
+				"description": "The Builder Component's component_id.",
+			},
+			"ops": {
+				"type": "array",
+				"description": "Edits applied in order to the component's block tree.",
+				"items": {
+					"type": "object",
+					"properties": {
+						"tool": {"type": "string", "enum": list(EDIT_OPS)},
+						"args": {
+							"type": "object",
+							"description": "That tool's usual arguments, with refs from the component.",
+						},
+					},
+					"required": ["tool", "args"],
+				},
+			},
+		},
+		"required": ["component_id", "ops"],
+	},
+	handler=run_edit_component,
+)
 
 
 extract_component_tool = Tool(
@@ -109,4 +200,4 @@ extract_component_tool = Tool(
 	handler=run_extract_component,
 )
 
-TOOLS = [extract_component_tool]
+TOOLS = [extract_component_tool, edit_component_tool]

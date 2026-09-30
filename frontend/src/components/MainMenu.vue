@@ -1,5 +1,5 @@
 <template>
-	<Dropdown :options="mainMenuOptions" size="sm" placement="left" :offset="18">
+	<Dropdown :options="mainMenuOptions" size="sm" align="start" :offset="18">
 		<template v-slot="{ open }">
 			<div class="flex cursor-pointer items-center gap-2">
 				<img src="/builder_logo.png" alt="logo" class="h-7" />
@@ -21,6 +21,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { triggerCopyEvent } from "@/utils/helpers";
+import { deletePage } from "@/utils/pageActions";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
 import { useRouter } from "vue-router";
@@ -47,7 +48,7 @@ const mainMenuOptions = [
 	{
 		group: "Builder",
 		hideLabel: true,
-		items: [
+		options: [
 			{
 				label: __("Back to Dashboard"),
 				onClick: () => router.push({ name: "home" }),
@@ -58,7 +59,7 @@ const mainMenuOptions = [
 	{
 		group: "Page",
 		hideLabel: true,
-		items: [
+		options: [
 			{
 				label: __("New Page"),
 				onClick: () => (showTemplatesDialog.value = true),
@@ -78,10 +79,7 @@ const mainMenuOptions = [
 			{
 				label: __("Delete Page"),
 				onClick: () => {
-					if (!pageStore.activePage) return;
-					pageStore.deletePage(pageStore.activePage).then(() => {
-						router.push({ name: "home" });
-					});
+					if (pageStore.activePage) deletePage(pageStore.activePage);
 				},
 				icon: "lucide-trash-2",
 				condition: () => !Boolean(pageStore.activePage?.is_standard),
@@ -91,7 +89,7 @@ const mainMenuOptions = [
 	{
 		group: "Preferences",
 		hideLabel: true,
-		items: [
+		options: [
 			{
 				label: __("Toggle Theme"),
 				onClick: () => toggleDark(),

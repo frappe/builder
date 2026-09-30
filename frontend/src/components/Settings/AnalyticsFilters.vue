@@ -25,7 +25,7 @@ import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import { webPages } from "@/data/webPage";
 import { BuilderPage } from "@/types/doctypes";
 import { filterOptions } from "@/utils/autocompleteOptions";
-import { DateRangePicker, Select } from "frappe-ui";
+import { DateRangePicker, Select, type DateRangeValue } from "frappe-ui";
 import { computed } from "vue";
 
 interface SelectOption {
@@ -90,10 +90,13 @@ const modelRoute = computed({
 	get: () => props.route,
 	set: (val) => emit("update:route", val),
 });
-// DateRangePicker works with a [from, to] array; we persist it as a "from,to" string.
-const customDateRangeValue = computed<string[]>({
-	get: () => (props.customDateRange ? props.customDateRange.split(",") : []),
-	set: (val) => emit("update:customDateRange", (val ?? []).join(",")),
+// DateRangePicker works with a [from, to] tuple; we persist it as a "from,to" string.
+const customDateRangeValue = computed<DateRangeValue>({
+	get: (): DateRangeValue => {
+		const [from, to] = props.customDateRange?.split(",") ?? [];
+		return from && to ? [from, to] : [];
+	},
+	set: (val: DateRangeValue) => emit("update:customDateRange", val.join(",")),
 });
 
 const getRouteOptions = async (query: string) => {

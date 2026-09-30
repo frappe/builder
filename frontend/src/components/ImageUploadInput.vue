@@ -3,15 +3,19 @@
 		ref="fileUploaderRef"
 		@success="(file: FileDoc) => setImageURL(file.file_url)"
 		fileTypes="image/*"
-		:uploadArgs="{
-			private: false,
-			folder: 'Home/Builder Uploads',
-			upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-		}">
+		:private="false"
+		folder="Home/Builder Uploads"
+		uploadEndpoint="/api/method/builder.api.upload_builder_asset">
 		<template #default="{ openFileSelector }">
-			<Popover placement="left" class="!block w-full" :offset="popoverOffset">
-				<template #target="{ togglePopover }">
-					<div class="flex items-center justify-between">
+			<Popover
+				side="left"
+				align="center"
+				:offset="popoverOffset"
+				bare
+				:open="isOpen"
+				@update:open="onUpdateOpen">
+				<template #trigger>
+					<div class="flex w-full items-center justify-between" @click.capture="onAnchorClick">
 						<InputLabel v-if="label && labelPosition === 'left'" class="w-1/3 min-w-[88px] shrink-0">
 							{{ label }}
 						</InputLabel>
@@ -28,8 +32,8 @@
 									<img
 										:src="currentImageURL || '/assets/builder/images/fallback.png'"
 										alt=""
-										@click="togglePopover"
-										class="h-4 w-4 cursor-pointer rounded border border-outline-gray-3 shadow-sm"
+										@click="toggle"
+										class="h-4 w-4 cursor-pointer rounded-4 border border-outline-gray-3 shadow-sm"
 										:style="{
 											'object-fit': imageFit || 'contain',
 										}" />
@@ -45,14 +49,14 @@
 						</div>
 					</div>
 				</template>
-				<template #body>
-					<div class="w-64 rounded-lg bg-surface-base p-3 shadow-lg">
+				<template #default>
+					<div class="w-64 rounded-6 bg-surface-base p-3 shadow-lg">
 						<div v-if="objectPosition !== undefined" class="mb-3 flex items-center">
 							<span class="text-sm font-semibold text-ink-gray-9">{{ __("Image") }}</span>
 						</div>
 						<div v-if="objectPosition !== undefined" class="mb-3">
 							<TabButtons
-								:class="STRETCH_TABS"
+								fluid
 								:options="fitOptions"
 								:modelValue="imageFit || 'contain'"
 								@update:modelValue="setImageFit" />
@@ -71,10 +75,10 @@
 							@update:viewBox="(val) => emit('update:objectViewBox', val)" />
 						<div
 							v-else-if="objectPosition !== undefined"
-							class="flex h-24 items-center justify-center rounded border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
+							class="flex h-24 items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-p-xs text-ink-gray-4">
 							{{ __("No image") }}
 						</div>
-						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded">
+						<div v-else class="group relative flex items-center justify-center overflow-hidden rounded-4">
 							<img
 								:src="currentImageURL || '/assets/builder/images/fallback.png'"
 								alt=""
@@ -95,12 +99,12 @@
 							<Button
 								class="flex-1"
 								variant="outline"
-								iconLeft="upload"
+								iconLeft="lucide-upload"
 								:label="currentImageURL ? __('Replace') : __('Upload')"
 								@click="openFileSelector" />
 							<Button
 								variant="outline"
-								icon="rotate-ccw"
+								icon="lucide-rotate-ccw"
 								:title="__('Reset focal point')"
 								:disabled="!objectPosition && !objectViewBox"
 								@click="resetFocus" />
@@ -131,8 +135,8 @@ import ImageUploader from "@/components/Controls/ImageUploader.vue";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import useBuilderStore from "@/stores/builderStore";
-import { STRETCH_TABS } from "@/utils/tabButtons";
-import { FileUploader, Popover, TabButtons } from "frappe-ui";
+import { useAnchoredPopover } from "@/utils/useAnchoredPopover";
+import { FileUploader, Popover, TabButtons, type TabButtonValue } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -159,6 +163,7 @@ const props = withDefaults(
 );
 
 const builderStore = useBuilderStore();
+const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
 const fileUploaderRef = ref<{ inputRef: () => HTMLInputElement } | null>(null);
 
 watch(
@@ -195,7 +200,7 @@ const setImageURL = (fileURL: string) => {
 	emit("update:modelValue", fileURL);
 };
 
-const setImageFit = (fit: string) => {
+const setImageFit = (fit: TabButtonValue) => {
 	emit("update:imageFit", fit);
 };
 </script>

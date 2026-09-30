@@ -121,7 +121,7 @@ const props = withDefaults(
 		maxValue?: number | null;
 		component?: Component;
 		events?: Record<string, unknown>;
-		defaultValue?: string | number;
+		defaultValue?: string | number | boolean;
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";
 		variants?: Array<{ name: string; property: string; label: string }>;

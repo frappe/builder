@@ -119,7 +119,12 @@ def run_read_block(ctx, args: dict) -> str:
 	if block is None:
 		return f"No block found with ref {ref}."
 	detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-	return f"Block {ref} (full styles/attributes/children):\n{detail}"
+	result = f"Block {ref} (full styles/attributes/children):\n{detail}"
+	if args.get("show_image"):
+		from builder.ai.agent.tools.preview import attach_block_images
+
+		result += "\n" + attach_block_images(ctx, block)
+	return result
 
 
 read_block = Tool(
@@ -130,12 +135,18 @@ read_block = Tool(
 		"Return a block's FULL detail — its styles, attributes, text, and child subtree — "
 		"by ref. Use this on a large page (where the context is only an outline) before "
 		"editing a block whose current styles you need to see, or to match the styling of an "
-		"existing section."
+		"existing section. On an image block, set show_image to also SEE the picture and "
+		"its dark-mode version: do that before describing, judging, recreating or making a "
+		"variant of an existing image, never work from its file name alone."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
 			"block_id": {"type": "string", "description": "The ref of the block to inspect."},
+			"show_image": {
+				"type": "boolean",
+				"description": "For an image block: attach its picture (and dark-mode picture) for you to look at.",
+			},
 		},
 		"required": ["block_id"],
 	},

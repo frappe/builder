@@ -77,6 +77,7 @@ def run(
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
+	canvas_theme: str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
@@ -86,6 +87,7 @@ def run(
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
+	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
 
 	# Guard concurrency for an established session first — nothing may persist on the
 	# busy path. The worker takes the atomic run lock; this check just gives a fast
@@ -102,6 +104,8 @@ def run(
 	if session_id:
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
+		if canvas_theme:
+			msg_meta["canvasTheme"] = canvas_theme
 		if image_data:
 			msg_meta["attachedImageUrl"] = image_file_url or image_data
 		# A card-composed reply (option tap, form submit) shows as this compact line
@@ -139,6 +143,7 @@ def run(
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
 		image_file_url=image_file_url,
+		canvas_theme=canvas_theme,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
@@ -241,6 +246,7 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
+			canvas_theme=AISession.latest_canvas_theme(session_id),
 			enqueue_after_commit=True,
 		)
 		return True

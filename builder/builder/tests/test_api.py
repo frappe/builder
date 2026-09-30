@@ -6,7 +6,14 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
-from builder.api import import_remote_assets, import_remote_fonts
+from builder.api import (
+	create_import_folder,
+	duplicate_page,
+	import_remote_assets,
+	import_remote_fonts,
+	import_template_group,
+	insert_folder,
+)
 
 FONT = "https://cdn.example.com/inter.woff2"
 
@@ -173,3 +180,77 @@ class TestImportRemoteFonts(FrappeTestCase):
 			imported = import_remote_fonts(fonts)
 
 		self.assertEqual(len(imported), 2)
+
+
+class TestDuplicatePage(FrappeTestCase):
+	def test_duplicate_of_a_standard_page_is_a_plain_page(self):
+		# developer mode off so the standard page is not exported to disk
+		with patch.dict(frappe.conf, {"developer_mode": 0}):
+			page = frappe.get_doc(
+				{"doctype": "Builder Page", "page_title": "Standard", "is_standard": 1, "app": "builder"}
+			).insert()
+			duplicate = duplicate_page(page.name)
+
+		self.assertFalse(duplicate.is_standard)
+		self.assertFalse(duplicate.app)
+		self.assertEqual(duplicate.page_title, "Standard (Copy)")
+
+	def test_copies_of_copies_are_numbered(self):
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Numbered"}).insert()
+		first = duplicate_page(page.name)
+		second = duplicate_page(first.name)
+		third = duplicate_page(page.name)
+
+		self.assertEqual(first.page_title, "Numbered (Copy)")
+		self.assertEqual(second.page_title, "Numbered (Copy 2)")
+		self.assertEqual(third.page_title, "Numbered (Copy 3)")
+
+
+GROUP = {
+	"name": "zz-harbour",
+	"title": "Zz Harbour",
+	"pages": [{"name": "zz_harbour_home"}, {"name": "zz_harbour_rooms"}, {"name": "zz_harbour_guide"}],
+}
+ROUTES = {
+	"zz_harbour_home": "templates/zz-harbour/home",
+	"zz_harbour_rooms": "templates/zz-harbour/rooms",
+	"zz_harbour_guide": "templates/zz-harbour/guides/arrival",
+}
+
+
+def fake_hub_get(method, page=None):
+	return {"page": {"page_title": page, "route": ROUTES[page], "blocks": [{"element": "div"}]}}
+
+
+@patch("builder.api.hub_get", fake_hub_get)
+@patch("builder.api.get_template_groups", lambda: [GROUP])
+class TestImportTemplateGroup(FrappeTestCase):
+	# each test counts folders and prefixes from scratch
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def import_routes(self):
+		result = import_template_group("zz-harbour")
+		routes = frappe.get_all("Builder Page", {"name": ["in", result["pages"]]}, pluck="route")
+		return result["folder"], sorted(routes)
+
+	def test_imports_into_a_new_folder_under_one_route_prefix(self):
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour")
+		self.assertEqual(routes, ["zz-harbour/guides/arrival", "zz-harbour/home", "zz-harbour/rooms"])
+
+	def test_a_repeat_import_takes_the_next_folder_and_prefix(self):
+		self.import_routes()
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour 2")
+		self.assertTrue(all(route.startswith("zz-harbour-2/") for route in routes))
+
+	def test_a_taken_folder_name_is_skipped_and_the_transaction_survives(self):
+		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": "Zz Harbour"}).insert()
+		self.assertFalse(insert_folder("Zz Harbour"))
+		self.assertEqual(create_import_folder("Zz Harbour", "zz-harbour"), ("Zz Harbour 2", "zz-harbour-2"))
+
+	def test_a_group_with_no_fetchable_pages_creates_no_folder(self):
+		with patch("builder.api.hub_get", lambda method, page=None: None):
+			self.assertRaises(frappe.ValidationError, import_template_group, "zz-harbour")
+		self.assertFalse(frappe.db.exists("Builder Project Folder", "Zz Harbour"))

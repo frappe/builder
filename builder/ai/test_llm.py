@@ -1,12 +1,14 @@
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.llm import (
+	GENERIC_FAILURE,
 	is_retryable,
 	loads_tolerant,
 	patch_messages_for_provider,
 	patch_params_for_provider,
 	provider_kwargs,
 	provider_overrides,
+	user_facing_error,
 )
 
 CLAUDE = "openrouter/anthropic/claude-sonnet-5"
@@ -29,6 +31,33 @@ class TestRetryable(FrappeTestCase):
 
 	def test_a_value_error_is_not(self):
 		self.assertFalse(is_retryable(ValueError("bad args")))
+
+
+class AuthenticationError(Exception):
+	pass
+
+
+class TestUserFacingError(FrappeTestCase):
+	def test_a_rejected_key_says_where_to_fix_it(self):
+		message = user_facing_error(AuthenticationError("Missing Authentication header sk-or-secret"))
+
+		self.assertIn("API key", message)
+		self.assertNotIn("sk-or-secret", message)
+
+	def test_a_subclass_maps_like_its_parent(self):
+		class ProviderAuthError(AuthenticationError):
+			pass
+
+		self.assertIn("API key", user_facing_error(ProviderAuthError()))
+
+	def test_a_chatgpt_sign_in_problem_asks_to_sign_in_again(self):
+		from builder.ai.codex import CodexCredentialError, CodexError
+
+		self.assertIn("Sign in with ChatGPT", user_facing_error(CodexCredentialError("expired")))
+		self.assertEqual(user_facing_error(CodexError("stream failed")), GENERIC_FAILURE)
+
+	def test_anything_else_stays_generic(self):
+		self.assertEqual(user_facing_error(ValueError("internal detail")), GENERIC_FAILURE)
 
 
 class TestLoadsTolerant(FrappeTestCase):

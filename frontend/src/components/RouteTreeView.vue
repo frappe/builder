@@ -36,7 +36,11 @@
 					class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-gray-7"
 					@click="loadMore('__root__', rootLoadMore.loadedCount)">
 					<span class="lucide-more-horizontal size-3" aria-hidden="true" />
-					{{ __("Load {0} more", [Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount)]) }}
+					{{
+						__("Load {0} more", [
+							Math.min(PAGE_LIMIT_PER_NODE, rootLoadMore.totalCount - rootLoadMore.loadedCount),
+						])
+					}}
 					<span class="ml-0.5 text-ink-gray-3">
 						{{ __("({0} remaining)", [rootLoadMore.totalCount - rootLoadMore.loadedCount]) }}
 					</span>
@@ -52,7 +56,7 @@ import { __ } from "@/translation";
 import RouteTreeNode from "@/components/RouteTreeNode.vue";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderPage } from "@/types/doctypes";
-import { createListResource, useShortcut } from "frappe-ui";
+import { createListResource, useKeyboardShortcut } from "frappe-ui";
 import { computed, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 
@@ -100,7 +104,17 @@ type TrieNode = {
 const pagesResource = createListResource({
 	method: "GET",
 	doctype: "Builder Page",
-	fields: ["name", "route", "page_name", "page_title", "published", "authenticated_access", "project_folder"],
+	fields: [
+		"name",
+		"route",
+		"page_name",
+		"page_title",
+		"published",
+		"staging",
+		"authenticated_access",
+		"project_folder",
+		"modified",
+	],
 	filters: { is_template: 0 },
 	orderBy: "route asc",
 	pageLength: 9999,
@@ -329,32 +343,32 @@ function focusNode(idx: number, nodes: Node[]) {
 
 const treeActive = () => regularNodes().length > 0;
 
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: "ArrowDown",
-		description: __("Move down in page tree"),
+		combo: "ArrowDown",
+		description: __("Move Down in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(idx === -1 ? 0 : idx + 1, nodes);
 		},
 	},
 	{
-		key: "ArrowUp",
-		description: __("Move up in page tree"),
+		combo: "ArrowUp",
+		description: __("Move Up in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			focusNode(Math.max(0, idx - 1), nodes);
 		},
 	},
 	{
-		key: "ArrowRight",
-		description: __("Expand node or move down in page tree"),
+		combo: "ArrowRight",
+		description: __("Expand Node or Move Down in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -370,10 +384,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "ArrowLeft",
-		description: __("Collapse node or move up in page tree"),
+		combo: "ArrowLeft",
+		description: __("Collapse Node or Move Up in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];
@@ -386,10 +400,10 @@ useShortcut([
 		},
 	},
 	{
-		key: "Enter",
-		description: __("Open page or toggle folder in page tree"),
+		combo: "Enter",
+		description: __("Open Page or Toggle Folder in Page Tree"),
 		group: __("Page Tree"),
-		condition: treeActive,
+		enabled: treeActive,
 		handler: () => {
 			const { nodes, idx } = currentNodes();
 			const node = nodes[idx];

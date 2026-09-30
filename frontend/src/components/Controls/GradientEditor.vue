@@ -1,5 +1,5 @@
 <template>
-	<div class="select-none space-y-4">
+	<div class="select-none space-y-3">
 		<!-- Type & Angle -->
 		<div class="flex items-center gap-3">
 			<TabButtons
@@ -9,13 +9,14 @@
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
-				:class="['flex-1', STRETCH_TABS]" />
+				fluid
+				class="flex-1" />
 		</div>
 
 		<div class="flex items-center gap-4">
 			<!-- Gradient Preview / Stop Bar -->
 			<div
-				class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
+				class="shadow-inner relative h-5 w-full rounded-4 border border-outline-gray-2"
 				:style="barPreviewStyle"
 				ref="barRef">
 				<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
@@ -25,18 +26,20 @@
 					class="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
 					:style="{ left: stop.position + '%' }">
 					<Popover
-						placement="top"
+						side="top"
+						align="center"
 						:offset="10"
-						@update:open="(open: boolean) => handleStopPopoverToggle(open, index)">
-						<template #target="{ togglePopover }">
+						bare
+						:open="openStop === index"
+						@update:open="(open: boolean) => setStopOpen(index, open)">
+						<template #trigger>
 							<div
 								class="size-4 cursor-pointer rounded-full border-2 border-white shadow-md ring-1 ring-black/20 transition-transform hover:scale-110 focus:outline-none"
 								:style="{ backgroundColor: stop.color }"
-								@mousedown="handleStopMouseDown(index, $event)"
-								@click="(e) => !hasMoved && togglePopover()" />
+								@mousedown="handleStopMouseDown(index, $event)" />
 						</template>
-						<template #body="{ close }">
-							<div class="w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+						<template #default="{ close }">
+							<div class="w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
 									:ref="(el) => (stopPickerRefs[index] = el)"
 									renderMode="inline"
@@ -81,11 +84,11 @@
 		</div>
 
 		<!-- Recently used gradients, falling back to the built-in presets -->
-		<div class="flex flex-wrap gap-2">
+		<div class="flex flex-wrap gap-1.5">
 			<div
 				v-for="swatch in gradientSwatches"
 				:key="swatch.gradient"
-				class="size-6 cursor-pointer rounded-full border border-outline-gray-2 shadow-sm transition-colors hover:border-outline-gray-4"
+				class="size-5 cursor-pointer rounded-full shadow-sm"
 				:style="{ background: swatch.gradient }"
 				@click="applyPreset(swatch.gradient)"
 				:title="swatch.name" />
@@ -97,7 +100,6 @@
 import { __ } from "@/translation";
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
 import { useMouseInElement, useMousePressed, useStorage } from "@vueuse/core";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { Popover, TabButtons } from "frappe-ui";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";
@@ -118,8 +120,17 @@ const hasMoved = ref(false);
 // the same way BackgroundHandler does for the background picker
 const stopPickerRefs: Record<number, any> = {};
 
-const handleStopPopoverToggle = (open: boolean, index: number) => {
-	if (!open) stopPickerRefs[index]?.commitRecentColor();
+const openStop = ref<number | null>(null);
+
+// a drag ends with a click on the handle; that click must not open the picker
+const setStopOpen = (index: number, open: boolean) => {
+	if (open && hasMoved.value) return;
+	if (open) {
+		openStop.value = index;
+		return;
+	}
+	if (openStop.value === index) openStop.value = null;
+	stopPickerRefs[index]?.commitRecentColor();
 };
 
 const { elementX } = useMouseInElement(barRef);

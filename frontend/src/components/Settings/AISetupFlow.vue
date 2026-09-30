@@ -17,7 +17,7 @@
 					Builder needs somewhere to send its requests. Pick who you already have an account with.
 				</p>
 			</div>
-			<div v-if="loadError" class="rounded-lg bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
+			<div v-if="loadError" class="rounded-6 bg-surface-red-1 p-3 text-p-sm text-ink-red-6">
 				{{ loadError }}
 			</div>
 			<p v-else-if="loading" class="text-p-sm text-ink-gray-5">Loading providers…</p>
@@ -29,7 +29,7 @@
 				<button
 					v-for="preset in presets"
 					:key="preset.id"
-					class="group flex flex-col gap-1 rounded-lg border p-3.5 text-left transition-colors"
+					class="group flex flex-col gap-1 rounded-6 border p-3.5 text-left transition-colors"
 					:class="
 						preset.configured
 							? 'border-outline-gray-2 bg-surface-gray-1 hover:border-outline-gray-3'
@@ -168,7 +168,7 @@
 				<div
 					v-for="m in active.models"
 					:key="m.model_id"
-					class="ai-model-row cursor-pointer rounded-lg border p-3 transition-colors"
+					class="ai-model-row cursor-pointer rounded-6 border p-3 transition-colors"
 					:class="
 						selected.includes(m.model_id)
 							? 'border-outline-gray-4 bg-surface-gray-2'

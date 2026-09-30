@@ -1,4 +1,5 @@
 <template>
+	<PagesSection v-if="canvasStore.editingMode === 'page' && pageStore.activePage?.project_folder" />
 	<div class="min-h-full p-3 pr-0" @click.stop="canvasStore.activeCanvas?.clearSelection()">
 		<span class="flex items-center gap-2 pb-2 text-sm capitalize text-ink-gray-4">
 			<span
@@ -33,13 +34,17 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import BlockLayers from "@/components/BlockLayers.vue";
+import PagesSection from "@/components/LeftPanelTabs/PagesSection.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import usePageStore from "@/stores/pageStore";
 import { inject, nextTick, Ref, ref, watch, watchEffect } from "vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
+// unfiled pages have no folder to list, so they show only the layers
+const pageStore = usePageStore();
 
 const pageLayers = ref<InstanceType<typeof BlockLayers> | null>(null);
 const componentLayers = ref<InstanceType<typeof BlockLayers> | null>(null);

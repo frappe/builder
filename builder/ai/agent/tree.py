@@ -104,6 +104,9 @@ def merge_attributes(block: dict, attrs: dict) -> None:
 	# Same standard/custom split the editor applies (toolDispatch.applyBlockUpdate).
 	for key, value in attrs.items():
 		target = "attributes" if key in STANDARD_ATTRS else "customAttributes"
+		if target == "attributes":
+			# An older write may have filed it as custom, where it would shadow this one.
+			block.get("customAttributes", {}).pop(key, None)
 		if value is None:
 			block.get(target, {}).pop(key, None)
 		else:
@@ -390,7 +393,7 @@ class WorkingTree:
 			return args, f"FAILED: {bad} — {BAD_BIND_HINT}"
 		if fields := moustache_fields(args):
 			return args, f"FAILED: {fields} — {MOUSTACHE_HINT}"
-		if client_script_outside_component(block, args):
+		if self.rejects_client_script(block, args):
 			return args, f"FAILED: {CLIENT_SCRIPT_HINT}"
 		return self.route_props(block, args)
 
@@ -420,11 +423,14 @@ class WorkingTree:
 			declared = ", ".join(sorted(set(pinned) | set(live)))
 			return args, (
 				f"FAILED: props {unknown} — this component declares only: {declared}. Use a "
-				"declared name; a genuinely new prop is added by editing the component itself, "
-				"not through an instance."
+				"declared name; a genuinely new prop is declared with edit_component (props on "
+				"the component's root), not through an instance."
 			)
 		merge_props(owner, props, pinned=pinned, live=live)
 		return {k: v for k, v in args.items() if k != "props"}, ""
+
+	def rejects_client_script(self, block: dict, args: dict) -> bool:
+		return client_script_outside_component(block, args)
 
 	def props_owner(self, block: dict) -> dict | None:
 		"""The instance root a prop write belongs to: the block itself, or the nearest
@@ -516,3 +522,54 @@ class WorkingTree:
 		# chain edits onto the block it just added.
 		args["block_json"] = block
 		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
+
+
+class ComponentTree(WorkingTree):
+	"""A Builder Component's own definition. Every block in it belongs to the
+	component, so client scripts land on any block and props on the root are the
+	component's declarations, not an instance's values."""
+
+	def __init__(self, root: dict | None, component_id: str):
+		super().__init__(root)
+		self.component_id = component_id
+
+	def rejects_client_script(self, block: dict, args: dict) -> bool:
+		return False
+
+	def route_props(self, block: dict, args: dict) -> tuple[dict, str]:
+		if block is not self.root or not isinstance(args.get("props"), dict):
+			return super().route_props(block, args)
+		merge_props(block, args["props"], pinned={})
+		return {k: v for k, v in args.items() if k != "props"}, ""
+
+	def apply_remove(self, block_id: str | None) -> str:
+		if self.root and block_id == self.root.get("blockId"):
+			return "FAILED: can't remove the component's root block. Remove or edit its children instead."
+		return super().apply_remove(block_id)
+
+	def apply_add(self, args: dict) -> str:
+		added = re.findall(r'"component": "([^"]+)"', json_dumps_safe(args.get("block")))
+		if any(component_embeds(component, self.component_id) for component in added):
+			return "FAILED: that would nest the component inside itself, which renders forever."
+		return super().apply_add(args)
+
+
+def component_embeds(component_id: str, target: str, seen: set | None = None) -> bool:
+	"""True when component_id is target or nests it at any depth."""
+	import frappe
+
+	if component_id == target:
+		return True
+	seen = set() if seen is None else seen
+	if component_id in seen:
+		return False
+	seen.add(component_id)
+	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component_id, "block") or "{}")
+	if not isinstance(definition, dict):
+		return False
+	nested = {
+		block["extendedFromComponent"]
+		for block, _ in walk_blocks(definition)
+		if block.get("extendedFromComponent")
+	}
+	return any(component_embeds(child, target, seen) for child in nested)

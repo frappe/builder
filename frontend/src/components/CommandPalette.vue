@@ -1,9 +1,9 @@
 <template>
 	<DialogRoot :open="show" @update:open="onOpenChange">
 		<DialogPortal>
-			<DialogOverlay class="fixed inset-0 z-[100] bg-black/30 backdrop-blur-[2px] dark:bg-black/60" />
+			<DialogOverlay class="fixed inset-0 z-[100] bg-black-overlay-200 dark:bg-black-overlay-700" />
 			<DialogContent
-				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-md bg-surface-base shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
+				class="fixed left-1/2 top-[10%] z-[100] w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-5 bg-surface-base shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06] focus-visible:outline-none dark:ring-white/[0.08]"
 				@open-auto-focus.prevent
 				@escape-key-down.prevent="onEscapeKey">
 				<DialogTitle class="sr-only">{{ __("Command Palette") }}</DialogTitle>
@@ -29,7 +29,7 @@
 						spellcheck="false"
 						@keydown="handleKeydown" />
 					<kbd
-						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
+						class="text-xs-medium mr-1.5 flex shrink-0 items-center gap-0.5 rounded-4 border border-outline-gray-2 px-1.5 py-1 text-ink-gray-4"
 						:title="__('Close')">
 						esc
 					</kbd>
@@ -82,17 +82,17 @@
 				<div class="flex items-center gap-4 border-t border-outline-gray-1 px-4 py-2.5">
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
 						<span class="flex gap-1">
-							<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+							<kbd class="rounded-4 border border-outline-gray-2 p-0.5 text-[11px] font-medium">
 								<span class="lucide-arrow-up size-3" />
 							</kbd>
-							<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+							<kbd class="rounded-4 border border-outline-gray-2 p-0.5 text-[11px] font-medium">
 								<span class="lucide-arrow-down size-3" />
 							</kbd>
 						</span>
 						{{ __("Navigate") }}
 					</span>
 					<span class="flex items-center gap-1.5 text-xs text-ink-gray-4">
-						<kbd class="rounded border border-outline-gray-2 p-0.5 text-[11px] font-medium">
+						<kbd class="rounded-4 border border-outline-gray-2 p-0.5 text-[11px] font-medium">
 							<span class="lucide-corner-down-left size-3" />
 						</kbd>
 						{{ __("Select") }}

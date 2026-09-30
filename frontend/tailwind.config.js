@@ -1,5 +1,5 @@
 import colors from "tailwindcss/colors";
-import frappeUIPreset from "frappe-ui/tailwind";
+import frappeUIPreset, { content as frappeUIContent } from "frappe-ui/tailwind";
 import plugin from "tailwindcss/plugin";
 
 export default {
@@ -7,8 +7,10 @@ export default {
 	content: [
 		"./index.html",
 		"./src/**/*.{vue,js,ts,jsx,tsx}",
-		"./node_modules/frappe-ui/src/components/**/*.{vue,js,ts,jsx,tsx}",
-		"../node_modules/frappe-ui/src/components/**/*.{vue,js,ts,jsx,tsx}",
+		// tracks the library's own source dirs, including the experimental subpath
+		...frappeUIContent,
+		// @framework/ui ships raw source too, compiled by this app's bundler
+		"../../frappe/ui/src/**/*.{vue,js,ts,jsx,tsx}",
 	],
 	plugins: [
 		plugin(function ({ matchUtilities, theme }) {
