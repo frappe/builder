@@ -179,10 +179,6 @@ const detachPreview = () => {
 // a preview opened by its own link has no editor behind it, so the back button
 // offers to edit the page instead of going back to it
 const cameFromEditor = ref(false);
-const isOpenedFromEditor = () => {
-	const previousPath = window.history.state?.back;
-	return typeof previousPath === "string" && router.resolve(previousPath).name === "builder";
-};
 
 // a detached preview keeps its editor one tab away, which is also a way back
 const hasEditorTab = ref(false);
@@ -368,7 +364,9 @@ onDeactivated(() => {
 
 onActivated(() => {
 	const pageId = route.params.pageId as string;
-	cameFromEditor.value = isOpenedFromEditor();
+	const previousPath = window.history.state?.back;
+
+	cameFromEditor.value = typeof previousPath === "string" && router.resolve(previousPath).name === "builder";
 	hasEditorTab.value = Boolean(pageStore.getEditorTab());
 	isFullscreen.value = cameFromEditor.value ? false : lastFullscreen.value;
 	// a detached or bookmarked preview boots straight into this route, with no
@@ -377,6 +375,7 @@ onActivated(() => {
 		pageStore.loadRouteVariables(pageId);
 		pageStore.setActivePage(pageId);
 	}
+	
 	builderStore.realtime.doc_subscribe("Builder Page", pageId);
 	builderStore.realtime.on("doc_update", reloadOnPageSave);
 	setPreviewURL();
