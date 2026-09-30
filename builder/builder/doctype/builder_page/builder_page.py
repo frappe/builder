@@ -19,6 +19,7 @@ from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
+from werkzeug.routing import Map
 
 from builder.builder.component_versions import (
 	collect_restore_warnings,
@@ -81,8 +82,8 @@ class BuilderPageRenderer(DocumentPage):
 					self.docname = d.name
 					self.validate_access()
 					return True
-			except ValueError:
-				return False
+			except (ValueError, LookupError):
+				continue
 
 		return False
 
@@ -224,6 +225,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
+		self.validate_route_variables()
 
 		# pages of shipped template groups can only be edited in developer mode
 		if (
@@ -235,6 +237,18 @@ class BuilderPage(WebsiteGenerator):
 			frappe.throw(
 				frappe._("Template pages can only be modified in developer mode."),
 				frappe.PermissionError,
+			)
+
+	def validate_route_variables(self):
+		if not self.route or not (":" in self.route or "<" in self.route):
+			return
+		try:
+			Map([ColonRule(f"/{self.route}", endpoint=self.name)])
+		except (ValueError, LookupError):
+			frappe.throw(
+				frappe._(
+					"Route variables can only use letters, numbers and underscores, like :slug or <slug>"
+				)
 			)
 
 	def on_update(self):
@@ -595,7 +609,8 @@ class BuilderPage(WebsiteGenerator):
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
-		context.page_data = clean_data(context.page_data)
+		# tojson can't serialize dates or decimals; frappe's encoder can
+		context.page_data = frappe.parse_json(frappe.as_json(clean_data(context.page_data)))
 		context["__content"] = render_template(context.__content, context)
 
 	def set_meta_tags(self, context, page_data=None):
@@ -1973,9 +1988,11 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 			return str(value)
 		case "number":
 			try:
-				return float(value)
+				number = float(value)
 			except (ValueError, TypeError):
 				return None
+			# past 2**53 floats aren't exact, so an int would print digits the value doesn't have
+			return int(number) if number.is_integer() and abs(number) < 2**53 else number
 		case "boolean":
 			if isinstance(value, bool):
 				return value

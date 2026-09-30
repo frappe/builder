@@ -5,6 +5,7 @@
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
@@ -251,6 +252,57 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			live.delete()
 			staging.delete()
+
+	def test_number_props_keep_whole_numbers_whole(self):
+		from builder.builder.doctype.builder_page.builder_page import parse_static_value
+
+		self.assertEqual(parse_static_value("29", "number"), 29)
+		self.assertIsInstance(parse_static_value(29.0, "number"), int)
+		self.assertEqual(parse_static_value("2.5", "number"), 2.5)
+		self.assertEqual(parse_static_value("1e23", "number"), 1e23)
+		self.assertIsNone(parse_static_value("abc", "number"))
+
+	def test_route_variables_must_be_identifiers(self):
+		for route in ("test-bad-route/:my-slug", "test-bad-route/<foo:slug>"):
+			self.assertRaises(frappe.ValidationError, insert_page, route, "Bad Route")
+
+	def test_a_malformed_dynamic_route_does_not_hide_other_dynamic_pages(self):
+		valid = insert_page("test-valid-dynamic/:slug", "Valid Dynamic Content")
+		malformed = insert_page("test-malformed-dynamic", "Malformed")
+		try:
+			valid.publish()
+			malformed.publish()
+			# a route saved before validation existed
+			malformed.db_set({"route": "test-malformed-dynamic/:my-slug", "dynamic_route": 1})
+			malformed.clear_route_cache()
+			set_request(method="GET", path="/test-valid-dynamic/any")
+			self.assertIn("Valid Dynamic Content", get_response_content("/test-valid-dynamic/any"))
+		finally:
+			valid.delete()
+			malformed.delete()
+
+	def test_page_data_for_scripts_can_hold_dates_and_decimals(self):
+		from datetime import date, datetime
+		from decimal import Decimal
+		from unittest.mock import patch
+
+		page = insert_page("test-page-data-dates", "Dates")
+		page_data = {
+			"page_data": {
+				"at": datetime(2026, 1, 2, 3, 4, 5),
+				"on": date(2026, 1, 2),
+				"price": Decimal("9.5"),
+			}
+		}
+		try:
+			page.publish()
+			with patch.object(type(page), "_get_page_data", return_value=frappe._dict(page_data)):
+				content = get_response_content("/test-page-data-dates")
+			self.assertIn('"at": "2026-01-02 03:04:05"', content)
+			self.assertIn('"on": "2026-01-02"', content)
+			self.assertIn('"price": 9.5', content)
+		finally:
+			page.delete()
 
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
@@ -1488,9 +1540,7 @@ component.update({
 				"Default Header Title",
 				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
-				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
-			)
+			self.assertEqual("25", get_html_for(content_with_default_values, "tag", "h4", only_content=True))
 			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
 
 			self.assertEqual(
@@ -1498,7 +1548,7 @@ component.update({
 				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
 			)
 			self.assertEqual(
-				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
+				"29", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
 			)
 			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
 		finally:
