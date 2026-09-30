@@ -262,7 +262,8 @@ onActivated(async () => {
 	});
 	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
 	builderStore.realtime.doc_open("Builder Page", route.params.pageId as string);
-	if (route.params.pageId === pageStore.selectedPage) {
+	// a preview selects its page without loading the canvas, so a selected page can still have none
+	if (route.params.pageId === pageStore.selectedPage && pageStore.pageBlocks.length) {
 		return;
 	}
 	if (!webPages.data) {
