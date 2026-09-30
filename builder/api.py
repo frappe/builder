@@ -600,33 +600,42 @@ def import_template_group(template_group: str) -> dict:
 	if not pages:
 		frappe.throw(frappe._("No pages found in this template group."))
 
-	slug = frappe.scrub(template_group).replace("_", "-")
-	folder, prefix = create_import_folder(group.get("title") or template_group, slug)
-	created = import_group_pages(pages, template_group, folder, prefix)
-	if not created:
+	# fetch before creating the folder, so its row lock isn't held across hub requests
+	bundles = fetch_group_bundles(pages)
+	if not bundles:
 		frappe.throw(frappe._("Could not import any pages from this template group."))
 
-	return {"folder": folder, "pages": created}
+	slug = frappe.scrub(template_group).replace("_", "-")
+	folder, prefix = create_import_folder(group.get("title") or template_group, slug)
+	return {"folder": folder, "pages": import_group_pages(bundles, template_group, folder, prefix)}
 
 
-def import_group_pages(pages: list[dict], template_group: str, folder: str, prefix: str) -> list[str]:
+def import_group_pages(
+	bundles: list[tuple[str, dict]], template_group: str, folder: str, prefix: str
+) -> list[str]:
 	created = []
+	for name, bundle in bundles:
+		route = f"{prefix}/{template_path(bundle, name, template_group)}"
+		created.append(create_page_from_bundle(bundle, folder, name, route))
+	return created
+
+
+def fetch_group_bundles(pages: list[dict]) -> list[tuple[str, dict]]:
+	bundles = []
 	for page in pages:
 		try:
 			bundle = hub_get("get_template_bundle", page=page.get("name"))
 		except Exception:
 			frappe.log_error(f"Failed to fetch template bundle for {page.get('name')}")
 			continue
-		if not bundle or not bundle.get("page"):
-			continue
-		path = template_path(bundle["page"].get("route") or page.get("name"), template_group)
-		created.append(create_page_from_bundle(bundle, folder, page.get("name"), f"{prefix}/{path}"))
-	return created
+		if bundle and bundle.get("page"):
+			bundles.append((page.get("name"), bundle))
+	return bundles
 
 
-def template_path(route: str, template_group: str) -> str:
+def template_path(bundle: dict, template_page: str, template_group: str) -> str:
 	"""The route below the hub's templates/<group>/, so nested template pages keep distinct paths."""
-	route = route.strip("/")
+	route = (bundle["page"].get("route") or template_page).strip("/")
 	hub_prefix = f"templates/{template_group}/"
 	return route.removeprefix(hub_prefix) if route.startswith(hub_prefix) else route.rsplit("/", 1)[-1]
 

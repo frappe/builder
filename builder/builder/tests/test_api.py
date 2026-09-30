@@ -249,3 +249,8 @@ class TestImportTemplateGroup(FrappeTestCase):
 		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": "Zz Harbour"}).insert()
 		self.assertFalse(insert_folder("Zz Harbour"))
 		self.assertEqual(create_import_folder("Zz Harbour", "zz-harbour"), ("Zz Harbour 2", "zz-harbour-2"))
+
+	def test_a_group_with_no_fetchable_pages_creates_no_folder(self):
+		with patch("builder.api.hub_get", lambda method, page=None: None):
+			self.assertRaises(frappe.ValidationError, import_template_group, "zz-harbour")
+		self.assertFalse(frappe.db.exists("Builder Project Folder", "Zz Harbour"))
