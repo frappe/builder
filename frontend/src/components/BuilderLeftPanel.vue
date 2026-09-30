@@ -39,12 +39,16 @@
 			</template>
 		</div>
 
-		<TokenManager v-model="builderStore.showTokenManager" :container="miniSidebar" />
+		<TokenManager
+			v-model="builderStore.showTokenManager"
+			:container="miniSidebar"
+			:readonly="Boolean(editorDemo)" />
 	</div>
 </template>
 <script setup lang="ts">
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
 import TokenManager from "@/components/Modals/TokenManager.vue";
+import { editorDemo } from "@/utils/editorDemo";
 import useBuilderStore from "@/stores/builderStore";
 import { KeyboardShortcut, Tooltip, useKeyboardShortcut } from "frappe-ui";
 import { reactive, Ref, ref, watch, watchEffect } from "vue";

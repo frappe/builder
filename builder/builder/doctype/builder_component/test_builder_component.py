@@ -5,6 +5,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.component_versions import ensure_component_version, resolve_component
+from builder.builder.doctype.builder_component.builder_component import get_component_data
 
 
 def header_block(title: str) -> str:
@@ -67,3 +68,13 @@ class TestBuilderComponent(FrappeTestCase):
 		self.assertEqual(
 			frappe.db.get_value("Builder Component", component.name, "block"), header_block("Three")
 		)
+
+	def test_a_page_using_a_data_script_is_not_served_from_the_page_cache(self):
+		component = make_component("Data")
+		component.db_set("component_data_script", "component.count = 1")
+		frappe.local.no_cache = 0
+		self.addCleanup(setattr, frappe.local, "no_cache", 0)
+
+		get_component_data(component.name)
+
+		self.assertTrue(frappe.local.no_cache)

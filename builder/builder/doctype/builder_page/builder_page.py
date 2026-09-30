@@ -19,6 +19,7 @@ from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
+from werkzeug.routing import Map
 
 from builder.builder.component_versions import (
 	collect_restore_warnings,
@@ -33,6 +34,7 @@ from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 	take_snapshot,
 )
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
+from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
@@ -80,8 +82,8 @@ class BuilderPageRenderer(DocumentPage):
 					self.docname = d.name
 					self.validate_access()
 					return True
-			except ValueError:
-				return False
+			except (ValueError, LookupError):
+				continue
 
 		return False
 
@@ -223,6 +225,7 @@ class BuilderPage(WebsiteGenerator):
 
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
+		self.validate_route_variables()
 
 		# pages of shipped template groups can only be edited in developer mode
 		if (
@@ -234,6 +237,18 @@ class BuilderPage(WebsiteGenerator):
 			frappe.throw(
 				frappe._("Template pages can only be modified in developer mode."),
 				frappe.PermissionError,
+			)
+
+	def validate_route_variables(self):
+		if not self.route or not (":" in self.route or "<" in self.route):
+			return
+		try:
+			Map([ColonRule(f"/{self.route}", endpoint=self.name)])
+		except (ValueError, LookupError):
+			frappe.throw(
+				frappe._(
+					"Route variables can only use letters, numbers and underscores, like :slug or <slug>"
+				)
 			)
 
 	def on_update(self):
@@ -577,6 +592,11 @@ class BuilderPage(WebsiteGenerator):
 			context.editor_link += f"?{query_string}"
 
 		context.page_name = self.name
+		if is_demo_page(self.name) and not context.preview:
+			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
+			# the file is served immutable for a year, so a build has to change its URL
+			version = frappe.utils.get_build_version()
+			context.editor_demo_script = f"/assets/builder/js/editor_demo.js?v={version}"
 		if context.preview:
 			if self.dynamic_route and hasattr(frappe.local, "request"):
 				context.base_url = frappe.utils.get_url(frappe.local.request.path or self.route)
@@ -589,7 +609,8 @@ class BuilderPage(WebsiteGenerator):
 		self.set_meta_tags(context=context, page_data=page_data)
 		self.set_favicon(context)
 		self.set_language(context)
-		context.page_data = clean_data(context.page_data)
+		# tojson can't serialize dates or decimals; frappe's encoder can
+		context.page_data = frappe.parse_json(frappe.as_json(clean_data(context.page_data)))
 		context["__content"] = render_template(context.__content, context)
 
 	def set_meta_tags(self, context, page_data=None):
@@ -998,23 +1019,28 @@ def interpret_prop_value(prop_config: dict, data_key: dict | None) -> Any:
 	return value if not is_empty else "undefined"
 
 
+def get_binding_key(key: str, comes_from: str, data_key: dict | None, missing: str = "{}") -> str:
+	"""Jinja expression for a bound key that survives a missing root."""
+	if comes_from == "props":
+		return jinja_safe_key(f"props.{key}", missing)
+	if comes_from == "componentData":
+		return jinja_safe_key(f"component.{key}", missing)
+	if data_key:
+		return jinja_safe_key(f"{extract_data_key(data_key)}.{key}", missing)
+	# a flat key keeps 0 and "" as-is; only a dotted path raises when its root is undefined
+	if is_safe_data_key(key) and "." not in key:
+		return key
+	return jinja_safe_key(key, missing)
+
+
 def get_dynamic_props_template(
 	prop_value: str, comes_from: str, data_key: dict | None, default_value: Any
 ) -> str:
 	"""Get a Jinja template reference for dynamic properties."""
-	if comes_from == "props":
-		key = jinja_safe_key(f"props.{prop_value}")
-	elif comes_from == "componentData":
-		key = jinja_safe_key(f"component.{prop_value}")
-	else:  # dataScript
-		if data_key:
-			base_key = extract_data_key(data_key)
-			key = jinja_safe_key(f"{base_key}.{prop_value}")
-		else:
-			key = prop_value
-
+	# props tell a missing path apart from an empty object, so the chain ends in none
+	key = get_binding_key(prop_value, comes_from, data_key, missing="none")
 	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	return f"{{{{ {key} if {key} is defined else '{fallback}' }}}}"
+	return f"{{{{ {key} if {key} is defined and {key} is not none else '{fallback}' }}}}"
 
 
 # Reserved characters and existing %-escapes pass through, so absolute and data: URLs
@@ -1052,6 +1078,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
 			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
+			# browsers don't hide <source>, and display: contents on picture turns it into a flex/grid item
+			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
 			picture_tag.attrs["style"] = "display: contents;"
 			state["has_dual_mode_image"] = True
@@ -1336,15 +1364,7 @@ def get_visibility_condition_key(block: dict, data_key: dict | None) -> str | No
 	if not key:
 		return None
 
-	# Get key based on source
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{key}")
-	else:  # dataScript
-		if data_key:
-			return f"{extract_data_key(data_key)}.{key}"
-		return key
+	return get_binding_key(key, comes_from, data_key)
 
 
 def escape_raw_text_end_tag(content: str, tag: str) -> str:
@@ -1501,7 +1521,7 @@ def resolve_binding_keys(binding: list[dict], data_key: dict | None) -> list[str
 	"""Jinja keys for one target, in precedence order and without repeats."""
 	keys = []
 	for candidate in binding:
-		key = get_dynamic_value_key(candidate, candidate.get("key", ""), data_key)
+		key = get_binding_key(candidate.get("key", ""), candidate.get("comesFrom", "dataScript"), data_key)
 		if key not in keys:
 			keys.append(key)
 	return keys
@@ -1520,22 +1540,6 @@ def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False)
 		else:
 			expression = f"{key} or {expression}"
 	return f"{{{{ {expression} }}}}"
-
-
-def get_dynamic_value_key(dynamic_value_doc: dict, original_key: str, data_key: dict | None) -> str:
-	"""Get the Jinja key for a dynamic value."""
-	comes_from = dynamic_value_doc.get("comesFrom", "dataScript")
-
-	if comes_from == "props":
-		return jinja_safe_key(f"props.{original_key}")
-	elif comes_from == "componentData":
-		return jinja_safe_key(f"component.{original_key}")
-	else:  # dataScript
-		key = dynamic_value_doc.get("key")
-		if data_key:
-			key = f"{extract_data_key(data_key)}.{key}"
-			return jinja_safe_key(key)
-		return key
 
 
 def wrap_html_with_context(html: str, context: dict) -> str:
@@ -1735,14 +1739,15 @@ def register_italic_font(font_map: dict, font: str | None, weight=400) -> None:
 def get_google_font_urls(font_map: dict) -> list[str]:
 	"""Build one combined Google Fonts stylesheet URL per font family.
 
-	Families used in italic get the `ital` axis with 400 always included as a
-	fallback instance. css2 silently drops tuples a family doesn't ship, so
-	no font catalog is needed."""
+	Families used in italic get the `ital` axis at every weight the family is
+	used at: an <em> or <i> inherits whatever weight surrounds it, which the
+	renderer doesn't track. Faces only download when text uses them, and css2
+	silently drops tuples a family doesn't ship, so no font catalog is needed."""
 	normalize_font_weights(font_map)
 	urls = []
 	for font, options in font_map.items():
 		family = quote_plus(font)
-		italics = sorted({400, *(int(weight) for weight in options.get("italics", []))})
+		italics = sorted({*options["weights"], *(int(weight) for weight in options.get("italics", []))})
 		if options.get("italics"):
 			tuples = [f"0,{weight}" for weight in options["weights"]]
 			tuples += [f"1,{weight}" for weight in italics]
@@ -1942,17 +1947,21 @@ def is_safe_data_key(key) -> bool:
 	return isinstance(key, str) and bool(SAFE_DATA_KEY.match(key))
 
 
-def jinja_safe_key(key):
-	# convert a.b to (a or {}).get('b', {})
-	# to avoid undefined error in jinja
+def jinja_safe_key(key, missing="{}"):
+	# convert a.b to (a or {})['b'] to avoid undefined error in jinja; subscripts fall back to
+	# attributes, so objects and dates resolve too, and the last segment falls back to `missing`
 	if not is_safe_data_key(key):
 		# render nothing rather than emitting a broken Jinja expression
-		return "{}"
-	keys = (key or "").split(".")
-	key = f"({keys[0]} or {{}})"
-	for k in keys[1:]:
-		key = f"{key}.get('{k}', {{}})"
-	return key
+		return missing
+	keys = key.split(".")
+	expr = f"({keys[0]} or {{}})"
+	for k in keys[1:-1]:
+		expr = f"({expr}['{k}'] or {{}})"
+	if len(keys) > 1:
+		last = f"{expr}['{keys[-1]}']"
+		# the attribute fallback can land on a method, like str.title or dict.items
+		expr = f"({missing} if {last} is callable else {last})"
+	return expr
 
 
 def to_jinja_literal(obj):
@@ -1998,9 +2007,11 @@ def parse_static_value(value: str, prop_type: str) -> Any:
 			return str(value)
 		case "number":
 			try:
-				return float(value)
+				number = float(value)
 			except (ValueError, TypeError):
 				return None
+			# past 2**53 floats aren't exact, so an int would print digits the value doesn't have
+			return int(number) if number.is_integer() and abs(number) < 2**53 else number
 		case "boolean":
 			if isinstance(value, bool):
 				return value

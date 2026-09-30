@@ -82,7 +82,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { Tooltip, useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
-import { Ref, computed, onActivated, ref, watch, watchEffect } from "vue";
+import { Ref, computed, onActivated, onDeactivated, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 const { capture } = useTelemetry();
@@ -224,13 +224,26 @@ const setPreviewURL = () => {
 		page: route.params.pageId,
 		...pageStore.routeVariables,
 		prefers_color_scheme: isDark.value ? "dark" : "light",
+		reloaded_at: Date.now(),
 	};
 	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
 };
 
+const reloadOnPageSave = (event: { doctype: string; name: string }) => {
+	if (event.doctype === "Builder Page" && event.name === route.params.pageId) setPreviewURL();
+};
+
+onDeactivated(() => {
+	builderStore.realtime.off("doc_update", reloadOnPageSave);
+	// PageBuilder shares this subscription and outlives the preview, so it owns
+	// unsubscribing; tearing it down here would also cut the editor's updates
+});
+
 onActivated(() => {
+	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
+	builderStore.realtime.on("doc_update", reloadOnPageSave);
 	setPreviewURL();
 	capture("builder_page_preview_viewed");
 });

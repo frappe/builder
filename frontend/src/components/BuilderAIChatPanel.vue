@@ -24,7 +24,7 @@
 					size="sm"
 					icon="lucide-settings-2"
 					tooltip="AI settings"
-					@click="builderStore.openBuilderSettings('Global', 'global_ai')" />
+					@click="builderStore.openBuilderSettings('global_ai')" />
 			</div>
 		</div>
 
@@ -53,7 +53,7 @@
 					Connect a model first. Takes a minute if you already have an API key.
 				</p>
 			</div>
-			<Button variant="solid" size="sm" @click="builderStore.openBuilderSettings('Global', 'global_ai')">
+			<Button variant="solid" size="sm" @click="builderStore.openBuilderSettings('global_ai')">
 				Set up AI
 			</Button>
 		</div>
@@ -318,7 +318,7 @@
 					<span class="flex-1">{{ modelLabel }} has no API key.</span>
 					<button
 						class="shrink-0 font-medium underline underline-offset-2"
-						@click="builderStore.openBuilderSettings('Global', 'global_ai')">
+						@click="builderStore.openBuilderSettings('global_ai')">
 						Add one
 					</button>
 				</div>

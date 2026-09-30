@@ -8,6 +8,7 @@ import useComponentStore from "@/stores/componentStore.js";
 import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import {
 	confirm,
 	countBlocks,
@@ -65,6 +66,8 @@ const usePageStore = defineStore("pageStore", {
 			// against the last page that actually loaded, so a retry after a failed
 			// fetch still counts as opening it
 			const switchingPage = pageName !== this.activePage?.name;
+			// going from one open page to another keeps the canvas zoom and pan
+			const keepViewport = switchingPage && Boolean(this.activePage);
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -105,7 +108,7 @@ const usePageStore = defineStore("pageStore", {
 			const canvasStore = useCanvasStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
-			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
 			if (page.client_scripts?.length) {
 				// Fetch full script documents for each script
@@ -127,7 +130,7 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						window.name = `editor-${pageName}`;
+						if (!editorDemo) window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
@@ -202,17 +205,20 @@ const usePageStore = defineStore("pageStore", {
 			const confirmed = await confirm(
 				__("Are you sure you want to delete page: {0}?", [page.page_title || page.page_name]),
 			);
-			if (confirmed) {
-				await toast.promise(webPages.delete.submit(page.name), {
-					loading: __("Deleting page"),
-					success: () => {
-						return __("Page deleted");
-					},
-					error: () => {
-						return __("Page deletion failed");
-					},
-				});
-			}
+			if (!confirmed) return false;
+			const deletion = webPages.delete.submit(page.name);
+			// toast.promise returns the toast id, not the promise
+			toast.promise(deletion, {
+				loading: __("Deleting page"),
+				success: () => {
+					return __("Page deleted");
+				},
+				error: () => {
+					return __("Page deletion failed");
+				},
+			});
+			await deletion;
+			return true;
 		},
 
 		async publishPage(openInBrowser = true, staging = false) {

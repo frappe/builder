@@ -13,7 +13,7 @@
 		v-if="modelValue"
 		:placement-offset-top="8"
 		:placement-offset-left="65"
-		:action-label="__('Add Token')"
+		:action-label="readonly ? undefined : __('Add Token')"
 		:action-handler="addNewVariable"
 		placement="top-left">
 		<template #header>
@@ -281,7 +281,7 @@
 										]"
 										@dblclick="startEdit(row, 'value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="(row.value as any) || null"
 											placement="bottom-start"
@@ -325,7 +325,7 @@
 										]"
 										@dblclick="startEdit(row, 'dark_value')">
 										<ColorPicker
-											v-if="!row.is_standard"
+											v-if="!row.is_standard && !readonly"
 											class="!w-auto shrink-0"
 											:modelValue="((row.dark_value || row.value) as any) || null"
 											placement="bottom-start"
@@ -398,7 +398,7 @@
 					</template>
 				</Dialog>
 
-				<div class="flex items-center pt-4">
+				<div v-if="!readonly" class="flex items-center pt-4">
 					<input ref="csvFileInput" type="file" accept=".csv" @change="handleCSVUpload" class="hidden" />
 					<Button
 						@click="triggerCSVUpload"
@@ -434,9 +434,11 @@ import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	modelValue: boolean;
 	container?: HTMLElement | null;
+	// browse only: tokens are shared by the whole site
+	readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -605,7 +607,7 @@ const isEditing = (row: Row, field: EditableField) =>
 	editingCell.value?.rowId === row.id && editingCell.value?.field === field;
 
 const startEdit = (row: Row, field: EditableField) => {
-	if (row.is_standard || row.isNew) return;
+	if (props.readonly || row.is_standard || row.isNew) return;
 	editingCell.value = { rowId: row.id, field };
 };
 
@@ -727,7 +729,7 @@ const handleRowMouseDown = (e: MouseEvent, row: Row) => {
 };
 
 const handleRowContextMenu = (e: MouseEvent, row: Row) => {
-	if (row.isNew || row.is_standard) return;
+	if (props.readonly || row.isNew || row.is_standard) return;
 	isNewRowContextMenu.value = false;
 	if (!selectedIds.value.has(row.id)) {
 		selectedIds.value = new Set([row.id]);

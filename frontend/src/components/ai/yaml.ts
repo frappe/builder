@@ -1,5 +1,4 @@
-// @ts-ignore
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { lucideSVG } from "./lucideIcon";
 import { normalizeStyles } from "./normalizeStyles";
 import type { ChatMessage } from "./types";
