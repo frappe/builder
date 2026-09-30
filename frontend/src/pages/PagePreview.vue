@@ -105,7 +105,7 @@ const minWidth = 400;
 let previewRoute = ref("");
 const width = ref(maxWidth);
 
-// blocks clicks on the iframe until the first load settles
+// covers the iframe until its first load starts passing mouse events back to this document
 const loading = ref(true);
 
 // shared by the header and the fullscreen toolbar
@@ -260,7 +260,7 @@ const restoreScrollPosition = () => {
 
 // runs on every reload: each one replaces the document these listeners live on
 const onPreviewLoad = () => {
-	setTimeout(() => (loading.value = false), 100);
+	loading.value = false;
 	const previewDocument = previewFrame.value?.contentWindow?.document;
 	if (!previewDocument) return;
 	// the iframe swallows these otherwise, which strands panel drags over the preview
