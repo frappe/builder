@@ -39,8 +39,9 @@ class BuilderSettings(Document):
 		self.handle_script_update("style", "css", "css", "page_styles")
 		if self.has_value_changed("home_page"):
 			frappe.cache.delete_key("home_page")
-		if self.has_value_changed("disable_auto_dark_mode"):
-			# Clear cache for all pages since this is a global setting
+		site_wide = ("disable_auto_dark_mode", "script", "style", "head_html", "body_html")
+		if any(self.has_value_changed(field) for field in site_wide):
+			# every page renders these settings, so cached pages would keep the old ones
 			clear_cache()
 
 	def handle_script_update(self, attribute, script_type, extension, folder_name):
