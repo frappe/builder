@@ -46,8 +46,8 @@
 				:placeholder="placeholderValue"
 				:dynamicValueKey="dynamicValue?.key"
 				componentClass="w-full"
-				@focusin="clearActiveVariant"
-				@mousedown="clearActiveVariant"
+				@focusin="clearActiveState"
+				@mousedown="clearActiveState"
 				@update:modelValue="updateValue"
 				@keydown="handleKeyDown"
 				@openDynamicModal="showDynamicValueModal = true"
@@ -74,12 +74,12 @@
 			:enableSlider="enableSlider"
 			:isActive="variant.property === activeStateProperty"
 			:isLast="index === visibleVariants.length - 1"
-			@focusin="setActiveVariant(variant.property)"
-			@mousedown="setActiveVariant(variant.property)"
+			@focusin="setActiveState(variant.property)"
+			@mousedown="setActiveState(variant.property)"
 			@update:modelValue="(v: any) => updateVariantValue(variant.name, v)"
 			@keydown="(e: KeyboardEvent) => handleKeyDown(e, variant.name)"
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
-			@endPreview="endVariantPreview(variant.property)"
+			@endPreview="endStatePreview(variant.property)"
 			@clear="clearVariant(variant.name)">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 				<slot :name="name" v-bind="{ ...slotData, variant: variant.name }" />
@@ -247,23 +247,23 @@ const showDynamicValueModal = ref(false);
 
 // The canvas previews this state, so its control stays highlighted even after
 // the input loses focus to a popover.
-const activeStateProperty = computed(() => blockController.getSelectedBlocks()[0]?.activeState);
+const activeStateProperty = computed(() => blockController.getFirstSelectedBlock()?.activeState);
 
-const setActiveVariant = (property: string) => {
+const setActiveState = (property: string) => {
 	if (props.controlType !== "style") return;
 	blockController.getSelectedBlocks().forEach((block) => {
 		block.activeState = property;
 	});
 };
 
-const clearActiveVariant = () => {
+const clearActiveState = () => {
 	blockController.getSelectedBlocks().forEach((block) => {
 		block.activeState = null;
 	});
 };
 
 // The press that ends one preview can start another, so clear only this one.
-const endVariantPreview = (property: string) => {
+const endStatePreview = (property: string) => {
 	blockController.getSelectedBlocks().forEach((block) => {
 		if (block.activeState === property) block.activeState = null;
 	});
@@ -272,7 +272,7 @@ const endVariantPreview = (property: string) => {
 const clearVariant = (variantName: string) => {
 	props.setVariantValue?.(variantName, null);
 	addedVariants.value.delete(variantName);
-	clearActiveVariant();
+	clearActiveState();
 };
 
 const dropdownOptions = computed(() => {
@@ -287,7 +287,7 @@ const dropdownOptions = computed(() => {
 						if (props.setVariantValue) {
 							props.setVariantValue(variant.name, rawModelValue.value as string);
 							addedVariants.value.add(variant.name);
-							setActiveVariant(variant.property);
+							setActiveState(variant.property);
 						}
 					},
 				})),
