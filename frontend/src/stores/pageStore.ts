@@ -160,9 +160,6 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		async setActivePage(pageName: string) {
-			// the canvas in pageBlocks belongs to the previous page, and the editor skips
-			// loading a selected page, so drop it to make the editor load this one
-			if (pageName !== this.selectedPage) this.pageBlocks = [];
 			this.selectedPage = pageName;
 			const page = await this.fetchActivePage(pageName);
 			if (!page) {
