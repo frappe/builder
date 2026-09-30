@@ -25,7 +25,7 @@
 import PublishButton from "@/components/PublishButton.vue";
 import { Position, StorageSerializers, clamp, useDraggable, useEventListener, useStorage } from "@vueuse/core";
 import { Button } from "frappe-ui";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
 	container: HTMLElement | null;
@@ -55,14 +55,16 @@ const placeInsideContainer = () => {
 	const size = toolbar.value?.getBoundingClientRect();
 	if (!bounds || !size) return;
 	const margin = 12;
+	const topOffset = 32;
 	const target = savedPosition.value || {
 		x: bounds.left + (bounds.width - size.width) / 2,
-		y: bounds.top + margin,
+		y: bounds.top + topOffset,
 	};
 	x.value = clamp(target.x, bounds.left + margin, bounds.right - size.width - margin);
 	y.value = clamp(target.y, bounds.top + margin, bounds.bottom - size.height - margin);
 };
 
-watch(() => props.container, placeInsideContainer, { immediate: true, flush: "post" });
+watch(() => props.container, placeInsideContainer, { flush: "post" });
+onMounted(placeInsideContainer);
 useEventListener(window, "resize", placeInsideContainer);
 </script>
