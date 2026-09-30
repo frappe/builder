@@ -146,6 +146,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
@@ -153,6 +154,7 @@ import { computed, nextTick, onMounted, Ref, ref } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const searchBlock = ref(null) as Ref<HTMLInputElement | null>;
@@ -349,8 +351,14 @@ const escapeRegExp = (string: string) => {
 	return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+const canReplace = () => {
+	if (!builderStore.readOnlyMode) return true;
+	toast.warning(__("Replace is disabled in read-only mode"));
+	return false;
+};
+
 const replaceInBlock = (block: Block, index: number) => {
-	if (!replaceQuery.value || !query.value) return;
+	if (!replaceQuery.value || !query.value || !canReplace()) return;
 
 	let hasReplacement = false;
 	const searchTerm = query.value;
@@ -377,7 +385,7 @@ const replaceInBlock = (block: Block, index: number) => {
 };
 
 const replaceAll = () => {
-	if (!replaceQuery.value || !query.value) return;
+	if (!replaceQuery.value || !query.value || !canReplace()) return;
 
 	let totalReplacements = 0;
 	const blocksToReplace = [...results.value];
