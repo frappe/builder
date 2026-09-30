@@ -24,7 +24,7 @@ export const folderPages = createListResource({
 // bumped after any page change so every page list refreshes from the server
 export const pagesVersion = ref(0);
 
-function notifyPagesChanged() {
+export function notifyPagesChanged() {
 	pagesVersion.value++;
 	webPages.reload();
 }
