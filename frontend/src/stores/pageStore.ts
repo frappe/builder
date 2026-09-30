@@ -460,6 +460,7 @@ const usePageStore = defineStore("pageStore", {
 			// name the tab per page: a shared name would let one editor's detached
 			// tab get renavigated (and hijacked) by another editor detaching a different page
 			const tab = window.open(previewURL, `${DETACHED_PREVIEW_TAB}-${pageId}`);
+			// raw, so Vue does not proxy the Window (its properties throw once the tab goes cross-origin)
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
 			tab?.focus();
 			return tab;
