@@ -46,17 +46,17 @@
 			</div>
 		</div>
 		<div
-			ref="previewArea"
+			ref="previewContainer"
 			class="relative flex flex-1 justify-center overflow-hidden bg-surface-gray-1"
 			:class="{ 'px-6 pt-6': !isFullscreen }">
-			<PreviewFullscreenToolbar v-if="isFullscreen" :container="previewArea" :actions="toolbarActions" />
+			<PreviewFullscreenToolbar v-if="isFullscreen" :container="previewContainer" :actions="toolbarActions" />
 			<div class="relative h-full bg-white" :style="{ width: frameWidth }">
 				<iframe
 					:src="previewRoute"
 					frameborder="0"
 					v-if="previewRoute"
 					class="h-full w-full"
-					ref="previewWindow"></iframe>
+					ref="previewFrame"></iframe>
 				<div v-if="loading || resizing" class="absolute inset-0"></div>
 				<!-- a short grab pill centred on each edge, instead of the full-height strip -->
 				<template v-if="!isFullscreen">
@@ -148,8 +148,8 @@ const deviceBreakpoints = [
 	},
 ];
 
-const previewArea = ref<HTMLElement | null>(null);
-const previewWindow = ref(null) as Ref<HTMLIFrameElement | null>;
+const previewContainer = ref<HTMLElement | null>(null);
+const previewFrame = ref(null) as Ref<HTMLIFrameElement | null>;
 
 // separate ref as from editor it never opens in full screen
 const isFullscreen = ref(false);
@@ -241,7 +241,7 @@ useKeyboardShortcut({
 
 const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
 	try {
-		const win = previewWindow.value?.contentWindow;
+		const win = previewFrame.value?.contentWindow;
 		const doc = win?.document;
 		if (doc && doc.documentElement) {
 			doc.documentElement.setAttribute("data-prefers-color-scheme", scheme);
@@ -256,7 +256,7 @@ const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
 const scrollStorageKey = () => `previewScroll:${route.params.pageId}`;
 
 const saveScrollPosition = useDebounceFn(() => {
-	const scrollY = previewWindow.value?.contentWindow?.scrollY;
+	const scrollY = previewFrame.value?.contentWindow?.scrollY;
 	if (scrollY !== undefined) sessionStorage.setItem(scrollStorageKey(), String(scrollY));
 }, 200);
 
@@ -264,13 +264,13 @@ const restoreScrollPosition = () => {
 	const scrollY = Number(sessionStorage.getItem(scrollStorageKey()));
 	// "instant" overrides a scroll-behavior: smooth on the previewed page, which
 	// would otherwise animate the restore
-	if (scrollY) previewWindow.value?.contentWindow?.scrollTo({ top: scrollY, behavior: "instant" });
+	if (scrollY) previewFrame.value?.contentWindow?.scrollTo({ top: scrollY, behavior: "instant" });
 };
 
 // runs on every reload: each one replaces the document these listeners live on
 const onPreviewLoad = () => {
 	setTimeout(() => (loading.value = false), 100);
-	const previewDocument = previewWindow.value?.contentWindow?.document;
+	const previewDocument = previewFrame.value?.contentWindow?.document;
 	if (!previewDocument) return;
 	// the iframe swallows these otherwise, which strands panel drags over the preview
 	for (const type of ["mousedown", "mouseup", "mousemove"]) {
@@ -295,7 +295,7 @@ const onPreviewLoad = () => {
 	previewDocument.addEventListener("scroll", saveScrollPosition, { passive: true });
 };
 
-useEventListener(previewWindow, "load", onPreviewLoad);
+useEventListener(previewFrame, "load", onPreviewLoad);
 
 watch(isDark, async (val) => {
 	setPreviewURL();
