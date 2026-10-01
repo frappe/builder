@@ -1,6 +1,6 @@
 <template>
 	<div ref="searchBlock" class="focus-within:outline-none" @keydown="handleKeydown">
-		<div class="mb-4">
+		<div v-if="!builderStore.readOnlyMode" class="mb-4">
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
@@ -149,7 +149,7 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
-import { computed, nextTick, onMounted, Ref, ref } from "vue";
+import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
@@ -465,6 +465,15 @@ watchDebounced(() => filters.value.map((f) => f.selected).join(","), performSear
 watchDebounced(searchInSelectedBlock, performSearch, {
 	debounce: 300,
 });
+
+// the panel can stay open while a version preview loads, so drop out of replace mode
+watch(
+	() => builderStore.readOnlyMode,
+	(readOnly) => {
+		if (readOnly) searchMode.value = "search";
+	},
+	{ immediate: true },
+);
 
 // Reset replaced count when switching modes
 watchDebounced(
