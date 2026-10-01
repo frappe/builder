@@ -33,7 +33,7 @@ const props = defineProps<{
 
 const toolbar = ref<HTMLElement | null>(null);
 const dragHandle = ref<HTMLElement | null>(null);
-const savedPosition = useStorage<Position | null>("previewFullscreenToolbarPosition", null, localStorage, {
+const savedPosition = useStorage<Position | null>("previewFloatingToolbarPosition", null, localStorage, {
 	serializer: StorageSerializers.object,
 });
 

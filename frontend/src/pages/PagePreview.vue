@@ -49,7 +49,7 @@
 			ref="previewContainer"
 			class="relative flex flex-1 justify-center overflow-hidden bg-surface-gray-1"
 			:class="{ 'px-6 pt-6': !isFullscreen }">
-			<PreviewFullscreenToolbar v-if="isFullscreen" :container="previewContainer" :actions="toolbarActions" />
+			<PreviewFloatingToolbar v-if="isFullscreen" :container="previewContainer" :actions="toolbarActions" />
 			<div class="relative h-full bg-white" :style="{ width: frameWidth }">
 				<iframe
 					:src="previewRoute"
@@ -82,7 +82,7 @@
 <script lang="ts" setup>
 import { __ } from "@/translation";
 import PanelResizer from "@/components/PanelResizer.vue";
-import PreviewFullscreenToolbar from "@/components/PreviewFullscreenToolbar.vue";
+import PreviewFloatingToolbar from "@/components/PreviewFloatingToolbar.vue";
 import PublishButton from "@/components/PublishButton.vue";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
