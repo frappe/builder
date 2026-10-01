@@ -121,7 +121,7 @@ const actions = computed(() => ({
 		label: __("Full screen"),
 		onClick: () => setFullscreen(true),
 	},
-	exitFullscreen: { icon: "lucide-proportions", label: __("Show Breakpoints"), onClick: () => setFullscreen(false) },
+	exitFullscreen: { icon: "lucide-tablet-smartphone", label: __("Show Breakpoints"), onClick: () => setFullscreen(false) },
 	detach: { icon: "lucide-external-link", label: __("Open in New Tab"), onClick: detachPreview },
 	darkMode: {
 		icon: isDark.value ? "lucide-sun" : "lucide-moon",
