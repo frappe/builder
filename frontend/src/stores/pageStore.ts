@@ -458,7 +458,14 @@ const usePageStore = defineStore("pageStore", {
 				params: { pageId },
 			}).href;
 			// one name per page, so an editor does not take over another editor's detached tab
-			const tab = window.open(previewURL, `${DETACHED_PREVIEW_TAB}-${pageId}`);
+			const tabName = `${DETACHED_PREVIEW_TAB}-${pageId}`;
+			// one detached tab per editor: send the open one to this page
+			const openTab = this.detachedPreview?.tab.closed ? null : this.detachedPreview?.tab;
+			if (openTab) {
+				openTab.name = tabName;
+				openTab.location.assign(previewURL);
+			}
+			const tab = openTab ?? window.open(previewURL, tabName);
 			// raw: a Vue proxy of a Window throws after the tab goes cross-origin
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
 			tab?.focus();
@@ -502,6 +509,8 @@ const usePageStore = defineStore("pageStore", {
 		openPreview(pageId: string) {
 			const tab = this.getDetachedPreview(pageId);
 			if (tab) tab.focus();
+			// getDetachedPreview drops a closed tab, so this one shows another page
+			else if (this.detachedPreview) this.detachPreview(pageId);
 			else router.push({ name: "preview", params: { pageId } });
 		},
 
