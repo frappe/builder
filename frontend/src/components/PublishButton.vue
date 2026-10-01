@@ -11,7 +11,6 @@
 			class="border-0"
 			:class="{
 				'rounded-br-none rounded-tr-none': showDropdown,
-				'!rounded-full': iconOnly,
 			}"
 			:loading="publishing" />
 		<Dropdown

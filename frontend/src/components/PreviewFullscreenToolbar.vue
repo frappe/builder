@@ -2,18 +2,17 @@
 	<div
 		ref="toolbar"
 		:style="style"
-		class="fixed z-20 flex touch-none select-none items-center gap-0.5 rounded-full border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
-		<span
+		class="fixed z-20 flex touch-none select-none items-center gap-1 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
+	<span
 			ref="dragHandle"
 			class="lucide-grip-vertical size-4 shrink-0 text-ink-gray-4 hover:text-ink-gray-7"
 			:class="isDragging ? 'cursor-grabbing' : 'cursor-grab'"
-			aria-hidden="true" />
+			aria-hidden="true" />	
 		<Button
 			v-for="action in actions"
 			:key="action.label"
 			variant="ghost"
 			size="sm"
-			class="!rounded-full"
 			:icon="action.icon"
 			:label="action.label"
 			:tooltip="action.label"
