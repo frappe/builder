@@ -58,7 +58,6 @@
 					class="h-full w-full"
 					ref="previewFrame"></iframe>
 				<div v-if="loading || resizing" class="absolute inset-0"></div>
-				<!-- a short grab pill centred on each edge, instead of the full-height strip -->
 				<template v-if="!isFullscreen">
 					<PanelResizer
 						v-for="side in resizerSides"
@@ -105,10 +104,9 @@ const minWidth = 400;
 let previewRoute = ref("");
 const width = ref(maxWidth);
 
-// covers the iframe until its first load starts passing mouse events back to this document
+// covers the iframe until onPreviewLoad forwards its mouse events
 const loading = ref(true);
 
-// shared by the header and the fullscreen toolbar
 const actions = computed(() => ({
 	back: {
 		icon: canGoBack.value ? "lucide-arrow-left" : "lucide-pencil",
@@ -151,33 +149,27 @@ const deviceBreakpoints = [
 const previewContainer = ref<HTMLElement | null>(null);
 const previewFrame = ref(null) as Ref<HTMLIFrameElement | null>;
 
-// separate ref as from editor it never opens in full screen
+// not lastFullscreen: a preview from the editor never opens in full screen
 const isFullscreen = ref(false);
-// restored when the preview is opened by its own link
+// for a preview opened by its own link
 const lastFullscreen = useStorage("previewFullscreen", false);
 const setFullscreen = (fullscreen: boolean) => {
 	isFullscreen.value = fullscreen;
 	lastFullscreen.value = fullscreen;
 };
 
-// A preview shown in place goes back in this tab. Its opener can be the detached
-// tab, which raised this one by name.
+// the opener of a preview from the editor can be the detached tab
 const goBack = () => {
 	if (!cameFromEditor.value && pageStore.focusEditorTab()) return;
 	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
 };
 
-// the preview moves to its own tab, so this one returns to the editor;
-// a blocked popup leaves this the only preview, so stay put instead
+// a blocked popup leaves this the only preview, so stay
 const detachPreview = () => {
 	if (pageStore.detachPreview(route.params.pageId as string)) goBack();
 };
 
-// a preview opened by its own link has no editor behind it, so the back button
-// offers to edit the page instead of going back to it
 const cameFromEditor = ref(false);
-
-// a detached preview keeps its editor one tab away, which is also a way back
 const hasEditorTab = ref(false);
 
 useEventListener(new BroadcastChannel(DETACHED_PREVIEW_CHANNEL), "message", () => {
@@ -224,7 +216,6 @@ useKeyboardShortcut({
 	enabled: () => router.currentRoute.value.name === "preview",
 });
 
-// the same key that opens the preview from the editor takes you back
 useKeyboardShortcut({
 	combo: "Mod+P",
 	description: __("Back to Builder"),
@@ -245,8 +236,7 @@ const applyColorSchemeToIframe = (scheme: "dark" | "light") => {
 	}
 };
 
-// the preview reloads whenever the page is saved elsewhere, so put the reader back
-// where they were instead of at the top
+// the preview reloads on each save, so keep the scroll position
 const scrollStorageKey = () => `previewScroll:${route.params.pageId}`;
 
 const saveScrollPosition = useDebounceFn(() => {
@@ -256,25 +246,22 @@ const saveScrollPosition = useDebounceFn(() => {
 
 const restoreScrollPosition = () => {
 	const scrollY = Number(sessionStorage.getItem(scrollStorageKey()));
-	// "instant" overrides a scroll-behavior: smooth on the previewed page, which
-	// would otherwise animate the restore
+	// "instant" overrides a smooth scroll-behavior on the page
 	if (scrollY) previewFrame.value?.contentWindow?.scrollTo({ top: scrollY, behavior: "instant" });
 };
 
-// runs on every reload: each one replaces the document these listeners live on
+// each reload replaces the document, so add the listeners again
 const onPreviewLoad = () => {
 	loading.value = false;
 	const previewDocument = previewFrame.value?.contentWindow?.document;
 	if (!previewDocument) return;
-	// the iframe swallows these otherwise, which strands panel drags over the preview
+	// without these, a panel drag over the iframe gets stuck
 	for (const type of ["mousedown", "mouseup", "mousemove"]) {
 		previewDocument.addEventListener(type, (event) =>
 			document.dispatchEvent(new MouseEvent(type, event as MouseEvent)),
 		);
 	}
-	// A click inside the iframe moves keyboard focus there, and this document stops
-	// seeing the key. Hand it back, and keep it off the browser print dialog. The
-	// capture phase runs before the previewed page, which may stop the event.
+	// forward Mod+P from the iframe and block print, before the page can stop the event
 	previewDocument.addEventListener(
 		"keydown",
 		(event) => {
@@ -321,7 +308,6 @@ const setPreviewURL = () => {
 		.join("&")}`;
 };
 
-// detaching only makes sense with an editor to go back to
 const headerActions = computed(() => [
 	actions.value.enterFullscreen,
 	...(cameFromEditor.value ? [actions.value.detach] : []),
@@ -340,7 +326,7 @@ const reloadOnPageSave = (event: { doctype: string; name: string; modified: stri
 	if (!cameFromEditor.value) syncPageStore();
 };
 
-// A detached or stand-alone preview has no editor tab to keep its page store current.
+// no editor in this tab keeps the page store current
 const syncPageStore = () => {
 	const currentModified = pageStore.activePage?.modified;
 	webPages.fetchOne.submit(pageStore.activePage?.name).then((doc: BuilderPage[] | null) => {
@@ -352,8 +338,7 @@ const syncPageStore = () => {
 
 onDeactivated(() => {
 	builderStore.realtime.off("doc_update", reloadOnPageSave);
-	// an editor sharing this tab reclaims the subscription when it reactivates and
-	// outlives the preview, so only unsubscribe when nothing here still owns it
+	// an editor in this tab keeps using the subscription
 	if (!cameFromEditor.value) {
 		builderStore.realtime.doc_unsubscribe("Builder Page", route.params.pageId as string);
 	}
@@ -366,8 +351,7 @@ onActivated(() => {
 	cameFromEditor.value = typeof previousPath === "string" && router.resolve(previousPath).name === "builder";
 	hasEditorTab.value = Boolean(pageStore.getEditorTab());
 	isFullscreen.value = cameFromEditor.value ? false : lastFullscreen.value;
-	// a detached or bookmarked preview boots straight into this route, with no
-	// editor to load the page first, and the publish button nothing to publish
+	// a detached or bookmarked preview has no editor to load the page first
 	if (pageStore.activePage?.name !== pageId) {
 		pageStore.loadRouteVariables(pageId);
 		pageStore.setActivePage(pageId);

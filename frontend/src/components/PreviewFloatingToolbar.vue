@@ -41,14 +41,13 @@ const { x, y, style, isDragging } = useDraggable(toolbar, {
 	handle: dragHandle,
 	containerElement: () => props.container,
 	initialValue: savedPosition.value || { x: 0, y: 0 },
-	// capture the pointer, else the preview iframe swallows the move events
+	// without pointer capture, the iframe swallows the move events
 	onStart: (_, event) => {
 		dragHandle.value?.setPointerCapture(event.pointerId);
 	},
 	onEnd: (position) => (savedPosition.value = { ...position }),
 });
 
-// places the toolbar at the saved position, or centered at the top, always inside the container
 const placeInsideContainer = () => {
 	const bounds = props.container?.getBoundingClientRect();
 	const size = toolbar.value?.getBoundingClientRect();

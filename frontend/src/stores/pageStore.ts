@@ -24,13 +24,10 @@ import { markRaw, nextTick } from "vue";
 
 const { capture } = useTelemetry();
 
-// a window name of its own, so detaching the preview does not take over the tab
-// that openPageInBrowser uses for the live page
+// not the openPageInBrowser tab name, so a detach does not take over the live page tab
 const DETACHED_PREVIEW_TAB = "builder-detached-preview";
 
-// A reloaded editor loses its handle on the detached tab, and the tab renames itself
-// on boot, so the editor cannot find it by name. The editor asks on this channel,
-// and the tab replies to its opener: the message source is the handle.
+// a reloaded editor asks here for its detached tab, which replies with postMessage
 export const DETACHED_PREVIEW_CHANNEL = "builder-detached-preview";
 
 /** Normalize query values to strings; repeated parameters use the first value. */
@@ -60,7 +57,6 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
-		// the preview tab detached from the editor
 		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {
@@ -137,7 +133,7 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						// the preview tab keeps the name it was opened under, so it can be raised by name
+						// the detached preview raises this tab by this name
 						if (!editorDemo && router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
@@ -461,10 +457,9 @@ const usePageStore = defineStore("pageStore", {
 				name: "preview",
 				params: { pageId },
 			}).href;
-			// name the tab per page: a shared name would let one editor's detached
-			// tab get renavigated (and hijacked) by another editor detaching a different page
+			// one name per page, so an editor does not take over another editor's detached tab
 			const tab = window.open(previewURL, `${DETACHED_PREVIEW_TAB}-${pageId}`);
-			// raw, so Vue does not proxy the Window (its properties throw once the tab goes cross-origin)
+			// raw: a Vue proxy of a Window throws after the tab goes cross-origin
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
 			tab?.focus();
 			return tab;
@@ -484,22 +479,18 @@ const usePageStore = defineStore("pageStore", {
 			this.getEditorTab()?.postMessage({ detachedPreviewOf: pageId }, window.location.origin);
 		},
 
-		// the detached tab, while it is open and still shows this page
 		getDetachedPreview(pageId: string) {
 			if (this.detachedPreview?.tab.closed) this.detachedPreview = null;
 			if (this.detachedPreview?.pageId !== pageId) return null;
 			return this.detachedPreview.tab;
 		},
 
-		// The tab that opened this preview, while it is still open.
 		getEditorTab() {
 			const opener = window.opener as Window | null;
 			return opener && !opener.closed ? opener : null;
 		},
 
-		// Chrome ignores focus() on another tab, so the tab is raised the way
-		// openPageInBrowser raises one: by name, through window.open. An empty URL
-		// leaves the editor where it is, rather than reloading it.
+		// Chrome ignores focus() on another tab, so raise it by name with no URL to reload
 		focusEditorTab() {
 			const editorTab = this.getEditorTab();
 			if (!editorTab) return false;

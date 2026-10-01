@@ -64,7 +64,7 @@ import { useRoute } from "vue-router";
 const props = defineProps<{
 	disabled?: boolean;
 	size?: "sm" | "md";
-	// drops the label and the menu: one round icon button, for the floating toolbar
+	// for the floating toolbar
 	iconOnly?: boolean;
 }>();
 
@@ -78,8 +78,7 @@ const showDropdown = computed(() => {
 	return !props.iconOnly && canvasStore.editingMode !== "fragment" && !pageStore.activePage?.is_template;
 });
 
-// a stand-alone preview sets activePage asynchronously, so a click before it
-// resolves would publish with another page's (or no) staging/published state
+// a stand-alone preview loads activePage late, so an early click must not publish
 const activePageLoaded = computed(() => pageStore.activePage?.name === route.params.pageId);
 
 // the main button keeps a live or staging page where it is; the menu moves it
