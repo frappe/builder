@@ -323,6 +323,7 @@ onMounted(() => {
 	if (!editorDemo) {
 		prefetchBuilderSettings();
 		prefetchTemplateGallery();
+		pageStore.findDetachedPreview();
 	}
 });
 

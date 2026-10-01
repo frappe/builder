@@ -87,7 +87,7 @@ import PublishButton from "@/components/PublishButton.vue";
 import { webPages } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
-import usePageStore from "@/stores/pageStore";
+import usePageStore, { DETACHED_PREVIEW_CHANNEL } from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { Button, useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
@@ -160,8 +160,10 @@ const setFullscreen = (fullscreen: boolean) => {
 	lastFullscreen.value = fullscreen;
 };
 
+// A preview shown in place goes back in this tab. Its opener can be the detached
+// tab, which raised this one by name.
 const goBack = () => {
-	if (pageStore.focusEditorTab()) return;
+	if (!cameFromEditor.value && pageStore.focusEditorTab()) return;
 	router.push({ name: "builder", params: { pageId: route.params.pageId || "new" } });
 };
 
@@ -177,6 +179,12 @@ const cameFromEditor = ref(false);
 
 // a detached preview keeps its editor one tab away, which is also a way back
 const hasEditorTab = ref(false);
+
+useEventListener(new BroadcastChannel(DETACHED_PREVIEW_CHANNEL), "message", () => {
+	if (route.name === "preview" && hasEditorTab.value && !cameFromEditor.value) {
+		pageStore.announceDetachedPreview(route.params.pageId as string);
+	}
+});
 const canGoBack = computed(() => cameFromEditor.value || hasEditorTab.value);
 const frameWidth = computed(() => (isFullscreen.value ? "100%" : `${width.value}px`));
 

@@ -28,6 +28,11 @@ const { capture } = useTelemetry();
 // that openPageInBrowser uses for the live page
 const DETACHED_PREVIEW_TAB = "builder-detached-preview";
 
+// A reloaded editor loses its handle on the detached tab, and the tab renames itself
+// on boot, so the editor cannot find it by name. The editor asks on this channel,
+// and the tab replies to its opener: the message source is the handle.
+export const DETACHED_PREVIEW_CHANNEL = "builder-detached-preview";
+
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
 	if (!values || typeof values !== "object" || Array.isArray(values)) {
@@ -55,8 +60,7 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
-		// the preview tab detached from the editor. A window handle does not survive
-		// a reload of the editor, so the preview then opens in place again.
+		// the preview tab detached from the editor
 		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {
@@ -464,6 +468,20 @@ const usePageStore = defineStore("pageStore", {
 			if (tab) this.detachedPreview = markRaw({ tab, pageId });
 			tab?.focus();
 			return tab;
+		},
+
+		findDetachedPreview() {
+			window.addEventListener("message", (event) => {
+				if (event.origin !== window.location.origin || !event.data?.detachedPreviewOf) return;
+				this.detachedPreview = markRaw({ tab: event.source as Window, pageId: event.data.detachedPreviewOf });
+			});
+			const channel = new BroadcastChannel(DETACHED_PREVIEW_CHANNEL);
+			channel.postMessage("find");
+			channel.close();
+		},
+
+		announceDetachedPreview(pageId: string) {
+			this.getEditorTab()?.postMessage({ detachedPreviewOf: pageId }, window.location.origin);
 		},
 
 		// the detached tab, while it is open and still shows this page
