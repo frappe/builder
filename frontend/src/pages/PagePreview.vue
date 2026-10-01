@@ -111,7 +111,7 @@ const loading = ref(true);
 // shared by the header and the fullscreen toolbar
 const actions = computed(() => ({
 	back: {
-		icon: canGoBack.value ? "lucide-chevron-left" : "lucide-pencil",
+		icon: canGoBack.value ? "lucide-arrow-left" : "lucide-pencil",
 		label: canGoBack.value ? __("Back") : __("Edit"),
 		onClick: goBack,
 	},
@@ -121,7 +121,7 @@ const actions = computed(() => ({
 		label: __("Full screen"),
 		onClick: () => setFullscreen(true),
 	},
-	exitFullscreen: { icon: "lucide-panel-top", label: __("Show UI"), onClick: () => setFullscreen(false) },
+	exitFullscreen: { icon: "lucide-proportions", label: __("Show Breakpoints"), onClick: () => setFullscreen(false) },
 	detach: { icon: "lucide-external-link", label: __("Open in New Tab"), onClick: detachPreview },
 	darkMode: {
 		icon: isDark.value ? "lucide-sun" : "lucide-moon",
@@ -202,12 +202,7 @@ const activeBreakpoint = computed(() => {
 const isDark = computed(() => builderStore.canvasDarkMode);
 
 const toggleDarkMode = () => {
-	const toggle = () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode);
-	if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-		document.startViewTransition(toggle);
-	} else {
-		toggle();
-	}
+	builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
 };
 
 useKeyboardShortcut({
@@ -320,7 +315,6 @@ const setPreviewURL = () => {
 
 // detaching only makes sense with an editor to go back to
 const headerActions = computed(() => [
-	actions.value.reload,
 	actions.value.enterFullscreen,
 	...(cameFromEditor.value ? [actions.value.detach] : []),
 ]);
