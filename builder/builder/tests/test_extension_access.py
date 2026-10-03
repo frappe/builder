@@ -1,0 +1,120 @@
+# Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
+# See license.txt
+
+import frappe
+from frappe.tests.utils import FrappeTestCase
+
+from builder.builder.tests.extension_fixtures import (
+	TEST_ROLE,
+	drop_installations,
+	make_installation,
+	make_user,
+	set_additional_manager_role,
+)
+from builder.extensions.access import (
+	assert_extension_access,
+	assert_extension_manager,
+	is_extension_manager,
+)
+
+EXTENSION = "acme/gated"
+
+
+class TestAssertExtensionAccess(FrappeTestCase):
+	"""The one gate every protected extension method opens with."""
+
+	def setUp(self):
+		drop_installations(EXTENSION)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+	def test_answers_with_the_installation_name(self):
+		installation = make_installation(EXTENSION)
+
+		self.assertEqual(assert_extension_access(EXTENSION, "data.access"), installation.name)
+
+	def test_every_builder_user_reaches_the_sites_installation(self):
+		installation = make_installation(EXTENSION)
+		frappe.set_user(make_user())
+
+		self.assertEqual(assert_extension_access(EXTENSION), installation.name)
+
+	def test_refuses_a_guest(self):
+		make_installation(EXTENSION)
+		frappe.set_user("Guest")
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION)
+
+	def test_refuses_a_user_who_cannot_read_a_builder_page(self):
+		"""Builder access is the second gate, checked before any installation."""
+		make_installation(EXTENSION)
+		frappe.set_user(make_user("extension-outsider@example.com", roles=()))
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION)
+
+	def test_refuses_an_extension_the_site_has_not_installed(self):
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION)
+
+	def test_refuses_an_installation_that_is_switched_off(self):
+		make_installation(EXTENSION, enabled=0)
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION)
+
+	def test_refuses_a_capability_that_was_not_granted(self):
+		make_installation(EXTENSION, capabilities=["page.read"])
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION, "data.access")
+
+	def test_needs_no_capability_when_the_method_asks_for_none(self):
+		make_installation(EXTENSION, capabilities=[])
+
+		self.assertIsNotNone(assert_extension_access(EXTENSION))
+
+	def test_applies_frappes_own_permission_last(self):
+		"""The capability says the extension may try. Frappe says whether this user may."""
+		make_installation(EXTENSION)
+		frappe.set_user(make_user())
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_access(EXTENSION, writes="DocType")
+
+
+class TestExtensionManager(FrappeTestCase):
+	"""Who may change the site's extensions. Builder Settings can name an additional role."""
+
+	def setUp(self):
+		self.addCleanup(frappe.set_user, "Administrator")
+		self.outsider = make_user("extension-outsider@example.com", roles=())
+
+	def test_a_system_manager_is_one(self):
+		set_additional_manager_role(self, None)
+
+		self.assertTrue(is_extension_manager("Administrator"))
+
+	def test_a_website_manager_is_one(self):
+		set_additional_manager_role(self, None)
+
+		self.assertTrue(is_extension_manager(make_user()))
+
+	def test_a_user_with_the_additional_role_is_one(self):
+		set_additional_manager_role(self, TEST_ROLE)
+
+		self.assertTrue(
+			is_extension_manager(make_user("extension-role-holder@example.com", roles=(TEST_ROLE,)))
+		)
+
+	def test_a_user_without_any_of_these_roles_is_not(self):
+		set_additional_manager_role(self, TEST_ROLE)
+
+		self.assertFalse(is_extension_manager(self.outsider))
+
+	def test_refuses_a_user_who_is_not_one(self):
+		set_additional_manager_role(self, None)
+		frappe.set_user(self.outsider)
+
+		with self.assertRaises(frappe.PermissionError):
+			assert_extension_manager()
