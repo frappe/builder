@@ -239,6 +239,12 @@ class BuilderPage(WebsiteGenerator):
 				frappe.PermissionError,
 			)
 
+	def set_route(self):
+		super().set_route()
+		if self.route:
+			# frappe trims slashes and dots but keeps whitespace, which reaches URLs as %20
+			self.route = self.route.strip("/. \t\n")
+
 	def validate_route_variables(self):
 		if not self.route or not (":" in self.route or "<" in self.route):
 			return

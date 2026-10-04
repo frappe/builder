@@ -1,3 +1,5 @@
+import re
+from contextlib import suppress
 from urllib import robotparser
 from urllib.parse import quote
 
@@ -10,15 +12,27 @@ no_cache = 1
 
 
 def get_context(context):
-	"""Overrides frappe's www/sitemap, which lists every published Builder Page regardless of
-	its indexing, access, home page and canonical settings"""
+	"""Overrides frappe's www/sitemap, which lists routes that redirect, and every published
+	Builder Page regardless of its indexing, access, home page and canonical settings"""
 	lastmod_by_route = get_static_routes() | get_document_routes() | get_builder_page_routes()
+	redirect_sources = get_redirect_sources()
 	return {
 		"links": [
 			{"loc": get_url(quote(route.encode("utf-8"))), "lastmod": lastmod}
 			for route, lastmod in lastmod_by_route.items()
+			if not any(source.match(route) for source in redirect_sources)
 		]
 	}
+
+
+def get_redirect_sources() -> list[re.Pattern]:
+	"""Matched like frappe's resolve_redirect, which would cost a redis lookup per route"""
+	rules = frappe.get_hooks("website_redirects") + (frappe.get_website_settings("route_redirects") or [])
+	sources = []
+	for rule in rules:
+		with suppress(re.error):
+			sources.append(re.compile(rule.get("source").strip("/ ") + "$"))
+	return sources
 
 
 def get_static_routes() -> dict:
