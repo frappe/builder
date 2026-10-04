@@ -231,6 +231,27 @@ class TestBuilderPage(FrappeTestCase):
 			for page in pages:
 				page.delete()
 
+	def test_sitemap_skips_routes_that_redirect(self):
+		source = "/test-sitemap-redirected"
+		page = insert_page(source.lstrip("/"), "Redirected Content")
+		settings = frappe.get_single("Website Settings")
+		try:
+			page.publish()
+			settings.append("route_redirects", {"source": source, "target": "/test-page"})
+			settings.save()
+			self.assertNotIn(f"{source}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			settings.route_redirects = [r for r in settings.route_redirects if r.source != source]
+			settings.save()
+			page.delete()
+
+	def test_route_is_trimmed_of_whitespace(self):
+		page = insert_page(" test-route-whitespace / ", "Whitespace Content")
+		try:
+			self.assertEqual(page.route, "test-route-whitespace")
+		finally:
+			page.delete()
+
 	def test_sitemap_lists_the_home_page_at_the_site_root(self):
 		from frappe.utils import get_url
 
