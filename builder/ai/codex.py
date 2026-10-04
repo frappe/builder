@@ -31,6 +31,7 @@ REFRESH_SLACK_MS = 60_000
 # The ChatGPT serving surface, not the public API. litellm's model map describes
 # the API and gets these wrong; the spark models are text-only.
 CONTEXT_WINDOWS = {
+	"gpt-6-luna": 272_000,
 	"gpt-5.6-sol": 272_000,
 	"gpt-5.6-terra": 272_000,
 	"gpt-5.6-luna": 272_000,
