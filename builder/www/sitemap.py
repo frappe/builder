@@ -5,7 +5,6 @@ from urllib.parse import quote
 
 import frappe
 from frappe.utils import get_url
-from frappe.utils.jinja import render_template
 from frappe.website.router import get_pages
 from frappe.www.sitemap import get_public_pages_from_doctypes, is_dynamic_route
 
@@ -91,20 +90,12 @@ def is_indexable(page: dict, route: str) -> bool:
 
 
 def has_other_canonical(page: dict, route: str) -> bool:
-	"""The home page is always canonical at the site root, whatever its canonical_url says"""
-	canonical = route and render_canonical(page.canonical_url)
-	return bool(canonical) and get_url(canonical).rstrip("/") != get_url(route)
-
-
-def render_canonical(canonical_url: str | None) -> str | None:
-	"""Rendered like the page renderer does, minus the page's data. A template that fails to
-	render here counts as no canonical, so the page stays listed"""
-	if not canonical_url or "{" not in canonical_url:
-		return canonical_url
-	try:
-		return render_template(canonical_url, {}).strip()
-	except Exception:
-		return None
+	"""The home page is always canonical at the site root, whatever its canonical_url says.
+	A templated canonical_url needs the page's data to resolve, so the page stays listed and
+	crawlers read the rendered canonical from the page itself"""
+	if not route or not page.canonical_url or "{" in page.canonical_url:
+		return False
+	return get_url(page.canonical_url).rstrip("/") != get_url(route)
 
 
 def get_robots_parser() -> robotparser.RobotFileParser:

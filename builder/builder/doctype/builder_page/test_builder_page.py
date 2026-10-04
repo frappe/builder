@@ -259,22 +259,14 @@ class TestBuilderPage(FrappeTestCase):
 			for page in pages:
 				page.delete()
 
-	def test_sitemap_resolves_templated_canonical_urls(self):
-		own, other = pages = [
-			insert_page(route, "Canonical Content")
-			for route in ("test-sitemap-own-canonical", "test-sitemap-other-canonical")
-		]
+	def test_sitemap_keeps_pages_with_templated_canonical_urls(self):
+		page = insert_page("test-sitemap-templated-canonical", "Canonical Content")
 		try:
-			for page in pages:
-				page.publish()
-			own.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-sitemap-own-canonical")
-			other.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-page")
-			sitemap = get_response_content("/sitemap.xml")
-			self.assertIn(f"/{own.route}</loc>", sitemap)
-			self.assertNotIn(f"/{other.route}</loc>", sitemap)
+			page.publish()
+			page.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-sitemap-templated-canonical")
+			self.assertIn(f"/{page.route}</loc>", get_response_content("/sitemap.xml"))
 		finally:
-			for page in pages:
-				page.delete()
+			page.delete()
 
 	def test_route_is_trimmed_of_whitespace(self):
 		padded, blank = pages = [
