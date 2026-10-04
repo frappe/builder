@@ -190,8 +190,6 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertTrue("Hello World!" in content)
 
 	def test_staging_page_is_served_but_kept_out_of_search(self):
-		from frappe.www.sitemap import get_public_pages_from_doctypes
-
 		noindex = '<meta name="robots" content="noindex, nofollow">'
 		page = insert_page("test-staging-page", "Staging Content")
 		try:
@@ -199,15 +197,101 @@ class TestBuilderPage(FrappeTestCase):
 			content = get_response_content("/test-staging-page")
 			self.assertIn("Staging Content", content)
 			self.assertIn(noindex, content)
-			get_public_pages_from_doctypes.clear_cache()
-			self.assertNotIn("test-staging-page", get_public_pages_from_doctypes())
+			self.assertNotIn("/test-staging-page</loc>", get_response_content("/sitemap.xml"))
 
 			page.publish()
 			self.assertFalse(page.staging)
 			self.assertNotIn(noindex, get_response_content("/test-staging-page"))
-			get_public_pages_from_doctypes.clear_cache()
-			self.assertIn("test-staging-page", get_public_pages_from_doctypes())
+			self.assertIn("/test-staging-page</loc>", get_response_content("/sitemap.xml"))
 		finally:
+			page.delete()
+
+	def test_sitemap_lists_only_indexable_pages(self):
+		live, noindex, login_only, duplicate, not_found = pages = [
+			insert_page(route, "Sitemap Content")
+			for route in (
+				"test-sitemap-live",
+				"test-sitemap-noindex",
+				"test-sitemap-login",
+				"test-sitemap-duplicate",
+				"404",
+			)
+		]
+		try:
+			for page in pages:
+				page.publish()
+			noindex.db_set("disable_indexing", 1)
+			login_only.db_set("authenticated_access", 1)
+			duplicate.db_set("canonical_url", "/test-sitemap-live")
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"/{live.route}</loc>", sitemap)
+			for page in (noindex, login_only, duplicate, not_found):
+				self.assertNotIn(f"/{page.route}</loc>", sitemap)
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_skips_routes_that_redirect(self):
+		source = "/test-sitemap-redirected"
+		page = insert_page(source.lstrip("/"), "Redirected Content")
+		settings = frappe.get_single("Website Settings")
+		try:
+			page.publish()
+			settings.append("route_redirects", {"source": source, "target": "/test-page"})
+			settings.save()
+			self.assertNotIn(f"{source}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			settings.route_redirects = [r for r in settings.route_redirects if r.source != source]
+			settings.save()
+			page.delete()
+
+	def test_sitemap_judges_a_shared_route_by_the_page_it_serves(self):
+		from frappe.utils import add_to_date, now_datetime
+
+		route = "test-sitemap-shared"
+		pages = [insert_page(route, heading) for heading in ("Older Content", "Newer Content")]
+		try:
+			for page in pages:
+				page.publish()
+			pages[-1].db_set({"published_at": add_to_date(now_datetime(), days=1), "disable_indexing": 1})
+			self.assertNotIn(f"/{route}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_keeps_pages_with_templated_canonical_urls(self):
+		page = insert_page("test-sitemap-templated-canonical", "Canonical Content")
+		try:
+			page.publish()
+			page.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-sitemap-templated-canonical")
+			self.assertIn(f"/{page.route}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			page.delete()
+
+	def test_route_is_trimmed_of_whitespace(self):
+		padded, blank = pages = [
+			insert_page(route, "Whitespace Content") for route in (" test-route-whitespace / ", "   ")
+		]
+		try:
+			self.assertEqual(padded.route, "test-route-whitespace")
+			self.assertTrue(blank.route.startswith("pages/"))
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_lists_the_home_page_at_the_site_root(self):
+		from frappe.utils import get_url
+
+		page = insert_page("test-sitemap-home", "Home Content")
+		home_page = frappe.db.get_single_value("Builder Settings", "home_page")
+		try:
+			page.publish()
+			frappe.db.set_single_value("Builder Settings", "home_page", page.route)
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"<loc>{get_url()}</loc>", sitemap)
+			self.assertNotIn("/test-sitemap-home</loc>", sitemap)
+		finally:
+			frappe.db.set_single_value("Builder Settings", "home_page", home_page)
 			page.delete()
 
 	def test_unpublish_takes_a_staging_page_offline(self):

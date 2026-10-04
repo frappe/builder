@@ -194,7 +194,7 @@ class BuilderPage(WebsiteGenerator):
 	def set_default_values(self):
 		if not self.page_title:
 			self.page_title = "My Page"
-		if not self.route:
+		if not (self.route or "").strip():
 			if not self.name:
 				self.autoname()
 			self.route = f"pages/{self.name}"
@@ -238,6 +238,12 @@ class BuilderPage(WebsiteGenerator):
 				frappe._("Template pages can only be modified in developer mode."),
 				frappe.PermissionError,
 			)
+
+	def set_route(self):
+		if self.route:
+			# frappe trims slashes and dots but keeps whitespace, which reaches URLs as %20
+			self.route = self.route.strip("/. \t\n")
+		super().set_route()
 
 	def validate_route_variables(self):
 		if not self.route or not (":" in self.route or "<" in self.route):
