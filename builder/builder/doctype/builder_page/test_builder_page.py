@@ -245,12 +245,47 @@ class TestBuilderPage(FrappeTestCase):
 			settings.save()
 			page.delete()
 
-	def test_route_is_trimmed_of_whitespace(self):
-		page = insert_page(" test-route-whitespace / ", "Whitespace Content")
+	def test_sitemap_judges_a_shared_route_by_the_page_it_serves(self):
+		from frappe.utils import add_to_date, now_datetime
+
+		route = "test-sitemap-shared"
+		pages = [insert_page(route, heading) for heading in ("Older Content", "Newer Content")]
 		try:
-			self.assertEqual(page.route, "test-route-whitespace")
+			for page in pages:
+				page.publish()
+			pages[-1].db_set({"published_at": add_to_date(now_datetime(), days=1), "disable_indexing": 1})
+			self.assertNotIn(f"/{route}</loc>", get_response_content("/sitemap.xml"))
 		finally:
-			page.delete()
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_resolves_templated_canonical_urls(self):
+		own, other = pages = [
+			insert_page(route, "Canonical Content")
+			for route in ("test-sitemap-own-canonical", "test-sitemap-other-canonical")
+		]
+		try:
+			for page in pages:
+				page.publish()
+			own.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-sitemap-own-canonical")
+			other.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-page")
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"/{own.route}</loc>", sitemap)
+			self.assertNotIn(f"/{other.route}</loc>", sitemap)
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_route_is_trimmed_of_whitespace(self):
+		padded, blank = pages = [
+			insert_page(route, "Whitespace Content") for route in (" test-route-whitespace / ", "   ")
+		]
+		try:
+			self.assertEqual(padded.route, "test-route-whitespace")
+			self.assertTrue(blank.route.startswith("pages/"))
+		finally:
+			for page in pages:
+				page.delete()
 
 	def test_sitemap_lists_the_home_page_at_the_site_root(self):
 		from frappe.utils import get_url
