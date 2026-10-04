@@ -968,10 +968,11 @@ function getPageUsageMessage(count: number) {
 
 // frappe-ui puts the server's text in `messages`; `message` is just "<url> <exc_type>"
 function getErrorMessage(error: unknown, fallback = __("Something went wrong")): string {
-	if (!(error instanceof Error)) return fallback;
+	if (typeof error !== "object" || !error) return fallback;
 	const first = "messages" in error && Array.isArray(error.messages) ? error.messages[0] : null;
-	if (first && typeof first === "string") return first.replace(/<[^>]*>/g, "").trim();
-	return error.message || fallback;
+	const text = typeof first === "string" ? first.replace(/<[^>]*>/g, "").trim() : "";
+	if (text) return text;
+	return ("message" in error && typeof error.message === "string" && error.message) || fallback;
 }
 
 function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
