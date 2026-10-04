@@ -10,29 +10,41 @@ from frappe.www.sitemap import get_public_pages_from_doctypes, is_dynamic_route
 
 no_cache = 1
 
+REGEX_CHARS = frozenset(".^$*+?{}[]\\|()")
+
 
 def get_context(context):
 	"""Overrides frappe's www/sitemap, which lists routes that redirect, and every published
 	Builder Page regardless of its indexing, access, home page and canonical settings"""
 	lastmod_by_route = get_static_routes() | get_document_routes() | get_builder_page_routes()
-	redirect_sources = get_redirect_sources()
+	redirects = RedirectSources()
+	base_url = get_url().rstrip("/")
 	return {
 		"links": [
-			{"loc": get_url(quote(route.encode("utf-8"))), "lastmod": lastmod}
+			{"loc": f"{base_url}/{quote(route.encode('utf-8'))}".rstrip("/"), "lastmod": lastmod}
 			for route, lastmod in lastmod_by_route.items()
-			if not any(source.match(route) for source in redirect_sources)
+			if not redirects.match(route)
 		]
 	}
 
 
-def get_redirect_sources() -> list[re.Pattern]:
-	"""Matched like frappe's resolve_redirect, which would cost a redis lookup per route"""
-	rules = frappe.get_hooks("website_redirects") + (frappe.get_website_settings("route_redirects") or [])
-	sources = []
-	for rule in rules:
-		with suppress(re.error):
-			sources.append(re.compile(rule.get("source").strip("/ ") + "$"))
-	return sources
+class RedirectSources:
+	"""Matches routes the way frappe's resolve_redirect matches a path, without its redis lookup
+	per route. Plain paths are compared directly, as a regex per source per route dominated the
+	sitemap's render time"""
+
+	def __init__(self):
+		rules = frappe.get_hooks("website_redirects") + (frappe.get_website_settings("route_redirects") or [])
+		sources = [rule.get("source").strip("/ ") for rule in rules]
+		self.paths = {source for source in sources if not REGEX_CHARS & set(source)}
+		self.patterns = []
+		for source in sources:
+			if source not in self.paths:
+				with suppress(re.error):
+					self.patterns.append(re.compile(source + "$"))
+
+	def match(self, route: str) -> bool:
+		return route in self.paths or any(pattern.match(route) for pattern in self.patterns)
 
 
 def get_static_routes() -> dict:
