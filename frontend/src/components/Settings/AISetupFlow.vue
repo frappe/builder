@@ -235,6 +235,7 @@
 
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
+import { getErrorMessage } from "@/utils/helpers";
 import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
@@ -343,7 +344,7 @@ const load = async () => {
 	} catch (error) {
 		// Without this the screen renders its heading over an empty grid and says
 		// nothing, which reads as "there are no providers" rather than "it broke".
-		loadError.value = (error as Error).message || "Could not load the provider list.";
+		loadError.value = getErrorMessage(error, "Could not load the provider list.");
 	} finally {
 		loading.value = false;
 	}
@@ -414,7 +415,7 @@ const verify = async () => {
 		result.value = {
 			success: false,
 			severity: "error",
-			message: (error as Error).message || "Could not reach the provider",
+			message: getErrorMessage(error, "Could not reach the provider"),
 		};
 	} finally {
 		busy.value = false;
@@ -430,7 +431,7 @@ const signIn = async () => {
 		oauthStatus.value = "waiting";
 		pollTimer = window.setInterval(pollLogin, 2500);
 	} catch (error) {
-		loginFailed((error as Error).message || "Could not start the sign-in");
+		loginFailed(getErrorMessage(error, "Could not start the sign-in"));
 	}
 };
 
@@ -456,7 +457,7 @@ const connectPasted = async () => {
 		if (res.status === "connected") loginDone();
 		else loginFailed(res.message || "Could not complete the sign-in");
 	} catch (error) {
-		loginFailed((error as Error).message || "Could not complete the sign-in");
+		loginFailed(getErrorMessage(error, "Could not complete the sign-in"));
 	} finally {
 		busy.value = false;
 	}
@@ -511,7 +512,7 @@ const finish = async () => {
 		}
 		emit("done");
 	} catch (error) {
-		toast.error((error as Error).message || "Could not save the provider");
+		toast.error(getErrorMessage(error, "Could not save the provider"));
 	} finally {
 		busy.value = false;
 	}
