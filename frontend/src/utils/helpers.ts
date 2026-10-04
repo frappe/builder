@@ -966,6 +966,15 @@ function getPageUsageMessage(count: number) {
 	return count === 1 ? __("used in 1 page") : __("used in {0} pages", [count]);
 }
 
+// frappe-ui puts the server's text in `messages`; `message` is just "<url> <exc_type>"
+function getErrorMessage(error: unknown, fallback = __("Something went wrong")): string {
+	if (typeof error !== "object" || !error) return fallback;
+	const first = "messages" in error && Array.isArray(error.messages) ? error.messages[0] : null;
+	const text = typeof first === "string" ? first.replace(/<[^>]*>/g, "").trim() : "";
+	if (text) return text;
+	return ("message" in error && typeof error.message === "string" && error.message) || fallback;
+}
+
 function parseJSONWithFallback<T>(value: T | string | undefined, fallback: T): T {
 	if (value === undefined || value === null || value === "") {
 		return fallback;
@@ -1008,6 +1017,7 @@ export {
 	getDataArray,
 	getDataForKey,
 	getDefaultPropsList,
+	getErrorMessage,
 	getImageBlock,
 	getNumberFromPx,
 	getPageUsageMessage,
