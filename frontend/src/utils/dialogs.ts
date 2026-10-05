@@ -146,8 +146,12 @@ const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
 
 export async function saveQuickVersion() {
 	const pageStore = usePageStore();
+	const pageName = pageStore.selectedPage as string;
 	await pageStore.waitTillPageIsSaved();
-	await pageStore.createManualSnapshot();
+	if (pageStore.selectedPage !== pageName) return;
+	// save explicitly so a failed autosave rejects here instead of versioning stale blocks
+	await pageStore.savePage();
+	await pageStore.createManualSnapshot(undefined, pageName);
 	toast.success(__("Version saved"));
 }
 
