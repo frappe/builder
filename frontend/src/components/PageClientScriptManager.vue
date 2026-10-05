@@ -479,6 +479,7 @@ const onScriptReorder = () => {
 		})
 		.catch((error: unknown) => {
 			toast.error(__("Failed to update script order"), { description: getErrorMessage(error) });
+			reloadScripts();
 		});
 };
 
