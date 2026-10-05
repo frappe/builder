@@ -249,7 +249,8 @@ const selectScript = (script: attachedScript) => {
 };
 
 const updateScript = async (value: string) => {
-	if (!activeScript.value || builderStore.readOnlyMode) return;
+	const target = activeScript.value;
+	if (!target || builderStore.readOnlyMode) return;
 
 	if (!value || !value.trim()) {
 		toast.warning(__("Script cannot be empty"));
@@ -257,18 +258,19 @@ const updateScript = async (value: string) => {
 	}
 
 	if (scriptUsageResource.list.loading) await scriptUsageResource.list.promise;
+	// usage now describes the current selection, and switching scripts already dropped this edit
+	if (activeScript.value?.script_name !== target.script_name) return;
 	if (scriptUsedInPages.value.length > 1) {
-		const choice = await promptSharedScriptSave(activeScript.value.script_name, otherPagesLabel.value);
-		if (choice === "copy") return saveScriptAsCopy(value);
+		const choice = await promptSharedScriptSave(target.script_name, otherPagesLabel.value);
+		if (choice === "copy") return saveScriptAsCopy(target, value);
 		if (choice !== "all") return;
 	}
-	saveScript(value);
+	saveScript(target, value);
 };
 
-const saveScript = (value: string) => {
-	if (!activeScript.value) return;
+const saveScript = (target: attachedScript, value: string) => {
 	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
-		if (script.name === activeScript.value?.script_name) {
+		if (script.name === target.script_name) {
 			script.script = value;
 		}
 		return script;
@@ -276,7 +278,7 @@ const saveScript = (value: string) => {
 
 	clientScriptResource.setValue
 		.submit({
-			name: activeScript.value.script_name,
+			name: target.script_name,
 			script: value,
 		})
 		.then(async () => {
@@ -296,18 +298,14 @@ const saveScript = (value: string) => {
 		});
 };
 
-const saveScriptAsCopy = async (value: string) => {
-	const source = activeScript.value;
-	if (!source) return;
+const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 	try {
 		const copyName: string = await createResource({ url: "builder.api.save_client_script_as_copy" }).submit({
 			page_name: props.page.name,
 			script_name: source.script_name,
 			script: value,
 		});
-		pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) =>
-			script.name === source.script_name ? { ...script, name: copyName, script: value } : script,
-		);
+		pointPageAtCopy(source.script_name, copyName, value);
 		await attachedScriptResource.reload();
 		selectScriptByName(copyName);
 		clientScriptResource.reload();
@@ -315,6 +313,15 @@ const saveScriptAsCopy = async (value: string) => {
 	} catch (error) {
 		toast.error(__("Failed to save script"), { description: getErrorMessage(error) });
 	}
+};
+
+const pointPageAtCopy = (sourceName: string, copyName: string, value: string) => {
+	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) =>
+		script.name === sourceName ? { ...script, name: copyName, script: value } : script,
+	);
+	pageStore.activePage?.client_scripts?.forEach((row) => {
+		if (row.builder_script === sourceName) row.builder_script = copyName;
+	});
 };
 
 const addScript = (scriptType: "JavaScript" | "CSS") => {
