@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""The gate every protected extension method opens with.
+"""Permission checks before an extension performs an action.
 
 An extension is installed for the whole site. It acts as the user who is using
 the editor, and never as more. Four checks run before a call reaches site data,
@@ -40,14 +40,8 @@ def find_installation(extension: str, enabled_only: bool = False) -> str | None:
 	return frappe.db.get_value(INSTALLATION_DOCTYPE, filters, "name")
 
 
-def assert_extension_access(extension: str, capability: str | None = None, writes: str | None = None) -> str:
-	"""Refuse unless this user may do this. Answers with the installation name.
-
-	`writes` names the doctype the caller is about to change, so Frappe applies
-	that doctype's own rule. For a token, that is the rule a user retinting one by
-	hand already meets. The capability is a separate check, and neither replaces
-	the other.
-	"""
+def assert_extension_access(extension: str, capability: str | None = None) -> str:
+	"""Refuse unless this user may do this. Answers with the installation name."""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to use extensions."), frappe.PermissionError)
 
@@ -58,9 +52,6 @@ def assert_extension_access(extension: str, capability: str | None = None, write
 		frappe.throw(_('"{0}" is not installed on this site.').format(extension), frappe.PermissionError)
 
 	assert_capability(installation, extension, capability)
-
-	if writes:
-		frappe.has_permission(writes, ptype="write", throw=True)
 
 	return installation
 
