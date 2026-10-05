@@ -109,12 +109,6 @@ p:empty::before {
 	border-radius: 2px;
 }
 
-/* frappe-ui popovers portal to <body> without a z-index; lift them above
-   DraggablePopup (z-20) so e.g. color pickers opened from within popups stay visible */
-.PopoverContent {
-	z-index: 30;
-}
-
 /* frappe-ui v1.0.0-beta.21 dimmed Switch labels to the shared InputLabel default
    (ink-gray-5); restore the old emphasis since the label acts as the row title */
 div:has(> [role='switch']) label[data-slot='label'] {

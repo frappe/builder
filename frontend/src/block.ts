@@ -390,13 +390,16 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
-	setStyle(style: styleProperty, value: StyleValue) {
+	// breakpoint defaults to the one the user is looking at. An extension may name
+	// one, because it writes without a canvas in front of it
+	setStyle(style: styleProperty, value: StyleValue, breakpoint?: string) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
 		style = kebabToCamelCase(style as string) as styleProperty;
-		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
+		const target = breakpoint ?? canvasStore.activeCanvas?.activeBreakpoint;
+		if (target === "mobile") {
 			styleObj = this.mobileStyles;
-		} else if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
+		} else if (target === "tablet") {
 			styleObj = this.tabletStyles;
 		}
 		if (value === null || value === "") {

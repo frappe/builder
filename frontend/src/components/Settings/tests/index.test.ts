@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { settingsItems } from "./index";
+import { settingsItems } from "../index";
 
 describe("settings registry", () => {
 	// prefetchBuilderSettings warms the panes through load, so a pane without one
