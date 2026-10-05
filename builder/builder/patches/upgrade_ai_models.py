@@ -67,17 +67,21 @@ def upgrade_provider(provider) -> None:
 		order_by="creation asc",
 	)
 	for row in retired:
+		successor = f"{provider.route_prefix}/{successors[row.model_id]}"
+		# A successor the site switched off is a choice to keep the model it replaces
+		if frappe.db.get_value("Builder AI Model", successor, "enabled") == 0:
+			continue
 		frappe.db.set_value("Builder AI Model", row.name, "enabled", 0)
-		replace(provider, successors[row.model_id], row.creation)
+		if not frappe.db.exists("Builder AI Model", successor):
+			add_successor(provider, successors[row.model_id], row.creation)
 
 
-def replace(provider, model_id: str, creation) -> None:
-	name = f"{provider.route_prefix}/{model_id}"
-	is_new = not frappe.db.exists("Builder AI Model", name)
+def add_successor(provider, model_id: str, creation) -> None:
 	add_model(provider.name, provider.route_prefix, model_id, label_for(provider.litellm_provider, model_id))
-	if is_new:
-		# The picker and the agent default to the oldest model, so the successor takes the retired row's place
-		frappe.db.set_value("Builder AI Model", name, "creation", creation, update_modified=False)
+	# The picker and the agent default to the oldest model, so the successor takes the retired row's place
+	frappe.db.set_value(
+		"Builder AI Model", f"{provider.route_prefix}/{model_id}", "creation", creation, update_modified=False
+	)
 
 
 def label_for(litellm_provider: str, model_id: str) -> str:
