@@ -232,18 +232,28 @@ class TestBuilderPage(FrappeTestCase):
 				page.delete()
 
 	def test_sitemap_skips_routes_that_redirect(self):
-		source = "/test-sitemap-redirected"
-		page = insert_page(source.lstrip("/"), "Redirected Content")
+		# plain paths and regex sources are matched separately
+		source_by_route = {
+			"test-sitemap-redirected": "/test-sitemap-redirected",
+			"test-sitemap-moved/old": r"/test-sitemap-moved/(.*)",
+		}
+		pages = [insert_page(route, "Redirected Content") for route in source_by_route]
 		settings = frappe.get_single("Website Settings")
 		try:
-			page.publish()
-			settings.append("route_redirects", {"source": source, "target": "/test-page"})
+			for page in pages:
+				page.publish()
+			for source in source_by_route.values():
+				settings.append("route_redirects", {"source": source, "target": "/test-page"})
 			settings.save()
-			self.assertNotIn(f"{source}</loc>", get_response_content("/sitemap.xml"))
+			sitemap = get_response_content("/sitemap.xml")
+			for route in source_by_route:
+				self.assertNotIn(f"/{route}</loc>", sitemap)
 		finally:
-			settings.route_redirects = [r for r in settings.route_redirects if r.source != source]
+			sources = set(source_by_route.values())
+			settings.route_redirects = [r for r in settings.route_redirects if r.source not in sources]
 			settings.save()
-			page.delete()
+			for page in pages:
+				page.delete()
 
 	def test_sitemap_judges_a_shared_route_by_the_page_it_serves(self):
 		from frappe.utils import add_to_date, now_datetime
