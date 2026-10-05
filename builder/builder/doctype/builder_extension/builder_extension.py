@@ -12,13 +12,13 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
-	PERMISSIONS,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
 	ICON_PATTERN,
 	MAX_README_BYTES,
 	MAX_SOURCE_BYTES,
+	PERMISSIONS,
 	VERSION_PATTERN,
 )
 

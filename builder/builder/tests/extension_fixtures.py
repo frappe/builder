@@ -13,7 +13,7 @@ import shutil
 import frappe
 from frappe.utils import get_files_path
 
-from builder.extensions.constants import PERMISSIONS, ENTRY_FILE, EXTENSIONS_FOLDER
+from builder.extensions.constants import ENTRY_FILE, EXTENSIONS_FOLDER, PERMISSIONS
 
 INSTALLATION_DOCTYPE = "Builder Extension"
 TEST_ROLE = "Extension Tester"
