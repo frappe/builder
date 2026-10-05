@@ -3,7 +3,7 @@
 
 """Storage an extension owns outright.
 
-No capability gates this. The extension's own drawer is not a write to the page,
+No permission gates this. The extension's own drawer is not a write to the page,
 so a read-only page does not close it.
 
 One row per user and installation, holding the whole store as one JSON object.

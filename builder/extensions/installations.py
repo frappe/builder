@@ -64,17 +64,17 @@ def set_extension_enabled(extension: str, enabled: bool) -> None:
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
-def set_granted_capabilities(extension: str, capabilities: list[str]) -> list[str]:
+def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]:
 	"""Narrow or widen what the site allows.
 
-	The record refuses a capability the manifest never asked for, so the rule has
+	The record refuses a permission the manifest never asked for, so the rule has
 	one owner and this method only writes what it is given.
 	"""
 	assert_extension_manager()
 	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
-	installation.granted_capabilities = frappe.as_json(capabilities)
+	installation.granted_permissions = frappe.as_json(permissions)
 	installation.save(ignore_permissions=True)
-	return installation.capabilities
+	return installation.permissions
 
 
 @frappe.whitelist(methods=["POST"])

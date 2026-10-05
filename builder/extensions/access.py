@@ -10,7 +10,7 @@ and they live here together so no method can be written with one forgotten:
 1. Somebody is signed in.
 2. That person can use Builder.
 3. The site installed this extension and left it on.
-4. The installation grants the capability the method needs.
+4. The installation grants the permission the method needs.
 
 Frappe's own permission runs last, for the user who is calling. Nothing here
 widens it. The user comes from `frappe.session.user`, and a caller cannot name
@@ -40,7 +40,7 @@ def find_installation(extension: str, enabled_only: bool = False) -> str | None:
 	return frappe.db.get_value(INSTALLATION_DOCTYPE, filters, "name")
 
 
-def assert_extension_access(extension: str, capability: str | None = None) -> str:
+def assert_extension_access(extension: str, permission: str | None = None) -> str:
 	"""Refuse unless this user may do this. Answers with the installation name."""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to use extensions."), frappe.PermissionError)
@@ -51,24 +51,24 @@ def assert_extension_access(extension: str, capability: str | None = None) -> st
 	if not installation:
 		frappe.throw(_('"{0}" is not installed on this site.').format(extension), frappe.PermissionError)
 
-	assert_capability(installation, extension, capability)
+	assert_permission(installation, extension, permission)
 
 	return installation
 
 
-def assert_capability(installation: str, extension: str, capability: str | None) -> None:
+def assert_permission(installation: str, extension: str, permission: str | None) -> None:
 	"""What an extension manager allowed, checked where the writing happens.
 
 	The browser bridge checks this before it sends the call, to give an extension a
 	clear error. That check protects nothing: a frame cannot reach these methods,
 	but the editor page can.
 	"""
-	if not capability:
+	if not permission:
 		return
 
-	granted = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation).capabilities
-	if capability not in granted:
-		frappe.throw(_('"{0}" was not granted {1}.').format(extension, capability), frappe.PermissionError)
+	granted = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation).permissions
+	if permission not in granted:
+		frappe.throw(_('"{0}" was not granted {1}.').format(extension, permission), frappe.PermissionError)
 
 
 def is_extension_manager(user: str | None = None) -> bool:

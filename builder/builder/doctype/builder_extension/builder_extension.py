@@ -12,7 +12,7 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
-	CAPABILITIES,
+	PERMISSIONS,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
@@ -38,14 +38,14 @@ class BuilderExtension(Document):
 		description: DF.SmallText | None
 		enabled: DF.Check
 		extension: DF.Data
-		granted_capabilities: DF.SmallText | None
+		granted_permissions: DF.SmallText | None
 		icon: DF.Data | None
 		install_error: DF.SmallText | None
 		install_state: DF.Literal["Installing", "Ready", "Failed"]
 		installed_on: DF.Datetime | None
 		label: DF.Data | None
 		readme: DF.LongText | None
-		requested_capabilities: DF.SmallText | None
+		requested_permissions: DF.SmallText | None
 		source_url: DF.Data | None
 		version: DF.Data
 	# end: auto-generated types
@@ -62,7 +62,7 @@ class BuilderExtension(Document):
 	def validate(self):
 		self.validate_identity()
 		self.validate_icon()
-		self.validate_capabilities()
+		self.validate_permissions()
 		self.validate_readme()
 
 	def on_trash(self):
@@ -76,14 +76,14 @@ class BuilderExtension(Document):
 		return get_files_path(f"{EXTENSIONS_FOLDER}/{self.name}", is_private=True)
 
 	@property
-	def capabilities(self) -> list[str]:
+	def permissions(self) -> list[str]:
 		"""What an extension manager allowed. Every gate reads this list and no other."""
-		return self.capability_list("granted_capabilities")
+		return self.permission_list("granted_permissions")
 
 	@property
 	def requested(self) -> list[str]:
 		"""What the manifest asked for. A grant cannot reach outside it."""
-		return self.capability_list("requested_capabilities")
+		return self.permission_list("requested_permissions")
 
 	@property
 	def source(self) -> str:
@@ -128,8 +128,8 @@ class BuilderExtension(Document):
 		if self.icon and not ICON_PATTERN.match(self.icon):
 			frappe.throw(_("Icon must name one SVG file in the install root, such as icon.svg."))
 
-	def validate_capabilities(self):
-		outside = sorted(set(self.capabilities) - set(self.requested))
+	def validate_permissions(self):
+		outside = sorted(set(self.permissions) - set(self.requested))
 		if outside:
 			frappe.throw(
 				_('"{0}" never asked for {1}, so it cannot be granted.').format(
@@ -137,7 +137,7 @@ class BuilderExtension(Document):
 				)
 			)
 
-	def capability_list(self, field: str) -> list[str]:
+	def permission_list(self, field: str) -> list[str]:
 		"""One of the two lists, parsed and checked against what Builder has."""
 		# parse_json raises on text that is not JSON, which would reach the user as a
 		# traceback instead of the message below
@@ -150,9 +150,9 @@ class BuilderExtension(Document):
 		if not isinstance(keys, list):
 			frappe.throw(_("{0} must be a JSON list.").format(label))
 
-		unknown = sorted(set(keys) - set(CAPABILITIES))
+		unknown = sorted(set(keys) - set(PERMISSIONS))
 		if unknown:
-			frappe.throw(_("Unknown capabilities in {0}: {1}").format(label, ", ".join(unknown)))
+			frappe.throw(_("Unknown permissions in {0}: {1}").format(label, ", ".join(unknown)))
 		return keys
 
 	def validate_readme(self):

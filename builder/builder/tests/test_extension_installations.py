@@ -15,7 +15,7 @@ from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
 	get_installations,
 	set_extension_enabled,
-	set_granted_capabilities,
+	set_granted_permissions,
 	uninstall_extension,
 )
 
@@ -106,45 +106,45 @@ class TestEnableAndDisable(FrappeTestCase):
 			set_extension_enabled(EXTENSION, False)
 
 
-class TestGrantedCapabilities(FrappeTestCase):
+class TestGrantedPermissions(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_revoking_narrows_what_the_gate_allows(self):
-		make_installation(EXTENSION, capabilities=["page.read", "token.write"])
+		make_installation(EXTENSION, permissions=["page.read", "token.write"])
 
-		set_granted_capabilities(EXTENSION, ["page.read"])
+		set_granted_permissions(EXTENSION, ["page.read"])
 
 		assert_extension_access(EXTENSION, "page.read")
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "token.write")
 
 	def test_granting_again_reopens_it(self):
-		make_installation(EXTENSION, capabilities=["page.read", "token.write"], granted=["page.read"])
+		make_installation(EXTENSION, permissions=["page.read", "token.write"], granted=["page.read"])
 
-		set_granted_capabilities(EXTENSION, ["page.read", "token.write"])
+		set_granted_permissions(EXTENSION, ["page.read", "token.write"])
 
 		assert_extension_access(EXTENSION, "token.write")
 
-	def test_refuses_a_capability_the_manifest_never_asked_for(self):
-		make_installation(EXTENSION, capabilities=["page.read"])
+	def test_refuses_a_permission_the_manifest_never_asked_for(self):
+		make_installation(EXTENSION, permissions=["page.read"])
 
 		with self.assertRaises(frappe.ValidationError):
-			set_granted_capabilities(EXTENSION, ["page.read", "schema.write"])
+			set_granted_permissions(EXTENSION, ["page.read", "schema.write"])
 
-	def test_refuses_a_capability_builder_does_not_have(self):
+	def test_refuses_a_permission_builder_does_not_have(self):
 		make_installation(EXTENSION)
 
 		with self.assertRaises(frappe.ValidationError):
-			set_granted_capabilities(EXTENSION, ["quantum.read"])
+			set_granted_permissions(EXTENSION, ["quantum.read"])
 
 	def test_refuses_a_user_who_cannot_manage(self):
 		make_installation(EXTENSION)
 		become_a_user_who_cannot_manage(self)
 
 		with self.assertRaises(frappe.PermissionError):
-			set_granted_capabilities(EXTENSION, [])
+			set_granted_permissions(EXTENSION, [])
 
 
 class TestUninstall(FrappeTestCase):

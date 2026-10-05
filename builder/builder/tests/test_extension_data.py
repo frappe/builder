@@ -17,7 +17,7 @@ from builder.extensions.data import (
 
 
 def make_extension(name="acme/data", **kwargs):
-	return make_installation(name, label="Data", capabilities=["data.access"], **kwargs)
+	return make_installation(name, label="Data", permissions=["data.access"], **kwargs)
 
 
 def make_contact(first_name="Ada"):
@@ -49,7 +49,7 @@ class TestExtensionDocuments(FrappeTestCase):
 			get_list("acme/data", "Error Log")
 
 	def test_refuses_an_extension_without_data_access(self):
-		make_installation("acme/no-data", capabilities=[])
+		make_installation("acme/no-data", permissions=[])
 
 		self.assertRaises(frappe.PermissionError, get_list, "acme/no-data", "Contact")
 

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One extension installed on this site, with its build, version and capabilities. Deleting it removes its files and extension state, but keeps any doctype, token or client script the extension made.",
+ "description": "One extension installed on this site, with its build, version and permissions. Deleting it removes its files and extension state, but keeps any doctype, token or client script the extension made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -14,8 +14,8 @@
   "readme",
   "version",
   "checksum",
-  "requested_capabilities",
-  "granted_capabilities",
+  "requested_permissions",
+  "granted_permissions",
   "installed_on",
   "install_state",
   "install_error"
@@ -90,17 +90,17 @@
    "read_only": 1
   },
   {
-   "description": "JSON list of capability keys the manifest asked for. A manager can grant only keys from this list.",
-   "fieldname": "requested_capabilities",
+   "description": "JSON list of permission keys the manifest asked for. A manager can grant only keys from this list.",
+   "fieldname": "requested_permissions",
    "fieldtype": "Small Text",
-   "label": "Requested Capabilities",
+   "label": "Requested Permissions",
    "read_only": 1
   },
   {
-   "description": "JSON list of capability keys an extension manager granted. A key absent here is not granted.",
-   "fieldname": "granted_capabilities",
+   "description": "JSON list of permission keys an extension manager granted. A key absent here is not granted.",
+   "fieldname": "granted_permissions",
    "fieldtype": "Small Text",
-   "label": "Granted Capabilities"
+   "label": "Granted Permissions"
   },
   {
    "fieldname": "installed_on",

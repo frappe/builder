@@ -21,8 +21,8 @@ VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*$")
 # No other format, so the editor draws it in an <img> at any size.
 ICON_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$")
 
-# every capability the bridge gates a method by
-CAPABILITIES = (
+# every permission the bridge gates a method by
+PERMISSIONS = (
 	"context.read",
 	"block.read",
 	"block.update",

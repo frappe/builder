@@ -66,14 +66,14 @@ class TestBuilderExtension(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, version="../1.0.0")
 
-	def test_refuses_a_capability_this_builder_does_not_have(self):
+	def test_refuses_a_permission_this_builder_does_not_have(self):
 		with self.assertRaises(frappe.ValidationError):
-			make_installation(EXTENSION, capabilities=["quantum.read"])
+			make_installation(EXTENSION, permissions=["quantum.read"])
 
 	def test_refuses_a_grant_the_manifest_never_asked_for(self):
 		"""A manager can only ever answer a question the extension asked."""
 		with self.assertRaises(frappe.ValidationError):
-			make_installation(EXTENSION, capabilities=["page.read"], granted=["page.read", "schema.write"])
+			make_installation(EXTENSION, permissions=["page.read"], granted=["page.read", "schema.write"])
 
 	def test_reads_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
@@ -157,10 +157,10 @@ class TestInstallationValidation(FrappeTestCase):
 			with self.assertRaises(frappe.ValidationError, msg=icon):
 				make_installation(EXTENSION, icon=icon)
 
-	def test_refuses_a_capability_list_that_is_not_a_json_list(self):
+	def test_refuses_a_permission_list_that_is_not_a_json_list(self):
 		for text in ("not json", '{"page.read": 1}'):
 			with self.assertRaises(frappe.ValidationError, msg=text):
-				make_installation(EXTENSION, requested_capabilities=text)
+				make_installation(EXTENSION, requested_permissions=text)
 
 	def test_refuses_a_readme_over_the_size_limit(self):
 		with patch(f"{INSTALLATION_MODULE}.MAX_README_BYTES", 3):

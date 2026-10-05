@@ -63,14 +63,14 @@ class TestAssertExtensionAccess(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION)
 
-	def test_refuses_a_capability_that_was_not_granted(self):
-		make_installation(EXTENSION, capabilities=["page.read"])
+	def test_refuses_a_permission_that_was_not_granted(self):
+		make_installation(EXTENSION, permissions=["page.read"])
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "data.access")
 
-	def test_needs_no_capability_when_the_method_asks_for_none(self):
-		make_installation(EXTENSION, capabilities=[])
+	def test_needs_no_permission_when_the_method_asks_for_none(self):
+		make_installation(EXTENSION, permissions=[])
 
 		self.assertIsNotNone(assert_extension_access(EXTENSION))
 

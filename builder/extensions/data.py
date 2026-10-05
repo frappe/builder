@@ -4,7 +4,7 @@
 """The documents an extension reads and writes, for the whole site.
 
 Two gates stand between an extension and a document:
-1. The capability says the extension may work with site data at all (`data.access`).
+1. The permission says the extension may work with site data at all (`data.access`).
    An extension manager grants it for the whole site.
 2. Frappe's own permission says whether the user who is calling may do it. It is
    the only gate that cannot be widened: no document an extension reads or writes

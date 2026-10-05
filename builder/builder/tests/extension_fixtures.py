@@ -13,27 +13,27 @@ import shutil
 import frappe
 from frappe.utils import get_files_path
 
-from builder.extensions.constants import CAPABILITIES, ENTRY_FILE, EXTENSIONS_FOLDER
+from builder.extensions.constants import PERMISSIONS, ENTRY_FILE, EXTENSIONS_FOLDER
 
 INSTALLATION_DOCTYPE = "Builder Extension"
 TEST_ROLE = "Extension Tester"
 
 
-def make_installation(extension="acme/listed", capabilities=None, granted=None, source=None, **values):
+def make_installation(extension="acme/listed", permissions=None, granted=None, source=None, **values):
 	"""The site's installation of one extension, with files when a source is given.
 
-	`capabilities` is what the manifest asked for, and every one of them is granted
-	unless `granted` narrows it. Both default to every capability, so a test that is
+	`permissions` is what the manifest asked for, and every one of them is granted
+	unless `granted` narrows it. Both default to every permission, so a test that is
 	not about the gate lists none.
 	"""
-	requested = list(CAPABILITIES) if capabilities is None else list(capabilities)
+	requested = list(PERMISSIONS) if permissions is None else list(permissions)
 	allowed = requested if granted is None else list(granted)
 	fields = {
 		"label": extension,
 		"version": "1.0.0",
 		"checksum": "sum123",
-		"requested_capabilities": json.dumps(requested),
-		"granted_capabilities": json.dumps(allowed),
+		"requested_permissions": json.dumps(requested),
+		"granted_permissions": json.dumps(allowed),
 		"enabled": 1,
 		**values,
 	}
