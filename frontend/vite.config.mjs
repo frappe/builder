@@ -49,6 +49,9 @@ export default defineConfig({
 		target: "es2015",
 	},
 	resolve: {
+		// the SDK package serves "source" in this repo, so the app builds its
+		// TypeScript and never needs the package built first
+		conditions: ["source", "module", "browser", "development|production"],
 		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],
 		alias: {
 			"@": path.resolve(__dirname, "src"),
