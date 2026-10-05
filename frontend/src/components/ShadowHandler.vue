@@ -4,7 +4,8 @@
 			<div
 				class="flex w-full items-center justify-between"
 				@focusin="updateActiveState"
-				@click.capture="onAnchorClick">
+				@click.capture="onAnchorClick"
+				@click="$event.target instanceof HTMLInputElement && open()">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -12,7 +13,7 @@
 					:enableStates="true"
 					:allowDynamicValue="true"
 					:placeholder="__('None')"
-					@focus="toggle"
+					@focus="open"
 					:getModelValue="() => getBoxShadowValue(null)"
 					:getVariantValue="(v: string) => getBoxShadowValue(v)"
 					:setVariantValue="handleSetVariant"
@@ -20,12 +21,7 @@
 					<template #prefix="{ variant }">
 						<div
 							class="absolute left-2 top-[6px] size-4 cursor-pointer rounded-4 border border-outline-gray-1 shadow-sm"
-							@click="
-								() => {
-									activeState = variant;
-									toggle();
-								}
-							"
+							@click="toggleForState(variant)"
 							:style="{
 								backgroundColor: shadowConfigs[0]?.color ?? 'transparent',
 							}" />
@@ -161,7 +157,13 @@ const SHADOW_CONTROLS = [
 ] as const;
 
 const activeState = ref<string | null>(null);
-const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
+const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
+
+const toggleForState = (state: string | null) => {
+	const isOpenForState = isOpen.value && activeState.value === state;
+	activeState.value = state;
+	toggle(!isOpenForState);
+};
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
