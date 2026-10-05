@@ -194,8 +194,11 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 
 	function batch(callback: () => void) {
 		const pauseId = pause();
-		callback();
-		resume(pauseId, true);
+		try {
+			callback();
+		} finally {
+			resume(pauseId, true);
+		}
 	}
 
 	return {
