@@ -14,6 +14,7 @@ from builder.api import (
 	import_remote_fonts,
 	import_template_group,
 	insert_folder,
+	save_client_script,
 )
 
 FONT = "https://cdn.example.com/inter.woff2"
@@ -209,6 +210,23 @@ class TestDuplicatePage(FrappeTestCase):
 	def test_copied_script_names_swap_the_hash(self):
 		for name in ("fp sidebar", "fp sidebar-8120f", "fp sidebar-8120f-c8371-91f8e"):
 			self.assertRegex(get_copy_script_name(name), r"^fp sidebar-[0-9a-f]{5}$")
+
+
+class TestSaveClientScript(FrappeTestCase):
+	def test_stale_save_is_refused(self):
+		script = frappe.get_doc(
+			{"doctype": "Builder Client Script", "script_type": "CSS", "script": "a{}"}
+		).insert()
+		# inserting writes the script file and commits, so remove it the same way
+		self.addCleanup(lambda: (frappe.delete_doc("Builder Client Script", script.name), frappe.db.commit()))
+		loaded = str(script.modified)
+
+		saved = save_client_script(script.name, "b{}", loaded)
+
+		with self.assertRaises(frappe.TimestampMismatchError):
+			save_client_script(script.name, "c{}", loaded)
+		save_client_script(script.name, "d{}", saved)
+		self.assertEqual(frappe.db.get_value("Builder Client Script", script.name, "script"), "d{}")
 
 
 GROUP = {
