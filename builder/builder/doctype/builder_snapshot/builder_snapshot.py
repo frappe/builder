@@ -47,11 +47,14 @@ def take_snapshot(
 
 	With `skip_if_unchanged`, returns None instead when the data matches the latest snapshot.
 	"""
-	doc = frappe.get_doc(reference_doctype, reference_name)
+	# the row lock serializes concurrent calls, so the unchanged check and insert are atomic
+	doc = frappe.get_doc(reference_doctype, reference_name, for_update=skip_if_unchanged)
 	data = {field: doc.get(field) for field in fields}
 	if transform:
 		data = transform(data)
-	if skip_if_unchanged and get_latest_snapshot_data(reference_doctype, reference_name) == compact_json(data):
+	if skip_if_unchanged and get_latest_snapshot_data(reference_doctype, reference_name) == compact_json(
+		data
+	):
 		return None
 	return create_snapshot(reference_doctype, reference_name, data, label, snapshot_type)
 
