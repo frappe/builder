@@ -33,13 +33,16 @@ export function promptOversizedSVG(bytes: number): Promise<boolean> {
 	});
 }
 
+function choose<T>(resolve: (choice: T) => void, choice: T) {
+	return ({ close }: { close: () => void }) => {
+		resolve(choice);
+		close();
+	};
+}
+
 // dismissing resolves null, so a stray Esc never saves
 export function promptSharedScriptSave(scriptName: string, otherPages: string): Promise<"all" | "copy" | null> {
 	return new Promise((resolve) => {
-		const choose = (choice: "all" | "copy") => ({ close }: { close: () => void }) => {
-			resolve(choice);
-			close();
-		};
 		dialog.confirm({
 			title: __("Update a shared script?"),
 			message:
@@ -52,8 +55,43 @@ export function promptSharedScriptSave(scriptName: string, otherPages: string): 
 			icon: "lucide-alert-circle",
 			theme: "amber",
 			actions: [
-				{ label: __("Save as Copy for This Page"), variant: "subtle", onClick: choose("copy") },
-				{ label: __("Update All Pages"), variant: "solid", onClick: choose("all") },
+				{ label: __("Save as Copy for This Page"), variant: "subtle", onClick: choose(resolve, "copy") },
+				{ label: __("Update All Pages"), variant: "solid", onClick: choose(resolve, "all") },
+			],
+			onCancel: () => resolve(null),
+		});
+	});
+}
+
+// dismissing resolves false, so a stray Esc keeps the edit
+export function promptDiscardScriptEdits(scriptName: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		dialog.confirm({
+			title: __("Discard unsaved changes?"),
+			message: __("Your edits to {0} have not been saved.", [scriptName]),
+			theme: "red",
+			confirmLabel: __("Discard"),
+			cancelLabel: __("Keep Editing"),
+			onConfirm: () => resolve(true),
+			onCancel: () => resolve(false),
+		});
+	});
+}
+
+// dismissing resolves null and leaves the edit in the editor, unsaved
+export function promptScriptConflict(scriptName: string): Promise<"overwrite" | "reload" | null> {
+	return new Promise((resolve) => {
+		dialog.confirm({
+			title: __("Script changed elsewhere"),
+			message: __(
+				"{0} was saved somewhere else (another tab or another person) after you opened it. Overwrite that version with yours, or load it and drop your edit?",
+				[scriptName],
+			),
+			icon: "lucide-alert-circle",
+			theme: "amber",
+			actions: [
+				{ label: __("Load Latest"), variant: "subtle", onClick: choose(resolve, "reload") },
+				{ label: __("Overwrite"), variant: "solid", theme: "red", onClick: choose(resolve, "overwrite") },
 			],
 			onCancel: () => resolve(null),
 		});

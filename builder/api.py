@@ -455,6 +455,18 @@ def save_client_script_as_copy(page_name: str, script_name: str, script: str) ->
 	return new_script.name
 
 
+@frappe.whitelist()
+@has_page_write("You do not have permission to edit client scripts")
+def save_client_script(name: str, script: str, modified: str | None = None) -> str:
+	"""Saves a script. Pass the `modified` it was loaded with to refuse overwriting a newer save."""
+	doc = frappe.get_doc("Builder Client Script", name)
+	doc.script = script
+	if modified:
+		doc.modified = modified
+	doc.save()
+	return str(doc.modified)
+
+
 def get_copy_script_name(name: str) -> str:
 	"""Swaps the trailing hash for a fresh one, so copies of copies don't keep growing the name."""
 	base = re.sub(r"(-[0-9a-f]{5})+$", "", name)
@@ -866,8 +878,13 @@ def get_codemirror_completions():
 @frappe.whitelist()
 @has_page_write("You do not have permission to reorder client scripts")
 def reorder_client_scripts(script_order: list[str]):
+	if not script_order:
+		return
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+	# the rows change without a page save, so the cached page would keep the old order
+	page = frappe.db.get_value("Builder Page Client Script", script_order[0], "parent")
+	frappe.get_doc("Builder Page", page).clear_cache()
 
 
 @frappe.whitelist()

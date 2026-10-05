@@ -35,7 +35,7 @@
 		<Button
 			v-if="showSaveButton"
 			variant="solid"
-			@click="emit('save', editor.getEditorValue())"
+			@click="handleSave(editor.getEditorValue())"
 			class="mt-3"
 			:disabled="!isDirty || readonly">
 			{{ __("Save") }}
@@ -83,6 +83,8 @@ const emit = defineEmits(["save", "update:modelValue"]);
 const editor = ref<VNodeRef | null>(null);
 
 const isDirty = ref(false);
+// a modelValue that only echoes what this editor emitted must not reset it, or text typed since is lost
+let pendingEcho: string | null = null;
 
 const handleBlur = (value: string) => {
 	try {
@@ -96,6 +98,7 @@ const handleBlur = (value: string) => {
 			return;
 		}
 		if (!props.showSaveButton && !props.readonly) {
+			pendingEcho = value;
 			emit("update:modelValue", processedValue);
 			isDirty.value = false; // Reset dirty state after blur save
 		}
@@ -130,6 +133,7 @@ const handleChange = (value: string) => {
 
 const handleSave = (value: string) => {
 	if (props.readonly) return;
+	pendingEcho = value;
 
 	if (props.type === "JSON" && value) {
 		value = JSON.parse(value);
@@ -157,6 +161,12 @@ function resetEditor(resetHistory = false) {
 watch(
 	() => props.modelValue,
 	() => {
+		const echoed = pendingEcho !== null && getModelValue() === pendingEcho;
+		pendingEcho = null;
+		if (echoed && editor.value) {
+			isDirty.value = editor.value.getEditorValue() !== getModelValue();
+			return;
+		}
 		resetEditor();
 	},
 );

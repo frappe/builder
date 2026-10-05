@@ -13,10 +13,10 @@
 							<a
 								href="#"
 								:class="{
-									'text-ink-gray-5': activeScript !== script,
-									'font-medium !text-ink-gray-8': activeScript === script,
+									'text-ink-gray-5': !isActive(script),
+									'font-medium !text-ink-gray-8': isActive(script),
 								}"
-								@click="selectScript(script)"
+								@click="switchToScript(script)"
 								class="group flex h-6 items-center justify-between gap-1 text-sm first-of-type:mt-6 last-of-type:mb-2 hover:text-ink-gray-7">
 								<div class="flex w-[90%] items-center gap-1">
 									<span
@@ -26,13 +26,11 @@
 									<JavaScriptIcon class="shrink-0" v-if="script.script_type === 'JavaScript'" />
 
 									<EditableSpan
+										:key="script.script_name"
 										v-model="script.script_name"
 										:editable="script.editable && !builderStore.readOnlyMode"
-										:onChange="
-											async (newName) => {
-												await updateScriptName(newName, script);
-											}
-										"
+										:onChange="(newName) => renameScript(newName, script)"
+										@blur="script.editable = false"
 										class="w-full truncate">
 										{{ script.script_name }}
 									</EditableSpan>
@@ -41,7 +39,7 @@
 								<Dropdown
 									class="script-options"
 									align="end"
-									v-if="activeScript === script && !builderStore.readOnlyMode"
+									v-if="isActive(script) && !builderStore.readOnlyMode"
 									:options="[
 										{
 											label: __('Rename'),
@@ -52,7 +50,7 @@
 										},
 										{
 											label: __('Remove Script'),
-											onClick: () => deleteScript(script.name),
+											onClick: () => removeScript(script),
 											icon: 'lucide-trash',
 										},
 									]">
@@ -84,6 +82,7 @@
 
 						<Combobox
 							v-if="clientScriptResource.data && clientScriptResource.data.length > 0"
+							:key="attachPickerKey"
 							:options="clientScriptOptions"
 							:placeholder="__('Attach Script')"
 							@update:modelValue="onScriptSelected">
@@ -141,8 +140,8 @@ import EditableSpan from "@/components/EditableSpan.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
-import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
-import { promptSharedScriptSave } from "@/utils/dialogs";
+import { BuilderClientScript, BuilderPage, BuilderPageClientScript } from "@/types/doctypes";
+import { promptDiscardScriptEdits, promptScriptConflict, promptSharedScriptSave } from "@/utils/dialogs";
 import { getErrorMessage, getPageUsageMessage } from "@/utils/helpers";
 import { Combobox, createListResource, createResource, Dropdown, type ComboboxOptionValue } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
@@ -160,14 +159,25 @@ const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
 type attachedScript = {
+	name: string;
+	creation: string;
+	modified: string;
+	owner: string;
+	modified_by: string;
+	script_name: string;
 	script: string;
 	script_type: string;
-	name: string;
-	script_name: string;
+	script_public_url?: string;
+	script_creation: string;
+	script_modified: string;
+	script_owner: string;
+	script_modified_by: string;
 	editable: boolean;
 };
 
 const activeScript = ref<attachedScript | null>(null);
+// rows are matched by name: the list refetches on its own after insert/delete, swapping every object
+const isActive = (script: attachedScript) => activeScript.value?.name === script.name;
 
 const props = defineProps<{
 	page: BuilderPage;
@@ -180,14 +190,24 @@ const attachedScriptResource = createListResource({
 		parent: props.page.name,
 	},
 	fields: [
+		"name",
+		"creation",
+		"modified",
+		"owner",
+		"modified_by",
+		"builder_script.name as script_name",
 		"builder_script.script",
 		"builder_script.script_type",
-		"builder_script.name as script_name",
-		"name",
+		"builder_script.public_url as script_public_url",
+		"builder_script.creation as script_creation",
+		"builder_script.modified as script_modified",
+		"builder_script.owner as script_owner",
+		"builder_script.modified_by as script_modified_by",
 	],
 	orderBy: "`tabBuilder Page Client Script`.idx asc",
 	auto: true,
 	onSuccess: (data: attachedScript[]) => {
+		syncPageStore(data);
 		const pendingName = builderStore.openClientScript;
 		if (pendingName) {
 			builderStore.openClientScript = null;
@@ -204,11 +224,53 @@ const attachedScriptResource = createListResource({
 });
 
 const attachedScripts = computed({
-	get: () => attachedScriptResource.data ?? [],
+	get: (): attachedScript[] => attachedScriptResource.data ?? [],
 	set: (scripts: attachedScript[]) => {
 		attachedScriptResource.data = scripts;
 	},
 });
+
+// copy/paste and the AI read the page's scripts from the store, so it mirrors this list
+const syncPageStore = (scripts: attachedScript[]) => {
+	const page = pageStore.activePage;
+	// a reply can land after another page opened, and that page may share these scripts
+	if (page?.name !== props.page.name) return;
+	page.client_scripts = scripts.map(toPageRow);
+	pageStore.activePageScripts = scripts.map(toScriptDoc);
+};
+
+const toPageRow = (script: attachedScript, index: number): BuilderPageClientScript => ({
+	name: script.name,
+	creation: script.creation,
+	modified: script.modified,
+	owner: script.owner,
+	modified_by: script.modified_by,
+	parent: props.page.name,
+	parenttype: "Builder Page",
+	parentfield: "client_scripts",
+	idx: index + 1,
+	builder_script: script.script_name,
+});
+
+const toScriptDoc = (script: attachedScript): BuilderClientScript => ({
+	name: script.script_name,
+	creation: script.script_creation,
+	modified: script.script_modified,
+	owner: script.script_owner,
+	modified_by: script.script_modified_by,
+	script: script.script,
+	script_type: script.script_type,
+	public_url: script.script_public_url,
+});
+
+// a reload swaps every row object, so re-point whatever is selected once it lands (the user may
+// have switched meanwhile), following `moved` when the selected script was renamed or copied
+const reloadScripts = async (moved?: { from: string; to: string }) => {
+	await attachedScriptResource.reload();
+	let name = activeScript.value?.script_name;
+	if (moved && name === moved.from) name = moved.to;
+	activeScript.value = attachedScripts.value.find((s) => s.script_name === name) ?? null;
+};
 
 const clientScriptResource = createListResource({
 	doctype: "Builder Client Script",
@@ -239,13 +301,24 @@ const usageMessage = computed(() => {
 		: getPageUsageMessage(count);
 });
 
+const loadUsage = (scriptName: string) => {
+	scriptUsageResource.filters = [["Builder Page Client Script", "builder_script", "=", scriptName]];
+	scriptUsageResource.reload();
+};
+
 const selectScript = (script: attachedScript) => {
 	activeScript.value = script;
-	scriptUsageResource.filters = [["Builder Page Client Script", "builder_script", "=", script.script_name]];
-	scriptUsageResource.reload();
+	loadUsage(script.script_name);
 	nextTick(() => {
 		scriptEditor.value?.resetEditor(true);
 	});
+};
+
+const switchToScript = async (script: attachedScript) => {
+	if (script.name === activeScript.value?.name) return;
+	const current = activeScript.value?.script_name ?? "";
+	if (scriptEditor.value?.isDirty && !(await promptDiscardScriptEdits(current))) return;
+	selectScript(script);
 };
 
 const updateScript = async (value: string) => {
@@ -268,35 +341,37 @@ const updateScript = async (value: string) => {
 	saveScript(target, value);
 };
 
-const saveScript = (target: attachedScript, value: string) => {
-	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
-		if (script.name === target.script_name) {
-			script.script = value;
-		}
-		return script;
-	});
-
-	clientScriptResource.setValue
-		.submit({
+const saveScript = async (target: attachedScript, value: string, overwrite = false): Promise<void> => {
+	try {
+		await createResource({ url: "builder.api.save_client_script" }).submit({
 			name: target.script_name,
 			script: value,
-		})
-		.then(async () => {
-			await attachedScriptResource.reload();
-			attachedScriptResource.data?.forEach((script: attachedScript) => {
-				if (script.script_name === activeScript.value?.script_name) {
-					activeScript.value = script;
-				}
-			});
-			toast.success(__("Script saved successfully"));
-		})
-		.catch((e: { message: string; exc: string }) => {
-			const error_message = e.exc.split("\n").slice(-2)[0];
-			toast.error(__("Failed to save script"), {
-				description: error_message,
-			});
+			modified: overwrite ? undefined : target.script_modified,
 		});
+	} catch (error) {
+		return onSaveFailed(target, value, error);
+	}
+	await reloadScripts();
+	toast.success(__("Script saved successfully"));
 };
+
+const onSaveFailed = async (target: attachedScript, value: string, error: unknown): Promise<void> => {
+	if (!isStaleSave(error)) {
+		toast.error(__("Failed to save script"), { description: getErrorMessage(error) });
+		return;
+	}
+	const choice = await promptScriptConflict(target.script_name);
+	if (choice === "overwrite") return saveScript(target, value, true);
+	if (choice !== "reload") return;
+	await reloadScripts();
+	if (activeScript.value) selectScript(activeScript.value);
+};
+
+const isStaleSave = (error: unknown) =>
+	typeof error === "object" &&
+	error !== null &&
+	"exc_type" in error &&
+	error.exc_type === "TimestampMismatchError";
 
 const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 	const pageName = props.page.name;
@@ -306,9 +381,8 @@ const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 			script_name: source.script_name,
 			script: value,
 		});
-		pointPageAtCopy(pageName, source.script_name, copyName, value);
-		await attachedScriptResource.reload();
-		selectScriptByName(copyName);
+		await reloadScripts({ from: source.script_name, to: copyName });
+		if (activeScript.value?.script_name === copyName) loadUsage(copyName);
 		clientScriptResource.reload();
 		toast.success(__("Saved as {0} for this page", [copyName]));
 	} catch (error) {
@@ -316,143 +390,103 @@ const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 	}
 };
 
-const pointPageAtCopy = (pageName: string, sourceName: string, copyName: string, value: string) => {
-	// another page may be open by now, and it can share the original script
-	if (pageStore.activePage?.name !== pageName) return;
-	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) =>
-		script.name === sourceName ? { ...script, name: copyName, script: value } : script,
-	);
-	pageStore.activePage?.client_scripts?.forEach((row) => {
-		if (row.builder_script === sourceName) row.builder_script = copyName;
-	});
-};
-
-const addScript = (scriptType: "JavaScript" | "CSS") => {
+const addScript = async (scriptType: "JavaScript" | "CSS") => {
 	if (builderStore.readOnlyMode) return;
-
-	clientScriptResource.insert
-		.submit({
+	try {
+		// builder_client_script_created is captured in the backend (before_insert)
+		const script: BuilderClientScript = await clientScriptResource.insert.submit({
 			script_type: scriptType,
 			script: scriptType === "JavaScript" ? "// Write your script here\n" : "/* Write your CSS here */\n",
-		})
-		.then((res: BuilderClientScript) => {
-			attachedScriptResource.insert
-				.submit({
-					parent: props.page.name,
-					parenttype: "Builder Page",
-					parentfield: "client_scripts",
-					builder_script: res.name,
-				})
-				.then(async () => {
-					// builder_client_script_created is captured in the backend (before_insert)
-					await attachedScriptResource.reload();
-					attachedScriptResource.data?.forEach((script: attachedScript) => {
-						if (script.script_name === res.name) {
-							selectScript(script);
-						}
-					});
-					pageStore.activePageScripts.push(res);
-				});
 		});
+		await attachToPage(script.name);
+	} catch (error) {
+		toast.error(__("Failed to add script"), { description: getErrorMessage(error) });
+	}
 };
 
+// the picker keeps its last pick, so picking the same script again later would not fire
+const attachPickerKey = ref(0);
+
 const onScriptSelected = (value: ComboboxOptionValue | null | undefined) => {
+	attachPickerKey.value++;
 	if (typeof value === "string" && value) attachScript(value);
 };
 
-const attachScript = (builder_script_name: string) => {
+const attachScript = async (scriptName: string) => {
 	if (builderStore.readOnlyMode) return;
-
-	attachedScriptResource.insert
-		.submit({
-			parent: props.page.name,
-			parenttype: "Builder Page",
-			parentfield: "client_scripts",
-			builder_script: builder_script_name,
-		})
-		.then(async () => {
-			capture("builder_client_script_attached");
-			await attachedScriptResource.reload();
-			attachedScriptResource.data?.forEach((script: attachedScript) => {
-				if (script.script_name === builder_script_name) {
-					selectScript(script);
-				}
-			});
-		});
+	try {
+		await attachToPage(scriptName);
+		capture("builder_client_script_attached");
+	} catch (error) {
+		toast.error(__("Failed to attach script"), { description: getErrorMessage(error) });
+	}
 };
 
-const deleteScript = (scriptName: string) => {
-	if (builderStore.readOnlyMode) return;
-
-	activeScript.value = null;
-	attachedScriptResource.delete.submit(scriptName).then(() => {
-		attachedScriptResource.reload();
+const attachToPage = async (scriptName: string) => {
+	await attachedScriptResource.insert.submit({
+		parent: props.page.name,
+		parenttype: "Builder Page",
+		parentfield: "client_scripts",
+		builder_script: scriptName,
 	});
-	pageStore.activePageScripts = pageStore.activePageScripts.filter(
-		(script: BuilderClientScript) => script.name !== scriptName,
-	);
+	await reloadScripts();
+	const attached = attachedScripts.value.find((s) => s.script_name === scriptName);
+	if (attached) await switchToScript(attached);
 };
 
-const updateScriptName = async (newName: string, script: attachedScript) => {
+const removeScript = async (script: attachedScript) => {
+	if (builderStore.readOnlyMode) return;
+	try {
+		await attachedScriptResource.delete.submit(script.name);
+	} catch (error) {
+		toast.error(__("Failed to remove script"), { description: getErrorMessage(error) });
+		return;
+	}
+	await reloadScripts();
+	if (!activeScript.value && attachedScripts.value.length) selectScript(attachedScripts.value[0]);
+};
+
+const renameScript = async (newName: string, script: attachedScript) => {
 	if (!newName || builderStore.readOnlyMode) return;
-	script.editable = false;
-	pageStore.activePageScripts = pageStore.activePageScripts.map((_script: BuilderClientScript) => {
-		if (_script.name === script.name) {
-			script.name = newName;
-		}
-		return script;
-	}) as unknown as BuilderClientScript[];
-	return createResource({
-		url: "frappe.client.rename_doc",
-	})
-		.submit({
-			doctype: "Builder Client Script",
-			old_name: script?.script_name,
-			new_name: newName,
-		})
-		.then(async () => {
-			attachedScriptResource.data = (attachedScriptResource.data ?? []).map(
-				(s: { script_name: string; script: string }) => {
-					if (s.script_name === script.script_name) {
-						s.script_name = newName;
-					}
-					return s;
-				},
-			);
-		});
+	await createResource({ url: "frappe.client.rename_doc" }).submit({
+		doctype: "Builder Client Script",
+		old_name: script.script_name,
+		new_name: newName,
+	});
+	await reloadScripts({ from: script.script_name, to: newName });
+	if (activeScript.value?.script_name === newName) loadUsage(newName);
+	clientScriptResource.reload();
 };
 
-const clientScriptOptions = computed(() =>
-	clientScriptResource.data?.map((script: { name: string; script_type: string }) => ({
-		label: `${script.name}.${script.script_type == "JavaScript" ? "js" : script.script_type.toLowerCase()}`,
-		value: script.name,
-	})),
-);
+const clientScriptOptions = computed(() => {
+	const attached = new Set(attachedScripts.value.map((script) => script.script_name));
+	return (clientScriptResource.data ?? [])
+		.filter((script: { name: string }) => !attached.has(script.name))
+		.map((script: { name: string; script_type: string }) => ({
+			label: `${script.name}.${script.script_type == "JavaScript" ? "js" : script.script_type.toLowerCase()}`,
+			value: script.name,
+		}));
+});
 
 const onScriptReorder = () => {
-	if (!attachedScriptResource.data) return;
-
-	const scriptOrder = attachedScriptResource.data.map((script: attachedScript) => script.name);
-
+	syncPageStore(attachedScripts.value);
 	createResource({
 		url: "builder.api.reorder_client_scripts",
 	})
 		.submit({
-			script_order: scriptOrder,
+			script_order: attachedScripts.value.map((script) => script.name),
 		})
 		.then(() => {
 			toast.success(__("Script order updated"));
 		})
-		.catch((e: { message: string; exc: string }) => {
-			const error_message = e.exc.split("\n").slice(-2)[0];
-			toast.error(__("Failed to update script order"), {
-				description: error_message,
-			});
+		.catch((error: unknown) => {
+			toast.error(__("Failed to update script order"), { description: getErrorMessage(error) });
+			reloadScripts();
 		});
 };
 
 const selectScriptByName = (name: string) => {
-	const target = attachedScriptResource.data?.find((s: attachedScript) => s.script_name === name);
+	const target = attachedScripts.value.find((s) => s.script_name === name);
 	if (target) selectScript(target);
 };
 
