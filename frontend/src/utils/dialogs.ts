@@ -144,29 +144,33 @@ export function promptRenamePage(page: BuilderPage) {
 
 const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
 
-async function saveVersionIfChanged(pageName: string, label: string) {
+async function saveVersionIfChanged(pageName: string, label?: string) {
 	const pageStore = usePageStore();
 	await pageStore.waitTillPageIsSaved();
 	if (pageStore.selectedPage !== pageName) throw new Error("Page changed while saving");
 	// save explicitly so a failed autosave rejects here instead of versioning stale blocks
 	await pageStore.savePage();
-	const res = await pageStore.createManualSnapshot(label, pageName, true);
+	const res = await pageStore.createManualSnapshot(label, pageName);
 	return Boolean(res?.message);
 }
 
-// queue quick saves so overlapping savePage() requests can't finish out of order
-let quickSaveQueue: Promise<unknown> = Promise.resolve();
+// queue version saves so overlapping savePage() requests can't finish out of order
+let saveVersionQueue: Promise<unknown> = Promise.resolve();
 
-export function quickSaveVersion() {
+export function saveVersion(label?: string) {
 	const pageName = usePageStore().selectedPage as string;
-	const label = useDateFormat(new Date(), "YYYY-MM-DD HH:mm:ss").value;
-	const saving = quickSaveQueue.then(() => saveVersionIfChanged(pageName, label));
-	quickSaveQueue = saving.catch(() => null);
+	const saving = saveVersionQueue.then(() => saveVersionIfChanged(pageName, label));
+	saveVersionQueue = saving.catch(() => null);
 	toast.promise(saving, {
 		loading: __("Saving version..."),
 		success: (isSaved: boolean) => (isSaved ? __("Version saved") : __("No changes since the last version")),
 		error: () => __("Could not save version"),
 	});
+	return saving;
+}
+
+export function quickSaveVersion() {
+	return saveVersion(useDateFormat(new Date(), "YYYY-MM-DD HH:mm:ss").value);
 }
 
 // Mod+S: changes autosave, so the shortcut offers to save a version instead

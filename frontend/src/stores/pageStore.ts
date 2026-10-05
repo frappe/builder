@@ -274,12 +274,11 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async createManualSnapshot(label?: string, pageName?: string, skipIfUnchanged = false) {
+		async createManualSnapshot(label?: string, pageName?: string) {
 			const res = await webPages.runDocMethod.submit({
 				name: pageName || (this.selectedPage as string),
 				method: "create_manual_snapshot",
 				label: label || null,
-				skip_if_unchanged: skipIfUnchanged,
 			});
 			this.snapshotsVersion++;
 			return res;
