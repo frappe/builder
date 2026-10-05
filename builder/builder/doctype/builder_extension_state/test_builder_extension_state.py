@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import get_table_name
 
 from builder.builder.doctype.builder_extension_state.builder_extension_state import (
-	TABLE,
 	UNIQUE_INDEX,
 	on_doctype_update,
 )
@@ -199,4 +199,4 @@ class TestExtensionState(FrappeTestCase):
 		on_doctype_update()
 		on_doctype_update()
 
-		self.assertTrue(frappe.db.has_index(TABLE, UNIQUE_INDEX))
+		self.assertTrue(frappe.db.has_index(get_table_name(STATE_DOCTYPE), UNIQUE_INDEX))

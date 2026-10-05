@@ -27,7 +27,6 @@ class BuilderExtensionState(Document):
 			self.name = str(uuid.uuid4())
 
 
-TABLE = "tabBuilder Extension State"
 UNIQUE_INDEX = "unique_installation_user"
 
 
