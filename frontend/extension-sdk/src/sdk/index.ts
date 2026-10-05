@@ -6,7 +6,7 @@
  */
 
 import { getChannel, listenForHandshake } from "./connect";
-import { context } from "./namespaces";
+import { actions, context, toolbar } from "./namespaces";
 import { registerMain, use, type Mounter } from "./slots";
 
 export type HostInfo = { version: string; protocol: number };
@@ -28,8 +28,14 @@ const builder = {
 	 */
 	use: (adapter: Mounter) => use(adapter),
 
+	/** A descriptor. Builder draws the button and posts the action back (Tier A). */
+	toolbar,
+
 	/** The editor snapshot: read it once, or name the fields to be told about. */
 	context,
+
+	/** The functions this extension owns. A descriptor names one, the host calls it. */
+	actions,
 
 	host: {
 		/** Which Builder this extension landed in. An extension ships on its own schedule. */

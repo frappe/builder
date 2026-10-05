@@ -56,6 +56,10 @@ export const useBuilderContext = (fields: ContextField[]) => {
 	return context;
 };
 
+/** One of this extension's own actions, as a function a template can call. */
+export const useAction = (name: string) => (context?: Record<string, unknown>) =>
+	builder.actions.run(name, context);
+
 /**
  * Mounts a component, for every slot this extension registers.
  *

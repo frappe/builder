@@ -60,8 +60,12 @@ const BuilderSettings = defineAsyncComponent(() => import("./BuilderSettings.vue
 
 const builderStore = useBuilderStore();
 
-const itemsIn = (region: ToolbarRegion) =>
-	toolbarItems.visible.value.filter((item) => item.region === region);
+const itemsIn = (region: ToolbarRegion) => {
+	const items = toolbarItems.visible.value.filter((item) => item.region === region);
+	if (region !== "right") return items;
+
+	return [...items.filter((item) => item.isExtension), ...items.filter((item) => !item.isExtension)];
+};
 
 const showInfoDialog = ref(false);
 </script>

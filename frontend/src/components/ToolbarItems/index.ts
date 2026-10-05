@@ -14,6 +14,7 @@ export type ToolbarRegion = "left" | "center" | "right";
 
 export type ToolbarItem = RegistryItem & {
 	region: ToolbarRegion;
+	isExtension?: boolean;
 	component: Component;
 	props?: () => Record<string, unknown>;
 };

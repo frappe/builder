@@ -14,11 +14,12 @@ import useBuilderStore from "@/stores/builderStore";
 import { editorMethods } from "./editor";
 import { bridge } from "./host/bridge";
 import { hostMethods } from "./host/hostMethods";
+import { surfaceMethods } from "./surfaces";
 
 // the store resolves on each call, never at import, so nothing here depends on
 // the order the editor loads in
 bridge.setMethodTable(
-	{ ...hostMethods, ...editorMethods },
+	{ ...hostMethods, ...surfaceMethods, ...editorMethods },
 	{ isReadOnly: () => useBuilderStore().readOnlyMode },
 );
 
