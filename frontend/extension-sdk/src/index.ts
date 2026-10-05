@@ -11,5 +11,6 @@
  */
 
 export { default, type HostInfo } from "./sdk/index";
+export type { ContextField, ContextHandler } from "./sdk/namespaces";
 export type { SlotEntry } from "./sdk/slots";
 export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./types";

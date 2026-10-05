@@ -2,10 +2,59 @@
  * `frappe-builder-extension-sdk/vue` — the optional Vue layer.
  *
  * It ships in the author's bundle, not in `extension-sdk.js`, because it needs a
- * Vue runtime and the SDK ships none.
+ * Vue runtime and the SDK ships none. That is also why it imports the SDK by its
+ * bare specifier and never by a relative path: a relative import would put a
+ * second copy of `connect.ts` in the author's bundle, holding no port and no
+ * channel, and every call through it would throw.
  */
 
-import { createApp, type Component } from "vue";
+import builder from "frappe-builder-extension-sdk";
+import type { ContextField, EditorContext } from "frappe-builder-extension-sdk";
+import { createApp, getCurrentScope, onScopeDispose, reactive, type Component } from "vue";
+
+/**
+ * What a template reads before the host has answered.
+ *
+ * The host answers `context.get` over a port, so the first paint happens before
+ * any value arrives. A shape means `context.selection.count` renders zero rather
+ * than throwing, and every field is replaced as soon as the answer lands.
+ */
+const emptyContext = (): EditorContext => ({
+	selection: { count: 0, blockIds: [] },
+	breakpoint: "desktop",
+	editingMode: "page",
+	readOnly: false,
+	isAIEnabled: false,
+	page: null,
+	site: { isDeveloperMode: false, isFCSite: false },
+});
+
+/**
+ * The editor snapshot, as a reactive object that follows the editor.
+ *
+ * Names the fields it wants, so the host sends nothing else and only when one of
+ * them moves. The subscription stops with the component that opened it.
+ */
+export const useBuilderContext = (fields: ContextField[]) => {
+	const context = reactive(emptyContext());
+
+	const pushed: Record<string, unknown> = {};
+	const stop = builder.context.subscribe(fields, (next) => {
+		Object.assign(pushed, next);
+		Object.assign(context, next);
+	});
+
+	// a subscription counts the current snapshot as already sent, so the host
+	// pushes nothing until a field moves and the first value has to be asked for.
+	// A push that landed first wins: this answer was asked for earlier and may be
+	// older than it
+	void builder.context.get().then((snapshot) => Object.assign(context, snapshot, pushed));
+
+	// outside a Vue scope there is nothing to dispose this subscription; it stops when the extension frame unloads.
+	if (getCurrentScope()) onScopeDispose(stop);
+
+	return context;
+};
 
 /**
  * Mounts a component, for every slot this extension registers.

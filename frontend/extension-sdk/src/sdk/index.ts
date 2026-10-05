@@ -6,6 +6,7 @@
  */
 
 import { getChannel, listenForHandshake } from "./connect";
+import { context } from "./namespaces";
 import { registerMain, use, type Mounter } from "./slots";
 
 export type HostInfo = { version: string; protocol: number };
@@ -26,6 +27,9 @@ const builder = {
 	 * slot's module has to export `mount(element, props)` itself.
 	 */
 	use: (adapter: Mounter) => use(adapter),
+
+	/** The editor snapshot: read it once, or name the fields to be told about. */
+	context,
 
 	host: {
 		/** Which Builder this extension landed in. An extension ships on its own schedule. */
