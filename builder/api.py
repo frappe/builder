@@ -427,11 +427,32 @@ def clone_client_scripts(source_page, new_page) -> None:
 	client_scripts = source_page.client_scripts
 	new_page.client_scripts = []
 	for script in client_scripts:
-		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
-		new_script = frappe.copy_doc(builder_script, ignore_no_copy=False)
-		new_script.name = get_copy_script_name(builder_script.name)
-		new_script.insert(ignore_permissions=True)
+		new_script = copy_client_script(script.builder_script)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+
+
+def copy_client_script(name: str, script: str | None = None):
+	new_script = frappe.copy_doc(frappe.get_doc("Builder Client Script", name), ignore_no_copy=False)
+	new_script.name = get_copy_script_name(name)
+	if script is not None:
+		new_script.script = script
+	return new_script.insert(ignore_permissions=True)
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to edit client scripts")
+def save_client_script_as_copy(page_name: str, script_name: str, script: str) -> str:
+	"""Moves one page off a shared script onto its own copy, which carries the edit."""
+	page = frappe.get_doc("Builder Page", page_name)
+	rows = [row for row in page.client_scripts if row.builder_script == script_name]
+	if not rows:
+		frappe.throw(_("{0} is not attached to this page").format(script_name))
+	new_script = copy_client_script(script_name, script)
+	for row in rows:
+		row.builder_script = new_script.name
+	page.save()
+	new_script.clear_page_cache()
+	return new_script.name
 
 
 def get_copy_script_name(name: str) -> str:

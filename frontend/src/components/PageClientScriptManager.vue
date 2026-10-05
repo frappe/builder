@@ -142,7 +142,8 @@ import PageListModal from "@/components/Modals/PageListModal.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
-import { getPageUsageMessage } from "@/utils/helpers";
+import { promptSharedScriptSave } from "@/utils/dialogs";
+import { getErrorMessage, getPageUsageMessage } from "@/utils/helpers";
 import { Combobox, createListResource, createResource, Dropdown, type ComboboxOptionValue } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, ref, watch } from "vue";
@@ -227,6 +228,10 @@ const scriptUsageResource = createListResource({
 });
 
 const scriptUsedInPages = computed<BuilderPage[]>(() => scriptUsageResource.data ?? []);
+const otherPagesLabel = computed(() => {
+	const count = scriptUsedInPages.value.length;
+	return count === usagePageLimit ? `${usagePageLimit - 1}+` : String(count - 1);
+});
 const usageMessage = computed(() => {
 	const count = scriptUsedInPages.value.length;
 	return count === usagePageLimit
@@ -243,16 +248,29 @@ const selectScript = (script: attachedScript) => {
 	});
 };
 
-const updateScript = (value: string) => {
-	if (!activeScript.value || builderStore.readOnlyMode) return;
+const updateScript = async (value: string) => {
+	const target = activeScript.value;
+	if (!target || builderStore.readOnlyMode) return;
 
 	if (!value || !value.trim()) {
 		toast.warning(__("Script cannot be empty"));
 		return;
 	}
 
+	if (scriptUsageResource.list.loading) await scriptUsageResource.list.promise;
+	// usage now describes the current selection, and switching scripts already dropped this edit
+	if (activeScript.value?.script_name !== target.script_name) return;
+	if (scriptUsedInPages.value.length > 1) {
+		const choice = await promptSharedScriptSave(target.script_name, otherPagesLabel.value);
+		if (choice === "copy") return saveScriptAsCopy(target, value);
+		if (choice !== "all") return;
+	}
+	saveScript(target, value);
+};
+
+const saveScript = (target: attachedScript, value: string) => {
 	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) => {
-		if (script.name === activeScript.value?.script_name) {
+		if (script.name === target.script_name) {
 			script.script = value;
 		}
 		return script;
@@ -260,7 +278,7 @@ const updateScript = (value: string) => {
 
 	clientScriptResource.setValue
 		.submit({
-			name: activeScript.value.script_name,
+			name: target.script_name,
 			script: value,
 		})
 		.then(async () => {
@@ -278,6 +296,35 @@ const updateScript = (value: string) => {
 				description: error_message,
 			});
 		});
+};
+
+const saveScriptAsCopy = async (source: attachedScript, value: string) => {
+	const pageName = props.page.name;
+	try {
+		const copyName: string = await createResource({ url: "builder.api.save_client_script_as_copy" }).submit({
+			page_name: pageName,
+			script_name: source.script_name,
+			script: value,
+		});
+		pointPageAtCopy(pageName, source.script_name, copyName, value);
+		await attachedScriptResource.reload();
+		selectScriptByName(copyName);
+		clientScriptResource.reload();
+		toast.success(__("Saved as {0} for this page", [copyName]));
+	} catch (error) {
+		toast.error(__("Failed to save script"), { description: getErrorMessage(error) });
+	}
+};
+
+const pointPageAtCopy = (pageName: string, sourceName: string, copyName: string, value: string) => {
+	// another page may be open by now, and it can share the original script
+	if (pageStore.activePage?.name !== pageName) return;
+	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) =>
+		script.name === sourceName ? { ...script, name: copyName, script: value } : script,
+	);
+	pageStore.activePage?.client_scripts?.forEach((row) => {
+		if (row.builder_script === sourceName) row.builder_script = copyName;
+	});
 };
 
 const addScript = (scriptType: "JavaScript" | "CSS") => {

@@ -33,6 +33,33 @@ export function promptOversizedSVG(bytes: number): Promise<boolean> {
 	});
 }
 
+// dismissing resolves null, so a stray Esc never saves
+export function promptSharedScriptSave(scriptName: string, otherPages: string): Promise<"all" | "copy" | null> {
+	return new Promise((resolve) => {
+		const choose = (choice: "all" | "copy") => ({ close }: { close: () => void }) => {
+			resolve(choice);
+			close();
+		};
+		dialog.confirm({
+			title: __("Update a shared script?"),
+			message:
+				otherPages === "1"
+					? __("{0} is also used on 1 other page. Saving changes how that page behaves too.", [scriptName])
+					: __("{0} is also used on {1} other pages. Saving changes how those pages behave too.", [
+							scriptName,
+							otherPages,
+						]),
+			icon: "lucide-alert-circle",
+			theme: "amber",
+			actions: [
+				{ label: __("Save as Copy for This Page"), variant: "subtle", onClick: choose("copy") },
+				{ label: __("Update All Pages"), variant: "solid", onClick: choose("all") },
+			],
+			onCancel: () => resolve(null),
+		});
+	});
+}
+
 export function promptCreateFolder() {
 	dialog.prompt({
 		title: __("Create New Folder"),
