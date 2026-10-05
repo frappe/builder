@@ -86,11 +86,11 @@ class BuilderExtension(Document):
 		return self.permission_list("requested_permissions")
 
 	@property
-	def source(self) -> str:
-		"""The built entry, which the editor reads and posts into a frame.
+	def entry_path(self) -> Path:
+		"""The built entry, which the editor fetches and hands to a frame.
 
 		A frame sends no session, so no route can check who is asking. The editor
-		reads it under its own session instead.
+		fetches it under its own session instead.
 		"""
 		entry = Path(self.install_path) / ENTRY_FILE
 		if not entry.is_file():
@@ -103,7 +103,7 @@ class BuilderExtension(Document):
 					self.extension, size, MAX_SOURCE_BYTES
 				)
 			)
-		return entry.read_text()
+		return entry
 
 	@property
 	def icon_data_uri(self) -> str | None:

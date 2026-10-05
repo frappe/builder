@@ -1,8 +1,11 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
@@ -12,6 +15,7 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
+	get_extension_source,
 	get_installations,
 	set_extension_enabled,
 	set_granted_permissions,
@@ -166,3 +170,81 @@ class TestUninstall(FrappeTestCase):
 	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
+
+
+class TestListedInstallation(FrappeTestCase):
+	"""What one row of the list carries for the editor to mount."""
+
+	def listed(self, name):
+		return next((row for row in get_installations() if row["name"] == name), None)
+
+	def test_carries_no_source(self):
+		"""One call per extension reads that, so a list of five carries no bundles."""
+		make_installation("acme/light", source="export default {};")
+
+		self.assertNotIn("source", self.listed("acme/light"))
+
+
+class TestExtensionIcon(FrappeTestCase):
+	def test_refuses_a_path_that_climbs_out_of_the_install_folder(self):
+		with self.assertRaises(frappe.ValidationError):
+			make_installation("acme/climber", icon="../../secrets.svg")
+
+
+class TestGetExtensionSource(FrappeTestCase):
+	def fetch(self, extension, etag=None):
+		"""Calls the endpoint the way the editor does, and reads the streamed body."""
+		set_request(method="GET", headers={"If-None-Match": etag} if etag else {})
+		response = get_extension_source(extension)
+		self.addCleanup(response.close)
+		return response
+
+	def body(self, response):
+		return b"".join(response.response).decode()
+
+	def test_streams_the_entry_the_site_installed(self):
+		make_installation("acme/coded", source="export const answer = 42;")
+
+		response = self.fetch("acme/coded")
+
+		self.assertEqual(self.body(response), "export const answer = 42;")
+		self.assertEqual(response.mimetype, "text/javascript")
+		self.assertEqual(response.headers["ETag"], '"sum123"')
+
+	def test_answers_an_unchanged_build_with_not_modified(self):
+		make_installation("acme/cached", source="export default {};")
+
+		self.assertEqual(self.fetch("acme/cached", etag='"sum123"').status_code, 304)
+
+	def test_streams_again_after_a_rebuild(self):
+		make_installation("acme/rebuilt", source="export default {};", checksum="sum456")
+
+		self.assertEqual(self.fetch("acme/rebuilt", etag='"sum123"').status_code, 200)
+
+	def test_refuses_an_extension_the_site_has_not_installed(self):
+		drop_installations("acme/absent")
+
+		with self.assertRaises(frappe.PermissionError):
+			self.fetch("acme/absent")
+
+	def test_every_builder_user_reads_the_sites_entry(self):
+		make_installation("acme/shared", source="export const shared = 1;")
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertEqual(self.body(self.fetch("acme/shared")), "export const shared = 1;")
+
+	def test_refuses_an_installation_that_is_switched_off(self):
+		make_installation("acme/paused", enabled=0, source="export default {};")
+
+		with self.assertRaises(frappe.PermissionError):
+			self.fetch("acme/paused")
+
+	def test_refuses_an_entry_larger_than_the_cap(self):
+		"""The frame parses the whole module, so the cap still bounds what it holds."""
+		make_installation("acme/heavy", source="x" * 200)
+
+		module = "builder.builder.doctype.builder_extension.builder_extension"
+		with patch(f"{module}.MAX_SOURCE_BYTES", 100):
+			with self.assertRaises(frappe.ValidationError):
+				self.fetch("acme/heavy")

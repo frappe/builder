@@ -78,7 +78,7 @@ class TestBuilderExtension(FrappeTestCase):
 	def test_reads_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
 
-		self.assertEqual(installation.source, "export const ok = true;")
+		self.assertEqual(installation.entry_path.read_text(), "export const ok = true;")
 
 	def test_uninstall_takes_the_files(self):
 		installation = make_installation(EXTENSION, source="export default {};")
@@ -112,18 +112,18 @@ class TestInstalledFiles(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 
-	def test_refuses_a_source_that_was_never_installed(self):
+	def test_refuses_an_entry_that_was_never_installed(self):
 		installation = make_installation(EXTENSION)
 
 		with self.assertRaises(frappe.ValidationError):
-			installation.source
+			installation.entry_path
 
-	def test_refuses_a_source_over_the_size_limit(self):
+	def test_refuses_an_entry_over_the_size_limit(self):
 		installation = make_installation(EXTENSION, source="export default {};")
 
 		with patch(f"{INSTALLATION_MODULE}.MAX_SOURCE_BYTES", 3):
 			with self.assertRaises(frappe.ValidationError):
-				installation.source
+				installation.entry_path
 
 	def test_draws_the_icon_as_a_data_uri(self):
 		installation = make_installation(EXTENSION, source="export default {};", icon="icon.svg")
