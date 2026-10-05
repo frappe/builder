@@ -1,4 +1,5 @@
 import router from "@/router";
+import { showDevExtensionDialog } from "@/extensions/devExtension";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -103,6 +104,15 @@ commands.registerBuiltIn({
 	group: "Navigate",
 	condition: isBuilderRoute,
 	action: () => router.push({ name: "home" }),
+});
+
+commands.registerBuiltIn({
+	name: "load-dev-extension",
+	title: __("Load Dev Extension"),
+	icon: "lucide-plug",
+	group: "General",
+	condition: () => isBuilderRoute() && Boolean(window.is_developer_mode),
+	action: () => (showDevExtensionDialog.value = true),
 });
 
 commands.registerBuiltIn({

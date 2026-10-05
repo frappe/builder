@@ -1,3 +1,4 @@
+import { devExtension } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { createDocumentResource, createResource, getCachedDocumentResource } from "frappe-ui";
 import { computed } from "vue";
@@ -81,19 +82,25 @@ const toInstalledExtension = (row: Installation): InstalledExtension | null => {
 };
 
 /**
- * Every extension this editor runs.
+ * Every extension this editor runs: the site's installations, plus the one loaded from a
+ * dev server this session. A dev extension replaces the installation of the same
+ * name, because two entries would give it two frames.
  *
  * A development record never mounts. It has no files, and the browser's own entry
  * runs it.
  */
-const installedExtensions = computed<InstalledExtension[]>(() =>
-	(installationsResource.data ?? [])
+const installedExtensions = computed<InstalledExtension[]>(() => {
+	const installed = (installationsResource.data ?? [])
 		.filter((row) => !row.is_development)
 		.flatMap((row) => {
 			const extension = toInstalledExtension(row);
 			return extension ? [extension] : [];
-		}),
-);
+		});
+	const development = devExtension.value;
+	if (!development) return installed;
+
+	return [...installed.filter((extension) => extension.name !== development.name), development];
+});
 
 /** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
 const loadExtensions = async (vm?: unknown) => {

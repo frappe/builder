@@ -76,6 +76,7 @@ declare module 'vue' {
     DashboardSidebar: typeof import('./src/components/DashboardSidebar.vue')['default']
     DashboardToolbar: typeof import('./src/components/DashboardToolbar.vue')['default']
     DataLoaderBlock: typeof import('./src/components/DataLoaderBlock.vue')['default']
+    DevExtensionDialog: typeof import('./src/components/DevExtensionDialog.vue')['default']
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
     DimensionInput: typeof import('./src/components/DimensionInput.vue')['default']
     DraggablePopup: typeof import('./src/components/Controls/DraggablePopup.vue')['default']

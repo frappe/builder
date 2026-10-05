@@ -15,10 +15,14 @@
 				@connect="(channel) => connectEntryFrame(extension, channel)"
 				@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
 		</div>
+
+		<!-- editor chrome, not an extension's: it is how one is loaded at all -->
+		<DevExtensionDialog />
 	</div>
 </template>
 
 <script setup lang="ts">
+import DevExtensionDialog from "@/components/DevExtensionDialog.vue";
 import ExtensionFrame from "@/components/ExtensionFrame.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
