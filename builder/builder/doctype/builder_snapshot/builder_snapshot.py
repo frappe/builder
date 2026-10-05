@@ -47,8 +47,10 @@ def take_snapshot(
 
 	With `skip_if_unchanged`, returns None instead when the data matches the latest snapshot.
 	"""
-	# the row lock serializes concurrent calls, so the unchanged check and insert are atomic
-	doc = frappe.get_doc(reference_doctype, reference_name, for_update=skip_if_unchanged)
+	if skip_if_unchanged:
+		# lock the row so concurrent calls can't both pass the unchanged check before either inserts
+		frappe.db.get_value(reference_doctype, reference_name, "name", for_update=True)
+	doc = frappe.get_doc(reference_doctype, reference_name)
 	data = {field: doc.get(field) for field in fields}
 	if transform:
 		data = transform(data)
