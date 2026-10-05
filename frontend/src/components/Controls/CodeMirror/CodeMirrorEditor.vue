@@ -57,6 +57,7 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 	if (!editor) return;
 
 	if (params.resetHistory) {
+		const docBefore = editor.state.doc;
 		const { startState } = await createStartingState({
 			props,
 			pythonCompletions: await getPythonCompletions(),
@@ -68,8 +69,9 @@ const resetEditor = async (params: { content: string; resetHistory: boolean; aut
 			mode: props.mode,
 			blockProps: allBlockProps.value,
 		});
-		// teardown can land while the state above is being built
-		if (!editor) return;
+		// teardown or typing can land while the state above is being built (language packs load lazily),
+		// and replacing the state then would throw that typing away
+		if (!editor || editor.state.doc !== docBefore) return;
 		editor.setState(startState);
 	} else {
 		editor.dispatch({

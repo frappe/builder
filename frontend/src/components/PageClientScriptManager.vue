@@ -263,10 +263,13 @@ const toScriptDoc = (script: attachedScript): BuilderClientScript => ({
 	public_url: script.script_public_url,
 });
 
-// a reload swaps every row object, so re-point the selection without resetting the editor
-const reloadScripts = async (activeName = activeScript.value?.script_name) => {
+// a reload swaps every row object, so re-point whatever is selected once it lands (the user may
+// have switched meanwhile), following `moved` when the selected script was renamed or copied
+const reloadScripts = async (moved?: { from: string; to: string }) => {
 	await attachedScriptResource.reload();
-	activeScript.value = attachedScripts.value.find((s) => s.script_name === activeName) ?? null;
+	let name = activeScript.value?.script_name;
+	if (moved && name === moved.from) name = moved.to;
+	activeScript.value = attachedScripts.value.find((s) => s.script_name === name) ?? null;
 };
 
 const clientScriptResource = createListResource({
@@ -378,8 +381,8 @@ const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 			script_name: source.script_name,
 			script: value,
 		});
-		await reloadScripts(copyName);
-		loadUsage(copyName);
+		await reloadScripts({ from: source.script_name, to: copyName });
+		if (activeScript.value?.script_name === copyName) loadUsage(copyName);
 		clientScriptResource.reload();
 		toast.success(__("Saved as {0} for this page", [copyName]));
 	} catch (error) {
@@ -445,14 +448,13 @@ const removeScript = async (script: attachedScript) => {
 
 const renameScript = async (newName: string, script: attachedScript) => {
 	if (!newName || builderStore.readOnlyMode) return;
-	const wasActive = script.script_name === activeScript.value?.script_name;
 	await createResource({ url: "frappe.client.rename_doc" }).submit({
 		doctype: "Builder Client Script",
 		old_name: script.script_name,
 		new_name: newName,
 	});
-	await reloadScripts(wasActive ? newName : undefined);
-	if (wasActive) loadUsage(newName);
+	await reloadScripts({ from: script.script_name, to: newName });
+	if (activeScript.value?.script_name === newName) loadUsage(newName);
 	clientScriptResource.reload();
 };
 
