@@ -108,6 +108,7 @@
 	<BuilderCommandPalette ref="commandPalette" />
 	<KeyboardShortcutsDialog v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
+	<ExtensionHost />
 </template>
 
 <script setup lang="ts">
@@ -120,6 +121,7 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { installEditorDemo } from "@/components/EditorDemo";
 import Dialog from "@/components/Controls/Dialog.vue";
+import ExtensionHost from "@/components/ExtensionHost.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
