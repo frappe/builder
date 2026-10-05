@@ -9,6 +9,7 @@ from PIL import Image
 from builder.api import (
 	create_import_folder,
 	duplicate_page,
+	get_copy_script_name,
 	import_remote_assets,
 	import_remote_fonts,
 	import_template_group,
@@ -204,6 +205,10 @@ class TestDuplicatePage(FrappeTestCase):
 		self.assertEqual(first.page_title, "Numbered (Copy)")
 		self.assertEqual(second.page_title, "Numbered (Copy 2)")
 		self.assertEqual(third.page_title, "Numbered (Copy 3)")
+
+	def test_copied_script_names_swap_the_hash(self):
+		for name in ("fp sidebar", "fp sidebar-8120f", "fp sidebar-8120f-c8371-91f8e"):
+			self.assertRegex(get_copy_script_name(name), r"^fp sidebar-[0-9a-f]{5}$")
 
 
 GROUP = {

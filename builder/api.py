@@ -429,9 +429,15 @@ def clone_client_scripts(source_page, new_page) -> None:
 	for script in client_scripts:
 		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
 		new_script = frappe.copy_doc(builder_script, ignore_no_copy=False)
-		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
+		new_script.name = get_copy_script_name(builder_script.name)
 		new_script.insert(ignore_permissions=True)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+
+
+def get_copy_script_name(name: str) -> str:
+	"""Swaps the trailing hash for a fresh one, so copies of copies don't keep growing the name."""
+	base = re.sub(r"(-[0-9a-f]{5})+$", "", name)
+	return f"{base}-{frappe.generate_hash(length=5)}"
 
 
 def get_copy_title(title: str) -> str:
@@ -546,7 +552,7 @@ def create_page_from_bundle(
 		new_script = frappe.get_doc(
 			{
 				"doctype": "Builder Client Script",
-				"name": f"{cs.get('name')}-{frappe.generate_hash(length=5)}",
+				"name": get_copy_script_name(cs.get("name")),
 				"script_type": cs.get("script_type"),
 				"script": cs.get("script"),
 			}
