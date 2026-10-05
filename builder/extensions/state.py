@@ -46,7 +46,7 @@ def set_state(extension: str, state: dict) -> None:
 	entry stored.
 	"""
 	installation = assert_extension_access(extension)
-	changes = read_changes(state)
+	changes = get_changes(state)
 	writes_before = frappe.db.transaction_writes
 	try:
 		merge_changes(extension, installation, changes)
@@ -103,7 +103,7 @@ def read_values(row) -> dict:
 	return frappe.parse_json(row.state) if row and row.state else {}
 
 
-def read_changes(state) -> dict:
+def get_changes(state) -> dict:
 	changes = frappe.parse_json(state)
 	if not isinstance(changes, dict):
 		frappe.throw(_('"state" must be an object.'))

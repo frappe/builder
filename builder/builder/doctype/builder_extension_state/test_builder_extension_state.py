@@ -18,7 +18,7 @@ from builder.builder.tests.extension_fixtures import (
 	make_user,
 )
 from builder.extensions import state
-from builder.extensions.state import STATE_DOCTYPE, get_state, read_changes, set_state, unset_state
+from builder.extensions.state import STATE_DOCTYPE, get_changes, get_state, set_state, unset_state
 
 EXTENSION = "acme/remembers"
 real_write_row = state.write_row
@@ -193,7 +193,7 @@ class TestExtensionState(FrappeTestCase):
 	def test_changes_that_are_not_an_object_are_refused_past_the_type_guard(self):
 		for sent in ('"dark"', "[1]", "3"):
 			with self.assertRaises(frappe.ValidationError, msg=sent):
-				read_changes(sent)
+				get_changes(sent)
 
 	def test_adds_the_unique_index_once(self):
 		on_doctype_update()
