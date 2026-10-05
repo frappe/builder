@@ -144,16 +144,23 @@ export function promptRenamePage(page: BuilderPage) {
 
 const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
 
-export async function quickSaveVersion() {
+async function saveVersionIfChanged() {
 	const pageStore = usePageStore();
 	const pageName = pageStore.selectedPage as string;
 	await pageStore.waitTillPageIsSaved();
-	if (pageStore.selectedPage !== pageName) return;
+	if (pageStore.selectedPage !== pageName) throw new Error("Page changed while saving");
 	// save explicitly so a failed autosave rejects here instead of versioning stale blocks
 	await pageStore.savePage();
 	const res = await pageStore.createManualSnapshot(undefined, pageName, true);
-	if (res?.message) toast.success(__("Version saved"));
-	else toast.info(__("No changes since the last version"));
+	return Boolean(res?.message);
+}
+
+export function quickSaveVersion() {
+	toast.promise(saveVersionIfChanged(), {
+		loading: __("Saving version..."),
+		success: (isSaved: boolean) => (isSaved ? __("Version saved") : __("No changes since the last version")),
+		error: () => __("Could not save version"),
+	});
 }
 
 // Mod+S: changes autosave, so the shortcut offers to save a version instead
@@ -167,7 +174,7 @@ export function promptSaveVersion() {
 		fields: [{ name: "dontRemind", type: "checkbox", label: __("Don't remind me again") }],
 		onConfirm: async ({ values }) => {
 			hideSaveVersionPrompt.value = Boolean(values.dontRemind);
-			await quickSaveVersion();
+			quickSaveVersion();
 		},
 	});
 }
