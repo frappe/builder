@@ -299,13 +299,14 @@ const saveScript = (target: attachedScript, value: string) => {
 };
 
 const saveScriptAsCopy = async (source: attachedScript, value: string) => {
+	const pageName = props.page.name;
 	try {
 		const copyName: string = await createResource({ url: "builder.api.save_client_script_as_copy" }).submit({
-			page_name: props.page.name,
+			page_name: pageName,
 			script_name: source.script_name,
 			script: value,
 		});
-		pointPageAtCopy(source.script_name, copyName, value);
+		pointPageAtCopy(pageName, source.script_name, copyName, value);
 		await attachedScriptResource.reload();
 		selectScriptByName(copyName);
 		clientScriptResource.reload();
@@ -315,7 +316,9 @@ const saveScriptAsCopy = async (source: attachedScript, value: string) => {
 	}
 };
 
-const pointPageAtCopy = (sourceName: string, copyName: string, value: string) => {
+const pointPageAtCopy = (pageName: string, sourceName: string, copyName: string, value: string) => {
+	// another page may be open by now, and it can share the original script
+	if (pageStore.activePage?.name !== pageName) return;
 	pageStore.activePageScripts = pageStore.activePageScripts.map((script: BuilderClientScript) =>
 		script.name === sourceName ? { ...script, name: copyName, script: value } : script,
 	);
