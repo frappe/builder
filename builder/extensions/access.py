@@ -1,23 +1,23 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Permission checks before an extension performs an action.
+"""Who can do what with extensions.
 
-An extension is installed for the whole site. It acts as the user who is using
-the editor, and never as more. Four checks run before a call reaches site data,
-and they live here together so no method can be written with one forgotten:
+An extension acts as the user who uses the editor, and never as more.
+`assert_extension_access` runs four checks before a call gets site data. They
+live here together so no method can be written with one forgotten:
 
 1. Somebody is signed in.
 2. That person can use Builder.
 3. The site installed this extension and left it on.
 4. The installation grants the permission the method needs.
 
-Frappe's own permission runs last, for the user who is calling. Nothing here
+Frappe's own permission check runs last, for the user who calls. Nothing here
 widens it. The user comes from `frappe.session.user`, and a caller cannot name
 one.
 
-Changing an installation is a separate right. A System Manager has it, and so
-does the role that Builder Settings names.
+Changing an installation is a different right. `assert_extension_manager`
+checks it, and `is_extension_manager` names the roles that have it.
 """
 
 import frappe
