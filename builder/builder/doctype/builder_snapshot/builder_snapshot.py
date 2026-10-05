@@ -25,7 +25,15 @@ class BuilderSnapshot(Document):
 	pass
 
 
-def take_snapshot(reference_doctype, reference_name, fields, label=None, snapshot_type=None, transform=None):
+def take_snapshot(
+	reference_doctype,
+	reference_name,
+	fields,
+	label=None,
+	snapshot_type=None,
+	transform=None,
+	skip_if_unchanged=False,
+):
 	"""Capture the current value of `fields` on a document as a snapshot.
 
 	Stores `{fieldname: value}` as JSON in the snapshot's `data` field.
@@ -36,11 +44,15 @@ def take_snapshot(reference_doctype, reference_name, fields, label=None, snapsho
 	It lets a consuming app post-process the captured values — e.g. pin
 	dependency versions into a JSON field — without this generic layer needing
 	any domain knowledge.
+
+	With `skip_if_unchanged`, returns None instead when the data matches the latest snapshot.
 	"""
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	data = {field: doc.get(field) for field in fields}
 	if transform:
 		data = transform(data)
+	if skip_if_unchanged and get_latest_snapshot_data(reference_doctype, reference_name) == compact_json(data):
+		return None
 	return create_snapshot(reference_doctype, reference_name, data, label, snapshot_type)
 
 
@@ -61,6 +73,15 @@ def create_snapshot(reference_doctype, reference_name, data: dict, label=None, s
 		}
 	).insert(ignore_permissions=True)
 	return snapshot.name
+
+
+def get_latest_snapshot_data(reference_doctype, reference_name) -> str | None:
+	return frappe.db.get_value(
+		"Builder Snapshot",
+		{"reference_doctype": reference_doctype, "reference_name": reference_name},
+		"data",
+		order_by="creation desc",
+	)
 
 
 def get_snapshot_data(snapshot_name) -> dict:

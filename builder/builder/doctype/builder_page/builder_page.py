@@ -465,7 +465,7 @@ class BuilderPage(WebsiteGenerator):
 		self.save()
 
 	@frappe.whitelist()
-	def create_manual_snapshot(self, label: str | None = None):
+	def create_manual_snapshot(self, label: str | None = None, skip_if_unchanged: bool = False):
 		# snapshot the current working content (unpublished draft if present, else live)
 		field = "draft_blocks" if self.draft_blocks else "blocks"
 		if not self.get(field):
@@ -477,6 +477,7 @@ class BuilderPage(WebsiteGenerator):
 			snapshot_type="Manual",
 			label=label,
 			transform=pin_components_in_page_data,
+			skip_if_unchanged=frappe.parse_json(skip_if_unchanged),
 		)
 
 	@frappe.whitelist()
