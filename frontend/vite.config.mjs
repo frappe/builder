@@ -17,7 +17,9 @@ export default defineConfig({
 			buildConfig: { indexHtmlPath: "../builder/www/_builder.html" },
 			frappeProxy: {
 				port: 8080,
-				source: "^/(app|desk|login|api|assets|files|pages|builder_assets)",
+				// builder_extension covers the frame shell and, as its prefix,
+				// builder_extension_asset. Both must reach Frappe, never Vite's fallback
+				source: "^/(app|desk|login|api|assets|files|pages|builder_assets|builder_extension)",
 			},
 			lucideIcons: true,
 			// the language-stubbing plugin crashes Vite 8's dep scan; the frappe-ui
@@ -60,7 +62,7 @@ export default defineConfig({
 	server: {
 		allowedHosts: true,
 		proxy: {
-			"^/(?!(?:builder|_builder|app|desk|login|api|assets|files|private|pages|builder_assets|src|node_modules)(?:[/?#]|$)|@|__)(?![^?]*\\.)[^/?#].*":
+			"^/(?!(?:builder|_builder|app|desk|login|api|assets|files|private|pages|builder_assets|builder_extension|src|node_modules)(?:[/?#]|$)|@|__)(?![^?]*\\.)[^/?#].*":
 				{
 					target: `http://127.0.0.1:${process.env.FRAPPE_WEB_SERVER_PORT || 8000}`,
 					router: (req) =>
