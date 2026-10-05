@@ -78,8 +78,6 @@ def is_extension_manager(user: str | None = None) -> bool:
 def assert_extension_manager() -> None:
 	if not is_extension_manager():
 		frappe.throw(
-			_(
-				"Only a System Manager or a Website Manager can change extensions."
-			),
+			_("Only a System Manager or a Website Manager can change extensions."),
 			frappe.PermissionError,
 		)

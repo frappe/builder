@@ -130,4 +130,3 @@ def make_page_reader(test_case, role=TEST_ROLE, email="extension-reader@example.
 	)
 	frappe.clear_cache(doctype="Builder Page")
 	return make_user(email, roles=(role,))
-
