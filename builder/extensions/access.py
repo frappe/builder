@@ -16,8 +16,8 @@ Frappe's own permission check runs last, for the user who calls. Nothing here
 widens it. The user comes from `frappe.session.user`, and a caller cannot name
 one.
 
-Changing an installation is a different right. `assert_extension_manager`
-checks it, and `is_extension_manager` names the roles that have it.
+Changing an installation is a different right: write access to the Builder
+Extension doctype. Its role permissions decide who has it.
 """
 
 import frappe
@@ -72,18 +72,14 @@ def assert_permission(installation: str, extension: str, permission: str | None)
 
 
 def is_extension_manager(user: str | None = None) -> bool:
-	"""A System Manager, a Website Manager, or a user with the role Builder Settings names."""
-	additional_role = frappe.db.get_single_value(
-		"Builder Settings", "additional_extension_manager_role", cache=False
-	)
-	return bool({"System Manager", "Website Manager", additional_role} & set(frappe.get_roles(user)))
+	return frappe.has_permission(INSTALLATION_DOCTYPE, ptype="write", user=user)
 
 
 def assert_extension_manager() -> None:
 	if not is_extension_manager():
 		frappe.throw(
 			_(
-				"Only an extension manager can change extensions. Builder Settings can name an additional role."
+				"Only a System Manager or a Website Manager can change extensions."
 			),
 			frappe.PermissionError,
 		)

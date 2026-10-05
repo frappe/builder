@@ -5,11 +5,10 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.tests.extension_fixtures import (
-	TEST_ROLE,
 	drop_installations,
 	make_installation,
 	make_page_reader,
-	set_additional_manager_role,
+	make_user,
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
@@ -27,7 +26,6 @@ def names(installations: list[dict]) -> list[str]:
 
 
 def become_a_user_who_cannot_manage(test_case):
-	set_additional_manager_role(test_case, None)
 	frappe.set_user(make_page_reader(test_case))
 
 
@@ -89,10 +87,9 @@ class TestEnableAndDisable(FrappeTestCase):
 		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertTrue(listed["enabled"])
 
-	def test_a_user_with_the_additional_role_can_switch_it(self):
+	def test_a_website_manager_can_switch_it(self):
 		make_installation(EXTENSION)
-		set_additional_manager_role(self, TEST_ROLE)
-		frappe.set_user(make_page_reader(self))
+		frappe.set_user(make_user())
 
 		set_extension_enabled(EXTENSION, False)
 

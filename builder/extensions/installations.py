@@ -7,8 +7,7 @@ The editor and the Extensions panel read one list. The editor mounts the
 enabled rows, and the panel shows every row, so a manager can turn one back on.
 
 Every method that changes an installation checks for an extension manager
-first. Builder Settings names that role, and it is the one rule for all of
-them, so the records here are written without Frappe's doctype permission.
+first, so the user gets a clear refusal before Frappe's own check runs.
 """
 
 import frappe
@@ -29,10 +28,6 @@ NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
 @has_page_read(NO_BUILDER_ACCESS)
 def get_installations() -> list[dict]:
 	"""Every installation on this site, the disabled and development ones included.
-
-	A disabled extension has to stay visible. Hiding it would leave no way to turn
-	it back on but the bench. It sorts last, and the last edited sorts first in
-	each group.
 
 	A development installation is listed so the panel can open its record. The
 	browser runs its own entry for it, and hides a record no dev server serves.
@@ -59,7 +54,7 @@ def set_extension_enabled(extension: str, enabled: bool) -> None:
 	assert_extension_manager()
 	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 	installation.enabled = 1 if enabled else 0
-	installation.save(ignore_permissions=True)
+	installation.save()
 
 
 @frappe.whitelist(methods=["POST"])
@@ -73,7 +68,7 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 	assert_extension_manager()
 	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 	installation.granted_permissions = frappe.as_json(permissions)
-	installation.save(ignore_permissions=True)
+	installation.save()
 	return installation.permissions
 
 
@@ -82,7 +77,7 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 def uninstall_extension(extension: str) -> None:
 	"""The site's copy and every user's stored state. `on_trash` takes both."""
 	assert_extension_manager()
-	frappe.delete_doc(INSTALLATION_DOCTYPE, get_installation(extension), ignore_permissions=True)
+	frappe.delete_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 
 
 def describe_installation(installation: str) -> dict:

@@ -20,8 +20,6 @@
   "developer_options_section",
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
-  "extensions_section",
-  "additional_extension_manager_role",
   "ai_section",
   "ai_api_key",
   "persona_survey_done"
@@ -119,18 +117,6 @@
    "fieldname": "restrict_click_handlers",
    "fieldtype": "Check",
    "label": "Restrict Click Handlers"
-  },
-  {
-   "fieldname": "extensions_section",
-   "fieldtype": "Section Break",
-   "label": "Extensions"
-  },
-  {
-   "description": "Users with this role can also install, turn on or off, grant and uninstall extensions for the whole site. System Managers and Website Managers always can.",
-   "fieldname": "additional_extension_manager_role",
-   "fieldtype": "Link",
-   "label": "Additional Extension Manager Role",
-   "options": "Role"
   },
   {
    "fieldname": "ai_section",

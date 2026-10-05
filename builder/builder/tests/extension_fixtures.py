@@ -131,13 +131,3 @@ def make_page_reader(test_case, role=TEST_ROLE, email="extension-reader@example.
 	frappe.clear_cache(doctype="Builder Page")
 	return make_user(email, roles=(role,))
 
-
-def set_additional_manager_role(test_case, role: str | None):
-	"""Name the manager role for one test, and put the old one back after it."""
-	previous = frappe.db.get_single_value(
-		"Builder Settings", "additional_extension_manager_role", cache=False
-	)
-	frappe.db.set_single_value("Builder Settings", "additional_extension_manager_role", role)
-	test_case.addCleanup(
-		frappe.db.set_single_value, "Builder Settings", "additional_extension_manager_role", previous
-	)
