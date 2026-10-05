@@ -91,7 +91,7 @@ const builder = {
 	/** A modal, and a draggable popover, the host draws around this extension's own document. */
 	ui,
 
-	/** This extension's own storage. No capability, because Builder never reads it. */
+	/** This extension's own storage. No permission, because Builder never reads it. */
 	state,
 
 	/** Real `Builder Token` rows, so they reach the published site too. */
@@ -109,8 +109,7 @@ const builder = {
 	 * ```
 	 *
 	 * Then `createListResource` and `createDocumentResource` work as they do in
-	 * any Frappe app. The grant still comes first: a resource errors with
-	 * `grant_required` until the user allows the access it needs.
+	 * any Frappe app, within the permissions of the user who uses the editor.
 	 */
 	data: { ...data, fetcher: resourceFetcher },
 

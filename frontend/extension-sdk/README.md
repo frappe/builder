@@ -61,7 +61,7 @@ Use the version 1 manifest shape. The build rejects missing and unknown fields.
 	"version": "1.2.0",
 	"entry": "main.js",
 	"icon": "icon.svg",
-	"capabilities": ["context.read", "block.update"]
+	"permissions": ["context.read", "block.update"]
 }
 ```
 
@@ -72,8 +72,8 @@ Put a `README.md` in the extension directory. The installer stores it on the ins
 Extensions panel shows it. The package never carries it: a built extension is `main.js`,
 `manifest.json` and one icon.
 
-The panel also lists every capability the manifest asks for, and the user can turn one off. A
-capability the user turned off is refused the way one you never asked for is.
+The panel also lists every permission the manifest asks for, and the user can turn one off. A
+permission the user turned off is refused the way one you never asked for is.
 
 ## Write against the editor
 

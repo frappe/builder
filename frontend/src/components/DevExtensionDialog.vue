@@ -54,9 +54,9 @@ const load = async () => {
 		await loadExtensions();
 		showDevExtensionDialog.value = false;
 		toast.success(`Loaded ${extension.label}`, {
-			description: extension.capabilities.length
-				? `Granted ${extension.capabilities.join(", ")}`
-				: "It asked for no capabilities",
+			description: extension.permissions.length
+				? `Granted ${extension.permissions.join(", ")}`
+				: "It asked for no permissions",
 		});
 	} catch (thrown) {
 		error.value = (thrown as Error).message;

@@ -5,7 +5,7 @@
  * holds the guards over these shapes.
  */
 
-import { CAPABILITIES, PROTOCOL_VERSION } from "./protocol.js";
+import { PERMISSIONS, PROTOCOL_VERSION } from "./protocol.js";
 
 /** The five documents an extension can have. The host names one at the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
@@ -14,7 +14,7 @@ export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings"
  * What Builder opens when the user opens this extension from its details pane.
  *
  * An extension declares one or Builder draws no Open button. A popover and a
- * dialog are frames Builder draws itself, so neither needs the capability the
+ * dialog are frames Builder draws itself, so neither needs the permission the
  * matching `ui.open*` call needs: the user pressed a button in Builder's own
  * chrome, and the extension asked for nothing.
  */
@@ -23,10 +23,10 @@ export type OpenTarget =
 	| { kind: "dialog"; title?: string }
 	| { kind: "leftPanel"; name: string };
 
-/** Every capability the bridge gates a method by. Mirrors the server protocol. */
-export { CAPABILITIES, PROTOCOL_VERSION };
+/** Every permission the bridge gates a method by. Mirrors the server protocol. */
+export { PERMISSIONS, PROTOCOL_VERSION };
 
-export type Capability = (typeof CAPABILITIES)[number];
+export type Permission = (typeof PERMISSIONS)[number];
 
 export type ExtensionManifest = {
 	v: typeof PROTOCOL_VERSION;
@@ -36,7 +36,7 @@ export type ExtensionManifest = {
 	version: string;
 	entry: "main.js";
 	icon?: string;
-	capabilities: Capability[];
+	permissions: Permission[];
 };
 
 /** One extension this user runs, as the editor mounts it. */
@@ -45,11 +45,11 @@ export type InstalledExtension = {
 	label: string;
 	/** A brief summary shown in the Extensions panel. */
 	description?: string;
-	capabilities: Capability[];
+	permissions: Permission[];
 	/** A data URI for the SVG the package ships. Unset when it ships none. */
 	icon?: string;
 	/**
-	 * Of this user's installed files. Set for an installed extension, and it keys
+	 * Of the site's installed files. Set for an installed extension, and it keys
 	 * the frame, so a rebuild remounts one. A development extension has none.
 	 */
 	checksum?: string;
@@ -127,8 +127,8 @@ export type EditorContext = {
  * The one message sent on the window, with the port transferred beside it.
  * Everything after this runs on the port.
  *
- * It names no extension and no capability. The host knows which extension a port
- * belongs to, and the host alone enforces a capability.
+ * It names no extension and no permission. The host knows which extension a port
+ * belongs to, and the host alone enforces a permission.
  */
 export type ConnectMessage = {
 	v: typeof PROTOCOL_VERSION;

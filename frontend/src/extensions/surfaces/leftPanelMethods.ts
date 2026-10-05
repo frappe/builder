@@ -10,7 +10,7 @@ import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
 import { editorContext } from "../editor/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
 import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import { fields, flag, optionalText, text } from "../params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
@@ -81,7 +81,7 @@ const tabs = createSurfaceItems<Registration, LeftPanelTab>({
 });
 
 export const leftPanelMethods: MethodTable = {
-	// the host draws the tab strip and mounts the frame, so no capability gates this
+	// the host draws the tab strip and mounts the frame, so no permission gates this
 	"leftPanel.register": { needs: null, run: tabs.register },
 	"leftPanel.unregister": { needs: null, run: tabs.unregister },
 	"leftPanel.update": { needs: null, run: tabs.update },

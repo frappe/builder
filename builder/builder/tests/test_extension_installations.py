@@ -12,7 +12,9 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
+	can_manage_extensions,
 	get_installations,
+	get_uninstall_summary,
 	set_extension_enabled,
 	set_granted_permissions,
 	uninstall_extension,
@@ -166,3 +168,44 @@ class TestUninstall(FrappeTestCase):
 	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
+
+
+class TestUninstallSummary(FrappeTestCase):
+	def setUp(self):
+		drop_installations(EXTENSION)
+		frappe.db.delete("Builder Extension Resource", {"extension": EXTENSION})
+
+	def test_names_what_the_site_keeps(self):
+		make_installation(EXTENSION)
+		frappe.get_doc(
+			{
+				"doctype": "Builder Extension Resource",
+				"extension": EXTENSION,
+				"resource_type": "DocType",
+				"resource_name": "Kept Widget",
+			}
+		).insert()
+
+		summary = get_uninstall_summary(EXTENSION)
+
+		self.assertEqual(summary["resources"], [{"resource_type": "DocType", "count": 1}])
+		self.assertEqual(summary["tokens"], 0)
+
+	def test_refuses_an_extension_the_site_has_not_installed(self):
+		with self.assertRaises(frappe.PermissionError):
+			get_uninstall_summary(EXTENSION)
+
+
+class TestCanManageExtensions(FrappeTestCase):
+	def setUp(self):
+		self.addCleanup(frappe.set_user, "Administrator")
+
+	def test_a_website_manager_can(self):
+		frappe.set_user(make_user())
+
+		self.assertTrue(can_manage_extensions())
+
+	def test_a_page_reader_cannot(self):
+		become_a_user_who_cannot_manage(self)
+
+		self.assertFalse(can_manage_extensions())

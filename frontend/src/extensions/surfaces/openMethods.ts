@@ -6,7 +6,7 @@
  * of its own. An extension declares one target or none, and an extension that
  * declared none gets no Open button.
  *
- * Builder starts the frame, not the extension, so no capability gates this. The
+ * Builder starts the frame, not the extension, so no permission gates this. The
  * user pressed a button in Builder's own chrome and the extension asked for
  * nothing. `actionMethods.ts` is the shape this follows rather than
  * `createSurfaceItems`: one per extension, no registry item, and no ordering.
@@ -18,7 +18,7 @@ import type { InstalledExtension, OpenTarget } from "frappe-builder-extension-sd
 import { reactive } from "vue";
 import { startDialog, startPopover } from "../editor/uiMethods";
 import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, oneOf, optionalText, optionalWholeNumber, refuse, text } from "../params";
 
 const kinds = ["popover", "dialog", "leftPanel"] as const;

@@ -3,7 +3,7 @@
 		The consent prompt, drawn by Builder and never by the extension. An
 		extension frame cannot paint here, cannot read this, and cannot answer it.
 
-		One instance for the whole editor: `grants.ts` queues requests so only one
+		One instance for the whole editor: `confirmations.ts` queues requests so only one
 		question stands at a time.
 	-->
 	<Dialog v-if="prompt" :modelValue="true" size="sm" @update:modelValue="deny">
@@ -30,13 +30,9 @@
 					<p v-if="prompt.kind === 'schema'" class="text-p-sm text-ink-red-6">
 						Dropping a doctype drops its table and every record in it. Nothing here can undo that.
 					</p>
-					<p v-else-if="prompt.kind === 'script'" class="text-p-sm text-ink-red-6">
+					<p v-else class="text-p-sm text-ink-red-6">
 						The script runs on the published page, for every visitor, and it can do anything this site's own
 						pages can do. You can read it and remove it in the Code tab.
-					</p>
-					<p v-else class="text-p-sm text-ink-red-6">
-						{{ prompt.subject }} controls how this site works. Access to it can change what other extensions
-						and other people are allowed to do.
 					</p>
 					<label class="flex cursor-pointer items-start gap-2 pt-3 text-p-sm text-ink-red-6">
 						<input v-model="understood" type="checkbox" class="mt-0.5" />
@@ -55,7 +51,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import { answerPrompt, pendingPrompt } from "@/extensions/data/grants";
+import { answerPrompt, pendingPrompt } from "@/extensions/data/confirmations";
 import { Button } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -63,7 +59,7 @@ const prompt = computed(() => pendingPrompt.value);
 const understood = ref(false);
 
 // each question is answered on its own. Carrying the tick over would let one
-// consent stand for a doctype the user never saw
+// consent stand for an act the user never saw
 watch(prompt, () => (understood.value = false));
 
 const canAllow = computed(() => !prompt.value?.sensitive || understood.value);
@@ -71,17 +67,8 @@ const canAllow = computed(() => !prompt.value?.sensitive || understood.value);
 /** The subject and the full stop, so no reflow can put whitespace between them. */
 const subject = computed(() => `${prompt.value?.subject}.`);
 
-/**
- * "read", "read and write", "read, write and delete" — or the one verb a schema
- * or script prompt names.
- */
-const verbs = computed(() => {
-	if (prompt.value?.kind === "schema") return prompt.value.act ?? "";
-	if (prompt.value?.kind === "script") return "run a script";
-	const asked = prompt.value?.access ?? [];
-	if (asked.length < 2) return asked.join("");
-	return `${asked.slice(0, -1).join(", ")} and ${asked[asked.length - 1]}`;
-});
+/** The one verb a schema or script prompt names. */
+const verbs = computed(() => (prompt.value?.kind === "schema" ? (prompt.value.act ?? "") : "run a script"));
 
 /** The one sentence that is true of every prompt: the user is still the ceiling. */
 const floor = computed(
@@ -89,14 +76,12 @@ const floor = computed(
 		({
 			schema: "It can only do what you can do. Changing a doctype needs your own System Manager role.",
 			script: "It can only do what you can do. You can already add a script to this page by hand.",
-			access: "It can only do what you can do. Your own permissions still apply to every record.",
-		})[prompt.value?.kind ?? "access"],
+		})[prompt.value?.kind ?? "script"],
 );
 
-/** What the verbs act on: records of a doctype, the doctype itself, or a page. */
+/** What the verbs act on: the doctype itself, or a page. */
 const object = computed(
-	() =>
-		({ schema: "the doctype", script: "on the page", access: "records of" })[prompt.value?.kind ?? "access"],
+	() => ({ schema: "the doctype", script: "on the page" })[prompt.value?.kind ?? "script"],
 );
 
 const allow = () => answerPrompt(true);

@@ -131,7 +131,7 @@
 
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
-import { userInstallations, getExtensionsCatalog, CatalogExtension } from "@/data/extensions";
+import { installations, getExtensionsCatalog, CatalogExtension } from "@/data/extensions";
 import { isDevExtension, showDevExtensionDialog, stopDevExtension } from "@/extensions/devExtension";
 import { Badge, Button, ItemListRow, LoadingIndicator, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
@@ -152,14 +152,14 @@ function matchesFilter(extension: CatalogExtension) {
 	return `${extension.label} ${extension.description ?? ""} ${extension.name}`.toLowerCase().includes(wanted);
 }
 
-const installed = computed(() => userInstallations.value.filter(matchesFilter));
+const installed = computed(() => installations.value.filter(matchesFilter));
 
 const extensionsCatalog = getExtensionsCatalog();
 const catalog = computed<CatalogExtension[]>(() => extensionsCatalog.data?.extensions ?? []);
 
 /** Catalog entries this user has not installed yet. */
 const notInstalled = computed<CatalogExtension[]>(() => {
-	const installedNames = new Set(userInstallations.value.map((extension) => extension.name));
+	const installedNames = new Set(installations.value.map((extension) => extension.name));
 	return catalog.value.filter((extension) => !installedNames.has(extension.name) && matchesFilter(extension));
 });
 

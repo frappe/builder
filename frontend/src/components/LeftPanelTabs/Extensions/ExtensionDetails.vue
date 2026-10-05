@@ -31,8 +31,12 @@
 
 				<p v-if="details.description" class="text-p-sm text-ink-gray-7">{{ details.description }}</p>
 
+				<p v-if="!isInstalled && !canManageExtensions" class="text-p-sm text-ink-gray-6">
+					Only a System Manager or a Website Manager can install extensions.
+				</p>
+
 				<Button
-					v-if="!isInstalled"
+					v-else-if="!isInstalled"
 					variant="solid"
 					size="sm"
 					icon-left="lucide-download"
@@ -60,12 +64,18 @@
 						<LoadingIndicator class="size-4" />
 						Installing this extension…
 					</div>
-					<Button variant="ghost" size="sm" label="Cancel" :loading="working" @click="discardInstall" />
+					<Button
+						v-if="canManageExtensions"
+						variant="ghost"
+						size="sm"
+						label="Cancel"
+						:loading="working"
+						@click="discardInstall" />
 				</div>
 
 				<div v-else-if="isFailed" class="flex flex-col gap-2">
 					<p class="text-p-sm text-ink-red-6">{{ details.install_error || "The install did not finish." }}</p>
-					<div class="flex gap-2">
+					<div v-if="canManageExtensions" class="flex gap-2">
 						<Button
 							variant="solid"
 							size="sm"
@@ -87,6 +97,7 @@
 				<ExtensionActions
 					v-else
 					:can-open="Boolean(mounted && canOpen(mounted))"
+					:can-manage="canManageExtensions"
 					:enabled="details.enabled"
 					:working="working"
 					@open="open"
@@ -101,22 +112,24 @@
 
 				<section v-if="isInstalled && isReady" class="border-t border-outline-gray-1 py-4">
 					<div class="pb-3">
-						<h2 class="text-sm font-medium text-ink-gray-8">Capabilities</h2>
+						<h2 class="text-sm font-medium text-ink-gray-8">Permissions</h2>
 						<p class="pt-2 text-xs text-ink-gray-5">
-							Control what {{ details.label }} may do in Builder and on this site.
+							<template v-if="canManageExtensions">
+								Control what {{ details.label }} may do for every user of this site.
+							</template>
+							<template v-else>Only a System Manager or a Website Manager can change these.</template>
 							<template v-if="details.is_development">
 								Loading it again restores what its manifest asks for.
 							</template>
 						</p>
 					</div>
-					<ExtensionCapabilities
+					<ExtensionPermissions
 						:extension="details.name"
 						:label="details.label ?? details.name"
-						:requested="details.requested_capabilities"
-						:granted="details.granted_capabilities"
-						:doctype-grants="details.doctype_grants"
-						@update:granted="grant"
-						@doctype-grants="refreshDetails" />
+						:requested="details.requested_permissions"
+						:granted="details.granted_permissions"
+						:read-only="!canManageExtensions"
+						@update:granted="grant" />
 				</section>
 
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
@@ -135,27 +148,28 @@
 			v-model:open="isInstallDialogOpen"
 			:extension="details.name"
 			:label="details.label ?? details.name"
-			:requested="releaseCapabilities"
+			:requested="releasePermissions"
 			@install="install" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import ExtensionActions from "@/components/LeftPanelTabs/Extensions/ExtensionActions.vue";
-import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/ExtensionCapabilities.vue";
+import ExtensionPermissions from "@/components/LeftPanelTabs/Extensions/ExtensionPermissions.vue";
 import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
+	canManageExtensions,
 	installedExtensions,
 	useInstallationDetails,
 	getHubExtension,
-	getHubReleaseCapabilities,
+	getHubReleasePermissions,
 	installFromHub,
 	setExtensionEnabled,
-	setGrantedCapabilities,
+	setGrantedPermissions,
 	uninstallExtension,
 	uninstallSummary,
-	userInstallations,
+	installations,
 	type InstallationDetails,
 } from "@/data/extensions";
 import { stopDevExtension } from "@/extensions/devExtension";
@@ -163,7 +177,7 @@ import { isEntryFrameReady } from "@/extensions/host/entryFrames";
 import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";
-import type { Capability } from "frappe-builder-extension-sdk/types";
+import type { Permission } from "frappe-builder-extension-sdk/types";
 import { Badge, Button, LoadingIndicator, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 
@@ -179,7 +193,7 @@ const error = ref("");
 const working = ref(false);
 
 /** Read from the shared list, so a Hub install started on this page swaps it to the installation. */
-const isInstalled = computed(() => userInstallations.value.some((row) => row.name === props.extension));
+const isInstalled = computed(() => installations.value.some((row) => row.name === props.extension));
 
 /** A Hub install is "Installing" until its job lands, then "Ready" or "Failed". An
  * install from any other path, and an older row, has no state and reads as ready. */
@@ -231,13 +245,12 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	source_url: hub.source_url ?? "",
 	enabled: false,
 	installed_on: "",
-	requested_capabilities: [],
-	granted_capabilities: [],
-	doctype_grants: [],
+	requested_permissions: [],
+	granted_permissions: [],
 });
 
 const isInstallDialogOpen = ref(false);
-const releaseCapabilities = ref<Capability[]>([]);
+const releasePermissions = ref<Permission[]>([]);
 
 /** Install and Retry stay loading until the dialog closes, whichever way it closes. */
 const isAskingInstall = computed(() => working.value || isInstallDialogOpen.value);
@@ -247,7 +260,7 @@ const isAskingInstall = computed(() => working.value || isInstallDialogOpen.valu
 const askInstall = async () => {
 	working.value = true;
 	try {
-		releaseCapabilities.value = await getHubReleaseCapabilities(props.extension, details.value!.version);
+		releasePermissions.value = await getHubReleasePermissions(props.extension, details.value!.version);
 		isInstallDialogOpen.value = true;
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
@@ -260,11 +273,11 @@ const askInstall = async () => {
  * Stays on the page. A fresh install adds a row, which flips `isInstalled`, and the
  * watch loads it. A retry keeps its row, so its details are reloaded here.
  */
-const install = async (capabilities: Capability[]) => {
+const install = async (permissions: Permission[]) => {
 	isInstallDialogOpen.value = false;
 	working.value = true;
 	try {
-		await installFromHub(props.extension, details.value!.version, capabilities);
+		await installFromHub(props.extension, details.value!.version, permissions);
 		toast.success("Installing…");
 		await refreshDetails();
 	} catch (thrown) {
@@ -298,9 +311,9 @@ watch([() => props.extension, isInstalled], load, { immediate: true });
  */
 const refreshDetails = () => activeInstallation.value?.reload();
 
-const grant = async (capabilities: Capability[]) => {
+const grant = async (permissions: Permission[]) => {
 	try {
-		await setGrantedCapabilities(props.extension, capabilities);
+		await setGrantedPermissions(props.extension, permissions);
 		await refreshDetails();
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
@@ -355,9 +368,8 @@ const uninstallMessage = (summary: Awaited<ReturnType<typeof uninstallSummary>>)
 	const kept = summary.resources.map((made) => `${made.count} ${made.resource_type}`);
 	if (summary.tokens) kept.push(`${summary.tokens} design token(s)`);
 
-	const lines = ["This removes your copy, your grants and what the extension remembered."];
+	const lines = ["This removes it for every user, with what it remembered for each of them."];
 	if (kept.length) lines.push(`The site keeps ${kept.join(", ")}, because published pages use them.`);
-	if (summary.other_users) lines.push(`${summary.other_users} other user(s) still have it installed.`);
 	return lines.join(" ");
 };
 </script>

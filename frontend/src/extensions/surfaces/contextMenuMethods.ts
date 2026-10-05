@@ -17,7 +17,7 @@ import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";
 import type { BlockMenuContext, ContextMenuOption } from "@/types/blockContextMenu";
 import { editorContext, factsFor } from "../editor/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import type { EditorContext } from "frappe-builder-extension-sdk/types";
 import { invokeAction } from "./actionMethods";
 import { fields, flag, oneOf, optionalText, text } from "../params";

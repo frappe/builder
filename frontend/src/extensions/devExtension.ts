@@ -11,7 +11,7 @@
  * remembered, so nobody retypes it.
  */
 
-import { CAPABILITIES, type Capability, type InstalledExtension } from "frappe-builder-extension-sdk/types";
+import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { call } from "frappe-ui";
 import { ref } from "vue";
 
@@ -39,17 +39,17 @@ export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 export const isDevExtension = (extension: { name: string }) => devExtension.value?.name === extension.name;
 
 /**
- * A capability this Builder does not know is a version gap, not a fault, so the
+ * A permission this Builder does not know is a version gap, not a fault, so the
  * extension loses that one grant and keeps the rest. Using it is refused by the
  * bridge, as it would be for an installed extension.
  */
-const grantedFrom = (asked: unknown): Capability[] => {
+const grantedFrom = (asked: unknown): Permission[] => {
 	const list = Array.isArray(asked) ? asked : [];
-	const unknown = list.filter((capability) => !CAPABILITIES.includes(capability));
+	const unknown = list.filter((permission) => !PERMISSIONS.includes(permission));
 	if (unknown.length) {
 		console.warn(`[builder] this Builder has no ${unknown.join(", ")}, so they are not granted`);
 	}
-	return list.filter((capability): capability is Capability => CAPABILITIES.includes(capability));
+	return list.filter((permission): permission is Permission => PERMISSIONS.includes(permission));
 };
 
 const read = async (origin: string) => {
@@ -75,16 +75,16 @@ const read = async (origin: string) => {
  * the browser as well as the server.
  *
  * An extension the user already has installed keeps that installation. The
- * server answers with its capabilities rather than making a second record.
+ * server answers with its permissions rather than making a second record.
  */
-const install = (extension: string, capabilities: Capability[]) =>
-	call(INSTALL_METHOD, { extension, capabilities }).catch(() => {
+const install = (extension: string, permissions: Permission[]) =>
+	call(INSTALL_METHOD, { extension, permissions }).catch(() => {
 		throw new Error(`Builder could not register "${extension}". Is the site in developer mode?`);
-	}) as Promise<Capability[]>;
+	}) as Promise<Permission[]>;
 
 /** A grant written in the panel, carried back to the entry the browser gate reads. */
-export const setDevCapabilities = (extension: string, capabilities: Capability[]) => {
-	if (devExtension.value?.name === extension) devExtension.value.capabilities = capabilities;
+export const setDevPermissions = (extension: string, permissions: Permission[]) => {
+	if (devExtension.value?.name === extension) devExtension.value.permissions = permissions;
 };
 
 /**
@@ -105,7 +105,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 	const origin = new URL(url.trim()).origin;
 	const descriptor = await read(origin);
 	if (devExtension.value) await remove(devExtension.value);
-	const granted = await install(descriptor.name, grantedFrom(descriptor.capabilities));
+	const granted = await install(descriptor.name, grantedFrom(descriptor.permissions));
 
 	localStorage.setItem(LAST_URL_KEY, origin);
 	devExtension.value = {
@@ -118,7 +118,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		// the dev server serves the source entry, so the path comes from it
 		entry: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
-		capabilities: granted,
+		permissions: granted,
 	};
 	return devExtension.value;
 };

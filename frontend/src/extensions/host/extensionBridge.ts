@@ -8,7 +8,7 @@
 
 import { ChannelCallError, unknownMethod, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { assertGranted, assertWritable, type MethodTable } from "./capabilities";
+import { assertGranted, assertWritable, type MethodTable } from "./permissions";
 import { createBudget, type Budget } from "./rateLimit";
 
 const overBudget = (extension: string) =>

@@ -18,7 +18,7 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { nextTick } from "vue";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
 
@@ -263,7 +263,7 @@ const insert = (params: unknown) => {
 
 export const blockMethods: MethodTable = {
 	"block.get": { needs: "block.read", run: get },
-	// read-only is refused in the bridge, once, for every write capability
+	// read-only is refused in the bridge, once, for every write permission
 	"block.update": { needs: "block.update", run: update },
 	// adding a block changes what the page is, not what one block holds, so it is
 	// its own grant. A user reading an install list can tell the two apart

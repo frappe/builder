@@ -1,5 +1,5 @@
 <template>
-	<!-- Collects the capabilities granted at install, and nothing else. -->
+	<!-- Collects the permissions granted at install, and nothing else. -->
 	<Dialog :modelValue="open" size="sm" @update:modelValue="(value: boolean) => emit('update:open', value)">
 		<template #body>
 			<div class="bg-surface-elevation-2 p-5">
@@ -8,15 +8,14 @@
 					<template v-if="requested.length">
 						Turn off what you do not want it to do. You can change this later in its details.
 					</template>
-					<template v-else>It asks for no capabilities.</template>
+					<template v-else>It asks for no permissions.</template>
 				</p>
 
 				<div v-if="requested.length" class="pt-4">
-					<ExtensionCapabilities
+					<ExtensionPermissions
 						:extension="extension"
 						:label="label"
 						:requested="requested"
-						:doctype-grants="[]"
 						v-model:granted="granted" />
 				</div>
 
@@ -31,8 +30,8 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import ExtensionCapabilities from "@/components/LeftPanelTabs/Extensions/ExtensionCapabilities.vue";
-import type { Capability } from "frappe-builder-extension-sdk/types";
+import ExtensionPermissions from "@/components/LeftPanelTabs/Extensions/ExtensionPermissions.vue";
+import type { Permission } from "frappe-builder-extension-sdk/types";
 import { Button } from "frappe-ui";
 import { ref, watch } from "vue";
 
@@ -40,17 +39,17 @@ const props = defineProps<{
 	open: boolean;
 	extension: string;
 	label: string;
-	requested: Capability[];
+	requested: Permission[];
 }>();
 
 const emit = defineEmits<{
 	"update:open": [open: boolean];
-	install: [capabilities: Capability[]];
+	install: [permissions: Permission[]];
 }>();
 
-const granted = ref<Capability[]>([]);
+const granted = ref<Permission[]>([]);
 
-// every capability starts on each time the dialog opens, so a choice from an
+// every permission starts on each time the dialog opens, so a choice from an
 // earlier attempt does not carry over
 watch(
 	() => props.open,

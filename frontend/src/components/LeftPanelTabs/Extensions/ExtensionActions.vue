@@ -9,6 +9,7 @@
 		</span>
 
 		<span
+			v-if="canManage"
 			ref="toggleAction"
 			class="inline-flex shrink-0"
 			:class="{ 'absolute invisible': !isActionVisible('toggle') }">
@@ -22,6 +23,7 @@
 		</span>
 
 		<span
+			v-if="canManage"
 			ref="uninstallAction"
 			class="inline-flex shrink-0"
 			:class="{ 'absolute invisible': !isActionVisible('uninstall') }">
@@ -62,6 +64,7 @@ type ActionId = "open" | "toggle" | "uninstall";
 
 const props = defineProps<{
 	canOpen: boolean;
+	canManage: boolean;
 	enabled: boolean;
 	working: boolean;
 }>();
@@ -82,8 +85,7 @@ let resizeObserver: ResizeObserver | null = null;
 
 const availableActionIds = computed<ActionId[]>(() => [
 	...(props.canOpen ? (["open"] as const) : []),
-	"toggle",
-	"uninstall",
+	...(props.canManage ? (["toggle", "uninstall"] as const) : []),
 ]);
 
 const overflowActionIds = computed(() =>
@@ -163,5 +165,5 @@ const observeActionRow = async () => {
 
 onMounted(observeActionRow);
 onBeforeUnmount(() => resizeObserver?.disconnect());
-watch([() => props.canOpen, () => props.enabled], observeActionRow);
+watch([() => props.canOpen, () => props.canManage, () => props.enabled], observeActionRow);
 </script>

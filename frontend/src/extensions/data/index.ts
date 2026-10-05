@@ -6,13 +6,11 @@
  * write is undone with one keystroke, and a document write is not.
  */
 
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { documentMethods } from "./documentMethods";
-import { grantMethods } from "./grants";
 import { schemaMethods } from "./schemaMethods";
 
 export const dataMethods: MethodTable = {
-	...grantMethods,
 	...documentMethods,
 	...schemaMethods,
 };

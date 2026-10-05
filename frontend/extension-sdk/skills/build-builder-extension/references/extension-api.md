@@ -34,7 +34,7 @@ The extension build must use one SDK module instance. The Vite plugin keeps the 
 
 Builder provides three UI levels. Choose the smallest level that can meet the request.
 
-| Level | Builder capability | Use it for |
+| Level | Builder permission | Use it for |
 |---|---|---|
 | Host-rendered item | Toolbar buttons and context menu rows | A small command with standard Builder UI |
 | Host-rendered controls | Property panel sections | Values that edit a selected block or call an action |
@@ -94,7 +94,7 @@ Put `manifest.json` beside `vite.config.js`.
   "version": "1.0.0",
   "entry": "main.js",
   "icon": "icon.svg",
-  "capabilities": ["context.read", "block.read", "block.update"]
+  "permissions": ["context.read", "block.read", "block.update"]
 }
 ```
 
@@ -118,9 +118,9 @@ these rules:
 
 Builder draws its own plug glyph for an extension that ships no icon.
 
-Request only the capabilities that the extension uses. Builder rejects a protected method without its capability.
+Request only the permissions that the extension uses. Builder rejects a protected method without its permission.
 
-| Capability | SDK methods or behavior |
+| Permission | SDK methods or behavior |
 |---|---|
 | `context.read` | `context.get`, `context.subscribe`, and `useBuilderContext` |
 | `block.read` | `block.get` |
@@ -131,14 +131,14 @@ Request only the capabilities that the extension uses. Builder rejects a protect
 | `token.write` | `tokens.set`, `tokens.unset` |
 | `ui.dialog` | `ui.openDialog`, `ui.closeDialog` |
 | `ui.popover` | `ui.openPopover`, `ui.closePopover` |
-| `data.access` | Every `data.*` method, including `requestAccess` |
+| `data.access` | Every `data.*` method |
 | `schema.write` | Every `schema.*` method |
 
-Surface registration, actions, extension state, `ui.toast`, and `host.info` need no capability.
+Surface registration, actions, extension state, `ui.toast`, and `host.info` need no permission.
 
 Builder rejects page writes in read-only mode. This rule covers `block.update`, `block.insert`, `page.write`, and token writes. It does not cover `data.*` or `schema.*`, which write to the site and not to the page.
 
-A capability grants the right to ask. For `data.*`, the user must also grant access to each doctype. Read [Site data](#site-data).
+A site manager grants permissions for the whole site. A permission never gives a user more access than that user already has. Read [Site data](#site-data).
 
 ## Package and build configuration
 
@@ -187,7 +187,7 @@ The error object can include one of these codes:
 | Code | Meaning |
 |---|---|
 | `unknown_method` | This Builder version does not provide the method |
-| `capability_required` | The manifest did not grant the required capability |
+| `permission_required` | The site did not grant the required permission |
 | `read_only` | The method would write while Builder is read-only |
 | `invalid_params` | The call sent an invalid value or shape |
 | `unknown_rule_key` | A `showWhen` or `enableWhen` rule used a key Builder does not know |
@@ -195,7 +195,6 @@ The error object can include one of these codes:
 | `already_registered` | The extension already registered a panel, settings page, dialog, or popover |
 | `unknown_block` | The active canvas does not contain the block ID |
 | `no_canvas` | Builder has no active canvas |
-| `grant_required` | The access is not allowed. Call `data.requestAccess`, then check the answer for `"denied"` |
 | `refused` | The user answered no to a schema dialog |
 | `server_error` | The site rejected the data or schema call |
 | `rate_limited` | The extension exceeded its request budget |
@@ -367,7 +366,7 @@ builder.properties.registerSection({
 
 Available controls are `text`, `number`, `select`, `toggle`, `color`, and `range`.
 
-A bound control writes an attribute or a style. Bound controls require the `block.update` capability.
+A bound control writes an attribute or a style. Bound controls require the `block.update` permission.
 
 An unbound control needs an `action`. It sends its value to the action when the value changes. Builder rejects a control that has neither `bind` nor `action`.
 
@@ -439,7 +438,7 @@ const result = await builder.ui.openDialog({
 
 The slot reads its input with `builder.ui.props()`. It returns a result with `builder.ui.closeDialog(result)`.
 
-Use `openPopover`, `closePopover`, and the `ui.popover` capability for a popover.
+Use `openPopover`, `closePopover`, and the `ui.popover` permission for a popover.
 
 Give a popover a start size with `width` and `height`, in pixels. Builder uses its own
 size for a field you omit. The user can always drag the corner to resize it.
@@ -465,13 +464,13 @@ builder.open.register({ kind: "leftPanel", name: "icons" });
 
 Declare it at module scope, beside the slot or the tab it opens. A `leftPanel` target
 names a tab this extension registered. Builder opens the target itself, so the
-extension needs no capability for it.
+extension needs no permission for it.
 
 Use `builder.open.unregister()` to take the button back.
 
 ### Toast
 
-Use `builder.ui.toast` for a short message outside the frame. It needs no capability.
+Use `builder.ui.toast` for a short message outside the frame. It needs no permission.
 
 ```ts
 builder.ui.toast("Image replaced", { type: "success" });
@@ -623,17 +622,11 @@ State uses browser `localStorage`. Builder scopes it by extension name and limit
 
 ## Site data
 
-Use `builder.data` to read and write documents on the site. Every method needs the `data.access` capability.
+Use `builder.data` to read and write documents on the site. Every method needs the `data.access` permission.
 
-The capability alone grants nothing. The user must also grant access to each doctype, and Builder stores that grant.
+Each call runs as the user who uses the editor. That user reaches only the documents their own Frappe permissions allow.
 
 ```ts
-const grant = await builder.data.getAccess("Task");
-if (grant.read !== "allowed") {
-  const answer = await builder.data.requestAccess("Task", ["read", "write"]);
-  if (answer.read !== "allowed") return;
-}
-
 const tasks = await builder.data.getList("Task", {
   fields: ["name", "subject", "status"],
   filters: { status: "Open" },
@@ -642,26 +635,20 @@ const tasks = await builder.data.getList("Task", {
 });
 ```
 
-`requestAccess` opens a modal dialog. Call it after the user presses something, never at startup.
-
-Each access in a grant holds one answer: `"allowed"`, `"denied"`, or `"not asked"`. Compare an answer to `"allowed"`, because `"denied"` is a truthy string.
-
-`requestAccess` asks only about each access that is `"not asked"`. It returns without a dialog when every access you name is already allowed or denied. The user can change a denied access in the Extensions panel.
-
 These methods read and write documents:
 
-| Method | Grant | Result |
-|---|---|---|
-| `data.getList(doctype, options)` | `read` | One page of documents |
-| `data.getCount(doctype, filters)` | `read` | How many documents match |
-| `data.getDoc(doctype, name)` | `read` | One whole document |
-| `data.insert(doctype, doc)` | `write` | The inserted document |
-| `data.update(doctype, name, doc)` | `write` | The saved document |
-| `data.delete(doctype, name)` | `delete` | Nothing |
+| Method | Result |
+|---|---|
+| `data.getList(doctype, options)` | One page of documents |
+| `data.getCount(doctype, filters)` | How many documents match |
+| `data.getDoc(doctype, name)` | One whole document |
+| `data.insert(doctype, doc)` | The inserted document |
+| `data.update(doctype, name, doc)` | The saved document |
+| `data.delete(doctype, name)` | Nothing |
 
 `getList` takes `fields`, `filters`, `orFilters`, `orderBy`, `groupBy`, `start`, and `pageLength`. `pageLength` can reach 500. Builder rejects 0.
 
-A call fails with `grant_required` when the access it needs is not allowed. Catch that code and call `requestAccess`. Then read the answer. If the user denied that access before, `requestAccess` returns `"denied"` without a dialog, so tell the user to change it in the Extensions panel. Any other refusal comes from the site, and asking again does not help.
+A call fails with `server_error` when the site refuses it. Asking again does not help, so tell the user what failed.
 
 For frappe-ui resources, wire the SDK fetcher once in the entry module:
 
@@ -670,11 +657,11 @@ import { setConfig } from "frappe-ui";
 setConfig("resourceFetcher", builder.data.fetcher);
 ```
 
-`createListResource` and `createDocumentResource` then work as they do in any Frappe app. The grant rule does not change.
+`createListResource` and `createDocumentResource` then work as they do in any Frappe app. The same permission rules apply.
 
 ## Doctypes
 
-Use `builder.schema` when the extension needs its own tables. Every method needs the `schema.write` capability.
+Use `builder.schema` when the extension needs its own tables. Every method needs the `schema.write` permission.
 
 ```ts
 const doctype = await builder.schema.createDoctype(
@@ -690,8 +677,6 @@ const doctype = await builder.schema.createDoctype(
 Builder asks the user before it creates or deletes a doctype. The call fails with `refused` when the user says no.
 
 The user must be a System Manager. Frappe wants create permission on `DocType`, and the extension cannot lift that.
-
-The extension receives a full grant on a doctype it creates, so `data.*` works on it with no second question.
 
 | Method | Behavior |
 |---|---|
@@ -774,7 +759,7 @@ Use icon names that Builder already renders. An unknown icon name can produce an
 ## Development workflow
 
 1. Create `manifest.json`, `README.md`, `LICENSE`, `vite.config.js`, and `src/main.ts`.
-2. Request only the required capabilities.
+2. Request only the required permissions.
 3. Register actions and surfaces at module scope.
 4. Put long-lived work inside `builder.main`.
 5. Start the extension with `npm run dev`.
@@ -801,7 +786,7 @@ Builder loads one development extension per session. A new development extension
 
 A page reload removes the development extension. Builder remembers the last development server origin.
 
-Builder ignores unknown requested capabilities during development. Calls that need those capabilities still fail.
+Builder ignores unknown requested permissions during development. Calls that need those permissions still fail.
 
 Builder permits 100 requests per extension each second. It rejects excess requests with the `rate_limited` error code.
 
@@ -815,16 +800,15 @@ When a user asks for a Builder component, first identify the user action and the
 1. Search the target project for an existing extension structure.
 2. Reuse its manifest, build setup, components, and naming patterns.
 3. Choose a host-rendered surface before you choose a frame.
-4. Map each protected SDK call to a manifest capability.
+4. Map each protected SDK call to a manifest permission.
 5. Give a surface its action as a function. Use `builder.actions.register` only for an action another frame runs.
 6. Add `showWhen` and `enableWhen` rules for selection and read-only state.
 7. Use a context subscription only when a rule cannot express the condition.
-8. Ask for a doctype grant behind a user action, never at startup.
-9. Keep all Builder access behind the public SDK.
-10. Keep functions, Vue components, DOM nodes, and class instances inside the frame.
-11. Send only plain objects, arrays, strings, numbers, booleans, and null through SDK calls.
-12. Build the extension and fix all TypeScript and Vite errors.
-13. Test the extension in Builder when a development site is available.
+8. Keep all Builder access behind the public SDK.
+9. Keep functions, Vue components, DOM nodes, and class instances inside the frame.
+10. Send only plain objects, arrays, strings, numbers, booleans, and null through SDK calls.
+11. Build the extension and fix all TypeScript and Vite errors.
+12. Test the extension in Builder when a development site is available.
 
 Do not access `window.parent`, Builder stores, or Builder DOM nodes. The sandbox and API do not support those paths.
 
@@ -836,4 +820,4 @@ Do not use a surface update to change placement or conditions. Register the item
 
 Do not assume that a method exists on an older Builder. An unknown declaration logs a warning and skips that surface.
 
-Keep the feature focused. Add only the surfaces and capabilities that the user request needs.
+Keep the feature focused. Add only the surfaces and permissions that the user request needs.

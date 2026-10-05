@@ -6,7 +6,7 @@
  */
 
 import { PROTOCOL_VERSION } from "frappe-builder-extension-sdk/types";
-import type { MethodTable } from "./capabilities";
+import type { MethodTable } from "./permissions";
 
 /** An extension ships on its own schedule, so it needs to know where it landed. */
 const getHostInfo = () => ({

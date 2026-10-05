@@ -17,7 +17,7 @@
 
 import { createResource } from "frappe-ui";
 import builderTokens from "@/data/builderToken";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, refuse, text } from "../params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 

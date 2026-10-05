@@ -239,7 +239,7 @@ export default function builderExtension({ builderUrl } = {}) {
 						description: manifest.description,
 						version: manifest.version,
 						readme: readReadme(root),
-						capabilities: manifest.capabilities ?? [],
+						permissions: manifest.permissions ?? [],
 						entry: servedPath(entry),
 						icon: manifest.icon ? servedPath(findIcon(manifest)) : undefined,
 					}),

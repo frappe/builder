@@ -6,7 +6,7 @@
  * them, so adding a surface is one import and one spread.
  */
 
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { actionMethods } from "./actionMethods";
 import { contextMenuMethods } from "./contextMenuMethods";
 import { leftPanelMethods } from "./leftPanelMethods";

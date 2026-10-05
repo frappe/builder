@@ -1,5 +1,5 @@
 /**
- * Storage an extension owns outright. No capability gates it: the drawer
+ * Storage an extension owns outright. No permission gates it: the drawer
  * is not a write to the page, so a read-only page does not close it.
  *
  * One row per key, on the site. It used to be `localStorage`, which is per
@@ -12,7 +12,7 @@
 import { isDevExtension } from "@/extensions/devExtension";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { createResource } from "frappe-ui";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, refuse, text } from "../params";
 
 type Store = Record<string, unknown>;

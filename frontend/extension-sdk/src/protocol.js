@@ -3,7 +3,7 @@
 export const PROTOCOL_VERSION = 1;
 
 /** @type {readonly ("context.read" | "block.read" | "block.update" | "block.insert" | "page.read" | "page.write" | "token.write" | "ui.dialog" | "ui.popover" | "data.access" | "schema.write")[]} */
-export const CAPABILITIES = [
+export const PERMISSIONS = [
 	"context.read",
 	"block.read",
 	"block.update",
@@ -25,10 +25,10 @@ const MANIFEST_FIELDS = new Set([
 	"version",
 	"entry",
 	"icon",
-	"capabilities",
+	"permissions",
 ]);
 
-const REQUIRED_MANIFEST_FIELDS = ["v", "name", "label", "description", "version", "entry", "capabilities"];
+const REQUIRED_MANIFEST_FIELDS = ["v", "name", "label", "description", "version", "entry", "permissions"];
 const EXTENSION_NAME = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/;
 const SEMVER =
 	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
@@ -48,11 +48,11 @@ const requireText = (manifest, field, maximum, source) => {
 	}
 };
 
-const validateCapabilities = (value, source) => {
-	if (!Array.isArray(value)) fail(source, 'field "capabilities" must be a list');
-	if (new Set(value).size !== value.length) fail(source, 'field "capabilities" must not contain duplicates');
-	const unknown = value.find((capability) => !CAPABILITIES.includes(capability));
-	if (unknown !== undefined) fail(source, `requests unknown capability "${String(unknown)}"`);
+const validatePermissions = (value, source) => {
+	if (!Array.isArray(value)) fail(source, 'field "permissions" must be a list');
+	if (new Set(value).size !== value.length) fail(source, 'field "permissions" must not contain duplicates');
+	const unknown = value.find((permission) => !PERMISSIONS.includes(permission));
+	if (unknown !== undefined) fail(source, `requests unknown permission "${String(unknown)}"`);
 };
 
 export const parseJson = (source, text) => {
@@ -85,6 +85,6 @@ export const validateManifest = (value, source = "manifest.json") => {
 	if (value.icon !== undefined && !/^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$/.test(value.icon)) {
 		fail(source, 'field "icon" must name one root SVG file');
 	}
-	validateCapabilities(value.capabilities, source);
+	validatePermissions(value.permissions, source);
 	return value;
 };

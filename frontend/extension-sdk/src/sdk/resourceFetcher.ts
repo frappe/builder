@@ -19,13 +19,13 @@
  *
  * **This is an adapter, not a gate.** It runs inside the frame, which is the
  * untrusted side, so it cannot decide anything. Each route below lands on a
- * `data.*` method the host gates and the server checks against the grant. A
+ * `data.*` method the host gates and the server checks against the permission. A
  * frame that replaced this file with its own would reach exactly the same
  * methods and the same refusals.
  *
  * A URL with no route is refused rather than forwarded. Forwarding would let a
- * resource name any whitelisted method on the site, and the doctype grant would
- * stop meaning anything.
+ * resource name any whitelisted method on the site, and the `data.access`
+ * permission would stop meaning anything.
  */
 
 import { ChannelCallError } from "../transport/createPortChannel";
@@ -91,10 +91,9 @@ const listOptions = (params: Params): ListOptions => ({
  */
 const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 	"frappe.client.get_list": (params) => {
-		// a child table is read through its parent's permission, so a grant on the
-		// child doctype would be answering a question nobody asked
+		// a child table is read through its parent's permission, so read the parent
 		if (params.parent) {
-			throw refuse("\"parent\" is not supported: grant the parent doctype instead.");
+			throw refuse("\"parent\" is not supported: read the parent document instead.");
 		}
 		return data.getList(named(params, "doctype", "frappe.client.get_list"), listOptions(params));
 	},
@@ -136,12 +135,7 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
  *
  * It answers with the data, and throws on a refusal, which is the contract
  * `resources.js` expects. A refusal keeps its `code`, so a resource's `onError`
- * can still read `grant_required` and call `builder.data.requestAccess`. Read
- * the answer it returns: a denied access returns "denied" without a dialog.
- *
- * It never opens the consent dialog itself. A resource fetches when it decides
- * to — `auto: true` fires on mount — so an asking fetcher would put a modal on
- * screen while the user is doing something else.
+ * can still read it.
  */
 export const resourceFetcher = (options: ResourceRequest) => {
 	const url = options?.url ?? "";

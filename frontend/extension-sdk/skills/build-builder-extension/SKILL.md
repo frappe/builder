@@ -9,7 +9,7 @@ An extension adds surfaces to the Frappe Builder editor. It runs in a sandboxed 
 reaches the editor only through `frappe-builder-extension-sdk`.
 
 Read `references/extension-api.md` before you write any code. It holds the whole API: the
-capability list, every surface, the error codes, and the rules the host enforces. This file
+permission list, every surface, the error codes, and the rules the host enforces. This file
 holds the workflow only.
 
 ## Before you start
@@ -145,11 +145,11 @@ and the SDK sends the declarations from the hidden main frame only.
 
 Register an action before the surface that names it. Put startup work in `builder.main`.
 
-Request only the capabilities the code uses. Map each protected call to its capability with
+Request only the permissions the code uses. Map each protected call to its permission with
 the table in `references/extension-api.md`.
 
 Use the exact version 1 manifest fields: `v`, `name`, `label`, `description`, `version`,
-`entry`, optional `icon`, and `capabilities`. Set `entry` to `main.js` and `v` to the
+`entry`, optional `icon`, and `permissions`. Set `entry` to `main.js` and `v` to the
 minimum Builder extension protocol the release needs.
 
 ## Run it
@@ -199,5 +199,5 @@ instance cannot cross the port.
 Register one panel, one settings page, one dialog, and one popover at most. A second one
 fails with `already_registered`.
 
-Ask for a doctype grant behind a button the user pressed. `data.requestAccess` opens a modal
-dialog, so it must never run at startup.
+A `data.*` call runs as the user who uses the editor. It reaches only the documents that user
+can already reach.

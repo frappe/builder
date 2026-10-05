@@ -17,7 +17,7 @@
 
 import { toast } from "frappe-ui";
 import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { fields, refuse, text } from "../params";
 

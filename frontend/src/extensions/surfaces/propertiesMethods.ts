@@ -6,7 +6,7 @@
  * The section header reads `label`, not the registry name, because the host
  * composes every name as `extension:name` and nobody wants that on screen.
  *
- * No method here needs a capability. A section with no bound control writes
+ * No method here needs a permission. A section with no bound control writes
  * nothing, so the grant belongs to the controls, and `readControls` checks it
  * on both doors into that list.
  */
@@ -14,7 +14,7 @@
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
 import { editorContext } from "../editor/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { readControls, toBlockProperty, type Control } from "./controlSchema";
 import { fields, flag, optionalText, text } from "../params";

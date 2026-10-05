@@ -20,8 +20,8 @@
 		<!-- editor chrome, not an extension's: it is how one is loaded at all -->
 		<DevExtensionDialog />
 
-		<!-- one for the whole editor: grants.ts queues, so one question stands at a time -->
-		<ExtensionGrantDialog />
+		<!-- one for the whole editor: confirmations.ts queues, so one question stands at a time -->
+		<ExtensionConfirmDialog />
 
 		<!-- one per extension, each rendering nothing until ui.openDialog -->
 		<ExtensionDialog
@@ -41,7 +41,7 @@
 import DevExtensionDialog from "@/components/DevExtensionDialog.vue";
 import ExtensionDialog from "@/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/components/ExtensionFrame.vue";
-import ExtensionGrantDialog from "@/components/ExtensionGrantDialog.vue";
+import ExtensionConfirmDialog from "@/components/ExtensionConfirmDialog.vue";
 import ExtensionPopover from "@/components/ExtensionPopover.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
@@ -84,10 +84,10 @@ const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) 
  * loading a dev version of an installed extension remounts its frames.
  *
  * The grant joins the key too. `dispatcherFor` closes over the record, so a frame
- * that keeps running after the user revokes a capability keeps the old answer.
+ * that keeps running after the user revokes a permission keeps the old answer.
  */
 const frameKey = (extension: InstalledExtension) =>
-	`${extension.name}@${extension.checksum ?? extension.entry}@${extension.capabilities.join(",")}`;
+	`${extension.name}@${extension.checksum ?? extension.entry}@${extension.permissions.join(",")}`;
 
 // unmounting a frame only closes its channel. What an extension registered
 // outlives it, so an extension that left the list, or that is now served from

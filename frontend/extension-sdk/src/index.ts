@@ -30,4 +30,4 @@ export type {
 } from "./sdk/namespaces";
 export type { FrameOptions, ToastOptions, ToastType } from "./sdk/ui";
 export type { SlotEntry } from "./sdk/slots";
-export type { Breakpoint, Capability, EditorContext, EditorSelection, ExtensionManifest } from "./types";
+export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./types";

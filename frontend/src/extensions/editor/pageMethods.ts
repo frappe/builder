@@ -26,8 +26,8 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { confirmPageScript } from "../data/grants";
-import type { MethodTable } from "../host/capabilities";
+import { confirmPageScript } from "../data/confirmations";
+import type { MethodTable } from "../host/permissions";
 import { fields, oneOf, refuse, text } from "../params";
 
 /**
@@ -114,6 +114,6 @@ export const pageMethods: MethodTable = {
 	"page.getBlocks": { needs: "page.read", run: getBlocks },
 	"page.attachScript": { needs: "page.write", run: attachScript },
 	"page.detachScript": { needs: "page.write", run: detachScript },
-	// its own scripts, so the capability that wrote them is the one that reads them
+	// its own scripts, so the permission that wrote them is the one that reads them
 	"page.listScripts": { needs: "page.write", run: listScripts },
 };

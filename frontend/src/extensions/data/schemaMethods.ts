@@ -16,9 +16,9 @@
  */
 
 import { createResource } from "frappe-ui";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, flag, oneOf, refuse, text } from "../params";
-import { confirmSchema } from "./grants";
+import { confirmSchema } from "./confirmations";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 const NAMING = ["hash", "autoincrement", "prompt"] as const;

@@ -12,7 +12,7 @@
 import ExtensionFrame from "@/components/ExtensionFrame.vue";
 import { settingsItems, type SettingsItem } from "@/components/Settings";
 import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import { fields, flag, optionalText, text } from "../params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
@@ -86,7 +86,7 @@ const pages = createSurfaceItems<Registration, SettingsItem>({
 });
 
 export const settingsMethods: MethodTable = {
-	// the host draws the sidebar entry and mounts the frame, so no capability gates this
+	// the host draws the sidebar entry and mounts the frame, so no permission gates this
 	"settings.registerItem": { needs: null, run: pages.register },
 	"settings.unregisterItem": { needs: null, run: pages.unregister },
 	"settings.update": { needs: null, run: pages.update },

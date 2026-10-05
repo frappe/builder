@@ -11,11 +11,11 @@
  *
  * A dialog is modal and covers the editor. A popover floats beside it, and the
  * user keeps editing while it stands, so it is the softer of the two and holds
- * its own capability. Both end the same way, and `frameSurface.ts` holds that.
+ * its own permission. Both end the same way, and `frameSurface.ts` holds that.
  */
 
 import { toast } from "frappe-ui";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { fields, oneOf, text } from "../params";
 import { createFrameSurface } from "./frameSurface";
 
@@ -41,14 +41,14 @@ export const dismissPopover = popover.dismiss;
 
 /**
  * Read by `surfaces/openMethods.ts`, which opens a frame because the user
- * pressed Open in Builder's own chrome. No capability is checked there: the
+ * pressed Open in Builder's own chrome. No permission is checked there: the
  * extension asked for nothing, so it needs no grant.
  */
 export const startDialog = dialog.start;
 export const startPopover = popover.start;
 
 export const uiMethods: MethodTable = {
-	// Toasts are rate limited by the bridge, but need no capability: they do not change editor state.
+	// Toasts are rate limited by the bridge, but need no permission: they do not change editor state.
 	"ui.toast": { needs: null, run: showToast },
 	// a modal covers the editor, so it is the intrusive case
 	"ui.openDialog": { needs: "ui.dialog", run: dialog.start },

@@ -1,21 +1,17 @@
-import { devExtension, isDevExtension, setDevCapabilities } from "@/extensions/devExtension";
-import type { Access, AccessAnswer } from "@/extensions/data/grants";
-import type { Capability, InstalledExtension } from "frappe-builder-extension-sdk/types";
+import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
+import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import {
 	call,
 	createDocumentResource,
-	createListResource,
 	createResource,
 	getCachedResource,
 	getCachedDocumentResource,
-	onDocUpdate,
 } from "frappe-ui";
 import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
 const METHOD = "builder.extensions.installations";
-const INSTALLATION_DOCTYPE = "Builder User Extension";
-const GRANT_DOCTYPE = "Builder Extension DocType Grant";
+const INSTALLATION_DOCTYPE = "Builder Extension";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
 const CATALOG_CACHE = "extensions-catalog";
@@ -43,7 +39,7 @@ type InstallationDocument = {
 	description?: string;
 	enabled: boolean | number;
 	checksum?: string;
-	granted_capabilities?: string;
+	granted_permissions?: string;
 	/** The rest is unread by the mount list, and read only by the details panel. */
 	version?: string;
 	source_url?: string;
@@ -51,15 +47,15 @@ type InstallationDocument = {
 	install_error?: string;
 	installed_on?: string;
 	readme?: string;
-	requested_capabilities?: string;
+	requested_permissions?: string;
 };
 
 /** The Vue instance a document resource ties its realtime subscription to. Set once, from the editor. */
 let resourceVm: unknown;
 
-const grantedCapabilities = (value: string | undefined): Capability[] => {
+const grantedPermissions = (value: string | undefined): Permission[] => {
 	if (!value) return [];
-	return JSON.parse(value) as Capability[];
+	return JSON.parse(value) as Permission[];
 };
 
 /**
@@ -82,16 +78,27 @@ const installationDocument = (installationId: string) =>
 	);
 
 /**
- * Every installation of this user, the disabled and development ones included.
+ * Every installation on this site, the disabled and development ones included.
  *
  * The editor mounts the enabled rows, and the panel shows them all. One list
  * means one fetch to refresh after a change, so the two never disagree.
  */
-const installationsResource = createResource<UserInstallation[]>({
-	url: "builder.extensions.installations.get_user_installations",
+const installationsResource = createResource<Installation[]>({
+	url: "builder.extensions.installations.get_installations",
 	// losing this list costs the editor its extensions, never the editor itself
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
+
+/**
+ * Whether this user may install, turn on or off, grant or uninstall. The panel
+ * hides those controls without it, and the server checks again on every call.
+ */
+const managerResource = createResource<boolean>({
+	url: "builder.extensions.installations.can_manage_extensions",
+	onError: (error: Error) => console.error("Could not check extension access", error),
+});
+
+const canManageExtensions = computed(() => Boolean(managerResource.data));
 
 /**
  * Fetch one installation's document into that shared cache.
@@ -99,13 +106,13 @@ const installationsResource = createResource<UserInstallation[]>({
  * Read it back with `getCachedDocumentResource`, never held here: `toInstalledExtension`
  * only reads that cache, so a fetch never happens as a side effect of a computed.
  */
-const loadInstallationDocument = (row: UserInstallation) => {
+const loadInstallationDocument = (row: Installation) => {
 	void installationDocument(row.installation_id)
 		.reload()
 		.catch(() => undefined);
 };
 
-const toInstalledExtension = (row: UserInstallation): InstalledExtension | null => {
+const toInstalledExtension = (row: Installation): InstalledExtension | null => {
 	const document = getCachedDocumentResource<InstallationDocument>(
 		INSTALLATION_DOCTYPE,
 		row.installation_id,
@@ -118,12 +125,12 @@ const toInstalledExtension = (row: UserInstallation): InstalledExtension | null 
 		description: document.description ?? row.description,
 		icon: row.icon,
 		checksum: document.checksum,
-		capabilities: grantedCapabilities(document.granted_capabilities),
+		permissions: grantedPermissions(document.granted_permissions),
 	};
 };
 
 /**
- * Every extension this user runs: their installations, plus the one loaded from a
+ * Every extension this editor runs: the site's installations, plus the one loaded from a
  * dev server this session. A dev extension replaces the installation of the same
  * name, because two entries would give it two frames.
  *
@@ -146,6 +153,7 @@ const installedExtensions = computed<InstalledExtension[]>(() => {
 /** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
 const loadExtensions = async (vm?: unknown) => {
 	if (vm) resourceVm = vm;
+	if (managerResource.data === null) void managerResource.fetch();
 	const rows = (await installationsResource.fetch()) ?? [];
 	rows.filter((row) => row.enabled && !row.is_development).forEach(loadInstallationDocument);
 	return rows;
@@ -186,7 +194,7 @@ const getExtensionSource = (extension: InstalledExtension): Promise<string> => {
  * and a version number or an install date is none of its business. This carries
  * what the panel shows and the editor never needs.
  */
-type UserInstallation = {
+type Installation = {
 	name: string;
 	/** The document's own name, not the extension's. */
 	installation_id: string;
@@ -206,20 +214,11 @@ type UserInstallation = {
 	is_development?: boolean;
 };
 
-/** One doctype this user answered for, as `Builder Extension DocType Grant` holds it. */
-type ExtensionGrant = {
-	document_type: string;
-	read_access: AccessAnswer;
-	write_access: AccessAnswer;
-	delete_access: AccessAnswer;
-};
-
-type InstallationDetails = UserInstallation & {
+type InstallationDetails = Installation & {
 	installed_on: string;
 	readme?: string;
-	requested_capabilities: Capability[];
-	granted_capabilities: Capability[];
-	doctype_grants: ExtensionGrant[];
+	requested_permissions: Permission[];
+	granted_permissions: Permission[];
 	development_server?: string;
 };
 
@@ -235,14 +234,14 @@ const applyDevelopmentDetails = (details: InstallationDetails): InstallationDeta
  * The install job writes the package icon last, so an Installing or Failed row
  * has none. It borrows the icon the Hub catalog showed before the install.
  */
-const withCatalogIcon = (row: UserInstallation): UserInstallation => {
+const withCatalogIcon = (row: Installation): Installation => {
 	if (row.icon || !row.install_state || row.install_state === "Ready") return row;
 	const catalog: CatalogExtension[] = getCachedResource([CATALOG_CACHE, 1])?.data?.extensions ?? [];
 	return { ...row, icon: catalog.find((extension) => extension.name === row.name)?.icon };
 };
 
 /** A running dev extension shows what its dev server serves, and is always enabled. */
-const withDevelopment = (row: UserInstallation): UserInstallation => {
+const withDevelopment = (row: Installation): Installation => {
 	const development = devExtension.value;
 	if (!development || development.name !== row.name) return row;
 
@@ -266,9 +265,9 @@ const withDevelopment = (row: UserInstallation): UserInstallation => {
  * A development record that no dev server runs this session is one a closed tab
  * failed to remove, so the panel hides it.
  */
-const userInstallations = computed<UserInstallation[]>(() => {
-	const devInstallation: UserInstallation[] = [];
-	const others: UserInstallation[] = [];
+const installations = computed<Installation[]>(() => {
+	const devInstallation: Installation[] = [];
+	const others: Installation[] = [];
 	for (const row of installationsResource.data ?? []) {
 		if (isDevExtension(row)) devInstallation.push(withDevelopment(withCatalogIcon(row)));
 		else if (!row.is_development) others.push(withCatalogIcon(row));
@@ -277,65 +276,29 @@ const userInstallations = computed<UserInstallation[]>(() => {
 });
 
 const findInstallation = (extension: string) =>
-	userInstallations.value.find((installation) => installation.name === extension);
-
-/**
- * Every installation this has already wired a doctype-grant subscription for.
- *
- * A grant is inserted or deleted rather than only edited, so `createListResource`'s
- * own `realtime` option cannot keep it live: that option only refreshes a row
- * already in the fetched page, never a new one. `onDocUpdate` is the same
- * primitive `createDocumentResource` uses for its own realtime, applied here by
- * hand, once per installation, so a bare reload catches the row it would miss.
- */
-const doctypeGrantsSubscribed = new Set<string>();
-
-const installationDoctypeGrants = (installationId: string) => {
-	const resource = createListResource<ExtensionGrant>(
-		{
-			doctype: GRANT_DOCTYPE,
-			filters: [["installation", "=", installationId]],
-			fields: ["document_type", "read_access", "write_access", "delete_access"],
-			orderBy: "document_type asc",
-			auto: false,
-			cache: ["installation-doctype-grants", installationId],
-			onError: (error: Error) => console.error("Could not load extension grants", error),
-		},
-		resourceVm,
-	);
-
-	const socket = (resourceVm as { $socket?: Parameters<typeof onDocUpdate>[0] } | undefined)?.$socket;
-	if (socket && !doctypeGrantsSubscribed.has(installationId)) {
-		doctypeGrantsSubscribed.add(installationId);
-		onDocUpdate(socket, GRANT_DOCTYPE, () => void resource.reload());
-	}
-
-	return resource;
-};
+	installations.value.find((installation) => installation.name === extension);
 
 /**
  * One installation, with the dev server standing in for what it owns.
  *
- * A development installation is real, so the record answers for the capabilities
- * it granted, the doctype grants and the install date. What the dev server shows
- * a user comes from the dev server, which is the copy running right now.
+ * A development installation is real, so the record answers for the permissions
+ * it granted and the install date. What the dev server shows a user comes from
+ * the dev server, which is the copy running right now.
  *
  * Composed from what the mount list and the panel's own list already fetch,
  * rather than a details call of its own: the document carries the readme and the
- * raw capability lists, `findInstallation` carries the icon and the install
- * state, and only the doctype grants are fetched here for the first time.
+ * raw permission lists, and `findInstallation` carries the icon and the install
+ * state.
  */
 const useInstallationDetails = (extension: string) => {
 	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
-	const doctypeGrants = shallowRef<ReturnType<typeof installationDoctypeGrants> | null>(null);
 
 	const reload = async () => {
 		const installationId = findInstallation(extension)?.installation_id;
 		if (!installationId) return;
 
 		document.value = installationDocument(installationId);
-		doctypeGrants.value = installationDoctypeGrants(installationId);
-		await Promise.all([document.value.reload(), doctypeGrants.value.reload()]);
+		await document.value.reload();
 	};
 
 	const details = computed<InstallationDetails | null>(() => {
@@ -347,29 +310,18 @@ const useInstallationDetails = (extension: string) => {
 			...installation,
 			installed_on: doc.installed_on ?? "",
 			readme: doc.readme,
-			requested_capabilities: grantedCapabilities(doc.requested_capabilities),
-			granted_capabilities: grantedCapabilities(doc.granted_capabilities),
-			doctype_grants: doctypeGrants.value?.data ?? [],
+			requested_permissions: grantedPermissions(doc.requested_permissions),
+			granted_permissions: grantedPermissions(doc.granted_permissions),
 		});
 	});
 
 	return { details, reload };
 };
 
-/**
- * The three answers that stand for one doctype, answering with the grants after it.
- *
- * "Not asked" lets the extension ask about that access again, and the row stays
- * so the panel keeps listing the doctype. A denied access stops the asking.
- */
-const setExtensionGrant = (extension: string, doctype: string, answers: Record<Access, AccessAnswer>) =>
-	call(`${METHOD}.set_extension_grant`, { extension, doctype, answers }) as Promise<ExtensionGrant[]>;
-
-/** What the site keeps when a user removes an extension. */
+/** What the site keeps when a manager removes an extension. */
 type UninstallSummary = {
 	resources: { resource_type: string; count: number }[];
 	tokens: number;
-	other_users: number;
 };
 
 /**
@@ -381,14 +333,14 @@ const setExtensionEnabled = async (extension: string, enabled: boolean) => {
 	await loadExtensions();
 };
 
-const setGrantedCapabilities = async (extension: string, capabilities: Capability[]) => {
-	const granted = (await call(`${METHOD}.set_granted_capabilities`, {
+const setGrantedPermissions = async (extension: string, permissions: Permission[]) => {
+	const granted = (await call(`${METHOD}.set_granted_permissions`, {
 		extension,
-		capabilities,
-	})) as Capability[];
+		permissions,
+	})) as Permission[];
 	// the editor runs the browser's own entry for a dev extension, not its record,
 	// so the new grant has to reach that entry too
-	setDevCapabilities(extension, granted);
+	setDevPermissions(extension, granted);
 	return granted;
 };
 
@@ -400,7 +352,7 @@ const uninstallExtension = async (extension: string) => {
 	await loadExtensions();
 };
 
-type CatalogExtension = Pick<UserInstallation, "name" | "label" | "description" | "icon">;
+type CatalogExtension = Pick<Installation, "name" | "label" | "description" | "icon">;
 
 const getExtensionsCatalog = (page: number = 1) =>
 	createResource({
@@ -412,7 +364,7 @@ const getExtensionsCatalog = (page: number = 1) =>
 		onError: (error: Error) => console.error("Could not load extensions list", error),
 	});
 
-/** A not-installed extension as its hub page describes it. No grants, no install date. */
+/** A not-installed extension as its hub page describes it. No permissions, no install date. */
 type HubExtension = CatalogExtension & {
 	version: string;
 	readme?: string;
@@ -455,12 +407,12 @@ const getHubExtension = async (name: string): Promise<HubExtension> => {
 };
 
 /** What one exact release asks for. The listing carries no manifest, so this reads the release. */
-const getHubReleaseCapabilities = async (name: string, version: string): Promise<Capability[]> => {
+const getHubReleasePermissions = async (name: string, version: string): Promise<Permission[]> => {
 	const { release } = await createResource({
 		url: `${hubUrl()}/${HUB_API}.get_extension_release`,
 		params: { extension_name: name, version },
 	}).fetch();
-	return release.manifest?.capabilities ?? [];
+	return release.manifest?.permissions ?? [];
 };
 
 /**
@@ -468,36 +420,29 @@ const getHubReleaseCapabilities = async (name: string, version: string): Promise
  * download in a background job, so this resolves fast. The row flips to "Ready"
  * or "Failed" on the `builder_extension_install` realtime event.
  *
- * `version` pins the release whose capabilities the user answered for.
+ * `version` pins the release whose permissions the user answered for.
  */
-const installFromHub = async (name: string, version: string, capabilities: Capability[]) => {
-	await call("builder.extensions.hub.install_from_hub", { name, version, capabilities });
+const installFromHub = async (name: string, version: string, permissions: Permission[]) => {
+	await call("builder.extensions.hub.install_from_hub", { name, version, permissions });
 	await loadExtensions();
 };
 
 export {
+	canManageExtensions,
 	getExtensionSource,
 	getExtensionsCatalog,
 	getHubExtension,
-	getHubReleaseCapabilities,
+	getHubReleasePermissions,
 	INSTALLATION_DOCTYPE,
 	installedExtensions,
 	installFromHub,
 	loadExtensions,
 	setExtensionEnabled,
-	setExtensionGrant,
-	setGrantedCapabilities,
+	setGrantedPermissions,
 	uninstallExtension,
 	uninstallSummary,
 	useInstallationDetails,
-	userInstallations,
+	installations,
 };
 
-export type {
-	CatalogExtension,
-	ExtensionGrant,
-	HubExtension,
-	InstallationDetails,
-	UninstallSummary,
-	UserInstallation,
-};
+export type { CatalogExtension, HubExtension, InstallationDetails, UninstallSummary, Installation };

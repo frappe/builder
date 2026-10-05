@@ -15,7 +15,7 @@ import ExtensionToolbarButton from "@/components/ToolbarItems/ExtensionToolbarBu
 import { toolbarItems, type ToolbarItem, type ToolbarRegion } from "@/components/ToolbarItems";
 import { editorContext } from "../editor/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/capabilities";
+import type { MethodTable } from "../host/permissions";
 import { invokeAction } from "./actionMethods";
 import { fields, flag, oneOf, optionalText, text } from "../params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
