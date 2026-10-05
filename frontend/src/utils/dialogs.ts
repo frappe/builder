@@ -9,7 +9,8 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import { createResource, dialog } from "frappe-ui";
+import { useStorage } from "@vueuse/core";
+import { createResource, dialog, toast } from "frappe-ui";
 import { __ } from "@/translation";
 
 // Imperative dialogs that replace single-purpose modal components. Each opens
@@ -137,6 +138,31 @@ export function promptRenamePage(page: BuilderPage) {
 			if (!pageTitle || pageTitle === page.page_title) return;
 			await webPages.setValue.submit({ name: page.name, page_title: pageTitle });
 			page.page_title = pageTitle;
+		},
+	});
+}
+
+const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
+
+export async function saveQuickVersion() {
+	const pageStore = usePageStore();
+	await pageStore.waitTillPageIsSaved();
+	await pageStore.createManualSnapshot();
+	toast.success(__("Version saved"));
+}
+
+// Mod+S: changes autosave, so the shortcut offers to save a version instead
+export function promptSaveVersion() {
+	if (hideSaveVersionPrompt.value) return saveQuickVersion();
+	dialog.prompt({
+		title: __("Save a Version History"),
+		message: __("Changes are saved automatically. This action saves the current state as a version."),
+		size: "sm",
+		confirmLabel: __("Save Version"),
+		fields: [{ name: "dontRemind", type: "checkbox", label: __("Don't remind me again") }],
+		onConfirm: async ({ values }) => {
+			hideSaveVersionPrompt.value = Boolean(values.dontRemind);
+			await saveQuickVersion();
 		},
 	});
 }

@@ -12,7 +12,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { commandShortcuts } from "@/components/Commands";
 import { __ } from "@/translation";
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
-import { promptOversizedSVG } from "@/utils/dialogs";
+import { promptOversizedSVG, promptSaveVersion } from "@/utils/dialogs";
 import {
 	addPxToNumber,
 	getBlockCopy,
@@ -251,6 +251,8 @@ export function useBuilderEvents(
 				if (canvasStore.editingMode === "fragment") {
 					saveAndExitFragmentMode(e);
 					e.stopPropagation();
+				} else if (canvasStore.editingMode === "page" && !builderStore.readOnlyMode && !isDialogOpen()) {
+					promptSaveVersion();
 				}
 			},
 		},
