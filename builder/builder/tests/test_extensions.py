@@ -10,10 +10,11 @@ from builder.builder.tests.extension_fixtures import (
 	INSTALLATION_DOCTYPE,
 	drop_installations,
 	make_installation,
+	make_page_reader,
 	make_user,
 )
-from builder.extensions.constants import CAPABILITIES
-from builder.extensions.installations import get_user_installations
+from builder.extensions.constants import PERMISSIONS
+from builder.extensions.installations import get_installations
 from builder.extensions.registry import (
 	get_extension_source,
 	install_dev_extension,
@@ -26,18 +27,7 @@ class TestListedInstallation(FrappeTestCase):
 	"""What one row of the list carries for the editor to mount."""
 
 	def listed(self, name):
-		return next((row for row in get_user_installations() if row["name"] == name), None)
-
-	def test_two_users_can_run_different_versions(self):
-		drop_installations("acme/versioned")
-		mine = make_installation("acme/versioned", version="1.0.0")
-		make_installation("acme/versioned", user=make_user(), version="2.0.0")
-
-		self.assertEqual(self.listed("acme/versioned")["installation_id"], mine.name)
-		theirs = frappe.db.get_value(
-			INSTALLATION_DOCTYPE, {"user": make_user(), "extension": "acme/versioned"}, "version"
-		)
-		self.assertEqual(theirs, "2.0.0")
+		return next((row for row in get_installations() if row["name"] == name), None)
 
 	def test_carries_no_source(self):
 		"""One call per extension reads that, so a list of five carries no bundles."""
@@ -53,23 +43,23 @@ class TestExtensionIcon(FrappeTestCase):
 
 
 class TestGetExtensionSource(FrappeTestCase):
-	def test_answers_with_the_entry_this_user_installed(self):
+	def test_answers_with_the_entry_the_site_installed(self):
 		make_installation("acme/coded", source="export const answer = 42;")
 
 		self.assertEqual(get_extension_source("acme/coded"), "export const answer = 42;")
 
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
 		drop_installations("acme/absent")
 
 		with self.assertRaises(frappe.PermissionError):
 			get_extension_source("acme/absent")
 
-	def test_refuses_another_users_copy(self):
-		drop_installations("acme/private")
-		make_installation("acme/private", user=make_user(), source="export const secret = 1;")
+	def test_every_builder_user_reads_the_sites_entry(self):
+		make_installation("acme/shared", source="export const shared = 1;")
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
 
-		with self.assertRaises(frappe.PermissionError):
-			get_extension_source("acme/private")
+		self.assertEqual(get_extension_source("acme/shared"), "export const shared = 1;")
 
 	def test_refuses_an_installation_that_is_switched_off(self):
 		make_installation("acme/paused", enabled=0, source="export default {};")
@@ -81,7 +71,7 @@ class TestGetExtensionSource(FrappeTestCase):
 		"""The editor holds it in memory and posts it to five frames."""
 		make_installation("acme/heavy", source="x" * 200)
 
-		module = "builder.builder.doctype.builder_user_extension.builder_user_extension"
+		module = "builder.builder.doctype.builder_extension.builder_extension"
 		with patch(f"{module}.MAX_SOURCE_BYTES", 100):
 			with self.assertRaises(frappe.ValidationError):
 				get_extension_source("acme/heavy")
@@ -145,22 +135,20 @@ class TestExtensionTokens(FrappeTestCase):
 		self.assertEqual(self.tokens_of(other)[0]["value"], "#34a853")
 
 	def installation_name(self):
-		return frappe.db.get_value(
-			INSTALLATION_DOCTYPE, {"user": frappe.session.user, "extension": self.extension}, "name"
-		)
+		return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": self.extension}, "name")
 
 	def test_refuses_a_token_with_no_key(self):
 		with self.assertRaises(frappe.ValidationError):
 			set_extension_tokens(self.extension, [self.shade(key="")])
 
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
 		drop_installations("acme/never-installed")
 
 		with self.assertRaises(frappe.PermissionError):
 			set_extension_tokens("acme/never-installed", [self.shade()])
 
-	def test_refuses_an_extension_without_the_capability(self):
-		make_installation("acme/ungranted", capabilities=["page.read"])
+	def test_refuses_an_extension_without_the_permission(self):
+		make_installation("acme/ungranted", permissions=["page.read"])
 
 		with self.assertRaises(frappe.PermissionError):
 			set_extension_tokens("acme/ungranted", [self.shade()])
@@ -180,8 +168,8 @@ class TestDevExtension(FrappeTestCase):
 	def installed(self):
 		return frappe.db.get_value(
 			INSTALLATION_DOCTYPE,
-			{"user": frappe.session.user, "extension": self.extension},
-			["version", "granted_capabilities"],
+			{"extension": self.extension},
+			["version", "granted_permissions"],
 			as_dict=True,
 		)
 
@@ -190,16 +178,16 @@ class TestDevExtension(FrappeTestCase):
 
 		installed = self.installed()
 		self.assertEqual(installed.version, "0.0.0-dev")
-		self.assertEqual(frappe.parse_json(installed.granted_capabilities), ["block.read", "ui.popover"])
+		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["block.read", "ui.popover"])
 
 	def test_grants_only_what_the_manifest_asks_for(self):
-		"""Both gates read this list, so a wider one would name what none allows."""
+		"""The gate reads this list, so a wider one would name what nobody allowed."""
 		granted = install_dev_extension(self.extension, ["block.read"])
 
 		self.assertEqual(granted, ["block.read"])
-		self.assertNotEqual(granted, list(CAPABILITIES))
+		self.assertNotEqual(granted, list(PERMISSIONS))
 
-	def test_refuses_a_capability_builder_does_not_have(self):
+	def test_refuses_a_permission_builder_does_not_have(self):
 		with self.assertRaises(frappe.ValidationError):
 			install_dev_extension(self.extension, ["quantum.read"])
 
@@ -215,12 +203,20 @@ class TestDevExtension(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("Builder Token", {"extension": self.extension}))
 
 	def test_leaves_a_real_installation_alone(self):
-		"""The name may belong to an extension the user really installed."""
+		"""The name may belong to an extension the site really installed."""
 		make_installation(self.extension, version="1.4.0")
 
 		remove_dev_extension(self.extension)
 
 		self.assertEqual(self.installed().version, "1.4.0")
+
+	def test_refuses_a_user_who_cannot_manage_extensions(self):
+		"""A development installation is the site's, like any other."""
+		frappe.set_user(make_page_reader(self))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		with self.assertRaises(frappe.PermissionError):
+			install_dev_extension(self.extension)
 
 	def test_refuses_to_register_outside_developer_mode(self):
 		frappe.conf.developer_mode = 0

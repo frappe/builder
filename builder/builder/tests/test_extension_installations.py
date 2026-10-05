@@ -7,19 +7,16 @@ from frappe.tests.utils import FrappeTestCase
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
+	make_page_reader,
 	make_user,
 )
-from builder.extensions.access import assert_extension_access, find_installation
-from builder.extensions.data import record_extension_grant
+from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
-	get_user_installations,
-	installation_doctype_grants,
+	get_installations,
 	set_extension_enabled,
-	set_extension_grant,
-	set_granted_capabilities,
+	set_granted_permissions,
 	uninstall_extension,
 )
-from builder.extensions.resources import record_resource
 
 EXTENSION = "acme/managed"
 
@@ -28,17 +25,21 @@ def names(installations: list[dict]) -> list[str]:
 	return [installation["name"] for installation in installations]
 
 
-class TestUserInstallations(FrappeTestCase):
+def become_a_user_who_cannot_manage(test_case):
+	frappe.set_user(make_page_reader(test_case))
+
+
+class TestInstallations(FrappeTestCase):
 	"""The listing the Extensions panel reads, which the editor's own list cannot be."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_lists_this_users_installation(self):
+	def test_lists_the_sites_installation(self):
 		make_installation(EXTENSION, version="2.1.0")
 
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION]
+		listed = [row for row in get_installations() if row["name"] == EXTENSION]
 
 		self.assertEqual(len(listed), 1)
 		self.assertEqual(listed[0]["version"], "2.1.0")
@@ -48,13 +49,14 @@ class TestUserInstallations(FrappeTestCase):
 		"""Hiding it would leave no way to turn it back on but the bench."""
 		make_installation(EXTENSION, enabled=0)
 
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertFalse(listed["enabled"])
 
-	def test_leaves_out_another_users_installation(self):
-		make_installation(EXTENSION, user=make_user())
+	def test_every_builder_user_sees_the_same_list(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
 
-		self.assertNotIn(EXTENSION, names(get_user_installations()))
+		self.assertIn(EXTENSION, names(get_installations()))
 
 
 class TestEnableAndDisable(FrappeTestCase):
@@ -67,7 +69,7 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, False)
 
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertFalse(listed["enabled"])
 
 	def test_disabling_closes_the_gate(self):
@@ -82,42 +84,64 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		set_extension_enabled(EXTENSION, True)
 
-		listed = [row for row in get_user_installations() if row["name"] == EXTENSION][0]
+		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertTrue(listed["enabled"])
 
+	def test_a_website_manager_can_switch_it(self):
+		make_installation(EXTENSION)
+		frappe.set_user(make_user())
 
-class TestGrantedCapabilities(FrappeTestCase):
+		set_extension_enabled(EXTENSION, False)
+
+		self.assertFalse(frappe.db.get_value("Builder Extension", {"extension": EXTENSION}, "enabled"))
+
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
+
+		with self.assertRaises(frappe.PermissionError):
+			set_extension_enabled(EXTENSION, False)
+
+
+class TestGrantedPermissions(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_revoking_narrows_what_the_gate_allows(self):
-		make_installation(EXTENSION, capabilities=["page.read", "token.write"])
+		make_installation(EXTENSION, permissions=["page.read", "token.write"])
 
-		set_granted_capabilities(EXTENSION, ["page.read"])
+		set_granted_permissions(EXTENSION, ["page.read"])
 
 		assert_extension_access(EXTENSION, "page.read")
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "token.write")
 
 	def test_granting_again_reopens_it(self):
-		make_installation(EXTENSION, capabilities=["page.read", "token.write"], granted=["page.read"])
+		make_installation(EXTENSION, permissions=["page.read", "token.write"], granted=["page.read"])
 
-		set_granted_capabilities(EXTENSION, ["page.read", "token.write"])
+		set_granted_permissions(EXTENSION, ["page.read", "token.write"])
 
 		assert_extension_access(EXTENSION, "token.write")
 
-	def test_refuses_a_capability_the_manifest_never_asked_for(self):
-		make_installation(EXTENSION, capabilities=["page.read"])
+	def test_refuses_a_permission_the_manifest_never_asked_for(self):
+		make_installation(EXTENSION, permissions=["page.read"])
 
 		with self.assertRaises(frappe.ValidationError):
-			set_granted_capabilities(EXTENSION, ["page.read", "schema.write"])
+			set_granted_permissions(EXTENSION, ["page.read", "schema.write"])
 
-	def test_refuses_a_capability_builder_does_not_have(self):
+	def test_refuses_a_permission_builder_does_not_have(self):
 		make_installation(EXTENSION)
 
 		with self.assertRaises(frappe.ValidationError):
-			set_granted_capabilities(EXTENSION, ["quantum.read"])
+			set_granted_permissions(EXTENSION, ["quantum.read"])
+
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
+
+		with self.assertRaises(frappe.PermissionError):
+			set_granted_permissions(EXTENSION, [])
 
 
 class TestUninstall(FrappeTestCase):
@@ -125,90 +149,20 @@ class TestUninstall(FrappeTestCase):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def test_removes_this_users_installation_and_leaves_what_it_made(self):
-		make_installation(EXTENSION)
-		record_resource(EXTENSION, "DocType", "Acme Order")
-
-		uninstall_extension(EXTENSION)
-
-		self.assertNotIn(EXTENSION, names(get_user_installations()))
-		self.assertTrue(frappe.db.exists("Builder Extension Resource", {"extension": EXTENSION}))
-
-	def test_leaves_another_users_installation_standing(self):
-		other = make_user()
-		make_installation(EXTENSION, user=other)
+	def test_removes_the_sites_installation(self):
 		make_installation(EXTENSION)
 
 		uninstall_extension(EXTENSION)
 
-		self.assertTrue(frappe.db.exists("Builder User Extension", {"extension": EXTENSION, "user": other}))
+		self.assertNotIn(EXTENSION, names(get_installations()))
 
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		become_a_user_who_cannot_manage(self)
+
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
 
-
-def answers(read="not asked", write="not asked", delete="not asked") -> dict:
-	return {"read": read, "write": write, "delete": delete}
-
-
-class TestGrantAnswers(FrappeTestCase):
-	"""Changing what a user already answered for, one access at a time.
-
-	The gate is the user's own installation, never the extension's access. They
-	must reach an answer after disabling the extension or turning `data.access`
-	off, which is when they most want it back.
-	"""
-
-	def setUp(self):
-		drop_installations(EXTENSION)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def grant(self, **values):
-		make_installation(EXTENSION)
-		record_extension_grant(EXTENSION, "Contact", **values)
-
-	def assertAnswers(self, row, read, write, delete):
-		self.assertEqual(
-			(row["read_access"], row["write_access"], row["delete_access"]), (read, write, delete)
-		)
-
-	def test_narrows_one_access_and_keeps_the_rest(self):
-		self.grant(access=["read", "write", "delete"])
-
-		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "allowed"))
-
-		self.assertAnswers(grants[0], "allowed", "allowed", "not asked")
-
-	def test_denies_one_access_and_keeps_the_rest(self):
-		self.grant(access=["read", "write"])
-
-		grants = set_extension_grant(EXTENSION, "Contact", answers("allowed", "denied"))
-
-		self.assertAnswers(grants[0], "allowed", "denied", "not asked")
-
-	def test_not_asked_is_the_way_back_from_a_denial(self):
-		self.grant(access=["read"], denied=True)
-		installation = find_installation(EXTENSION)
-
-		set_extension_grant(EXTENSION, "Contact", answers())
-
-		self.assertAnswers(
-			installation_doctype_grants(installation)[0], "not asked", "not asked", "not asked"
-		)
-
-	def test_refuses_an_answer_it_does_not_know(self):
-		self.grant(access=["read"])
-
-		with self.assertRaises(frappe.ValidationError):
-			set_extension_grant(EXTENSION, "Contact", answers(read="maybe"))
-
-	def test_refuses_answers_that_leave_an_access_out(self):
-		self.grant(access=["read"])
-
-		with self.assertRaises(frappe.ValidationError):
-			set_extension_grant(EXTENSION, "Contact", {"read": "allowed"})
-
-	def test_refuses_an_extension_this_user_has_not_installed(self):
+	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
-			set_extension_grant(EXTENSION, "Contact", answers())
+			uninstall_extension(EXTENSION)

@@ -12,21 +12,20 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
-	CAPABILITIES,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
 	ICON_PATTERN,
 	MAX_README_BYTES,
 	MAX_SOURCE_BYTES,
+	PERMISSIONS,
 	VERSION_PATTERN,
 )
 
-GRANT_DOCTYPE = "Builder Extension DocType Grant"
 STATE_DOCTYPE = "Builder Extension State"
 
 
-class BuilderUserExtension(Document):
+class BuilderExtension(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -39,23 +38,21 @@ class BuilderUserExtension(Document):
 		description: DF.SmallText | None
 		enabled: DF.Check
 		extension: DF.Data
-		granted_capabilities: DF.SmallText | None
+		granted_permissions: DF.SmallText | None
 		icon: DF.Data | None
 		install_error: DF.SmallText | None
 		install_state: DF.Literal["Installing", "Ready", "Failed"]
 		installed_on: DF.Datetime | None
 		label: DF.Data | None
 		readme: DF.LongText | None
-		requested_capabilities: DF.SmallText | None
+		requested_permissions: DF.SmallText | None
 		source_url: DF.Data | None
-		user: DF.Link
 		version: DF.Data
 	# end: auto-generated types
 
 	def autoname(self):
-		# a uuid, and (user, extension) is looked up by field, the way Builder Token
-		# looks up (extension, key). The name is also the install directory, so it
-		# must hold no separator
+		# a uuid, and the extension is looked up by field. The name is also the
+		# install directory, so it must hold no separator
 		if not self.name:
 			self.name = str(uuid.uuid4())
 
@@ -65,28 +62,28 @@ class BuilderUserExtension(Document):
 	def validate(self):
 		self.validate_identity()
 		self.validate_icon()
-		self.validate_capabilities()
+		self.validate_permissions()
 		self.validate_readme()
 
 	def on_trash(self):
 		self.delete_extension_state()
-		self.delete_extension_grants()
-		self.delete_extension_files()
+		# the rows roll back with a failed delete, and files would not
+		frappe.db.after_commit.add(self.delete_extension_files)
 
 	@property
 	def install_path(self) -> str:
-		"""This user's own copy. Private, so nothing but Builder reads it."""
+		"""The site's one copy. Private, so nothing but Builder reads it."""
 		return get_files_path(f"{EXTENSIONS_FOLDER}/{self.name}", is_private=True)
 
 	@property
-	def capabilities(self) -> list[str]:
-		"""What this user allowed. Every gate reads this list and no other."""
-		return self.capability_list("granted_capabilities")
+	def permissions(self) -> list[str]:
+		"""What an extension manager allowed. Every gate reads this list and no other."""
+		return self.permission_list("granted_permissions")
 
 	@property
 	def requested(self) -> list[str]:
 		"""What the manifest asked for. A grant cannot reach outside it."""
-		return self.capability_list("requested_capabilities")
+		return self.permission_list("requested_permissions")
 
 	@property
 	def source(self) -> str:
@@ -131,8 +128,8 @@ class BuilderUserExtension(Document):
 		if self.icon and not ICON_PATTERN.match(self.icon):
 			frappe.throw(_("Icon must name one SVG file in the install root, such as icon.svg."))
 
-	def validate_capabilities(self):
-		outside = sorted(set(self.capabilities) - set(self.requested))
+	def validate_permissions(self):
+		outside = sorted(set(self.permissions) - set(self.requested))
 		if outside:
 			frappe.throw(
 				_('"{0}" never asked for {1}, so it cannot be granted.').format(
@@ -140,7 +137,7 @@ class BuilderUserExtension(Document):
 				)
 			)
 
-	def capability_list(self, field: str) -> list[str]:
+	def permission_list(self, field: str) -> list[str]:
 		"""One of the two lists, parsed and checked against what Builder has."""
 		# parse_json raises on text that is not JSON, which would reach the user as a
 		# traceback instead of the message below
@@ -153,9 +150,9 @@ class BuilderUserExtension(Document):
 		if not isinstance(keys, list):
 			frappe.throw(_("{0} must be a JSON list.").format(label))
 
-		unknown = sorted(set(keys) - set(CAPABILITIES))
+		unknown = sorted(set(keys) - set(PERMISSIONS))
 		if unknown:
-			frappe.throw(_("Unknown capabilities in {0}: {1}").format(label, ", ".join(unknown)))
+			frappe.throw(_("Unknown permissions in {0}: {1}").format(label, ", ".join(unknown)))
 		return keys
 
 	def validate_readme(self):
@@ -163,7 +160,7 @@ class BuilderUserExtension(Document):
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
 
 	def write_extension_files(self, files: dict[str, bytes]):
-		"""Replace this user's copy with the files a frame loads.
+		"""Replace the installed copy with the files a frame loads.
 
 		Keyed by path under the install root, so `main.js` lands where `source`
 		reads it. Replaces the whole directory, so a rebuild leaves nothing of the
@@ -177,37 +174,11 @@ class BuilderUserExtension(Document):
 			target.write_bytes(content)
 
 	def delete_extension_files(self):
-		"""This user's copy alone. Another user's copy is another directory."""
 		shutil.rmtree(self.install_path, ignore_errors=True)
 
 	def delete_extension_state(self):
-		"""A state row Links to this record, so Frappe refuses the delete while one stands."""
-		for state in frappe.get_all(STATE_DOCTYPE, filters={"installation": self.name}, pluck="name"):
-			frappe.delete_doc(STATE_DOCTYPE, state, ignore_permissions=True)
+		"""A state row Links to this record, so Frappe refuses the delete while one stands.
 
-	def delete_extension_grants(self):
-		"""What this user allowed this copy, and nobody else's answer.
-
-		Nothing the extension made goes with it. A doctype, a token and a client
-		script all serve the site, so all three outlive one user leaving.
+		One query for every user's row. A state row has no hooks, files or versions to clear.
 		"""
-		for grant in frappe.get_all(GRANT_DOCTYPE, filters={"installation": self.name}, pluck="name"):
-			frappe.delete_doc(GRANT_DOCTYPE, grant, ignore_permissions=True)
-
-
-TABLE = "tabBuilder User Extension"
-UNIQUE_INDEX = "unique_user_extension"
-SOURCE_SCOPED_INDEX = "unique_user_source_extension"
-
-
-def on_doctype_update():
-	"""One installation per user and extension.
-
-	`publisher/name` is the whole identity. A second install of one name, from any
-	source, is refused, so `source_url` stays a plain record of where the files
-	came from and never scopes a lookup.
-	"""
-	if frappe.db.has_index(TABLE, SOURCE_SCOPED_INDEX):
-		frappe.db.sql_ddl(f"alter table `{TABLE}` drop index `{SOURCE_SCOPED_INDEX}`")
-
-	frappe.db.add_unique("Builder User Extension", ["user", "extension"], constraint_name=UNIQUE_INDEX)
+		frappe.db.delete(STATE_DOCTYPE, {"installation": self.name})

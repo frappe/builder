@@ -68,7 +68,7 @@ def delete_extension_tokens(extension: str) -> None:
 	"""Every token this extension defined.
 
 	Only a development session calls this. A token an installed extension made
-	outlives its user, because it styles pages the site serves.
+	outlives an uninstall, because it styles pages the site serves.
 	"""
 	for token in frappe.get_all(TOKEN_DOCTYPE, filters={"extension": extension}, pluck="name"):
 		frappe.delete_doc(TOKEN_DOCTYPE, token, ignore_permissions=True)

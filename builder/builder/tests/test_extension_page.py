@@ -39,7 +39,7 @@ class TestExtensionPageScripts(FrappeTestCase):
 	def an_extension(self, label: str) -> str:
 		"""The name is the identity, so this answers with it. Dropped in tearDown."""
 		extension = f"acme/{label}-{self.run_id}"
-		make_installation(extension, capabilities=["page.write"])
+		make_installation(extension, permissions=["page.write"])
 		self.extensions.append(extension)
 		return extension
 

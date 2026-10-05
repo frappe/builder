@@ -4,8 +4,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.tests.extension_fixtures import drop_installations, make_installation
-from builder.extensions.data import get_extension_grant
+from builder.builder.tests.extension_fixtures import drop_installations, make_installation, make_page_reader
 from builder.extensions.schema import (
 	create_doctype,
 	delete_doctype,
@@ -18,7 +17,7 @@ NAME = "Sample Widget"
 
 
 def make_extension(name="acme/schema", **kwargs):
-	return make_installation(name, label="Schema", capabilities=["schema.write", "data.access"], **kwargs)
+	return make_installation(name, label="Schema", permissions=["schema.write", "data.access"], **kwargs)
 
 
 def a_field(**over):
@@ -49,6 +48,7 @@ class TestExtensionSchema(FrappeTestCase):
 		self.extension = make_extension()
 
 	def tearDown(self):
+		frappe.set_user("Administrator")
 		clean_up()
 
 	def create(self, **over):
@@ -74,13 +74,6 @@ class TestExtensionSchema(FrappeTestCase):
 				{"extension": "acme/schema", "resource_type": "DocType", "resource_name": NAME},
 			)
 		)
-
-	def test_the_maker_gets_a_full_grant_with_no_prompt(self):
-		"""It made the table, so asking whether it may read the table has one answer."""
-		self.create()
-
-		grant = get_extension_grant("acme/schema", NAME)
-		self.assertEqual((grant["read"], grant["write"], grant["delete"]), ("allowed", "allowed", "allowed"))
 
 	def test_an_unknown_naming_is_refused(self):
 		self.assertRaises(
@@ -117,8 +110,10 @@ class TestExtensionSchema(FrappeTestCase):
 		described = get_doctype("acme/schema", NAME)
 		self.assertIn("title", [field["fieldname"] for field in described["fields"]])
 
-	def test_reading_a_doctype_needs_a_grant(self):
-		self.assertRaises(frappe.PermissionError, get_doctype, "acme/schema", "Contact")
+	def test_reading_a_doctype_needs_the_users_own_read_permission(self):
+		frappe.set_user(make_page_reader(self))
+
+		self.assertRaises(frappe.PermissionError, get_doctype, "acme/schema", "Error Log")
 
 	def test_update_adds_a_field(self):
 		self.create()
@@ -143,7 +138,7 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertEqual(frappe.get_meta(NAME).get_field("title").label, "Headline")
 
 	def test_only_the_maker_may_change_a_doctype(self):
-		"""A document grant says nothing about reshaping the table."""
+		"""`data.access` says nothing about reshaping the table."""
 		self.create()
 		make_extension("acme/other")
 
@@ -167,18 +162,6 @@ class TestExtensionSchema(FrappeTestCase):
 
 		self.assertFalse(frappe.db.exists("DocType", NAME))
 		self.assertFalse(frappe.db.exists("Builder Extension Resource", {"resource_name": NAME}))
-
-	def test_delete_takes_the_grant_with_it(self):
-		"""Frappe lets a DocType be deleted while a Link names it.
-
-		A grant left behind would be inherited by any doctype created later under
-		the same name, with nobody asked.
-		"""
-		self.create()
-
-		delete_doctype("acme/schema", NAME)
-
-		self.assertFalse(frappe.db.exists("Builder Extension DocType Grant", {"document_type": NAME}))
 
 	def test_lists_what_this_extension_made(self):
 		self.create()

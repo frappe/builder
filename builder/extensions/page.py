@@ -4,7 +4,7 @@
 """Client scripts an extension puts on the page the user is editing.
 
 Say the risk plainly, once. A client script is JavaScript on a public page at
-the site's own origin. The frame sandbox does not reach it, and no capability
+the site's own origin. The frame sandbox does not reach it, and no permission
 bounds what it does once it lands. Three things make this the trade the rest of
 this API already makes, rather than a new one:
 
@@ -16,10 +16,10 @@ this API already makes, rather than a new one:
    script belongs to which extension, and an extension can only rewrite or
    detach its own.
 
-A script outlives the user who installed the extension. It runs on a published
-page for every visitor, so it belongs to the site the way a doctype does, and one
-person uninstalling must not change what another person's pages serve. Detaching
-one is the extension's own call, or an administrator's.
+A script outlives an uninstall. It runs on a published page for every visitor,
+so it belongs to the site the way a doctype does, and removing the extension
+must not change what the pages serve. Detaching one is the extension's own call,
+or an administrator's.
 
 One script of each type per extension per page, so `attach_script` is an upsert
 and needs no name from the caller. `Builder Client Script.name` is generated

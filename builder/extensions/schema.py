@@ -13,26 +13,18 @@ extension asking a page editor to model a table simply fails, and that is the
 right answer rather than a bug.
 
 Ownership is a record, not a naming convention. `Builder Extension Resource`
-says which extension made which doctype, so a creating extension can be given a
-full grant with no second question.
+says which extension made which doctype, so only that extension changes or
+drops it.
 
-Ownership names the extension, not one user's installation of it. A doctype holds
-the site's data, so it outlives the person who installed the extension, and the
-next person to install it owns what the first one made.
+Ownership names the extension, not its installation. A doctype holds the site's
+data, so it outlives an uninstall, and the next installation owns what the first
+one made.
 """
 
 import frappe
 from frappe import _
 
 from builder.extensions.access import assert_extension_access
-from builder.extensions.data import (
-	ACCESS_FIELDS,
-	ALLOWED,
-	assert_grant,
-	describe_grant,
-	forget_grant,
-	upsert_grant,
-)
 from builder.extensions.resources import (
 	RESOURCE_DOCTYPE,
 	find_resource,
@@ -122,13 +114,8 @@ def create_doctype(
 	naming: str = "hash",
 	istable: bool = False,
 ) -> dict:
-	"""A new custom doctype, owned by this extension.
-
-	The extension is given a full grant on it in the same call. It made the
-	table, so asking whether it may read the table would be a question with one
-	sensible answer.
-	"""
-	installation = assert_extension_access(extension, "schema.write", writes=RESOURCE_DOCTYPE)
+	"""A new custom doctype, owned by this extension."""
+	assert_extension_access(extension, "schema.write", writes=RESOURCE_DOCTYPE)
 	rows = read_fields(fields)
 	if not rows:
 		frappe.throw(_("A doctype needs at least one field."))
@@ -147,15 +134,14 @@ def create_doctype(
 	).insert()
 
 	record_resource(extension, "DocType", document.name)
-	grant_everything(installation, document.name)
 	return describe_doctype(document.name)
 
 
 @frappe.whitelist()
 def get_doctype(extension: str, doctype: str) -> dict:
-	"""The field list of a doctype this extension may read."""
-	installation = assert_extension_access(extension, "schema.write")
-	assert_grant(installation, extension, doctype, "read")
+	"""The field list of a doctype this user may read."""
+	assert_extension_access(extension, "schema.write")
+	frappe.has_permission(doctype, ptype="read", throw=True)
 	return describe_doctype(doctype)
 
 
@@ -164,8 +150,8 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 	"""Adds fields, and updates the ones already there by fieldname.
 
 	Never removes a field the call leaves unmentioned. That is the rule
-	`set_extension_tokens` and `record_extension_grant` follow, and it matters
-	more here: a removed field drops a column and the data in it.
+	`set_extension_tokens` follows, and it matters more here: a removed field
+	drops a column and the data in it.
 	"""
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
@@ -186,19 +172,12 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 
 @frappe.whitelist(methods=["POST"])
 def delete_doctype(extension: str, doctype: str) -> None:
-	"""Drops a doctype this extension made, and the table under it.
-
-	The grant goes with it. Frappe does not stop a `DocType` being deleted while
-	a Link names it, so the row would otherwise outlive the doctype — and a
-	doctype created later under the same name would inherit that grant without
-	anyone being asked.
-	"""
-	installation = assert_extension_access(extension, "schema.write")
+	"""Drops a doctype this extension made, and the table under it."""
+	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
 
 	frappe.delete_doc("DocType", doctype)
 	forget_resource(extension, "DocType", doctype)
-	forget_grant(installation, doctype)
 
 
 @frappe.whitelist()
@@ -264,21 +243,12 @@ def describe_doctype(doctype: str) -> dict:
 	}
 
 
-def grant_everything(installation: str, doctype: str) -> None:
-	"""A full grant on a doctype this extension just made, with no prompt.
-
-	For this installation alone. Another user installing the same extension is
-	asked the ordinary way, because they did not make this table.
-	"""
-	upsert_grant(installation, doctype, dict.fromkeys(ACCESS_FIELDS.values(), ALLOWED))
-
-
 def assert_owned(extension: str, doctype: str) -> None:
 	"""Only the extension that made a doctype may change or drop it.
 
-	A grant is not enough. A grant says the user let this extension read and
-	write **documents**, which is not the same as letting it change the shape of
-	the table or drop it.
+	`data.access` is not enough. It lets the extension read and write
+	**documents**, which is not the same as changing the shape of the table or
+	dropping it.
 	"""
 	if find_resource(extension, "DocType", doctype):
 		return

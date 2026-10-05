@@ -30,7 +30,6 @@ import frappe
 from frappe import _
 
 from builder.extensions.constants import (
-	CAPABILITIES,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	MANIFEST_FILE,
@@ -40,13 +39,12 @@ from builder.extensions.constants import (
 	MAX_PACKAGE_FILES,
 	MAX_SOURCE_BYTES,
 	PACKAGE_SUFFIXES,
+	PERMISSIONS,
 	PROTOCOL_VERSION,
 	VERSION_PATTERN,
 )
 
-MANIFEST_REQUIRED_FIELDS = frozenset(
-	{"v", "name", "label", "description", "version", "entry", "capabilities"}
-)
+MANIFEST_REQUIRED_FIELDS = frozenset({"v", "name", "label", "description", "version", "entry", "permissions"})
 MANIFEST_OPTIONAL_FIELDS = frozenset({"icon"})
 
 # Every import specifier `main.js` carries, so a relative one can be refused: a
@@ -201,7 +199,7 @@ def validate_manifest(manifest: object) -> dict:
 
 	assert_plain_text(manifest["label"], "label", 80)
 	assert_plain_text(manifest["description"], "description", 240)
-	assert_capabilities(manifest["capabilities"])
+	assert_permissions(manifest["permissions"])
 	assert_manifest_icon(manifest.get("icon"))
 	return manifest
 
@@ -213,14 +211,14 @@ def assert_plain_text(value: object, field: str, maximum: int) -> None:
 		frappe.throw(_("The manifest {0} must be plain text.").format(field))
 
 
-def assert_capabilities(capabilities: object) -> None:
-	if not isinstance(capabilities, list) or any(not isinstance(item, str) for item in capabilities):
-		frappe.throw(_("The manifest capabilities must be a list of names."))
-	if len(capabilities) != len(set(capabilities)):
-		frappe.throw(_("The manifest capabilities repeat a name."))
-	unknown = sorted(set(capabilities) - set(CAPABILITIES))
+def assert_permissions(permissions: object) -> None:
+	if not isinstance(permissions, list) or any(not isinstance(item, str) for item in permissions):
+		frappe.throw(_("The manifest permissions must be a list of names."))
+	if len(permissions) != len(set(permissions)):
+		frappe.throw(_("The manifest permissions repeat a name."))
+	unknown = sorted(set(permissions) - set(PERMISSIONS))
 	if unknown:
-		frappe.throw(_("The manifest asks for an unknown capability: {0}.").format(unknown[0]))
+		frappe.throw(_("The manifest asks for an unknown permission: {0}.").format(unknown[0]))
 
 
 def assert_manifest_icon(icon: object) -> None:
@@ -234,9 +232,7 @@ def assert_identity(manifest: dict, expected_name: str, expected_version: str) -
 	if manifest["name"] != expected_name:
 		frappe.throw(_("The package is {0}, not {1}.").format(manifest["name"], expected_name))
 	if manifest["version"] != expected_version:
-		frappe.throw(
-			_("The package is version {0}, not {1}.").format(manifest["version"], expected_version)
-		)
+		frappe.throw(_("The package is version {0}, not {1}.").format(manifest["version"], expected_version))
 
 
 def read_main_js(archive: zipfile.ZipFile, entries: dict) -> bytes:

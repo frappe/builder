@@ -1,11 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
-"""What every extension test needs: one user's installation, and its files.
+"""What every extension test needs: the site's installation, its files, and users.
 
-An extension used to be one site record, so a test could make one in three lines.
-It is now a record per user with its own copy of the entry, so the setup lives
-here rather than in each of the seven files that need it.
+The setup lives here rather than in each of the files that need it.
 """
 
 import json
@@ -15,39 +13,37 @@ import shutil
 import frappe
 from frappe.utils import get_files_path
 
-from builder.extensions.constants import CAPABILITIES, ENTRY_FILE, EXTENSIONS_FOLDER
+from builder.extensions.constants import ENTRY_FILE, EXTENSIONS_FOLDER, PERMISSIONS
 
-INSTALLATION_DOCTYPE = "Builder User Extension"
+INSTALLATION_DOCTYPE = "Builder Extension"
+TEST_ROLE = "Extension Tester"
 
 
-def make_installation(
-	extension="acme/listed", user=None, capabilities=None, granted=None, source=None, **values
-):
-	"""This user's installation of one extension, with files when a source is given.
+def make_installation(extension="acme/listed", permissions=None, granted=None, source=None, **values):
+	"""The site's installation of one extension, with files when a source is given.
 
-	`capabilities` is what the manifest asked for, and every one of them is granted
-	unless `granted` narrows it. Both default to every capability, so a test that is
+	`permissions` is what the manifest asked for, and every one of them is granted
+	unless `granted` narrows it. Both default to every permission, so a test that is
 	not about the gate lists none.
 	"""
-	user = user or frappe.session.user
-	requested = list(CAPABILITIES) if capabilities is None else list(capabilities)
+	requested = list(PERMISSIONS) if permissions is None else list(permissions)
 	allowed = requested if granted is None else list(granted)
 	fields = {
 		"label": extension,
 		"version": "1.0.0",
 		"checksum": "sum123",
-		"requested_capabilities": json.dumps(requested),
-		"granted_capabilities": json.dumps(allowed),
+		"requested_permissions": json.dumps(requested),
+		"granted_permissions": json.dumps(allowed),
 		"enabled": 1,
 		**values,
 	}
 
-	name = find_installation(extension, user)
+	name = find_installation(extension)
 	if name:
 		installation = frappe.get_doc(INSTALLATION_DOCTYPE, name).update(fields).save()
 	else:
 		installation = frappe.get_doc(
-			{"doctype": INSTALLATION_DOCTYPE, "user": user, "extension": extension, **fields}
+			{"doctype": INSTALLATION_DOCTYPE, "extension": extension, **fields}
 		).insert()
 
 	if source is not None:
@@ -55,13 +51,8 @@ def make_installation(
 	return installation
 
 
-def find_installation(extension, user=None):
-	"""One user's installation of one extension."""
-	return frappe.db.get_value(
-		INSTALLATION_DOCTYPE,
-		{"user": user or frappe.session.user, "extension": extension},
-		"name",
-	)
+def find_installation(extension):
+	return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": extension}, "name")
 
 
 def write_source(installation, source: str):
@@ -73,7 +64,7 @@ def write_source(installation, source: str):
 
 
 def drop_installations(extension: str):
-	"""Every user's installation of one extension, for a test that starts clean."""
+	"""The site's installation of one extension, for a test that starts clean."""
 	for name in frappe.get_all(INSTALLATION_DOCTYPE, filters={"extension": extension}, pluck="name"):
 		frappe.delete_doc(INSTALLATION_DOCTYPE, name, force=True)
 	remove_orphan_installs()
@@ -96,12 +87,23 @@ def remove_orphan_installs():
 			shutil.rmtree(path, ignore_errors=True)
 
 
+def make_role(name: str) -> str:
+	"""Tests own their role. A fresh site ships no spare one to borrow."""
+	if not frappe.db.exists("Role", name):
+		frappe.get_doc({"doctype": "Role", "role_name": name, "desk_access": 1}).insert(
+			ignore_permissions=True
+		)
+	return name
+
+
 def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
-	"""A second Builder user, to show that an installation is one person's.
+	"""A second Builder user.
 
 	Website Manager gives read on Builder Page, the check the gate makes before it
 	looks for an installation. Pass no roles for a user the gate turns away.
 	"""
+	for role in roles:
+		make_role(role)
 	if not frappe.db.exists("User", email):
 		frappe.get_doc(
 			{
@@ -113,3 +115,18 @@ def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
 			}
 		).insert(ignore_permissions=True)
 	return email
+
+
+def make_page_reader(test_case, role=TEST_ROLE, email="extension-reader@example.com"):
+	"""A user who reads Builder Pages through `role` alone: no System Manager, no Website Manager."""
+	make_role(role)
+	permission = frappe.get_doc(
+		{"doctype": "Custom DocPerm", "parent": "Builder Page", "role": role, "permlevel": 0, "read": 1}
+	).insert(ignore_permissions=True)
+	# Cleanups run last in, first out, so the cache clears after the row goes.
+	test_case.addCleanup(frappe.clear_cache, doctype="Builder Page")
+	test_case.addCleanup(
+		frappe.delete_doc, "Custom DocPerm", permission.name, force=True, ignore_permissions=True
+	)
+	frappe.clear_cache(doctype="Builder Page")
+	return make_user(email, roles=(role,))
