@@ -144,16 +144,25 @@ export function promptRenamePage(page: BuilderPage) {
 
 const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
 
+// ignore repeat presses so concurrent requests can't both pass the unchanged check
+let isQuickSaving = false;
+
 export async function quickSaveVersion() {
-	const pageStore = usePageStore();
-	const pageName = pageStore.selectedPage as string;
-	await pageStore.waitTillPageIsSaved();
-	if (pageStore.selectedPage !== pageName) return;
-	// save explicitly so a failed autosave rejects here instead of versioning stale blocks
-	await pageStore.savePage();
-	const res = await pageStore.createManualSnapshot(undefined, pageName, true);
-	if (res?.message) toast.success(__("Version saved"));
-	else toast.info(__("No changes since the last version"));
+	if (isQuickSaving) return;
+	isQuickSaving = true;
+	try {
+		const pageStore = usePageStore();
+		const pageName = pageStore.selectedPage as string;
+		await pageStore.waitTillPageIsSaved();
+		if (pageStore.selectedPage !== pageName) return;
+		// save explicitly so a failed autosave rejects here instead of versioning stale blocks
+		await pageStore.savePage();
+		const res = await pageStore.createManualSnapshot(undefined, pageName, true);
+		if (res?.message) toast.success(__("Version saved"));
+		else toast.info(__("No changes since the last version"));
+	} finally {
+		isQuickSaving = false;
+	}
 }
 
 // Mod+S: changes autosave, so the shortcut offers to save a version instead
