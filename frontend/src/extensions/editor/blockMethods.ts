@@ -262,10 +262,8 @@ const insert = (params: unknown) => {
 };
 
 export const blockMethods: MethodTable = {
-	"block.get": { needs: "block.read", run: get },
+	"block.get": { needs: null, run: get },
 	// read-only is refused in the bridge, once, for every write permission
-	"block.update": { needs: "block.update", run: update },
-	// adding a block changes what the page is, not what one block holds, so it is
-	// its own grant. A user reading an install list can tell the two apart
-	"block.insert": { needs: "block.insert", run: insert },
+	"block.update": { needs: "page.edit", run: update },
+	"block.insert": { needs: "page.edit", run: insert },
 };

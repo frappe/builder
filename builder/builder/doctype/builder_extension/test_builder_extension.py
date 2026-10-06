@@ -73,7 +73,7 @@ class TestBuilderExtension(FrappeTestCase):
 	def test_refuses_a_grant_the_manifest_never_asked_for(self):
 		"""A manager can only ever answer a question the extension asked."""
 		with self.assertRaises(frappe.ValidationError):
-			make_installation(EXTENSION, permissions=["page.read"], granted=["page.read", "schema.write"])
+			make_installation(EXTENSION, permissions=["page.edit"], granted=["page.edit", "schema.write"])
 
 	def test_reads_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
@@ -158,7 +158,7 @@ class TestInstallationValidation(FrappeTestCase):
 				make_installation(EXTENSION, icon=icon)
 
 	def test_refuses_a_permission_list_that_is_not_a_json_list(self):
-		for text in ("not json", '{"page.read": 1}'):
+		for text in ("not json", '{"page.edit": 1}'):
 			with self.assertRaises(frappe.ValidationError, msg=text):
 				make_installation(EXTENSION, requested_permissions=text)
 

@@ -30,7 +30,7 @@ export type MethodTable = Record<string, HostMethod>;
  * write method. Naming the permissions rather than the methods means a
  * write method added later is covered before it is written.
  */
-const WRITE_PERMISSIONS: Permission[] = ["block.update", "block.insert", "page.write", "token.write"];
+const WRITE_PERMISSIONS: Permission[] = ["page.edit", "page.write", "token.write"];
 
 export const assertWritable = (extension: InstalledExtension, method: string, needs: Permission | null) => {
 	if (!needs || !WRITE_PERMISSIONS.includes(needs)) return;
@@ -41,7 +41,7 @@ export const assertWritable = (extension: InstalledExtension, method: string, ne
 };
 
 /** The check a `bind` control makes at registration, where there is no call to gate. */
-export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("block.update");
+export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("page.edit");
 
 export const assertGranted = (extension: InstalledExtension, method: string, needs: Permission | null) => {
 	if (!needs || extension.permissions.includes(needs)) return;

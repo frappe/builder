@@ -2,19 +2,18 @@
 
 export const PROTOCOL_VERSION = 1;
 
-/** @type {readonly ("context.read" | "block.read" | "block.update" | "block.insert" | "page.read" | "page.write" | "token.write" | "ui.dialog" | "ui.popover" | "data.access" | "schema.write")[]} */
+/**
+ * Each permission that an extension can ask for. A read or a window needs no permission.
+ *
+ * @type {readonly ("page.edit" | "page.write" | "token.write" | "data.access" | "schema.write" | "method.call")[]}
+ */
 export const PERMISSIONS = [
-	"context.read",
-	"block.read",
-	"block.update",
-	"block.insert",
-	"page.read",
+	"page.edit",
 	"page.write",
 	"token.write",
-	"ui.dialog",
-	"ui.popover",
 	"data.access",
 	"schema.write",
+	"method.call",
 ];
 
 const MANIFEST_FIELDS = new Set([

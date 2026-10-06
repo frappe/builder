@@ -139,7 +139,7 @@ export type Control = {
 	control: ControlName;
 	label?: string;
 	placeholder?: string;
-	/** The host writes the block itself. Needs the `block.update` permission. */
+	/** The host writes the block itself. Needs the `page.edit` permission. */
 	bind?: { attribute?: string; style?: string };
 	/** The extension's own value, when no block property holds it. */
 	value?: unknown;
@@ -276,7 +276,7 @@ export type BlockPatch = {
 export const block = {
 	/** One block and its subtree, as a plain object. The id comes from the context or a menu row. */
 	get: (blockId: string) => call("block.get", { blockId }) as Promise<Record<string, unknown>>,
-	/** Refused without `block.update`, and refused again while the page is read-only. */
+	/** Refused without `page.edit`, and refused again while the page is read-only. */
 	update: (blockId: string, patch: BlockPatch) => call("block.update", { blockId, ...patch }),
 	/**
 	 * A new block inside `parentId`, appended unless `index` names a place.

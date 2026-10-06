@@ -111,7 +111,7 @@ const listScripts = (_params: unknown, extension: InstalledExtension) =>
 	invoke("list_scripts", { extension: extension.name, page: openPage().name });
 
 export const pageMethods: MethodTable = {
-	"page.getBlocks": { needs: "page.read", run: getBlocks },
+	"page.getBlocks": { needs: null, run: getBlocks },
 	"page.attachScript": { needs: "page.write", run: attachScript },
 	"page.detachScript": { needs: "page.write", run: detachScript },
 	// its own scripts, so the permission that wrote them is the one that reads them

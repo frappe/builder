@@ -126,7 +126,7 @@ export const readControls = (params: unknown, extension: InstalledExtension): Co
 	const controls = params.map(readControl);
 	if (controls.some((control) => control.bind) && !canWrite(extension)) {
 		throw refuse(
-			`"${extension.name}" was not granted block.update, which a bound control needs.`,
+			`"${extension.name}" was not granted page.edit, which a bound control needs.`,
 			"permission_required",
 		);
 	}

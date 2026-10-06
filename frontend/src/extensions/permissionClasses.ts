@@ -27,14 +27,8 @@ type PermissionDetail = {
 };
 
 export const permissionDetails: Record<Permission, PermissionDetail> = {
-	"context.read": { permissionClass: "Editor read", label: "See what you have selected" },
-	"block.read": { permissionClass: "Editor read", label: "Read a block on the canvas" },
-	"page.read": { permissionClass: "Editor read", label: "Read the whole page" },
-	"block.update": { permissionClass: "Editor write", label: "Change a block you have selected" },
-	"block.insert": { permissionClass: "Editor write", label: "Add blocks to the page" },
-	"page.write": { permissionClass: "Editor write", label: "Change the page and its client scripts" },
-	"ui.dialog": { permissionClass: "Editor chrome", label: "Open a dialog over the editor" },
-	"ui.popover": { permissionClass: "Editor chrome", label: "Open a popover beside the editor" },
+	"page.edit": { permissionClass: "Editor write", label: "Change and add blocks on the page" },
+	"page.write": { permissionClass: "Editor write", label: "Add client scripts to the page" },
 	"data.access": {
 		permissionClass: SITE_DATA_CLASS,
 		label: "Read and write documents on this site",
@@ -45,6 +39,11 @@ export const permissionDetails: Record<Permission, PermissionDetail> = {
 		label: "Define design tokens",
 		warning: "A token it writes styles every page you already published.",
 	},
+	"method.call": {
+		permissionClass: SITE_DATA_CLASS,
+		label: "Run actions from installed apps",
+		warning: "It never gets more than the permissions of the person using it.",
+	},
 	"schema.write": {
 		permissionClass: SHARED_STATE_CLASS,
 		label: "Create and drop doctypes",
@@ -53,12 +52,10 @@ export const permissionDetails: Record<Permission, PermissionDetail> = {
 };
 
 /** The reading order of the classes, widest reach last. */
-const CLASS_ORDER = ["Editor read", "Editor write", "Editor chrome", SITE_DATA_CLASS, SHARED_STATE_CLASS];
+const CLASS_ORDER = ["Editor write", SITE_DATA_CLASS, SHARED_STATE_CLASS];
 
 const CLASS_SUMMARIES: Record<string, string> = {
-	"Editor read": "What it sees while you edit.",
 	"Editor write": "What it changes on the page you have open.",
-	"Editor chrome": "The windows it opens inside Builder.",
 	[SITE_DATA_CLASS]: "Documents on this site, within each user's own permissions.",
 	[SHARED_STATE_CLASS]: "Changes that outlive this session and reach every visitor.",
 };

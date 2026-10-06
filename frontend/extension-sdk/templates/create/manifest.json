@@ -6,5 +6,5 @@
 	"version": "1.0.0",
 	"entry": "main.js",
 	"icon": "icon.svg",
-	"permissions": ["context.read", "block.insert", "ui.popover"]
+	"permissions": ["page.edit"]
 }

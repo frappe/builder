@@ -94,7 +94,7 @@ Put `manifest.json` beside `vite.config.js`.
   "version": "1.0.0",
   "entry": "main.js",
   "icon": "icon.svg",
-  "permissions": ["context.read", "block.read", "block.update"]
+  "permissions": ["page.edit"]
 }
 ```
 
@@ -122,21 +122,16 @@ Request only the permissions that the extension uses. Builder rejects a protecte
 
 | Permission | SDK methods or behavior |
 |---|---|
-| `context.read` | `context.get`, `context.subscribe`, and `useBuilderContext` |
-| `block.read` | `block.get` |
-| `block.update` | `block.update` and bound property controls |
-| `block.insert` | `block.insert` |
-| `page.read` | `page.getBlocks` |
+| `page.edit` | `block.update`, `block.insert`, and bound property controls |
 | `page.write` | `page.attachScript`, `page.detachScript`, `page.listScripts` |
 | `token.write` | `tokens.set`, `tokens.unset` |
-| `ui.dialog` | `ui.openDialog`, `ui.closeDialog` |
-| `ui.popover` | `ui.openPopover`, `ui.closePopover` |
 | `data.access` | Every `data.*` method |
 | `schema.write` | Every `schema.*` method |
+| `method.call` | Reserved for the methods of installed apps. No method uses it yet. |
 
-Surface registration, actions, extension state, `ui.toast`, and `host.info` need no permission.
+Reads and windows need no permission. This covers `context.*`, `block.get`, `page.getBlocks`, and `ui.*`. Surface registration, actions, extension state, and `host.info` also need no permission.
 
-Builder rejects page writes in read-only mode. This rule covers `block.update`, `block.insert`, `page.write`, and token writes. It does not cover `data.*` or `schema.*`, which write to the site and not to the page.
+Builder rejects page writes in read-only mode. This rule covers `page.edit`, `page.write`, and `token.write`. It does not cover `data.*` or `schema.*`, which write to the site and not to the page.
 
 A site manager grants permissions for the whole site. A permission never gives a user more access than that user already has. Read [Site data](#site-data).
 
@@ -366,7 +361,7 @@ builder.properties.registerSection({
 
 Available controls are `text`, `number`, `select`, `toggle`, `color`, and `range`.
 
-A bound control writes an attribute or a style. Bound controls require the `block.update` permission.
+A bound control writes an attribute or a style. Bound controls require the `page.edit` permission.
 
 An unbound control needs an `action`. It sends its value to the action when the value changes. Builder rejects a control that has neither `bind` nor `action`.
 
@@ -438,7 +433,7 @@ const result = await builder.ui.openDialog({
 
 The slot reads its input with `builder.ui.props()`. It returns a result with `builder.ui.closeDialog(result)`.
 
-Use `openPopover`, `closePopover`, and the `ui.popover` permission for a popover.
+Use `openPopover` and `closePopover` for a popover. A popover needs no permission.
 
 Give a popover a start size with `width` and `height`, in pixels. Builder uses its own
 size for a field you omit. The user can always drag the corner to resize it.

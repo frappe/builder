@@ -50,10 +50,9 @@ export const startPopover = popover.start;
 export const uiMethods: MethodTable = {
 	// Toasts are rate limited by the bridge, but need no permission: they do not change editor state.
 	"ui.toast": { needs: null, run: showToast },
-	// a modal covers the editor, so it is the intrusive case
-	"ui.openDialog": { needs: "ui.dialog", run: dialog.start },
-	"ui.closeDialog": { needs: "ui.dialog", run: dialog.finish },
-	// a popover leaves the editor usable, so it is not the same grant
-	"ui.openPopover": { needs: "ui.popover", run: popover.start },
-	"ui.closePopover": { needs: "ui.popover", run: popover.finish },
+	// a window changes nothing that a user saves, so it needs no permission
+	"ui.openDialog": { needs: null, run: dialog.start },
+	"ui.closeDialog": { needs: null, run: dialog.finish },
+	"ui.openPopover": { needs: null, run: popover.start },
+	"ui.closePopover": { needs: null, run: popover.finish },
 };
