@@ -4,14 +4,12 @@ import { createDocumentResource, createResource, getCachedDocumentResource } fro
 import { computed } from "vue";
 
 const INSTALLATION_DOCTYPE = "Builder Extension";
-const SOURCE_URL = "/api/method/builder.extensions.installations.get_extension_source";
 
 type InstallationDocument = {
 	extension: string;
 	label?: string;
 	description?: string;
 	enabled: boolean | number;
-	checksum?: string;
 	granted_permissions?: string;
 };
 
@@ -68,14 +66,14 @@ const toInstalledExtension = (row: Installation): InstalledExtension | null => {
 		INSTALLATION_DOCTYPE,
 		row.installation_id,
 	)?.doc;
-	if (!document || !document.enabled) return null;
+	if (!document || !document.enabled || !row.entry_url) return null;
 
 	return {
 		name: row.name,
 		label: document.label ?? row.label ?? row.name,
 		description: document.description ?? row.description,
 		icon: row.icon,
-		checksum: document.checksum,
+		entryUrl: row.entry_url,
 		permissions: grantedPermissions(document.granted_permissions),
 	};
 };
@@ -108,45 +106,6 @@ const loadExtensions = async (vm?: unknown) => {
 	return rows;
 };
 
-/**
- * The built entry of one installation, as a Blob that a frame runs.
- *
- * The editor gets it, not the frame, because a frame sends no session. The
- * request is a GET. So the browser checks the checksum, and an unchanged
- * build gives a 304. The editor gets it one time in each session. All frames
- * of the extension share it.
- *
- * A Blob cannot change. So a browser can clone it into a frame as a handle
- * to the same bytes. A browser copies a string into each frame.
- *
- * The key includes the checksum. So the editor gets a new build again. The
- * cache removes a failed request. So a reloaded frame asks again and does
- * not get the old error.
- */
-const sources = new Map<string, Promise<Blob>>();
-
-const fetchSource = async (extension: InstalledExtension) => {
-	const response = await fetch(`${SOURCE_URL}?${new URLSearchParams({ extension: extension.name })}`);
-	if (!response.ok) throw new Error(`Could not read "${extension.name}" (HTTP ${response.status})`);
-	return response.blob();
-};
-
-const getExtensionSource = (extension: InstalledExtension): Promise<Blob> => {
-	const key = `${extension.name}@${extension.checksum ?? ""}`;
-
-	const cached = sources.get(key);
-	if (cached) return cached;
-
-	const reading = fetchSource(extension);
-
-	const source = reading.catch((error: Error) => {
-		sources.delete(key);
-		throw error;
-	});
-	sources.set(key, source);
-	return source;
-};
-
 /** One row of the installation list of the site. */
 type Installation = {
 	name: string;
@@ -156,8 +115,10 @@ type Installation = {
 	description?: string;
 	icon?: string;
 	enabled: boolean;
+	/** The entry URL, with the checksum of the build. Not set for an installation with no checksum. */
+	entry_url?: string;
 	/** A dev server load made this row. The entry in the browser runs it. The row never runs. */
 	is_development?: boolean;
 };
 
-export { getExtensionSource, INSTALLATION_DOCTYPE, installedExtensions, loadExtensions };
+export { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions };

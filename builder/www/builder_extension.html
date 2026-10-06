@@ -10,11 +10,8 @@
 	reached on a second hostname, where the site URL would name the wrong origin.
 	The site URL covers a browser that does not match 'self' at an opaque origin.
 
-	blob: is what runs an installed extension. No route can serve one user's copy
-	of it, because this frame sends no session, so the host reads the file under
-	its own and posts the code in the handshake. The SDK turns that string into a
-	module through a Blob URL. Nothing else here loosens: an extension still
-	reaches no origin but the site's own.
+	An installed extension loads from the site, through the asset route. So
+	script-src needs no blob:, and an extension reaches no origin but the site's own.
 
 	extension_dev_origins adds localhost on any port, but only where the site runs
 	in developer mode. An extension loaded from a dev server imports its entry from
@@ -34,7 +31,7 @@
 		<meta
 			http-equiv="Content-Security-Policy"
 			content="default-src 'none';
-				script-src 'self' blob: {{ frappe.utils.get_url() }} {{ csp_hash(import_map) }} {{ extension_dev_origins("http", "https") }};
+				script-src 'self' {{ frappe.utils.get_url() }} {{ csp_hash(import_map) }} {{ extension_dev_origins("http", "https") }};
 				style-src 'self' {{ frappe.utils.get_url() }} 'unsafe-inline';
 				img-src 'self' {{ frappe.utils.get_url() }} data: blob:;
 				font-src 'self' {{ frappe.utils.get_url() }} data:;

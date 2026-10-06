@@ -12,12 +12,13 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
+	ASSET_ROUTE,
+	ASSET_TYPES,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
 	ICON_PATTERN,
 	MAX_README_BYTES,
-	MAX_SOURCE_BYTES,
 	PERMISSIONS,
 	VERSION_PATTERN,
 )
@@ -86,24 +87,19 @@ class BuilderExtension(Document):
 		return self.permission_list("requested_permissions")
 
 	@property
-	def entry_path(self) -> Path:
-		"""The built entry, which the editor fetches and hands to a frame.
+	def entry_url(self) -> str | None:
+		"""Where a frame imports the entry. The checksum names the build, so a rebuild gets a new URL."""
+		if not self.checksum:
+			return None
+		return f"/{ASSET_ROUTE}/{self.name}/{self.checksum}/{ENTRY_FILE}"
 
-		A frame sends no session, so no route can check who is asking. The editor
-		fetches it under its own session instead.
-		"""
-		entry = Path(self.install_path) / ENTRY_FILE
-		if not entry.is_file():
-			frappe.throw(_('"{0}" has no installed {1}.').format(self.extension, ENTRY_FILE))
-
-		size = entry.stat().st_size
-		if size > MAX_SOURCE_BYTES:
-			frappe.throw(
-				_('"{0}" is {1} bytes, and {2} is the most one extension may hold.').format(
-					self.extension, size, MAX_SOURCE_BYTES
-				)
-			)
-		return entry
+	def get_asset_path(self, relative_path: str) -> Path | None:
+		"""An installed file that a frame may load. None for a path outside the install."""
+		root = Path(self.install_path).resolve()
+		file = (root / relative_path).resolve()
+		if file.is_relative_to(root) and file.suffix in ASSET_TYPES and file.is_file():
+			return file
+		return None
 
 	@property
 	def icon_data_uri(self) -> str | None:
@@ -162,8 +158,8 @@ class BuilderExtension(Document):
 	def write_extension_files(self, files: dict[str, bytes]):
 		"""Replace the installed copy with the files a frame loads.
 
-		Keyed by path under the install root, so `main.js` lands where `source`
-		reads it. Replaces the whole directory, so a rebuild leaves nothing of the
+		Keyed by path under the install root, so a chunk lands where the entry
+		imports it from. Replaces the whole directory, so a rebuild leaves nothing of the
 		last one behind.
 		"""
 		root = Path(self.install_path)

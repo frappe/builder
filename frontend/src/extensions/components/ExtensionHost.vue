@@ -59,15 +59,15 @@ const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) 
  * code changes. A frame reads its code one time, in the handshake. A key with
  * only the name would keep the old frame.
  *
- * An installation uses its checksum in the key. So a new build starts a new
- * frame. A dev extension has no checksum. It uses the URL of its dev server.
- * So a dev version of an installed extension mounts its frames again.
+ * The entry URL names the build. An installation has its checksum in the URL,
+ * and a dev extension has the URL of its dev server. So a new build, or a dev
+ * version of an installed extension, mounts its frames again.
  *
  * The key also includes the permissions. `dispatcherFor` keeps the record from
  * when it started. Without this, a frame keeps a permission after the user removes it.
  */
 const frameKey = (extension: InstalledExtension) =>
-	`${extension.name}@${extension.checksum ?? extension.entryUrl}@${extension.permissions.join(",")}`;
+	`${extension.name}@${extension.entryUrl}@${extension.permissions.join(",")}`;
 
 // an unmounted frame only closes its channel. The registrations of the
 // extension stay. So this code first removes, by name, each extension that

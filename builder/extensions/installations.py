@@ -13,12 +13,9 @@ first, so the user gets a clear refusal before Frappe's own check runs.
 
 import frappe
 from frappe import _
-from werkzeug.wrappers import Response
-from werkzeug.wsgi import wrap_file
 
 from builder.extensions.access import (
 	INSTALLATION_DOCTYPE,
-	assert_extension_access,
 	assert_extension_manager,
 	find_installation,
 )
@@ -26,9 +23,6 @@ from builder.extensions.constants import DEV_EXTENSION_VERSION
 from builder.utils import has_page_read
 
 NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
-
-# the editor asks again on every load, and an unchanged build answers 304
-SOURCE_CACHE_CONTROL = "private, no-cache"
 
 
 @frappe.whitelist()
@@ -52,30 +46,6 @@ def get_installations() -> list[dict]:
 def is_turned_off(row: dict) -> bool:
 	"""A pending or failed install is not enabled yet, but no manager turned it off."""
 	return not row.enabled and row.install_state in (None, "", "Ready")
-
-
-@frappe.whitelist(methods=["GET"])
-def get_extension_source(extension: str) -> Response:
-	"""The built entry the site installed, streamed as a module.
-
-	A frame sends no cookie, so no route can serve the code to it. The editor
-	fetches it here under its own session and hands the bytes to the frame.
-	"""
-	installation = frappe.get_cached_doc(INSTALLATION_DOCTYPE, assert_extension_access(extension))
-	headers = get_source_headers(installation.checksum)
-	if "ETag" in headers and frappe.request.headers.get("If-None-Match") == headers["ETag"]:
-		return Response(status=304, headers=headers)
-
-	stream = wrap_file(frappe.request.environ, installation.entry_path.open("rb"))
-	return Response(stream, direct_passthrough=True, headers=headers, mimetype="text/javascript")
-
-
-def get_source_headers(checksum: str | None) -> dict:
-	"""The checksum names the build, so it is the ETag. Without one, every fetch is a full read."""
-	headers = {"Cache-Control": SOURCE_CACHE_CONTROL}
-	if checksum:
-		headers["ETag"] = f'"{checksum}"'
-	return headers
 
 
 @frappe.whitelist(methods=["POST"])
@@ -125,6 +95,7 @@ def describe_installation(installation: str) -> dict:
 		"description": row.description,
 		"icon": row.icon_data_uri,
 		"version": row.version,
+		"entry_url": row.entry_url,
 		"source_url": row.source_url,
 		"enabled": bool(row.enabled),
 		"install_state": row.install_state,

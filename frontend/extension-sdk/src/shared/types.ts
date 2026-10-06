@@ -36,16 +36,10 @@ export type InstalledExtension = {
 	/** A data URI for the SVG in the package. Not set if the package has no SVG. */
 	icon?: string;
 	/**
-	 * The checksum of the installed files on the site. Only an installed
-	 * extension has one. It is part of the frame key. So a new build mounts
-	 * a new frame. A development extension has no checksum.
+	 * The URL of the entry module. Builder serves an installed extension, with the
+	 * checksum of the build in the URL. A dev server serves a development extension.
 	 */
-	checksum?: string;
-	/**
-	 * The URL of the entry on a dev server. Only a development extension has one.
-	 * An installed extension has no URL, because no route serves the files of one user.
-	 */
-	entryUrl?: string;
+	entryUrl: string;
 };
 
 export type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -122,14 +116,8 @@ export type ConnectMessage = {
 	v: typeof PROTOCOL_VERSION;
 	type: "connect";
 	slot: ExtensionSlot;
-	/** A development extension imports this URL from its dev server. */
-	entryUrl?: string;
-	/**
-	 * The built file of an installed extension. It is a Blob, not a string.
-	 * A Blob cannot change. So a browser can clone it as a handle to the same
-	 * bytes. A browser copies a string into each frame.
-	 */
-	source?: Blob;
+	/** The URL of the entry module that this frame imports. */
+	entryUrl: string;
 	theme: "light" | "dark";
 	props?: Record<string, unknown>; // set only for a dialog
 };

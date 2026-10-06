@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
-import { getExtensionSource, installedExtensions } from "@/data/extensions";
+import { installedExtensions } from "@/data/extensions";
 import { createPortChannel, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
 import {
 	PROTOCOL_VERSION,
@@ -69,26 +69,11 @@ const installed = (): InstalledExtension => {
 	return found;
 };
 
-/**
- * Gets the code of the extension for this frame.
- *
- * A dev extension gives a URL on its dev server. Its modules import each other
- * by relative path. Only a real URL can find them.
- *
- * An installation comes as a Blob that the editor gets. A frame sends no
- * session. So no route can check who asks for the code.
- */
-const code = async (): Promise<{ entryUrl: string } | { source: Blob }> => {
-	const extension = installed();
-	if (extension.entryUrl) return { entryUrl: extension.entryUrl };
-	return { source: await getExtensionSource(extension) };
-};
-
-const handshake = async (): Promise<ConnectMessage> => ({
+const handshake = (): ConnectMessage => ({
 	v: PROTOCOL_VERSION,
 	type: "connect",
 	slot: props.slot,
-	...(await code()),
+	entryUrl: installed().entryUrl,
 	theme: theme(),
 	props: props.initialProps,
 });
@@ -105,7 +90,7 @@ const disconnect = () => {
  * Runs on each `load`. So a reloaded frame connects again. First, the old
  * channel closes. Each pending call to the old document then fails.
  */
-const connect = async () => {
+const connect = () => {
 	disconnect();
 	loading.value = true;
 	const pair = new MessageChannel();
@@ -113,14 +98,13 @@ const connect = async () => {
 	channel = opening;
 	opening.listen("slot.ready", finishLoading);
 
-	const message = await handshake().catch((error: Error) => {
+	let message: ConnectMessage;
+	try {
+		message = handshake();
+	} catch (error) {
 		console.error(`[builder] could not load "${props.extension}"`, error);
-		finishLoading();
-		return null;
-	});
-	// the source read takes time. The frame can reload during the read.
-	// In that case, `connect` replaced this channel with a newer one
-	if (!message || channel !== opening) return;
+		return finishLoading();
+	}
 
 	// only "*" can reach an opaque origin. The port makes this safe. The port
 	// moves only one time, and this is the last message on the window

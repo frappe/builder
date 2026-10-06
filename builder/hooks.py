@@ -204,6 +204,8 @@ website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resol
 page_renderer = [
 	# the extension SDK first: it matches one fixed route and answers without touching a page
 	"builder.extensions.sdk.ExtensionSDKRenderer",
+	# the installed files of an extension, under the same route prefix
+	"builder.extensions.assets.ExtensionAssetRenderer",
 	"builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer",
 ]
 

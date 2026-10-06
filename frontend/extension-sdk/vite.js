@@ -28,7 +28,7 @@ const DESCRIPTOR_PATH = "/__builder-extension";
 /** The hot reload client of Vite. It loads from the dev server, which serves the entry. */
 const HMR_CLIENT = "/@vite/client";
 
-/** The one file of an install. The editor reads it and sends it to the frame. */
+/** The entry of an install. A frame imports it from Builder, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
 /** Runs in each frame, because each frame imports the entry. */
@@ -37,28 +37,6 @@ const STYLE_TAG = (css) =>
 
 /** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
-
-/** Sufficient for an icon or a cursor. Not sufficient for a font. */
-const ASSET_INLINE_LIMIT = 64 * 1024;
-
-/**
- * Stops a build that makes more files than the entry, the manifest and the icon.
- *
- * A frame gets the entry as code, not as a URL. So a relative import has no
- * base, and an asset URL points to nothing. This error names the file. An
- * error in a frame shows no message.
- */
-const assertOneFile = (bundle, manifest) => {
-	const allowed = new Set([OUTPUT_ENTRY, MANIFEST, manifest.icon].filter(Boolean));
-	const extra = Object.keys(bundle).filter((name) => !allowed.has(name));
-	if (!extra.length) return;
-
-	throw new Error(
-		`[builder] an extension has to build to one file, and this build also emitted ${extra.join(", ")}. ` +
-			`Import a module statically instead of with import(). Drop an asset over ${ASSET_INLINE_LIMIT / 1024} kB, ` +
-			"such as a font, and use the one Builder already loads.",
-	);
-};
 
 /**
  * Moves the stylesheet into the entry.
@@ -144,9 +122,8 @@ export default function builderExtension({ builderUrl } = {}) {
 			entry = findEntry(root);
 			serving = env.command === "serve";
 			return {
-				// the build does not need this now. A small asset goes into the entry,
-				// and the check below stops a large asset. The dev server still needs it,
-				// because it serves modules by path, not as one file
+				// a chunk or an asset URL resolves against the module that names it. So
+				// the build works under any install URL
 				base: "./",
 				// the frame runs module scripts. So it is always a modern browser
 				build: {
@@ -155,14 +132,6 @@ export default function builderExtension({ builderUrl } = {}) {
 					// adds a stylesheet to the preload list of each lazy chunk. The
 					// frame then asks for a file that this plugin moved into the entry
 					cssCodeSplit: false,
-					// a small asset also goes into the entry, for the same reason as the
-					// CSS. The frame gets code and can fetch nothing.
-					//
-					// The build stops for a large asset. Vite adds an inline asset one time
-					// for each reference. Six @font-face rules for one font add it six
-					// times, as base64 that does not compress. On one sample, the size
-					// went from 1.6 MB to 5.6 MB. Also, Builder loads its own fonts.
-					assetsInlineLimit: ASSET_INLINE_LIMIT,
 					rollupOptions: {
 						input: entry,
 						// the build never includes the SDK. The import map of the frame
@@ -170,11 +139,9 @@ export default function builderExtension({ builderUrl } = {}) {
 						// map belongs to the document, so it also works for a Blob module
 						external: [SDK],
 						output: {
-							// one file. The editor reads the entry and sends the code to
-							// the frame. A chunk has no URL to import from
-							inlineDynamicImports: true,
 							entryFileNames: OUTPUT_ENTRY,
-							assetFileNames: "[name]-[hash][extname]",
+							chunkFileNames: "chunks/[name]-[hash].js",
+							assetFileNames: "assets/[name]-[hash][extname]",
 						},
 					},
 				},
@@ -247,7 +214,7 @@ export default function builderExtension({ builderUrl } = {}) {
 
 		/**
 		 * Adds the manifest and the icon to the output. Moves the stylesheet into
-		 * the entry. Stops a build that makes more than one file.
+		 * the entry.
 		 *
 		 * `order: "post"` is necessary. The CSS plugin of Vite adds the stylesheet
 		 * in this same hook. This code must run after it.
@@ -265,7 +232,6 @@ export default function builderExtension({ builderUrl } = {}) {
 				}
 
 				foldStylesheets(bundle);
-				assertOneFile(bundle, manifest);
 			},
 		},
 	};
