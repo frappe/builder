@@ -15,9 +15,9 @@
 
 import { useThrottleFn } from "@vueuse/core";
 import { watch } from "vue";
-import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/permissions";
-import { fields as asFields, oneOf, refuse } from "../params";
+import { bridge } from "../bridge/bridge";
+import type { MethodTable } from "../bridge/permissions";
+import { fields as asFields, oneOf, refuse } from "../bridge/params";
 import type { EditorContext, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { editorContext } from "./editorContext";
 

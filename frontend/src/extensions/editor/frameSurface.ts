@@ -11,8 +11,8 @@
  */
 
 import { markRaw, reactive } from "vue";
-import { bridge } from "../host/bridge";
-import { fields, optionalText, optionalWholeNumber, refuse } from "../params";
+import { bridge } from "../bridge/bridge";
+import { fields, optionalText, optionalWholeNumber, refuse } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**

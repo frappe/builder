@@ -173,7 +173,7 @@ import {
 	type InstallationDetails,
 } from "@/data/extensions";
 import { stopDevExtension } from "@/extensions/devExtension";
-import { isEntryFrameReady } from "@/extensions/host/entryFrames";
+import { isEntryFrameReady } from "@/extensions/bridge/entryFrames";
 import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";

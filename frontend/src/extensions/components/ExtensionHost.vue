@@ -38,14 +38,14 @@
 </template>
 
 <script setup lang="ts">
-import DevExtensionDialog from "@/components/DevExtensionDialog.vue";
-import ExtensionDialog from "@/components/ExtensionDialog.vue";
-import ExtensionFrame from "@/components/ExtensionFrame.vue";
-import ExtensionConfirmDialog from "@/components/ExtensionConfirmDialog.vue";
-import ExtensionPopover from "@/components/ExtensionPopover.vue";
+import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
+import ExtensionDialog from "@/extensions/components/ExtensionDialog.vue";
+import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
+import ExtensionConfirmDialog from "@/extensions/components/ExtensionConfirmDialog.vue";
+import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
-import { markEntryFrameReady, waitForEntryFrame } from "@/extensions/host/entryFrames";
+import { markEntryFrameReady, waitForEntryFrame } from "@/extensions/bridge/entryFrames";
 import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";

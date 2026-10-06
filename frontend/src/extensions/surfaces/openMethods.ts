@@ -17,9 +17,9 @@ import useBuilderStore from "@/stores/builderStore";
 import type { InstalledExtension, OpenTarget } from "frappe-builder-extension-sdk/types";
 import { reactive } from "vue";
 import { startDialog, startPopover } from "../editor/uiMethods";
-import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/permissions";
-import { fields, oneOf, optionalText, optionalWholeNumber, refuse, text } from "../params";
+import { bridge } from "../bridge/bridge";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, oneOf, optionalText, optionalWholeNumber, refuse, text } from "../bridge/params";
 
 const kinds = ["popover", "dialog", "leftPanel"] as const;
 

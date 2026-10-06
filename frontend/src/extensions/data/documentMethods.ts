@@ -18,8 +18,8 @@
  */
 
 import { createResource } from "frappe-ui";
-import type { MethodTable } from "../host/permissions";
-import { fields, optionalText, refuse, text, wholeNumber } from "../params";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**

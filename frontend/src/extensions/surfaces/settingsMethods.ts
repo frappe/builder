@@ -9,12 +9,12 @@
  * decision.
  */
 
-import ExtensionFrame from "@/components/ExtensionFrame.vue";
+import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { settingsItems, type SettingsItem } from "@/components/Settings";
-import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/permissions";
+import { bridge } from "../bridge/bridge";
+import type { MethodTable } from "../bridge/permissions";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
-import { fields, flag, optionalText, text } from "../params";
+import { fields, flag, optionalText, text } from "../bridge/params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
 
 type Registration = {

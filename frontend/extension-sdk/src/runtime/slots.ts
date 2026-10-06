@@ -13,7 +13,7 @@
  * it. A slot's module should not run at all unless this frame is that slot.
  */
 
-import type { ExtensionSlot } from "../types";
+import type { ExtensionSlot } from "../shared/types";
 
 /** The one element the shell gives a frame to paint into. */
 const ROOT_ID = "app";

@@ -15,12 +15,12 @@
 
 import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";
 import type { BlockMenuContext, ContextMenuOption } from "@/types/blockContextMenu";
-import { editorContext, factsFor } from "../editor/editorContext";
-import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/permissions";
+import { editorContext, factsFor } from "../context/editorContext";
+import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
+import type { MethodTable } from "../bridge/permissions";
 import type { EditorContext } from "frappe-builder-extension-sdk/types";
 import { invokeAction } from "./actionMethods";
-import { fields, flag, oneOf, optionalText, text } from "../params";
+import { fields, flag, oneOf, optionalText, text } from "../bridge/params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
 
 const MENUS = ["canvas", "layers", "both"] as const;

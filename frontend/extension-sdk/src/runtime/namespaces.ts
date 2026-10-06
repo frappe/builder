@@ -14,7 +14,7 @@
  * copy of a rule on this side would be a second thing to keep in step.
  */
 
-import type { OpenTarget } from "../types";
+import type { OpenTarget } from "../shared/types";
 import { holdAction, releaseAction, type ActionHandler } from "./actions";
 import { getChannel } from "./connect";
 import { getActiveSlot, registerSlot } from "./slots";

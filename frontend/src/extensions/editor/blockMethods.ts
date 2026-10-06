@@ -18,8 +18,8 @@ import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { nextTick } from "vue";
-import type { MethodTable } from "../host/permissions";
-import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../params";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;

@@ -13,11 +13,11 @@
 
 import ExtensionToolbarButton from "@/components/ToolbarItems/ExtensionToolbarButton.vue";
 import { toolbarItems, type ToolbarItem, type ToolbarRegion } from "@/components/ToolbarItems";
-import { editorContext } from "../editor/editorContext";
-import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/permissions";
+import { editorContext } from "../context/editorContext";
+import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
+import type { MethodTable } from "../bridge/permissions";
 import { invokeAction } from "./actionMethods";
-import { fields, flag, oneOf, optionalText, text } from "../params";
+import { fields, flag, oneOf, optionalText, text } from "../bridge/params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
 
 const REGIONS = ["left", "center", "right"] as const;

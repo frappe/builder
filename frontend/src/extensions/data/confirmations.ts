@@ -8,7 +8,7 @@
  */
 
 import { ref } from "vue";
-import { bridge } from "../host/bridge";
+import { bridge } from "../bridge/bridge";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 export type PromptKind = "schema" | "script";

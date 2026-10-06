@@ -28,7 +28,7 @@
  * permission would stop meaning anything.
  */
 
-import { ChannelCallError } from "../transport/createPortChannel";
+import { ChannelCallError } from "../shared/transport/createPortChannel";
 import { data, type ListOptions } from "./namespaces";
 
 type Params = Record<string, unknown>;

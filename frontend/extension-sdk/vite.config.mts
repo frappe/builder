@@ -26,8 +26,8 @@ export default defineConfig({
 			entry: {
 				index: entry("index.ts"),
 				vue: entry("vue.ts"),
-				types: entry("types.ts"),
-				"transport/createPortChannel": entry("transport/createPortChannel.ts"),
+				types: entry("shared/types.ts"),
+				"transport/createPortChannel": entry("shared/transport/createPortChannel.ts"),
 			},
 			formats: ["es"],
 		},

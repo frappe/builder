@@ -1,12 +1,15 @@
 /**
- * Every method an extension reaches site data through, in one table.
+ * The methods that read or change site records and doctypes, as one method table.
  *
- * The third table, after `surfaces/index.ts` and `editor/index.ts`. This one
- * sits apart from `editor/` because what it touches outlives the page: a block
- * write is undone with one keystroke, and a document write is not.
+ * - `documentMethods.ts`: read, add, change and remove documents.
+ * - `schemaMethods.ts`: add, read and remove the doctypes of an extension.
+ * - `confirmations.ts`: the questions that Builder asks before an act that cannot be undone.
+ *
+ * This folder is separate from `editor/`. A user can undo a block change.
+ * A user cannot undo a document change.
  */
 
-import type { MethodTable } from "../host/permissions";
+import type { MethodTable } from "../bridge/permissions";
 import { documentMethods } from "./documentMethods";
 import { schemaMethods } from "./schemaMethods";
 

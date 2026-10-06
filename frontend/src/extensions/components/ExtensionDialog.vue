@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import ExtensionFrame from "@/components/ExtensionFrame.vue";
+import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { connectExtension, disconnectExtension, dispatcherFor } from "@/extensions";
 import { dismissDialog, openDialogs } from "@/extensions/editor/uiMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";

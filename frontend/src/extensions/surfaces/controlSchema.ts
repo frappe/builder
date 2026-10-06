@@ -25,10 +25,10 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import RangeInput from "@/components/Controls/RangeInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
 import blockController from "@/utils/blockController";
-import { editorContext } from "../editor/editorContext";
-import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import { canWrite } from "../host/permissions";
-import { fields, oneOf, optionalText, refuse, text } from "../params";
+import { editorContext } from "../context/editorContext";
+import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
+import { canWrite } from "../bridge/permissions";
+import { fields, oneOf, optionalText, refuse, text } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { invokeAction } from "./actionMethods";
 

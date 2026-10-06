@@ -16,10 +16,10 @@
  */
 
 import { toast } from "frappe-ui";
-import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/permissions";
+import { bridge } from "../bridge/bridge";
+import type { MethodTable } from "../bridge/permissions";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { fields, refuse, text } from "../params";
+import { fields, refuse, text } from "../bridge/params";
 
 const actions = new Set<string>();
 

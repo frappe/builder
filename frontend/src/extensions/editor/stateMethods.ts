@@ -12,8 +12,8 @@
 import { isDevExtension } from "@/extensions/devExtension";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { createResource } from "frappe-ui";
-import type { MethodTable } from "../host/permissions";
-import { fields, refuse, text } from "../params";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, refuse, text } from "../bridge/params";
 
 type Store = Record<string, unknown>;
 

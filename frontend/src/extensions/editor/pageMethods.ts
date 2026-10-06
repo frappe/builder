@@ -27,8 +27,8 @@ import { getBlockObject } from "@/utils/helpers";
 import { createResource } from "frappe-ui";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { confirmPageScript } from "../data/confirmations";
-import type { MethodTable } from "../host/permissions";
-import { fields, oneOf, refuse, text } from "../params";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, oneOf, refuse, text } from "../bridge/params";
 
 /**
  * A list, because that is the shape Builder stores a page in, even though the

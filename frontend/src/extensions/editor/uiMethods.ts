@@ -15,8 +15,8 @@
  */
 
 import { toast } from "frappe-ui";
-import type { MethodTable } from "../host/permissions";
-import { fields, oneOf, text } from "../params";
+import type { MethodTable } from "../bridge/permissions";
+import { fields, oneOf, text } from "../bridge/params";
 import { createFrameSurface } from "./frameSurface";
 
 const dialog = createFrameSurface("dialog");

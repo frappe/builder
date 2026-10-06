@@ -5,14 +5,14 @@
  * `BuilderLeftPanel.vue` needs no line that knows extensions exist.
  */
 
-import ExtensionFrame from "@/components/ExtensionFrame.vue";
+import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
-import { editorContext } from "../editor/editorContext";
-import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import { bridge } from "../host/bridge";
-import type { MethodTable } from "../host/permissions";
+import { editorContext } from "../context/editorContext";
+import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
+import { bridge } from "../bridge/bridge";
+import type { MethodTable } from "../bridge/permissions";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
-import { fields, flag, optionalText, text } from "../params";
+import { fields, flag, optionalText, text } from "../bridge/params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
 
 type Registration = {

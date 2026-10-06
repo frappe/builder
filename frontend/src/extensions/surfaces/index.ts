@@ -1,12 +1,17 @@
 /**
- * Every method a surface answers, in one table.
+ * The items that an extension adds to the editor UI, as one method table.
  *
- * Each surface file owns its registry, its validation and its descriptor.
- * `surfaceItems.ts` holds the bookkeeping they share. This file only gathers
- * them, so adding a surface is one import and one spread.
+ * - `toolbarMethods.ts`, `contextMenuMethods.ts`, `propertiesMethods.ts`,
+ *   `leftPanelMethods.ts`, `settingsMethods.ts`: one file for each surface.
+ * - `controlSchema.ts`: changes a control from data into a right panel property.
+ * - `actionMethods.ts`: the actions that a button or a menu item runs.
+ * - `openMethods.ts`: what opens when a user opens an extension.
+ * - `surfaceItems.ts`: the record keeping that each surface shares.
+ *
+ * To add a surface, add one import and one spread here.
  */
 
-import type { MethodTable } from "../host/permissions";
+import type { MethodTable } from "../bridge/permissions";
 import { actionMethods } from "./actionMethods";
 import { contextMenuMethods } from "./contextMenuMethods";
 import { leftPanelMethods } from "./leftPanelMethods";

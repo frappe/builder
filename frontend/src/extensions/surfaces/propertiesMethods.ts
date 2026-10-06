@@ -12,12 +12,12 @@
  */
 
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
-import { editorContext } from "../editor/editorContext";
-import { assertRule, matches, type ShowWhenRule } from "../editor/showWhen";
-import type { MethodTable } from "../host/permissions";
+import { editorContext } from "../context/editorContext";
+import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
+import type { MethodTable } from "../bridge/permissions";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { readControls, toBlockProperty, type Control } from "./controlSchema";
-import { fields, flag, optionalText, text } from "../params";
+import { fields, flag, optionalText, text } from "../bridge/params";
 import { createSurfaceItems, type SurfaceItem } from "./surfaceItems";
 
 type Registration = {
