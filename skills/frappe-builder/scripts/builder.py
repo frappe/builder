@@ -561,7 +561,9 @@ def main():
 	copy.add_argument("ref")
 	copy.add_argument("--to", required=True, help="frappectl profile of the site to copy into")
 	copy.add_argument(
-		"--replace", action="store_true", help="overwrite components, scripts and tokens that differ there"
+		"--replace",
+		action="store_true",
+		help="overwrite what differs there, including the live page fields and another user's draft",
 	)
 	instance = sub.add_parser("instance")
 	instance.add_argument("component")
