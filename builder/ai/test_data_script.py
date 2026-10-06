@@ -41,6 +41,15 @@ class TestWriteDataScript(FrappeTestCase):
 		self.assertFalse(out.startswith("FAILED"), out)
 		self.assertEqual(self.saved_script(), script)
 
+	def test_ignores_names_in_comments_and_strings(self):
+		script = (
+			"# frappe.utils.getdate would be handy here\n"
+			"data.note = 'see frappe.get_list'\n"
+			"data.events = frappe.db.get_all('Event', fields=['subject'])"
+		)
+
+		self.assertFalse(self.write(script, False).startswith("FAILED"))
+
 	def test_allows_the_full_namespace_when_server_scripts_are_on(self):
 		script = "data.events = frappe.get_list('Event', fields=['subject'])"
 

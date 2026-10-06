@@ -9,6 +9,7 @@ through the confirm-gate (builder/ai/agent/pending.py) — the user approves bef
 anything is written.
 """
 
+import ast
 import json
 import logging
 import re
@@ -209,7 +210,6 @@ PORTABLE_HINT = (
 	"frappe.db.get_all / get_list / count / exists / get_single_value, frappe.get_doc, "
 	"frappe.form_dict and frappe.session.user; format dates and numbers in plain Python"
 )
-FRAPPE_NAME_RE = re.compile(r"\bfrappe(?:\.\w+)+")
 
 
 def missing_names(script: str) -> list[str]:
@@ -218,12 +218,32 @@ def missing_names(script: str) -> list[str]:
 
 	if is_safe_exec_enabled():
 		return []
-	used = set(FRAPPE_NAME_RE.findall(script))
-	return sorted(name for name in used if not is_portable(name))
+	return sorted(name for name in frappe_names(script) if not is_portable(name))
+
+
+def frappe_names(script: str) -> set[str]:
+	"""Dotted `frappe.*` names the code uses; comments and strings don't count."""
+	try:
+		tree = ast.parse(script)
+	except SyntaxError:
+		return set()
+	names = (dotted_name(node) for node in ast.walk(tree) if isinstance(node, ast.Attribute))
+	return {name for name in names if name and name.startswith("frappe.")}
+
+
+def dotted_name(node: ast.Attribute) -> str | None:
+	parts = []
+	while isinstance(node, ast.Attribute):
+		parts.append(node.attr)
+		node = node.value
+	return ".".join([node.id, *reversed(parts)]) if isinstance(node, ast.Name) else None
 
 
 def is_portable(name: str) -> bool:
-	return any(name == allowed or name.startswith(f"{allowed}.") for allowed in PORTABLE_NAMES)
+	return any(
+		name == allowed or name.startswith(f"{allowed}.") or allowed.startswith(f"{name}.")
+		for allowed in PORTABLE_NAMES
+	)
 
 
 def write_page_data_script(ctx, args: dict) -> str:
@@ -413,8 +433,11 @@ write_page_data_script_tool = Tool(
 		"fields=['title', 'starts_on'], filters={'published': 1})`, then bind blocks and "
 		"repeaters to the keys you set. It runs sandboxed at render time with no imports. "
 		"Write it with the names every site provides, including sites with server scripts "
-		f"disabled: {PORTABLE_HINT}. Fields are plain fieldnames; SQL functions in `fields` "
-		"are dropped. On a dynamic route ('partners/<partner_id>') the URL params arrive as "
+		f"disabled: {PORTABLE_HINT}. frappe.db.get_all reads whatever the script asks for, "
+		"whoever is viewing, so list explicit `fields`, filter to what the page publishes, and "
+		"never query private records (users, form submissions); frappe.db.get_list answers "
+		"with the visitor's own permissions. Fields are plain fieldnames; SQL functions in "
+		"`fields` are dropped. On a dynamic route ('partners/<partner_id>') the URL params arrive as "
 		"frappe.form_dict.<param>: data.partner = frappe.get_doc('Partner', "
 		"frappe.form_dict.partner_id). Keys are descriptive names (data.products), never dict "
 		"method names like data.items/keys/values/get, which shadow and break the render. "
