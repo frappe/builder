@@ -32,7 +32,9 @@ class TestAgentJobs(FrappeTestCase):
 		self.assertNotIn(SECRET, kwargs.values())
 
 	def test_a_run_does_not_queue_the_api_key(self):
-		self.assert_no_key(self.enqueued_kwargs(lambda: api.run("hi", "some-page", model=MODEL["name"])))
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Run"}).insert()
+
+		self.assert_no_key(self.enqueued_kwargs(lambda: api.run("hi", page.name, model=MODEL["name"])))
 
 	def test_a_resumed_run_does_not_queue_the_api_key(self):
 		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Resume"}).insert()
