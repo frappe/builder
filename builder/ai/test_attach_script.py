@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent.tools.scripts import apply_attach_page_script
+from builder.ai.agent.tools.scripts import apply_attach_page_script, apply_update_script
 
 
 def make_page():
@@ -51,4 +51,38 @@ class TestAttachPageScript(FrappeTestCase):
 
 	def test_no_open_page_fails(self):
 		out = apply_attach_page_script(SimpleNamespace(page_id=None), {"script_name": "anything"})
+		self.assertTrue(out.startswith("FAILED"))
+
+
+class TestUpdateScript(FrappeTestCase):
+	def test_updates_a_script_attached_to_the_page(self):
+		page, script = make_page(), make_script()
+		ctx = SimpleNamespace(page_id=page.name)
+		apply_attach_page_script(ctx, {"script_name": script.name})
+
+		out = apply_update_script(ctx, {"script_name": script.name, "script": ".hero { opacity: 0; }"})
+
+		self.assertEqual(out, f"Updated script '{script.name}'.")
+		self.assertEqual(
+			frappe.db.get_value("Builder Client Script", script.name, "script"), ".hero { opacity: 0; }"
+		)
+
+	def test_will_not_touch_a_script_on_another_page(self):
+		page, script = make_page(), make_script()
+
+		out = apply_update_script(
+			SimpleNamespace(page_id=page.name),
+			{"script_name": script.name, "script": ".hero { opacity: 0; }"},
+		)
+
+		self.assertTrue(out.startswith("FAILED"))
+		self.assertEqual(frappe.db.get_value("Builder Client Script", script.name, "script"), script.script)
+
+	def test_no_open_page_fails(self):
+		script = make_script()
+
+		out = apply_update_script(
+			SimpleNamespace(page_id=None), {"script_name": script.name, "script": ".a {}"}
+		)
+
 		self.assertTrue(out.startswith("FAILED"))
