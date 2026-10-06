@@ -14,7 +14,7 @@
  * rule here would be a second rule to keep the same.
  */
 
-import { holdAction, releaseAction, type ActionHandler } from "./actions";
+import { setHandler, deleteHandler, type ActionHandler } from "./actions";
 import { getChannel } from "./connect";
 import { getActiveSlot } from "./slots";
 
@@ -57,7 +57,7 @@ export type ActionRef = string | ActionHandler;
 
 /** Keeps a handler in this frame and sends its name to the host. Entry frame only. */
 const registerAction = (name: string, handler: ActionHandler) => {
-	if (getActiveSlot() === "main") holdAction(name, handler);
+	if (getActiveSlot() === "main") setHandler(name, handler);
 	return declare("actions.register", { name });
 };
 
@@ -145,7 +145,7 @@ export const actions = {
 	register: (name: string, handler: ActionHandler) => registerAction(name, handler),
 	unregister: (name: string) => {
 		if (getActiveSlot() !== "main") return Promise.resolve();
-		releaseAction(name);
+		deleteHandler(name);
 		return call("actions.unregister", { name });
 	},
 	/** Runs an action of this extension from any of its frames. */

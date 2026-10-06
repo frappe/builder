@@ -19,9 +19,9 @@ export type ActionHandler = (context: Record<string, unknown>) => unknown;
 
 const handlers = new Map<string, ActionHandler>();
 
-export const holdAction = (name: string, handler: ActionHandler) => handlers.set(name, handler);
+export const setHandler = (name: string, handler: ActionHandler) => handlers.set(name, handler);
 
-export const releaseAction = (name: string) => handlers.delete(name);
+export const deleteHandler = (name: string) => handlers.delete(name);
 
 export const runAction = (params: unknown) => {
 	const { action, context } = (params ?? {}) as { action?: string; context?: Record<string, unknown> };
