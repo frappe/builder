@@ -26,7 +26,7 @@
 - Unbalanced parentheses in a value get escaped and the rule breaks.
 - `fontFamily` is one bare Google Fonts family (`"Fraunces"`); it loads automatically. A stack (`"Inter, sans-serif"`) or `inherit` is mangled into a bad font request.
 - `background` with a `var()` works live but the editor canvas drops it; use `backgroundColor`/`backgroundImage`.
-- Key order is not kept (see SKILL.md traps): never pair a shorthand with its longhand.
+- Sync and snapshot restore sort style keys, so a shorthand and its own longhand (`borderWidth` with `borderLeft`) can swap order: use longhands.
 
 ## Tokens
 

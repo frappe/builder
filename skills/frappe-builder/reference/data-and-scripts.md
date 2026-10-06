@@ -32,7 +32,7 @@ In both:
 
 `data` merges into the page's template context: `data.style` wipes every block style, `data.preview` drops the token stylesheet; name keys after your content. `data.title` sets `<title>`.
 
-`window.page_data` holds only `data.page_data`, and a date or Decimal inside it fails the page (convert with `str()`). For a single value, bind it to a `data-*` attribute and read `element.dataset`.
+`window.page_data` holds only `data.page_data`. For a single value, bind it to a `data-*` attribute and read `element.dataset`.
 
 ## Dynamic routes
 

@@ -16,7 +16,6 @@ Declared on the definition root under `props.<name>`, in the shape the editor wr
 - Types: `string`, `select` (`options.options` list), `number`, `boolean` (`defaultValue` `"true"`/`"false"`), `array`, `object`, `color`, `image`.
 - Keep `isPassedDown: true`: without it the definition's own children can't see the prop live, though the editor shows it.
 - An instance entry is the whole declaration with `value` set (`instance` builds it). A bare `{"value": ...}` works in the editor and falls back to the static text live.
-- Number props render live as floats (`29.0`); format them in the data script if they are shown.
 - A repeater over a prop needs an `array` (or `object`) prop; over any other type it fails the page.
 - For records with several fields, take an array of delimited rows (`"Label | Body"`) and split them in the data script, as the tabs example does.
 
@@ -24,13 +23,11 @@ Declared on the definition root under `props.<name>`, in the shape the editor wr
 
 `component_data_script` runs once per instance per render, with `props` (resolved values) and an empty `component` to fill. Bindings and repeaters read `component.<key>` (`comesFrom: "componentData"`); the client script receives only `component.component_data`. The same two-executor rules as page data scripts apply (`data-and-scripts.md`), and props is a dict with attribute access, so read list props with `props.get("items")`.
 
-A page whose data comes only from component data scripts is still HTML-cached for 30 minutes (`live-and-cached.md`).
-
 ## Client script and scoped CSS
 
 `clientScript: {"js": ..., "css": ...}` on a block runs once per rendered instance: `js` is the body of an async function with `this` = the block's element and `(component_data, props)` as arguments; it runs inline while the page parses, before page scripts. `css` is scoped to the block.
 
-- Style the root with `&`, not `:scope` (the editor ignores `:scope`). Plain selectors match descendants.
+- Plain selectors match descendants; `&` or `:scope` is the block itself.
 - Scope every query to `this`: several instances share one page.
 - Props that contain `<` or `&` arrive HTML-escaped (`&lt;`, `&amp;`) in the script.
 - `window.events.dispatch(name, data)` / `events.listen(name, callback)` connect components.

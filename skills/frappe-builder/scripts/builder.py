@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -148,6 +149,9 @@ class Target:
 			update[self.script_field] = self.script_path.read_text()
 		return update
 
+	def encode_tree(self) -> str:
+		return json.dumps(self.local_tree(), separators=(",", ":"))
+
 	def refresh(self, ctl: Frappectl):
 		doc = self.doc
 		fresh = ctl.get(self.doctype, doc["name"])
@@ -170,9 +174,6 @@ class PageTarget(Target):
 	def tree_field(self) -> str:
 		return "draft_blocks"
 
-	def encode_tree(self) -> str:
-		return json.dumps(self.local_tree(), separators=(",", ":"))
-
 
 class ComponentTarget(Target):
 	doctype = "Builder Component"
@@ -188,9 +189,6 @@ class ComponentTarget(Target):
 
 	def tree_field(self) -> str:
 		return "block"
-
-	def encode_tree(self) -> str:
-		return json.dumps(self.local_tree(), separators=(",", ":"))
 
 
 def tree_file(target: str) -> Path:
@@ -279,15 +277,21 @@ def cmd_outline(target: str):
 		print_outline(Block(root, str(index)))
 
 
+def used_components(roots: list) -> set[str]:
+	found = set()
+	walk(roots, lambda node: node.get("referenceBlockId") or found.add(node.get("extendedFromComponent")))
+	return found - {None}
+
+
 def site_names(ctl: Frappectl | None, doctype: str) -> set[str] | None:
 	return {row["name"] for row in ctl.names(doctype)} if ctl else None
 
 
 def lint(ctl: Frappectl | None, path: Path) -> int:
 	kind = "component" if path.name == "block.json" else "page"
-	linter = Linter(
-		roots_of(path), site_names(ctl, "Builder Token"), site_names(ctl, "Builder Component"), kind
-	)
+	roots, components = roots_of(path), site_names(ctl, "Builder Component")
+	definitions = {cid: ctl.definition(cid) for cid in used_components(roots) & (components or set())}
+	linter = Linter(roots, site_names(ctl, "Builder Token"), components, kind, definitions)
 	issues = linter.run()
 	for level, where, message in issues:
 		print(f"{level:5} {where}: {message}")
@@ -332,7 +336,7 @@ def cmd_push(ctl: Frappectl, args):
 	if rewritten := rewritten_blocks(target, update):
 		sys.exit(
 			f"the site rewrote blocks on save ({', '.join(rewritten[:5])}), so the saved draft is not what"
-			" you sent. Builder before v1.35 sanitises raw HTML and attributes on save. Restore the"
+			" you sent. Builder before v1.33 sanitises raw HTML and attributes on save. Restore the"
 			" 'Before agent edit' snapshot (see SKILL.md) and update Builder before pushing again."
 		)
 	report_push(ctl, target, update)
@@ -396,7 +400,8 @@ def cmd_sync(ctl: Frappectl, args):
 
 
 def cmd_connect(ctl: Frappectl, args):
-	update_tools()
+	ensure_frappectl()
+	update_skill()
 	ctl = Frappectl(args.site or profile_for(args.target))
 	who = ctl.run("auth", "whoami")
 	print(f"connected to {who['site']} as {who['user']}; use -s {who['source']}")
@@ -408,10 +413,17 @@ def cmd_connect(ctl: Frappectl, args):
 	if "builder" not in versions:
 		sys.exit("Builder is not installed on this site")
 	print(f"Builder {versions['builder']['version']}, Frappe {versions['frappe']['version']}")
-	if sanitises_blocks(ctl):
-		print("this Builder predates v1.35 and rewrites raw HTML on save: update Builder on the site first")
+	if too_old(versions["builder"]["version"]):
+		print("this skill expects Builder v1.35 or later: ask the human to update Builder on the site")
 	if args.bench:
 		update_bench(Path(args.bench))
+
+
+def read_terminal(fd: int) -> bytes:
+	try:
+		return os.read(fd, 1024)
+	except OSError:  # the terminal closed when frappectl exited
+		return b""
 
 
 def profile_for(target: str | None) -> str | None:
@@ -445,17 +457,42 @@ def login(site: str) -> str:
 	import pty
 
 	print("signing in: the human approves it in the browser tab that opens", flush=True)
-	# frappectl insists on a terminal even when the flags answer every prompt
-	if pty.spawn(command):
+	# frappectl insists on a terminal even when the flags answer every prompt; pty.spawn
+	# would hang on macOS before Python 3.10 once frappectl exits, so relay output by hand
+	controller, terminal = pty.openpty()
+	process = subprocess.Popen(command, stdin=terminal, stdout=terminal, stderr=terminal)
+	os.close(terminal)
+	while chunk := read_terminal(controller):
+		sys.stdout.write(chunk.decode(errors="replace"))
+		sys.stdout.flush()
+	os.close(controller)
+	if process.wait():
 		sys.exit("sign-in did not complete")
 	return name
 
 
-def update_tools():
+def ensure_frappectl():
+	# a frappectl too old for --writable can't sign in the way login does
+	if shutil.which("frappectl") and "--writable" in run_text("frappectl", "auth", "login", "--help"):
+		return
 	if not shutil.which("uv"):
 		sys.exit("install uv (https://docs.astral.sh/uv/getting-started/installation/), then connect again")
 	action = "upgrade" if shutil.which("frappectl") else "install"
-	subprocess.run(["uv", "tool", action, "frappectl"], capture_output=True, stdin=subprocess.DEVNULL)
+	result = subprocess.run(
+		["uv", "tool", action, "frappectl"], capture_output=True, text=True, stdin=subprocess.DEVNULL
+	)
+	if result.returncode:
+		sys.exit(result.stderr.strip() or f"uv tool {action} frappectl failed")
+	if not shutil.which("frappectl"):
+		sys.exit(
+			"frappectl is installed but not on PATH: run `uv tool update-shell`, then connect again in a new shell"
+		)
+
+
+def update_skill():
+	if not shutil.which("npx"):
+		print("npx is missing, so the frappe-builder skill was not checked for updates")
+		return
 	skill = Path(__file__).parent.parent
 	before = (skill / "SKILL.md").read_bytes()
 	lock = next((d for d in list(skill.parents)[:4] if (d / "skills-lock.json").exists()), None)
@@ -467,10 +504,14 @@ def update_tools():
 		print("the frappe-builder skill was updated: read SKILL.md again before going on")
 
 
-def sanitises_blocks(ctl: Frappectl) -> bool:
-	meta = ctl.run("doc", "get", "DocType", "Builder Page", check=False)
-	fields = {f["fieldname"]: f for f in meta["fields"]} if meta else {}
-	return bool(fields) and not fields.get("draft_blocks", {}).get("ignore_xss_filter")
+def run_text(*command: str) -> str:
+	return subprocess.run(command, capture_output=True, text=True, stdin=subprocess.DEVNULL).stdout
+
+
+def too_old(version: str) -> bool:
+	if "dev" in version:
+		return False
+	return tuple(int(n) for n in re.findall(r"\d+", version)[:2]) < (1, 35)
 
 
 def update_bench(bench: Path):

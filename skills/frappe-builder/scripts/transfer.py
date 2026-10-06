@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -40,9 +41,16 @@ class SiteCopy:
 		self.tmp = Path(tempfile.mkdtemp(prefix="builder-copy-"))
 
 	def page(self, name: str):
-		doc = self.source.get("Builder Page", name)
+		try:
+			self.copy_page(self.source.get("Builder Page", name))
+		finally:
+			shutil.rmtree(self.tmp, ignore_errors=True)
+
+	def copy_page(self, doc: dict):
 		current = self.target_page(doc["route"])
 		tree = parse_blocks(doc.get("draft_blocks")) or parse_blocks(doc.get("blocks"))
+		if doc.get("published") and tree != parse_blocks(doc.get("blocks")):
+			print("copying the source's draft, which has edits it hasn't published")
 		fields = {key: doc[key] for key in PAGE_FIELDS if doc.get(key) not in (None, "", 0)}
 		fields["draft_blocks"] = tree
 		self.collect(fields)

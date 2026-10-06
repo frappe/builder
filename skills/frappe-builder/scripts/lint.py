@@ -77,10 +77,18 @@ class Block:
 
 
 class Linter:
-	def __init__(self, roots: list[dict], tokens: set[str] | None, components: set[str] | None, kind="page"):
+	def __init__(
+		self,
+		roots: list[dict],
+		tokens: set[str] | None,
+		components: set[str] | None,
+		kind="page",
+		definitions: dict[str, dict] | None = None,
+	):
 		self.roots = [Block(root, str(index)) for index, root in enumerate(roots)]
 		self.tokens = tokens
 		self.components = components
+		self.definitions = definitions or {}
 		self.kind = kind
 		self.issues: list[tuple[str, str, str]] = []
 
@@ -191,8 +199,8 @@ class Linter:
 		state, _, prop = key.rpartition(":")
 		if key.count(":") > 1 or state.startswith(":"):
 			self.add("error", block, f"{field}.{key}: one single-colon state only (hover:, before:), no ::")
-		if isinstance(value, (int, float)) and value and LENGTH_PROPS.match(prop):
-			self.add("error", block, f"{field}.{key}: {value} has no unit and is ignored")
+		if LENGTH_PROPS.match(prop) and re.fullmatch(r"-?\d*\.?\d+", str(value).strip()) and float(value):
+			self.add("error", block, f"{field}.{key}: {value!r} has no unit and is ignored")
 		text = str(value)
 		if text.count("(") != text.count(")"):
 			self.add("error", block, f"{field}.{key}: unbalanced parentheses get escaped")
@@ -221,7 +229,7 @@ class Linter:
 		component = block.extendedFromComponent
 		if not component or block.referenceBlockId:
 			return
-		if not block.children:
+		if not block.children and (self.definitions.get(component) or {}).get("children"):
 			self.add("error", block, "component instance without skeleton children renders empty")
 		if self.components is not None and component not in self.components:
 			self.add("error", block, f"component '{component}' does not exist on the site")
@@ -233,5 +241,3 @@ class Linter:
 			self.add("error", block, "fb- classes change on every render; select your own classes")
 		if re.search(r"\.innerHTML\s*=", js):
 			self.add("warn", block, "setting innerHTML throws in the editor canvas; use textContent")
-		if ":scope" in css:
-			self.add("warn", block, ":scope doesn't apply in the editor canvas; use &")

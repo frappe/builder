@@ -4,9 +4,9 @@ A change that "didn't take" either went somewhere that isn't live (a page's `dra
 
 ## The page cache
 
-On production sites (not in developer mode), a page's rendered HTML is cached in Redis for 30 minutes. Pages with a data script or a dynamic route are never cached; pages whose data comes only from component data scripts are, so their data can be up to 30 minutes old.
+On production sites (not in developer mode), a page's rendered HTML is cached in Redis for 30 minutes. Pages with a data script, a dynamic route or a component data script are never cached.
 
-The cache is cleared when the page's blocks, route or publish state change, and when a component it embeds is saved. It is **not** cleared by saving a client script or Builder Settings (style, script, `head_html`, `body_html`): cached pages keep the old HTML and the old script `?v=` URLs.
+The cache is cleared when the page's blocks, route or publish state change, and when a component it embeds, a client script it links or Builder Settings is saved.
 
 ```sh
 curl -sI "https://<site>/<route>" | grep -i x-from-cache       # True: served from the cache

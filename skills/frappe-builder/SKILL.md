@@ -9,7 +9,7 @@ A Builder site is a set of documents: `Builder Page` (a block tree in `blocks` =
 
 ## 1. Connect
 
-Start each session with `python3 <skill-dir>/scripts/builder.py connect <site URL or profile> [--bench <bench dir>]` and pass the profile it prints as `-s <p>`. It installs or updates frappectl and this skill (read this file again if it says so), signs in through the human's browser when the site has no profile (they click Allow), and warns when the site's Builder is too old. With `--bench` it also pulls a local bench's Frappe and Builder when they sit untouched on `develop`. The user needs the Website Manager role; creating a DocType (for forms) needs System Manager.
+Start each session with `python3 <skill-dir>/scripts/builder.py connect <site URL or profile> [--bench <bench dir>]` and pass the profile it prints as `-s <p>`. It installs frappectl if needed, updates this skill (read this file again if it says so), signs in through the human's browser when the site has no profile (they click Allow), and warns when the site's Builder is too old. With `--bench` it also pulls a local bench's Frappe and Builder when they sit untouched on `develop`. The user needs the Website Manager role; creating a DocType (for forms) needs System Manager.
 
 No site yet? Local setups run Frappe and Builder on `develop`; the `frappe-app-dev` skill (`npx skills add frappe/skills --skill frappe-app-dev`) covers bench basics. `bench find ~` lists existing benches: if one runs Frappe 16 or later, ask the human whether to reuse it, which skips the slow `bench init`.
 
@@ -53,7 +53,7 @@ python3 $B -s <p> copy <page> --to <other profile>             # with its compon
 
 Only a page's block tree has a draft; visitors see it after publish. Everything else is live when saved: a page's data script and fields, client scripts, tokens, Builder Settings, and component saves (unpinned instances change at once; `sync` then rewrites the live blocks of every page that embeds the component).
 
-- Close editor tabs on the page before you push, and reload them after: an open tab saves its old tree over your draft on its next edit.
+- Ask the human to close editor tabs on the page before you push and reload them after: an open tab saves its old tree over your draft on its next edit.
 - On a site that has pages, pull one first and reuse its tokens, fonts, widths and components.
 - A new page: `doc create "Builder Page" --set page_title=... --set route=... < /dev/null`, then pull. Set page fields with `doc update --set` before you pull; push refuses a workdir that is behind.
 - Preview a draft: `frappectl -s <p> api method/builder.api.get_page_preview_html -F page=<page>` renders it with the live data script and scripts. An error there is the error visitors would get.
@@ -66,9 +66,8 @@ Done when push reports no lint errors in what you changed, the preview (or the l
 
 - **All block text, attributes, component scripts and styles, `head_html` and `canonical_url` render through Jinja.** `{{ }}` and `{% %}` are evaluated live and shown raw in the editor. `{#` fails the page unless inside `{% raw %}`; `.__` fails it even there, so move such code into a client script file.
 - **A data-script exception, a missing nested binding, or a dict where a repeater wants a list 500s the page.** `reference/data-and-scripts.md`.
-- **Routes shadow everything.** A Builder route wins over every other website route; a root catch-all like `/:slug` captures `/login` and the editor at `/builder`. Route variables are `[A-Za-z0-9_]` only: one hyphenated variable breaks every dynamic page published before it.
+- **Routes shadow everything.** A Builder route wins over every other website route; a root catch-all like `/:slug` captures `/login` and the editor at `/builder`.
 - **Bound values render as raw HTML.** Strip or escape visitor-submitted text in the data script.
-- **Style key order is not kept.** Sync and snapshot restore sort every page's style keys, so a shorthand with its own longhand (`borderWidth` with `borderLeft`) flips. Use longhands.
 
 ## Reference
 
