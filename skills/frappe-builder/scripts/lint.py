@@ -229,7 +229,11 @@ class Linter:
 		component = block.extendedFromComponent
 		if not component or block.referenceBlockId:
 			return
-		if not block.children and (self.definitions.get(component) or {}).get("children"):
+		if not block.children and component not in self.definitions:
+			self.add(
+				"warn", block, "instance without skeleton children: empty unless the component is one block"
+			)
+		elif not block.children and self.definitions[component].get("children"):
 			self.add("error", block, "component instance without skeleton children renders empty")
 		if self.components is not None and component not in self.components:
 			self.add("error", block, f"component '{component}' does not exist on the site")

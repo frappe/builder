@@ -153,7 +153,7 @@ class SiteCopy:
 			self.font(fields["value"])
 
 	def font(self, family: str):
-		if not self.visit("User Font", family):
+		if not self.visit("User Font", family) or self.target.names("User Font", f"name={family}"):
 			return
 		if found := self.source.names("User Font", f"name={family}", fields="name,font_file"):
 			self.download(found[0]["font_file"])
@@ -182,7 +182,7 @@ class SiteCopy:
 	def write(self, doctype: str, name: str, fields: dict):
 		if doctype != "User Font":
 			self.ensure(doctype, name, fields)
-		elif not self.target.names("User Font", f"name={name}"):
+		else:
 			self.target.run_input(fields, "doc", "create", "User Font")
 			print(f"created User Font {name}")
 
