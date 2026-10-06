@@ -1,16 +1,17 @@
 import type Block from "@/block";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
-import { ToolDispatcher } from "@/components/ai/toolDispatch";
+import { type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/yaml";
+import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
 import { useRoute } from "vue-router";
 
 /**
@@ -23,6 +24,11 @@ export class AIChatController {
 	private readonly canvasStore = useCanvasStore();
 	private readonly pageStore = usePageStore();
 	private readonly route = useRoute();
+	// Bob edits the page, so everything lands here even while a component is open
+	private readonly pageCanvas: PageCanvas = inject(
+		"pageCanvas",
+		shallowRef<InstanceType<typeof BuilderCanvas> | null>(null),
+	);
 	private readonly dispatcher: ToolDispatcher;
 
 	readonly prompt = ref("");
@@ -208,16 +214,20 @@ export class AIChatController {
 		const model = this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value);
 		return !!model && model.ready === false;
 	});
+	/** A turn saves the canvas first, and with a component open on the canvas that
+	 * would write the component over the page draft. */
+	readonly isEditingPage = computed(() => this.canvasStore.editingMode === "page");
 	readonly canSubmit = computed(
 		() =>
 			!!this.prompt.value.trim() &&
 			!this.isSubmitting.value &&
+			this.isEditingPage.value &&
 			!!this.selectedModel.value &&
 			!this.selectedModelUnusable.value,
 	);
 
 	constructor() {
-		this.dispatcher = new ToolDispatcher(this.pageStore, this.canvasStore, () => this.pageId.value);
+		this.dispatcher = new ToolDispatcher(this.pageStore, this.pageCanvas);
 
 		watch(
 			this.currentProviderModels,
@@ -307,7 +317,7 @@ export class AIChatController {
 		this.lastStreamRenderAt = Date.now();
 		try {
 			this.dispatcher.applyPageYaml(this.pageStreamContent.value);
-			nextTick(() => this.canvasStore.activeCanvas?.followBuildEdge());
+			nextTick(() => this.pageCanvas.value?.followBuildEdge());
 		} catch {}
 	}
 
@@ -562,23 +572,45 @@ export class AIChatController {
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
-		if (!data.operations?.length) return;
+		const operations = data.operations;
+		if (!operations?.length) return;
 		this.previewUnconfirmed = false;
-		for (const op of data.operations) {
-			this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
-			try {
-				this.dispatcher.applyToolOperation(op.tool_name, op.args);
-			} catch (e) {
-				console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
+		this.applyServerEdit(() => {
+			for (const op of operations) {
+				this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
+				try {
+					this.dispatcher.applyToolOperation(op.tool_name, op.args);
+				} catch (e) {
+					console.warn(`[AI agent] tool "${op.tool_name}" failed:`, e);
+				}
 			}
-		}
-		const followId = this.followTargetIn(data.operations);
-		if (followId) nextTick(() => this.canvasStore.activeCanvas?.followBlock(followId));
+		});
+		const followId = this.followTargetIn(operations);
+		if (followId) nextTick(() => this.pageCanvas.value?.followBlock(followId));
 		// Don't overwrite the bubble with a static "Applying N changes…" — the loop emits
 		// a per-round progress note (the model's words, or a "Updated N blocks" summary)
 		// right after each batch, which is what the user actually sees update.
 		this.scrollToBottom();
 	};
+
+	/** Mirror edits the server already saved. Autosave stands down so the client
+	 * copy can't land as the last write, and the batch is one undo step: Vue's deep
+	 * watchers fire after `apply` returns, so both resume on the next tick (which is
+	 * also why history.batch(), resuming synchronously, would leave an empty step). */
+	private applyServerEdit(apply: () => void) {
+		const pauseId = this.pageCanvas.value?.history?.pause();
+		const wasQuiet = this.builderStore.aiBuildingCanvas;
+		this.builderStore.aiBuildingCanvas = true;
+		try {
+			apply();
+		} finally {
+			nextTick(() => {
+				// a whole-tree op rebuilt the history, and the new one ignores this id
+				if (pauseId) this.pageCanvas.value?.history?.resume(pauseId, true);
+				if (!wasQuiet) this.builderStore.aiBuildingCanvas = false;
+			});
+		}
+	}
 
 	/** The batch's last touched block, for the canvas to pan into view. Whole-tree
 	 * rewrites (generate_page/set_page_blocks) have no single locus; skip those. */
@@ -897,7 +929,8 @@ export class AIChatController {
 	 * The pre-turn snapshot is the single source of truth; there is no separate undo. */
 	revertTurn = async (message: ChatMessage) => {
 		const snapshot: string | undefined = message.metadata?.revertSnapshot;
-		if (!snapshot || !this.sessionId.value) return;
+		// restoring reloads the page onto the active canvas, a component's while one is open
+		if (!snapshot || !this.sessionId.value || !this.isEditingPage.value) return;
 		const confirmed = await confirm(
 			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
 		);
@@ -916,7 +949,7 @@ export class AIChatController {
 	};
 
 	selectBlockById = (blockId: string) => {
-		const block = this.dispatcher.findBlockInTree(blockId);
+		const block = this.pageCanvas.value?.findBlock(blockId);
 		if (!block) return;
 		this.canvasStore.selectBlock(block, null, true, true);
 	};

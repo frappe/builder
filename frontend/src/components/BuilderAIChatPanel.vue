@@ -151,7 +151,8 @@
 
 							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
 								<button
-									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40"
+									:disabled="!isEditingPage"
 									@click="revertTurn(message)">
 									<span class="lucide-rotate-ccw size-3" />
 									Revert
@@ -211,7 +212,7 @@
 							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
 							:ui="message.metadata.ui"
 							:interactive="message.id === lastMessageId"
-							:disabled="isSubmitting"
+							:disabled="isSubmitting || !isEditingPage"
 							:answered-with="replyTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
@@ -319,6 +320,17 @@
 					</button>
 				</div>
 				<div
+					v-else-if="!isEditingPage"
+					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+					<span class="lucide-box size-3.5 shrink-0" />
+					<span class="flex-1">Bob only edits the page.</span>
+					<button
+						class="shrink-0 font-medium underline underline-offset-2"
+						@click="canvasStore.exitFragmentMode()">
+						Back to page
+					</button>
+				</div>
+				<div
 					class="relative"
 					@paste.stop="handlePaste"
 					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
@@ -333,7 +345,7 @@
 						v-model="prompt"
 						rows="1"
 						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
-						:disabled="isSubmitting"
+						:disabled="isSubmitting || !isEditingPage"
 						placeholder="Ask to create or edit this page…"
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
@@ -421,6 +433,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { isEditingPage } = chat;
 const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
