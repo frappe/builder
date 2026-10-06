@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseJson, validateManifest } from "./src/protocol.js";
+import { parseJson, validateManifest } from "./src/manifest.js";
 
 const SDK = "frappe-builder-extension-sdk";
 const MANIFEST = "manifest.json";

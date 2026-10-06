@@ -5,7 +5,7 @@
  * `transport/messages.ts` has the checks for these shapes.
  */
 
-import { PERMISSIONS, PROTOCOL_VERSION } from "./protocol.js";
+import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";
 
 /** The five documents that an extension can have. The host names one in the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
