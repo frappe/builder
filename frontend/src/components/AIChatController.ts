@@ -647,20 +647,7 @@ export class AIChatController {
 		// the session this turn belongs to; the user may switch chats mid-await below
 		const completedSession = data.session_id || this.sessionId.value;
 
-		let undoScripts: string[] = [];
-		if (this.dispatcher.pendingScriptOps.value.length) {
-			const names = await Promise.all(this.dispatcher.pendingScriptOps.value);
-			undoScripts = names.filter((n): n is string => !!n);
-			this.dispatcher.pendingScriptOps.value = [];
-		}
-		for (const name of undoScripts) {
-			if (!this.dispatcher.pendingAffectedScripts.value.find((s) => s.script_name === name)) {
-				this.dispatcher.pendingAffectedScripts.value.push({ script_name: name, changedProps: ["created"] });
-			}
-		}
-
 		const meta: Record<string, any> = { status: "complete" };
-		if (undoScripts.length) meta.undoScripts = undoScripts;
 		if (this.dispatcher.pendingAffectedBlocks.value.length)
 			meta.affectedBlocks = [...this.dispatcher.pendingAffectedBlocks.value];
 		if (this.dispatcher.pendingAffectedScripts.value.length)
@@ -672,10 +659,7 @@ export class AIChatController {
 		this.dispatcher.reset();
 
 		const localMeta = { ...meta };
-		if (
-			completedSession &&
-			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length || localMeta.undoScripts?.length)
-		) {
+		if (completedSession && (localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)) {
 			createResource({ url: "builder.ai.api.update_session_message_metadata" })
 				.submit({ session_id: completedSession, metadata: localMeta })
 				.catch(() => null);
@@ -687,9 +671,7 @@ export class AIChatController {
 		// but only onto the turn's own session, not one switched to meanwhile.
 		if (
 			this.sessionId.value === completedSession &&
-			(localMeta.affectedBlocks?.length ||
-				localMeta.affectedScripts?.length ||
-				localMeta.undoScripts?.length)
+			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)
 		) {
 			let idx = this.messages.value.length - 1;
 			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;

@@ -490,6 +490,15 @@ const selectScriptByName = (name: string) => {
 	if (target) selectScript(target);
 };
 
+// An AI turn saved script changes on the server. A dirty editor keeps its text, and
+// saving it then meets the newer version as a conflict instead of losing either.
+watch(
+	() => pageStore.scriptsVersion,
+	() => {
+		if (!scriptEditor.value?.isDirty) reloadScripts();
+	},
+);
+
 // Handle openClientScript when data is already loaded (component already mounted)
 watch(
 	() => builderStore.openClientScript,

@@ -1,6 +1,7 @@
 import type Block from "@/block";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import type usePageStore from "@/stores/pageStore";
+import type { BuilderClientScript } from "@/types/doctypes";
 import { findBlockInTree } from "@/utils/block/tree";
 import { getBlockInstance } from "@/utils/helpers";
 import { ref, type Ref } from "vue";
@@ -17,6 +18,19 @@ import {
 type PageStore = ReturnType<typeof usePageStore>;
 export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
 
+const SCRIPT_TOOLS = new Set(["update_script", "set_page_script", "attach_page_script"]);
+
+/** The store keeps what the page fetches for each script: its name, type and code. */
+const scriptDoc = (name: string, scriptType: unknown, script: unknown): BuilderClientScript => ({
+	name,
+	creation: "",
+	modified: "",
+	owner: "",
+	modified_by: "",
+	script_type: typeof scriptType === "string" && scriptType ? scriptType : "JavaScript",
+	script: typeof script === "string" ? script : "",
+});
+
 /**
  * Applies the agent's client-side tool operations to the page's block tree and
  * tracks what changed (for the "affected items" UI). Holds its own per-turn
@@ -26,7 +40,6 @@ export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
  * its own canvas, the active canvas holds that component, not the page Bob edits.
  */
 export class ToolDispatcher {
-	readonly pendingScriptOps = ref<Promise<string | null>[]>([]);
 	readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
 	readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
 
@@ -36,7 +49,6 @@ export class ToolDispatcher {
 	) {}
 
 	reset() {
-		this.pendingScriptOps.value = [];
 		this.pendingAffectedBlocks.value = [];
 		this.pendingAffectedScripts.value = [];
 	}
@@ -98,6 +110,10 @@ export class ToolDispatcher {
 				if (args.script_type) props.push("script_type");
 				return props;
 			}
+			case "set_page_script":
+				return ["created"];
+			case "attach_page_script":
+				return ["attached"];
 			default:
 				return [];
 		}
@@ -143,7 +159,7 @@ export class ToolDispatcher {
 			trackBlock(args.block_id as string, changedProps);
 		} else if (toolName === "add_block") {
 			trackBlock(args.parent_block_id as string, changedProps);
-		} else if (toolName === "update_script") {
+		} else if (SCRIPT_TOOLS.has(toolName)) {
 			const scriptName = args.script_name as string | undefined;
 			if (!scriptName) return;
 			const existing = this.pendingAffectedScripts.value.find((s) => s.script_name === scriptName);
@@ -325,39 +341,23 @@ export class ToolDispatcher {
 			}
 			case "update_script": {
 				// Scripts are server-authoritative (SCRIPT_TWIN_TOOLS): the loop has
-				// already persisted the change — only mirror the local UI state.
-				const existing = this.pageStore.activePageScripts.find(
-					(s) => s.name === (args.script_name as string),
-				);
+				// already persisted the change, so only mirror the local UI state.
+				const existing = this.pageStore.activePageScripts.find((s) => s.name === args.script_name);
 				if (existing) {
-					existing.script = args.script as string;
-					if (args.script_type) existing.script_type = args.script_type as any;
+					existing.script = args.script;
+					if (args.script_type) existing.script_type = args.script_type;
 				}
-				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
+				this.pageStore.scriptsVersion++;
 				return;
 			}
-			case "set_page_script": {
-				// Server-authoritative like update_script: the doc exists and is attached.
-				if (!args.script_name) return;
-				this.pageStore.activePageScripts.push({
-					name: args.script_name as string,
-					script_type: ((args.script_type as string) || "JavaScript") as any,
-					script: args.script as string,
-				} as any);
-				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-				return;
-			}
+			case "set_page_script":
 			case "attach_page_script": {
-				// Server-authoritative: an existing shared doc was linked to this page;
-				// the server enriched the op with its type and content for the list.
-				const name = args.script_name as string;
+				// Server-authoritative: the doc exists and is attached, and the server
+				// enriched the op with its type and content for the list.
+				const name = args.script_name;
 				if (!name || this.pageStore.activePageScripts.some((s) => s.name === name)) return;
-				this.pageStore.activePageScripts.push({
-					name,
-					script_type: ((args.script_type as string) || "JavaScript") as any,
-					script: (args.script as string) || "",
-				} as any);
-				this.pendingScriptOps.value.push(Promise.resolve(name));
+				this.pageStore.activePageScripts.push(scriptDoc(name, args.script_type, args.script));
+				this.pageStore.scriptsVersion++;
 				return;
 			}
 		}

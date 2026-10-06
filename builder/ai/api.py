@@ -593,14 +593,12 @@ def delete_ai_session(session_id: str):
 @frappe.whitelist()
 @has_page_write()
 def update_session_message_metadata(session_id: str, metadata: dict):
-	"""Persist client-side metadata (affectedBlocks, affectedScripts, undoScripts)
-	onto the last assistant message so it survives page reloads."""
+	"""Persist client-side metadata (affectedBlocks, affectedScripts) onto the last
+	assistant message so it survives page reloads."""
 	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
 		return
 	session = AISession.get(session_id)  # asserts ownership
-	safe_meta = {
-		k: metadata[k] for k in ("affectedBlocks", "affectedScripts", "undoScripts") if k in metadata
-	}
+	safe_meta = {k: metadata[k] for k in ("affectedBlocks", "affectedScripts") if k in metadata}
 	session.update_last_assistant_metadata(safe_meta)
 
 
