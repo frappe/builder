@@ -223,11 +223,7 @@ def missing_names(script: str) -> list[str]:
 
 def frappe_names(script: str) -> set[str]:
 	"""Dotted `frappe.*` names the code uses; comments and strings don't count."""
-	try:
-		tree = ast.parse(script)
-	except SyntaxError:
-		return set()
-	names = (dotted_name(node) for node in ast.walk(tree) if isinstance(node, ast.Attribute))
+	names = (dotted_name(node) for node in ast.walk(ast.parse(script)) if isinstance(node, ast.Attribute))
 	return {name for name in names if name and name.startswith("frappe.")}
 
 
@@ -266,6 +262,10 @@ def write_page_data_script(ctx, args: dict) -> str:
 			"(''builtin_function_or_method' is not iterable'). Use a descriptive key instead, "
 			"e.g. data.products or data.merch_items."
 		)
+	try:
+		ast.parse(script)
+	except SyntaxError as e:
+		return f"FAILED: the data script doesn't parse ({e.msg}, line {e.lineno}), so the page would fail to render."
 	if IMPORT_RE.search(script):
 		return (
 			"FAILED: data scripts run sandboxed, where import statements fail at render. "

@@ -50,6 +50,12 @@ class TestWriteDataScript(FrappeTestCase):
 
 		self.assertFalse(self.write(script, False).startswith("FAILED"))
 
+	def test_refuses_a_script_that_does_not_parse(self):
+		out = self.write("data.events = frappe.get_list('Event'", False)
+
+		self.assertTrue(out.startswith("FAILED"))
+		self.assertFalse(self.saved_script())
+
 	def test_allows_the_full_namespace_when_server_scripts_are_on(self):
 		script = "data.events = frappe.get_list('Event', fields=['subject'])"
 
