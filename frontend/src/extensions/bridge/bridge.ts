@@ -1,13 +1,14 @@
 /**
- * The one bridge the editor runs on.
+ * The one bridge of the editor.
  *
- * It lives here, apart from `index.ts`, so a surface can import `dispatcherFor`
- * to build a frame's props without importing the module that composes the
- * method table. The dependency then runs one way: index → surfaces → bridge.
+ * This file is separate from `index.ts`. So a surface can import
+ * `dispatcherFor` for the props of a frame. It does not import the module that
+ * makes the method table. The imports then go in one direction:
+ * index → surfaces → bridge.
  *
- * `index.ts` fills the table with `setMethodTable`, and is the only caller that may. It
- * supplies the read-only reader in the same call, because this file must import
- * no store: six surface tests import it, and they run without pinia.
+ * Only `index.ts` fills the table, with `setMethodTable`. The same call gives
+ * the read-only reader. This file must import no store. Six surface tests
+ * import it, and they run without pinia.
  */
 
 import { createExtensionBridge } from "./extensionBridge";

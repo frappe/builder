@@ -192,19 +192,19 @@ const details = computed(() => activeInstallation.value?.details.value ?? hubDet
 const error = ref("");
 const working = ref(false);
 
-/** Read from the shared list, so a Hub install started on this page swaps it to the installation. */
+/** Reads the shared list. So a Hub install from this page changes it to the installation. */
 const isInstalled = computed(() => installations.value.some((row) => row.name === props.extension));
 
-/** A Hub install is "Installing" until its job lands, then "Ready" or "Failed". An
- * install from any other path, and an older row, has no state and reads as ready. */
+/** A Hub install is "Installing" until its job ends. Then it is "Ready" or "Failed".
+ * An install from a different source, or an older row, has no state. It counts as ready. */
 const isPending = computed(() => details.value?.install_state === "Installing");
 const isFailed = computed(() => details.value?.install_state === "Failed");
 const isReady = computed(() => !isPending.value && !isFailed.value);
 
-/** The running record, which a disabled extension does not have. Its open target needs a frame. */
+/** The running record. A disabled extension has none. Its open target needs a frame. */
 const mounted = computed(() => installedExtensions.value.find((row) => row.name === props.extension));
 
-/** The entry registers the open target, so the buttons wait for it instead of moving when Open arrives. */
+/** The entry registers the open target. So the buttons wait for it, and they do not move when Open comes. */
 const isWaitingForEntryFrame = computed(() => Boolean(mounted.value) && !isEntryFrameReady(props.extension));
 
 const open = () => mounted.value && openExtension(mounted.value);
@@ -238,7 +238,7 @@ const load = async () => {
 	}
 };
 
-/** A hub entry seen through the same shape, minus what only an installation holds. */
+/** A Hub entry in the same shape, without the fields that only an installation has. */
 const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): InstallationDetails => ({
 	...hub,
 	installation_id: "",
@@ -252,11 +252,11 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 const isInstallDialogOpen = ref(false);
 const releasePermissions = ref<Permission[]>([]);
 
-/** Install and Retry stay loading until the dialog closes, whichever way it closes. */
+/** Install and Retry show loading until the dialog closes, in any way. */
 const isAskingInstall = computed(() => working.value || isInstallDialogOpen.value);
 
-/** Serves the Marketplace "Install" and the "Retry" on a failed row. The dialog
- * lists what the exact release asks for, so the install pins that version. */
+/** For the Marketplace "Install" and the "Retry" on a failed row. The dialog shows
+ * the permissions of one release. So the install uses that version. */
 const askInstall = async () => {
 	working.value = true;
 	try {
@@ -270,8 +270,8 @@ const askInstall = async () => {
 };
 
 /**
- * Stays on the page. A fresh install adds a row, which flips `isInstalled`, and the
- * watch loads it. A retry keeps its row, so its details are reloaded here.
+ * Stays on the page. A new install adds a row. Then `isInstalled` becomes true,
+ * and the watch loads the row. A retry keeps its row. So this code reloads its details.
  */
 const install = async (permissions: Permission[]) => {
 	isInstallDialogOpen.value = false;
@@ -287,9 +287,9 @@ const install = async (permissions: Permission[]) => {
 	}
 };
 
-/** Cancel a stuck install or clear a failed one. Neither made anything, so this
- * needs no uninstall summary or confirmation. Only a Hub install gets here, so the
- * watch always has a Hub page to swap in. */
+/** Cancels a stuck install or removes a failed install. Neither made anything. So
+ * this needs no uninstall summary and no confirmation. Only a Hub install comes
+ * here. So the watch always has a Hub page to show. */
 const discardInstall = async () => {
 	working.value = true;
 	try {
@@ -305,9 +305,8 @@ const discardInstall = async () => {
 watch([() => props.extension, isInstalled], load, { immediate: true });
 
 /**
- * The underlying resources are realtime, so this is only an immediate refresh
- * rather than a wait for the round trip — not the only thing that keeps
- * `details` current.
+ * The resources are realtime. So this is only an immediate refresh, with no
+ * wait for the round trip. Other code also keeps `details` current.
  */
 const refreshDetails = () => activeInstallation.value?.reload();
 
@@ -320,7 +319,7 @@ const grant = async (permissions: Permission[]) => {
 	}
 };
 
-/** The install job finishes elsewhere. Reload this page when it touches this extension. */
+/** The install job ends in a different place. Reload this page when it changes this extension. */
 const onInstallDone = (event: { extension: string }) => {
 	if (event.extension === props.extension) load();
 };
@@ -328,7 +327,7 @@ const onInstallDone = (event: { extension: string }) => {
 onMounted(() => builderStore.realtime.on("builder_extension_install", onInstallDone));
 onUnmounted(() => builderStore.realtime.off("builder_extension_install", onInstallDone));
 
-/** Disabling unmounts every frame, so the panel has to say what it did. */
+/** A disable unmounts each frame. So the panel must tell the user what it did. */
 const setEnabled = async (enabled: boolean) => {
 	working.value = true;
 	try {
@@ -343,8 +342,9 @@ const setEnabled = async (enabled: boolean) => {
 };
 
 /**
- * The summary is read before the question, because what the site keeps is the
- * part a user cannot guess: a token styles pages they already published.
+ * The code reads the summary before it asks the question. The user cannot
+ * guess what the site keeps. For example, a token styles pages that the user
+ * already published.
  */
 const uninstall = async () => {
 	working.value = true;
@@ -354,7 +354,7 @@ const uninstall = async () => {
 			const isFromHub = Boolean(details.value?.source_url);
 			await uninstallExtension(props.extension);
 			toast.success("Extension uninstalled");
-			// the watch swaps in the Hub page, and a directory install has none to show
+			// the watch shows the Hub page. An install from a directory has no Hub page
 			if (!isFromHub) emit("back");
 		}
 	} catch (thrown) {
@@ -375,8 +375,8 @@ const uninstallMessage = (summary: Awaited<ReturnType<typeof uninstallSummary>>)
 </script>
 
 <style scoped>
-/* The panel is 300 pixels wide, so anything that cannot wrap has to scroll in
- * its own box rather than push the column. */
+/* The panel is 300 pixels wide. So content that cannot wrap must scroll in
+ * its own box. It must not make the column wider. */
 .extension-readme :deep(pre),
 .extension-readme :deep(table) {
 	overflow-x: auto;

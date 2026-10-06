@@ -1,16 +1,17 @@
 /**
- * The editor snapshot, read once or pushed as it changes.
+ * The editor snapshot. An extension reads it one time, or gets a push when it changes.
  *
- * This is the first thing the host sends without being asked. Every other method
- * answers a request, so the message budget in `dispatcherFor` covers it. A push
- * goes out through `channel.emit`, which no budget guards and none should: a
- * push is the user moving the mouse, not the extension misbehaving. Charging it
- * to the extension's request budget would let a busy canvas make its own calls
- * fail. The throttle is the cap.
+ * A push is the only message that the host sends without a request. All other
+ * methods answer a request. So the message budget in `dispatcherFor` covers them.
  *
- * One subscription per extension, and one watcher over `editorContext` for all
- * of them. The snapshot is one computed, so a watcher per subscription would
- * evaluate the same value once per extension on every change.
+ * A push goes through `channel.emit`. No budget applies to it, and none must.
+ * A push comes from the user, not from a bad extension. If the push used the
+ * request budget, a busy canvas could make the calls of the extension fail.
+ * The throttle is the limit.
+ *
+ * There is one subscription for each extension. One watcher on `editorContext`
+ * serves all of them. The snapshot is one computed. With one watcher for each
+ * subscription, each change would compute the same value for each extension.
  */
 
 import { useThrottleFn } from "@vueuse/core";
@@ -21,7 +22,7 @@ import { fields as asFields, oneOf, refuse } from "../bridge/params";
 import type { EditorContext, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { editorContext } from "./editorContext";
 
-/** The snapshot's own keys. A field an extension names must be one of these. */
+/** The keys of the snapshot. An extension can name only these fields. */
 const CONTEXT_FIELDS = [
 	"selection",
 	"breakpoint",
@@ -35,14 +36,14 @@ const CONTEXT_FIELDS = [
 type ContextField = (typeof CONTEXT_FIELDS)[number];
 
 /**
- * Long enough that a drag across the canvas coalesces into a handful of
- * messages, short enough that no user sees the delay.
+ * With this delay, a drag across the canvas sends only a few messages.
+ * The delay is too short for a user to see.
  */
 const THROTTLE_MS = 100;
 
 type Subscription = {
 	fields: Set<ContextField>;
-	/** What each field looked like when it was last sent, as JSON. */
+	/** The last sent value of each field, as JSON. */
 	sent: Map<ContextField, string>;
 	push: () => void;
 };
@@ -50,12 +51,13 @@ type Subscription = {
 const subscriptions = new Map<string, Subscription>();
 
 /**
- * Created on the first subscription, not at module scope.
+ * The first subscription makes the watcher. Module scope does not.
  *
- * `watch` reads its source once when it is created, and `editorContext` resolves
- * pinia stores inside its getter. Creating it here keeps this module importable
- * without pinia, and costs nothing in the sessions where no extension subscribes
- * to anything — which is most of them.
+ * `watch` reads its source one time when it starts. The getter of
+ * `editorContext` gets the pinia stores. So a module that makes the watcher
+ * at load time needs pinia. With this approach, tests can import this module
+ * without pinia. Also, the watcher costs nothing in a session with no
+ * subscription. Most sessions have none.
  */
 let stopWatching: (() => void) | null = null;
 
@@ -68,13 +70,12 @@ const readFields = (params: unknown): ContextField[] => {
 };
 
 /**
- * Nothing outside the subscribed fields ever travels, and nothing travels at all
- * unless one of them moved.
+ * Sends only the subscribed fields, and only when one of them changed.
  *
- * Whether to send is decided per field. What to send is not: the payload carries
- * every subscribed field, so a handler can destructure them without guarding
- * each one. A partial payload made `({ selection }) => selection.count` throw
- * inside a sandboxed frame whenever some other subscribed field changed alone.
+ * Each field decides if a push is necessary. But the payload has all the
+ * subscribed fields. So a handler can destructure them without a check for
+ * each field. With a partial payload, `({ selection }) => selection.count`
+ * failed in the frame when a different field changed alone.
  */
 const changedSince = (subscription: Subscription, context: EditorContext) => {
 	let moved = false;
@@ -90,17 +91,16 @@ const changedSince = (subscription: Subscription, context: EditorContext) => {
 };
 
 /**
- * What the snapshot holds now counts as already sent, so "changed" means changed
- * since the subscription rather than since the process started. Without this the
- * first push fires whatever moved.
+ * Marks the current snapshot as sent. So "changed" means changed after the
+ * subscription started. Without this, the first push sends any field that
+ * changed before.
  */
 const remember = (subscription: Subscription) => void changedSince(subscription, editorContext.value);
 
 /**
- * Every frame of the extension hears it, because a panel and the entry frame are
- * two contexts of one extension and either may hold the handler. A frame that
- * asked for nothing drops the message on its own side, where its listener list
- * is the thing that knows.
+ * Sends to each frame of the extension. A panel and the entry frame are two
+ * parts of one extension. The handler can be in either frame. A frame with no
+ * listener ignores the message. Only its listener list knows this.
  */
 const send = (extension: string) => {
 	const subscription = subscriptions.get(extension);
@@ -119,9 +119,9 @@ const forget = (extension: string) => {
 };
 
 /**
- * A second call adds its fields rather than replacing them. Every handler in a
- * frame listens on the same `context` event, so a replacement would leave the
- * first handler silent with nothing to explain it.
+ * A second call adds its fields. It does not replace the first fields. All
+ * handlers in a frame listen to the same `context` event. A replacement would
+ * stop the first handler, with no message.
  */
 const subscribe = (params: unknown, extension: InstalledExtension) => {
 	const wanted = readFields(params);
@@ -141,7 +141,7 @@ const subscribe = (params: unknown, extension: InstalledExtension) => {
 	subscriptions.set(extension.name, subscription);
 	bridge.registerTeardown(extension.name, () => forget(extension.name));
 
-	// no first push: `context.get` is the startup path, so the watcher stays lazy
+	// no first push. At startup, the extension uses `context.get`. So the watcher waits for a change
 	stopWatching ??= watch(editorContext, () => subscriptions.forEach((entry) => entry.push()));
 };
 

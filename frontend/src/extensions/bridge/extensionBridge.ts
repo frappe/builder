@@ -1,9 +1,9 @@
 /**
- * The one owner of an extension's live state: its frames, its message budget,
- * and the cleanup list teardown walks.
+ * The one owner of the live state of an extension. This state is its frames,
+ * its message budget and the cleanup list for teardown.
  *
- * A factory rather than a module: `index.ts` holds the one instance the editor
- * runs on, and a test builds its own with its own method table.
+ * It is a factory, not a module. `index.ts` keeps the one instance of the
+ * editor. A test makes its own instance, with its own method table.
  */
 
 import { ChannelCallError, unknownMethod, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
@@ -15,27 +15,27 @@ const overBudget = (extension: string) =>
 	new ChannelCallError({ message: `"${extension}" is sending too many messages.`, code: "rate_limited" });
 
 /**
- * `isReadOnly` is injected rather than imported, so no module on the way to this
- * factory has to import a store. `index.ts` supplies it with the method table,
- * because it is the one file that already imports the whole editor.
+ * The caller gives `isReadOnly`. This file does not import it. So no module
+ * that leads to this factory must import a store. `index.ts` gives it with the
+ * method table. It is the one file that already imports the full editor.
  */
 export type BridgeOptions = { isReadOnly?: () => boolean };
 
 export const createExtensionBridge = (methods: MethodTable = {}, options: BridgeOptions = {}) => {
 	let { isReadOnly } = options;
-	// Look up only registered methods. Object properties such as "constructor"
-	// are inherited from the prototype and are not valid HostMethods.
+	// find only registered methods. Object properties such as "constructor"
+	// come from the prototype. They are not valid HostMethods
 	const methodTable = new Map(Object.entries(methods));
-	// Extension keys throughout this bridge are InstalledExtension.name values.
+	// in this bridge, each extension key is an InstalledExtension.name value
 	const entryChannels = new Map<string, PortChannel>();
-	// every live frame of an extension, because a context push has more than one
-	// destination. The entry channel above stays separate: it is the one frame an
-	// action must reach, and it is chosen by arrival order rather than by liveness
+	// all live frames of an extension, because a context push can go to more than
+	// one frame. The entry channel above is separate. An action must go to that
+	// frame. The bridge chooses it by connect order, not by which frames are live
 	const channels = new Map<string, Set<PortChannel>>();
 	const budgets = new Map<string, Budget>();
 	const cleanups = new Map<string, Array<() => void>>();
 
-	// keyed by extension, not by frame: every frame of one extension shares one budget
+	// the key is the extension, not the frame. All frames of one extension share one budget
 	const budgetFor = (extension: string) => {
 		const known = budgets.get(extension);
 		if (known) return known;
@@ -46,8 +46,8 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 	};
 
 	/**
-	 * The first frame of an extension to connect is always its entry frame, because
-	 * no UI frame can exist before `main.js` has registered anything.
+	 * The first frame of an extension to connect is always its entry frame.
+	 * No UI frame can exist before `main.js` registers a surface.
 	 */
 	const connect = (extension: string, channel: PortChannel) => {
 		if (!entryChannels.has(extension)) entryChannels.set(extension, channel);
@@ -57,7 +57,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 		live.add(channel);
 	};
 
-	/** Identity, not name: a reconnecting frame must not delete its own replacement. */
+	/** Compares the channel, not the name. A frame that connects again must not remove its new channel. */
 	const disconnect = (extension: string, channel: PortChannel) => {
 		if (entryChannels.get(extension) === channel) entryChannels.delete(extension);
 		channels.get(extension)?.delete(channel);
@@ -65,20 +65,20 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 
 	const getEntryChannel = (extension: string) => entryChannels.get(extension);
 
-	/** Every frame the host can push to. A copy, so a disconnect mid-push is safe. */
+	/** All frames that the host can push to. It is a copy. So a disconnect during a push is safe. */
 	const getChannels = (extension: string) => [...(channels.get(extension) ?? [])];
 
 	/**
-	 * One dispatcher per frame, closed over the record it was handed, so a frame
-	 * never names the extension it speaks for and cannot borrow another's grants.
+	 * One dispatcher for each frame. It keeps the record that it got. So a frame
+	 * never names its extension, and it cannot use the permissions of a different extension.
 	 *
-	 * Not memoized: a refetched record carries fresh grants, and a cached
-	 * dispatcher would keep answering with the old ones.
+	 * There is no cache. A new record can have new permissions. A cached
+	 * dispatcher would keep the old permissions.
 	 */
 	const dispatcherFor =
 		(extension: InstalledExtension): Dispatcher =>
 		(method, params) => {
-			// cheapest check first, and a flood of unknown methods is still a flood
+			// the fastest check is first. Too many calls to unknown methods are also too many calls
 			if (!budgetFor(extension.name).take()) throw overBudget(extension.name);
 
 			const entry = methodTable.get(method);
@@ -90,9 +90,9 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 		};
 
 	/**
-	 * Fills the method table after construction, so a surface can import the bridge for
-	 * `dispatcherFor` without the bridge importing the surface back. Once only:
-	 * a second call would give the method list two owners.
+	 * Fills the method table after the bridge exists. So a surface can import the
+	 * bridge for `dispatcherFor`, and the bridge does not import the surface.
+	 * Call it only one time. A second call would give the method list two owners.
 	 */
 	const setMethodTable = (added: MethodTable, settings: BridgeOptions = {}) => {
 		if (methodTable.size) throw new Error("The extension method table is already defined");
@@ -100,7 +100,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 		isReadOnly = settings.isReadOnly ?? isReadOnly;
 	};
 
-	/** Milestone 4 records every cleanup the bridge needs when an extension leaves. */
+	/** Records a cleanup that the bridge runs when an extension stops. */
 	const registerTeardown = (extensionName: string, cleanup: () => void) => {
 		const forExtension = cleanups.get(extensionName) ?? [];
 		cleanups.set(extensionName, forExtension);
@@ -108,8 +108,8 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 	};
 
 	/**
-	 * The bridge does not wait for a disabled or uninstalled extension to clean up
-	 * after itself, because its frames may never run again.
+	 * The bridge does not wait for a disabled or removed extension to clean up.
+	 * Its frames can stop and not run again.
 	 */
 	const teardown = (extensionName: string) => {
 		cleanups.get(extensionName)?.forEach((cleanup) => cleanup());

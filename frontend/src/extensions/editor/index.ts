@@ -8,7 +8,8 @@
  * - `uiMethods.ts`: toasts, dialogs and popovers.
  * - `frameSurface.ts`: the shared state of a dialog or a popover frame.
  *
- * Most methods here need a permission. Most surface methods do not.
+ * The writes need a permission: `page.edit`, `page.write` or `token.write`.
+ * Reads, state and windows need none.
  */
 
 import type { MethodTable } from "../bridge/permissions";

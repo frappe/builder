@@ -1,13 +1,12 @@
 /**
- * What a permission means to the person answering for it.
+ * What a permission means to the user who approves it.
  *
- * The bridge reads a permission as a key. A user reads it as a sentence, so the
- * wording lives here and the gate keeps the key. The classes come from milestone
- * 7: a permission is grouped by how far its effect reaches, not by which method
- * it unlocks.
+ * The bridge reads a permission as a key. A user reads it as a sentence. So
+ * the words are here, and the gate keeps the key. Each class groups
+ * permissions by how far their effect goes, not by the methods they allow.
  *
- * Two classes reach past this editor session, so they are sensitive. A doctype
- * holds the site's own data, and a token styles every published page.
+ * Two classes go past this editor session, so they are sensitive. A doctype
+ * has the data of the site, and a token styles each published page.
  */
 
 import type { Permission } from "frappe-builder-extension-sdk/types";
@@ -20,9 +19,9 @@ const SENSITIVE_CLASSES = [SITE_DATA_CLASS, SHARED_STATE_CLASS];
 
 type PermissionDetail = {
 	permissionClass: string;
-	/** What it lets the extension do, in one line a user can answer. */
+	/** What it lets the extension do, in one line that a user can answer. */
 	label: string;
-	/** Why allowing it reaches further than this editor session. */
+	/** Why its effect goes past this editor session. */
 	warning?: string;
 };
 
@@ -51,7 +50,7 @@ export const permissionDetails: Record<Permission, PermissionDetail> = {
 	},
 };
 
-/** The reading order of the classes, widest reach last. */
+/** The order of the classes. The class with the widest effect is last. */
 const CLASS_ORDER = ["Editor write", SITE_DATA_CLASS, SHARED_STATE_CLASS];
 
 const CLASS_SUMMARIES: Record<string, string> = {
@@ -70,7 +69,7 @@ export type PermissionGroup = {
 export const isSensitive = (permission: Permission) =>
 	SENSITIVE_CLASSES.includes(permissionDetails[permission]?.permissionClass);
 
-/** The classes an extension actually asked for, each holding what it asked for. */
+/** The classes that an extension asked for. Each class has the permissions that it asked for. */
 export const groupPermissions = (permissions: Permission[]): PermissionGroup[] =>
 	CLASS_ORDER.map((name) => ({
 		name,

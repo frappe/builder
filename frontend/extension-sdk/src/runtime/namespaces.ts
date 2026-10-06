@@ -1,17 +1,17 @@
 /**
- * `builder.<surface>.<verb>` over one call.
+ * Each `builder.<surface>.<verb>` sends one call.
  *
- * Registrations are declarations, written at module scope. Every frame of an
- * extension imports the same module, so every frame reads them — which is what
- * lets a panel tab declare the document it loads in the same breath as the tab
- * itself, even though the two are used in different frames.
+ * Registrations are declarations. Write them at module scope. Each frame of
+ * an extension imports the same module, so each frame reads them. So a panel
+ * tab can name its document next to the tab itself. The tab and the document
+ * are in different frames.
  *
- * Only the entry frame tells the host. A declaration read in a panel frame
- * records what that frame needs locally and sends nothing, so the host hears
- * each registration once however many frames are open.
+ * Only the entry frame sends a declaration to the host. A panel frame keeps
+ * what it needs and sends nothing. So the host gets each registration one
+ * time, for any number of open frames.
  *
- * Nothing is validated here. The host validates every parameter, and a
- * copy of a rule on this side would be a second thing to keep in step.
+ * This file does not validate. The host validates each parameter. A copy of a
+ * rule here would be a second rule to keep the same.
  */
 
 import type { OpenTarget } from "../shared/types";
@@ -19,20 +19,19 @@ import { holdAction, releaseAction, type ActionHandler } from "./actions";
 import { getChannel } from "./connect";
 import { getActiveSlot, registerSlot } from "./slots";
 
-/** An imperative call. Any frame may make one: `update` and `run` are not declarations. */
+/** A direct call. Any frame can make one. `update` and `run` are not declarations. */
 const call = (method: string, params?: unknown) => getChannel().call(method, params);
 
 /**
- * A declaration. The host hears it from the entry frame only.
+ * A declaration. The host gets it from the entry frame only.
  *
- * A refusal is logged as well as returned, because a declaration at module scope
- * is usually not awaited, and a silently rejected registration is a surface that
- * never appears with nothing to explain it.
+ * This function logs a refusal and also returns it. Authors usually do not
+ * await a declaration at module scope. A silent refusal gives a surface that
+ * does not show, with no message.
  *
- * A method this Builder does not have is a version gap, not a mistake. An
- * extension ships on its own schedule, so it loses that one surface and keeps
- * the rest, and the warning says which Builder is behind rather than blaming
- * the extension.
+ * A method that this Builder does not have shows a version gap, not an error.
+ * An extension has its own release schedule. It loses only that surface. The
+ * warning tells that Builder is older than the extension.
  */
 export const declare = (method: string, params?: unknown) => {
 	if (getActiveSlot() !== "main") return Promise.resolve();
@@ -49,21 +48,21 @@ export const declare = (method: string, params?: unknown) => {
 };
 
 /**
- * A function, or the name of an action registered elsewhere.
+ * A function, or the name of an action from a different registration.
  *
- * A function cannot cross the port, so the SDK holds it in this frame and sends
- * the item's own name. A string names an action another call registered, which
- * is what a frame other than the entry one has to use.
+ * A function cannot go through the port. The SDK keeps it in this frame and
+ * sends the name of the item. A string names an action that a different call
+ * registered. A frame that is not the entry frame must use a string.
  */
 export type ActionRef = string | ActionHandler;
 
-/** Holds a handler in this frame and tells the host its name. The entry frame only. */
+/** Keeps a handler in this frame and sends its name to the host. Entry frame only. */
 const registerAction = (name: string, handler: ActionHandler) => {
 	if (getActiveSlot() === "main") holdAction(name, handler);
 	return declare("actions.register", { name });
 };
 
-/** Swaps a function action for the name it is held under, because a function cannot be cloned. */
+/** Replaces a function action with its name, because a function cannot be cloned. */
 const resolveAction = <T extends { name: string; action?: ActionRef }>(item: T, prefix = ""): T => {
 	if (typeof item.action !== "function") return item;
 	const name = `${prefix}${item.name}`;
@@ -71,20 +70,20 @@ const resolveAction = <T extends { name: string; action?: ActionRef }>(item: T, 
 	return { ...item, action: name };
 };
 
-/** A control's action is held under the section's name too, so two sections may share a control name. */
+/** The host keeps the action of a control under the section name too. So two sections can use the same control name. */
 const resolveControls = (section: string, controls: Control[]) =>
 	controls.map((control) => resolveAction(control, `${section}.`));
 
 export type ShowWhen = Record<string, unknown>;
 
-/** Resolves to the module holding a slot's document. */
+/** Gives the module that has the document of the slot. */
 export type SlotLoader = () => Promise<unknown>;
 
 export type LeftPanelRegistration = {
 	name: string;
 	label: string;
 	icon: string;
-	/** What the tab's frame paints. Declared here because the tab is what shows it. */
+	/** What the frame of the tab shows. It is declared here, because the tab shows it. */
 	component?: SlotLoader;
 	before?: string;
 	after?: string;
@@ -97,7 +96,7 @@ export type ToolbarRegistration = {
 	icon: string;
 	label?: string;
 	tooltip?: string;
-	/** A function, or the name of an action this extension registered. */
+	/** A function, or the name of an action that this extension registered. */
 	action?: ActionRef;
 	badge?: string | number | null;
 	before?: string;
@@ -109,9 +108,9 @@ export type ToolbarRegistration = {
 export type ContextMenuRegistration = {
 	name: string;
 	label: string;
-	/** A function, or the name of an action this extension registered. */
+	/** A function, or the name of an action that this extension registered. */
 	action: ActionRef;
-	/** Which menu the row belongs to. Fixed at registration. Defaults to "both". */
+	/** The menu of the row. It is set at registration. The default is "both". */
 	menu?: "canvas" | "layers" | "both";
 	before?: string;
 	after?: string;
@@ -124,16 +123,16 @@ export type SettingsRegistration = {
 	label: string;
 	title: string;
 	icon: string;
-	/** What the settings frame paints. Declared here, because this item shows it. */
+	/** What the settings frame shows. It is declared here, because this item shows it. */
 	component?: SlotLoader;
 	before?: string;
 	after?: string;
 };
 
-/** Which Builder control the host renders. A section holds values, not triggers. */
+/** The Builder control that the host shows. A section holds values, not buttons. */
 export type ControlName = "text" | "number" | "select" | "toggle" | "color" | "range";
 
-/** One control in a property section (Tier B). The host renders it. */
+/** One control in a property section (Tier B). The host shows it. */
 export type Control = {
 	name: string;
 	control: ControlName;
@@ -141,22 +140,22 @@ export type Control = {
 	placeholder?: string;
 	/** The host writes the block itself. Needs the `page.edit` permission. */
 	bind?: { attribute?: string; style?: string };
-	/** The extension's own value, when no block property holds it. */
+	/** The value of the extension, when no block property holds it. */
 	value?: unknown;
-	/** An action to invoke after a bound write, or on every change when unbound. */
+	/** The action to run after a bound write. If the control is not bound, it runs on each change. */
 	action?: ActionRef;
-	/** For "select" and "toggle". A toggle option may carry an icon. */
+	/** For "select" and "toggle". A toggle option can have an icon. */
 	options?: Array<{ label: string; value: string; icon?: string }>;
 	min?: number;
 	max?: number;
 	step?: number;
-	/** Per control, so one control can hide while the rest of the section stays. */
+	/** For each control. So one control can hide while the rest of the section stays. */
 	showWhen?: ShowWhen;
 };
 
 export type PropertiesRegistration = {
 	name: string;
-	/** The section header. Defaults to `name`. */
+	/** The section header. The default is `name`. */
 	label?: string;
 	controls: Control[];
 	before?: string;
@@ -175,7 +174,7 @@ export type ItemPatch = {
 
 export const leftPanel = {
 	register: ({ component, ...registration }: LeftPanelRegistration) => {
-		// recorded in every frame, used in the panel frame, sent by neither
+		// each frame records it. The panel frame uses it. No frame sends it
 		if (component) registerSlot("panel", { component });
 		return declare("leftPanel.register", registration);
 	},
@@ -184,10 +183,11 @@ export const leftPanel = {
 };
 
 /**
- * What the Open button in the extension's details pane does.
+ * What the Open button in the details pane of the extension does.
  *
- * A declaration, not a slot: `kind` names an interface the extension registered
- * elsewhere, and Builder opens it. Declare none and the pane draws no button.
+ * It is a declaration, not a slot. `kind` names a UI that the extension
+ * registered in a different call. Builder opens it. With no target, the pane
+ * shows no button.
  */
 export const open = {
 	register: (target: OpenTarget) => declare("open.register", target),
@@ -214,7 +214,7 @@ export const properties = {
 			controls: resolveControls(registration.name, registration.controls),
 		}),
 	unregisterSection: (name: string) => call("properties.unregisterSection", { name }),
-	/** Replaces the whole list, for a control list that depends on the extension's own state. */
+	/** Replaces the full list. Use it when the control list depends on the state of the extension. */
 	setControls: (name: string, controls: Control[]) =>
 		call("properties.setControls", { name, controls: resolveControls(name, controls) }),
 	update: (name: string, patch: ItemPatch) => call("properties.update", { name, patch }),
@@ -235,20 +235,20 @@ export type ContextField =
 export type ContextHandler = (context: Record<string, unknown>) => void;
 
 export const context = {
-	/** The whole snapshot, once. For startup. */
+	/** The full snapshot, one time. Use it at startup. */
 	get: () => call("context.get") as Promise<Record<string, unknown>>,
 
 	/**
-	 * Names the fields this extension cares about, so the host sends nothing else
-	 * and only when one of them changes.
+	 * Names the fields that this extension watches. The host sends only these
+	 * fields, and only when one of them changes.
 	 *
-	 * Use it for a fact no rule can state — `isSVG` is in the snapshot but is not
-	 * a rule key — and push the answer back with `update`. Use `showWhen` for
-	 * anything the rule vocabulary already covers: it costs no messages.
+	 * Use it for a fact that no rule can state. For example, `isSVG` is in the
+	 * snapshot, but it is not a rule key. Send the result back with `update`.
+	 * For all other cases, use `showWhen`. It sends no messages.
 	 */
 	subscribe: (fields: ContextField[], handler: ContextHandler) => {
-		// the host holds one subscription per extension, so a push carries every
-		// field any call site named. This handler hears only its own.
+		// the host keeps one subscription for each extension. So each push has
+		// all the fields that any caller named. This handler gets only its own fields
 		let seen = "";
 		const stop = getChannel().listen("context", (payload) => {
 			const context = payload as Record<string, unknown>;
@@ -257,8 +257,8 @@ export const context = {
 			seen = mine;
 			handler(context);
 		});
-		// a call, not a declaration: any frame may subscribe, and the host pushes
-		// to every frame of the extension, so a panel hears what a panel asked for
+		// a call, not a declaration. Any frame can subscribe. The host pushes to
+		// each frame of the extension, so a panel gets what it asked for
 		void call("context.subscribe", { fields });
 		return stop;
 	},
@@ -266,7 +266,7 @@ export const context = {
 
 export type BlockPatch = {
 	attributes?: Record<string, string | null>;
-	/** Lands on the breakpoint the user is looking at unless `breakpoint` names one. */
+	/** Writes to the breakpoint that the user sees, unless `breakpoint` names a different one. */
 	styles?: Record<string, string | number | null>;
 	classes?: string[];
 	innerHTML?: string;
@@ -274,72 +274,73 @@ export type BlockPatch = {
 };
 
 export const block = {
-	/** One block and its subtree, as a plain object. The id comes from the context or a menu row. */
+	/** One block and its subtree, as a plain object. The id comes from the context or from a menu row. */
 	get: (blockId: string) => call("block.get", { blockId }) as Promise<Record<string, unknown>>,
-	/** Refused without `page.edit`, and refused again while the page is read-only. */
+	/** Refused without `page.edit`. Also refused while the page is read-only. */
 	update: (blockId: string, patch: BlockPatch) => call("block.update", { blockId, ...patch }),
 	/**
-	 * A new block inside `parentId`, appended unless `index` names a place.
+	 * Adds a new block inside `parentId`. It goes at the end, unless `index` names a position.
 	 *
-	 * A block carries its own `children`, so a whole form or card is one call and
-	 * one undo step. Nothing is added until the whole tree reads clean, so a
-	 * refusal leaves the page untouched.
+	 * A block has its own `children`. So a full form or card is one call and one
+	 * undo step. The host adds nothing until the full tree is valid. So a refusal
+	 * does not change the page.
 	 *
-	 * Answers with the root's `blockId`, and with `keys`: every `key` named in
-	 * the tree, mapped to the block it became. The new blocks are not selected:
-	 * the selection stays the user's.
+	 * Returns the `blockId` of the root, and `keys`. `keys` maps each `key` in the
+	 * tree to its new block. The new blocks are not selected. The selection of
+	 * the user does not change.
 	 */
 	insert: (parentId: string, block: NewBlock, index?: number) =>
 		call("block.insert", { parentId, block, index }) as Promise<InsertedBlock>,
 };
 
-/** What `block.insert` draws. `element` is required, and everything else is optional. */
+/** What `block.insert` adds. `element` is required. All other fields are optional. */
 export type NewBlock = {
 	element: string;
 	attributes?: Record<string, string | null>;
 	styles?: Record<string, string | number | null>;
 	classes?: string[];
 	innerHTML?: string;
-	/** The caller's own name for this node, answered back as a `blockId`. Unique in one call. */
+	/** The name that the caller gives this node. The answer maps it to a `blockId`. It must be unique in one call. */
 	key?: string;
 	children?: NewBlock[];
 };
 
 export type InsertedBlock = {
-	/** The root of what this call made. */
+	/** The root of the blocks that this call made. */
 	blockId: string;
-	/** Every `key` in the tree, and the block it became. Empty when the tree named none. */
+	/** Each `key` in the tree, and its new block. Empty when the tree has no keys. */
 	keys: Record<string, string>;
 };
 
 export const page = {
 	/**
-	 * The tree the canvas holds, as a list of roots. A node carries its own
-	 * `children`, so walk it to reach every block.
+	 * The tree of the canvas, as a list of roots. A node has its own `children`.
+	 * Go through them to reach each block.
 	 *
-	 * While the user edits a component this answers with that component, because
-	 * those are the ids `block.get` and `block.update` can resolve. Read
-	 * `context.editingMode` to tell the two apart.
+	 * When the user edits a component, this returns that component. `block.get`
+	 * and `block.update` can find only those ids. Read `context.editingMode` to
+	 * know which tree you have.
 	 */
 	getBlocks: () => call("page.getBlocks") as Promise<Array<Record<string, unknown>>>,
 
 	/**
-	 * Puts one script on the open page, and rewrites it on a later call.
+	 * Adds one script to the open page. A later call replaces the script.
 	 *
-	 * The script runs on the published page, never in the editor canvas, so the
-	 * editor shows what a block is set to and the page shows what it does.
+	 * The script runs on the published page, never in the editor canvas. So the
+	 * editor shows the settings of a block, and the page shows what it does.
 	 *
-	 * One JavaScript and one CSS script per extension per page. Creating the
-	 * first of a type asks the user and names the page. Rewriting it does not.
+	 * Each extension can have one JavaScript and one CSS script on each page.
+	 * Builder asks the user before the first script of a type, and names the page.
+	 * It does not ask before a replacement.
 	 *
-	 * Needs `page.write`, and is refused again while the page is read-only.
+	 * Needs `page.write`. It is also refused while the page is read-only.
 	 */
 	attachScript: (script: PageScript) => call("page.attachScript", script) as Promise<AttachedScript>,
 
-	/** Unlinks and deletes this extension's script of that type. Quiet when it has none. */
+	/** Removes the script of that type from this extension. If there is no script, it does nothing. */
 	detachScript: (type: ScriptType) => call("page.detachScript", { type }),
 
-	/** This extension's own scripts on the open page, and nobody else's. */
+	/** The scripts of this extension on the open page. It does not show the scripts of others. */
 	listScripts: () => call("page.listScripts") as Promise<AttachedScript[]>,
 };
 
@@ -347,7 +348,7 @@ export type ScriptType = "JavaScript" | "CSS";
 
 export type PageScript = {
 	type: ScriptType;
-	/** The whole file. A later call replaces it, so send what the page should run. */
+	/** The full file. A later call replaces it. So send all the code that the page must run. */
 	script: string;
 };
 
@@ -358,16 +359,16 @@ export type AttachedScript = {
 };
 
 export const state = {
-	/** Everything this extension has stored. Per browser and per user. */
+	/** All the values that this extension stored for this user. A dev extension stores them in the browser. */
 	get: () => call("state.get") as Promise<Record<string, unknown>>,
-	/** Merged at the top level. Never removes a key the patch leaves unmentioned. */
+	/** Merges at the top level. It never removes a key that the patch does not name. */
 	set: (state: Record<string, unknown>) => call("state.set", { state }),
 	unset: (key: string) => call("state.unset", { key }),
 };
 
-/** One row in `Builder Token`, as an extension describes it. */
+/** One row in `Builder Token`, as an extension gives it. */
 export type ExtensionToken = {
-	/** This extension's own stable id for the token. The record's name is a uuid. */
+	/** The stable id of the token in this extension. The record name is a uuid. */
 	key: string;
 	token_name: string;
 	type: "Color" | "Dimension" | "Font";
@@ -378,32 +379,32 @@ export type ExtensionToken = {
 
 export const tokens = {
 	/**
-	 * Upserts by `key`, and never deletes what the call leaves unmentioned.
+	 * Adds or changes rows by `key`. It never removes a row that the call does not name.
 	 *
-	 * A network call, not a client write: the row has to exist server-side to
-	 * reach the published site, so this resolves only once Frappe answers.
+	 * It is a network call. The row must exist on the server to reach the
+	 * published site. So the promise resolves only when Frappe answers.
 	 */
 	set: (tokens: ExtensionToken[]) => call("tokens.set", { tokens }),
 	unset: (key: string) => call("tokens.unset", { key }),
 };
 
-/** One document, as Frappe holds it. Its fields are the doctype's own. */
+/** One document, as Frappe keeps it. Its fields are the fields of the doctype. */
 export type Doc = Record<string, unknown>;
 
 /**
- * The options `data.getList` takes, spelled the way `createListResource` spells
- * them, because an extension author is a frontend author.
+ * The options of `data.getList`. They have the same names as in
+ * `createListResource`, because an extension author writes frontend code.
  */
 export type ListOptions = {
 	fields?: string[];
-	/** A dict of equalities, or Frappe's list form: `[["status", "!=", "Open"]]`. */
+	/** A dict of equal values, or the Frappe list form: `[["status", "!=", "Open"]]`. */
 	filters?: Record<string, unknown> | unknown[];
-	/** Matched with OR, beside `filters`, which is matched with AND. */
+	/** These match with OR. `filters` match with AND. */
 	orFilters?: Record<string, unknown> | unknown[];
 	orderBy?: string;
 	groupBy?: string;
 	start?: number;
-	/** Up to 500. The server refuses 0, which Frappe reads as every row. */
+	/** 500 or less. The server refuses 0, because Frappe reads 0 as all rows. */
 	pageLength?: number;
 };
 
@@ -411,37 +412,37 @@ export const data = {
 	/**
 	 * One page of documents.
 	 *
-	 * Every call here needs the `data.access` permission, and runs as the user who
-	 * uses the editor. It reaches only the documents that user can reach, so a
-	 * refusal is the site saying no, and asking again will not change it.
+	 * Each call here needs the `data.access` permission. It runs as the user of
+	 * the editor, and it reaches only the documents of that user. A refusal comes
+	 * from the site. A second call does not change it.
 	 */
 	getList: (doctype: string, options: ListOptions = {}) =>
 		call("data.getList", { doctype, ...options }) as Promise<Doc[]>,
 
-	/** How many documents match, without fetching them. */
+	/** The number of documents that match. It does not get the documents. */
 	getCount: (doctype: string, filters?: ListOptions["filters"]) =>
 		call("data.getCount", { doctype, filters }) as Promise<number>,
 
-	/** One whole document, child tables included. */
+	/** One full document, with its child tables. */
 	getDoc: (doctype: string, name: string) => call("data.getDoc", { doctype, name }) as Promise<Doc>,
 
-	/** A new document. Answers with the inserted document. */
+	/** Adds a new document. Returns the new document. */
 	insert: (doctype: string, doc: Doc) => call("data.insert", { doctype, doc }) as Promise<Doc>,
 
-	/** Only the fields `doc` names change. Answers with the saved document. */
+	/** Changes only the fields that `doc` names. Returns the saved document. */
 	update: (doctype: string, name: string, doc: Doc) =>
 		call("data.update", { doctype, name, doc }) as Promise<Doc>,
 
 	delete: (doctype: string, name: string) => call("data.delete", { doctype, name }),
 };
 
-/** One field of a doctype an extension creates. */
+/** One field of a doctype that an extension makes. */
 export type SchemaField = {
 	fieldname?: string;
 	label?: string;
-	/** A layout break and a Heading need no fieldname. A Table needs a child doctype, so it is refused. */
+	/** A layout break and a Heading need no fieldname. A Table needs a child doctype, so it is not allowed. */
 	fieldtype: string;
-	/** The linked doctype for a Link, or the newline-separated choices for a Select. */
+	/** The linked doctype for a Link. For a Select, the choices, one on each line. */
 	options?: string;
 	reqd?: boolean;
 	unique?: boolean;
@@ -457,17 +458,17 @@ export type Doctype = {
 	fields: SchemaField[];
 };
 
-/** How a new document is named. Fixed at creation: changing it later renames nothing. */
+/** How a new document gets its name. It is set at creation. A later change renames nothing. */
 export type Naming = "hash" | "autoincrement" | "prompt";
 
 export const schema = {
 	/**
-	 * A new custom doctype, owned by this extension.
+	 * Makes a new custom doctype. This extension owns it.
 	 *
-	 * The user is asked first, by name, and the call is refused with the code
-	 * `refused` if they say no. It needs the `schema.write` permission, and it
-	 * needs the **user** to be a System Manager: Frappe wants create permission
-	 * on `DocType` and nothing here lifts that.
+	 * Builder first asks the user, with the name. If the user says no, the call
+	 * fails with the code `refused`. It needs the `schema.write` permission. The
+	 * **user** must also be a System Manager. Frappe needs create permission on
+	 * `DocType`, and nothing here changes that.
 	 */
 	createDoctype: (
 		doctype: string,
@@ -475,32 +476,32 @@ export const schema = {
 		options: { naming?: Naming; istable?: boolean } = {},
 	) => call("schema.createDoctype", { doctype, fields, ...options }) as Promise<Doctype>,
 
-	/** The field list of a doctype the user may read. */
+	/** The field list of a doctype that the user can read. */
 	getDoctype: (doctype: string) => call("schema.getDoctype", { doctype }) as Promise<Doctype>,
 
 	/**
-	 * Adds fields, and updates the ones already there by fieldname.
+	 * Adds fields, and changes the existing fields by fieldname.
 	 *
-	 * Never removes a field the call leaves unmentioned, because removing one
-	 * drops a column and the data in it. Only the extension that made the
-	 * doctype may call this.
+	 * It never removes a field that the call does not name. A removed field
+	 * removes a column and its data. Only the extension that made the doctype
+	 * can call this.
 	 */
 	updateDoctype: (doctype: string, fields: SchemaField[]) =>
 		call("schema.updateDoctype", { doctype, fields }) as Promise<Doctype>,
 
-	/** Drops a doctype this extension made, and its table. The user is asked first. */
+	/** Removes a doctype that this extension made, and its table. Builder asks the user first. */
 	deleteDoctype: (doctype: string) => call("schema.deleteDoctype", { doctype }),
 
-	/** Every doctype this extension made, and whether each still exists. */
+	/** Each doctype that this extension made, and if it still exists. */
 	listDoctypes: () => call("schema.listDoctypes") as Promise<Array<{ doctype: string; exists: boolean }>>,
 };
 
 export const actions = {
 	/**
-	 * The handler stays in this frame, and the host learns only the name.
+	 * The handler stays in this frame. The host gets only the name.
 	 *
-	 * Only the entry frame holds and names it, so the host always calls the frame
-	 * that outlives the others.
+	 * Only the entry frame keeps and names the handler. So the host always
+	 * calls the frame that lives longest.
 	 */
 	register: (name: string, handler: ActionHandler) => registerAction(name, handler),
 	unregister: (name: string) => {
@@ -508,6 +509,6 @@ export const actions = {
 		releaseAction(name);
 		return call("actions.unregister", { name });
 	},
-	/** Runs an action this extension owns, from any of its frames. */
+	/** Runs an action of this extension from any of its frames. */
 	run: (name: string, context?: Record<string, unknown>) => call("actions.run", { name, context }),
 };

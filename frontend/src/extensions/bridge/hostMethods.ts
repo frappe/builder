@@ -1,14 +1,15 @@
 /**
- * What the host answers about itself.
+ * The data that the host gives about itself.
  *
- * Apart from `index.ts`, which is wiring and imports the whole editor through
- * the surfaces. This file imports nothing but a type, so it stays testable.
+ * This file is separate from `index.ts`. `index.ts` connects the parts and
+ * imports the full editor through the surfaces. This file imports only a type.
+ * So tests can use it.
  */
 
 import { PROTOCOL_VERSION } from "frappe-builder-extension-sdk/types";
 import type { MethodTable } from "./permissions";
 
-/** An extension ships on its own schedule, so it needs to know where it landed. */
+/** An extension has its own release schedule. So it must know which Builder runs it. */
 const getHostInfo = () => ({
 	version: window.builder_version,
 	protocol: PROTOCOL_VERSION,

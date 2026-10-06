@@ -1,5 +1,5 @@
 <template>
-	<!-- one field and two buttons: the default "lg" is far wider than it needs -->
+	<!-- one field and two buttons. The default "lg" size is too wide -->
 	<Dialog v-model="showDevExtensionDialog" size="sm">
 		<template #body>
 			<div class="bg-surface-elevation-2 p-5">
@@ -38,7 +38,7 @@ const url = ref(lastDevUrl());
 const error = ref("");
 const loading = ref(false);
 
-// the field is prefilled every time it opens, so a reload costs one click
+// the dialog fills the field each time it opens. So a reload needs only one click
 watch(showDevExtensionDialog, (open) => {
 	if (!open) return;
 	url.value = lastDevUrl();
@@ -50,7 +50,7 @@ const load = async () => {
 	error.value = "";
 	try {
 		const extension = await loadDevExtension(url.value);
-		// the panel opens the record the load just made, so the list has to name it
+		// the panel opens the new record. So the list must name it
 		await loadExtensions();
 		showDevExtensionDialog.value = false;
 		toast.success(`Loaded ${extension.label}`, {

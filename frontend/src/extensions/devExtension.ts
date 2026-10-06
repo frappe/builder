@@ -1,21 +1,21 @@
 /**
- * An extension served from its author's dev server, for this session only.
+ * An extension from the dev server of its author. It runs only in this session.
  *
- * It has no record and no files. The editor asks the dev server what it is
- * serving, and appends one entry to the installed list — which is all the rest of
- * the host reads, so the entry frame, the surfaces, the dispatcher and the
- * teardown need no idea that this one was never installed.
+ * It has no files. The editor asks the dev server what it serves. Then the
+ * editor adds one entry to the installed list. The rest of the host reads only
+ * that list. So the entry frame, the surfaces, the dispatcher and the teardown
+ * do not know that the extension is not installed.
  *
- * A reload drops it, because loading one is a deliberate act and a stale dev
- * extension that fails to load looks like Builder being broken. The last URL is
- * remembered, so nobody retypes it.
+ * A reload removes it. A user must load it on purpose. An old dev extension
+ * that fails to load looks like a Builder error. The editor keeps the last URL,
+ * so the user does not type it again.
  */
 
 import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { call } from "frappe-ui";
 import { ref } from "vue";
 
-/** Served by the build plugin, and by nothing else. */
+/** Only the build plugin serves this path. */
 const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
@@ -28,20 +28,20 @@ export type DevelopmentExtension = InstalledExtension & {
 	readme?: string;
 };
 
-/** One at a time: a second load replaces the first, as one dialog replaces another. */
+/** One at a time. A second load replaces the first. */
 export const devExtension = ref<DevelopmentExtension | null>(null);
 
 export const showDevExtensionDialog = ref(false);
 
 export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 
-/** Both lists carry the dev entry under its own name, so the name is the test. */
+/** Both lists have the dev entry under its own name. So the name is the check. */
 export const isDevExtension = (extension: { name: string }) => devExtension.value?.name === extension.name;
 
 /**
- * A permission this Builder does not know is a version gap, not a fault, so the
- * extension loses that one grant and keeps the rest. Using it is refused by the
- * bridge, as it would be for an installed extension.
+ * An unknown permission shows a version gap, not an error. The extension does
+ * not get that permission. It keeps the others. The bridge refuses calls that
+ * need it, as for an installed extension.
  */
 const grantedFrom = (asked: unknown): Permission[] => {
 	const list = Array.isArray(asked) ? asked : [];
@@ -66,31 +66,30 @@ const read = async (origin: string) => {
 };
 
 /**
- * Gives the dev extension an installation of its own, so it passes the same
- * server gate an installed extension does. Without one, every call it makes to
- * Builder is refused.
+ * Gives the dev extension its own installation. So it passes the same server
+ * gate as an installed extension. Without it, Builder refuses each call.
  *
- * The record answers with what it granted, and that answer is what this entry
- * carries. Both gates then read one list, so narrowing it in the panel reaches
- * the browser as well as the server.
+ * The server returns the granted permissions. This entry keeps that list.
+ * So the browser gate and the server gate read the same list. A change in
+ * the panel then reaches the browser and the server.
  *
- * An extension the user already has installed keeps that installation. The
- * server answers with its permissions rather than making a second record.
+ * If the site already installed the extension, it keeps that installation.
+ * The server returns its permissions. It does not make a second record.
  */
 const install = (extension: string, permissions: Permission[]) =>
 	call(INSTALL_METHOD, { extension, permissions }).catch(() => {
 		throw new Error(`Builder could not register "${extension}". Is the site in developer mode?`);
 	}) as Promise<Permission[]>;
 
-/** A grant written in the panel, carried back to the entry the browser gate reads. */
+/** Copies a permission change from the panel to the entry that the browser gate reads. */
 export const setDevPermissions = (extension: string, permissions: Permission[]) => {
 	if (devExtension.value?.name === extension) devExtension.value.permissions = permissions;
 };
 
 /**
- * Raw `fetch` rather than `call`, because `keepalive` is what lets a request
- * started on `pagehide` outlive the document. Frappe refuses a form POST without
- * the CSRF header, and the browser adds none of its own.
+ * Uses `fetch`, not `call`. With `keepalive`, a request from `pagehide` can
+ * continue after the document closes. Frappe refuses a form POST without the
+ * CSRF header. The browser does not add this header.
  */
 const remove = (extension: InstalledExtension) =>
 	fetch(REMOVE_METHOD, {
@@ -100,7 +99,7 @@ const remove = (extension: InstalledExtension) =>
 		keepalive: true,
 	}).catch((error) => console.error(`Could not remove development extension "${extension.name}"`, error));
 
-/** Takes any URL on the dev server, because an author pastes what the terminal printed. */
+/** Accepts any URL on the dev server. An author pastes the URL from the terminal. */
 export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
 	const origin = new URL(url.trim()).origin;
 	const descriptor = await read(origin);
@@ -115,7 +114,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		version: descriptor.version,
 		serverOrigin: origin,
 		readme: descriptor.readme,
-		// the dev server serves the source entry, so the path comes from it
+		// the dev server serves the source entry. So the path comes from the dev server
 		entry: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
 		permissions: granted,

@@ -1,18 +1,15 @@
 /**
- * Design tokens an extension creates at runtime.
+ * The design tokens that an extension makes while the editor runs.
  *
- * The only write in this milestone that leaves the browser. `block.update`
- * mutates the block tree in memory, and `state.set` writes `localStorage`. A
- * token has to exist server-side, because `Builder Token` feeds
- * `/builder_assets/tokens.css`, which the **published** site serves — and an
- * extension's frame never runs there.
+ * `block.update` changes the block tree in memory. A token must exist on the
+ * server, because `Builder Token` gives the data for `/builder_assets/tokens.css`.
+ * The **published** site serves that file, and an extension frame never runs there.
  *
- * So these resolve only once the Frappe method returns, and a frame awaiting one
- * is waiting on a round trip.
+ * So these calls resolve only when the Frappe method returns. A frame that
+ * waits for one waits for a network round trip.
  *
- * There is no manifest field for a token list. A palette is computed from
- * something the user picks after install, so there is no fixed list a manifest
- * could hold.
+ * The manifest has no field for a token list. A palette comes from a choice
+ * that the user makes after the install. So no fixed list exists.
  */
 
 import { createResource } from "frappe-ui";
@@ -23,13 +20,13 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 const TOKEN_TYPES = ["Color", "Dimension", "Font"] as const;
 
-/** One-shot, the way `router.ts:31` and `usersInfo.ts:64` call a whitelisted method. */
+/** One call, as `router.ts` and `usersInfo.ts` call a whitelisted method. */
 const invoke = (url: string, params: Record<string, unknown>) => createResource({ url }).submit(params);
 
 /**
- * `key` is the extension's own stable id, because `Builder Token.name` is a
- * database-assigned uuid the extension never sees. Everything else is what
- * the doctype holds.
+ * `key` is the stable id that the extension gives. `Builder Token.name` is a
+ * uuid from the database, and the extension never sees it. The other fields
+ * are the fields of the doctype.
  */
 const readToken = (value: unknown) => {
 	const sent = fields(value);
@@ -49,8 +46,8 @@ const readToken = (value: unknown) => {
 };
 
 /**
- * Upserts by `key`, and never deletes what the call leaves unmentioned. Dropping
- * from ten shades to six needs an explicit `unset` for the four that fell out.
+ * Adds or changes rows by `key`. It never removes a row that the call does not
+ * name. To go from ten shades to six, call `unset` for the four old shades.
  */
 const set = (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params).tokens;
@@ -78,7 +75,7 @@ const unset = (params: unknown, extension: InstalledExtension) => {
 };
 
 export const tokenMethods: MethodTable = {
-	// a network call, not a client write, so read-only refuses it in the bridge too
+	// a network call, not a client write. The bridge also refuses it in read-only mode
 	"tokens.set": { needs: "token.write", run: set },
 	"tokens.unset": { needs: "token.write", run: unset },
 };

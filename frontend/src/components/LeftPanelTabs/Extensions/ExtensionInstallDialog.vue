@@ -1,5 +1,5 @@
 <template>
-	<!-- Collects the permissions granted at install, and nothing else. -->
+	<!-- Gets the permissions to grant at install, and nothing else. -->
 	<Dialog :modelValue="open" size="sm" @update:modelValue="(value: boolean) => emit('update:open', value)">
 		<template #body>
 			<div class="bg-surface-elevation-2 p-5">
@@ -49,8 +49,8 @@ const emit = defineEmits<{
 
 const granted = ref<Permission[]>([]);
 
-// every permission starts on each time the dialog opens, so a choice from an
-// earlier attempt does not carry over
+// all permissions start on each time the dialog opens. So a choice from an
+// earlier try does not stay
 watch(
 	() => props.open,
 	(open) => open && (granted.value = [...props.requested]),

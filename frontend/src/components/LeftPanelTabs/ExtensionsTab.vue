@@ -12,15 +12,15 @@ import { toast } from "frappe-ui";
 import { onMounted, onUnmounted, ref } from "vue";
 
 /**
- * The list and one extension's details are the same panel, one at a time, the way
- * VS Code opens an extension page from its list. The tab owns which one is open
- * and nothing else.
+ * The list and the details of one extension use the same panel, one at a time.
+ * VS Code opens an extension page from its list in the same way. The tab owns
+ * only the choice of which one is open.
  */
 const selectedExtension = ref<string | null>(null);
 
 const builderStore = useBuilderStore();
 
-/** A Hub install finishes in a background job. Reload the list when it lands. */
+/** A Hub install ends in a background job. Reload the list when it ends. */
 const onInstallDone = (event: { extension: string; state: "Ready" | "Failed" }) => {
 	loadExtensions();
 	if (event.state === "Failed") toast.error(`Could not install ${event.extension}`);

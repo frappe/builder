@@ -23,8 +23,8 @@ import { contextMethods } from "./context/contextMethods";
 import { editorMethods } from "./editor";
 import { surfaceMethods } from "./surfaces";
 
-// the store resolves on each call, never at import, so nothing here depends on
-// the order the editor loads in
+// the store loads on each call, not at import. So this code does not depend
+// on the load order of the editor
 bridge.setMethodTable(
 	{ ...hostMethods, ...surfaceMethods, ...contextMethods, ...editorMethods, ...dataMethods },
 	{ isReadOnly: () => useBuilderStore().readOnlyMode },

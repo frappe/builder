@@ -1,14 +1,14 @@
 /**
- * Tier B. A section in the right panel, built from a list of controls the
- * extension sends as data. `controlSchema.ts` renders each one with Builder's
- * own components, so the section cannot look foreign.
+ * Tier B. A section in the right panel, from a list of controls that the
+ * extension sends as data. `controlSchema.ts` shows each control with Builder
+ * components. So the section looks the same as the built-in sections.
  *
- * The section header reads `label`, not the registry name, because the host
- * composes every name as `extension:name` and nobody wants that on screen.
+ * The section header shows `label`, not the registry name. The host makes each
+ * name as `extension:name`, and the user must not see that.
  *
  * No method here needs a permission. A section with no bound control writes
- * nothing, so the grant belongs to the controls, and `readControls` checks it
- * on both doors into that list.
+ * nothing. So the permission belongs to the controls. `readControls` checks it
+ * on both ways into that list.
  */
 
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";
@@ -54,7 +54,7 @@ const mergeRegistration = (
 	...current,
 	label: optionalText(patch.label, "label") ?? current.label,
 	visible: flag(patch.visible, current.visible),
-	// setControls reshapes itself into this patch, so both doors read the same way
+	// setControls changes into this patch. So both ways use the same reader
 	controls: "controls" in patch ? readControls(patch.controls, extension) : current.controls,
 });
 
@@ -78,8 +78,8 @@ const sections = createSurfaceItems<Registration, PropertySection>({
 });
 
 /**
- * Replacing the whole list is a patch of one field, so it reuses the merge and
- * re-register path every surface shares.
+ * A new full list is a patch of one field. So it uses the merge and the second
+ * registration that all surfaces share.
  */
 const setControls = (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);

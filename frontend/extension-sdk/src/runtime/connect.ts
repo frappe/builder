@@ -1,8 +1,8 @@
 /**
  * The frame side of the handshake.
  *
- * Builder posts one message on the window with a port beside it. Everything
- * after that runs on the port, so this listener matters exactly once.
+ * Builder sends one message on the window, with a port. After that, all
+ * messages use the port. So this listener is necessary only one time.
  */
 
 import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
@@ -11,12 +11,12 @@ import { dispatch } from "./actions";
 import { runSlot, setActiveSlot } from "./slots";
 
 /**
- * The origin check lives here, not in the host: measured, every extension frame
- * reports `origin: "null"`, so a host-side allowlist separates nothing.
+ * The frame checks the origin, not the host. Each extension frame sends
+ * `origin: "null"`. So a check on the host side cannot tell frames apart.
  *
- * Builder serves this file, so its own URL names the host origin — and names the
- * hostname Builder is actually being used on, which a value baked in at render
- * time can get wrong.
+ * Builder serves this file, so the URL of this file gives the host origin.
+ * It also gives the hostname that the user really opened. A value set when
+ * the page renders can be wrong.
  */
 const HOST_ORIGIN = new URL(import.meta.url).origin;
 
@@ -39,15 +39,18 @@ const isConnectMessage = (data: unknown): data is ConnectMessage =>
 const applyTheme = (theme: unknown) => document.documentElement.setAttribute("data-theme", String(theme));
 
 /**
- * Runs the extension, from wherever the host said its code is.
+ * Runs the extension code from the location that the host gave.
  *
- * Installed code arrives as source, because a frame sends no cookie and no route
- * can serve one user's copy. A Blob URL makes it a module, and the document's
- * import map still resolves the SDK inside it: a map belongs to the document, not
- * to the URL a module came from.
+ * Installed code comes as a Blob. A frame sends no cookie, so no route can
+ * check who asks for the code. A Blob URL makes the code a module. The import
+ * map still finds the SDK inside it, because the map belongs to the document.
  *
- * A dev extension keeps its URL. A dev server serves unbundled modules that
- * import each other by relative path, and a Blob gives them no path.
+ * The frame makes the Blob URL itself. A Blob URL belongs to the origin that
+ * made it. This frame has an opaque origin, so it cannot load a URL from the
+ * editor. The new Blob also sets the type that a module script must have.
+ *
+ * A dev extension keeps its URL. A dev server serves separate modules that
+ * import each other by relative path. A Blob gives them no path.
  */
 const runEntry = async (message: ConnectMessage) => {
 	if (message.source === undefined) {
@@ -60,7 +63,7 @@ const runEntry = async (message: ConnectMessage) => {
 	try {
 		await import(/* @vite-ignore */ url);
 	} finally {
-		// the module has loaded, and a build that ships one file imports nothing later
+		// the module is loaded. A one-file build imports nothing more
 		URL.revokeObjectURL(url);
 	}
 };
@@ -72,28 +75,27 @@ const start = async (message: ConnectMessage, port: MessagePort) => {
 	slotProps = message.props ?? {};
 	setActiveSlot(message.slot);
 
-	// the shell names no extension, so what to run arrives here
+	// the shell names no extension. The message tells what to run
 	await runEntry(message);
-	// the props travel to the document the slot mounts, so a dialog can be opened
-	// with call-time arguments
+	// the props go to the slot document. So a dialog can open with call-time arguments
 	await runSlot(slotProps);
-	// The iframe document loading is not enough: the extension's entry and its
-	// visual slot may still be importing. The host removes its loader only now.
+	// A loaded iframe document is not sufficient. The entry and the slot can
+	// still import modules. The host removes its loader only after this event.
 	channel.emit("slot.ready");
 };
 
 /**
- * Registered when this module loads. A module script runs before the iframe's
- * own `load` event, which is what the host waits for, so the message cannot
- * arrive before this listener exists.
+ * Adds the handshake listener when this module loads. A module script runs
+ * before the `load` event of the iframe. The host waits for that event.
+ * So the message cannot come before this listener exists.
  */
 export const listenForHandshake = () => {
 	window.addEventListener("message", (message: MessageEvent) => {
 		if (message.origin !== HOST_ORIGIN) return;
-		if (channel) return; // the port transfers once, so the handshake happens once
+		if (channel) return; // a port moves only one time, so the handshake occurs one time
 		if (!isConnectMessage(message.data) || !message.ports[0]) return;
-		// a frame that cannot import its entry, or whose slot throws while it
-		// mounts, would otherwise fail with nothing printed anywhere
+		// if the entry import fails or the slot fails to mount, show the error.
+		// Otherwise the frame fails with no message
 		start(message.data, message.ports[0]).catch((error) =>
 			console.error(`[builder] the "${message.data.slot}" frame could not start`, error),
 		);

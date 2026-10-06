@@ -1,9 +1,9 @@
 <template>
 	<!--
-		The host owns the chrome, so every extension dialog looks the same and only
-		the document inside it belongs to the extension. `Controls/Dialog.vue`
-		is what Builder's own settings dialog uses, so the backdrop, Escape and the
-		click outside all come from there.
+		The host owns the window. So all extension dialogs look the same. Only the
+		document inside belongs to the extension. The Builder settings dialog also
+		uses `Controls/Dialog.vue`. The backdrop, Escape and the click outside come
+		from there.
 	-->
 	<Dialog v-if="dialog" :modelValue="true" size="lg" @update:modelValue="dismiss">
 		<template #body>
@@ -33,7 +33,7 @@ import { dismissDialog, openDialogs } from "@/extensions/editor/uiMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { computed } from "vue";
 
-/** A compact host-owned canvas. Dialog content scrolls within this frame. */
+/** A small area that the host owns. The dialog content scrolls in this frame. */
 const FRAME_HEIGHT = 192;
 
 const props = defineProps<{ extension: InstalledExtension }>();
@@ -42,8 +42,8 @@ const dialog = computed(() => openDialogs.get(props.extension.name));
 const dispatch = computed(() => dispatcherFor(props.extension));
 
 /**
- * Escape, the close button and a click outside all end the same way: the pending
- * `openDialog` resolves with nothing, and the host does that itself.
+ * Escape, the close button and a click outside have the same result. The host
+ * resolves the waiting `openDialog` with nothing.
  */
 const dismiss = () => dismissDialog(props.extension.name);
 </script>

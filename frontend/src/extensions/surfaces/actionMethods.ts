@@ -1,18 +1,18 @@
 /**
- * Actions: the functions an extension owns, and the host calls back into.
+ * Actions are the functions of an extension. The host calls them.
  *
- * A descriptor cannot carry a function across `postMessage`, so an extension
- * names an action and the host turns that name into a function. The
- * handler itself never leaves the frame. Invoking one is the only path where
- * the host calls the extension, rather than the other way round.
+ * A descriptor cannot send a function through `postMessage`. So an extension
+ * names an action, and the host changes that name into a function. The handler
+ * stays in the frame. This is the only place where the host calls the
+ * extension. In all other places, the extension calls the host.
  *
- * An action is scoped to the extension that registered it, so there is no
- * shared namespace and no extension can invoke another's action.
+ * Each action belongs to the extension that registered it. There is no shared
+ * namespace. No extension can run the action of a different extension.
  *
- * Only the entry frame should register an action, because any other frame may
- * be closed while the action is still on a descriptor. The host cannot tell
- * which frame called, so the SDK refuses it where the slot is known — the same
- * reasoning 1.12 applies to origin checks.
+ * Only the entry frame must register an action. A different frame can close
+ * while a descriptor still shows the action. The host cannot know which frame
+ * called. So the SDK makes the check, because it knows the slot. The origin
+ * check uses the same approach.
  */
 
 import { toast } from "frappe-ui";
@@ -37,8 +37,8 @@ const unregister = (params: unknown, extension: InstalledExtension) => {
 };
 
 /**
- * An action that resolves to nothing rejects, raises a toast and logs both
- * names, so a user sees a message and an author sees a stack.
+ * If no action has the name, the call fails. It shows a toast and logs both
+ * names. So a user sees a message, and an author sees a stack.
  */
 export const invokeAction = async (
 	extension: InstalledExtension,
@@ -66,7 +66,7 @@ const run = (params: unknown, extension: InstalledExtension) => {
 };
 
 export const actionMethods: MethodTable = {
-	// the handler runs in the extension's own frame, so nothing here needs a grant
+	// the handler runs in the frame of the extension. So these methods need no permission
 	"actions.register": { needs: null, run: register },
 	"actions.unregister": { needs: null, run: unregister },
 	"actions.run": { needs: null, run },

@@ -1,29 +1,28 @@
 /**
- * The vocabulary the host and the SDK both read.
+ * The words that the host and the SDK both use.
  *
- * Domain types first, then the shapes that cross a port. `transport/messages.ts`
- * holds the guards over these shapes.
+ * Domain types come first. Then come the shapes that go through a port.
+ * `transport/messages.ts` has the checks for these shapes.
  */
 
 import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";
 
-/** The five documents an extension can have. The host names one at the handshake. */
+/** The five documents that an extension can have. The host names one in the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
 
 /**
  * What Builder opens when the user opens this extension from its details pane.
  *
- * An extension declares one or Builder draws no Open button. A popover and a
- * dialog are frames Builder draws itself, so neither needs the permission the
- * matching `ui.open*` call needs: the user pressed a button in Builder's own
- * chrome, and the extension asked for nothing.
+ * If an extension declares no target, Builder shows no Open button.
+ * Builder shows the popover or the dialog in its own frame. The user
+ * pressed a button in Builder, and the extension asked for nothing.
  */
 export type OpenTarget =
 	| { kind: "popover"; width?: number; height?: number }
 	| { kind: "dialog"; title?: string }
 	| { kind: "leftPanel"; name: string };
 
-/** Every permission the bridge gates a method by. Mirrors the server protocol. */
+/** Each permission that the bridge uses to gate a method. The server has the same list. */
 export { PERMISSIONS, PROTOCOL_VERSION };
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -39,23 +38,24 @@ export type ExtensionManifest = {
 	permissions: Permission[];
 };
 
-/** One extension this user runs, as the editor mounts it. */
+/** One extension that this user runs, as the editor mounts it. */
 export type InstalledExtension = {
 	name: string; // "acme/icons"
 	label: string;
-	/** A brief summary shown in the Extensions panel. */
+	/** A short summary for the Extensions panel. */
 	description?: string;
 	permissions: Permission[];
-	/** A data URI for the SVG the package ships. Unset when it ships none. */
+	/** A data URI for the SVG in the package. Not set if the package has no SVG. */
 	icon?: string;
 	/**
-	 * Of the site's installed files. Set for an installed extension, and it keys
-	 * the frame, so a rebuild remounts one. A development extension has none.
+	 * The checksum of the installed files on the site. Only an installed
+	 * extension has one. It is part of the frame key. So a new build mounts
+	 * a new frame. A development extension has no checksum.
 	 */
 	checksum?: string;
 	/**
-	 * Where a dev server serves the entry. Set for a development extension only:
-	 * an installed one has no URL, because no route serves one user's files.
+	 * The URL of the entry on a dev server. Only a development extension has one.
+	 * An installed extension has no URL, because no route serves the files of one user.
 	 */
 	entry?: string;
 };
@@ -63,25 +63,25 @@ export type InstalledExtension = {
 export type Breakpoint = "desktop" | "tablet" | "mobile";
 
 /**
- * What the host publishes about the selection.
+ * The data that the host gives about the selection.
  *
- * Every field but `count` describes one block, so every field but `count` is
- * defined only when exactly one block names it. With three blocks selected,
- * `isText: true` would not be a coarse answer, it would be a false one.
+ * `count` and `blockIds` describe the full selection. Each other field
+ * describes one block. So a field has a value only when one block is
+ * selected. With three blocks selected, `isText: true` would be false.
  *
- * A rule naming any of these therefore stops matching under a multi-selection,
- * because the matcher compares strictly and nothing equals `undefined`. The item
- * hides rather than acting on a claim about a block the user did not mean.
+ * So a rule that names one of these fields does not match when the user
+ * selects more than one block. The matcher compares strictly, and no value
+ * equals `undefined`. The item then hides. It does not act on the wrong block.
  *
- * The context menu looks like an exception and is not one: a right-click names
- * one block, so the host fills these from that block, whatever else is selected.
+ * The context menu is not an exception. A right-click names one block. The
+ * host fills these fields from that block, whatever else is selected.
  *
- * The kind checks stay separate booleans rather than one `blockType`, because
- * `Block` treats them as independent. A block can be a link and a container.
+ * The kind checks are separate booleans, not one `blockType`. `Block` keeps
+ * them independent. For example, a block can be a link and a container.
  */
 export type EditorSelection = {
 	count: number;
-	/** Every selected block, in the order the canvas holds them. Always present. */
+	/** Each selected block, in canvas order. Always present. */
 	blockIds: string[];
 	blockId?: string;
 	element?: string; // the tag, the underlying truth behind every kind check
@@ -99,14 +99,14 @@ export type EditorSelection = {
 	isChildOfComponent?: boolean;
 };
 
-/** One block's own answers, carrying no claim about the selection it sits in. */
+/** The facts about one block. They say nothing about the full selection. */
 export type BlockSnapshot = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
- * The snapshot an extension reads instead of Builder's live state.
+ * The snapshot that an extension reads. It is not the live state of Builder.
  *
- * A field enters this list only when a built-in `condition` already reads it.
- * Adding a field later is cheap. Removing one is not.
+ * Add a field only when a built-in `condition` already reads it.
+ * It is easy to add a field later. It is difficult to remove one.
  */
 export type EditorContext = {
 	selection: EditorSelection;
@@ -114,21 +114,21 @@ export type EditorContext = {
 	editingMode: "page" | "fragment";
 	readOnly: boolean;
 	isAIEnabled: boolean;
-	/** Null while no page is open, so nothing can read an empty route as a real one. */
+	/** Null when no page is open. So no code reads an empty route as a real route. */
 	page: { route: string; isTemplate: boolean; isStandard: boolean; published: boolean } | null;
 	site: { isDeveloperMode: boolean; isFCSite: boolean };
 };
 
 /**
- * Extensions ship on their own schedule and will run against an older Builder,
- * so every message names the version it was written for.
+ * An extension has its own release schedule. It can run on an older Builder.
+ * So each message names the version that it uses.
  */
 /**
- * The one message sent on the window, with the port transferred beside it.
- * Everything after this runs on the port.
+ * The one message on the window. The port goes with it.
+ * All other messages use the port.
  *
- * It names no extension and no permission. The host knows which extension a port
- * belongs to, and the host alone enforces a permission.
+ * It names no extension and no permission. The host knows the extension of
+ * each port. Only the host applies permissions.
  */
 export type ConnectMessage = {
 	v: typeof PROTOCOL_VERSION;
@@ -136,7 +136,7 @@ export type ConnectMessage = {
 	slot: ExtensionSlot;
 	/** A development extension imports this URL from its dev server. */
 	entry?: string;
-	/** An installed extension arrives as code, and the frame runs it from a Blob. */
+	/** The code of an installed extension. The frame runs it from a Blob. */
 	source?: string;
 	theme: "light" | "dark";
 	props?: Record<string, unknown>; // only ever set for a dialog
@@ -144,7 +144,7 @@ export type ConnectMessage = {
 
 export type ChannelError = {
 	message: string;
-	/** Set when a caller branches on the reason, such as "unsupported_version". */
+	/** Set when the caller must act on the reason, for example "unsupported_version". */
 	code?: string;
 };
 
@@ -171,13 +171,13 @@ export type EventMessage = {
 	payload?: unknown;
 };
 
-/** Both sides send all three kinds, so no shape carries a direction. */
+/** Both sides send all three types. So no shape has a direction. */
 export type PortMessage = RequestMessage | ResponseMessage | EventMessage;
 
 /**
- * A message this Builder recognizes the shape of, at a version it may not speak.
- * The channel answers such a message instead of dropping it, so an extension
- * built against a newer Builder learns why its call failed.
+ * A message with a known shape and a version that this Builder can not know.
+ * The channel answers this message. It does not ignore it. So an extension
+ * for a newer Builder learns why its call failed.
  */
 export type AnyVersionMessage = (
 	Omit<RequestMessage, "v"> | Omit<ResponseMessage, "v"> | Omit<EventMessage, "v">

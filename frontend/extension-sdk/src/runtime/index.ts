@@ -1,5 +1,5 @@
 /**
- * `frappe-builder-extension-sdk` — the object an extension imports.
+ * `frappe-builder-extension-sdk`: the object that an extension imports.
  *
  * - `connect.ts`: the handshake, and how the frame runs the extension code.
  * - `namespaces.ts`: the `builder.<surface>` APIs.
@@ -8,8 +8,8 @@
  * - `ui.ts`: toasts, dialogs and popovers from inside a frame.
  * - `resourceFetcher.ts`: sends frappe-ui resource requests through the bridge.
  *
- * The shell loads this file, and the import map resolves the same URL for the
- * extension's own import, so both get one module instance and one channel.
+ * The shell loads this file. The import map gives the same URL to the import
+ * of the extension. So both use one module copy and one channel.
  */
 
 import { getChannel, listenForHandshake } from "./connect";
@@ -37,97 +37,98 @@ export type HostInfo = { version: string; protocol: number };
 
 const builder = {
 	/**
-	 * Imperative startup work, in the hidden entry frame only.
+	 * Startup code. It runs only in the hidden entry frame.
 	 *
-	 * Registrations do not belong here. They are declarations, and every frame
-	 * needs to read them, so they go at module scope.
+	 * Do not put registrations here. Every frame must read them.
+	 * So they go at module scope.
 	 */
 	main: (handler: () => void) => registerMain(handler),
 
 	/**
-	 * Names the layer that mounts a component, once for this extension.
+	 * Sets the adapter that mounts a component. Call it one time for each extension.
 	 *
-	 * `frappe-builder-extension-sdk/vue` exports `vueAdapter`. Without one, a
-	 * slot's module has to export `mount(element, props)` itself.
+	 * `frappe-builder-extension-sdk/vue` exports `vueAdapter`. If there is no
+	 * adapter, the module of each slot must export `mount(element, props)`.
 	 */
 	use: (adapter: Mounter) => use(adapter),
 
 	/**
-	 * The document `ui.openDialog` opens. Builder tells nobody: a dialog is
-	 * opened by a call, so this registration stays in the frame that made it.
+	 * The document that `ui.openDialog` opens. Builder does not send it to the host.
+	 * A call opens a dialog. So this registration stays in the frame that made it.
 	 */
 	dialog: {
 		register: (entry: SlotEntry) => registerSlot("dialog", entry),
 	},
 
-	/** The same, for the floating panel `ui.openPopover` opens. */
+	/** The same, for the floating panel that `ui.openPopover` opens. */
 	popover: {
 		register: (entry: SlotEntry) => registerSlot("popover", entry),
 	},
 
 	/**
-	 * What the Open button in this extension's details pane opens: a popover, a
-	 * dialog, or its own left panel tab. Declare none and the pane draws none.
+	 * What the Open button in the details pane of this extension opens. It is a
+	 * popover, a dialog or the left panel tab of the extension. With no target,
+	 * the pane shows no button.
 	 */
 	open,
 
-	/** One tab, registered from the entry frame and drawn by the host (Tier C). */
+	/** One tab. The entry frame registers it, and the host shows it (Tier C). */
 	leftPanel,
 
-	/** A descriptor. Builder draws the button and posts the action back (Tier A). */
+	/** A descriptor. Builder shows the button and sends the action back (Tier A). */
 	toolbar,
 
-	/** A row in the block menu. Its rule is answered for the block under the cursor. */
+	/** A row in the block menu. The host checks its rule for the block under the cursor. */
 	contextMenu,
 
-	/** Tier B. A list naming Builder's own controls, which the host renders. */
+	/** Tier B. A list that names Builder controls. The host shows them. */
 	properties,
 
-	/** One page in the settings dialog, and the document it loads. */
+	/** One page in the settings dialog, and the document that it loads. */
 	settings,
 
-	/** The editor snapshot: read it once, or name the fields to be told about. */
+	/** The editor snapshot. Read it one time, or name the fields to watch. */
 	context,
 
-	/** One block, by the id a menu row or the snapshot handed over. */
+	/** One block, by the id from a menu row or from the snapshot. */
 	block,
 
-	/** The whole tree, when one block is not enough. */
+	/** The full tree, when one block is not sufficient. */
 	page,
 
-	/** A modal, and a draggable popover, the host draws around this extension's own document. */
+	/** A modal and a popover that a user can move. The host shows them around the document of this extension. */
 	ui,
 
-	/** This extension's own storage. No permission, because Builder never reads it. */
+	/** The storage of this extension. It needs no permission, because Builder never reads it. */
 	state,
 
-	/** Real `Builder Token` rows, so they reach the published site too. */
+	/** Real `Builder Token` rows. So they also reach the published site. */
 	tokens,
 
 	/**
-	 * Site data. Ask the user for a doctype first: nothing here is granted at install.
+	 * Site data. Each call needs the `data.access` permission.
 	 *
-	 * `fetcher` is added here rather than in `namespaces.ts` so that file never
-	 * imports the one that reads it back. Wire it once, in the entry:
+	 * This file adds `fetcher`, not `namespaces.ts`. So `namespaces.ts` does not
+	 * import the file that reads it. Connect it one time, in the entry:
 	 *
 	 * ```js
 	 * import { setConfig } from "frappe-ui";
 	 * setConfig("resourceFetcher", builder.data.fetcher);
 	 * ```
 	 *
-	 * Then `createListResource` and `createDocumentResource` work as they do in
-	 * any Frappe app, within the permissions of the user who uses the editor.
+	 * Then `createListResource` and `createDocumentResource` work as in any Frappe
+	 * app. They get only what the user of the editor can get.
 	 */
 	data: { ...data, fetcher: resourceFetcher },
 
-	/** Doctypes this extension creates. The user is asked before a table is made or dropped. */
+	/** The doctypes of this extension. Builder asks the user before it makes or removes a table. */
 	schema,
 
-	/** The functions this extension owns. A descriptor names one, the host calls it. */
+	/** The functions of this extension. A descriptor names one. The host calls it. */
 	actions,
 
 	host: {
-		/** Which Builder this extension landed in. An extension ships on its own schedule. */
+		/** The Builder version that runs this extension. An extension has its own release schedule. */
 		info: () => getChannel().call<HostInfo>("host.info"),
 	},
 };

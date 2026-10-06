@@ -1,20 +1,20 @@
 /**
- * CRUD on real documents.
+ * Reads, adds, changes and removes real documents.
  *
- * Every method opens with the same gate and then gets out of the way. The
- * `data.access` permission says this extension works with site data at all.
+ * Each method starts with the same gate. The `data.access` permission says
+ * that this extension can use site data.
  *
- * The second gate is the one that matters most, and nothing here can reach it:
- * `frappe.client` runs the query as the logged-in user, so an extension sees the
- * rows that user sees and no others.
+ * The second gate is the most important, and no code here can change it.
+ * `frappe.client` runs the query as the logged-in user. So an extension sees
+ * only the rows that this user sees.
  *
- * The option names follow `createListResource` — `fields`, `filters`, `orderBy`,
- * `start`, `pageLength` — because an extension author is a frontend author and
- * that is the vocabulary already in this repo. The host translates them to
- * Frappe's own names on the way out.
+ * The option names come from `createListResource`: `fields`, `filters`,
+ * `orderBy`, `start` and `pageLength`. An extension author writes frontend
+ * code, and this repo already uses these names. The host changes them to the
+ * Frappe names before it sends the request.
  *
- * Not a page write, so read-only mode does not refuse any of it. Read-only is
- * about the page being edited, and a Contact is not that page.
+ * These are not page writes. So read-only mode does not refuse them.
+ * Read-only mode is about the open page, and a Contact is not that page.
  */
 
 import { createResource } from "frappe-ui";
@@ -23,22 +23,23 @@ import { fields, optionalText, refuse, text, wholeNumber } from "../bridge/param
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
- * Structured-cloneable, always.
+ * Makes a value that `postMessage` can always clone.
  *
  * `createResource` keeps its `data` reactive, and `postMessage` cannot clone a
- * Vue proxy. A document has no fixed shape to rebuild field by field, so the
- * round trip through JSON is what makes it plain. It drops `undefined`, which a document off the wire never holds.
+ * Vue proxy. A document has no fixed shape, so this code cannot copy it field
+ * by field. A JSON round trip makes it plain. It removes `undefined`, but a
+ * document from the server never has `undefined`.
  */
 const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
 
-/** A server refusal, as something the frame can branch on. Asking again would not change it. */
+/** A server refusal, in a form that the frame can act on. A second call does not change it. */
 const asRefusal = (thrown: unknown) => {
 	const sent = thrown as { exc_type?: string; messages?: string[]; message?: string };
 	const message = sent.messages?.[0] || sent.message || "The server refused that call.";
 	return refuse(message, "server_error");
 };
 
-/** One-shot, the way `tokenMethods.ts:27` calls a whitelisted method. */
+/** One call, as `tokenMethods.ts` calls a whitelisted method. */
 const invoke = (url: string, params: Record<string, unknown>) =>
 	createResource({ url })
 		.submit(params)
@@ -51,7 +52,7 @@ const readDoctype = (sent: Record<string, unknown>) => text(sent.doctype, "docty
 
 const readName = (sent: Record<string, unknown>) => text(sent.name, "name");
 
-/** A patch or a new document. Never a list, and never a bare value. */
+/** A patch or a new document. Never a list, and never a single value. */
 const readDoc = (value: unknown) => {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		throw refuse('"doc" must be an object.', "invalid_params");
@@ -60,9 +61,9 @@ const readDoc = (value: unknown) => {
 };
 
 /**
- * A dict of equalities, or Frappe's list form for anything else. Passed through
- * rather than parsed: the query builder is what understands a filter, and a
- * second reader here would be a second thing to keep in step.
+ * A dict of equal values, or the Frappe list form for other filters. This code
+ * does not parse the filter. The query builder reads it. A second reader here
+ * would be a second rule to keep the same.
  */
 const readFilters = (value: unknown) => {
 	if (value === undefined) return undefined;
@@ -94,7 +95,7 @@ const getList = (params: unknown, extension: InstalledExtension) => {
 		order_by: optionalText(sent.orderBy, "orderBy"),
 		group_by: optionalText(sent.groupBy, "groupBy"),
 		limit_start: optionalCount(sent.start, "start"),
-		// left out rather than defaulted here: the page size is the server's rule
+		// not set here when missing. The server owns the page size rule
 		limit_page_length: optionalCount(sent.pageLength, "pageLength"),
 	});
 };

@@ -1,15 +1,15 @@
 /**
  * What Builder opens when the user opens an extension from its details pane.
  *
- * The target names an interface the extension registered elsewhere — its
- * popover, its dialog, or its own left panel tab — so nothing here draws chrome
- * of its own. An extension declares one target or none, and an extension that
- * declared none gets no Open button.
+ * The target names a UI that the extension registered in a different call:
+ * its popover, its dialog or its left panel tab. So this file shows no window
+ * of its own. An extension declares one target or none. With none, it gets no
+ * Open button.
  *
- * Builder starts the frame, not the extension, so no permission gates this. The
- * user pressed a button in Builder's own chrome and the extension asked for
- * nothing. `actionMethods.ts` is the shape this follows rather than
- * `createSurfaceItems`: one per extension, no registry item, and no ordering.
+ * Builder starts the frame, not the extension. So no permission gates this.
+ * The user clicked a button in Builder, and the extension asked for nothing.
+ * This file follows `actionMethods.ts`, not `createSurfaceItems`: one target
+ * for each extension, no registry item and no order.
  */
 
 import { leftPanelTabs } from "@/components/LeftPanelTabs";
@@ -23,7 +23,7 @@ import { fields, oneOf, optionalText, optionalWholeNumber, refuse, text } from "
 
 const kinds = ["popover", "dialog", "leftPanel"] as const;
 
-/** Reactive: the details pane paints its Open button from this. */
+/** Reactive. The details pane shows its Open button from this. */
 export const openTargets = reactive(new Map<string, OpenTarget>());
 
 const readTarget = (params: unknown): OpenTarget => {
@@ -41,7 +41,7 @@ const readTarget = (params: unknown): OpenTarget => {
 
 const register = (params: unknown, extension: InstalledExtension) => {
 	const target = readTarget(params);
-	// registering again replaces the target, so its teardown must not be added twice
+	// a second registration replaces the target. Do not add its teardown two times
 	if (!openTargets.has(extension.name)) {
 		bridge.registerTeardown(extension.name, () => openTargets.delete(extension.name));
 	}
@@ -54,15 +54,15 @@ const unregister = (params: unknown, extension: InstalledExtension) => {
 	}
 };
 
-/** The registry name `surfaceItems.ts:createItemKey` gave this extension's tab. */
+/** The registry name that `createItemKey` in `surfaceItems.ts` gave the tab of this extension. */
 const tabKey = (extension: InstalledExtension, name: string) => `${extension.name}:${name}`;
 
 /**
- * Whether the details pane can offer this extension.
+ * True if the details pane can open this extension.
  *
- * A left panel target has to name a tab that is showing. Both `leftPanel.update`
- * and a `showWhen` rule can hide one, and a button that switches to nothing is
- * worse than no button at all.
+ * A left panel target must name a visible tab. `leftPanel.update` and a
+ * `showWhen` rule can both hide a tab. A button that opens nothing is worse
+ * than no button.
  */
 export const canOpen = (extension: InstalledExtension) => {
 	const target = openTargets.get(extension.name);
@@ -71,7 +71,7 @@ export const canOpen = (extension: InstalledExtension) => {
 	return leftPanelTabs.visible.value.some((tab) => tab.name === tabKey(extension, target.name));
 };
 
-/** Runs the declared target. The pane calls this only where `canOpen` is true. */
+/** Opens the declared target. The pane calls this only when `canOpen` is true. */
 export const openExtension = (extension: InstalledExtension) => {
 	const target = openTargets.get(extension.name);
 	if (!target) return;
@@ -81,15 +81,15 @@ export const openExtension = (extension: InstalledExtension) => {
 	}
 	if (target.kind === "dialog") return void startDialog({ title: target.title }, extension);
 
-	// the same two writes `BuilderLeftPanel.vue:select` makes, so Open lands the
-	// user where clicking the tab would have
+	// the same two writes as `select` in `BuilderLeftPanel.vue`. So Open goes to
+	// the same place as a click on the tab
 	const builderStore = useBuilderStore();
 	builderStore.leftPanelActiveTab = tabKey(extension, target.name);
 	builderStore.showTokenManager = false;
 };
 
 export const openMethods: MethodTable = {
-	// Builder chrome opens the target, so the extension needs no grant for it
+	// Builder opens the target. So the extension needs no permission for it
 	"open.register": { needs: null, run: register },
 	"open.unregister": { needs: null, run: unregister },
 };

@@ -1,17 +1,15 @@
 /**
- * Reading and writing one block.
+ * Reads and changes blocks.
  *
- * The context menu already hands an extension a `blockId`, and the snapshot
- * already carries `blockIds` for a multi-selection. Until now neither could be
- * resolved into anything. This is where an id becomes a block.
+ * The context menu gives an extension a `blockId`. The snapshot has `blockIds`
+ * for a multi-selection. This file changes an id into a block.
  *
- * An id arrives as a string from another realm, so the host resolves it against
- * the real tree and refuses anything that tree does not hold. Nothing here
- * trusts the frame beyond the shape of what it sent.
+ * An id comes as a string from a different realm. The host finds it in the
+ * real tree, and refuses an id that the tree does not have. This code trusts
+ * only the shape of the data from the frame.
  *
- * Undo needs no help. `useCanvasHistory.ts:49` watches the root block deeply, so
- * a write made here is recorded as an undo step exactly like a write made by
- * Builder's own controls.
+ * Undo needs no extra code. `useCanvasHistory.ts` watches the root block deeply.
+ * So it records a write from here as an undo step, as for the Builder controls.
  */
 
 import type Block from "@/block";
@@ -24,7 +22,7 @@ import type { Breakpoint } from "frappe-builder-extension-sdk/types";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
 
-/** A tag name, and nothing that could carry markup of its own. */
+/** A tag name, with no markup in it. */
 const ELEMENT_NAME = /^[a-z][a-z0-9-]*$/;
 
 const findBlock = (blockId: string): Block => {
@@ -36,16 +34,16 @@ const findBlock = (blockId: string): Block => {
 const namedBlock = (params: unknown) => findBlock(text(fields(params).blockId, "blockId"));
 
 /**
- * The whole subtree, as a plain object.
+ * The full subtree, as a plain object.
  *
- * `getBlockObject` is the copy Builder already makes for its own clipboard and
- * history, so it strips the parent link and the component reference — the two
- * things that cannot cross a port — and it is the shape a block is stored in.
- * An extension therefore reads what it would write.
+ * Builder already uses `getBlockObject` for its clipboard and history. It
+ * removes the parent link and the component reference. These two cannot go
+ * through a port. It is also the shape that Builder stores. So an extension
+ * reads the same shape that it writes.
  */
 const get = (params: unknown) => getBlockObject(namedBlock(params));
 
-/** A record of strings, which is what an attribute map and a style map both are. */
+/** A record of strings. An attribute map and a style map both have this shape. */
 const readMap = (value: unknown, name: string) => {
 	if (value === undefined) return undefined;
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -62,13 +60,13 @@ const readClasses = (value: unknown) => {
 	return value as string[];
 };
 
-/** `undefined` removes an attribute, the same way `removeAttribute` does. */
+/** `undefined` removes an attribute, as `removeAttribute` does. */
 const writeAttributes = (block: Block, attributes: Record<string, unknown>) =>
 	Object.entries(attributes).forEach(([attribute, value]) =>
 		block.setAttribute(attribute, value === null ? undefined : optionalText(value, attribute)),
 	);
 
-/** `null` and `""` delete a style, which is `setStyle`'s own rule. */
+/** `null` and `""` remove a style. `setStyle` has the same rule. */
 const writeStyles = (block: Block, styles: Record<string, unknown>, breakpoint?: Breakpoint) =>
 	Object.entries(styles).forEach(([style, value]) => {
 		if (value !== null && typeof value !== "string" && typeof value !== "number") {
@@ -78,11 +76,11 @@ const writeStyles = (block: Block, styles: Record<string, unknown>, breakpoint?:
 	});
 
 /**
- * Every key is optional, and a patch naming none of them is a mistake worth
- * saying out loud rather than a write that quietly does nothing.
+ * Each key is optional. A patch with no keys is an error. It is better to
+ * show the error than to do nothing.
  *
- * A style lands on the breakpoint the user is looking at unless the patch names
- * one, because an extension writes without a canvas in front of it.
+ * A style goes to the breakpoint that the user sees, unless the patch names a
+ * breakpoint. An extension does not see the canvas.
  */
 const update = (params: unknown) => {
 	const sent = fields(params);
@@ -106,18 +104,18 @@ const update = (params: unknown) => {
 };
 
 /**
- * A tree is bounded, because the frame is the untrusted side. A message with no
- * ceiling on it is a message that costs the editor an unbounded amount of work.
+ * A tree has a size limit, because the frame is not trusted. Without a limit,
+ * one message could give the editor too much work.
  */
 const MAX_NODES = 200;
 const MAX_DEPTH = 20;
 
 /**
- * One node, read and checked, with nothing added to the page yet.
+ * One node, read and checked. Nothing is on the page yet.
  *
- * The whole tree becomes this before the first `addChild` runs. That is what
- * makes a refusal leave the page exactly as it was: a bad node at depth four
- * cannot half-build the three above it.
+ * The full tree gets this form before the first `addChild` runs. So a refusal
+ * does not change the page. A bad node at depth four cannot leave the three
+ * nodes above it half built.
  */
 type PlannedBlock = {
 	element: string;
@@ -136,11 +134,11 @@ const readChildren = (value: unknown) => {
 };
 
 /**
- * The tree an extension sent, as something safe to build.
+ * The tree from an extension, in a form that is safe to build.
  *
- * A `key` is how the caller finds one node again — the submit button of a form
- * it just drew. It is the caller's own name for the node, so two nodes cannot
- * share one, and the host never reads it as anything but a label.
+ * The caller uses a `key` to find one node again, for example the submit
+ * button of a new form. It is the name that the caller gives the node. So two
+ * nodes cannot have the same key. The host reads it only as a label.
  */
 const planTree = (value: unknown): PlannedBlock => {
 	const keys = new Set<string>();
@@ -174,7 +172,7 @@ const planTree = (value: unknown): PlannedBlock => {
 	return plan(value, 1);
 };
 
-/** Builds one planned node and everything under it, in the order it was sent. */
+/** Builds one planned node and all nodes below it, in the order that they came. */
 const mount = (
 	parent: Block,
 	planned: PlannedBlock,
@@ -197,17 +195,17 @@ const mount = (
 };
 
 /**
- * Builds the tree, and leaves the selection where it was.
+ * Builds the tree, and does not change the selection.
  *
- * `addChild` calls `makeBlockEditable` for a text block whatever its `select`
- * argument says (`block.ts:595`), and that both selects the block and opens the
- * text editor on it. A form is mostly labels, so a tree of them ends with the
- * last label selected and in edit mode.
+ * `addChild` calls `makeBlockEditable` for each text block, for any value of
+ * `select` (see `block.ts`). That selects the block and opens the text editor.
+ * A form has many labels. So without this, the last label is selected and in
+ * edit mode.
  *
- * The restore waits a tick because the selection does. `Block.selectBlock`
- * queues its work in `nextTick` (`block.ts:654`), so a synchronous restore runs
- * first and the label takes the selection back. Ours is queued after every one
- * the build queued, so it settles last.
+ * The restore waits one tick, because the selection also waits.
+ * `Block.selectBlock` queues its work in `nextTick`. A synchronous restore
+ * would run first, and then the label would take the selection back. This
+ * restore is queued after all the others, so it runs last.
  */
 const keepingSelection = <T>(build: () => T): T => {
 	const store = useCanvasStore();
@@ -229,23 +227,22 @@ const keepingSelection = <T>(build: () => T): T => {
 };
 
 /**
- * A new block, or a whole tree of them, as a child of one the page already holds.
+ * Adds a new block, or a full tree of blocks, as a child of a block on the page.
  *
- * A node carries its own `children`, so an extension that generates markup — a
- * form, a card, a table — draws it in one call. The answer holds the root's
- * `blockId`, and `keys` maps every `key` the caller named to the block it made.
+ * A node has its own `children`. So an extension can add a form, a card or a
+ * table in one call. The answer has the `blockId` of the root. `keys` maps each
+ * `key` of the caller to its new block.
  *
- * **One call is one act.** History records through a trailing 100 ms debounce
- * (`useCanvasHistory.ts:13`), so a tree built here is one undo step. Twenty
- * separate calls usually are too, but their boundary is the clock rather than
- * the call: an extension that awaits anything slow inside a loop splits its own
- * form across two steps. This does not.
+ * **One call is one act.** History waits 100 ms after the last change before it
+ * records (see `useCanvasHistory.ts`). So a tree from one call is one undo step.
+ * Twenty separate calls are usually one step too, but the timer decides that,
+ * not the calls. A slow loop can split one form into two steps. One call cannot.
  *
- * **Nothing is built while the tree is read.** A refused node leaves the page
- * untouched, rather than half a form nobody asked for.
+ * **Nothing is built while the tree is read.** A refused node does not change
+ * the page. The page never gets half a form.
  *
- * **The new block is not selected.** The selection is the user's, and an
- * extension writing to the page has no business taking it.
+ * **The new block is not selected.** The selection belongs to the user. An
+ * extension that writes to the page must not change it.
  */
 const insert = (params: unknown) => {
 	const sent = fields(params);
@@ -263,7 +260,7 @@ const insert = (params: unknown) => {
 
 export const blockMethods: MethodTable = {
 	"block.get": { needs: null, run: get },
-	// read-only is refused in the bridge, once, for every write permission
+	// the bridge refuses each write permission in read-only mode, in one place
 	"block.update": { needs: "page.edit", run: update },
 	"block.insert": { needs: "page.edit", run: insert },
 };

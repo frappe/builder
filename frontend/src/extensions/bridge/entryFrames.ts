@@ -1,12 +1,13 @@
 /**
- * Whether an extension's entry frame has finished its first run.
+ * True when the entry frame of an extension finished its first run.
  *
- * The details pane waits on this before it draws the actions. The entry registers
- * the open target, and an Open button that arrives later moves the buttons beside it.
+ * The details pane waits for this before it shows the actions. The entry
+ * registers the open target. An Open button that comes later would move the
+ * other buttons.
  *
- * A frame whose entry fails to import, or whose `main` throws, never says it is
- * ready. So the wait has a cap: a broken extension must still show Disable and
- * Uninstall.
+ * If the entry import fails, or if `main` throws an error, the frame never
+ * sends ready. So the wait has a time limit. A broken extension must still
+ * show Disable and Uninstall.
  */
 
 import { reactive } from "vue";
@@ -23,8 +24,9 @@ export const markEntryFrameReady = (extension: string) => readyEntryFrames.add(e
 /**
  * Starts the wait for an entry frame that just connected.
  *
- * A frame whose handshake failed was marked ready without ever connecting, so the
- * mark is cleared here first. Teardown ends the wait, so a remounted frame waits again.
+ * If a handshake failed, the frame got the ready mark with no connection. So
+ * this first removes the mark. Teardown ends the wait. So a frame that mounts
+ * again waits again.
  */
 export const waitForEntryFrame = (extension: string) => {
 	readyEntryFrames.delete(extension);

@@ -1,18 +1,18 @@
 /**
- * Doctypes an extension creates while the editor runs.
+ * The doctypes that an extension makes while the editor runs.
  *
- * Three gates, and the third is the one that bites. `schema.write` says an
- * admin allowed this extension to model tables at all. A confirmation names the
- * doctype at the moment it is created or dropped. And Frappe wants create
- * permission on `DocType`, which is System Manager — so an extension asking a
- * page editor to model a table fails, and that is the right answer.
+ * There are three gates:
+ * 1. `schema.write` says that a manager let this extension make tables.
+ * 2. A confirmation names the doctype when the extension makes or removes it.
+ * 3. Frappe needs create permission on `DocType`, which a System Manager has.
+ *    So the call fails for a page editor, and that is correct.
  *
- * Ownership is a record, not a naming convention. Only the extension that made
- * a doctype may change or drop it, and a document grant is not enough: reading
- * a table is not the same as reshaping it.
+ * A record shows the owner, not a naming rule. Only the extension that made a
+ * doctype can change or remove it. `data.access` is not sufficient, because
+ * to read a table is not the same as to change its shape.
  *
- * Not a page write, so read-only mode does not refuse any of it — a table is
- * not the page being edited.
+ * These are not page writes. So read-only mode does not refuse them. A table
+ * is not the open page.
  */
 
 import { createResource } from "frappe-ui";
@@ -23,7 +23,7 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 const NAMING = ["hash", "autoincrement", "prompt"] as const;
 
-/** Rebuilt plain, because `createResource` answers with its reactive `data`. */
+/** A plain copy, because `createResource` returns its reactive `data`. */
 const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
 
 const asRefusal = (thrown: unknown) => {
@@ -40,8 +40,8 @@ const invoke = (url: string, params: Record<string, unknown>) =>
 		});
 
 /**
- * A field list, checked for shape only. Which field types are allowed is the
- * server's rule, so there is one list rather than two that drift.
+ * A field list. This code checks only its shape. The server decides which
+ * field types are allowed. So there is one list, not two lists that can differ.
  */
 const readFields = (value: unknown) => {
 	if (!Array.isArray(value) || !value.length) {
@@ -56,8 +56,8 @@ const readFields = (value: unknown) => {
 };
 
 /**
- * Asks, then creates. The user answers before anything is written, so a refusal
- * leaves no half-made table behind.
+ * Asks first, then makes the doctype. The user answers before any write. So a
+ * refusal leaves no part of a table.
  */
 const createDoctype = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
@@ -84,7 +84,7 @@ const getDoctype = (params: unknown, extension: InstalledExtension) =>
 		doctype: text(fields(params).doctype, "doctype"),
 	});
 
-/** Adds fields and updates them by fieldname. Never removes one, so no column is dropped. */
+/** Adds fields and changes them by fieldname. It never removes a field, so no column is removed. */
 const updateDoctype = (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
 	return invoke("builder.extensions.schema.update_doctype", {

@@ -16,15 +16,15 @@ const INSTALLATION_DOCTYPE = "Builder Extension";
 const HUB_API = "api/method/builder_hub.extensions.api";
 const CATALOG_CACHE = "extensions-catalog";
 
-/** The Builder Hub this site reads its catalog from. */
+/** The Builder Hub that gives this site its catalog. */
 const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url ?? "") || "preview.frappe.cloud";
 
 function ensureProtocol(url: string, defaultProtocol = "http") {
 	if (!url) return url;
 
-	// Normalize the default protocol (strip any trailing "://" or ":")
+	// remove a trailing "://" or ":" from the default protocol
 	const protocol = defaultProtocol.replace(/:\/\/$|:$/, "");
-	// Matches things like "http://", "https://", "ftp://", "mailto:", "//" (protocol-relative)
+	// matches "http://", "https://", "ftp://", "mailto:" and "//" (a protocol-relative URL)
 	const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(url) || /^\/\//.test(url);
 
 	let result = hasProtocol ? url : `${protocol}://${url}`;
@@ -40,7 +40,7 @@ type InstallationDocument = {
 	enabled: boolean | number;
 	checksum?: string;
 	granted_permissions?: string;
-	/** The rest is unread by the mount list, and read only by the details panel. */
+	/** The mount list does not read the fields below. Only the details panel reads them. */
 	version?: string;
 	source_url?: string;
 	install_state?: "Installing" | "Ready" | "Failed";
@@ -50,7 +50,7 @@ type InstallationDocument = {
 	requested_permissions?: string;
 };
 
-/** The Vue instance a document resource ties its realtime subscription to. Set once, from the editor. */
+/** The Vue instance for the realtime subscription of a document resource. The editor sets it one time. */
 let resourceVm: unknown;
 
 const grantedPermissions = (value: string | undefined): Permission[] => {
@@ -59,11 +59,10 @@ const grantedPermissions = (value: string | undefined): Permission[] => {
 };
 
 /**
- * One installation's document, shared by the mount list and the details panel.
+ * The document of one installation. The mount list and the details panel share it.
  *
- * `frappe-ui` caches this itself by doctype and name, so calling it again for an
- * installation already loaded returns the same live resource rather than a
- * second copy racing it.
+ * `frappe-ui` caches it by doctype and name. A second call for a loaded
+ * installation gives the same live resource. It does not make a second copy.
  */
 const installationDocument = (installationId: string) =>
 	createDocumentResource<InstallationDocument>(
@@ -78,20 +77,21 @@ const installationDocument = (installationId: string) =>
 	);
 
 /**
- * Every installation on this site, the disabled and development ones included.
+ * All installations on this site, with the disabled and development installations.
  *
- * The editor mounts the enabled rows, and the panel shows them all. One list
- * means one fetch to refresh after a change, so the two never disagree.
+ * The editor mounts the enabled rows, and the panel shows all rows. With one
+ * list, one request updates both after a change. So they always agree.
  */
 const installationsResource = createResource<Installation[]>({
 	url: "builder.extensions.installations.get_installations",
-	// losing this list costs the editor its extensions, never the editor itself
+	// if this list fails, the editor loses its extensions. The editor itself still works
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
 
 /**
- * Whether this user may install, turn on or off, grant or uninstall. The panel
- * hides those controls without it, and the server checks again on every call.
+ * True if this user can install, turn on, turn off, change permissions or
+ * remove extensions. If not, the panel hides those controls. The server also
+ * checks each call.
  */
 const managerResource = createResource<boolean>({
 	url: "builder.extensions.installations.can_manage_extensions",
@@ -101,10 +101,10 @@ const managerResource = createResource<boolean>({
 const canManageExtensions = computed(() => Boolean(managerResource.data));
 
 /**
- * Fetch one installation's document into that shared cache.
+ * Gets the document of one installation into the shared cache.
  *
- * Read it back with `getCachedDocumentResource`, never held here: `toInstalledExtension`
- * only reads that cache, so a fetch never happens as a side effect of a computed.
+ * Read it with `getCachedDocumentResource`. Do not keep it here.
+ * `toInstalledExtension` only reads the cache. So a computed never starts a fetch.
  */
 const loadInstallationDocument = (row: Installation) => {
 	void installationDocument(row.installation_id)
@@ -130,12 +130,11 @@ const toInstalledExtension = (row: Installation): InstalledExtension | null => {
 };
 
 /**
- * Every extension this editor runs: the site's installations, plus the one loaded from a
- * dev server this session. A dev extension replaces the installation of the same
- * name, because two entries would give it two frames.
+ * All extensions that this editor runs. These are the installations of the
+ * site, and the extension from a dev server in this session. A dev extension
+ * replaces the installation with the same name. Two entries would give it two frames.
  *
- * A development record never mounts. It has no files, and the browser's own entry
- * runs it.
+ * A development record never mounts. It has no files. The entry in the browser runs it.
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
 	const installed = (installationsResource.data ?? [])
@@ -150,7 +149,7 @@ const installedExtensions = computed<InstalledExtension[]>(() => {
 	return [...installed.filter((extension) => extension.name !== development.name), development];
 });
 
-/** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
+/** Gets the list, and the documents of the rows that the editor mounts. Call it after each change. */
 const loadExtensions = async (vm?: unknown) => {
 	if (vm) resourceVm = vm;
 	if (managerResource.data === null) void managerResource.fetch();
@@ -160,12 +159,14 @@ const loadExtensions = async (vm?: unknown) => {
 };
 
 /**
- * The built entry of one installation, which a frame runs from a Blob.
+ * The built entry of one installation. A frame runs it from a Blob.
  *
- * The editor reads it, not the frame, because a frame sends no session. Fetched
- * once and shared by the five frames that mount one extension. The checksum joins
- * the key, so a rebuild is fetched again. A failed fetch is dropped, so a
- * reloaded frame asks rather than replaying the error.
+ * The editor gets it, not the frame, because a frame sends no session. The
+ * editor gets it one time. The five frames of one extension share it.
+ *
+ * The key includes the checksum. So the editor gets a new build again. The
+ * cache removes a failed request. So a reloaded frame asks again and does not
+ * get the old error.
  */
 const sources = new Map<string, Promise<string>>();
 
@@ -188,29 +189,30 @@ const getExtensionSource = (extension: InstalledExtension): Promise<string> => {
 };
 
 /**
- * One installation as the Extensions panel reads it.
+ * One installation, as the Extensions panel reads it.
  *
- * Not `InstalledExtension`: that is the wire shape an extension's own code sees,
- * and a version number or an install date is none of its business. This carries
- * what the panel shows and the editor never needs.
+ * This is not `InstalledExtension`. That is the shape that the code of an
+ * extension sees, and the extension does not need a version number or an
+ * install date. This type has the data that the panel shows and the editor
+ * never needs.
  */
 type Installation = {
 	name: string;
-	/** The document's own name, not the extension's. */
+	/** The name of the document, not of the extension. */
 	installation_id: string;
 	label?: string;
 	description?: string;
 	icon?: string;
-	/** For a running dev extension, the version its dev server serves. */
+	/** For a running dev extension, the version that its dev server serves. */
 	version: string;
-	/** The Builder Hub it came from. Empty for an extension installed from a directory. */
+	/** The Builder Hub that it came from. Empty for an extension from a directory. */
 	source_url: string;
 	enabled: boolean;
-	/** A Hub install is "Installing" until its background job lands, then "Ready" or "Failed". */
+	/** A Hub install is "Installing" until its background job ends. Then it is "Ready" or "Failed". */
 	install_state?: "Installing" | "Ready" | "Failed";
-	/** Why the last Hub install failed, shown with a Retry. */
+	/** Why the last Hub install failed. The panel shows it with a Retry button. */
 	install_error?: string;
-	/** Made by a dev server load. Only the one running this session is shown. */
+	/** A dev server load made this row. The panel shows only the row that runs in this session. */
 	is_development?: boolean;
 };
 
@@ -222,7 +224,7 @@ type InstallationDetails = Installation & {
 	development_server?: string;
 };
 
-/** What only a running dev server knows about its extension. */
+/** The data about an extension that only its running dev server has. */
 const applyDevelopmentDetails = (details: InstallationDetails): InstallationDetails => {
 	const development = devExtension.value;
 	if (!development || development.name !== details.name) return details;
@@ -231,8 +233,8 @@ const applyDevelopmentDetails = (details: InstallationDetails): InstallationDeta
 };
 
 /**
- * The install job writes the package icon last, so an Installing or Failed row
- * has none. It borrows the icon the Hub catalog showed before the install.
+ * The install job writes the package icon last. So an Installing or Failed row
+ * has no icon. It uses the icon from the Hub catalog.
  */
 const withCatalogIcon = (row: Installation): Installation => {
 	if (row.icon || !row.install_state || row.install_state === "Ready") return row;
@@ -240,7 +242,7 @@ const withCatalogIcon = (row: Installation): Installation => {
 	return { ...row, icon: catalog.find((extension) => extension.name === row.name)?.icon };
 };
 
-/** A running dev extension shows what its dev server serves, and is always enabled. */
+/** A running dev extension shows the data from its dev server. It is always enabled. */
 const withDevelopment = (row: Installation): Installation => {
 	const development = devExtension.value;
 	if (!development || development.name !== row.name) return row;
@@ -257,13 +259,13 @@ const withDevelopment = (row: Installation): Installation => {
 };
 
 /**
- * What the panel manages, which is not what the editor mounts.
+ * The rows that the panel manages. They are not the rows that the editor mounts.
  *
- * `installedExtensions` drops a disabled installation, because a frame must not
- * run for one. The panel keeps it, because turning it back on is the point.
+ * `installedExtensions` removes a disabled installation, because no frame must
+ * run for it. The panel keeps it, so that the user can turn it on again.
  *
- * A development record that no dev server runs this session is one a closed tab
- * failed to remove, so the panel hides it.
+ * If no dev server runs a development record in this session, a closed tab
+ * failed to remove it. So the panel hides it.
  */
 const installations = computed<Installation[]>(() => {
 	const devInstallation: Installation[] = [];
@@ -279,16 +281,15 @@ const findInstallation = (extension: string) =>
 	installations.value.find((installation) => installation.name === extension);
 
 /**
- * One installation, with the dev server standing in for what it owns.
+ * One installation. For a dev extension, the dev server gives its own data.
  *
- * A development installation is real, so the record answers for the permissions
- * it granted and the install date. What the dev server shows a user comes from
- * the dev server, which is the copy running right now.
+ * A development installation is a real record. So the record gives the granted
+ * permissions and the install date. The dev server gives the data that a user
+ * sees, because the dev server runs the current copy.
  *
- * Composed from what the mount list and the panel's own list already fetch,
- * rather than a details call of its own: the document carries the readme and the
- * raw permission lists, and `findInstallation` carries the icon and the install
- * state.
+ * This uses the data that the mount list and the panel list already have. It
+ * makes no request of its own. The document has the readme and the permission
+ * lists. `findInstallation` has the icon and the install state.
  */
 const useInstallationDetails = (extension: string) => {
 	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
@@ -318,15 +319,15 @@ const useInstallationDetails = (extension: string) => {
 	return { details, reload };
 };
 
-/** What the site keeps when a manager removes an extension. */
+/** The data that the site keeps when a manager removes an extension. */
 type UninstallSummary = {
 	resources: { resource_type: string; count: number }[];
 	tokens: number;
 };
 
 /**
- * Every write below reloads the list, so no caller can leave the panel showing
- * one answer and the editor running another.
+ * Each write below reloads the list. So the panel and the editor always show
+ * the same state.
  */
 const setExtensionEnabled = async (extension: string, enabled: boolean) => {
 	await call(`${METHOD}.set_extension_enabled`, { extension, enabled });
@@ -338,8 +339,8 @@ const setGrantedPermissions = async (extension: string, permissions: Permission[
 		extension,
 		permissions,
 	})) as Permission[];
-	// the editor runs the browser's own entry for a dev extension, not its record,
-	// so the new grant has to reach that entry too
+	// for a dev extension, the editor runs the entry in the browser, not the record.
+	// So the new permissions must also reach that entry
 	setDevPermissions(extension, granted);
 	return granted;
 };
@@ -364,29 +365,29 @@ const getExtensionsCatalog = (page: number = 1) =>
 		onError: (error: Error) => console.error("Could not load extensions list", error),
 	});
 
-/** A not-installed extension as its hub page describes it. No permissions, no install date. */
+/** An extension that is not installed, as its Hub page shows it. It has no permissions and no install date. */
 type HubExtension = CatalogExtension & {
 	version: string;
 	readme?: string;
 	source_url?: string;
 };
 
-/** What `get_extension` sends: the manifest entry beside every release of it. */
+/** The data that `get_extension` returns: the manifest entry and each release. */
 type HubExtensionResponse = {
 	extension: CatalogExtension & { readme?: string; repository_url?: string };
 	releases: { version: string; status: string; published_on: string }[];
 };
 
-/** The newest published release, which names the version a fresh install gets. */
+/** The newest published release. A new install gets this version. */
 const latestVersion = (releases: HubExtensionResponse["releases"]) =>
 	releases
 		.filter((release) => release.status === "Published")
 		.sort((a, b) => b.published_on.localeCompare(a.published_on))[0]?.version ?? "";
 
 /**
- * One extension read from the hub, for the page a user opens before installing.
+ * One extension from the Hub, for the page that a user opens before an install.
  *
- * Goes to the hub, not the site, because the site has no record of it yet.
+ * It asks the Hub, not the site, because the site has no record of it yet.
  */
 const getHubExtension = async (name: string): Promise<HubExtension> => {
 	const { extension, releases }: HubExtensionResponse = await createResource({
@@ -406,7 +407,7 @@ const getHubExtension = async (name: string): Promise<HubExtension> => {
 	};
 };
 
-/** What one exact release asks for. The listing carries no manifest, so this reads the release. */
+/** The permissions that one release asks for. The list has no manifest, so this reads the release. */
 const getHubReleasePermissions = async (name: string, version: string): Promise<Permission[]> => {
 	const { release } = await createResource({
 		url: `${hubUrl()}/${HUB_API}.get_extension_release`,
@@ -416,11 +417,11 @@ const getHubReleasePermissions = async (name: string, version: string): Promise<
 };
 
 /**
- * Start a Hub install. The server answers with an "Installing" row and runs the
- * download in a background job, so this resolves fast. The row flips to "Ready"
- * or "Failed" on the `builder_extension_install` realtime event.
+ * Starts a Hub install. The server returns an "Installing" row and downloads
+ * the package in a background job. So this call returns quickly. The row
+ * changes to "Ready" or "Failed" on the `builder_extension_install` realtime event.
  *
- * `version` pins the release whose permissions the user answered for.
+ * `version` sets the release. The user approved the permissions of that release.
  */
 const installFromHub = async (name: string, version: string, permissions: Permission[]) => {
 	await call("builder.extensions.hub.install_from_hub", { name, version, permissions });

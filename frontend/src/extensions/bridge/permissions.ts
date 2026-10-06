@@ -1,34 +1,34 @@
 /**
- * The gate in front of every method a frame calls.
+ * The gate for each method that a frame calls.
  *
- * Pure: the bridge holds the record and passes it in, so nothing here reads a
- * resource or keeps state. The permission keys live in `../types`, beside the
- * spelling the SDK reads.
+ * The functions here are pure. The bridge keeps the record and gives it to
+ * them. So no code here reads a resource or keeps state. The permission keys
+ * are in the SDK types, with the names that the SDK reads.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
- * One method the host answers.
+ * One method that the host answers.
  *
- * `needs` is required rather than optional, so a method that needs no grant says
- * so out loud. A method cannot reach the table with its gate forgotten.
+ * `needs` is required. So a method with no permission must say `null`.
+ * No method can go into the table without a gate.
  */
 export type HostMethod = {
 	needs: Permission | null;
-	/** The record comes from the dispatcher's closure, never from the wire. */
+	/** The record comes from the dispatcher. It never comes from the message. */
 	run: (params: unknown, extension: InstalledExtension) => unknown;
 };
 
 export type MethodTable = Record<string, HostMethod>;
 
 /**
- * The permissions that change something a user can see and save.
+ * The permissions that change data that a user can see and save.
  *
- * Read-only mode is enforced once, in the bridge, rather than trusted to each
- * write method. Naming the permissions rather than the methods means a
- * write method added later is covered before it is written.
+ * The bridge applies read-only mode in one place. Each write method does not
+ * check it. This list names permissions, not methods. So a new write method
+ * gets the check automatically.
  */
 const WRITE_PERMISSIONS: Permission[] = ["page.edit", "page.write", "token.write"];
 
@@ -40,7 +40,7 @@ export const assertWritable = (extension: InstalledExtension, method: string, ne
 	});
 };
 
-/** The check a `bind` control makes at registration, where there is no call to gate. */
+/** The check for a `bind` control at registration. At that time, there is no call to gate. */
 export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("page.edit");
 
 export const assertGranted = (extension: InstalledExtension, method: string, needs: Permission | null) => {

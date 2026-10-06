@@ -1,20 +1,20 @@
 <template>
 	<!--
-		The consent prompt, drawn by Builder and never by the extension. An
-		extension frame cannot paint here, cannot read this, and cannot answer it.
-
-		One instance for the whole editor: `confirmations.ts` queues requests so only one
-		question stands at a time.
+		The consent prompt. Builder shows it, never the extension. An extension
+		frame cannot show, read or answer it.
+		
+		There is one prompt for the whole editor. `confirmations.ts` keeps a queue,
+		so it asks one question at a time.
 	-->
 	<Dialog v-if="prompt" :modelValue="true" size="sm" @update:modelValue="deny">
 		<template #body>
 			<div class="bg-surface-elevation-2 p-5">
 				<h3 class="text-md-semibold text-ink-gray-9">{{ prompt.extension.label }} wants access</h3>
 
-				<!-- the period is part of the interpolation, not a node beside it: a
-					newline between a closing tag and a bare "." becomes a text node, and
-					the sentence reads "Contact ." Prettier reflows the markup, so the
-					punctuation cannot live in the whitespace -->
+				<!-- the period is in the interpolation, not in a separate node. A newline
+					between a closing tag and a "." becomes a text node. Then the sentence
+					reads "Contact ." Prettier moves the markup, so the period cannot be
+					in the whitespace -->
 				<p class="pt-4 text-p-sm text-ink-gray-6">
 					It is asking to
 					<span class="font-semibold text-ink-gray-8">{{ verbs }}</span>
@@ -58,19 +58,19 @@ import { computed, ref, watch } from "vue";
 const prompt = computed(() => pendingPrompt.value);
 const understood = ref(false);
 
-// each question is answered on its own. Carrying the tick over would let one
-// consent stand for an act the user never saw
+// the user answers each question separately. If the tick stayed, one answer
+// would approve an act that the user never saw
 watch(prompt, () => (understood.value = false));
 
 const canAllow = computed(() => !prompt.value?.sensitive || understood.value);
 
-/** The subject and the full stop, so no reflow can put whitespace between them. */
+/** The subject and the period together. So a reflow cannot put a space between them. */
 const subject = computed(() => `${prompt.value?.subject}.`);
 
-/** The one verb a schema or script prompt names. */
+/** The verb of a schema or script prompt. */
 const verbs = computed(() => (prompt.value?.kind === "schema" ? (prompt.value.act ?? "") : "run a script"));
 
-/** The one sentence that is true of every prompt: the user is still the ceiling. */
+/** The sentence that is true for each prompt. The extension gets no more access than the user. */
 const floor = computed(
 	() =>
 		({
@@ -79,7 +79,7 @@ const floor = computed(
 		})[prompt.value?.kind ?? "script"],
 );
 
-/** What the verbs act on: the doctype itself, or a page. */
+/** The object of the verb: the doctype or a page. */
 const object = computed(
 	() => ({ schema: "the doctype", script: "on the page" })[prompt.value?.kind ?? "script"],
 );
@@ -87,8 +87,8 @@ const object = computed(
 const allow = () => answerPrompt(true);
 
 /**
- * The button, Escape and a click outside all mean the same thing. An unanswered
- * question is a no, which is what every browser permission prompt does.
+ * The button, Escape and a click outside have the same result. A question
+ * with no answer is a no. Browser permission prompts do the same.
  */
 const deny = () => answerPrompt(false);
 </script>

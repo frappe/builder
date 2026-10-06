@@ -1,8 +1,8 @@
 /**
- * One left panel tab per extension, rendered as a frame (Tier C).
+ * One left panel tab for each extension, shown as a frame (Tier C).
  *
- * The registry receives the same object shape a built-in tab produces, so
- * `BuilderLeftPanel.vue` needs no line that knows extensions exist.
+ * The registry gets the same object shape as a built-in tab. So
+ * `BuilderLeftPanel.vue` needs no code about extensions.
  */
 
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
@@ -57,7 +57,7 @@ const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Re
 		usesRuntimeIcon: registration.icon.startsWith("lucide-"),
 		before: registration.before,
 		after: registration.after,
-		// 1.13: mount on first open, and v-show keeps the document alive after that
+		// mount on the first open. After that, v-show keeps the document alive
 		lazy: true,
 		component: ExtensionFrame,
 		props: () => ({
@@ -81,7 +81,7 @@ const tabs = createSurfaceItems<Registration, LeftPanelTab>({
 });
 
 export const leftPanelMethods: MethodTable = {
-	// the host draws the tab strip and mounts the frame, so no permission gates this
+	// the host shows the tab strip and mounts the frame. So no permission gates this
 	"leftPanel.register": { needs: null, run: tabs.register },
 	"leftPanel.unregister": { needs: null, run: tabs.unregister },
 	"leftPanel.update": { needs: null, run: tabs.update },

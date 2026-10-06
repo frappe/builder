@@ -38,7 +38,7 @@ const props = defineProps<{
 	label: string;
 	requested: Permission[];
 	granted: Permission[];
-	/** Shown, but not changed, by a user who cannot manage extensions. */
+	/** A user who cannot manage extensions sees this, but cannot change it. */
 	readOnly?: boolean;
 }>();
 
@@ -46,16 +46,16 @@ const emit = defineEmits<{
 	"update:granted": [permissions: Permission[]];
 }>();
 
-/** Only what this extension asked for. A permission it never asked for is not a choice. */
+/** Only the permissions that this extension asked for. The user cannot add other permissions. */
 const groups = computed(() => groupPermissions(props.requested));
 
 /**
- * Turning one off asks nothing: a narrower grant can break the extension and
- * nothing else. Turning a sensitive one on reaches the site's data or every
- * published page, so that direction carries the warning.
+ * To turn a permission off asks nothing. Fewer permissions can break only the
+ * extension. To turn a sensitive permission on gives access to site data or to
+ * each published page. So only that direction shows the warning.
  *
- * The parent decides where the list goes: an installation writes it, and the
- * install dialog holds it until the user installs.
+ * The parent decides where the list goes. An installation writes it. The
+ * install dialog keeps it until the user installs.
  */
 const answer = async (permission: Permission, allow: boolean) => {
 	if (allow && isSensitive(permission) && !(await confirmSensitive(permission))) return;

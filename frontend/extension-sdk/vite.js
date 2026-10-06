@@ -1,9 +1,9 @@
 /**
- * `frappe-builder-extension-sdk/vite` — the build an extension author runs.
+ * `frappe-builder-extension-sdk/vite`: the build that an extension author runs.
  *
- * Plain JavaScript on purpose. Vite hands a config's own imports to Node, and
- * Node refuses to strip types from any file under `node_modules`, so a
- * TypeScript plugin cannot be loaded by the config that uses it.
+ * This file is plain JavaScript. Vite gives the imports of a config to Node.
+ * Node does not remove types from a file under `node_modules`. So a config
+ * cannot load a TypeScript plugin from a package.
  *
  * ```js
  * import builderExtension from "frappe-builder-extension-sdk/vite";
@@ -19,34 +19,34 @@ import { parseJson, validateManifest } from "./src/shared/manifest.js";
 const SDK = "frappe-builder-extension-sdk";
 const MANIFEST = "manifest.json";
 
-/** Where Builder serves the one SDK instance every frame of an extension shares. */
+/** The URL where Builder serves the one SDK copy that all frames of an extension share. */
 const SDK_PATH = "/builder_extension_asset/sdk/extension-sdk.js";
 
-/** What the editor reads to learn what this dev server is serving. */
+/** The editor reads this path to learn what the dev server serves. */
 const DESCRIPTOR_PATH = "/__builder-extension";
 
-/** Vite's hot reload client. It resolves against the dev server, which serves the entry. */
+/** The hot reload client of Vite. It loads from the dev server, which serves the entry. */
 const HMR_CLIENT = "/@vite/client";
 
-/** The one file an install holds, and the one the editor reads and posts. */
+/** The one file of an install. The editor reads it and sends it to the frame. */
 const OUTPUT_ENTRY = "main.js";
 
-/** Runs in every frame, because every frame imports the entry. */
+/** Runs in each frame, because each frame imports the entry. */
 const STYLE_TAG = (css) =>
 	`(() => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); })();`;
 
-/** One entry, so Rollup sees the whole graph and shared code lands in one chunk. */
+/** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
 
-/** Room for an icon or a cursor, and not for a font. */
+/** Sufficient for an icon or a cursor. Not sufficient for a font. */
 const ASSET_INLINE_LIMIT = 64 * 1024;
 
 /**
- * Refuses a build that emitted more than the entry, the manifest and the icon.
+ * Stops a build that makes more files than the entry, the manifest and the icon.
  *
- * A frame gets the entry as code, not a URL, so a relative import resolves
- * against nothing and an asset URL points nowhere. Failing here names the file.
- * Failing in a frame prints nothing anywhere.
+ * A frame gets the entry as code, not as a URL. So a relative import has no
+ * base, and an asset URL points to nothing. This error names the file. An
+ * error in a frame shows no message.
  */
 const assertOneFile = (bundle, manifest) => {
 	const allowed = new Set([OUTPUT_ENTRY, MANIFEST, manifest.icon].filter(Boolean));
@@ -63,9 +63,9 @@ const assertOneFile = (bundle, manifest) => {
 /**
  * Moves the stylesheet into the entry.
  *
- * The frame shell is one static document that names no extension, so it can link
- * no stylesheet of one. A built extension's CSS therefore has to carry itself, or
- * every frame paints unstyled.
+ * The frame shell is one static document. It names no extension. So it
+ * cannot link the stylesheet of an extension. The CSS of a built extension
+ * must be in the entry. If not, each frame shows no styles.
  */
 const foldStylesheets = (bundle) => {
 	const sheets = Object.values(bundle).filter(
@@ -99,10 +99,10 @@ const readReadme = (root) => {
 };
 
 /**
- * @param {{ builderUrl: string }} options `builderUrl` is the origin the editor
- * is opened on. It has no default: the dev server imports the SDK from it by
- * absolute URL, and an origin that is not the one serving the editor loads a
- * second SDK instance, whose frames never connect.
+ * @param {{ builderUrl: string }} options `builderUrl` is the origin of the
+ * editor. It has no default. The dev server imports the SDK from this origin
+ * by absolute URL. A different origin loads a second SDK copy. The frames of
+ * that copy do not connect.
  */
 export default function builderExtension({ builderUrl } = {}) {
 	if (!builderUrl) {
@@ -115,12 +115,12 @@ export default function builderExtension({ builderUrl } = {}) {
 	let entry = "";
 	let serving = false;
 
-	/** What the dev server answers for a file, as the editor loads both over HTTP. */
+	/** The dev server path of a file. The editor loads the entry and the icon over HTTP. */
 	const servedPath = (file) => `/${path.relative(root, file)}`;
 
 	/**
-	 * The icon sits beside the entry, and the install flattens that directory, so
-	 * the one name in the manifest holds for the source tree and the install both.
+	 * The icon is next to the entry. The install puts all files in one directory.
+	 * So the name in the manifest is correct for the source and for the install.
 	 */
 	const findIcon = (manifest) => (manifest.icon ? path.join(path.dirname(entry), manifest.icon) : "");
 
@@ -135,8 +135,8 @@ export default function builderExtension({ builderUrl } = {}) {
 
 	return {
 		name: "builder-extension",
-		// before Vite's own resolver, or it resolves the SDK to a file on disk and
-		// the frame ends up with a second instance of it
+		// run before the resolver of Vite. If not, Vite finds the SDK on disk,
+		// and the frame gets a second copy of it
 		enforce: "pre",
 
 		config(config, env) {
@@ -144,34 +144,34 @@ export default function builderExtension({ builderUrl } = {}) {
 			entry = findEntry(root);
 			serving = env.command === "serve";
 			return {
-				// nothing built needs this now: a small asset is inlined, and the check
-				// below refuses a big one. It stays for the dev server, which serves
-				// modules by path rather than as one file
+				// the build does not need this now. A small asset goes into the entry,
+				// and the check below stops a large asset. The dev server still needs it,
+				// because it serves modules by path, not as one file
 				base: "./",
-				// the frame is a modern browser by definition: it runs module scripts
+				// the frame runs module scripts. So it is always a modern browser
 				build: {
 					target: "es2020",
-					// one stylesheet, because the entry carries the CSS itself. Split CSS
-					// also puts a stylesheet in the preload list of every lazy chunk, and
-					// the frame then asks for a file this plugin folded into the entry
+					// one stylesheet, because the entry has the CSS. Split CSS also
+					// adds a stylesheet to the preload list of each lazy chunk. The
+					// frame then asks for a file that this plugin moved into the entry
 					cssCodeSplit: false,
-					// a small asset goes inside the entry too, for the reason the CSS does:
-					// the frame gets code and can fetch nothing.
+					// a small asset also goes into the entry, for the same reason as the
+					// CSS. The frame gets code and can fetch nothing.
 					//
-					// A big one is refused instead. Vite embeds an inlined asset once per
-					// reference, so a font named by six @font-face rules lands six times,
-					// as base64 that will not compress. Measured: 1.6 MB to 5.6 MB on one
-					// sample. A frame also runs inside Builder, which loads its own fonts.
+					// The build stops for a large asset. Vite adds an inline asset one time
+					// for each reference. Six @font-face rules for one font add it six
+					// times, as base64 that does not compress. On one sample, the size
+					// went from 1.6 MB to 5.6 MB. Also, Builder loads its own fonts.
 					assetsInlineLimit: ASSET_INLINE_LIMIT,
 					rollupOptions: {
 						input: entry,
-						// never bundled: the frame shell's import map resolves it to the one
-						// instance Builder serves. An import map belongs to the document, so
-						// it answers a Blob module the way it answers any other
+						// the build never includes the SDK. The import map of the frame
+						// shell points it to the one copy that Builder serves. An import
+						// map belongs to the document, so it also works for a Blob module
 						external: [SDK],
 						output: {
-							// one file. The editor reads the entry and posts the code to
-							// the frame, so a chunk has no URL left to import from
+							// one file. The editor reads the entry and sends the code to
+							// the frame. A chunk has no URL to import from
 							inlineDynamicImports: true,
 							entryFileNames: OUTPUT_ENTRY,
 							assetFileNames: "[name]-[hash][extname]",
@@ -179,57 +179,55 @@ export default function builderExtension({ builderUrl } = {}) {
 					},
 				},
 				server: {
-					// an extension frame runs at an opaque origin, so it sends
-					// `Origin: null`, and Vite answers such a request with no CORS
-					// header at all
+					// an extension frame has an opaque origin. It sends `Origin: null`.
+					// By default, Vite sends no CORS header for that request
 					cors: { origin: "*" },
-					// the package is installed by a link, so it resolves outside this
-					// project and the dev server would refuse to serve it. The project
-					// itself has to be named too: this list replaces the default rather
-					// than adding to it
+					// the package is installed by a link, so it is outside this project.
+					// Without this, the dev server does not serve it. The project must
+					// also be in the list, because this list replaces the default list
 					fs: { allow: [root, path.dirname(fileURLToPath(import.meta.url))] },
 				},
 			};
 		},
 
 		/**
-		 * Names Builder's own URL for the SDK, rather than leaving the specifier
-		 * for the frame's import map.
+		 * Changes the SDK import to the Builder URL. Without this, the import
+		 * map of the frame gets the import.
 		 *
-		 * Measured: `external: true` alone does not survive a dev server. Vite
-		 * rewrites the bare specifier to `/@id/frappe-builder-extension-sdk`, the browser
+		 * `external: true` alone does not work on a dev server. Vite changes the
+		 * package name to `/@id/frappe-builder-extension-sdk`. The browser then
 		 * asks the dev server for it, and the import map never sees it. The frame
-		 * would then hold a second SDK instance, with no port and no channel.
+		 * then has a second SDK copy, with no port and no channel.
 		 *
-		 * An absolute URL is left alone, and it resolves to the same module the
-		 * frame shell already loaded — as long as `builderUrl` is the origin the
-		 * editor is open on. That is why the option has no default.
+		 * Vite does not change an absolute URL. It gives the same module that the
+		 * frame shell loaded, if `builderUrl` is the origin of the editor. That is
+		 * why the option has no default.
 		 */
 		resolveId(id) {
 			if (serving && id === SDK) return { id: sdkUrl, external: true };
 		},
 
 		/**
-		 * Loads Vite's hot reload client, which nothing else here would.
+		 * Loads the hot reload client of Vite. No other code loads it.
 		 *
-		 * Vite injects it into the HTML it serves. An extension frame is served by
-		 * Builder instead, so the client never arrives — and `@vitejs/plugin-vue`
-		 * emits `import.meta.hot.accept(...)` with no guard, because it assumes the
-		 * client defined it. Without this the first component to load throws while
-		 * it evaluates, inside a frame, with nothing printed anywhere.
+		 * Vite adds the client to the HTML that it serves. Builder serves the
+		 * extension frame, so the client does not load. `@vitejs/plugin-vue` calls
+		 * `import.meta.hot.accept(...)` with no check. It expects the client to
+		 * set it. Without this, the first component fails when it loads. The
+		 * error is inside a frame, so no message shows.
 		 */
 		transform(code, id) {
 			if (!serving || id !== entry) return;
 			return { code: `import ${JSON.stringify(HMR_CLIENT)};\n${code}`, map: null };
 		},
 
-		/** What "load development extension" reads: identity, grants, and the entry. */
+		/** The data that "load development extension" reads: the identity, the permissions and the entry. */
 		configureServer(server) {
 			server.middlewares.use(DESCRIPTOR_PATH, (request, response) => {
 				const { manifest } = readManifest(root);
 				response.setHeader("Content-Type", "application/json");
-				// a middleware added here runs before Vite's own, so the CORS setting
-				// above has not been applied yet. The editor reads this cross-origin
+				// this middleware runs before the middleware of Vite. So the CORS
+				// setting above does not apply yet. The editor reads this from a different origin
 				response.setHeader("Access-Control-Allow-Origin", "*");
 				response.end(
 					JSON.stringify({
@@ -248,11 +246,11 @@ export default function builderExtension({ builderUrl } = {}) {
 		},
 
 		/**
-		 * Emits the manifest and the icon, folds the stylesheet into the entry, and
-		 * refuses a build that is more than one file.
+		 * Adds the manifest and the icon to the output. Moves the stylesheet into
+		 * the entry. Stops a build that makes more than one file.
 		 *
-		 * `order: "post"`, because Vite's own CSS plugin emits that file in this
-		 * same hook and this has to run after it.
+		 * `order: "post"` is necessary. The CSS plugin of Vite adds the stylesheet
+		 * in this same hook. This code must run after it.
 		 */
 		generateBundle: {
 			order: "post",
@@ -260,8 +258,8 @@ export default function builderExtension({ builderUrl } = {}) {
 				const { manifest, source } = readManifest(root);
 				this.emitFile({ type: "asset", fileName: MANIFEST, source });
 
-				// the installation reads its icon from the install root, so the file
-				// lands there under the name the manifest gave it
+				// the install reads its icon from its root directory. So the file
+				// goes there, with the name from the manifest
 				if (manifest.icon) {
 					this.emitFile({ type: "asset", fileName: manifest.icon, source: readIcon(findIcon(manifest)) });
 				}

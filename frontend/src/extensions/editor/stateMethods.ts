@@ -1,12 +1,13 @@
 /**
- * Storage an extension owns outright. No permission gates it: the drawer
- * is not a write to the page, so a read-only page does not close it.
+ * The storage of an extension. No permission gates it. It is not a write to
+ * the page, so read-only mode does not stop it.
  *
- * One row per key, on the site. It used to be `localStorage`, which is per
- * browser, so two people sharing a machine shared every extension's state.
+ * The site keeps one JSON row for each user and installation. Before, it used
+ * `localStorage`, which is per browser. Then two people on one computer shared
+ * the state of each extension.
  *
- * A dev extension still uses the browser: its installation goes on every
- * `pagehide`, so a site row would not survive the reload an author needs.
+ * A dev extension still uses the browser. Its installation is removed on each
+ * `pagehide`. So a site row would not stay after the reload that an author needs.
  */
 
 import { isDevExtension } from "@/extensions/devExtension";
@@ -17,7 +18,7 @@ import { fields, refuse, text } from "../bridge/params";
 
 type Store = Record<string, unknown>;
 
-/** Rebuilt plain, because `createResource` answers with its reactive `data`. */
+/** A plain copy, because `createResource` returns its reactive `data`. */
 const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
 
 const invoke = (method: string, params: Record<string, unknown>) =>
@@ -30,18 +31,19 @@ const invoke = (method: string, params: Record<string, unknown>) =>
 		});
 
 /**
- * Room for settings and a cached list, small enough that no extension fills the
- * origin the editor shares with it. The server holds the same ceiling.
+ * Space for settings and a cached list. It is small, so that no extension fills
+ * the storage of the origin that it shares with the editor. The server has the
+ * same limit.
  */
 const MAX_BYTES = 100_000;
 
-/** Namespaced, the way `pageStore.ts:63` namespaces a page's route variables. */
+/** Has a namespace, as the route variables of a page do in `pageStore.ts`. */
 const keyFor = (extension: InstalledExtension) => `builder-extension:${extension.name}`;
 
 /**
- * A store that will not parse is treated as absent. A broad fallback is right
- * here. The value is the extension's own, and one bad entry would otherwise stop
- * the extension writing ever again.
+ * If the store cannot be parsed, the code treats it as empty. A broad fallback
+ * is correct here. The value belongs to the extension. Without the fallback,
+ * one bad entry would stop all later writes of the extension.
  */
 const readLocal = (extension: InstalledExtension): Store => {
 	const stored = localStorage.getItem(keyFor(extension));
@@ -65,8 +67,8 @@ const writeLocal = (extension: InstalledExtension, store: Store) => {
 	try {
 		localStorage.setItem(keyFor(extension), serialized);
 	} catch {
-		// the origin is shared with Builder's own keys, so this can happen to an
-		// extension that stayed well inside its own limit
+		// Builder keys use the same origin. So this can occur when an extension is
+		// well inside its own limit
 		throw refuse(`This browser has no room left to store "${extension.name}" state.`, "storage_full");
 	}
 };
@@ -75,10 +77,10 @@ const get = (_params: unknown, extension: InstalledExtension) =>
 	isDevExtension(extension) ? readLocal(extension) : invoke("get_state", { extension: extension.name });
 
 /**
- * A patch, merged at the top level. `set` never removes what a call leaves
- * unmentioned. An extension has up to five frames, and merging stops a panel
- * saving its query from erasing what the entry stored. The server keeps one row
- * per key, so two writing different keys never race.
+ * A patch, merged at the top level. `set` never removes a key that the call
+ * does not name. An extension has up to five frames. With the merge, a panel
+ * that saves its query does not remove what the entry stored. The server locks
+ * the row while it merges, so two frames cannot lose a write.
  */
 const set = (params: unknown, extension: InstalledExtension) => {
 	const patch = fields(params).state;
@@ -104,7 +106,7 @@ const unset = (params: unknown, extension: InstalledExtension) => {
 };
 
 export const stateMethods: MethodTable = {
-	// the extension's own drawer, so nothing here needs a grant
+	// the storage of the extension. So these methods need no permission
 	"state.get": { needs: null, run: get },
 	"state.set": { needs: null, run: set },
 	"state.unset": { needs: null, run: unset },

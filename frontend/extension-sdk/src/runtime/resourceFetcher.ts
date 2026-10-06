@@ -1,10 +1,10 @@
 /**
- * frappe-ui's resources, over the bridge.
+ * Sends frappe-ui resource requests through the bridge.
  *
- * An extension frame runs at an opaque origin with no cookie, so `fetch` can
- * never reach Frappe from here. `createResource` reads its fetcher on every
- * fetch (`resources.js:57`), so one `setConfig` call reroutes every resource in
- * the frame through the port instead:
+ * An extension frame has an opaque origin and no cookie. So `fetch` cannot
+ * reach Frappe from the frame. `createResource` reads its fetcher on each
+ * request. So one `setConfig` call sends each resource in the frame through
+ * the port:
  *
  * ```js
  * import { setConfig } from "frappe-ui";
@@ -13,19 +13,18 @@
  * setConfig("resourceFetcher", builder.data.fetcher);
  * ```
  *
- * Write it in the entry, which every frame imports. It must be the extension's
- * own `frappe-ui`: each extension bundles a copy, and the SDK cannot reach that
- * copy's config from here.
+ * Write it in the entry, which each frame imports. Use the `frappe-ui` of the
+ * extension. Each extension bundles its own copy, and the SDK cannot reach the
+ * config of that copy.
  *
- * **This is an adapter, not a gate.** It runs inside the frame, which is the
- * untrusted side, so it cannot decide anything. Each route below lands on a
- * `data.*` method the host gates and the server checks against the permission. A
- * frame that replaced this file with its own would reach exactly the same
- * methods and the same refusals.
+ * **This is an adapter, not a gate.** It runs in the frame, and the frame is
+ * not trusted. So it decides nothing. Each route below goes to a `data.*`
+ * method. The host gates that method, and the server checks the permission.
+ * A frame that replaces this file gets the same methods and the same refusals.
  *
- * A URL with no route is refused rather than forwarded. Forwarding would let a
- * resource name any whitelisted method on the site, and the `data.access`
- * permission would stop meaning anything.
+ * The adapter refuses a URL with no route. It does not forward it. If it did,
+ * a resource could call any whitelisted method on the site. Then the
+ * `data.access` permission would have no effect.
  */
 
 import { ChannelCallError } from "../shared/transport/createPortChannel";
@@ -33,20 +32,21 @@ import { data, type ListOptions } from "./namespaces";
 
 type Params = Record<string, unknown>;
 
-/** frappe-ui hands the fetcher the whole resource options, with params resolved. */
+/** frappe-ui gives the fetcher all the resource options, with the params resolved. */
 export type ResourceRequest = { url?: string; params?: Params };
 
 const refuse = (message: string, code = "unsupported_request") =>
 	new ChannelCallError({ message: `[builder] ${message}`, code });
 
 /**
- * A plain deep copy of what a resource sent.
+ * A plain deep copy of the data that a resource sent.
  *
- * `createListResource` holds its state in a `reactive`, and `makeParams` hands
- * those values straight to the fetcher — `out.fields` is a proxy over an array,
- * `out.filters` a proxy over an object. `postMessage` cannot clone a proxy, so
- * the params are flattened here, at the edge, before anything tries to send
- * them. The host flattens the answer coming back for the same reason.
+ * `createListResource` keeps its state in a `reactive`. `makeParams` gives those
+ * values directly to the fetcher. For example, `out.fields` is a proxy of an
+ * array, and `out.filters` is a proxy of an object.
+ *
+ * `postMessage` cannot clone a proxy. So this code makes plain copies before
+ * the send. The host makes a plain copy of the answer for the same reason.
  */
 const asParams = (value: unknown): Params =>
 	value ? (JSON.parse(JSON.stringify(value)) as Params) : {};
@@ -60,9 +60,9 @@ const named = (params: Params, field: string, url: string) => {
 };
 
 /**
- * `set_value` carries its patch as `fieldname`, which is an object from every
- * frappe-ui path. The one-field form, `fieldname` plus `value`, is what a
- * hand-written `createResource` sends, so both are read here.
+ * `set_value` sends its patch as `fieldname`. From frappe-ui, it is always an
+ * object. A hand-written `createResource` sends one field, as `fieldname` and
+ * `value`. So this code reads both forms.
  */
 const patchOf = (params: Params) => {
 	const sent = params.fieldname;
@@ -84,14 +84,14 @@ const listOptions = (params: Params): ListOptions => ({
 });
 
 /**
- * The five URLs `createListResource` and `createDocumentResource` reach for.
+ * The five URLs that `createListResource` and `createDocumentResource` use.
  *
- * They are Frappe's own names because that is what the resources send, and
- * `defaultListUrl` and its siblings default to exactly these strings.
+ * They are the Frappe names, because the resources send these names.
+ * `defaultListUrl` and the related settings use these strings by default.
  */
 const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 	"frappe.client.get_list": (params) => {
-		// a child table is read through its parent's permission, so read the parent
+		// the permission of the parent controls a child table. So read the parent
 		if (params.parent) {
 			throw refuse("\"parent\" is not supported: read the parent document instead.");
 		}
@@ -110,7 +110,7 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 			named(params, "name", "frappe.client.get"),
 		),
 
-	// the doctype travels inside the document here, not beside it
+	// here, the doctype is inside the document, not next to it
 	"frappe.client.insert": (params) => {
 		const doc = asParams(params.doc);
 		return data.insert(named(doc, "doctype", "frappe.client.insert"), doc);
@@ -131,11 +131,11 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 };
 
 /**
- * Hand this to `setConfig("resourceFetcher", ...)`.
+ * Give this to `setConfig("resourceFetcher", ...)`.
  *
- * It answers with the data, and throws on a refusal, which is the contract
- * `resources.js` expects. A refusal keeps its `code`, so a resource's `onError`
- * can still read it.
+ * It returns the data, and it throws an error on a refusal. `resources.js`
+ * expects this. A refusal keeps its `code`. So the `onError` of a resource can
+ * read it.
  */
 export const resourceFetcher = (options: ResourceRequest) => {
 	const url = options?.url ?? "";

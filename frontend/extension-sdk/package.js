@@ -1,4 +1,4 @@
-/** Build and validate the immutable archive an extension author publishes. */
+/** Builds and checks the archive that an extension author publishes. The archive cannot change. */
 
 import crypto from "node:crypto";
 import fs from "node:fs";

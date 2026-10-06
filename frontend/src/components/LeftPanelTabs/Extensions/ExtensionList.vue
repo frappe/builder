@@ -26,7 +26,7 @@
 						@click="open(extension.name)"
 						@keydown.enter.self="open(extension.name)">
 						<template #prefix>
-							<!-- one box whatever the file measures, so a stray icon cannot set the row height -->
+							<!-- one box for any icon size. So a large icon cannot change the row height -->
 							<img
 								v-if="extension.icon"
 								:src="extension.icon"
@@ -35,7 +35,7 @@
 								aria-hidden="true" />
 							<span v-else class="lucide-plug size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
 						</template>
-						<!-- The badge sits on the second line, so a label keeps the width of the first. -->
+						<!-- the badge is on the second line. So a label keeps the full width of the first line -->
 						<div class="flex min-w-0 flex-col gap-1">
 							<span class="truncate">{{ extension.label }}</span>
 							<div class="flex min-w-0 items-center gap-1.5">
@@ -140,12 +140,12 @@ const emit = defineEmits<{ select: [extension: string] }>();
 
 const open = (extension: string) => emit("select", extension);
 
-// loading one runs code the editor never installed, so only a developer sees the button
+// a dev load runs code that the site did not install. So only a developer sees the button
 const isDeveloperMode = Boolean(window.is_developer_mode);
 
 const filter = ref("");
 
-/** Empty search matches everything; otherwise the label, description, and package name are searched. */
+/** An empty search matches all extensions. Other searches look in the label, the description and the package name. */
 function matchesFilter(extension: CatalogExtension) {
 	const wanted = filter.value.trim().toLowerCase();
 	if (!wanted) return true;
@@ -157,13 +157,13 @@ const installed = computed(() => installations.value.filter(matchesFilter));
 const extensionsCatalog = getExtensionsCatalog();
 const catalog = computed<CatalogExtension[]>(() => extensionsCatalog.data?.extensions ?? []);
 
-/** Catalog entries this user has not installed yet. */
+/** The catalog entries that are not installed yet. */
 const notInstalled = computed<CatalogExtension[]>(() => {
 	const installedNames = new Set(installations.value.map((extension) => extension.name));
 	return catalog.value.filter((extension) => !installedNames.has(extension.name) && matchesFilter(extension));
 });
 
-/** The Hub answered, so an empty section means a search, a full install, or an empty Hub. */
+/** The Hub answered. So an empty section means a search with no match, all extensions installed, or an empty Hub. */
 const emptyMarketplaceText = computed(() => {
 	if (filter.value) return "Nothing here matches that.";
 	if (catalog.value.length) return "You have installed every extension on the Hub.";

@@ -1,16 +1,16 @@
 /**
- * Context menu rows. The surface D20 was written for.
+ * Context menu rows.
  *
- * Every other surface asks its rule about the selection. This one asks about the
- * block the user right-clicked, which is a different block whenever more than
- * one is selected. A rule here is therefore answered per block, at render, for
- * the row under the cursor — the property that makes rules worth having.
+ * All other surfaces check their rule against the selection. This surface
+ * checks it against the block that the user right-clicked. When more than one
+ * block is selected, that block can be different. So the host checks a rule
+ * here for each block, when it shows the row under the cursor.
  *
- * `condition` and `disabled` both receive the menu context (`ContextMenu.vue:15`
- * and `:18`), so the two halves of D20 land on fields that already exist.
+ * `condition` and `disabled` both get the menu context (see `ContextMenu.vue`).
+ * So `showWhen` and `enableWhen` use fields that already exist.
  *
- * `menu` is not a condition. It never changes after registration, so it says
- * which menu the row belongs to and the host folds it into the same expression.
+ * `menu` is not a condition. It never changes after registration. It names the
+ * menu of the row, and the host adds it to the same check.
  */
 
 import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";
@@ -48,7 +48,7 @@ const readRegistration = (params: unknown): Registration => {
 	return {
 		name: text(sent.name, "name"),
 		label: text(sent.label, "label"),
-		// a row with nothing to run is a row that does nothing when clicked
+		// a row with no action does nothing on a click
 		action: text(sent.action, "action"),
 		menu: sent.menu === undefined ? "both" : oneOf(sent.menu, MENUS, "menu"),
 		before: optionalText(sent.before, "before"),
@@ -70,7 +70,7 @@ const mergeRegistration = (current: Registration, patch: Record<string, unknown>
 const inMenu = (menu: Menu, fromLayersPanel: boolean) =>
 	menu === "both" || (menu === "layers") === fromLayersPanel;
 
-/** The snapshot, with the clicked block answering for the selection. */
+/** The snapshot. The clicked block gives the block fields of the selection. */
 const contextFor = (menu: BlockMenuContext): EditorContext => {
 	const snapshot = editorContext.value;
 	// count and blockIds still describe the real selection. Only the block snapshot changes
@@ -78,9 +78,9 @@ const contextFor = (menu: BlockMenuContext): EditorContext => {
 };
 
 /**
- * What crosses the port. `target` is a DOM node and `block` is a class
- * instance, so neither can travel. The extension receives an id and asks for
- * more with `block.get(blockId)`.
+ * The data that goes through the port. `target` is a DOM node, and `block` is a
+ * class instance. Neither can go through a port. The extension gets an id, and
+ * asks for more with `block.get(blockId)`.
  */
 const portable = (menu: BlockMenuContext) => ({
 	blockId: menu.block.blockId,
@@ -109,7 +109,7 @@ const rows = createSurfaceItems<Registration, ContextMenuOption>({
 });
 
 export const contextMenuMethods: MethodTable = {
-	// the host draws the row and runs the action through the bridge
+	// the host shows the row and runs the action through the bridge
 	"contextMenu.register": { needs: null, run: rows.register },
 	"contextMenu.unregister": { needs: null, run: rows.unregister },
 	"contextMenu.update": { needs: null, run: rows.update },

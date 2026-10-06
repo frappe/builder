@@ -1,20 +1,20 @@
 /**
- * One control, as data, turned into the `BlockProperty` the right panel renders
- * (Tier B). Nothing an extension sends is a component or a function, so this
- * file is the only place that knows which Builder control answers which name.
+ * Changes one control, sent as data, into the `BlockProperty` that the right
+ * panel shows (Tier B). An extension sends no components and no functions. So
+ * only this file knows which Builder control matches which name.
  *
- * Two components make one control. The wrapper decides where the value lives,
- * and the inner widget decides what the user touches, exactly as Builder's own
- * sections are written (`StyleSection.ts:38`).
+ * Two components make one control. The wrapper decides where the value is
+ * stored. The inner widget is what the user uses. The Builder sections use
+ * the same design (see `StyleSection.ts`).
  *
  * | `bind`        | wrapper                   | who writes the block   |
  * | attribute     | AttributePropertyControl  | the wrapper, by default |
  * | style         | StylePropertyControl      | the wrapper, by default |
  * | none          | BasePropertyControl       | nobody: the extension acts |
  *
- * A `bind` control with no `action` synthesizes to a `propertyKey` and nothing
- * else, because both bound wrappers already carry the write. Only the two
- * shapes that need more than a write get a `setModelValue` from here.
+ * A `bind` control with no `action` becomes only a `propertyKey`, because both
+ * bound wrappers already do the write. Only the two shapes that need more than
+ * a write get a `setModelValue` here.
  */
 
 import type { BlockProperty } from "@/components/BlockPropertySections";
@@ -33,13 +33,13 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { invokeAction } from "./actionMethods";
 
 /**
- * The widgets Builder's own sections use most, less the ones an extension
- * cannot describe as data: `Autocomplete` wants a `getOptions` function, and
- * `FontInput` loads webfonts as a side effect.
+ * The widgets that the Builder sections use most. It does not include the
+ * widgets that an extension cannot give as data. `Autocomplete` needs a
+ * `getOptions` function, and `FontInput` loads web fonts.
  *
- * `text` names no widget, because `Input` is the wrapper's default. `type` and
- * `options` are declared by no wrapper, so Vue passes them through `useAttrs`
- * to the widget (`BasePropertyControl.vue:130`).
+ * `text` names no widget, because `Input` is the default of the wrapper. No
+ * wrapper declares `type` and `options`. So Vue passes them to the widget
+ * through `useAttrs` (see `BasePropertyControl.vue`).
  */
 const WIDGETS = {
 	text: {},
@@ -60,7 +60,7 @@ export type Control = {
 	label?: string;
 	placeholder?: string;
 	bind?: Bind;
-	/** The extension's own value, when no block property holds it. */
+	/** The value of the extension, when no block property holds it. */
 	value?: unknown;
 	action?: string;
 	options?: unknown;
@@ -72,7 +72,7 @@ export type Control = {
 
 const number = (value: unknown) => (typeof value === "number" ? value : undefined);
 
-/** Neither key is required, but a bind that names neither would write nowhere. */
+/** Neither key is required. But a bind with neither key would write to nothing. */
 const readBind = (value: unknown, name: string): Bind | undefined => {
 	if (value === undefined) return undefined;
 	const sent = fields(value);
@@ -106,7 +106,7 @@ const readControl = (params: unknown): Control => {
 		showWhen: sent.showWhen as ShowWhenRule | undefined,
 	};
 
-	// a control that neither writes nor reports would render and do nothing
+	// a control that does not write and has no action would show and do nothing
 	if (!control.bind && !control.action) {
 		throw refuse(`"${name}" has neither "bind" nor "action", so it does nothing.`, "invalid_params");
 	}
@@ -114,11 +114,12 @@ const readControl = (params: unknown): Control => {
 };
 
 /**
- * The gate B3 describes, over every control at once.
+ * The permission gate for all the controls at one time.
  *
- * B3 puts it at registration, where there is no call to gate. `setControls`
- * replaces the whole list, so it is a second door into the same state and gets
- * the same check. That is why this lives with the reader, not with the method.
+ * The check occurs at registration, when there is no call to gate.
+ * `setControls` replaces the full list. So it is a second way to change the
+ * same state, and it gets the same check. That is why this check is in the
+ * reader, not in the method.
  */
 export const readControls = (params: unknown, extension: InstalledExtension): Control[] => {
 	if (!Array.isArray(params)) throw refuse(`"controls" must be a list.`, "invalid_params");
@@ -138,7 +139,7 @@ const writeTo = (bind: Bind) => (value: string | number | boolean) =>
 		? blockController.setAttribute(bind.attribute, String(value))
 		: blockController.setStyle(bind.style as string, value);
 
-/** The portable context an action receives, the same shape a menu row sends. */
+/** The plain context that an action gets. A menu row sends the same shape. */
 const notify = (control: Control, extension: InstalledExtension) => (value: unknown) =>
 	void invokeAction(extension, control.action as string, {
 		name: control.name,
@@ -147,8 +148,8 @@ const notify = (control: Control, extension: InstalledExtension) => (value: unkn
 	});
 
 /**
- * A bound control with no action hands back nothing, and the wrapper's own
- * default reads and writes the block.
+ * A bound control with no action returns nothing. The default of the wrapper
+ * reads and writes the block.
  */
 const valueProps = (control: Control, extension: InstalledExtension) => {
 	const tell = control.action ? notify(control, extension) : undefined;
@@ -178,7 +179,7 @@ export const toBlockProperty = (
 	component: wrapperFor(control),
 	getProps: () => ({
 		label: control.label,
-		// an unbound control owns no block property, so its own name identifies it
+		// a control that is not bound has no block property. So its name identifies it
 		propertyKey: control.bind?.attribute ?? control.bind?.style ?? control.name,
 		placeholder: control.placeholder,
 		options: control.options,
@@ -188,7 +189,7 @@ export const toBlockProperty = (
 		...WIDGETS[control.control],
 		...valueProps(control, extension),
 	}),
-	// the panel's search filter reads this, and the type requires it
+	// the search filter of the panel reads this, and the type needs it
 	searchKeyWords: [sectionLabel, control.label, control.name].filter(Boolean).join(", "),
 	condition: control.showWhen ? () => matches(control.showWhen, editorContext.value) : undefined,
 });

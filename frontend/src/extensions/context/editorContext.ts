@@ -1,12 +1,12 @@
 /**
- * Builder's live state, reduced to what an extension may read.
+ * The live state of Builder, with only the fields that an extension can read.
  *
- * A computed, so the 23 context menu items that read it during one render share
- * one evaluation, and so milestone 5 can watch it rather than keep a second copy.
+ * It is a computed. So the 23 context menu items that read it in one render
+ * share one result. Also, `contextMethods.ts` can watch it and keep no second copy.
  *
- * Stores resolve inside the getter. A registry module must not import Vue SFC
- * scope, and resolving a store at import time would tie this
- * module to the order the editor loads in.
+ * The getter gets the stores. A registry module must not import Vue SFC scope.
+ * A store that loads at import time makes this module depend on the load order
+ * of the editor.
  */
 
 import type Block from "@/block";
@@ -18,8 +18,8 @@ import { computed } from "vue";
 import type { BlockSnapshot, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
 /**
- * One block's own answers. Read from the block, not from `blockController`,
- * because the caller has already decided which block it means.
+ * A snapshot of one block. It comes from the block, not from
+ * `blockController`, because the caller already chose the block.
  */
 export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	blockId: block.blockId,
@@ -35,15 +35,15 @@ export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	isInput: block.isInput(),
 	isRepeater: block.isRepeater(),
 	isComponent: block.isExtendedFromComponent(),
-	// a string field holding the component name, not a method
+	// a string field with the component name. It is not a method
 	isChildOfComponent: Boolean(block.isChildOfComponent),
 });
 
 /**
- * No single block answers for an ambiguous selection, so only `count` and
- * `blockIds` survive one. `blockIds` is what an extension acts on when it wants
- * every selected block, and it is the only way to reach them once the per-block
- * fields go quiet.
+ * When more than one block is selected, no one block gives a snapshot. So
+ * only `count` and `blockIds` stay. An extension uses `blockIds` to act on all
+ * selected blocks. When the fields for one block are empty, `blockIds` is the
+ * only way to get the blocks.
  */
 const getSelection = () => {
 	const blocks = blockController.getSelectedBlocks();

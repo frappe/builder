@@ -1,13 +1,12 @@
 /**
- * The bookkeeping a host-drawn frame surface repeats.
+ * The record keeping that each frame window of the host needs.
  *
- * A dialog and a popover differ only in the chrome the host draws around them.
- * Both are opened by one frame and closed by another, both are keyed by the
- * extension, and both have the same three endings. So the state lives here once
- * and `uiMethods.ts` makes one of these per kind.
+ * A dialog and a popover are different only in the window that the host shows
+ * around them. One frame opens each of them, and a different frame closes it.
+ * The key of both is the extension, and both have the same three endings. So
+ * the state is here, one time. `uiMethods.ts` makes one of these for each type.
  *
- * `surfaces/surfaceItems.ts` is the same idea for the surfaces an extension
- * registers, and was extracted at its second surface too.
+ * `surfaces/surfaceItems.ts` does the same for the surfaces of an extension.
  */
 
 import { markRaw, reactive } from "vue";
@@ -16,18 +15,18 @@ import { fields, optionalText, optionalWholeNumber, refuse } from "../bridge/par
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
- * What the extension asks the host to draw around it. Both are optional, and an
- * unset one leaves the host's own starting size. The user resizes from
- * there either way, so this is a seed and not a lock.
+ * The size that the extension asks for. Both fields are optional. If a field is
+ * not set, the host uses its own start size. The user can always change the
+ * size. So this is a start value, not a fixed value.
  */
 export type FrameSize = { width?: number; height?: number };
 
 /**
- * Reads a size off whatever the open call sent.
+ * Reads a size from the data of the open call.
  *
- * Only a sized surface calls it. A dialog is drawn at the host's own size, so a
- * `width` sent to `ui.openDialog` is dropped like any other field it has no use
- * for, rather than kept where nothing would read it.
+ * Only a surface with a size calls it. A dialog always has the size of the
+ * host. So the host ignores a `width` in `ui.openDialog`, as it ignores any
+ * other field that it does not use.
  */
 const frameSize = (params: unknown): FrameSize => {
 	const sent = fields(params);
@@ -39,35 +38,36 @@ const frameSize = (params: unknown): FrameSize => {
 
 export type OpenFrame = {
 	title: string;
-	/** Set only by a sized surface. A dialog carries none, because none is read. */
+	/** Set only by a surface with a size. A dialog has none, because nothing reads it. */
 	size?: FrameSize;
 	/**
-	 * Travels to the frame at its connect handshake.
+	 * Goes to the frame in its connect handshake.
 	 *
-	 * Raw, never reactive. The handshake is a `postMessage`, which clones what it
-	 * sends, and a Vue proxy cannot be cloned. These are plain JSON off the wire
-	 * and never change while the frame is open, so there is nothing to observe.
+	 * It is plain, never reactive. The handshake is a `postMessage`, which clones
+	 * the data. A Vue proxy cannot be cloned. These values are plain JSON from the
+	 * message, and they do not change while the frame is open. So nothing needs to
+	 * watch them.
 	 */
 	props: Record<string, unknown>;
 };
 
-/** `sized` lets the extension seed the frame's dimensions. Only the popover does. */
+/** `sized` lets the extension give the start size of the frame. Only the popover uses it. */
 export const createFrameSurface = (kind: string, { sized = false } = {}) => {
-	/** Read by the host component. Reactive, because opening one has to paint. */
+	/** The host component reads this. It is reactive, because an open call must show the frame. */
 	const open = reactive(new Map<string, OpenFrame>());
 
-	/** Kept out of the reactive map: a resolver is not state anything renders. */
+	/** Not in the reactive map. Nothing shows a resolver. */
 	const waiting = new Map<string, (result: unknown) => void>();
 
-	/** Which extensions already have a teardown hook, so opening twice adds one hook. */
+	/** The extensions that already have a teardown hook. So a second open adds no second hook. */
 	const hooked = new Set<string>();
 
 	/**
-	 * Settles whoever is waiting, and forgets the frame.
+	 * Resolves the waiting call, and removes the frame.
 	 *
-	 * One function for all three endings — the frame closed itself, the user
-	 * dismissed it, or the extension was torn down — because a pending call that
-	 * never settles is a frame waiting forever.
+	 * One function for all three endings: the frame closed itself, the user closed
+	 * it, or the extension stopped. A waiting call that never resolves makes a
+	 * frame wait forever.
 	 */
 	const settle = (extension: string, result: unknown) => {
 		waiting.get(extension)?.(result);
@@ -75,7 +75,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 		open.delete(extension);
 	};
 
-	/** The host does this itself when the user closes it. */
+	/** The host calls this when the user closes the frame. */
 	const dismiss = (extension: string) => settle(extension, undefined);
 
 	const hookTeardown = (extension: string) => {
@@ -88,8 +88,8 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	};
 
 	/**
-	 * A second call replaces the first. The first one's caller is settled
-	 * with nothing, rather than left pending against a frame that is gone.
+	 * A second call replaces the first. The caller of the first call gets nothing.
+	 * It does not wait for a frame that is gone.
 	 */
 	const start = (params: unknown, extension: InstalledExtension) => {
 		const sent = fields(params);

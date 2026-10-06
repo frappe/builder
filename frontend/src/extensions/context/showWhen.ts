@@ -1,19 +1,19 @@
 /**
- * The rule an extension declares, and the matcher the host runs at render.
+ * The rule that an extension declares, and the matcher that the host runs when it renders.
  *
- * A `condition` runs inside a computed and must answer synchronously. An
- * extension lives in another realm, where every answer is asynchronous. So the
- * extension states a rule about host state, and the host answers it.
+ * A `condition` runs in a computed. It must answer at once. An extension runs
+ * in a different realm, where each answer is asynchronous. So the extension
+ * gives a rule about the host state, and the host checks the rule.
  *
- * The host owns the keys. Each names a field the snapshot already publishes,
- * so an author reads one spelling in both places. Grow this list one key
- * at a time. Adding a key later is cheap. Removing one is not.
+ * The host owns the keys. Each key names a field of the snapshot. So an
+ * author sees the same name in both places. Add keys one at a time. It is easy
+ * to add a key later. It is difficult to remove one.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";
 import type { Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
-/** The vocabulary itself: one reader per key, and the only place it grows. */
+/** The rule keys, with one reader for each key. Add new keys only here. */
 const READERS = {
 	isRoot: (context: EditorContext) => context.selection.isRoot,
 	isText: (context: EditorContext) => context.selection.isText,
@@ -39,18 +39,17 @@ export type ShowWhenRule = {
 type RuleKey = keyof typeof READERS;
 
 /**
- * Every key must match. A missing rule matches, so an item with no rule shows
- * wherever its owner's flag allows.
+ * All keys must match. No rule is a match. So an item with no rule shows
+ * where the flag of its owner allows.
  *
- * The comparison is strict, so a value of the wrong type hides the item rather
- * than showing it.
+ * The comparison is strict. So a value of the wrong type hides the item.
  */
 export const matches = (rule: ShowWhenRule | undefined, context: EditorContext) =>
 	!rule || Object.entries(rule).every(([key, wanted]) => READERS[key as RuleKey](context) === wanted);
 
 /**
- * An unknown key raises at registration and names the key. An ignored key would
- * make the item show everywhere, which is the wrong way to fail.
+ * An unknown key causes an error at registration. The error names the key.
+ * If the matcher ignored the key, the item would show in all places.
  */
 export const assertRule = (rule: ShowWhenRule | undefined, field = "showWhen") => {
 	const unknown = Object.keys(rule ?? {}).filter((key) => !(key in READERS));

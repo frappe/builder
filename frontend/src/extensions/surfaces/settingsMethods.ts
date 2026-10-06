@@ -1,12 +1,12 @@
 /**
- * One page in the settings dialog per extension, rendered as a frame
- * (Tier C). The same shape as the left panel tab. What differs is only where
- * the host puts it.
+ * One page in the settings dialog for each extension, shown as a frame
+ * (Tier C). It has the same shape as the left panel tab. Only its place is
+ * different.
  *
- * The group is always "Global". `settingsGroups` is a fixed list of two, and
- * "Current Page" is about the page being edited, which an extension's own page
- * is not. There is no `settings.registerGroup`: a third group is a Builder
- * decision.
+ * The group is always "Global". `settingsGroups` is a fixed list of two.
+ * "Current Page" is about the open page, and the page of an extension is not
+ * that page. There is no `settings.registerGroup`. Builder decides if a third
+ * group is necessary.
  */
 
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
@@ -34,7 +34,7 @@ const readRegistration = (params: unknown): Registration => {
 	return {
 		name: text(sent.name, "name"),
 		label,
-		// the sidebar entry and the heading may differ, as the built-in panes show
+		// the sidebar entry and the heading can be different, as in the built-in panes
 		title: optionalText(sent.title, "title") ?? label,
 		icon: text(sent.icon, "icon"),
 		before: optionalText(sent.before, "before"),
@@ -64,7 +64,7 @@ const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Re
 		before: registration.before,
 		after: registration.after,
 		component: ExtensionFrame,
-		// the dialog renders only the selected pane, so the frame mounts on first open
+		// the dialog shows only the selected pane. So the frame mounts on the first open
 		props: () => ({
 			extension: extension.name,
 			slot: "settings",
@@ -86,7 +86,7 @@ const pages = createSurfaceItems<Registration, SettingsItem>({
 });
 
 export const settingsMethods: MethodTable = {
-	// the host draws the sidebar entry and mounts the frame, so no permission gates this
+	// the host shows the sidebar entry and mounts the frame. So no permission gates this
 	"settings.registerItem": { needs: null, run: pages.register },
 	"settings.unregisterItem": { needs: null, run: pages.unregister },
 	"settings.update": { needs: null, run: pages.update },
