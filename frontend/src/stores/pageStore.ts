@@ -286,9 +286,9 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async createManualSnapshot(label?: string) {
+		async createManualSnapshot(label?: string, pageName?: string) {
 			const res = await webPages.runDocMethod.submit({
-				name: this.selectedPage as string,
+				name: pageName || (this.selectedPage as string),
 				method: "create_manual_snapshot",
 				label: label || null,
 			});

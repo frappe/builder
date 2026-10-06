@@ -9,7 +9,8 @@ import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
-import { createResource, dialog } from "frappe-ui";
+import { useDateFormat, useStorage } from "@vueuse/core";
+import { createResource, dialog, toast } from "frappe-ui";
 import { __ } from "@/translation";
 
 // Imperative dialogs that replace single-purpose modal components. Each opens
@@ -202,6 +203,46 @@ export function promptRenamePage(page: BuilderPage) {
 			if (!pageTitle || pageTitle === page.page_title) return;
 			await webPages.setValue.submit({ name: page.name, page_title: pageTitle });
 			page.page_title = pageTitle;
+		},
+	});
+}
+
+const hideSaveVersionPrompt = useStorage("hideSaveVersionPrompt", false);
+
+async function saveVersionIfChanged(pageName: string, label?: string) {
+	const pageStore = usePageStore();
+	await pageStore.waitTillPageIsSaved();
+	if (pageStore.selectedPage !== pageName) throw new Error("Page changed while saving");
+	const res = await pageStore.createManualSnapshot(label, pageName);
+	return Boolean(res?.message);
+}
+
+export function saveVersion(label?: string) {
+	const saving = saveVersionIfChanged(usePageStore().selectedPage as string, label);
+	toast.promise(saving, {
+		loading: __("Saving version..."),
+		success: (isSaved: boolean) => (isSaved ? __("Version saved") : __("No changes since the last version")),
+		error: () => __("Could not save version"),
+	});
+	return saving;
+}
+
+export function quickSaveVersion() {
+	return saveVersion(useDateFormat(new Date(), "YYYY-MM-DD HH:mm:ss").value);
+}
+
+// Mod+S: changes autosave, so the shortcut offers to save a version instead
+export function promptSaveVersion() {
+	if (hideSaveVersionPrompt.value) return quickSaveVersion();
+	dialog.prompt({
+		title: __("Save a Version History"),
+		message: __("Changes are saved automatically. This action saves the current state as a version."),
+		size: "sm",
+		confirmLabel: __("Save Version"),
+		fields: [{ name: "dontRemind", type: "checkbox", label: __("Don't remind me again") }],
+		onConfirm: async ({ values }) => {
+			hideSaveVersionPrompt.value = Boolean(values.dontRemind);
+			quickSaveVersion();
 		},
 	});
 }
