@@ -62,7 +62,7 @@ class TestAssertExtensionAccess(FrappeTestCase):
 			assert_extension_access(EXTENSION)
 
 	def test_refuses_a_permission_that_was_not_granted(self):
-		make_installation(EXTENSION, permissions=["page.read"])
+		make_installation(EXTENSION, permissions=["page.edit"])
 
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "data.access")

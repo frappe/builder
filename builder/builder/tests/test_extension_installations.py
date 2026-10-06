@@ -77,7 +77,7 @@ class TestEnableAndDisable(FrappeTestCase):
 		set_extension_enabled(EXTENSION, False)
 
 		with self.assertRaises(frappe.PermissionError):
-			assert_extension_access(EXTENSION, "page.read")
+			assert_extension_access(EXTENSION, "page.edit")
 
 	def test_enabling_opens_it_again(self):
 		make_installation(EXTENSION, enabled=0)
@@ -109,26 +109,26 @@ class TestGrantedPermissions(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_revoking_narrows_what_the_gate_allows(self):
-		make_installation(EXTENSION, permissions=["page.read", "token.write"])
+		make_installation(EXTENSION, permissions=["page.edit", "token.write"])
 
-		set_granted_permissions(EXTENSION, ["page.read"])
+		set_granted_permissions(EXTENSION, ["page.edit"])
 
-		assert_extension_access(EXTENSION, "page.read")
+		assert_extension_access(EXTENSION, "page.edit")
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "token.write")
 
 	def test_granting_again_reopens_it(self):
-		make_installation(EXTENSION, permissions=["page.read", "token.write"], granted=["page.read"])
+		make_installation(EXTENSION, permissions=["page.edit", "token.write"], granted=["page.edit"])
 
-		set_granted_permissions(EXTENSION, ["page.read", "token.write"])
+		set_granted_permissions(EXTENSION, ["page.edit", "token.write"])
 
 		assert_extension_access(EXTENSION, "token.write")
 
 	def test_refuses_a_permission_the_manifest_never_asked_for(self):
-		make_installation(EXTENSION, permissions=["page.read"])
+		make_installation(EXTENSION, permissions=["page.edit"])
 
 		with self.assertRaises(frappe.ValidationError):
-			set_granted_permissions(EXTENSION, ["page.read", "schema.write"])
+			set_granted_permissions(EXTENSION, ["page.edit", "schema.write"])
 
 	def test_refuses_a_permission_builder_does_not_have(self):
 		make_installation(EXTENSION)
