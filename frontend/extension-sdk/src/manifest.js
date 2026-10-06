@@ -1,12 +1,20 @@
 /**
- * The values of the extension protocol.
- * The SDK runtime, the Vite plugin and the host use them.
+ * The rules for `manifest.json`.
+ *
+ * The Vite plugin uses this file to check a manifest before a build or a dev
+ * load. `types.ts` gets the version and the permission types from it.
+ *
+ * This file is plain JavaScript. Node loads the Vite plugin from
+ * `node_modules`, and Node does not remove types there. So the plugin and all
+ * the files that it imports must be JavaScript.
  */
 
+/** The `v` field of a manifest. Each port message also has this version. */
 export const PROTOCOL_VERSION = 1;
 
 /**
  * Each permission that an extension can ask for. A read or a window needs no permission.
+ * Keep this list the same as `PERMISSIONS` in `builder/extensions/constants.py`.
  *
  * @type {readonly ("page.edit" | "page.write" | "token.write" | "data.access" | "schema.write" | "method.call")[]}
  */
@@ -34,6 +42,7 @@ const REQUIRED_MANIFEST_FIELDS = ["v", "name", "label", "description", "version"
 const EXTENSION_NAME = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/;
 const SEMVER =
 	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+// the editor shows the label and the description. No markup and no control characters
 const PLAIN_TEXT = /^[^<>\u0000-\u001f\u007f]*$/;
 
 const fail = (source, message) => {
@@ -44,6 +53,7 @@ const isObject = (value) => value !== null && typeof value === "object" && !Arra
 
 const requireText = (manifest, field, maximum, source) => {
 	const value = manifest[field];
+	// count code points, not UTF-16 units
 	const length = typeof value === "string" ? [...value].length : 0;
 	if (!length || length > maximum || value.trim() !== value || !PLAIN_TEXT.test(value)) {
 		fail(source, `field "${field}" must contain 1 through ${maximum} plain text characters`);
@@ -67,6 +77,7 @@ export const parseJson = (source, text) => {
 
 export const isSemver = (value) => typeof value === "string" && SEMVER.test(value);
 
+/** Returns the manifest, or throws an error. `source` names the file in the error message. */
 export const validateManifest = (value, source = "manifest.json") => {
 	if (!isObject(value)) fail(source, "must contain one JSON object");
 
