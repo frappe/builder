@@ -55,6 +55,9 @@ export class AIChatController {
 	// which a blank chat takes its new session id from
 	private turnCount = 0;
 	private liveSend = 0;
+	// both outlive their turn, so a new turn clears them before they can touch it
+	private completeTimer: ReturnType<typeof setTimeout> | undefined;
+	private cancelWatchdog: ReturnType<typeof setTimeout> | undefined;
 
 	private invalidateSessionLoads() {
 		this.loadSessionEpoch++;
@@ -286,6 +289,7 @@ export class AIChatController {
 
 	resetTransientState() {
 		this.clearStreamRenderTimer();
+		this.clearTurnTimers();
 		this.liveSend = 0;
 		this.endCanvasBuild();
 		this.progressMessage.value = "";
@@ -296,6 +300,11 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
+	}
+
+	private clearTurnTimers() {
+		clearTimeout(this.completeTimer);
+		clearTimeout(this.cancelWatchdog);
 	}
 
 	/** Throttle the streaming canvas preview: render at most every STREAM_RENDER_MS
@@ -557,7 +566,11 @@ export class AIChatController {
 			builderTokens.reload();
 		}
 		if (resources.includes("page_data") || resources.includes("page")) {
-			const page = await this.pageStore.fetchActivePage(this.pageId.value).catch(() => null);
+			const pageId = this.pageId.value;
+			const pageLoadToken = this.pageStore.pageLoadToken;
+			const page = await this.pageStore.fetchActivePage(pageId).catch(() => null);
+			// another page may have opened meanwhile, and its canvas autosaves to activePage
+			if (pageLoadToken !== this.pageStore.pageLoadToken || this.pageStore.selectedPage !== pageId) return;
 			if (page) {
 				this.pageStore.activePage = page;
 				if (resources.includes("page_data")) await this.pageStore.setPageData(page);
@@ -575,9 +588,11 @@ export class AIChatController {
 		const operations = data.operations;
 		if (!operations?.length) return;
 		this.previewUnconfirmed = false;
+		// another chat's turn still edits this page, but its changes aren't this chat's
+		const ownTurn = !this.isForeignSession(data);
 		this.applyServerEdit(() => {
 			for (const op of operations) {
-				this.dispatcher.trackAffectedItem(op.tool_name, op.args); // track before apply (remove_block)
+				if (ownTurn) this.dispatcher.trackAffectedItem(op.tool_name, op.args); // before apply (remove_block)
 				try {
 					this.dispatcher.applyToolOperation(op.tool_name, op.args);
 				} catch (e) {
@@ -665,7 +680,10 @@ export class AIChatController {
 				.catch(() => null);
 		}
 
+		const turn = this.turnCount;
 		await this.loadSession();
+		// a turn sent during the reload owns the chat's tail now
+		if (turn !== this.turnCount) return;
 
 		// Re-apply client-only metadata in case the server hasn't flushed it yet —
 		// but only onto the turn's own session, not one switched to meanwhile.
@@ -684,7 +702,7 @@ export class AIChatController {
 		}
 
 		this.scrollToBottom();
-		window.setTimeout(() => {
+		this.completeTimer = setTimeout(() => {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
 		}, 1200);
@@ -779,6 +797,8 @@ export class AIChatController {
 	beginResumedTurn = () => {
 		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
 		this.messages.value.push(assistantMessage);
+		this.turnCount++;
+		this.clearTurnTimers();
 		this.pendingAssistantId.value = assistantMessage.id;
 		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
@@ -817,7 +837,8 @@ export class AIChatController {
 		}
 		// Watchdog: a wedged run (e.g. a stalled provider connection) can't reach its
 		// next cancellation check. Don't leave "Cancelling…" up forever.
-		setTimeout(resetStuckCancel, 20000);
+		clearTimeout(this.cancelWatchdog);
+		this.cancelWatchdog = setTimeout(resetStuckCancel, 20000);
 	};
 
 	submitPrompt = async () => {
@@ -828,6 +849,7 @@ export class AIChatController {
 		const sessionId = this.sessionId.value;
 		const turn = ++this.turnCount;
 		this.liveSend = turn;
+		this.clearTurnTimers();
 		// a page or chat switch resets liveSend, and this send must then stand down
 		const stillOwned = () => this.pageId.value === pageId && this.liveSend === turn;
 
@@ -911,8 +933,9 @@ export class AIChatController {
 	 * The pre-turn snapshot is the single source of truth; there is no separate undo. */
 	revertTurn = async (message: ChatMessage) => {
 		const snapshot: string | undefined = message.metadata?.revertSnapshot;
+		// a running turn is still writing the draft the snapshot would replace, and
 		// restoring reloads the page onto the active canvas, a component's while one is open
-		if (!snapshot || !this.sessionId.value || !this.isEditingPage.value) return;
+		if (!snapshot || !this.sessionId.value || this.isSubmitting.value || !this.isEditingPage.value) return;
 		const confirmed = await confirm(
 			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
 		);

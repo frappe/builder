@@ -17,7 +17,12 @@
 					:disabled="isSubmitting"
 					@click="newSession" />
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
-					<Button variant="ghost" size="sm" icon="lucide-history" tooltip="Chats on this page" />
+					<Button
+						variant="ghost"
+						size="sm"
+						icon="lucide-history"
+						tooltip="Chats on this page"
+						:disabled="isSubmitting" />
 				</Dropdown>
 				<Button
 					variant="ghost"
@@ -152,7 +157,7 @@
 							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
 								<button
 									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40"
-									:disabled="!isEditingPage"
+									:disabled="isSubmitting || !isEditingPage"
 									@click="revertTurn(message)">
 									<span class="lucide-rotate-ccw size-3" />
 									Revert
