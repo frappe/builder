@@ -15,13 +15,13 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import type { BlockFacts, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
+import type { BlockSnapshot, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
 /**
- * The facts about one block. They come from the block, not from
+ * A snapshot of one block. It comes from the block, not from
  * `blockController`, because the caller already chose the block.
  */
-export const factsFor = (block: Block): BlockFacts => ({
+export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	blockId: block.blockId,
 	element: block.element,
 	isRoot: block.isRoot(),
@@ -40,7 +40,7 @@ export const factsFor = (block: Block): BlockFacts => ({
 });
 
 /**
- * When more than one block is selected, no one block gives the facts. So
+ * When more than one block is selected, no one block gives a snapshot. So
  * only `count` and `blockIds` stay. An extension uses `blockIds` to act on all
  * selected blocks. When the fields for one block are empty, `blockIds` is the
  * only way to get the blocks.
@@ -48,7 +48,7 @@ export const factsFor = (block: Block): BlockFacts => ({
 const getSelection = () => {
 	const blocks = blockController.getSelectedBlocks();
 	const shared = { count: blocks.length, blockIds: blocks.map((block) => block.blockId) };
-	return blocks.length === 1 ? { ...shared, ...factsFor(blocks[0]) } : shared;
+	return blocks.length === 1 ? { ...shared, ...getBlockSnapshot(blocks[0]) } : shared;
 };
 
 const getPage = () => {

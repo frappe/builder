@@ -87,8 +87,8 @@ export type EditorSelection = {
 	isChildOfComponent?: boolean;
 };
 
-/** The facts about one block. They say nothing about the full selection. */
-export type BlockFacts = Omit<EditorSelection, "count" | "blockIds">;
+/** A snapshot of one block. It says nothing about the full selection. */
+export type BlockSnapshot = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
  * The snapshot that an extension reads. It is not the live state of Builder.
