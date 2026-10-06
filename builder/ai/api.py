@@ -155,6 +155,7 @@ Write it as the user speaking, plain text, no headings or bullets unless the dra
 
 
 @frappe.whitelist()
+@has_page_write()
 def improve_prompt(prompt: str, model: str | None = None) -> str:
 	"""One cheap completion that sharpens the composer draft in place — the user
 	reviews and edits the result before sending it."""
