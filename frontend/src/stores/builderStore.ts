@@ -1,5 +1,6 @@
 import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
+import type { AISetupState } from "@/components/ai/types";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import { editorDemo } from "@/utils/editorDemo";
@@ -84,8 +85,9 @@ const useBuilderStore = defineStore("builderStore", {
 		async refreshAIState() {
 			const state = (await createResource({ url: "builder.ai.api.ai_setup_state" })
 				.submit()
-				.catch(() => null)) as { configured?: boolean } | null;
+				.catch(() => null)) as AISetupState | null;
 			this.aiConfigured = !!state?.configured;
+			return state;
 		},
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;

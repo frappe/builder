@@ -238,31 +238,15 @@
 </template>
 
 <script setup lang="ts">
+import type { AIPreset as Preset, AISetupState } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { getErrorMessage } from "@/utils/helpers";
 import { Badge, Button, Checkbox, createResource, FormControl, Progress, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
-defineProps<{ canSkipSetup?: boolean }>();
+// `state` is the setup state the caller just fetched, so it isn't asked for twice
+const props = defineProps<{ canSkipSetup?: boolean; state?: AISetupState | null }>();
 const emit = defineEmits(["done"]);
-
-type Preset = {
-	id: string;
-	name: string;
-	tagline: string;
-	blurb: string;
-	key_url: string;
-	key_prefix: string;
-	key_steps: string[];
-	api_base: string | null;
-	custom: boolean;
-	oauth: boolean;
-	has_key: boolean;
-	needs_name: boolean;
-	needs_api_base: boolean;
-	configured: boolean;
-	models: { model_id: string; label: string; note: string; recommended: boolean }[];
-};
 
 const stepLabels = ["Provider", "Connect", "Models"];
 const step = ref(0);
@@ -328,7 +312,8 @@ const canContinue = computed(() => {
 const load = async () => {
 	loading.value = true;
 	try {
-		const state: any = await createResource({ url: "builder.ai.api.ai_setup_state" }).submit();
+		const state: AISetupState =
+			props.state ?? (await createResource({ url: "builder.ai.api.ai_setup_state" }).submit());
 		presets.value = state.presets || [];
 		if (state.needs_migrate) {
 			loadError.value = "This site is missing Builder's AI tables. Run bench migrate on it, then reopen.";
