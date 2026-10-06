@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import DevExtensionDialog from "@/components/DevExtensionDialog.vue";
-import ExtensionFrame from "@/components/ExtensionFrame.vue";
+import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
+import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
 import useBuilderStore from "@/stores/builderStore";

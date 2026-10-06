@@ -1,12 +1,14 @@
 /**
- * All the methods of the surfaces, in one table.
+ * The items that an extension adds to the editor UI, as one method table.
  *
- * Each surface file owns its registry, its validation and its descriptor.
- * `surfaceItems.ts` has the shared record keeping. This file only collects the
- * tables. So a new surface needs one import and one spread.
+ * - `toolbarMethods.ts`: toolbar buttons.
+ * - `actionMethods.ts`: the actions that a button or a menu item runs.
+ * - `surfaceItems.ts`: the record keeping that each surface shares.
+ *
+ * To add a surface, add one import and one spread here.
  */
 
-import type { MethodTable } from "../host/permissions";
+import type { MethodTable } from "../bridge/permissions";
 import { actionMethods } from "./actionMethods";
 import { toolbarMethods } from "./toolbarMethods";
 

@@ -28,13 +28,13 @@
 		},
 		"./vite": "./vite.js",
 		"./types": {
-			"source": "./src/types.ts",
-			"types": "./dist/types.d.ts",
+			"source": "./src/shared/types.ts",
+			"types": "./dist/shared/types.d.ts",
 			"default": "./dist/types.js"
 		},
 		"./transport": {
-			"source": "./src/transport/createPortChannel.ts",
-			"types": "./dist/transport/createPortChannel.d.ts",
+			"source": "./src/shared/transport/createPortChannel.ts",
+			"types": "./dist/shared/transport/createPortChannel.d.ts",
 			"default": "./dist/transport/createPortChannel.js"
 		}
 	},

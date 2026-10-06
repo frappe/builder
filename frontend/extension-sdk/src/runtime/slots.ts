@@ -13,7 +13,7 @@
  * frame. The module of a slot must not run in a frame for a different slot.
  */
 
-import type { ExtensionSlot } from "../types";
+import type { ExtensionSlot } from "../shared/types";
 
 /** The one element that the shell gives a frame for its content. */
 const ROOT_ID = "app";

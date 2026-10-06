@@ -11,9 +11,9 @@
  */
 
 import type { RegistryEntry, createRegistry } from "@/utils/createRegistry";
-import { bridge } from "../host/bridge";
+import { bridge } from "../bridge/bridge";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { fields, refuse, text } from "../params";
+import { fields, refuse, text } from "../bridge/params";
 
 type Named = { name: string };
 

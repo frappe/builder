@@ -21,7 +21,7 @@ export default defineConfig({
 		// the frame runs module scripts. So it is always a modern browser
 		target: "es2020",
 		lib: {
-			entry: path.resolve(root, "extension-sdk/src/sdk/index.ts"),
+			entry: path.resolve(root, "extension-sdk/src/runtime/index.ts"),
 			formats: ["es"],
 			fileName: () => "extension-sdk.js",
 		},

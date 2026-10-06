@@ -1,5 +1,10 @@
 /**
- * The `.` entry. In practice, it gives only types.
+ * The `.` entry of `frappe-builder-extension-sdk`. In practice, it gives only types.
+ *
+ * - `runtime/`: the frame half. Builder serves it to each frame as `extension-sdk.js`.
+ * - `shared/`: the types, the manifest rules and the port channel. The host also imports them.
+ * - `vue.ts`: the optional Vue helpers, in the bundle of the author.
+ * - `../vite.js`: the build plugin, which runs in Node.
  *
  * No extension build reads this file. `vite.js` marks the SDK as external.
  * The import stays in the build output. The import map of the frame shell
@@ -11,7 +16,7 @@
  * This file lets the editor and the type checker of an author follow the import.
  */
 
-export { default, type HostInfo } from "./sdk/index";
-export type { ContextField, ContextHandler, ItemPatch, ShowWhen, ToolbarRegistration } from "./sdk/namespaces";
-export type { SlotEntry } from "./sdk/slots";
-export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./types";
+export { default, type HostInfo } from "./runtime/index";
+export type { ContextField, ContextHandler, ItemPatch, ShowWhen, ToolbarRegistration } from "./runtime/namespaces";
+export type { SlotEntry } from "./runtime/slots";
+export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./shared/types";

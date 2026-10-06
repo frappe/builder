@@ -1,25 +1,27 @@
 /**
- * The one place where the editor keeps its live extensions.
+ * The host side of extensions. This file makes the method table and exports
+ * the bridge API to the editor.
  *
- * It is a module, not a store. Registry code uses it, and a registry module
- * must not import Vue SFC scope. The install list is a resource. It is in
- * `@/data` with the other resources.
+ * - `bridge/`: the gate for each call from a frame. Permissions, rate limit, parameter checks.
+ * - `context/`: the editor snapshot, the `showWhen` rules, and the context methods.
+ * - `surfaces/`: the items that an extension adds to the editor UI.
+ * - `components/`: the frames, and the dialog that loads a dev extension.
+ * - `devExtension.ts`: the extension from a dev server, for this session.
  *
- * The bridge is in `host/bridge.ts`. So a surface can import the bridge and
- * not import this file. This file makes the method table. So the bridge
- * never knows what a surface is.
+ * The installed list is a resource, so it is in `@/data/extensions.ts`.
+ * This is a module, not a store, because registry modules import it.
  */
 
 import useBuilderStore from "@/stores/builderStore";
-import { editorMethods } from "./editor";
-import { bridge } from "./host/bridge";
-import { hostMethods } from "./host/hostMethods";
+import { bridge } from "./bridge/bridge";
+import { hostMethods } from "./bridge/hostMethods";
+import { contextMethods } from "./context/contextMethods";
 import { surfaceMethods } from "./surfaces";
 
 // the store loads on each call, not at import. So this code does not depend
 // on the load order of the editor
 bridge.setMethodTable(
-	{ ...hostMethods, ...surfaceMethods, ...editorMethods },
+	{ ...hostMethods, ...surfaceMethods, ...contextMethods },
 	{ isReadOnly: () => useBuilderStore().readOnlyMode },
 );
 

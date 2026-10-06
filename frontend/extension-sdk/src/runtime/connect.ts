@@ -5,8 +5,8 @@
  * messages use the port. So this listener is necessary only one time.
  */
 
-import { createPortChannel, type PortChannel } from "../transport/createPortChannel";
-import { PROTOCOL_VERSION, type ConnectMessage } from "../types";
+import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
+import { PROTOCOL_VERSION, type ConnectMessage } from "../shared/types";
 import { dispatch } from "./actions";
 import { runSlot, setActiveSlot } from "./slots";
 

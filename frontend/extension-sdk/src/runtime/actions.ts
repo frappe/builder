@@ -13,7 +13,7 @@
  * shows its action.
  */
 
-import { unknownMethod } from "../transport/createPortChannel";
+import { unknownMethod } from "../shared/transport/createPortChannel";
 
 export type ActionHandler = (context: Record<string, unknown>) => unknown;
 
