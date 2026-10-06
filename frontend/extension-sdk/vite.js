@@ -135,8 +135,8 @@ export default function builderExtension({ builderUrl } = {}) {
 					rollupOptions: {
 						input: entry,
 						// the build never includes the SDK. The import map of the frame
-						// shell points it to the one copy that Builder serves. An import
-						// map belongs to the document, so it also works for a Blob module
+						// shell points it to the one copy that Builder serves, for the
+						// entry and for every chunk
 						external: [SDK],
 						output: {
 							entryFileNames: OUTPUT_ENTRY,
