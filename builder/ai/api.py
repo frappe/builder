@@ -100,7 +100,10 @@ def run(
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
 
-	# Append the user turn for an established session.
+	# A chat's session is created by its first message, not by opening the panel.
+	if not session_id:
+		session_id = AISession.create({"page": page_id}, model).name
+
 	if session_id:
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
@@ -524,21 +527,17 @@ def parse_model_ids(models) -> list[str]:
 @has_page_write()
 def get_ai_session(page_id: str, model: str | None = None, session_id: str | None = None):
 	"""One page can hold several parallel chat sessions. With `session_id` this loads
-	that specific session; without it, the page's most recently used one (creating
-	the first if none exist)."""
+	that specific session; without it, the page's most recently used one. Reading
+	never creates a session: a page nobody has chatted on gets a blank one, and
+	`run` creates the session with the chat's first message."""
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
-		return {
-			"session_id": "",
-			"page_id": page_id,
-			"selected_model": model or "",
-			"last_task_type": None,
-			"messages": [],
-		}
+		return blank_session(page_id, model)
 
-	if session_id and frappe.db.exists(AISession.DOCTYPE, session_id):
-		session = AISession.get(session_id, page_id=page_id)
-	else:
-		session = AISession.get_or_create(page_id, model=model)
+	if not (session_id and frappe.db.exists(AISession.DOCTYPE, session_id)):
+		session_id = AISession.last_used({"page": page_id, "session_user": frappe.session.user})
+	if not session_id:
+		return blank_session(page_id, model)
+	session = AISession.get(session_id, page_id=page_id)
 	return {
 		"session_id": session.name,
 		"page_id": session.page,
@@ -548,23 +547,14 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 	}
 
 
-@frappe.whitelist()
-@has_page_write()
-def new_ai_session(page_id: str, model: str | None = None):
-	"""Start a fresh chat session on this page — existing sessions stay untouched
-	and switchable (VS Code-style parallel chats). An empty session the user never
-	used IS a fresh chat, so hand that back rather than stacking up another: a few
-	taps of New chat otherwise fill the switcher with identical blank entries."""
-	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
-		frappe.throw(_("Save the page before starting a chat session"))
-	filters = {"page": page_id, "session_user": frappe.session.user}
-	blank = frappe.db.get_value(
-		AISession.DOCTYPE, {**filters, "status": "Active", "title": ["is", "not set"]}, "name"
-	)
-	if blank and not frappe.db.count(AISession.MESSAGE_DOCTYPE, {"session": blank}):
-		return {"session_id": blank, "messages": []}
-	session = AISession.create({"page": page_id}, model)
-	return {"session_id": session.name, "messages": []}
+def blank_session(page_id: str, model: str | None) -> dict:
+	return {
+		"session_id": "",
+		"page_id": page_id,
+		"selected_model": model or "",
+		"last_task_type": None,
+		"messages": [],
+	}
 
 
 @frappe.whitelist()

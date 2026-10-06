@@ -45,8 +45,10 @@ export class AIChatController {
 	private pendingSessionId: string | null = null;
 	// orders the user's session choices (switch/new/delete); refreshes don't count
 	private sessionIntentEpoch = 0;
-	// in-flight new_ai_session calls; a "reselect" during one must cancel it
-	private pendingSessionCreates = 0;
+	// turns started from this panel; liveSend is the one whose run call is still out,
+	// which a blank chat takes its new session id from
+	private turnCount = 0;
+	private liveSend = 0;
 
 	private invalidateSessionLoads() {
 		this.loadSessionEpoch++;
@@ -148,7 +150,6 @@ export class AIChatController {
 	/** The in-flight turn's timeline, mirrored onto the pending message as it grows. */
 	private readonly liveSteps = ref<AITurnStep[]>([]);
 	private readonly pendingAssistantId = ref<string | null>(null);
-	private submittedForPageId: string | null = null;
 	// Streaming re-render is throttled: re-parsing + rebuilding the whole block tree
 	// on every chunk pegs the CPU. The final generate_page op re-applies the
 	// authoritative document, so this preview can render at a coarse cadence.
@@ -275,6 +276,7 @@ export class AIChatController {
 
 	resetTransientState() {
 		this.clearStreamRenderTimer();
+		this.liveSend = 0;
 		this.endCanvasBuild();
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
@@ -353,8 +355,8 @@ export class AIChatController {
 	};
 
 	/** Load a chat session: the given one, else the current one, else the page's
-	 * most recently used (the server creates the first). A page can hold several
-	 * parallel sessions — see switchSession/newSession. */
+	 * most recently used, or a blank chat when there is none. A page can hold
+	 * several parallel sessions; see switchSession/newSession. */
 	async loadSession(sessionId?: string) {
 		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
 		const target = sessionId || this.pendingSessionId || this.sessionId.value || undefined;
@@ -400,39 +402,21 @@ export class AIChatController {
 
 	switchSession = async (sessionId: string) => {
 		// reselecting the current chat is a no-op only when nothing else is pending
-		if (
-			!sessionId ||
-			(sessionId === this.sessionId.value && !this.pendingSessionId && !this.pendingSessionCreates)
-		)
-			return;
+		if (!sessionId || (sessionId === this.sessionId.value && !this.pendingSessionId)) return;
 		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
 		this.scrollToBottom();
 	};
 
-	newSession = async () => {
+	/** A blank chat. The server only creates its session with the first message. */
+	newSession = () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
-		const intent = ++this.sessionIntentEpoch;
+		this.sessionIntentEpoch++;
 		this.invalidateSessionLoads();
-		const pageId = this.pageId.value;
-		this.pendingSessionCreates++;
-		try {
-			const result = await createResource({ url: "builder.ai.api.new_ai_session" }).submit({
-				page_id: pageId,
-				model: this.selectedModel.value,
-			});
-			// a later choice (another chat, another page) beats this create
-			if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
-			this.resetTransientState();
-			// loads started during the round-trip above carry a valid epoch; void them
-			this.invalidateSessionLoads();
-			this.sessionId.value = (result as { session_id: string }).session_id;
-			this.messages.value = [];
-			this.loadSessions();
-		} finally {
-			this.pendingSessionCreates--;
-		}
+		this.resetTransientState();
+		this.sessionId.value = "";
+		this.messages.value = [];
 	};
 
 	deleteSession = async () => {
@@ -446,7 +430,7 @@ export class AIChatController {
 		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
 		this.resetTransientState();
 		this.sessionId.value = "";
-		await this.loadSession(); // falls back to the next most recent (or a fresh one)
+		await this.loadSession(); // falls back to the next most recent (or a blank chat)
 	};
 
 	clearImage = () => {
@@ -473,9 +457,13 @@ export class AIChatController {
 	/** All events on this page's channel carry the session that produced them.
 	 * With parallel sessions, chat-UI events from a session the user isn't
 	 * viewing must not touch this view (canvas ops in onToolBatch still apply —
-	 * the canvas is page-level, not session-level). */
+	 * the canvas is page-level, not session-level). A blank chat owns no turn
+	 * until its first send: that turn's first event names the session it created,
+	 * which Stop needs before run even returns. */
 	private isForeignSession(data: { session_id?: string }): boolean {
-		return !!(data.session_id && this.sessionId.value && data.session_id !== this.sessionId.value);
+		if (!data.session_id) return false;
+		if (!this.sessionId.value && this.liveSend) this.sessionId.value = data.session_id;
+		return data.session_id !== this.sessionId.value;
 	}
 
 	/** The turn's headline status ("Thinking with Claude Sonnet 5"), for the panel
@@ -621,11 +609,6 @@ export class AIChatController {
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
 		this.previewUnconfirmed = false;
-		if (this.submittedForPageId && this.submittedForPageId !== this.pageId.value) {
-			this.submittedForPageId = null;
-			return;
-		}
-		this.submittedForPageId = null;
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
@@ -825,13 +808,17 @@ export class AIChatController {
 
 	submitPrompt = async () => {
 		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
-		// submitting pins the current chat: a still-pending create must not replace it
+		// submitting pins the current chat over any session choice still in flight
 		this.sessionIntentEpoch++;
+		const pageId = this.pageId.value;
+		const sessionId = this.sessionId.value;
+		const turn = ++this.turnCount;
+		this.liveSend = turn;
+		// a page or chat switch resets liveSend, and this send must then stand down
+		const stillOwned = () => this.pageId.value === pageId && this.liveSend === turn;
 
 		const userText = this.prompt.value.trim();
 		this.prompt.value = "";
-		this.submittedForPageId = this.pageId.value;
-		if (!this.sessionId.value) await this.loadSession();
 
 		// Only explicitly attached blocks travel with the message.
 		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
@@ -862,19 +849,19 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = true;
 
-		// The server edits the page authoritatively from draft_blocks — flush any
-		// unsaved canvas changes first so the turn (and its revert snapshot) starts
-		// from exactly what the user sees.
-		await this.pageStore.savePage();
-
 		try {
+			// The server edits the page authoritatively from draft_blocks — flush any
+			// unsaved canvas changes first so the turn (and its revert snapshot) starts
+			// from exactly what the user sees.
+			await this.pageStore.savePage();
+			if (!stillOwned()) return;
 			const result = await createResource({
 				url: "builder.ai.api.run",
 				makeParams: () => ({
 					prompt: userText,
-					page_id: this.pageId.value,
+					page_id: pageId,
 					model: this.selectedModel.value,
-					session_id: this.sessionId.value,
+					session_id: sessionId,
 					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
 					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
@@ -882,12 +869,27 @@ export class AIChatController {
 					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
 				}),
 			}).submit();
+			if (!stillOwned()) return;
 			const response = result as { session_id?: string; status?: string; message?: string };
 			if (response.session_id) this.sessionId.value = response.session_id;
+			// a blank chat's first send created its session; list it in the switcher
+			if (!sessionId) this.loadSessions();
 		} catch (error) {
-			await this.onError({ message: getErrorMessage(error, "Request failed") });
+			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], userText, error);
+		} finally {
+			if (this.liveSend === turn) this.liveSend = 0;
 		}
 	};
+
+	/** The send failed before any turn started, so nothing reached the chat: take
+	 * the optimistic bubbles back out and hand the prompt back to the composer. */
+	private failSend(messageIds: string[], userText: string, error: unknown) {
+		this.messages.value = this.messages.value.filter((m) => !messageIds.includes(m.id));
+		this.pendingAssistantId.value = null;
+		this.isSubmitting.value = false;
+		if (!this.prompt.value.trim()) this.prompt.value = userText;
+		toast.error(getErrorMessage(error, "Could not send the message"));
+	}
 
 	/** Revert an AI turn in ONE go: restore the page to the snapshot taken just before it
 	 * — blocks, page data AND client scripts (created ones get unlinked, edited ones

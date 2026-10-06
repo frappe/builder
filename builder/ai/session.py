@@ -22,20 +22,6 @@ class AISession:
 	# --- factories --------------------------------------------------------
 
 	@classmethod
-	def find_or_create(cls, filters: dict, model: str | None = None):
-		"""Return the session to reopen for `filters` (a page can hold several
-		parallel sessions), or insert one. A late model pick is saved onto a session
-		created without one."""
-		name = cls.last_used(filters)
-		if name:
-			doc = frappe.get_doc(cls.DOCTYPE, str(name))
-			if model and not doc.selected_model:
-				doc.selected_model = model
-				doc.save(ignore_permissions=True)
-			return cls(doc)
-		return cls.create({**filters}, model)
-
-	@classmethod
 	def last_used(cls, filters: dict) -> str | None:
 		"""The most recent session that was actually TALKED to, else the most recent
 		one at all. A session is stamped with last_interaction_on the moment it is
@@ -61,8 +47,7 @@ class AISession:
 
 	@classmethod
 	def create(cls, values: dict, model: str | None = None):
-		"""Insert a fresh Active session — the 'new chat' action and the create branch
-		of find_or_create share this."""
+		"""Insert a fresh Active session. A chat gets one with its first message."""
 		doc = frappe.get_doc(
 			{
 				"doctype": cls.DOCTYPE,
@@ -74,10 +59,6 @@ class AISession:
 			}
 		).insert(ignore_permissions=True)
 		return cls(doc)
-
-	@classmethod
-	def get_or_create(cls, page_id: str, model: str | None = None, user: str | None = None):
-		return cls.find_or_create({"page": page_id, "session_user": user or frappe.session.user}, model)
 
 	@classmethod
 	def get(cls, session_id: str, page_id: str | None = None, user: str | None = None):
