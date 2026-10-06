@@ -616,16 +616,18 @@ def update_session_message_metadata(session_id: str, metadata: dict):
 
 @frappe.whitelist()
 @has_page_write()
-def test_api_key(provider: str | None = None):
+def test_api_key(provider: str | None = None, api_key: str | None = None):
 	"""Call the cheapest model this key can reach and report what happened. With a
-	provider, tests THAT provider's key and one of its models; without, the
-	OpenRouter key in Builder Settings."""
+	provider, tests THAT provider's key and one of its models (or `api_key`, a key
+	typed into its form but not saved yet); without, the OpenRouter key in Builder
+	Settings."""
+	typed_key = api_key if provider else None
 	if provider:
 		model = frappe.db.get_value("Builder AI Model", {"provider": provider, "enabled": 1}, "name")
 		if not model:
 			return {"success": False, "message": _("Add a model to this provider first")}
 		actual_model = model
-		api_key = resolve_api_key(model)
+		api_key = typed_key or resolve_api_key(model)
 	else:
 		api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
 		if not api_key:
@@ -634,14 +636,15 @@ def test_api_key(provider: str | None = None):
 
 	from builder.ai.llm import route
 
-	call_model, overrides, api_key = route(actual_model, api_key)
+	# route() prefers the provider's stored key, and the typed one is what's under test
+	call_model, overrides, routed_key = route(actual_model, api_key)
 	try:
 		litellm.completion(
 			model=call_model,
 			**overrides,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
-			api_key=api_key,
+			api_key=typed_key or routed_key,
 		)
 		return {"success": True, "message": _("API key is valid")}
 	except Exception as e:

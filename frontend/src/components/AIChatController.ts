@@ -7,7 +7,7 @@ import { buildLocalMessage } from "@/components/ai/yaml";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
-import { confirm } from "@/utils/helpers";
+import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
@@ -141,7 +141,7 @@ export class AIChatController {
 			})) as string;
 			if (improved) this.prompt.value = improved;
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Could not improve the prompt");
+			toast.error(getErrorMessage(error, "Could not improve the prompt"));
 		} finally {
 			this.isImprovingPrompt.value = false;
 		}
@@ -890,7 +890,7 @@ export class AIChatController {
 			const response = result as { session_id?: string; status?: string; message?: string };
 			if (response.session_id) this.sessionId.value = response.session_id;
 		} catch (error) {
-			await this.onError({ message: error instanceof Error ? error.message : "Request failed" });
+			await this.onError({ message: getErrorMessage(error, "Request failed") });
 		}
 	};
 
