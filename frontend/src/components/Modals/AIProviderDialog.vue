@@ -47,7 +47,15 @@
 							@update:modelValue="(value: string) => (apiKey = value)"
 							placeholder="sk-…"
 							:hideClearButton="true" />
-						<Button v-if="isEdit" variant="subtle" :loading="testing" @click="test">Test</Button>
+						<Button
+							v-if="isEdit"
+							variant="subtle"
+							:loading="testing"
+							:disabled="baseEdited"
+							:tooltip="baseEdited ? 'Save to test the new base URL' : undefined"
+							@click="test">
+							Test
+						</Button>
 						<Button
 							v-if="isEdit && provider.api_base"
 							variant="subtle"
@@ -94,12 +102,17 @@ const emit = defineEmits(["update:modelValue", "saved"]);
 const provider = ref<Partial<BuilderAIProvider>>(defaultProvider());
 const apiKey = ref("");
 const hasStoredKey = ref(false);
+// Test only calls the saved endpoint, so an editor can't point the server at any host
+const savedApiBase = ref<string | undefined>();
 const testing = ref(false);
 const importing = ref(false);
 const testResult = ref("");
 const testOk = ref(false);
 
 const isEdit = computed(() => Boolean(props.providerName));
+const baseEdited = computed(
+	() => isEdit.value && (provider.value.api_base || "") !== (savedApiBase.value || ""),
+);
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
 
 /** The framework's dummy password: all asterisks, meaning "unchanged". Mirrors
@@ -123,6 +136,7 @@ watch(
 			name: props.providerName,
 		});
 		provider.value = { ...doc };
+		savedApiBase.value = doc.api_base;
 		// A Password field comes back as the framework's dummy — one '*' per
 		// character of the real key, never the key itself (base_document
 		// _save_passwords). Showing it is what Desk does, and it reads as "something
