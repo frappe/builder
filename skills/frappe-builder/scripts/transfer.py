@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import unquote
@@ -36,6 +37,7 @@ class SiteCopy:
 
 	def page(self, name: str):
 		doc = self.source.get("Builder Page", name)
+		current = self.target_page(doc["route"])
 		tree = parse_blocks(doc.get("draft_blocks")) or parse_blocks(doc.get("blocks"))
 		fields = {key: doc[key] for key in PAGE_FIELDS if doc.get(key) not in (None, "", 0)}
 		fields = self.carry({**fields, "draft_blocks": tree})
@@ -44,12 +46,31 @@ class SiteCopy:
 		for script in scripts:
 			self.script(script)
 		fields["client_scripts"] = [{"builder_script": script} for script in scripts]
-		self.save_page(doc["route"], fields)
+		self.save_page(doc["route"], fields, current)
 
-	def save_page(self, route: str, fields: dict):
-		if existing := self.target.names("Builder Page", f"route={route}"):
-			name = existing[0]["name"]
-			self.update_page(self.target.get("Builder Page", name), fields)
+	def target_page(self, route: str) -> dict | None:
+		"""The page at route on the target, checked before anything is written there."""
+		found = self.target.names("Builder Page", f"route={route}")
+		if not found:
+			return None
+		current = self.target.get("Builder Page", found[0]["name"])
+		draft = parse_blocks(current.get("draft_blocks"))
+		pending = draft and draft != parse_blocks(current.get("blocks"))
+		if (
+			pending
+			and not self.replace
+			and current["modified_by"] != self.target.run("auth", "whoami")["user"]
+		):
+			sys.exit(
+				f"/{route} on the target has unpublished edits by {current['modified_by']}: publish or discard"
+				" them there, or pass --replace (a snapshot is taken first)"
+			)
+		return current
+
+	def save_page(self, route: str, fields: dict, current: dict | None):
+		if current:
+			name = current["name"]
+			self.update_page(current, fields)
 		else:
 			name = self.target.run_input({"route": route, **fields}, "doc", "create", "Builder Page")["name"]
 			print(f"created page {name} at /{route}")
@@ -74,14 +95,14 @@ class SiteCopy:
 
 	def carry(self, value):
 		"""Brings everything value refers to across and returns it with file URLs rewritten."""
-		text = json.dumps(value)
+		text = FILE_URL.sub(lambda match: self.file(match.group(0)), json.dumps(value))
 		for component in sorted(set(COMPONENT_REF.findall(text))):
 			self.component(component)
 		for token in sorted(set(TOKEN_REF.findall(text))):
 			self.token(token)
 		for family in sorted(set(FONT_REF.findall(text))):
 			self.font(family)
-		return json.loads(FILE_URL.sub(lambda match: self.file(match.group(0)), text))
+		return json.loads(text)
 
 	def component(self, component_id: str):
 		if self.visit("Builder Component", component_id):
@@ -125,11 +146,10 @@ class SiteCopy:
 	def file(self, url: str) -> str:
 		if url not in self.files:
 			local = Path(self.tmp) / Path(unquote(url)).name
-			downloaded = self.source.run("file", "download", url, "-o", str(local), check=False)
-			uploaded = self.target.run("file", "upload", str(local)) if downloaded is not False else None
-			self.files[url] = uploaded["file_url"] if uploaded else url
-			if not uploaded:
-				print(f"could not copy {url}; the page keeps pointing at it")
+			if self.source.run("file", "download", url, "-o", str(local), check=False) is False:
+				# the same path on the target may be missing or hold another file
+				sys.exit(f"could not download {url} from the source; fix or remove it there, then copy again")
+			self.files[url] = self.target.run("file", "upload", str(local))["file_url"]
 		return self.files[url]
 
 	def ensure(self, doctype: str, name: str, fields: dict):
