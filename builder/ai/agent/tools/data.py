@@ -190,11 +190,46 @@ RESERVED_DATA_KEYS_RE = re.compile(r"\bdata\.(items|keys|values|get|update|copy|
 # safe_exec has no __import__ — any import statement dies with ImportError at render.
 IMPORT_RE = re.compile(r"^\s*(import|from)\s+\w", re.MULTILINE)
 
+# With server scripts disabled, Builder runs data scripts through its own smaller
+# namespace (builder.utils.get_safer_globals); these are the names it keeps.
+PORTABLE_NAMES = (
+	"frappe.db.get_all",
+	"frappe.db.get_list",
+	"frappe.db.count",
+	"frappe.db.exists",
+	"frappe.db.get_single_value",
+	"frappe.get_doc",
+	"frappe.get_cached_doc",
+	"frappe.form_dict",
+	"frappe.session",
+	"frappe.make_get_request",
+	"frappe._",
+)
+PORTABLE_HINT = (
+	"frappe.db.get_all / get_list / count / exists / get_single_value, frappe.get_doc, "
+	"frappe.form_dict and frappe.session.user; format dates and numbers in plain Python"
+)
+FRAPPE_NAME_RE = re.compile(r"\bfrappe(?:\.\w+)+")
+
+
+def missing_names(script: str) -> list[str]:
+	"""Names the data script uses that this site's executor doesn't provide."""
+	from frappe.utils.safe_exec import is_safe_exec_enabled
+
+	if is_safe_exec_enabled():
+		return []
+	used = set(FRAPPE_NAME_RE.findall(script))
+	return sorted(name for name in used if not is_portable(name))
+
+
+def is_portable(name: str) -> bool:
+	return any(name == allowed or name.startswith(f"{allowed}.") for allowed in PORTABLE_NAMES)
+
 
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
-	`data.events = frappe.get_list("Event", ...)`). Runs in the frappe safe_exec
-	sandbox at render time; bind blocks/repeaters to the keys it sets."""
+	`data.events = frappe.db.get_all("Event", ...)`). Runs sandboxed at render time;
+	bind blocks/repeaters to the keys it sets."""
 	if not ctx.page_id:
 		return "No page in context to attach a data script to."
 	script = args.get("script") or ""
@@ -213,12 +248,14 @@ def write_page_data_script(ctx, args: dict) -> str:
 		)
 	if IMPORT_RE.search(script):
 		return (
-			"FAILED: the data script runs in Frappe's safe_exec sandbox — IMPORT statements are "
-			"not allowed (ImportError at render). A curated namespace is already available: "
-			"frappe.get_all / frappe.get_list / frappe.db.get_value / frappe.db.count, and date/"
-			"format helpers under frappe.utils (frappe.utils.getdate, frappe.utils.formatdate(d, "
-			"'MMM dd'), frappe.utils.now_datetime, frappe.utils.add_days, frappe.utils.fmt_money). "
-			"Rewrite without imports."
+			"FAILED: data scripts run sandboxed, where import statements fail at render. "
+			f"Use what is already there: {PORTABLE_HINT}."
+		)
+	if missing := missing_names(script):
+		return (
+			f"FAILED: this site runs data scripts with server scripts disabled, where "
+			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
+			f"{PORTABLE_HINT}."
 		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
@@ -372,16 +409,16 @@ write_page_data_script_tool = Tool(
 	side="server",
 	description=(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
-		"for data-driven pages, e.g. `data.events = frappe.get_list('Event', fields=['title','date'], "
-		"filters={'published': 1})`. Then bind blocks/repeaters to the keys you set. Runs in the "
-		"safe_exec SANDBOX at render time: NO import statements — frappe.get_all/get_list/get_doc, "
-		"frappe.db.get_value/count, and frappe.utils date/format helpers (getdate, formatdate, "
-		"now_datetime, add_days, fmt_money) are preinjected. On a DYNAMIC route "
-		"('partners/<partner_id>') the URL params arrive as frappe.form_dict.<param> — load the "
-		"record from them (data.partner = frappe.get_doc('Partner', frappe.form_dict.partner_id)). "
-		"Keys must be descriptive names (data.products) — NEVER dict method names like "
-		"data.items/keys/values/get (they shadow and break the render). READ-ONLY: never "
-		"save/insert/delete documents here."
+		"for data-driven pages, e.g. `data.events = frappe.db.get_all('Event', "
+		"fields=['title', 'starts_on'], filters={'published': 1})`, then bind blocks and "
+		"repeaters to the keys you set. It runs sandboxed at render time with no imports. "
+		"Write it with the names every site provides, including sites with server scripts "
+		f"disabled: {PORTABLE_HINT}. Fields are plain fieldnames; SQL functions in `fields` "
+		"are dropped. On a dynamic route ('partners/<partner_id>') the URL params arrive as "
+		"frappe.form_dict.<param>: data.partner = frappe.get_doc('Partner', "
+		"frappe.form_dict.partner_id). Keys are descriptive names (data.products), never dict "
+		"method names like data.items/keys/values/get, which shadow and break the render. "
+		"Read-only: never save, insert or delete documents here."
 	),
 	parameters={
 		"type": "object",
