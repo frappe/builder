@@ -339,9 +339,14 @@ export class AIChatController {
 
 	// scrolling a display:none container (closed tab) is a no-op; park and replay
 	private pendingScrollToBottom = false;
+	private scrollFrame = 0;
 
+	/** At most once a frame: streaming calls this per token, and each scroll forces
+	 * a layout. The frame lands after Vue has patched the DOM. */
 	private scrollToBottom() {
-		nextTick(() => {
+		if (this.scrollFrame) return;
+		this.scrollFrame = requestAnimationFrame(() => {
+			this.scrollFrame = 0;
 			const el = this.messageContainer.value;
 			if (!el || el.clientHeight === 0) {
 				this.pendingScrollToBottom = true;
