@@ -1,9 +1,9 @@
 /**
- * Every method a surface answers, in one table.
+ * All the methods of the surfaces, in one table.
  *
  * Each surface file owns its registry, its validation and its descriptor.
- * `surfaceItems.ts` holds the bookkeeping they share. This file only gathers
- * them, so adding a surface is one import and one spread.
+ * `surfaceItems.ts` has the shared record keeping. This file only collects the
+ * tables. So a new surface needs one import and one spread.
  */
 
 import type { MethodTable } from "../host/permissions";

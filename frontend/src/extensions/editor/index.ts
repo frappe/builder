@@ -1,9 +1,9 @@
 /**
- * Every method an extension reads or writes the editor through, in one table.
+ * All the methods that an extension uses to read or change the editor, in one table.
  *
- * The counterpart of `surfaces/index.ts`. A surface adds something to Builder's
- * chrome. A file here reaches Builder's own state, so each one holds a real
- * permission rather than the `null` most surfaces carry.
+ * This file is the pair of `surfaces/index.ts`. A surface adds an item to the
+ * Builder UI. A file here reads or changes the state of Builder. So a method
+ * here can need a permission. Most surfaces have `null`.
  */
 
 import type { MethodTable } from "../host/permissions";

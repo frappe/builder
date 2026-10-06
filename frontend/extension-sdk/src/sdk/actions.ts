@@ -1,15 +1,16 @@
 /**
- * The handlers this frame owns, and running the one the host asked for.
+ * The handlers that this frame keeps, and how to run one when the host asks.
  *
- * A handler is a function, so it never crosses the port. The host holds only
- * the name, and calls back when a descriptor naming it is activated.
+ * A handler is a function, so it cannot go through the port. The host keeps
+ * only the name. When a user activates a descriptor with that name, the host
+ * calls back.
  *
- * Apart from `namespaces.ts` so that `connect.ts` can dispatch requests without
- * the two importing each other.
+ * This code is separate from `namespaces.ts`. So `connect.ts` can dispatch
+ * requests, and the two files do not import each other.
  *
- * Only the entry frame holds handlers. The host calls that frame because it
- * outlives visual slots, which can close while an action still appears on a
- * descriptor.
+ * Only the entry frame keeps handlers. The host calls that frame because it
+ * lives longer than visual slots. A slot can close while a descriptor still
+ * shows its action.
  */
 
 import { unknownMethod } from "../transport/createPortChannel";

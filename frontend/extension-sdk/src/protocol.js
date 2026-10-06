@@ -1,9 +1,12 @@
-/** The extension protocol values shared by the runtime, Vite plugin, and packager. */
+/**
+ * The values of the extension protocol.
+ * The SDK runtime, the Vite plugin and the host use them.
+ */
 
 export const PROTOCOL_VERSION = 1;
 
 /**
- * Every permission an extension may ask for. Reads and windows need none.
+ * Each permission that an extension can ask for. A read or a window needs no permission.
  *
  * @type {readonly ("page.edit" | "page.write" | "token.write" | "data.access" | "schema.write" | "method.call")[]}
  */

@@ -1,9 +1,9 @@
 /**
- * Builds and checks the messages that cross a port. `../types` holds their shapes.
+ * Makes and checks the messages that go through a port. `../types` has their shapes.
  *
- * Recognizing a message and accepting its version are two steps, and the types
- * enforce the order. A message at an unknown version is still routable, so the
- * channel can answer it rather than drop it.
+ * The check has two steps. First, it finds the message type. Then, it accepts
+ * or refuses the version. The types make sure of this order. The channel can
+ * still route a message with an unknown version. So it can answer the message.
  */
 
 import {
@@ -45,7 +45,7 @@ export const event = (name: string, payload?: unknown): EventMessage => ({
 	payload,
 });
 
-/** The only refusal the transport itself raises. Every other error comes from a method. */
+/** The only refusal that the transport makes. All other errors come from a method. */
 export const unsupportedVersionError = (version: number): ChannelError => ({
 	message: `This Builder speaks protocol version ${PROTOCOL_VERSION}, not ${version}.`,
 	code: "unsupported_version",
@@ -58,10 +58,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === "object" && value !== null;
 
 /**
- * True for anything shaped like a port message, at any version.
+ * True for a value with the shape of a port message, at any version.
  *
  * It checks only the fields that route a message. `params`, `result` and
- * `payload` belong to the method, and the host validates those per method.
+ * `payload` belong to the method. The host validates them for each method.
  */
 export const isPortMessage = (value: unknown): value is AnyVersionMessage => {
 	if (!isRecord(value) || typeof value.v !== "number") return false;

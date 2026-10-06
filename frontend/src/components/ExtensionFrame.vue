@@ -3,7 +3,7 @@
 		<div v-if="loading" class="absolute inset-0 grid place-items-center bg-surface-base">
 			<LoadingIcon class="h-6 w-6 text-ink-gray-5" />
 		</div>
-		<!-- no allow-same-origin: the opaque origin is the whole isolation guarantee -->
+		<!-- no allow-same-origin. The opaque origin is the only isolation -->
 		<iframe
 			ref="frame"
 			:src="SHELL_URL"
@@ -26,27 +26,28 @@ import {
 import useBuilderStore from "@/stores/builderStore";
 import { onBeforeUnmount, ref, watch } from "vue";
 
-/** One document serves every extension and every slot, so it takes no segment. */
+/** One document serves all extensions and all slots. So the URL has no extra segment. */
 const SHELL_URL = "/builder_extension";
 
 const props = defineProps<{
 	extension: string;
 	slot: ExtensionSlot;
 	initialProps?: Record<string, unknown>;
-	/** Answers what the frame calls. Named as B2 names it, and not `onRequest`,
-	 * which Vue would read as a listener for a `request` event. */
+	/** Answers the calls of the frame. The name is not `onRequest`, because
+	 * Vue reads that name as a listener for a `request` event. */
 	dispatch?: Dispatcher;
 }>();
 
 /**
- * The channel, not the port: `createPortChannel` owns `port.onmessage`, so one
- * port can back only one channel, and this component needs it for theme events.
+ * This component emits the channel, not the port. `createPortChannel` owns
+ * `port.onmessage`. So one port can have only one channel. This component
+ * also needs the channel for theme events.
  */
 const emit = defineEmits<{
 	connect: [channel: PortChannel];
-	/** Names the channel that went away, so a caller can drop it by identity. */
+	/** Names the closed channel. So a caller can find it and remove it. */
 	disconnect: [channel: PortChannel];
-	/** The frame ran its slot, or could not load. A frame whose code throws sends neither. */
+	/** The frame ran its slot, or it could not load. If the code of the frame fails, no event occurs. */
 	ready: [];
 }>();
 
@@ -69,13 +70,13 @@ const installed = (): InstalledExtension => {
 };
 
 /**
- * Where this frame gets the extension's code.
+ * Gets the code of the extension for this frame.
  *
- * A dev extension names a URL its dev server serves: those modules import each
- * other by relative path, and only a real URL resolves them.
+ * A dev extension gives a URL on its dev server. Its modules import each other
+ * by relative path. Only a real URL can find them.
  *
- * An installation arrives as a Blob the editor fetched. A frame sends no
- * session, so no route could check who is asking for it.
+ * An installation comes as a Blob that the editor gets. A frame sends no
+ * session. So no route can check who asks for the code.
  */
 const code = async (): Promise<{ entry: string } | { source: Blob }> => {
 	const extension = installed();
@@ -101,8 +102,8 @@ const disconnect = () => {
 };
 
 /**
- * Runs on every `load`, so a reloaded frame reconnects. The old channel closes
- * first, which rejects any call left pending against a document that is gone.
+ * Runs on each `load`. So a reloaded frame connects again. First, the old
+ * channel closes. Each pending call to the old document then fails.
  */
 const connect = async () => {
 	disconnect();
@@ -117,17 +118,17 @@ const connect = async () => {
 		finishLoading();
 		return null;
 	});
-	// reading the source is a round trip, and the frame may have reloaded while it
-	// ran. `connect` would then have replaced this channel with a newer one
+	// the source read takes time. The frame can reload during the read.
+	// In that case, `connect` replaced this channel with a newer one
 	if (!message || channel !== opening) return;
 
-	// "*" is the only target that reaches an opaque origin. The port makes the
-	// broadcast safe: it is transferred once, and this is the last window message
+	// only "*" can reach an opaque origin. The port makes this safe. The port
+	// moves only one time, and this is the last message on the window
 	frame.value?.contentWindow?.postMessage(message, "*", [pair.port2]);
 	emit("connect", opening);
 };
 
-// the handshake carries the theme once, so a later flip needs its own message
+// the handshake sends the theme one time. A later theme change needs its own message
 watch(
 	() => store.isDark,
 	() => channel?.emit("theme", theme()),

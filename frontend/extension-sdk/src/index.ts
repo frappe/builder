@@ -1,13 +1,14 @@
 /**
- * The `.` entry: types only, in practice.
+ * The `.` entry. In practice, it gives only types.
  *
- * No extension build reads this file. `vite.js` marks `frappe-builder-extension-sdk`
- * external, so the specifier survives into the output and the frame shell's
- * import map resolves it to the one instance Builder serves. In a dev server the
- * plugin rewrites the same specifier to an absolute URL on the Builder origin,
- * which is that same instance again.
+ * No extension build reads this file. `vite.js` marks the SDK as external.
+ * The import stays in the build output. The import map of the frame shell
+ * then points it to the one SDK copy that Builder serves.
  *
- * It exists so an author's editor and type checker can follow the import.
+ * On a dev server, the plugin changes the import to an absolute URL on the
+ * Builder origin. That URL also gives the same SDK copy.
+ *
+ * This file lets the editor and the type checker of an author follow the import.
  */
 
 export { default, type HostInfo } from "./sdk/index";

@@ -1,9 +1,9 @@
 /**
- * One `MessagePort` per extension frame, three verbs: `call`, `listen`, `emit`.
- * Builder groups the channels from an extension's frames by extension.
+ * One `MessagePort` for each extension frame, with three verbs: `call`, `listen` and `emit`.
+ * Builder groups the channels of the frames of one extension.
  *
- * The host and the SDK both use this. Neither side is a client, so nothing here
- * knows which end of a channel it runs on, or what methods exist.
+ * The host and the SDK both use this file. Neither side is the client. So
+ * this file does not know its side of the channel. It also does not know the methods.
  */
 
 import type { AnyVersionMessage, ChannelError, EventMessage, PortMessage, RequestMessage } from "../types";
@@ -20,10 +20,10 @@ import {
 
 export type EventHandler = (payload: unknown) => void;
 
-/** Resolves every request this end of the channel accepts. */
+/** Answers each request that this side of the channel accepts. */
 export type Dispatcher = (method: string, params: unknown) => unknown;
 
-/** A refusal from the far side, or from the transport itself. */
+/** A refusal from the other side, or from the transport. */
 export class ChannelCallError extends Error {
 	code?: string;
 
@@ -34,7 +34,7 @@ export class ChannelCallError extends Error {
 	}
 }
 
-/** The refusal for a method nothing claims. A dispatcher raises it too, so it has one spelling. */
+/** The refusal for an unknown method. A dispatcher also uses it, so the text is the same in all places. */
 export const unknownMethod = (method: string) =>
 	new ChannelCallError({ message: `Unknown method "${method}".`, code: "unknown_method" });
 
@@ -83,8 +83,8 @@ export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
 		listeners.get(message.event)?.forEach((handler) => handler(message.payload));
 	};
 
-	// a request and a response both carry an id, so both can be answered. An event
-	// cannot, so a version it does not speak leaves it nowhere to report
+	// a request and a response have an id, so the channel can answer them.
+	// An event has no id. So the channel cannot report an unknown version for it
 	const refuseVersion = (message: AnyVersionMessage) => {
 		if (message.type === "request") return post(unsupportedVersion(message.id, message.v));
 		if (message.type === "response") return settle(message.id, undefined, unsupportedVersionError(message.v));
@@ -116,7 +116,7 @@ export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
 
 	const emit = (name: string, payload?: unknown) => post(eventMessage(name, payload));
 
-	/** Nothing outlives the port: every pending call rejects, and no goodbye is sent. */
+	/** Closes the channel with the port. Each pending call fails. No last message goes to the other side. */
 	const close = () => {
 		if (closed) return;
 		closed = true;
@@ -126,7 +126,7 @@ export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
 		port.close();
 	};
 
-	// assigning onmessage starts the port
+	// the port starts when onmessage gets a value
 	port.onmessage = (message: MessageEvent) => receive(message.data);
 
 	return { call, listen, emit, close };

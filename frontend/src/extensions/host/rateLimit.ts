@@ -1,12 +1,13 @@
 /**
- * A message budget per extension.
+ * A message budget for each extension.
  *
- * An extension in a loop can flood `postMessage` and freeze the editor. A call
- * over budget is refused, never queued, so the work per message drops to a
- * lookup and the extension recovers when the window rolls over.
+ * An extension in a loop can send too many messages and stop the editor. The
+ * budget refuses a call over the limit. It does not queue the call. So each
+ * extra message costs only one check. The extension can send again in the
+ * next window.
  */
 
-/** A startup burst is a handful of calls. A loop is thousands, so the two do not overlap. */
+/** Startup sends a few calls. A loop sends thousands. So this limit does not stop startup. */
 const MESSAGES_PER_WINDOW = 100;
 const WINDOW_MS = 1000;
 
@@ -14,7 +15,7 @@ export const createBudget = (extension: string, perWindow = MESSAGES_PER_WINDOW)
 	let windowStart = 0;
 	let used = 0;
 
-	// the window owns the warning, because it owns the boundary that makes "once" mean anything
+	// the window controls the warning. So the warning shows one time in each window
 	const take = () => {
 		const now = Date.now();
 		if (now - windowStart >= WINDOW_MS) {

@@ -1,5 +1,5 @@
 <template>
-	<!-- one field and two buttons: the default "lg" is far wider than it needs -->
+	<!-- one field and two buttons. The default "lg" size is too wide -->
 	<Dialog v-model="showDevExtensionDialog" title="Load Dev Extension" size="sm">
 		<template #default>
 			<p class="text-p-sm text-ink-gray-6">
@@ -35,7 +35,7 @@ const url = ref(lastDevUrl());
 const error = ref("");
 const loading = ref(false);
 
-// the field is prefilled every time it opens, so a reload costs one click
+// the dialog fills the field each time it opens. So a reload needs only one click
 watch(showDevExtensionDialog, (open) => {
 	if (!open) return;
 	url.value = lastDevUrl();

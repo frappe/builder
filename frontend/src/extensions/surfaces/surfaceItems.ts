@@ -1,13 +1,13 @@
 /**
- * The bookkeeping every surface repeats: which extension registered what, under
- * which key, and how to take it back.
+ * The record keeping that each surface needs. It records which extension
+ * registered an item, with which key. It also removes the item.
  *
- * A surface keeps only what is its own — how to read a registration, how to
- * merge a patch, and what descriptor the registry receives.
+ * A surface keeps only its own parts. These are how to read a registration,
+ * how to merge a patch, and which descriptor goes to the registry.
  *
- * `update` merges and registers again. A registry item is a copy
- * (`createRegistry.ts:65`), so a value held anywhere else never reaches the
- * screen, and re-registering keeps the item's slot.
+ * `update` merges and registers again. `createRegistry.ts` keeps a copy of each
+ * item. So a change to a value in a different place does not show. A second
+ * registration keeps the position of the item.
  */
 
 import type { RegistryEntry, createRegistry } from "@/utils/createRegistry";
@@ -23,7 +23,7 @@ export type SurfaceItem<TRegistration> = {
 };
 
 type Options<TRegistration extends Named, TItem extends RegistryEntry> = {
-	/** Names the surface in a refusal, such as "toolbar item". */
+	/** The name of the surface in a refusal, for example "toolbar item". */
 	kind: string;
 	registry: ReturnType<typeof createRegistry<TItem>>;
 	readRegistration: (params: unknown, extension: InstalledExtension) => TRegistration;
@@ -40,7 +40,7 @@ export const createSurfaceItems = <TRegistration extends Named, TItem extends Re
 ) => {
 	const items = new Map<string, SurfaceItem<TRegistration> & { unregister: () => void }>();
 
-	// the host composes every registry name: two extensions may pick the same one
+	// the host makes each registry name. Two extensions can choose the same name
 	const createItemKey = (extension: InstalledExtension, name: string) => `${extension.name}:${name}`;
 
 	const readItemKey = (params: unknown, extension: InstalledExtension) =>
@@ -66,7 +66,7 @@ export const createSurfaceItems = <TRegistration extends Named, TItem extends Re
 		const registration = options.readRegistration(params, extension);
 		const key = createItemKey(extension, registration.name);
 
-		// a re-registration replaces the item, so its teardown must not be added twice
+		// a second registration replaces the item. Do not add its teardown two times
 		if (!items.has(key)) bridge.registerTeardown(extension.name, () => unregisterItem(key));
 		upsertRegistryItem(key, { extension, registration });
 	};

@@ -15,7 +15,7 @@ type InstallationDocument = {
 	granted_permissions?: string;
 };
 
-/** The Vue instance a document resource ties its realtime subscription to. Set once, from the editor. */
+/** The Vue instance for the realtime subscription of a document resource. The editor sets it one time. */
 let resourceVm: unknown;
 
 const grantedPermissions = (value: string | undefined): Permission[] => {
@@ -24,11 +24,10 @@ const grantedPermissions = (value: string | undefined): Permission[] => {
 };
 
 /**
- * One installation's document.
+ * The document of one installation.
  *
- * `frappe-ui` caches this itself by doctype and name, so calling it again for an
- * installation already loaded returns the same live resource rather than a
- * second copy racing it.
+ * `frappe-ui` caches it by doctype and name. A second call for a loaded
+ * installation gives the same live resource. It does not make a second copy.
  */
 const installationDocument = (installationId: string) =>
 	createDocumentResource<InstallationDocument>(
@@ -43,20 +42,20 @@ const installationDocument = (installationId: string) =>
 	);
 
 /**
- * Every installation on this site, the disabled and development ones included.
+ * All installations on this site, with the disabled and development installations.
  * The editor mounts the enabled rows.
  */
 const installationsResource = createResource<Installation[]>({
 	url: "builder.extensions.installations.get_installations",
-	// losing this list costs the editor its extensions, never the editor itself
+	// if this list fails, the editor loses its extensions. The editor itself still works
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
 
 /**
- * Fetch one installation's document into that shared cache.
+ * Gets the document of one installation into the shared cache.
  *
- * Read it back with `getCachedDocumentResource`, never held here: `toInstalledExtension`
- * only reads that cache, so a fetch never happens as a side effect of a computed.
+ * Read it with `getCachedDocumentResource`. Do not keep it here.
+ * `toInstalledExtension` only reads the cache. So a computed never starts a fetch.
  */
 const loadInstallationDocument = (row: Installation) => {
 	void installationDocument(row.installation_id)
@@ -82,12 +81,11 @@ const toInstalledExtension = (row: Installation): InstalledExtension | null => {
 };
 
 /**
- * Every extension this editor runs: the site's installations, plus the one loaded from a
- * dev server this session. A dev extension replaces the installation of the same
- * name, because two entries would give it two frames.
+ * All extensions that this editor runs. These are the installations of the
+ * site, and the extension from a dev server in this session. A dev extension
+ * replaces the installation with the same name. Two entries would give it two frames.
  *
- * A development record never mounts. It has no files, and the browser's own entry
- * runs it.
+ * A development record never mounts. It has no files. The entry in the browser runs it.
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
 	const installed = (installationsResource.data ?? [])
@@ -102,7 +100,7 @@ const installedExtensions = computed<InstalledExtension[]>(() => {
 	return [...installed.filter((extension) => extension.name !== development.name), development];
 });
 
-/** Fetches the list, and the documents of the rows the editor mounts. Call it after every change. */
+/** Gets the list, and the documents of the rows that the editor mounts. Call it after each change. */
 const loadExtensions = async (vm?: unknown) => {
 	if (vm) resourceVm = vm;
 	const rows = (await installationsResource.fetch()) ?? [];
@@ -111,16 +109,19 @@ const loadExtensions = async (vm?: unknown) => {
 };
 
 /**
- * The built entry of one installation, as a Blob a frame runs.
+ * The built entry of one installation, as a Blob that a frame runs.
  *
- * The editor fetches it, not the frame, because a frame sends no session. A
- * GET, so the browser revalidates by checksum and an unchanged build costs a
- * 304. Fetched once per session and shared by every frame of the extension. A
- * Blob is immutable, so a browser can clone it into a frame as a handle to the
- * same bytes. A string is copied into every frame.
+ * The editor gets it, not the frame, because a frame sends no session. The
+ * request is a GET. So the browser checks the checksum, and an unchanged
+ * build gives a 304. The editor gets it one time in each session. All frames
+ * of the extension share it.
  *
- * The checksum joins the key, so a rebuild is fetched again. A failed fetch is
- * dropped, so a reloaded frame asks rather than replaying the error.
+ * A Blob cannot change. So a browser can clone it into a frame as a handle
+ * to the same bytes. A browser copies a string into each frame.
+ *
+ * The key includes the checksum. So the editor gets a new build again. The
+ * cache removes a failed request. So a reloaded frame asks again and does
+ * not get the old error.
  */
 const sources = new Map<string, Promise<Blob>>();
 
@@ -146,16 +147,16 @@ const getExtensionSource = (extension: InstalledExtension): Promise<Blob> => {
 	return source;
 };
 
-/** One row of the site's installation list. */
+/** One row of the installation list of the site. */
 type Installation = {
 	name: string;
-	/** The document's own name, not the extension's. */
+	/** The name of the document, not of the extension. */
 	installation_id: string;
 	label?: string;
 	description?: string;
 	icon?: string;
 	enabled: boolean;
-	/** Made by a dev server load. The browser's own entry runs it, never the row. */
+	/** A dev server load made this row. The entry in the browser runs it. The row never runs. */
 	is_development?: boolean;
 };
 

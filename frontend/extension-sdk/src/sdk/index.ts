@@ -1,8 +1,8 @@
 /**
- * `frappe-builder-extension-sdk` — the object an extension imports.
+ * `frappe-builder-extension-sdk`: the object that an extension imports.
  *
- * The shell loads this file, and the import map resolves the same URL for the
- * extension's own import, so both get one module instance and one channel.
+ * The shell loads this file. The import map gives the same URL to the import
+ * of the extension. So both use one module copy and one channel.
  */
 
 import { getChannel, listenForHandshake } from "./connect";
@@ -13,32 +13,32 @@ export type HostInfo = { version: string; protocol: number };
 
 const builder = {
 	/**
-	 * Imperative startup work, in the hidden entry frame only.
+	 * Startup code. It runs only in the hidden entry frame.
 	 *
-	 * Registrations do not belong here. They are declarations, and every frame
-	 * needs to read them, so they go at module scope.
+	 * Do not put registrations here. Every frame must read them.
+	 * So they go at module scope.
 	 */
 	main: (handler: () => void) => registerMain(handler),
 
 	/**
-	 * Names the layer that mounts a component, once for this extension.
+	 * Sets the adapter that mounts a component. Call it one time for each extension.
 	 *
-	 * `frappe-builder-extension-sdk/vue` exports `vueAdapter`. Without one, a
-	 * slot's module has to export `mount(element, props)` itself.
+	 * `frappe-builder-extension-sdk/vue` exports `vueAdapter`. If there is no
+	 * adapter, the module of each slot must export `mount(element, props)`.
 	 */
 	use: (adapter: Mounter) => use(adapter),
 
-	/** A descriptor. Builder draws the button and posts the action back (Tier A). */
+	/** A descriptor. Builder shows the button and sends the action back (Tier A). */
 	toolbar,
 
-	/** The editor snapshot: read it once, or name the fields to be told about. */
+	/** The editor snapshot. Read it one time, or name the fields to watch. */
 	context,
 
-	/** The functions this extension owns. A descriptor names one, the host calls it. */
+	/** The functions of this extension. A descriptor names one. The host calls it. */
 	actions,
 
 	host: {
-		/** Which Builder this extension landed in. An extension ships on its own schedule. */
+		/** The Builder version that runs this extension. An extension has its own release schedule. */
 		info: () => getChannel().call<HostInfo>("host.info"),
 	},
 };

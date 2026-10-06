@@ -1,33 +1,33 @@
 /**
- * The five slot entries an extension registers, and running the one that arrived.
+ * The five slot entries of an extension, and the code that runs the slot of this frame.
  *
- * The slot names are fixed and none is a name the author picks.
+ * The slot names are fixed. The author does not choose them.
  *
- * Every frame imports the same entry module, so all five registrations run in
- * every frame. Only the one the handshake named is then executed. That is how
- * one module serves five frames: the frame learns which it is after the module
- * has already been read.
+ * Each frame imports the same entry module. So all five registrations run in
+ * each frame. The frame then runs only the slot that the handshake named. The
+ * frame learns its slot after it reads the module. So one module serves
+ * five frames.
  *
- * It is also why `main` takes a callback and the rest take `{ load }`. The entry
- * module always runs, so `main`'s work has to be deferred to the frame that owns
- * it. A slot's module should not run at all unless this frame is that slot.
+ * For the same reason, `main` takes a callback and the other slots take
+ * `{ component }`. The entry module always runs. So `main` must wait for its own
+ * frame. The module of a slot must not run in a frame for a different slot.
  */
 
 import type { ExtensionSlot } from "../types";
 
-/** The one element the shell gives a frame to paint into. */
+/** The one element that the shell gives a frame for its content. */
 const ROOT_ID = "app";
 
 export type VisualSlot = Exclude<ExtensionSlot, "main">;
 
-/** `component` resolves to the module holding the slot's document. */
+/** `component` gives the module that has the slot document. */
 export type SlotEntry = { component: () => Promise<unknown> };
 
 /**
- * Turns a component into DOM, and answers with the cleanup for it.
+ * Changes a component into DOM, and returns a cleanup function.
  *
- * The SDK ships no framework, so an extension hands one of these over. It runs
- * in the author's bundle, in this frame, and never crosses a port.
+ * The SDK has no framework, so the extension gives this function. It runs in
+ * the bundle of the author, in this frame. It does not go through a port.
  */
 export type Mounter = (
 	component: unknown,
@@ -41,8 +41,8 @@ let slot: ExtensionSlot | null = null;
 const visualSlots = new Map<VisualSlot, SlotEntry>();
 
 /**
- * Set before the entry module is imported, so a registration made while that
- * module evaluates already knows which frame it is running in.
+ * Set before the frame imports the entry module. So a registration in that
+ * module knows its frame.
  */
 export const setActiveSlot = (name: ExtensionSlot) => (slot = name);
 
@@ -63,10 +63,10 @@ export const registerSlot = (slot: VisualSlot, entry: SlotEntry) => {
 };
 
 /**
- * Names the layer that mounts a component, once for the whole extension.
+ * Sets the adapter that mounts a component. One adapter for each extension.
  *
- * `frappe-builder-extension-sdk/vue` exports one. A second call is refused: two
- * would give "how a component becomes DOM" two owners.
+ * `frappe-builder-extension-sdk/vue` exports one. A second call fails. Two
+ * adapters would give two owners for one job.
  */
 export const use = (adapter: Mounter) => {
 	if (mounter) throw new Error("This extension already registered a mount adapter");
@@ -74,19 +74,18 @@ export const use = (adapter: Mounter) => {
 };
 
 /**
- * The contract between the SDK and an extension's document.
+ * The contract between the SDK and the document of an extension.
  *
- * `component()` resolves to a module, and a module is inert: turning a component
- * into DOM needs a framework runtime. The extension already ships one,
- * and the SDK ships none, so the extension does the mounting and the SDK only
- * calls it. That keeps `extension-sdk.js` small for an extension that draws
- * nothing at all.
+ * `component()` gives a module. A module does nothing by itself. A framework
+ * runtime must change the component into DOM. The extension has a runtime,
+ * and the SDK has none. So the extension mounts, and the SDK only calls it.
+ * This keeps `extension-sdk.js` small for an extension with no UI.
  *
- * A module answers in one of two shapes. It exports `mount`, which needs no
- * framework the SDK has to know about. Or it default-exports a component, and
- * the adapter from `use` mounts it.
+ * A module has one of two shapes:
+ * 1. It exports `mount`. The SDK needs to know no framework.
+ * 2. It has a default export of a component. The adapter from `use` mounts it.
  *
- * The returned cleanup is optional, and runs when the frame goes away.
+ * The cleanup is optional. It runs when the frame closes.
  */
 type SlotModule = {
 	mount?: (element: HTMLElement, props: Record<string, unknown>) => (() => void) | void;
@@ -95,7 +94,7 @@ type SlotModule = {
 
 let unmount: (() => void) | void = undefined;
 
-/** Names the layer that turns a component into DOM, rather than just failing. */
+/** Mounts the module. If it cannot, the error tells how to fix it. */
 const mount = (module: SlotModule, slot: ExtensionSlot, root: HTMLElement, props: Record<string, unknown>) => {
 	if (typeof module.mount === "function") return module.mount(root, props);
 	if (mounter && module.default) return mounter(module.default, root, props);
@@ -107,10 +106,11 @@ const mount = (module: SlotModule, slot: ExtensionSlot, root: HTMLElement, props
 };
 
 /**
- * Runs only the slot this frame was opened for.
+ * Runs only the slot of this frame.
  *
- * A frame that registered no slot warns rather than throws, because an extension
- * built against a newer Builder may know a slot this one never opens.
+ * If the extension registered no slot for this frame, it shows a warning, not
+ * an error. An extension for a newer Builder can know a slot that this Builder
+ * does not open.
  */
 export const runSlot = async (props: Record<string, unknown> = {}) => {
 	if (slot === "main") return mainHandler?.();
@@ -124,7 +124,7 @@ export const runSlot = async (props: Record<string, unknown> = {}) => {
 	const module = (await entry.component()) as SlotModule;
 	unmount = mount(module, slot as ExtensionSlot, root, props);
 
-	// the document dies with the frame, so this is for what the document owns:
-	// a Vue app's unmount hooks, a timer, a subscription
+	// the document closes with the frame. This cleanup is for what the document
+	// owns: the unmount hooks of a Vue app, a timer, or a subscription
 	window.addEventListener("pagehide", () => unmount?.(), { once: true });
 };

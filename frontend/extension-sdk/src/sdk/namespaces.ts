@@ -1,37 +1,36 @@
 /**
- * `builder.<surface>.<verb>` over one call.
+ * Each `builder.<surface>.<verb>` sends one call.
  *
- * Registrations are declarations, written at module scope. Every frame of an
- * extension imports the same module, so every frame reads them — which is what
- * lets a panel tab declare the document it loads in the same breath as the tab
- * itself, even though the two are used in different frames.
+ * Registrations are declarations. Write them at module scope. Each frame of
+ * an extension imports the same module, so each frame reads them. So a panel
+ * tab can name its document next to the tab itself. The tab and the document
+ * are in different frames.
  *
- * Only the entry frame tells the host. A declaration read in a panel frame
- * records what that frame needs locally and sends nothing, so the host hears
- * each registration once however many frames are open.
+ * Only the entry frame sends a declaration to the host. A panel frame keeps
+ * what it needs and sends nothing. So the host gets each registration one
+ * time, for any number of open frames.
  *
- * Nothing is validated here. The host validates every parameter, and a
- * copy of a rule on this side would be a second thing to keep in step.
+ * This file does not validate. The host validates each parameter. A copy of a
+ * rule here would be a second rule to keep the same.
  */
 
 import { holdAction, releaseAction, type ActionHandler } from "./actions";
 import { getChannel } from "./connect";
 import { getActiveSlot } from "./slots";
 
-/** An imperative call. Any frame may make one: `update` and `run` are not declarations. */
+/** A direct call. Any frame can make one. `update` and `run` are not declarations. */
 const call = (method: string, params?: unknown) => getChannel().call(method, params);
 
 /**
- * A declaration. The host hears it from the entry frame only.
+ * A declaration. The host gets it from the entry frame only.
  *
- * A refusal is logged as well as returned, because a declaration at module scope
- * is usually not awaited, and a silently rejected registration is a surface that
- * never appears with nothing to explain it.
+ * This function logs a refusal and also returns it. Authors usually do not
+ * await a declaration at module scope. A silent refusal gives a surface that
+ * does not show, with no message.
  *
- * A method this Builder does not have is a version gap, not a mistake. An
- * extension ships on its own schedule, so it loses that one surface and keeps
- * the rest, and the warning says which Builder is behind rather than blaming
- * the extension.
+ * A method that this Builder does not have shows a version gap, not an error.
+ * An extension has its own release schedule. It loses only that surface. The
+ * warning tells that Builder is older than the extension.
  */
 export const declare = (method: string, params?: unknown) => {
 	if (getActiveSlot() !== "main") return Promise.resolve();
@@ -48,21 +47,21 @@ export const declare = (method: string, params?: unknown) => {
 };
 
 /**
- * A function, or the name of an action registered elsewhere.
+ * A function, or the name of an action from a different registration.
  *
- * A function cannot cross the port, so the SDK holds it in this frame and sends
- * the item's own name. A string names an action another call registered, which
- * is what a frame other than the entry one has to use.
+ * A function cannot go through the port. The SDK keeps it in this frame and
+ * sends the name of the item. A string names an action that a different call
+ * registered. A frame that is not the entry frame must use a string.
  */
 export type ActionRef = string | ActionHandler;
 
-/** Holds a handler in this frame and tells the host its name. The entry frame only. */
+/** Keeps a handler in this frame and sends its name to the host. Entry frame only. */
 const registerAction = (name: string, handler: ActionHandler) => {
 	if (getActiveSlot() === "main") holdAction(name, handler);
 	return declare("actions.register", { name });
 };
 
-/** Swaps a function action for the name it is held under, because a function cannot be cloned. */
+/** Replaces a function action with its name, because a function cannot be cloned. */
 const resolveAction = <T extends { name: string; action?: ActionRef }>(item: T): T => {
 	if (typeof item.action !== "function") return item;
 	void registerAction(item.name, item.action);
@@ -77,7 +76,7 @@ export type ToolbarRegistration = {
 	icon: string;
 	label?: string;
 	tooltip?: string;
-	/** A function, or the name of an action this extension registered. */
+	/** A function, or the name of an action that this extension registered. */
 	action?: ActionRef;
 	badge?: string | number | null;
 	before?: string;
@@ -107,20 +106,20 @@ export type ContextField =
 export type ContextHandler = (context: Record<string, unknown>) => void;
 
 export const context = {
-	/** The whole snapshot, once. For startup. */
+	/** The full snapshot, one time. Use it at startup. */
 	get: () => call("context.get") as Promise<Record<string, unknown>>,
 
 	/**
-	 * Names the fields this extension cares about, so the host sends nothing else
-	 * and only when one of them changes.
+	 * Names the fields that this extension watches. The host sends only these
+	 * fields, and only when one of them changes.
 	 *
-	 * Use it for a fact no rule can state — `isSVG` is in the snapshot but is not
-	 * a rule key — and push the answer back with `update`. Use `showWhen` for
-	 * anything the rule vocabulary already covers: it costs no messages.
+	 * Use it for a fact that no rule can state. For example, `isSVG` is in the
+	 * snapshot, but it is not a rule key. Send the result back with `update`.
+	 * For all other cases, use `showWhen`. It sends no messages.
 	 */
 	subscribe: (fields: ContextField[], handler: ContextHandler) => {
-		// the host holds one subscription per extension, so a push carries every
-		// field any call site named. This handler hears only its own.
+		// the host keeps one subscription for each extension. So each push has
+		// all the fields that any caller named. This handler gets only its own fields
 		let seen = "";
 		const stop = getChannel().listen("context", (payload) => {
 			const context = payload as Record<string, unknown>;
@@ -129,8 +128,8 @@ export const context = {
 			seen = mine;
 			handler(context);
 		});
-		// a call, not a declaration: any frame may subscribe, and the host pushes
-		// to every frame of the extension, so a panel hears what a panel asked for
+		// a call, not a declaration. Any frame can subscribe. The host pushes to
+		// each frame of the extension, so a panel gets what it asked for
 		void call("context.subscribe", { fields });
 		return stop;
 	},
@@ -138,10 +137,10 @@ export const context = {
 
 export const actions = {
 	/**
-	 * The handler stays in this frame, and the host learns only the name.
+	 * The handler stays in this frame. The host gets only the name.
 	 *
-	 * Only the entry frame holds and names it, so the host always calls the frame
-	 * that outlives the others.
+	 * Only the entry frame keeps and names the handler. So the host always
+	 * calls the frame that lives longest.
 	 */
 	register: (name: string, handler: ActionHandler) => registerAction(name, handler),
 	unregister: (name: string) => {
@@ -149,6 +148,6 @@ export const actions = {
 		releaseAction(name);
 		return call("actions.unregister", { name });
 	},
-	/** Runs an action this extension owns, from any of its frames. */
+	/** Runs an action of this extension from any of its frames. */
 	run: (name: string, context?: Record<string, unknown>) => call("actions.run", { name, context }),
 };

@@ -1,8 +1,8 @@
 /**
- * Reading what a frame sent.
+ * Reads the parameters that a frame sent.
  *
- * Every parameter arrives from another realm as unknown, and the host validates
- * all of them. A refusal carries a code, so the SDK can branch on it.
+ * Each parameter comes from a different realm as unknown. The host validates
+ * all of them. A refusal has a code. So the SDK can act on the code.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";
@@ -19,7 +19,7 @@ export const text = (value: unknown, field: string) => {
 export const optionalText = (value: unknown, field: string) =>
 	value === undefined ? undefined : text(value, field);
 
-/** Keeps the current value when the patch says nothing about this field. */
+/** Keeps the current value if the patch does not set this field. */
 export const flag = (value: unknown, current: boolean) => (typeof value === "boolean" ? value : current);
 
 export const oneOf = <T extends string>(value: unknown, allowed: readonly T[], field: string): T => {
