@@ -34,17 +34,17 @@ class TestDevExtension(FrappeTestCase):
 		)
 
 	def test_registers_an_installation_the_gate_accepts(self):
-		install_dev_extension(self.extension, ["block.read", "ui.popover"])
+		install_dev_extension(self.extension, ["page.edit", "token.write"])
 
 		installed = self.installed()
 		self.assertEqual(installed.version, "0.0.0-dev")
-		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["block.read", "ui.popover"])
+		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "token.write"])
 
 	def test_grants_only_what_the_manifest_asks_for(self):
 		"""The gate reads this list, so a wider one would name what nobody allowed."""
-		granted = install_dev_extension(self.extension, ["block.read"])
+		granted = install_dev_extension(self.extension, ["page.edit"])
 
-		self.assertEqual(granted, ["block.read"])
+		self.assertEqual(granted, ["page.edit"])
 		self.assertNotEqual(granted, list(PERMISSIONS))
 
 	def test_refuses_a_permission_builder_does_not_have(self):
@@ -52,7 +52,7 @@ class TestDevExtension(FrappeTestCase):
 			install_dev_extension(self.extension, ["quantum.read"])
 
 	def test_removes_the_installation(self):
-		install_dev_extension(self.extension, ["block.read"])
+		install_dev_extension(self.extension, ["page.edit"])
 
 		remove_dev_extension(self.extension)
 

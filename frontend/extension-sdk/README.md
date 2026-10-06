@@ -42,7 +42,7 @@ Use the version 1 manifest shape. The build rejects missing and unknown fields.
 	"version": "1.2.0",
 	"entry": "main.js",
 	"icon": "icon.svg",
-	"permissions": ["context.read"]
+	"permissions": []
 }
 ```
 

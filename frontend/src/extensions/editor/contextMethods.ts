@@ -146,6 +146,6 @@ const subscribe = (params: unknown, extension: InstalledExtension) => {
 };
 
 export const contextMethods: MethodTable = {
-	"context.get": { needs: "context.read", run: () => editorContext.value },
-	"context.subscribe": { needs: "context.read", run: subscribe },
+	"context.get": { needs: null, run: () => editorContext.value },
+	"context.subscribe": { needs: null, run: subscribe },
 };
