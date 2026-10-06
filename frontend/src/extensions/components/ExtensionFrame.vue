@@ -26,7 +26,10 @@ import {
 import useBuilderStore from "@/stores/builderStore";
 import { onBeforeUnmount, ref, watch } from "vue";
 
-/** One document serves all extensions and all slots. So the URL has no extra segment. */
+/** 
+ * One document serves all extensions and all slots. So the URL has no extra segment. 
+ * See builder/www/builder_extension.html
+ * */
 const SHELL_URL = "/builder_extension";
 
 const props = defineProps<{

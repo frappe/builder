@@ -106,7 +106,7 @@ export type EditorContext = {
  * So each message names the version that it uses.
  */
 /**
- * The one message on the window. The port goes with it.
+ * The initial and only message on the window. The port is sent via this message.
  * All other messages use the port.
  *
  * It names no extension and no permission. The host knows the extension of
