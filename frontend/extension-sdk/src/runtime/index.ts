@@ -2,7 +2,7 @@
  * `frappe-builder-extension-sdk`: the object that an extension imports.
  *
  * - `connect.ts`: the handshake, and how the frame runs the extension code.
- * - `namespaces.ts`: `builder.toolbar`, `builder.context` and `builder.actions`.
+ * - `methods.ts`: `builder.toolbar`, `builder.context` and `builder.actions`.
  * - `slots.ts`: the five slots, and the slot that this frame runs.
  * - `actions.ts`: the action handlers that the host calls.
  *
@@ -11,7 +11,7 @@
  */
 
 import { getChannel, listenForHandshake } from "./connect";
-import { actions, context, toolbar } from "./namespaces";
+import { actions, context, toolbar } from "./methods";
 import { registerMain, use, type Mounter } from "./slots";
 
 export type HostInfo = { version: string; protocol: number };
