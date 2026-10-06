@@ -638,6 +638,7 @@ export class AIChatController {
 	 * watchers fire after `apply` returns, so both resume on the next tick (which is
 	 * also why history.batch(), resuming synchronously, would leave an empty step). */
 	private applyServerEdit(apply: () => void) {
+		this.builderStore.aiEditEpoch++;
 		const pauseId = this.pageCanvas.value?.history?.pause();
 		const wasQuiet = this.builderStore.aiBuildingCanvas;
 		this.builderStore.aiBuildingCanvas = true;
