@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import zlib from "node:zlib";
-import { parseJson, validateManifest } from "./src/shared/protocol.js";
+import { parseJson, validateManifest } from "./src/shared/manifest.js";
 
 export const MAX_PACKAGE_BYTES = 10 * 1024 * 1024;
 

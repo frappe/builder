@@ -15,7 +15,7 @@
 
 import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";
 import type { BlockMenuContext, ContextMenuOption } from "@/types/blockContextMenu";
-import { editorContext, factsFor } from "../context/editorContext";
+import { editorContext, getBlockSnapshot } from "../context/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
 import type { MethodTable } from "../bridge/permissions";
 import type { EditorContext } from "frappe-builder-extension-sdk/types";
@@ -73,8 +73,8 @@ const inMenu = (menu: Menu, fromLayersPanel: boolean) =>
 /** The snapshot, with the clicked block answering for the selection. */
 const contextFor = (menu: BlockMenuContext): EditorContext => {
 	const snapshot = editorContext.value;
-	// count and blockIds still describe the real selection: only the block facts move
-	return { ...snapshot, selection: { ...snapshot.selection, ...factsFor(menu.block) } };
+	// count and blockIds still describe the real selection. Only the block snapshot changes
+	return { ...snapshot, selection: { ...snapshot.selection, ...getBlockSnapshot(menu.block) } };
 };
 
 /**

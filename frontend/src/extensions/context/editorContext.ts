@@ -15,13 +15,13 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import blockController from "@/utils/blockController";
 import { computed } from "vue";
-import type { BlockFacts, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
+import type { BlockSnapshot, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
 /**
  * One block's own answers. Read from the block, not from `blockController`,
  * because the caller has already decided which block it means.
  */
-export const factsFor = (block: Block): BlockFacts => ({
+export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	blockId: block.blockId,
 	element: block.element,
 	isRoot: block.isRoot(),
@@ -48,7 +48,7 @@ export const factsFor = (block: Block): BlockFacts => ({
 const getSelection = () => {
 	const blocks = blockController.getSelectedBlocks();
 	const shared = { count: blocks.length, blockIds: blocks.map((block) => block.blockId) };
-	return blocks.length === 1 ? { ...shared, ...factsFor(blocks[0]) } : shared;
+	return blocks.length === 1 ? { ...shared, ...getBlockSnapshot(blocks[0]) } : shared;
 };
 
 const getPage = () => {

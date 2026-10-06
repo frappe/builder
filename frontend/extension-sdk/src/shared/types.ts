@@ -5,7 +5,7 @@
  * holds the guards over these shapes.
  */
 
-import { PERMISSIONS, PROTOCOL_VERSION } from "./protocol.js";
+import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";
 
 /** The five documents an extension can have. The host names one at the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
@@ -100,7 +100,7 @@ export type EditorSelection = {
 };
 
 /** One block's own answers, carrying no claim about the selection it sits in. */
-export type BlockFacts = Omit<EditorSelection, "count" | "blockIds">;
+export type BlockSnapshot = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
  * The snapshot an extension reads instead of Builder's live state.
