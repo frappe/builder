@@ -490,12 +490,24 @@ const selectScriptByName = (name: string) => {
 	if (target) selectScript(target);
 };
 
+const reloadWhenSaved = ref(false);
 // An AI turn saved script changes on the server. A dirty editor keeps its text, and
-// saving it then meets the newer version as a conflict instead of losing either.
+// saving it then meets the newer version as a conflict instead of losing either; the
+// list reloads once that text is saved or discarded.
 watch(
 	() => pageStore.scriptsVersion,
 	() => {
 		if (!scriptEditor.value?.isDirty) reloadScripts();
+		else reloadWhenSaved.value = true;
+	},
+);
+
+watch(
+	() => scriptEditor.value?.isDirty,
+	(dirty) => {
+		if (dirty || !reloadWhenSaved.value) return;
+		reloadWhenSaved.value = false;
+		reloadScripts();
 	},
 );
 
