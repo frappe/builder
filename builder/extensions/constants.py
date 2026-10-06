@@ -35,10 +35,6 @@ PERMISSIONS = (
 # browser adds its own entry for it, so the listing leaves it out.
 DEV_EXTENSION_VERSION = "0.0.0-dev"
 
-# The editor holds the whole entry in memory and posts it to five frames. The
-# ceiling is what a browser can hold, not what a disk can.
-MAX_SOURCE_BYTES = 5_000_000
-
 # A README is prose, and the panel renders it in a 300 pixel column. This is room
 # for a long one and no room for a book.
 MAX_README_BYTES = 100_000

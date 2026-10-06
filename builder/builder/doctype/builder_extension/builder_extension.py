@@ -12,12 +12,10 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
-	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
 	ICON_PATTERN,
 	MAX_README_BYTES,
-	MAX_SOURCE_BYTES,
 	PERMISSIONS,
 	VERSION_PATTERN,
 )
@@ -86,30 +84,10 @@ class BuilderExtension(Document):
 		return self.permission_list("requested_permissions")
 
 	@property
-	def source(self) -> str:
-		"""The built entry, which the editor reads and posts into a frame.
-
-		A frame sends no session, so no route can check who is asking. The editor
-		reads it under its own session instead.
-		"""
-		entry = Path(self.install_path) / ENTRY_FILE
-		if not entry.is_file():
-			frappe.throw(_('"{0}" has no installed {1}.').format(self.extension, ENTRY_FILE))
-
-		size = entry.stat().st_size
-		if size > MAX_SOURCE_BYTES:
-			frappe.throw(
-				_('"{0}" is {1} bytes, and {2} is the most one extension may hold.').format(
-					self.extension, size, MAX_SOURCE_BYTES
-				)
-			)
-		return entry.read_text()
-
-	@property
 	def icon_data_uri(self) -> str | None:
 		"""None when the package ships no icon. The editor draws its own glyph then.
 
-		A data URI, not a URL, because no public route serves one user's files.
+		A data URI, so the panel draws it with no request of its own.
 		"""
 		if not self.icon:
 			return None
@@ -162,8 +140,8 @@ class BuilderExtension(Document):
 	def write_extension_files(self, files: dict[str, bytes]):
 		"""Replace the installed copy with the files a frame loads.
 
-		Keyed by path under the install root, so `main.js` lands where `source`
-		reads it. Replaces the whole directory, so a rebuild leaves nothing of the
+		Keyed by path under the install root, so a file can sit in a folder.
+		Replaces the whole directory, so a rebuild leaves nothing of the
 		last one behind.
 		"""
 		root = Path(self.install_path)
