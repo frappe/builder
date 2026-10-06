@@ -169,19 +169,17 @@ class ModelRegistry:
 		"""Provider-grouped catalog — the shape the model picker consumes.
 
 		`ready` says whether this model can actually be called: its provider's own
-		key, or the shared one in Builder Settings. Computed here rather than in the
-		cached row loader, so key state is never held in redis, and so the picker can
-		say a model is unusable BEFORE someone writes a prompt for it."""
-		from builder.ai.llm import provider_api_key
+		key, a gateway's api_base (which may need no key), or for OpenRouter the
+		shared one in Builder Settings. Computed here rather than in the cached row
+		loader, so key state is never held in redis, and so the picker can say a
+		model is unusable BEFORE someone writes a prompt for it."""
+		from builder.ai.llm import provider_api_key, settings_api_key, uses_settings_key
 
-		fallback = bool(
-			frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
-		)
+		fallback = bool(settings_api_key())
 		grouped: dict[str, list] = {}
 		for m in cls.catalog():
-			grouped.setdefault(m["provider"], []).append(
-				{**m, "ready": bool(provider_api_key(m)) or fallback}
-			)
+			ready = bool(provider_api_key(m) or m.get("api_base")) or (fallback and uses_settings_key(m))
+			grouped.setdefault(m["provider"], []).append({**m, "ready": ready})
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
 	@classmethod

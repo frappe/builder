@@ -14,32 +14,13 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
+from builder.ai.llm import resolve_api_key
 from builder.ai.models import ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
-
-
-def resolve_api_key(model: str | None = None) -> str:
-	"""The key to call `model` with: its provider's own key when it has one (a
-	local or self-hosted gateway needs no OpenRouter account at all), otherwise
-	the OpenRouter key from Builder Settings."""
-	if model:
-		from builder.ai.llm import provider_api_key
-
-		info = ModelRegistry.find(model)
-		if info and (key := provider_api_key(info)):
-			return key
-	api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
-	if not api_key:
-		frappe.throw(
-			_(
-				"Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
-			)
-		)
-	return api_key
 
 
 def save_attached_image(data_url: str) -> str | None:
@@ -346,7 +327,8 @@ def import_provider_models(provider: str) -> dict:
 
 	url = f"{doc.api_base.rstrip('/')}/models"
 	headers = {"Content-Type": "application/json"}
-	if key := (doc.resolved_key() or resolve_api_key()):
+	# Never the Builder Settings key: that belongs to OpenRouter, not this api_base.
+	if key := doc.resolved_key():
 		headers["Authorization"] = f"Bearer {key}"
 	try:
 		response = requests.get(url, headers=headers, timeout=20)

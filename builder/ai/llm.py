@@ -9,10 +9,15 @@ import logging
 
 import frappe
 import litellm
+from frappe import _
 
 from builder.ai.models import ModelRegistry
 
 litellm.drop_params = True
+
+# Sent for a provider with no key of its own (as presets.verify_key does): a
+# keyless gateway (Ollama, vLLM) ignores it, anything else rejects it.
+NO_KEY = "not-needed"
 
 logger = frappe.logger("builder.ai.llm")
 logger.setLevel(logging.INFO)
@@ -166,7 +171,8 @@ def route(model: str, api_key: str | None) -> tuple[str, dict, str | None]:
 	model_id = model[len(prefix) + 1 :] if prefix and model.startswith(f"{prefix}/") else model
 	litellm_provider = info.get("litellm_provider") or prefix
 	overrides = provider_overrides(info)
-	return f"{litellm_provider}/{model_id}", overrides, provider_api_key(info) or api_key
+	fallback = api_key if uses_settings_key(info) else NO_KEY
+	return f"{litellm_provider}/{model_id}", overrides, provider_api_key(info) or fallback
 
 
 def codex_route(model: str) -> tuple[str, str] | None:
@@ -182,8 +188,7 @@ def codex_route(model: str) -> tuple[str, str] | None:
 
 
 def provider_api_key(info: dict) -> str | None:
-	"""The provider's own key, when it has one. Without one it falls back to the
-	caller's (the OpenRouter key in Builder Settings)."""
+	"""The provider's own key, when it has one."""
 	provider = info.get("provider")
 	if not provider:
 		return None
@@ -191,6 +196,33 @@ def provider_api_key(info: dict) -> str | None:
 		return frappe.get_cached_doc("Builder AI Provider", provider).resolved_key()
 	except Exception:
 		return None
+
+
+def uses_settings_key(info: dict) -> bool:
+	"""The Builder Settings key is an OpenRouter key, so only a provider that
+	calls OpenRouter itself may borrow it. Sent to any other endpoint it would
+	hand the key to whoever runs that endpoint."""
+	return info.get("litellm_provider") == "openrouter" and not info.get("api_base")
+
+
+def settings_api_key() -> str | None:
+	return frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+
+
+def resolve_api_key(model: str | None = None) -> str:
+	"""The key to call `model` with: its provider's own key, else the Builder
+	Settings key for a model called on OpenRouter, else NO_KEY (a local or
+	self-hosted gateway needs no key at all)."""
+	info = ModelRegistry.find(model) if model else None
+	if info and (key := provider_api_key(info)):
+		return key
+	if info and not uses_settings_key(info):
+		return NO_KEY
+	if api_key := settings_api_key():
+		return api_key
+	frappe.throw(
+		_("Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider")
+	)
 
 
 def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
