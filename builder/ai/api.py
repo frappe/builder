@@ -104,7 +104,8 @@ def run(
 				resolved_model
 			)
 		)
-	api_key = resolve_api_key(resolved_model)
+	# Fails fast on a missing key; the job resolves its own copy so the key never sits in the queue.
+	resolve_api_key(resolved_model)
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
@@ -116,7 +117,6 @@ def run(
 		timeout=600,
 		prompt=prompt,
 		model=resolved_model,
-		api_key=api_key,
 		user=frappe.session.user,
 		page_id=page_id,
 		session_id=session_id,
@@ -223,7 +223,6 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
 			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
 			model=resolved_model,
-			api_key=resolve_api_key(resolved_model),
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
