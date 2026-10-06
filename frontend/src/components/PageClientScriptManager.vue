@@ -267,6 +267,10 @@ const toScriptDoc = (script: attachedScript): BuilderClientScript => ({
 // have switched meanwhile), following `moved` when the selected script was renamed or copied
 const reloadScripts = async (moved?: { from: string; to: string }) => {
 	await attachedScriptResource.reload();
+	reselectActive(moved);
+};
+
+const reselectActive = (moved?: { from: string; to: string }) => {
 	let name = activeScript.value?.script_name;
 	if (moved && name === moved.from) name = moved.to;
 	activeScript.value = attachedScripts.value.find((s) => s.script_name === name) ?? null;
@@ -493,21 +497,27 @@ const selectScriptByName = (name: string) => {
 const reloadWhenSaved = ref(false);
 // An AI turn saved script changes on the server. A dirty editor keeps its text, and
 // saving it then meets the newer version as a conflict instead of losing either; the
-// list reloads once that text is saved or discarded.
+// editor moves to the reloaded row once that text is saved or discarded.
+const reloadAfterAITurn = async () => {
+	reloadWhenSaved.value = false;
+	await attachedScriptResource.reload();
+	// typing may have started while the list loaded: keep the row being edited
+	if (scriptEditor.value?.isDirty) reloadWhenSaved.value = true;
+	else reselectActive();
+};
+
 watch(
 	() => pageStore.scriptsVersion,
 	() => {
-		if (!scriptEditor.value?.isDirty) reloadScripts();
-		else reloadWhenSaved.value = true;
+		if (scriptEditor.value?.isDirty) reloadWhenSaved.value = true;
+		else reloadAfterAITurn();
 	},
 );
 
 watch(
 	() => scriptEditor.value?.isDirty,
 	(dirty) => {
-		if (dirty || !reloadWhenSaved.value) return;
-		reloadWhenSaved.value = false;
-		reloadScripts();
+		if (!dirty && reloadWhenSaved.value) reloadAfterAITurn();
 	},
 );
 
