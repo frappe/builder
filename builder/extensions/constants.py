@@ -21,19 +21,14 @@ VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*$")
 # No other format, so the editor draws it in an <img> at any size.
 ICON_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$")
 
-# every permission the bridge gates a method by
+# every permission the bridge gates a method by. Reads and windows need none
 PERMISSIONS = (
-	"context.read",
-	"block.read",
-	"block.update",
-	"block.insert",
-	"page.read",
+	"page.edit",
 	"page.write",
 	"token.write",
-	"ui.dialog",
-	"ui.popover",
 	"data.access",
 	"schema.write",
+	"method.call",
 )
 
 # An installation loaded from a dev server this session. It has no files, and the
