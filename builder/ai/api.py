@@ -201,11 +201,11 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
 	if owner != frappe.session.user:
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
-	if msg.status != "pending_action":
+	applying = decision == "apply"
+	if not AISession.claim_pending_action(message_id, "action_applied" if applying else "action_skipped"):
 		frappe.throw(_("No pending action on this message"))
 
-	if decision != "apply":
-		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
+	if not applying:
 		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
 		resumed = resume_after_action(msg.session, outcome)
@@ -213,7 +213,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
-	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")

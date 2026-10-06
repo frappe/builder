@@ -5,6 +5,8 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent import pending
+from builder.ai.api import confirm_pending_settings
+from builder.ai.session import AISession
 
 SEED_DOCTYPE = "Bob Seed Test Item"
 
@@ -129,3 +131,25 @@ class TestApplyPendingAction(FrappeTestCase):
 					"status": "pending_action",
 				}
 			).insert()
+
+
+class TestConfirmPendingSettings(FrappeTestCase):
+	def pending_message(self) -> str:
+		session = frappe.get_doc({"doctype": "Builder AI Session", "session_user": "Administrator"}).insert()
+		metadata = {"status": "pending_action", "kind": "home_page", "payload": {"route": "bob-home"}}
+		return AISession.try_append_message(session.name, "assistant", "Apply?", metadata=metadata)
+
+	def test_a_pending_action_is_claimed_once(self):
+		message_id = self.pending_message()
+
+		self.assertTrue(AISession.claim_pending_action(message_id, "action_applied"))
+		self.assertFalse(AISession.claim_pending_action(message_id, "action_skipped"))
+		self.assertEqual(frappe.db.get_value("Builder AI Message", message_id, "status"), "action_applied")
+
+	def test_a_second_confirm_does_not_apply_again(self):
+		message_id = self.pending_message()
+		confirm_pending_settings(message_id)
+
+		with self.assertRaises(frappe.ValidationError):
+			confirm_pending_settings(message_id, decision="skip")
+		self.assertEqual(frappe.db.get_single_value("Builder Settings", "home_page"), "bob-home")

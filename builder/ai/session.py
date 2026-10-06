@@ -340,6 +340,16 @@ class AISession:
 			update_modified=False,
 		)
 
+	@classmethod
+	def claim_pending_action(cls, message_id: str, status: str) -> bool:
+		"""Decide a pending-action message exactly once. The row lock holds a
+		concurrent confirm until this one commits, and it then reads the decided status."""
+		current = frappe.db.get_value(cls.MESSAGE_DOCTYPE, message_id, "status", for_update=True)
+		if current != "pending_action":
+			return False
+		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", status)
+		return True
+
 	# --- run lock (one turn per session at a time) -------------------------
 	# Redis NX+TTL via builder.ai.locks: atomic (the old is_running DB flag was a
 	# check-then-set race) and self-healing — a crashed worker's lock expires
