@@ -401,12 +401,15 @@
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
-					<Button
-						v-else
-						variant="solid"
-						icon="lucide-arrow-up"
-						:disabled="!canSubmit"
-						@click="submitPrompt" />
+					<Tooltip v-else side="top">
+						<template #content>
+							<span class="flex items-center gap-1.5">
+								Send
+								<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+							</span>
+						</template>
+						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
+					</Tooltip>
 				</div>
 			</div>
 		</template>
@@ -432,7 +435,7 @@ import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Button, Dropdown, Tooltip } from "frappe-ui";
+import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
