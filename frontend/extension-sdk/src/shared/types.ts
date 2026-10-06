@@ -45,7 +45,7 @@ export type InstalledExtension = {
 	 * The URL of the entry on a dev server. Only a development extension has one.
 	 * An installed extension has no URL, because no route serves the files of one user.
 	 */
-	entry?: string;
+	entryUrl?: string;
 };
 
 export type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -123,7 +123,7 @@ export type ConnectMessage = {
 	type: "connect";
 	slot: ExtensionSlot;
 	/** A development extension imports this URL from its dev server. */
-	entry?: string;
+	entryUrl?: string;
 	/**
 	 * The built file of an installed extension. It is a Blob, not a string.
 	 * A Blob cannot change. So a browser can clone it as a handle to the same

@@ -54,8 +54,8 @@ const applyTheme = (theme: unknown) => document.documentElement.setAttribute("da
  */
 const runEntry = async (message: ConnectMessage) => {
 	if (message.source === undefined) {
-		if (!message.entry) throw new Error("The connect message carried no extension code");
-		await import(/* @vite-ignore */ message.entry);
+		if (!message.entryUrl) throw new Error("The connect message carried no extension code");
+		await import(/* @vite-ignore */ message.entryUrl);
 		return;
 	}
 

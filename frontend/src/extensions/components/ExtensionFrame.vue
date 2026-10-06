@@ -78,9 +78,9 @@ const installed = (): InstalledExtension => {
  * An installation comes as a Blob that the editor gets. A frame sends no
  * session. So no route can check who asks for the code.
  */
-const code = async (): Promise<{ entry: string } | { source: Blob }> => {
+const code = async (): Promise<{ entryUrl: string } | { source: Blob }> => {
 	const extension = installed();
-	if (extension.entry) return { entry: extension.entry };
+	if (extension.entryUrl) return { entryUrl: extension.entryUrl };
 	return { source: await getExtensionSource(extension) };
 };
 

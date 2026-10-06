@@ -106,7 +106,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		serverOrigin: origin,
 		readme: descriptor.readme,
 		// the dev server serves the source entry. So the path comes from the dev server
-		entry: `${origin}${descriptor.entry}`,
+		entryUrl: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
 		permissions: granted,
 	};

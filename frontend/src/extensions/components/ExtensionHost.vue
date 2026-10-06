@@ -67,7 +67,7 @@ const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) 
  * when it started. Without this, a frame keeps a permission after the user removes it.
  */
 const frameKey = (extension: InstalledExtension) =>
-	`${extension.name}@${extension.checksum ?? extension.entry}@${extension.permissions.join(",")}`;
+	`${extension.name}@${extension.checksum ?? extension.entryUrl}@${extension.permissions.join(",")}`;
 
 // an unmounted frame only closes its channel. The registrations of the
 // extension stay. So this code first removes, by name, each extension that
