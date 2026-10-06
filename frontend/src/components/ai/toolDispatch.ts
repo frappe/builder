@@ -31,6 +31,14 @@ const scriptDoc = (name: string, scriptType: unknown, script: unknown): BuilderC
 	script: typeof script === "string" ? script : "",
 });
 
+export type AffectedItems = { blocks: AffectedBlock[]; scripts: AffectedScript[] };
+
+function addAffected<T extends { changedProps: string[] }, K extends keyof T>(list: T[], key: K, item: T) {
+	const existing = list.find((entry) => entry[key] === item[key]);
+	if (existing) existing.changedProps = [...new Set([...existing.changedProps, ...item.changedProps])];
+	else list.push(item);
+}
+
 /**
  * Applies the agent's client-side tool operations to the page's block tree and
  * tracks what changed (for the "affected items" UI). Holds its own per-turn
@@ -121,21 +129,16 @@ export class ToolDispatcher {
 
 	/** Record what a tool op changed. Call BEFORE applying so remove_block can
 	 * still read the block's info while it exists. */
-	trackAffectedItem(toolName: string, args: Record<string, any>) {
+	trackAffectedItem(toolName: string, args: Record<string, any>, into: AffectedItems = this.pending()) {
 		const trackBlock = (blockId: string, changedProps: string[]) => {
 			if (!blockId || !changedProps.length) return;
 			const block = this.findBlock(blockId);
-			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === blockId);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedBlocks.value.push({
-					block_id: blockId,
-					blockName: block?.blockName || "",
-					element: block?.element || "div",
-					changedProps,
-				});
-			}
+			addAffected(into.blocks, "block_id", {
+				block_id: blockId,
+				blockName: block?.blockName || "",
+				element: block?.element || "div",
+				changedProps,
+			});
 		};
 
 		// Batch edit: each block may have changed different props (patches mode), so
@@ -161,14 +164,19 @@ export class ToolDispatcher {
 			trackBlock(args.parent_block_id as string, changedProps);
 		} else if (SCRIPT_TOOLS.has(toolName)) {
 			const scriptName = args.script_name as string | undefined;
-			if (!scriptName) return;
-			const existing = this.pendingAffectedScripts.value.find((s) => s.script_name === scriptName);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedScripts.value.push({ script_name: scriptName, changedProps });
-			}
+			if (scriptName) addAffected(into.scripts, "script_name", { script_name: scriptName, changedProps });
 		}
+	}
+
+	/** Fold items recorded aside (a batch whose chat wasn't known yet) into this turn's. */
+	mergeAffected(items: AffectedItems) {
+		const pending = this.pending();
+		items.blocks.forEach((item) => addAffected(pending.blocks, "block_id", item));
+		items.scripts.forEach((item) => addAffected(pending.scripts, "script_name", item));
+	}
+
+	private pending(): AffectedItems {
+		return { blocks: this.pendingAffectedBlocks.value, scripts: this.pendingAffectedScripts.value };
 	}
 
 	/** Merge one block's worth of changes (styles/attrs/text/element/classes) into

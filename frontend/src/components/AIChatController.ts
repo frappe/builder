@@ -1,7 +1,7 @@
 import type Block from "@/block";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
-import { type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
+import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/yaml";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -606,11 +606,18 @@ export class AIChatController {
 		const operations = data.operations;
 		if (!operations?.length) return;
 		this.previewUnconfirmed = false;
-		// another chat's turn still edits this page, but its changes aren't this chat's
-		const ownTurn = !this.isForeignSession(data);
+		// another chat's turn still edits this page, but its changes aren't this chat's;
+		// until run names this send's session, record aside and decide once it does
+		const aside: AffectedItems = { blocks: [], scripts: [] };
+		const undecided = this.holdUntilSessionKnown(data, () => {
+			if (!this.isForeignSession(data)) this.dispatcher.mergeAffected(aside);
+		});
+		const ownTurn = !undecided && !this.isForeignSession(data);
 		this.applyServerEdit(() => {
 			for (const op of operations) {
-				if (ownTurn) this.dispatcher.trackAffectedItem(op.tool_name, op.args); // before apply (remove_block)
+				// before apply: a removed block can't be named afterwards
+				if (ownTurn) this.dispatcher.trackAffectedItem(op.tool_name, op.args);
+				else if (undecided) this.dispatcher.trackAffectedItem(op.tool_name, op.args, aside);
 				try {
 					this.dispatcher.applyToolOperation(op.tool_name, op.args);
 				} catch (e) {
