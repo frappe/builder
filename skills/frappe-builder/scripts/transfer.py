@@ -26,25 +26,34 @@ TOKEN_FIELDS = ("token_name", "type", "value", "dark_value", "group")
 
 
 class SiteCopy:
-	"""Creates what the target lacks and leaves what it already has, unless replace is set:
-	a component, script or token there may serve other pages."""
+	"""Reads the page and everything it needs from the source and downloads every file
+	before writing anything, so a missing file leaves the target untouched. On the target it
+	creates what is missing and leaves what differs, unless replace is set: a component,
+	script or token there may serve other pages."""
 
 	def __init__(self, source, target, replace: bool = False):
 		self.source, self.target, self.replace = source, target, replace
-		self.files: dict[str, str] = {}
+		self.downloads: dict[str, Path] = {}
+		self.uploaded: dict[str, str] = {}
+		self.docs: list[tuple[str, str, dict]] = []
 		self.seen: set[tuple[str, str]] = set()
-		self.tmp = tempfile.mkdtemp(prefix="builder-copy-")
+		self.tmp = Path(tempfile.mkdtemp(prefix="builder-copy-"))
 
 	def page(self, name: str):
 		doc = self.source.get("Builder Page", name)
 		current = self.target_page(doc["route"])
 		tree = parse_blocks(doc.get("draft_blocks")) or parse_blocks(doc.get("blocks"))
 		fields = {key: doc[key] for key in PAGE_FIELDS if doc.get(key) not in (None, "", 0)}
-		fields = self.carry({**fields, "draft_blocks": tree})
-		fields["draft_blocks"] = json.dumps(fields["draft_blocks"], separators=(",", ":"))
+		fields["draft_blocks"] = tree
+		self.collect(fields)
 		scripts = [row["builder_script"] for row in doc.get("client_scripts") or []]
 		for script in scripts:
 			self.script(script)
+		self.upload()
+		for doctype, docname, doc_fields in self.docs:
+			self.write(doctype, docname, self.rewrite(doc_fields))
+		fields = self.rewrite(fields)
+		fields["draft_blocks"] = json.dumps(fields["draft_blocks"], separators=(",", ":"))
 		fields["client_scripts"] = [{"builder_script": script} for script in scripts]
 		self.save_page(doc["route"], fields, current)
 
@@ -93,16 +102,17 @@ class SiteCopy:
 		if kept:
 			print(f"left its live {', '.join(kept)} as they were; --replace copies the source's")
 
-	def carry(self, value):
-		"""Brings everything value refers to across and returns it with file URLs rewritten."""
-		text = FILE_URL.sub(lambda match: self.file(match.group(0)), json.dumps(value))
+	def collect(self, value):
+		"""Queues everything value refers to, dependencies first, and downloads its files."""
+		text = json.dumps(value)
+		for url in FILE_URL.findall(text):
+			self.download(url)
 		for component in sorted(set(COMPONENT_REF.findall(text))):
 			self.component(component)
 		for token in sorted(set(TOKEN_REF.findall(text))):
 			self.token(token)
 		for family in sorted(set(FONT_REF.findall(text))):
 			self.font(family)
-		return json.loads(text)
 
 	def component(self, component_id: str):
 		if self.visit("Builder Component", component_id):
@@ -113,15 +123,15 @@ class SiteCopy:
 				"block": json.loads(doc.get("block") or "{}"),
 				"component_data_script": doc.get("component_data_script") or "",
 			}
-			fields = self.carry(fields)
-			fields["block"] = json.dumps(fields["block"], separators=(",", ":"))
-			self.ensure("Builder Component", component_id, fields)
+			self.collect(fields)
+			self.docs.append(("Builder Component", component_id, fields))
 
 	def script(self, name: str):
 		if self.visit("Builder Client Script", name):
 			doc = self.source.get("Builder Client Script", name)
-			fields = self.carry({"script_type": doc.get("script_type"), "script": doc.get("script") or ""})
-			self.ensure("Builder Client Script", name, fields)
+			fields = {"script_type": doc.get("script_type"), "script": doc.get("script") or ""}
+			self.collect(fields)
+			self.docs.append(("Builder Client Script", name, fields))
 
 	def token(self, name: str):
 		if not self.visit("Builder Token", name):
@@ -130,27 +140,43 @@ class SiteCopy:
 		if not found:
 			return  # a CSS variable from a script, not a token
 		fields = {key: found[0].get(key) for key in TOKEN_FIELDS}
-		self.ensure("Builder Token", name, fields)
+		self.docs.append(("Builder Token", name, fields))
 		if fields["type"] == "Font":
 			self.font(fields["value"])
 
 	def font(self, family: str):
 		if not self.visit("User Font", family):
 			return
-		found = self.source.names("User Font", f"name={family}", fields="name,font_file")
-		if found and not self.target.names("User Font", f"name={family}"):
-			fields = {"font_name": family, "font_file": self.file(found[0]["font_file"])}
-			self.target.run_input(fields, "doc", "create", "User Font")
-			print(f"created User Font {family}")
+		if found := self.source.names("User Font", f"name={family}", fields="name,font_file"):
+			self.download(found[0]["font_file"])
+			self.docs.append(("User Font", family, {"font_name": family, "font_file": found[0]["font_file"]}))
 
-	def file(self, url: str) -> str:
-		if url not in self.files:
-			local = Path(self.tmp) / Path(unquote(url)).name
+	def download(self, url: str):
+		if url not in self.downloads:
+			# a folder per file keeps same-named files from different folders apart
+			local = self.tmp / str(len(self.downloads)) / Path(unquote(url)).name
+			local.parent.mkdir()
 			if self.source.run("file", "download", url, "-o", str(local), check=False) is False:
 				# the same path on the target may be missing or hold another file
 				sys.exit(f"could not download {url} from the source; fix or remove it there, then copy again")
-			self.files[url] = self.target.run("file", "upload", str(local))["file_url"]
-		return self.files[url]
+			self.downloads[url] = local
+
+	def upload(self):
+		for url, local in self.downloads.items():
+			self.uploaded[url] = self.target.run("file", "upload", str(local))["file_url"]
+
+	def rewrite(self, fields: dict) -> dict:
+		fields = json.loads(FILE_URL.sub(lambda match: self.uploaded[match.group(0)], json.dumps(fields)))
+		if isinstance(fields.get("block"), dict):
+			fields["block"] = json.dumps(fields["block"], separators=(",", ":"))
+		return fields
+
+	def write(self, doctype: str, name: str, fields: dict):
+		if doctype != "User Font":
+			self.ensure(doctype, name, fields)
+		elif not self.target.names("User Font", f"name={name}"):
+			self.target.run_input(fields, "doc", "create", "User Font")
+			print(f"created User Font {name}")
 
 	def ensure(self, doctype: str, name: str, fields: dict):
 		existing = self.target.names(doctype, f"name={name}", fields="name," + ",".join(fields))
