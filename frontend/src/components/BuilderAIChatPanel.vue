@@ -59,10 +59,6 @@
 		</div>
 
 		<template v-else>
-			<!-- <div class="border-b border-outline-gray-1 px-4 py-3">
-				<OptionToggle v-model="scope" :options="scopeOptions" />
-			</div> -->
-
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
@@ -410,16 +406,16 @@ import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
-import { AIChatController, type ChatMessage } from "@/components/AIChatController";
+import { AIChatController } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
-import type { AITurnStep } from "@/components/ai/types";
+import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
+import { Button, Dropdown, Tooltip } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -883,10 +879,7 @@ function toggleChips(messageId: string) {
 	--shine-peak: var(--ink-gray-9);
 }
 
-/* Empty-state hero: a living aurora of drifting color blobs behind the sparkle.
- * Each blob only animates transform (GPU-composited) under a single static blur,
- * so the motion stays silky. Prime-ish, mismatched durations keep it organic —
- * the loop never visibly repeats. */
+/* Empty-state hero: BobOrb's shader aurora behind the sparkle, in a breathing bloom. */
 .bob-hero-orb {
 	position: relative;
 	display: grid;
@@ -963,7 +956,6 @@ function toggleChips(messageId: string) {
 
 @media (prefers-reduced-motion: reduce) {
 	.bob-hero-orb::after,
-	.bob-blob,
 	.bob-orb-spark,
 	.bob-pill-in,
 	.animate-shine {

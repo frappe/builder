@@ -13,16 +13,6 @@ import { createResource, toast } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
-// Re-exported for components that still import these from here.
-export type {
-	AffectedBlock,
-	AffectedScript,
-	AIModel,
-	AIProvider,
-	AITurnStep,
-	ChatMessage,
-} from "@/components/ai/types";
-
 /**
  * Orchestrates the Builder AI chat: holds UI state, sends each user turn to the
  * single `builder.ai.api.run` endpoint, and reacts to the `ai_chat_*` realtime

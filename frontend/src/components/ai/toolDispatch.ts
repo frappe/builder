@@ -164,13 +164,9 @@ export class ToolDispatcher {
 		const baseStyles = normalizeStyles(args.base_styles);
 		const mobileStyles = normalizeStyles(args.mobile_styles);
 		const tabletStyles = normalizeStyles(args.tablet_styles);
-		Object.entries(baseStyles).forEach(([key, value]) => block.setBaseStyle(key as any, value as StyleValue));
-		Object.entries(mobileStyles).forEach(([key, value]) => {
-			block.mobileStyles[key] = value as StyleValue;
-		});
-		Object.entries(tabletStyles).forEach(([key, value]) => {
-			block.tabletStyles[key] = value as StyleValue;
-		});
+		Object.assign(block.baseStyles, baseStyles);
+		Object.assign(block.mobileStyles, mobileStyles);
+		Object.assign(block.tabletStyles, tabletStyles);
 		if (args.attributes) {
 			Object.entries(args.attributes).forEach(([key, value]) => {
 				if (STANDARD_ATTRS.has(key)) {
