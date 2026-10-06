@@ -51,10 +51,13 @@ export class AIChatController {
 	private pendingSessionId: string | null = null;
 	// orders the user's session choices (switch/new/delete); refreshes don't count
 	private sessionIntentEpoch = 0;
-	// turns started from this panel; liveSend is the one whose run call is still out,
-	// which a blank chat takes its new session id from
+	// turns started from this panel; liveSend is the one whose run call is still out
 	private turnCount = 0;
 	private liveSend = 0;
+	// a blank chat can't tell its own turn's events from another chat's until run
+	// names the session it created, so they wait here and replay once it does
+	private heldEvents: Array<() => void> = [];
+	private cancelOnceKnown = false;
 	// both outlive their turn, so a new turn clears them before they can touch it
 	private completeTimer: ReturnType<typeof setTimeout> | undefined;
 	private cancelWatchdog: ReturnType<typeof setTimeout> | undefined;
@@ -291,6 +294,8 @@ export class AIChatController {
 		this.clearStreamRenderTimer();
 		this.clearTurnTimers();
 		this.liveSend = 0;
+		this.heldEvents = [];
+		this.cancelOnceKnown = false;
 		this.endCanvasBuild();
 		this.progressMessage.value = "";
 		this.pageStreamContent.value = "";
@@ -476,19 +481,30 @@ export class AIChatController {
 	/** All events on this page's channel carry the session that produced them.
 	 * With parallel sessions, chat-UI events from a session the user isn't
 	 * viewing must not touch this view (canvas ops in onToolBatch still apply —
-	 * the canvas is page-level, not session-level). A blank chat owns no turn
-	 * until its first send: that turn's first event names the session it created,
-	 * which Stop needs before run even returns. */
+	 * the canvas is page-level, not session-level). */
 	private isForeignSession(data: { session_id?: string }): boolean {
 		if (!data.session_id) return false;
-		if (!this.sessionId.value && this.liveSend) this.sessionId.value = data.session_id;
 		return data.session_id !== this.sessionId.value;
+	}
+
+	private holdUntilSessionKnown(data: { session_id?: string }, replay: () => void): boolean {
+		if (!data.session_id || this.sessionId.value || !this.liveSend) return false;
+		this.heldEvents.push(replay);
+		return true;
+	}
+
+	private replayHeldEvents() {
+		this.heldEvents.splice(0).forEach((replay) => replay());
+		if (!this.cancelOnceKnown) return;
+		this.cancelOnceKnown = false;
+		this.cancel();
 	}
 
 	/** The turn's headline status ("Thinking with Claude Sonnet 5"), for the panel
 	 * header only. What the turn is DOING belongs to the timeline now — writing it
 	 * into the bubble as well just says the same thing twice. */
 	onProgress = (data: { message?: string; session_id?: string }) => {
+		if (this.holdUntilSessionKnown(data, () => this.onProgress(data))) return;
 		if (this.isForeignSession(data)) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
@@ -499,6 +515,7 @@ export class AIChatController {
 	 * round is over — whatever has been streaming becomes part of the timeline and the
 	 * live answer resets for the next round. */
 	onStep = (data: AITurnStep & { session_id?: string }) => {
+		if (this.holdUntilSessionKnown(data, () => this.onStep(data))) return;
 		if (this.isForeignSession(data) || typeof data.id !== "number") return;
 		this.isSubmitting.value = true;
 		const { session_id, page_id, ...step } = data as Record<string, any>;
@@ -531,6 +548,7 @@ export class AIChatController {
 		replace?: boolean;
 	}) => {
 		if (!data.chunk && !data.replace) return;
+		if (this.holdUntilSessionKnown(data, () => this.onStream(data))) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
 			// paint its preview, but keep its chat text out of this session.
@@ -647,6 +665,7 @@ export class AIChatController {
 	}
 
 	onComplete = async (data: { message?: string; session_id?: string }) => {
+		if (this.holdUntilSessionKnown(data, () => this.onComplete(data))) return;
 		if (this.isForeignSession(data)) {
 			// The other chat's build on this page finished; the authoritative
 			// tool_batch already replaced the streamed preview.
@@ -709,6 +728,7 @@ export class AIChatController {
 	};
 
 	onError = async (data: { message?: string; session_id?: string }) => {
+		if (this.holdUntilSessionKnown(data, () => this.onError(data))) return;
 		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
@@ -733,6 +753,7 @@ export class AIChatController {
 		pending_action?: { kind: string; payload: Record<string, any> };
 		session_id?: string;
 	}) => {
+		if (this.holdUntilSessionKnown(data, () => this.onClarify(data))) return;
 		if (this.isForeignSession(data)) return;
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
@@ -814,6 +835,12 @@ export class AIChatController {
 	 * so we show "Cancelling" locally right away for instant feedback; that event
 	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
 	cancel = async () => {
+		if (!this.sessionId.value && this.liveSend) {
+			// the turn's session isn't known yet; cancel it the moment run names it
+			this.cancelOnceKnown = true;
+			this.progressMessage.value = "Cancelling…";
+			return;
+		}
 		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
 		this.isCancelling.value = true;
 		this.progressMessage.value = "Cancelling…";
@@ -913,7 +940,10 @@ export class AIChatController {
 		} catch (error) {
 			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], userText, error);
 		} finally {
-			if (this.liveSend === turn) this.liveSend = 0;
+			if (this.liveSend === turn) {
+				this.liveSend = 0;
+				this.replayHeldEvents();
+			}
 		}
 	};
 
