@@ -90,8 +90,10 @@ def apply_global_settings(payload: dict) -> str:
 
 
 def apply_create_doctype(payload: dict) -> str:
-	"""Create a Custom DocType (custom=1, created at runtime — no code files / app
-	migration) with Guest read so public pages can query it."""
+	"""Create a Custom DocType (custom=1, created at runtime, no code files or app
+	migration). Public pages read it through their data script, so it grants no
+	Guest read: that would publish every field over the REST API, and Frappe only
+	lets Administrator grant it."""
 	frappe.has_permission("DocType", "create", throw=True)
 	name = (payload.get("name") or "").strip()
 	if not name:
@@ -126,8 +128,6 @@ def apply_create_doctype(payload: dict) -> str:
 			"fields": fields,
 			"permissions": [
 				{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-				# Public website pages read data as Guest.
-				{"role": "Guest", "read": 1},
 			],
 		}
 	).insert()

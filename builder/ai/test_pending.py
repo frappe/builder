@@ -79,18 +79,22 @@ class TestApplyPendingAction(FrappeTestCase):
 			pending.apply_pending_action("connect_form", payload)
 		self.assertFalse(frappe.db.exists("DocType", "Bob Forbidden Submission"))
 
-	def test_a_system_manager_can_seed_a_custom_doctype(self):
-		# Created as Administrator: Frappe lets only Administrator grant Guest read on a custom DocType.
-		pending.apply_pending_action(
-			"create_doctype", {"name": SEED_DOCTYPE, "fields": [{"fieldname": "title"}]}
-		)
+	def test_a_system_manager_can_create_and_seed_a_doctype(self):
+		doctype = f"{SEED_DOCTYPE} {frappe.generate_hash(length=6)}"
 		frappe.set_user(user_with_role("System Manager"))
+		try:
+			pending.apply_pending_action(
+				"create_doctype", {"name": doctype, "fields": [{"fieldname": "title"}]}
+			)
+			pending.apply_pending_action(
+				"seed_sample_data", {"doctype": doctype, "rows": [{"title": "Seeded"}]}
+			)
 
-		pending.apply_pending_action(
-			"seed_sample_data", {"doctype": SEED_DOCTYPE, "rows": [{"title": "Seeded"}]}
-		)
-
-		self.assertTrue(frappe.db.exists(SEED_DOCTYPE, {"title": "Seeded"}))
+			self.assertTrue(frappe.db.exists(doctype, {"title": "Seeded"}))
+			self.assertFalse(frappe.get_all("DocPerm", {"parent": doctype, "role": "Guest"}))
+		finally:
+			frappe.set_user("Administrator")
+			frappe.delete_doc("DocType", doctype, force=True, ignore_missing=True)
 
 	def test_a_system_manager_can_connect_a_form(self):
 		frappe.set_user(user_with_role("System Manager"))
