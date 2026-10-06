@@ -1,6 +1,8 @@
 """Checks for block trees. Each rule is a failure reproduced on a live site: a broken
 render, a style that silently doesn't apply, or a canvas that shows something else."""
 
+from __future__ import annotations
+
 import re
 
 TEXT_ELEMENTS = {
@@ -11,6 +13,10 @@ LENGTH_PROPS = re.compile(
 	r"^(width|height|minWidth|maxWidth|minHeight|maxHeight|top|right|bottom|left|gap|rowGap|columnGap"
 	r"|fontSize|letterSpacing|borderRadius|(padding|margin)(Top|Right|Bottom|Left)?)$"
 )
+RAW_LAYOUT = re.compile(
+	r"<(div|p|h[1-6]|section|article|header|footer|nav|table|ul|ol|form|input|button)\b", re.I
+)
+RAW_SKIPPED = re.compile(r"<(svg|script|style|iframe)\b.*?</\1>", re.I | re.S)
 SIDES = ("Top", "Right", "Bottom", "Left")
 # style maps lose their key order on server rewrites (sync, snapshot restore), so a
 # shorthand and its longhand in one map end up in alphabetical order
@@ -42,7 +48,7 @@ class Block:
 		return f"{self.path} {self.element or '?'}#{self.blockId or ''}{name}"
 
 	@property
-	def children(self) -> list["Block"]:
+	def children(self) -> list[Block]:
 		return [
 			Block(child, f"{self.path}.{index}")
 			for index, child in enumerate(self.data.get("children") or [])
@@ -122,6 +128,24 @@ class Linter:
 			self.add("warn", block, "text on a non-text element is invisible in the editor canvas")
 		if "darkSrc" in (block.customAttributes or {}):
 			self.add("error", block, "darkSrc only works in attributes, not customAttributes")
+		if original == "__raw_html__":
+			self.check_raw_html(block, html)
+
+	def check_raw_html(self, block: Block, html: str):
+		if re.search(r"<script\b", html, re.I):
+			self.add(
+				"warn",
+				block,
+				"a <script> in raw HTML never runs in the editor; use a clientScript or script file",
+			)
+		markup = RAW_SKIPPED.sub(" ", html)
+		words = len(re.sub(r"<[^>]+>", " ", markup).split())
+		if words > 25 or (words > 2 and RAW_LAYOUT.search(markup)):
+			self.add(
+				"warn",
+				block,
+				"text and layout in raw HTML can't be edited in the editor; build them from blocks",
+			)
 
 	def check_jinja(self, block: Block):
 		script = block.script()
@@ -167,7 +191,7 @@ class Linter:
 		state, _, prop = key.rpartition(":")
 		if key.count(":") > 1 or state.startswith(":"):
 			self.add("error", block, f"{field}.{key}: one single-colon state only (hover:, before:), no ::")
-		if isinstance(value, int | float) and value and LENGTH_PROPS.match(prop):
+		if isinstance(value, (int, float)) and value and LENGTH_PROPS.match(prop):
 			self.add("error", block, f"{field}.{key}: {value} has no unit and is ignored")
 		text = str(value)
 		if text.count("(") != text.count(")"):

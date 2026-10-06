@@ -66,8 +66,6 @@ Guests can't insert into a DocType directly; a Web Form's `accept` endpoint can:
 2. A `Web Form` on it: `title`, `published: 1`, `login_required: 0`, `allow_multiple: 1`, the same fields. It also serves its own page at its route.
 3. Page JS that POSTs `{"web_form": "<name>", "data": {...}}` with the CSRF header to `/api/method/frappe.website.doctype.web_form.web_form.accept`.
 
-Submissions land at `/app/<doctype-slug>`.
-
 ## Site-wide
 
 `Builder Settings` holds `style` and `script` (every Builder page), `head_html`/`body_html` (every page) and `home_page` (the route served at `/`).

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pull, lint, push and publish Frappe Builder pages and components through frappectl.
 
+    builder.py connect <site URL | profile> [--bench DIR]
     builder.py [-s PROFILE] pull <page name | route | URL | component/<id>> [--dir .builder]
     builder.py outline <workdir | json file>
     builder.py [-s PROFILE] lint <workdir | json file>
@@ -9,6 +10,7 @@
     builder.py [-s PROFILE] sync <component id>
     builder.py [-s PROFILE] usage <component id>
     builder.py [-s PROFILE] instance <component id> [--props JSON]
+    builder.py [-s PROFILE] copy <page> --to PROFILE [--replace]
 
 A page workdir holds doc.json (the page as pulled, the rollback), blocks.json (the
 working tree) and data_script.py. push writes draft_blocks, and page_data_script
@@ -19,9 +21,13 @@ data_script.py. push saves the component, which is live at once for every
 unpinned instance; sync then adds refs for new blocks and re-pins every instance.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,25 +35,33 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from lint import Block, Linter
-from tree import InstanceBuilder, block_ids, parse_blocks
+from transfer import SiteCopy
+from tree import InstanceBuilder, block_ids, parse_blocks, walk
 
 
 class Frappectl:
 	def __init__(self, profile: str | None):
+		self.profile = profile
 		self.base = ["frappectl", *(["-s", profile] if profile else []), "--json"]
 
-	def run(self, *args: str, hint: str = "") -> object:
+	def run(self, *args: str, hint: str = "", check: bool = True) -> object:
 		result = subprocess.run([*self.base, *args], capture_output=True, text=True, stdin=subprocess.DEVNULL)
+		if result.returncode and not check:
+			return False
 		if result.returncode:
 			message = result.stderr.strip() or f"frappectl {args[0]} failed"
 			sys.exit(f"{message}\n{hint}" if hint else message)
 		return json.loads(result.stdout) if result.stdout.strip() else None
 
 	def run_input(self, data: dict, *args: str, hint: str = "") -> object:
-		with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
-			json.dump(data, handle)
-			handle.flush()
-			return self.run(*args, "--input", handle.name, hint=hint)
+		# closed before frappectl opens it: Windows refuses a second open of a temp file
+		fd, path = tempfile.mkstemp(suffix=".json")
+		try:
+			with os.fdopen(fd, "w") as handle:
+				json.dump(data, handle)
+			return self.run(*args, "--input", path, hint=hint)
+		finally:
+			os.unlink(path)
 
 	def get(self, doctype: str, name: str) -> dict:
 		return self.run("doc", "get", doctype, name)
@@ -94,7 +108,7 @@ class Target:
 		self.doc_path = workdir / "doc.json"
 
 	@staticmethod
-	def of(workdir: Path) -> "Target":
+	def of(workdir: Path) -> Target:
 		doc = json.loads((workdir / "doc.json").read_text())
 		return ComponentTarget(workdir) if doc.get("doctype") == "Builder Component" else PageTarget(workdir)
 
@@ -315,7 +329,31 @@ def cmd_push(ctl: Frappectl, args):
 		hint="Someone saved it after your pull: pull into another --dir, merge, push from there.",
 	)  # fmt: skip
 	target.refresh(ctl)
+	if rewritten := rewritten_blocks(target, update):
+		sys.exit(
+			f"the site rewrote blocks on save ({', '.join(rewritten[:5])}), so the saved draft is not what"
+			" you sent. Builder before v1.35 sanitises raw HTML and attributes on save. Restore the"
+			" 'Before agent edit' snapshot (see SKILL.md) and update Builder before pushing again."
+		)
 	report_push(ctl, target, update)
+
+
+def rewritten_blocks(target: Target, update: dict) -> list[str]:
+	sent = json.loads(update[target.tree_field()])
+	try:
+		saved = target.site_tree(target.doc)
+	except ValueError:
+		return ["all of them: the saved tree is no longer valid JSON"]
+	if sent == saved:
+		return []
+	before, after = blocks_by_id(sent), blocks_by_id(saved)
+	return [block_id for block_id in before if before[block_id] != after.get(block_id)] or ["tree"]
+
+
+def blocks_by_id(tree) -> dict:
+	found = {}
+	walk(tree, lambda node: found.setdefault(str(node.get("blockId")), {**node, "children": None}))
+	return found
 
 
 def report_push(ctl: Frappectl, target: Target, update: dict):
@@ -357,6 +395,127 @@ def cmd_sync(ctl: Frappectl, args):
 	)
 
 
+def cmd_connect(ctl: Frappectl, args):
+	update_tools()
+	ctl = Frappectl(args.site or profile_for(args.target))
+	who = ctl.run("auth", "whoami")
+	print(f"connected to {who['site']} as {who['user']}; use -s {who['source']}")
+	if who.get("read_only"):
+		print(
+			f"the profile is read-only: ask the human to run `frappectl auth configure {who['source']} --writable`"
+		)
+	versions = ctl.run("api", "method/frappe.utils.change_log.get_versions")
+	if "builder" not in versions:
+		sys.exit("Builder is not installed on this site")
+	print(f"Builder {versions['builder']['version']}, Frappe {versions['frappe']['version']}")
+	if sanitises_blocks(ctl):
+		print("this Builder predates v1.35 and rewrites raw HTML on save: update Builder on the site first")
+	if args.bench:
+		update_bench(Path(args.bench))
+
+
+def profile_for(target: str | None) -> str | None:
+	if not target:
+		return None
+	profiles = Frappectl(None).run("auth", "list", check=False) or []
+	for profile in profiles:
+		if target.rstrip("/") in (profile["profile"], profile["site"].rstrip("/")):
+			return profile["profile"]
+	if "://" not in target:
+		sys.exit(f"no frappectl profile '{target}'; pass the site URL to sign in")
+	return login(target.rstrip("/"))
+
+
+def login(site: str) -> str:
+	name = urlparse(site).hostname
+	command = [
+		"frappectl",
+		"auth",
+		"login",
+		site,
+		"--name",
+		name,
+		"--description",
+		"",
+		"--oauth",
+		"--writable",
+	]
+	if os.name != "posix":
+		sys.exit(f"ask the human to run this in a terminal, then connect again: {shlex.join(command)}")
+	import pty
+
+	print("signing in: the human approves it in the browser tab that opens", flush=True)
+	# frappectl insists on a terminal even when the flags answer every prompt
+	if pty.spawn(command):
+		sys.exit("sign-in did not complete")
+	return name
+
+
+def update_tools():
+	if not shutil.which("uv"):
+		sys.exit("install uv (https://docs.astral.sh/uv/getting-started/installation/), then connect again")
+	action = "upgrade" if shutil.which("frappectl") else "install"
+	subprocess.run(["uv", "tool", action, "frappectl"], capture_output=True, stdin=subprocess.DEVNULL)
+	skill = Path(__file__).parent.parent
+	before = (skill / "SKILL.md").read_bytes()
+	lock = next((d for d in list(skill.parents)[:4] if (d / "skills-lock.json").exists()), None)
+	subprocess.run(
+		["npx", "-y", "skills", "update", "frappe-builder", "-y", *([] if lock else ["-g"])],
+		cwd=lock, capture_output=True, stdin=subprocess.DEVNULL,
+	)  # fmt: skip
+	if (skill / "SKILL.md").read_bytes() != before:
+		print("the frappe-builder skill was updated: read SKILL.md again before going on")
+
+
+def sanitises_blocks(ctl: Frappectl) -> bool:
+	meta = ctl.run("doc", "get", "DocType", "Builder Page", check=False)
+	fields = {f["fieldname"]: f for f in meta["fields"]} if meta else {}
+	return bool(fields) and not fields.get("draft_blocks", {}).get("ignore_xss_filter")
+
+
+def update_bench(bench: Path):
+	"""Pulls Frappe and Builder when their checkouts track develop untouched."""
+	behind = []
+	for app in ("frappe", "builder"):
+		git = GitCheckout(bench / "apps" / app)
+		if git.branch() != "develop" or git.dirty():
+			print(f"{app}: on {git.branch()}{' with local changes' if git.dirty() else ''}, left as is")
+		elif count := git.behind():
+			behind.append(app)
+			print(f"{app}: {count} commits behind develop")
+	if behind:
+		print("updating with bench update (backs up and migrates every site on the bench)", flush=True)
+		subprocess.run(
+			["bench", "update", "--pull", "--requirements", "--patch", "--build", "--apps", ",".join(behind)],
+			cwd=bench, stdin=subprocess.DEVNULL,
+		)  # fmt: skip
+
+
+class GitCheckout:
+	def __init__(self, path: Path):
+		self.path = path
+
+	def git(self, *args: str) -> str:
+		return subprocess.run(
+			["git", "-C", str(self.path), *args], capture_output=True, text=True
+		).stdout.strip()
+
+	def branch(self) -> str:
+		return self.git("branch", "--show-current")
+
+	def dirty(self) -> bool:
+		return bool(self.git("status", "--porcelain", "--untracked-files=no"))
+
+	def behind(self) -> int:
+		remote = "upstream" if "upstream" in self.git("remote").split() else "origin"
+		self.git("fetch", "-q", remote, "develop")
+		return int(self.git("rev-list", "--count", "HEAD..FETCH_HEAD") or 0)
+
+
+def cmd_copy(ctl: Frappectl, args):
+	SiteCopy(ctl, Frappectl(args.to), replace=args.replace).page(ctl.find_page(args.ref))
+
+
 def cmd_usage(ctl: Frappectl, args):
 	for page in ctl.embedding_pages(args.component):
 		print(f"{page['name']}  /{page.get('route')}  {'published' if page.get('published') else 'draft'}")
@@ -395,6 +554,15 @@ def main():
 	create.add_argument("--name", help="component label")
 	create.add_argument("--dir", default=".builder")
 	create.add_argument("--force", action="store_true", help="create despite lint errors")
+	connect = sub.add_parser("connect")
+	connect.add_argument("target", nargs="?", help="site URL or frappectl profile")
+	connect.add_argument("--bench", help="local bench folder: pull Frappe and Builder there when behind")
+	copy = sub.add_parser("copy")
+	copy.add_argument("ref")
+	copy.add_argument("--to", required=True, help="frappectl profile of the site to copy into")
+	copy.add_argument(
+		"--replace", action="store_true", help="overwrite components, scripts and tokens that differ there"
+	)
 	instance = sub.add_parser("instance")
 	instance.add_argument("component")
 	instance.add_argument("--props", help="JSON object of prop values")
@@ -414,6 +582,8 @@ def main():
 		"usage": cmd_usage,
 		"instance": cmd_instance,
 		"create": cmd_create,
+		"copy": cmd_copy,
+		"connect": cmd_connect,
 	}
 	return commands[args.command](ctl, args)
 

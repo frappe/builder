@@ -15,12 +15,12 @@
 - `p` renders as `div`, and each block's `fb-` class changes on every render, so scripts and CSS select classes you set in `classes`.
 - `attributes` holds `src`, `darkSrc`, `alt`, `href`, `target`, `rel`, `placeholder`, `type`, `value`, `title`; `customAttributes` everything else (`id`, `data-*`, `aria-*`, `role`). `darkSrc` works only in `attributes`, and wraps the image in `<picture>`.
 - Text in `innerHTML` shows in the editor only on `span h1-h6 p b label a cite li strong em i blockquote summary button`; on a `div` it renders live but is invisible in the canvas.
-- Raw markup (SVG, embeds): `element: "div"`, `originalElement: "__raw_html__"`, markup in `innerHTML`.
+- Raw HTML (`element: "div"`, `originalElement: "__raw_html__"`, markup in `innerHTML`) is for SVG, iframes and embeds: its text can't be edited in the editor, and its `<script>` never runs there.
 - Images: `frappectl file upload <path>`, or `method call builder.api.import_remote_assets -F 'urls:=["https://..."]'` to copy remote images into the site (returns old URL -> new URL).
 
 ## Styles
 
-- camelCase or kebab-case keys both work. Values are CSS strings with units: a bare number is emitted as-is (`width: 100` does nothing).
+- Values are CSS strings with units: a bare number is emitted as-is (`width: 100` does nothing).
 - Breakpoints: `tabletStyles` apply at 1023px and below, `mobileStyles` at 576px and below. The editor frames are 1400, 800 and 420 wide.
 - States are prefixed keys with one colon: `hover:color`, `focus:borderColor`, `before:content` (quote the value: `"'x'"`). `::before` doesn't work.
 - Unbalanced parentheses in a value get escaped and the rule breaks.

@@ -1,5 +1,7 @@
 """Block tree helpers: parsing, walking, component instances and prop values."""
 
+from __future__ import annotations
+
 import copy
 import json
 import secrets
@@ -42,7 +44,7 @@ def encode_value(declaration: dict, value):
 	if kind == "boolean":
 		return value if isinstance(value, bool) else str(value).strip().lower() in ("true", "1", "yes")
 	if kind == "number":
-		return value if isinstance(value, int | float) else float(value)
+		return value if isinstance(value, (int, float)) else float(value)
 	return "" if value is None else str(value)
 
 
