@@ -62,6 +62,9 @@ builder.toolbar.register({
 });
 ```
 
+In the right region, Builder's own buttons always stay at the right end. `before` and `after` place
+your button among the extension buttons only.
+
 A Vue slot uses the `/vue` entry. Register the adapter once, and every slot then takes a component.
 
 ```js

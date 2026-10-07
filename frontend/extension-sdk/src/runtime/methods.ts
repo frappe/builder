@@ -80,6 +80,7 @@ export type ToolbarRegistration = {
 	/** A function, or the name of an action that this extension registered. */
 	action?: ActionRef;
 	badge?: string | number | null;
+	/** In the right region, these place a button among the extension buttons only. Builder's own buttons stay at the right end. */
 	before?: string;
 	after?: string;
 	showWhen?: ShowWhen;
