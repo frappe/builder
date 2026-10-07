@@ -7,7 +7,7 @@
 
 import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
 import { PROTOCOL_VERSION, type ConnectMessage } from "../shared/types";
-import { dispatch } from "./actions";
+import { handleRequest } from "./actions";
 import { runSlot, setActiveSlot } from "./slots";
 
 /**
@@ -39,7 +39,7 @@ const isConnectMessage = (data: unknown): data is ConnectMessage =>
 const applyTheme = (theme: unknown) => document.documentElement.setAttribute("data-theme", String(theme));
 
 const start = async (message: ConnectMessage, port: MessagePort) => {
-	channel = createPortChannel(port, dispatch);
+	channel = createPortChannel(port, handleRequest);
 	channel.listen("theme", applyTheme);
 	applyTheme(message.theme);
 	slotProps = message.props ?? {};

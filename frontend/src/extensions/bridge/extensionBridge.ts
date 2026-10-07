@@ -6,7 +6,7 @@
  * editor. A test makes its own instance, with its own method table.
  */
 
-import { ChannelCallError, unknownMethod, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
+import { ChannelCallError, unknownMethod, type RequestHandler, type PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { assertGranted, assertWritable, type MethodTable } from "./permissions";
 import { createBudget, type Budget } from "./rateLimit";
@@ -69,14 +69,14 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 	const getChannels = (extension: string) => [...(channels.get(extension) ?? [])];
 
 	/**
-	 * One dispatcher for each frame. It keeps the record that it got. So a frame
+	 * One request handler for each frame. It keeps the record that it got. So a frame
 	 * never names its extension, and it cannot use the permissions of a different extension.
 	 *
 	 * There is no cache. A new record can have new permissions. A cached
-	 * dispatcher would keep the old permissions.
+	 * request handler would keep the old permissions.
 	 */
-	const dispatcherFor =
-		(extension: InstalledExtension): Dispatcher =>
+	const requestHandlerFor =
+		(extension: InstalledExtension): RequestHandler =>
 		(method, params) => {
 			// the fastest check is first. Too many calls to unknown methods are also too many calls
 			if (!budgetFor(extension.name).take()) throw overBudget(extension.name);
@@ -91,7 +91,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 
 	/**
 	 * Fills the method table after the bridge exists. So a surface can import the
-	 * bridge for `dispatcherFor`, and the bridge does not import the surface.
+	 * bridge for `requestHandlerFor`, and the bridge does not import the surface.
 	 * Call it only one time. A second call would give the method list two owners.
 	 */
 	const setMethodTable = (added: MethodTable, settings: BridgeOptions = {}) => {
@@ -120,7 +120,7 @@ export const createExtensionBridge = (methods: MethodTable = {}, options: Bridge
 		budgets.delete(extensionName);
 	};
 
-	return { connect, disconnect, getEntryChannel, getChannels, setMethodTable, dispatcherFor, registerTeardown, teardown };
+	return { connect, disconnect, getEntryChannel, getChannels, setMethodTable, requestHandlerFor, registerTeardown, teardown };
 };
 
 export type ExtensionBridge = ReturnType<typeof createExtensionBridge>;

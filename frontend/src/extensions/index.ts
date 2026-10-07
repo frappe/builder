@@ -29,7 +29,7 @@ export const {
 	connect: connectExtension,
 	disconnect: disconnectExtension,
 	getEntryChannel,
-	dispatcherFor,
+	requestHandlerFor,
 	registerTeardown,
 	teardown: teardownExtension,
 } = bridge;

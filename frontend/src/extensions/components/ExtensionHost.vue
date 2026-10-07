@@ -11,7 +11,7 @@
 				:key="frameKey(extension)"
 				:extension="extension.name"
 				slot="main"
-				:dispatch="dispatcherFor(extension)"
+				:request-handler="requestHandlerFor(extension)"
 				@connect="(channel) => connectEntryFrame(extension, channel)"
 				@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
 		</div>
@@ -25,7 +25,7 @@
 import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
-import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
+import { connectExtension, disconnectExtension, requestHandlerFor, teardownExtension } from "@/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
@@ -63,7 +63,7 @@ const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) 
  * and a dev extension has the URL of its dev server. So a new build, or a dev
  * version of an installed extension, mounts its frames again.
  *
- * The key also includes the permissions. `dispatcherFor` keeps the record from
+ * The key also includes the permissions. `requestHandlerFor` keeps the record from
  * when it started. Without this, a frame keeps a permission after the user removes it.
  */
 const frameKey = (extension: InstalledExtension) =>

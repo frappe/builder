@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { installedExtensions } from "@/data/extensions";
-import { createPortChannel, type Dispatcher, type PortChannel } from "frappe-builder-extension-sdk/transport";
+import { createPortChannel, type RequestHandler, type PortChannel } from "frappe-builder-extension-sdk/transport";
 import {
 	PROTOCOL_VERSION,
 	type ConnectMessage,
@@ -38,7 +38,7 @@ const props = defineProps<{
 	initialProps?: Record<string, unknown>;
 	/** Answers the calls of the frame. The name is not `onRequest`, because
 	 * Vue reads that name as a listener for a `request` event. */
-	dispatch?: Dispatcher;
+	requestHandler?: RequestHandler;
 }>();
 
 /**
@@ -97,7 +97,7 @@ const connect = () => {
 	disconnect();
 	loading.value = true;
 	const pair = new MessageChannel();
-	const opening = createPortChannel(pair.port1, props.dispatch);
+	const opening = createPortChannel(pair.port1, props.requestHandler);
 	channel = opening;
 	opening.listen("slot.ready", finishLoading);
 

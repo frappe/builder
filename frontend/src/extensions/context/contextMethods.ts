@@ -2,7 +2,7 @@
  * The editor snapshot. An extension reads it one time, or gets a push when it changes.
  *
  * A push is the only message that the host sends without a request. All other
- * methods answer a request. So the message budget in `dispatcherFor` covers them.
+ * methods answer a request. So the message budget in `requestHandlerFor` covers them.
  *
  * A push goes through `channel.emit`. No budget applies to it, and none must.
  * A push comes from the user, not from a bad extension. If the push used the

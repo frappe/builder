@@ -17,7 +17,7 @@ import type { Permission, InstalledExtension } from "frappe-builder-extension-sd
  */
 export type HostMethod = {
 	needs: Permission | null;
-	/** The record comes from the dispatcher. It never comes from the message. */
+	/** The record comes from the request handler. It never comes from the message. */
 	run: (params: unknown, extension: InstalledExtension) => unknown;
 };
 
