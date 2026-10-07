@@ -16,12 +16,10 @@ export const PROTOCOL_VERSION = 1;
  * Each permission that an extension can ask for. A read or a window needs no permission.
  * Keep this list the same as `PERMISSIONS` in `builder/extensions/constants.py`.
  *
- * @type {readonly ("page.edit" | "page.write" | "token.write" | "data.access" | "schema.write" | "method.call")[]}
+ * @type {readonly ("page.edit" | "data.access" | "schema.write" | "method.call")[]}
  */
 export const PERMISSIONS = [
 	"page.edit",
-	"page.write",
-	"token.write",
 	"data.access",
 	"schema.write",
 	"method.call",

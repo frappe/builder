@@ -43,8 +43,6 @@ ICON_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$")
 # every permission the bridge gates a method by. Reads and windows need none
 PERMISSIONS = (
 	"page.edit",
-	"page.write",
-	"token.write",
 	"data.access",
 	"schema.write",
 	"method.call",
