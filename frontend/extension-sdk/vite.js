@@ -31,31 +31,29 @@ const HMR_CLIENT = "/@vite/client";
 /** The entry of an install. A frame imports it from Builder, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
-/** Runs in each frame, because each frame imports the entry. */
-const STYLE_TAG = (css) =>
-	`(() => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); })();`;
+/**
+ * Runs in each frame, because each frame imports the entry. A link, not an
+ * inline style, so each `url(...)` in the CSS resolves against the stylesheet.
+ */
+const STYLESHEET_LINK = (fileName) =>
+	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.append(link); })();`;
 
 /** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
 
 /**
- * Moves the stylesheet into the entry.
+ * Makes the entry link the stylesheet.
  *
  * The frame shell is one static document. It names no extension. So it
- * cannot link the stylesheet of an extension. The CSS of a built extension
- * must be in the entry. If not, each frame shows no styles.
+ * cannot link the stylesheet of an extension. The entry must link it. If
+ * not, each frame shows no styles.
  */
-const foldStylesheets = (bundle) => {
-	const sheets = Object.values(bundle).filter(
-		(file) => file.type === "asset" && file.fileName.endsWith(".css"),
-	);
-	if (!sheets.length) return;
-
-	const css = sheets.map((sheet) => sheet.source).join("\n");
-	sheets.forEach((sheet) => delete bundle[sheet.fileName]);
+const linkStylesheet = (bundle) => {
+	const sheet = Object.values(bundle).find((file) => file.type === "asset" && file.fileName.endsWith(".css"));
+	if (!sheet) return;
 
 	const entryChunk = Object.values(bundle).find((file) => file.type === "chunk" && file.isEntry);
-	entryChunk.code = `${STYLE_TAG(css)}\n${entryChunk.code}`;
+	entryChunk.code = `${STYLESHEET_LINK(sheet.fileName)}\n${entryChunk.code}`;
 };
 
 const findEntry = (root) => {
@@ -128,9 +126,7 @@ export default function builderExtension({ builderUrl } = {}) {
 				// the frame runs module scripts. So it is always a modern browser
 				build: {
 					target: "es2020",
-					// one stylesheet, because the entry has the CSS. Split CSS also
-					// adds a stylesheet to the preload list of each lazy chunk. The
-					// frame then asks for a file that this plugin moved into the entry
+					// one stylesheet, because the entry links only one
 					cssCodeSplit: false,
 					rollupOptions: {
 						input: entry,
@@ -213,8 +209,8 @@ export default function builderExtension({ builderUrl } = {}) {
 		},
 
 		/**
-		 * Adds the manifest and the icon to the output. Moves the stylesheet into
-		 * the entry.
+		 * Adds the manifest and the icon to the output. Makes the entry link the
+		 * stylesheet.
 		 *
 		 * `order: "post"` is necessary. The CSS plugin of Vite adds the stylesheet
 		 * in this same hook. This code must run after it.
@@ -231,7 +227,7 @@ export default function builderExtension({ builderUrl } = {}) {
 					this.emitFile({ type: "asset", fileName: manifest.icon, source: readIcon(findIcon(manifest)) });
 				}
 
-				foldStylesheets(bundle);
+				linkStylesheet(bundle);
 			},
 		},
 	};
