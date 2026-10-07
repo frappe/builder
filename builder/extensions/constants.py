@@ -63,8 +63,8 @@ MAX_README_BYTES = 100_000
 # site with what it remembers.
 MAX_STATE_BYTES = 100_000
 
-# The largest `main.js` a package may hold.
-MAX_SOURCE_BYTES = 5_000_000
+# The largest file a package may hold. It matches the Hub.
+MAX_FILE_BYTES = 5 * 1024 * 1024
 
 # The Builder Hub a site reads its catalog from when no other URL is set. It must
 # match the default on `Builder Settings.hub_url`.
@@ -74,13 +74,12 @@ DEFAULT_HUB_URL = "https://preview.frappe.cloud"
 # refused, and the Hub is asked for a release at or below this.
 PROTOCOL_VERSION = 1
 
-# A `.builderext` package is one small ZIP: a manifest, one built file and an
-# icon. These bound what Builder will download and unpack from it.
+# A `.builderext` package is one ZIP: the manifest, `main.js` and the icon at the
+# root, and the build's `chunks/` and `assets/`. These bound what Builder will
+# download and unpack from it. They match the Hub.
+PACKAGE_FOLDERS = frozenset({"chunks", "assets"})
 MAX_PACKAGE_BYTES = 10 * 1024 * 1024
 MAX_EXTRACTED_BYTES = 30 * 1024 * 1024
 MAX_PACKAGE_FILES = 200
 MAX_MANIFEST_BYTES = 128 * 1024
 MAX_ICON_BYTES = 64 * 1024
-
-# The only kinds of file a package may hold.
-PACKAGE_SUFFIXES = frozenset({".js", ".json", ".svg"})

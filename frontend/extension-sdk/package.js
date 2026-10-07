@@ -9,7 +9,30 @@ import { parseJson, validateManifest } from "./src/shared/manifest.js";
 
 export const MAX_PACKAGE_BYTES = 10 * 1024 * 1024;
 
-export const ALLOWED_SUFFIXES = new Set([".js", ".json", ".svg"]);
+/** The largest file a package may hold. It matches the Hub and the site. */
+export const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+/** The types that Builder serves to a frame. Keep in step with `ASSET_TYPES` in `builder/extensions/constants.py`. */
+export const ALLOWED_SUFFIXES = new Set([
+	".js",
+	".css",
+	".json",
+	".svg",
+	".png",
+	".jpg",
+	".jpeg",
+	".gif",
+	".webp",
+	".woff",
+	".woff2",
+]);
+
+/** The build output folders beside the root files. The entry imports them by relative path. */
+export const PACKAGE_FOLDERS = new Set(["chunks", "assets"]);
+
+const IMPORT_SPECIFIER =
+	/(?:\bimport\s*(?:[^'";]*?\sfrom\s*)?|\bexport\s+[^'";]*?\sfrom\s*|\bimport\s*\()['"]([^'"]+)['"]/g;
+const IMPORT_META_URL = /\bnew\s+URL\s*\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url/g;
 
 const fail = (message) => {
 	throw new Error(`[builder] ${message}`);
@@ -62,23 +85,23 @@ const collectFiles = (root, directory = root, found = []) => {
 
 export const validateSvg = (data, name) => {
 	const svg = data.toString("utf8");
-	if (!/<svg(?:\s|\/?>)/i.test(svg)) fail(`package icon "${name}" is not an SVG document`);
+	if (!/<svg(?:\s|\/?>)/i.test(svg)) fail(`package SVG "${name}" is not an SVG document`);
 	if (/<(?:[a-z][\w.-]*:)?(?:script|foreignObject)\b/i.test(svg)) {
-		fail(`package icon "${name}" contains an unsafe element`);
+		fail(`package SVG "${name}" contains an unsafe element`);
 	}
-	if (/\son[a-z][\w:-]*\s*=/i.test(svg)) fail(`package icon "${name}" contains an event attribute`);
+	if (/\son[a-z][\w:-]*\s*=/i.test(svg)) fail(`package SVG "${name}" contains an event attribute`);
 	if (/<!DOCTYPE|<!ENTITY|<\?xml-stylesheet/i.test(svg))
-		fail(`package icon "${name}" contains an external reference`);
+		fail(`package SVG "${name}" contains an external reference`);
 
 	const references = svg.matchAll(/(?:href|xlink:href)\s*=\s*(["'])(.*?)\1/gi);
 	if ([...references].some((match) => !match[2].startsWith("#"))) {
-		fail(`package icon "${name}" contains an external reference`);
+		fail(`package SVG "${name}" contains an external reference`);
 	}
 	const urls = svg.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/gi);
 	if ([...urls].some((match) => !match[2].startsWith("#"))) {
-		fail(`package icon "${name}" contains an external reference`);
+		fail(`package SVG "${name}" contains an external reference`);
 	}
-	if (/@import/i.test(svg)) fail(`package icon "${name}" contains an external reference`);
+	if (/@import/i.test(svg)) fail(`package SVG "${name}" contains an external reference`);
 };
 
 export const validatePackageFiles = (root, manifest) => {
@@ -87,25 +110,43 @@ export const validatePackageFiles = (root, manifest) => {
 	const files = collectFiles(root).sort((left, right) => left.name.localeCompare(right.name));
 
 	const names = new Set();
-	const allowedNames = new Set(["manifest.json", "main.js", manifest.icon].filter(Boolean));
+	const rootFiles = new Set(["manifest.json", "main.js", manifest.icon].filter(Boolean));
 	for (const file of files) {
 		const normalized = path.posix.normalize(file.name);
 		if (names.has(normalized)) fail(`package contains duplicate path "${normalized}"`);
 		names.add(normalized);
-		if (!allowedNames.has(file.name)) fail(`package contains unexpected file "${file.name}"`);
+		const folder = file.name.split("/")[0];
+		if (!rootFiles.has(file.name) && !(file.name.includes("/") && PACKAGE_FOLDERS.has(folder))) {
+			fail(`package contains unexpected file "${file.name}"`);
+		}
 		if (!ALLOWED_SUFFIXES.has(path.posix.extname(file.name))) {
 			fail(`package entry "${file.name}" uses an unsupported suffix`);
 		}
+		if (file.data.length > MAX_FILE_BYTES)
+			fail(`package entry "${file.name}" is larger than ${MAX_FILE_BYTES} bytes`);
+		if (file.name.endsWith(".svg")) validateSvg(file.data, file.name);
 	}
 
 	for (const required of ["manifest.json", "main.js"]) {
 		if (!names.has(required)) fail(`package has no root ${required}`);
 	}
-	if (manifest.icon) {
-		if (!names.has(manifest.icon)) fail(`package has no manifest icon "${manifest.icon}"`);
-		validateSvg(files.find((file) => file.name === manifest.icon).data, manifest.icon);
-	}
+	if (manifest.icon && !names.has(manifest.icon)) fail(`package has no manifest icon "${manifest.icon}"`);
+	assertImportsResolve(files, names);
 	return files;
+};
+
+/** A relative import must name a file in the package. The frame cannot load any other. */
+const assertImportsResolve = (files, names) => {
+	for (const file of files.filter((entry) => entry.name.endsWith(".js"))) {
+		const source = file.data.toString("utf8");
+		const specifiers = [...source.matchAll(IMPORT_SPECIFIER), ...source.matchAll(IMPORT_META_URL)];
+		for (const [, specifier] of specifiers) {
+			const target = path.posix.normalize(path.posix.join(path.posix.dirname(file.name), specifier));
+			if (specifier.startsWith(".") && !names.has(target)) {
+				fail(`${file.name} imports "${specifier}", which the package does not hold`);
+			}
+		}
+	}
 };
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {

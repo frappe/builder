@@ -8,9 +8,10 @@ source Builder trusts to point at a release, not one it trusts to have vetted
 it. So Builder runs the same checks again here, over the exact bytes the release
 `package_sha256` pins.
 
-A package is one ZIP holding `manifest.json`, `main.js` and an optional
-`icon.svg`, and nothing else. See `builder_hub.extensions.package` for the
-reference these checks mirror.
+A package is one ZIP. It holds `manifest.json`, `main.js` and an optional icon
+at the root, and the build's `chunks/` and `assets/`. Each file has a type that
+the asset route serves. See `builder_hub.extensions.package` for the reference
+these checks mirror.
 """
 
 from __future__ import annotations
@@ -30,15 +31,16 @@ import frappe
 from frappe import _
 
 from builder.extensions.constants import (
+	ASSET_TYPES,
 	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	MANIFEST_FILE,
 	MAX_EXTRACTED_BYTES,
+	MAX_FILE_BYTES,
 	MAX_ICON_BYTES,
 	MAX_MANIFEST_BYTES,
 	MAX_PACKAGE_FILES,
-	MAX_SOURCE_BYTES,
-	PACKAGE_SUFFIXES,
+	PACKAGE_FOLDERS,
 	PERMISSIONS,
 	PROTOCOL_VERSION,
 	VERSION_PATTERN,
@@ -47,8 +49,8 @@ from builder.extensions.constants import (
 MANIFEST_REQUIRED_FIELDS = frozenset({"v", "name", "label", "description", "version", "entry", "permissions"})
 MANIFEST_OPTIONAL_FIELDS = frozenset({"icon"})
 
-# Every import specifier `main.js` carries, so a relative one can be refused: a
-# sandboxed frame resolves it against nothing.
+# Every import specifier a module carries, so a relative one can be checked: it
+# must name a file in the package.
 IMPORT_SPECIFIER = re.compile(
 	r"(?:\bimport\s*(?:[^'\";]*?\sfrom\s*)?|\bexport\s+[^'\";]*?\sfrom\s*|\bimport\s*\()['\"]([^'\"]+)['\"]"
 )
@@ -84,12 +86,9 @@ def validate_package(package_bytes: bytes, expected_name: str, expected_version:
 		manifest = parse_manifest(manifest_bytes)
 		assert_identity(manifest, expected_name, expected_version)
 		assert_file_set(entries, manifest.get("icon"))
+		files = {path: read_package_file(archive, path, info) for path, info in entries.items()}
 
-		files = {MANIFEST_FILE: manifest_bytes, ENTRY_FILE: read_main_js(archive, entries)}
-		icon = manifest.get("icon")
-		if icon:
-			files[icon] = read_icon(archive, entries, icon)
-
+	assert_imports_resolve(files)
 	return ValidatedPackage(manifest, files)
 
 
@@ -109,8 +108,9 @@ def read_entries(archive: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
 	extracted = 0
 	entries: dict[str, zipfile.ZipInfo] = {}
 	for info in infos:
+		# a ZIP tool adds an entry for each folder. The files inside carry the paths
 		if info.is_dir():
-			frappe.throw(_("The package must hold no directory: {0}.").format(info.filename))
+			continue
 
 		path = normalized_path(info.filename)
 		assert_safe_entry(info, path, entries)
@@ -133,7 +133,7 @@ def assert_safe_entry(info: zipfile.ZipInfo, path: str, seen: dict) -> None:
 		frappe.throw(_("The package holds an encrypted file: {0}.").format(info.filename))
 	if path in seen:
 		frappe.throw(_("The package names {0} twice.").format(path))
-	if PurePosixPath(path).suffix not in PACKAGE_SUFFIXES:
+	if PurePosixPath(path).suffix not in ASSET_TYPES:
 		frappe.throw(_("The package holds an unsupported file: {0}.").format(path))
 
 
@@ -153,10 +153,15 @@ def normalized_path(name: str) -> str:
 
 
 def assert_file_set(entries: dict, icon_name: str | None) -> None:
-	allowed = {MANIFEST_FILE, ENTRY_FILE} | ({icon_name} if icon_name else set())
-	extra = sorted(set(entries) - allowed)
-	if extra:
-		frappe.throw(_("The package holds an unexpected file: {0}.").format(extra[0]))
+	"""The root files, and the build folders. Nothing else."""
+	if icon_name and icon_name not in entries:
+		frappe.throw(_("The manifest names {0}, which the package does not hold.").format(icon_name))
+
+	root_files = {MANIFEST_FILE, ENTRY_FILE} | ({icon_name} if icon_name else set())
+	for path in sorted(entries):
+		parts = PurePosixPath(path).parts
+		if path not in root_files and not (len(parts) > 1 and parts[0] in PACKAGE_FOLDERS):
+			frappe.throw(_("The package holds an unexpected file: {0}.").format(path))
 
 
 def read_entry(archive: zipfile.ZipFile, info: zipfile.ZipInfo, limit: int) -> bytes:
@@ -235,25 +240,30 @@ def assert_identity(manifest: dict, expected_name: str, expected_version: str) -
 		frappe.throw(_("The package is version {0}, not {1}.").format(manifest["version"], expected_version))
 
 
-def read_main_js(archive: zipfile.ZipFile, entries: dict) -> bytes:
-	content = read_entry(archive, entries[ENTRY_FILE], MAX_SOURCE_BYTES)
-	try:
-		source = content.decode("utf-8")
-	except UnicodeDecodeError:
-		frappe.throw(_("{0} must be UTF-8.").format(ENTRY_FILE))
+def read_package_file(archive: zipfile.ZipFile, path: str, info: zipfile.ZipInfo) -> bytes:
+	"""One file, within its limit. The route serves an SVG from the site, so each one is checked."""
+	if not path.endswith(".svg"):
+		return read_entry(archive, info, MAX_FILE_BYTES)
 
-	specifiers = IMPORT_SPECIFIER.findall(source) + IMPORT_META_URL.findall(source)
-	if any(specifier.startswith(".") for specifier in specifiers):
-		frappe.throw(_("{0} must not import a relative file.").format(ENTRY_FILE))
+	content = read_entry(archive, info, MAX_ICON_BYTES)
+	assert_safe_svg(content, path)
 	return content
 
 
-def read_icon(archive: zipfile.ZipFile, entries: dict, icon_name: str) -> bytes:
-	if icon_name not in entries:
-		frappe.throw(_("The manifest names {0}, which the package does not hold.").format(icon_name))
-	content = read_entry(archive, entries[icon_name], MAX_ICON_BYTES)
-	assert_safe_svg(content, icon_name)
-	return content
+def assert_imports_resolve(files: dict[str, bytes]) -> None:
+	"""A relative import must name a file in the package. The frame cannot load any other."""
+	for path, content in files.items():
+		if not path.endswith(".js"):
+			continue
+		try:
+			source = content.decode("utf-8")
+		except UnicodeDecodeError:
+			frappe.throw(_("{0} must be UTF-8.").format(path))
+
+		for specifier in IMPORT_SPECIFIER.findall(source) + IMPORT_META_URL.findall(source):
+			target = posixpath.normpath(posixpath.join(posixpath.dirname(path), specifier))
+			if specifier.startswith(".") and target not in files:
+				frappe.throw(_("{0} imports {1}, which the package does not hold.").format(path, specifier))
 
 
 def assert_safe_svg(content: bytes, name: str) -> None:

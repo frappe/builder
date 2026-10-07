@@ -130,11 +130,9 @@ npx builder-extension package
 ```
 
 The command validates the repository, manifest, built files, and package limits. A
-package contains only `manifest.json`, `main.js`, and the optional SVG icon. The command
-writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
-
-The packager and the Hub install do not accept `chunks/` or `assets/` yet. Until they do, a
-build that splits its code, or has CSS, cannot be packaged. It still runs from a dev server.
+package holds `manifest.json`, `main.js` and the optional SVG icon at the root, and the
+build's `chunks/` and `assets/` folders. A relative import must name a file in the package.
+The command writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
 
 Create a GitHub release whose tag is the manifest version with a `v` prefix. For
 example, manifest version `1.2.0` uses tag `v1.2.0`. Copy the workflow shipped at
