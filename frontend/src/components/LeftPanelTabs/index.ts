@@ -31,7 +31,7 @@ export const leftPanelTabs = createRegistry<LeftPanelTab>();
 // the route chunk imports this after pinia is installed, so the lookup resolves
 const builderStore = useBuilderStore();
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Blocks",
 	label: __("Insert"),
 	icon: "lucide-plus",
@@ -39,7 +39,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+I",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Layers",
 	label: __("Layers"),
 	icon: LayersIcon,
@@ -47,7 +47,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+L",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Assets",
 	label: __("Components"),
 	icon: "lucide-box",
@@ -55,7 +55,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+A",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Code",
 	label: __("Code"),
 	icon: "lucide-code",
@@ -72,7 +72,7 @@ leftPanelTabs.register({
 });
 
 // not a tab. It toggles a modal, so it declares an action and its own active state
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "tokens",
 	label: __("Design Tokens"),
 	icon: "lucide-aperture",
@@ -81,7 +81,7 @@ leftPanelTabs.register({
 	isActive: () => builderStore.showTokenManager,
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Chat",
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",

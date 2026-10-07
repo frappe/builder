@@ -30,7 +30,7 @@
 				class="absolute right-5 top-5"></Button>
 			<div v-if="settingsLoaded" class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
 				<KeepAlive>
-					<component :is="selectedItemDoc?.component" class="pb-16" />
+					<component :is="selectedItemDoc?.component" v-bind="selectedItemDoc?.props?.()" class="pb-16" />
 				</KeepAlive>
 			</div>
 			<div v-else class="flex items-center justify-center">
