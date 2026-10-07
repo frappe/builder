@@ -1,8 +1,10 @@
 import type Block from "@/block";
-import type useCanvasStore from "@/stores/canvasStore";
+import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import type usePageStore from "@/stores/pageStore";
+import type { BuilderClientScript } from "@/types/doctypes";
+import { findBlockInTree } from "@/utils/block/tree";
 import { getBlockInstance } from "@/utils/helpers";
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import { normalizeStyles } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
 import {
@@ -14,57 +16,75 @@ import {
 } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
-type CanvasStore = ReturnType<typeof useCanvasStore>;
+export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
+
+const SCRIPT_TOOLS = new Set(["update_script", "set_page_script", "attach_page_script"]);
+
+/** The store keeps what the page fetches for each script: its name, type and code. */
+const scriptDoc = (name: string, scriptType: unknown, script: unknown): BuilderClientScript => ({
+	name,
+	creation: "",
+	modified: "",
+	owner: "",
+	modified_by: "",
+	script_type: typeof scriptType === "string" && scriptType ? scriptType : "JavaScript",
+	script: typeof script === "string" ? script : "",
+});
+
+export type AffectedItems = { blocks: AffectedBlock[]; scripts: AffectedScript[] };
+
+function addAffected<T extends { changedProps: string[] }, K extends keyof T>(list: T[], key: K, item: T) {
+	const existing = list.find((entry) => entry[key] === item[key]);
+	if (existing) existing.changedProps = [...new Set([...existing.changedProps, ...item.changedProps])];
+	else list.push(item);
+}
 
 /**
- * Applies the agent's client-side tool operations to the canvas block tree and
- * tracks what changed (for the "affected items" UI and script undo). Holds its
- * own per-turn pending state; call `reset()` at the start of each turn.
+ * Applies the agent's client-side tool operations to the page's block tree and
+ * tracks what changed (for the "affected items" UI). Holds its own per-turn
+ * pending state; call `reset()` at the start of each turn.
+ *
+ * Ops target the page canvas, never the active one: while a component is open on
+ * its own canvas, the active canvas holds that component, not the page Bob edits.
  */
 export class ToolDispatcher {
-	readonly pendingScriptOps = ref<Promise<string | null>[]>([]);
 	readonly pendingAffectedBlocks = ref<AffectedBlock[]>([]);
 	readonly pendingAffectedScripts = ref<AffectedScript[]>([]);
 
 	constructor(
 		private readonly pageStore: PageStore,
-		private readonly canvasStore: CanvasStore,
-		private readonly getPageId: () => string,
+		private readonly pageCanvas: PageCanvas,
 	) {}
 
-	private get rootBlock(): Block | null {
-		return (this.pageStore.pageBlocks[0] || null) as Block | null;
-	}
-
 	reset() {
-		this.pendingScriptOps.value = [];
 		this.pendingAffectedBlocks.value = [];
 		this.pendingAffectedScripts.value = [];
 	}
 
-	findBlockInTree(blockId: string, root?: Block | null): Block | null {
-		const searchRoot = root !== undefined ? root : this.rootBlock;
-		if (!searchRoot) return null;
-		if (searchRoot.blockId === blockId) return searchRoot;
-		for (const child of searchRoot.children || []) {
-			const found = this.findBlockInTree(blockId, child as Block);
-			if (found) return found;
-		}
-		return null;
+	private findBlock(blockId: string, within?: Block): Block | null {
+		const root = within ?? this.pageCanvas.value?.getRootBlock();
+		return root ? findBlockInTree(blockId, [root]) : null;
 	}
 
-	/** Replace the entire page with a freshly generated YAML document.
-	 * `persistRepeaterData` is true only on the FINAL apply — never while streaming
-	 * (persisting per chunk would fire a network setValue + re-parse on every token). */
-	applyPageYaml(yamlString: string, persistRepeaterData = false) {
+	/** Swap in a whole new page tree. Streamed previews keep the undo stack; the
+	 * final apply resets it once instead of on every preview frame. */
+	private replaceRoot(blockData: BlockOptions, resetHistory: boolean) {
+		const root = getBlockInstance(blockData);
+		this.pageStore.pageBlocks = [root];
+		this.pageCanvas.value?.setRootBlock(root, false, resetHistory);
+	}
+
+	/** Replace the entire page with a freshly generated YAML document. `final` is
+	 * true only on the authoritative apply, never while streaming (persisting per
+	 * chunk would fire a network setValue + re-parse on every token). */
+	applyPageYaml(yamlString: string, final = false) {
 		const block = parseBlock(yamlString);
 		if (!block) return;
 		try {
-			this.pageStore.pageBlocks = [getBlockInstance(block)];
-			this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+			this.replaceRoot(block, final);
 			// Repeaters carry static JSON data; persist it as the page_data_script shim
-			// so the loops render. Final apply only — see note above.
-			if (persistRepeaterData) {
+			// so the loops render. Final apply only, see note above.
+			if (final) {
 				const dataScript = buildRepeaterDataScript(yamlString);
 				if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
 			}
@@ -98,6 +118,10 @@ export class ToolDispatcher {
 				if (args.script_type) props.push("script_type");
 				return props;
 			}
+			case "set_page_script":
+				return ["created"];
+			case "attach_page_script":
+				return ["attached"];
 			default:
 				return [];
 		}
@@ -105,21 +129,16 @@ export class ToolDispatcher {
 
 	/** Record what a tool op changed. Call BEFORE applying so remove_block can
 	 * still read the block's info while it exists. */
-	trackAffectedItem(toolName: string, args: Record<string, any>) {
+	trackAffectedItem(toolName: string, args: Record<string, any>, into: AffectedItems = this.pending()) {
 		const trackBlock = (blockId: string, changedProps: string[]) => {
 			if (!blockId || !changedProps.length) return;
-			const block = this.findBlockInTree(blockId);
-			const existing = this.pendingAffectedBlocks.value.find((b) => b.block_id === blockId);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedBlocks.value.push({
-					block_id: blockId,
-					blockName: block?.blockName || "",
-					element: block?.element || "div",
-					changedProps,
-				});
-			}
+			const block = this.findBlock(blockId);
+			addAffected(into.blocks, "block_id", {
+				block_id: blockId,
+				blockName: block?.blockName || "",
+				element: block?.element || "div",
+				changedProps,
+			});
 		};
 
 		// Batch edit: each block may have changed different props (patches mode), so
@@ -143,16 +162,21 @@ export class ToolDispatcher {
 			trackBlock(args.block_id as string, changedProps);
 		} else if (toolName === "add_block") {
 			trackBlock(args.parent_block_id as string, changedProps);
-		} else if (toolName === "update_script") {
+		} else if (SCRIPT_TOOLS.has(toolName)) {
 			const scriptName = args.script_name as string | undefined;
-			if (!scriptName) return;
-			const existing = this.pendingAffectedScripts.value.find((s) => s.script_name === scriptName);
-			if (existing) {
-				existing.changedProps = [...new Set([...existing.changedProps, ...changedProps])];
-			} else {
-				this.pendingAffectedScripts.value.push({ script_name: scriptName, changedProps });
-			}
+			if (scriptName) addAffected(into.scripts, "script_name", { script_name: scriptName, changedProps });
 		}
+	}
+
+	/** Fold items recorded aside (a batch whose chat wasn't known yet) into this turn's. */
+	mergeAffected(items: AffectedItems) {
+		const pending = this.pending();
+		items.blocks.forEach((item) => addAffected(pending.blocks, "block_id", item));
+		items.scripts.forEach((item) => addAffected(pending.scripts, "script_name", item));
+	}
+
+	private pending(): AffectedItems {
+		return { blocks: this.pendingAffectedBlocks.value, scripts: this.pendingAffectedScripts.value };
 	}
 
 	/** Merge one block's worth of changes (styles/attrs/text/element/classes) into
@@ -164,13 +188,9 @@ export class ToolDispatcher {
 		const baseStyles = normalizeStyles(args.base_styles);
 		const mobileStyles = normalizeStyles(args.mobile_styles);
 		const tabletStyles = normalizeStyles(args.tablet_styles);
-		Object.entries(baseStyles).forEach(([key, value]) => block.setBaseStyle(key as any, value as StyleValue));
-		Object.entries(mobileStyles).forEach(([key, value]) => {
-			block.mobileStyles[key] = value as StyleValue;
-		});
-		Object.entries(tabletStyles).forEach(([key, value]) => {
-			block.tabletStyles[key] = value as StyleValue;
-		});
+		Object.assign(block.baseStyles, baseStyles);
+		Object.assign(block.mobileStyles, mobileStyles);
+		Object.assign(block.tabletStyles, tabletStyles);
 		if (args.attributes) {
 			Object.entries(args.attributes).forEach(([key, value]) => {
 				if (STANDARD_ATTRS.has(key)) {
@@ -251,8 +271,7 @@ export class ToolDispatcher {
 				// the live preview. args.yaml is the legacy fallback (recovered
 				// YAML-as-content turns).
 				if (Array.isArray(args.blocks) && args.blocks.length) {
-					this.pageStore.pageBlocks = [getBlockInstance(args.blocks[0])];
-					this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+					this.replaceRoot(args.blocks[0], true);
 					if (args.data_script) this.pageStore.applyRepeaterDataScript(args.data_script as string);
 					return;
 				}
@@ -262,14 +281,12 @@ export class ToolDispatcher {
 			case "set_page_blocks": {
 				// A server tool rewrote the tree; replace it wholesale. Blocks keep
 				// their blockIds, so refs/selection stay valid — unlike generate_page.
-				const root = args.blocks as Record<string, any>;
-				if (!root) return;
-				this.pageStore.pageBlocks = [getBlockInstance(root)];
-				this.canvasStore.activeCanvas?.setRootBlock(this.pageStore.pageBlocks[0] as Block, false);
+				if (!args.blocks) return;
+				this.replaceRoot(args.blocks, true);
 				return;
 			}
 			case "update_block": {
-				const block = this.findBlockInTree(args.block_id);
+				const block = this.findBlock(args.block_id);
 				if (!block) return;
 				this.applyBlockUpdate(block, args);
 				return;
@@ -278,20 +295,20 @@ export class ToolDispatcher {
 				// Per-block mode wins over uniform mode (matches the tool contract).
 				if (Array.isArray(args.patches)) {
 					for (const patch of args.patches as Record<string, any>[]) {
-						const block = this.findBlockInTree(patch.block_id);
+						const block = this.findBlock(patch.block_id);
 						if (block) this.applyBlockUpdate(block, patch);
 					}
 					return;
 				}
 				const ids = (args.block_ids as string[]) || [];
 				for (const id of ids) {
-					const block = this.findBlockInTree(id);
+					const block = this.findBlock(id);
 					if (block) this.applyBlockUpdate(block, args);
 				}
 				return;
 			}
 			case "add_block": {
-				const parent = this.findBlockInTree(args.parent_block_id);
+				const parent = this.findBlock(args.parent_block_id);
 				if (!parent) return;
 				// block_json is the server-expanded block, refs (whole subtree) included —
 				// the canvas must use the same ids the agent chains follow-up edits onto.
@@ -300,7 +317,7 @@ export class ToolDispatcher {
 						convertYAMLtoBlock(args.block as Record<string, any>),
 				);
 				if (args.after_block_id) {
-					const sibling = this.findBlockInTree(args.after_block_id, parent);
+					const sibling = this.findBlock(args.after_block_id, parent);
 					if (sibling) {
 						parent.addChildAfter(newBlock, sibling);
 						return;
@@ -310,18 +327,18 @@ export class ToolDispatcher {
 				return;
 			}
 			case "remove_block": {
-				const block = this.findBlockInTree(args.block_id);
+				const block = this.findBlock(args.block_id);
 				if (!block) return;
 				block.getParentBlock()?.removeChild(block);
 				return;
 			}
 			case "move_block": {
-				const block = this.findBlockInTree(args.block_id);
-				const newParent = this.findBlockInTree(args.new_parent_block_id);
+				const block = this.findBlock(args.block_id);
+				const newParent = this.findBlock(args.new_parent_block_id);
 				if (!block || !newParent) return;
 				block.getParentBlock()?.removeChild(block);
 				if (args.after_block_id) {
-					const sibling = this.findBlockInTree(args.after_block_id, newParent);
+					const sibling = this.findBlock(args.after_block_id, newParent);
 					if (sibling) {
 						newParent.addChildAfter(block, sibling);
 						return;
@@ -332,39 +349,23 @@ export class ToolDispatcher {
 			}
 			case "update_script": {
 				// Scripts are server-authoritative (SCRIPT_TWIN_TOOLS): the loop has
-				// already persisted the change — only mirror the local UI state.
-				const existing = this.pageStore.activePageScripts.find(
-					(s) => s.name === (args.script_name as string),
-				);
+				// already persisted the change, so only mirror the local UI state.
+				const existing = this.pageStore.activePageScripts.find((s) => s.name === args.script_name);
 				if (existing) {
-					existing.script = args.script as string;
-					if (args.script_type) existing.script_type = args.script_type as any;
+					existing.script = args.script;
+					if (args.script_type) existing.script_type = args.script_type;
 				}
-				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
+				this.pageStore.scriptsVersion++;
 				return;
 			}
-			case "set_page_script": {
-				// Server-authoritative like update_script: the doc exists and is attached.
-				if (!args.script_name) return;
-				this.pageStore.activePageScripts.push({
-					name: args.script_name as string,
-					script_type: ((args.script_type as string) || "JavaScript") as any,
-					script: args.script as string,
-				} as any);
-				this.pendingScriptOps.value.push(Promise.resolve(args.script_name as string));
-				return;
-			}
+			case "set_page_script":
 			case "attach_page_script": {
-				// Server-authoritative: an existing shared doc was linked to this page;
-				// the server enriched the op with its type and content for the list.
-				const name = args.script_name as string;
+				// Server-authoritative: the doc exists and is attached, and the server
+				// enriched the op with its type and content for the list.
+				const name = args.script_name;
 				if (!name || this.pageStore.activePageScripts.some((s) => s.name === name)) return;
-				this.pageStore.activePageScripts.push({
-					name,
-					script_type: ((args.script_type as string) || "JavaScript") as any,
-					script: (args.script as string) || "",
-				} as any);
-				this.pendingScriptOps.value.push(Promise.resolve(name));
+				this.pageStore.activePageScripts.push(scriptDoc(name, args.script_type, args.script));
+				this.pageStore.scriptsVersion++;
 				return;
 			}
 		}

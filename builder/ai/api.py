@@ -100,7 +100,9 @@ def run(
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
 
-	# Append the user turn for an established session.
+	if not session_id:
+		session_id = AISession.create({"page": page_id}, model).name
+
 	if session_id:
 		session = AISession.get(session_id, page_id=page_id)
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
@@ -524,21 +526,17 @@ def parse_model_ids(models) -> list[str]:
 @has_page_write()
 def get_ai_session(page_id: str, model: str | None = None, session_id: str | None = None):
 	"""One page can hold several parallel chat sessions. With `session_id` this loads
-	that specific session; without it, the page's most recently used one (creating
-	the first if none exist)."""
+	that specific session; without it, the page's most recently used one. Reading
+	never creates a session: a page nobody has chatted on gets a blank one, and
+	`run` creates the session with the chat's first message."""
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
-		return {
-			"session_id": "",
-			"page_id": page_id,
-			"selected_model": model or "",
-			"last_task_type": None,
-			"messages": [],
-		}
+		return blank_session(page_id, model)
 
-	if session_id and frappe.db.exists(AISession.DOCTYPE, session_id):
-		session = AISession.get(session_id, page_id=page_id)
-	else:
-		session = AISession.get_or_create(page_id, model=model)
+	if not (session_id and frappe.db.exists(AISession.DOCTYPE, session_id)):
+		session_id = AISession.last_used({"page": page_id, "session_user": frappe.session.user})
+	if not session_id:
+		return blank_session(page_id, model)
+	session = AISession.get(session_id, page_id=page_id)
 	return {
 		"session_id": session.name,
 		"page_id": session.page,
@@ -548,23 +546,14 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 	}
 
 
-@frappe.whitelist()
-@has_page_write()
-def new_ai_session(page_id: str, model: str | None = None):
-	"""Start a fresh chat session on this page — existing sessions stay untouched
-	and switchable (VS Code-style parallel chats). An empty session the user never
-	used IS a fresh chat, so hand that back rather than stacking up another: a few
-	taps of New chat otherwise fill the switcher with identical blank entries."""
-	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
-		frappe.throw(_("Save the page before starting a chat session"))
-	filters = {"page": page_id, "session_user": frappe.session.user}
-	blank = frappe.db.get_value(
-		AISession.DOCTYPE, {**filters, "status": "Active", "title": ["is", "not set"]}, "name"
-	)
-	if blank and not frappe.db.count(AISession.MESSAGE_DOCTYPE, {"session": blank}):
-		return {"session_id": blank, "messages": []}
-	session = AISession.create({"page": page_id}, model)
-	return {"session_id": session.name, "messages": []}
+def blank_session(page_id: str, model: str | None) -> dict:
+	return {
+		"session_id": "",
+		"page_id": page_id,
+		"selected_model": model or "",
+		"last_task_type": None,
+		"messages": [],
+	}
 
 
 @frappe.whitelist()
@@ -603,29 +592,29 @@ def delete_ai_session(session_id: str):
 @frappe.whitelist()
 @has_page_write()
 def update_session_message_metadata(session_id: str, metadata: dict):
-	"""Persist client-side metadata (affectedBlocks, affectedScripts, undoScripts)
-	onto the last assistant message so it survives page reloads."""
+	"""Persist client-side metadata (affectedBlocks, affectedScripts) onto the last
+	assistant message so it survives page reloads."""
 	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
 		return
 	session = AISession.get(session_id)  # asserts ownership
-	safe_meta = {
-		k: metadata[k] for k in ("affectedBlocks", "affectedScripts", "undoScripts") if k in metadata
-	}
+	safe_meta = {k: metadata[k] for k in ("affectedBlocks", "affectedScripts") if k in metadata}
 	session.update_last_assistant_metadata(safe_meta)
 
 
 @frappe.whitelist()
 @has_page_write()
-def test_api_key(provider: str | None = None):
+def test_api_key(provider: str | None = None, api_key: str | None = None):
 	"""Call the cheapest model this key can reach and report what happened. With a
-	provider, tests THAT provider's key and one of its models; without, the
-	OpenRouter key in Builder Settings."""
+	provider, tests THAT provider's key and one of its models (or `api_key`, a key
+	typed into its form but not saved yet); without, the OpenRouter key in Builder
+	Settings."""
+	typed_key = api_key if provider else None
 	if provider:
 		model = frappe.db.get_value("Builder AI Model", {"provider": provider, "enabled": 1}, "name")
 		if not model:
 			return {"success": False, "message": _("Add a model to this provider first")}
 		actual_model = model
-		api_key = resolve_api_key(model)
+		api_key = typed_key or resolve_api_key(model)
 	else:
 		api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
 		if not api_key:
@@ -634,14 +623,15 @@ def test_api_key(provider: str | None = None):
 
 	from builder.ai.llm import route
 
-	call_model, overrides, api_key = route(actual_model, api_key)
+	# route() prefers the provider's stored key, and the typed one is what's under test
+	call_model, overrides, routed_key = route(actual_model, api_key)
 	try:
 		litellm.completion(
 			model=call_model,
 			**overrides,
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
-			api_key=api_key,
+			api_key=typed_key or routed_key,
 		)
 		return {"success": True, "message": _("API key is valid")}
 	except Exception as e:

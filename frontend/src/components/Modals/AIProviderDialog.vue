@@ -47,12 +47,25 @@
 							@update:modelValue="(value: string) => (apiKey = value)"
 							placeholder="sk-…"
 							:hideClearButton="true" />
-						<Button v-if="isEdit" variant="subtle" :loading="testing" @click="test">Test</Button>
+						<Button
+							v-if="isEdit"
+							variant="subtle"
+							:loading="testing"
+							:disabled="baseEdited"
+							:tooltip="baseEdited ? 'Save to test the new base URL' : undefined"
+							@click="test">
+							Test
+						</Button>
 						<Button
 							v-if="isEdit && provider.api_base"
 							variant="subtle"
 							:loading="importing"
-							title="Ask this provider which models it serves"
+							:disabled="baseEdited"
+							:tooltip="
+								baseEdited
+									? 'Save to import from the new base URL'
+									: 'Ask this provider which models it serves'
+							"
 							@click="importModels">
 							Import models
 						</Button>
@@ -84,6 +97,7 @@
 import InputLabel from "@/components/Controls/InputLabel.vue";
 import { defaultProvider } from "@/data/aiModels";
 import { BuilderAIProvider } from "@/types/doctypes";
+import { getErrorMessage } from "@/utils/helpers";
 import { Button, createResource, Dialog, Switch, toast } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -93,12 +107,17 @@ const emit = defineEmits(["update:modelValue", "saved"]);
 const provider = ref<Partial<BuilderAIProvider>>(defaultProvider());
 const apiKey = ref("");
 const hasStoredKey = ref(false);
+// Test only calls the saved endpoint, so an editor can't point the server at any host
+const savedApiBase = ref<string | undefined>();
 const testing = ref(false);
 const importing = ref(false);
 const testResult = ref("");
 const testOk = ref(false);
 
 const isEdit = computed(() => Boolean(props.providerName));
+const baseEdited = computed(
+	() => isEdit.value && (provider.value.api_base || "") !== (savedApiBase.value || ""),
+);
 const testClass = computed(() => (testOk.value ? "text-ink-green-6" : "text-ink-red-6"));
 
 /** The framework's dummy password: all asterisks, meaning "unchanged". Mirrors
@@ -122,6 +141,7 @@ watch(
 			name: props.providerName,
 		});
 		provider.value = { ...doc };
+		savedApiBase.value = doc.api_base;
 		// A Password field comes back as the framework's dummy — one '*' per
 		// character of the real key, never the key itself (base_document
 		// _save_passwords). Showing it is what Desk does, and it reads as "something
@@ -148,28 +168,33 @@ const save = async () => {
 		emit("saved");
 		emit("update:modelValue", false);
 	} catch (error) {
-		toast.error((error as Error).message || "Could not save the provider");
+		toast.error(getErrorMessage(error, "Could not save the provider"));
 	}
 };
 
 const test = async () => {
+	// clicking Test straight from the base URL field commits it in the same gesture
+	if (baseEdited.value) return;
 	testing.value = true;
 	testResult.value = "";
 	try {
 		const result = (await createResource({ url: "builder.ai.api.test_api_key" }).submit({
 			provider: props.providerName,
+			// the key just typed, not the stored one it would replace
+			...(apiKey.value && !isDummyKey(apiKey.value) ? { api_key: apiKey.value } : {}),
 		})) as { success: boolean; message?: string };
 		testOk.value = result.success;
 		testResult.value = result.message || (result.success ? "Key works" : "Key failed");
 	} catch (error) {
 		testOk.value = false;
-		testResult.value = (error as Error).message || "Could not reach the provider";
+		testResult.value = getErrorMessage(error, "Could not reach the provider");
 	} finally {
 		testing.value = false;
 	}
 };
 
 const importModels = async () => {
+	if (baseEdited.value) return;
 	importing.value = true;
 	try {
 		const result = (await createResource({ url: "builder.ai.api.import_provider_models" }).submit({
@@ -181,7 +206,7 @@ const importModels = async () => {
 		toast.success(parts.join(", "));
 		emit("saved");
 	} catch (error) {
-		toast.error((error as Error).message || "Could not import models");
+		toast.error(getErrorMessage(error, "Could not import models"));
 	} finally {
 		importing.value = false;
 	}
@@ -197,17 +222,7 @@ const remove = async () => {
 		emit("saved");
 		emit("update:modelValue", false);
 	} catch (error) {
-		// The server's reason is in `messages` / `exc`; the Error's own message is
-		// just the class name, so deleting a provider that still has models used to
-		// surface as a bare "ValidationError".
-		toast.error(serverMessage(error) || "Could not delete the provider");
+		toast.error(getErrorMessage(error, "Could not delete the provider"));
 	}
 };
-
-function serverMessage(error: unknown): string {
-	const e = error as { messages?: string[]; exc?: string; message?: string };
-	const raw = e?.messages?.[0] || e?.exc?.split("\n").filter(Boolean).slice(-1)[0] || e?.message || "";
-	// Server messages can carry markup (doc links) — show the text.
-	return raw.replace(/<[^>]+>/g, "").trim();
-}
 </script>
