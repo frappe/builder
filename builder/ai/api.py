@@ -100,7 +100,6 @@ def run(
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
 
-	# A chat's session is created by its first message, not by opening the panel.
 	if not session_id:
 		session_id = AISession.create({"page": page_id}, model).name
 
