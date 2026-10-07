@@ -12,7 +12,9 @@ const iconSvg = ref<string>();
 watch(
 	() => props.name,
 	async (name) => {
-		iconSvg.value = await loadRuntimeLucideIcon(name);
+		const svg = await loadRuntimeLucideIcon(name);
+		// a slow download for an old name must not replace the icon of the new name
+		if (name === props.name) iconSvg.value = svg;
 	},
 	{ immediate: true },
 );
