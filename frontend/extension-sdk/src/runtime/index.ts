@@ -5,6 +5,7 @@
  * - `methods.ts`: `builder.toolbar`, `builder.context` and `builder.actions`.
  * - `slots.ts`: the five slots, and the slot that this frame runs.
  * - `actions.ts`: the action handlers that the host calls.
+ * - `ui.ts`: toasts, dialogs and popovers from inside a frame.
  * - `resourceFetcher.ts`: sends frappe-ui resource requests through the bridge.
  *
  * The shell loads this file. The import map gives the same URL to the import
@@ -12,9 +13,10 @@
  */
 
 import { getChannel, listenForHandshake } from "./connect";
-import { actions, context, data, toolbar } from "./methods";
+import { actions, block, context, data, page, state, toolbar } from "./methods";
 import { resourceFetcher } from "./resourceFetcher";
-import { registerMain, use, type Mounter } from "./slots";
+import { registerMain, registerSlot, use, type Mounter, type SlotEntry } from "./slots";
+import { ui } from "./ui";
 
 export type HostInfo = { version: string; protocol: number };
 
@@ -35,11 +37,36 @@ const builder = {
 	 */
 	use: (adapter: Mounter) => use(adapter),
 
+	/**
+	 * The document that `ui.openDialog` opens. Builder does not send it to the host.
+	 * A call opens a dialog. So this registration stays in the frame that made it.
+	 */
+	dialog: {
+		register: (entry: SlotEntry) => registerSlot("dialog", entry),
+	},
+
+	/** The same, for the floating panel that `ui.openPopover` opens. */
+	popover: {
+		register: (entry: SlotEntry) => registerSlot("popover", entry),
+	},
+
 	/** A descriptor. Builder shows the button and sends the action back (Tier A). */
 	toolbar,
 
 	/** The editor snapshot. Read it one time, or name the fields to watch. */
 	context,
+
+	/** One block, by the id from a menu row or from the snapshot. */
+	block,
+
+	/** The full tree, when one block is not sufficient. */
+	page,
+
+	/** A modal and a popover that a user can move. The host shows them around the document of this extension. */
+	ui,
+
+	/** The storage of this extension. It needs no permission, because Builder never reads it. */
+	state,
 
 	/**
 	 * Site data. Each call needs the `data.access` permission.

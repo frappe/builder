@@ -36,6 +36,9 @@ export const devExtension = ref<DevelopmentExtension | null>(null);
 
 export const showDevExtensionDialog = ref(false);
 
+/** Both lists have the dev entry under its own name. So the name is the check. */
+export const isDevExtension = (extension: { name: string }) => devExtension.value?.name === extension.name;
+
 export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 
 /**
