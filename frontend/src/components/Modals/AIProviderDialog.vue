@@ -60,7 +60,12 @@
 							v-if="isEdit && provider.api_base"
 							variant="subtle"
 							:loading="importing"
-							title="Ask this provider which models it serves"
+							:disabled="baseEdited"
+							:tooltip="
+								baseEdited
+									? 'Save to import from the new base URL'
+									: 'Ask this provider which models it serves'
+							"
 							@click="importModels">
 							Import models
 						</Button>
@@ -168,6 +173,8 @@ const save = async () => {
 };
 
 const test = async () => {
+	// clicking Test straight from the base URL field commits it in the same gesture
+	if (baseEdited.value) return;
 	testing.value = true;
 	testResult.value = "";
 	try {
@@ -187,6 +194,7 @@ const test = async () => {
 };
 
 const importModels = async () => {
+	if (baseEdited.value) return;
 	importing.value = true;
 	try {
 		const result = (await createResource({ url: "builder.ai.api.import_provider_models" }).submit({
