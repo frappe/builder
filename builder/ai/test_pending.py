@@ -157,3 +157,40 @@ class TestConfirmPendingSettings(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			confirm_pending_settings(message_id, decision="skip")
 		self.assertEqual(frappe.db.get_single_value("Builder Settings", "home_page"), "bob-home")
+
+
+class TestProposalsTheUserCannotApply(FrappeTestCase):
+	def setUp(self):
+		frappe.set_user(user_with_role("Website Manager"))
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def assert_declined(self, out):
+		self.assertTrue(out.startswith("DECLINED"), out)
+		self.assertIn("isn't permitted", out)
+
+	def test_create_doctype_is_declined_without_a_card(self):
+		from builder.ai.agent.tools.data import request_create_doctype
+
+		self.assert_declined(
+			request_create_doctype(None, {"name": "Bob Visit Log", "fields": [{"fieldname": "title"}]})
+		)
+
+	def test_seed_sample_data_is_declined_without_a_card(self):
+		from builder.ai.agent.tools.data import request_seed_sample_data
+
+		self.assert_declined(
+			request_seed_sample_data(None, {"doctype": "User", "rows": [{"email": "x@example.com"}]})
+		)
+
+	def test_connect_form_is_declined_without_a_card(self):
+		from types import SimpleNamespace
+
+		from builder.ai.agent.tools.forms import request_connect_form
+
+		self.assert_declined(
+			request_connect_form(
+				SimpleNamespace(page_id="page-anything"), {"doctype_name": "Bob Visit Request"}
+			)
+		)

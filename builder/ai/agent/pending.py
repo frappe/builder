@@ -26,6 +26,16 @@ KINDS = {
 GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
 
+def not_permitted(action: str) -> str:
+	"""Declines a proposal the user couldn't apply, so Bob says so instead of raising a
+	card whose Apply would fail."""
+	return (
+		f"DECLINED: this user isn't permitted to {action}, so no card was shown. Tell them in "
+		"one plain sentence that someone with that permission (usually a System Manager) has "
+		"to do it, then carry on with what you can do."
+	)
+
+
 def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 	"""Persist + emit a pending sensitive action, then end the turn without mutating."""
 	metadata = {"status": "pending_action", "kind": kind, "payload": payload}

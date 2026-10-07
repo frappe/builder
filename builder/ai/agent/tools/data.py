@@ -233,6 +233,8 @@ def write_page_data_script(ctx, args: dict) -> str:
 def request_create_doctype(ctx, args: dict) -> str | None:
 	"""Returning a string DECLINES the proposal (no confirm card) and feeds the
 	reason back to the model — e.g. proposing 'Event', a built-in Frappe doctype."""
+	if not frappe.has_permission("DocType", "create"):
+		return pending.not_permitted("create DocTypes")
 	name = (args.get("name") or "").strip()
 	fields = args.get("fields") or []
 	if not name or not fields:
@@ -255,6 +257,8 @@ def request_seed_sample_data(ctx, args: dict) -> str | None:
 		return f"DECLINED: DocType '{doctype}' does not exist — create it first (create_doctype)."
 	if not rows:
 		return "DECLINED: no rows to insert."
+	if not frappe.has_permission(doctype, "create"):
+		return pending.not_permitted(f"create {doctype} records")
 	# Rows with made-up fieldnames would insert as empty records — bounce them back
 	# with the real schema instead of putting a doomed proposal in front of the user.
 	valid = {f.fieldname for f in frappe.get_meta(doctype).fields}
