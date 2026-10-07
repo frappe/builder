@@ -25,10 +25,11 @@ ensureTranslations().then(() => {
 	app.use(FrappeUI);
 	if (!editorDemo) {
 		app.use(telemetryPlugin, { app_name: "builder" });
+		// the demo runs inside the published page, where these names would capture its edit link
+		window.name = "frappe-builder";
 	}
 	app.use(translationPlugin);
 
-	window.name = "frappe-builder";
 	app.config.globalProperties.window = window;
 
 	app.component("Button", Button);

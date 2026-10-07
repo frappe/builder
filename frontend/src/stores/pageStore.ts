@@ -8,6 +8,7 @@ import useComponentStore from "@/stores/componentStore.js";
 import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
+import { editorDemo } from "@/utils/editorDemo";
 import {
 	confirm,
 	countBlocks,
@@ -19,9 +20,15 @@ import {
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
-import { nextTick } from "vue";
+import { markRaw, nextTick } from "vue";
 
 const { capture } = useTelemetry();
+
+// not the openPageInBrowser tab name, so a detach does not take over the live page tab
+const DETACHED_PREVIEW_TAB = "builder-detached-preview";
+
+// a reloaded editor asks here for its detached tab, which replies with postMessage
+export const DETACHED_PREVIEW_CHANNEL = "builder-detached-preview";
 
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
@@ -50,6 +57,7 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
+		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {
 		async setPage(
@@ -65,6 +73,8 @@ const usePageStore = defineStore("pageStore", {
 			// against the last page that actually loaded, so a retry after a failed
 			// fetch still counts as opening it
 			const switchingPage = pageName !== this.activePage?.name;
+			// going from one open page to another keeps the canvas zoom and pan
+			const keepViewport = switchingPage && Boolean(this.activePage);
 			this.selectedPage = pageName;
 			const pageLoadToken = ++this.pageLoadToken;
 
@@ -95,17 +105,13 @@ const usePageStore = defineStore("pageStore", {
 			this.pageBlocks = [getBlockInstance(blocks[0] || getBlockTemplate("body"))];
 			this.pageName = page.page_name as string;
 			this.route = page.route || "/" + this.pageName.toLowerCase().replace(/ /g, "-");
-			const variables = localStorage.getItem(`${page.name}:routeVariables`) || "{}";
-			this.routeVariables = normalizeRouteVariables(JSON.parse(variables));
-			if (routeParams) {
-				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
-			}
+			this.loadRouteVariables(page.name, routeParams);
 			await this.setPageData(this.activePage);
 
 			const canvasStore = useCanvasStore();
 			// switching pages always exits any active version preview
 			canvasStore.clearVersionPreview();
-			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas);
+			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
 			if (page.client_scripts?.length) {
 				// Fetch full script documents for each script
@@ -127,7 +133,8 @@ const usePageStore = defineStore("pageStore", {
 				const interval = setInterval(() => {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
-						window.name = `editor-${pageName}`;
+						// the detached preview raises this tab by this name
+						if (!editorDemo && router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
@@ -142,6 +149,14 @@ const usePageStore = defineStore("pageStore", {
 					}
 				}, 50);
 			});
+		},
+
+		loadRouteVariables(pageName: string, routeParams: Record<string, unknown> | null = null) {
+			const stored = localStorage.getItem(`${pageName}:routeVariables`) || "{}";
+			this.routeVariables = normalizeRouteVariables(JSON.parse(stored));
+			if (routeParams) {
+				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
+			}
 		},
 
 		async setActivePage(pageName: string) {
@@ -202,17 +217,20 @@ const usePageStore = defineStore("pageStore", {
 			const confirmed = await confirm(
 				__("Are you sure you want to delete page: {0}?", [page.page_title || page.page_name]),
 			);
-			if (confirmed) {
-				await toast.promise(webPages.delete.submit(page.name), {
-					loading: __("Deleting page"),
-					success: () => {
-						return __("Page deleted");
-					},
-					error: () => {
-						return __("Page deletion failed");
-					},
-				});
-			}
+			if (!confirmed) return false;
+			const deletion = webPages.delete.submit(page.name);
+			// toast.promise returns the toast id, not the promise
+			toast.promise(deletion, {
+				loading: __("Deleting page"),
+				success: () => {
+					return __("Page deleted");
+				},
+				error: () => {
+					return __("Page deletion failed");
+				},
+			});
+			await deletion;
+			return true;
 		},
 
 		async publishPage(openInBrowser = true, staging = false) {
@@ -268,9 +286,9 @@ const usePageStore = defineStore("pageStore", {
 			}
 		},
 
-		async createManualSnapshot(label?: string) {
+		async createManualSnapshot(label?: string, pageName?: string) {
 			const res = await webPages.runDocMethod.submit({
-				name: this.selectedPage as string,
+				name: pageName || (this.selectedPage as string),
 				method: "create_manual_snapshot",
 				label: label || null,
 			});
@@ -432,6 +450,74 @@ const usePageStore = defineStore("pageStore", {
 			this.routeVariables[variable] = value;
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
 			this.setPageData(this.activePage as BuilderPage);
+		},
+
+		detachPreview(pageId: string) {
+			const previewURL = router.resolve({
+				name: "preview",
+				params: { pageId },
+			}).href;
+			// one name per page, so an editor does not take over another editor's detached tab
+			const tabName = `${DETACHED_PREVIEW_TAB}-${pageId}`;
+			// one detached tab per editor: send the open one to this page
+			let tab = this.detachedPreview?.tab.closed ? null : (this.detachedPreview?.tab ?? null);
+			try {
+				if (tab) {
+					tab.name = tabName;
+					tab.location.assign(previewURL);
+				}
+			} catch (error) {
+				// a tab that went to another origin blocks these, so open a new one
+				if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
+				tab = null;
+			}
+			tab ??= window.open(previewURL, tabName);
+			// raw: a Vue proxy of a Window throws after the tab goes cross-origin
+			if (tab) this.detachedPreview = markRaw({ tab, pageId });
+			tab?.focus();
+			return tab;
+		},
+
+		findDetachedPreview() {
+			window.addEventListener("message", (event) => {
+				if (event.origin !== window.location.origin || !event.data?.detachedPreviewOf) return;
+				this.detachedPreview = markRaw({ tab: event.source as Window, pageId: event.data.detachedPreviewOf });
+			});
+			const channel = new BroadcastChannel(DETACHED_PREVIEW_CHANNEL);
+			channel.postMessage("find");
+			channel.close();
+		},
+
+		announceDetachedPreview(pageId: string) {
+			this.getEditorTab()?.postMessage({ detachedPreviewOf: pageId }, window.location.origin);
+		},
+
+		getDetachedPreview(pageId: string) {
+			if (this.detachedPreview?.tab.closed) this.detachedPreview = null;
+			if (this.detachedPreview?.pageId !== pageId) return null;
+			return this.detachedPreview.tab;
+		},
+
+		getEditorTab() {
+			const opener = window.opener as Window | null;
+			return opener && !opener.closed ? opener : null;
+		},
+
+		// Chrome ignores focus() on another tab, so raise it by name with no URL to reload
+		focusEditorTab() {
+			const editorTab = this.getEditorTab();
+			if (!editorTab) return false;
+			if (editorTab.name) window.open("", editorTab.name);
+			editorTab.focus();
+			return true;
+		},
+
+		openPreview(pageId: string) {
+			const tab = this.getDetachedPreview(pageId);
+			if (tab) tab.focus();
+			// getDetachedPreview drops a closed tab, so this one shows another page
+			else if (this.detachedPreview) this.detachPreview(pageId);
+			else router.push({ name: "preview", params: { pageId } });
 		},
 
 		openPageInBrowser(page: BuilderPage) {

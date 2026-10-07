@@ -5,6 +5,7 @@
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
@@ -189,8 +190,6 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertTrue("Hello World!" in content)
 
 	def test_staging_page_is_served_but_kept_out_of_search(self):
-		from frappe.www.sitemap import get_public_pages_from_doctypes
-
 		noindex = '<meta name="robots" content="noindex, nofollow">'
 		page = insert_page("test-staging-page", "Staging Content")
 		try:
@@ -198,15 +197,111 @@ class TestBuilderPage(FrappeTestCase):
 			content = get_response_content("/test-staging-page")
 			self.assertIn("Staging Content", content)
 			self.assertIn(noindex, content)
-			get_public_pages_from_doctypes.clear_cache()
-			self.assertNotIn("test-staging-page", get_public_pages_from_doctypes())
+			self.assertNotIn("/test-staging-page</loc>", get_response_content("/sitemap.xml"))
 
 			page.publish()
 			self.assertFalse(page.staging)
 			self.assertNotIn(noindex, get_response_content("/test-staging-page"))
-			get_public_pages_from_doctypes.clear_cache()
-			self.assertIn("test-staging-page", get_public_pages_from_doctypes())
+			self.assertIn("/test-staging-page</loc>", get_response_content("/sitemap.xml"))
 		finally:
+			page.delete()
+
+	def test_sitemap_lists_only_indexable_pages(self):
+		live, noindex, login_only, duplicate, not_found = pages = [
+			insert_page(route, "Sitemap Content")
+			for route in (
+				"test-sitemap-live",
+				"test-sitemap-noindex",
+				"test-sitemap-login",
+				"test-sitemap-duplicate",
+				"404",
+			)
+		]
+		try:
+			for page in pages:
+				page.publish()
+			noindex.db_set("disable_indexing", 1)
+			login_only.db_set("authenticated_access", 1)
+			duplicate.db_set("canonical_url", "/test-sitemap-live")
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"/{live.route}</loc>", sitemap)
+			for page in (noindex, login_only, duplicate, not_found):
+				self.assertNotIn(f"/{page.route}</loc>", sitemap)
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_skips_routes_that_redirect(self):
+		# plain paths and regex sources are matched separately
+		source_by_route = {
+			"test-sitemap-redirected": "/test-sitemap-redirected",
+			"test-sitemap-moved/old": r"/test-sitemap-moved/(.*)",
+		}
+		pages = [insert_page(route, "Redirected Content") for route in source_by_route]
+		settings = frappe.get_single("Website Settings")
+		try:
+			for page in pages:
+				page.publish()
+			for source in source_by_route.values():
+				settings.append("route_redirects", {"source": source, "target": "/test-page"})
+			settings.save()
+			sitemap = get_response_content("/sitemap.xml")
+			for route in source_by_route:
+				self.assertNotIn(f"/{route}</loc>", sitemap)
+		finally:
+			sources = set(source_by_route.values())
+			settings.route_redirects = [r for r in settings.route_redirects if r.source not in sources]
+			settings.save()
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_judges_a_shared_route_by_the_page_it_serves(self):
+		from frappe.utils import add_to_date, now_datetime
+
+		route = "test-sitemap-shared"
+		pages = [insert_page(route, heading) for heading in ("Older Content", "Newer Content")]
+		try:
+			for page in pages:
+				page.publish()
+			pages[-1].db_set({"published_at": add_to_date(now_datetime(), days=1), "disable_indexing": 1})
+			self.assertNotIn(f"/{route}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_keeps_pages_with_templated_canonical_urls(self):
+		page = insert_page("test-sitemap-templated-canonical", "Canonical Content")
+		try:
+			page.publish()
+			page.db_set("canonical_url", "{{ frappe.utils.get_url() }}/test-sitemap-templated-canonical")
+			self.assertIn(f"/{page.route}</loc>", get_response_content("/sitemap.xml"))
+		finally:
+			page.delete()
+
+	def test_route_is_trimmed_of_whitespace(self):
+		padded, blank = pages = [
+			insert_page(route, "Whitespace Content") for route in (" test-route-whitespace / ", "   ")
+		]
+		try:
+			self.assertEqual(padded.route, "test-route-whitespace")
+			self.assertTrue(blank.route.startswith("pages/"))
+		finally:
+			for page in pages:
+				page.delete()
+
+	def test_sitemap_lists_the_home_page_at_the_site_root(self):
+		from frappe.utils import get_url
+
+		page = insert_page("test-sitemap-home", "Home Content")
+		home_page = frappe.db.get_single_value("Builder Settings", "home_page")
+		try:
+			page.publish()
+			frappe.db.set_single_value("Builder Settings", "home_page", page.route)
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"<loc>{get_url()}</loc>", sitemap)
+			self.assertNotIn("/test-sitemap-home</loc>", sitemap)
+		finally:
+			frappe.db.set_single_value("Builder Settings", "home_page", home_page)
 			page.delete()
 
 	def test_unpublish_takes_a_staging_page_offline(self):
@@ -251,6 +346,57 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			live.delete()
 			staging.delete()
+
+	def test_number_props_keep_whole_numbers_whole(self):
+		from builder.builder.doctype.builder_page.builder_page import parse_static_value
+
+		self.assertEqual(parse_static_value("29", "number"), 29)
+		self.assertIsInstance(parse_static_value(29.0, "number"), int)
+		self.assertEqual(parse_static_value("2.5", "number"), 2.5)
+		self.assertEqual(parse_static_value("1e23", "number"), 1e23)
+		self.assertIsNone(parse_static_value("abc", "number"))
+
+	def test_route_variables_must_be_identifiers(self):
+		for route in ("test-bad-route/:my-slug", "test-bad-route/<foo:slug>"):
+			self.assertRaises(frappe.ValidationError, insert_page, route, "Bad Route")
+
+	def test_a_malformed_dynamic_route_does_not_hide_other_dynamic_pages(self):
+		valid = insert_page("test-valid-dynamic/:slug", "Valid Dynamic Content")
+		malformed = insert_page("test-malformed-dynamic", "Malformed")
+		try:
+			valid.publish()
+			malformed.publish()
+			# a route saved before validation existed
+			malformed.db_set({"route": "test-malformed-dynamic/:my-slug", "dynamic_route": 1})
+			malformed.clear_route_cache()
+			set_request(method="GET", path="/test-valid-dynamic/any")
+			self.assertIn("Valid Dynamic Content", get_response_content("/test-valid-dynamic/any"))
+		finally:
+			valid.delete()
+			malformed.delete()
+
+	def test_page_data_for_scripts_can_hold_dates_and_decimals(self):
+		from datetime import date, datetime
+		from decimal import Decimal
+		from unittest.mock import patch
+
+		page = insert_page("test-page-data-dates", "Dates")
+		page_data = {
+			"page_data": {
+				"at": datetime(2026, 1, 2, 3, 4, 5),
+				"on": date(2026, 1, 2),
+				"price": Decimal("9.5"),
+			}
+		}
+		try:
+			page.publish()
+			with patch.object(type(page), "_get_page_data", return_value=frappe._dict(page_data)):
+				content = get_response_content("/test-page-data-dates")
+			self.assertIn('"at": "2026-01-02 03:04:05"', content)
+			self.assertIn('"on": "2026-01-02"', content)
+			self.assertIn('"price": 9.5', content)
+		finally:
+			page.delete()
 
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
@@ -379,6 +525,179 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertEqual("admin", get_html_for(content, "attribute", "data-role"))
 		finally:
 			page.delete()
+
+	def dotted_key_blocks(self):
+		body = Block(element="div", originalElement="body")
+		heading = Block(element="h1", innerHTML="Fallback title")
+		heading.set_dynamic_value("hero.title", "key", "innerHTML")
+		link = Block(element="a", innerHTML="Link", attributes={"href": "/fallback"})
+		link.set_dynamic_value("hero.link", "attribute", "href")
+		note = Block(element="p", innerHTML="Only with hero")
+		note.visibilityCondition = {"key": "hero.show", "comesFrom": "dataScript"}
+		body.attach_children(heading, link, note)
+		return body
+
+	def test_dotted_keys_without_their_root_fall_back(self):
+		"""Blocks pasted from another page keep bindings like `hero.title`. A page whose
+		data script does not define `hero` must render the fallbacks, not fail."""
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Fallback Test",
+				"published": 1,
+				"route": "/dotted-keys-fallback-test",
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-fallback-test")
+			self.assertEqual("Fallback title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="/fallback"', get_html_for(content, "tag", "a"))
+			self.assertNotIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_resolve_from_page_data(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Keys Test",
+				"published": 1,
+				"route": "/dotted-keys-test",
+				"page_data_script": (
+					'data.update({"hero": {"title": "Real title", "link": "https://example.com", "show": True}})'
+				),
+				"blocks": self.dotted_key_blocks().as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-keys-test")
+			self.assertEqual("Real title", get_html_for(content, "tag", "h1", only_content=True))
+			self.assertIn('href="https://example.com"', get_html_for(content, "tag", "a"))
+			self.assertIn("Only with hero", content)
+		finally:
+			page.delete()
+
+	def test_dotted_keys_read_attributes_of_non_mapping_values(self):
+		body = Block(element="div", originalElement="body")
+		year = Block(element="h1", innerHTML="No year")
+		year.set_dynamic_value("post.creation.year", "key", "innerHTML")
+		text_root = Block(element="h2", innerHTML="Fallback")
+		text_root.set_dynamic_value("tagline.title", "key", "innerHTML")
+		body.attach_children(year, text_root)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dotted Attribute Keys Test",
+				"published": 1,
+				"route": "/dotted-attribute-keys-test",
+				"page_data_script": (
+					'post = frappe.db.get_all("Builder Page", fields=["creation"], '
+					'filters={"page_title": "Dotted Attribute Keys Test"})[0]\n'
+					'data.update({"post": post, "tagline": "Plain"})'
+				),
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dotted-attribute-keys-test")
+			year = str(frappe.utils.get_datetime(page.creation).year)
+			self.assertEqual(year, get_html_for(content, "tag", "h1", only_content=True))
+			self.assertEqual("Fallback", get_html_for(content, "tag", "h2", only_content=True))
+		finally:
+			page.delete()
+
+	def component_with_dynamic_title(self, key):
+		prop = {
+			"label": "Title",
+			"isStandard": True,
+			"isDynamic": False,
+			"isPassedDown": False,
+			"comesFrom": None,
+			"value": "Default Title",
+			"propOptions": {
+				"isRequired": False,
+				"type": "string",
+				"options": {"defaultValue": "Default Title"},
+			},
+		}
+		root = Block(
+			element="div", blockId="dynamic-prop-root", clientScript={"js": "void 0;"}, props={"title": prop}
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": root.as_json()}).insert()
+		instance = Block(
+			extendedFromComponent=component.name,
+			props={"title": {**prop, "isDynamic": True, "comesFrom": "dataScript", "value": key}},
+		)
+		return component, instance
+
+	def test_dynamic_prop_without_its_root_uses_the_default(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Fallback Test",
+				"published": 1,
+				"route": "/dynamic-prop-fallback-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-fallback-test")
+			self.assertIn('"title": "Default Title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_resolves_from_page_data(self):
+		component, instance = self.component_with_dynamic_title("hero.title")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Test",
+				"published": 1,
+				"route": "/dynamic-prop-test",
+				"page_data_script": 'data.update({"hero": {"title": "Real title"}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-test")
+			self.assertIn('"title": "Real title"', content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_dynamic_prop_keeps_an_empty_object(self):
+		component, instance = self.component_with_dynamic_title("hero.meta")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Prop Empty Object Test",
+				"published": 1,
+				"route": "/dynamic-prop-empty-object-test",
+				"page_data_script": 'data.update({"hero": {"meta": {}}})',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-prop-empty-object-test")
+			self.assertIn('"title": {}', content)
+		finally:
+			page.delete()
+			component.delete()
 
 	def test_repeater_block_dynamic_values(self):
 		body = Block(
@@ -1315,9 +1634,7 @@ component.update({
 				"Default Header Title",
 				get_html_for(content_with_default_values, "tag", "h1", only_content=True),
 			)
-			self.assertEqual(
-				"25.0", get_html_for(content_with_default_values, "tag", "h4", only_content=True)
-			)
+			self.assertEqual("25", get_html_for(content_with_default_values, "tag", "h4", only_content=True))
 			self.assertFalse("Badge" in get_html_for(content_with_default_values, "tag", "h6"))
 
 			self.assertEqual(
@@ -1325,7 +1642,7 @@ component.update({
 				get_html_for(content_with_overridden_values, "tag", "h1", only_content=True),
 			)
 			self.assertEqual(
-				"29.0", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
+				"29", get_html_for(content_with_overridden_values, "tag", "h4", only_content=True)
 			)
 			self.assertTrue("Badge" in get_html_for(content_with_overridden_values, "tag", "h6"))
 		finally:
@@ -1461,6 +1778,9 @@ component.update({
 			self.assertTrue(
 				'srcset="/files/dark-mode-image.png"'
 				in get_html_for(content, "tag", "source", only_content=False)
+			)
+			self.assertTrue(
+				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
@@ -1609,8 +1929,8 @@ component.update({
 		)
 
 	def test_get_google_font_urls_with_italics(self):
-		"""Fonts used in italic get the ital axis in the same single request,
-		with 400 italic always included as a fallback instance."""
+		"""Fonts used in italic get the ital axis in the same single request, at
+		every weight the family is used at, since <em>/<i> inherit their weight."""
 		from builder.builder.doctype.builder_page.builder_page import get_google_font_urls
 
 		font_map = {
@@ -1623,7 +1943,7 @@ component.update({
 		self.assertEqual(
 			urls,
 			[
-				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap",
+				"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap",
 				"https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400;1,600&display=swap",
 				"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap",
 			],

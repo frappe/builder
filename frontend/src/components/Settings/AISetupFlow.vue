@@ -1,13 +1,17 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col gap-5">
-		<!-- Steps you've already cleared stay clickable, so this doubles as the way
-		     back; the ones ahead are disabled because they need this one answered. -->
-		<TabButtons
+		<Progress
 			class="shrink-0"
-			type="underline"
-			:modelValue="step"
-			:options="stepOptions"
-			@update:modelValue="goToStep" />
+			size="md"
+			:value="((step + 1) / stepLabels.length) * 100"
+			:intervals="stepLabels.length"
+			:label="stepLabels[step]"
+			hint>
+			<template #hint>
+				<!-- block, or the slot wrapper's inherited 24px line-height drops it below the label -->
+				<span class="text-base-medium block text-ink-gray-5">{{ step + 1 }} of {{ stepLabels.length }}</span>
+			</template>
+		</Progress>
 
 		<!-- 1 · pick a provider -->
 		<div v-if="step === 0" class="flex min-h-0 flex-1 flex-col gap-3">
@@ -235,7 +239,8 @@
 
 <script setup lang="ts">
 import { reloadAIRegistry } from "@/data/aiModels";
-import { Badge, Button, Checkbox, createResource, FormControl, TabButtons, toast } from "frappe-ui";
+import { getErrorMessage } from "@/utils/helpers";
+import { Badge, Button, Checkbox, createResource, FormControl, Progress, toast } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
 defineProps<{ canSkipSetup?: boolean }>();
@@ -261,9 +266,6 @@ type Preset = {
 
 const stepLabels = ["Provider", "Connect", "Models"];
 const step = ref(0);
-// How far the flow has been taken, so stepping back doesn't lock the later steps
-// away again.
-const reached = ref(0);
 const presets = ref<Preset[]>([]);
 const active = ref<Preset>({} as Preset);
 const providerName = ref("");
@@ -292,13 +294,6 @@ const resultClass = computed(() =>
 		: result.value?.severity === "warn"
 			? "text-ink-amber-6"
 			: "text-ink-red-6",
-);
-
-// Numbered because the steps are gated, not browsable: the count tells you how
-// far this goes and which one you're on. The label is fixed, so unlike the tick
-// it used to swap in, nothing about it moves between steps.
-const stepOptions = computed(() =>
-	stepLabels.map((label, i) => ({ label: `${i + 1}. ${label}`, value: i, disabled: i > reached.value })),
 );
 
 const keyPlaceholder = computed(() => {
@@ -343,7 +338,7 @@ const load = async () => {
 	} catch (error) {
 		// Without this the screen renders its heading over an empty grid and says
 		// nothing, which reads as "there are no providers" rather than "it broke".
-		loadError.value = (error as Error).message || "Could not load the provider list.";
+		loadError.value = getErrorMessage(error, "Could not load the provider list.");
 	} finally {
 		loading.value = false;
 	}
@@ -362,22 +357,7 @@ const choose = (preset: Preset) => {
 	// Recommended models come pre-ticked so a known provider is two clicks and a
 	// paste: the point of the presets is that nothing else needs deciding.
 	selected.value = preset.models.filter((m) => m.recommended).map((m) => m.model_id);
-	// A different provider invalidates everything chosen after it.
-	reached.value = 1;
-	goTo(1);
-};
-
-const goTo = (n: number) => {
-	step.value = n;
-	reached.value = Math.max(reached.value, n);
-};
-
-const goToStep = (value: unknown) => {
-	const n = Number(value);
-	if (n <= reached.value) {
-		result.value = null;
-		step.value = n;
-	}
+	step.value = 1;
 };
 
 const back = () => {
@@ -392,7 +372,7 @@ const back = () => {
 
 const proceed = () => {
 	if (active.value.custom) selected.value = customModelIds.value;
-	goTo(2);
+	step.value = 2;
 };
 
 const verify = async () => {
@@ -414,7 +394,7 @@ const verify = async () => {
 		result.value = {
 			success: false,
 			severity: "error",
-			message: (error as Error).message || "Could not reach the provider",
+			message: getErrorMessage(error, "Could not reach the provider"),
 		};
 	} finally {
 		busy.value = false;
@@ -430,7 +410,7 @@ const signIn = async () => {
 		oauthStatus.value = "waiting";
 		pollTimer = window.setInterval(pollLogin, 2500);
 	} catch (error) {
-		loginFailed((error as Error).message || "Could not start the sign-in");
+		loginFailed(getErrorMessage(error, "Could not start the sign-in"));
 	}
 };
 
@@ -456,7 +436,7 @@ const connectPasted = async () => {
 		if (res.status === "connected") loginDone();
 		else loginFailed(res.message || "Could not complete the sign-in");
 	} catch (error) {
-		loginFailed((error as Error).message || "Could not complete the sign-in");
+		loginFailed(getErrorMessage(error, "Could not complete the sign-in"));
 	} finally {
 		busy.value = false;
 	}
@@ -511,7 +491,7 @@ const finish = async () => {
 		}
 		emit("done");
 	} catch (error) {
-		toast.error((error as Error).message || "Could not save the provider");
+		toast.error(getErrorMessage(error, "Could not save the provider"));
 	} finally {
 		busy.value = false;
 	}

@@ -1,0 +1,14 @@
+name: Pre-build assets
+
+on:
+  push:
+    branches: [develop, master]
+
+jobs:
+  assets:
+    name: Pre-build assets
+    uses: frappe/pilot/.github/workflows/app-assets.yml@develop
+    with:
+      frappe-branch: ${{ github.ref_name == 'master' && 'version-16' || 'develop' }}
+    permissions:
+      contents: write

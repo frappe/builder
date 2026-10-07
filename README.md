@@ -147,6 +147,14 @@ yarn dev --host
 
 **Note:** You'll find all the code related to Builder's frontend inside `frappe-bench/apps/builder/frontend`
 
+## Manage Your Site With an AI Agent
+
+The [`frappe-builder`](skills/frappe-builder/SKILL.md) skill lets your own coding agent (Claude Code, Codex, OpenCode and others) edit, build and publish Builder pages on any Frappe site through [frappectl](https://github.com/frappe/frappectl):
+
+```bash
+npx skills add frappe/builder
+```
+
 <h2></h2>
 
 ### Links

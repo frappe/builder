@@ -31,11 +31,13 @@ PRESETS = [
 			"Add a little credit — most pages cost a few cents",
 		],
 		"models": [
-			("anthropic/claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
-			("openai/gpt-5.6-luna", "GPT-5.6 Luna", "Fastest and cheapest of the good ones", True),
-			("openai/gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier from OpenAI", False),
-			("google/gemini-3.6-flash", "Gemini 3.6 Flash", "Google's latest, fast", False),
-			("nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra", "Free, no credit needed", False),
+			("anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5", "Best all-rounder for building pages", True),
+			("openai/gpt-6.1-sol", "GPT-6.1 Sol", "OpenAI's latest, same price as Sonnet", True),
+			("anthropic/claude-opus-5.5", "Claude Opus 5.5", "Stronger on complex pages, pricier", False),
+			("anthropic/claude-fable-5.1", "Claude Fable 5.1", "Most capable Claude, priced to match", False),
+			("openai/gpt-6-astra", "GPT-6 Astra", "OpenAI's top tier", False),
+			("openai/gpt-5.6-terra", "GPT-5.6 Terra", "Previous OpenAI generation", False),
+			("google/gemini-3.8-flash", "Gemini 3.8 Flash", "Google's latest, fast", False),
 		],
 	},
 	{
@@ -54,8 +56,9 @@ PRESETS = [
 			"Create a key and copy it",
 		],
 		"models": [
-			("claude-sonnet-5", "Claude Sonnet 5", "Best all-rounder for building pages", True),
-			("claude-haiku-4.5", "Claude Haiku 4.5", "Fastest and cheapest Claude", False),
+			("claude-sonnet-5-5", "Claude Sonnet 5.5", "Best all-rounder for building pages", True),
+			("claude-opus-5-5", "Claude Opus 5.5", "Stronger on complex pages, pricier", False),
+			("claude-fable-5-1", "Claude Fable 5.1", "Most capable Claude, priced to match", False),
 		],
 	},
 	{
@@ -74,10 +77,8 @@ PRESETS = [
 			"Copy it before closing the dialog",
 		],
 		"models": [
-			("gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier, best value of these", True),
-			("gpt-5.6-luna", "GPT-5.6 Luna", "Fastest and cheapest", False),
-			("gpt-5.6-sol", "GPT-5.6 Sol", "Top of the 5.6 line", False),
-			("gpt-5.5", "GPT-5.5", "Previous generation", False),
+			("gpt-6.1-sol", "GPT-6.1 Sol", "Latest, best value of these", True),
+			("gpt-6-astra", "GPT-6 Astra", "Top tier, five times the price", False),
 		],
 	},
 	{
@@ -96,10 +97,8 @@ PRESETS = [
 			"You'll be connected automatically when the sign-in completes",
 		],
 		"models": [
-			("gpt-5.6-terra", "GPT-5.6 Terra", "Frontier tier, best for building", True),
-			("gpt-5.6-luna", "GPT-5.6 Luna", "Fastest of the 5.6 line", False),
-			("gpt-5.3-codex", "GPT-5.3 Codex", "Code-tuned, largest context", False),
-			("gpt-5.5", "GPT-5.5", "Previous generation", False),
+			("gpt-6-luna", "GPT-6 Luna", "Newest in ChatGPT, and its default", True),
+			("gpt-5.6-terra", "GPT-5.6 Terra", "Previous generation, balanced", True),
 		],
 	},
 	{
@@ -118,9 +117,8 @@ PRESETS = [
 			"Create a key in a new or existing project",
 		],
 		"models": [
-			("gemini-3.6-flash", "Gemini 3.6 Flash", "Latest, fast, good value", True),
+			("gemini-3.8-flash", "Gemini 3.8 Flash", "Latest, fast", True),
 			("gemini-3.1-pro-preview", "Gemini 3.1 Pro", "Strongest Gemini for building", False),
-			("gemini-3.1-flash-lite", "Gemini 3.1 Flash Lite", "Cheapest of these", False),
 		],
 	},
 	{
