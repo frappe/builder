@@ -2,7 +2,7 @@
  * `frappe-builder-extension-sdk`: the object that an extension imports.
  *
  * - `connect.ts`: the handshake, and how the frame runs the extension code.
- * - `methods.ts`: `builder.toolbar`, `builder.context` and `builder.actions`.
+ * - `methods.ts`: the `builder.<surface>` APIs.
  * - `slots.ts`: the five slots, and the slot that this frame runs.
  * - `actions.ts`: the action handlers that the host calls.
  * - `ui.ts`: toasts, dialogs and popovers from inside a frame.
@@ -13,7 +13,19 @@
  */
 
 import { getChannel, listenForHandshake } from "./connect";
-import { actions, block, context, data, page, state, toolbar } from "./methods";
+import {
+	actions,
+	block,
+	context,
+	contextMenu,
+	data,
+	leftPanel,
+	page,
+	properties,
+	settings,
+	state,
+	toolbar,
+} from "./methods";
 import { resourceFetcher } from "./resourceFetcher";
 import { registerMain, registerSlot, use, type Mounter, type SlotEntry } from "./slots";
 import { ui } from "./ui";
@@ -50,8 +62,20 @@ const builder = {
 		register: (entry: SlotEntry) => registerSlot("popover", entry),
 	},
 
+	/** One tab. The entry frame registers it, and the host shows it (Tier C). */
+	leftPanel,
+
 	/** A descriptor. Builder shows the button and sends the action back (Tier A). */
 	toolbar,
+
+	/** A row in the block menu. The host checks its rule for the block under the cursor. */
+	contextMenu,
+
+	/** Tier B. A list that names Builder controls. The host shows them. */
+	properties,
+
+	/** One page in the settings dialog, and the document that it loads. */
+	settings,
 
 	/** The editor snapshot. Read it one time, or name the fields to watch. */
 	context,

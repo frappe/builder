@@ -47,3 +47,6 @@ export const assertGranted = (extension: InstalledExtension, method: string, nee
 		code: "permission_required",
 	});
 };
+
+/** The check for a `bind` control at registration. At that time, there is no call to gate. */
+export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("page.edit");

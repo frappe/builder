@@ -21,9 +21,16 @@ export type {
 	BlockPatch,
 	ContextField,
 	ContextHandler,
+	ContextMenuRegistration,
+	Control,
+	ControlName,
 	ItemPatch,
+	LeftPanelRegistration,
 	NewBlock,
+	PropertiesRegistration,
+	SettingsRegistration,
 	ShowWhen,
+	SlotLoader,
 	ToolbarRegistration,
 } from "./runtime/methods";
 export type { FrameOptions, ToastOptions, ToastType } from "./runtime/ui";

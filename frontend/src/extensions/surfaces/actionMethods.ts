@@ -48,9 +48,13 @@ const runAction = (extension: InstalledExtension, action: string, context: Recor
  * For a click. Nothing waits for the result, so it shows a toast and logs
  * both names. So a user sees a message, and an author sees a stack.
  */
-export const invokeAction = async (extension: InstalledExtension, action: string) => {
+export const invokeAction = async (
+	extension: InstalledExtension,
+	action: string,
+	context: Record<string, unknown> = {},
+) => {
 	try {
-		await runAction(extension, action);
+		await runAction(extension, action, context);
 	} catch (error) {
 		toast.error(`${extension.label} failed to run "${action}".`);
 		console.error(`Extension "${extension.name}" failed while running "${action}"`, error);
