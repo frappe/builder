@@ -189,6 +189,20 @@ class TestListedInstallation(FrappeTestCase):
 			f"/builder_extension_asset/{installation.name}/sum123/main.js",
 		)
 
+	def test_carries_the_granted_permissions(self):
+		make_installation("acme/light", permissions=["page.edit", "token.write"], granted=["page.edit"])
+
+		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
+
+	def test_a_page_reader_gets_the_grants_without_reading_the_installation(self):
+		"""The editor builds an extension from this row alone. A page reader cannot read the document."""
+		make_installation("acme/light", permissions=["page.edit"])
+		become_a_user_who_cannot_manage(self)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
+		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
+
 	def test_carries_no_entry_url_without_a_checksum(self):
 		make_installation("acme/light", source="export default {};", checksum=None)
 

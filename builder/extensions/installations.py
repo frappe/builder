@@ -82,10 +82,10 @@ def uninstall_extension(extension: str) -> None:
 
 
 def describe_installation(installation: str) -> dict:
-	"""What a row in the panel shows. The icon is derived, so this reads the document.
+	"""What a row in the panel shows, and all that the editor needs to mount it.
 
-	`installation_id` names the document itself, not the extension. The panel
-	reads it to open the same live document the editor already keeps.
+	The icon is derived, so this reads the document. The row carries the grants,
+	so a page reader with no read access to the installation still runs it.
 	"""
 	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
@@ -98,6 +98,7 @@ def describe_installation(installation: str) -> dict:
 		"entry_url": row.entry_url,
 		"source_url": row.source_url,
 		"enabled": bool(row.enabled),
+		"permissions": row.permissions,
 		"install_state": row.install_state,
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_EXTENSION_VERSION,

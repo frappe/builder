@@ -29,19 +29,18 @@ import { connectExtension, disconnectExtension, requestHandlerFor, teardownExten
 import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { getCurrentInstance, onMounted, onUnmounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 
 const builderStore = useBuilderStore();
-const resourceVm = getCurrentInstance()?.proxy;
 
 const onInstallationListChanged = ({ doctype }: { doctype: string }) => {
-	if (doctype === INSTALLATION_DOCTYPE) void loadExtensions(resourceVm);
+	if (doctype === INSTALLATION_DOCTYPE) void loadExtensions();
 };
 
 onMounted(() => {
 	builderStore.realtime.emit("doctype_subscribe", INSTALLATION_DOCTYPE);
 	builderStore.realtime.on("list_update", onInstallationListChanged);
-	void loadExtensions(resourceVm);
+	void loadExtensions();
 });
 
 onUnmounted(() => {
