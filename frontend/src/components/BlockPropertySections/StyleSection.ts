@@ -109,6 +109,8 @@ const styleSectionProperties = [
 				component: ColorInput,
 				label: __("Text Color"),
 				popoverOffset: 120,
+				setModelValue: (value: StyleValue) =>
+					blockController.setTextColor(typeof value === "string" && value ? value : null),
 			};
 		},
 		searchKeyWords: "Text, Color, TextColor, Text Color",

@@ -103,7 +103,7 @@ p:empty::before {
 	background-color: var(--gray-950);
 }
 
-[contenteditable=true]:not(.cm-content):focus-visible {
+[contenteditable=true]:focus-visible {
 	outline: 1px solid var(--outline-gray-4);
 	outline-offset: 3px;
 	border-radius: 2px;

@@ -22,8 +22,8 @@ export default defineConfig({
 				source: "^/(app|desk|login|api|assets|files|pages|builder_assets|builder_extension)",
 			},
 			lucideIcons: true,
-			// the language-stubbing plugin crashes Vite 8's dep scan; the frappe-ui
-			// workspace already installs every @codemirror/lang-* loadLanguage imports
+			// this app brings its own @codemirror/lang-* packages and never imports
+			// frappe-ui/code-editor, so the language-stubbing plugin has nothing to do
 			codeLanguages: false,
 			frappeTypes: {
 				input: {

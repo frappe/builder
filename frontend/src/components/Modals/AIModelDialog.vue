@@ -24,7 +24,7 @@
 							:autofocus="true"
 							:modelValue="model.model_id"
 							@update:modelValue="(value: string) => (model.model_id = value)"
-							placeholder="anthropic/claude-sonnet-5"
+							placeholder="anthropic/claude-sonnet-5.5"
 							:hideClearButton="true" />
 						<p class="text-p-xs text-ink-gray-5">The id at the provider. Becomes {{ preview }}.</p>
 					</div>
@@ -35,7 +35,7 @@
 						type="text"
 						:modelValue="model.label"
 						@update:modelValue="(value: string) => (model.label = value)"
-						placeholder="Claude Sonnet 5"
+						placeholder="Claude Sonnet 5.5"
 						:hideClearButton="true" />
 				</div>
 				<p class="text-p-xs text-ink-gray-5">

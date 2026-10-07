@@ -17,8 +17,9 @@
 			:on-update="updateTracker"
 			:disable-handlers="false"
 			:breakpoint="breakpoint" />
-		<MarginHandler
-			v-show="showMarginHandler"
+		<GapHandler
+			:data-block-id="block.blockId"
+			v-if="showGapHandler"
 			:target-block="block"
 			:target="target"
 			:on-update="updateTracker"
@@ -46,14 +47,14 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber } from "@/utils/helpers";
+import { addPxToNumber, getRenderedPosition } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
 import trackTarget from "../utils/trackTarget";
 import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
-import MarginHandler from "./MarginHandler.vue";
+import GapHandler from "./GapHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
 import RotationHandler from "./RotationHandler.vue";
 
@@ -100,7 +101,6 @@ const transforming = computed(() => resizing.value || rotating.value);
 const guides = setGuides(props.target, canvasProps);
 const moving = ref(false);
 const preventClick = ref(false);
-
 const showPaddingHandler = computed(() => {
 	return (
 		builderStore.mode === "select" &&
@@ -115,17 +115,13 @@ const showPaddingHandler = computed(() => {
 	);
 });
 
-const showMarginHandler = computed(() => {
+// A gap needs two children to sit between. Whether the block is actually a flex or grid
+// container is decided inside the handler, off the rendered display — isFlex()/isGrid()
+// read only the block's own styles and miss a layout that comes from a CSS class.
+const showGapHandler = computed(() => {
 	return (
-		builderStore.mode === "select" &&
-		isBlockSelected.value &&
-		!props.block.isRoot() &&
-		!canvasStore.isDragging &&
-		!transforming.value &&
-		!props.editable &&
-		!props.readonly &&
-		!blockController.multipleBlocksSelected() &&
-		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
+		showPaddingHandler.value &&
+		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
 	);
 });
 
@@ -188,6 +184,10 @@ const getStyleClasses = computed(() => {
 		classes.push("ring-purple-400");
 	} else {
 		classes.push("ring-blue-400");
+	}
+	// hover editors mount later, so without this their ring paints over the selection's handles
+	if (isBlockSelected.value) {
+		classes.push("z-10");
 	}
 	if (
 		isBlockSelected.value &&
@@ -295,8 +295,7 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const startLeft = (props.target as HTMLElement).offsetLeft || 0;
-	const startTop = (props.target as HTMLElement).offsetTop || 0;
+	const { left: startLeft, top: startTop } = getRenderedPosition(props.target as HTMLElement);
 
 	moving.value = true;
 	guides.showX();
@@ -313,15 +312,15 @@ const handleMove = (ev: MouseEvent) => {
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
 		let finalTop = startTop + movementY;
-		props.block.setStyle("left", addPxToNumber(finalLeft));
-		props.block.setStyle("top", addPxToNumber(finalTop));
+		props.block.setActiveStyle("left", addPxToNumber(finalLeft));
+		props.block.setActiveStyle("top", addPxToNumber(finalTop));
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + leftOffset));
+			props.block.setActiveStyle("left", addPxToNumber(finalLeft + leftOffset));
 		}
 		if (rightOffset !== 0) {
-			props.block.setStyle("left", addPxToNumber(finalLeft + rightOffset));
+			props.block.setActiveStyle("left", addPxToNumber(finalLeft + rightOffset));
 		}
 
 		mouseMoveEvent.preventDefault();

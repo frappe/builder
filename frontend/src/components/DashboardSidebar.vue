@@ -97,7 +97,7 @@
 			<DialogDescription class="sr-only">
 				{{ __("Configure global settings for this builder project.") }}
 			</DialogDescription>
-			<BuilderSettings @close="showSettingsDialog = false" group="Global" bare />
+			<BuilderSettings @close="showSettingsDialog = false" :onlyGlobal="true" bare />
 		</template>
 	</Dialog>
 </template>

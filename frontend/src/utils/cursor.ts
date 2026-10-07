@@ -54,7 +54,7 @@ function startDrag({ cursor, onMove, onEnd, onCancel }: DragOptions) {
 	const stop = () => {
 		document.removeEventListener("mousemove", mousemove);
 		document.removeEventListener("mouseup", mouseup);
-		document.removeEventListener("keydown", keydown);
+		document.removeEventListener("keydown", keydown, true);
 		clearDragCursor();
 	};
 
@@ -75,7 +75,8 @@ function startDrag({ cursor, onMove, onEnd, onCancel }: DragOptions) {
 
 	document.addEventListener("mousemove", mousemove);
 	document.addEventListener("mouseup", mouseup);
-	document.addEventListener("keydown", keydown);
+	// capture, because a focused control can stop the key before it reaches the document
+	document.addEventListener("keydown", keydown, true);
 }
 
 export { clearDragCursor, getRotatedCursor, setDragCursor, startDrag };
