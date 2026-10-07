@@ -9,6 +9,9 @@
  * A reload removes it. A user must load it on purpose. An old dev extension
  * that fails to load looks like a Builder error. The editor keeps the last URL,
  * so the user does not type it again.
+ *
+ * Closing the tab keeps the installation. It belongs to the site, so another
+ * tab can run the same extension. The next load refreshes it.
  */
 
 import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";
@@ -20,7 +23,7 @@ const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
 const INSTALL_METHOD = "builder.extensions.development.install_dev_extension";
-const REMOVE_METHOD = "/api/method/builder.extensions.development.remove_dev_extension";
+const REMOVE_METHOD = "builder.extensions.development.remove_dev_extension";
 
 export type DevelopmentExtension = InstalledExtension & {
 	version: string;
@@ -77,18 +80,10 @@ const install = (extension: string, permissions: Permission[]) =>
 		throw new Error(`Builder could not register "${extension}". Is the site in developer mode?`);
 	}) as Promise<Permission[]>;
 
-/**
- * Uses `fetch`, not `call`. With `keepalive`, a request from `pagehide` can
- * continue after the document closes. Frappe refuses a form POST without the
- * CSRF header. The browser does not add this header.
- */
 const remove = (extension: InstalledExtension) =>
-	fetch(REMOVE_METHOD, {
-		method: "POST",
-		headers: { "X-Frappe-CSRF-Token": window.csrf_token ?? "" },
-		body: new URLSearchParams({ extension: extension.name }),
-		keepalive: true,
-	}).catch((error) => console.error(`Could not remove development extension "${extension.name}"`, error));
+	call(REMOVE_METHOD, { extension: extension.name }).catch((error: Error) =>
+		console.error(`Could not remove development extension "${extension.name}"`, error),
+	);
 
 /** Accepts any URL on the dev server. An author pastes the URL from the terminal. */
 export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
@@ -112,10 +107,3 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 	};
 	return devExtension.value;
 };
-
-export const stopDevExtension = () => {
-	if (devExtension.value) void remove(devExtension.value);
-	devExtension.value = null;
-};
-
-window.addEventListener("pagehide", stopDevExtension);
