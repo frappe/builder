@@ -156,7 +156,7 @@ export default function builderExtension({ builderUrl } = {}) {
 					// in the origin correct: Vite stops, and does not try the next port
 					port,
 					strictPort: true,
-					origin: config.server?.origin ?? `http://localhost:${port}`,
+					origin: config.server?.origin ?? `${config.server?.https ? "https" : "http"}://localhost:${port}`,
 					// the package is installed by a link, so it is outside this project.
 					// Without this, the dev server does not serve it. The project must
 					// also be in the list, because this list replaces the default list
