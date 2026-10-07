@@ -75,13 +75,13 @@ import { computed, ref } from "vue";
 const props = defineProps<{ steps: AITurnStep[]; working?: boolean }>();
 
 /** A run of the same tool collapses to one row with a count. Minting six design
- * tokens is one action to the reader, not six lines of "Set theme variable", and
- * the repetition drowns out the steps that actually differ. Times are summed. */
+ * tokens is one action to the reader, not six lines of "Set token: …", and the
+ * repetition drowns out the steps that actually differ. Times are summed. */
 const rows = computed<(AITurnStep & { repeats?: number })[]>(() => {
 	const out: (AITurnStep & { repeats?: number })[] = [];
 	for (const step of props.steps) {
 		const last = out[out.length - 1];
-		if (last && step.kind === "tool" && last.kind === "tool" && last.summary === step.summary) {
+		if (last && sameAction(last, step)) {
 			last.repeats = (last.repeats || 1) + 1;
 			last.ms = (last.ms || 0) + (step.ms || 0);
 			last.status = step.status;
@@ -89,8 +89,20 @@ const rows = computed<(AITurnStep & { repeats?: number })[]>(() => {
 		}
 		out.push({ ...step });
 	}
-	return out;
+	return out.map(countTokens);
 });
+
+const sameAction = (a: AITurnStep, b: AITurnStep) =>
+	a.kind === "tool" &&
+	b.kind === "tool" &&
+	(a.summary === b.summary || (a.tool === "set_design_token" && b.tool === "set_design_token"));
+
+// each token step names its token, so a run of them says how many instead
+function countTokens(row: AITurnStep & { repeats?: number }) {
+	if (row.tool !== "set_design_token" || !row.repeats) return row;
+	const verb = running(row) ? "Setting" : "Set";
+	return { ...row, summary: `${verb} ${row.repeats} design tokens`, repeats: undefined };
+}
 
 const expanded = ref(new Set<number>());
 

@@ -12,8 +12,25 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 	}
 });
 
-/** Markdown → sanitized HTML for AI chat messages and an extension's README. */
+// A streamed token re-renders the whole transcript, so every finished message would
+// otherwise be parsed and sanitized again per token. Least recently read goes first,
+// which ages out a stream's partial snapshots and keeps what's on screen.
+const MAX_CACHED = 300;
+const rendered = new Map<string, string>();
+
+/** Markdown → sanitized HTML for AI chat messages (editor panel + dashboard chat) and an extension's README. */
 export function renderMarkdown(content: string): string {
+	const html = rendered.get(content) ?? sanitize(content);
+	rendered.delete(content);
+	rendered.set(content, html);
+	if (rendered.size > MAX_CACHED) {
+		const oldest = rendered.keys().next();
+		if (!oldest.done) rendered.delete(oldest.value);
+	}
+	return html;
+}
+
+function sanitize(content: string): string {
 	return DOMPurify.sanitize(marked.parse(content) as string, {
 		ALLOWED_TAGS: [
 			"p",

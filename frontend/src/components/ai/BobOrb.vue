@@ -129,12 +129,18 @@ function resize() {
 }
 
 function frame(now: number) {
-	if (!gl || !program) return;
+	raf = 0;
+	// hidden (the chat panel is v-show): stop drawing, the ResizeObserver restarts it
+	if (!gl || !program || !canvas.value?.clientWidth) return;
 	if (!startedAt) startedAt = now;
 	resize();
 	gl.uniform1f(uTime, (now - startedAt) / 1000);
 	gl.drawArrays(gl.TRIANGLES, 0, 3);
 	if (!reduceMotion) raf = requestAnimationFrame(frame);
+}
+
+function start() {
+	if (!raf) raf = requestAnimationFrame(frame);
 }
 
 onMounted(() => {
@@ -144,9 +150,12 @@ onMounted(() => {
 		canvas.value?.classList.add("bob-orb-gl--fallback");
 		return;
 	}
-	ro = new ResizeObserver(() => resize());
+	ro = new ResizeObserver(() => {
+		resize();
+		start();
+	});
 	if (canvas.value) ro.observe(canvas.value);
-	raf = requestAnimationFrame(frame);
+	start();
 });
 
 onBeforeUnmount(() => {

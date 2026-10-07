@@ -17,7 +17,12 @@
 					:disabled="isSubmitting"
 					@click="newSession" />
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
-					<Button variant="ghost" size="sm" icon="lucide-history" tooltip="Chats on this page" />
+					<Button
+						variant="ghost"
+						size="sm"
+						icon="lucide-history"
+						tooltip="Chats on this page"
+						:disabled="isSubmitting" />
 				</Dropdown>
 				<Button
 					variant="ghost"
@@ -59,10 +64,6 @@
 		</div>
 
 		<template v-else>
-			<!-- <div class="border-b border-outline-gray-1 px-4 py-3">
-				<OptionToggle v-model="scope" :options="scopeOptions" />
-			</div> -->
-
 			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
@@ -155,7 +156,8 @@
 
 							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
 								<button
-									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7"
+									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40"
+									:disabled="isSubmitting || !isEditingPage"
 									@click="revertTurn(message)">
 									<span class="lucide-rotate-ccw size-3" />
 									Revert
@@ -215,7 +217,7 @@
 							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
 							:ui="message.metadata.ui"
 							:interactive="message.id === lastMessageId"
-							:disabled="isSubmitting"
+							:disabled="isSubmitting || !isEditingPage"
 							:answered-with="replyTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
@@ -323,6 +325,17 @@
 					</button>
 				</div>
 				<div
+					v-else-if="!isEditingPage"
+					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+					<span class="lucide-box size-3.5 shrink-0" />
+					<span class="flex-1">Bob only edits the page.</span>
+					<button
+						class="shrink-0 font-medium underline underline-offset-2"
+						@click="canvasStore.exitFragmentMode()">
+						Back to page
+					</button>
+				</div>
+				<div
 					class="relative"
 					@paste.stop="handlePaste"
 					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
@@ -337,7 +350,7 @@
 						v-model="prompt"
 						rows="1"
 						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
-						:disabled="isSubmitting"
+						:disabled="isSubmitting || !isEditingPage"
 						placeholder="Ask to create or edit this page…"
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
@@ -388,12 +401,15 @@
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
-					<Button
-						v-else
-						variant="solid"
-						icon="lucide-arrow-up"
-						:disabled="!canSubmit"
-						@click="submitPrompt" />
+					<Tooltip v-else side="top">
+						<template #content>
+							<span class="flex items-center gap-1.5">
+								Send
+								<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+							</span>
+						</template>
+						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
+					</Tooltip>
 				</div>
 			</div>
 		</template>
@@ -410,21 +426,22 @@ import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
-import { AIChatController, type ChatMessage } from "@/components/AIChatController";
+import { AIChatController } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
-import type { AITurnStep } from "@/components/ai/types";
+import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Button, Dropdown, Popover, Tooltip } from "frappe-ui";
+import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { isEditingPage } = chat;
 const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -840,10 +857,7 @@ function toggleChips(messageId: string) {
 	--shine-peak: var(--ink-gray-9);
 }
 
-/* Empty-state hero: a living aurora of drifting color blobs behind the sparkle.
- * Each blob only animates transform (GPU-composited) under a single static blur,
- * so the motion stays silky. Prime-ish, mismatched durations keep it organic —
- * the loop never visibly repeats. */
+/* Empty-state hero: BobOrb's shader aurora behind the sparkle, in a breathing bloom. */
 .bob-hero-orb {
 	position: relative;
 	display: grid;
@@ -920,7 +934,6 @@ function toggleChips(messageId: string) {
 
 @media (prefers-reduced-motion: reduce) {
 	.bob-hero-orb::after,
-	.bob-blob,
 	.bob-orb-spark,
 	.bob-pill-in,
 	.animate-shine {
