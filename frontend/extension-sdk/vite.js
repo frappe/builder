@@ -85,7 +85,8 @@ export default function builderExtension({ builderUrl } = {}) {
 		throw new Error('[builder] builderExtension() needs "builderUrl", the origin Builder is served on');
 	}
 
-	const sdkUrl = `${builderUrl.replace(/\/$/, "")}${SDK_PATH}`;
+	const builderOrigin = new URL(builderUrl).origin;
+	const sdkUrl = `${builderOrigin}${SDK_PATH}`;
 
 	let root = process.cwd();
 	let entry = "";
@@ -143,8 +144,9 @@ export default function builderExtension({ builderUrl } = {}) {
 				},
 				server: {
 					// an extension frame has an opaque origin. It sends `Origin: null`.
-					// By default, Vite sends no CORS header for that request
-					cors: { origin: "*" },
+					// Any site can send `null` from a sandboxed frame, so this list
+					// stops a plain fetch, but the source files are not private
+					cors: { origin: [builderOrigin, "null"] },
 					// the package is installed by a link, so it is outside this project.
 					// Without this, the dev server does not serve it. The project must
 					// also be in the list, because this list replaces the default list
@@ -190,8 +192,8 @@ export default function builderExtension({ builderUrl } = {}) {
 				const { manifest } = readManifest(root);
 				response.setHeader("Content-Type", "application/json");
 				// this middleware runs before the middleware of Vite. So the CORS
-				// setting above does not apply yet. The editor reads this from a different origin
-				response.setHeader("Access-Control-Allow-Origin", "*");
+				// setting above does not apply yet. Only the editor reads this, never a frame
+				response.setHeader("Access-Control-Allow-Origin", builderOrigin);
 				response.end(
 					JSON.stringify({
 						v: manifest.v,
