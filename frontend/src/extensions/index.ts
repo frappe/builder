@@ -5,6 +5,7 @@
  * - `bridge/`: the gate for each call from a frame. Permissions, rate limit, parameter checks.
  * - `context/`: the editor snapshot, the `showWhen` rules, and the context methods.
  * - `surfaces/`: the items that an extension adds to the editor UI.
+ * - `data/`: the methods that read or change site records.
  * - `components/`: the frames, and the dialog that loads a dev extension.
  * - `devExtension.ts`: the extension from a dev server, for this session.
  *
@@ -16,12 +17,13 @@ import useBuilderStore from "@/stores/builderStore";
 import { bridge } from "./bridge/bridge";
 import { hostMethods } from "./bridge/hostMethods";
 import { contextMethods } from "./context/contextMethods";
+import { dataMethods } from "./data";
 import { surfaceMethods } from "./surfaces";
 
 // the store loads on each call, not at import. So this code does not depend
 // on the load order of the editor
 bridge.setMethodTable(
-	{ ...hostMethods, ...surfaceMethods, ...contextMethods },
+	{ ...hostMethods, ...surfaceMethods, ...contextMethods, ...dataMethods },
 	{ isReadOnly: () => useBuilderStore().readOnlyMode },
 );
 

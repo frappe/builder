@@ -5,13 +5,15 @@
  * - `methods.ts`: `builder.toolbar`, `builder.context` and `builder.actions`.
  * - `slots.ts`: the five slots, and the slot that this frame runs.
  * - `actions.ts`: the action handlers that the host calls.
+ * - `resourceFetcher.ts`: sends frappe-ui resource requests through the bridge.
  *
  * The shell loads this file. The import map gives the same URL to the import
  * of the extension. So both use one module copy and one channel.
  */
 
 import { getChannel, listenForHandshake } from "./connect";
-import { actions, context, toolbar } from "./methods";
+import { actions, context, data, toolbar } from "./methods";
+import { resourceFetcher } from "./resourceFetcher";
 import { registerMain, use, type Mounter } from "./slots";
 
 export type HostInfo = { version: string; protocol: number };
@@ -38,6 +40,22 @@ const builder = {
 
 	/** The editor snapshot. Read it one time, or name the fields to watch. */
 	context,
+
+	/**
+	 * Site data. Each call needs the `data.access` permission.
+	 *
+	 * This file adds `fetcher`, not `methods.ts`. So `methods.ts` does not
+	 * import the file that reads it. Connect it one time, in the entry:
+	 *
+	 * ```js
+	 * import { setConfig } from "frappe-ui";
+	 * setConfig("resourceFetcher", builder.data.fetcher);
+	 * ```
+	 *
+	 * Then `createListResource` and `createDocumentResource` work as in any Frappe
+	 * app. They get only what the user of the editor can get.
+	 */
+	data: { ...data, fetcher: resourceFetcher },
 
 	/** The functions of this extension. A descriptor names one. The host calls it. */
 	actions,
