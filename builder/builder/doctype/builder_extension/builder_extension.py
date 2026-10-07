@@ -105,7 +105,7 @@ class BuilderExtension(Document):
 	def icon_data_uri(self) -> str | None:
 		"""None when the package ships no icon. The editor draws its own glyph then.
 
-		A data URI, not a URL, because no public route serves one user's files.
+		A data URI, so the panel draws it with no request of its own.
 		"""
 		if not self.icon:
 			return None
@@ -158,8 +158,8 @@ class BuilderExtension(Document):
 	def write_extension_files(self, files: dict[str, bytes]):
 		"""Replace the installed copy with the files a frame loads.
 
-		Keyed by path under the install root, so a chunk lands where the entry
-		imports it from. Replaces the whole directory, so a rebuild leaves nothing of the
+		Keyed by path under the install root, so a file can sit in a folder.
+		Replaces the whole directory, so a rebuild leaves nothing of the
 		last one behind.
 		"""
 		root = Path(self.install_path)

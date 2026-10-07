@@ -75,6 +75,14 @@ class TestBuilderExtension(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, permissions=["page.edit"], granted=["page.edit", "schema.write"])
 
+	def test_writes_the_files_it_installs(self):
+		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"export const ok = true;", "chunks/a.js": b""})
+
+		root = Path(installation.install_path)
+		self.assertEqual((root / "main.js").read_text(), "export const ok = true;")
+		self.assertTrue((root / "chunks" / "a.js").is_file())
+
 	def test_finds_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
 
