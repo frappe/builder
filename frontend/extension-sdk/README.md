@@ -82,6 +82,12 @@ builder.use(vueAdapter);
 Builder makes a site installation for the extension and grants what the manifest asks for. Only a
 user who manages extensions can load one. The extension runs until you reload the editor.
 
+The dev server stays on one port, 5173 by default. If that port is in use, the dev server stops.
+To run a second extension, set `server.port` in its `vite.config.js`.
+
+The plugin sets the asset URLs to `http://localhost:<port>`. If your dev server uses HTTPS, set
+`server.origin`, for example `"https://localhost:5173"`.
+
 ## Versions
 
 The SDK remains on `0.x` while its authoring API stabilizes. The extension
