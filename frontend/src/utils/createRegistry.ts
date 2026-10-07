@@ -21,8 +21,8 @@ export type RegistryItem = RegistryEntry & {
 
 /**
  * A registry backs one editor surface. Builder registers its own items with
- * `registerBuiltIn`, which locks the name. Extensions use `register`, and cannot
- * replace or remove a built-in item.
+ * `registerBuiltIn` and removes them with `unregisterBuiltIn`. A built-in name is
+ * locked: `register` and `unregister` cannot replace or remove it.
  *
  * Leave `before` and `after` unset in the common case: items then display in
  * registration order.
@@ -94,10 +94,16 @@ export function createRegistry<T extends RegistryEntry>() {
 		return remove(name);
 	};
 
+	/** Builder removes its own items here, as the editor demo does. */
+	const unregisterBuiltIn = (name: string) => {
+		builtInNames.delete(name);
+		return remove(name);
+	};
+
 	const all = computed(() => order.value.map((name) => items.get(name) as T));
 
 	// condition runs at render, never at register, so it can read live state
 	const visible = computed(() => all.value.filter((item) => (item as RegistryItem).condition?.() ?? true));
 
-	return { register, registerBuiltIn, unregister, all, visible };
+	return { register, registerBuiltIn, unregister, unregisterBuiltIn, all, visible };
 }

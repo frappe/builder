@@ -103,16 +103,10 @@ p:empty::before {
 	background-color: var(--gray-950);
 }
 
-[contenteditable=true]:not(.cm-content):focus-visible {
+[contenteditable=true]:focus-visible {
 	outline: 1px solid var(--outline-gray-4);
 	outline-offset: 3px;
 	border-radius: 2px;
-}
-
-/* frappe-ui popovers portal to <body> without a z-index; lift them above
-   DraggablePopup (z-20) so e.g. color pickers opened from within popups stay visible */
-.PopoverContent {
-	z-index: 30;
 }
 
 /* frappe-ui v1.0.0-beta.21 dimmed Switch labels to the shared InputLabel default

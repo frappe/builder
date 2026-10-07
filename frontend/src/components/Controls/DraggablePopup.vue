@@ -1,7 +1,7 @@
 <template>
 	<teleport to="#popovers">
 		<div class="relative" ref="popover">
-			<!-- fixed makes this a stacking context, so the popup clears panel chrome from here -->
+			<!-- above panel controls that set a z-index (Input's fade and suffix), below frappe-ui overlays (z-100) -->
 			<div class="fixed z-50" @mousedown.stop>
 				<div
 					ref="popoverContent"

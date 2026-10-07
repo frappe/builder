@@ -83,7 +83,7 @@ leftPanelTabs.registerBuiltIn({
 	isActive: () => builderStore.showTokenManager,
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Chat",
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",

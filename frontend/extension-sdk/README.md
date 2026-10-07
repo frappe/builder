@@ -69,8 +69,7 @@ A manifest can name an icon, such as `"icon": "icon.svg"`. Put a square SVG of t
 entry. Builder draws it beside the extension in the Extensions panel.
 
 Put a `README.md` in the extension directory. The installer stores it on the installation, and the
-Extensions panel shows it. The package never carries it: a built extension is `main.js`,
-`manifest.json` and one icon.
+Extensions panel shows it.
 
 The panel also lists every permission the manifest asks for, and the user can turn one off. A
 permission the user turned off is refused the way one you never asked for is.
@@ -84,9 +83,12 @@ builder.toolbar.register({
 	name: "say-hello",
 	region: "right",
 	icon: "lucide-hand",
-	action: () => builder.ui.toast("hello"),
+	action: async () => console.log(await builder.context.get()),
 });
 ```
+
+In the right region, Builder's own buttons always stay at the right end. `before` and `after` place
+your button among the extension buttons only.
 
 A Vue slot uses the `/vue` entry. Register the adapter once, and every slot then takes a component.
 
@@ -98,6 +100,22 @@ builder.popover.register({ component: () => import("./Popover.vue") });
 ```
 
 `vue` is an optional peer dependency. Install it only if you write slots in Vue.
+
+## Run it in Builder
+
+1. Turn on developer mode for the site.
+2. Start the extension's dev server with `npm run dev`.
+3. In the Builder editor, open the command palette and run **Load Dev Extension**.
+4. Enter the address the dev server prints.
+
+Builder makes a site installation for the extension and grants what the manifest asks for. Only a
+user who manages extensions can load one. The extension runs until you reload the editor.
+
+The dev server stays on one port, 5173 by default. If that port is in use, the dev server stops.
+To run a second extension, set `server.port` in its `vite.config.js`.
+
+The plugin sets the asset URLs to `http://localhost:<port>`, or `https://` when `server.https` is
+set. If a plugin turns on HTTPS for you, such as `@vitejs/plugin-basic-ssl`, set `server.origin`.
 
 ## Package a release
 
@@ -114,6 +132,9 @@ npx builder-extension package
 The command validates the repository, manifest, built files, and package limits. A
 package contains only `manifest.json`, `main.js`, and the optional SVG icon. The command
 writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
+
+The packager and the Hub install do not accept `chunks/` or `assets/` yet. Until they do, a
+build that splits its code, or has CSS, cannot be packaged. It still runs from a dev server.
 
 Create a GitHub release whose tag is the manifest version with a `v` prefix. For
 example, manifest version `1.2.0` uses tag `v1.2.0`. Copy the workflow shipped at

@@ -52,7 +52,8 @@ export const matches = (rule: ShowWhenRule | undefined, context: EditorContext) 
  * If the matcher ignored the key, the item would show in all places.
  */
 export const assertRule = (rule: ShowWhenRule | undefined, field = "showWhen") => {
-	const unknown = Object.keys(rule ?? {}).filter((key) => !(key in READERS));
+	// not `in`: it also accepts inherited keys, such as `__proto__`, that have no reader
+	const unknown = Object.keys(rule ?? {}).filter((key) => !Object.hasOwn(READERS, key));
 	if (!unknown.length) return;
 
 	throw new ChannelCallError({

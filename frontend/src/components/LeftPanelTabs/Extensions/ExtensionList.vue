@@ -51,7 +51,7 @@
 								<Tooltip
 									v-else-if="isDevExtension(extension)"
 									text="Served by a dev server. A reload drops it.">
-									<Badge size="sm" theme="orange" label="Dev" />
+									<Badge size="sm" theme="amber" label="Dev" />
 								</Tooltip>
 								<!-- <Badge v-else-if="!extension.enabled" size="sm" theme="gray" label="Disabled" /> -->
 							</div>

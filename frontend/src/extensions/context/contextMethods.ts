@@ -2,7 +2,7 @@
  * The editor snapshot. An extension reads it one time, or gets a push when it changes.
  *
  * A push is the only message that the host sends without a request. All other
- * methods answer a request. So the message budget in `dispatcherFor` covers them.
+ * methods answer a request. So the message budget in `requestHandlerFor` covers them.
  *
  * A push goes through `channel.emit`. No budget applies to it, and none must.
  * A push comes from the user, not from a bad extension. If the push used the
@@ -91,11 +91,12 @@ const changedSince = (subscription: Subscription, context: EditorContext) => {
 };
 
 /**
- * Marks the current snapshot as sent. So "changed" means changed after the
- * subscription started. Without this, the first push sends any field that
- * changed before.
+ * Marks the current value of these fields as sent. So "changed" means changed
+ * after the field was subscribed. Only new fields: a field that is already
+ * subscribed can have a change that waits for the throttle.
  */
-const remember = (subscription: Subscription) => void changedSince(subscription, editorContext.value);
+const remember = (subscription: Subscription, fields: ContextField[]) =>
+	fields.forEach((field) => subscription.sent.set(field, JSON.stringify(editorContext.value[field])));
 
 /**
  * Sends to each frame of the extension. A panel and the entry frame are two
@@ -127,8 +128,9 @@ const subscribe = (params: unknown, extension: InstalledExtension) => {
 	const wanted = readFields(params);
 	const known = subscriptions.get(extension.name);
 	if (known) {
-		wanted.forEach((field) => known.fields.add(field));
-		remember(known);
+		const added = wanted.filter((field) => !known.fields.has(field));
+		added.forEach((field) => known.fields.add(field));
+		remember(known, added);
 		return;
 	}
 
@@ -137,7 +139,7 @@ const subscribe = (params: unknown, extension: InstalledExtension) => {
 		sent: new Map(),
 		push: useThrottleFn(() => send(extension.name), THROTTLE_MS, true),
 	};
-	remember(subscription);
+	remember(subscription, wanted);
 	subscriptions.set(extension.name, subscription);
 	bridge.registerTeardown(extension.name, () => forget(extension.name));
 

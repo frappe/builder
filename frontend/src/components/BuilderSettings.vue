@@ -43,12 +43,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import {
-	settingsGroupLabels,
-	settingsGroups,
-	settingsItems,
-	type SettingsGroup,
-} from "@/components/Settings";
+import { settingsGroupLabels, settingsGroups, settingsItems } from "@/components/Settings";
 import builderProjectFolder from "@/data/builderProjectFolder";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
@@ -58,8 +53,7 @@ import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
-	// limits the dialog to one group, e.g. the dashboard has no current page
-	group?: SettingsGroup | null;
+	onlyGlobal?: boolean;
 	initialTab?: string;
 }>();
 
@@ -67,7 +61,11 @@ const route = useRoute();
 const pageStore = usePageStore();
 const builderStore = useBuilderStore();
 const emit = defineEmits(["close"]);
-const selectedItem = ref<string>(props.initialTab || builderStore.settingsActiveTab);
+const selectedItem = ref<string>(
+	props.initialTab ||
+		builderStore.settingsActiveTab ||
+		(props.onlyGlobal ? "global_general" : "page_general"),
+);
 const settingsLoaded = ref(false);
 
 onMounted(async () => {
@@ -84,7 +82,7 @@ onMounted(async () => {
 
 const visibleGroups = computed(() =>
 	settingsGroups
-		.filter((group) => !props.group || group === props.group)
+		.filter((group) => !(props.onlyGlobal && group === "Current Page"))
 		.map((group) => ({
 			title: settingsGroupLabels[group],
 			items: settingsItems.visible.value.filter((item) => item.group === group),
@@ -101,10 +99,10 @@ const selectItem = (value: string) => {
 	builderStore.settingsActiveTab = value;
 };
 
-// the remembered tab may belong to a hidden group; fall back locally without persisting
-// so the other group keeps its last selection
+// the remembered tab may not exist here (e.g. page tabs are hidden in onlyGlobal mode); fall back
+// locally without persisting so the editor keeps its last page-level selection
 if (!selectedItemDoc.value) {
-	selectedItem.value = visibleGroups.value[0]?.items[0]?.name;
+	selectedItem.value = props.onlyGlobal ? "global_general" : "page_general";
 }
 
 watch(

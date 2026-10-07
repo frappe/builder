@@ -1,4 +1,5 @@
 import router from "@/router";
+import { showDevExtensionDialog } from "@/extensions/devExtension";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -106,6 +107,15 @@ commands.registerBuiltIn({
 });
 
 commands.registerBuiltIn({
+	name: "load-dev-extension",
+	title: __("Load Dev Extension"),
+	icon: "lucide-plug",
+	group: "General",
+	condition: () => isBuilderRoute() && Boolean(window.is_developer_mode),
+	action: () => (showDevExtensionDialog.value = true),
+});
+
+commands.registerBuiltIn({
 	name: "preview",
 	title: __("Preview Page"),
 	icon: "lucide-play",
@@ -114,7 +124,7 @@ commands.registerBuiltIn({
 	keys: { combo: "Mod+P", description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
-		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
+		pageStore.openPreview(pageStore.selectedPage as string);
 	},
 });
 

@@ -57,11 +57,13 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 	const centerX = bounds.left + bounds.width / 2;
 	const centerY = bounds.top + bounds.height / 2;
 	let previousPointerAngle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX) * (180 / Math.PI);
-	let rotation = parseFloat(String(props.targetBlock.getStyle("rotate") || 0)) || 0;
+	let rotation = parseFloat(String(props.targetBlock.getActiveStyleValue("rotate") || 0)) || 0;
 	// ancestors don't rotate mid-drag, so their contribution can be captured once up front
 	const ancestorRotation = getElementRotation((props.target as Element).parentElement);
 	const pauseId = canvasStore.activeCanvas?.history?.pause();
-	const startRotate = props.targetBlock.getStyle("rotate", null, true);
+	// the drag writes to the active state, so Escape must restore that same key
+	const rotateStyle = props.targetBlock.getActiveStyleProperty("rotate");
+	const startRotate = props.targetBlock.getStyle(rotateStyle, null, true);
 	let lastCursorAngle: number | null = null;
 	const dragCursor = (angle: number) =>
 		getRotatedCursor(rotationCursorSvg, ancestorRotation + angle + baseAngle, "pointer");
@@ -84,7 +86,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 			previousPointerAngle = pointerAngle;
 			const finalRotation = mouseMoveEvent.shiftKey ? Math.round(rotation / 15) * 15 : Math.round(rotation);
 			currentRotation.value = finalRotation;
-			props.targetBlock.setStyle("rotate", `${finalRotation}deg`);
+			props.targetBlock.setActiveStyle("rotate", `${finalRotation}deg`);
 			// the cursor SVG only needs rebuilding when the rounded/snapped angle actually
 			// changes - most mousemove ticks land on the same value, especially while snapping
 			if (finalRotation !== lastCursorAngle) {
@@ -92,7 +94,7 @@ const handleRotate = (ev: MouseEvent, baseAngle: number) => {
 				setDragCursor(dragCursor(finalRotation));
 			}
 		},
-		onCancel: () => props.targetBlock.setStyle("rotate", startRotate ?? null),
+		onCancel: () => props.targetBlock.setStyle(rotateStyle, startRotate ?? null),
 		onEnd: () => {
 			rotating.value = false;
 			emit("rotating", false);

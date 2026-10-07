@@ -42,7 +42,6 @@
 				</DialogDescription>
 				<BuilderSettings
 					:initial-tab="builderStore.settingsActiveTab"
-					:group="builderStore.settingsGroup"
 					@close="builderStore.showSettingsDialog = false"></BuilderSettings>
 			</template>
 		</Dialog>
@@ -64,6 +63,7 @@ const itemsIn = (region: ToolbarRegion) => {
 	const items = toolbarItems.visible.value.filter((item) => item.region === region);
 	if (region !== "right") return items;
 
+	// on purpose: Builder's own buttons stay at the right end, whatever `before` or `after` an extension sends
 	return [...items.filter((item) => item.isExtension), ...items.filter((item) => !item.isExtension)];
 };
 

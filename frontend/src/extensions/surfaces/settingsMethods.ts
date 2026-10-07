@@ -52,7 +52,7 @@ const mergeRegistration = (current: Registration, patch: Record<string, unknown>
 });
 
 const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Registration>): SettingsItem => {
-	const dispatch = bridge.dispatcherFor(extension);
+	const requestHandler = bridge.requestHandlerFor(extension);
 
 	return {
 		name: key,
@@ -68,7 +68,7 @@ const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Re
 		props: () => ({
 			extension: extension.name,
 			slot: "settings",
-			dispatch,
+			requestHandler,
 			onConnect: (channel: PortChannel) => bridge.connect(extension.name, channel),
 			onDisconnect: (channel: PortChannel) => bridge.disconnect(extension.name, channel),
 		}),

@@ -21,7 +21,7 @@ import {
 export type EventHandler = (payload: unknown) => void;
 
 /** Answers each request that this side of the channel accepts. */
-export type Dispatcher = (method: string, params: unknown) => unknown;
+export type RequestHandler = (method: string, params: unknown) => unknown;
 
 /** A refusal from the other side, or from the transport. */
 export class ChannelCallError extends Error {
@@ -34,7 +34,7 @@ export class ChannelCallError extends Error {
 	}
 }
 
-/** The refusal for an unknown method. A dispatcher also uses it, so the text is the same in all places. */
+/** The refusal for an unknown method. A request handler also uses it, so the text is the same in all places. */
 export const unknownMethod = (method: string) =>
 	new ChannelCallError({ message: `Unknown method "${method}".`, code: "unknown_method" });
 
@@ -48,7 +48,7 @@ const toChannelError = (error: unknown): ChannelError => {
 	return { message: error instanceof Error ? error.message : String(error) };
 };
 
-export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
+export function createPortChannel(port: MessagePort, requestHandler?: RequestHandler) {
 	const pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
 	const listeners = new Map<string, Set<EventHandler>>();
 	let nextId = 1;
@@ -59,7 +59,7 @@ export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
 	};
 
 	const run = (method: string, params: unknown) => {
-		if (dispatcher) return dispatcher(method, params);
+		if (requestHandler) return requestHandler(method, params);
 		throw unknownMethod(method);
 	};
 
@@ -103,8 +103,9 @@ export function createPortChannel(port: MessagePort, dispatcher?: Dispatcher) {
 		new Promise<T>((resolve, reject) => {
 			if (closed) return reject(new ChannelCallError(CHANNEL_CLOSED));
 			const id = nextId++;
-			pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
+			// post first. It throws for params it cannot copy, and a response always comes later
 			post(request(id, method, params));
+			pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
 		});
 
 	const listen = (name: string, handler: EventHandler) => {

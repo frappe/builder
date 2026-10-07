@@ -30,7 +30,7 @@
 					:extension="extension.name"
 					v-bind="{ slot: 'popover' }"
 					:initialProps="popover.props"
-					:dispatch="dispatch"
+					:request-handler="requestHandler"
 					@connect="(channel) => connectExtension(extension.name, channel)"
 					@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
 			</div>
@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
-import { connectExtension, disconnectExtension, dispatcherFor } from "@/extensions";
+import { connectExtension, disconnectExtension, requestHandlerFor } from "@/extensions";
 import { dismissPopover, openPopovers } from "@/extensions/editor/uiMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { computed, ref } from "vue";
@@ -53,7 +53,7 @@ const DEFAULT_HEIGHT = 520;
 const props = defineProps<{ extension: InstalledExtension }>();
 
 const popover = computed(() => openPopovers.get(props.extension.name));
-const dispatch = computed(() => dispatcherFor(props.extension));
+const requestHandler = computed(() => requestHandlerFor(props.extension));
 const pointerBusy = ref(false);
 
 /** Opens below the toolbar, at the top right. The user can move it. */

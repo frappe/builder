@@ -28,56 +28,35 @@ const DESCRIPTOR_PATH = "/__builder-extension";
 /** The hot reload client of Vite. It loads from the dev server, which serves the entry. */
 const HMR_CLIENT = "/@vite/client";
 
-/** The one file of an install. The editor reads it and sends it to the frame. */
+/** The port of Vite when the config sets none. */
+const DEFAULT_PORT = 5173;
+
+/** The entry of an install. A frame imports it from Builder, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
-/** Runs in each frame, because each frame imports the entry. */
-const STYLE_TAG = (css) =>
-	`(() => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); })();`;
+/**
+ * Runs in each frame, because each frame imports the entry. A link, not an
+ * inline style, so each `url(...)` in the CSS resolves against the stylesheet.
+ */
+const STYLESHEET_LINK = (fileName) =>
+	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.append(link); })();`;
 
 /** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
 
-/** Sufficient for an icon or a cursor. Not sufficient for a font. */
-const ASSET_INLINE_LIMIT = 64 * 1024;
-
 /**
- * Stops a build that makes more files than the entry, the manifest and the icon.
- *
- * A frame gets the entry as code, not as a URL. So a relative import has no
- * base, and an asset URL points to nothing. This error names the file. An
- * error in a frame shows no message.
- */
-const assertOneFile = (bundle, manifest) => {
-	const allowed = new Set([OUTPUT_ENTRY, MANIFEST, manifest.icon].filter(Boolean));
-	const extra = Object.keys(bundle).filter((name) => !allowed.has(name));
-	if (!extra.length) return;
-
-	throw new Error(
-		`[builder] an extension has to build to one file, and this build also emitted ${extra.join(", ")}. ` +
-			`Import a module statically instead of with import(). Drop an asset over ${ASSET_INLINE_LIMIT / 1024} kB, ` +
-			"such as a font, and use the one Builder already loads.",
-	);
-};
-
-/**
- * Moves the stylesheet into the entry.
+ * Makes the entry link the stylesheet.
  *
  * The frame shell is one static document. It names no extension. So it
- * cannot link the stylesheet of an extension. The CSS of a built extension
- * must be in the entry. If not, each frame shows no styles.
+ * cannot link the stylesheet of an extension. The entry must link it. If
+ * not, each frame shows no styles.
  */
-const foldStylesheets = (bundle) => {
-	const sheets = Object.values(bundle).filter(
-		(file) => file.type === "asset" && file.fileName.endsWith(".css"),
-	);
-	if (!sheets.length) return;
-
-	const css = sheets.map((sheet) => sheet.source).join("\n");
-	sheets.forEach((sheet) => delete bundle[sheet.fileName]);
+const linkStylesheet = (bundle) => {
+	const sheet = Object.values(bundle).find((file) => file.type === "asset" && file.fileName.endsWith(".css"));
+	if (!sheet) return;
 
 	const entryChunk = Object.values(bundle).find((file) => file.type === "chunk" && file.isEntry);
-	entryChunk.code = `${STYLE_TAG(css)}\n${entryChunk.code}`;
+	entryChunk.code = `${STYLESHEET_LINK(sheet.fileName)}\n${entryChunk.code}`;
 };
 
 const findEntry = (root) => {
@@ -109,7 +88,8 @@ export default function builderExtension({ builderUrl } = {}) {
 		throw new Error('[builder] builderExtension() needs "builderUrl", the origin Builder is served on');
 	}
 
-	const sdkUrl = `${builderUrl.replace(/\/$/, "")}${SDK_PATH}`;
+	const builderOrigin = new URL(builderUrl).origin;
+	const sdkUrl = `${builderOrigin}${SDK_PATH}`;
 
 	let root = process.cwd();
 	let entry = "";
@@ -143,45 +123,40 @@ export default function builderExtension({ builderUrl } = {}) {
 			root = path.resolve(config.root ?? process.cwd());
 			entry = findEntry(root);
 			serving = env.command === "serve";
+			const port = config.server?.port ?? DEFAULT_PORT;
 			return {
-				// the build does not need this now. A small asset goes into the entry,
-				// and the check below stops a large asset. The dev server still needs it,
-				// because it serves modules by path, not as one file
+				// a chunk or an asset URL resolves against the module that names it. So
+				// the build works under any install URL
 				base: "./",
 				// the frame runs module scripts. So it is always a modern browser
 				build: {
 					target: "es2020",
-					// one stylesheet, because the entry has the CSS. Split CSS also
-					// adds a stylesheet to the preload list of each lazy chunk. The
-					// frame then asks for a file that this plugin moved into the entry
+					// one stylesheet, because the entry links only one
 					cssCodeSplit: false,
-					// a small asset also goes into the entry, for the same reason as the
-					// CSS. The frame gets code and can fetch nothing.
-					//
-					// The build stops for a large asset. Vite adds an inline asset one time
-					// for each reference. Six @font-face rules for one font add it six
-					// times, as base64 that does not compress. On one sample, the size
-					// went from 1.6 MB to 5.6 MB. Also, Builder loads its own fonts.
-					assetsInlineLimit: ASSET_INLINE_LIMIT,
 					rollupOptions: {
 						input: entry,
 						// the build never includes the SDK. The import map of the frame
-						// shell points it to the one copy that Builder serves. An import
-						// map belongs to the document, so it also works for a Blob module
+						// shell points it to the one copy that Builder serves, for the
+						// entry and for every chunk
 						external: [SDK],
 						output: {
-							// one file. The editor reads the entry and sends the code to
-							// the frame. A chunk has no URL to import from
-							inlineDynamicImports: true,
 							entryFileNames: OUTPUT_ENTRY,
-							assetFileNames: "[name]-[hash][extname]",
+							chunkFileNames: "chunks/[name]-[hash].js",
+							assetFileNames: "assets/[name]-[hash][extname]",
 						},
 					},
 				},
 				server: {
 					// an extension frame has an opaque origin. It sends `Origin: null`.
-					// By default, Vite sends no CORS header for that request
-					cors: { origin: "*" },
+					// Any site can send `null` from a sandboxed frame, so this list
+					// stops a plain fetch, but the source files are not private
+					cors: { origin: [builderOrigin, "null"] },
+					// an asset URL resolves against the frame document, on the Builder
+					// site. So it must name the dev server. `strictPort` keeps the port
+					// in the origin correct: Vite stops, and does not try the next port
+					port,
+					strictPort: true,
+					origin: config.server?.origin ?? `${config.server?.https ? "https" : "http"}://localhost:${port}`,
 					// the package is installed by a link, so it is outside this project.
 					// Without this, the dev server does not serve it. The project must
 					// also be in the list, because this list replaces the default list
@@ -227,8 +202,8 @@ export default function builderExtension({ builderUrl } = {}) {
 				const { manifest } = readManifest(root);
 				response.setHeader("Content-Type", "application/json");
 				// this middleware runs before the middleware of Vite. So the CORS
-				// setting above does not apply yet. The editor reads this from a different origin
-				response.setHeader("Access-Control-Allow-Origin", "*");
+				// setting above does not apply yet. Only the editor reads this, never a frame
+				response.setHeader("Access-Control-Allow-Origin", builderOrigin);
 				response.end(
 					JSON.stringify({
 						v: manifest.v,
@@ -246,8 +221,8 @@ export default function builderExtension({ builderUrl } = {}) {
 		},
 
 		/**
-		 * Adds the manifest and the icon to the output. Moves the stylesheet into
-		 * the entry. Stops a build that makes more than one file.
+		 * Adds the manifest and the icon to the output. Makes the entry link the
+		 * stylesheet.
 		 *
 		 * `order: "post"` is necessary. The CSS plugin of Vite adds the stylesheet
 		 * in this same hook. This code must run after it.
@@ -264,8 +239,7 @@ export default function builderExtension({ builderUrl } = {}) {
 					this.emitFile({ type: "asset", fileName: manifest.icon, source: readIcon(findIcon(manifest)) });
 				}
 
-				foldStylesheets(bundle);
-				assertOneFile(bundle, manifest);
+				linkStylesheet(bundle);
 			},
 		},
 	};

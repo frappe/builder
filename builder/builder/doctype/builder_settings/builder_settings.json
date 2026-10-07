@@ -53,7 +53,7 @@
    "label": "Style Public URL"
   },
   {
-   "description": "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\" rel=\"noopener noreferrer\">favicon-generator.org</a>",
+   "description": "An icon file with .ico extension. Should be 16 x 16 px.<br>You can generate using <a href=\"https://favicon-generator.org\" target=\"_blank\">favicon-generator.org</a>",
    "fieldname": "favicon",
    "fieldtype": "Attach Image",
    "label": "Favicon"
@@ -134,7 +134,7 @@
   },
   {
    "default": "0",
-   "description": "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) \u2014 acceptable proxy for per-user on single-user trial sites.",
+   "description": "Internal flag: set once the persona onboarding survey has been shown. Site-wide (Builder Settings is a Single) — acceptable proxy for per-user on single-user trial sites.",
    "fieldname": "persona_survey_done",
    "fieldtype": "Check",
    "hidden": 1,
@@ -162,7 +162,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-07 00:05:17.903363",
+ "modified": "2026-10-07 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

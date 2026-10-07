@@ -36,24 +36,25 @@ const unregister = (params: unknown, extension: InstalledExtension) => {
 	if (!actions.delete(key)) throw refuse(`No action is registered under "${key}".`, "unknown_item");
 };
 
+/** Fails if no live action has the name, or if the handler fails. The caller reports it. */
+const runAction = (extension: InstalledExtension, action: string, context: Record<string, unknown> = {}) => {
+	const channel = actions.has(keyOf(extension, action)) && bridge.getEntryChannel(extension.name);
+	if (!channel)
+		throw refuse(`No live action is registered under "${keyOf(extension, action)}".`, "unknown_item");
+	return channel.call("action.invoke", { action, context });
+};
+
 /**
- * If no action has the name, the call fails. It shows a toast and logs both
- * names. So a user sees a message, and an author sees a stack.
+ * For a click. Nothing waits for the result, so it shows a toast and logs
+ * both names. So a user sees a message, and an author sees a stack.
  */
 export const invokeAction = async (
 	extension: InstalledExtension,
 	action: string,
 	context: Record<string, unknown> = {},
 ) => {
-	const channel = actions.has(keyOf(extension, action)) && bridge.getEntryChannel(extension.name);
-	if (!channel) {
-		toast.error(`${extension.label} could not run "${action}".`);
-		console.error(`Extension "${extension.name}" has no live action named "${action}"`);
-		return;
-	}
-
 	try {
-		return await channel.call("action.invoke", { action, context });
+		await runAction(extension, action, context);
 	} catch (error) {
 		toast.error(`${extension.label} failed to run "${action}".`);
 		console.error(`Extension "${extension.name}" failed while running "${action}"`, error);
@@ -62,7 +63,7 @@ export const invokeAction = async (
 
 const run = (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
-	return invokeAction(extension, text(sent.name, "name"), fields(sent.context));
+	return runAction(extension, text(sent.name, "name"), fields(sent.context));
 };
 
 export const actionMethods: MethodTable = {

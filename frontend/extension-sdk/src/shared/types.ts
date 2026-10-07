@@ -48,16 +48,10 @@ export type InstalledExtension = {
 	/** A data URI for the SVG in the package. Not set if the package has no SVG. */
 	icon?: string;
 	/**
-	 * The checksum of the installed files on the site. Only an installed
-	 * extension has one. It is part of the frame key. So a new build mounts
-	 * a new frame. A development extension has no checksum.
+	 * The URL of the entry module. Builder serves an installed extension, with the
+	 * checksum of the build in the URL. A dev server serves a development extension.
 	 */
-	checksum?: string;
-	/**
-	 * The URL of the entry on a dev server. Only a development extension has one.
-	 * An installed extension has no URL, because no route serves the files of one user.
-	 */
-	entry?: string;
+	entryUrl: string;
 };
 
 export type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -84,7 +78,7 @@ export type EditorSelection = {
 	/** Each selected block, in canvas order. Always present. */
 	blockIds: string[];
 	blockId?: string;
-	element?: string; // the tag, the underlying truth behind every kind check
+	element?: string; // the tag. All the kind checks come from it
 	isRoot?: boolean;
 	isText?: boolean;
 	isImage?: boolean;
@@ -99,7 +93,7 @@ export type EditorSelection = {
 	isChildOfComponent?: boolean;
 };
 
-/** The facts about one block. They say nothing about the full selection. */
+/** A snapshot of one block. It says nothing about the full selection. */
 export type BlockSnapshot = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
@@ -124,7 +118,7 @@ export type EditorContext = {
  * So each message names the version that it uses.
  */
 /**
- * The one message on the window. The port goes with it.
+ * The initial and only message on the window. The port is sent via this message.
  * All other messages use the port.
  *
  * It names no extension and no permission. The host knows the extension of
@@ -134,12 +128,10 @@ export type ConnectMessage = {
 	v: typeof PROTOCOL_VERSION;
 	type: "connect";
 	slot: ExtensionSlot;
-	/** A development extension imports this URL from its dev server. */
-	entry?: string;
-	/** The code of an installed extension. The frame runs it from a Blob. */
-	source?: string;
+	/** The URL of the entry module that this frame imports. */
+	entryUrl: string;
 	theme: "light" | "dark";
-	props?: Record<string, unknown>; // only ever set for a dialog
+	props?: Record<string, unknown>; // set only for a dialog
 };
 
 export type ChannelError = {

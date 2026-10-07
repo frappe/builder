@@ -1,11 +1,10 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""How an extension's code reaches a frame, and how a dev server extension gets an installation.
+"""How an extension served from a dev server gets a site installation.
 
-A frame sends no cookie, so no route can tell who is asking and the site's copy
-cannot be served safely by URL. The editor reads the entry here under its own
-session and posts the code into the frame it mounts.
+The installation lets a dev extension pass the same server checks as an
+installed one. Only an extension manager makes one, and only in developer mode.
 """
 
 import json
@@ -15,18 +14,10 @@ from frappe import _
 
 from builder.extensions.access import (
 	INSTALLATION_DOCTYPE,
-	assert_extension_access,
 	assert_extension_manager,
 	find_installation,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-
-
-@frappe.whitelist()
-def get_extension_source(extension: str) -> str:
-	"""The built entry the site installed."""
-	installation = assert_extension_access(extension)
-	return frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation).source
 
 
 @frappe.whitelist(methods=["POST"])

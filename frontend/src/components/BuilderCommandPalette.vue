@@ -54,7 +54,7 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 	searchQuery.value = "";
 };
 
-commands.register({
+commands.registerBuiltIn({
 	name: "search-page",
 	title: __("Search Page"),
 	icon: "lucide-file-search",
@@ -71,7 +71,7 @@ commands.register({
 		}),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "settings",
 	title: __("Settings"),
 	icon: "lucide-settings-2",
@@ -104,6 +104,11 @@ const paletteCommands = computed<PaletteItem[]>(() =>
 	commands.visible.value.filter((command) => command.inPalette !== false).map(toPaletteItem),
 );
 
+function openSettings(tab: string) {
+	builderStore.settingsActiveTab = tab;
+	builderStore.showSettingsDialog = true;
+}
+
 // read from the same registry the settings dialog renders, so a pane registered
 // by an extension shows up here too
 const settingsCommands = computed<PaletteItem[]>(() =>
@@ -117,7 +122,7 @@ const settingsCommands = computed<PaletteItem[]>(() =>
 			icon: item.icon,
 			usesRuntimeIcon: item.usesRuntimeIcon,
 			section: item.group === "Current Page" ? "page" : "global",
-			action: () => builderStore.openBuilderSettings(item.group, item.name),
+			action: () => openSettings(item.name),
 		})),
 );
 

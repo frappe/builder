@@ -33,7 +33,7 @@ export type {
 	ShowWhen,
 	SlotLoader,
 	ToolbarRegistration,
-} from "./runtime/namespaces";
+} from "./runtime/methods";
 export type { FrameOptions, ToastOptions, ToastType } from "./runtime/ui";
 export type { SlotEntry } from "./runtime/slots";
 export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./shared/types";

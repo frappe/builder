@@ -34,7 +34,7 @@ function toLocalDelta(dx: number, dy: number, rotationDeg: number) {
 
 // Uses the reactive block style so computed cursors update with style-panel edits.
 function getTotalRotation(target: Element, targetBlock: Block): number {
-	const ownRotation = parseFloat(String(targetBlock.getStyle("rotate") || 0)) || 0;
+	const ownRotation = parseFloat(String(targetBlock.getActiveStyleValue("rotate") || 0)) || 0;
 	return ownRotation + getElementRotation(target.parentElement);
 }
 

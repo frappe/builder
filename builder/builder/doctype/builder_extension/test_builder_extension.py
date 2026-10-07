@@ -75,10 +75,18 @@ class TestBuilderExtension(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, permissions=["page.edit"], granted=["page.edit", "schema.write"])
 
-	def test_reads_the_entry_it_installed(self):
+	def test_writes_the_files_it_installs(self):
+		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"export const ok = true;", "chunks/a.js": b""})
+
+		root = Path(installation.install_path)
+		self.assertEqual((root / "main.js").read_text(), "export const ok = true;")
+		self.assertTrue((root / "chunks" / "a.js").is_file())
+
+	def test_finds_the_entry_it_installed(self):
 		installation = make_installation(EXTENSION, source="export const ok = true;")
 
-		self.assertEqual(installation.source, "export const ok = true;")
+		self.assertEqual(installation.get_asset_path("main.js").read_text(), "export const ok = true;")
 
 	def test_uninstall_takes_the_files(self):
 		installation = make_installation(EXTENSION, source="export default {};")
@@ -112,18 +120,27 @@ class TestInstalledFiles(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 
-	def test_refuses_a_source_that_was_never_installed(self):
+	def test_finds_a_chunk_in_a_folder(self):
 		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"", "chunks/panel.js": b"export {};"})
 
-		with self.assertRaises(frappe.ValidationError):
-			installation.source
+		self.assertEqual(installation.get_asset_path("chunks/panel.js").read_bytes(), b"export {};")
 
-	def test_refuses_a_source_over_the_size_limit(self):
+	def test_finds_no_file_that_was_never_installed(self):
+		self.assertIsNone(make_installation(EXTENSION).get_asset_path("main.js"))
+
+	def test_finds_no_file_outside_the_install(self):
 		installation = make_installation(EXTENSION, source="export default {};")
+		sibling = make_installation("acme/sibling", source="export const secret = 1;")
+		self.addCleanup(drop_installations, "acme/sibling")
 
-		with patch(f"{INSTALLATION_MODULE}.MAX_SOURCE_BYTES", 3):
-			with self.assertRaises(frappe.ValidationError):
-				installation.source
+		self.assertIsNone(installation.get_asset_path(f"../{sibling.name}/main.js"))
+
+	def test_finds_no_file_of_a_type_a_frame_does_not_load(self):
+		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"", "page.html": b"<script></script>"})
+
+		self.assertIsNone(installation.get_asset_path("page.html"))
 
 	def test_draws_the_icon_as_a_data_uri(self):
 		installation = make_installation(EXTENSION, source="export default {};", icon="icon.svg")

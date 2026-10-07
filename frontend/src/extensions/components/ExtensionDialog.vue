@@ -16,7 +16,7 @@
 					:extension="extension.name"
 					slot="dialog"
 					:initialProps="dialog.props"
-					:dispatch="dispatch"
+					:request-handler="requestHandler"
 					:style="{ height: `${FRAME_HEIGHT}px` }"
 					@connect="(channel) => connectExtension(extension.name, channel)"
 					@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
-import { connectExtension, disconnectExtension, dispatcherFor } from "@/extensions";
+import { connectExtension, disconnectExtension, requestHandlerFor } from "@/extensions";
 import { dismissDialog, openDialogs } from "@/extensions/editor/uiMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { computed } from "vue";
@@ -39,7 +39,7 @@ const FRAME_HEIGHT = 192;
 const props = defineProps<{ extension: InstalledExtension }>();
 
 const dialog = computed(() => openDialogs.get(props.extension.name));
-const dispatch = computed(() => dispatcherFor(props.extension));
+const requestHandler = computed(() => requestHandlerFor(props.extension));
 
 /**
  * Escape, the close button and a click outside have the same result. The host

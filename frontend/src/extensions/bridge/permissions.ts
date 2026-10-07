@@ -17,7 +17,7 @@ import type { Permission, InstalledExtension } from "frappe-builder-extension-sd
  */
 export type HostMethod = {
 	needs: Permission | null;
-	/** The record comes from the dispatcher. It never comes from the message. */
+	/** The record comes from the request handler. It never comes from the message. */
 	run: (params: unknown, extension: InstalledExtension) => unknown;
 };
 
@@ -40,9 +40,6 @@ export const assertWritable = (extension: InstalledExtension, method: string, ne
 	});
 };
 
-/** The check for a `bind` control at registration. At that time, there is no call to gate. */
-export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("page.edit");
-
 export const assertGranted = (extension: InstalledExtension, method: string, needs: Permission | null) => {
 	if (!needs || extension.permissions.includes(needs)) return;
 	throw new ChannelCallError({
@@ -50,3 +47,6 @@ export const assertGranted = (extension: InstalledExtension, method: string, nee
 		code: "permission_required",
 	});
 };
+
+/** The check for a `bind` control at registration. At that time, there is no call to gate. */
+export const canWrite = (extension: InstalledExtension) => extension.permissions.includes("page.edit");

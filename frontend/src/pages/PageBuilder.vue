@@ -264,7 +264,8 @@ onActivated(async () => {
 	});
 	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
 	builderStore.realtime.doc_open("Builder Page", route.params.pageId as string);
-	if (route.params.pageId === pageStore.selectedPage) {
+	// a preview selects the page but does not load its canvas
+	if (route.params.pageId === pageStore.selectedPage && pageStore.pageBlocks.length) {
 		return;
 	}
 	if (!webPages.data) {
@@ -300,8 +301,9 @@ watch(
 				page_title: "My Page",
 				draft_blocks: [getRootBlockTemplate()],
 			} as BuilderPage;
-			if (builderStore.activeFolder) {
-				pageInfo["project_folder"] = builderStore.activeFolder;
+			const folder = (to.query.folder as string) || builderStore.activeFolder;
+			if (folder) {
+				pageInfo["project_folder"] = folder;
 			}
 			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
@@ -323,6 +325,7 @@ onMounted(() => {
 	if (!editorDemo) {
 		prefetchBuilderSettings();
 		prefetchTemplateGallery();
+		pageStore.findDetachedPreview();
 	}
 });
 

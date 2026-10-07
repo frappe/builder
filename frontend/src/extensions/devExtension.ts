@@ -3,12 +3,15 @@
  *
  * It has no files. The editor asks the dev server what it serves. Then the
  * editor adds one entry to the installed list. The rest of the host reads only
- * that list. So the entry frame, the surfaces, the dispatcher and the teardown
+ * that list. So the entry frame, the surfaces, the request handler and the teardown
  * do not know that the extension is not installed.
  *
  * A reload removes it. A user must load it on purpose. An old dev extension
  * that fails to load looks like a Builder error. The editor keeps the last URL,
  * so the user does not type it again.
+ *
+ * Closing the tab keeps the installation. It belongs to the site, so another
+ * tab can run the same extension. The next load refreshes it.
  */
 
 import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";
@@ -19,8 +22,8 @@ import { ref } from "vue";
 const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
-const INSTALL_METHOD = "builder.extensions.registry.install_dev_extension";
-const REMOVE_METHOD = "/api/method/builder.extensions.registry.remove_dev_extension";
+const INSTALL_METHOD = "builder.extensions.development.install_dev_extension";
+const REMOVE_METHOD = "builder.extensions.development.remove_dev_extension";
 
 export type DevelopmentExtension = InstalledExtension & {
 	version: string;
@@ -33,10 +36,10 @@ export const devExtension = ref<DevelopmentExtension | null>(null);
 
 export const showDevExtensionDialog = ref(false);
 
-export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
-
 /** Both lists have the dev entry under its own name. So the name is the check. */
 export const isDevExtension = (extension: { name: string }) => devExtension.value?.name === extension.name;
+
+export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 
 /**
  * An unknown permission shows a version gap, not an error. The extension does
@@ -86,18 +89,10 @@ export const setDevPermissions = (extension: string, permissions: Permission[]) 
 	if (devExtension.value?.name === extension) devExtension.value.permissions = permissions;
 };
 
-/**
- * Uses `fetch`, not `call`. With `keepalive`, a request from `pagehide` can
- * continue after the document closes. Frappe refuses a form POST without the
- * CSRF header. The browser does not add this header.
- */
 const remove = (extension: InstalledExtension) =>
-	fetch(REMOVE_METHOD, {
-		method: "POST",
-		headers: { "X-Frappe-CSRF-Token": window.csrf_token },
-		body: new URLSearchParams({ extension: extension.name }),
-		keepalive: true,
-	}).catch((error) => console.error(`Could not remove development extension "${extension.name}"`, error));
+	call(REMOVE_METHOD, { extension: extension.name }).catch((error: Error) =>
+		console.error(`Could not remove development extension "${extension.name}"`, error),
+	);
 
 /** Accepts any URL on the dev server. An author pastes the URL from the terminal. */
 export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
@@ -115,16 +110,15 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		serverOrigin: origin,
 		readme: descriptor.readme,
 		// the dev server serves the source entry. So the path comes from the dev server
-		entry: `${origin}${descriptor.entry}`,
+		entryUrl: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
 		permissions: granted,
 	};
 	return devExtension.value;
 };
 
+/** The Stop button in the Extensions panel. Closing the tab does not call this, so another tab keeps the record. */
 export const stopDevExtension = () => {
 	if (devExtension.value) void remove(devExtension.value);
 	devExtension.value = null;
 };
-
-window.addEventListener("pagehide", stopDevExtension);

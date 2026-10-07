@@ -11,7 +11,7 @@
 				:key="frameKey(extension)"
 				:extension="extension.name"
 				slot="main"
-				:dispatch="dispatcherFor(extension)"
+				:request-handler="requestHandlerFor(extension)"
 				@connect="(channel) => connectEntryFrame(extension, channel)"
 				@disconnect="(channel) => disconnectExtension(extension.name, channel)"
 				@ready="markEntryFrameReady(extension.name)" />
@@ -39,29 +39,28 @@
 
 <script setup lang="ts">
 import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
+import ExtensionConfirmDialog from "@/extensions/components/ExtensionConfirmDialog.vue";
 import ExtensionDialog from "@/extensions/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
-import ExtensionConfirmDialog from "@/extensions/components/ExtensionConfirmDialog.vue";
 import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
-import { connectExtension, disconnectExtension, dispatcherFor, teardownExtension } from "@/extensions";
+import { connectExtension, disconnectExtension, requestHandlerFor, teardownExtension } from "@/extensions";
 import { markEntryFrameReady, waitForEntryFrame } from "@/extensions/bridge/entryFrames";
 import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { getCurrentInstance, onMounted, onUnmounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 
 const builderStore = useBuilderStore();
-const resourceVm = getCurrentInstance()?.proxy;
 
 const onInstallationListChanged = ({ doctype }: { doctype: string }) => {
-	if (doctype === INSTALLATION_DOCTYPE) void loadExtensions(resourceVm);
+	if (doctype === INSTALLATION_DOCTYPE) void loadExtensions();
 };
 
 onMounted(() => {
 	builderStore.realtime.emit("doctype_subscribe", INSTALLATION_DOCTYPE);
 	builderStore.realtime.on("list_update", onInstallationListChanged);
-	void loadExtensions(resourceVm);
+	void loadExtensions();
 });
 
 onUnmounted(() => {
@@ -80,15 +79,15 @@ const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) 
  * code changes. A frame reads its code one time, in the handshake. A key with
  * only the name would keep the old frame.
  *
- * An installation uses its checksum in the key. So a new build starts a new
- * frame. A dev extension has no checksum. It uses the URL of its dev server.
- * So a dev version of an installed extension mounts its frames again.
+ * The entry URL names the build. An installation has its checksum in the URL,
+ * and a dev extension has the URL of its dev server. So a new build, or a dev
+ * version of an installed extension, mounts its frames again.
  *
- * The key also includes the permissions. `dispatcherFor` keeps the record from
+ * The key also includes the permissions. `requestHandlerFor` keeps the record from
  * when it started. Without this, a frame keeps a permission after the user removes it.
  */
 const frameKey = (extension: InstalledExtension) =>
-	`${extension.name}@${extension.checksum ?? extension.entry}@${extension.permissions.join(",")}`;
+	`${extension.name}@${extension.entryUrl}@${extension.permissions.join(",")}`;
 
 // an unmounted frame only closes its channel. The registrations of the
 // extension stay. So this code first removes, by name, each extension that

@@ -2,7 +2,7 @@
  * `frappe-builder-extension-sdk`: the object that an extension imports.
  *
  * - `connect.ts`: the handshake, and how the frame runs the extension code.
- * - `namespaces.ts`: the `builder.<surface>` APIs.
+ * - `methods.ts`: the `builder.<surface>` APIs.
  * - `slots.ts`: the five slots, and the slot that this frame runs.
  * - `actions.ts`: the action handlers that the host calls.
  * - `ui.ts`: toasts, dialogs and popovers from inside a frame.
@@ -28,7 +28,7 @@ import {
 	state,
 	toolbar,
 	tokens,
-} from "./namespaces";
+} from "./methods";
 import { resourceFetcher } from "./resourceFetcher";
 import { registerMain, registerSlot, use, type Mounter, type SlotEntry } from "./slots";
 import { ui } from "./ui";
@@ -108,7 +108,7 @@ const builder = {
 	/**
 	 * Site data. Each call needs the `data.access` permission.
 	 *
-	 * This file adds `fetcher`, not `namespaces.ts`. So `namespaces.ts` does not
+	 * This file adds `fetcher`, not `methods.ts`. So `methods.ts` does not
 	 * import the file that reads it. Connect it one time, in the entry:
 	 *
 	 * ```js

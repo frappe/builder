@@ -7,7 +7,7 @@
 
 import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
 import { PROTOCOL_VERSION, type ConnectMessage } from "../shared/types";
-import { dispatch } from "./actions";
+import { handleRequest } from "./actions";
 import { runSlot, setActiveSlot } from "./slots";
 
 /**
@@ -38,45 +38,16 @@ const isConnectMessage = (data: unknown): data is ConnectMessage =>
 
 const applyTheme = (theme: unknown) => document.documentElement.setAttribute("data-theme", String(theme));
 
-/**
- * Runs the extension code from the location that the host gave.
- *
- * Installed code comes as a Blob. A frame sends no cookie, so no route can
- * check who asks for the code. A Blob URL makes the code a module. The import
- * map still finds the SDK inside it, because the map belongs to the document.
- *
- * The frame makes the Blob URL itself. A Blob URL belongs to the origin that
- * made it. This frame has an opaque origin, so it cannot load a URL from the
- * editor. The new Blob also sets the type that a module script must have.
- *
- * A dev extension keeps its URL. A dev server serves separate modules that
- * import each other by relative path. A Blob gives them no path.
- */
-const runEntry = async (message: ConnectMessage) => {
-	if (message.source === undefined) {
-		if (!message.entry) throw new Error("The connect message carried no extension code");
-		await import(/* @vite-ignore */ message.entry);
-		return;
-	}
-
-	const url = URL.createObjectURL(new Blob([message.source], { type: "text/javascript" }));
-	try {
-		await import(/* @vite-ignore */ url);
-	} finally {
-		// the module is loaded. A one-file build imports nothing more
-		URL.revokeObjectURL(url);
-	}
-};
-
 const start = async (message: ConnectMessage, port: MessagePort) => {
-	channel = createPortChannel(port, dispatch);
+	channel = createPortChannel(port, handleRequest);
 	channel.listen("theme", applyTheme);
 	applyTheme(message.theme);
 	slotProps = message.props ?? {};
 	setActiveSlot(message.slot);
 
-	// the shell names no extension. The message tells what to run
-	await runEntry(message);
+	// the shell names no extension. The message tells what to run. A real URL
+	// lets the entry import its chunks and assets by relative path
+	await import(/* @vite-ignore */ message.entryUrl);
 	// the props go to the slot document. So a dialog can open with call-time arguments
 	await runSlot(slotProps);
 	// A loaded iframe document is not sufficient. The entry and the slot can

@@ -86,8 +86,9 @@
 					:data="pageStore.pageData" />
 			</div>
 		</div>
+		<!-- isolate keeps editor z-indexes from lifting handles above the side panels -->
 		<div
-			class="overlay absolute"
+			class="overlay absolute isolate"
 			:class="{ 'pointer-events-none': isOverDropZone }"
 			id="overlay"
 			ref="overlay" />
@@ -213,6 +214,8 @@ const {
 	selectBlockRange,
 	selectedBlockIds,
 	isSelected,
+	selectBlock,
+	removeNestedBlocks,
 	toggleBlockSelection,
 	selectedBlocks,
 } = useBlockSelection(block);
@@ -264,12 +267,11 @@ const {
 	clearCanvas,
 	getRootBlock,
 	setRootBlock,
-	selectBlock,
 	scrollBlockIntoView,
 	removeBlock,
 	findBlock,
 	isDirty,
-} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, history);
+} = useCanvasUtils(canvasProps, canvasContainer, canvas, block, selectedBlockIds, selectBlock, history);
 
 const { followBuildEdge, followBlock } = useBuildFollow(canvasProps, canvasContainer, canvas);
 
@@ -279,7 +281,9 @@ const { marquee, marqueeStyle, suppressNextClick, handleMarqueeStart, cleanupMar
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
+		selectedBlocks,
 		findBlock,
+		removeNestedBlocks,
 		setActiveBreakpoint,
 		setHoveredBreakpoint,
 	});
@@ -481,7 +485,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	const selector = `[data-builder-canvas="${canvasId}"] [data-block-uid="${escapeAttributeValue(
 		script.key,
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
-	blockStyles.set(registrationKey, script.css ? `${selector} { ${script.css} }` : "");
+	blockStyles.set(registrationKey, script.css ? `@scope (${selector}) { ${script.css} }` : "");
 
 	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 	let cleanup = () => {};

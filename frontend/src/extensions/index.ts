@@ -16,10 +16,10 @@
  */
 
 import useBuilderStore from "@/stores/builderStore";
-import { dataMethods } from "./data";
 import { bridge } from "./bridge/bridge";
 import { hostMethods } from "./bridge/hostMethods";
 import { contextMethods } from "./context/contextMethods";
+import { dataMethods } from "./data";
 import { editorMethods } from "./editor";
 import { surfaceMethods } from "./surfaces";
 
@@ -34,7 +34,7 @@ export const {
 	connect: connectExtension,
 	disconnect: disconnectExtension,
 	getEntryChannel,
-	dispatcherFor,
+	requestHandlerFor,
 	registerTeardown,
 	teardown: teardownExtension,
 } = bridge;

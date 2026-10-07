@@ -24,7 +24,7 @@
 						<span class="truncate text-xs text-ink-gray-5">{{ details.name }}</span>
 						<div class="flex items-center gap-1.5">
 							<span class="text-xs text-ink-gray-5">Version {{ details.version }}</span>
-							<Badge v-if="details.is_development" size="sm" theme="orange" label="Dev" />
+							<Badge v-if="details.is_development" size="sm" theme="amber" label="Dev" />
 						</div>
 					</div>
 				</div>
@@ -244,6 +244,7 @@ const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): Installation
 	installation_id: "",
 	source_url: hub.source_url ?? "",
 	enabled: false,
+	permissions: [],
 	installed_on: "",
 	requested_permissions: [],
 	granted_permissions: [],

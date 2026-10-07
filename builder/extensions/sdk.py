@@ -3,14 +3,10 @@
 
 """The one SDK build every extension frame shares.
 
-Nothing else is served here. An extension's own code reaches its frame through
-the connect handshake, because a frame sends no session and no route could tell
-one user's request from another's.
-
-The frame still needs this file over HTTP: its import map resolves the bare
-`frappe-builder-extension-sdk` specifier to this URL, and a module script at an
-opaque origin is a cross-origin request. The web server sends no CORS header for
-the app's public directory, so Builder answers this one itself.
+The frame's import map resolves the bare `frappe-builder-extension-sdk`
+specifier to this URL, and a module script at an opaque origin is a cross-origin
+request. The web server sends no CORS header for the app's public directory, so
+Builder answers this one itself. `assets.py` serves the extensions' own files.
 """
 
 from functools import cached_property
@@ -21,8 +17,11 @@ from frappe.website.page_renderers.base_renderer import BaseRenderer
 from werkzeug.wrappers import Response
 from werkzeug.wsgi import wrap_file
 
+from builder.extensions.assets import SECURITY_HEADERS
+from builder.extensions.constants import ASSET_ROUTE
+
 # `yarn build:sdk` writes this one file, and `builder_extension.html` imports it
-SDK_ROUTE = "builder_extension_asset/sdk/extension-sdk.js"
+SDK_ROUTE = f"{ASSET_ROUTE}/sdk/extension-sdk.js"
 
 # The name never changes, so the file cannot be immutable. It revalidates, and an
 # unchanged build answers 304.
@@ -58,7 +57,7 @@ class ExtensionSDKRenderer(BaseRenderer):
 	@property
 	def response_headers(self) -> dict:
 		return {
-			"Access-Control-Allow-Origin": "*",
+			**SECURITY_HEADERS,
 			"Cache-Control": CACHE_CONTROL,
 			"ETag": self.etag,
 		}

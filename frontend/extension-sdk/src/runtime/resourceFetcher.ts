@@ -28,7 +28,7 @@
  */
 
 import { ChannelCallError } from "../shared/transport/createPortChannel";
-import { data, type ListOptions } from "./namespaces";
+import { data, type ListOptions } from "./methods";
 
 type Params = Record<string, unknown>;
 

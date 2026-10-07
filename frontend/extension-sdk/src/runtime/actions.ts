@@ -5,7 +5,7 @@
  * only the name. When a user activates a descriptor with that name, the host
  * calls back.
  *
- * This code is separate from `namespaces.ts`. So `connect.ts` can dispatch
+ * This code is separate from `methods.ts`. So `connect.ts` can answer
  * requests, and the two files do not import each other.
  *
  * Only the entry frame keeps handlers. The host calls that frame because it
@@ -19,9 +19,9 @@ export type ActionHandler = (context: Record<string, unknown>) => unknown;
 
 const handlers = new Map<string, ActionHandler>();
 
-export const holdAction = (name: string, handler: ActionHandler) => handlers.set(name, handler);
+export const setHandler = (name: string, handler: ActionHandler) => handlers.set(name, handler);
 
-export const releaseAction = (name: string) => handlers.delete(name);
+export const deleteHandler = (name: string) => handlers.delete(name);
 
 export const runAction = (params: unknown) => {
 	const { action, context } = (params ?? {}) as { action?: string; context?: Record<string, unknown> };
@@ -32,7 +32,7 @@ export const runAction = (params: unknown) => {
 
 const methods = new Map<string, (params: unknown) => unknown>([["action.invoke", runAction]]);
 
-export const dispatch = (method: string, params: unknown) => {
+export const handleRequest = (method: string, params: unknown) => {
 	const handler = methods.get(method);
 	if (!handler) throw unknownMethod(method);
 	return handler(params);

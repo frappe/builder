@@ -8,12 +8,19 @@ export const loadRuntimeLucideIcon = (name: string) => {
 	const iconName = name.slice("lucide-".length);
 	if (!ICON_NAME.test(iconName)) return;
 	if (!iconCache.has(iconName)) {
-		iconCache.set(iconName, fetch(`${iconBaseUrl}${iconName}.svg`).then((response) => (response.ok ? response.text() : undefined)));
+		const download = fetch(`${iconBaseUrl}${iconName}.svg`)
+			.then((response) => (response.ok ? response.text() : undefined))
+			// a network error is not kept, so a later button tries again. A 404 is kept
+			.catch(() => void iconCache.delete(iconName));
+		iconCache.set(iconName, download);
 	}
 	return iconCache.get(iconName);
 };
 
 export const createLucideMaskImage = (svg: string) => {
-	const normalizedSvg = svg.replace(/stroke-width="[^"]+"/g, "stroke-width=\"1.5\"").replace(/\s+/g, " ").trim();
+	const normalizedSvg = svg
+		.replace(/stroke-width="[^"]+"/g, 'stroke-width="1.5"')
+		.replace(/\s+/g, " ")
+		.trim();
 	return `url("data:image/svg+xml;utf8,${encodeURIComponent(normalizedSvg)}")`;
 };

@@ -141,6 +141,15 @@ describe("createRegistry", () => {
 		expect(names(registry.visible.value)).toEqual(["Layers"]);
 	});
 
+	it("lets Builder remove its own built-in item", () => {
+		const registry = createRegistry<TestItem>();
+		registry.registerBuiltIn({ name: "Layers" });
+
+		expect(registry.unregisterBuiltIn("Layers")).toBe(true);
+		expect(names(registry.visible.value)).toEqual([]);
+		expect(() => registry.register({ name: "Layers" })).not.toThrow();
+	});
+
 	it("lets a built-in register again under the same name", () => {
 		const registry = createRegistry<TestItem>();
 		registry.registerBuiltIn({ name: "Layers", label: "first" });

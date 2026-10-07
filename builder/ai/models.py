@@ -29,8 +29,8 @@ DEFAULT_CONTEXT_WINDOW = 200_000
 # Used only when the rows are unreachable (install/migrate ordering) or all gone,
 # so the agent still has something to call.
 FALLBACK_MODEL = {
-	"name": "openrouter/anthropic/claude-sonnet-5",
-	"label": "Claude Sonnet 5",
+	"name": "openrouter/anthropic/claude-sonnet-5.5",
+	"label": "Claude Sonnet 5.5",
 	"provider": "OpenRouter",
 	"route_prefix": "openrouter",
 	"litellm_provider": "openrouter",

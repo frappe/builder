@@ -1,7 +1,9 @@
 import ipaddress
 import os
+import re
 import socket
 from io import BytesIO
+from itertools import count
 from types import FunctionType, MethodType, ModuleType
 from typing import Any
 from urllib.parse import unquote, urlparse
@@ -425,11 +427,63 @@ def clone_client_scripts(source_page, new_page) -> None:
 	client_scripts = source_page.client_scripts
 	new_page.client_scripts = []
 	for script in client_scripts:
-		builder_script = frappe.get_doc("Builder Client Script", script.builder_script)
-		new_script = frappe.copy_doc(builder_script, ignore_no_copy=False)
-		new_script.name = f"{builder_script.name}-{frappe.generate_hash(length=5)}"
-		new_script.insert(ignore_permissions=True)
+		new_script = copy_client_script(script.builder_script)
 		new_page.append("client_scripts", {"builder_script": new_script.name})
+
+
+def copy_client_script(name: str, script: str | None = None):
+	new_script = frappe.copy_doc(frappe.get_doc("Builder Client Script", name), ignore_no_copy=False)
+	new_script.name = get_copy_script_name(name)
+	if script is not None:
+		new_script.script = script
+	return new_script.insert(ignore_permissions=True)
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to edit client scripts")
+def save_client_script_as_copy(page_name: str, script_name: str, script: str) -> str:
+	"""Moves one page off a shared script onto its own copy, which carries the edit."""
+	page = frappe.get_doc("Builder Page", page_name)
+	rows = [row for row in page.client_scripts if row.builder_script == script_name]
+	if not rows:
+		frappe.throw(_("{0} is not attached to this page").format(script_name))
+	new_script = copy_client_script(script_name, script)
+	for row in rows:
+		row.builder_script = new_script.name
+	page.save()
+	new_script.clear_page_cache()
+	return new_script.name
+
+
+@frappe.whitelist()
+@has_page_write("You do not have permission to edit client scripts")
+def save_client_script(name: str, script: str, modified: str | None = None) -> str:
+	"""Saves a script. Pass the `modified` it was loaded with to refuse overwriting a newer save."""
+	doc = frappe.get_doc("Builder Client Script", name)
+	doc.script = script
+	if modified:
+		doc.modified = modified
+	doc.save()
+	return str(doc.modified)
+
+
+def get_copy_script_name(name: str) -> str:
+	"""Swaps the trailing hash for a fresh one, so copies of copies don't keep growing the name."""
+	base = re.sub(r"(-[0-9a-f]{5})+$", "", name)
+	return f"{base}-{frappe.generate_hash(length=5)}"
+
+
+def get_copy_title(title: str) -> str:
+	"""Numbers copies like "Home (Copy)", "Home (Copy 2)" so copying a copy doesn't stack suffixes.
+
+	The trailing number alternative strips titles made while the number sat outside the parens."""
+	base = re.sub(r" \(Copy(?: \d+)?\)(?: \d+)?$", "", title)
+	siblings = frappe.get_all(
+		"Builder Page", filters={"page_title": ["like", f"{base} (Copy%"]}, pluck="page_title"
+	)
+	pattern = rf"{re.escape(base)} \(Copy(?: (\d+))?\)"
+	numbers = [int(m.group(1) or 1) for t in siblings if (m := re.fullmatch(pattern, t))]
+	return f"{base} (Copy {max(numbers) + 1})" if numbers else f"{base} (Copy)"
 
 
 @frappe.whitelist()
@@ -438,7 +492,11 @@ def duplicate_page(page_name: str):
 	page = frappe.get_doc("Builder Page", page_name)
 	new_page = frappe.copy_doc(page)
 	del new_page.page_name
+	new_page.page_title = get_copy_title(page.page_title or page.page_name)
 	new_page.route = None
+	new_page.published = 0
+	new_page.staging = 0
+	new_page.published_at = None
 	new_page.is_standard = 0
 	new_page.app = None
 	clone_client_scripts(page, new_page)
@@ -487,7 +545,10 @@ def get_template_groups() -> list[dict]:
 
 
 def create_page_from_bundle(
-	bundle: dict, project_folder: str | None = None, template_page: str | None = None
+	bundle: dict,
+	project_folder: str | None = None,
+	template_page: str | None = None,
+	route: str | None = None,
 ) -> str:
 	"""Create an editable page from a fetched hub bundle and return its name.
 
@@ -517,13 +578,14 @@ def create_page_from_bundle(
 			"body_html": page.get("body_html"),
 			"meta_description": page.get("meta_description"),
 			"project_folder": project_folder or None,
+			"route": route,
 		}
 	)
 	for cs in bundle.get("client_scripts") or []:
 		new_script = frappe.get_doc(
 			{
 				"doctype": "Builder Client Script",
-				"name": f"{cs.get('name')}-{frappe.generate_hash(length=5)}",
+				"name": get_copy_script_name(cs.get("name")),
 				"script_type": cs.get("script_type"),
 				"script": cs.get("script"),
 			}
@@ -563,8 +625,11 @@ def create_page_from_template(template_page: str, project_folder: str | None = N
 
 @frappe.whitelist()
 @has_page_write("You do not have permission to create pages.")
-def import_template_group(template_group: str, project_folder: str | None = None) -> list[str]:
-	"""Import all pages from a template group and return their names."""
+def import_template_group(template_group: str) -> dict:
+	"""Import all pages of a template group into a new folder and return it with the page names.
+
+	Pages keep their template paths under one shared route prefix, so the group's relative
+	nav links (href="rooms") resolve between the imported pages."""
 	groups = get_template_groups()
 	group = next((g for g in groups if g.get("name") == template_group), None)
 	if not group:
@@ -574,22 +639,80 @@ def import_template_group(template_group: str, project_folder: str | None = None
 	if not pages:
 		frappe.throw(frappe._("No pages found in this template group."))
 
+	# fetch before creating the folder, so its row lock isn't held across hub requests
+	bundles = fetch_group_bundles(pages)
+	if not bundles:
+		frappe.throw(frappe._("Could not import any pages from this template group."))
+
+	slug = frappe.scrub(template_group).replace("_", "-")
+	folder, prefix = create_import_folder(group.get("title") or template_group, slug)
+	return {"folder": folder, "pages": import_group_pages(bundles, template_group, folder, prefix)}
+
+
+def import_group_pages(
+	bundles: list[tuple[str, dict]], template_group: str, folder: str, prefix: str
+) -> list[str]:
 	created = []
+	for name, bundle in bundles:
+		route = f"{prefix}/{template_path(bundle, name, template_group)}"
+		created.append(create_page_from_bundle(bundle, folder, name, route))
+	return created
+
+
+def fetch_group_bundles(pages: list[dict]) -> list[tuple[str, dict]]:
+	bundles = []
 	for page in pages:
 		try:
 			bundle = hub_get("get_template_bundle", page=page.get("name"))
 		except Exception:
 			frappe.log_error(f"Failed to fetch template bundle for {page.get('name')}")
 			continue
-		if not bundle or not bundle.get("page"):
+		if bundle and bundle.get("page"):
+			bundles.append((page.get("name"), bundle))
+	return bundles
+
+
+def template_path(bundle: dict, template_page: str, template_group: str) -> str:
+	"""The route below the hub's templates/<group>/, so nested template pages keep distinct paths."""
+	route = (bundle["page"].get("route") or template_page).strip("/")
+	hub_prefix = f"templates/{template_group}/"
+	return route.removeprefix(hub_prefix) if route.startswith(hub_prefix) else route.rsplit("/", 1)[-1]
+
+
+def create_import_folder(title: str, slug: str) -> tuple[str, str]:
+	"""Create a folder for an import and take its route prefix from the same suffix.
+
+	The folder name is the doctype's primary key, so two concurrent imports can never
+	claim the same folder, and with it the same prefix."""
+	taken_names, taken_prefixes = taken_folder_names(title), taken_route_prefixes(slug)
+	for suffix in count(1):
+		name, prefix = (title, slug) if suffix == 1 else (f"{title} {suffix}", f"{slug}-{suffix}")
+		if name in taken_names or prefix in taken_prefixes:
 			continue
-		name = create_page_from_bundle(bundle, project_folder, page.get("name"))
-		created.append(name)
+		if insert_folder(name):
+			return name, prefix
+		taken_names.add(name)
 
-	if not created:
-		frappe.throw(frappe._("Could not import any pages from this template group."))
 
-	return created
+def insert_folder(name: str) -> bool:
+	frappe.db.savepoint("builder_import_folder")
+	try:
+		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": name}).insert()
+	except frappe.DuplicateEntryError:
+		frappe.db.rollback(save_point="builder_import_folder")
+		return False
+	return True
+
+
+def taken_folder_names(title: str) -> set[str]:
+	return set(
+		frappe.get_all("Builder Project Folder", filters={"name": ["like", f"{title}%"]}, pluck="name")
+	)
+
+
+def taken_route_prefixes(slug: str) -> set[str]:
+	routes = frappe.get_all("Builder Page", filters={"route": ["like", f"{slug}%/%"]}, pluck="route")
+	return {route.split("/")[0] for route in routes}
 
 
 @frappe.whitelist()
@@ -755,8 +878,13 @@ def get_codemirror_completions():
 @frappe.whitelist()
 @has_page_write("You do not have permission to reorder client scripts")
 def reorder_client_scripts(script_order: list[str]):
+	if not script_order:
+		return
 	for idx, script_name in enumerate(script_order, start=1):
 		frappe.db.set_value("Builder Page Client Script", script_name, "idx", idx)
+	# the rows change without a page save, so the cached page would keep the old order
+	page = frappe.db.get_value("Builder Page Client Script", script_order[0], "parent")
+	frappe.get_doc("Builder Page", page).clear_cache()
 
 
 @frappe.whitelist()

@@ -1,12 +1,6 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import {
-	call,
-	createDocumentResource,
-	createResource,
-	getCachedResource,
-	getCachedDocumentResource,
-} from "frappe-ui";
+import { call, createDocumentResource, createResource, getCachedResource } from "frappe-ui";
 import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
@@ -38,9 +32,8 @@ type InstallationDocument = {
 	label?: string;
 	description?: string;
 	enabled: boolean | number;
-	checksum?: string;
 	granted_permissions?: string;
-	/** The mount list does not read the fields below. Only the details panel reads them. */
+	/** Only the details panel reads the fields below. The mount list reads the rows. */
 	version?: string;
 	source_url?: string;
 	install_state?: "Installing" | "Ready" | "Failed";
@@ -50,37 +43,34 @@ type InstallationDocument = {
 	requested_permissions?: string;
 };
 
-/** The Vue instance for the realtime subscription of a document resource. The editor sets it one time. */
-let resourceVm: unknown;
-
 const grantedPermissions = (value: string | undefined): Permission[] => {
 	if (!value) return [];
 	return JSON.parse(value) as Permission[];
 };
 
 /**
- * The document of one installation. The mount list and the details panel share it.
+ * The document of one installation, for the details panel. Only a manager
+ * opens the panel, and a manager can read the doctype.
  *
  * `frappe-ui` caches it by doctype and name. A second call for a loaded
- * installation gives the same live resource. It does not make a second copy.
+ * installation gives the same resource. It does not make a second copy.
  */
 const installationDocument = (installationId: string) =>
-	createDocumentResource<InstallationDocument>(
-		{
-			doctype: INSTALLATION_DOCTYPE,
-			name: installationId,
-			auto: false,
-			realtime: Boolean(resourceVm),
-			onError: (error: Error) => console.error("Could not load extension", error),
-		},
-		resourceVm,
-	);
+	createDocumentResource<InstallationDocument>({
+		doctype: INSTALLATION_DOCTYPE,
+		name: installationId,
+		auto: false,
+		onError: (error: Error) => console.error("Could not load extension", error),
+	});
 
 /**
  * All installations on this site, with the disabled and development installations.
  *
  * The editor mounts the enabled rows, and the panel shows all rows. With one
  * list, one request updates both after a change. So they always agree.
+ *
+ * A row has all that the editor needs. A page reader can get the list, but
+ * possibly not the installation documents.
  */
 const installationsResource = createResource<Installation[]>({
 	url: "builder.extensions.installations.get_installations",
@@ -100,34 +90,14 @@ const managerResource = createResource<boolean>({
 
 const canManageExtensions = computed(() => Boolean(managerResource.data));
 
-/**
- * Gets the document of one installation into the shared cache.
- *
- * Read it with `getCachedDocumentResource`. Do not keep it here.
- * `toInstalledExtension` only reads the cache. So a computed never starts a fetch.
- */
-const loadInstallationDocument = (row: Installation) => {
-	void installationDocument(row.installation_id)
-		.reload()
-		.catch(() => undefined);
-};
-
-const toInstalledExtension = (row: Installation): InstalledExtension | null => {
-	const document = getCachedDocumentResource<InstallationDocument>(
-		INSTALLATION_DOCTYPE,
-		row.installation_id,
-	)?.doc;
-	if (!document || !document.enabled) return null;
-
-	return {
-		name: row.name,
-		label: document.label ?? row.label ?? row.name,
-		description: document.description ?? row.description,
-		icon: row.icon,
-		checksum: document.checksum,
-		permissions: grantedPermissions(document.granted_permissions),
-	};
-};
+const toInstalledExtension = (row: Installation): InstalledExtension => ({
+	name: row.name,
+	label: row.label ?? row.name,
+	description: row.description,
+	icon: row.icon,
+	entryUrl: row.entry_url as string,
+	permissions: row.permissions,
+});
 
 /**
  * All extensions that this editor runs. These are the installations of the
@@ -138,64 +108,21 @@ const toInstalledExtension = (row: Installation): InstalledExtension | null => {
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
 	const installed = (installationsResource.data ?? [])
-		.filter((row) => !row.is_development)
-		.flatMap((row) => {
-			const extension = toInstalledExtension(row);
-			return extension ? [extension] : [];
-		});
+		.filter((row) => row.enabled && row.entry_url && !row.is_development)
+		.map(toInstalledExtension);
 	const development = devExtension.value;
 	if (!development) return installed;
 
 	return [...installed.filter((extension) => extension.name !== development.name), development];
 });
 
-/** Gets the list, and the documents of the rows that the editor mounts. Call it after each change. */
-const loadExtensions = async (vm?: unknown) => {
-	if (vm) resourceVm = vm;
+/** Gets the list. Call it after each change. */
+const loadExtensions = () => {
 	if (managerResource.data === null) void managerResource.fetch();
-	const rows = (await installationsResource.fetch()) ?? [];
-	rows.filter((row) => row.enabled && !row.is_development).forEach(loadInstallationDocument);
-	return rows;
+	return installationsResource.fetch();
 };
 
-/**
- * The built entry of one installation. A frame runs it from a Blob.
- *
- * The editor gets it, not the frame, because a frame sends no session. The
- * editor gets it one time. The five frames of one extension share it.
- *
- * The key includes the checksum. So the editor gets a new build again. The
- * cache removes a failed request. So a reloaded frame asks again and does not
- * get the old error.
- */
-const sources = new Map<string, Promise<string>>();
-
-const getExtensionSource = (extension: InstalledExtension): Promise<string> => {
-	const key = `${extension.name}@${extension.checksum ?? ""}`;
-
-	const cached = sources.get(key);
-	if (cached) return cached;
-
-	const reading = call("builder.extensions.registry.get_extension_source", {
-		extension: extension.name,
-	}) as Promise<string>;
-
-	const source = reading.catch((error: Error) => {
-		sources.delete(key);
-		throw error;
-	});
-	sources.set(key, source);
-	return source;
-};
-
-/**
- * One installation, as the Extensions panel reads it.
- *
- * This is not `InstalledExtension`. That is the shape that the code of an
- * extension sees, and the extension does not need a version number or an
- * install date. This type has the data that the panel shows and the editor
- * never needs.
- */
+/** One row of the installation list of the site. */
 type Installation = {
 	name: string;
 	/** The name of the document, not of the extension. */
@@ -212,7 +139,11 @@ type Installation = {
 	install_state?: "Installing" | "Ready" | "Failed";
 	/** Why the last Hub install failed. The panel shows it with a Retry button. */
 	install_error?: string;
-	/** A dev server load made this row. The panel shows only the row that runs in this session. */
+	/** What an extension manager allowed. The server gate reads the same list. */
+	permissions: Permission[];
+	/** The entry URL, with the checksum of the build. Not set for an installation with no checksum. */
+	entry_url?: string;
+	/** A dev server load made this row. The entry in the browser runs it. The row never runs. */
 	is_development?: boolean;
 };
 
@@ -430,7 +361,6 @@ const installFromHub = async (name: string, version: string, permissions: Permis
 
 export {
 	canManageExtensions,
-	getExtensionSource,
 	getExtensionsCatalog,
 	getHubExtension,
 	getHubReleasePermissions,

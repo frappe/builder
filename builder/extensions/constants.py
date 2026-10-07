@@ -10,8 +10,27 @@ importing each other.
 import re
 
 EXTENSIONS_FOLDER = "extensions"
-ENTRY_FILE = "main.js"
 MANIFEST_FILE = "manifest.json"
+ENTRY_FILE = "main.js"
+
+# The route that serves the SDK and the installed files to extension frames
+ASSET_ROUTE = "builder_extension_asset"
+
+# The files a frame may load, by suffix. No HTML or XML: a tab that opens one of
+# these URLs must not get a page that runs as the site
+ASSET_TYPES = {
+	".js": "text/javascript",
+	".css": "text/css",
+	".json": "application/json",
+	".svg": "image/svg+xml",
+	".png": "image/png",
+	".jpg": "image/jpeg",
+	".jpeg": "image/jpeg",
+	".gif": "image/gif",
+	".webp": "image/webp",
+	".woff": "font/woff",
+	".woff2": "font/woff2",
+}
 
 # publisher/name, lowercase. The slash is the only separator, and no install path
 # is built from it, so a name can add no path segment.
@@ -36,10 +55,6 @@ PERMISSIONS = (
 # browser adds its own entry for it, so the listing leaves it out.
 DEV_EXTENSION_VERSION = "0.0.0-dev"
 
-# The editor holds the whole entry in memory and posts it to five frames. The
-# ceiling is what a browser can hold, not what a disk can.
-MAX_SOURCE_BYTES = 5_000_000
-
 # A README is prose, and the panel renders it in a 300 pixel column. This is room
 # for a long one and no room for a book.
 MAX_README_BYTES = 100_000
@@ -47,6 +62,9 @@ MAX_README_BYTES = 100_000
 # Room for settings and a cached list. Small enough that no extension fills a
 # site with what it remembers.
 MAX_STATE_BYTES = 100_000
+
+# The largest `main.js` a package may hold.
+MAX_SOURCE_BYTES = 5_000_000
 
 # The Builder Hub a site reads its catalog from when no other URL is set. It must
 # match the default on `Builder Settings.hub_url`.

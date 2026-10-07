@@ -1,27 +1,25 @@
 <template>
 	<!-- one field and two buttons. The default "lg" size is too wide -->
-	<Dialog v-model="showDevExtensionDialog" size="sm">
-		<template #body>
-			<div class="bg-surface-elevation-2 p-5">
-				<h3 class="text-md-semibold text-ink-gray-9">Load Dev Extension</h3>
-				<p class="pt-4 text-p-sm text-ink-gray-6">
-					The address of the dev server running the extension. It runs until you reload the editor.
-				</p>
+	<Dialog v-model="showDevExtensionDialog" title="Load Dev Extension" size="sm">
+		<template #default>
+			<p class="text-p-sm text-ink-gray-6">
+				The address of the dev server running the extension. It runs until you reload the editor.
+			</p>
 
-				<FormControl
-					v-model="url"
-					class="pt-4"
-					type="text"
-					placeholder="http://localhost:5173"
-					autofocus
-					@keyup.enter="load" />
+			<FormControl
+				v-model="url"
+				class="pt-4"
+				type="text"
+				placeholder="http://localhost:5173"
+				autofocus
+				@keyup.enter="load" />
 
-				<p v-if="error" class="pt-2 text-p-sm text-ink-red-6">{{ error }}</p>
-
-				<div class="flex justify-end gap-2 pt-4">
-					<Button variant="subtle" @click="showDevExtensionDialog = false">Cancel</Button>
-					<Button variant="solid" :loading="loading" @click="load">Load</Button>
-				</div>
+			<p v-if="error" class="pt-2 text-p-sm text-ink-red-6">{{ error }}</p>
+		</template>
+		<template #actions>
+			<div class="flex justify-end gap-2">
+				<Button variant="subtle" @click="showDevExtensionDialog = false">Cancel</Button>
+				<Button variant="solid" :loading="loading" @click="load">Load</Button>
 			</div>
 		</template>
 	</Dialog>
