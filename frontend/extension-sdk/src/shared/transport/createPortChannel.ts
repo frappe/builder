@@ -103,8 +103,9 @@ export function createPortChannel(port: MessagePort, requestHandler?: RequestHan
 		new Promise<T>((resolve, reject) => {
 			if (closed) return reject(new ChannelCallError(CHANNEL_CLOSED));
 			const id = nextId++;
-			pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
+			// post first. It throws for params it cannot copy, and a response always comes later
 			post(request(id, method, params));
+			pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
 		});
 
 	const listen = (name: string, handler: EventHandler) => {
