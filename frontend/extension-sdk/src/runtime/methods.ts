@@ -1,12 +1,11 @@
 /**
  * Each `builder.<surface>.<verb>` sends one call.
  *
- * Registrations are declarations. Write them at module scope. Each frame of
- * an extension imports the same module, so each frame reads them. So a panel
- * tab can name its document next to the tab itself. The tab and the document
- * are in different frames.
+ * Write registrations at module scope. Each frame of an extension imports the
+ * same module, so each frame reads them. So a panel tab can name its document
+ * next to the tab itself. The tab and the document are in different frames.
  *
- * Only the entry frame sends a declaration to the host. A panel frame keeps
+ * Only the entry frame sends a registration to the host. A panel frame keeps
  * what it needs and sends nothing. So the host gets each registration one
  * time, for any number of open frames.
  *
@@ -18,21 +17,23 @@ import { setHandler, deleteHandler, type ActionHandler } from "./actions";
 import { getChannel } from "./connect";
 import { getActiveSlot } from "./slots";
 
-/** A direct call. Any frame can make one. `update` and `run` are not declarations. */
+/** A direct call. Any frame can make one. `update` and `run` are not registrations. */
 const call = (method: string, params?: unknown) => getChannel().call(method, params);
 
 /**
- * A declaration. The host gets it from the entry frame only.
+ * A call that only the entry frame sends. In other frames it does nothing.
+ * Use it for registrations at module scope. Every frame runs that code, and
+ * the host still gets each registration one time.
  *
  * This function logs a refusal and also returns it. Authors usually do not
- * await a declaration at module scope. A silent refusal gives a surface that
+ * await a registration at module scope. A silent refusal gives a surface that
  * does not show, with no message.
  *
  * A method that this Builder does not have shows a version gap, not an error.
  * An extension has its own release schedule. It loses only that surface. The
  * warning tells that Builder is older than the extension.
  */
-export const declare = (method: string, params?: unknown) => {
+export const callFromEntryOnly = (method: string, params?: unknown) => {
 	if (getActiveSlot() !== "main") return Promise.resolve();
 
 	const sent = call(method, params);
@@ -58,7 +59,7 @@ export type ActionRef = string | ActionHandler;
 /** Keeps a handler in this frame and sends its name to the host. Entry frame only. */
 const registerAction = (name: string, handler: ActionHandler) => {
 	if (getActiveSlot() === "main") setHandler(name, handler);
-	return declare("actions.register", { name });
+	return callFromEntryOnly("actions.register", { name });
 };
 
 /** Replaces a function action with its name, because a function cannot be cloned. */
@@ -95,7 +96,8 @@ export type ItemPatch = {
 };
 
 export const toolbar = {
-	register: (registration: ToolbarRegistration) => declare("toolbar.register", resolveAction(registration)),
+	register: (registration: ToolbarRegistration) =>
+		callFromEntryOnly("toolbar.register", resolveAction(registration)),
 	unregister: (name: string) => call("toolbar.unregister", { name }),
 	update: (name: string, patch: ItemPatch) => call("toolbar.update", { name, patch }),
 };
@@ -128,7 +130,7 @@ export const context = {
 			seen = mine;
 			handler(context);
 		});
-		// a call, not a declaration. Any frame can subscribe. The host pushes to
+		// a call, not a registration. Any frame can subscribe. The host pushes to
 		// each frame of the extension, so a panel gets what it asked for
 		void call("context.subscribe", { fields });
 		return stop;
