@@ -14,9 +14,9 @@
 	script-src needs no blob:, and an extension reaches no origin but the site's own.
 
 	extension_dev_origins adds localhost on any port, but only where the site runs
-	in developer mode. An extension loaded from a dev server imports its entry from
-	there, and its hot reload opens a websocket back to it. Both are refused by the
-	policy above, and neither can name its port in advance.
+	in developer mode. An extension loaded from a dev server imports its entry,
+	images and fonts from there, and its hot reload opens a websocket back to it.
+	The policy above refuses all of them, and none can name its port in advance.
 
 	An import map is an inline script, so script-src blocks it without a hash or a
 	nonce. The map never changes, so it takes a hash. Both the hash and the script
@@ -33,8 +33,8 @@
 			content="default-src 'none';
 				script-src 'self' {{ frappe.utils.get_url() }} {{ csp_hash(import_map) }} {{ extension_dev_origins("http", "https") }};
 				style-src 'self' {{ frappe.utils.get_url() }} 'unsafe-inline';
-				img-src 'self' {{ frappe.utils.get_url() }} data: blob:;
-				font-src 'self' {{ frappe.utils.get_url() }} data:;
+				img-src 'self' {{ frappe.utils.get_url() }} data: blob: {{ extension_dev_origins("http", "https") }};
+				font-src 'self' {{ frappe.utils.get_url() }} data: {{ extension_dev_origins("http", "https") }};
 				connect-src 'self' {{ frappe.utils.get_url() }} {{ extension_dev_origins("http", "https", "ws", "wss") }};
 				base-uri 'none';
 				form-action 'none'" />

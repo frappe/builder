@@ -28,6 +28,9 @@ const DESCRIPTOR_PATH = "/__builder-extension";
 /** The hot reload client of Vite. It loads from the dev server, which serves the entry. */
 const HMR_CLIENT = "/@vite/client";
 
+/** The port of Vite when the config sets none. */
+const DEFAULT_PORT = 5173;
+
 /** The entry of an install. A frame imports it from Builder, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
@@ -120,6 +123,7 @@ export default function builderExtension({ builderUrl } = {}) {
 			root = path.resolve(config.root ?? process.cwd());
 			entry = findEntry(root);
 			serving = env.command === "serve";
+			const port = config.server?.port ?? DEFAULT_PORT;
 			return {
 				// a chunk or an asset URL resolves against the module that names it. So
 				// the build works under any install URL
@@ -147,6 +151,12 @@ export default function builderExtension({ builderUrl } = {}) {
 					// Any site can send `null` from a sandboxed frame, so this list
 					// stops a plain fetch, but the source files are not private
 					cors: { origin: [builderOrigin, "null"] },
+					// an asset URL resolves against the frame document, on the Builder
+					// site. So it must name the dev server. `strictPort` keeps the port
+					// in the origin correct: Vite stops, and does not try the next port
+					port,
+					strictPort: true,
+					origin: config.server?.origin ?? `http://localhost:${port}`,
 					// the package is installed by a link, so it is outside this project.
 					// Without this, the dev server does not serve it. The project must
 					// also be in the list, because this list replaces the default list
