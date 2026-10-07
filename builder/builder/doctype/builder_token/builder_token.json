@@ -9,7 +9,9 @@
   "group",
   "type",
   "value",
-  "dark_value"
+  "dark_value",
+  "extension",
+  "key"
  ],
  "fields": [
   {
@@ -52,6 +54,20 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Group"
+  },
+  {
+   "description": "Set only for a token an extension created, as \"publisher/name\". A user may still retint or delete it.",
+   "fieldname": "extension",
+   "fieldtype": "Data",
+   "label": "Extension",
+   "read_only": 1
+  },
+  {
+   "description": "The extension's own stable id for this token, unique within that extension.",
+   "fieldname": "key",
+   "fieldtype": "Data",
+   "label": "Key",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

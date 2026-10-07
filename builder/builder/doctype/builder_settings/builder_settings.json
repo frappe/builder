@@ -20,6 +20,9 @@
   "developer_options_section",
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
+  "extensions_settings_section",
+  "disable_extensions",
+  "hub_url",
   "ai_section",
   "ai_api_key",
   "persona_survey_done"
@@ -136,13 +139,30 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "Persona Survey Done"
+  },
+  {
+   "fieldname": "extensions_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Extensions Settings"
+  },
+  {
+   "default": "preview.frappe.cloud",
+   "fieldname": "hub_url",
+   "fieldtype": "Data",
+   "label": "Hub URL"
+  },
+  {
+   "default": "0",
+   "fieldname": "disable_extensions",
+   "fieldtype": "Check",
+   "label": "Disable Extensions"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-05 16:00:00.000000",
+ "modified": "2026-10-07 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

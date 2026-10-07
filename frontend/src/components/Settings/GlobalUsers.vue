@@ -26,7 +26,11 @@
 							<span class="truncate text-p-sm text-ink-gray-8">{{ invite.email }}</span>
 							<UseTimeAgo v-slot="{ timeAgo }" :time="invite.creation">
 								<span class="truncate text-p-xs text-ink-gray-5">
-									{{ invite.invited_by_name ? __("Invited {0} by {1}", [timeAgo, invite.invited_by_name]) : __("Invited {0}", [timeAgo]) }}
+									{{
+										invite.invited_by_name
+											? __("Invited {0} by {1}", [timeAgo, invite.invited_by_name])
+											: __("Invited {0}", [timeAgo])
+									}}
 								</span>
 							</UseTimeAgo>
 						</div>

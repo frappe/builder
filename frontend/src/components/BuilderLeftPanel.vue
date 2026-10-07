@@ -17,11 +17,15 @@
 					</span>
 				</template>
 				<Button
-					:icon="tab.icon"
+					:icon="tab.usesRuntimeIcon ? undefined : tab.icon"
 					size="md"
 					:class="{ '!text-ink-gray-6': !isActive(tab) }"
 					:variant="isActive(tab) ? 'subtle' : 'ghost'"
-					@click.stop="select(tab)"></Button>
+					@click.stop="select(tab)">
+					<template v-if="tab.usesRuntimeIcon && typeof tab.icon === 'string'" #icon>
+						<RuntimeLucideIcon :name="tab.icon" class="size-4.5" />
+					</template>
+				</Button>
 			</Tooltip>
 		</div>
 		<div

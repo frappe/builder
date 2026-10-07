@@ -51,7 +51,7 @@
 			<!-- text: what Bob said on its way through -->
 			<div
 				v-else-if="step.kind === 'text' && step.text"
-				class="ai-prose prose prose-sm max-w-none break-words text-p-sm text-ink-gray-7"
+				class="markdown-body prose prose-sm max-w-none break-words text-p-sm text-ink-gray-7"
 				v-html="renderMarkdown(step.text)" />
 		</template>
 

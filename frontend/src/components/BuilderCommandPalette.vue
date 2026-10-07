@@ -54,7 +54,7 @@ const openStep = (step: { id: string; label: string; placeholder: string; hint: 
 	searchQuery.value = "";
 };
 
-commands.register({
+commands.registerBuiltIn({
 	name: "search-page",
 	title: __("Search Page"),
 	icon: "lucide-file-search",
@@ -71,7 +71,7 @@ commands.register({
 		}),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "settings",
 	title: __("Settings"),
 	icon: "lucide-settings-2",
@@ -120,6 +120,7 @@ const settingsCommands = computed<PaletteItem[]>(() =>
 			title: item.title,
 			description: __("Settings"),
 			icon: item.icon,
+			usesRuntimeIcon: item.usesRuntimeIcon,
 			section: item.group === "Current Page" ? "page" : "global",
 			action: () => openSettings(item.name),
 		})),

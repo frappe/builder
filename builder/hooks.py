@@ -57,6 +57,8 @@ website_generators = ["Builder Page"]
 jinja = {
 	"methods": [
 		"builder.builder.doctype.builder_component.builder_component.get_component_data",
+		"builder.utils.csp_hash",
+		"builder.utils.extension_dev_origins",
 	],
 	"filters": [
 		"builder.utils.combine",
@@ -88,14 +90,6 @@ after_app_install = "builder.install.after_app_install"
 # Permissions
 # -----------
 # Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# "Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# "Event": "frappe.desk.doctype.event.event.has_permission",
-# }
 
 user_invitation = {
 	"allowed_roles": {
@@ -207,7 +201,13 @@ website_route_rules = [
 ]
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
-page_renderer = "builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer"
+page_renderer = [
+	# the extension SDK first: it matches one fixed route and answers without touching a page
+	"builder.extensions.sdk.ExtensionSDKRenderer",
+	# the installed files of an extension, under the same route prefix
+	"builder.extensions.assets.ExtensionAssetRenderer",
+	"builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer",
+]
 
 get_web_pages_with_dynamic_routes = (
 	"builder.builder.doctype.builder_page.builder_page.get_web_pages_with_dynamic_routes"

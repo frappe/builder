@@ -14,6 +14,7 @@ export type ToolbarRegion = "left" | "center" | "right";
 
 export type ToolbarItem = RegistryItem & {
 	region: ToolbarRegion;
+	isExtension?: boolean;
 	component: Component;
 	props?: () => Record<string, unknown>;
 };
@@ -24,18 +25,18 @@ export const toolbarItems = createRegistry<ToolbarItem>();
 const builderStore = useBuilderStore();
 const pageStore = usePageStore();
 
-toolbarItems.register({ name: "menu", region: "left", component: MainMenu });
-toolbarItems.register({ name: "modes", region: "left", component: ModeSwitcher });
-toolbarItems.register({ name: "page", region: "center", component: PageTitlePopover });
+toolbarItems.registerBuiltIn({ name: "menu", region: "left", component: MainMenu });
+toolbarItems.registerBuiltIn({ name: "modes", region: "left", component: ModeSwitcher });
+toolbarItems.registerBuiltIn({ name: "page", region: "center", component: PageTitlePopover });
 
-toolbarItems.register({
+toolbarItems.registerBuiltIn({
 	name: "viewers",
 	region: "right",
 	component: ViewerAvatars,
 	condition: () => builderStore.viewers.length > 0,
 });
 
-toolbarItems.register({
+toolbarItems.registerBuiltIn({
 	name: "read-only",
 	region: "right",
 	component: ReadOnlyBadge,
@@ -43,9 +44,9 @@ toolbarItems.register({
 });
 
 // one item, not five: the icons share a gap-2 group inside a gap-4 region
-toolbarItems.register({ name: "actions", region: "right", component: ToolbarActions });
+toolbarItems.registerBuiltIn({ name: "actions", region: "right", component: ToolbarActions });
 
-toolbarItems.register({
+toolbarItems.registerBuiltIn({
 	name: "publish",
 	region: "right",
 	component: PublishButton,

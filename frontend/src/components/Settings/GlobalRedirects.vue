@@ -261,7 +261,11 @@ const saveExisting = (id: string, d: Draft) => {
 		() => routeRedirects.setValue.submit({ name: id, ...docFields(d) }),
 		() => index !== -1 && Object.assign(routeRedirects.data![index], docFields(d)),
 		() => backup && Object.assign(routeRedirects.data![index], backup),
-		{ loading: __("Updating redirect..."), success: __("Redirect updated"), error: __("Error updating redirect") },
+		{
+			loading: __("Updating redirect..."),
+			success: __("Redirect updated"),
+			error: __("Error updating redirect"),
+		},
 	);
 };
 
@@ -278,7 +282,11 @@ const deleteRedirect = async (id: string) => {
 		() => routeRedirects.delete.submit(id),
 		() => index !== -1 && routeRedirects.data!.splice(index, 1),
 		() => backup && routeRedirects.data!.splice(index, 0, backup),
-		{ loading: __("Deleting redirect..."), success: __("Redirect deleted"), error: __("Error deleting redirect") },
+		{
+			loading: __("Deleting redirect..."),
+			success: __("Redirect deleted"),
+			error: __("Error deleting redirect"),
+		},
 	);
 };
 </script>

@@ -1,4 +1,5 @@
 import router from "@/router";
+import { showDevExtensionDialog } from "@/extensions/devExtension";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -95,7 +96,7 @@ const setLayersTab = async () => {
 	await nextTick();
 };
 
-commands.register({
+commands.registerBuiltIn({
 	name: "go-to-dashboard",
 	title: __("Go to Dashboard"),
 	icon: "lucide-layout-dashboard",
@@ -105,7 +106,16 @@ commands.register({
 	action: () => router.push({ name: "home" }),
 });
 
-commands.register({
+commands.registerBuiltIn({
+	name: "load-dev-extension",
+	title: __("Load Dev Extension"),
+	icon: "lucide-plug",
+	group: "General",
+	condition: () => isBuilderRoute() && Boolean(window.is_developer_mode),
+	action: () => (showDevExtensionDialog.value = true),
+});
+
+commands.registerBuiltIn({
 	name: "preview",
 	title: __("Preview Page"),
 	icon: "lucide-play",
@@ -118,7 +128,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "publish",
 	title: __("Publish Page"),
 	icon: "lucide-globe",
@@ -129,7 +139,7 @@ commands.register({
 	action: () => pageStore.publishPage(true, Boolean(pageStore.activePage?.staging)),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "duplicate-page",
 	title: __("Duplicate Page"),
 	icon: "lucide-copy-plus",
@@ -143,7 +153,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "expand-layers",
 	title: __("Expand All Layers"),
 	icon: "lucide-chevrons-up-down",
@@ -156,7 +166,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "collapse-layers",
 	title: __("Collapse All Layers"),
 	icon: "lucide-chevrons-down-up",
@@ -169,7 +179,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "toggle-left-panel",
 	title: () => (builderStore.showLeftPanel ? __("Hide Left Panel") : __("Show Left Panel")),
 	icon: () => (builderStore.showLeftPanel ? "lucide-panel-left-close" : "lucide-panel-left-open"),
@@ -180,7 +190,7 @@ commands.register({
 	action: () => (builderStore.showLeftPanel = !builderStore.showLeftPanel),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "toggle-right-panel",
 	title: () => (builderStore.showRightPanel ? __("Hide Right Panel") : __("Show Right Panel")),
 	icon: () => (builderStore.showRightPanel ? "lucide-panel-right-close" : "lucide-panel-right-open"),
@@ -190,7 +200,7 @@ commands.register({
 	action: () => (builderStore.showRightPanel = !builderStore.showRightPanel),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "toggle-theme",
 	title: () => (isDark.value ? __("Switch to Light Mode") : __("Switch to Dark Mode")),
 	icon: () => (isDark.value ? "lucide-sun" : "lucide-moon"),
@@ -199,7 +209,7 @@ commands.register({
 	action: transitionTheme,
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "shortcuts",
 	title: __("Keyboard Shortcuts"),
 	icon: "lucide-command",
@@ -212,7 +222,7 @@ commands.register({
 
 // key bindings with no palette entry, so the palette shows what it always did
 
-commands.register({
+commands.registerBuiltIn({
 	name: "toggle-panels",
 	title: __("Toggle Panels"),
 	icon: "lucide-panels-left-bottom",
@@ -225,7 +235,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "toggle-canvas-dark-mode",
 	title: __("Toggle Canvas Dark Mode"),
 	icon: "lucide-moon",
@@ -235,7 +245,7 @@ commands.register({
 	action: () => (builderStore.canvasDarkMode = !builderStore.canvasDarkMode),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "search-blocks",
 	title: __("Search Blocks"),
 	icon: "lucide-search",
@@ -245,7 +255,7 @@ commands.register({
 	action: () => (builderStore.showSearchBlock = true),
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "focus-property-search",
 	title: __("Focus Property Search"),
 	icon: "lucide-search",
@@ -257,7 +267,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "copy-block-styles",
 	title: __("Copy Block Styles"),
 	icon: "lucide-clipboard-copy",
@@ -271,7 +281,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "duplicate-block",
 	title: __("Duplicate Block"),
 	icon: "lucide-copy",
@@ -285,7 +295,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "undo",
 	title: __("Undo"),
 	icon: "lucide-undo-2",
@@ -298,7 +308,7 @@ commands.register({
 	},
 });
 
-commands.register({
+commands.registerBuiltIn({
 	name: "redo",
 	title: __("Redo"),
 	icon: "lucide-redo-2",

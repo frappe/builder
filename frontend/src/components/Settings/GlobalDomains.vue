@@ -55,7 +55,9 @@
 					<div class="flex items-center gap-2 px-3 py-2.5">
 						<div class="min-w-0 flex-1">
 							<div class="flex items-baseline gap-1.5">
-								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">{{ __("{0} record", [rec.type]) }}</span>
+								<span class="text-p-sm-semibold leading-6 text-ink-gray-8">
+									{{ __("{0} record", [rec.type]) }}
+								</span>
 								<span class="font-mono text-p-xs">
 									<span :class="newDomain ? 'text-ink-gray-5' : 'text-ink-gray-3'">{{ rec.host }}</span>
 									<span class="px-1 text-ink-gray-4">→</span>
@@ -182,7 +184,8 @@ function brokenReason(d: any): string {
 		const a = parsed.A;
 		if (cname?.exists && !cname?.matched)
 			return __("CNAME record points to wrong destination: {0}", [cname.answer?.trim() || __("unknown")]);
-		if (a?.exists && !a?.matched) return __("A record points to wrong IP: {0}", [a.answer?.trim() || __("unknown")]);
+		if (a?.exists && !a?.matched)
+			return __("A record points to wrong IP: {0}", [a.answer?.trim() || __("unknown")]);
 		if (!cname?.exists && !a?.exists) return __("No DNS record found for this domain.");
 		if (parsed.matched || parsed.valid)
 			return __("DNS is verified but SSL certificate provisioning failed. Please retry.");
