@@ -432,7 +432,7 @@ import { confirm } from "@/utils/helpers";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
-import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, reactive, ref, watch, type ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
 	modelValue: boolean;
@@ -450,6 +450,8 @@ const {
 	createVariable: createVar,
 	updateVariable,
 	deleteVariable,
+	recordTokenChange,
+	tokenHistoryVersion,
 	variables,
 } = useBuilderToken();
 
@@ -539,6 +541,14 @@ const getRowObject = (variable: BuilderToken) => {
 };
 // drop local row state so fresh store values flow in (used after bulk external changes like CSV import)
 const resetRowObjects = () => rowObjects.clear();
+watch(tokenHistoryVersion, resetRowObjects);
+
+const tokenSnapshot = (row: Row) => ({
+	token_name: row.token_name || "",
+	value: row.value || "",
+	dark_value: row.dark_value || "",
+	group: row.group || "",
+});
 
 // group objects are reused across recomputes so that the open state survives edits
 const groupObjects = new Map<string, RowGroup>();
@@ -638,7 +648,9 @@ const commitEdit = (row: Row, field: EditableField, e: Event) => {
 	const value = inputValue(e).trim();
 	exitEdit(row);
 	if ((row[field] || "") === value) return;
+	const before = tokenSnapshot(row);
 	row[field] = value;
+	recordTokenChange([{ name: row.name!, before, after: tokenSnapshot(row) }]);
 	if (field === "value" || field === "dark_value") {
 		syncStoreColors(row);
 	}
@@ -775,6 +787,13 @@ const confirmGroupDialog = async () => {
 const moveSelectedToGroup = async (group: string) => {
 	const rows = selectedRows();
 	if (!rows.length) return;
+	recordTokenChange(
+		rows.map((row) => ({
+			name: row.name!,
+			before: tokenSnapshot(row),
+			after: { ...tokenSnapshot(row), group },
+		})),
+	);
 	for (const row of rows) {
 		row.group = group;
 		await saveVariable(row);
@@ -867,8 +886,14 @@ const syncStoreColors = (row: Row) => {
 	);
 };
 
+// a picker drag fires many updates; it is one undo step, from its first value to the one saved
+const valuesBeforeSave = new Map<string, ReturnType<typeof tokenSnapshot>>();
+
 // live value updates from the color pickers and the new row's inputs (any token type)
 const updateRowValue = async (row: Row, value: string | null, mode: "light" | "dark") => {
+	if (!row.isNew && row.name && !valuesBeforeSave.has(row.name)) {
+		valuesBeforeSave.set(row.name, tokenSnapshot(row));
+	}
 	if (mode === "light") {
 		row.value = value || "";
 	} else {
@@ -884,6 +909,9 @@ const updateRowValue = async (row: Row, value: string | null, mode: "light" | "d
 };
 
 const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
+	const before = valuesBeforeSave.get(row.name!);
+	valuesBeforeSave.delete(row.name!);
+	if (before) recordTokenChange([{ name: row.name!, before, after: tokenSnapshot(row) }]);
 	try {
 		await saveVariable(row);
 	} catch (error) {

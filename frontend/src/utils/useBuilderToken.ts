@@ -1,6 +1,7 @@
 import builderTokenStore from "@/data/builderToken";
 import { BuilderToken } from "@/types/doctypes";
-import { computed } from "vue";
+import { toast } from "frappe-ui";
+import { computed, ref } from "vue";
 
 export const defaultBuilderToken = {
 	token_name: "",
@@ -17,6 +18,10 @@ export const tokenType = (token: Partial<BuilderToken>): NonNullable<BuilderToke
 	if (type === "dimension") return "Dimension";
 	return "Color";
 };
+
+type TokenFields = Pick<BuilderToken, "token_name" | "value" | "dark_value" | "group">;
+type TokenChange = { name: string; before: TokenFields; after: TokenFields };
+type TokenHistoryEntry = { changes: TokenChange[]; at: number };
 
 let instance: ReturnType<typeof builderTokenComposable> | null = null;
 
@@ -111,6 +116,35 @@ function builderTokenComposable() {
 		(builderTokenStore.data || []).filter((t: BuilderToken) => tokenType(t) === "Font" && t.value),
 	);
 
+	const tokenUndoStack: TokenHistoryEntry[] = [];
+	const tokenRedoStack: TokenHistoryEntry[] = [];
+	const tokenHistoryVersion = ref(0);
+
+	const recordTokenChange = (changes: TokenChange[]) => {
+		const changed = changes.filter(({ before, after }) =>
+			(Object.keys(after) as (keyof TokenFields)[]).some((key) => before[key] !== after[key]),
+		);
+		if (!changed.length) return;
+		tokenUndoStack.unshift({ changes: changed, at: Date.now() });
+		tokenRedoStack.length = 0;
+	};
+
+	const moveTokenChange = (from: TokenHistoryEntry[], to: TokenHistoryEntry[], side: "before" | "after") => {
+		const entry = from.shift();
+		if (!entry) return;
+		to.unshift({ ...entry, at: Date.now() });
+		const values = new Map(entry.changes.map((change) => [change.name, change[side]]));
+		builderTokenStore.data = (builderTokenStore.data || []).map((token: BuilderToken) =>
+			values.has(token.name) ? { ...token, ...values.get(token.name) } : token,
+		);
+		tokenHistoryVersion.value++;
+		for (const [name, fields] of values) {
+			updateVariable({ name, ...fields }).catch((error) =>
+				toast.error((error as Error).message || "Failed to update variable"),
+			);
+		}
+	};
+
 	return {
 		cssVariables,
 		darkCssVariables,
@@ -120,6 +154,12 @@ function builderTokenComposable() {
 		createVariable,
 		updateVariable,
 		deleteVariable,
+		recordTokenChange,
+		undoTokenChange: () => moveTokenChange(tokenUndoStack, tokenRedoStack, "before"),
+		redoTokenChange: () => moveTokenChange(tokenRedoStack, tokenUndoStack, "after"),
+		lastTokenUndoAt: () => tokenUndoStack[0]?.at ?? 0,
+		lastTokenRedoAt: () => tokenRedoStack[0]?.at ?? 0,
+		tokenHistoryVersion,
 		variables: computed({
 			get: () => (builderTokenStore.data as BuilderToken[]) || [],
 			set: (value: BuilderToken[]) => {

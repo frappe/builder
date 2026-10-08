@@ -6,6 +6,7 @@ import { ref, Ref } from "vue";
 type CanvasState = {
 	block: string;
 	selectedBlockIds: Set<string>;
+	at?: number;
 };
 export type PauseId = string & { __brand: "PauseId" };
 
@@ -66,8 +67,10 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 
 	function commit() {
 		if (!enabled.value) return;
-		undoStack.value.unshift(last.value);
-		last.value = createHistoryRecord();
+		const record = createHistoryRecord();
+		if (record.block === last.value.block) return;
+		undoStack.value.unshift(stamp(last.value));
+		last.value = record;
 		trim(undoStack.value);
 		if (redoStack.value.length) {
 			redoStack.value.splice(0, redoStack.value.length);
@@ -86,6 +89,11 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 				return;
 			}
 		}
+	}
+
+	function stamp(state: CanvasState) {
+		state.at = Date.now();
+		return state;
 	}
 
 	function updateSelections() {
@@ -126,7 +134,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		if (!enabled.value) return;
 		const state = undoStack.value.shift();
 		if (state) {
-			redoStack.value.unshift(last.value);
+			redoStack.value.unshift(stamp(last.value));
 			trim(redoStack.value);
 			setSource(state);
 		}
@@ -140,7 +148,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		if (!enabled.value) return;
 		const state = redoStack.value.shift();
 		if (state) {
-			undoStack.value.unshift(last.value);
+			undoStack.value.unshift(stamp(last.value));
 			trim(undoStack.value);
 			setSource(state);
 		}
@@ -209,6 +217,8 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		batch,
 		canUndo,
 		canRedo,
+		lastUndoAt: () => undoStack.value[0]?.at ?? 0,
+		lastRedoAt: () => redoStack.value[0]?.at ?? 0,
 		dispose,
 		disable,
 		enable,
