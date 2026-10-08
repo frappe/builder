@@ -12,7 +12,6 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
-import { createSocket } from "@/utils/socket";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -23,9 +22,6 @@ app.use(pinia);
 
 ensureTranslations().then(() => {
 	app.use(router);
-	// frappe-ui resources read `$socket` for realtime, and the plugin no longer opens one.
-	// Assigned before the plugin installs, or its guard makes the read throw.
-	app.config.globalProperties.$socket = editorDemo ? undefined : createSocket();
 	app.use(FrappeUI);
 	if (!editorDemo) {
 		app.use(telemetryPlugin, { app_name: "builder" });
