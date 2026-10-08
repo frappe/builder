@@ -31,9 +31,9 @@
 	::selection { background: Highlight; color: HighlightText }
 	img { filter: var(--builder-image-dim, none) }
 	picture img { filter: none }
-	/* a link is hovered (or tapped) as it's clicked, so its #id jump scrolls smoothly unless set to instant */
-	:root:has(a[href^="#"]:hover) { scroll-behavior: smooth }
-	:root:has(a[data-scroll-behavior="instant"]:hover) { scroll-behavior: auto }
+	/* a link is hovered (or tapped) or keyboard-focused as it's activated, so its #id jump scrolls the page and nested blocks smoothly unless set to instant */
+	:root:has(a[href^="#"]:is(:hover, :focus-visible)), :root:has(a[href^="#"]:is(:hover, :focus-visible)) * { scroll-behavior: smooth }
+	:root:has(a[data-scroll-behavior="instant"]:is(:hover, :focus-visible)), :root:has(a[data-scroll-behavior="instant"]:is(:hover, :focus-visible)) * { scroll-behavior: auto }
 	@media (prefers-color-scheme: dark) { :root:not([data-prefers-color-scheme="light"]):not([data-theme="light"]) { --builder-image-dim: brightness(0.85) contrast(1.05) } }
 	:root[data-prefers-color-scheme="dark"], :root[data-theme="dark"] { --builder-image-dim: brightness(0.85) contrast(1.05) }
 	</style>

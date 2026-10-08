@@ -276,7 +276,7 @@ const onPreviewLoad = () => {
 		const link = (event.target as Element).closest?.('a[href^="#"]');
 		if (!link || event.defaultPrevented) return;
 		event.preventDefault();
-		previewDocument.location.hash = link.getAttribute("href")!;
+		previewDocument.location.replace(new URL(link.getAttribute("href")!, previewDocument.URL).href);
 	});
 	applyColorSchemeToIframe(isDark.value ? "dark" : "light");
 	restoreScrollPosition();
