@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
@@ -166,3 +167,49 @@ class TestUninstall(FrappeTestCase):
 	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
+
+
+class TestListedInstallation(FrappeTestCase):
+	"""What one row of the list carries for the editor to mount."""
+
+	def listed(self, name):
+		return next((row for row in get_installations() if row["name"] == name), None)
+
+	def test_carries_no_source(self):
+		"""One call per extension reads that, so a list of five carries no bundles."""
+		make_installation("acme/light", source="export default {};")
+
+		self.assertNotIn("source", self.listed("acme/light"))
+
+	def test_carries_the_entry_url_of_its_build(self):
+		installation = make_installation("acme/light", source="export default {};")
+
+		self.assertEqual(
+			self.listed("acme/light")["entry_url"],
+			f"/builder_extension_asset/{installation.name}/sum123/main.js",
+		)
+
+	def test_carries_the_granted_permissions(self):
+		make_installation("acme/light", permissions=["page.edit", "token.write"], granted=["page.edit"])
+
+		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
+
+	def test_a_page_reader_gets_the_grants_without_reading_the_installation(self):
+		"""The editor builds an extension from this row alone. A page reader cannot read the document."""
+		make_installation("acme/light", permissions=["page.edit"])
+		become_a_user_who_cannot_manage(self)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
+		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
+
+	def test_carries_no_entry_url_without_a_checksum(self):
+		make_installation("acme/light", source="export default {};", checksum=None)
+
+		self.assertIsNone(self.listed("acme/light")["entry_url"])
+
+
+class TestExtensionIcon(FrappeTestCase):
+	def test_refuses_a_path_that_climbs_out_of_the_install_folder(self):
+		with self.assertRaises(frappe.ValidationError):
+			make_installation("acme/climber", icon="../../secrets.svg")

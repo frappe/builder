@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""What an extension manager does with the extensions installed on this site.
+"""The extensions installed on this site: what the editor reads, and what an
+extension manager changes.
 
 The editor and the Extensions panel read one list. The editor mounts the
 enabled rows, and the panel shows every row, so a manager can turn one back on.
@@ -81,10 +82,10 @@ def uninstall_extension(extension: str) -> None:
 
 
 def describe_installation(installation: str) -> dict:
-	"""What a row in the panel shows. The icon is derived, so this reads the document.
+	"""What a row in the panel shows, and all that the editor needs to mount it.
 
-	`installation_id` names the document itself, not the extension. The panel
-	reads it to open the same live document the editor already keeps.
+	The icon is derived, so this reads the document. The row carries the grants,
+	so a page reader with no read access to the installation still runs it.
 	"""
 	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
@@ -94,8 +95,10 @@ def describe_installation(installation: str) -> dict:
 		"description": row.description,
 		"icon": row.icon_data_uri,
 		"version": row.version,
+		"entry_url": row.entry_url,
 		"source_url": row.source_url,
 		"enabled": bool(row.enabled),
+		"permissions": row.permissions,
 		"install_state": row.install_state,
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_EXTENSION_VERSION,

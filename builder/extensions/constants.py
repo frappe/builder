@@ -12,6 +12,25 @@ import re
 EXTENSIONS_FOLDER = "extensions"
 ENTRY_FILE = "main.js"
 
+# The route that serves the SDK and the installed files to extension frames
+ASSET_ROUTE = "builder_extension_asset"
+
+# The files a frame may load, by suffix. No HTML or XML: a tab that opens one of
+# these URLs must not get a page that runs as the site
+ASSET_TYPES = {
+	".js": "text/javascript",
+	".css": "text/css",
+	".json": "application/json",
+	".svg": "image/svg+xml",
+	".png": "image/png",
+	".jpg": "image/jpeg",
+	".jpeg": "image/jpeg",
+	".gif": "image/gif",
+	".webp": "image/webp",
+	".woff": "font/woff",
+	".woff2": "font/woff2",
+}
+
 # publisher/name, lowercase. The slash is the only separator, and no install path
 # is built from it, so a name can add no path segment.
 EXTENSION_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*$")

@@ -83,6 +83,11 @@ class TestBuilderExtension(FrappeTestCase):
 		self.assertEqual((root / "main.js").read_text(), "export const ok = true;")
 		self.assertTrue((root / "chunks" / "a.js").is_file())
 
+	def test_finds_the_entry_it_installed(self):
+		installation = make_installation(EXTENSION, source="export const ok = true;")
+
+		self.assertEqual(installation.get_asset_path("main.js").read_text(), "export const ok = true;")
+
 	def test_uninstall_takes_the_files(self):
 		installation = make_installation(EXTENSION, source="export default {};")
 		install_path = Path(installation.install_path)
@@ -114,6 +119,28 @@ class TestBuilderExtension(FrappeTestCase):
 class TestInstalledFiles(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
+
+	def test_finds_a_chunk_in_a_folder(self):
+		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"", "chunks/panel.js": b"export {};"})
+
+		self.assertEqual(installation.get_asset_path("chunks/panel.js").read_bytes(), b"export {};")
+
+	def test_finds_no_file_that_was_never_installed(self):
+		self.assertIsNone(make_installation(EXTENSION).get_asset_path("main.js"))
+
+	def test_finds_no_file_outside_the_install(self):
+		installation = make_installation(EXTENSION, source="export default {};")
+		sibling = make_installation("acme/sibling", source="export const secret = 1;")
+		self.addCleanup(drop_installations, "acme/sibling")
+
+		self.assertIsNone(installation.get_asset_path(f"../{sibling.name}/main.js"))
+
+	def test_finds_no_file_of_a_type_a_frame_does_not_load(self):
+		installation = make_installation(EXTENSION)
+		installation.write_extension_files({"main.js": b"", "page.html": b"<script></script>"})
+
+		self.assertIsNone(installation.get_asset_path("page.html"))
 
 	def test_draws_the_icon_as_a_data_uri(self):
 		installation = make_installation(EXTENSION, source="export default {};", icon="icon.svg")

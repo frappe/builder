@@ -12,6 +12,9 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.extensions.constants import (
+	ASSET_ROUTE,
+	ASSET_TYPES,
+	ENTRY_FILE,
 	EXTENSION_NAME_PATTERN,
 	EXTENSIONS_FOLDER,
 	ICON_PATTERN,
@@ -82,6 +85,21 @@ class BuilderExtension(Document):
 	def requested(self) -> list[str]:
 		"""What the manifest asked for. A grant cannot reach outside it."""
 		return self.permission_list("requested_permissions")
+
+	@property
+	def entry_url(self) -> str | None:
+		"""Where a frame imports the entry. The checksum names the build, so a rebuild gets a new URL."""
+		if not self.checksum:
+			return None
+		return f"/{ASSET_ROUTE}/{self.name}/{self.checksum}/{ENTRY_FILE}"
+
+	def get_asset_path(self, relative_path: str) -> Path | None:
+		"""An installed file that a frame may load. None for a path outside the install."""
+		root = Path(self.install_path).resolve()
+		file = (root / relative_path).resolve()
+		if file.is_relative_to(root) and file.suffix in ASSET_TYPES and file.is_file():
+			return file
+		return None
 
 	@property
 	def icon_data_uri(self) -> str | None:
