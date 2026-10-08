@@ -18,12 +18,6 @@
 {const c=document.cookie,show=window.matchMedia("(min-width:768px)").matches&&c.includes("user_id=")&&!c.includes("user_id=Guest")&&!c.includes("system_user=no;");if(show){const link=document.createElement("a");link.rel="nofollow";link.href="{{ editor_link }}";link.target="editor-{{ page_name }}";link.style.cssText="position:fixed;bottom:40px;right:50px;height:35px;width:35px;opacity:.1";link.innerHTML='<img src="/assets/builder/frontend/builder_logo.png" alt="Edit in Builder" style="box-shadow:#bdbdbd 0 0 5px;border-radius:10px"/>';link.addEventListener("mouseover",()=>link.style.opacity="1");link.addEventListener("mouseout",()=>link.style.opacity=".1");document.body.appendChild(link)}}
 </script>
 {% endif %}
-<script>
-// #id links with data-scroll-behavior scroll smoothly or instantly; the preview handles every #id link,
-// since its <base> resolves them to the published route, which would navigate away from the preview
-// cancelling the jump leaves focus on the link, so focus the target
-{const preview={{ "true" if preview else "false" }};document.addEventListener("click",function(e){const a=!e.defaultPrevented&&e.target.closest&&e.target.closest('a[href^="#"]');if(!a||!(preview||a.dataset.scrollBehavior)||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||(a.target&&a.target!=="_self"))return;const h=a.hash.slice(1);let d=h;try{d=decodeURIComponent(h)}catch(_){}const t=h?document.getElementById(h)||document.getElementById(d):document.documentElement;if(!t)return;e.preventDefault();t.scrollIntoView({behavior:a.dataset.scrollBehavior||"auto"});if(t.tabIndex<0)t.tabIndex=-1;t.focus({preventScroll:true});if(!preview)history.pushState(null,"",a.hash||"#")})}
-</script>
 {% if editor_demo_url %}
 <script src="{{ editor_demo_script }}" data-demo-url="{{ editor_demo_url }}" defer></script>
 {% endif %}

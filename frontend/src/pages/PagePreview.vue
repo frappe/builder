@@ -271,6 +271,13 @@ const onPreviewLoad = () => {
 		},
 		{ capture: true },
 	);
+	// the page's <base> points #id links at the published route, so jump within the preview instead
+	previewDocument.addEventListener("click", (event) => {
+		const link = (event.target as Element).closest?.('a[href^="#"]');
+		if (!link || event.defaultPrevented) return;
+		event.preventDefault();
+		previewDocument.location.hash = link.getAttribute("href")!;
+	});
 	applyColorSchemeToIframe(isDark.value ? "dark" : "light");
 	restoreScrollPosition();
 	previewDocument.addEventListener("scroll", saveScrollPosition, { passive: true });

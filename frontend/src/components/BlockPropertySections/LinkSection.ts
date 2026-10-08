@@ -105,9 +105,9 @@ const linkSectionProperties = [
 				type: "select",
 				propertyKey: "data-scroll-behavior",
 				allowDynamicValue: false,
-				getModelValue: () => blockController.getAttribute("data-scroll-behavior") || "instant",
+				getModelValue: () => blockController.getAttribute("data-scroll-behavior") || "smooth",
 				setModelValue: (val: string) => {
-					if (val === "instant") {
+					if (val === "smooth") {
 						blockController.removeAttribute("data-scroll-behavior");
 					} else {
 						blockController.setAttribute("data-scroll-behavior", val);
