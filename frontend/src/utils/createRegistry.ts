@@ -1,8 +1,12 @@
 import { computed, markRaw, reactive, ref, toRaw } from "vue";
 
 /**
- * A registry item has a stable name, and can ask for a position next to another item.
- * An unknown `before` name puts the item first. An unknown `after` name puts it last.
+ * Every registry item needs a stable identity, and may ask for a position
+ * relative to another item's name.
+ *
+ * An unknown `before` name puts the item first, an unknown `after` name puts it
+ * last, so an extension that anchors to a feature this site does not have still
+ * lands somewhere sensible.
  */
 export type RegistryEntry = {
 	name: string;
@@ -16,15 +20,23 @@ export type RegistryItem = RegistryEntry & {
 };
 
 /**
- * A registry keeps the items of one editor surface. Extensions cannot replace or remove a built-in item.
- * Without `before` and `after`, items show in registration order. Read `all` if the surface gives `condition` an argument.
+ * A registry backs one editor surface. Builder registers its own items with
+ * `registerBuiltIn` and removes them with `unregisterBuiltIn`. A built-in name is
+ * locked: `register` and `unregister` cannot replace or remove it.
+ *
+ * Leave `before` and `after` unset in the common case: items then display in
+ * registration order.
+ *
+ * Read `visible` when an item decides its own visibility. Read `all` when the
+ * surface passes an argument to condition, as the block context menu does.
  */
 export function createRegistry<T extends RegistryEntry>() {
 	const items = reactive(new Map<string, T>()) as Map<string, T>;
 	const builtInNames = new Set<string>();
 	const order = ref<string[]>([]);
 
-	// An item without `before` or `after` keeps its position when it registers again.
+	// re-registering without an anchor keeps the slot the name already holds, so
+	// installing the same set twice cannot reshuffle the surface
 	const place = (item: T) => {
 		const current = order.value.indexOf(item.name);
 		if (current !== -1) {
@@ -50,7 +62,8 @@ export function createRegistry<T extends RegistryEntry>() {
 	};
 
 	const add = (item: T) => {
-		// Entries can have Vue components. A raw snapshot stops the reactive Map from wrapping them.
+		// Registry entries can carry Vue components. Keeping the snapshot raw stops
+		// the reactive Map from proxying those components before a surface renders it.
 		const registered = markRaw({ ...item });
 		items.set(item.name, registered);
 		place(registered);
@@ -64,13 +77,13 @@ export function createRegistry<T extends RegistryEntry>() {
 		if (builtInNames.has(name)) throw new Error(`"${name}" is a built-in item and is read-only`);
 	};
 
-	/** Builder registers its own items here. An extension cannot use a built-in name. */
+	/** Builder registers its own items here. A built-in name is then locked. */
 	const registerBuiltIn = (item: T) => {
 		builtInNames.add(item.name);
 		return add(item);
 	};
 
-	// Returns its own unregister function. So a caller does not keep the names.
+	// returns its own unregister, so a caller never has to track names
 	const register = (item: T) => {
 		guardBuiltIn(item.name);
 		return add(item);
@@ -81,7 +94,7 @@ export function createRegistry<T extends RegistryEntry>() {
 		return remove(name);
 	};
 
-	/** Builder removes its own items here. The editor demo uses it. */
+	/** Builder removes its own items here, as the editor demo does. */
 	const unregisterBuiltIn = (name: string) => {
 		builtInNames.delete(name);
 		return remove(name);

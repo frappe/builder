@@ -20,7 +20,7 @@ INSTALLATION_MODULE = "builder.builder.doctype.builder_extension.builder_extensi
 
 
 class TestBuilderExtension(FrappeTestCase):
-	"""Tests the installation record of an extension."""
+	"""The site's one record of an extension."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
@@ -44,7 +44,7 @@ class TestBuilderExtension(FrappeTestCase):
 		self.assertRaises(Exception, second.insert)
 
 	def test_a_second_install_of_one_name_is_refused_whatever_the_source(self):
-		"""`publisher/name` identifies the extension. A second source does not make a second install."""
+		"""`publisher/name` is the whole identity, so a second source is not a second install."""
 		make_installation(EXTENSION, source_url="https://hub.example")
 
 		second = frappe.get_doc(
@@ -71,7 +71,7 @@ class TestBuilderExtension(FrappeTestCase):
 			make_installation(EXTENSION, permissions=["quantum.read"])
 
 	def test_refuses_a_grant_the_manifest_never_asked_for(self):
-		"""A manager can grant only the permissions that the extension asks for."""
+		"""A manager can only ever answer a question the extension asked."""
 		with self.assertRaises(frappe.ValidationError):
 			make_installation(EXTENSION, permissions=["page.edit"], granted=["page.edit", "schema.write"])
 

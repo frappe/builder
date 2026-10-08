@@ -6,8 +6,15 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const entry = (file: string) => path.resolve(root, "src", file);
 
 /**
- * Builds the npm package. Run it only before a publish. `publishConfig` points `exports` to `dist`.
- * `vue` and the SDK stay external. The frame gives the SDK, and the extension gives Vue.
+ * Builds the package that an extension author installs from npm.
+ *
+ * In this repo, `exports` points to `src`. So this build runs only before a
+ * publish. `publishConfig` changes the same `exports` to point to `dist`.
+ *
+ * `vue` stays external, because the SDK has no Vue runtime. The copy of the
+ * author must show the slot. The package name stays external for the same
+ * reason. `vue.ts` must import the SDK by its package name. The import map of
+ * the frame points that name to the one SDK copy that Builder serves.
  */
 export default defineConfig({
 	build: {

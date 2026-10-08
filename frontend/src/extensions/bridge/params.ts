@@ -1,6 +1,8 @@
 /**
- * Checks the parameters that a frame sends. The host checks each parameter.
- * Each error has a code for the SDK.
+ * Reads the parameters that a frame sent.
+ *
+ * Each parameter comes from a different realm as unknown. The host validates
+ * all of them. A refusal has a code. So the SDK can act on the code.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";

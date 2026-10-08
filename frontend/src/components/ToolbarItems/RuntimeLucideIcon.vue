@@ -13,7 +13,7 @@ watch(
 	() => props.name,
 	async (name) => {
 		const svg = await loadRuntimeLucideIcon(name);
-		// Ignore a slow download for an old name.
+		// a slow download for an old name must not replace the icon of the new name
 		if (name === props.name) iconSvg.value = svg;
 	},
 	{ immediate: true },

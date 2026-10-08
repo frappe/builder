@@ -1,11 +1,16 @@
-/** The types that the host and the SDK share. `transport/messages.ts` checks the message shapes. */
+/**
+ * The words that the host and the SDK both use.
+ *
+ * Domain types come first. Then come the shapes that go through a port.
+ * `transport/messages.ts` has the checks for these shapes.
+ */
 
 import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";
 
 /** The five documents that an extension can have. The host names one in the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
 
-/** The permissions that the bridge checks. The server has the same list. */
+/** Each permission that the bridge uses to gate a method. The server has the same list. */
 export { PERMISSIONS, PROTOCOL_VERSION };
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -21,28 +26,44 @@ export type ExtensionManifest = {
 	permissions: Permission[];
 };
 
-/** One extension that the editor mounts. */
+/** One extension that this user runs, as the editor mounts it. */
 export type InstalledExtension = {
 	name: string; // "acme/icons"
 	label: string;
 	/** A short summary for the Extensions panel. */
 	description?: string;
 	permissions: Permission[];
-	/** A data URI for the icon. Empty if the package has no icon. */
+	/** A data URI for the SVG in the package. Not set if the package has no SVG. */
 	icon?: string;
-	/** The URL of the entry module. It is on Builder with the build checksum, or on a dev server. */
+	/**
+	 * The URL of the entry module. Builder serves an installed extension, with the
+	 * checksum of the build in the URL. A dev server serves a development extension.
+	 */
 	entryUrl: string;
 };
 
 export type Breakpoint = "desktop" | "tablet" | "mobile";
 
 /**
- * The selection. `count` and `blockIds` are for all selected blocks.
- * The other fields have a value only for one block. So a rule with them hides the item for many blocks.
+ * The data that the host gives about the selection.
+ *
+ * `count` and `blockIds` describe the full selection. Each other field
+ * describes one block. So a field has a value only when one block is
+ * selected. With three blocks selected, `isText: true` would be false.
+ *
+ * So a rule that names one of these fields does not match when the user
+ * selects more than one block. The matcher compares strictly, and no value
+ * equals `undefined`. The item then hides. It does not act on the wrong block.
+ *
+ * The context menu is not an exception. A right-click names one block. The
+ * host fills these fields from that block, whatever else is selected.
+ *
+ * The kind checks are separate booleans, not one `blockType`. `Block` keeps
+ * them independent. For example, a block can be a link and a container.
  */
 export type EditorSelection = {
 	count: number;
-	/** The selected blocks, in canvas order. */
+	/** Each selected block, in canvas order. Always present. */
 	blockIds: string[];
 	blockId?: string;
 	element?: string; // the tag. All the kind checks come from it
@@ -60,12 +81,14 @@ export type EditorSelection = {
 	isChildOfComponent?: boolean;
 };
 
-/** A snapshot of one block. */
+/** A snapshot of one block. It says nothing about the full selection. */
 export type BlockSnapshot = Omit<EditorSelection, "count" | "blockIds">;
 
 /**
  * The snapshot that an extension reads. It is not the live state of Builder.
- * Add a field only when a built-in `condition` reads it. It is difficult to remove a field.
+ *
+ * Add a field only when a built-in `condition` already reads it.
+ * It is easy to add a field later. It is difficult to remove one.
  */
 export type EditorContext = {
 	selection: EditorSelection;
@@ -73,14 +96,21 @@ export type EditorContext = {
 	editingMode: "page" | "fragment";
 	readOnly: boolean;
 	isAIEnabled: boolean;
-	/** Null when no page is open. */
+	/** Null when no page is open. So no code reads an empty route as a real route. */
 	page: { route: string; isTemplate: boolean; isStandard: boolean; published: boolean } | null;
 	site: { isDeveloperMode: boolean; isFCSite: boolean };
 };
 
 /**
- * The only message on the window. It sends the port. All other messages use the port.
- * Each message has a version, because an extension can run on an older Builder.
+ * An extension has its own release schedule. It can run on an older Builder.
+ * So each message names the version that it uses.
+ */
+/**
+ * The initial and only message on the window. The port is sent via this message.
+ * All other messages use the port.
+ *
+ * It names no extension and no permission. The host knows the extension of
+ * each port. Only the host applies permissions.
  */
 export type ConnectMessage = {
 	v: typeof PROTOCOL_VERSION;
@@ -94,7 +124,7 @@ export type ConnectMessage = {
 
 export type ChannelError = {
 	message: string;
-	/** A code that the caller can act on, for example "unsupported_version". */
+	/** Set when the caller must act on the reason, for example "unsupported_version". */
 	code?: string;
 };
 
@@ -121,10 +151,14 @@ export type EventMessage = {
 	payload?: unknown;
 };
 
-/** Both sides send all three types. */
+/** Both sides send all three types. So no shape has a direction. */
 export type PortMessage = RequestMessage | ResponseMessage | EventMessage;
 
-/** A message with a version that this Builder does not know. The channel answers it with an error. */
+/**
+ * A message with a known shape and a version that this Builder can not know.
+ * The channel answers this message. It does not ignore it. So an extension
+ * for a newer Builder learns why its call failed.
+ */
 export type AnyVersionMessage = (
 	Omit<RequestMessage, "v"> | Omit<ResponseMessage, "v"> | Omit<EventMessage, "v">
 ) & {

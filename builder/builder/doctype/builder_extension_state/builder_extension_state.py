@@ -22,7 +22,7 @@ class BuilderExtensionState(Document):
 	# end: auto-generated types
 
 	def autoname(self):
-		# The code finds a row by installation and user, not by name.
+		# a uuid, and (installation, user) is looked up by field
 		if not self.name:
 			self.name = str(uuid.uuid4())
 
@@ -31,5 +31,5 @@ UNIQUE_INDEX = "unique_installation_user"
 
 
 def on_doctype_update():
-	"""Adds a unique index. Each user and installation can have one row only."""
+	"""One row per user and installation. `set_state` reads it by the two, so a second would hide one."""
 	frappe.db.add_unique("Builder Extension State", ["installation", "user"], constraint_name=UNIQUE_INDEX)

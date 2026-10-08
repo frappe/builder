@@ -1,9 +1,23 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Methods that keep the state of an extension for each user.
-Each user and installation has one row with one JSON object. No permission is necessary.
-Each method calls `assert_extension_access`. So the writes ignore the doctype permissions."""
+"""Storage an extension owns outright.
+
+No permission gates this. The extension's own drawer is not a write to the page,
+so a read-only page does not close it.
+
+One row per user and installation, holding the whole store as one JSON object.
+The extension is installed for the whole site, but what it stores is one user's.
+The store used to be `localStorage`, which is per browser, so two people sharing
+a machine shared every extension's state. Here it follows the user between
+machines.
+
+A development extension still uses the browser. Its installation goes on every
+`pagehide`, so a row here would not survive the reload an author needs.
+
+These methods are the only way in. Each opens with `assert_extension_access`,
+so the writes skip the doctype permission, which only a System Manager holds.
+"""
 
 import json
 
@@ -18,25 +32,29 @@ STATE_DOCTYPE = "Builder Extension State"
 
 @frappe.whitelist()
 def get_state(extension: str) -> dict:
-	"""Returns all the state that this extension keeps for this user."""
+	"""Everything this extension stored for this user."""
 	installation = assert_extension_access(extension)
 	return read_values(read_row(installation))
 
 
 @frappe.whitelist(methods=["POST"])
 def set_state(extension: str, state: dict) -> None:
-	"""Merges the changed keys into the state. It does not remove other keys.
+	"""Only the keys that change, merged at the top level.
 
-	Many frames of an extension can write. The merge keeps the keys of each frame."""
+	`set` never removes what a call leaves unmentioned. An extension has up to
+	five frames, and merging stops a panel saving its query from erasing what the
+	entry stored.
+	"""
 	installation = assert_extension_access(extension)
 	changes = get_changes(state)
 	writes_before = frappe.db.transaction_writes
 	try:
 		merge_changes(extension, installation, changes)
 	except (frappe.QueryDeadlockError, frappe.UniqueValidationError):
-		# Two frames wrote the first row at the same time. The database stopped one write.
-		# The row exists now, so a second merge is safe.
-		# Do not retry if the rollback also removes an earlier write.
+		# Two frames made this user's first write at once, so neither had a row to
+		# lock. The database ends one transaction: MariaDB with a deadlock, Postgres
+		# with a duplicate. The other frame's row exists now, so merging again is
+		# safe, but only when the rollback takes no earlier write with it.
 		if writes_before:
 			raise
 		frappe.db.rollback()
@@ -46,7 +64,11 @@ def set_state(extension: str, state: dict) -> None:
 
 @frappe.whitelist(methods=["POST"])
 def unset_state(extension: str, key: str) -> None:
-	"""Removes one key. A missing key is not an error."""
+	"""Drop one key.
+
+	Quiet about a key that is not there. An extension clearing what it has already
+	cleared is not an error.
+	"""
 	installation = assert_extension_access(extension)
 	row = read_row(installation, for_update=True)
 	values = read_values(row)
@@ -63,9 +85,11 @@ def merge_changes(extension: str, installation: str, changes: dict) -> None:
 
 
 def read_row(installation: str, for_update: bool = False):
-	"""Returns the row of this user, or None before the first write.
+	"""This user's row, or None before the first write.
 
-	`for_update` locks the row. So two merges run one after the other."""
+	`for_update` locks the row until the request commits. Two frames that merge at
+	the same time then run one after the other, and neither loses the other's keys.
+	"""
 	return frappe.db.get_value(
 		STATE_DOCTYPE,
 		{"installation": installation, "user": frappe.session.user},
@@ -87,7 +111,7 @@ def get_changes(state) -> dict:
 
 
 def write_row(extension: str, installation: str, row, values: dict) -> None:
-	"""Writes the state. The size limit is for all the state, with the key names."""
+	"""The cap is on the whole store, key names included, not on one key."""
 	stored = json.dumps(values)
 	if len(stored) > MAX_STATE_BYTES:
 		frappe.throw(_('"{0}" state is larger than {1} kB.').format(extension, MAX_STATE_BYTES // 1000))

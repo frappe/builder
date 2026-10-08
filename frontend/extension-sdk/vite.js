@@ -1,6 +1,14 @@
 /**
- * `frappe-builder-extension-sdk/vite`: the build plugin for extensions. It is plain JavaScript for Node.
- * Usage: `plugins: [vue(), builderExtension({ builderUrl })]`.
+ * `frappe-builder-extension-sdk/vite`: the build that an extension author runs.
+ *
+ * This file is plain JavaScript. Vite gives the imports of a config to Node.
+ * Node does not remove types from a file under `node_modules`. So a config
+ * cannot load a TypeScript plugin from a package.
+ *
+ * ```js
+ * import builderExtension from "frappe-builder-extension-sdk/vite";
+ * export default defineConfig({ plugins: [vue(), builderExtension({ builderUrl })] });
+ * ```
  */
 
 import fs from "node:fs";
@@ -11,29 +19,38 @@ import { parseJson, validateManifest } from "./src/shared/manifest.js";
 const SDK = "frappe-builder-extension-sdk";
 const MANIFEST = "manifest.json";
 
-/** The URL where Builder serves the SDK. */
+/** The URL where Builder serves the one SDK copy that all frames of an extension share. */
 const SDK_PATH = "/builder_extension_asset/sdk/extension-sdk.js";
 
 /** The editor reads this path to learn what the dev server serves. */
 const DESCRIPTOR_PATH = "/__builder-extension";
 
-/** The hot reload client of Vite. */
+/** The hot reload client of Vite. It loads from the dev server, which serves the entry. */
 const HMR_CLIENT = "/@vite/client";
 
-/** The Vite port if the config sets none. */
+/** The port of Vite when the config sets none. */
 const DEFAULT_PORT = 5173;
 
-/** The entry file of the build. It imports its chunks by relative path. */
+/** The entry of an install. A frame imports it from Builder, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
-/** Adds a stylesheet link in each frame. A link lets each `url(...)` in the CSS resolve against the stylesheet. */
+/**
+ * Runs in each frame, because each frame imports the entry. A link, not an
+ * inline style, so each `url(...)` in the CSS resolves against the stylesheet.
+ */
 const STYLESHEET_LINK = (fileName) =>
 	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.append(link); })();`;
 
-/** One entry. So Rollup puts shared code into one chunk. */
+/** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
 
-/** Makes the entry link the stylesheet. The frame page does not know the extension. */
+/**
+ * Makes the entry link the stylesheet.
+ *
+ * The frame shell is one static document. It names no extension. So it
+ * cannot link the stylesheet of an extension. The entry must link it. If
+ * not, each frame shows no styles.
+ */
 const linkStylesheet = (bundle) => {
 	const sheet = Object.values(bundle).find((file) => file.type === "asset" && file.fileName.endsWith(".css"));
 	if (!sheet) return;
@@ -61,8 +78,10 @@ const readReadme = (root) => {
 };
 
 /**
- * @param {{ builderUrl: string }} options `builderUrl` is the origin of the editor. It has no default.
- * The dev server imports the SDK from it. A different origin gives a second SDK that does not connect.
+ * @param {{ builderUrl: string }} options `builderUrl` is the origin of the
+ * editor. It has no default. The dev server imports the SDK from this origin
+ * by absolute URL. A different origin loads a second SDK copy. The frames of
+ * that copy do not connect.
  */
 export default function builderExtension({ builderUrl } = {}) {
 	if (!builderUrl) {
@@ -76,10 +95,13 @@ export default function builderExtension({ builderUrl } = {}) {
 	let entry = "";
 	let serving = false;
 
-	/** The dev server path of a file. */
+	/** The dev server path of a file. The editor loads the entry and the icon over HTTP. */
 	const servedPath = (file) => `/${path.relative(root, file)}`;
 
-	/** The icon is next to the entry. The install keeps all files in one folder, so the name stays correct. */
+	/**
+	 * The icon is next to the entry. The install puts all files in one directory.
+	 * So the name in the manifest is correct for the source and for the install.
+	 */
 	const findIcon = (manifest) => (manifest.icon ? path.join(path.dirname(entry), manifest.icon) : "");
 
 	const readIcon = (file) => {
@@ -93,7 +115,8 @@ export default function builderExtension({ builderUrl } = {}) {
 
 	return {
 		name: "builder-extension",
-		// Run before the Vite resolver. If not, Vite finds the SDK on disk and adds a second copy.
+		// run before the resolver of Vite. If not, Vite finds the SDK on disk,
+		// and the frame gets a second copy of it
 		enforce: "pre",
 
 		config(config, env) {
@@ -102,16 +125,19 @@ export default function builderExtension({ builderUrl } = {}) {
 			serving = env.command === "serve";
 			const port = config.server?.port ?? DEFAULT_PORT;
 			return {
-				// Relative URLs. So the build works at any install URL.
+				// a chunk or an asset URL resolves against the module that names it. So
+				// the build works under any install URL
 				base: "./",
-				// The frame runs module scripts. So the browser is always modern.
+				// the frame runs module scripts. So it is always a modern browser
 				build: {
 					target: "es2020",
-					// One stylesheet, because the entry links only one.
+					// one stylesheet, because the entry links only one
 					cssCodeSplit: false,
 					rollupOptions: {
 						input: entry,
-						// Do not include the SDK. The import map of the frame gives it.
+						// the build never includes the SDK. The import map of the frame
+						// shell points it to the one copy that Builder serves, for the
+						// entry and for every chunk
 						external: [SDK],
 						output: {
 							entryFileNames: OUTPUT_ENTRY,
@@ -121,43 +147,62 @@ export default function builderExtension({ builderUrl } = {}) {
 					},
 				},
 				server: {
-					// An extension frame sends `Origin: null`. This list stops a plain fetch.
-					// The source files are not private.
+					// an extension frame has an opaque origin. It sends `Origin: null`.
+					// Any site can send `null` from a sandboxed frame, so this list
+					// stops a plain fetch, but the source files are not private
 					cors: { origin: [builderOrigin, "null"] },
-					// Asset URLs must name the dev server. `strictPort` keeps the port in the origin correct.
+					// an asset URL resolves against the frame document, on the Builder
+					// site. So it must name the dev server. `strictPort` keeps the port
+					// in the origin correct: Vite stops, and does not try the next port
 					port,
 					strictPort: true,
 					origin: config.server?.origin ?? `${config.server?.https ? "https" : "http"}://localhost:${port}`,
-					// The package is linked, so it is outside the project. Allow both folders.
-					// This list replaces the default list.
+					// the package is installed by a link, so it is outside this project.
+					// Without this, the dev server does not serve it. The project must
+					// also be in the list, because this list replaces the default list
 					fs: { allow: [root, path.dirname(fileURLToPath(import.meta.url))] },
 				},
 			};
 		},
 
 		/**
-		 * Changes the SDK import to the Builder URL on the dev server.
-		 * If not, Vite serves a second SDK copy with no port.
+		 * Changes the SDK import to the Builder URL. Without this, the import
+		 * map of the frame gets the import.
+		 *
+		 * `external: true` alone does not work on a dev server. Vite changes the
+		 * package name to `/@id/frappe-builder-extension-sdk`. The browser then
+		 * asks the dev server for it, and the import map never sees it. The frame
+		 * then has a second SDK copy, with no port and no channel.
+		 *
+		 * Vite does not change an absolute URL. It gives the same module that the
+		 * frame shell loaded, if `builderUrl` is the origin of the editor. That is
+		 * why the option has no default.
 		 */
 		resolveId(id) {
 			if (serving && id === SDK) return { id: sdkUrl, external: true };
 		},
 
 		/**
-		 * Loads the Vite hot reload client. Builder serves the frame page, so Vite cannot add it.
-		 * `@vitejs/plugin-vue` needs the client. Without it, the first component fails.
+		 * Loads the hot reload client of Vite. No other code loads it.
+		 *
+		 * Vite adds the client to the HTML that it serves. Builder serves the
+		 * extension frame, so the client does not load. `@vitejs/plugin-vue` calls
+		 * `import.meta.hot.accept(...)` with no check. It expects the client to
+		 * set it. Without this, the first component fails when it loads. The
+		 * error is inside a frame, so no message shows.
 		 */
 		transform(code, id) {
 			if (!serving || id !== entry) return;
 			return { code: `import ${JSON.stringify(HMR_CLIENT)};\n${code}`, map: null };
 		},
 
-		/** The data that the editor reads to load a dev extension. */
+		/** The data that "load development extension" reads: the identity, the permissions and the entry. */
 		configureServer(server) {
 			server.middlewares.use(DESCRIPTOR_PATH, (request, response) => {
 				const { manifest } = readManifest(root);
 				response.setHeader("Content-Type", "application/json");
-				// This runs before the Vite CORS setting. Only the editor reads it.
+				// this middleware runs before the middleware of Vite. So the CORS
+				// setting above does not apply yet. Only the editor reads this, never a frame
 				response.setHeader("Access-Control-Allow-Origin", builderOrigin);
 				response.end(
 					JSON.stringify({
@@ -176,8 +221,11 @@ export default function builderExtension({ builderUrl } = {}) {
 		},
 
 		/**
-		 * Adds the manifest and the icon to the output, and links the stylesheet.
-		 * `order: "post"` is necessary. The Vite CSS plugin adds the stylesheet in this hook.
+		 * Adds the manifest and the icon to the output. Makes the entry link the
+		 * stylesheet.
+		 *
+		 * `order: "post"` is necessary. The CSS plugin of Vite adds the stylesheet
+		 * in this same hook. This code must run after it.
 		 */
 		generateBundle: {
 			order: "post",
@@ -185,7 +233,8 @@ export default function builderExtension({ builderUrl } = {}) {
 				const { manifest, source } = readManifest(root);
 				this.emitFile({ type: "asset", fileName: MANIFEST, source });
 
-				// The install reads the icon from its root folder.
+				// the install reads its icon from its root directory. So the file
+				// goes there, with the name from the manifest
 				if (manifest.icon) {
 					this.emitFile({ type: "asset", fileName: manifest.icon, source: readIcon(findIcon(manifest)) });
 				}

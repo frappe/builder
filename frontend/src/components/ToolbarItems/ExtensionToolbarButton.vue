@@ -22,8 +22,11 @@
 
 <script setup lang="ts">
 /**
- * A toolbar button from an extension. Builder makes it with its own components.
- * This component does not know about the bridge. The bridge gives `onClick`.
+ * Tier A. The extension sends data, and Builder makes the button from its own
+ * components. So the button looks the same as the built-in buttons.
+ *
+ * This component knows nothing about extensions or the bridge. The bridge makes
+ * the descriptor and gives `onClick`. So all extension logic stays in the bridge.
  */
 import { Button, Tooltip } from "frappe-ui";
 
@@ -36,7 +39,7 @@ const props = defineProps<{
 	onClick?: () => void;
 }>();
 
-// Remove the focus after a click, like the built-in buttons.
+// the built-in toolbar buttons blur on click. So no focus ring stays
 const click = (event: MouseEvent) => {
 	(event.currentTarget as HTMLElement)?.blur();
 	props.onClick?.();

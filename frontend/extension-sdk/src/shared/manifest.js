@@ -1,13 +1,21 @@
 /**
- * The rules for `manifest.json`. The Vite plugin checks a manifest with them.
- * This file is plain JavaScript, because Node loads the plugin from `node_modules`.
+ * The rules for `manifest.json`.
+ *
+ * The Vite plugin uses this file to check a manifest before a build or a dev
+ * load. `types.ts` gets the version and the permission types from it.
+ *
+ * This file is plain JavaScript. Node loads the Vite plugin from
+ * `node_modules`, and Node does not remove types there. So the plugin and all
+ * the files that it imports must be JavaScript.
  */
 
 /** The `v` field of a manifest. Each port message also has this version. */
 export const PROTOCOL_VERSION = 1;
 
 /**
- * The permissions that an extension can ask for. Keep it the same as `PERMISSIONS` in `constants.py`.
+ * Each permission that an extension can ask for. A read or a window needs no permission.
+ * Keep this list the same as `PERMISSIONS` in `builder/extensions/constants.py`.
+ *
  * @type {readonly ("page.edit" | "page.write" | "token.write" | "data.access" | "schema.write" | "method.call")[]}
  */
 export const PERMISSIONS = [
@@ -34,7 +42,7 @@ const REQUIRED_MANIFEST_FIELDS = ["v", "name", "label", "description", "version"
 const EXTENSION_NAME = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/;
 const SEMVER =
 	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
-// The editor shows the label and the description. So they cannot have markup or control characters.
+// the editor shows the label and the description. No markup and no control characters
 const PLAIN_TEXT = /^[^<>\u0000-\u001f\u007f]*$/;
 
 const fail = (source, message) => {
@@ -45,7 +53,7 @@ const isObject = (value) => value !== null && typeof value === "object" && !Arra
 
 const requireText = (manifest, field, maximum, source) => {
 	const value = manifest[field];
-	// Count code points, not UTF-16 units.
+	// count code points, not UTF-16 units
 	const length = typeof value === "string" ? [...value].length : 0;
 	if (!length || length > maximum || value.trim() !== value || !PLAIN_TEXT.test(value)) {
 		fail(source, `field "${field}" must contain 1 through ${maximum} plain text characters`);

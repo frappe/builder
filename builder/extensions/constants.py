@@ -1,20 +1,22 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Names, file types and limits for extensions.
+"""What an extension may be named, hold, and ask for.
 
-The extension modules and the DocTypes use this module. So they do not import each other."""
+Its own module, so the extension modules and the DocTypes share it without
+importing each other.
+"""
 
 import re
 
 EXTENSIONS_FOLDER = "extensions"
 ENTRY_FILE = "main.js"
 
-# The route for the SDK and the installed files of extensions
+# The route that serves the SDK and the installed files to extension frames
 ASSET_ROUTE = "builder_extension_asset"
 
-# The file types that a frame can load.
-# No HTML or XML. A file must not open as a page of the site.
+# The files a frame may load, by suffix. No HTML or XML: a tab that opens one of
+# these URLs must not get a page that runs as the site
 ASSET_TYPES = {
 	".js": "text/javascript",
 	".css": "text/css",
@@ -29,15 +31,16 @@ ASSET_TYPES = {
 	".woff2": "font/woff2",
 }
 
-# publisher/name, in lowercase. The install path does not use the name.
+# publisher/name, lowercase. The slash is the only separator, and no install path
+# is built from it, so a name can add no path segment.
 EXTENSION_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*$")
 VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*$")
 
-# One SVG file in the install root. The pattern has no slash.
-# So the icon cannot name a file outside the install.
+# One SVG in the install root. No separator, so an icon names no file outside it.
+# No other format, so the editor draws it in an <img> at any size.
 ICON_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$")
 
-# The permissions that the bridge checks. Reads and windows need no permission.
+# every permission the bridge gates a method by. Reads and windows need none
 PERMISSIONS = (
 	"page.edit",
 	"page.write",
@@ -47,12 +50,14 @@ PERMISSIONS = (
 	"method.call",
 )
 
-# The version of an extension from a dev server. It has no files.
-# The list of installations does not show it, because the browser adds it.
+# An installation loaded from a dev server this session. It has no files, and the
+# browser adds its own entry for it, so the listing leaves it out.
 DEV_EXTENSION_VERSION = "0.0.0-dev"
 
-# The panel shows the README in a narrow column. This limit is enough for a long README.
+# A README is prose, and the panel renders it in a 300 pixel column. This is room
+# for a long one and no room for a book.
 MAX_README_BYTES = 100_000
 
-# Enough for settings and a small cache. An extension cannot fill the site with state.
+# Room for settings and a cached list. Small enough that no extension fills a
+# site with what it remembers.
 MAX_STATE_BYTES = 100_000

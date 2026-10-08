@@ -202,9 +202,9 @@ website_route_rules = [
 
 website_path_resolver = "builder.builder.doctype.builder_page.builder_page.resolve_path"
 page_renderer = [
-	# The SDK comes first. It matches one fixed route.
+	# the extension SDK first: it matches one fixed route and answers without touching a page
 	"builder.extensions.sdk.ExtensionSDKRenderer",
-	# The installed files of extensions, on the same route prefix.
+	# the installed files of an extension, under the same route prefix
 	"builder.extensions.assets.ExtensionAssetRenderer",
 	"builder.builder.doctype.builder_page.builder_page.BuilderPageRenderer",
 ]

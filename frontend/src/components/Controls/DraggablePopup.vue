@@ -1,7 +1,7 @@
 <template>
 	<teleport to="#popovers">
 		<div class="relative" ref="popover">
-			<!-- Above the panel controls with a z-index. Below the frappe-ui overlays (z-100). -->
+			<!-- above panel controls that set a z-index (Input's fade and suffix), below frappe-ui overlays (z-100) -->
 			<div class="fixed z-50" @mousedown.stop>
 				<div
 					ref="popoverContent"
@@ -32,7 +32,7 @@
 					<div class="min-h-0 flex-1 px-3 pb-3">
 						<slot name="content"></slot>
 					</div>
-					<!-- The resize handles. The popup controls its size. -->
+					<!-- grab corners: the popup owns its size, so the handles live with the chrome -->
 					<template v-if="resizable">
 						<div
 							class="absolute bottom-0 left-0 size-4 cursor-sw-resize"
@@ -87,7 +87,8 @@ const props = withDefaults(
 	},
 );
 
-// "dragging" and "resizing" let content such as an iframe stop pointer events until the gesture ends.
+// "dragging" and "resizing" let a consumer whose content swallows the pointer,
+// such as an iframe, stop taking events until the gesture ends
 const emit = defineEmits(["update:modelValue", "dragging", "resizing"]);
 
 const MIN_WIDTH = 240;
@@ -98,7 +99,7 @@ const popoverContent = ref(null) as Ref<HTMLElement | null>;
 const headerRef = ref<HTMLElement | null>(null);
 const popupLeft = ref(1500);
 const popupTop = ref(100);
-// The popup controls its size. `width` and `height` give only the start size.
+// The popup owns its size from here on: `width` and `height` only seed it.
 const popupWidth = ref(props.width);
 const popupHeight = ref(props.height);
 const isDragging = ref(false);
@@ -185,7 +186,7 @@ const startResize = (event: MouseEvent, corner: "left" | "right") => {
 	document.addEventListener("mouseup", stopResize, { once: true });
 };
 
-/** Keeps the corner in the viewport while it moves. */
+/** Clamped as it moves, so the corner never leaves the viewport. */
 const resize = (event: MouseEvent) => {
 	if (!resizingCorner.value) return;
 
@@ -198,7 +199,7 @@ const resize = (event: MouseEvent) => {
 		return;
 	}
 
-	// The right edge stays. The left edge moves with the width.
+	// the right edge stays put, so the left edge follows the width
 	popupWidth.value = clamp(startWidth - dx, MIN_WIDTH, startLeft + startWidth - VIEWPORT_PADDING);
 	popupLeft.value = startLeft + startWidth - popupWidth.value;
 };

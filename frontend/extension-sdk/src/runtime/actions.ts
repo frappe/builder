@@ -1,6 +1,16 @@
 /**
- * The action handlers of this frame. The host keeps only their names and calls back.
- * Only the entry frame keeps handlers, because it stays open the longest.
+ * The handlers that this frame keeps, and how to run one when the host asks.
+ *
+ * A handler is a function, so it cannot go through the port. The host keeps
+ * only the name. When a user activates a descriptor with that name, the host
+ * calls back.
+ *
+ * This code is separate from `methods.ts`. So `connect.ts` can answer
+ * requests, and the two files do not import each other.
+ *
+ * Only the entry frame keeps handlers. The host calls that frame because it
+ * lives longer than visual slots. A slot can close while a descriptor still
+ * shows its action.
  */
 
 import { unknownMethod } from "../shared/transport/createPortChannel";

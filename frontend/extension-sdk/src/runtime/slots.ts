@@ -1,19 +1,34 @@
 /**
- * Code that runs the slots of extensions.
- * Each frame imports the entry module and runs only its own slot.
+ * The five slot entries of an extension, and the code that runs the slot of this frame.
+ *
+ * The slot names are fixed. The author does not choose them.
+ *
+ * Each frame imports the same entry module. So all five registrations run in
+ * each frame. The frame then runs only the slot that the handshake named. The
+ * frame learns its slot after it reads the module. So one module serves
+ * five frames.
+ *
+ * For the same reason, `main` takes a callback and the other slots take
+ * `{ component }`. The entry module always runs. So `main` must wait for its own
+ * frame. The module of a slot must not run in a frame for a different slot.
  */
 
 import type { ExtensionSlot } from "../shared/types";
 
-/** The element that the shell gives a frame for its content. */
+/** The one element that the shell gives a frame for its content. */
 const ROOT_ID = "app";
 
 export type VisualSlot = Exclude<ExtensionSlot, "main">;
 
-/** `component` returns the module of the slot. */
+/** `component` gives the module that has the slot document. */
 export type SlotEntry = { component: () => Promise<unknown> };
 
-/** Mounts a component and returns a cleanup function. The extension gives this function. */
+/**
+ * Changes a component into DOM, and returns a cleanup function.
+ *
+ * The SDK has no framework, so the extension gives this function. It runs in
+ * the bundle of the author, in this frame. It does not go through a port.
+ */
 export type Mounter = (
 	component: unknown,
 	element: HTMLElement,
@@ -25,7 +40,10 @@ let mounter: Mounter | null = null;
 let slot: ExtensionSlot | null = null;
 const visualSlots = new Map<VisualSlot, SlotEntry>();
 
-/** Set before the frame imports the entry. So a registration knows its frame. */
+/**
+ * Set before the frame imports the entry module. So a registration in that
+ * module knows its frame.
+ */
 export const setActiveSlot = (name: ExtensionSlot) => (slot = name);
 
 export const getActiveSlot = () => slot;
@@ -44,14 +62,29 @@ export const registerSlot = (slot: VisualSlot, entry: SlotEntry) => {
 	visualSlots.set(slot, entry);
 };
 
-/** Sets the adapter that mounts a component. A second call fails. */
+/**
+ * Sets the adapter that mounts a component. One adapter for each extension.
+ *
+ * `frappe-builder-extension-sdk/vue` exports one. A second call fails. Two
+ * adapters would give two owners for one job.
+ */
 export const use = (adapter: Mounter) => {
 	if (mounter) throw new Error("This extension already registered a mount adapter");
 	mounter = adapter;
 };
 
 /**
- * A slot module exports `mount`, or has a default export of a component for the adapter.
+ * The contract between the SDK and the document of an extension.
+ *
+ * `component()` gives a module. A module does nothing by itself. A framework
+ * runtime must change the component into DOM. The extension has a runtime,
+ * and the SDK has none. So the extension mounts, and the SDK only calls it.
+ * This keeps `extension-sdk.js` small for an extension with no UI.
+ *
+ * A module has one of two shapes:
+ * 1. It exports `mount`. The SDK needs to know no framework.
+ * 2. It has a default export of a component. The adapter from `use` mounts it.
+ *
  * The cleanup is optional. It runs when the frame closes.
  */
 type SlotModule = {
@@ -73,8 +106,11 @@ const mount = (module: SlotModule, slot: ExtensionSlot, root: HTMLElement, props
 };
 
 /**
- * Runs only the slot of this frame. If there is no slot, it shows a warning.
- * An extension for a newer Builder can have a slot that this Builder does not open.
+ * Runs only the slot of this frame.
+ *
+ * If the extension registered no slot for this frame, it shows a warning, not
+ * an error. An extension for a newer Builder can know a slot that this Builder
+ * does not open.
  */
 export const runSlot = async (props: Record<string, unknown> = {}) => {
 	if (slot === "main") return mainHandler?.();
@@ -88,6 +124,7 @@ export const runSlot = async (props: Record<string, unknown> = {}) => {
 	const module = (await entry.component()) as SlotModule;
 	unmount = mount(module, slot as ExtensionSlot, root, props);
 
-	// The cleanup is for the Vue app, timers and subscriptions of the slot.
+	// the document closes with the frame. This cleanup is for what the document
+	// owns: the unmount hooks of a Vue app, a timer, or a subscription
 	window.addEventListener("pagehide", () => unmount?.(), { once: true });
 };

@@ -31,7 +31,7 @@ def become_a_user_who_cannot_manage(test_case):
 
 
 class TestInstallations(FrappeTestCase):
-	"""Tests the list that the Extensions panel shows."""
+	"""The listing the Extensions panel reads, which the editor's own list cannot be."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
@@ -47,7 +47,7 @@ class TestInstallations(FrappeTestCase):
 		self.assertTrue(listed[0]["enabled"])
 
 	def test_keeps_a_disabled_installation(self):
-		"""The panel must show it. If not, only the bench can enable it again."""
+		"""Hiding it would leave no way to turn it back on but the bench."""
 		make_installation(EXTENSION, enabled=0)
 
 		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
@@ -170,13 +170,13 @@ class TestUninstall(FrappeTestCase):
 
 
 class TestListedInstallation(FrappeTestCase):
-	"""Tests the data in one row that the editor uses to mount an extension."""
+	"""What one row of the list carries for the editor to mount."""
 
 	def listed(self, name):
 		return next((row for row in get_installations() if row["name"] == name), None)
 
 	def test_carries_no_source(self):
-		"""The list does not include the bundles. A separate call gets each bundle."""
+		"""One call per extension reads that, so a list of five carries no bundles."""
 		make_installation("acme/light", source="export default {};")
 
 		self.assertNotIn("source", self.listed("acme/light"))
@@ -195,7 +195,7 @@ class TestListedInstallation(FrappeTestCase):
 		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
 
 	def test_a_page_reader_gets_the_grants_without_reading_the_installation(self):
-		"""The editor uses only this row. A page reader cannot read the document."""
+		"""The editor builds an extension from this row alone. A page reader cannot read the document."""
 		make_installation("acme/light", permissions=["page.edit"])
 		become_a_user_who_cannot_manage(self)
 		self.addCleanup(frappe.set_user, "Administrator")

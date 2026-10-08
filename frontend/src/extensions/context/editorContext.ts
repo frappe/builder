@@ -1,6 +1,12 @@
 /**
- * The live state of Builder that an extension can read. It is one computed for all readers.
- * The getter gets the stores. So the load order of the editor does not matter.
+ * The live state of Builder, with only the fields that an extension can read.
+ *
+ * It is a computed. So the 23 context menu items that read it in one render
+ * share one result. Also, `contextMethods.ts` can watch it and keep no second copy.
+ *
+ * The getter gets the stores. A registry module must not import Vue SFC scope.
+ * A store that loads at import time makes this module depend on the load order
+ * of the editor.
  */
 
 import type Block from "@/block";
@@ -11,7 +17,10 @@ import blockController from "@/utils/blockController";
 import { computed } from "vue";
 import type { BlockSnapshot, Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
-/** Makes a snapshot of one block. */
+/**
+ * A snapshot of one block. It comes from the block, not from
+ * `blockController`, because the caller already chose the block.
+ */
 export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	blockId: block.blockId,
 	element: block.element,
@@ -26,11 +35,16 @@ export const getBlockSnapshot = (block: Block): BlockSnapshot => ({
 	isInput: block.isInput(),
 	isRepeater: block.isRepeater(),
 	isComponent: block.isExtendedFromComponent(),
-	// This field is the component name, not a method.
+	// a string field with the component name. It is not a method
 	isChildOfComponent: Boolean(block.isChildOfComponent),
 });
 
-/** Returns `count` and `blockIds`. For one block, it also returns the block snapshot. */
+/**
+ * When more than one block is selected, no one block gives a snapshot. So
+ * only `count` and `blockIds` stay. An extension uses `blockIds` to act on all
+ * selected blocks. When the fields for one block are empty, `blockIds` is the
+ * only way to get the blocks.
+ */
 const getSelection = () => {
 	const blocks = blockController.getSelectedBlocks();
 	const shared = { count: blocks.length, blockIds: blocks.map((block) => block.blockId) };

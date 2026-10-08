@@ -6,12 +6,15 @@ import { computed } from "vue";
 const INSTALLATION_DOCTYPE = "Builder Extension";
 
 /**
- * All installations on the site. The editor mounts the enabled rows.
- * Each row has all the data that the editor needs.
+ * All installations on this site, with the disabled and development installations.
+ * The editor mounts the enabled rows.
+ *
+ * A row has all that the editor needs. A page reader can get the list, but
+ * possibly not the installation documents.
  */
 const installationsResource = createResource<Installation[]>({
 	url: "builder.extensions.installations.get_installations",
-	// If the list fails, the editor works without extensions.
+	// if this list fails, the editor loses its extensions. The editor itself still works
 	onError: (error: Error) => console.error("Could not load installations", error),
 });
 
@@ -25,8 +28,11 @@ const toInstalledExtension = (row: Installation): InstalledExtension => ({
 });
 
 /**
- * The extensions that the editor runs: the enabled installations and the dev extension.
- * The dev extension replaces an installation with the same name.
+ * All extensions that this editor runs. These are the installations of the
+ * site, and the extension from a dev server in this session. A dev extension
+ * replaces the installation with the same name. Two entries would give it two frames.
+ *
+ * A development record never mounts. It has no files. The entry in the browser runs it.
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
 	const installed = (installationsResource.data ?? [])
@@ -48,11 +54,11 @@ type Installation = {
 	description?: string;
 	icon?: string;
 	enabled: boolean;
-	/** The granted permissions. The server checks the same list. */
+	/** What an extension manager allowed. The server gate reads the same list. */
 	permissions: Permission[];
-	/** The entry URL with the build checksum. Empty if there is no build. */
+	/** The entry URL, with the checksum of the build. Not set for an installation with no checksum. */
 	entry_url?: string;
-	/** True for a dev extension. The editor does not mount this row. */
+	/** A dev server load made this row. The entry in the browser runs it. The row never runs. */
 	is_development?: boolean;
 };
 
