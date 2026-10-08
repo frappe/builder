@@ -3,7 +3,7 @@
 		<div v-if="loading" class="absolute inset-0 grid place-items-center bg-surface-base">
 			<LoadingIcon class="h-6 w-6 text-ink-gray-5" />
 		</div>
-		<!-- no allow-same-origin. The opaque origin is the only isolation -->
+		<!-- Do not add allow-same-origin. The opaque origin isolates the frame. -->
 		<iframe
 			ref="frame"
 			:src="SHELL_URL"
@@ -16,7 +16,11 @@
 <script setup lang="ts">
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { installedExtensions } from "@/data/extensions";
-import { createPortChannel, type RequestHandler, type PortChannel } from "frappe-builder-extension-sdk/transport";
+import {
+	createPortChannel,
+	type RequestHandler,
+	type PortChannel,
+} from "frappe-builder-extension-sdk/transport";
 import {
 	PROTOCOL_VERSION,
 	type ConnectMessage,
@@ -26,31 +30,23 @@ import {
 import useBuilderStore from "@/stores/builderStore";
 import { onBeforeUnmount, ref, watch } from "vue";
 
-/** 
- * One document serves all extensions and all slots. So the URL has no extra segment. 
- * See builder/www/builder_extension.html
- * */
+/** One page serves all extensions and slots. See builder/www/builder_extension.html. */
 const SHELL_URL = "/builder_extension";
 
 const props = defineProps<{
 	extension: string;
 	slot: ExtensionSlot;
 	initialProps?: Record<string, unknown>;
-	/** Answers the calls of the frame. The name is not `onRequest`, because
-	 * Vue reads that name as a listener for a `request` event. */
+	/** Answers the calls of the frame. Vue reads `onRequest` as an event listener, so do not use that name. */
 	requestHandler?: RequestHandler;
 }>();
 
-/**
- * This component emits the channel, not the port. `createPortChannel` owns
- * `port.onmessage`. So one port can have only one channel. This component
- * also needs the channel for theme events.
- */
+/** Emits the channel, not the port. One port can have only one channel. */
 const emit = defineEmits<{
 	connect: [channel: PortChannel];
-	/** Names the closed channel. So a caller can find it and remove it. */
+	/** Gives the closed channel, so the caller can remove it. */
 	disconnect: [channel: PortChannel];
-	/** The frame ran its slot, or it could not load. If the code of the frame fails, no event occurs. */
+	/** The frame ran its slot, or it did not load. */
 	ready: [];
 }>();
 
@@ -89,10 +85,7 @@ const disconnect = () => {
 	emit("disconnect", closing);
 };
 
-/**
- * Runs on each `load`. So a reloaded frame connects again. First, the old
- * channel closes. Each pending call to the old document then fails.
- */
+/** Runs on each `load`. It closes the old channel and connects again. */
 const connect = () => {
 	disconnect();
 	loading.value = true;
@@ -109,13 +102,12 @@ const connect = () => {
 		return finishLoading();
 	}
 
-	// only "*" can reach an opaque origin. The port makes this safe. The port
-	// moves only one time, and this is the last message on the window
+	// Only "*" can reach an opaque origin. The port makes this safe.
 	frame.value?.contentWindow?.postMessage(message, "*", [pair.port2]);
 	emit("connect", opening);
 };
 
-// the handshake sends the theme one time. A later theme change needs its own message
+// The handshake sends the theme one time. This sends each later change.
 watch(
 	() => store.isDark,
 	() => channel?.emit("theme", theme()),

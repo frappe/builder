@@ -1,13 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""The one SDK build every extension frame shares.
-
-The frame's import map resolves the bare `frappe-builder-extension-sdk`
-specifier to this URL, and a module script at an opaque origin is a cross-origin
-request. The web server sends no CORS header for the app's public directory, so
-Builder answers this one itself. `assets.py` serves the extensions' own files.
-"""
+"""Serves the one SDK build that all extension frames use.
+A frame imports the SDK across origins. The web server sends no CORS header for
+public files. So Builder serves the SDK itself."""
 
 from functools import cached_property
 from pathlib import Path
@@ -20,11 +16,10 @@ from werkzeug.wsgi import wrap_file
 from builder.extensions.assets import SECURITY_HEADERS
 from builder.extensions.constants import ASSET_ROUTE
 
-# `yarn build:sdk` writes this one file, and `builder_extension.html` imports it
+# `yarn build:sdk` writes this file. `builder_extension.html` imports it.
 SDK_ROUTE = f"{ASSET_ROUTE}/sdk/extension-sdk.js"
 
-# The name never changes, so the file cannot be immutable. It revalidates, and an
-# unchanged build answers 304.
+# The URL does not change. So the browser checks the file each time, and gets 304 if it is the same.
 CACHE_CONTROL = "public, no-cache"
 
 
@@ -38,9 +33,9 @@ class ExtensionSDKRenderer(BaseRenderer):
 		if frappe.local.request.headers.get("If-None-Match") == self.etag:
 			return Response(status=304, headers=self.response_headers)
 
-		# the file descriptor stays open, and the middleware closes it
+		# The middleware closes the file.
 		stream = wrap_file(frappe.local.request.environ, open(self.file_path, "rb"))
-		# a module script is MIME-strict: the wrong type stops the browser running it
+		# The browser runs a module script only with the correct type.
 		return Response(
 			stream, direct_passthrough=True, headers=self.response_headers, mimetype="text/javascript"
 		)

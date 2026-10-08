@@ -23,8 +23,8 @@ app.use(pinia);
 
 ensureTranslations().then(() => {
 	app.use(router);
-	// frappe-ui resources read `$socket` for realtime, and the plugin no longer opens one.
-	// Assigned before the plugin installs, or its guard makes the read throw.
+	// frappe-ui resources read `$socket`, and the plugin does not open one now.
+	// Set it before the plugin installs. If not, the read throws an error.
 	app.config.globalProperties.$socket = editorDemo ? undefined : createSocket();
 	app.use(FrappeUI);
 	if (!editorDemo) {

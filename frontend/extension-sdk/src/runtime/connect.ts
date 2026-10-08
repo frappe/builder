@@ -1,9 +1,4 @@
-/**
- * The frame side of the handshake.
- *
- * Builder sends one message on the window, with a port. After that, all
- * messages use the port. So this listener is necessary only one time.
- */
+/** The frame side of the handshake. Builder sends one message with a port. All later messages use the port. */
 
 import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
 import { PROTOCOL_VERSION, type ConnectMessage } from "../shared/types";
@@ -11,12 +6,8 @@ import { handleRequest } from "./actions";
 import { runSlot, setActiveSlot } from "./slots";
 
 /**
- * The frame checks the origin, not the host. Each extension frame sends
- * `origin: "null"`. So a check on the host side cannot tell frames apart.
- *
- * Builder serves this file, so the URL of this file gives the host origin.
- * It also gives the hostname that the user really opened. A value set when
- * the page renders can be wrong.
+ * The frame checks the origin of the message. All extension frames have the origin "null".
+ * Builder serves this file. So the URL of this file gives the correct host origin.
  */
 const HOST_ORIGIN = new URL(import.meta.url).origin;
 
@@ -45,28 +36,22 @@ const start = async (message: ConnectMessage, port: MessagePort) => {
 	slotProps = message.props ?? {};
 	setActiveSlot(message.slot);
 
-	// the shell names no extension. The message tells what to run. A real URL
-	// lets the entry import its chunks and assets by relative path
+	// A real URL lets the entry import its chunks and assets by relative path.
 	await import(/* @vite-ignore */ message.entryUrl);
-	// the props go to the slot document. So a dialog can open with call-time arguments
+	// The props go to the slot. So a dialog can open with arguments.
 	await runSlot(slotProps);
-	// A loaded iframe document is not sufficient. The entry and the slot can
-	// still import modules. The host removes its loader only after this event.
+	// The entry and the slot can still import modules after the iframe loads.
+	// The host removes its loader only after this event.
 	channel.emit("slot.ready");
 };
 
-/**
- * Adds the handshake listener when this module loads. A module script runs
- * before the `load` event of the iframe. The host waits for that event.
- * So the message cannot come before this listener exists.
- */
+/** Adds the listener when the module loads. This occurs before the iframe `load` event. */
 export const listenForHandshake = () => {
 	window.addEventListener("message", (message: MessageEvent) => {
 		if (message.origin !== HOST_ORIGIN) return;
 		if (channel) return; // a port moves only one time, so the handshake occurs one time
 		if (!isConnectMessage(message.data) || !message.ports[0]) return;
-		// if the entry import fails or the slot fails to mount, show the error.
-		// Otherwise the frame fails with no message
+		// Show the error if the entry import or the slot mount fails.
 		start(message.data, message.ports[0]).catch((error) =>
 			console.error(`[builder] the "${message.data.slot}" frame could not start`, error),
 		);

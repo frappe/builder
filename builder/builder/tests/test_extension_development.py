@@ -41,7 +41,7 @@ class TestDevExtension(FrappeTestCase):
 		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "token.write"])
 
 	def test_grants_only_what_the_manifest_asks_for(self):
-		"""The gate reads this list, so a wider one would name what nobody allowed."""
+		"""The checks use this list. A longer list would grant permissions that nobody allowed."""
 		granted = install_dev_extension(self.extension, ["page.edit"])
 
 		self.assertEqual(granted, ["page.edit"])
@@ -59,7 +59,7 @@ class TestDevExtension(FrappeTestCase):
 		self.assertIsNone(self.installed())
 
 	def test_leaves_a_real_installation_alone(self):
-		"""The name may belong to an extension the site really installed."""
+		"""The name can belong to an extension that the site installed."""
 		make_installation(self.extension, version="1.4.0")
 
 		remove_dev_extension(self.extension)
@@ -67,7 +67,7 @@ class TestDevExtension(FrappeTestCase):
 		self.assertEqual(self.installed().version, "1.4.0")
 
 	def test_refuses_a_user_who_cannot_manage_extensions(self):
-		"""A development installation is the site's, like any other."""
+		"""A dev installation belongs to the site, like other installations."""
 		frappe.set_user(make_page_reader(self))
 		self.addCleanup(frappe.set_user, "Administrator")
 

@@ -1,9 +1,6 @@
 /**
- * One `MessagePort` for each extension frame, with three verbs: `call`, `listen` and `emit`.
- * Builder groups the channels of the frames of one extension.
- *
- * The host and the SDK both use this file. Neither side is the client. So
- * this file does not know its side of the channel. It also does not know the methods.
+ * A channel on one `MessagePort` for each frame, with `call`, `listen` and `emit`.
+ * The host and the SDK both use this file. It does not know its side or the methods.
  */
 
 import type { AnyVersionMessage, ChannelError, EventMessage, PortMessage, RequestMessage } from "../types";
@@ -20,10 +17,10 @@ import {
 
 export type EventHandler = (payload: unknown) => void;
 
-/** Answers each request that this side of the channel accepts. */
+/** Answers each request that this side accepts. */
 export type RequestHandler = (method: string, params: unknown) => unknown;
 
-/** A refusal from the other side, or from the transport. */
+/** An error from the other side, or from the transport. */
 export class ChannelCallError extends Error {
 	code?: string;
 
@@ -34,7 +31,7 @@ export class ChannelCallError extends Error {
 	}
 }
 
-/** The refusal for an unknown method. A request handler also uses it, so the text is the same in all places. */
+/** The error for an unknown method. A request handler also uses it. */
 export const unknownMethod = (method: string) =>
 	new ChannelCallError({ message: `Unknown method "${method}".`, code: "unknown_method" });
 
@@ -83,8 +80,8 @@ export function createPortChannel(port: MessagePort, requestHandler?: RequestHan
 		listeners.get(message.event)?.forEach((handler) => handler(message.payload));
 	};
 
-	// a request and a response have an id, so the channel can answer them.
-	// An event has no id. So the channel cannot report an unknown version for it
+	// A request and a response have an id. So the channel can answer an unknown version.
+	// An event has no id. So the channel cannot answer it.
 	const refuseVersion = (message: AnyVersionMessage) => {
 		if (message.type === "request") return post(unsupportedVersion(message.id, message.v));
 		if (message.type === "response") return settle(message.id, undefined, unsupportedVersionError(message.v));
@@ -103,7 +100,7 @@ export function createPortChannel(port: MessagePort, requestHandler?: RequestHan
 		new Promise<T>((resolve, reject) => {
 			if (closed) return reject(new ChannelCallError(CHANNEL_CLOSED));
 			const id = nextId++;
-			// post first. It throws for params it cannot copy, and a response always comes later
+			// Post first. It throws if it cannot copy the params.
 			post(request(id, method, params));
 			pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
 		});
@@ -117,7 +114,7 @@ export function createPortChannel(port: MessagePort, requestHandler?: RequestHan
 
 	const emit = (name: string, payload?: unknown) => post(eventMessage(name, payload));
 
-	/** Closes the channel with the port. Each pending call fails. No last message goes to the other side. */
+	/** Closes the channel and the port. Each pending call fails. */
 	const close = () => {
 		if (closed) return;
 		closed = true;
@@ -127,7 +124,7 @@ export function createPortChannel(port: MessagePort, requestHandler?: RequestHan
 		port.close();
 	};
 
-	// the port starts when onmessage gets a value
+	// Setting onmessage starts the port.
 	port.onmessage = (message: MessageEvent) => receive(message.data);
 
 	return { call, listen, emit, close };

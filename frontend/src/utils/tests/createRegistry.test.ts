@@ -76,7 +76,7 @@ describe("createRegistry", () => {
 		expect(names(registry.all.value)).toEqual(["early", "late"]);
 	});
 
-	// visible is a computed, so a condition has to read reactive state to re-run
+	// `visible` is a computed. A condition must read reactive state to run again.
 	it("re-runs the condition when the reactive state it reads changes", () => {
 		const registry = createRegistry<TestItem>();
 		const allowed = ref(false);
@@ -159,7 +159,7 @@ describe("createRegistry", () => {
 		expect(registry.visible.value[0].label).toBe("second");
 	});
 
-	// two surfaces install the same built-in set, so this must not reshuffle
+	// Two surfaces add the same built-in items. So the order must not change.
 	it("keeps an item in its slot when the same set registers twice", () => {
 		const registry = createRegistry<TestItem>();
 		registry.register({ name: "a" });

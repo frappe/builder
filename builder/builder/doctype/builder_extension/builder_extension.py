@@ -52,8 +52,7 @@ class BuilderExtension(Document):
 	# end: auto-generated types
 
 	def autoname(self):
-		# a uuid, and the extension is looked up by field. The name is also the
-		# install directory, so it must hold no separator
+		# The name is also the install folder. A UUID has no slash.
 		if not self.name:
 			self.name = str(uuid.uuid4())
 
@@ -68,33 +67,33 @@ class BuilderExtension(Document):
 
 	def on_trash(self):
 		self.delete_extension_state()
-		# the rows roll back with a failed delete, and files would not
+		# A failed delete rolls back the rows, but not the files.
 		frappe.db.after_commit.add(self.delete_extension_files)
 
 	@property
 	def install_path(self) -> str:
-		"""The site's one copy. Private, so nothing but Builder reads it."""
+		"""Returns the install folder. It is private, so only Builder reads it."""
 		return get_files_path(f"{EXTENSIONS_FOLDER}/{self.name}", is_private=True)
 
 	@property
 	def permissions(self) -> list[str]:
-		"""What an extension manager allowed. Every gate reads this list and no other."""
+		"""Returns the granted permissions. All checks use this list."""
 		return self.permission_list("granted_permissions")
 
 	@property
 	def requested(self) -> list[str]:
-		"""What the manifest asked for. A grant cannot reach outside it."""
+		"""Returns the permissions that the manifest asks for."""
 		return self.permission_list("requested_permissions")
 
 	@property
 	def entry_url(self) -> str | None:
-		"""Where a frame imports the entry. The checksum names the build, so a rebuild gets a new URL."""
+		"""Returns the URL of the entry. A new build gets a new checksum and a new URL."""
 		if not self.checksum:
 			return None
 		return f"/{ASSET_ROUTE}/{self.name}/{self.checksum}/{ENTRY_FILE}"
 
 	def get_asset_path(self, relative_path: str) -> Path | None:
-		"""An installed file that a frame may load. None for a path outside the install."""
+		"""Returns an installed file that a frame can load. Returns None for a path outside the install."""
 		root = Path(self.install_path).resolve()
 		file = (root / relative_path).resolve()
 		if file.is_relative_to(root) and file.suffix in ASSET_TYPES and file.is_file():
@@ -103,10 +102,7 @@ class BuilderExtension(Document):
 
 	@property
 	def icon_data_uri(self) -> str | None:
-		"""None when the package ships no icon. The editor draws its own glyph then.
-
-		A data URI, so the panel draws it with no request of its own.
-		"""
+		"""Returns the icon as a data URI, or None if there is no icon."""
 		if not self.icon:
 			return None
 		icon = Path(self.install_path) / self.icon
@@ -134,9 +130,8 @@ class BuilderExtension(Document):
 			)
 
 	def permission_list(self, field: str) -> list[str]:
-		"""One of the two lists, parsed and checked against what Builder has."""
-		# parse_json raises on text that is not JSON, which would reach the user as a
-		# traceback instead of the message below
+		"""Returns one permission list. Stops if the list has an unknown permission."""
+		# Without this, text that is not JSON shows a traceback to the user.
 		try:
 			keys = frappe.parse_json(self.get(field) or "[]")
 		except ValueError:
@@ -156,12 +151,7 @@ class BuilderExtension(Document):
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
 
 	def write_extension_files(self, files: dict[str, bytes]):
-		"""Replace the installed copy with the files a frame loads.
-
-		Keyed by path under the install root, so a file can sit in a folder.
-		Replaces the whole directory, so a rebuild leaves nothing of the
-		last one behind.
-		"""
+		"""Replaces the install folder with these files. The keys are paths in the folder."""
 		root = Path(self.install_path)
 		shutil.rmtree(root, ignore_errors=True)
 		for relative_path, content in files.items():
@@ -173,8 +163,5 @@ class BuilderExtension(Document):
 		shutil.rmtree(self.install_path, ignore_errors=True)
 
 	def delete_extension_state(self):
-		"""A state row Links to this record, so Frappe refuses the delete while one stands.
-
-		One query for every user's row. A state row has no hooks, files or versions to clear.
-		"""
+		"""Deletes the state rows of all users. A state row links to the installation and stops its delete."""
 		frappe.db.delete(STATE_DOCTYPE, {"installation": self.name})

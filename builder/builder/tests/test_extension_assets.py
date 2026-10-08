@@ -12,7 +12,7 @@ EXTENSION = "acme/served"
 
 
 class TestExtensionAssets(FrappeTestCase):
-	"""The public route that serves an installation's files to its frames."""
+	"""Tests the public route that serves the files of an installation."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)

@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { settingsItems } from "../index";
 
 describe("settings registry", () => {
-	// prefetchBuilderSettings warms the panes through load, so a pane without one
-	// silently keeps its chunk miss on first open
+	// prefetchBuilderSettings loads each pane early. A pane without `load` loads late on first open.
 	it("gives every pane a loader", () => {
 		const items = settingsItems.all.value;
 
@@ -15,7 +14,7 @@ describe("settings registry", () => {
 		settingsItems.all.value.forEach((item) => expect(item.component).toBeTruthy());
 	});
 
-	// the analytics panes share the largest chunk we ship, so the idle prefetch skips them
+	// The analytics panes use the largest chunk. So the prefetch does not load them.
 	it("keeps the analytics panes out of the prefetch", () => {
 		const skipped = settingsItems.all.value.filter((item) => item.preload === false);
 

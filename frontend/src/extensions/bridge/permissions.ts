@@ -1,34 +1,20 @@
-/**
- * The gate for each method that a frame calls.
- *
- * The functions here are pure. The bridge keeps the record and gives it to
- * them. So no code here reads a resource or keeps state. The permission keys
- * are in the SDK types, with the names that the SDK reads.
- */
+/** Checks the permission of each method that a frame calls. These functions keep no state. */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
 
-/**
- * One method that the host answers.
- *
- * `needs` is required. So a method with no permission must say `null`.
- * No method can go into the table without a gate.
- */
+/** One host method. `needs` is required. A method with no permission sets `null`. */
 export type HostMethod = {
 	needs: Permission | null;
-	/** The record comes from the request handler. It never comes from the message. */
+	/** The request handler gives the record, not the message. */
 	run: (params: unknown, extension: InstalledExtension) => unknown;
 };
 
 export type MethodTable = Record<string, HostMethod>;
 
 /**
- * The permissions that change data that a user can see and save.
- *
- * The bridge applies read-only mode in one place. Each write method does not
- * check it. This list names permissions, not methods. So a new write method
- * gets the check automatically.
+ * The permissions that change data. Read-only mode blocks the methods that need them.
+ * A new write method gets this check from its permission.
  */
 const WRITE_PERMISSIONS: Permission[] = ["page.edit", "page.write", "token.write"];
 

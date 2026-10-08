@@ -1,10 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
-"""What every extension test needs: the site's installation, its files, and users.
-
-The setup lives here rather than in each of the files that need it.
-"""
+"""Shared setup for the extension tests: installations, files and users."""
 
 import json
 import pathlib
@@ -20,12 +17,9 @@ TEST_ROLE = "Extension Tester"
 
 
 def make_installation(extension="acme/listed", permissions=None, granted=None, source=None, **values):
-	"""The site's installation of one extension, with files when a source is given.
+	"""Makes an installation of one extension. Adds files if `source` is given.
 
-	`permissions` is what the manifest asked for, and every one of them is granted
-	unless `granted` narrows it. Both default to every permission, so a test that is
-	not about the gate lists none.
-	"""
+	By default, the manifest asks for all permissions and the site grants all of them."""
 	requested = list(PERMISSIONS) if permissions is None else list(permissions)
 	allowed = requested if granted is None else list(granted)
 	fields = {
@@ -56,7 +50,7 @@ def find_installation(extension):
 
 
 def write_source(installation, source: str):
-	"""The one file an install holds, plus an icon when the record names one."""
+	"""Writes the entry file, and the icon if the record has one."""
 	files = {ENTRY_FILE: source.encode()}
 	if installation.icon:
 		files[installation.icon] = b"<svg />"
@@ -64,19 +58,16 @@ def write_source(installation, source: str):
 
 
 def drop_installations(extension: str):
-	"""The site's installation of one extension, for a test that starts clean."""
+	"""Deletes the installation of one extension, so that a test starts clean."""
 	for name in frappe.get_all(INSTALLATION_DOCTYPE, filters={"extension": extension}, pluck="name"):
 		frappe.delete_doc(INSTALLATION_DOCTYPE, name, force=True)
 	remove_orphan_installs()
 
 
 def remove_orphan_installs():
-	"""Install directories with no record left.
+	"""Deletes install folders that have no record.
 
-	A test rolls the database back, so `on_trash` never runs and the files would
-	stay on the site. Removing what no record names keeps a run from leaving
-	anything behind.
-	"""
+	A test rolls back the database. So `on_trash` does not run and does not delete the files."""
 	root = pathlib.Path(get_files_path(EXTENSIONS_FOLDER, is_private=True))
 	if not root.is_dir():
 		return
@@ -88,7 +79,7 @@ def remove_orphan_installs():
 
 
 def make_role(name: str) -> str:
-	"""Tests own their role. A fresh site ships no spare one to borrow."""
+	"""Makes a role for the tests. A new site has no spare role."""
 	if not frappe.db.exists("Role", name):
 		frappe.get_doc({"doctype": "Role", "role_name": name, "desk_access": 1}).insert(
 			ignore_permissions=True
@@ -97,11 +88,9 @@ def make_role(name: str) -> str:
 
 
 def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
-	"""A second Builder user.
+	"""Makes a second Builder user. Website Manager gives read access to Builder Page.
 
-	Website Manager gives read on Builder Page, the check the gate makes before it
-	looks for an installation. Pass no roles for a user the gate turns away.
-	"""
+	Give no roles to make a user that the checks refuse."""
 	for role in roles:
 		make_role(role)
 	if not frappe.db.exists("User", email):
@@ -118,12 +107,12 @@ def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
 
 
 def make_page_reader(test_case, role=TEST_ROLE, email="extension-reader@example.com"):
-	"""A user who reads Builder Pages through `role` alone: no System Manager, no Website Manager."""
+	"""Makes a user who reads Builder Pages only through `role`."""
 	make_role(role)
 	permission = frappe.get_doc(
 		{"doctype": "Custom DocPerm", "parent": "Builder Page", "role": role, "permlevel": 0, "read": 1}
 	).insert(ignore_permissions=True)
-	# Cleanups run last in, first out, so the cache clears after the row goes.
+	# Cleanups run in reverse order. So the cache clears after the row is deleted.
 	test_case.addCleanup(frappe.clear_cache, doctype="Builder Page")
 	test_case.addCleanup(
 		frappe.delete_doc, "Custom DocPerm", permission.name, force=True, ignore_permissions=True

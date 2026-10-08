@@ -10,7 +10,7 @@ export type SettingsItem = RegistryItem & {
 	icon: string;
 	group: SettingsGroup;
 	component: Component;
-	/** What the pane receives. An extension's frame needs its record; a built-in pane needs nothing. */
+	/** The props of the pane. An extension frame needs its record. A built-in pane needs nothing. */
 	props?: () => Record<string, unknown>;
 	disabled?: boolean;
 	/** an async pane exposes its loader, so prefetch can warm it while the editor idles */

@@ -1,10 +1,5 @@
 /**
- * The items that an extension adds to the editor UI, as one method table.
- *
- * - `toolbarMethods.ts`: toolbar buttons.
- * - `actionMethods.ts`: the actions that a button or a menu item runs.
- * - `surfaceItems.ts`: the record keeping that each surface shares.
- *
+ * The methods for the items that an extension adds to the editor UI.
  * To add a surface, add one import and one spread here.
  */
 

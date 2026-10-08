@@ -1,19 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""The documents an extension reads and writes, for the whole site.
-
-Two gates stand between an extension and a document:
-1. The permission says the extension may work with site data at all (`data.access`).
-   An extension manager grants it for the whole site.
-2. Frappe's own permission says whether the user who is calling may do it. It is
-   the only gate that cannot be widened: no document an extension reads or writes
-   passes `ignore_permissions`.
-
-The first gate belongs to the site and the second to each user, so granting
-`data.access` never adds access. A user reaches only the documents that user can
-already reach.
-"""
+"""Methods that let an extension read and write documents.
+Each method needs the `data.access` permission. Frappe then checks the permissions of the user.
+So an extension gets only the documents that the user can get."""
 
 import frappe
 import frappe.client
@@ -21,9 +11,7 @@ from frappe import _
 
 from builder.extensions.access import assert_extension_access
 
-# a page of rows, and the ceiling one call can ask for. The server owns this
-# number: it is the side protecting the database, and a copy in the browser
-# would be a second owner of one rule
+# The default rows for each call, and the maximum. Only the server keeps these limits.
 DEFAULT_PAGE_LENGTH = 20
 MAX_PAGE_LENGTH = 500
 
@@ -40,17 +28,9 @@ def get_list(
 	limit_start: int = 0,
 	limit_page_length: int = DEFAULT_PAGE_LENGTH,
 ) -> list[dict]:
-	"""One page of documents.
-
-	`frappe.client` does the query and the permission check, so an extension
-	reaches exactly the rows the user reaches, with the field-level rules the
-	user has.
-
-	`or_filters` and `group_by` are here because `createListResource` sends them
-	on every fetch. Dropping a filter quietly would answer with more rows than
-	the caller asked for, which is a correctness bug rather than a missing
-	feature.
-	"""
+	"""Returns one page of documents.
+	`createListResource` sends `or_filters` and `group_by` on each fetch.
+	If the method ignores a filter, it returns too many rows."""
 	assert_extension_access(extension, "data.access")
 	return frappe.client.get_list(
 		doctype=doctype,
@@ -66,17 +46,9 @@ def get_list(
 
 @frappe.whitelist()
 def get_count(extension: str, doctype: str, filters: dict | list | None = None) -> int:
-	"""How many documents match, without fetching them.
-
-	`frappe.client.get_count` reaches `reportview.get_count`, which reads the
-	**whole request form_dict** rather than only its arguments. This call's own
-	`extension` argument therefore lands in the query builder, which answers
-	`DatabaseQuery.execute() got an unexpected keyword argument 'extension'`.
-
-	So the dict is emptied for the length of the call. Reaching for
-	`frappe.db.count` instead would be simpler and wrong: it skips the user
-	permission row filters, so the number would count rows the user cannot read.
-	"""
+	"""Returns the number of matching documents.
+	`reportview.get_count` reads all of `form_dict`, and fails on `extension`. So the call clears it.
+	Do not use `frappe.db.count`. It does not apply user permissions."""
 	assert_extension_access(extension, "data.access")
 
 	sent = frappe.local.form_dict
@@ -89,21 +61,21 @@ def get_count(extension: str, doctype: str, filters: dict | list | None = None) 
 
 @frappe.whitelist()
 def get_doc(extension: str, doctype: str, name: str) -> dict:
-	"""One whole document, child tables included."""
+	"""Returns one document with its child tables."""
 	assert_extension_access(extension, "data.access")
 	return frappe.client.get(doctype=doctype, name=name)
 
 
 @frappe.whitelist(methods=["POST"])
 def insert_doc(extension: str, doctype: str, doc: dict | None = None) -> dict:
-	"""The doctype comes from the argument, never from the payload."""
+	"""Uses the doctype from the argument, not from the payload."""
 	assert_extension_access(extension, "data.access")
 	return frappe.client.insert({**(doc or {}), "doctype": doctype})
 
 
 @frappe.whitelist(methods=["POST"])
 def update_doc(extension: str, doctype: str, name: str, doc: dict | None = None) -> dict:
-	"""Only the fields `doc` names change. `set_value` refuses the framework's own fields."""
+	"""Changes only the fields in `doc`. `set_value` does not change the standard fields."""
 	assert_extension_access(extension, "data.access")
 	return frappe.client.set_value(doctype, name, doc or {})
 
@@ -115,7 +87,7 @@ def delete_doc(extension: str, doctype: str, name: str) -> None:
 
 
 def get_page_length(limit_page_length: int) -> int:
-	"""Frappe reads 0 as "every row", which is the one answer no extension may ask for."""
+	"""Stops a call that asks for 0 rows or too many rows. Frappe reads 0 as all rows."""
 	if not 1 <= limit_page_length <= MAX_PAGE_LENGTH:
 		frappe.throw(_("Ask for 1 to {0} rows at a time.").format(MAX_PAGE_LENGTH))
 	return limit_page_length

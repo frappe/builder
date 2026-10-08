@@ -25,11 +25,7 @@ real_write_row = state.write_row
 
 
 class TestExtensionState(FrappeTestCase):
-	"""One user's drawer for one extension.
-
-	It lived in `localStorage`, which is per browser, so two people sharing a
-	machine shared every extension's state.
-	"""
+	"""Tests the state of one extension for one user."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
@@ -60,7 +56,7 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(len(self.rows()), 1)
 
 	def test_many_keys_take_as_few_queries_as_one(self):
-		"""The installation, the locked row and one update."""
+		"""Counts the queries: the installation, the locked row and one update."""
 		set_state(EXTENSION, {"first": 1})
 
 		with self.assertQueryCount(3):
@@ -69,7 +65,7 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(len(get_state(EXTENSION)), 201)
 
 	def test_a_first_write_that_loses_the_race_merges_into_the_winner(self):
-		"""Neither frame had a row to lock, so MariaDB ends one with a deadlock."""
+		"""Two frames have no row to lock. So MariaDB stops one write with a deadlock."""
 		attempts = []
 
 		def lose_the_first_attempt(*args):
@@ -102,7 +98,7 @@ class TestExtensionState(FrappeTestCase):
 		rollback.assert_called_once()
 
 	def test_a_lost_race_after_earlier_writes_is_not_retried(self):
-		"""A rollback would discard those writes, so the failure goes to the caller."""
+		"""A rollback would remove the earlier writes. So the error goes to the caller."""
 		with (
 			patch.object(state, "write_row", side_effect=frappe.QueryDeadlockError),
 			patch.object(frappe.db, "rollback") as rollback,
@@ -121,16 +117,15 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(get_state(EXTENSION), {"page": 2})
 
 	def test_refuses_changes_that_are_not_an_object(self):
-		"""Frappe's own type guard catches most of these before the method runs."""
+		"""Frappe checks most of these types before the method runs."""
 		refusals = (frappe.ValidationError, frappe.exceptions.FrappeTypeError)
 		for sent in ("dark", ["dark"], 3):
 			with self.assertRaises(refusals, msg=repr(sent)):
 				set_state(EXTENSION, sent)
 
 	def test_the_cap_is_on_the_whole_store_and_not_one_key(self):
-		"""A per-key cap would let an extension write a thousand small keys."""
-		# the store serializes as {"a": "xxx..."}: 24 characters for one entry,
-		# 48 for two and 72 for three
+		"""The limit is for all keys. A limit for each key allows many small keys."""
+		# The JSON is 24 characters for one key, 48 for two and 72 for three.
 		with patch("builder.extensions.state.MAX_STATE_BYTES", 50):
 			set_state(EXTENSION, {"a": "x" * 15})
 			set_state(EXTENSION, {"b": "x" * 15})
@@ -144,7 +139,7 @@ class TestExtensionState(FrappeTestCase):
 				set_state(EXTENSION, {"k" * 40: 1})
 
 	def test_another_users_store_is_not_this_one(self):
-		"""The installation is the site's. What it stores is each user's."""
+		"""The installation belongs to the site. The state belongs to each user."""
 		set_state(EXTENSION, {"theme": "dark"})
 
 		frappe.set_user(make_user())
@@ -164,7 +159,7 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
 
 	def test_a_user_without_a_manager_role_stores_and_drops_keys(self):
-		"""Only a System Manager holds the doctype permission. The gate lets this user in."""
+		"""Only a System Manager has the doctype permission. The checks still let this user in."""
 		frappe.set_user(make_page_reader(self))
 		self.addCleanup(frappe.set_user, "Administrator")
 
@@ -174,7 +169,7 @@ class TestExtensionState(FrappeTestCase):
 		self.assertEqual(get_state(EXTENSION), {"page": 2})
 
 	def test_only_a_system_manager_reaches_the_doctype_directly(self):
-		"""The generic REST routes skip the gate, the store cap and the session user."""
+		"""The REST routes do not run the checks, the size limit or the session user."""
 		self.assertFalse(frappe.has_permission(STATE_DOCTYPE, "read", user=make_user()))
 
 	def test_refuses_an_extension_this_user_has_not_installed(self):

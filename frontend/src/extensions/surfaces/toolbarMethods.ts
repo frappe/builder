@@ -1,14 +1,6 @@
 /**
- * Tier A toolbar buttons. The extension sends a descriptor, and Builder shows
- * its own `Button`. So the button looks the same as the built-in buttons.
- *
- * Two rules apply. If a rule fails, the button hides or stops. `showWhen`
- * controls if the button shows. `enableWhen` controls if the button works.
- * Each rule also uses the flag that the extension sends with `update`.
- *
- * In read-only mode, the host does not disable a button by itself. It cannot
- * know if an action changes data. So the extension sets
- * `enableWhen: { readOnly: false }`, or it sends `enabled`.
+ * Toolbar buttons. The extension sends a descriptor, and Builder shows its own `Button`.
+ * Read-only mode does not disable a button. Use `enableWhen: { readOnly: false }`.
  */
 
 import ExtensionToolbarButton from "@/components/ToolbarItems/ExtensionToolbarButton.vue";
@@ -102,7 +94,7 @@ const buttons = createSurfaceItems<Registration, ToolbarItem>({
 });
 
 export const toolbarMethods: MethodTable = {
-	// Builder shows the button. So the extension gets no new access
+	// Builder shows the button. So the extension gets no new access.
 	"toolbar.register": { needs: null, run: buttons.register },
 	"toolbar.unregister": { needs: null, run: buttons.unregister },
 	"toolbar.update": { needs: null, run: buttons.update },

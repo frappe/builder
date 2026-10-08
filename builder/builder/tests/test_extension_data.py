@@ -39,11 +39,11 @@ class TestExtensionDocuments(FrappeTestCase):
 		self.assertIn("Grace", [row.first_name for row in rows])
 
 	def test_data_access_never_widens_the_users_own_permission(self):
-		"""The site allows the extension. Frappe still checks the user who is calling."""
+		"""The site allows the extension. Frappe still checks the permissions of the user."""
 		frappe.set_user(make_user())
 		self.addCleanup(frappe.set_user, "Administrator")
 
-		# not Contact, which some sites open to every role
+		# Not Contact. Some sites give Contact access to all roles.
 		self.assertFalse(frappe.has_permission("Error Log", "read"))
 		with self.assertRaises(frappe.PermissionError):
 			get_list("acme/data", "Error Log")
@@ -103,7 +103,7 @@ class TestExtensionDocuments(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("Contact", contact.name))
 
 	def test_refuses_a_page_of_every_row(self):
-		"""Frappe reads 0 as "no limit", which is the one answer no extension may ask for."""
+		"""Frappe reads 0 as no limit. An extension cannot ask for that."""
 		self.assertRaises(frappe.ValidationError, get_list, "acme/data", "Contact", limit_page_length=0)
 
 	def test_refuses_a_page_over_the_ceiling(self):

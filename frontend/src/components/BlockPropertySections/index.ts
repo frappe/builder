@@ -32,7 +32,7 @@ export type BlockProperty = {
 };
 
 export type PropertySection = RegistryItem & {
-	/** What the header shows. An extension needs it: its name is `extension:name`. */
+	/** The header text. An extension needs it, because its name is `extension:name`. */
 	label?: string;
 	properties: BlockProperty[] | (() => BlockProperty[]);
 	collapsed?: boolean | ComputedRef<boolean>;

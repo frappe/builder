@@ -1,5 +1,5 @@
 <template>
-	<!-- one field and two buttons. The default "lg" size is too wide -->
+	<!-- The default "lg" size is too wide for one field. -->
 	<Dialog v-model="showDevExtensionDialog" title="Load Dev Extension" size="sm">
 		<template #default>
 			<p class="text-p-sm text-ink-gray-6">
@@ -35,7 +35,7 @@ const url = ref(lastDevUrl());
 const error = ref("");
 const loading = ref(false);
 
-// the dialog fills the field each time it opens. So a reload needs only one click
+// The dialog fills the field with the last URL each time it opens.
 watch(showDevExtensionDialog, (open) => {
 	if (!open) return;
 	url.value = lastDevUrl();

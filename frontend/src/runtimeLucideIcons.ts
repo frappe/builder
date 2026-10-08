@@ -10,7 +10,7 @@ export const loadRuntimeLucideIcon = (name: string) => {
 	if (!iconCache.has(iconName)) {
 		const download = fetch(`${iconBaseUrl}${iconName}.svg`)
 			.then((response) => (response.ok ? response.text() : undefined))
-			// a network error is not kept, so a later button tries again. A 404 is kept
+			// Do not keep a network error, so a later button tries again. Keep a 404.
 			.catch(() => void iconCache.delete(iconName));
 		iconCache.set(iconName, download);
 	}

@@ -1,15 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""The extensions installed on this site: what the editor reads, and what an
-extension manager changes.
+"""Methods that list and change the extensions installed on the site.
 
-The editor and the Extensions panel read one list. The editor mounts the
-enabled rows, and the panel shows every row, so a manager can turn one back on.
-
-Every method that changes an installation checks for an extension manager
-first, so the user gets a clear refusal before Frappe's own check runs.
-"""
+The editor mounts the enabled rows. The Extensions panel shows all rows."""
 
 import frappe
 from frappe import _
@@ -28,30 +22,26 @@ NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
 def get_installations() -> list[dict]:
-	"""Every installation on this site, the disabled and development ones included.
-
-	A development installation is listed so the panel can open its record. The
-	browser runs its own entry for it, and hides a record no dev server serves.
-	"""
+	"""Returns all installations on the site, with the disabled and dev installations."""
 	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
 		fields=["name", "enabled", "install_state"],
 		order_by="modified desc",
 	)
-	# a stable sort, so each group keeps the modified order
+	# The sort is stable. So each group keeps the order by date.
 	rows.sort(key=is_turned_off)
 	return [describe_installation(row.name) for row in rows]
 
 
 def is_turned_off(row: dict) -> bool:
-	"""A pending or failed install is not enabled yet, but no manager turned it off."""
+	"""Returns True if a manager disabled the extension. A pending or failed install is not disabled."""
 	return not row.enabled and row.install_state in (None, "", "Ready")
 
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def set_extension_enabled(extension: str, enabled: bool) -> None:
-	"""Off stops this extension for every user."""
+	"""Enables or disables the extension for all users."""
 	assert_extension_manager()
 	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 	installation.enabled = 1 if enabled else 0
@@ -61,11 +51,7 @@ def set_extension_enabled(extension: str, enabled: bool) -> None:
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]:
-	"""Narrow or widen what the site allows.
-
-	The record refuses a permission the manifest never asked for, so the rule has
-	one owner and this method only writes what it is given.
-	"""
+	"""Sets the granted permissions. The record refuses a permission that the manifest does not ask for."""
 	assert_extension_manager()
 	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 	installation.granted_permissions = frappe.as_json(permissions)
@@ -76,17 +62,15 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def uninstall_extension(extension: str) -> None:
-	"""The site's copy and every user's stored state. `on_trash` takes both."""
+	"""Deletes the installation. `on_trash` deletes the files and the state of all users."""
 	assert_extension_manager()
 	frappe.delete_doc(INSTALLATION_DOCTYPE, get_installation(extension))
 
 
 def describe_installation(installation: str) -> dict:
-	"""What a row in the panel shows, and all that the editor needs to mount it.
+	"""Returns the data for one row of the panel. The editor also uses it to mount the extension.
 
-	The icon is derived, so this reads the document. The row carries the grants,
-	so a page reader with no read access to the installation still runs it.
-	"""
+	The row has the permissions. So a user without read access to the installation can run it."""
 	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
 		"installation_id": row.name,
@@ -106,7 +90,7 @@ def describe_installation(installation: str) -> dict:
 
 
 def get_installation(extension: str) -> str:
-	"""The site's installation of this extension, or a refusal naming it."""
+	"""Returns the installation of this extension. Stops the call if there is no installation."""
 	installation = find_installation(extension)
 	if not installation:
 		frappe.throw(_('"{0}" is not installed on this site.').format(extension), frappe.PermissionError)

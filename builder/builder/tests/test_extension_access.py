@@ -19,7 +19,7 @@ EXTENSION = "acme/gated"
 
 
 class TestAssertExtensionAccess(FrappeTestCase):
-	"""The one gate every protected extension method opens with."""
+	"""Tests the checks that each protected extension method runs first."""
 
 	def setUp(self):
 		drop_installations(EXTENSION)
@@ -44,7 +44,7 @@ class TestAssertExtensionAccess(FrappeTestCase):
 			assert_extension_access(EXTENSION)
 
 	def test_refuses_a_user_who_cannot_read_a_builder_page(self):
-		"""Builder access is the second gate, checked before any installation."""
+		"""The checks look at Builder access before the installation."""
 		make_installation(EXTENSION)
 		frappe.set_user(make_user("extension-outsider@example.com", roles=()))
 
@@ -74,7 +74,7 @@ class TestAssertExtensionAccess(FrappeTestCase):
 
 
 class TestExtensionManager(FrappeTestCase):
-	"""Who may change the site's extensions."""
+	"""Tests who can change the extensions of the site."""
 
 	def setUp(self):
 		self.addCleanup(frappe.set_user, "Administrator")

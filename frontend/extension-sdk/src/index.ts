@@ -1,19 +1,6 @@
 /**
- * The `.` entry of `frappe-builder-extension-sdk`. In practice, it gives only types.
- *
- * - `runtime/`: the frame half. Builder serves it to each frame as `extension-sdk.js`.
- * - `shared/`: the types, the manifest rules and the port channel. The host also imports them.
- * - `vue.ts`: the optional Vue helpers, in the bundle of the author.
- * - `../vite.js`: the build plugin, which runs in Node.
- *
- * No extension build reads this file. `vite.js` marks the SDK as external.
- * The import stays in the build output. The import map of the frame shell
- * then points it to the one SDK copy that Builder serves.
- *
- * On a dev server, the plugin changes the import to an absolute URL on the
- * Builder origin. That URL also gives the same SDK copy.
- *
- * This file lets the editor and the type checker of an author follow the import.
+ * The `.` entry of `frappe-builder-extension-sdk`. It gives types to editors and type checkers.
+ * The build keeps the SDK import. The frame import map points it to the SDK that Builder serves.
  */
 
 export { default, type HostInfo } from "./runtime/index";

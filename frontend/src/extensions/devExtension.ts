@@ -1,24 +1,13 @@
 /**
- * An extension from the dev server of its author. It runs only in this session.
- *
- * It has no files. The editor asks the dev server what it serves. Then the
- * editor adds one entry to the installed list. The rest of the host reads only
- * that list. So the entry frame, the surfaces, the request handler and the teardown
- * do not know that the extension is not installed.
- *
- * A reload removes it. A user must load it on purpose. An old dev extension
- * that fails to load looks like a Builder error. The editor keeps the last URL,
- * so the user does not type it again.
- *
- * Closing the tab keeps the installation. It belongs to the site, so another
- * tab can run the same extension. The next load refreshes it.
+ * The extension from a dev server. It runs only in this session.
+ * The editor adds it to the list of extensions. A reload removes it.
  */
 
 import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { call } from "frappe-ui";
 import { ref } from "vue";
 
-/** Only the build plugin serves this path. */
+/** The build plugin serves this path. */
 const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
@@ -31,18 +20,14 @@ export type DevelopmentExtension = InstalledExtension & {
 	readme?: string;
 };
 
-/** One at a time. A second load replaces the first. */
+/** One dev extension at a time. A second load replaces the first. */
 export const devExtension = ref<DevelopmentExtension | null>(null);
 
 export const showDevExtensionDialog = ref(false);
 
 export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 
-/**
- * An unknown permission shows a version gap, not an error. The extension does
- * not get that permission. It keeps the others. The bridge refuses calls that
- * need it, as for an installed extension.
- */
+/** Removes unknown permissions. The extension keeps the other permissions. */
 const grantedFrom = (asked: unknown): Permission[] => {
 	const list = Array.isArray(asked) ? asked : [];
 	const unknown = list.filter((permission) => !PERMISSIONS.includes(permission));
@@ -66,14 +51,8 @@ const read = async (origin: string) => {
 };
 
 /**
- * Gives the dev extension its own installation. So it passes the same server
- * gate as an installed extension. Without it, Builder refuses each call.
- *
- * The server returns the granted permissions. This entry keeps that list.
- * So the browser gate and the server gate read the same list.
- *
- * If the site already installed the extension, it keeps that installation.
- * The server returns its permissions. It does not make a second record.
+ * Adds an installation for the dev extension. Without it, the server refuses each call.
+ * Returns the granted permissions. An installed extension keeps its installation.
  */
 const install = (extension: string, permissions: Permission[]) =>
 	call(INSTALL_METHOD, { extension, permissions }).catch(() => {
@@ -85,7 +64,7 @@ const remove = (extension: InstalledExtension) =>
 		console.error(`Could not remove development extension "${extension.name}"`, error),
 	);
 
-/** Accepts any URL on the dev server. An author pastes the URL from the terminal. */
+/** Accepts any URL on the dev server. */
 export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
 	const origin = new URL(url.trim()).origin;
 	const descriptor = await read(origin);
@@ -100,7 +79,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		version: descriptor.version,
 		serverOrigin: origin,
 		readme: descriptor.readme,
-		// the dev server serves the source entry. So the path comes from the dev server
+		// The dev server gives the path of the source entry.
 		entryUrl: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
 		permissions: granted,

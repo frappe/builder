@@ -1,19 +1,12 @@
 /**
- * The rule that an extension declares, and the matcher that the host runs when it renders.
- *
- * A `condition` runs in a computed. It must answer at once. An extension runs
- * in a different realm, where each answer is asynchronous. So the extension
- * gives a rule about the host state, and the host checks the rule.
- *
- * The host owns the keys. Each key names a field of the snapshot. So an
- * author sees the same name in both places. Add keys one at a time. It is easy
- * to add a key later. It is difficult to remove one.
+ * The `showWhen` rule of an extension, and the code that checks it.
+ * An extension cannot answer a `condition` at once. So it gives a rule, and the host checks it.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";
 import type { Breakpoint, EditorContext } from "frappe-builder-extension-sdk/types";
 
-/** The rule keys, with one reader for each key. Add new keys only here. */
+/** The rule keys, with one reader for each key. Add new keys here. */
 const READERS = {
 	isRoot: (context: EditorContext) => context.selection.isRoot,
 	isText: (context: EditorContext) => context.selection.isText,
@@ -38,21 +31,13 @@ export type ShowWhenRule = {
 
 type RuleKey = keyof typeof READERS;
 
-/**
- * All keys must match. No rule is a match. So an item with no rule shows
- * where the flag of its owner allows.
- *
- * The comparison is strict. So a value of the wrong type hides the item.
- */
+/** Returns true if all keys match, or if there is no rule. The comparison is strict. */
 export const matches = (rule: ShowWhenRule | undefined, context: EditorContext) =>
 	!rule || Object.entries(rule).every(([key, wanted]) => READERS[key as RuleKey](context) === wanted);
 
-/**
- * An unknown key causes an error at registration. The error names the key.
- * If the matcher ignored the key, the item would show in all places.
- */
+/** Stops a rule with an unknown key. If not, the item shows in all places. */
 export const assertRule = (rule: ShowWhenRule | undefined, field = "showWhen") => {
-	// not `in`: it also accepts inherited keys, such as `__proto__`, that have no reader
+	// Do not use `in`. It also finds inherited keys, such as `__proto__`.
 	const unknown = Object.keys(rule ?? {}).filter((key) => !Object.hasOwn(READERS, key));
 	if (!unknown.length) return;
 
