@@ -52,8 +52,21 @@ export const createSurfaceItems = <TRegistration extends Named, TItem extends Re
 		return item;
 	};
 
+	// an anchor names a sibling of the same extension first. Other names pass
+	// through, so full keys of other extensions also work
+	const resolveAnchor = (extension: InstalledExtension, anchor?: string) => {
+		if (!anchor) return anchor;
+		const siblingKey = createItemKey(extension, anchor);
+		return items.has(siblingKey) ? siblingKey : anchor;
+	};
+
 	const upsertRegistryItem = (key: string, item: SurfaceItem<TRegistration>) => {
-		const unregister = options.registry.register(options.toRegistryItem(key, item));
+		const entry = options.toRegistryItem(key, item);
+		const unregister = options.registry.register({
+			...entry,
+			before: resolveAnchor(item.extension, entry.before),
+			after: resolveAnchor(item.extension, entry.after),
+		});
 		items.set(key, { ...item, unregister });
 	};
 
