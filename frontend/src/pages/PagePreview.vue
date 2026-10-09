@@ -199,7 +199,38 @@ watchEffect(() => {
 			{ once: true },
 		);
 	}
+<<<<<<< HEAD
 });
+=======
+	// forward Mod+P from the iframe and block print, before the page can stop the event
+	previewDocument.addEventListener(
+		"keydown",
+		(event) => {
+			if (event.key.toLowerCase() !== "p" || !(event.ctrlKey || event.metaKey)) return;
+			event.preventDefault();
+			document.dispatchEvent(new KeyboardEvent("keydown", event));
+		},
+		{ capture: true },
+	);
+	// the page's <base> points #id links at the published route, so jump within the preview instead
+	previewDocument.addEventListener("click", (event) => {
+		const link = (event.target as Element).closest?.('a[href^="#"]');
+		if (!link || event.defaultPrevented) return;
+		event.preventDefault();
+		previewDocument.location.replace(new URL(link.getAttribute("href")!, previewDocument.URL).href);
+	});
+	// a link to an unpublished page lands on the 404, whose home link would load Builder in the preview
+	previewDocument.querySelector(".error-page a[href='/']")?.addEventListener("click", (event) => {
+		event.preventDefault();
+		previewFrame.value?.contentWindow?.history.back();
+	});
+	applyColorSchemeToIframe(isDark.value ? "dark" : "light");
+	restoreScrollPosition();
+	previewDocument.addEventListener("scroll", saveScrollPosition, { passive: true });
+};
+
+useEventListener(previewFrame, "load", onPreviewLoad);
+>>>>>>> b4a7afa (fix: stop 404 Back to Home from opening Builder in the preview)
 
 watch(isDark, async (val) => {
 	setPreviewURL();
