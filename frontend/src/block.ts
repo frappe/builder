@@ -341,7 +341,7 @@ class Block implements BlockOptions {
 	hasChildren() {
 		return this.getChildren().length > 0;
 	}
-	getCustomAttributes() {
+	getCustomAttributes(): BlockAttributeMap {
 		let customAttributes = {};
 		if (this.isExtendedFromComponent()) {
 			customAttributes = this.referenceComponent?.customAttributes || {};
@@ -451,6 +451,21 @@ class Block implements BlockOptions {
 	}
 	removeAttribute(attribute: string) {
 		this.setAttribute(attribute, undefined);
+	}
+	// published pages apply customAttributes over attributes, so an id set in HTML Attributes wins
+	getId() {
+		return this.getCustomAttributes().id || this.getAttribute("id");
+	}
+	setId(id: string | undefined) {
+		// a removed key falls back to the component's id, so an instance blanks it instead
+		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
+		if (value !== undefined && "id" in this.getCustomAttributes()) {
+			this.customAttributes.id = value;
+		} else {
+			// clearing drops both copies, or the one left behind becomes the id again
+			delete this.customAttributes.id;
+		}
+		this.setAttribute("id", value);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
