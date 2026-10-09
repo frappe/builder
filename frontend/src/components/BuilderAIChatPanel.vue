@@ -40,7 +40,7 @@
 		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
 		     full-height panel leaves it stranded low with nothing beneath it. -->
 		<div
-			v-else-if="!builderStore.isAIEnabled && !activePanel"
+			v-else-if="!builderStore.isAIEnabled"
 			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
@@ -52,32 +52,11 @@
 					Connect a model first. Takes a minute if you already have an API key.
 				</p>
 			</div>
-			<Button variant="solid" size="sm" @click="openPanel('providers')">Set up AI</Button>
+			<Button variant="solid" size="sm" @click="menu.open(connectLevel(bob))">Set up AI</Button>
 		</div>
 
 		<template v-else>
-			<AICommandPanel v-if="activePanel" :title="PANEL_TITLES[activePanel]" @close="activePanel = null">
-				<AIModelPanel
-					v-if="activePanel === 'model'"
-					:providers="availableModels"
-					:selected="selectedModel"
-					:filter="panelArg"
-					@pick="pickModel"
-					@manage="openPanel('providers')" />
-				<AICreditsPanel v-else-if="activePanel === 'credits'" :providers="availableModels" />
-				<AIProvidersPanel v-else-if="activePanel === 'providers'" />
-				<AIChatsPanel
-					v-else
-					:sessions="sessions"
-					:current="sessionId"
-					@switch="(name) => closePanelAfter(() => switchSession(name))"
-					@delete="closePanelAfter(deleteSession)" />
-			</AICommandPanel>
-			<!-- v-show, not v-if: the controller holds this element to keep the scroll -->
-			<div
-				v-show="!activePanel"
-				ref="messageContainer"
-				class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
+			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
 						<span class="bob-hero-orb">
@@ -270,165 +249,162 @@
 					</div>
 				</div>
 			</div>
-
-			<div v-if="builderStore.isAIEnabled" class="border-t border-outline-gray-1 p-4">
-				<!-- Canvas selection alone sends nothing; attaching is the explicit act
+		</template>
+		<div v-if="builderStore.isAIStateKnown" class="border-t border-outline-gray-1 p-4">
+			<!-- Canvas selection alone sends nothing; attaching is the explicit act
 				     that scopes the request. -->
-				<div
-					v-if="attachedBlocks.length || attachableBlocks.length"
-					class="mb-2 flex flex-wrap items-center gap-1.5">
-					<span v-if="attachedBlocks.length" class="text-xs text-ink-gray-5">Context:</span>
+			<div
+				v-if="attachedBlocks.length || attachableBlocks.length"
+				class="mb-2 flex flex-wrap items-center gap-1.5">
+				<span v-if="attachedBlocks.length" class="text-xs text-ink-gray-5">Context:</span>
+				<span
+					v-for="block in attachedBlocks"
+					:key="block.id"
+					class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
+					<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
+					<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
+					<Tooltip text="Remove from context">
+						<button
+							type="button"
+							class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
+							@click="chat.detachBlock(block.id)">
+							<span class="lucide-x h-3 w-3" />
+						</button>
+					</Tooltip>
+				</span>
+				<button
+					v-if="attachableBlocks.length"
+					type="button"
+					class="inline-flex items-center gap-1 rounded-4 border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
+					@click="chat.attachSelection()">
+					<span class="lucide-plus h-3 w-3" />
+					<span class="block max-w-[10rem] truncate">
+						{{
+							attachableBlocks.length === 1
+								? attachableBlocks[0].getBlockDescription()
+								: `${attachableBlocks.length} selected blocks`
+						}}
+					</span>
+				</button>
+			</div>
+			<Transition name="fade">
+				<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
 					<span
-						v-for="block in attachedBlocks"
-						:key="block.id"
 						class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-						<span class="lucide-square-dashed h-3 w-3 shrink-0 text-ink-gray-5" />
-						<span class="block max-w-[8rem] truncate">{{ block.label }}</span>
-						<Tooltip text="Remove from context">
+						<img :src="imagePreviewUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
+						<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
+						<Tooltip text="Remove image">
 							<button
 								type="button"
 								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-								@click="chat.detachBlock(block.id)">
+								@click="clearImage">
 								<span class="lucide-x h-3 w-3" />
 							</button>
 						</Tooltip>
 					</span>
-					<button
-						v-if="attachableBlocks.length"
-						type="button"
-						class="inline-flex items-center gap-1 rounded-4 border border-dashed border-outline-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
-						@click="chat.attachSelection()">
-						<span class="lucide-plus h-3 w-3" />
-						<span class="block max-w-[10rem] truncate">
-							{{
-								attachableBlocks.length === 1
-									? attachableBlocks[0].getBlockDescription()
-									: `${attachableBlocks.length} selected blocks`
-							}}
-						</span>
-					</button>
 				</div>
-				<Transition name="fade">
-					<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
-						<span
-							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-							<img :src="imagePreviewUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
-							<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
-							<Tooltip text="Remove image">
-								<button
-									type="button"
-									class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-									@click="clearImage">
-									<span class="lucide-x h-3 w-3" />
-								</button>
-							</Tooltip>
-						</span>
-					</div>
-				</Transition>
-				<!-- Say it before a prompt is typed, not after the send fails on the server. -->
-				<div
-					v-if="selectedModelUnusable"
-					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
-					<span class="lucide-key-round size-3.5 shrink-0" />
-					<span class="flex-1">{{ modelLabel }} has no API key.</span>
-					<button class="shrink-0 font-medium underline underline-offset-2" @click="openPanel('providers')">
-						Add one
-					</button>
-				</div>
-				<div
-					v-else-if="!isEditingPage"
-					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
-					<span class="lucide-box size-3.5 shrink-0" />
-					<span class="flex-1">Bob only edits the page.</span>
-					<button
-						class="shrink-0 font-medium underline underline-offset-2"
-						@click="canvasStore.exitFragmentMode()">
-						Back to page
-					</button>
-				</div>
-				<div
-					class="relative"
-					@paste.stop="handlePaste"
-					@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
-					@dragleave="isDragging = false"
-					@drop.prevent="handleDrop">
-					<!-- Grows with the prompt (see autoGrow) between min-h and max-h; past
+			</Transition>
+			<!-- Say it before a prompt is typed, not after the send fails on the server. -->
+			<div
+				v-if="selectedModelUnusable"
+				class="mb-2 flex items-center gap-2 rounded-5 bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
+				<span class="lucide-key-round size-3.5 shrink-0" />
+				<span class="flex-1">{{ modelLabel }} has no API key.</span>
+				<button
+					class="shrink-0 font-medium underline underline-offset-2"
+					@click="menu.open(providersLevel(bob))">
+					Add one
+				</button>
+			</div>
+			<div
+				v-else-if="!isEditingPage"
+				class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+				<span class="lucide-box size-3.5 shrink-0" />
+				<span class="flex-1">Bob only edits the page.</span>
+				<button
+					class="shrink-0 font-medium underline underline-offset-2"
+					@click="canvasStore.exitFragmentMode()">
+					Back to page
+				</button>
+			</div>
+			<div
+				class="relative"
+				@paste.stop="handlePaste"
+				@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
+				@dragleave="isDragging = false"
+				@drop.prevent="handleDrop">
+				<!-- Grows with the prompt (see autoGrow) between min-h and max-h; past
 					     that it scrolls. The suggestion pills prefill a paragraph, so a
 					     fixed four rows meant the brief you're about to send was mostly
 					     out of sight. -->
-					<textarea
-						ref="promptInput"
-						v-model="prompt"
-						rows="1"
-						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
-						:disabled="isSubmitting || !isEditingPage"
-						placeholder="Ask to create or edit this page, or type / for commands"
-						@keydown="slash.onKeydown"
-						@keydown.meta.enter="submitPrompt"
-						@keydown.ctrl.enter="submitPrompt" />
-					<AISlashMenu
-						v-if="slashOpen"
-						v-model:activeIndex="slashActiveIndex"
-						:commands="slashMatches"
-						@run="slash.run" />
-					<Transition name="fade">
-						<!-- inset-0 covers the wrapper, so the textarea has to fill it exactly:
+				<textarea
+					ref="promptInput"
+					v-model="prompt"
+					rows="1"
+					class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
+					:disabled="isSubmitting || !isEditingPage"
+					:placeholder="composerPlaceholder"
+					@keydown="menu.onKeydown"
+					@keydown.meta.enter="submitPrompt"
+					@keydown.ctrl.enter="submitPrompt" />
+				<AICommandMenu v-if="menuOpen" :menu="menu" />
+				<Transition name="fade">
+					<!-- inset-0 covers the wrapper, so the textarea has to fill it exactly:
 						     as an inline-block it left a few px of line-box gap underneath and
 						     the target hung past the field. Same radius as the field, too. -->
-						<div
-							v-if="isDragging"
-							class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-4 border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
-							<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
-								<span class="lucide-image h-3.5 w-3.5" />
-								{{ __("Drop image to attach") }}
-							</div>
+					<div
+						v-if="isDragging"
+						class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-4 border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
+						<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
+							<span class="lucide-image h-3.5 w-3.5" />
+							{{ __("Drop image to attach") }}
 						</div>
-					</Transition>
-					<!-- Only on an empty box: it sits over the textarea, so once there's a
-					     prompt long enough to reach it the hint lands on the user's words. -->
-					<span
-						v-if="isVisionModel && !prompt && !imagePreviewUrl && !isDragging"
-						class="pointer-events-none absolute bottom-3 right-2 select-none text-[10px] text-ink-gray-4">
-						Paste or drop image
-					</span>
-				</div>
-				<div class="mt-2 flex items-center justify-between gap-2">
-					<div class="flex items-center gap-0.5">
-						<button
-							class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded-4 px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
-							@click="openPanel('model')">
-							<span class="lucide-cpu size-3.5 shrink-0" />
-							<span class="truncate text-xs">{{ modelLabel }}</span>
-						</button>
-						<Tooltip text="Improve prompt" side="top">
-							<button
-								class="flex size-7 items-center justify-center rounded-4 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
-								:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
-								@click="chat.improvePrompt">
-								<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />
-								<span v-else class="lucide-wand-sparkles size-3.5" />
-							</button>
-						</Tooltip>
 					</div>
-					<Button
-						v-if="isSubmitting"
-						variant="solid"
-						icon="lucide-square"
-						:loading="isCancelling"
-						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
-						@click="chat.cancel" />
-					<Tooltip v-else side="top">
-						<template #content>
-							<span class="flex items-center gap-1.5">
-								Send
-								<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
-							</span>
-						</template>
-						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
+				</Transition>
+				<!-- Only on an empty box: it sits over the textarea, so once there's a
+					     prompt long enough to reach it the hint lands on the user's words. -->
+				<span
+					v-if="isVisionModel && !prompt && !imagePreviewUrl && !isDragging"
+					class="pointer-events-none absolute bottom-3 right-2 select-none text-[10px] text-ink-gray-4">
+					Paste or drop image
+				</span>
+			</div>
+			<div class="mt-2 flex items-center justify-between gap-2">
+				<div class="flex items-center gap-0.5">
+					<button
+						class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded-4 px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
+						@click="menu.open(modelLevel(bob))">
+						<span class="lucide-cpu size-3.5 shrink-0" />
+						<span class="truncate text-xs">{{ modelLabel }}</span>
+					</button>
+					<Tooltip text="Improve prompt" side="top">
+						<button
+							class="flex size-7 items-center justify-center rounded-4 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
+							:disabled="!prompt.trim() || isImprovingPrompt || isSubmitting"
+							@click="chat.improvePrompt">
+							<span v-if="isImprovingPrompt" class="lucide-loader-circle size-3.5 animate-spin" />
+							<span v-else class="lucide-wand-sparkles size-3.5" />
+						</button>
 					</Tooltip>
 				</div>
+				<Button
+					v-if="isSubmitting"
+					variant="solid"
+					icon="lucide-square"
+					:loading="isCancelling"
+					:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
+					@click="chat.cancel" />
+				<Tooltip v-else side="top">
+					<template #content>
+						<span class="flex items-center gap-1.5">
+							Send
+							<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+						</span>
+					</template>
+					<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
+				</Tooltip>
 			</div>
-		</template>
+		</div>
 		<Dialog title="Turn debug" size="3xl" v-model="debugOpen">
 			<template #default>
 				<AIDebugPanel :debug="debugData" />
@@ -439,15 +415,14 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
-import AIChatsPanel from "@/components/ai/AIChatsPanel.vue";
-import AICommandPanel from "@/components/ai/AICommandPanel.vue";
-import AICreditsPanel from "@/components/ai/AICreditsPanel.vue";
-import AIModelPanel from "@/components/ai/AIModelPanel.vue";
-import AIProvidersPanel from "@/components/ai/AIProvidersPanel.vue";
-import AISlashMenu from "@/components/ai/AISlashMenu.vue";
+import AICommandMenu from "@/components/ai/AICommandMenu.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
-import { registerBobCommands, type CommandPanel } from "@/components/ai/bobCommands";
-import { useSlashMenu } from "@/components/ai/slashCommands";
+import { registerBobCommands } from "@/components/ai/bobCommands";
+import { useCommandMenu } from "@/components/ai/commandMenu";
+import { connectLevel } from "@/components/ai/commands/connect";
+import { modelLevel } from "@/components/ai/commands/models";
+import { providersLevel } from "@/components/ai/commands/providers";
+import type { BobContext } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";
@@ -457,6 +432,7 @@ import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
+import { reloadAIRegistry } from "@/data/aiModels";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
@@ -465,7 +441,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit } = chat;
-const { availableModels, selectedModel } = chat;
 const { isEditingPage } = chat;
 const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
@@ -778,43 +753,33 @@ function formatDuration(ms: number): string {
 }
 
 // --- "/" commands ----------------------------------------------------------
-const PANEL_TITLES: Record<CommandPanel, string> = {
-	model: "Model",
-	credits: "Credits",
-	providers: "Providers",
-	chats: "Chats",
+const menu = useCommandMenu(prompt);
+const { isOpen: menuOpen, level: menuLevel } = menu;
+const bob: BobContext = {
+	chat,
+	menu,
+	refreshAI: async () => {
+		await reloadAIRegistry();
+		chat.loadModels();
+		await builderStore.refreshAIState();
+	},
 };
-const activePanel = ref<CommandPanel | null>(null);
-const panelArg = ref("");
+onUnmounted(registerBobCommands(bob));
 
-const slash = useSlashMenu(prompt);
-const { matches: slashMatches, activeIndex: slashActiveIndex, isOpen: slashOpen } = slash;
+const composerPlaceholder = computed(() =>
+	menuLevel.value && !menuLevel.value.input
+		? "Type to filter"
+		: "Ask to create or edit this page, or type / for commands",
+);
 
-function openPanel(panel: CommandPanel, arg = "") {
-	panelArg.value = arg;
-	activePanel.value = panel;
-	// the picker may be minutes old, and a gateway adds models without telling anyone
-	if (panel === "model") chat.loadModels();
-}
-
-function pickModel(name: string) {
-	selectedModel.value = name;
-	activePanel.value = null;
-}
-
-async function closePanelAfter(action: () => unknown) {
-	activePanel.value = null;
-	await action();
-}
-
-const unregisterCommands = registerBobCommands({
-	openPanel,
-	newSession: () => closePanelAfter(newSession),
+// a key or URL is typed into a field inside the menu; hand focus back after
+watch(menuLevel, (level) => {
+	if (!level?.input) nextTick(() => promptInput.value?.focus());
 });
-onUnmounted(unregisterCommands);
 
 const submitPrompt = () => {
-	if (slash.runHighlighted()) return;
+	// the menu took this Enter already
+	if (menuOpen.value) return;
 	chat.submitPrompt();
 };
 
@@ -842,15 +807,6 @@ watch(
 	},
 );
 
-// Providers and models are configured in that panel, so the picker is stale the
-// moment it closes. Refetch then rather than making every screen in there
-// remember to signal this one.
-watch(activePanel, (panel, previous) => {
-	if (previous === "providers" && panel !== "providers") {
-		chat.loadModels();
-		builderStore.refreshAIState();
-	}
-});
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {
