@@ -112,7 +112,7 @@
 				:modelValue="activeScript.script"
 				:label="activeScript.script_name"
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
-				class="flex-1"
+				class="flex-1 [&>div]:max-h-[calc(100vh-17rem)]"
 				mode="page"
 				height="min(65vh, 100vh - 17rem)"
 				:readonly="builderStore.readOnlyMode"
