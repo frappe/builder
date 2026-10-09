@@ -36,6 +36,23 @@ SHORTHANDS = {
 }
 
 
+DYNAMIC_PROP_READ = re.compile(r"\bprops(\.get\(|\??\.?\[)\s*[A-Za-z_]")
+
+
+def reads_prop_in(name: str, source: str) -> bool:
+	"""props.name, props["name"], props.get("name") or `{ name } = props`; where the source
+	reads props by a variable key, any quoted mention of the name."""
+	escaped = re.escape(name)
+	quoted = rf"""['"]{escaped}['"]"""
+	literal = (
+		rf"\bprops\??\.\s*{escaped}\b|\bprops(\?\.)?\[\s*{quoted}|\bprops\.get\(\s*{quoted}"
+		rf"|\{{[^}}]*\b{escaped}\b[^}}]*\}}\s*=\s*props\b"
+	)
+	if re.search(literal, source):
+		return True
+	return bool(DYNAMIC_PROP_READ.search(source) and re.search(quoted, source))
+
+
 class Block:
 	def __init__(self, data: dict, path: str):
 		self.data = data
@@ -255,7 +272,7 @@ class Linter:
 		blocks = list(root.walk())
 		for name in root.props or {}:
 			word = re.compile(rf"\b{re.escape(name)}\b")
-			if self.drives_logic(word, blocks):
+			if self.drives_logic(name, word, blocks):
 				continue
 			reached = [block for block in blocks if block.reads_prop(word)]
 			if not reached:
@@ -267,17 +284,17 @@ class Linter:
 					f"prop '{name}' only fills this block; leave it unbound and edit it on each instance",
 				)
 
-	def drives_logic(self, word: re.Pattern, blocks: list[Block]) -> bool:
+	def drives_logic(self, name: str, word: re.Pattern, blocks: list[Block]) -> bool:
 		"""A prop that a script, a repeater or a nested component reads does work the editor can't."""
-		sources = [self.data_script]
+		code = [self.data_script]
 		for block in blocks:
 			script = block.script()
-			sources += [script.get("js") or "", script.get("css") or ""]
-			if block.isRepeaterBlock:
-				sources.append(json.dumps(block.dataKey or {}))
-			if block.extendedFromComponent:
-				sources.append(json.dumps(block.props or {}))
-		return any(word.search(source) for source in sources)
+			code += [script.get("js") or "", script.get("css") or ""]
+			repeats = block.isRepeaterBlock and block.reads_prop(word)
+			passes_down = block.extendedFromComponent and word.search(json.dumps(block.props or {}))
+			if repeats or passes_down:
+				return True
+		return any(reads_prop_in(name, source) for source in code)
 
 	def check_script(self, block: Block):
 		script = block.script()
