@@ -204,12 +204,6 @@ export class AIChatController {
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
 			"Select model",
 	);
-	readonly modelOptions = computed(() =>
-		this.currentProviderModels.value.map((m) => ({
-			label: m.label,
-			onClick: () => (this.selectedModel.value = m.name),
-		})),
-	);
 	readonly isVisionModel = computed(
 		() => this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false,
 	);
@@ -401,7 +395,7 @@ export class AIChatController {
 			const session = result as { session_id: string; messages: ChatMessage[] };
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
-				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
 			this.scrollToBottom();
 			this.loadSessions();

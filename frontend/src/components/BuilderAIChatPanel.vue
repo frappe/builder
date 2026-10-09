@@ -24,12 +24,6 @@
 						tooltip="Chats on this page"
 						:disabled="isSubmitting" />
 				</Dropdown>
-				<Button
-					variant="ghost"
-					size="sm"
-					icon="lucide-settings-2"
-					tooltip="AI settings"
-					@click="builderStore.openBuilderSettings('global_ai')" />
 			</div>
 		</div>
 
@@ -46,7 +40,7 @@
 		<!-- pb offsets the centring so it sits in the upper third: dead centre of a
 		     full-height panel leaves it stranded low with nothing beneath it. -->
 		<div
-			v-else-if="!builderStore.isAIEnabled"
+			v-else-if="!builderStore.isAIEnabled && !activePanel"
 			class="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-40">
 			<span class="bob-hero-orb">
 				<BobOrb class="bob-orb-aura" />
@@ -58,13 +52,32 @@
 					Connect a model first. Takes a minute if you already have an API key.
 				</p>
 			</div>
-			<Button variant="solid" size="sm" @click="builderStore.openBuilderSettings('global_ai')">
-				Set up AI
-			</Button>
+			<Button variant="solid" size="sm" @click="openPanel('providers')">Set up AI</Button>
 		</div>
 
 		<template v-else>
-			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
+			<AICommandPanel v-if="activePanel" :title="PANEL_TITLES[activePanel]" @close="activePanel = null">
+				<AIModelPanel
+					v-if="activePanel === 'model'"
+					:providers="availableModels"
+					:selected="selectedModel"
+					:filter="panelArg"
+					@pick="pickModel"
+					@manage="openPanel('providers')" />
+				<AICreditsPanel v-else-if="activePanel === 'credits'" :providers="availableModels" />
+				<AIProvidersPanel v-else-if="activePanel === 'providers'" />
+				<AIChatsPanel
+					v-else
+					:sessions="sessions"
+					:current="sessionId"
+					@switch="(name) => closePanelAfter(() => switchSession(name))"
+					@delete="closePanelAfter(deleteSession)" />
+			</AICommandPanel>
+			<!-- v-show, not v-if: the controller holds this element to keep the scroll -->
+			<div
+				v-show="!activePanel"
+				ref="messageContainer"
+				class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
 						<span class="bob-hero-orb">
@@ -258,7 +271,7 @@
 				</div>
 			</div>
 
-			<div class="border-t border-outline-gray-1 p-4">
+			<div v-if="builderStore.isAIEnabled" class="border-t border-outline-gray-1 p-4">
 				<!-- Canvas selection alone sends nothing; attaching is the explicit act
 				     that scopes the request. -->
 				<div
@@ -318,9 +331,7 @@
 					class="mb-2 flex items-center gap-2 rounded-5 bg-surface-amber-1 px-2.5 py-1.5 text-p-xs text-ink-amber-7">
 					<span class="lucide-key-round size-3.5 shrink-0" />
 					<span class="flex-1">{{ modelLabel }} has no API key.</span>
-					<button
-						class="shrink-0 font-medium underline underline-offset-2"
-						@click="builderStore.openBuilderSettings('global_ai')">
+					<button class="shrink-0 font-medium underline underline-offset-2" @click="openPanel('providers')">
 						Add one
 					</button>
 				</div>
@@ -351,9 +362,15 @@
 						rows="1"
 						class="no-scrollbar block max-h-60 min-h-20 w-full resize-none rounded-4 border border-[--surface-gray-2] bg-surface-gray-2 px-2 py-1.5 text-p-sm text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-base focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3 disabled:cursor-not-allowed disabled:bg-surface-gray-1 disabled:text-ink-gray-5"
 						:disabled="isSubmitting || !isEditingPage"
-						placeholder="Ask to create or edit this page…"
+						placeholder="Ask to create or edit this page, or type / for commands"
+						@keydown="slash.onKeydown"
 						@keydown.meta.enter="submitPrompt"
 						@keydown.ctrl.enter="submitPrompt" />
+					<AISlashMenu
+						v-if="slashOpen"
+						v-model:activeIndex="slashActiveIndex"
+						:commands="slashMatches"
+						@run="slash.run" />
 					<Transition name="fade">
 						<!-- inset-0 covers the wrapper, so the textarea has to fill it exactly:
 						     as an inline-block it left a few px of line-box gap underneath and
@@ -377,13 +394,12 @@
 				</div>
 				<div class="mt-2 flex items-center justify-between gap-2">
 					<div class="flex items-center gap-0.5">
-						<Dropdown :options="modelOptions" side="top" :offset="6">
-							<button
-								class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded-4 px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8">
-								<span class="lucide-cpu size-3.5 shrink-0" />
-								<span class="truncate text-xs">{{ modelLabel }}</span>
-							</button>
-						</Dropdown>
+						<button
+							class="flex h-7 max-w-[9rem] items-center gap-1.5 rounded-4 px-1.5 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8"
+							@click="openPanel('model')">
+							<span class="lucide-cpu size-3.5 shrink-0" />
+							<span class="truncate text-xs">{{ modelLabel }}</span>
+						</button>
 						<Tooltip text="Improve prompt" side="top">
 							<button
 								class="flex size-7 items-center justify-center rounded-4 text-ink-gray-5 transition-colors hover:bg-surface-gray-2 hover:text-ink-gray-8 disabled:cursor-not-allowed disabled:opacity-40"
@@ -423,7 +439,15 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIChatsPanel from "@/components/ai/AIChatsPanel.vue";
+import AICommandPanel from "@/components/ai/AICommandPanel.vue";
+import AICreditsPanel from "@/components/ai/AICreditsPanel.vue";
+import AIModelPanel from "@/components/ai/AIModelPanel.vue";
+import AIProvidersPanel from "@/components/ai/AIProvidersPanel.vue";
+import AISlashMenu from "@/components/ai/AISlashMenu.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
+import { registerBobCommands, type CommandPanel } from "@/components/ai/bobCommands";
+import { useSlashMenu } from "@/components/ai/slashCommands";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";
@@ -440,7 +464,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
-const { prompt, isSubmitting, isCancelling, messages, modelLabel, modelOptions, canSubmit } = chat;
+const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit } = chat;
+const { availableModels, selectedModel } = chat;
 const { isEditingPage } = chat;
 const { isImprovingPrompt } = chat;
 const { selectedModelUnusable } = chat;
@@ -735,9 +760,9 @@ function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
 		(debug.argsRepaired ?? 0) > 0 ||
-			(debug.toolFailures?.length ?? 0) > 0 ||
-			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds",
+		(debug.toolFailures?.length ?? 0) > 0 ||
+		(debug.finishReasons || []).includes("length") ||
+		debug.stopReason === "max_rounds",
 	);
 }
 
@@ -752,7 +777,44 @@ function formatDuration(ms: number): string {
 	return mins % 60 ? `${hrs}h ${mins % 60}m` : `${hrs}h`;
 }
 
+// --- "/" commands ----------------------------------------------------------
+const PANEL_TITLES: Record<CommandPanel, string> = {
+	model: "Model",
+	credits: "Credits",
+	providers: "Providers",
+	chats: "Chats",
+};
+const activePanel = ref<CommandPanel | null>(null);
+const panelArg = ref("");
+
+const slash = useSlashMenu(prompt);
+const { matches: slashMatches, activeIndex: slashActiveIndex, isOpen: slashOpen } = slash;
+
+function openPanel(panel: CommandPanel, arg = "") {
+	panelArg.value = arg;
+	activePanel.value = panel;
+	// the picker may be minutes old, and a gateway adds models without telling anyone
+	if (panel === "model") chat.loadModels();
+}
+
+function pickModel(name: string) {
+	selectedModel.value = name;
+	activePanel.value = null;
+}
+
+async function closePanelAfter(action: () => unknown) {
+	activePanel.value = null;
+	await action();
+}
+
+const unregisterCommands = registerBobCommands({
+	openPanel,
+	newSession: () => closePanelAfter(newSession),
+});
+onUnmounted(unregisterCommands);
+
 const submitPrompt = () => {
+	if (slash.runHighlighted()) return;
 	chat.submitPrompt();
 };
 
@@ -780,18 +842,15 @@ watch(
 	},
 );
 
-// Providers and models are configured in Settings, so the picker is stale the
-// moment that dialog closes. Refetch then rather than making every screen in
-// there remember to signal this one.
-watch(
-	() => builderStore.showSettingsDialog,
-	(open, wasOpen) => {
-		if (wasOpen && !open) {
-			chat.loadModels();
-			builderStore.refreshAIState();
-		}
-	},
-);
+// Providers and models are configured in that panel, so the picker is stale the
+// moment it closes. Refetch then rather than making every screen in there
+// remember to signal this one.
+watch(activePanel, (panel, previous) => {
+	if (previous === "providers" && panel !== "providers") {
+		chat.loadModels();
+		builderStore.refreshAIState();
+	}
+});
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {

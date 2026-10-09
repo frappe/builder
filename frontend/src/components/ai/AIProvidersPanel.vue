@@ -6,10 +6,11 @@
 		<AIModelList v-else @add-provider="addProvider" />
 	</div>
 </template>
+
 <script setup lang="ts">
+import AIModelList from "@/components/ai/AIModelList.vue";
+import AISetupFlow from "@/components/ai/AISetupFlow.vue";
 import type { AISetupState } from "@/components/ai/types";
-import AIModelList from "@/components/Settings/AIModelList.vue";
-import AISetupFlow from "@/components/Settings/AISetupFlow.vue";
 import useBuilderStore from "@/stores/builderStore";
 import { onMounted, ref } from "vue";
 

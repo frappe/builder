@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col gap-3">
-		<div class="flex items-center justify-between">
+		<div class="flex flex-wrap items-center justify-between gap-2">
 			<div class="flex flex-col gap-1">
 				<h3 class="text-p-base font-medium text-ink-gray-9">Models</h3>
 				<p class="text-p-sm text-ink-gray-5">The chat's model picker offers every enabled model.</p>
@@ -31,12 +31,15 @@
 					class="group/provider flex items-center gap-2 border-b border-outline-gray-1 py-1.5 text-left"
 					@click="editProvider(group.provider)">
 					<span
-						class="text-p-sm font-medium"
+						class="shrink-0 text-p-sm font-medium"
 						:class="group.enabled ? 'text-ink-gray-7' : 'text-ink-gray-4 line-through'">
 						{{ group.label }}
 					</span>
-					<span v-if="group.hint" class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
-					<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
+					<span v-if="group.hint" class="min-w-0 truncate text-p-xs text-ink-gray-5" :title="group.hint">
+						{{ group.hint }}
+					</span>
+					<span
+						class="lucide-settings size-3.5 shrink-0 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
 					<AIProviderCredits v-if="group.hint && group.enabled" :provider="group.provider" />
 				</button>
 
@@ -76,7 +79,7 @@
 <script setup lang="ts">
 import AIModelDialog from "@/components/Modals/AIModelDialog.vue";
 import AIProviderDialog from "@/components/Modals/AIProviderDialog.vue";
-import AIProviderCredits from "@/components/Settings/AIProviderCredits.vue";
+import AIProviderCredits from "@/components/ai/AIProviderCredits.vue";
 import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import { BuilderAIModel } from "@/types/doctypes";
 import { Button, createResource, Switch } from "frappe-ui";

@@ -148,14 +148,6 @@ const panes: SettingsPane[] = [
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalAgents.vue"),
 	},
-	{
-		name: "global_ai",
-		label: __("AI"),
-		title: __("AI Settings"),
-		icon: "lucide-sparkles",
-		group: "Global",
-		load: () => import("@/components/Settings/GlobalAI.vue"),
-	},
 ];
 
 panes.forEach((pane) => settingsItems.register({ ...pane, component: defineAsyncComponent(pane.load) }));

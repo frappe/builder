@@ -29,7 +29,7 @@
 			     so the rows grew to fill the panel and each card became a tall slab. -->
 			<div
 				v-else
-				class="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-2.5 overflow-y-auto pb-2">
+				class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 content-start gap-2.5 overflow-y-auto pb-2">
 				<button
 					v-for="preset in presets"
 					:key="preset.id"
