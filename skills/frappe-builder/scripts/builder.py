@@ -9,7 +9,7 @@
     builder.py [-s PROFILE] publish <workdir>
     builder.py [-s PROFILE] sync <component id>
     builder.py [-s PROFILE] usage <component id>
-    builder.py [-s PROFILE] instance <component id> [--props JSON]
+    builder.py [-s PROFILE] instance <component id> [--props JSON] [--overrides JSON]
     builder.py [-s PROFILE] copy <page> --to PROFILE [--replace]
 
 A page workdir holds doc.json (the page as pulled, the rollback), blocks.json (the
@@ -291,7 +291,9 @@ def lint(ctl: Frappectl | None, path: Path) -> int:
 	kind = "component" if path.name == "block.json" else "page"
 	roots, components = roots_of(path), site_names(ctl, "Builder Component")
 	definitions = {cid: ctl.definition(cid) for cid in used_components(roots) & (components or set())}
-	linter = Linter(roots, site_names(ctl, "Builder Token"), components, kind, definitions)
+	script = path.with_name("data_script.py")
+	data_script = script.read_text() if kind == "component" and script.exists() else ""
+	linter = Linter(roots, site_names(ctl, "Builder Token"), components, kind, definitions, data_script)
 	issues = linter.run()
 	for level, where, message in issues:
 		print(f"{level:5} {where}: {message}")
@@ -564,8 +566,10 @@ def cmd_usage(ctl: Frappectl, args):
 
 def cmd_instance(ctl: Frappectl, args):
 	props = json.loads(args.props) if args.props else None
+	overrides = json.loads(args.overrides) if args.overrides else None
 	try:
-		print(json.dumps(InstanceBuilder(ctl.definition).build(args.component, props), indent=1))
+		instance = InstanceBuilder(ctl.definition).build(args.component, props, overrides)
+		print(json.dumps(instance, indent=1))
 	except KeyError as error:
 		sys.exit(str(error))
 
@@ -609,6 +613,10 @@ def main():
 	instance = sub.add_parser("instance")
 	instance.add_argument("component")
 	instance.add_argument("--props", help="JSON object of prop values")
+	instance.add_argument(
+		"--overrides",
+		help='JSON object of block fields to set on this instance, keyed by blockName or blockId: {"title": {"innerHTML": "..."}}',
+	)
 	args = parser.parse_args()
 
 	if args.command == "outline":

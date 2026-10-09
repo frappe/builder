@@ -45,7 +45,7 @@ python3 $B outline .builder/<name>
 python3 $B -s <p> push .builder/<name>                     # lints first; refuses on errors
 python3 $B -s <p> publish .builder/<name>                  # pages
 python3 $B -s <p> create <id> --from <folder with block.json> # new component
-python3 $B -s <p> instance <component-id> --props '{...}'   # embed JSON to paste into a page
+python3 $B -s <p> instance <component-id> [--props JSON] [--overrides JSON]  # embed JSON to paste into a page
 python3 $B -s <p> usage <component-id>
 python3 $B -s <p> sync <component-id>
 python3 $B -s <p> copy <page> --to <other profile>             # with its components, scripts, tokens, fonts, files
@@ -55,6 +55,7 @@ Only a page's block tree has a draft; visitors see it after publish. Everything 
 
 - Ask the human to close editor tabs on the page before you push and reload them after: an open tab saves its old tree over your draft on its next edit.
 - On a site that has pages, pull one first and reuse its tokens, fonts, widths and components.
+- Build a section from blocks on the page. Make it a component only when the same tree repeats, on this page or across pages, and no existing one fits. A component gets props only for what editing its instances in place can't do (`reference/components.md`); lint warns on the rest.
 - A new page: `doc create "Builder Page" --set page_title=... --set route=... < /dev/null`, then pull. Set page fields with `doc update --set` before you pull; push refuses a workdir that is behind.
 - Preview a draft: `frappectl -s <p> api method/builder.api.get_page_preview_html -F page=<page>` renders it with the live data script and scripts. An error there is the error visitors would get.
 - Roll back a page: the first push after a pull saves a snapshot labelled "Before agent edit"; `method call restore_snapshot --doctype "Builder Page" --name <page> -F snapshot=<id>` restores it into the draft. Roll back a component by pushing the `doc.json` you pulled.
