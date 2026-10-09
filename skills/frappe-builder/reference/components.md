@@ -1,10 +1,21 @@
 # Components
 
-A `Builder Component` stores one block tree in `block` (a JSON string) and an optional `component_data_script`. Its doc name is its `component_id`. Pages embed it as an **instance**: a block with `extendedFromComponent` whose children are a **skeleton** of refs (`referenceBlockId` = a definition blockId, `isChildOfComponent` = the component id). The server renders the definition through the skeleton, so an instance without one renders empty, and definition blocks missing from it don't render. Get a correct instance from `builder.py instance <id> --props '{...}'`.
+A `Builder Component` stores one block tree in `block` (a JSON string) and an optional `component_data_script`. Its doc name is its `component_id`. Pages embed it as an **instance**: a block with `extendedFromComponent` whose children are a **skeleton** of refs (`referenceBlockId` = a definition blockId, `isChildOfComponent` = the component id). The server renders the definition through the skeleton, so an instance without one renders empty, and definition blocks missing from it don't render. Get a correct instance from `builder.py instance <id>`.
 
 `examples/tabs/` is a complete component (props, data script, repeaters, script with keyboard support, scoped CSS) that renders and behaves the same live and in the editor: `builder.py create tabs --from <skill-dir>/examples/tabs --name Tabs`.
 
+## When to make one
+
+A component is a block tree that repeats, on one page or across pages, and changes in one place. A section used once stays plain blocks on the page, and a component's parts stay its own blocks unless they repeat elsewhere too. Reuse an existing component before creating one.
+
 ## Props
+
+Each page edits an instance's blocks in place, in the editor or with `instance --overrides`: text, images and alt text, links, styles, and hiding a block. So leave those blocks unbound in the definition, with real default content, instead of declaring a prop per field, even when one value fills several blocks. A prop is only for:
+
+- what the editor can't edit on an instance, like the list a repeater renders,
+- a value a client script or the data script needs.
+
+A data script that only copies a value through, or single-value fallbacks for a list prop, doesn't make a prop needed. Lint warns on a prop that no script or repeater reads.
 
 Declared on the definition root under `props.<name>`, in the shape the editor writes:
 
@@ -36,7 +47,11 @@ The editor runs the same script in a sandbox, re-running it when props change. T
 
 ## Instances and overrides
 
-A skeleton ref can override the definition block it points at, per page: styles merge per key, `classes` append, `attributes` merge, `innerHTML` replaces non-empty text (an empty string can't blank it), `display: none` hides it. An instance root's `clientScript: {"js": ""}` disables the definition's script live, not in the editor.
+A skeleton ref can override the definition block it points at, per page: styles merge per key, `classes` append, `attributes` merge, `innerHTML` replaces non-empty text (an empty string can't blank it), `display: none` hides it. An instance root's `clientScript: {"js": ""}` disables the definition's script live, not in the editor. `instance` writes overrides keyed by the definition's blockNames (blockIds when names repeat):
+
+```sh
+builder.py instance hero --overrides '{"title": {"innerHTML": "..."}, "image": {"attributes": {"src": "...", "alt": "..."}}, "video": {"baseStyles": {"display": "none"}}}'
+```
 
 - Blocks you add to a skeleton render too, until a sync drops them.
 - A component nested in another: the outer definition's overrides of the inner component's blocks are not applied, and a prop set on the inner instance shows live but not in the editor. The inner script's `props` also receives an ancestor's value for a same-named prop, so give nested props distinct names.

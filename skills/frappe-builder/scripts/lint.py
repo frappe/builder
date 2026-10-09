@@ -1,8 +1,10 @@
 """Checks for block trees. Each rule is a failure reproduced on a live site: a broken
-render, a style that silently doesn't apply, or a canvas that shows something else."""
+render, a style that silently doesn't apply, a canvas that shows something else, or a
+component prop that only does what editing the instance in place already does."""
 
 from __future__ import annotations
 
+import json
 import re
 
 TEXT_ELEMENTS = {
@@ -32,6 +34,23 @@ SHORTHANDS = {
 	"gap": ["rowGap", "columnGap"],
 	"flexFlow": ["flexDirection", "flexWrap"],
 }
+
+
+DYNAMIC_PROP_READ = re.compile(r"\bprops(\.get\(|\??\.?\[)\s*[A-Za-z_]")
+
+
+def reads_prop_in(name: str, source: str) -> bool:
+	"""props.name, props["name"], props.get("name") or `{ name } = props`; where the source
+	reads props by a variable key, any quoted mention of the name."""
+	escaped = re.escape(name)
+	quoted = rf"""['"]{escaped}['"]"""
+	literal = (
+		rf"\bprops\??\.\s*{escaped}\b|\bprops(\?\.)?\[\s*{quoted}|\bprops\.get\(\s*{quoted}"
+		rf"|\{{[^}}]*\b{escaped}\b[^}}]*\}}\s*=\s*props\b"
+	)
+	if re.search(literal, source):
+		return True
+	return bool(DYNAMIC_PROP_READ.search(source) and re.search(quoted, source))
 
 
 class Block:
@@ -69,6 +88,13 @@ class Block:
 		keys = [self.dataKey] if isinstance(self.dataKey, dict) and self.dataKey.get("key") else []
 		return keys + [v for v in self.dynamicValues or [] if isinstance(v, dict)]
 
+	def reads_prop(self, word: re.Pattern) -> bool:
+		condition = self.visibilityCondition if isinstance(self.visibilityCondition, dict) else {}
+		keys = [binding.get("key") for binding in self.bindings() if binding.get("comesFrom") == "props"]
+		if condition.get("comesFrom") == "props":
+			keys.append(condition.get("key"))
+		return any(word.search(str(key or "")) for key in keys)
+
 	def script(self) -> dict:
 		script = dict(self.clientScript or {})
 		if not script.get("js") and self.blockClientScript:
@@ -84,12 +110,14 @@ class Linter:
 		components: set[str] | None,
 		kind="page",
 		definitions: dict[str, dict] | None = None,
+		data_script: str = "",
 	):
 		self.roots = [Block(root, str(index)) for index, root in enumerate(roots)]
 		self.tokens = tokens
 		self.components = components
 		self.definitions = definitions or {}
 		self.kind = kind
+		self.data_script = data_script
 		self.issues: list[tuple[str, str, str]] = []
 
 	def add(self, level: str, block: Block | None, message: str):
@@ -115,6 +143,8 @@ class Linter:
 					self.add("error", block, f"duplicate blockId, also at {seen[block.blockId]}")
 				seen.setdefault(block.blockId or "", block.path)
 				self.check_block(block)
+		if self.kind == "component" and self.roots:
+			self.check_props(self.roots[0])
 		return self.issues
 
 	def check_block(self, block: Block):
@@ -237,6 +267,35 @@ class Linter:
 			self.add("error", block, "component instance without skeleton children renders empty")
 		if self.components is not None and component not in self.components:
 			self.add("error", block, f"component '{component}' does not exist on the site")
+
+	def check_props(self, root: Block):
+		blocks = list(root.walk())
+		for name in root.props or {}:
+			word = re.compile(rf"\b{re.escape(name)}\b")
+			if self.drives_logic(name, word, blocks):
+				continue
+			reached = [block for block in blocks if block.reads_prop(word)]
+			if not reached:
+				self.add("warn", root, f"prop '{name}' is read by no block or script")
+			else:
+				self.add(
+					"warn",
+					reached[0],
+					f"prop '{name}' only fills {len(reached)} block(s) the editor edits on each instance;"
+					" no script reads it, so leave them unbound",
+				)
+
+	def drives_logic(self, name: str, word: re.Pattern, blocks: list[Block]) -> bool:
+		"""A prop that a script, a repeater or a nested component reads does work the editor can't."""
+		code = [self.data_script]
+		for block in blocks:
+			script = block.script()
+			code += [script.get("js") or "", script.get("css") or ""]
+			repeats = block.isRepeaterBlock and block.reads_prop(word)
+			passes_down = block.extendedFromComponent and word.search(json.dumps(block.props or {}))
+			if repeats or passes_down:
+				return True
+		return any(reads_prop_in(name, source) for source in code)
 
 	def check_script(self, block: Block):
 		script = block.script()

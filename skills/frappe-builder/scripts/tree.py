@@ -7,6 +7,14 @@ import json
 import secrets
 
 STANDARD_ATTRS = {"src", "darkSrc", "alt", "href", "title", "value", "type", "placeholder", "target", "rel"}
+FIXED_FIELDS = {
+	"blockId",
+	"referenceBlockId",
+	"isChildOfComponent",
+	"extendedFromComponent",
+	"children",
+	"props",
+}
 
 
 def parse_blocks(raw) -> list:
@@ -49,12 +57,13 @@ def encode_value(declaration: dict, value):
 
 
 class InstanceBuilder:
-	"""Builds a page-side instance of a component: root, skeleton refs and prop values."""
+	"""Builds a page-side instance of a component: root, skeleton refs, prop values and
+	per-instance overrides of the definition's blocks."""
 
 	def __init__(self, load_definition):
 		self.load_definition = load_definition
 
-	def build(self, component_id: str, props: dict | None = None) -> dict:
+	def build(self, component_id: str, props: dict | None = None, overrides: dict | None = None) -> dict:
 		definition = self.load_definition(component_id)
 		declared = definition.get("props") or {}
 		unknown = sorted(set(props or {}) - set(declared))
@@ -69,7 +78,39 @@ class InstanceBuilder:
 		}
 		if props:
 			root["props"] = {key: self.with_value(declared[key], value) for key, value in props.items()}
+		for key, fields in (overrides or {}).items():
+			self.override(root, definition, key, fields)
 		return root
+
+	def override(self, root: dict, definition: dict, key: str, fields: dict):
+		fixed = sorted(FIXED_FIELDS & set(fields))
+		if fixed:
+			raise KeyError(f"{key}: an override can't set {fixed}")
+		targets = {definition.get("blockId"): root, **self.own_refs(root)}
+		targets[self.resolve(definition, key)].update(fields)
+
+	@staticmethod
+	def own_refs(root: dict) -> dict:
+		refs, owner = {}, root["extendedFromComponent"]
+		walk(
+			root["children"],
+			lambda ref: ref["isChildOfComponent"] == owner and refs.setdefault(ref["referenceBlockId"], ref),
+		)
+		return refs
+
+	@staticmethod
+	def resolve(definition: dict, key: str) -> str:
+		"""The definition blockId a blockId or a blockName refers to, among the component's
+		own blocks (not those of a component nested in it)."""
+		own = []
+		walk(definition, lambda block: None if block.get("isChildOfComponent") else own.append(block))
+		matches = [block["blockId"] for block in own if key in (block.get("blockId"), block.get("blockName"))]
+		if len(matches) == 1:
+			return matches[0]
+		names = sorted({block.get("blockName") or block.get("blockId") for block in own})
+		if matches:
+			raise KeyError(f"blockName '{key}' is on several blocks; use a blockId: {matches}")
+		raise KeyError(f"the component has no block '{key}'; its blocks: {names}")
 
 	def skeleton(self, children: list | None, owner: str) -> list:
 		refs = []
