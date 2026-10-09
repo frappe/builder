@@ -10,13 +10,12 @@ A component is a block tree that repeats, on one page or across pages, and chang
 
 ## Props
 
-Each page edits an instance's blocks in place, in the editor or with `instance --overrides`: text, images and alt text, links, styles, and hiding a block. So leave those blocks unbound in the definition, with real default content, instead of declaring a prop per field. A prop is for what an in-place edit can't do:
+Each page edits an instance's blocks in place, in the editor or with `instance --overrides`: text, images and alt text, links, styles, and hiding a block. So leave those blocks unbound in the definition, with real default content, instead of declaring a prop per field, even when one value fills several blocks. A prop is only for:
 
-- a list a repeater renders,
-- a value a client script or the data script reads,
-- one setting that changes several blocks.
+- what the editor can't edit on an instance, like the list a repeater renders,
+- a value a client script or the data script needs.
 
-Lint warns on a prop that fills a single block, or that nothing reads.
+A data script that only copies a value through, or single-value fallbacks for a list prop, doesn't make a prop needed. Lint warns on a prop that no script or repeater reads.
 
 Declared on the definition root under `props.<name>`, in the shape the editor writes:
 

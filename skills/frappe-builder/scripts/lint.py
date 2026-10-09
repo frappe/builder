@@ -277,11 +277,12 @@ class Linter:
 			reached = [block for block in blocks if block.reads_prop(word)]
 			if not reached:
 				self.add("warn", root, f"prop '{name}' is read by no block or script")
-			elif len(reached) == 1:
+			else:
 				self.add(
 					"warn",
 					reached[0],
-					f"prop '{name}' only fills this block; leave it unbound and edit it on each instance",
+					f"prop '{name}' only fills {len(reached)} block(s) the editor edits on each instance;"
+					" no script reads it, so leave them unbound",
 				)
 
 	def drives_logic(self, name: str, word: re.Pattern, blocks: list[Block]) -> bool:
