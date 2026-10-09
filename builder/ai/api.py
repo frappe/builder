@@ -14,7 +14,7 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
-from builder.ai.models import ModelRegistry
+from builder.ai.models import GatewayListing, ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
@@ -326,54 +326,28 @@ def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	return doc.name
 
 
-# Embeddings and rerankers answer /v1/models too, and fail as chat models.
-NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts", "moderation")
-
-
 @frappe.whitelist()
 def import_provider_models(provider: str) -> dict:
-	"""Add every chat model an OpenAI-compatible provider advertises at /models.
-
-	Saves typing model ids by hand, and is the only way to discover what a private
-	or self-hosted gateway actually serves. Existing rows are left alone, so this
-	is safe to re-run when a provider adds a model."""
+	"""Add every chat model a gateway advertises at /models, right now rather than
+	on the picker's next sync. Existing rows are left alone, so this is safe to re-run."""
 	if not frappe.has_permission("Builder AI Model", "create"):
 		frappe.throw(_("You are not permitted to manage AI models"), frappe.PermissionError)
 
 	doc = frappe.get_doc("Builder AI Provider", provider)
 	if not doc.api_base:
 		frappe.throw(_("This provider has no API Base to ask"))
-
-	import requests
-
-	url = f"{doc.api_base.rstrip('/')}/models"
-	headers = {"Content-Type": "application/json"}
-	if key := (doc.resolved_key() or resolve_api_key()):
-		headers["Authorization"] = f"Bearer {key}"
 	try:
-		response = requests.get(url, headers=headers, timeout=20)
-		response.raise_for_status()
-		listed = response.json().get("data") or []
+		return GatewayListing(doc).sync()
 	except Exception as e:
 		logger.warning(f"import_provider_models failed for {provider}: {e}")
-		frappe.throw(_("Could not reach {0}: {1}").format(url, str(e)[:200]))
+		frappe.throw(_("Could not reach {0}: {1}").format(doc.api_base, str(e)[:200]))
 
-	added, skipped = [], []
-	for entry in listed:
-		model_id = (entry or {}).get("id")
-		if not model_id:
-			continue
-		if any(marker in model_id.lower() for marker in NON_CHAT_MARKERS):
-			skipped.append(model_id)
-			continue
-		if frappe.db.exists("Builder AI Model", f"{doc.route_prefix}/{model_id}"):
-			continue
-		frappe.get_doc(
-			{"doctype": "Builder AI Model", "provider": provider, "model_id": model_id, "enabled": 1}
-		).insert()
-		added.append(model_id)
 
-	return {"added": added, "skipped": skipped, "found": len(listed)}
+@frappe.whitelist()
+def sync_ai_models() -> None:
+	"""Pick up models the gateways added or retired since the last sync."""
+	if frappe.has_permission("Builder AI Model", "create"):
+		GatewayListing.sync_all(force=True)
 
 
 @frappe.whitelist()
@@ -408,6 +382,7 @@ def get_provider_credits(provider: str) -> dict | None:
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
+	GatewayListing.sync_all()
 	return ModelRegistry.available()
 
 

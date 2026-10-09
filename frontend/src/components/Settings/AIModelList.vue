@@ -79,7 +79,7 @@ import AIProviderDialog from "@/components/Modals/AIProviderDialog.vue";
 import AIProviderCredits from "@/components/Settings/AIProviderCredits.vue";
 import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import { BuilderAIModel } from "@/types/doctypes";
-import { Button, Switch } from "frappe-ui";
+import { Button, createResource, Switch } from "frappe-ui";
 import { computed, onMounted, ref } from "vue";
 
 defineEmits(["add-provider"]);
@@ -133,5 +133,13 @@ const remove = async (row: BuilderAIModel) => {
 	reload();
 };
 
-onMounted(reload);
+onMounted(async () => {
+	reload();
+	try {
+		await createResource({ url: "builder.ai.api.sync_ai_models" }).submit();
+		reload();
+	} catch {
+		// an unreachable gateway leaves the stored list in place
+	}
+});
 </script>
