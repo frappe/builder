@@ -377,6 +377,35 @@ def import_provider_models(provider: str) -> dict:
 
 
 @frappe.whitelist()
+def get_provider_credits(provider: str) -> dict | None:
+	"""The balance a gateway reports at <api_base>/credits, or None when it reports none.
+
+	Most providers have no such endpoint, so any failure is a quiet None rather
+	than an error in the settings list."""
+	if not frappe.has_permission("Builder AI Provider", "read"):
+		frappe.throw(_("You are not permitted to view AI providers"), frappe.PermissionError)
+
+	doc = frappe.get_doc("Builder AI Provider", provider)
+	if not doc.api_base:
+		return None
+
+	import requests
+
+	headers = {}
+	if key := doc.resolved_key():
+		headers["Authorization"] = f"Bearer {key}"
+	try:
+		response = requests.get(f"{doc.api_base.rstrip('/')}/credits", headers=headers, timeout=10)
+		response.raise_for_status()
+		credits = response.json()
+	except Exception:
+		return None
+	if not isinstance(credits, dict) or not isinstance(credits.get("balance"), int | float):
+		return None
+	return {"balance": credits["balance"], "spent": credits.get("spent")}
+
+
+@frappe.whitelist()
 @has_page_write()
 def get_ai_models():
 	return ModelRegistry.available()

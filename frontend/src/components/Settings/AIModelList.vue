@@ -37,6 +37,7 @@
 					</span>
 					<span v-if="group.hint" class="text-p-xs text-ink-gray-5">{{ group.hint }}</span>
 					<span class="lucide-settings size-3.5 text-ink-gray-4 opacity-0 group-hover/provider:opacity-100" />
+					<AIProviderCredits v-if="group.hint && group.enabled" :provider="group.provider" />
 				</button>
 
 				<div
@@ -75,6 +76,7 @@
 <script setup lang="ts">
 import AIModelDialog from "@/components/Modals/AIModelDialog.vue";
 import AIProviderDialog from "@/components/Modals/AIProviderDialog.vue";
+import AIProviderCredits from "@/components/Settings/AIProviderCredits.vue";
 import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import { BuilderAIModel } from "@/types/doctypes";
 import { Button, Switch } from "frappe-ui";

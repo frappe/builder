@@ -15,6 +15,7 @@ declare module 'vue' {
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
     AIModelDialog: typeof import('./src/components/Modals/AIModelDialog.vue')['default']
     AIModelList: typeof import('./src/components/Settings/AIModelList.vue')['default']
+    AIProviderCredits: typeof import('./src/components/Settings/AIProviderCredits.vue')['default']
     AIProviderDialog: typeof import('./src/components/Modals/AIProviderDialog.vue')['default']
     AISetupFlow: typeof import('./src/components/Settings/AISetupFlow.vue')['default']
     AITurnTimeline: typeof import('./src/components/ai/AITurnTimeline.vue')['default']
