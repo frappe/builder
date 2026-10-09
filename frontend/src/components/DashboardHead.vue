@@ -1,19 +1,20 @@
 <template>
-	<div class="m-auto flex w-3/4 max-w-6xl items-center justify-between bg-surface-base px-3.5 py-5 pt-8">
+	<div
+		class="m-auto flex w-3/4 max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-surface-base px-3.5 py-5 pt-8">
 		<h1
 			class="text-xl-semibold truncate text-ink-gray-9"
 			:title="builderStore.activeFolder || __('All Pages')">
 			{{ builderStore.activeFolder || __("All Pages") }}
 		</h1>
-		<div class="flex shrink-0 gap-2">
+		<div class="ml-auto flex min-w-0 max-w-full gap-2">
 			<div>
 				<Button variant="solid" v-if="selectionMode && selectedPages.size" @click="promptSelectFolder()">
 					{{ __("Move To Folder") }}
 				</Button>
 			</div>
-			<div class="relative flex" v-show="!selectionMode">
+			<div class="relative flex w-48 min-w-0 shrink" v-show="!selectionMode">
 				<BuilderInput
-					class="w-48"
+					class="w-full"
 					type="text"
 					:placeholder="__('Filter by title or route')"
 					v-model="searchFilter"
