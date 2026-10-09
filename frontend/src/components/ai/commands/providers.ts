@@ -37,6 +37,7 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 				...modelsOf(name).map((m): MenuItem => ({
 					key: m.name,
 					label: m.label || m.model_id,
+					group: "Models",
 					checked: !!m.enabled,
 					run: () => toggleModel(ctx, m),
 				})),
@@ -88,7 +89,6 @@ const modelsOf = (provider: string): BuilderAIModel[] =>
 	(aiModels.data || []).filter((m: BuilderAIModel) => m.provider === provider);
 
 function modelCount(provider: string): string {
-	const models = modelsOf(provider);
-	const on = models.filter((m) => m.enabled).length;
-	return models.length ? `${on} of ${models.length} on` : "no models";
+	const on = modelsOf(provider).filter((m) => m.enabled).length;
+	return on === 1 ? "1 model" : `${on || "no"} models`;
 }
