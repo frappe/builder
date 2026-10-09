@@ -278,6 +278,11 @@ const onPreviewLoad = () => {
 		event.preventDefault();
 		previewDocument.location.replace(new URL(link.getAttribute("href")!, previewDocument.URL).href);
 	});
+	// a link to an unpublished page lands on the 404, whose home link would load Builder in the preview
+	previewDocument.querySelector(".error-page a[href='/']")?.addEventListener("click", (event) => {
+		event.preventDefault();
+		previewFrame.value?.contentWindow?.history.back();
+	});
 	applyColorSchemeToIframe(isDark.value ? "dark" : "light");
 	restoreScrollPosition();
 	previewDocument.addEventListener("scroll", saveScrollPosition, { passive: true });
