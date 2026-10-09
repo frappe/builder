@@ -3,7 +3,7 @@
 		<section class="m-auto mb-24 flex h-fit w-3/4 max-w-6xl flex-col pt-5">
 			<!-- pages -->
 			<div>
-				<div v-if="!webPages.data?.length && !searchFilter && !statusFilter" class="col-span-full">
+				<div v-if="!webPages.data?.length && !searchFilter && !activeFilterCount" class="col-span-full">
 					<p class="px-3 text-base text-gray-500">
 						{{ __("You don't have any pages yet. Click on the + New button to create a new page.") }}
 					</p>
@@ -74,6 +74,9 @@ const builderStore = useBuilderStore();
 const {
 	searchFilter,
 	statusFilter,
+	accessFilter,
+	createdByFilter,
+	activeFilterCount,
 	orderBy,
 	displayType,
 	selectionMode,
@@ -145,10 +148,21 @@ useKeyboardShortcut({
 	},
 });
 
-const statusFilters = {
+const statusFilters: Partial<Record<typeof statusFilter.value, object>> = {
 	live: { published: 1 },
 	staging: { staging: 1 },
 	draft: { published: 0, staging: 0 },
+	// draft pages carry draft_blocks too, and search owns the OR group, so this reuses the names lookup
+	get unpublished_changes() {
+		return {
+			name: ["in", (pagesWithUnpublishedChanges.data || []).map((page: { name: string }) => page.name)],
+		};
+	},
+};
+
+const accessFilters: Partial<Record<typeof accessFilter.value, object>> = {
+	public: { authenticated_access: 0 },
+	protected: { authenticated_access: 1 },
 };
 
 const fetchPages = () => {
@@ -156,7 +170,10 @@ const fetchPages = () => {
 		is_template: 0,
 	} as any;
 	if (displayType.value !== "tree") {
-		Object.assign(filters, statusFilters[statusFilter.value as keyof typeof statusFilters]);
+		Object.assign(filters, statusFilters[statusFilter.value], accessFilters[accessFilter.value]);
+		if (createdByFilter.value) {
+			filters["owner"] = createdByFilter.value;
+		}
 	}
 	const orFilters = {} as any;
 	if (searchFilter.value) {
@@ -234,7 +251,14 @@ const togglePageSelection = (page: BuilderPage) => {
 	}
 };
 
-watchDebounced([searchFilter, statusFilter, orderBy], fetchPages, {
+watch(
+	() => pagesWithUnpublishedChanges.data,
+	() => {
+		if (statusFilter.value === "unpublished_changes") fetchPages();
+	},
+);
+
+watchDebounced([searchFilter, statusFilter, accessFilter, createdByFilter, orderBy], fetchPages, {
 	debounce: 300,
 	immediate: true,
 });

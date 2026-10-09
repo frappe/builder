@@ -72,6 +72,7 @@ declare module 'vue' {
     CursorTooltip: typeof import('./src/components/CursorTooltip.vue')['default']
     CustomSearchPanel: typeof import('./src/components/Controls/CodeMirror/CustomSearchPanel.vue')['default']
     DashboardContent: typeof import('./src/components/DashboardContent.vue')['default']
+    DashboardFilter: typeof import('./src/components/DashboardFilter.vue')['default']
     DashboardHead: typeof import('./src/components/DashboardHead.vue')['default']
     DashboardSidebar: typeof import('./src/components/DashboardSidebar.vue')['default']
     DashboardToolbar: typeof import('./src/components/DashboardToolbar.vue')['default']

@@ -27,16 +27,8 @@
 					</template>
 				</BuilderInput>
 			</div>
-			<div class="max-md:hidden" v-show="!selectionMode && displayType !== 'tree'">
-				<Select
-					v-model="statusFilter"
-					:options="[
-						{ label: __('Status'), value: '', disabled: true },
-						{ label: __('All'), value: 'all' },
-						{ label: __('Live'), value: 'live' },
-						{ label: __('Staging'), value: 'staging' },
-						{ label: __('Draft'), value: 'draft' },
-					]" />
+			<div v-show="!selectionMode && displayType !== 'tree'">
+				<DashboardFilter />
 			</div>
 			<div v-if="displayType === 'tree' && !selectionMode">
 				<Button
@@ -52,21 +44,12 @@
 				</Button>
 			</div>
 			<div class="max-sm:hidden" v-show="displayType !== 'tree' && !selectionMode">
-				<Select
-					v-model="orderBy"
-					:options="[
-						{ label: __('Sort'), value: '', disabled: true },
-						{ label: __('Last Created'), value: 'creation' },
-						{ label: __('Last Modified'), value: 'modified' },
-						{
-							label: __('Alphabetically (A-Z)'),
-							value: 'alphabetically_a_z',
-						},
-						{
-							label: __('Alphabetically (Z-A)'),
-							value: 'alphabetically_z_a',
-						},
-					]" />
+				<Dropdown :options="sortOptions" align="end">
+					<Button icon-left="lucide-arrow-up-down" :label="__('Sort')" />
+					<template #item-suffix="{ item }">
+						<span v-if="item.selected" class="lucide-check size-4 text-ink-gray-7" aria-hidden="true" />
+					</template>
+				</Dropdown>
 			</div>
 			<div class="max-md:hidden">
 				<OptionToggle
@@ -100,10 +83,12 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import OptionToggle from "@/components/Controls/OptionToggle.vue";
+import DashboardFilter from "@/components/DashboardFilter.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import useBuilderStore from "@/stores/builderStore";
 import { promptSelectFolder } from "@/utils/dialogs";
-import { Button, Select } from "frappe-ui";
+import { Button, Dropdown } from "frappe-ui";
+import { computed } from "vue";
 import ListTreeIcon from "~icons/lucide/list-tree";
 
 const builderStore = useBuilderStore();
@@ -113,9 +98,23 @@ const {
 	selectedPages,
 	treeExpanded,
 	displayType,
-	statusFilter,
 	orderBy,
 	expandTreeFn,
 	collapseTreeFn,
 } = useDashboardState();
+
+const sortOrders: { label: string; value: typeof orderBy.value }[] = [
+	{ label: __("Last Created"), value: "creation" },
+	{ label: __("Last Modified"), value: "modified" },
+	{ label: __("Alphabetically (A-Z)"), value: "alphabetically_a_z" },
+	{ label: __("Alphabetically (Z-A)"), value: "alphabetically_z_a" },
+];
+
+const sortOptions = computed(() =>
+	sortOrders.map(({ label, value }) => ({
+		label,
+		selected: orderBy.value === value,
+		onClick: () => (orderBy.value = value),
+	})),
+);
 </script>
