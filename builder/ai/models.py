@@ -13,6 +13,7 @@ offline fallback, and the only source for every other provider.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import frappe
 import requests
@@ -165,13 +166,19 @@ class GatewayListing:
 		names = frappe.get_all(
 			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "set"]}, pluck="name"
 		)
-		for name in names:
-			listing = cls(frappe.get_doc("Builder AI Provider", name))
-			if force or not listing.is_fresh():
-				try:
-					listing.sync()
-				except Exception as e:
-					logger.warning(f"model listing failed for {name}: {e}")
+		listings = [cls(frappe.get_doc("Builder AI Provider", name)) for name in names]
+		stale = [listing for listing in listings if force or not listing.is_fresh()]
+		if not stale:
+			return
+		# side by side, so one unreachable gateway can't stall the picker for the rest
+		with ThreadPoolExecutor(max_workers=len(stale)) as pool:
+			outcomes = list(pool.map(fetch_listing, [listing.request() for listing in stale]))
+		for listing, outcome in zip(stale, outcomes, strict=True):
+			if isinstance(outcome, Exception):
+				logger.warning(f"model listing failed for {listing.provider.name}: {outcome}")
+				listing.remember(None)
+			else:
+				listing.apply(outcome)
 
 	@classmethod
 	def served_ids(cls, provider_name: str) -> set[str] | None:
@@ -190,21 +197,33 @@ class GatewayListing:
 	def sync(self) -> dict:
 		"""Add a row for every listed chat model that has none. Existing rows are
 		left alone, so a model someone switched off stays off."""
-		try:
-			listed = self.fetch()
-		except Exception:
+		outcome = fetch_listing(self.request())
+		if isinstance(outcome, Exception):
 			self.remember(None)
-			raise
+			raise outcome
+		return self.apply(outcome)
+
+	def apply(self, listed: list[str]) -> dict:
 		chat = [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
 		self.remember(chat)
 		added = [model_id for model_id in chat if self.add_row(model_id)]
 		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
 
-	def fetch(self) -> list[str]:
+	def credits(self) -> dict | None:
+		"""The balance the gateway reports at /credits, or None when it reports none."""
 		url, headers = self.request()
-		response = requests.get(url, headers=headers, timeout=FETCH_TIMEOUT)
-		response.raise_for_status()
-		return [entry["id"] for entry in response.json().get("data") or [] if (entry or {}).get("id")]
+		try:
+			response = requests.get(
+				url.removesuffix("/models") + "/credits", headers=headers, timeout=FETCH_TIMEOUT
+			)
+			response.raise_for_status()
+			reported = response.json()
+		except Exception:
+			return None
+		if not isinstance(reported, dict) or not is_number(reported.get("balance")):
+			return None
+		spent = reported.get("spent")
+		return {"balance": reported["balance"], "spent": spent if is_number(spent) else None}
 
 	def request(self) -> tuple[str, dict]:
 		base = self.provider.api_base.rstrip("/")
@@ -228,12 +247,30 @@ class GatewayListing:
 					"doctype": "Builder AI Model",
 					"provider": self.provider.name,
 					"model_id": model_id,
+					# the provider heads its group in the picker, so a vendor prefix is noise
+					"label": model_id.rsplit("/", 1)[-1],
 					"enabled": 1,
 				}
 			).insert(ignore_permissions=True)
 		except frappe.DuplicateEntryError:
 			return False
 		return True
+
+
+def fetch_listing(request: tuple[str, dict]) -> list[str] | Exception:
+	"""Model ids at a /models endpoint. Plain HTTP and no frappe calls, so it is safe in a
+	worker thread; it returns the error rather than raising, so one failure can't sink a batch."""
+	url, headers = request
+	try:
+		response = requests.get(url, headers=headers, timeout=FETCH_TIMEOUT)
+		response.raise_for_status()
+		return [entry["id"] for entry in response.json().get("data") or [] if (entry or {}).get("id")]
+	except Exception as e:
+		return e
+
+
+def is_number(value) -> bool:
+	return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 class ModelRegistry:

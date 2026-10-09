@@ -45,7 +45,9 @@ class TestGatewayListing(FrappeTestCase):
 		result, _ = self.sync("vendor/chat-a", "vendor/text-embedding-3")
 		self.assertEqual(result["added"], ["vendor/chat-a"])
 		self.assertEqual(result["skipped"], ["vendor/text-embedding-3"])
-		self.assertTrue(frappe.db.exists("Builder AI Model", "test-gateway/vendor/chat-a"))
+		self.assertEqual(
+			frappe.db.get_value("Builder AI Model", "test-gateway/vendor/chat-a", "label"), "chat-a"
+		)
 
 	def test_leaves_a_switched_off_model_off(self):
 		self.sync("vendor/chat-a")
@@ -77,3 +79,55 @@ class TestGatewayListing(FrappeTestCase):
 		_, get = self.sync()
 		self.assertEqual(get.call_args.args[0], "https://gw.test/anthropic/v1/models")
 		self.assertEqual(get.call_args.kwargs["headers"]["x-api-key"], "gw-key")
+
+	def test_one_dead_gateway_does_not_hold_up_the_others(self):
+		other = frappe.get_doc(
+			{
+				"doctype": "Builder AI Provider",
+				"provider_name": "Dead Gateway",
+				"api_base": "https://dead.test/v1",
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "Builder AI Provider", other.name, force=True, ignore_permissions=True
+		)
+
+		def respond(url, **kwargs):
+			if "dead.test" in url:
+				raise ConnectionError("down")
+			return listing("vendor/chat-a")
+
+		with patch("builder.ai.models.requests.get", side_effect=respond):
+			GatewayListing.sync_all(force=True)
+		self.assertTrue(frappe.db.exists("Builder AI Model", "test-gateway/vendor/chat-a"))
+		self.assertIsNone(GatewayListing.served_ids("Dead Gateway"))
+
+	def test_credits_fall_back_to_the_shared_key(self):
+		keyless = frappe.get_doc(
+			{
+				"doctype": "Builder AI Provider",
+				"provider_name": "Keyless Gateway",
+				"api_base": "https://free.test/v1",
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "Builder AI Provider", keyless.name, force=True, ignore_permissions=True
+		)
+		settings = MagicMock()
+		settings.get_password.return_value = "shared-key"
+		reply = MagicMock()
+		reply.json.return_value = {"balance": 5.5, "spent": 1}
+		with (
+			patch("builder.ai.models.frappe.get_single", return_value=settings),
+			patch("builder.ai.models.requests.get", return_value=reply) as get,
+		):
+			credits = GatewayListing(keyless).credits()
+		self.assertEqual(credits, {"balance": 5.5, "spent": 1})
+		self.assertEqual(get.call_args.args[0], "https://free.test/v1/credits")
+		self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer shared-key"})
+
+	def test_credits_drop_a_spend_that_is_not_a_number(self):
+		reply = MagicMock()
+		reply.json.return_value = {"balance": 2, "spent": "n/a"}
+		with patch("builder.ai.models.requests.get", return_value=reply):
+			self.assertEqual(GatewayListing(self.provider).credits(), {"balance": 2, "spent": None})
