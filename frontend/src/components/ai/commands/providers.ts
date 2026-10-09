@@ -15,14 +15,23 @@ export function providersLevel(ctx: BobContext): MenuLevel {
 			const providers: BuilderAIProvider[] = aiProviders.data || [];
 			const credits = await creditsFor(providers.filter((p) => p.api_base).map((p) => p.name));
 			return [
-				{ key: "connect", label: "Connect a provider", icon: "lucide-plus", run: () => connectLevel(ctx) },
 				...providers.map((p): MenuItem => ({
 					key: p.name,
 					label: p.provider_name,
-					icon: "lucide-server",
-					hint: [modelCount(p.name), creditsLabel(credits[p.name])].filter(Boolean).join(" · "),
+					description: p.enabled
+						? [modelCount(p.name), creditsLabel(credits[p.name])].filter(Boolean).join(" · ")
+						: "Off",
+					group: "Connected",
+					submenu: true,
 					run: () => providerLevel(ctx, p.name),
 				})),
+				{
+					key: "connect",
+					label: "Connect a provider",
+					icon: "lucide-plus",
+					submenu: true,
+					run: () => connectLevel(ctx),
+				},
 			];
 		},
 	};
@@ -38,15 +47,28 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 					key: m.name,
 					label: m.label || m.model_id,
 					group: "Models",
-					checked: !!m.enabled,
+					switchValue: !!m.enabled,
 					run: () => toggleModel(ctx, m),
 				})),
-				{ key: "key", label: "Change API key", icon: "lucide-key-round", run: () => keyLevel(ctx, name) },
+				{
+					key: "enabled",
+					label: "Use this provider",
+					switchValue: !!providerDoc(name)?.enabled,
+					run: () => toggleProvider(ctx, name),
+				},
+				{
+					key: "key",
+					label: "Change API key",
+					icon: "lucide-key-round",
+					submenu: true,
+					run: () => keyLevel(ctx, name),
+				},
 				{
 					key: "delete",
 					label: "Delete provider",
 					icon: "lucide-trash-2",
-					danger: true,
+					theme: "red",
+					submenu: true,
 					run: () =>
 						confirmLevel(`Delete ${name}?`, `Delete ${name} and its models`, () => remove(ctx, name)),
 				},
@@ -78,12 +100,21 @@ async function toggleModel(ctx: BobContext, model: BuilderAIModel): Promise<Menu
 	return "stay";
 }
 
+async function toggleProvider(ctx: BobContext, name: string): Promise<MenuStep> {
+	await aiProviders.setValue.submit({ name, enabled: providerDoc(name)?.enabled ? 0 : 1 });
+	await ctx.refreshAI();
+	return "stay";
+}
+
 async function remove(ctx: BobContext, name: string): Promise<MenuStep> {
 	await call("frappe.client.delete", { doctype: "Builder AI Provider", name });
 	await ctx.refreshAI();
 	toast.success(`${name} deleted`);
 	return { back: 2 };
 }
+
+const providerDoc = (name: string): BuilderAIProvider | undefined =>
+	(aiProviders.data || []).find((p: BuilderAIProvider) => p.name === name);
 
 const modelsOf = (provider: string): BuilderAIModel[] =>
 	(aiModels.data || []).filter((m: BuilderAIModel) => m.provider === provider);

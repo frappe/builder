@@ -13,9 +13,9 @@ export function modelLevel(ctx: BobContext, query = ""): MenuLevel {
 				group.models.map((model): MenuItem => ({
 					key: model.name,
 					label: model.label,
-					hint: model.ready === false ? "no API key" : undefined,
+					description: model.ready === false ? "No API key" : undefined,
 					group: [group.provider, creditsLabel(credits[group.provider])].filter(Boolean).join(" · "),
-					checked: model.name === ctx.chat.selectedModel.value,
+					selected: model.name === ctx.chat.selectedModel.value,
 					run: () => {
 						ctx.chat.selectedModel.value = model.name;
 					},

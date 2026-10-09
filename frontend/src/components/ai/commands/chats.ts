@@ -6,20 +6,21 @@ export function chatsLevel(ctx: BobContext): MenuLevel {
 	return {
 		title: "Chats",
 		items: () => [
-			{ key: "new", label: "New chat", icon: "lucide-plus", run: () => chat.newSession() },
 			...chat.sessions.value.map((session): MenuItem => ({
 				key: session.name,
 				label: session.title || "New chat",
-				checked: session.name === chat.sessionId.value,
+				group: "On this page",
+				selected: session.name === chat.sessionId.value,
 				run: () => chat.switchSession(session.name),
 			})),
+			{ key: "new", label: "New chat", icon: "lucide-plus", run: () => chat.newSession() },
 			...(chat.sessionId.value
 				? [
 						{
 							key: "delete",
 							label: "Delete this chat",
 							icon: "lucide-trash-2",
-							danger: true,
+							theme: "red" as const,
 							run: () => chat.deleteSession(),
 						},
 					]

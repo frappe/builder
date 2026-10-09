@@ -47,17 +47,35 @@
 					:active="index === highlighted"
 					@mouseenter="hover(index)"
 					@mousedown.prevent="menu.choose(item)">
-					<template v-if="item.icon" #prefix>
-						<span class="size-4" :class="[item.icon, item.danger ? 'text-ink-red-6' : 'text-ink-gray-6']" />
+					<!-- the same row frappe-ui's Dropdown draws (MenuItemContent): the icon slot is
+					     kept for the whole section once any row has an icon, so labels line up -->
+					<template v-if="section.hasIcons" #prefix>
+						<span
+							:class="[
+								item.icon,
+								'size-4 shrink-0',
+								item.theme === 'red' ? 'text-ink-red-7' : 'text-ink-gray-6',
+							]" />
 					</template>
-					<!-- the hint sits beside the label while it fits and wraps under it when it doesn't;
-					     justify-between leaves a lone wrapped hint at the start of its line -->
-					<span class="flex flex-wrap items-baseline justify-between gap-x-3">
-						<span :class="item.danger ? 'text-ink-red-6' : 'text-ink-gray-8'">{{ item.label }}</span>
-						<span v-if="item.hint" class="line-clamp-2 text-sm text-ink-gray-5">{{ item.hint }}</span>
-					</span>
-					<template v-if="item.checked" #suffix>
-						<span class="lucide-check size-4 text-ink-gray-7" />
+					<div class="min-w-0">
+						<div
+							class="truncate leading-tighter"
+							:class="item.theme === 'red' ? 'text-ink-red-7' : 'text-ink-gray-7'">
+							{{ item.label }}
+						</div>
+						<div v-if="item.description" class="truncate text-p-sm text-ink-gray-5">
+							{{ item.description }}
+						</div>
+					</div>
+					<template v-if="item.switchValue !== undefined || item.selected || item.submenu" #suffix>
+						<!-- the row toggles it, so the switch only shows the state -->
+						<Switch
+							v-if="item.switchValue !== undefined"
+							class="pointer-events-none"
+							tabindex="-1"
+							:modelValue="item.switchValue" />
+						<span v-else-if="item.selected" class="lucide-check ml-1 size-4 text-ink-gray-6" />
+						<span v-else class="lucide-chevron-right size-4 shrink-0 text-ink-gray-6" />
 					</template>
 				</ItemListRow>
 			</div>
@@ -70,7 +88,7 @@
 
 <script setup lang="ts">
 import type { CommandMenu, MenuItem } from "@/components/ai/commandMenu";
-import { Button, ItemListRow, LoadingIndicator, Password, TextInput } from "frappe-ui";
+import { Button, ItemListRow, LoadingIndicator, Password, Switch, TextInput } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
 
 const props = defineProps<{ menu: CommandMenu }>();
@@ -82,11 +100,16 @@ const highlighted = computed(() => (level.value?.input ? -1 : activeIndex.value)
 
 // consecutive rows that share a group render as one Dropdown-style group
 const sections = computed(() => {
-	const out: { key: string; group?: string; rows: { item: MenuItem; index: number }[] }[] = [];
+	const out: { key: string; group?: string; hasIcons: boolean; rows: { item: MenuItem; index: number }[] }[] =
+		[];
 	items.value.forEach((item, index) => {
-		const last = out.at(-1);
-		if (last && last.group === item.group) last.rows.push({ item, index });
-		else out.push({ key: `${index}-${item.group ?? ""}`, group: item.group, rows: [{ item, index }] });
+		let section = out.at(-1);
+		if (!section || section.group !== item.group) {
+			section = { key: `${index}-${item.group ?? ""}`, group: item.group, hasIcons: false, rows: [] };
+			out.push(section);
+		}
+		section.rows.push({ item, index });
+		section.hasIcons ||= !!item.icon;
 	});
 	return out;
 });

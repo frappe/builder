@@ -21,8 +21,8 @@ export function connectLevel(ctx: BobContext): MenuLevel {
 			return state.presets.map((preset): MenuItem => ({
 				key: preset.id,
 				label: preset.name || "Custom endpoint",
-				icon: "lucide-plug",
-				hint: preset.configured ? "connected" : preset.tagline,
+				description: preset.configured ? "Connected" : preset.tagline,
+				submenu: true,
 				run: () =>
 					preset.oauth ? signInLevel(ctx, preset) : preset.custom ? urlLevel(ctx) : keyLevel(ctx, preset),
 			}));

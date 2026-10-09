@@ -2,14 +2,20 @@ import { slashCommands } from "@/components/ai/slashCommands";
 import { getErrorMessage } from "@/utils/helpers";
 import { computed, ref, shallowRef, watch, type Ref } from "vue";
 
+/** One row, in frappe-ui menu terms: the description sits under the label, and the
+ * suffix is a tick (selected), a switch (switchValue) or a chevron (submenu). */
 export type MenuItem = {
 	key: string;
 	label: string;
-	/** dim text after the label, e.g. a provider's balance */
-	hint?: string;
+	description?: string;
 	icon?: string;
-	checked?: boolean;
-	danger?: boolean;
+	/** the current choice, like the model in use */
+	selected?: boolean;
+	/** an on/off row; choosing it flips the value */
+	switchValue?: boolean;
+	/** choosing it opens another level */
+	submenu?: boolean;
+	theme?: "red";
 	group?: string;
 	run: () => MenuStep | Promise<MenuStep>;
 };
@@ -198,8 +204,9 @@ function commandItems({ name, arg, hasArg }: TypedCommand): MenuItem[] {
 		.map((c) => ({
 			key: c.name,
 			label: `/${c.name}`,
-			hint: c.description,
+			description: c.description,
 			icon: c.icon,
+			submenu: c.submenu,
 			run: () => c.run(arg),
 		}));
 }
@@ -208,6 +215,6 @@ function filterItems(items: MenuItem[], query: string): MenuItem[] {
 	const needle = query.trim().toLowerCase();
 	if (!needle) return items;
 	return items.filter((item) =>
-		`${item.label} ${item.hint ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
+		`${item.label} ${item.description ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
 	);
 }

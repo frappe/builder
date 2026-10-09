@@ -43,7 +43,7 @@ export function confirmLevel(title: string, label: string, action: () => Promise
 	return {
 		title,
 		items: () => [
-			{ key: "confirm", label, icon: "lucide-trash-2", danger: true, run: action },
+			{ key: "confirm", label, icon: "lucide-trash-2", theme: "red", run: action },
 			{ key: "cancel", label: "Cancel", icon: "lucide-x", run: () => "back" },
 		],
 	};

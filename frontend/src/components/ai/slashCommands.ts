@@ -5,6 +5,8 @@ export type SlashCommand = RegistryItem & {
 	description: string;
 	icon: string;
 	aliases?: string[];
+	/** opens a level of its own, so its row shows a chevron */
+	submenu?: boolean;
 	/** `arg` is whatever follows the command, e.g. "glm" in "/model glm" */
 	run: (arg: string) => MenuStep | Promise<MenuStep>;
 };
