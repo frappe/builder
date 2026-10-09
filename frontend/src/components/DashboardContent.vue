@@ -137,6 +137,8 @@ useKeyboardShortcut({
 	combo: "Escape",
 	description: __("Deselect Pages"),
 	group: __("Dashboard"),
+	// an always-on Escape is preventDefault-ed here, which stops menus from dismissing
+	enabled: selectionMode,
 	handler: () => {
 		selectedPages.value.clear();
 		selectionMode.value = false;
