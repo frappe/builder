@@ -101,7 +101,7 @@
 		</div>
 
 		<div
-			class="flex h-[calc(65vh+68px)] w-full items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
+			class="flex h-[calc(min(65vh,100vh-17rem)+68px)] w-full items-center justify-center rounded-4 border border-dashed border-outline-gray-2 bg-surface-gray-1 text-base text-ink-gray-6"
 			v-show="!activeScript">
 			{{ __("Add Script") }}
 		</div>
@@ -114,7 +114,7 @@
 				:type="activeScript.script_type as 'JavaScript' | 'CSS'"
 				class="flex-1"
 				mode="page"
-				height="65vh"
+				height="min(65vh, 100vh - 17rem)"
 				:readonly="builderStore.readOnlyMode"
 				:autofocus="false"
 				:show-save-button="true"
