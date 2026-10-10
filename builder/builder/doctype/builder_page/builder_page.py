@@ -1077,6 +1077,8 @@ PICTURE_LAYOUT_STYLE_PROPERTIES = {
 	"width",
 }
 
+PICTURE_FILL_STYLE_PROPERTIES = PICTURE_LAYOUT_STYLE_PROPERTIES - {"order"}
+
 
 def quote_url(url: str | None) -> str | None:
 	if not url:
@@ -1108,10 +1110,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			dark_source["srcset"] = dark_src
 			dark_source["media"] = "(prefers-color-scheme: dark)"
 			dark_source["data-scheme"] = "dark"  # used by manual theme toggle script
-			# Keep picture as a box so flex/grid sizing applies to dark-mode images.
+			# Keep picture as an inline box for normal image flow and flex/grid sizing.
 			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
-			picture_tag.attrs["style"] = "display: block;"
+			picture_tag.attrs["style"] = "display: inline-block;"
 			state["has_dual_mode_image"] = True
 
 			tag = soup.new_tag("img")
@@ -1135,8 +1137,6 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	if tag.get("data-track") and block.get("blockId"):
 		tag["data-track"] = block.get("blockId")
 
-	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
-	tag.attrs["class"] = " ".join(classes)
 	if picture_tag is not None:
 		layout_block = {
 			style_key: {
@@ -1146,10 +1146,34 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			}
 			for style_key in ("baseStyles", "mobileStyles", "tabletStyles")
 		}
+		image_block = block.copy()
+		for style_key in ("baseStyles", "mobileStyles", "tabletStyles"):
+			image_block[style_key] = {
+				name: value
+				for name, value in (block.get(style_key) or {}).items()
+				if name.split(":")[-1] not in PICTURE_LAYOUT_STYLE_PROPERTIES
+			}
+
 		if any(layout_block.values()):
+			if any(
+				name.split(":")[-1] in PICTURE_FILL_STYLE_PROPERTIES
+				for styles in layout_block.values()
+				for name in styles
+			):
+				image_block["baseStyles"] = {
+					**image_block.get("baseStyles", {}),
+					"width": "100%",
+					"height": "100%",
+				}
+
+			tag.attrs["class"] = " ".join(build_tag_classes(image_block, state, ancestor_font=ancestor_font))
 			picture_tag.attrs["class"] = " ".join(
 				build_tag_classes(layout_block, state, ancestor_font=ancestor_font)
 			)
+		else:
+			tag.attrs["class"] = " ".join(build_tag_classes(block, state, ancestor_font=ancestor_font))
+	else:
+		tag.attrs["class"] = " ".join(build_tag_classes(block, state, ancestor_font=ancestor_font))
 
 	add_inner_html_content(tag, block, state, ancestor_font=ancestor_font)
 

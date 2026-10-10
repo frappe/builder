@@ -1747,7 +1747,7 @@ component.update({
 		image_block = Block(
 			element="img",
 			baseStyles={
-				"width": "240px",
+				"width": "50%",
 				"height": "120px",
 				"flexGrow": 1,
 				"flexShrink": 0,
@@ -1792,7 +1792,7 @@ component.update({
 				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
-				'style="display: block;"' in get_html_for(content, "tag", "picture", only_content=False)
+				'style="display: inline-block;"' in get_html_for(content, "tag", "picture", only_content=False)
 			)
 			picture_html = get_html_for(content, "tag", "picture", only_content=False)
 			picture_class = get_html_for(picture_html, "attribute", "class")[0]
@@ -1800,7 +1800,7 @@ component.update({
 			self.assertIn(f".{picture_class} {{", style_text)
 			picture_rule = style_text.split(f".{picture_class} {{", 1)[1].split("}", 1)[0]
 			for layout_style in (
-				"width: 240px;",
+				"width: 50%;",
 				"height: 120px;",
 				"flex-grow: 1;",
 				"flex-shrink: 0;",
@@ -1810,6 +1810,9 @@ component.update({
 			img_html = get_html_for(content, "tag", "img", only_content=False)
 			img_class = get_html_for(img_html, "attribute", "class")[0]
 			img_rule = style_text.split(f".{img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("width: 100%;", img_rule)
+			self.assertIn("height: 100%;", img_rule)
+			self.assertNotIn("width: 50%;", img_rule)
 			self.assertIn("border-radius: 8px;", img_rule)
 			self.assertNotIn("border-radius: 8px;", picture_rule)
 			self.assertTrue(
