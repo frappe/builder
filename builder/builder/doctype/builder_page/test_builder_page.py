@@ -1742,9 +1742,18 @@ component.update({
 		body = Block(
 			element="div",
 			originalElement="body",
+			baseStyles={"display": "flex"},
 		)
 		image_block = Block(
 			element="img",
+			baseStyles={
+				"width": "240px",
+				"height": "120px",
+				"flexGrow": 1,
+				"flexShrink": 0,
+				"order": 2,
+				"borderRadius": "8px",
+			},
 			attributes={
 				"src": "/files/light-mode-image.png",
 				"darkSrc": "/files/dark-mode-image.png",
@@ -1785,6 +1794,24 @@ component.update({
 			self.assertTrue(
 				'style="display: block;"' in get_html_for(content, "tag", "picture", only_content=False)
 			)
+			picture_html = get_html_for(content, "tag", "picture", only_content=False)
+			picture_class = get_html_for(picture_html, "attribute", "class")[0]
+			style_text = get_html_for(content, "tag", "style", only_content=True)
+			self.assertIn(f".{picture_class} {{", style_text)
+			picture_rule = style_text.split(f".{picture_class} {{", 1)[1].split("}", 1)[0]
+			for layout_style in (
+				"width: 240px;",
+				"height: 120px;",
+				"flex-grow: 1;",
+				"flex-shrink: 0;",
+				"order: 2;",
+			):
+				self.assertIn(layout_style, picture_rule)
+			img_html = get_html_for(content, "tag", "img", only_content=False)
+			img_class = get_html_for(img_html, "attribute", "class")[0]
+			img_rule = style_text.split(f".{img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("border-radius: 8px;", img_rule)
+			self.assertNotIn("border-radius: 8px;", picture_rule)
 			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)

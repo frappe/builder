@@ -1053,6 +1053,30 @@ def get_dynamic_props_template(
 # survive; only what a URL can't carry literally (spaces, non-ASCII) is encoded.
 URL_SAFE_CHARS = "/:?#[]@!$&'()*+,;=%"
 
+PICTURE_LAYOUT_STYLE_PROPERTIES = {
+	"alignSelf",
+	"aspectRatio",
+	"flex",
+	"flexBasis",
+	"flexGrow",
+	"flexShrink",
+	"gridArea",
+	"gridColumn",
+	"gridColumnEnd",
+	"gridColumnStart",
+	"gridRow",
+	"gridRowEnd",
+	"gridRowStart",
+	"height",
+	"justifySelf",
+	"maxHeight",
+	"maxWidth",
+	"minHeight",
+	"minWidth",
+	"order",
+	"width",
+}
+
 
 def quote_url(url: str | None) -> str | None:
 	if not url:
@@ -1113,6 +1137,19 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 
 	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
 	tag.attrs["class"] = " ".join(classes)
+	if picture_tag is not None:
+		layout_block = {
+			style_key: {
+				name: value
+				for name, value in (block.get(style_key) or {}).items()
+				if name.split(":")[-1] in PICTURE_LAYOUT_STYLE_PROPERTIES
+			}
+			for style_key in ("baseStyles", "mobileStyles", "tabletStyles")
+		}
+		if any(layout_block.values()):
+			picture_tag.attrs["class"] = " ".join(
+				build_tag_classes(layout_block, state, ancestor_font=ancestor_font)
+			)
 
 	add_inner_html_content(tag, block, state, ancestor_font=ancestor_font)
 
