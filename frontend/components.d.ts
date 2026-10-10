@@ -12,11 +12,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
+    AICommandMenu: typeof import('./src/components/ai/AICommandMenu.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
-    AIModelDialog: typeof import('./src/components/Modals/AIModelDialog.vue')['default']
-    AIModelList: typeof import('./src/components/Settings/AIModelList.vue')['default']
-    AIProviderDialog: typeof import('./src/components/Modals/AIProviderDialog.vue')['default']
-    AISetupFlow: typeof import('./src/components/Settings/AISetupFlow.vue')['default']
     AITurnTimeline: typeof import('./src/components/ai/AITurnTimeline.vue')['default']
     AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
     AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']
@@ -92,7 +89,6 @@ declare module 'vue' {
     FontInputActions: typeof import('./src/components/Controls/FontInputActions.vue')['default']
     FontUploader: typeof import('./src/components/Controls/FontUploader.vue')['default']
     GapHandler: typeof import('./src/components/GapHandler.vue')['default']
-    GlobalAI: typeof import('./src/components/Settings/GlobalAI.vue')['default']
     GlobalAnalytics: typeof import('./src/components/Settings/GlobalAnalytics.vue')['default']
     GlobalCode: typeof import('./src/components/Settings/GlobalCode.vue')['default']
     GlobalDeveloper: typeof import('./src/components/Settings/GlobalDeveloper.vue')['default']

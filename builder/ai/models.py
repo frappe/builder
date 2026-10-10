@@ -13,6 +13,7 @@ offline fallback, and the only source for every other provider.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import frappe
 import requests
@@ -144,6 +145,134 @@ def lookup_metadata(qualified_name: str, model_id: str) -> dict:
 	return {k: v for k, v in found.items() if v is not None}
 
 
+LISTING_TTL = 5 * 60
+# Embeddings and rerankers answer /models too, and fail as chat models.
+NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts", "moderation")
+
+
+class GatewayListing:
+	"""The models a gateway with its own api_base serves right now, per its /models.
+
+	Gateways add and retire models without telling anyone, so newly listed models
+	get rows as they appear, and the cached listing lets the picker hide a model
+	the gateway stopped serving instead of failing the turn that picks it."""
+
+	def __init__(self, provider):
+		self.provider = provider
+
+	@classmethod
+	def sync_all(cls, force: bool = False) -> None:
+		"""Sync every enabled gateway whose listing is stale (or all, when forced)."""
+		names = frappe.get_all(
+			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "set"]}, pluck="name"
+		)
+		listings = [cls(frappe.get_doc("Builder AI Provider", name)) for name in names]
+		stale = [listing for listing in listings if force or not listing.is_fresh()]
+		if not stale:
+			return
+		# side by side, so one unreachable gateway can't stall the picker for the rest
+		with ThreadPoolExecutor(max_workers=len(stale)) as pool:
+			outcomes = list(pool.map(fetch_listing, [listing.request() for listing in stale]))
+		for listing, outcome in zip(stale, outcomes, strict=True):
+			if isinstance(outcome, Exception):
+				logger.warning(f"model listing failed for {listing.provider.name}: {outcome}")
+				listing.remember(None)
+			else:
+				listing.apply(outcome)
+
+	@classmethod
+	def served_ids(cls, provider_name: str) -> set[str] | None:
+		"""Ids from the last good listing, or None when there is none to go by."""
+		cached = frappe.cache.get_value(cls.cache_key(provider_name)) or {}
+		ids = cached.get("ids")
+		return set(ids) if ids is not None else None
+
+	@staticmethod
+	def cache_key(provider_name: str) -> str:
+		return f"builder_ai_gateway_listing::{provider_name}"
+
+	def is_fresh(self) -> bool:
+		return frappe.cache.get_value(self.cache_key(self.provider.name)) is not None
+
+	def sync(self) -> dict:
+		"""Add a row for every listed chat model that has none. Existing rows are
+		left alone, so a model someone switched off stays off."""
+		outcome = fetch_listing(self.request())
+		if isinstance(outcome, Exception):
+			self.remember(None)
+			raise outcome
+		return self.apply(outcome)
+
+	def apply(self, listed: list[str]) -> dict:
+		chat = [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
+		self.remember(chat)
+		added = [model_id for model_id in chat if self.add_row(model_id)]
+		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
+
+	def credits(self) -> dict | None:
+		"""The balance the gateway reports at /credits, or None when it reports none."""
+		url, headers = self.request()
+		try:
+			response = requests.get(
+				url.removesuffix("/models") + "/credits", headers=headers, timeout=FETCH_TIMEOUT
+			)
+			response.raise_for_status()
+			reported = response.json()
+		except Exception:
+			return None
+		if not isinstance(reported, dict) or not is_number(reported.get("balance")):
+			return None
+		spent = reported.get("spent")
+		return {"balance": reported["balance"], "spent": spent if is_number(spent) else None}
+
+	def request(self) -> tuple[str, dict]:
+		base = self.provider.api_base.rstrip("/")
+		key = self.provider.resolved_key() or frappe.get_single("Builder Settings").get_password(
+			"ai_api_key", raise_exception=False
+		)
+		if self.provider.litellm_provider == "anthropic":
+			# litellm treats an Anthropic api_base as the host root and appends /v1/messages
+			return f"{base}/v1/models", {"x-api-key": key or "", "anthropic-version": "2023-06-01"}
+		return f"{base}/models", {"Authorization": f"Bearer {key}"} if key else {}
+
+	def remember(self, ids: list[str] | None) -> None:
+		frappe.cache.set_value(self.cache_key(self.provider.name), {"ids": ids}, expires_in_sec=LISTING_TTL)
+
+	def add_row(self, model_id: str) -> bool:
+		if frappe.db.exists("Builder AI Model", f"{self.provider.route_prefix}/{model_id}"):
+			return False
+		try:
+			frappe.get_doc(
+				{
+					"doctype": "Builder AI Model",
+					"provider": self.provider.name,
+					"model_id": model_id,
+					# the provider heads its group in the picker, so a vendor prefix is noise
+					"label": model_id.rsplit("/", 1)[-1],
+					"enabled": 1,
+				}
+			).insert(ignore_permissions=True)
+		except frappe.DuplicateEntryError:
+			return False
+		return True
+
+
+def fetch_listing(request: tuple[str, dict]) -> list[str] | Exception:
+	"""Model ids at a /models endpoint. Plain HTTP and no frappe calls, so it is safe in a
+	worker thread; it returns the error rather than raising, so one failure can't sink a batch."""
+	url, headers = request
+	try:
+		response = requests.get(url, headers=headers, timeout=FETCH_TIMEOUT)
+		response.raise_for_status()
+		return [entry["id"] for entry in response.json().get("data") or [] if (entry or {}).get("id")]
+	except Exception as e:
+		return e
+
+
+def is_number(value) -> bool:
+	return isinstance(value, int | float) and not isinstance(value, bool)
+
+
 class ModelRegistry:
 	@classmethod
 	def clear_cache(cls) -> None:
@@ -179,10 +308,18 @@ class ModelRegistry:
 		)
 		grouped: dict[str, list] = {}
 		for m in cls.catalog():
+			if not cls.still_served(m):
+				continue
 			grouped.setdefault(m["provider"], []).append(
 				{**m, "ready": bool(provider_api_key(m)) or fallback}
 			)
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
+
+	@staticmethod
+	def still_served(m: dict) -> bool:
+		served = GatewayListing.served_ids(m["provider"]) if m.get("api_base") else None
+		prefix = m.get("route_prefix") or ""
+		return served is None or m["name"][len(prefix) + 1 :] in served
 
 	@classmethod
 	def find(cls, model_name: str) -> dict | None:

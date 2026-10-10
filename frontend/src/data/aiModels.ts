@@ -1,4 +1,3 @@
-import { BuilderAIModel, BuilderAIProvider } from "@/types/doctypes";
 import { createListResource } from "frappe-ui";
 
 // Providers and models are plain doctypes, so the settings UI talks to them
@@ -26,17 +25,3 @@ export const aiModels = createListResource({
 export const reloadAIRegistry = async () => {
 	await Promise.all([aiProviders.reload(), aiModels.reload()]);
 };
-
-export const defaultProvider = (): Partial<BuilderAIProvider> => ({
-	provider_name: "",
-	enabled: 1,
-	api_base: "",
-});
-
-// Context window and vision are filled in by the model's detect_metadata.
-export const defaultModel = (provider: string): Partial<BuilderAIModel> => ({
-	provider,
-	model_id: "",
-	label: "",
-	enabled: 1,
-});
