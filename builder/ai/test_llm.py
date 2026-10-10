@@ -1,5 +1,9 @@
+from unittest.mock import patch
+
+import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from builder.ai.api import import_provider_models
 from builder.ai.llm import (
 	GENERIC_FAILURE,
 	is_retryable,
@@ -8,11 +12,29 @@ from builder.ai.llm import (
 	patch_params_for_provider,
 	provider_kwargs,
 	provider_overrides,
+	resolve_api_key,
+	route,
 	user_facing_error,
 )
+from builder.ai.models import ModelRegistry
 
 CLAUDE = "openrouter/anthropic/claude-sonnet-5"
 GPT = "openrouter/openai/gpt-5.6-luna"
+SHARED_KEY = "sk-or-shared"
+OPENROUTER_MODEL = {
+	"name": CLAUDE,
+	"provider": "OpenRouter",
+	"route_prefix": "openrouter",
+	"litellm_provider": "openrouter",
+	"api_base": None,
+}
+GATEWAY_MODEL = {
+	"name": "gateway/llama-4",
+	"provider": "Gateway",
+	"route_prefix": "gateway",
+	"litellm_provider": "openai",
+	"api_base": "https://gateway.example.com/v1",
+}
 
 
 class RateLimitError(Exception):
@@ -137,3 +159,53 @@ class TestProviderTuning(FrappeTestCase):
 
 	def test_omits_an_api_base_that_is_not_set(self):
 		self.assertEqual(provider_overrides({}), {})
+
+
+class TestSharedKey(FrappeTestCase):
+	def routed_key(self, info: dict) -> str | None:
+		with (
+			patch.object(ModelRegistry, "find", return_value=info),
+			patch("builder.ai.llm.provider_api_key", return_value=None),
+		):
+			return route(info["name"], SHARED_KEY)[2]
+
+	def test_an_openrouter_model_without_its_own_key_borrows_the_shared_one(self):
+		self.assertEqual(self.routed_key(OPENROUTER_MODEL), SHARED_KEY)
+
+	def test_a_custom_gateway_never_gets_the_shared_key(self):
+		self.assertNotEqual(self.routed_key(GATEWAY_MODEL), SHARED_KEY)
+
+	def test_openrouter_behind_a_custom_api_base_never_gets_the_shared_key(self):
+		self.assertNotEqual(
+			self.routed_key({**OPENROUTER_MODEL, "api_base": "https://proxy.example.com"}), SHARED_KEY
+		)
+
+	def resolved_key(self, info: dict) -> str:
+		with (
+			patch.object(ModelRegistry, "find", return_value=info),
+			patch("builder.ai.llm.provider_api_key", return_value=None),
+			patch("builder.ai.llm.settings_api_key", return_value=SHARED_KEY),
+		):
+			return resolve_api_key(info["name"])
+
+	def test_resolves_the_shared_key_only_for_openrouter(self):
+		self.assertEqual(self.resolved_key(OPENROUTER_MODEL), SHARED_KEY)
+		self.assertNotEqual(self.resolved_key(GATEWAY_MODEL), SHARED_KEY)
+
+	def test_importing_a_gateways_models_never_sends_the_shared_key(self):
+		provider = frappe.get_doc(
+			{
+				"doctype": "Builder AI Provider",
+				"provider_name": "Bob Keyless Gateway",
+				"api_base": GATEWAY_MODEL["api_base"],
+			}
+		).insert()
+
+		with (
+			patch("builder.ai.llm.settings_api_key", return_value=SHARED_KEY),
+			patch("requests.get") as get,
+		):
+			get.return_value.json.return_value = {"data": []}
+			import_provider_models(provider.name)
+
+		self.assertNotIn("Authorization", get.call_args.kwargs["headers"])

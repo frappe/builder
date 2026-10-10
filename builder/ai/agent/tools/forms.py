@@ -73,6 +73,8 @@ def request_connect_form(ctx, args: dict) -> str | None:
 	the user approves (see pending.apply_connect_form)."""
 	if not getattr(ctx, "page_id", None):
 		return "DECLINED: no page is open — build the form's page first."
+	if not frappe.has_permission("DocType", "create"):
+		return pending.not_permitted("create the DocType a form saves to")
 	# A form here is already wired — very likely a "where do submissions go?" ask.
 	# Answer with the existing DocType; don't create a duplicate (unless forced).
 	if not args.get("force_new") and (connected := connected_submission_doctype(ctx.page_id)):

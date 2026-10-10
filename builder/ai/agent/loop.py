@@ -1488,5 +1488,6 @@ class AgentRunner:
 		return " ".join(parts)
 
 
-def run_agent_job(prompt: str, model: str, api_key: str, **kwargs):
-	AgentRunner(prompt, model, api_key, **kwargs).run()
+def run_agent_job(prompt: str, model: str, **kwargs):
+	# Resolved here, not passed in: job kwargs sit in Redis and show in Desk's RQ Job view.
+	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()

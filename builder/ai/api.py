@@ -14,32 +14,13 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
+from builder.ai.llm import resolve_api_key
 from builder.ai.models import ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
-
-
-def resolve_api_key(model: str | None = None) -> str:
-	"""The key to call `model` with: its provider's own key when it has one (a
-	local or self-hosted gateway needs no OpenRouter account at all), otherwise
-	the OpenRouter key from Builder Settings."""
-	if model:
-		from builder.ai.llm import provider_api_key
-
-		info = ModelRegistry.find(model)
-		if info and (key := provider_api_key(info)):
-			return key
-	api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
-	if not api_key:
-		frappe.throw(
-			_(
-				"Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
-			)
-		)
-	return api_key
 
 
 def save_attached_image(data_url: str) -> str | None:
@@ -125,7 +106,8 @@ def run(
 				resolved_model
 			)
 		)
-	api_key = resolve_api_key(resolved_model)
+	# Fails fast on a missing key; the job resolves its own copy so the key never sits in the queue.
+	resolve_api_key(resolved_model)
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
@@ -137,7 +119,6 @@ def run(
 		timeout=600,
 		prompt=prompt,
 		model=resolved_model,
-		api_key=api_key,
 		user=frappe.session.user,
 		page_id=page_id,
 		session_id=session_id,
@@ -157,6 +138,7 @@ Write it as the user speaking, plain text, no headings or bullets unless the dra
 
 
 @frappe.whitelist()
+@has_page_write()
 def improve_prompt(prompt: str, model: str | None = None) -> str:
 	"""One cheap completion that sharpens the composer draft in place — the user
 	reviews and edits the result before sending it."""
@@ -203,11 +185,11 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
 	if owner != frappe.session.user:
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
-	if msg.status != "pending_action":
+	applying = decision == "apply"
+	if not AISession.claim_pending_action(message_id, "action_applied" if applying else "action_skipped"):
 		frappe.throw(_("No pending action on this message"))
 
-	if decision != "apply":
-		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
+	if not applying:
 		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
 		resumed = resume_after_action(msg.session, outcome)
@@ -215,7 +197,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 
 	meta = AISession.load_metadata(msg.metadata_json)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
-	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
@@ -244,7 +225,6 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
 			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
 			model=resolved_model,
-			api_key=resolve_api_key(resolved_model),
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
@@ -348,7 +328,8 @@ def import_provider_models(provider: str) -> dict:
 
 	url = f"{doc.api_base.rstrip('/')}/models"
 	headers = {"Content-Type": "application/json"}
-	if key := (doc.resolved_key() or resolve_api_key()):
+	# Never the Builder Settings key: that belongs to OpenRouter, not this api_base.
+	if key := doc.resolved_key():
 		headers["Authorization"] = f"Bearer {key}"
 	try:
 		response = requests.get(url, headers=headers, timeout=20)
