@@ -285,6 +285,20 @@ commands.register({
 	},
 });
 
+// without this the browser selects the editor's own panel text
+commands.register({
+	name: "select-all",
+	title: __("Select All"),
+	icon: "lucide-square-dashed",
+	group: "Edit",
+	inPalette: false,
+	keys: { combo: "Mod+A", description: __("Select Entire Canvas") },
+	action: () => {
+		const rootBlock = canvasStore.getRootBlock();
+		if (rootBlock) canvasStore.selectBlock(rootBlock, null);
+	},
+});
+
 commands.register({
 	name: "undo",
 	title: __("Undo"),
