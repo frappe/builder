@@ -248,7 +248,9 @@ const blockController = {
 	},
 	setInnerHTML: (value: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
-			block.setInnerHTML(value);
+			if (!block.setRepeaterItemText(value)) {
+				block.setInnerHTML(value);
+			}
 		});
 	},
 	getTextContent: () => {

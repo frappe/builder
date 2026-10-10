@@ -11,12 +11,13 @@
 			:componentData="repeatingFrom == 'componentData' ? _data : componentData"
 			:defaultProps="repeatingFrom == 'props' ? _data : null"
 			:block="block.children[0]"
-			:preview="Number(index) !== 0 || preview"
+			:preview="Number(index) !== editableIndex || preview"
 			:readonly="readonly"
 			:breakpoint="breakpoint"
 			:isChildOfComponent="block.isExtendedFromComponent()"
 			:repeater-index="getRepeaterIndex(index)"
-			v-for="(_data, index) in blockRepeaterData" />
+			v-for="(_data, index) in blockRepeaterData"
+			:key="Number(index) === editableIndex ? `editable-${index}` : index" />
 	</component>
 </template>
 
@@ -114,6 +115,10 @@ const blockRepeaterData = computed(() => {
 		return [{}];
 	}
 });
+
+// only one rendered item is editable; the rest are previews. Remounting on change (see :key) matters
+// because BuilderBlock reads `preview` once during setup
+const editableIndex = computed(() => props.block.getRepeaterPreviewIndex());
 
 const getRepeaterIndex = (index: number | string) => {
 	if (props.repeaterIndex !== undefined) {
