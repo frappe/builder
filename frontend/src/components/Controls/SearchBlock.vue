@@ -150,7 +150,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
-import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
+import { computed, nextTick, onMounted, Ref, ref, shallowRef, watch } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
@@ -164,105 +164,113 @@ const replaceQuery = ref("");
 const searchMode = ref<"search" | "replace">("search");
 const replacedCount = ref(0);
 const results = ref([]) as Ref<Block[]>;
+const blockMatches = shallowRef(new Map<string, SearchMatch[]>());
 const searchInSelectedBlock = ref(false);
 
-const propertyHandlers = [
+type SearchLocation = {
+	label: string;
+	value: unknown;
+	exact?: boolean;
+	set?: (value: string) => void;
+};
+
+type SearchMatch = SearchLocation & { block: Block; value: string };
+
+// keeps fontWeight: 600 a number when the replaced value is still numeric
+const restoreType = (original: unknown, value: string) =>
+	typeof original === "number" && value.trim() !== "" && !isNaN(Number(value)) ? Number(value) : value;
+
+const styleLocations = (styles: BlockStyleMap, breakpoint?: string): SearchLocation[] =>
+	Object.entries(styles)
+		// __last_display and friends are editor state, not styles
+		.filter(([style]) => !style.startsWith("__"))
+		.map(([style, value]) => ({
+			label: breakpoint ? `${style} (${breakpoint})` : style,
+			value,
+			set: (newValue: string) => {
+				if (newValue === "") delete styles[style as styleProperty];
+				else styles[style as styleProperty] = restoreType(value, newValue);
+			},
+		}));
+
+const attributeLocations = (attributes: BlockAttributeMap): SearchLocation[] =>
+	Object.entries(attributes).map(([attribute, value]) => ({
+		label: attribute,
+		value,
+		set: (newValue: string) => (attributes[attribute] = restoreType(value, newValue)),
+	}));
+
+const textLocations = (block: Block): SearchLocation[] => {
+	const innerHTML = block.getInnerHTML();
+	if (!innerHTML) return [];
+	// unlike DOMParser, a template keeps a leading <script>/<style> in place, and nothing in it runs
+	const template = document.createElement("template");
+	template.innerHTML = innerHTML;
+	const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
+	const locations: SearchLocation[] = [];
+	while (walker.nextNode()) {
+		const node = walker.currentNode as Text;
+		if (node.parentElement?.closest("script, style")) continue;
+		locations.push({
+			label: __("Content"),
+			value: node.data,
+			set: (value: string) => {
+				node.data = value;
+				block.setInnerHTML(template.innerHTML);
+			},
+		});
+	}
+	return locations;
+};
+
+const searchFields: { key: string; name: string; locations: (block: Block) => SearchLocation[] }[] = [
 	{
 		key: "element",
 		name: __("Tag"),
-		matches: (block: Block, term: string) => block.getElement()?.toLowerCase().includes(term),
-		replace: () => false,
+		locations: (block) => [{ label: __("Tag"), value: block.getElement(), exact: true }],
 	},
 	{
-		// dynamicValues and dataKey
 		key: "data",
 		name: __("Data"),
-		matches: (block: Block, term: string) => {
-			if (block.getDynamicValues()) {
-				block.getDynamicValues().forEach((dv: BlockDataKey) => {
-					if (dv.key?.toLowerCase().includes(term)) {
-						return true;
-					}
-				});
-			}
-			if (block.dataKey) {
-				if (block.dataKey.key?.toLowerCase().includes(term)) {
-					return true;
-				}
-			}
-			return false;
-		},
-		replace: (block: Block, searchTerm: string, replaceTerm: string) => {},
+		locations: (block) =>
+			[block.dataKey, ...block.getDynamicValues()].map((dataKey) => ({
+				label: dataKey?.property ? `${__("Data")} (${dataKey.property})` : __("Data"),
+				value: dataKey?.key,
+			})),
 	},
-	{
-		key: "content",
-		name: __("Content"),
-		matches: (block: Block, term: string) => block.getInnerHTML()?.toLowerCase().includes(term),
-		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
-			const innerHTML = block.getInnerHTML();
-			if (innerHTML) {
-				const regex = new RegExp(escapeRegExp(searchTerm), "gi");
-				if (regex.test(innerHTML)) {
-					block.setInnerHTML(innerHTML.replace(regex, replaceTerm));
-					return true;
-				}
-			}
-			return false;
-		},
-	},
+	{ key: "content", name: __("Content"), locations: textLocations },
 	{
 		key: "styles",
 		name: __("Style"),
-		matches: (block: Block, term: string) => {
-			const styles = { ...block.baseStyles, ...block.mobileStyles, ...block.tabletStyles };
-			return Object.values(styles).some((val) => String(val).toLowerCase().includes(term));
-		},
-		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
-			let replaced = false;
-			replaced = replaceInProperty(block.baseStyles, searchTerm, replaceTerm) || replaced;
-			replaced = replaceInProperty(block.mobileStyles, searchTerm, replaceTerm) || replaced;
-			replaced = replaceInProperty(block.tabletStyles, searchTerm, replaceTerm) || replaced;
-			return replaced;
-		},
+		locations: (block) => [
+			...styleLocations(block.baseStyles),
+			...styleLocations(block.tabletStyles, __("Tablet")),
+			...styleLocations(block.mobileStyles, __("Mobile")),
+		],
 	},
 	{
 		key: "attributes",
 		name: __("Attributes"),
-		matches: (block: Block, term: string) => {
-			const attrs = { ...block.attributes, ...block.customAttributes };
-			return Object.values(attrs).some((val) => String(val).toLowerCase().includes(term));
-		},
-		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
-			let replaced = false;
-			replaced = replaceInProperty(block.attributes, searchTerm, replaceTerm) || replaced;
-			replaced = replaceInProperty(block.customAttributes, searchTerm, replaceTerm) || replaced;
-			return replaced;
-		},
+		locations: (block) => [
+			...attributeLocations(block.attributes),
+			...attributeLocations(block.customAttributes),
+		],
 	},
 	{
 		key: "classes",
 		name: __("CSS Classes"),
-		matches: (block: Block, term: string) => {
-			return block.classes?.some((c) => c.toLowerCase().includes(term));
-		},
-		replace: (block: Block, searchTerm: string, replaceTerm: string) => {
-			if (!block.classes) return false;
-			let hasReplacement = false;
-			const regex = new RegExp(escapeRegExp(searchTerm), "gi");
-			block.classes = block.classes.map((c) => {
-				if (regex.test(c)) {
-					hasReplacement = true;
-					return c.replace(regex, replaceTerm);
-				}
-				return c;
-			});
-			return hasReplacement;
-		},
+		locations: (block) =>
+			(block.classes || []).map((className) => ({
+				label: __("Class"),
+				value: className,
+				set: (value: string) =>
+					(block.classes = block.classes.map((c) => (c === className ? value : c)).filter(Boolean)),
+			})),
 	},
 ];
 
 const filters = ref(
-	propertyHandlers.map((h) => ({
+	searchFields.map((h) => ({
 		name: h.name,
 		selected: false,
 		key: h.key,
@@ -315,36 +323,36 @@ const clearAllFilters = () => {
 };
 
 const getMatchDetails = (block: Block) => {
-	if (!query.value) return "";
-
-	const lowerSearchTerm = query.value.toLowerCase();
-	const details = propertyHandlers.filter((h) => h.matches(block, lowerSearchTerm)).map((h) => h.name);
-
-	return details.length > 0 ? __("Found in: {0}", [details.join(", ")]) : "";
+	const labels = new Set(blockMatches.value.get(block.blockId)?.map((match) => match.label));
+	return labels.size ? __("Found in: {0}", [[...labels].join(", ")]) : "";
 };
 
-const replaceInProperty = (obj: any, searchTerm: string, replaceTerm: string): boolean => {
-	let hasReplacement = false;
+const activeFields = () => {
+	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
+	return activeFilterKeys.length
+		? searchFields.filter((f) => activeFilterKeys.includes(f.key))
+		: searchFields;
+};
 
-	if (typeof obj === "string") {
-		return obj.toLowerCase().includes(searchTerm.toLowerCase());
-	}
+const collectMatches = (block: Block, searchTerm: string): SearchMatch[] => {
+	const term = searchTerm.toLowerCase();
+	return activeFields().flatMap((field) =>
+		field
+			.locations(block)
+			.filter(({ value }) => typeof value === "string" || typeof value === "number")
+			.map((location) => ({ ...location, block, value: String(location.value) }))
+			.filter(({ value, exact }) =>
+				exact ? value.toLowerCase() === term : value.toLowerCase().includes(term),
+			),
+	);
+};
 
-	if (typeof obj === "object" && obj !== null) {
-		for (const key in obj) {
-			if (typeof obj[key] === "string") {
-				const regex = new RegExp(escapeRegExp(searchTerm), "gi");
-				if (regex.test(obj[key])) {
-					obj[key] = obj[key].replace(regex, replaceTerm);
-					hasReplacement = true;
-				}
-			} else if (typeof obj[key] === "object") {
-				hasReplacement = replaceInProperty(obj[key], searchTerm, replaceTerm) || hasReplacement;
-			}
-		}
-	}
-
-	return hasReplacement;
+const replaceMatches = (matches: SearchMatch[], searchTerm: string, replaceTerm: string) => {
+	const regex = new RegExp(escapeRegExp(searchTerm), "gi");
+	const replaceable = matches.filter((match) => match.set);
+	// a function replacement keeps "$" in the replace text literal
+	replaceable.forEach((match) => match.set?.(match.value.replace(regex, () => replaceTerm)));
+	return replaceable.length > 0;
 };
 
 const escapeRegExp = (string: string) => {
@@ -354,22 +362,7 @@ const escapeRegExp = (string: string) => {
 const replaceInBlock = (block: Block, index: number) => {
 	if (!replaceQuery.value || !query.value) return;
 
-	let hasReplacement = false;
-	const searchTerm = query.value;
-	const replaceTerm = replaceQuery.value;
-	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
-	const replacers =
-		activeFilterKeys.length > 0
-			? propertyHandlers.filter((h) => activeFilterKeys.includes(h.key))
-			: propertyHandlers;
-
-	for (const replacer of replacers) {
-		if (replacer.replace(block, searchTerm, replaceTerm)) {
-			hasReplacement = true;
-		}
-	}
-
-	if (hasReplacement) {
+	if (replaceMatches(collectMatches(block, query.value), query.value, replaceQuery.value)) {
 		replacedCount.value++;
 		results.value.splice(index, 1);
 		toast.success(__("Replaced in {0}", [block.getBlockDescription()]));
@@ -416,21 +409,15 @@ const performSearch = () => {
 
 const searchWithFilters = (searchTerm: string): Block[] => {
 	const searchResults: Block[] = [];
+	const matchesByBlock = new Map<string, SearchMatch[]>();
 	const limit = 50;
-	const lowerSearchTerm = searchTerm.toLowerCase();
-
-	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
-
-	const searchers =
-		activeFilterKeys.length > 0
-			? propertyHandlers.filter((h) => activeFilterKeys.includes(h.key))
-			: propertyHandlers;
 
 	function searchInBlock(block: Block) {
 		if (searchResults.length >= limit) return;
-		const matches = searchers.some((s) => s.matches(block, lowerSearchTerm));
-		if (matches) {
+		const matches = collectMatches(block, searchTerm);
+		if (matches.length) {
 			searchResults.push(block);
+			matchesByBlock.set(block.blockId, matches);
 		}
 		block.children?.forEach((child) => searchInBlock(child));
 	}
@@ -445,6 +432,7 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 		searchInBlock(startingBlock);
 	}
 
+	blockMatches.value = matchesByBlock;
 	return searchResults;
 };
 
