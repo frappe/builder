@@ -1,21 +1,18 @@
 <template>
 	<div class="flex flex-col gap-2" @keydown="handleKeydown">
-		<OptionToggle
-			v-if="!builderStore.readOnlyMode"
-			v-model="searchMode"
-			:options="[
-				{ label: __('Search'), value: 'search' },
-				{ label: __('Replace'), value: 'replace' },
-			]" />
-
-		<div class="flex gap-1.5">
-			<BuilderInput
-				ref="searchInput"
-				class="flex-1"
-				type="text"
-				:placeholder="__('Find')"
-				v-model="query"
-				@input="setQuery">
+		<div
+			class="grid items-center gap-1.5"
+			:class="
+				builderStore.readOnlyMode ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-[auto_minmax(0,1fr)_auto]'
+			">
+			<Button
+				v-if="!builderStore.readOnlyMode"
+				variant="ghost"
+				:icon="searchMode === 'replace' ? 'lucide-chevron-down' : 'lucide-chevron-right'"
+				:label="__('Toggle Replace')"
+				:tooltip="__('Toggle Replace')"
+				@click="toggleReplace" />
+			<BuilderInput ref="searchInput" type="text" :placeholder="__('Find')" v-model="query" @input="setQuery">
 				<template #prefix>
 					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
 				</template>
@@ -39,18 +36,29 @@
 					</div>
 				</template>
 			</Popover>
-		</div>
-
-		<BuilderInput
-			v-if="searchMode === 'replace'"
-			type="text"
-			:placeholder="__('Replace with')"
-			v-model="replaceQuery"
-			@input="(value: string) => (replaceQuery = value)">
-			<template #prefix>
-				<span class="lucide-corner-down-right size-4 text-ink-gray-5" aria-hidden="true" />
+			<template v-if="searchMode === 'replace'">
+				<!-- BuilderInput passes class to its inner input, so the wrapper places it in the grid -->
+				<div class="col-start-2">
+					<BuilderInput
+						ref="replaceInput"
+						type="text"
+						:placeholder="__('Replace with')"
+						v-model="replaceQuery"
+						@input="(value: string) => (replaceQuery = value)">
+						<template #prefix>
+							<span class="lucide-corner-down-right size-4 text-ink-gray-5" aria-hidden="true" />
+						</template>
+					</BuilderInput>
+				</div>
+				<Button
+					variant="ghost"
+					icon="lucide-replace-all"
+					:label="__('Replace All')"
+					:tooltip="__('Replace All')"
+					:disabled="!matchCount.matches"
+					@click="replaceInBlocks(getScopeBlocks())" />
 			</template>
-		</BuilderInput>
+		</div>
 
 		<div v-if="selectedFiltersCount" class="flex flex-wrap gap-1">
 			<Button
@@ -77,47 +85,67 @@
 			<div class="flex min-h-7 items-center justify-between gap-2 border-t border-outline-gray-1 pt-2">
 				<span class="text-sm text-ink-gray-5">{{ matchSummary }}</span>
 				<Button
-					v-if="searchMode === 'replace'"
-					variant="solid"
-					:label="__('Replace All')"
-					:disabled="!matchCount.matches"
-					@click="replaceInBlocks(getScopeBlocks())" />
+					v-if="results.length"
+					variant="ghost"
+					:icon="allCollapsed ? 'lucide-chevrons-up-down' : 'lucide-chevrons-down-up'"
+					:label="allCollapsed ? __('Expand All') : __('Collapse All')"
+					:tooltip="allCollapsed ? __('Expand All') : __('Collapse All')"
+					@click="toggleAllCollapsed" />
 			</div>
 
 			<div
 				v-if="results.length"
-				class="-mx-1 max-h-72 overflow-y-auto"
+				ref="resultList"
+				class="-mx-1 max-h-80 overflow-y-auto"
+				:class="{
+					'[mask-image:linear-gradient(to_bottom,black_calc(100%_-_2rem),transparent)]': !arrivedState.bottom,
+				}"
 				@mouseleave="canvasStore.activeCanvas?.setHoveredBlock(null)">
 				<div
 					v-for="result in results"
 					:key="result.blockId"
-					class="group flex cursor-pointer items-start gap-2 rounded-4 px-2 py-1.5 hover:bg-surface-gray-2"
-					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
-					@click="canvasStore.selectBlock(result, null, true, true)">
-					<span :class="[result.getIcon(), 'mt-0.5 size-3.5 shrink-0 text-ink-gray-5']" aria-hidden="true" />
-					<div class="min-w-0 flex-1">
-						<div class="truncate text-sm text-ink-gray-8">{{ result.getBlockDescription() }}</div>
+					class="group pb-1"
+					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)">
+					<div
+						class="flex h-7 cursor-pointer items-center gap-1.5 rounded-4 px-1 hover:bg-surface-gray-2"
+						@click="canvasStore.selectBlock(result, null, true, true)">
+						<span
+							:class="[
+								isCollapsed(result) ? 'lucide-chevron-right' : 'lucide-chevron-down',
+								'size-3 shrink-0 text-ink-gray-4',
+							]"
+							aria-hidden="true"
+							@click.stop="toggleCollapsed(result)" />
+						<span :class="[result.getIcon(), 'size-3 shrink-0 text-ink-gray-5']" aria-hidden="true" />
+						<span class="min-w-0 flex-1 truncate text-sm text-ink-gray-8">
+							{{ result.getBlockDescription() }}
+						</span>
+						<span
+							class="mr-1 min-w-5 rounded-full bg-surface-gray-2 px-1.5 text-center text-xs text-ink-gray-6"
+							:class="{ 'group-hover:hidden': searchMode === 'replace' }">
+							{{ blockMatches.get(result.blockId)?.length }}
+						</span>
+						<Button
+							v-if="searchMode === 'replace'"
+							class="hidden group-hover:inline-flex"
+							variant="ghost"
+							icon="lucide-replace"
+							:label="__('Replace')"
+							:tooltip="__('Replace in this block')"
+							@click.stop="replaceInBlocks([result])" />
+					</div>
+					<template v-if="!isCollapsed(result)">
 						<div
 							v-for="(preview, index) in getPreviews(result)"
 							:key="index"
-							class="truncate text-xs text-ink-gray-5">
-							<span class="mr-1 text-ink-gray-6">{{ preview.label }}</span>
+							class="cursor-pointer truncate rounded-4 py-0.5 pl-10 pr-2 text-xs text-ink-gray-7 hover:bg-surface-gray-2"
+							@click="canvasStore.selectBlock(result, null, true, true)">
+							<span v-if="preview.label" class="mr-1.5 text-ink-gray-5">{{ preview.label }}</span>
 							<span>{{ preview.before }}</span>
 							<mark class="rounded-sm bg-surface-amber-2 text-ink-gray-9">{{ preview.hit }}</mark>
 							<span>{{ preview.after }}</span>
 						</div>
-						<div v-if="getHiddenMatchCount(result)" class="text-xs text-ink-gray-4">
-							{{ __("+{0} more", [getHiddenMatchCount(result)]) }}
-						</div>
-					</div>
-					<Button
-						v-if="searchMode === 'replace'"
-						class="invisible shrink-0 group-hover:visible"
-						variant="ghost"
-						icon="lucide-replace"
-						:label="__('Replace')"
-						:tooltip="__('Replace in this block')"
-						@click.stop="replaceInBlocks([result])" />
+					</template>
 				</div>
 			</div>
 
@@ -135,17 +163,20 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { getBlocksInScope } from "@/utils/block/tree";
-import { watchDebounced } from "@vueuse/core";
+import { useScroll, watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, Ref, ref, shallowRef, unref, watch } from "vue";
 import type { ComponentPublicInstance } from "vue";
 import { toast } from "frappe-ui";
-import OptionToggle from "./OptionToggle.vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const searchInput = ref<ComponentPublicInstance | null>(null);
+const replaceInput = ref<ComponentPublicInstance | null>(null);
+const resultList = ref<HTMLElement | null>(null);
+const { arrivedState, measure } = useScroll(resultList);
+const collapsedBlockIds = ref(new Set<string>());
 const query = ref("");
 const replaceQuery = ref("");
 const searchMode = ref<"search" | "replace">("search");
@@ -162,7 +193,8 @@ const searchInSelectedBlock = computed({
 });
 
 type SearchLocation = {
-	label: string;
+	// text content goes unlabelled, it's what most searches are after
+	label?: string;
 	value: unknown;
 	exact?: boolean;
 	set?: (value: string) => void;
@@ -206,7 +238,6 @@ const textLocations = (block: Block): SearchLocation[] => {
 		const node = walker.currentNode as Text;
 		if (node.parentElement?.closest("script, style")) continue;
 		locations.push({
-			label: __("Content"),
 			value: node.data,
 			set: (value: string) => {
 				node.data = value;
@@ -292,7 +323,27 @@ const setQuery = (value: string) => {
 	query.value = value;
 };
 
-const focusFind = () => searchInput.value?.$el.querySelector("input")?.focus();
+const focusInput = (input: Ref<ComponentPublicInstance | null>) =>
+	input.value?.$el.querySelector("input")?.focus();
+
+const focusFind = () => focusInput(searchInput);
+
+const toggleReplace = () => {
+	searchMode.value = searchMode.value === "replace" ? "search" : "replace";
+	if (searchMode.value === "replace") nextTick(() => focusInput(replaceInput));
+};
+
+const isCollapsed = (block: Block) => collapsedBlockIds.value.has(block.blockId);
+
+const toggleCollapsed = (block: Block) => {
+	if (!collapsedBlockIds.value.delete(block.blockId)) collapsedBlockIds.value.add(block.blockId);
+};
+
+const allCollapsed = computed(() => results.value.length > 0 && results.value.every(isCollapsed));
+
+const toggleAllCollapsed = () => {
+	collapsedBlockIds.value = new Set(allCollapsed.value ? [] : results.value.map((block) => block.blockId));
+};
 
 const handleKeydown = (event: KeyboardEvent) => {
 	// Cmd+F or Ctrl+F for quick search
@@ -311,10 +362,8 @@ const toggleFilter = (filter: any) => {
 	filter.selected = !filter.selected;
 };
 
-const PREVIEWS_PER_BLOCK = 2;
-
 const getPreviews = (block: Block) =>
-	(blockMatches.value.get(block.blockId) || []).slice(0, PREVIEWS_PER_BLOCK).map((match) => {
+	(blockMatches.value.get(block.blockId) || []).map((match) => {
 		const collapse = (text: string) => text.replace(/\s+/g, " ");
 		// the matches can trail the query by the search debounce, so the term may be missing
 		const index = match.value.toLowerCase().indexOf(query.value.toLowerCase());
@@ -328,9 +377,6 @@ const getPreviews = (block: Block) =>
 			after: collapse(match.value.slice(end)),
 		};
 	});
-
-const getHiddenMatchCount = (block: Block) =>
-	Math.max(0, (blockMatches.value.get(block.blockId)?.length || 0) - PREVIEWS_PER_BLOCK);
 
 const activeFields = () => {
 	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
@@ -441,6 +487,9 @@ watchDebounced(
 	performSearch,
 	{ debounce: 300 },
 );
+
+// arrivedState only updates on scroll, so the bottom fade needs a fresh measure when the list changes
+watch([results, () => collapsedBlockIds.value.size], () => measure(), { flush: "post" });
 
 // the panel can stay open while a version preview loads, so drop out of replace mode
 watch(
