@@ -62,7 +62,7 @@
 			</Popover>
 		</div>
 
-		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
+		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length || searchInSelectedBlock" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
 				<Checkbox v-model="searchInSelectedBlock" class="mr-2" />
 				<span>{{ __("Search inside selected block only") }}</span>
@@ -146,6 +146,7 @@ import { __ } from "@/translation";
 import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
+import { getBlocksInScope } from "@/utils/block/tree";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
 import { computed, nextTick, onMounted, Ref, ref, shallowRef, watch } from "vue";
@@ -163,7 +164,15 @@ const searchMode = ref<"search" | "replace">("search");
 const replacedCount = ref(0);
 const results = ref([]) as Ref<Block[]>;
 const blockMatches = shallowRef(new Map<string, SearchMatch[]>());
-const searchInSelectedBlock = ref(false);
+// ids captured when scope is ticked, so clicking results doesn't move it and undo brings deleted blocks back
+const scopeBlockIds = ref<string[]>([]);
+const searchInSelectedBlock = computed({
+	get: () => scopeBlockIds.value.length > 0,
+	set: (scoped: boolean) => {
+		const selectedBlocks: Block[] = scoped ? canvasStore.activeCanvas?.selectedBlocks || [] : [];
+		scopeBlockIds.value = selectedBlocks.map((block) => block.blockId);
+	},
+});
 
 type SearchLocation = {
 	label: string;
@@ -391,24 +400,8 @@ const performSearch = () => {
 };
 
 const getScopeBlocks = (): Block[] => {
-	const blocks: Block[] = [];
-
-	function addBlock(block: Block) {
-		blocks.push(block);
-		block.children?.forEach((child) => addBlock(child));
-	}
-
-	const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks;
-	const startingBlock =
-		searchInSelectedBlock.value && selectedBlocks?.length
-			? selectedBlocks[0]
-			: canvasStore.activeCanvas?.getRootBlock();
-
-	if (startingBlock) {
-		addBlock(startingBlock);
-	}
-
-	return blocks;
+	const rootBlock = canvasStore.activeCanvas?.getRootBlock();
+	return rootBlock ? getBlocksInScope(rootBlock, scopeBlockIds.value) : [];
 };
 
 const searchWithFilters = (searchTerm: string): Block[] => {
@@ -443,7 +436,7 @@ watchDebounced(
 		query,
 		() => filters.value.map((f) => f.selected).join(","),
 		searchMode,
-		searchInSelectedBlock,
+		scopeBlockIds,
 		() => canvasStore.activeCanvas?.getRootBlock(),
 		() => canvasStore.activeCanvas?.history?.undoStack[0],
 	],

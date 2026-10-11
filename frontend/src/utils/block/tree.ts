@@ -45,3 +45,16 @@ export function findBlockInTree(blockId: string, blocks: Block[]): Block | null 
 	}
 	return null;
 }
+
+// each scope block and its descendants once, in tree order; ids missing from the tree (deleted blocks) are skipped
+export function getBlocksInScope(rootBlock: Block, scopeBlockIds: string[]): Block[] {
+	const scope = new Set(scopeBlockIds);
+	const blocks: Block[] = [];
+	function addBlock(block: Block, ancestorInScope: boolean) {
+		const inScope = ancestorInScope || !scope.size || scope.has(block.blockId);
+		if (inScope) blocks.push(block);
+		block.children?.forEach((child) => addBlock(child, inScope));
+	}
+	addBlock(rootBlock, false);
+	return blocks;
+}
