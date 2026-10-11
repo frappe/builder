@@ -104,11 +104,10 @@
 				<div
 					v-for="result in results"
 					:key="result.blockId"
-					class="group pb-1"
-					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)">
-					<div
-						class="flex h-7 cursor-pointer items-center gap-1.5 rounded-4 px-1 hover:bg-surface-gray-2"
-						@click="canvasStore.selectBlock(result, null, true, true)">
+					class="group cursor-pointer rounded-4 pb-1 hover:bg-surface-gray-2"
+					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
+					@click="canvasStore.selectBlock(result, null, true, true)">
+					<div class="flex h-7 items-center gap-1.5 px-1">
 						<span
 							:class="[
 								isCollapsed(result) ? 'lucide-chevron-right' : 'lucide-chevron-down',
@@ -121,7 +120,7 @@
 							{{ result.getBlockDescription() }}
 						</span>
 						<span
-							class="mr-1 min-w-5 rounded-full bg-surface-gray-2 px-1.5 text-center text-xs text-ink-gray-6"
+							class="mr-1 min-w-5 rounded-full bg-surface-gray-2 px-1.5 text-center text-xs text-ink-gray-6 group-hover:bg-surface-gray-3"
 							:class="{ 'group-hover:hidden': searchMode === 'replace' }">
 							{{ blockMatches.get(result.blockId)?.length }}
 						</span>
@@ -138,8 +137,7 @@
 						<div
 							v-for="(preview, index) in getPreviews(result)"
 							:key="index"
-							class="cursor-pointer truncate rounded-4 py-0.5 pl-10 pr-2 text-xs text-ink-gray-7 hover:bg-surface-gray-2"
-							@click="canvasStore.selectBlock(result, null, true, true)">
+							class="truncate py-0.5 pl-10 pr-2 text-xs text-ink-gray-7">
 							<span v-if="preview.label" class="mr-1.5 text-ink-gray-5">{{ preview.label }}</span>
 							<span>{{ preview.before }}</span>
 							<mark class="rounded-sm bg-surface-amber-2 text-ink-gray-9">{{ preview.hit }}</mark>
