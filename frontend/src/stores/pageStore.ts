@@ -57,6 +57,8 @@ const usePageStore = defineStore("pageStore", {
 		settingPage: false,
 		pageLoadToken: 0,
 		snapshotsVersion: 0,
+		// bumped when an AI turn changes the page's scripts on the server
+		scriptsVersion: 0,
 		detachedPreview: null as { tab: Window; pageId: string } | null,
 	}),
 	actions: {

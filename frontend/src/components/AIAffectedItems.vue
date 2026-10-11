@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AffectedBlock, AffectedScript } from "@/components/AIChatController";
+import type { AffectedBlock, AffectedScript } from "@/components/ai/types";
 import { computed, ref } from "vue";
 
 const props = defineProps<{

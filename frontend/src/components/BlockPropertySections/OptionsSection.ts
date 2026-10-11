@@ -8,6 +8,12 @@ const setClasses = (val: string) => {
 	blockController.setClasses(classes);
 };
 
+const setID = (val: string) => {
+	// a space would split the id, so #section links could never match it
+	const id = val.trim().replace(/\s+/g, "-");
+	blockController.getFirstSelectedBlock()?.setId(id || undefined);
+};
+
 const optionsSectionProperties = [
 	{
 		component: InlineInput,
@@ -20,6 +26,21 @@ const optionsSectionProperties = [
 		searchKeyWords: "Class, ClassName, Class Name",
 		events: {
 			"update:modelValue": (val: string) => setClasses(val || ""),
+		},
+		condition: () => !blockController.multipleBlocksSelected(),
+	},
+	{
+		component: InlineInput,
+		getProps: () => {
+			return {
+				label: __("ID"),
+				description: __("Links to #id scroll to this block"),
+				modelValue: blockController.getFirstSelectedBlock()?.getId(),
+			};
+		},
+		searchKeyWords: "ID, Anchor, Section, Element ID, Scroll To",
+		events: {
+			"update:modelValue": (val: string) => setID(val || ""),
 		},
 		condition: () => !blockController.multipleBlocksSelected(),
 	},
