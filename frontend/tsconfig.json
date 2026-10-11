@@ -6,6 +6,7 @@
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "bundler",
+    "customConditions": ["source"],
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -44,6 +45,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
+    "extension-sdk/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.tsx"
   ],
