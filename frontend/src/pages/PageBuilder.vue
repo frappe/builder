@@ -83,6 +83,18 @@
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar data-panel="toolbar" class="absolute left-0 right-0 top-0"></BuilderToolbar>
+		<DraggablePopup
+			v-model="builderStore.showSearchBlock"
+			:container="canvasStore.activeCanvas?.$el"
+			placement="top-right"
+			:placementOffset="20"
+			:width="340"
+			v-if="builderStore.showSearchBlock">
+			<template #header>{{ __("Search Blocks") }}</template>
+			<template #content>
+				<SearchBlock></SearchBlock>
+			</template>
+		</DraggablePopup>
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -120,6 +132,8 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { installEditorDemo } from "@/components/EditorDemo";
 import Dialog from "@/components/Controls/Dialog.vue";
+import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";

@@ -1,144 +1,132 @@
 <template>
-	<div ref="searchBlock" class="focus-within:outline-none" @keydown="handleKeydown">
-		<div v-if="!builderStore.readOnlyMode" class="mb-4">
-			<OptionToggle
-				v-model="searchMode"
-				:options="[
-					{ label: __('Search'), value: 'search', icon: 'lucide-search' },
-					{ label: __('Find & Replace'), value: 'replace', icon: 'lucide-edit-3' },
-				]" />
-		</div>
+	<div class="flex flex-col gap-2" @keydown="handleKeydown">
+		<OptionToggle
+			v-if="!builderStore.readOnlyMode"
+			v-model="searchMode"
+			:options="[
+				{ label: __('Search'), value: 'search' },
+				{ label: __('Replace'), value: 'replace' },
+			]" />
 
-		<div class="mb-4 flex gap-2">
+		<div class="flex gap-1.5">
 			<BuilderInput
 				ref="searchInput"
 				class="flex-1"
 				type="text"
-				:placeholder="searchMode === 'replace' ? __('Find...') : __('Search blocks...')"
+				:placeholder="__('Find')"
 				v-model="query"
-				@input="setQuery" />
-
+				@input="setQuery">
+				<template #prefix>
+					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
+				</template>
+			</BuilderInput>
 			<Popover bare>
-				<template #trigger="{ open }">
+				<template #trigger>
 					<Button
-						icon="lucide-filter"
+						icon="lucide-list-filter"
 						:label="__('Filters')"
-						:class="[
-							'flex items-center gap-2 text-sm',
-							selectedFiltersCount > 0 ? 'border-ink-gray-6 bg-ink-gray-1' : '',
-						]">
-						<span
-							v-if="selectedFiltersCount > 0"
-							class="bg-ink-gray-7 ml-1 rounded-full px-2 py-0.5 text-xs text-white">
-							{{ selectedFiltersCount }}
-						</span>
-						<span
-							:class="[open ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
-							aria-hidden="true" />
-					</Button>
+						:variant="selectedFiltersCount ? 'subtle' : 'ghost'" />
 				</template>
 				<template #default>
-					<div class="w-48 rounded-6 bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
-						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
-						<div class="space-y-1 px-2">
-							<label
-								v-for="filter in filters"
-								:key="filter.name"
-								class="flex cursor-pointer items-center rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
-								<Checkbox
-									:modelValue="filter.selected"
-									@update:modelValue="toggleFilter(filter)"
-									class="mr-3" />
-								<span>{{ filter.name }}</span>
-							</label>
-						</div>
-						<div class="border-surface-gray-3 mt-1 border-t px-2 pt-2">
-							<Button @click="clearAllFilters" variant="subtle" class="w-full">
-								{{ __("Clear all filters") }}
-							</Button>
-						</div>
+					<div class="w-44 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
+						<label
+							v-for="filter in filters"
+							:key="filter.key"
+							class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
+							<Checkbox :modelValue="filter.selected" @update:modelValue="toggleFilter(filter)" />
+							{{ filter.name }}
+						</label>
 					</div>
 				</template>
 			</Popover>
 		</div>
 
-		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length || searchInSelectedBlock" class="mb-4">
-			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
-				<Checkbox v-model="searchInSelectedBlock" class="mr-2" />
-				<span>{{ __("Search inside selected block only") }}</span>
-			</label>
-		</div>
+		<BuilderInput
+			v-if="searchMode === 'replace'"
+			type="text"
+			:placeholder="__('Replace with')"
+			v-model="replaceQuery"
+			@input="(value: string) => (replaceQuery = value)">
+			<template #prefix>
+				<span class="lucide-corner-down-right size-4 text-ink-gray-5" aria-hidden="true" />
+			</template>
+		</BuilderInput>
 
-		<div v-if="searchMode === 'replace'" class="mb-4">
-			<BuilderInput
-				class="w-full"
-				type="text"
-				:placeholder="__('Replace with...')"
-				v-model="replaceQuery"
-				@keydown.enter="handlePrimaryAction" />
-		</div>
-
-		<div
-			v-if="query && (searchMode === 'search' || (searchMode === 'replace' && results.length > 0))"
-			class="mb-4">
+		<div v-if="selectedFiltersCount" class="flex flex-wrap gap-1">
 			<Button
-				v-if="searchMode === 'replace'"
-				@click="handlePrimaryAction"
-				variant="solid"
-				class="w-full"
-				:disabled="!replaceableCount">
-				{{ __("Replace All ({0} matches)", [replaceableCount]) }}
-			</Button>
-			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
-				{{
-					replacedCount === 1
-						? __("Replaced in {0} block", [replacedCount])
-						: __("Replaced in {0} blocks", [replacedCount])
-				}}
-			</div>
+				v-for="filter in filters.filter((f) => f.selected)"
+				:key="filter.key"
+				size="sm"
+				iconRight="lucide-x"
+				:label="filter.name"
+				@click="toggleFilter(filter)" />
 		</div>
 
-		<div v-if="!query" class="mt-6 text-center">
-			<div class="flex flex-col items-center justify-center py-8">
-				<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-gray-2">
-					<span class="lucide-search size-8 text-ink-gray-4" aria-hidden="true" />
-				</div>
-				<h3 class="text-sm-medium mb-2 text-ink-gray-6">{{ __("Search your blocks") }}</h3>
-			</div>
-		</div>
+		<label
+			v-if="canvasStore.activeCanvas?.selectedBlocks?.length || searchInSelectedBlock"
+			class="flex cursor-pointer items-center gap-2 text-sm text-ink-gray-7">
+			<Checkbox v-model="searchInSelectedBlock" />
+			{{ __("Search inside selected block only") }}
+		</label>
 
-		<div v-else-if="results.length > 0" class="max-h-64 overflow-y-auto">
-			<!-- Search Results -->
-			<div v-for="result in results" :key="result.blockId">
+		<p v-if="!query" class="py-2 text-sm text-ink-gray-5">
+			{{ __("Find text, styles, attributes and classes") }}
+		</p>
+
+		<template v-else>
+			<div class="flex min-h-7 items-center justify-between gap-2 border-t border-outline-gray-1 pt-2">
+				<span class="text-sm text-ink-gray-5">{{ matchSummary }}</span>
+				<Button
+					v-if="searchMode === 'replace'"
+					variant="solid"
+					:label="__('Replace All')"
+					:disabled="!matchCount.matches"
+					@click="replaceInBlocks(getScopeBlocks())" />
+			</div>
+
+			<div
+				v-if="results.length"
+				class="-mx-1 max-h-72 overflow-y-auto"
+				@mouseleave="canvasStore.activeCanvas?.setHoveredBlock(null)">
 				<div
-					class="mb-2 flex cursor-pointer items-center justify-between rounded-4 px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
+					v-for="result in results"
+					:key="result.blockId"
+					class="group flex cursor-pointer items-start gap-2 rounded-4 px-2 py-1.5 hover:bg-surface-gray-2"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
 					@click="canvasStore.selectBlock(result, null, true, true)">
-					<div class="line-clamp-2 flex-1">
-						{{ result.getBlockDescription() }}
-						<div class="mt-1 text-xs text-ink-gray-5">
-							{{ getMatchDetails(result) }}
+					<span :class="[result.getIcon(), 'mt-0.5 size-3.5 shrink-0 text-ink-gray-5']" aria-hidden="true" />
+					<div class="min-w-0 flex-1">
+						<div class="truncate text-sm text-ink-gray-8">{{ result.getBlockDescription() }}</div>
+						<div
+							v-for="(preview, index) in getPreviews(result)"
+							:key="index"
+							class="truncate text-xs text-ink-gray-5">
+							<span class="mr-1 text-ink-gray-6">{{ preview.label }}</span>
+							<span>{{ preview.before }}</span>
+							<mark class="rounded-sm bg-surface-amber-2 text-ink-gray-9">{{ preview.hit }}</mark>
+							<span>{{ preview.after }}</span>
+						</div>
+						<div v-if="getHiddenMatchCount(result)" class="text-xs text-ink-gray-4">
+							{{ __("+{0} more", [getHiddenMatchCount(result)]) }}
 						</div>
 					</div>
 					<Button
 						v-if="searchMode === 'replace'"
-						@click.stop="replaceInBlocks([result])"
-						variant="subtle"
-						class="ml-3 px-2 py-1 text-xs">
-						{{ __("Replace") }}
-					</Button>
+						class="invisible shrink-0 group-hover:visible"
+						variant="ghost"
+						icon="lucide-replace"
+						:label="__('Replace')"
+						:tooltip="__('Replace in this block')"
+						@click.stop="replaceInBlocks([result])" />
 				</div>
 			</div>
-		</div>
 
-		<div v-else-if="query && results.length === 0" class="mt-6 text-center">
-			<!-- No Results State -->
-			<div class="flex flex-col items-center justify-center py-6">
-				<span class="lucide-search mb-3 size-6 text-ink-gray-4" aria-hidden="true" />
-				<h3 class="text-sm-medium mb-1 text-ink-gray-6">{{ __("No results found") }}</h3>
-				<p class="text-xs text-ink-gray-5">{{ __("Try different keywords or adjust your filters") }}</p>
-			</div>
-		</div>
+			<p v-else class="text-xs text-ink-gray-5">{{ __("Try different keywords or adjust your filters") }}</p>
+
+			<p v-if="blockMatches.size > results.length" class="text-xs text-ink-gray-5">
+				{{ __("Showing {0} of {1} blocks", [results.length, blockMatches.size]) }}
+			</p>
+		</template>
 	</div>
 </template>
 <script setup lang="ts">
@@ -149,19 +137,18 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getBlocksInScope } from "@/utils/block/tree";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
-import { computed, nextTick, onMounted, Ref, ref, shallowRef, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, Ref, ref, shallowRef, unref, watch } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
-const searchBlock = ref(null) as Ref<HTMLInputElement | null>;
-const searchInput = ref(null) as Ref<HTMLInputElement | null>;
+const searchInput = ref<ComponentPublicInstance | null>(null);
 const query = ref("");
 const replaceQuery = ref("");
 const searchMode = ref<"search" | "replace">("search");
-const replacedCount = ref(0);
 const results = ref([]) as Ref<Block[]>;
 const blockMatches = shallowRef(new Map<string, SearchMatch[]>());
 // ids captured when scope is ticked, so clicking results doesn't move it and undo brings deleted blocks back
@@ -288,29 +275,30 @@ const selectedFiltersCount = computed(() => {
 	return filters.value.filter((f) => f.selected).length;
 });
 
-const replaceableCount = computed(
-	() => [...blockMatches.value.values()].flat().filter((match) => match.set).length,
-);
+const matchCount = computed(() => ({
+	matches: [...blockMatches.value.values()].flat().length,
+	blocks: blockMatches.value.size,
+}));
+
+const matchSummary = computed(() => {
+	const { matches, blocks } = matchCount.value;
+	if (!matches) return __("No matches");
+	if (matches === 1) return __("1 match");
+	if (blocks === 1) return __("{0} matches in 1 block", [matches]);
+	return __("{0} matches in {1} blocks", [matches, blocks]);
+});
 
 const setQuery = (value: string) => {
 	query.value = value;
-	replacedCount.value = 0;
 };
 
-const handlePrimaryAction = () => {
-	if (searchMode.value === "replace" && results.value.length > 0) {
-		replaceInBlocks(getScopeBlocks());
-	}
-};
+const focusFind = () => searchInput.value?.$el.querySelector("input")?.focus();
 
 const handleKeydown = (event: KeyboardEvent) => {
 	// Cmd+F or Ctrl+F for quick search
 	if ((event.metaKey || event.ctrlKey) && event.key === "f") {
 		event.preventDefault();
-		const input = searchInput.value?.querySelector?.("input") || searchInput.value;
-		if (input && "focus" in input && typeof input.focus === "function") {
-			input.focus();
-		}
+		focusFind();
 	}
 	// Escape to clear search
 	if (event.key === "Escape") {
@@ -323,16 +311,26 @@ const toggleFilter = (filter: any) => {
 	filter.selected = !filter.selected;
 };
 
-const clearAllFilters = () => {
-	filters.value.forEach((filter) => {
-		filter.selected = false;
-	});
-};
+const PREVIEWS_PER_BLOCK = 2;
 
-const getMatchDetails = (block: Block) => {
-	const labels = new Set(blockMatches.value.get(block.blockId)?.map((match) => match.label));
-	return labels.size ? __("Found in: {0}", [[...labels].join(", ")]) : "";
-};
+const getPreviews = (block: Block) =>
+	(blockMatches.value.get(block.blockId) || []).slice(0, PREVIEWS_PER_BLOCK).map((match) => {
+		const collapse = (text: string) => text.replace(/\s+/g, " ");
+		// the matches can trail the query by the search debounce, so the term may be missing
+		const index = match.value.toLowerCase().indexOf(query.value.toLowerCase());
+		if (index < 0) return { label: match.label, before: collapse(match.value), hit: "", after: "" };
+		const start = Math.max(0, index - 16);
+		const end = index + query.value.length;
+		return {
+			label: match.label,
+			before: (start ? "…" : "") + collapse(match.value.slice(start, index)).trimStart(),
+			hit: match.value.slice(index, end),
+			after: collapse(match.value.slice(end)),
+		};
+	});
+
+const getHiddenMatchCount = (block: Block) =>
+	Math.max(0, (blockMatches.value.get(block.blockId)?.length || 0) - PREVIEWS_PER_BLOCK);
 
 const activeFields = () => {
 	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
@@ -381,7 +379,6 @@ const replaceInBlocks = (blocks: Block[]) => {
 	}
 
 	const changedBlocks = [...new Set(matches.map((match) => match.block))];
-	replacedCount.value += changedBlocks.length;
 	toast.success(
 		changedBlocks.length === 1
 			? __("Replaced in {0}", [changedBlocks[0].getBlockDescription()])
@@ -411,7 +408,10 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 
 	// every match is kept so the Replace All count covers blocks past the display limit
 	for (const block of getScopeBlocks()) {
-		const matches = collectMatches(block, searchTerm);
+		// replace mode lists only what Replace can change
+		const matches = collectMatches(block, searchTerm).filter(
+			(match) => searchMode.value === "search" || match.set,
+		);
 		if (!matches.length) continue;
 		matchesByBlock.set(block.blockId, matches);
 		if (searchResults.length < limit) searchResults.push(block);
@@ -421,16 +421,14 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 	return searchResults;
 };
 
-onMounted(async () => {
-	await nextTick();
-	const input = searchInput.value?.querySelector?.("input") || searchInput.value;
-	if (input && "focus" in input && typeof input.focus === "function") {
-		input.focus();
-	}
-});
+// the native autofocus attribute only fires once per page, so it would miss every reopen
+onMounted(() => nextTick(focusFind));
+
+onUnmounted(() => canvasStore.activeCanvas?.setHoveredBlock(null));
 
 // edits, deletions, replaces, undo and redo all move the undo stack's head (its length stops
-// changing once the stack is full); searching never edits blocks, so it can't retrigger itself
+// changing once the stack is full); searching never edits blocks, so it can't retrigger itself.
+// history sits in a ref, so undoStack arrives unwrapped despite its Ref type
 watchDebounced(
 	[
 		query,
@@ -438,7 +436,7 @@ watchDebounced(
 		searchMode,
 		scopeBlockIds,
 		() => canvasStore.activeCanvas?.getRootBlock(),
-		() => canvasStore.activeCanvas?.history?.undoStack[0],
+		() => unref(canvasStore.activeCanvas?.history?.undoStack)?.[0],
 	],
 	performSearch,
 	{ debounce: 300 },
@@ -451,14 +449,5 @@ watch(
 		if (readOnly) searchMode.value = "search";
 	},
 	{ immediate: true },
-);
-
-// Reset replaced count when switching modes
-watchDebounced(
-	searchMode,
-	() => {
-		replacedCount.value = 0;
-	},
-	{ debounce: 100 },
 );
 </script>
