@@ -16,8 +16,7 @@
 				type="text"
 				:placeholder="searchMode === 'replace' ? __('Find...') : __('Search blocks...')"
 				v-model="query"
-				@input="setQuery"
-				@keydown.enter="performSearch" />
+				@input="setQuery" />
 
 			<Popover bare>
 				<template #trigger="{ open }">
@@ -65,7 +64,7 @@
 
 		<div v-if="canvasStore.activeCanvas?.selectedBlocks?.length" class="mb-4">
 			<label class="flex cursor-pointer items-center text-sm text-ink-gray-7">
-				<Checkbox v-model="searchInSelectedBlock" @update:modelValue="performSearch" class="mr-2" />
+				<Checkbox v-model="searchInSelectedBlock" class="mr-2" />
 				<span>{{ __("Search inside selected block only") }}</span>
 			</label>
 		</div>
@@ -290,9 +289,7 @@ const setQuery = (value: string) => {
 };
 
 const handlePrimaryAction = () => {
-	if (searchMode.value === "search") {
-		performSearch();
-	} else if (searchMode.value === "replace" && results.value.length > 0) {
+	if (searchMode.value === "replace" && results.value.length > 0) {
 		replaceInBlocks(getScopeBlocks());
 	}
 };
@@ -315,14 +312,12 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const toggleFilter = (filter: any) => {
 	filter.selected = !filter.selected;
-	performSearch();
 };
 
 const clearAllFilters = () => {
 	filters.value.forEach((filter) => {
 		filter.selected = false;
 	});
-	performSearch();
 };
 
 const getMatchDetails = (block: Block) => {
@@ -383,7 +378,6 @@ const replaceInBlocks = (blocks: Block[]) => {
 			? __("Replaced in {0}", [changedBlocks[0].getBlockDescription()])
 			: __("Replaced in {0} blocks", [changedBlocks.length]),
 	);
-	performSearch();
 };
 
 const performSearch = () => {
@@ -442,17 +436,20 @@ onMounted(async () => {
 	}
 });
 
-watchDebounced(query, performSearch, {
-	debounce: 300,
-});
-
-watchDebounced(() => filters.value.map((f) => f.selected).join(","), performSearch, {
-	debounce: 300,
-});
-
-watchDebounced(searchInSelectedBlock, performSearch, {
-	debounce: 300,
-});
+// edits, deletions, replaces, undo and redo all move the undo stack's head (its length stops
+// changing once the stack is full); searching never edits blocks, so it can't retrigger itself
+watchDebounced(
+	[
+		query,
+		() => filters.value.map((f) => f.selected).join(","),
+		searchMode,
+		searchInSelectedBlock,
+		() => canvasStore.activeCanvas?.getRootBlock(),
+		() => canvasStore.activeCanvas?.history?.undoStack[0],
+	],
+	performSearch,
+	{ debounce: 300 },
+);
 
 // the panel can stay open while a version preview loads, so drop out of replace mode
 watch(
