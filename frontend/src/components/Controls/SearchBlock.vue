@@ -17,7 +17,7 @@
 				:placeholder="searchMode === 'replace' ? __('Find...') : __('Search blocks...')"
 				v-model="query"
 				@input="setQuery"
-				@keydown.enter="handlePrimaryAction" />
+				@keydown.enter="performSearch" />
 
 			<Popover bare>
 				<template #trigger="{ open }">
@@ -87,8 +87,8 @@
 				@click="handlePrimaryAction"
 				variant="solid"
 				class="w-full"
-				:disabled="!replaceQuery">
-				{{ __("Replace All ({0} matches)", [results.length]) }}
+				:disabled="!replaceableCount">
+				{{ __("Replace All ({0} matches)", [replaceableCount]) }}
 			</Button>
 			<div v-if="searchMode === 'replace' && replacedCount > 0" class="mt-2 text-xs text-ink-gray-5">
 				{{
@@ -110,7 +110,7 @@
 
 		<div v-else-if="results.length > 0" class="max-h-64 overflow-y-auto">
 			<!-- Search Results -->
-			<div v-for="(result, index) in results" :key="result.blockId">
+			<div v-for="result in results" :key="result.blockId">
 				<div
 					class="mb-2 flex cursor-pointer items-center justify-between rounded-4 px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
@@ -123,10 +123,9 @@
 					</div>
 					<Button
 						v-if="searchMode === 'replace'"
-						@click.stop="replaceInBlock(result, index)"
+						@click.stop="replaceInBlocks([result])"
 						variant="subtle"
-						class="ml-3 px-2 py-1 text-xs"
-						:disabled="!replaceQuery">
+						class="ml-3 px-2 py-1 text-xs">
 						{{ __("Replace") }}
 					</Button>
 				</div>
@@ -281,6 +280,10 @@ const selectedFiltersCount = computed(() => {
 	return filters.value.filter((f) => f.selected).length;
 });
 
+const replaceableCount = computed(
+	() => [...blockMatches.value.values()].flat().filter((match) => match.set).length,
+);
+
 const setQuery = (value: string) => {
 	query.value = value;
 	replacedCount.value = 0;
@@ -290,7 +293,7 @@ const handlePrimaryAction = () => {
 	if (searchMode.value === "search") {
 		performSearch();
 	} else if (searchMode.value === "replace" && results.value.length > 0) {
-		replaceAll();
+		replaceInBlocks(getScopeBlocks());
 	}
 };
 
@@ -347,54 +350,40 @@ const collectMatches = (block: Block, searchTerm: string): SearchMatch[] => {
 	);
 };
 
-const replaceMatches = (matches: SearchMatch[], searchTerm: string, replaceTerm: string) => {
-	const regex = new RegExp(escapeRegExp(searchTerm), "gi");
-	const replaceable = matches.filter((match) => match.set);
-	// a function replacement keeps "$" in the replace text literal
-	replaceable.forEach((match) => match.set?.(match.value.replace(regex, () => replaceTerm)));
-	return replaceable.length > 0;
-};
-
 const escapeRegExp = (string: string) => {
 	return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-const replaceInBlock = (block: Block, index: number) => {
-	if (!replaceQuery.value || !query.value) return;
+const replaceInBlocks = (blocks: Block[]) => {
+	if (builderStore.readOnlyMode || !query.value) return;
 
-	if (replaceMatches(collectMatches(block, query.value), query.value, replaceQuery.value)) {
-		replacedCount.value++;
-		results.value.splice(index, 1);
-		toast.success(__("Replaced in {0}", [block.getBlockDescription()]));
-	} else {
+	const matches = blocks.flatMap((block) => collectMatches(block, query.value)).filter((match) => match.set);
+	if (!matches.length) {
 		toast.error(__("No replacements made"));
+		return;
 	}
-};
 
-const replaceAll = () => {
-	if (!replaceQuery.value || !query.value) return;
-
-	let totalReplacements = 0;
-	const blocksToReplace = [...results.value];
-
-	blocksToReplace.forEach((block, index) => {
-		const originalCount = replacedCount.value;
-		replaceInBlock(block, 0); // Always use index 0 since we're working with a copy
-		if (replacedCount.value > originalCount) {
-			totalReplacements++;
-		}
-	});
-
-	if (totalReplacements > 0) {
-		toast.success(
-			totalReplacements === 1
-				? __("Replaced in {0} block", [totalReplacements])
-				: __("Replaced in {0} blocks", [totalReplacements]),
-		);
-		performSearch();
-	} else {
-		toast.error(__("No replacements made"));
+	const regex = new RegExp(escapeRegExp(query.value), "gi");
+	const history = canvasStore.activeCanvas?.history;
+	const pauseId = history?.pause();
+	try {
+		// a function replacement keeps "$" in the replace text literal
+		matches.forEach((match) => match.set?.(match.value.replace(regex, () => replaceQuery.value)));
+	} finally {
+		// the history watcher fires after this returns; resuming right away would record an extra empty step
+		nextTick(() => {
+			if (pauseId) history?.resume(pauseId, true);
+		});
 	}
+
+	const changedBlocks = [...new Set(matches.map((match) => match.block))];
+	replacedCount.value += changedBlocks.length;
+	toast.success(
+		changedBlocks.length === 1
+			? __("Replaced in {0}", [changedBlocks[0].getBlockDescription()])
+			: __("Replaced in {0} blocks", [changedBlocks.length]),
+	);
+	performSearch();
 };
 
 const performSearch = () => {
@@ -407,19 +396,12 @@ const performSearch = () => {
 	}
 };
 
-const searchWithFilters = (searchTerm: string): Block[] => {
-	const searchResults: Block[] = [];
-	const matchesByBlock = new Map<string, SearchMatch[]>();
-	const limit = 50;
+const getScopeBlocks = (): Block[] => {
+	const blocks: Block[] = [];
 
-	function searchInBlock(block: Block) {
-		if (searchResults.length >= limit) return;
-		const matches = collectMatches(block, searchTerm);
-		if (matches.length) {
-			searchResults.push(block);
-			matchesByBlock.set(block.blockId, matches);
-		}
-		block.children?.forEach((child) => searchInBlock(child));
+	function addBlock(block: Block) {
+		blocks.push(block);
+		block.children?.forEach((child) => addBlock(child));
 	}
 
 	const selectedBlocks = canvasStore.activeCanvas?.selectedBlocks;
@@ -429,7 +411,23 @@ const searchWithFilters = (searchTerm: string): Block[] => {
 			: canvasStore.activeCanvas?.getRootBlock();
 
 	if (startingBlock) {
-		searchInBlock(startingBlock);
+		addBlock(startingBlock);
+	}
+
+	return blocks;
+};
+
+const searchWithFilters = (searchTerm: string): Block[] => {
+	const searchResults: Block[] = [];
+	const matchesByBlock = new Map<string, SearchMatch[]>();
+	const limit = 50;
+
+	// every match is kept so the Replace All count covers blocks past the display limit
+	for (const block of getScopeBlocks()) {
+		const matches = collectMatches(block, searchTerm);
+		if (!matches.length) continue;
+		matchesByBlock.set(block.blockId, matches);
+		if (searchResults.length < limit) searchResults.push(block);
 	}
 
 	blockMatches.value = matchesByBlock;
