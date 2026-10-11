@@ -49,6 +49,18 @@ const pagesWithUnpublishedChanges = createListResource({
 	pageLength: 9999,
 });
 
+const pageCreators = createListResource({
+	doctype: "Builder Page",
+	fields: ["owner"],
+	filters: {
+		is_template: 0,
+	},
+	groupBy: "owner",
+	orderBy: "owner asc",
+	cache: "page-creators",
+	pageLength: 999,
+});
+
 const templateGroups = createResource({
 	url: "builder.api.get_template_groups",
 	cache: "template-groups",
@@ -66,4 +78,4 @@ const searchablePages = createListResource({
 	pageLength: 10,
 });
 
-export { pagesWithUnpublishedChanges, searchablePages, templateGroups, webPages };
+export { pageCreators, pagesWithUnpublishedChanges, searchablePages, templateGroups, webPages };
