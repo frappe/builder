@@ -22,6 +22,7 @@ import {
 	leftPanel,
 	page,
 	properties,
+	schema,
 	settings,
 	state,
 	toolbar,
@@ -107,6 +108,12 @@ const builder = {
 	 * app. They get only what the user of the editor can get.
 	 */
 	data: { ...data, fetcher: resourceFetcher },
+
+	/**
+	 * The doctypes of this extension. Each call needs the `schema.write`
+	 * permission, and the user must be a System Manager.
+	 */
+	schema,
 
 	/** The functions of this extension. A descriptor names one. The host calls it. */
 	actions,

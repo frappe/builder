@@ -114,7 +114,10 @@ user_invitation = {
 doc_events = {
 	"User Invitation": {
 		"after_insert": "builder.user_invitation.capture_user_invited",
-	}
+	},
+	"DocType": {
+		"after_rename": "builder.extensions.resources.follow_renamed_doctype",
+	},
 }
 
 # Scheduled Tasks
