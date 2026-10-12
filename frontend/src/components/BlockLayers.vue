@@ -21,10 +21,9 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
 					:class="{
-						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
-							canvasStore.layerDraggingOverBlock === element.blockId,
+						'!bg-blue-100 dark:!bg-blue-900': canvasStore.layerDraggingOverBlock === element.blockId,
 					}"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="
@@ -32,7 +31,7 @@
 					"
 					@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
 					<span
-						class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+						class="group flex py-[7px] items-center gap-1.5 pr-[2px] font-medium"
 						:style="{ paddingLeft: `${indent}px` }"
 						:class="{
 							'!opacity-50': !element.isVisible() || isParentHidden,
@@ -442,18 +441,23 @@ defineExpose({
 });
 </script>
 <style>
-.hovered-block {
-	@apply border-blue-300 text-gray-700 dark:border-blue-900 dark:text-gray-500;
-}
-.block-selected {
-	@apply overflow-hidden bg-blue-100 dark:!bg-blue-950 border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+.hovered-block > span {
+	@apply rounded-4 bg-surface-blue-2;
 }
 
-.block-selected .block-tree {
-	@apply bg-surface-gray-1;
+.block-selected {
+	@apply overflow-hidden !bg-surface-blue-1 text-ink-gray-9;
+}
+
+.block-selected > span {
+	@apply rounded-none bg-surface-blue-3;
 }
 
 .block-selected .block-layer-item {
 	@apply bg-transparent;
+}
+
+.block-selected .block-layer-item > span {
+	@apply rounded-none;
 }
 </style>
