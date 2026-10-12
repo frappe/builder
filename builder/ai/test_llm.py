@@ -56,6 +56,18 @@ class TestUserFacingError(FrappeTestCase):
 		self.assertIn("Sign in with ChatGPT", user_facing_error(CodexCredentialError("expired")))
 		self.assertEqual(user_facing_error(CodexError("stream failed")), GENERIC_FAILURE)
 
+	def test_a_payment_failure_says_so(self):
+		class APIError(Exception):
+			status_code = 402
+
+		self.assertIn("out of credit", user_facing_error(APIError("check your payment status")))
+
+	def test_an_unavailable_model_points_at_the_picker(self):
+		class ServiceUnavailableError(Exception):
+			pass
+
+		self.assertIn("/model", user_facing_error(ServiceUnavailableError("model unavailable")))
+
 	def test_anything_else_stays_generic(self):
 		self.assertEqual(user_facing_error(ValueError("internal detail")), GENERIC_FAILURE)
 
