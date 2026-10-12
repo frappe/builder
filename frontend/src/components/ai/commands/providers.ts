@@ -53,6 +53,7 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 				{
 					key: "enabled",
 					label: "Use this provider",
+					icon: "lucide-power",
 					switchValue: !!providerDoc(name)?.enabled,
 					run: () => toggleProvider(ctx, name),
 				},

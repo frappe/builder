@@ -341,7 +341,7 @@
 					variant="ghost"
 					size="md"
 					:rows="1"
-					class="no-scrollbar max-h-60 min-h-14 resize-none"
+					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4"
 					:disabled="isSubmitting || !isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
