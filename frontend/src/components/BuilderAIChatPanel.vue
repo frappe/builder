@@ -341,7 +341,7 @@
 					variant="ghost"
 					size="md"
 					:rows="1"
-					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:bg-transparent"
+					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
 					:disabled="isSubmitting || !isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
@@ -361,7 +361,7 @@
 						size="xs"
 						icon-right="lucide-chevron-down"
 						:label="modelLabel"
-						class="min-w-0"
+						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
 					<Button
 						v-if="isSubmitting"

@@ -16,6 +16,8 @@ export type LeftPanelTab = RegistryItem & {
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
 	shortcut?: KeyboardShortcutCombo;
+	/** narrowest the panel may be while this tab shows, if wider than the panel's own minimum */
+	minWidth?: number;
 	/** mount on first open, then keep alive */
 	lazy?: boolean;
 	/** mount a lazy tab early, before the user opens it */
@@ -67,8 +69,7 @@ leftPanelTabs.register({
 	// and so does a script the chat asks to open: the watchers that open the
 	// editor live INSIDE PageScript, so until something mounts it the flag is
 	// set for nobody to read
-	preload: () =>
-		builderStore.showDataScriptDialog !== null || builderStore.openClientScript !== null,
+	preload: () => builderStore.showDataScriptDialog !== null || builderStore.openClientScript !== null,
 });
 
 // not a tab. It toggles a modal, so it declares an action and its own active state
@@ -88,4 +89,6 @@ leftPanelTabs.register({
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
 	component: defineAsyncComponent(() => import("@/components/BuilderAIChatPanel.vue")),
 	shortcut: "Mod+Shift+O",
+	// the composer's controls and the chat bubbles stop fitting below this
+	minWidth: 300,
 });
