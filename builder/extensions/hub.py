@@ -31,7 +31,7 @@ from dataclasses import dataclass
 import frappe
 import requests
 from frappe import _
-from frappe.utils import now_datetime, time_diff_in_seconds
+from frappe.utils.background_jobs import is_job_enqueued
 
 from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_manager, find_installation
 from builder.extensions.constants import (
@@ -51,9 +51,6 @@ HUB_API = "api/method/builder_hub.extensions.api"
 HUB_TIMEOUT = 20
 PACKAGE_TIMEOUT = 30
 PACKAGE_CHUNK_BYTES = 64 * 1024
-# An `Installing` row older than this has a job that died without marking it. Past
-# the job timeout of 300s with room for the queue wait.
-STALE_INSTALL_SECONDS = 600
 # The job's own RQ timeout. A hang past this is killed by RQ, not by the job.
 INSTALL_JOB_TIMEOUT = 300
 # A catalog or release response is small JSON. This is room for a long README
@@ -232,14 +229,12 @@ def install_from_hub(name: str, permissions: list[str], version: str | None = No
 	version = version or latest_version(listing, name)
 	installation = create_pending_installation(name, version, listing.get("extension") or {})
 
-	# No deduplicate: `assert_installable` already refuses a fresh install while one
-	# runs, and a crashed job can linger in the RQ registry long enough to block a
-	# legitimate retry.
 	frappe.enqueue(
 		run_hub_install,
 		queue="default",
 		timeout=INSTALL_JOB_TIMEOUT,
 		enqueue_after_commit=True,
+		job_id=install_job_id(installation),
 		installation=installation,
 		name=name,
 		version=version,
@@ -292,8 +287,9 @@ def assert_installable(name: str) -> None:
 	installing.
 
 	A `Failed` row is not a block, so the panel's Retry starts a fresh job on it.
-	Nor is an `Installing` row whose job stopped touching it: a crashed worker
-	cannot mark the row itself, so a stale one has to be retryable too.
+	Nor is an `Installing` row whose job is gone: a crashed worker cannot mark the
+	row itself. While the job is queued or running, a retry would start a second
+	job on the same row, and the one that ends last would win.
 	"""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to install extensions."), frappe.PermissionError)
@@ -304,13 +300,15 @@ def assert_installable(name: str) -> None:
 	existing = find_installation(name)
 	if not existing:
 		return
-	state, source, touched = frappe.db.get_value(
-		INSTALLATION_DOCTYPE, existing, ["install_state", "source_url", "modified"]
-	)
-	if state == "Installing" and time_diff_in_seconds(now_datetime(), touched) < STALE_INSTALL_SECONDS:
+	state, source = frappe.db.get_value(INSTALLATION_DOCTYPE, existing, ["install_state", "source_url"])
+	if state == "Installing" and is_job_enqueued(install_job_id(existing)):
 		frappe.throw(_('"{0}" is already installing.').format(name))
 	if state not in ("Failed", "Installing"):
 		frappe.throw(_('"{0}" is already installed from {1}.').format(name, source or _("a directory")))
+
+
+def install_job_id(installation: str) -> str:
+	return f"builder_extension_install_{installation}"
 
 
 def create_pending_installation(name: str, version: str, listing: dict) -> str:

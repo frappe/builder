@@ -1,10 +1,15 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.extensions.hub import ensure_protocol, resolve_hub_url
+from builder.builder.tests.extension_fixtures import drop_installations, make_installation
+from builder.extensions.hub import assert_installable, ensure_protocol, resolve_hub_url
+
+EXTENSION = "acme/installing"
 
 
 class TestHubUrl(FrappeTestCase):
@@ -22,3 +27,19 @@ class TestHubUrl(FrappeTestCase):
 		frappe.db.set_single_value("Builder Settings", "hub_url", "hub.example.com")
 
 		self.assertEqual(resolve_hub_url(), "https://hub.example.com")
+
+
+class TestRetry(FrappeTestCase):
+	"""A retry must not start a second job on a row whose job still runs."""
+
+	def setUp(self):
+		drop_installations(EXTENSION)
+		make_installation(EXTENSION, install_state="Installing", enabled=0)
+
+	def test_refuses_while_the_job_is_queued_or_running(self):
+		with patch("builder.extensions.hub.is_job_enqueued", return_value=True):
+			self.assertRaises(frappe.ValidationError, assert_installable, EXTENSION)
+
+	def test_allows_once_the_job_is_gone(self):
+		with patch("builder.extensions.hub.is_job_enqueued", return_value=False):
+			assert_installable(EXTENSION)
