@@ -293,8 +293,8 @@ def run_hub_install(
 
 def assert_installable(name: str) -> None:
 	"""Refuse before the job is queued: a guest, a user who cannot manage
-	extensions, a site with extensions off, a bad name, or a name the site
-	already has installed or installing.
+	extensions, a bad name, or a name the site already has installed or
+	installing.
 
 	A `Failed` row is not a block, so the panel's Retry starts a fresh job on it.
 	Nor is an `Installing` row whose job stopped touching it: a crashed worker
@@ -303,8 +303,6 @@ def assert_installable(name: str) -> None:
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to install extensions."), frappe.PermissionError)
 	assert_extension_manager()
-	if frappe.db.get_single_value("Builder Settings", "disable_extensions"):
-		frappe.throw(_("Extensions are turned off for this site."))
 	if not EXTENSION_NAME_PATTERN.match(name or ""):
 		frappe.throw(_("An extension name reads as publisher/name, in lowercase."))
 

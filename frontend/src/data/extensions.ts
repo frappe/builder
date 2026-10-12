@@ -1,6 +1,7 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { call, createDocumentResource, createResource, getCachedResource } from "frappe-ui";
+import { useStorage } from "@vueuse/core";
 import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
@@ -8,6 +9,9 @@ const METHOD = "builder.extensions.installations";
 const INSTALLATION_DOCTYPE = "Builder Extension";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
+
+/** A choice of this user in this browser. It is not an access control, so the server does not read it. */
+const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
 const CATALOG_CACHE = "extensions-catalog";
 
 /** The Builder Hub that gives this site its catalog. */
@@ -107,6 +111,7 @@ const toInstalledExtension = (row: Installation): InstalledExtension => ({
  * A development record never mounts. It has no files. The entry in the browser runs it.
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
+	if (extensionsDisabled.value) return [];
 	const installed = (installationsResource.data ?? [])
 		.filter((row) => row.enabled && row.entry_url && !row.is_development)
 		.map(toInstalledExtension);
@@ -360,6 +365,7 @@ const installFromHub = async (name: string, version: string, permissions: Permis
 
 export {
 	canManageExtensions,
+	extensionsDisabled,
 	getExtensionsCatalog,
 	getHubExtension,
 	getHubReleasePermissions,
