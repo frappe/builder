@@ -9,6 +9,7 @@
  * - `data/`: the methods that read or change site records.
  * - `components/`: the frames, the dialogs and the popover that the runtime shows.
  * - `devExtension.ts`: the extension from a dev server, for this session.
+ * - `permissionClasses.ts`: the words that a user sees for each permission.
  *
  * The installed list is a resource, so it is in `@/data/extensions.ts`.
  * This is a module, not a store, because registry modules import it.

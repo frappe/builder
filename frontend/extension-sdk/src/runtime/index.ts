@@ -20,6 +20,7 @@ import {
 	contextMenu,
 	data,
 	leftPanel,
+	open,
 	page,
 	properties,
 	schema,
@@ -62,6 +63,13 @@ const builder = {
 	popover: {
 		register: (entry: SlotEntry) => registerSlot("popover", entry),
 	},
+
+	/**
+	 * What the Open button in the details pane of this extension opens. It is a
+	 * popover, a dialog or the left panel tab of the extension. With no target,
+	 * the pane shows no button.
+	 */
+	open,
 
 	/** One tab. The entry frame registers it, and the host shows it (Tier C). */
 	leftPanel,

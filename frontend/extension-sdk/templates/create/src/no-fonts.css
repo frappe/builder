@@ -1,0 +1,4 @@
+/*
+ * Builder already loads Inter. Keeping this file empty prevents frappe-ui from
+ * embedding the same fonts in the extension bundle.
+ */

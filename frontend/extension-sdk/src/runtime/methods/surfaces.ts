@@ -1,5 +1,6 @@
 /** The registrations of the left panel, the toolbar, the context menu, properties and settings. */
 
+import type { OpenTarget } from "../../shared/types";
 import { registerSlot } from "../slots";
 import { resolveAction, type ActionRef } from "./actions";
 import { call, callFromEntryOnly } from "./call";
@@ -115,6 +116,18 @@ export const leftPanel = {
 	},
 	unregister: (name: string) => call("leftPanel.unregister", { name }),
 	update: (name: string, patch: ItemPatch) => call("leftPanel.update", { name, patch }),
+};
+
+/**
+ * What the Open button in the details pane of the extension does.
+ *
+ * It is a registration, not a slot. `kind` names a UI that the extension
+ * registered in a different call. Builder opens it. With no target, the pane
+ * shows no button.
+ */
+export const open = {
+	register: (target: OpenTarget) => callFromEntryOnly("open.register", target),
+	unregister: () => call("open.unregister"),
 };
 
 export const toolbar = {

@@ -18,7 +18,7 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 const MAX_CACHED = 300;
 const rendered = new Map<string, string>();
 
-/** Markdown → sanitized HTML for AI chat messages (editor panel + dashboard chat). */
+/** Markdown → sanitized HTML for AI chat messages (editor panel + dashboard chat) and an extension's README. */
 export function renderMarkdown(content: string): string {
 	const html = rendered.get(content) ?? sanitize(content);
 	rendered.delete(content);

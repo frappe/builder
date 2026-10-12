@@ -2,7 +2,9 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
+import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
+import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -89,4 +91,12 @@ leftPanelTabs.registerBuiltIn({
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
 	component: defineAsyncComponent(() => import("@/components/BuilderAIChatPanel.vue")),
 	shortcut: "Mod+Shift+O",
+});
+
+leftPanelTabs.registerBuiltIn({
+	name: "Extensions",
+	label: "Extensions",
+	icon: "lucide-plug",
+	component: ExtensionsTab,
+	condition: () => !extensionsDisabled.value,
 });

@@ -13,7 +13,8 @@
 				slot="main"
 				:request-handler="requestHandlerFor(extension)"
 				@connect="(channel) => connectEntryFrame(extension, channel)"
-				@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
+				@disconnect="(channel) => disconnectExtension(extension.name, channel)"
+				@ready="markEntryFrameReady(extension.name)" />
 		</div>
 
 		<!-- part of the editor, not of an extension. A user loads an extension with it -->
@@ -44,6 +45,7 @@ import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, requestHandlerFor, teardownExtension } from "@/extensions";
+import { markEntryFrameReady, waitForEntryFrame } from "@/extensions/bridge/entryFrames";
 import useBuilderStore from "@/stores/builderStore";
 import type { PortChannel } from "frappe-builder-extension-sdk/transport";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
@@ -69,6 +71,7 @@ onUnmounted(() => {
 const connectEntryFrame = (extension: InstalledExtension, channel: PortChannel) => {
 	teardownExtension(extension.name);
 	connectExtension(extension.name, channel);
+	waitForEntryFrame(extension.name);
 };
 
 /**
