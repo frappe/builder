@@ -84,13 +84,13 @@
 		<CodeEditor
 			:modelValue="websiteSettings.doc?.robots_txt"
 			type="Python"
-			height="200px"
+			height="120px"
+			fixed-height
 			label="robots.txt"
 			:autofocus="false"
-			:showSaveButton="true"
 			:show-line-numbers="true"
 			:description="robotsDescription"
-			@save="(val: string) => websiteSettings.setValue.submit({ robots_txt: val })" />
+			@update:modelValue="(val: string) => websiteSettings.setValue.submit({ robots_txt: val })" />
 	</div>
 </template>
 <script setup lang="ts">
