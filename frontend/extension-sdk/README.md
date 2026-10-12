@@ -143,17 +143,6 @@ The first release and repository need Builder Hub review. For a later release, u
 `manifest.json`, commit it, and push the exact version tag. Builder Hub detects and
 validates the new GitHub release without another listing submission.
 
-## Agent skill
-
-The package ships a skill for Claude Code and other agents. It holds the workflow, and
-the whole API as a reference file.
-
-```sh
-cp -R node_modules/frappe-builder-extension-sdk/skills/build-builder-extension ~/.claude/skills/
-```
-
-Then ask the agent for a Builder extension.
-
 ## Versions
 
 The SDK remains on `0.x` while its authoring API stabilizes. The extension
