@@ -68,7 +68,8 @@ export function useCommandMenu(prompt: Ref<string>) {
 	let draft = "";
 
 	async function open(next: MenuLevel) {
-		if (!stack.value.length) draft = prompt.value.startsWith("/") ? "" : prompt.value;
+		// only the "/model" being run is spent; a draft that merely starts with a slash is kept
+		if (!stack.value.length) draft = rootItems.value.length ? "" : prompt.value;
 		stack.value = [...stack.value, next];
 		await enter();
 	}
@@ -88,8 +89,9 @@ export function useCommandMenu(prompt: Ref<string>) {
 
 	function close() {
 		stopLevel?.();
-		// inside a level the composer text was the menu's filter, never a prompt
-		if (stack.value.length || prompt.value.startsWith("/")) prompt.value = draft;
+		// inside a level the composer text was the menu's filter, and at the root a command;
+		// anything else is the user's own draft and stays
+		if (stack.value.length || rootItems.value.length) prompt.value = draft;
 		draft = "";
 		stack.value = [];
 		items.value = [];
