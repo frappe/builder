@@ -134,6 +134,13 @@ class TestExtensionSchema(FrappeTestCase):
 
 		self.assertIn("title", [field.fieldname for field in frappe.get_meta(NAME).fields])
 
+	def test_update_adds_a_layout_break_without_a_fieldname(self):
+		self.create()
+
+		update_doctype("acme/schema", NAME, [{"fieldtype": "Section Break"}, a_field(fieldname="note")])
+
+		self.assertIn("Section Break", [field.fieldtype for field in frappe.get_meta(NAME).fields])
+
 	def test_update_changes_a_field_already_there(self):
 		self.create()
 

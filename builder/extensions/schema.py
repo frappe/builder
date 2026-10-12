@@ -161,7 +161,8 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 	existing = {row.fieldname: row for row in document.fields}
 
 	for row in read_fields(fields):
-		found = existing.get(row["fieldname"])
+		# a layout break may come without a fieldname, so it is always a new field
+		found = existing.get(row.get("fieldname"))
 		if found:
 			found.update(row)
 		else:
