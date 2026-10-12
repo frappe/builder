@@ -37,6 +37,11 @@ const frameSize = (params: unknown): FrameSize => {
 };
 
 export type OpenFrame = {
+	/**
+	 * New for each open call. The host component keys the frame by it. So a second
+	 * open loads a new frame, which gets the new props in its handshake.
+	 */
+	id: number;
 	title: string;
 	/** Set only by a surface with a size. A dialog has none, because nothing reads it. */
 	size?: FrameSize;
@@ -61,6 +66,8 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 
 	/** The extensions that already have a teardown hook. So a second open adds no second hook. */
 	const hooked = new Set<string>();
+
+	let opened = 0;
 
 	/**
 	 * Resolves the waiting call, and removes the frame.
@@ -94,6 +101,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	const start = (params: unknown, extension: InstalledExtension) => {
 		const sent = fields(params);
 		const frame: OpenFrame = {
+			id: ++opened,
 			title: optionalText(sent.title, "title") ?? extension.label,
 			...(sized && { size: frameSize(sent) }),
 			props: markRaw(fields(sent.props)),

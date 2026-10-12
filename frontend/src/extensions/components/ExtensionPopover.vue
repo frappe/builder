@@ -27,6 +27,7 @@
 			<!-- an iframe takes the pointer events. So it stops events during a drag -->
 			<div class="h-full" :class="pointerBusy && 'pointer-events-none'">
 				<ExtensionFrame
+					:key="popover.id"
 					:extension="extension.name"
 					v-bind="{ slot: 'popover' }"
 					:initialProps="popover.props"
