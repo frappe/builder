@@ -2,7 +2,7 @@
  * Reads and changes blocks.
  */
 
-import type Block from "@/block";
+import Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { nextTick } from "vue";
@@ -115,6 +115,13 @@ type PlannedBlock = ReturnType<typeof readChanges> & {
 	children: PlannedBlock[];
 };
 
+/** The canvas keeps text, images and inputs as leaves. A child of one would not show. */
+const assertCanHaveChildren = (block: Block) => {
+	if (!block.canHaveChildren()) {
+		throw refuse(`A <${block.getElement()}> block cannot have children.`, "invalid_params");
+	}
+};
+
 const readChildren = (value: unknown) => {
 	if (value === undefined) return [];
 	if (!Array.isArray(value)) throw refuse(`"block.children" must be a list.`, "invalid_params");
@@ -143,12 +150,11 @@ const planTree = (value: unknown): PlannedBlock => {
 		if (key && keys.has(key)) throw refuse(`Two blocks share the key "${key}".`, "invalid_params");
 		if (key) keys.add(key);
 
-		return {
-			element,
-			key,
-			...readChanges(wanted, element, "block."),
-			children: readChildren(wanted.children).map((child) => plan(child, depth + 1)),
-		};
+		const changes = readChanges(wanted, element, "block.");
+		const children = readChildren(wanted.children);
+		if (children.length) assertCanHaveChildren(new Block({ element, innerHTML: changes.innerHTML }));
+
+		return { element, key, ...changes, children: children.map((child) => plan(child, depth + 1)) };
 	};
 
 	return plan(value, 1);
@@ -229,6 +235,7 @@ const keepingSelection = <T>(build: () => T): T => {
 const insert = (params: unknown) => {
 	const sent = fields(params);
 	const parent = findBlock(text(sent.parentId, "parentId"));
+	assertCanHaveChildren(parent);
 	const index = sent.index === undefined ? undefined : wholeNumber(sent.index, "index");
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
