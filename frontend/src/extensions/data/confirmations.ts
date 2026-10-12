@@ -37,11 +37,21 @@ export const answerPrompt = (allowed: boolean) => {
 /** The extensions that already have a teardown hook. So a second question adds no second hook. */
 const hooked = new Set<string>();
 
+/**
+ * How many times each extension stopped. A queued question keeps the count from
+ * when it was asked. If the count changed, the extension stopped, so the
+ * question gets no without a dialog. A restarted extension can still ask.
+ */
+const stops = new Map<string, number>();
+
+const stopCount = (extension: string) => stops.get(extension) ?? 0;
+
 const hookTeardown = (extension: InstalledExtension) => {
 	if (hooked.has(extension.name)) return;
 	hooked.add(extension.name);
 	bridge.registerTeardown(extension.name, () => {
 		hooked.delete(extension.name);
+		stops.set(extension.name, stopCount(extension.name) + 1);
 		// remove the prompt when its extension stops. Otherwise it asks for an extension that is gone
 		if (pendingPrompt.value?.extension.name === extension.name) answerPrompt(false);
 	});
@@ -77,5 +87,8 @@ const ask = (request: ExtensionPrompt) =>
  */
 export const confirmSchema = (extension: InstalledExtension, doctype: string, act: SchemaAct) => {
 	hookTeardown(extension);
-	return enqueue(() => ask({ extension, doctype, act }));
+	const asked = stopCount(extension.name);
+	return enqueue(() =>
+		stopCount(extension.name) === asked ? ask({ extension, doctype, act }) : Promise.resolve(false),
+	);
 };
