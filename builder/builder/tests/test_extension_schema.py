@@ -14,6 +14,7 @@ from builder.extensions.schema import (
 )
 
 NAME = "Sample Widget"
+RENAMED = "Sample Gadget"
 
 
 def make_extension(name="acme/schema", **kwargs):
@@ -34,8 +35,9 @@ def clean_up():
 	record this file makes has to be removed by hand. A resource row outlives an
 	uninstall now, so it goes separately.
 	"""
-	if frappe.db.exists("DocType", NAME):
-		frappe.delete_doc("DocType", NAME, force=True)
+	for doctype in (NAME, RENAMED):
+		if frappe.db.exists("DocType", doctype):
+			frappe.delete_doc("DocType", doctype, force=True)
 	for name in EXTENSIONS:
 		drop_installations(name)
 		frappe.db.delete("Builder Extension Resource", {"extension": name})
@@ -167,3 +169,21 @@ class TestExtensionSchema(FrappeTestCase):
 		self.create()
 
 		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])
+
+	def test_the_old_maker_does_not_own_a_new_doctype_with_the_same_name(self):
+		"""Frappe runs no hook when a DocType is deleted in Desk, so the old row stays."""
+		self.create()
+		frappe.delete_doc("DocType", NAME)
+		make_extension("acme/other")
+		create_doctype("acme/other", NAME, [a_field()])
+
+		self.assertRaises(
+			frappe.PermissionError, update_doctype, "acme/schema", NAME, [a_field(fieldname="note")]
+		)
+
+	def test_ownership_follows_a_rename(self):
+		self.create()
+
+		frappe.rename_doc("DocType", NAME, RENAMED, force=True)
+
+		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": RENAMED, "exists": True}])

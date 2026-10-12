@@ -7,7 +7,8 @@
  "field_order": [
   "extension",
   "resource_type",
-  "resource_name"
+  "resource_name",
+  "resource_created"
  ],
  "fields": [
   {
@@ -39,12 +40,20 @@
    "label": "Resource Name",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "description": "The creation time of the record. A new record with the same name does not match it.",
+   "fieldname": "resource_created",
+   "fieldtype": "Datetime",
+   "label": "Resource Created",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-21 10:00:00.000000",
+ "modified": "2026-10-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension Resource",

@@ -187,7 +187,7 @@ def list_doctypes(extension: str) -> list[dict]:
 	assert_extension_access(extension, "schema.write")
 
 	names = list_resources(extension, "DocType")
-	return [{"doctype": name, "exists": bool(frappe.db.exists("DocType", name))} for name in names]
+	return [{"doctype": name, "exists": bool(find_resource(extension, "DocType", name))} for name in names]
 
 
 def read_doctype_name(doctype: str) -> str:
