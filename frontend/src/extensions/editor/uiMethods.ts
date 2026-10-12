@@ -33,8 +33,8 @@ const showToast = (params: unknown) => {
 };
 
 /** `ExtensionDialog.vue` and `ExtensionPopover.vue` read this. */
-export const openDialogs = dialog.open;
-export const openPopovers = popover.open;
+export const openDialogs = dialog.openFrames;
+export const openPopovers = popover.openFrames;
 
 export const dismissDialog = dialog.dismiss;
 export const dismissPopover = popover.dismiss;
@@ -43,8 +43,8 @@ export const uiMethods: MethodTable = {
 	// the bridge rate limits toasts. They need no permission, because they do not change the editor state
 	"ui.toast": { needs: null, run: showToast },
 	// a window changes nothing that a user saves, so it needs no permission
-	"ui.openDialog": { needs: null, run: dialog.start },
-	"ui.closeDialog": { needs: null, run: dialog.finish },
-	"ui.openPopover": { needs: null, run: popover.start },
-	"ui.closePopover": { needs: null, run: popover.finish },
+	"ui.openDialog": { needs: null, run: dialog.open },
+	"ui.closeDialog": { needs: null, run: dialog.close },
+	"ui.openPopover": { needs: null, run: popover.open },
+	"ui.closePopover": { needs: null, run: popover.close },
 };

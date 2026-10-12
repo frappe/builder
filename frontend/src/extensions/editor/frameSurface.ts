@@ -59,7 +59,7 @@ export type OpenFrame = {
 /** `sized` lets the extension give the start size of the frame. Only the popover uses it. */
 export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	/** The host component reads this. It is reactive, because an open call must show the frame. */
-	const open = reactive(new Map<string, OpenFrame>());
+	const openFrames = reactive(new Map<string, OpenFrame>());
 
 	/** Not in the reactive map. Nothing shows a resolver. */
 	const waiting = new Map<string, (result: unknown) => void>();
@@ -79,7 +79,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	const settle = (extension: string, result: unknown) => {
 		waiting.get(extension)?.(result);
 		waiting.delete(extension);
-		open.delete(extension);
+		openFrames.delete(extension);
 	};
 
 	/** The host calls this when the user closes the frame. */
@@ -98,7 +98,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 	 * A second call replaces the first. The caller of the first call gets nothing.
 	 * It does not wait for a frame that is gone.
 	 */
-	const start = (params: unknown, extension: InstalledExtension) => {
+	const open = (params: unknown, extension: InstalledExtension) => {
 		const sent = fields(params);
 		const frame: OpenFrame = {
 			id: ++opened,
@@ -108,18 +108,18 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 		};
 
 		settle(extension.name, undefined);
-		open.set(extension.name, frame);
+		openFrames.set(extension.name, frame);
 		hookTeardown(extension.name);
 
 		return new Promise((resolve) => waiting.set(extension.name, resolve));
 	};
 
-	const finish = (params: unknown, extension: InstalledExtension) => {
-		if (!open.has(extension.name)) {
+	const close = (params: unknown, extension: InstalledExtension) => {
+		if (!openFrames.has(extension.name)) {
 			throw refuse(`"${extension.name}" has no open ${kind} to close.`, "unknown_item");
 		}
 		settle(extension.name, fields(params).result);
 	};
 
-	return { open, start, finish, dismiss };
+	return { openFrames, open, close, dismiss };
 };
