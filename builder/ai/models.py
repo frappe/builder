@@ -169,7 +169,11 @@ class GatewayListing:
 		)
 		if any(frappe.cache.get_value(cls.cache_key(name)) is None for name in names):
 			frappe.enqueue(
-				sync_stale_gateways, queue="short", job_id="builder_ai_gateway_sync", deduplicate=True
+				sync_stale_gateways,
+				queue="short",
+				job_id="builder_ai_gateway_sync",
+				deduplicate=True,
+				enqueue_after_commit=True,
 			)
 
 	@classmethod
