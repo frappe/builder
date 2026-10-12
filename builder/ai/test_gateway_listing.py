@@ -131,3 +131,11 @@ class TestGatewayListing(FrappeTestCase):
 		reply.json.return_value = {"balance": 2, "spent": "n/a"}
 		with patch("builder.ai.models.requests.get", return_value=reply):
 			self.assertEqual(GatewayListing(self.provider).credits(), {"balance": 2, "spent": None})
+
+	def test_deleting_a_provider_takes_its_models_along(self):
+		from builder.ai.api import delete_ai_provider
+
+		self.sync("vendor/chat-a", "vendor/chat-b")
+		delete_ai_provider(PROVIDER)
+		self.assertFalse(frappe.db.exists("Builder AI Provider", PROVIDER))
+		self.assertFalse(frappe.db.count("Builder AI Model", {"provider": PROVIDER}))

@@ -108,7 +108,7 @@ async function toggleProvider(ctx: BobContext, name: string): Promise<MenuStep> 
 }
 
 async function remove(ctx: BobContext, name: string): Promise<MenuStep> {
-	await call("frappe.client.delete", { doctype: "Builder AI Provider", name });
+	await call("builder.ai.api.delete_ai_provider", { provider: name });
 	await ctx.refreshAI();
 	toast.success(`${name} deleted`);
 	return { back: 2 };

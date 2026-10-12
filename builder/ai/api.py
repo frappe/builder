@@ -344,6 +344,15 @@ def import_provider_models(provider: str) -> dict:
 
 
 @frappe.whitelist()
+def delete_ai_provider(provider: str) -> None:
+	"""Delete a provider with its models. A provider refuses to go while models still
+	point at it, so they go first, in the same request."""
+	for model in frappe.get_all("Builder AI Model", filters={"provider": provider}, pluck="name"):
+		frappe.delete_doc("Builder AI Model", model)
+	frappe.delete_doc("Builder AI Provider", provider)
+
+
+@frappe.whitelist()
 def sync_ai_models() -> None:
 	"""Pick up models the gateways added or retired since the last sync."""
 	if frappe.has_permission("Builder AI Model", "create"):
