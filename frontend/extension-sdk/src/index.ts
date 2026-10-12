@@ -4,7 +4,7 @@
  * - `runtime/`: the frame half. Builder serves it to each frame as `extension-sdk.js`.
  * - `shared/`: the types, the manifest rules and the port channel. The host also imports them.
  * - `vue.ts`: the optional Vue helpers, in the bundle of the author.
- * - `../vite.js`: the build plugin, which runs in Node.
+ * - `../vite.js` and `../package.js`: the build plugin and the packager, which run in Node.
  *
  * No extension build reads this file. `vite.js` marks the SDK as external.
  * The import stays in the build output. The import map of the frame shell

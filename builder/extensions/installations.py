@@ -18,8 +18,10 @@ from builder.extensions.access import (
 	INSTALLATION_DOCTYPE,
 	assert_extension_manager,
 	find_installation,
+	is_extension_manager,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
+from builder.extensions.resources import find_resource, list_resources
 from builder.utils import has_page_read
 
 NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
@@ -48,6 +50,13 @@ def is_turned_off(row: dict) -> bool:
 	return not row.enabled and row.install_state in (None, "", "Ready")
 
 
+@frappe.whitelist()
+@has_page_read(NO_BUILDER_ACCESS)
+def can_manage_extensions() -> bool:
+	"""Lets the panel hide what the server would refuse."""
+	return is_extension_manager()
+
+
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def set_extension_enabled(extension: str, enabled: bool) -> None:
@@ -71,6 +80,22 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 	installation.granted_permissions = frappe.as_json(permissions)
 	installation.save()
 	return installation.permissions
+
+
+@frappe.whitelist()
+@has_page_read(NO_BUILDER_ACCESS)
+def get_uninstall_summary(extension: str) -> dict:
+	"""What the site keeps when a manager removes the extension.
+
+	A doctype holds the site's data, so uninstalling does not drop it. Naming it
+	here lets a manager read that before they answer.
+	"""
+	get_installation(extension)
+	# a row whose doctype was deleted in Desk no longer matches, and the site keeps nothing for it
+	kept = [
+		name for name in list_resources(extension, "DocType") if find_resource(extension, "DocType", name)
+	]
+	return {"resources": [{"resource_type": "DocType", "count": len(kept)}] if kept else []}
 
 
 @frappe.whitelist(methods=["POST"])

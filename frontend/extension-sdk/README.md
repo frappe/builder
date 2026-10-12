@@ -3,6 +3,25 @@
 The package a Builder extension author installs. It gives you the types, the Vue
 helpers, and the Vite plugin that builds an extension.
 
+## Install
+
+```sh
+npm install --save-dev github:stravo1/frappe-builder-extension-sdk#v0.1.3
+```
+
+## Create an extension
+
+Run the scaffolder directly from GitHub. The SDK does not need to be published
+to npm.
+
+```sh
+npx github:stravo1/frappe-builder-extension-sdk#v0.1.3 create
+```
+
+It creates a TypeScript Vue extension with frappe-ui, Tailwind, a development
+server, an example toolbar popover, release automation, and a Git repository.
+It does not install dependencies. Run the commands it prints when it finishes.
+
 ## Two halves
 
 The SDK has a runtime half and an author half.
@@ -42,12 +61,18 @@ Use the version 1 manifest shape. The build rejects missing and unknown fields.
 	"version": "1.2.0",
 	"entry": "main.js",
 	"icon": "icon.svg",
-	"permissions": []
+	"permissions": ["page.edit"]
 }
 ```
 
 A manifest can name an icon, such as `"icon": "icon.svg"`. Put a square SVG of that name beside the
-entry.
+entry. Builder draws it beside the extension in the Extensions panel.
+
+Put a `README.md` in the extension directory. The installer stores it on the installation, and the
+Extensions panel shows it.
+
+The panel also lists every permission the manifest asks for, and the user can turn one off. A
+permission the user turned off is refused the way one you never asked for is.
 
 ## Write against the editor
 
@@ -68,9 +93,10 @@ your button among the extension buttons only.
 A Vue slot uses the `/vue` entry. Register the adapter once, and every slot then takes a component.
 
 ```js
-import { vueAdapter } from "frappe-builder-extension-sdk/vue";
+import { vueAdapter, useBuilderContext } from "frappe-builder-extension-sdk/vue";
 
 builder.use(vueAdapter);
+builder.popover.register({ component: () => import("./Popover.vue") });
 ```
 
 `vue` is an optional peer dependency. Install it only if you write slots in Vue.
@@ -90,6 +116,43 @@ To run a second extension, set `server.port` in its `vite.config.js`.
 
 The plugin sets the asset URLs to `http://localhost:<port>`, or `https://` when `server.https` is
 set. If a plugin turns on HTTPS for you, such as `@vitejs/plugin-basic-ssl`, set `server.origin`.
+
+## Package a release
+
+Builder Hub reads `manifest.json`, `README.md`, and `LICENSE` from the repository root.
+Each release manifest declares its required Builder extension protocol in `v`.
+
+Build, then create the release package:
+
+```sh
+npm run build
+npx builder-extension package
+```
+
+The command validates the repository, manifest, built files, and package limits. A
+package holds `manifest.json`, `main.js` and the optional SVG icon at the root, and the
+build's `chunks/` and `assets/` folders. A relative import must name a file in the package.
+The command writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
+
+Create a GitHub release whose tag is the manifest version with a `v` prefix. For
+example, manifest version `1.2.0` uses tag `v1.2.0`. Copy the workflow shipped at
+`templates/github/workflows/release.yml` to `.github/workflows/release.yml`. It
+supports both pushed tags and releases created on GitHub.
+
+The first release and repository need Builder Hub review. For a later release, update
+`manifest.json`, commit it, and push the exact version tag. Builder Hub detects and
+validates the new GitHub release without another listing submission.
+
+## Agent skill
+
+The package ships a skill for Claude Code and other agents. It holds the workflow, and
+the whole API as a reference file.
+
+```sh
+cp -R node_modules/frappe-builder-extension-sdk/skills/build-builder-extension ~/.claude/skills/
+```
+
+Then ask the agent for a Builder extension.
 
 ## Versions
 

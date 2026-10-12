@@ -10,6 +10,18 @@ import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";
 /** The five documents that an extension can have. The host names one in the handshake. */
 export type ExtensionSlot = "main" | "panel" | "dialog" | "popover" | "settings";
 
+/**
+ * What Builder opens when the user opens this extension from its details pane.
+ *
+ * If an extension declares no target, Builder shows no Open button.
+ * Builder shows the popover or the dialog in its own frame. The user
+ * pressed a button in Builder, and the extension asked for nothing.
+ */
+export type OpenTarget =
+	| { kind: "popover"; width?: number; height?: number }
+	| { kind: "dialog"; title?: string }
+	| { kind: "leftPanel"; name: string };
+
 /** Each permission that the bridge uses to gate a method. The server has the same list. */
 export { PERMISSIONS, PROTOCOL_VERSION };
 

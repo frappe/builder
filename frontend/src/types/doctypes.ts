@@ -43,6 +43,10 @@ export interface BuilderSettings extends DocType {
 	restrict_click_handlers: 0 | 1;
 	/** AI API Key: Password */
 	ai_api_key?: string;
+	/** Hub URL: Data */
+	hub_url?: string;
+	/** Disable Extensions: Check */
+	disable_extensions: 0 | 1;
 }
 
 // Last updated: 2024-11-13 20:08:24.187664

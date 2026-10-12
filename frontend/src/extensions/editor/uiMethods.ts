@@ -39,6 +39,10 @@ export const openPopovers = popover.openFrames;
 export const dismissDialog = dialog.dismiss;
 export const dismissPopover = popover.dismiss;
 
+/** The Open button of the details pane opens a window without a frame call. */
+export const openDialog = dialog.open;
+export const openPopover = popover.open;
+
 export const uiMethods: MethodTable = {
 	// the bridge rate limits toasts. They need no permission, because they do not change the editor state
 	"ui.toast": { needs: null, run: showToast },

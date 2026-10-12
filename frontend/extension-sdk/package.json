@@ -9,9 +9,17 @@
 		"directory": "frontend/extension-sdk"
 	},
 	"type": "module",
+	"bin": {
+		"builder-extension": "./bin/builder-extension.js"
+	},
 	"files": [
+		"bin",
+		"create.js",
 		"dist",
+		"package.js",
 		"src",
+		"skills",
+		"templates",
 		"vite.js",
 		"README.md"
 	],
@@ -43,6 +51,7 @@
 	},
 	"scripts": {
 		"build": "vite build && tsc -p tsconfig.build.json",
+		"package:extension": "node ./bin/builder-extension.js package",
 		"prepare": "npm run build"
 	},
 	"peerDependencies": {

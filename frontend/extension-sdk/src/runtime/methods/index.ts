@@ -22,6 +22,7 @@ export { schema, type Doctype, type Naming, type SchemaField } from "./schema";
 export {
 	contextMenu,
 	leftPanel,
+	open,
 	properties,
 	settings,
 	toolbar,

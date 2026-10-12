@@ -73,7 +73,8 @@ const read = async (origin: string) => {
  * gate as an installed extension. Without it, Builder refuses each call.
  *
  * The server returns the granted permissions. This entry keeps that list.
- * So the browser gate and the server gate read the same list.
+ * So the browser gate and the server gate read the same list. A change in
+ * the panel then reaches the browser and the server.
  *
  * If the site already installed the extension, it keeps that installation.
  * The server returns its permissions. It does not make a second record.
@@ -82,6 +83,11 @@ const install = (extension: string, permissions: Permission[]) =>
 	call(INSTALL_METHOD, { extension, permissions }).catch(() => {
 		throw new Error(`Builder could not register "${extension}". Is the site in developer mode?`);
 	}) as Promise<Permission[]>;
+
+/** Copies a permission change from the panel to the entry that the browser gate reads. */
+export const setDevPermissions = (extension: string, permissions: Permission[]) => {
+	if (devExtension.value?.name === extension) devExtension.value.permissions = permissions;
+};
 
 const remove = (extension: InstalledExtension) =>
 	call(REMOVE_METHOD, { extension: extension.name }).catch((error: Error) =>
@@ -109,4 +115,10 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 		permissions: granted,
 	};
 	return devExtension.value;
+};
+
+/** The Stop button in the Extensions panel. Closing the tab does not call this, so another tab keeps the record. */
+export const stopDevExtension = () => {
+	if (devExtension.value) void remove(devExtension.value);
+	devExtension.value = null;
 };
