@@ -25,6 +25,7 @@ sha256. A local Hub can still be plain HTTP, but its URL must say so.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass
 
@@ -152,32 +153,39 @@ def read_release(name: str, release: dict) -> Release:
 
 def hub_get(hub_url: str, method: str, params: dict) -> dict:
 	"""One GET to a Builder Hub API method. Answers with its `message` payload."""
+	url = f"{hub_url}/{HUB_API}.{method}"
+	too_large = _("The Hub sent more than a release listing should need.")
 	try:
-		response = requests.get(f"{hub_url}/{HUB_API}.{method}", params=params, timeout=HUB_TIMEOUT)
+		with requests.get(url, params=params, timeout=HUB_TIMEOUT, stream=True) as response:
+			content = read_capped(response, MAX_METADATA_BYTES, too_large)
 	except requests.RequestException:
 		frappe.throw(_("Could not reach the Builder Hub at {0}.").format(hub_url))
 
 	if not response.ok:
-		frappe.throw(hub_error(response))
-	if len(response.content) > MAX_METADATA_BYTES:
-		frappe.throw(_("The Hub sent more than a release listing should need."))
-
-	body = response.json()
+		frappe.throw(hub_error(content, response.status_code))
+	body = parse_hub_json(content)
 	if not isinstance(body, dict) or not isinstance(body.get("message"), dict):
 		frappe.throw(_("The Hub response was not in the form Builder expects."))
 	return body["message"]
 
 
-def hub_error(response: requests.Response) -> str:
+def parse_hub_json(content: bytes) -> object:
+	try:
+		return json.loads(content)
+	except ValueError:
+		frappe.throw(_("The Hub response was not in the form Builder expects."))
+
+
+def hub_error(content: bytes, status_code: int) -> str:
 	"""The Hub's own message for a failed call. A Frappe Hub carries one; fall back
 	to the status line when it does not."""
 	try:
-		messages = frappe.parse_json(response.json().get("_server_messages") or "[]")
+		messages = frappe.parse_json(json.loads(content).get("_server_messages") or "[]")
 		if messages:
 			return frappe.parse_json(messages[0]).get("message") or str(messages[0])
 	except (ValueError, TypeError, AttributeError):
 		pass
-	return _("The Builder Hub returned an error ({0}).").format(response.status_code)
+	return _("The Builder Hub returned an error ({0}).").format(status_code)
 
 
 def download_package(release: Release) -> bytes:
@@ -185,13 +193,14 @@ def download_package(release: Release) -> bytes:
 
 	Stops the stream past the release `package_size`, and refuses a download
 	whose sha256 does not match `release.package_sha256`. `package_url` is not
-	address-checked yet, for the same reason `resolve_hub_url` is not.
+	address-checked, because the sha256 from the Hub proves the bytes.
 	"""
 	try:
 		with requests.get(release.package_url, timeout=PACKAGE_TIMEOUT, stream=True) as response:
 			if not response.ok:
 				frappe.throw(_("The package download failed ({0}).").format(response.status_code))
-			package_bytes = read_capped(response, release.package_size)
+			too_large = _("The extension package is larger than its release says.")
+			package_bytes = read_capped(response, release.package_size, too_large)
 	except requests.RequestException:
 		frappe.throw(_("Could not download the extension package."))
 
@@ -200,14 +209,14 @@ def download_package(release: Release) -> bytes:
 	return package_bytes
 
 
-def read_capped(response: requests.Response, limit: int) -> bytes:
+def read_capped(response: requests.Response, limit: int, too_large: str) -> bytes:
 	"""Every byte of the stream, or a refusal the moment it passes `limit`."""
-	package_bytes = bytearray()
+	content = bytearray()
 	for chunk in response.iter_content(PACKAGE_CHUNK_BYTES):
-		package_bytes.extend(chunk)
-		if len(package_bytes) > limit:
-			frappe.throw(_("The extension package is larger than its release says."))
-	return bytes(package_bytes)
+		content.extend(chunk)
+		if len(content) > limit:
+			frappe.throw(too_large)
+	return bytes(content)
 
 
 @frappe.whitelist(methods=["POST"])
