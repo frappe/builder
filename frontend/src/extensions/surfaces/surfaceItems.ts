@@ -1,13 +1,6 @@
 /**
- * The record keeping that each surface needs. It records which extension
- * registered an item, with which key. It also removes the item.
- *
- * A surface keeps only its own parts. These are how to read a registration,
- * how to merge a patch, and which descriptor goes to the registry.
- *
- * `update` merges and registers again. `createRegistry.ts` keeps a copy of each
- * item. So a change to a value in a different place does not show. A second
- * registration keeps the position of the item.
+ * The record keeping that each surface needs. It records which extension registered an item,
+ * with which key. It also removes the item.
  */
 
 import type { RegistryEntry, createRegistry } from "@/utils/createRegistry";

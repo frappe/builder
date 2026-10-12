@@ -1,13 +1,5 @@
 /**
  * The rule that an extension declares, and the matcher that the host runs when it renders.
- *
- * A `condition` runs in a computed. It must answer at once. An extension runs
- * in a different realm, where each answer is asynchronous. So the extension
- * gives a rule about the host state, and the host checks the rule.
- *
- * The host owns the keys. Each key names a field of the snapshot. So an
- * author sees the same name in both places. Add keys one at a time. It is easy
- * to add a key later. It is difficult to remove one.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";

@@ -1,14 +1,5 @@
 /**
- * Tier B. A section in the right panel, from a list of controls that the
- * extension sends as data. `controlSchema.ts` shows each control with Builder
- * components. So the section looks the same as the built-in sections.
- *
- * The section header shows `label`, not the registry name. The host makes each
- * name as `extension:name`, and the user must not see that.
- *
- * No method here needs a permission. A section with no bound control writes
- * nothing. So the permission belongs to the controls. `readControls` checks it
- * on both ways into that list.
+ * Shows extension controls in a right panel section.
  */
 
 import { propertySections, type PropertySection } from "@/components/BlockPropertySections";

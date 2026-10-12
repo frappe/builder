@@ -1,8 +1,5 @@
 /**
- * The words that the host and the SDK both use.
- *
- * Domain types come first. Then come the shapes that go through a port.
- * `transport/messages.ts` has the checks for these shapes.
+ * Shared types for the extension host and SDK.
  */
 
 import { PERMISSIONS, PROTOCOL_VERSION } from "./manifest.js";

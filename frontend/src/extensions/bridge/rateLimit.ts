@@ -1,10 +1,5 @@
 /**
  * A message budget for each extension.
- *
- * An extension in a loop can send too many messages and stop the editor. The
- * budget refuses a call over the limit. It does not queue the call. So each
- * extra message costs only one check. The extension can send again in the
- * next window.
  */
 
 /** Startup sends a few calls. A loop sends thousands. So this limit does not stop startup. */

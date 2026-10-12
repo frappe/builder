@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One extension installed on this site, with its build, version and permissions. Deleting it removes its files and extension state, but keeps any doctype, token or client script the extension made.",
+ "description": "One extension installed on this site, with its version and permissions.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [

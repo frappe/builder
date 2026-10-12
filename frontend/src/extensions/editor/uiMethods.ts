@@ -1,17 +1,5 @@
 /**
  * The two frame windows that the host shows for an extension.
- *
- * The host owns the window. So all extension dialogs and popovers look the
- * same. The extension owns only the document inside.
- *
- * `open` and `close` come on the ports of different frames. One frame asks,
- * and the frame that the host opens answers. The host cannot know which frame
- * called. So the key is the extension, because an extension has only one of
- * each at a time.
- *
- * A dialog is modal and covers the editor. A popover is beside the editor, and
- * the user can edit while it is open. Neither needs a permission. Both end in
- * the same way, and `frameSurface.ts` has that code.
  */
 
 import { toast } from "frappe-ui";

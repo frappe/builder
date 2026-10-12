@@ -1,9 +1,5 @@
 /**
  * The gate for each method that a frame calls.
- *
- * The functions here are pure. The bridge keeps the record and gives it to
- * them. So no code here reads a resource or keeps state. The permission keys
- * are in the SDK types, with the names that the SDK reads.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";

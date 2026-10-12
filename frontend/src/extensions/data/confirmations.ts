@@ -1,9 +1,5 @@
 /**
  * The question that Builder asks before an extension makes or removes a doctype.
- *
- * Each question names one act. It records nothing, because there is no lasting
- * permission. The next act asks again. The Frappe permission still decides if
- * this user can do the act. No call here gives more access.
  */
 
 import { ref } from "vue";

@@ -1,18 +1,5 @@
 /**
- * The host side of extensions. This file makes the method table and exports
- * the bridge API to the editor.
- *
- * - `bridge/`: the gate for each call from a frame. Permissions, rate limit, parameter checks.
- * - `context/`: the editor snapshot, the `showWhen` rules, and the context methods.
- * - `surfaces/`: the items that an extension adds to the editor UI.
- * - `editor/`: the methods that read or change blocks, pages and state.
- * - `data/`: the methods that read or change site records.
- * - `components/`: the frames, the dialogs and the popover that the runtime shows.
- * - `devExtension.ts`: the extension from a dev server, for this session.
- * - `permissionClasses.ts`: the words that a user sees for each permission.
- *
- * The installed list is a resource, so it is in `@/data/extensions.ts`.
- * This is a module, not a store, because registry modules import it.
+ * Exports the extension method table and bridge API to the editor.
  */
 
 import useBuilderStore from "@/stores/builderStore";

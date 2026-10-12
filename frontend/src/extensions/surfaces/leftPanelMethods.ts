@@ -1,8 +1,5 @@
 /**
- * One left panel tab for each extension, shown as a frame (Tier C).
- *
- * The registry gets the same object shape as a built-in tab. So
- * `BuilderLeftPanel.vue` needs no code about extensions.
+ * Shows each extension's left panel tab in a frame.
  */
 
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";

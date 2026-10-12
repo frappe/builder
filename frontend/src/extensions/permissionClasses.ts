@@ -1,12 +1,5 @@
 /**
  * What a permission means to the user who approves it.
- *
- * The bridge reads a permission as a key. A user reads it as a sentence. So
- * the words are here, and the gate keeps the key. Each class groups
- * permissions by how far their effect goes, not by the methods they allow.
- *
- * Two classes go past this editor session, so they are sensitive. A doctype
- * has the data of the site, and a token styles each published page.
  */
 
 import type { Permission } from "frappe-builder-extension-sdk/types";

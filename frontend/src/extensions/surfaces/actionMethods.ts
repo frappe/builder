@@ -1,18 +1,5 @@
 /**
  * Actions are the functions of an extension. The host calls them.
- *
- * A descriptor cannot send a function through `postMessage`. So an extension
- * names an action, and the host changes that name into a function. The handler
- * stays in the frame. This is the only place where the host calls the
- * extension. In all other places, the extension calls the host.
- *
- * Each action belongs to the extension that registered it. There is no shared
- * namespace. No extension can run the action of a different extension.
- *
- * Only the entry frame must register an action. A different frame can close
- * while a descriptor still shows the action. The host cannot know which frame
- * called. So the SDK makes the check, because it knows the slot. The origin
- * check uses the same approach.
  */
 
 import { toast } from "frappe-ui";

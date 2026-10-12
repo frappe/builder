@@ -1,13 +1,5 @@
 /**
  * The methods that read or change the state of the editor, as one method table.
- *
- * - `blockMethods.ts`: read, change, add and remove blocks.
- * - `pageMethods.ts`: the block tree of the page.
- * - `stateMethods.ts`: the saved state of an extension, for each user.
- * - `uiMethods.ts`: toasts, dialogs and popovers.
- * - `frameSurface.ts`: the shared state of a dialog or a popover frame.
- *
- * Block writes need the `page.edit` permission. Reads, state and windows need none.
  */
 
 import type { MethodTable } from "../bridge/permissions";

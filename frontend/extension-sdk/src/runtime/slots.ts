@@ -1,16 +1,5 @@
 /**
  * The five slot entries of an extension, and the code that runs the slot of this frame.
- *
- * The slot names are fixed. The author does not choose them.
- *
- * Each frame imports the same entry module. So all five registrations run in
- * each frame. The frame then runs only the slot that the handshake named. The
- * frame learns its slot after it reads the module. So one module serves
- * five frames.
- *
- * For the same reason, `main` takes a callback and the other slots take
- * `{ component }`. The entry module always runs. So `main` must wait for its own
- * frame. The module of a slot must not run in a frame for a different slot.
  */
 
 import type { ExtensionSlot } from "../shared/types";

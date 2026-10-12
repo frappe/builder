@@ -1,12 +1,5 @@
 /**
  * The live state of Builder, with only the fields that an extension can read.
- *
- * It is a computed. So the 23 context menu items that read it in one render
- * share one result. Also, `contextMethods.ts` can watch it and keep no second copy.
- *
- * The getter gets the stores. A registry module must not import Vue SFC scope.
- * A store that loads at import time makes this module depend on the load order
- * of the editor.
  */
 
 import type Block from "@/block";

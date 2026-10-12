@@ -1,17 +1,5 @@
 /**
  * An extension from the dev server of its author. It runs only in this session.
- *
- * It has no files. The editor asks the dev server what it serves. Then the
- * editor adds one entry to the installed list. The rest of the host reads only
- * that list. So the entry frame, the surfaces, the request handler and the teardown
- * do not know that the extension is not installed.
- *
- * A reload removes it. A user must load it on purpose. An old dev extension
- * that fails to load looks like a Builder error. The editor keeps the last URL,
- * so the user does not type it again.
- *
- * Closing the tab keeps the installation. It belongs to the site, so another
- * tab can run the same extension. The next load refreshes it.
  */
 
 import { PERMISSIONS, type Permission, type InstalledExtension } from "frappe-builder-extension-sdk/types";

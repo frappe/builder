@@ -1,18 +1,5 @@
 /**
  * The doctypes that an extension makes while the editor runs.
- *
- * There are three gates:
- * 1. `schema.write` says that a manager let this extension make tables.
- * 2. A confirmation names the doctype when the extension makes or removes it.
- * 3. Frappe needs create permission on `DocType`, which a System Manager has.
- *    So the call fails for a page editor, and that is correct.
- *
- * A record shows the owner, not a naming rule. Only the extension that made a
- * doctype can change or remove it. `data.access` is not sufficient, because
- * to read a table is not the same as to change its shape.
- *
- * These are not page writes. So read-only mode does not refuse them. A table
- * is not the open page.
  */
 
 import type { MethodTable } from "../bridge/permissions";

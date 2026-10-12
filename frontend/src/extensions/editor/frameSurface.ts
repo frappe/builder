@@ -1,12 +1,5 @@
 /**
  * The record keeping that each frame window of the host needs.
- *
- * A dialog and a popover are different only in the window that the host shows
- * around them. One frame opens each of them, and a different frame closes it.
- * The key of both is the extension, and both have the same three endings. So
- * the state is here, one time. `uiMethods.ts` makes one of these for each type.
- *
- * `surfaces/surfaceItems.ts` does the same for the surfaces of an extension.
  */
 
 import { markRaw, reactive } from "vue";

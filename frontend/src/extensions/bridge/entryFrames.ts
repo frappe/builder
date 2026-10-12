@@ -1,13 +1,5 @@
 /**
  * True when the entry frame of an extension finished its first run.
- *
- * The details pane waits for this before it shows the actions. The entry
- * registers the open target. An Open button that comes later would move the
- * other buttons.
- *
- * If the entry import fails, or if `main` throws an error, the frame never
- * sends ready. So the wait has a time limit. A broken extension must still
- * show Disable and Uninstall.
  */
 
 import { reactive } from "vue";

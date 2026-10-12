@@ -1,20 +1,5 @@
 /**
  * The dialog, the popover and the toast, from inside a frame.
- *
- * Two frames take part, and neither knows about the other. One frame asks for
- * a dialog and waits. The host opens the dialog document in a new frame. That
- * frame calls `closeDialog` when it is done. The host then gives its result to
- * the waiting call of the first frame.
- *
- * A popover works the same way, in the `popover` slot. It is not modal. The
- * user can edit while it is open, and can move it. So a caller that needs an
- * answer waits for it. A caller that only opens a panel does not wait.
- *
- * A toast opens no frame and has no result. The host shows it in Builder.
- *
- * The host shows the window around the document. A dialog keeps the size of
- * the host. A popover is a work panel, so it can ask for a size. The user can
- * still change the size.
  */
 
 import { getChannel, getSlotProps } from "./connect";

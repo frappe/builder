@@ -1,16 +1,5 @@
 /**
  * Context menu rows.
- *
- * All other surfaces check their rule against the selection. This surface
- * checks it against the block that the user right-clicked. When more than one
- * block is selected, that block can be different. So the host checks a rule
- * here for each block, when it shows the row under the cursor.
- *
- * `condition` and `disabled` both get the menu context (see `ContextMenu.vue`).
- * So `showWhen` and `enableWhen` use fields that already exist.
- *
- * `menu` is not a condition. It never changes after registration. It names the
- * menu of the row, and the host adds it to the same check.
  */
 
 import { blockContextMenuOptions } from "@/components/BlockContextMenuOptions";

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-08-21 10:00:00.000000",
- "description": "What an extension made. These rows outlive every uninstall, because a doctype holds site data. They name the extension, not its installation, so a later installation owns what an earlier one made.",
+ "description": "Tracks resources an extension made. Records stay after uninstall.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [

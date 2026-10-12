@@ -1,9 +1,5 @@
 /**
  * Makes and checks the messages that go through a port. `../types` has their shapes.
- *
- * The check has two steps. First, it finds the message type. Then, it accepts
- * or refuses the version. The types make sure of this order. The channel can
- * still route a message with an unknown version. So it can answer the message.
  */
 
 import {

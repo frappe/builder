@@ -1,9 +1,5 @@
 /**
- * The one owner of the live state of an extension. This state is its frames,
- * its message budget and the cleanup list for teardown.
- *
- * It is a factory, not a module. `index.ts` keeps the one instance of the
- * editor. A test makes its own instance, with its own method table.
+ * Owns extension frames, message limits, and cleanup actions.
  */
 
 import { ChannelCallError, unknownMethod, type RequestHandler, type PortChannel } from "frappe-builder-extension-sdk/transport";

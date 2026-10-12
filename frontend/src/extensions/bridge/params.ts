@@ -1,8 +1,5 @@
 /**
- * Reads the parameters that a frame sent.
- *
- * Each parameter comes from a different realm as unknown. The host validates
- * all of them. A refusal has a code. So the SDK can act on the code.
+ * Validates parameters from extension frames and returns clear refusal codes.
  */
 
 import { ChannelCallError } from "frappe-builder-extension-sdk/transport";

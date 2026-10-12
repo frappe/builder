@@ -1,15 +1,5 @@
 /**
  * `frappe-builder-extension-sdk`: the object that an extension imports.
- *
- * - `connect.ts`: the handshake, and how the frame runs the extension code.
- * - `methods/`: the `builder.<surface>` APIs.
- * - `slots.ts`: the five slots, and the slot that this frame runs.
- * - `actions.ts`: the action handlers that the host calls.
- * - `ui.ts`: toasts, dialogs and popovers from inside a frame.
- * - `resourceFetcher.ts`: sends frappe-ui resource requests through the bridge.
- *
- * The shell loads this file. The import map gives the same URL to the import
- * of the extension. So both use one module copy and one channel.
  */
 
 import { getChannel, listenForHandshake } from "./connect";

@@ -1,9 +1,6 @@
 /**
  * One `MessagePort` for each extension frame, with three verbs: `call`, `listen` and `emit`.
  * Builder groups the channels of the frames of one extension.
- *
- * The host and the SDK both use this file. Neither side is the client. So
- * this file does not know its side of the channel. It also does not know the methods.
  */
 
 import type { AnyVersionMessage, ChannelError, EventMessage, PortMessage, RequestMessage } from "../types";

@@ -1,20 +1,5 @@
 /**
- * Changes one control, sent as data, into the `BlockProperty` that the right
- * panel shows (Tier B). An extension sends no components and no functions. So
- * only this file knows which Builder control matches which name.
- *
- * Two components make one control. The wrapper decides where the value is
- * stored. The inner widget is what the user uses. The Builder sections use
- * the same design (see `StyleSection.ts`).
- *
- * | `bind`        | wrapper                   | who writes the block   |
- * | attribute     | AttributePropertyControl  | the wrapper, by default |
- * | style         | StylePropertyControl      | the wrapper, by default |
- * | none          | BasePropertyControl       | nobody: the extension acts |
- *
- * A `bind` control with no `action` becomes only a `propertyKey`, because both
- * bound wrappers already do the write. Only the two shapes that need more than
- * a write get a `setModelValue` here.
+ * Converts extension control data into Builder right panel controls.
  */
 
 import type { BlockProperty } from "@/components/BlockPropertySections";

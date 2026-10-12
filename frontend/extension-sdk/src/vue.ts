@@ -1,13 +1,5 @@
 /**
  * `frappe-builder-extension-sdk/vue`: the optional Vue layer.
- *
- * This file goes in the bundle of the author, not in `extension-sdk.js`. It
- * needs a Vue runtime, and the SDK has none.
- *
- * For the same reason, it imports the SDK by its package name, not by a
- * relative path. A relative import puts a second copy of `connect.ts` in the
- * bundle of the author. That copy has no port and no channel. Each call
- * through it fails.
  */
 
 import builder from "frappe-builder-extension-sdk";

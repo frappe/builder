@@ -1,12 +1,5 @@
 /**
  * The rules for `manifest.json`.
- *
- * The Vite plugin uses this file to check a manifest before a build or a dev
- * load. `types.ts` gets the version and the permission types from it.
- *
- * This file is plain JavaScript. Node loads the Vite plugin from
- * `node_modules`, and Node does not remove types there. So the plugin and all
- * the files that it imports must be JavaScript.
  */
 
 /** The `v` field of a manifest. Each port message also has this version. */

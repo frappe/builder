@@ -1,15 +1,5 @@
 /**
  * What Builder opens when the user opens an extension from its details pane.
- *
- * The target names a UI that the extension registered in a different call:
- * its popover, its dialog or its left panel tab. So this file shows no window
- * of its own. An extension declares one target or none. With none, it gets no
- * Open button.
- *
- * Builder starts the frame, not the extension. So no permission gates this.
- * The user clicked a button in Builder, and the extension asked for nothing.
- * This file follows `actionMethods.ts`, not `createSurfaceItems`: one target
- * for each extension, no registry item and no order.
  */
 
 import { leftPanelTabs } from "@/components/LeftPanelTabs";

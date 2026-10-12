@@ -1,17 +1,6 @@
 /**
- * The markup that an extension may put on the canvas.
- *
- * The canvas renders a block in the editor page, outside the sandbox of the
- * extension frame. `innerHTML` goes through `v-html`, and attributes go onto the
- * element. So an `onerror` attribute or a `<script>` element from an extension
- * would run with the session of the user. These checks refuse such markup. The
- * page stores what passes, so the published page gets the same markup.
- *
- * DOMPurify decides what is safe. Each check refuses and does not clean, so the
- * author of the extension sees what the host did not accept.
- *
- * Only the block methods come through here. `data.*` writes documents as they
- * are, so `data.access` is a trusted permission (see `builder/extensions/data.py`).
+ * DOMPurify checks markup before Builder adds it to the canvas.
+ * This prevents extension markup from running outside its sandbox.
  */
 
 import DOMPurify, { type RemovedAttribute, type RemovedElement } from "dompurify";

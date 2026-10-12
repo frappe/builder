@@ -1,15 +1,5 @@
 /**
  * Reads and changes blocks.
- *
- * The context menu gives an extension a `blockId`. The snapshot has `blockIds`
- * for a multi-selection. This file changes an id into a block.
- *
- * An id comes as a string from a different realm. The host finds it in the
- * real tree, and refuses an id that the tree does not have. This code trusts
- * only the shape of the data from the frame.
- *
- * Undo needs no extra code. `useCanvasHistory.ts` watches the root block deeply.
- * So it records a write from here as an undo step, as for the Builder controls.
  */
 
 import type Block from "@/block";

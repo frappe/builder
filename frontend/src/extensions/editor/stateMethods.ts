@@ -1,13 +1,5 @@
 /**
- * The storage of an extension. No permission gates it. It is not a write to
- * the page, so read-only mode does not stop it.
- *
- * The site keeps one JSON row for each user and installation. Before, it used
- * `localStorage`, which is per browser. Then two people on one computer shared
- * the state of each extension.
- *
- * A dev extension still uses the browser. Its installation is removed on each
- * `pagehide`. So a site row would not stay after the reload that an author needs.
+ * Stores extension data for each user. Read-only mode does not block this storage.
  */
 
 import { isDevExtension } from "@/extensions/devExtension";

@@ -1,30 +1,5 @@
 /**
  * Sends frappe-ui resource requests through the bridge.
- *
- * An extension frame has an opaque origin and no cookie. So `fetch` cannot
- * reach Frappe from the frame. `createResource` reads its fetcher on each
- * request. So one `setConfig` call sends each resource in the frame through
- * the port:
- *
- * ```js
- * import { setConfig } from "frappe-ui";
- * import builder from "frappe-builder-extension-sdk";
- *
- * setConfig("resourceFetcher", builder.data.fetcher);
- * ```
- *
- * Write it in the entry, which each frame imports. Use the `frappe-ui` of the
- * extension. Each extension bundles its own copy, and the SDK cannot reach the
- * config of that copy.
- *
- * **This is an adapter, not a gate.** It runs in the frame, and the frame is
- * not trusted. So it decides nothing. Each route below goes to a `data.*`
- * method. The host gates that method, and the server checks the permission.
- * A frame that replaces this file gets the same methods and the same refusals.
- *
- * The adapter refuses a URL with no route. It does not forward it. If it did,
- * a resource could call any whitelisted method on the site. Then the
- * `data.access` permission would have no effect.
  */
 
 import { ChannelCallError } from "../shared/transport/createPortChannel";

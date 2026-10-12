@@ -1,20 +1,5 @@
 /**
  * Reads, adds, changes and removes real documents.
- *
- * Each method starts with the same gate. The `data.access` permission says
- * that this extension can use site data.
- *
- * The second gate is the most important, and no code here can change it.
- * `frappe.client` runs the query as the logged-in user. So an extension sees
- * only the rows that this user sees.
- *
- * The option names come from `createListResource`: `fields`, `filters`,
- * `orderBy`, `start` and `pageLength`. An extension author writes frontend
- * code, and this repo already uses these names. The host changes them to the
- * Frappe names before it sends the request.
- *
- * These are not page writes. So read-only mode does not refuse them.
- * Read-only mode is about the open page, and a Contact is not that page.
  */
 
 import { createResource } from "frappe-ui";
