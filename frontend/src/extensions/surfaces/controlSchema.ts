@@ -27,7 +27,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { editorContext } from "../context/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
-import { canWrite } from "../bridge/permissions";
+import { canEdit } from "../bridge/permissions";
 import { isSafeAttribute } from "../editor/safeMarkup";
 import { fields, oneOf, optionalText, refuse, text } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
@@ -149,7 +149,7 @@ export const readControls = (params: unknown, extension: InstalledExtension): Co
 	if (!Array.isArray(params)) throw refuse(`"controls" must be a list.`, "invalid_params");
 
 	const controls = params.map(readControl);
-	if (controls.some((control) => control.bind) && !canWrite(extension)) {
+	if (controls.some((control) => control.bind) && !canEdit(extension)) {
 		throw refuse(
 			`"${extension.name}" was not granted page.edit, which a bound control needs.`,
 			"permission_required",
