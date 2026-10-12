@@ -895,7 +895,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
+	setDataKey(key: keyof BlockDataKey, value: string) {
 		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",

@@ -195,7 +195,8 @@ type SearchLocation = {
 	label?: string;
 	value: unknown;
 	exact?: boolean;
-	set?: (value: string) => void;
+	// returns false when it rejects the value
+	set?: (value: string) => unknown;
 };
 
 type SearchMatch = SearchLocation & { block: Block; value: string };
@@ -203,6 +204,9 @@ type SearchMatch = SearchLocation & { block: Block; value: string };
 // keeps fontWeight: 600 a number when the replaced value is still numeric
 const restoreType = (original: unknown, value: string) =>
 	typeof original === "number" && value.trim() !== "" && !isNaN(Number(value)) ? Number(value) : value;
+
+// the canvas throws while rendering a block whose tag isn't a valid element name
+const isTagName = (value: string) => /^[a-z][a-z0-9-]*$/i.test(value);
 
 const styleLocations = (styles: BlockStyleMap, breakpoint?: string): SearchLocation[] =>
 	Object.entries(styles)
@@ -250,7 +254,17 @@ const searchFields: { key: string; name: string; locations: (block: Block) => Se
 	{
 		key: "element",
 		name: __("Tag"),
-		locations: (block) => [{ label: __("Tag"), value: block.getElement(), exact: true }],
+		locations: (block) => [
+			{
+				label: __("Tag"),
+				value: block.getElement(),
+				exact: true,
+				// the root's tag is fixed, the Tag control hides it too
+				set: block.isRoot()
+					? undefined
+					: (value: string) => isTagName(value) && (block.element = value.toLowerCase()),
+			},
+		],
 	},
 	{
 		key: "data",
@@ -259,6 +273,10 @@ const searchFields: { key: string; name: string; locations: (block: Block) => Se
 			[block.dataKey, ...block.getDynamicValues()].map((dataKey) => ({
 				label: dataKey?.property ? `${__("Data")} (${dataKey.property})` : __("Data"),
 				value: dataKey?.key,
+				set: (value: string) =>
+					dataKey === block.dataKey
+						? block.setDataKey("key", value)
+						: dataKey?.type && block.setDynamicValue(dataKey.property, dataKey.type, value, dataKey.comesFrom),
 			})),
 	},
 	{ key: "content", name: __("Content"), locations: textLocations },
@@ -412,17 +430,25 @@ const replaceInBlocks = (blocks: Block[]) => {
 	const regex = new RegExp(escapeRegExp(query.value), "gi");
 	const history = canvasStore.activeCanvas?.history;
 	const pauseId = history?.pause();
+	let replaced: SearchMatch[] = [];
 	try {
 		// a function replacement keeps "$" in the replace text literal
-		matches.forEach((match) => match.set?.(match.value.replace(regex, () => replaceQuery.value)));
+		replaced = matches.filter(
+			(match) => match.set?.(match.value.replace(regex, () => replaceQuery.value)) !== false,
+		);
 	} finally {
-		// the history watcher fires after this returns; resuming right away would record an extra empty step
+		// the history watcher fires after this returns; resuming right away would record an extra empty step.
+		// forced, since a text block remounted by a tag change force-resumes on mount and drops this pause
 		nextTick(() => {
-			if (pauseId) history?.resume(pauseId, true);
+			if (pauseId) history?.resume(pauseId, replaced.length > 0, true);
 		});
 	}
 
-	const changedBlocks = [...new Set(matches.map((match) => match.block))];
+	if (!replaced.length) {
+		toast.error(__("No replacements made"));
+		return;
+	}
+	const changedBlocks = [...new Set(replaced.map((match) => match.block))];
 	toast.success(
 		changedBlocks.length === 1
 			? __("Replaced in {0}", [changedBlocks[0].getBlockDescription()])
