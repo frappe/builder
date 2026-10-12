@@ -41,35 +41,44 @@ const namedBlock = (params: unknown) => findBlock(text(fields(params).blockId, "
  */
 const get = (params: unknown) => getBlockObject(namedBlock(params));
 
-/** A record of values, such as a style map. */
-const readMap = (value: unknown, name: string) => {
+/** `null` and `""` remove a style. `setStyle` has the same rule. */
+const readStyles = (value: unknown, field: string) => {
 	if (value === undefined) return undefined;
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		throw refuse(`"${name}" must be an object.`, "invalid_params");
+		throw refuse(`"${field}" must be an object.`, "invalid_params");
 	}
-	return value as Record<string, unknown>;
+	Object.entries(value).forEach(([style, sent]) => {
+		if (sent !== null && typeof sent !== "string" && typeof sent !== "number") {
+			throw refuse(`"${field}.${style}" must be a string, a number or null.`, "invalid_params");
+		}
+	});
+	return value as Record<string, string | number | null>;
 };
 
-const readClasses = (value: unknown) => {
+const readClasses = (value: unknown, field: string) => {
 	if (value === undefined) return undefined;
 	if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
-		throw refuse(`"classes" must be a list of strings.`, "invalid_params");
+		throw refuse(`"${field}" must be a list of strings.`, "invalid_params");
 	}
 	return value as string[];
 };
 
-/** `readAttributes` has checked each value. */
+/**
+ * Every value of one block, checked before anything is written. So a refused
+ * call leaves the page as it was. `update` and `insert` both read with this.
+ */
+const readChanges = (sent: Record<string, unknown>, element: string, prefix = "") => ({
+	attributes: readAttributes(sent.attributes, element, `${prefix}attributes`),
+	styles: readStyles(sent.styles, `${prefix}styles`),
+	classes: readClasses(sent.classes, `${prefix}classes`),
+	innerHTML: readHTML(sent.innerHTML, `${prefix}innerHTML`),
+});
+
 const writeAttributes = (block: Block, attributes: Record<string, string | undefined>) =>
 	Object.entries(attributes).forEach(([attribute, value]) => block.setAttribute(attribute, value));
 
-/** `null` and `""` remove a style. `setStyle` has the same rule. */
-const writeStyles = (block: Block, styles: Record<string, unknown>, breakpoint?: Breakpoint) =>
-	Object.entries(styles).forEach(([style, value]) => {
-		if (value !== null && typeof value !== "string" && typeof value !== "number") {
-			throw refuse(`"styles.${style}" must be a string, a number or null.`, "invalid_params");
-		}
-		block.setStyle(style, value, breakpoint);
-	});
+const writeStyles = (block: Block, styles: Record<string, string | number | null>, breakpoint?: Breakpoint) =>
+	Object.entries(styles).forEach(([style, value]) => block.setStyle(style, value, breakpoint));
 
 /**
  * Each key is optional. A patch with no keys is an error. It is better to
@@ -82,10 +91,7 @@ const update = (params: unknown) => {
 	const sent = fields(params);
 	const block = namedBlock(params);
 
-	const attributes = readAttributes(sent.attributes, block.getElement() || "div", "attributes");
-	const styles = readMap(sent.styles, "styles");
-	const classes = readClasses(sent.classes);
-	const innerHTML = readHTML(sent.innerHTML, "innerHTML");
+	const { attributes, styles, classes, innerHTML } = readChanges(sent, block.getElement() || "div");
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
 
@@ -113,13 +119,9 @@ const MAX_DEPTH = 20;
  * does not change the page. A bad node at depth four cannot leave the three
  * nodes above it half built.
  */
-type PlannedBlock = {
+type PlannedBlock = ReturnType<typeof readChanges> & {
 	element: string;
 	key?: string;
-	classes?: string[];
-	innerHTML?: string;
-	attributes?: Record<string, string | undefined>;
-	styles?: Record<string, unknown>;
 	children: PlannedBlock[];
 };
 
@@ -154,10 +156,7 @@ const planTree = (value: unknown): PlannedBlock => {
 		return {
 			element,
 			key,
-			classes: readClasses(wanted.classes),
-			innerHTML: readHTML(wanted.innerHTML, "block.innerHTML"),
-			attributes: readAttributes(wanted.attributes, element, "block.attributes"),
-			styles: readMap(wanted.styles, "block.styles"),
+			...readChanges(wanted, element, "block."),
 			children: readChildren(wanted.children).map((child) => plan(child, depth + 1)),
 		};
 	};
