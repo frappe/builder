@@ -34,11 +34,11 @@ class TestDevExtension(FrappeTestCase):
 		)
 
 	def test_registers_an_installation_the_gate_accepts(self):
-		install_dev_extension(self.extension, ["page.edit", "token.write"])
+		install_dev_extension(self.extension, ["page.edit", "data.access"])
 
 		installed = self.installed()
 		self.assertEqual(installed.version, "0.0.0-dev")
-		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "token.write"])
+		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "data.access"])
 
 	def test_grants_only_what_the_manifest_asks_for(self):
 		"""The gate reads this list, so a wider one would name what nobody allowed."""

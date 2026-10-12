@@ -17,6 +17,22 @@
  */
 
 export { default, type HostInfo } from "./runtime/index";
-export type { ContextField, ContextHandler, ItemPatch, ShowWhen, ToolbarRegistration } from "./runtime/methods";
+export type {
+	BlockPatch,
+	ContextField,
+	ContextHandler,
+	ContextMenuRegistration,
+	Control,
+	ControlName,
+	ItemPatch,
+	LeftPanelRegistration,
+	NewBlock,
+	PropertiesRegistration,
+	SettingsRegistration,
+	ShowWhen,
+	SlotLoader,
+	ToolbarRegistration,
+} from "./runtime/methods";
+export type { FrameOptions, ToastOptions, ToastType } from "./runtime/ui";
 export type { SlotEntry } from "./runtime/slots";
 export type { Breakpoint, Permission, EditorContext, EditorSelection, ExtensionManifest } from "./shared/types";

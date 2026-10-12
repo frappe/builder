@@ -18,12 +18,26 @@
 
 		<!-- part of the editor, not of an extension. A user loads an extension with it -->
 		<DevExtensionDialog />
+
+		<!-- one for each extension. It shows nothing until ui.openDialog -->
+		<ExtensionDialog
+			v-for="extension in installedExtensions"
+			:key="`dialog-${frameKey(extension)}`"
+			:extension="extension" />
+
+		<!-- the same, for ui.openPopover. A popover is not modal, so both can be open -->
+		<ExtensionPopover
+			v-for="extension in installedExtensions"
+			:key="`popover-${frameKey(extension)}`"
+			:extension="extension" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
+import ExtensionDialog from "@/extensions/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
+import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
 import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, requestHandlerFor, teardownExtension } from "@/extensions";
 import useBuilderStore from "@/stores/builderStore";

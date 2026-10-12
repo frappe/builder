@@ -30,7 +30,7 @@ export type MethodTable = Record<string, HostMethod>;
  * check it. This list names permissions, not methods. So a new write method
  * gets the check automatically.
  */
-const WRITE_PERMISSIONS: Permission[] = ["page.edit", "page.write", "token.write"];
+const WRITE_PERMISSIONS: Permission[] = ["page.edit"];
 
 export const assertWritable = (extension: InstalledExtension, method: string, needs: Permission | null) => {
 	if (!needs || !WRITE_PERMISSIONS.includes(needs)) return;
@@ -47,3 +47,6 @@ export const assertGranted = (extension: InstalledExtension, method: string, nee
 		code: "permission_required",
 	});
 };
+
+/** The check for a `bind` control at registration. At that time, there is no call to gate. */
+export const canEdit = (extension: InstalledExtension) => extension.permissions.includes("page.edit");

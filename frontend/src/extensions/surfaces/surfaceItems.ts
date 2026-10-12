@@ -23,7 +23,7 @@ export type SurfaceItem<TRegistration> = {
 };
 
 type Options<TRegistration extends Named, TItem extends RegistryEntry> = {
-	/** The name of the surface in a refusal, for example "toolbar item". */
+	/** The name of the surface in a refusal, for example "left panel tab". */
 	kind: string;
 	registry: ReturnType<typeof createRegistry<TItem>>;
 	readRegistration: (params: unknown, extension: InstalledExtension) => TRegistration;
@@ -33,6 +33,8 @@ type Options<TRegistration extends Named, TItem extends RegistryEntry> = {
 		extension: InstalledExtension,
 	) => TRegistration;
 	toRegistryItem: (key: string, item: SurfaceItem<TRegistration>) => TItem;
+	/** Allow only one item for each extension. The left panel and settings use this. */
+	limitToOnePerExtension?: boolean;
 };
 
 export const createSurfaceItems = <TRegistration extends Named, TItem extends RegistryEntry>(
@@ -78,6 +80,13 @@ export const createSurfaceItems = <TRegistration extends Named, TItem extends Re
 	const register = (params: unknown, extension: InstalledExtension) => {
 		const registration = options.readRegistration(params, extension);
 		const key = createItemKey(extension, registration.name);
+
+		// a second registration with the same name replaces the item. A reloaded frame
+		// does this on each edit. Only an item with a different name is refused
+		const owned = [...items].some(([held, item]) => item.extension.name === extension.name && held !== key);
+		if (options.limitToOnePerExtension && owned) {
+			throw refuse(`"${extension.name}" already registers a ${options.kind}.`, "already_registered");
+		}
 
 		// a second registration replaces the item. Do not add its teardown two times
 		if (!items.has(key)) bridge.registerTeardown(extension.name, () => unregisterItem(key));

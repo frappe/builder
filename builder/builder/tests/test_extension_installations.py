@@ -110,20 +110,20 @@ class TestGrantedPermissions(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_revoking_narrows_what_the_gate_allows(self):
-		make_installation(EXTENSION, permissions=["page.edit", "token.write"])
+		make_installation(EXTENSION, permissions=["page.edit", "data.access"])
 
 		set_granted_permissions(EXTENSION, ["page.edit"])
 
 		assert_extension_access(EXTENSION, "page.edit")
 		with self.assertRaises(frappe.PermissionError):
-			assert_extension_access(EXTENSION, "token.write")
+			assert_extension_access(EXTENSION, "data.access")
 
 	def test_granting_again_reopens_it(self):
-		make_installation(EXTENSION, permissions=["page.edit", "token.write"], granted=["page.edit"])
+		make_installation(EXTENSION, permissions=["page.edit", "data.access"], granted=["page.edit"])
 
-		set_granted_permissions(EXTENSION, ["page.edit", "token.write"])
+		set_granted_permissions(EXTENSION, ["page.edit", "data.access"])
 
-		assert_extension_access(EXTENSION, "token.write")
+		assert_extension_access(EXTENSION, "data.access")
 
 	def test_refuses_a_permission_the_manifest_never_asked_for(self):
 		make_installation(EXTENSION, permissions=["page.edit"])
@@ -190,7 +190,7 @@ class TestListedInstallation(FrappeTestCase):
 		)
 
 	def test_carries_the_granted_permissions(self):
-		make_installation("acme/light", permissions=["page.edit", "token.write"], granted=["page.edit"])
+		make_installation("acme/light", permissions=["page.edit", "data.access"], granted=["page.edit"])
 
 		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
 

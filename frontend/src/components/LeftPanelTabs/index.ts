@@ -12,6 +12,7 @@ import { __ } from "@/translation";
 export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
+	usesRuntimeIcon?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */

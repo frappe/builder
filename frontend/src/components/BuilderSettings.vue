@@ -11,12 +11,15 @@
 					:key="link.name"
 					:variant="selectedItem === link.name ? 'subtle' : 'ghost'"
 					:disabled="link.disabled"
-					:icon-left="link.icon"
+					:icon-left="link.usesRuntimeIcon ? undefined : link.icon"
 					@click="!link.disabled && selectItem(link.name)"
 					:class="{
 						'!bg-surface-gray-3': selectedItem === link.name,
 					}"
 					class="!justify-start">
+					<template v-if="link.usesRuntimeIcon" #prefix>
+						<RuntimeLucideIcon :name="link.icon" class="h-4.5" />
+					</template>
 					{{ link.label }}
 				</Button>
 			</div>
