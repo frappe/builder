@@ -131,7 +131,7 @@ npx builder-extension package
 
 The command validates the repository, manifest, built files, and package limits. A
 package holds `manifest.json`, `main.js` and the optional SVG icon at the root, and the
-build's `chunks/` and `assets/` folders. A relative import must name a file in the package.
+build's `chunks/` and `assets/` folders.
 The command writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
 
 Create a GitHub release whose tag is the manifest version with a `v` prefix. For

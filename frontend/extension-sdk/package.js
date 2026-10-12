@@ -30,10 +30,6 @@ export const ALLOWED_SUFFIXES = new Set([
 /** The build output folders beside the root files. The entry imports them by relative path. */
 export const PACKAGE_FOLDERS = new Set(["chunks", "assets"]);
 
-const IMPORT_SPECIFIER =
-	/(?:\bimport\s*(?:[^'";]*?\sfrom\s*)?|\bexport\s+[^'";]*?\sfrom\s*|\bimport\s*\()['"]([^'"]+)['"]/g;
-const IMPORT_META_URL = /\bnew\s+URL\s*\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url/g;
-
 const fail = (message) => {
 	throw new Error(`[builder] ${message}`);
 };
@@ -131,22 +127,7 @@ export const validatePackageFiles = (root, manifest) => {
 		if (!names.has(required)) fail(`package has no root ${required}`);
 	}
 	if (manifest.icon && !names.has(manifest.icon)) fail(`package has no manifest icon "${manifest.icon}"`);
-	assertImportsResolve(files, names);
 	return files;
-};
-
-/** A relative import must name a file in the package. The frame cannot load any other. */
-const assertImportsResolve = (files, names) => {
-	for (const file of files.filter((entry) => entry.name.endsWith(".js"))) {
-		const source = file.data.toString("utf8");
-		const specifiers = [...source.matchAll(IMPORT_SPECIFIER), ...source.matchAll(IMPORT_META_URL)];
-		for (const [, specifier] of specifiers) {
-			const target = path.posix.normalize(path.posix.join(path.posix.dirname(file.name), specifier));
-			if (specifier.startsWith(".") && !names.has(target)) {
-				fail(`${file.name} imports "${specifier}", which the package does not hold`);
-			}
-		}
-	}
 };
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {

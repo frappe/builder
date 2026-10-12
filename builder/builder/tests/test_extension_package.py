@@ -67,12 +67,6 @@ class TestExtensionPackage(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			validate_package(make_package(build(**{"assets/page.html": b"<script></script>"})), NAME, VERSION)
 
-	def test_refuses_an_import_of_a_missing_file(self):
-		files = build(**{"main.js": b'import "./chunks/gone.js";'})
-
-		with self.assertRaises(frappe.ValidationError):
-			validate_package(make_package(files), NAME, VERSION)
-
 	def test_checks_every_svg_not_only_the_icon(self):
 		unsafe = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
 

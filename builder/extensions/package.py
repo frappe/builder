@@ -49,13 +49,6 @@ from builder.extensions.constants import (
 MANIFEST_REQUIRED_FIELDS = frozenset({"v", "name", "label", "description", "version", "entry", "permissions"})
 MANIFEST_OPTIONAL_FIELDS = frozenset({"icon"})
 
-# Every import specifier a module carries, so a relative one can be checked: it
-# must name a file in the package.
-IMPORT_SPECIFIER = re.compile(
-	r"(?:\bimport\s*(?:[^'\";]*?\sfrom\s*)?|\bexport\s+[^'\";]*?\sfrom\s*|\bimport\s*\()['\"]([^'\"]+)['\"]"
-)
-IMPORT_META_URL = re.compile(r"\bnew\s+URL\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*import\.meta\.url")
-
 # A url() that is not a local fragment, or a value that opens with an external scheme.
 SVG_EXTERNAL_REFERENCE = re.compile(
 	r"(?:url\s*\(\s*['\"]?\s*(?!#)|^\s*(?:https?:|//|data:|javascript:))", re.I
@@ -88,7 +81,6 @@ def validate_package(package_bytes: bytes, expected_name: str, expected_version:
 		assert_file_set(entries, manifest.get("icon"))
 		files = {path: read_package_file(archive, path, info) for path, info in entries.items()}
 
-	assert_imports_resolve(files)
 	return ValidatedPackage(manifest, files)
 
 
@@ -248,22 +240,6 @@ def read_package_file(archive: zipfile.ZipFile, path: str, info: zipfile.ZipInfo
 	content = read_entry(archive, info, MAX_ICON_BYTES)
 	assert_safe_svg(content, path)
 	return content
-
-
-def assert_imports_resolve(files: dict[str, bytes]) -> None:
-	"""A relative import must name a file in the package. The frame cannot load any other."""
-	for path, content in files.items():
-		if not path.endswith(".js"):
-			continue
-		try:
-			source = content.decode("utf-8")
-		except UnicodeDecodeError:
-			frappe.throw(_("{0} must be UTF-8.").format(path))
-
-		for specifier in IMPORT_SPECIFIER.findall(source) + IMPORT_META_URL.findall(source):
-			target = posixpath.normpath(posixpath.join(posixpath.dirname(path), specifier))
-			if specifier.startswith(".") and target not in files:
-				frappe.throw(_("{0} imports {1}, which the package does not hold.").format(path, specifier))
 
 
 def assert_safe_svg(content: bytes, name: str) -> None:
