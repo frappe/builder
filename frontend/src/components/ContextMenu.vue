@@ -5,7 +5,7 @@
 		</DropdownMenuTrigger>
 		<DropdownMenuPortal>
 			<DropdownMenuContent
-				class="z-50 min-w-[120px] rounded-lg bg-surface-base p-1 text-sm shadow-xl"
+				class="z-50 min-w-[120px] rounded-6 bg-surface-base p-1 text-sm shadow-xl"
 				:side-offset="0"
 				align="start"
 				avoid-collisions>
@@ -13,7 +13,7 @@
 					v-for="(option, index) in options"
 					:key="index"
 					v-show="!option.condition || option.condition(props.context)"
-					class="block cursor-pointer rounded px-3 py-1.5 text-ink-gray-9 outline-none data-[highlighted]:bg-surface-gray-4"
+					class="block cursor-pointer rounded-4 px-3 py-1.5 text-ink-gray-9 outline-none data-[highlighted]:bg-surface-gray-4"
 					:class="{ '!cursor-default !text-ink-gray-4': option.disabled?.(props.context) }"
 					:disabled="option.disabled?.(props.context)"
 					@select="handleClick(option.action)">

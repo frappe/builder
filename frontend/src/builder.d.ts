@@ -8,7 +8,7 @@ declare module "csstype" {
 	}
 }
 
-declare type styleProperty = keyof CSSProperties | `__${string}`;
+declare type styleProperty = keyof CSSProperties | `${string}:${keyof CSSProperties}` | `__${string}`;
 
 declare interface BlockStyleMap {
 	[key: styleProperty]: StyleValue;

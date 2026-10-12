@@ -1,0 +1,151 @@
+{
+ "blockId": "tabs-root",
+ "blockName": "Tabs",
+ "element": "div",
+ "baseStyles": {
+  "display": "flex",
+  "flexDirection": "column",
+  "gap": "16px",
+  "width": "100%",
+  "maxWidth": "720px"
+ },
+ "props": {
+  "rows": {
+   "label": "Rows (Label | Body)",
+   "isStandard": true,
+   "isDynamic": false,
+   "isPassedDown": true,
+   "comesFrom": null,
+   "value": null,
+   "propOptions": {
+    "type": "array",
+    "isRequired": false,
+    "options": {
+     "defaultValue": [
+      "One | First body",
+      "Two | Second body"
+     ]
+    },
+    "dependencies": {}
+   }
+  },
+  "active": {
+   "label": "Active tab",
+   "isStandard": true,
+   "isDynamic": false,
+   "isPassedDown": true,
+   "comesFrom": null,
+   "value": null,
+   "propOptions": {
+    "type": "number",
+    "isRequired": false,
+    "options": {
+     "defaultValue": 0
+    },
+    "dependencies": {}
+   }
+  },
+  "accent": {
+   "label": "Accent",
+   "isStandard": true,
+   "isDynamic": false,
+   "isPassedDown": true,
+   "comesFrom": null,
+   "value": null,
+   "propOptions": {
+    "type": "color",
+    "isRequired": false,
+    "options": {
+     "defaultValue": "#1F6FEB"
+    },
+    "dependencies": {}
+   }
+  }
+ },
+ "clientScript": {
+  "js": "const live = typeof window !== \"undefined\";\nconst tabs = [...this.querySelectorAll(\".tabs-tab\")];\nconst panels = [...this.querySelectorAll(\".tabs-panel\")];\nconst show = (index) => {\n  tabs.forEach((tab, i) => { tab.classList.toggle(\"is-active\", i === index); tab.setAttribute(\"aria-selected\", String(i === index)); tab.tabIndex = i === index ? 0 : -1; });\n  panels.forEach((panel, i) => { panel.hidden = i !== index; });\n  this.dataset.active = String(index);\n};\nthis.style.setProperty(\"--tabs-accent\", props.accent);\nshow(Math.min(Math.max(Number(props.active) || 0, 0), tabs.length - 1));\nif (live) {\n  tabs.forEach((tab, i) => tab.addEventListener(\"click\", () => show(i)));\n  this.addEventListener(\"keydown\", (event) => {\n    if (![\"ArrowRight\", \"ArrowLeft\"].includes(event.key)) return;\n    const next = (Number(this.dataset.active) + (event.key === \"ArrowRight\" ? 1 : tabs.length - 1)) % tabs.length;\n    show(next); tabs[next].focus();\n  });\n}\n",
+  "css": ".tabs-tab { cursor: pointer; border: 0; background: none; padding: 8px 2px; color: rgba(0, 0, 0, 0.55); border-bottom: 2px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; }\n.tabs-tab:hover { color: rgba(0, 0, 0, 0.85); }\n.tabs-tab:focus-visible { outline: 2px solid var(--tabs-accent); outline-offset: 2px; }\n.tabs-tab.is-active { color: var(--tabs-accent); border-bottom-color: var(--tabs-accent); }\n@media (prefers-reduced-motion: reduce) { .tabs-tab { transition: none; } }"
+ },
+ "children": [
+  {
+   "blockId": "tabs-bar",
+   "blockName": "Tab bar",
+   "element": "div",
+   "isRepeaterBlock": true,
+   "dataKey": {
+    "key": "tabs",
+    "comesFrom": "componentData"
+   },
+   "customAttributes": {
+    "role": "tablist"
+   },
+   "baseStyles": {
+    "display": "flex",
+    "gap": "24px",
+    "borderBottom": "1px solid rgba(0, 0, 0, 0.1)"
+   },
+   "children": [
+    {
+     "blockId": "tabs-tab",
+     "blockName": "Tab",
+     "element": "button",
+     "innerHTML": "Tab",
+     "classes": [
+      "tabs-tab"
+     ],
+     "customAttributes": {
+      "role": "tab"
+     },
+     "baseStyles": {
+      "fontSize": "15px",
+      "fontWeight": "500"
+     },
+     "dataKey": {
+      "key": "label",
+      "comesFrom": "componentData",
+      "type": "key",
+      "property": "innerHTML"
+     },
+     "children": []
+    }
+   ]
+  },
+  {
+   "blockId": "tabs-panels",
+   "blockName": "Panels",
+   "element": "div",
+   "isRepeaterBlock": true,
+   "dataKey": {
+    "key": "tabs",
+    "comesFrom": "componentData"
+   },
+   "children": [
+    {
+     "blockId": "tabs-panel",
+     "blockName": "Panel",
+     "element": "p",
+     "innerHTML": "Panel",
+     "classes": [
+      "tabs-panel"
+     ],
+     "customAttributes": {
+      "role": "tabpanel"
+     },
+     "baseStyles": {
+      "fontSize": "16px",
+      "lineHeight": "1.6",
+      "color": "rgba(0, 0, 0, 0.7)",
+      "margin": "0px"
+     },
+     "dataKey": {
+      "key": "body",
+      "comesFrom": "componentData",
+      "type": "key",
+      "property": "innerHTML"
+     },
+     "children": []
+    }
+   ]
+  }
+ ]
+}

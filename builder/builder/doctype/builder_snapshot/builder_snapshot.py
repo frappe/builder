@@ -25,11 +25,19 @@ class BuilderSnapshot(Document):
 	pass
 
 
-def take_snapshot(reference_doctype, reference_name, fields, label=None, snapshot_type=None, transform=None):
+def take_snapshot(
+	reference_doctype,
+	reference_name,
+	fields,
+	label=None,
+	snapshot_type=None,
+	transform=None,
+):
 	"""Capture the current value of `fields` on a document as a snapshot.
 
 	Stores `{fieldname: value}` as JSON in the snapshot's `data` field.
-	Returns the new snapshot's name.
+	Returns the new snapshot's name, or None when the data matches the latest
+	snapshot of the same `snapshot_type`.
 
 	`transform`, if given, is a callable that receives the captured
 	`{fieldname: value}` dict and returns a (possibly rewritten) dict to store.
@@ -37,10 +45,14 @@ def take_snapshot(reference_doctype, reference_name, fields, label=None, snapsho
 	dependency versions into a JSON field — without this generic layer needing
 	any domain knowledge.
 	"""
+	# lock the row so concurrent calls can't both pass the unchanged check before either inserts
+	frappe.db.get_value(reference_doctype, reference_name, "name", for_update=True)
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	data = {field: doc.get(field) for field in fields}
 	if transform:
 		data = transform(data)
+	if get_latest_snapshot_data(reference_doctype, reference_name, snapshot_type) == compact_json(data):
+		return None
 	return create_snapshot(reference_doctype, reference_name, data, label, snapshot_type)
 
 
@@ -61,6 +73,18 @@ def create_snapshot(reference_doctype, reference_name, data: dict, label=None, s
 		}
 	).insert(ignore_permissions=True)
 	return snapshot.name
+
+
+def get_latest_snapshot_data(reference_doctype, reference_name, snapshot_type=None) -> str | None:
+	filters = {"reference_doctype": reference_doctype, "reference_name": reference_name}
+	if snapshot_type:
+		filters["snapshot_type"] = snapshot_type
+	return frappe.db.get_value(
+		"Builder Snapshot",
+		filters,
+		"data",
+		order_by="creation desc",
+	)
 
 
 def get_snapshot_data(snapshot_name) -> dict:

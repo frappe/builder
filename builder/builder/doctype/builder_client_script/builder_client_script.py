@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.modules.export_file import export_to_files
 from frappe.utils import get_files_path
 from frappe.utils.telemetry import capture
+from frappe.website.utils import clear_cache
 from jsmin import jsmin
 
 from builder.export_import_standard_page import StandardFileSync
@@ -40,6 +41,12 @@ class BuilderClientScript(StandardFileSync, Document):
 		self.update_script_file()
 		self.update_exported_script()
 		self.export_standard_files()
+		self.clear_page_cache()
+
+	def clear_page_cache(self):
+		# cached pages link the previous file version
+		for page in self.get_referencing_pages(fields=["route"]):
+			clear_cache(page.route)
 
 	def on_trash(self):
 		self.delete_script_file()

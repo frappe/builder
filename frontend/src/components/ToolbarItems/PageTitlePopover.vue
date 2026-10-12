@@ -6,13 +6,13 @@
 					{{ __("Loading...") }}
 				</div>
 				<div v-else class="flex items-center gap-1">
-					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="0.6">
+					<Tooltip :text="__('This is the homepage for your site')" :hoverDelay="600">
 						<span
 							class="lucide-home size-4"
 							aria-hidden="true"
 							v-if="pageStore.isHomePage(pageStore.activePage)" />
 					</Tooltip>
-					<Tooltip :text="__('This page has limited access')" :hoverDelay="0.6">
+					<Tooltip :text="__('This page has limited access')" :hoverDelay="600">
 						<span
 							class="lucide-shield-user size-4 text-ink-amber-6"
 							v-if="
@@ -31,7 +31,7 @@
 						v-html="routeString"
 						:title="getTextContent(routeString)"></span>
 				</div>
-				<PageStatusBadge v-if="pageStore.activePage" :page="pageStore.activePage" />
+				<PageStatusPill v-if="pageStore.activePage" :page="pageStore.activePage" />
 				<span
 					class="lucide-external-link h-[14px] w-[14px] !text-gray-700 dark:!text-gray-200"
 					aria-hidden="true"
@@ -40,7 +40,9 @@
 			</div>
 		</template>
 		<template #default>
-			<div class="flex w-72 flex-col gap-3 rounded bg-surface-base p-4 shadow-lg" v-if="pageStore.activePage">
+			<div
+				class="flex w-72 flex-col gap-3 rounded-4 bg-surface-base p-4 shadow-lg"
+				v-if="pageStore.activePage">
 				<PageOptions></PageOptions>
 			</div>
 		</template>
@@ -49,7 +51,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import PageOptions from "@/components/PageOptions.vue";
-import PageStatusBadge from "@/components/PageStatusBadge.vue";
+import PageStatusPill from "@/components/PageStatusPill.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
@@ -86,7 +88,7 @@ const routeString = computed(() => {
 			const previewValue = pageStore.routeVariables[variable];
 			return `<span class="${
 				previewValue ? "bg-purple-100 dark:bg-purple-900" : "bg-gray-100 dark:bg-gray-800"
-			} rounded-sm px-[5px] pb-[2px] text-sm">${
+			} rounded-1 px-[5px] pb-[2px] text-sm">${
 				previewValue ? escapeHtml(previewValue) : formattedPart
 			}</span>`;
 		} else {

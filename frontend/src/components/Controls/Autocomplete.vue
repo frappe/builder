@@ -7,7 +7,7 @@
 		:reset-search-term-on-blur="false">
 		<div class="group/autocomplete relative" ref="containerRef">
 			<div
-				class="group form-input flex h-7 flex-1 items-center gap-2 rounded bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
+				class="group form-input flex h-7 flex-1 items-center gap-2 rounded-4 bg-surface-gray-2 p-0 text-sm text-ink-gray-8 transition-colors focus-within:bg-surface-base focus-within:ring-1 focus-within:ring-outline-gray-4"
 				:class="{
 					'can-show-arrows': canShowArrows,
 				}">
@@ -56,7 +56,7 @@
 			<Teleport to="body" :disabled="!referenceElementSelector">
 				<ComboboxContent
 					ref="contentRef"
-					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-xl"
+					class="combobox-content z-50 max-h-80 w-full overflow-hidden rounded-6 border border-outline-gray-2 bg-surface-base shadow-xl"
 					:class="[
 						referenceElementSelector ? 'fixed' : 'absolute',
 						!referenceElementSelector && openOptionsAbove ? 'bottom-full mb-1' : '',
@@ -83,7 +83,7 @@
 								:data-value="option.value"
 								:disabled="option.disabled"
 								@mousedown.prevent
-								class="group flex cursor-default select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
+								class="group flex cursor-default select-none items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-9 transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-gray-1 data-[disabled]:opacity-50">
 								<component v-if="option.prefix" :is="option.prefix" class="h-4 w-4 flex-shrink-0" />
 								<MiddleTruncate :text="option.label" :style="resolveLabelStyle(option)" />
 								<component

@@ -161,6 +161,31 @@ class TestOpenPageContext(FrappeTestCase):
 		self.assertIn("draft", out)
 		# The site's URL and structure are DISCOVERED via the read tools, never pre-baked.
 		self.assertNotIn(frappe.utils.get_url(), out)
+		self.assertNotIn("mode in the editor", out)
+
+	def test_says_which_theme_the_editor_shows(self):
+		from builder.ai.agent.loop import AgentRunner
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Theme Context Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert(ignore_if_duplicate=True)
+		runner = AgentRunner("hi", model="m", api_key="k", page_id=page.name, canvas_theme="dark")
+
+		self.assertIn("viewing it in dark mode in the editor", runner.build_open_page_context())
+
+	def test_resume_recovers_the_latest_theme(self):
+		from builder.ai.session import AISession
+
+		session = AISession.create({"page": None})
+		session_id = session._doc.name
+		for theme in ("light", "dark"):
+			AISession.try_append_message(session_id, "user", "hi", metadata={"canvasTheme": theme})
+
+		self.assertEqual(AISession.latest_canvas_theme(session_id), "dark")
 
 
 class TestComponentContract(FrappeTestCase):

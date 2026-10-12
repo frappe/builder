@@ -4,7 +4,7 @@
 		class="fixed inset-0 z-[9999] grid place-content-center gap-4 bg-surface-base text-ink-gray-9">
 		<img src="/builder_logo.png" alt="logo" class="h-10" />
 		<div class="flex flex-col">
-			<h1 class="text-p-3xl-semibold">{{ __("Screen too small") }}</h1>
+			<h1 class="text-p-2xl-semibold">{{ __("Screen too small") }}</h1>
 			<p class="text-p-base">{{ __("Please switch to a larger screen to edit") }}</p>
 		</div>
 	</div>
@@ -74,13 +74,15 @@
 		<!-- Panels layer (middle) - comes after canvas in DOM -->
 		<BuilderLeftPanel
 			v-show="builderStore.showLeftPanel"
+			data-panel="left"
 			class="absolute bottom-0 left-0 top-[var(--toolbar-height)] w-fit border-r-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderLeftPanel>
 		<BuilderRightPanel
 			v-show="builderStore.showRightPanel"
+			data-panel="right"
 			class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-base dark:border-outline-gray-1"></BuilderRightPanel>
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
-		<BuilderToolbar class="absolute left-0 right-0 top-0"></BuilderToolbar>
+		<BuilderToolbar data-panel="toolbar" class="absolute left-0 right-0 top-0"></BuilderToolbar>
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -104,7 +106,7 @@
 	</Dialog>
 	<BlockContextMenu ref="blockContextMenu"></BlockContextMenu>
 	<BuilderCommandPalette ref="commandPalette" />
-	<KeyboardShortcutsModal v-model:open="builderStore.shortcutsModalOpen" />
+	<KeyboardShortcutsDialog v-model:open="builderStore.shortcutsModalOpen" />
 	<TemplatesDialog />
 </template>
 
@@ -116,6 +118,7 @@ import BuilderCommandPalette from "@/components/BuilderCommandPalette.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
 import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
+import { installEditorDemo } from "@/components/EditorDemo";
 import Dialog from "@/components/Controls/Dialog.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
@@ -126,13 +129,14 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { getUsersInfo } from "@/usersInfo";
+import { editorDemo } from "@/utils/editorDemo";
 import blockController from "@/utils/blockController";
 import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
-import { useDebounceFn, useEventListener } from "@vueuse/core";
-import { createResource, KeyboardShortcutsModal, useShortcut } from "frappe-ui";
+import { useDebounceFn } from "@vueuse/core";
+import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -185,28 +189,30 @@ const fragmentCanvas = ref<InstanceType<typeof BuilderCanvas> | null>(null);
 
 provide("pageCanvas", pageCanvas);
 provide("fragmentCanvas", fragmentCanvas);
+if (editorDemo) {
+	installEditorDemo();
+}
 useBuilderEvents(pageCanvas, fragmentCanvas, saveAndExitFragmentMode, route, router);
 
-useShortcut([
+useKeyboardShortcut([
 	{
-		key: " ",
+		combo: "Space",
 		description: __("Hold for Move Mode"),
 		group: __("Tools"),
-		handler: () => {
+		onHold: () => {
 			if (!canvasStore.editableBlock) {
 				builderStore.mode = "move";
+			}
+		},
+		// on release, revert back to last mode
+		onRelease: () => {
+			if (builderStore.mode === "move") {
+				builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
 			}
 		},
 		preventDefault: true,
 	},
 ]);
-
-// When space is released, revert back to last mode
-useEventListener(document, "keyup", (e) => {
-	if (e.key === " " && builderStore.mode === "move") {
-		builderStore.mode = builderStore.lastMode !== "move" ? builderStore.lastMode : "select";
-	}
-});
 
 async function saveAndExitFragmentMode(e: Event) {
 	if (canvasStore.fragmentData.fragmentType === "component") {
@@ -256,7 +262,8 @@ onActivated(async () => {
 	});
 	builderStore.realtime.doc_subscribe("Builder Page", route.params.pageId as string);
 	builderStore.realtime.doc_open("Builder Page", route.params.pageId as string);
-	if (route.params.pageId === pageStore.selectedPage) {
+	// a preview selects the page but does not load its canvas
+	if (route.params.pageId === pageStore.selectedPage && pageStore.pageBlocks.length) {
 		return;
 	}
 	if (!webPages.data) {
@@ -292,8 +299,9 @@ watch(
 				page_title: "My Page",
 				draft_blocks: [getRootBlockTemplate()],
 			} as BuilderPage;
-			if (builderStore.activeFolder) {
-				pageInfo["project_folder"] = builderStore.activeFolder;
+			const folder = (to.query.folder as string) || builderStore.activeFolder;
+			if (folder) {
+				pageInfo["project_folder"] = folder;
 			}
 			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
@@ -312,8 +320,11 @@ onDeactivated(() => {
 
 onMounted(() => {
 	builderStore.blockContextMenu = blockContextMenu.value;
-	prefetchBuilderSettings();
-	prefetchTemplateGallery();
+	if (!editorDemo) {
+		prefetchBuilderSettings();
+		prefetchTemplateGallery();
+		pageStore.findDetachedPreview();
+	}
 });
 
 watchEffect(() => {
@@ -324,7 +335,12 @@ watchEffect(() => {
 	}
 });
 
-const debouncedPageSave = useDebounceFn(pageStore.savePage, 300);
+// a save queued before one of Bob's server edits landed would write over the server's newer draft
+const debouncedPageSave = useDebounceFn((aiEditEpoch: number) => {
+	if (aiEditEpoch === builderStore.aiEditEpoch) return pageStore.savePage();
+	// a save still in flight clears the flag itself when it lands
+	if (!pageStore.saveId) pageStore.savingPage = false;
+}, 300);
 
 const usageMessage = computed(() => getPageUsageMessage(usageCount.value));
 
@@ -340,7 +356,7 @@ watch(
 			!pageCanvas.value?.canvasProps?.settingCanvas
 		) {
 			pageStore.savingPage = true;
-			debouncedPageSave();
+			debouncedPageSave(builderStore.aiEditEpoch);
 		}
 	},
 	{

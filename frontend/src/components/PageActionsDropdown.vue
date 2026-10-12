@@ -4,7 +4,12 @@
 			{
 				group: 'Actions',
 				hideLabel: true,
-				items: [
+				options: [
+					{
+						label: __('Rename'),
+						onClick: () => promptRenamePage(props.page),
+						icon: 'lucide-pencil',
+					},
 					{
 						label: __('Duplicate'),
 						onClick: () => pageStore.duplicatePage(props.page),
@@ -37,9 +42,12 @@
 			},
 		]"
 		:size="size"
-		:placement="placement">
-		<!-- The slot content becomes the dropdown trigger (reka-ui as-child). -->
-		<slot />
+		:align="align">
+		<!-- The slot content becomes the dropdown trigger (reka-ui as-child).
+			 `open` goes through so a trigger that only shows on hover can stay put while its menu is up. -->
+		<template #default="triggerProps">
+			<slot v-bind="triggerProps" />
+		</template>
 	</Dropdown>
 </template>
 
@@ -47,6 +55,7 @@
 import { __ } from "@/translation";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
+import { promptRenamePage } from "@/utils/dialogs";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
 
@@ -56,11 +65,11 @@ const props = withDefaults(
 	defineProps<{
 		page: BuilderPage;
 		size?: "xs" | "sm" | "md" | "lg";
-		placement?: "left" | "right" | "center";
+		align?: "start" | "center" | "end";
 	}>(),
 	{
 		size: "md",
-		placement: "left",
+		align: "start",
 	},
 );
 </script>

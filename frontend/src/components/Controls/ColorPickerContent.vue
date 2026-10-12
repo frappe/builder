@@ -4,13 +4,13 @@
 			'color-picker-container flex flex-col gap-2',
 			renderMode === 'inline'
 				? 'w-full'
-				: 'w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
+				: 'w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl',
 		]">
 		<div
 			ref="colorMap"
 			:style="colorMapStyle"
 			@mousedown.prevent="handleSelectorMove"
-			class="relative m-auto h-24 w-full rounded-md"
+			class="relative m-auto h-24 w-full rounded-5"
 			@click.prevent="setColor">
 			<div
 				@mousedown.stop.prevent="handleSelectorMove"
@@ -19,7 +19,7 @@
 		</div>
 		<div
 			ref="hueMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-3 w-full rounded-5"
 			@click="setHue"
 			@mousedown.prevent="handleHueSelectorMove"
 			:style="hueMapStyle">
@@ -27,7 +27,7 @@
 		</div>
 		<div
 			ref="alphaMap"
-			class="relative m-auto h-3 w-full rounded-md"
+			class="relative m-auto h-3 w-full rounded-5"
 			@click="setAlpha"
 			@mousedown.prevent="handleAlphaSelectorMove"
 			:style="alphaMapStyle">

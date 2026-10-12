@@ -31,17 +31,19 @@
 			<!-- preview -->
 			<div class="flex h-fit w-72 flex-shrink-0 flex-col justify-between gap-1">
 				<span class="text-sm text-ink-gray-7">{{ __("Social Preview") }}</span>
-				<div class="flex flex-1 flex-col rounded border border-outline-gray-2">
+				<div class="flex flex-col overflow-hidden rounded-4 border border-outline-gray-2">
 					<img
 						:src="pageStore.activePage?.meta_image || pageStore.activePage?.preview"
 						alt=""
-						class="h-40 w-full rounded-t object-cover" />
-					<div class="flex flex-1 flex-col gap-1 border-t border-outline-gray-2 p-2">
-						<span class="text-base text-ink-gray-6">{{ pageStore.activePage?.route }}</span>
-						<span class="text-base-medium mt-2 text-ink-gray-9">
+						class="aspect-[1.91/1] w-full object-cover object-top" />
+					<div class="flex flex-col gap-0.5 border-t border-outline-gray-2 px-3 py-2">
+						<span class="truncate text-sm text-ink-gray-5">{{ pageStore.activePage?.route }}</span>
+						<span class="text-base-medium truncate text-ink-gray-9">
 							{{ pageStore.activePage?.page_title }}
 						</span>
-						<span class="line-clamp-3 text-base leading-5 text-ink-gray-6">
+						<span
+							v-if="pageStore.activePage?.meta_description"
+							class="line-clamp-2 text-p-sm text-ink-gray-6">
 							{{ pageStore.activePage?.meta_description }}
 						</span>
 					</div>

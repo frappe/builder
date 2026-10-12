@@ -3,13 +3,19 @@
 		<PanelResizer
 			:dimension="builderStore.builderLayout.leftPanelWidth"
 			side="right"
-			:minDimension="200"
+			:minDimension="minWidth"
 			:maxDimension="500"
 			@resize="(width) => (builderStore.builderLayout.leftPanelWidth = width)" />
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="tab of tabs" :key="tab.name" :text="tabLabel(tab)" placement="right">
+			<Tooltip v-for="tab of tabs" :key="tab.name" side="right">
+				<template #content>
+					<span class="flex items-center gap-1.5">
+						{{ tab.label }}
+						<KeyboardShortcut v-if="tab.shortcut" :combo="tab.shortcut" class="!text-xs !text-ink-gray-4" />
+					</span>
+				</template>
 				<Button
 					:icon="tab.icon"
 					size="md"
@@ -33,15 +39,19 @@
 			</template>
 		</div>
 
-		<TokenManager v-model="builderStore.showTokenManager" :container="miniSidebar" />
+		<TokenManager
+			v-model="builderStore.showTokenManager"
+			:container="miniSidebar"
+			:readonly="Boolean(editorDemo)" />
 	</div>
 </template>
 <script setup lang="ts">
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
 import TokenManager from "@/components/Modals/TokenManager.vue";
+import { editorDemo } from "@/utils/editorDemo";
 import useBuilderStore from "@/stores/builderStore";
-import { formatShortcutLabel, Tooltip, useShortcut } from "frappe-ui";
-import { reactive, Ref, ref, watch, watchEffect } from "vue";
+import { KeyboardShortcut, Tooltip, useKeyboardShortcut } from "frappe-ui";
+import { computed, reactive, Ref, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import PanelResizer from "./PanelResizer.vue";
 
@@ -49,6 +59,19 @@ const builderStore = useBuilderStore();
 const route = useRoute();
 
 const tabs = leftPanelTabs.visible;
+
+const PANEL_MIN_WIDTH = 200;
+const activeTab = computed(() => tabs.value.find((tab) => tab.name === builderStore.leftPanelActiveTab));
+const minWidth = computed(() => Math.max(PANEL_MIN_WIDTH, activeTab.value?.minWidth ?? 0));
+
+// widen the stored width rather than only the drawn one: the canvas is laid out from it
+watch(
+	minWidth,
+	(min) => {
+		if (builderStore.builderLayout.leftPanelWidth < min) builderStore.builderLayout.leftPanelWidth = min;
+	},
+	{ immediate: true },
+);
 
 const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const mountedTabs = reactive(new Set<string>());
@@ -61,15 +84,12 @@ const select = (tab: LeftPanelTab) => {
 	builderStore.showTokenManager = false;
 };
 
-const tabLabel = (tab: LeftPanelTab) =>
-	tab.shortcut ? `${tab.label} (${formatShortcutLabel(tab.shortcut)})` : tab.label;
-
 // read once at setup, so a tab registered later gets no binding until reload
-useShortcut(
+useKeyboardShortcut(
 	tabs.value
 		.filter((tab) => tab.shortcut)
 		.map((tab) => ({
-			...tab.shortcut!,
+			combo: tab.shortcut!,
 			description: `Show ${tab.label} Panel`,
 			group: "View",
 			handler: () => select(tab),

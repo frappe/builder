@@ -72,6 +72,33 @@ const mergeLegacyRawStyles = (baseStyles: BlockStyleMap, rawStyles?: BlockStyleM
 	return baseStyles;
 };
 
+const withoutColor = (style: string) =>
+	style
+		.split(";")
+		.filter((declaration) => declaration.split(":")[0].trim().toLowerCase() !== "color")
+		.join(";")
+		.trim();
+
+// textStyle marks also keep the raw style attribute, which would write the old colour back
+const clearEditorTextColor = (editor: Editor) => {
+	const { from, to } = editor.state.selection;
+	editor
+		.chain()
+		.selectAll()
+		.unsetColor()
+		.setTextSelection({ from, to })
+		.command(({ tr }) => {
+			tr.doc.descendants((node, pos) => {
+				const mark = node.marks.find((m) => m.type.name === "textStyle" && m.attrs.style);
+				if (!mark) return;
+				const style = withoutColor(mark.attrs.style) || null;
+				tr.addMark(pos, pos + node.nodeSize, mark.type.create({ ...mark.attrs, style }));
+			});
+			return true;
+		})
+		.run();
+};
+
 class Block implements BlockOptions {
 	blockId: string;
 	children: Array<Block>;
@@ -314,7 +341,7 @@ class Block implements BlockOptions {
 	hasChildren() {
 		return this.getChildren().length > 0;
 	}
-	getCustomAttributes() {
+	getCustomAttributes(): BlockAttributeMap {
 		let customAttributes = {};
 		if (this.isExtendedFromComponent()) {
 			customAttributes = this.referenceComponent?.customAttributes || {};
@@ -405,11 +432,40 @@ class Block implements BlockOptions {
 		}
 		styleObj[style] = value;
 	}
+	setActiveStyle(style: styleProperty, value: StyleValue) {
+		this.setStyle(this.getActiveStyleProperty(style), value);
+	}
+	getActiveStyleValue(style: styleProperty) {
+		const activeStateStyle = this.getActiveStyleProperty(style);
+		const activeValue = activeStateStyle === style ? undefined : this.getStyle(activeStateStyle);
+		return activeValue === null || activeValue === "" || activeValue === undefined
+			? this.getStyle(style)
+			: activeValue;
+	}
+	getActiveStyleProperty(style: styleProperty) {
+		const activeState = this.activeState?.split(":")[0];
+		return (activeState ? `${activeState}:${style}` : style) as styleProperty;
+	}
 	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
 	}
 	removeAttribute(attribute: string) {
 		this.setAttribute(attribute, undefined);
+	}
+	// published pages apply customAttributes over attributes, so an id set in HTML Attributes wins
+	getId() {
+		return this.getCustomAttributes().id || this.getAttribute("id");
+	}
+	setId(id: string | undefined) {
+		// a removed key falls back to the component's id, so an instance blanks it instead
+		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
+		if (value !== undefined && "id" in this.getCustomAttributes()) {
+			this.customAttributes.id = value;
+		} else {
+			// clearing drops both copies, or the one left behind becomes the id again
+			delete this.customAttributes.id;
+		}
+		this.setAttribute("id", value);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
@@ -658,6 +714,14 @@ class Block implements BlockOptions {
 	getParentBlock(): Block | null {
 		return this.parentBlock || null;
 	}
+	getAncestorStyle(style: styleProperty, breakpoint?: string): StyleValue | undefined {
+		let parent = this.getParentBlock();
+		while (parent) {
+			const value = parent.getStyle(style, breakpoint);
+			if (value) return value;
+			parent = parent.getParentBlock();
+		}
+	}
 	selectParentBlock() {
 		const parentBlock = this.getParentBlock();
 		if (parentBlock) {
@@ -742,18 +806,18 @@ class Block implements BlockOptions {
 		activeEditor = editor;
 		activeEditorBlockId = editor ? this.blockId : null;
 	}
-	setTextColor(color: string) {
+	setTextColor(color: string | null) {
+		this.setStyle("color", color);
 		const editor = this.getEditor();
 		if (this.isText() && editor && editor.isEditable) {
-			editor.chain().setColor(color).run();
-		} else {
-			this.setStyle("color", color);
-			const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
-			innerHTMLDOM.querySelectorAll("*").forEach((el) => {
-				(el as HTMLElement).style.color = "";
-			});
-			this.innerHTML = innerHTMLDOM.body.innerHTML;
+			clearEditorTextColor(editor);
+			return;
 		}
+		const innerHTMLDOM = new DOMParser().parseFromString(this.innerHTML || "", "text/html");
+		innerHTMLDOM.querySelectorAll("*").forEach((el) => {
+			(el as HTMLElement).style.color = "";
+		});
+		this.innerHTML = innerHTMLDOM.body.innerHTML;
 	}
 	isHTML() {
 		return this.originalElement === "__raw_html__" || (isHTMLString(this.getInnerHTML()) && !this.isText());

@@ -1,6 +1,6 @@
 <template>
 	<div ref="searchBlock" class="focus-within:outline-none" @keydown="handleKeydown">
-		<div class="mb-4">
+		<div v-if="!builderStore.readOnlyMode" class="mb-4">
 			<OptionToggle
 				v-model="searchMode"
 				:options="[
@@ -20,7 +20,7 @@
 				@keydown.enter="handlePrimaryAction" />
 
 			<Popover bare>
-				<template #trigger="{ isOpen }">
+				<template #trigger="{ open }">
 					<Button
 						icon="lucide-filter"
 						:label="__('Filters')"
@@ -34,18 +34,18 @@
 							{{ selectedFiltersCount }}
 						</span>
 						<span
-							:class="[isOpen ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
+							:class="[open ? 'lucide-chevron-up' : 'lucide-chevron-down', 'size-4']"
 							aria-hidden="true" />
 					</Button>
 				</template>
 				<template #default>
-					<div class="w-48 rounded-lg bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
+					<div class="w-48 rounded-6 bg-surface-base py-2 shadow-lg ring-1 ring-black ring-opacity-5">
 						<div class="text-xs-medium px-3 py-2 text-ink-gray-5">{{ __("Filter search results by:") }}</div>
 						<div class="space-y-1 px-2">
 							<label
 								v-for="filter in filters"
 								:key="filter.name"
-								class="flex cursor-pointer items-center rounded px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
+								class="flex cursor-pointer items-center rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-1">
 								<Checkbox
 									:modelValue="filter.selected"
 									@update:modelValue="toggleFilter(filter)"
@@ -112,9 +112,9 @@
 			<!-- Search Results -->
 			<div v-for="(result, index) in results" :key="result.blockId">
 				<div
-					class="mb-2 flex cursor-pointer items-center justify-between rounded px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
+					class="mb-2 flex cursor-pointer items-center justify-between rounded-4 px-3 py-2 text-sm text-ink-gray-7 hover:bg-surface-gray-1"
 					@mouseover.stop="canvasStore.activeCanvas?.setHoveredBlock(result.blockId)"
-					@click="canvasStore.activeCanvas?.scrollBlockIntoView(result)">
+					@click="canvasStore.selectBlock(result, null, true, true)">
 					<div class="line-clamp-2 flex-1">
 						{{ result.getBlockDescription() }}
 						<div class="mt-1 text-xs text-ink-gray-5">
@@ -146,13 +146,15 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import type Block from "@/block";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { watchDebounced } from "@vueuse/core";
 import { Checkbox, Popover } from "frappe-ui";
-import { computed, nextTick, onMounted, Ref, ref } from "vue";
+import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
 import { toast } from "frappe-ui";
 import OptionToggle from "./OptionToggle.vue";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const searchBlock = ref(null) as Ref<HTMLInputElement | null>;
@@ -465,6 +467,15 @@ watchDebounced(() => filters.value.map((f) => f.selected).join(","), performSear
 watchDebounced(searchInSelectedBlock, performSearch, {
 	debounce: 300,
 });
+
+// the panel can stay open while a version preview loads, so drop out of replace mode
+watch(
+	() => builderStore.readOnlyMode,
+	(readOnly) => {
+		if (readOnly) searchMode.value = "search";
+	},
+	{ immediate: true },
+);
 
 // Reset replaced count when switching modes
 watchDebounced(

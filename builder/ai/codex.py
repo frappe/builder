@@ -22,7 +22,7 @@ CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 TOKEN_URL = "https://auth.openai.com/oauth/token"
 API_BASE = "https://chatgpt.com/backend-api"
 ORIGINATOR = "codex_cli_rs"
-CLIENT_VERSION = "0.145.0"
+CLIENT_VERSION = "0.160.0"
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 120  # max stall between bytes, mirrors llm.py
 CATALOG_TIMEOUT = 5
@@ -31,6 +31,7 @@ REFRESH_SLACK_MS = 60_000
 # The ChatGPT serving surface, not the public API. litellm's model map describes
 # the API and gets these wrong; the spark models are text-only.
 CONTEXT_WINDOWS = {
+	"gpt-6-luna": 272_000,
 	"gpt-5.6-sol": 272_000,
 	"gpt-5.6-terra": 272_000,
 	"gpt-5.6-luna": 272_000,
@@ -46,6 +47,11 @@ CONTEXT_WINDOWS = {
 
 
 class CodexError(Exception):
+	pass
+
+
+# A missing, expired or unusable ChatGPT sign-in: the one Codex failure the user fixes.
+class CodexCredentialError(CodexError):
 	pass
 
 
@@ -477,7 +483,7 @@ def runtime_auth(provider: str) -> tuple[str, str]:
 		cred = refresh_credential(cred)
 		save_credential(provider, cred)
 	if not cred.get("account_id"):
-		raise CodexError(
+		raise CodexCredentialError(
 			"The ChatGPT credential is missing its account id. Sign in with ChatGPT again from AI settings."
 		)
 	return cred["access"], cred["account_id"]
@@ -486,7 +492,7 @@ def runtime_auth(provider: str) -> tuple[str, str]:
 def stored_credential(provider: str) -> dict:
 	raw = frappe.get_cached_doc("Builder AI Provider", provider).resolved_key()
 	if not raw:
-		raise CodexError("No ChatGPT credential is saved. Sign in with ChatGPT from AI settings.")
+		raise CodexCredentialError("No ChatGPT credential is saved. Sign in with ChatGPT from AI settings.")
 	return parse_credential(raw)
 
 
@@ -504,7 +510,7 @@ def parse_credential(raw: str) -> dict:
 	except ValueError:
 		data = None
 	if not isinstance(data, dict):
-		raise CodexError(
+		raise CodexCredentialError(
 			"That doesn't look like a ChatGPT credential. Sign in with ChatGPT, or paste the full contents of ~/.codex/auth.json."
 		)
 	if tokens := data.get("tokens"):
@@ -516,7 +522,9 @@ def parse_credential(raw: str) -> dict:
 			"account_id": tokens.get("account_id") or account_id_from_tokens(tokens.get("id_token"), access),
 		}
 	if not data.get("refresh"):
-		raise CodexError("The credential has no refresh token. Sign in with ChatGPT again from AI settings.")
+		raise CodexCredentialError(
+			"The credential has no refresh token. Sign in with ChatGPT again from AI settings."
+		)
 	return data
 
 
@@ -528,7 +536,9 @@ def refresh_credential(cred: dict) -> dict:
 		timeout=30,
 	)
 	if resp.status_code >= 400:
-		raise CodexError("The ChatGPT sign-in has expired. Sign in with ChatGPT again from AI settings.")
+		raise CodexCredentialError(
+			"The ChatGPT sign-in has expired. Sign in with ChatGPT again from AI settings."
+		)
 	data = resp.json()
 	access = data.get("access_token") or ""
 	return {

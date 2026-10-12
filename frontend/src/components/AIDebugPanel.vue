@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-5 text-sm text-ink-gray-7">
 		<!-- Summary card: status + model, primary stat tiles, context meter -->
-		<div class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-gray-1">
+		<div class="overflow-hidden rounded-7 border border-outline-gray-2 bg-surface-gray-1">
 			<div class="flex items-center justify-between gap-3 border-b border-outline-gray-2 px-3.5 py-2.5">
 				<span class="inline-flex items-center gap-1.5 text-xs font-semibold" :class="stopPill.text">
 					<span class="size-2 rounded-full" :class="stopPill.dot" />
@@ -13,7 +13,7 @@
 			<div class="grid grid-cols-2 divide-x divide-y divide-outline-gray-2 sm:grid-cols-4">
 				<div v-for="s in primaryStats" :key="s.label" class="flex flex-col gap-1 p-3.5">
 					<span class="text-[10px] font-medium uppercase tracking-wide text-ink-gray-5">{{ s.label }}</span>
-					<span class="text-lg font-medium tabular-nums leading-none text-ink-gray-9">{{ s.value }}</span>
+					<span class="text-md font-medium tabular-nums leading-none text-ink-gray-9">{{ s.value }}</span>
 					<span v-if="s.sub" class="text-[11px] leading-none" :class="s.subTone || 'text-ink-gray-5'">
 						{{ s.sub }}
 					</span>
@@ -82,13 +82,13 @@
 						<div v-if="round.tools?.length" class="flex flex-col gap-2">
 							<div v-for="(tool, ti) in round.tools" :key="ti" class="min-w-0">
 								<span
-									class="inline-block rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold"
+									class="inline-block rounded-5 px-2 py-0.5 font-mono text-[11px] font-semibold"
 									:class="toolTone(tool.name)">
 									{{ tool.name }}
 								</span>
 								<pre
 									v-if="hasArgs(tool.args)"
-									class="no-scrollbar mt-1 overflow-x-auto rounded-md bg-surface-gray-2 px-2.5 py-1.5 font-mono text-[10px] leading-snug text-ink-gray-6"
+									class="no-scrollbar mt-1 overflow-x-auto rounded-5 bg-surface-gray-2 px-2.5 py-1.5 font-mono text-[10px] leading-snug text-ink-gray-6"
 									>{{ tool.args }}</pre
 								>
 							</div>
@@ -98,7 +98,7 @@
 						</span>
 						<p
 							v-if="round.text"
-							class="mt-2 whitespace-pre-wrap break-words rounded-md bg-surface-gray-2 px-3 py-2 text-xs leading-relaxed text-ink-gray-7">
+							class="mt-2 whitespace-pre-wrap break-words rounded-5 bg-surface-gray-2 px-3 py-2 text-xs leading-relaxed text-ink-gray-7">
 							{{ round.text }}
 						</p>
 					</div>
@@ -107,7 +107,7 @@
 		</div>
 
 		<!-- Tool failures -->
-		<div v-if="toolFailures.length" class="rounded-lg border border-outline-red-3 bg-surface-red-2 p-3">
+		<div v-if="toolFailures.length" class="rounded-6 border border-outline-red-3 bg-surface-red-2 p-3">
 			<span class="flex items-center gap-1.5 text-xs font-semibold text-ink-red-8">
 				<span class="lucide-x-circle size-3.5" />
 				Tool failures
@@ -121,7 +121,7 @@
 
 		<!-- Collapsibles -->
 		<div class="flex flex-col gap-2">
-			<details v-if="perCall.length" class="group rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+			<details v-if="perCall.length" class="group rounded-6 border border-outline-gray-2 bg-surface-gray-1">
 				<summary
 					class="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-medium text-ink-gray-6">
 					<span class="lucide-chevron-right size-3.5 transition-transform group-open:rotate-90" />
@@ -139,13 +139,13 @@
 				</div>
 			</details>
 
-			<details class="group rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+			<details class="group rounded-6 border border-outline-gray-2 bg-surface-gray-1">
 				<summary
 					class="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-medium text-ink-gray-6">
 					<span class="lucide-chevron-right size-3.5 transition-transform group-open:rotate-90" />
 					Raw JSON
 					<button
-						class="ml-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
+						class="ml-auto inline-flex items-center gap-1 rounded-4 px-1.5 py-0.5 text-[11px] font-medium text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
 						@click.prevent="copyRaw">
 						<span :class="copied ? 'lucide-check' : 'lucide-copy'" class="size-3" />
 						{{ copied ? "copied" : "copy" }}
@@ -256,6 +256,7 @@ const TOOL_TONES: Record<string, string> = {
 	update_block: AMBER,
 	update_blocks: AMBER,
 	update_script: AMBER,
+	edit_component: AMBER,
 	move_block: AMBER,
 	set_page_settings: AMBER,
 	remove_block: RED,

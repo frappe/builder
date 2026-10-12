@@ -3,7 +3,7 @@
 	     a dead form of greyed-out controls tells the user nothing. -->
 	<div
 		v-if="answers.length"
-		class="mt-2 w-full divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+		class="mt-2 w-full divide-y divide-outline-gray-1 rounded-6 border border-outline-gray-2 bg-surface-gray-1">
 		<div v-for="(item, i) in answers" :key="i" class="px-3 py-2">
 			<p class="text-p-xs leading-snug text-ink-gray-5">{{ item.question }}</p>
 			<p class="mt-0.5 text-p-sm font-medium leading-snug text-ink-gray-8">{{ item.answer }}</p>
@@ -15,7 +15,7 @@
 	<div
 		v-else
 		class="mt-2 w-full space-y-2.5"
-		:class="{ 'rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3': hasChrome }">
+		:class="{ 'rounded-6 border border-outline-gray-2 bg-surface-gray-1 p-3': hasChrome }">
 		<!-- Several questions in one card walk one at a time: the whole set is asked
 		     in a single turn, and the user still meets them one decision at a time. -->
 		<div v-if="isStepped" class="flex items-center justify-between">
@@ -63,7 +63,7 @@
 
 			<!-- swatches -->
 			<div v-else-if="el.kind === 'swatches'" class="flex flex-wrap items-center gap-1.5">
-				<span class="flex overflow-hidden rounded border border-black/10">
+				<span class="flex overflow-hidden rounded-4 border border-black/10">
 					<span
 						v-for="color in (el.colors || []).slice(0, 8)"
 						:key="color"
@@ -76,7 +76,7 @@
 
 			<!-- image -->
 			<figure v-else-if="el.kind === 'image' && safeSrc(el.src)" class="m-0">
-				<img :src="el.src" class="max-h-48 w-auto max-w-full rounded border border-outline-gray-2" alt="" />
+				<img :src="el.src" class="max-h-48 w-auto max-w-full rounded-4 border border-outline-gray-2" alt="" />
 				<figcaption v-if="el.caption" class="mt-1 text-xs text-ink-gray-5">{{ el.caption }}</figcaption>
 			</figure>
 
@@ -93,7 +93,7 @@
 						v-for="(option, j) in el.options || []"
 						:key="j"
 						:disabled="!interactive || disabled"
-						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
+						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-6 border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
 						:class="
 							isSelected(i, j)
 								? 'border-outline-gray-4 bg-surface-gray-2'
@@ -104,12 +104,12 @@
 						<img
 							v-if="option.image && safeSrc(option.image)"
 							:src="option.image"
-							class="h-24 w-full rounded border border-black/10 object-cover"
+							class="h-24 w-full rounded-4 border border-black/10 object-cover"
 							loading="lazy"
 							alt="" />
 						<span
 							v-else-if="option.colors?.length"
-							class="flex shrink-0 overflow-hidden rounded border border-black/10">
+							class="flex shrink-0 overflow-hidden rounded-4 border border-black/10">
 							<span
 								v-for="color in option.colors.slice(0, 5)"
 								:key="color"
@@ -143,18 +143,16 @@
 				</span>
 				<FileUploader
 					fileTypes="image/*"
-					:uploadArgs="{
-						private: false,
-						folder: 'Home/Builder Uploads',
-						upload_endpoint: '/api/method/builder.api.upload_builder_asset',
-					}"
+					:private="false"
+					folder="Home/Builder Uploads"
+					uploadEndpoint="/api/method/builder.api.upload_builder_asset"
 					@success="(file: any) => (uploads[i] = file.file_url)">
 					<template #default="{ openFileSelector, uploading, progress }">
 						<div class="flex items-center gap-2">
 							<img
 								v-if="uploads[i]"
 								:src="uploads[i]"
-								class="h-10 w-14 rounded border border-outline-gray-2 object-cover"
+								class="h-10 w-14 rounded-4 border border-outline-gray-2 object-cover"
 								alt="" />
 							<Button
 								size="sm"

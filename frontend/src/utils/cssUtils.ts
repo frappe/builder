@@ -225,7 +225,10 @@ function shortenNumber(num: number): string {
 // read/write logic is identical, so each type just declares its shape here.
 export type SpacingType = "margin" | "padding" | "gap";
 
-const SPACING_PROPERTIES: Record<SpacingType, { longhands: styleProperty[]; slots: ShorthandSlots }> = {
+export const SPACING_PROPERTIES: Record<
+	SpacingType,
+	{ longhands: styleProperty[]; slots: ShorthandSlots }
+> = {
 	margin: { longhands: ["marginTop", "marginRight", "marginBottom", "marginLeft"], slots: 4 },
 	padding: { longhands: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"], slots: 4 },
 	gap: { longhands: ["rowGap", "columnGap"], slots: 2 },
@@ -348,8 +351,16 @@ function expandBoxShorthand(value: unknown): string[] {
 	return expandShorthand(value, 4);
 }
 
+function fillUnsetSlots(parts: unknown[]): string[] {
+	return parts.map((part) => {
+		const value = String(part ?? "").trim();
+		return value !== "" && value !== "Mixed" && value !== "unset" ? value : "0px";
+	});
+}
+
 function collapseBoxShorthand(parts: unknown[]): string {
-	return collapseShorthand(parts, 4);
+	if (parts.every((part) => String(part ?? "").trim() === "")) return "";
+	return collapseShorthand(fillUnsetSlots(Array.from({ length: 4 }, (_, index) => parts[index])), 4);
 }
 
 function expandGapShorthand(value: unknown): [string, string] {
@@ -357,16 +368,7 @@ function expandGapShorthand(value: unknown): [string, string] {
 }
 
 function collapseGapShorthand(parts: unknown[]): string {
-	// An unset axis has to become 0px, otherwise the pair reads as a single value.
-	const axes = parts.map((part) => {
-		const value = String(part ?? "").trim();
-		if (value !== "" && value !== "Mixed" && value !== "unset") {
-			return value;
-		} else {
-			return "0px";
-		}
-	});
-	return collapseShorthand(axes, 2);
+	return collapseShorthand(fillUnsetSlots(parts), 2);
 }
 
 /**

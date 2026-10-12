@@ -22,6 +22,9 @@
 			<template #prefix v-if="$slots.prefix">
 				<slot name="prefix" />
 			</template>
+			<template #description v-if="$slots.description">
+				<slot name="description" />
+			</template>
 			<template #suffix v-if="hasSuffix">
 				<div class="flex items-center gap-0.5">
 					<NumberArrows

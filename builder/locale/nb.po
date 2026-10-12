@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 05:58\n"
+"PO-Revision-Date: 2026-09-20 21:03\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Norwegian Bokmal\n"
 "MIME-Version: 1.0\n"
@@ -4066,7 +4066,7 @@ msgstr ""
 
 #: frontend/src/components/Commands/index.ts:205
 msgid "Show Keyboard Shortcuts"
-msgstr ""
+msgstr "Vis tastatursnarveier"
 
 #: frontend/src/components/BlockFlexLayoutHandler.vue:50
 msgid "Shrink"

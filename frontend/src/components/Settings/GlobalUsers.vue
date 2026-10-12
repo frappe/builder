@@ -5,7 +5,7 @@
 				type="text"
 				class="w-72"
 				:placeholder="__('Search by name or email')"
-				icon-left="search"
+				icon-left="lucide-search"
 				:modelValue="searchQuery"
 				@input="(val: string) => (searchQuery = val)" />
 			<Button variant="solid" icon-left="lucide-plus" @click="openInviteDialog">{{ __("Invite") }}</Button>

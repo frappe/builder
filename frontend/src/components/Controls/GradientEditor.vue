@@ -9,13 +9,14 @@
 				]"
 				:modelValue="gradient.type"
 				@update:modelValue="updateType"
-				:class="['flex-1', STRETCH_TABS]" />
+				fluid
+				class="flex-1" />
 		</div>
 
 		<div class="flex items-center gap-4">
 			<!-- Gradient Preview / Stop Bar -->
 			<div
-				class="shadow-inner relative h-5 w-full rounded border border-outline-gray-2"
+				class="shadow-inner relative h-5 w-full rounded-4 border border-outline-gray-2"
 				:style="barPreviewStyle"
 				ref="barRef">
 				<div class="absolute inset-0 cursor-copy" @click.self="addStopAtX"></div>
@@ -38,7 +39,7 @@
 								@mousedown="handleStopMouseDown(index, $event)" />
 						</template>
 						<template #default="{ close }">
-							<div class="w-52 rounded-lg border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
+							<div class="w-52 rounded-6 border border-outline-gray-2 bg-surface-base p-3 shadow-xl">
 								<ColorPicker
 									:ref="(el) => (stopPickerRefs[index] = el)"
 									renderMode="inline"
@@ -99,7 +100,6 @@
 import { __ } from "@/translation";
 import { parseGradient, stringifyGradient, type Gradient, type GradientStop } from "@/utils/gradientUtils";
 import { useMouseInElement, useMousePressed, useStorage } from "@vueuse/core";
-import { STRETCH_TABS } from "@/utils/tabButtons";
 import { Popover, TabButtons } from "frappe-ui";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import AnglePicker from "./AnglePicker.vue";

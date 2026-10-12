@@ -74,7 +74,7 @@ import {
 	toStyleProperty,
 	toTitleCase,
 } from "@/utils/helpers";
-import { Combobox } from "frappe-ui";
+import { Combobox, type ComboboxOptionValue, type SelectionExposed } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 
 const STATES = ["hover", "active", "focus"];
@@ -83,7 +83,7 @@ const canvasStore = useCanvasStore();
 const propertySearch = ref("");
 const contextMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
 const contextMenuProperty = ref<string | null>(null);
-const propertyCombobox = ref<{ reset: () => void } | null>(null);
+const propertyCombobox = ref<SelectionExposed | null>(null);
 
 // rows added from the picker stay visible until they are removed, even without a value
 const addedProperties = reactive(new Set<string>());
@@ -182,11 +182,11 @@ const focusProperty = async (property: string) => {
 
 const resetPropertyPicker = () => {
 	propertySearch.value = "";
-	nextTick(() => propertyCombobox.value?.reset());
+	nextTick(() => propertyCombobox.value?.clear());
 };
 
-const addProperty = (property: string | null) => {
-	const normalizedProperty = normalizeCSSPropertyName(property);
+const addProperty = (property: ComboboxOptionValue | null | undefined) => {
+	const normalizedProperty = normalizeCSSPropertyName(property?.toString());
 	if (normalizedProperty && canAddProperty(normalizedProperty)) {
 		addedProperties.add(normalizedProperty);
 		focusProperty(normalizedProperty);

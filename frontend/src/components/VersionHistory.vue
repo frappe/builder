@@ -23,8 +23,8 @@
 				type="text"
 				:placeholder="__('Name this version (optional)')"
 				class="flex-1"
-				@keydown.enter="saveVersion" />
-			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveVersion" />
+				@keydown.enter="saveLabeledVersion" />
+			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveLabeledVersion" />
 		</div>
 
 		<!-- list -->
@@ -42,7 +42,7 @@
 			<template v-else>
 				<!-- current (working draft) -->
 				<button
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="canvasStore.previewSnapshotName === null ? 'bg-surface-gray-3' : 'hover:bg-surface-gray-2'"
 					@click="canvasStore.clearVersionPreview()">
 					<span class="mt-1.5 h-2 w-2 shrink-0 self-start rounded-full bg-gray-400" />
@@ -57,7 +57,7 @@
 				<!-- live published version, for pages published before any snapshot existed -->
 				<button
 					v-if="showPublishedVersion"
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="
 						canvasStore.previewSnapshotName === PUBLISHED_VERSION
 							? 'bg-surface-gray-3'
@@ -92,7 +92,7 @@
 				<button
 					v-for="snapshot in snapshots.data"
 					:key="snapshot.name"
-					class="group flex w-full items-center gap-2.5 rounded px-3 py-2 text-left"
+					class="group flex w-full items-center gap-2.5 rounded-4 px-3 py-2 text-left"
 					:class="
 						canvasStore.previewSnapshotName === snapshot.name
 							? 'bg-surface-gray-3'
@@ -143,9 +143,10 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderSnapshot } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
+import { saveVersion } from "@/utils/dialogs";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Button, createListResource, TextInput, toast } from "frappe-ui";
+import { Avatar, Button, createListResource, TextInput } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
@@ -227,18 +228,17 @@ onBeforeUnmount(() => canvasStore.clearVersionPreview());
 
 function toggleSaveRow() {
 	showSaveRow.value = !showSaveRow.value;
-	if (showSaveRow.value) nextTick(() => labelInput.value?.el?.focus?.());
+	if (showSaveRow.value) nextTick(() => labelInput.value?.focus());
 }
 
-async function saveVersion() {
+async function saveLabeledVersion() {
 	if (saving.value) return;
 	saving.value = true;
 	try {
-		await pageStore.createManualSnapshot(newLabel.value.trim() || undefined);
+		await saveVersion(newLabel.value.trim() || undefined);
 		newLabel.value = "";
 		showSaveRow.value = false;
 		await snapshots.reload();
-		toast.success(__("Version saved"));
 	} finally {
 		saving.value = false;
 	}

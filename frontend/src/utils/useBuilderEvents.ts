@@ -12,7 +12,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { commandShortcuts } from "@/components/Commands";
 import { __ } from "@/translation";
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
-import { promptOversizedSVG } from "@/utils/dialogs";
+import { promptOversizedSVG, promptSaveVersion } from "@/utils/dialogs";
 import {
 	addPxToNumber,
 	getBlockCopy,
@@ -27,7 +27,7 @@ import {
 	uploadSVGAsFile,
 } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
-import { toast, useShortcut } from "frappe-ui";
+import { toast, useKeyboardShortcut } from "frappe-ui";
 import { Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -240,11 +240,10 @@ export function useBuilderEvents(
 
 	// a command that declares keys owns its binding; what is left needs the
 	// keyboard event or a canvas ref, so it stays a plain shortcut
-	useShortcut([
+	useKeyboardShortcut([
 		...commandShortcuts(),
 		{
-			key: "s",
-			ctrl: true,
+			combo: "Mod+S",
 			description: __("Save Page / Component"),
 			group: __("General"),
 			allowInInput: true,
@@ -252,11 +251,13 @@ export function useBuilderEvents(
 				if (canvasStore.editingMode === "fragment") {
 					saveAndExitFragmentMode(e);
 					e.stopPropagation();
+				} else if (canvasStore.editingMode === "page" && !builderStore.readOnlyMode && !isDialogOpen()) {
+					promptSaveVersion();
 				}
 			},
 		},
 		{
-			key: "Backspace",
+			combo: "Backspace",
 			description: __("Delete Selected Blocks"),
 			group: __("Edit"),
 			handler: (e) => {
@@ -270,7 +271,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "Delete",
+			combo: "Delete",
 			description: __("Delete Selected Blocks"),
 			group: __("Edit"),
 			handler: (e) => {
@@ -284,18 +285,17 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "Escape",
+			combo: "Escape",
 			description: __("Exit Current Mode"),
 			group: __("General"),
-			condition: () => canvasStore.editingMode !== "page",
+			enabled: () => canvasStore.editingMode !== "page",
 			handler: (e) => {
 				canvasStore.exitFragmentMode(e);
 			},
 			preventDefault: false,
 		},
 		{
-			key: "0",
-			ctrl: true,
+			combo: "Mod+Digit0",
 			description: __("Reset Canvas Zoom"),
 			group: __("Canvas"),
 			handler: () => {
@@ -305,9 +305,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "0",
-			ctrl: true,
-			shift: true,
+			combo: "Mod+Shift+Digit0",
 			description: __("Fit Canvas to Screen"),
 			group: __("Canvas"),
 			handler: () => {
@@ -317,7 +315,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "ArrowRight",
+			combo: "ArrowRight",
 			description: __("Pan Canvas"),
 			group: __("Canvas"),
 			handler: () => {
@@ -325,10 +323,10 @@ export function useBuilderEvents(
 					pageCanvas.value.moveCanvas("right");
 				}
 			},
-			condition: () => !blockController.isBlockSelected(),
+			enabled: () => !blockController.isBlockSelected(),
 		},
 		{
-			key: "ArrowLeft",
+			combo: "ArrowLeft",
 			description: __("Pan Canvas"),
 			group: __("Canvas"),
 			handler: () => {
@@ -336,10 +334,10 @@ export function useBuilderEvents(
 					pageCanvas.value.moveCanvas("left");
 				}
 			},
-			condition: () => !blockController.isBlockSelected(),
+			enabled: () => !blockController.isBlockSelected(),
 		},
 		{
-			key: "ArrowUp",
+			combo: "ArrowUp",
 			description: __("Pan Canvas"),
 			group: __("Canvas"),
 			handler: () => {
@@ -347,10 +345,10 @@ export function useBuilderEvents(
 					pageCanvas.value.moveCanvas("up");
 				}
 			},
-			condition: () => !blockController.isBlockSelected(),
+			enabled: () => !blockController.isBlockSelected(),
 		},
 		{
-			key: "ArrowDown",
+			combo: "ArrowDown",
 			description: __("Pan Canvas"),
 			group: __("Canvas"),
 			handler: () => {
@@ -358,11 +356,10 @@ export function useBuilderEvents(
 					pageCanvas.value.moveCanvas("down");
 				}
 			},
-			condition: () => !blockController.isBlockSelected(),
+			enabled: () => !blockController.isBlockSelected(),
 		},
 		{
-			key: "=",
-			ctrl: true,
+			combo: "Mod+Equal",
 			description: __("Zoom In"),
 			group: __("Canvas"),
 			handler: () => {
@@ -372,8 +369,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "-",
-			ctrl: true,
+			combo: "Mod+Minus",
 			description: __("Zoom Out"),
 			group: __("Canvas"),
 			handler: () => {
@@ -383,7 +379,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "c",
+			combo: "C",
 			description: __("Container Mode"),
 			group: __("Tools"),
 			handler: () => {
@@ -392,7 +388,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "i",
+			combo: "I",
 			description: __("Image Mode"),
 			group: __("Tools"),
 			handler: () => {
@@ -401,7 +397,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "t",
+			combo: "T",
 			description: __("Text Mode"),
 			group: __("Tools"),
 			handler: () => {
@@ -410,7 +406,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "v",
+			combo: "V",
 			description: __("Select Mode"),
 			group: __("Tools"),
 			handler: () => {
@@ -418,7 +414,7 @@ export function useBuilderEvents(
 			},
 		},
 		{
-			key: "h",
+			combo: "H",
 			description: __("Move / Hand Mode"),
 			group: __("Tools"),
 			handler: () => {

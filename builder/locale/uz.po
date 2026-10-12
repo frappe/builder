@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: suraj@frappe.io\n"
 "POT-Creation-Date: 2026-08-18 15:53+0000\n"
-"PO-Revision-Date: 2026-08-19 05:58\n"
+"PO-Revision-Date: 2026-09-20 21:03\n"
 "Last-Translator: suraj@frappe.io\n"
 "Language-Team: Uzbek\n"
 "MIME-Version: 1.0\n"
@@ -5119,7 +5119,7 @@ msgstr "Yaqinlashtirish"
 
 #: frontend/src/utils/useBuilderEvents.ts:357
 msgid "Zoom Out"
-msgstr "Kattalashtirish"
+msgstr "Uzoqlashtirish"
 
 #. Option for the 'Role' (Select) field in DocType 'Builder AI Message'
 #: builder/builder/doctype/builder_ai_message/builder_ai_message.json

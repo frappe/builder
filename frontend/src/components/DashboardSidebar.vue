@@ -62,7 +62,7 @@
 							class="cursor-pointer" />
 						<Dropdown
 							v-else-if="isFolderActive(project.folder_name)"
-							placement="right"
+							align="end"
 							:options="[
 								{
 									label: __('Rename'),
@@ -125,7 +125,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui";
-import { TrialBanner } from "frappe-ui/frappe";
+import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
 
@@ -152,56 +152,51 @@ const appsSubmenu = computed(() => {
 	}));
 });
 
-// grouped options render fine (the header hands them to Dropdown), but its prop
-// type only describes a flat list
-const appMenuItems = computed(
-	() =>
-		[
+const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
+	{
+		group: "Builder",
+		hideLabel: true,
+		options: [
 			{
-				group: "Builder",
-				hideLabel: true,
-				items: [
-					{
-						label: __("New Page"),
-						onClick: () => (showTemplatesDialog.value = true),
-						icon: "lucide-plus",
-					},
-				],
+				label: __("New Page"),
+				onClick: () => (showTemplatesDialog.value = true),
+				icon: "lucide-plus",
+			},
+		],
+	},
+	{
+		group: "Options",
+		hideLabel: true,
+		options: [
+			{
+				label: __("Apps"),
+				icon: "lucide-grid",
+				submenu: appsSubmenu.value,
 			},
 			{
-				group: "Options",
-				hideLabel: true,
-				items: [
-					{
-						label: __("Apps"),
-						icon: "lucide-grid",
-						submenu: appsSubmenu.value,
-					},
-					{
-						label: __("Toggle Theme"),
-						onClick: () => toggleDark(),
-						icon: isDark.value ? "lucide-sun" : "lucide-moon",
-					},
-					{
-						label: __("Settings"),
-						onClick: () => (showSettingsDialog.value = true),
-						icon: "lucide-settings",
-					},
-				],
+				label: __("Toggle Theme"),
+				onClick: () => toggleDark(),
+				icon: isDark.value ? "lucide-sun" : "lucide-moon",
 			},
 			{
-				group: "Help",
-				hideLabel: true,
-				items: [
-					{
-						label: __("Help"),
-						onClick: () => window.open("https://t.me/frappebuilder"),
-						icon: "lucide-info",
-					},
-				],
+				label: __("Settings"),
+				onClick: () => (showSettingsDialog.value = true),
+				icon: "lucide-settings",
 			},
-		] as unknown as SidebarHeaderProps["menuItems"],
-);
+		],
+	},
+	{
+		group: "Help",
+		hideLabel: true,
+		options: [
+			{
+				label: __("Help"),
+				onClick: () => window.open("https://t.me/frappebuilder"),
+				icon: "lucide-info",
+			},
+		],
+	},
+]);
 
 const isFolderActive = (folderName: string) => {
 	return builderStore.activeFolder === folderName;

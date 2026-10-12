@@ -1,7 +1,7 @@
 <template>
 	<div class="items-top relative flex justify-center">
 		<div class="relative h-fit w-fit">
-			<div class="group grid grid-cols-3 rounded-sm bg-surface-gray-2 p-1.5">
+			<div class="group grid grid-cols-3 rounded-1 bg-surface-gray-2 p-1.5">
 				<div
 					v-for="option in placementOptions"
 					:key="option"
@@ -24,19 +24,19 @@
 						class="hidden w-5 gap-[2px] hover:opacity-100 group-hover/option:flex"
 						:style="previewStyle(option)">
 						<div
-							class="rounded-sm bg-surface-gray-8"
+							class="rounded-1 bg-surface-gray-8"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-surface-gray-8"
+							class="rounded-1 bg-surface-gray-8"
 							:class="{
 								'h-3 w-1': direction === 'row',
 								'h-1 w-3': direction === 'column',
 							}"></div>
 						<div
-							class="rounded-sm bg-surface-gray-8"
+							class="rounded-1 bg-surface-gray-8"
 							:class="{
 								'h-2 w-1': direction === 'row',
 								'h-1 w-2': direction === 'column',
@@ -45,22 +45,22 @@
 				</div>
 			</div>
 			<div
-				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5"
+				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-1 p-1.5"
 				:style="selectedOverlayStyle">
 				<div
-					class="rounded-sm bg-surface-gray-9"
+					class="rounded-1 bg-surface-gray-9"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-9"
+					class="rounded-1 bg-surface-gray-9"
 					:class="{
 						'h-1 w-3': direction === 'column',
 						'h-3 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-9"
+					class="rounded-1 bg-surface-gray-9"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
@@ -68,22 +68,22 @@
 			</div>
 			<div
 				v-if="isDistributed && hoveredSlot"
-				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-sm p-1.5 opacity-40"
+				class="pointer-events-none absolute top-0 flex h-full w-full cursor-pointer gap-[2px] rounded-1 p-1.5 opacity-40"
 				:style="hoverOverlayStyle">
 				<div
-					class="rounded-sm bg-surface-gray-8"
+					class="rounded-1 bg-surface-gray-8"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-8"
+					class="rounded-1 bg-surface-gray-8"
 					:class="{
 						'h-1 w-3': direction === 'column',
 						'h-3 w-1': direction === 'row',
 					}"></div>
 				<div
-					class="rounded-sm bg-surface-gray-8"
+					class="rounded-1 bg-surface-gray-8"
 					:class="{
 						'h-1 w-2': direction === 'column',
 						'h-2 w-1': direction === 'row',

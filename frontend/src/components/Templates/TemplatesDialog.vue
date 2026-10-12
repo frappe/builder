@@ -21,7 +21,7 @@ import { __ } from "@/translation";
 import Dialog from "@/components/Controls/Dialog.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { Button } from "frappe-ui";
-import { useTelemetry } from "frappe-ui/frappe";
+import { useTelemetry } from "@framework/ui/telemetry";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { watch } from "vue";
 import TemplateGallery from "./TemplateGallery.vue";

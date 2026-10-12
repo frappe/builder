@@ -22,7 +22,9 @@ type UseCanvasMarqueeSelectionOptions = {
 	canvasProps: CanvasProps;
 	activeBreakpoint: Ref<string | null>;
 	selectedBlockIds: Ref<Set<string>>;
+	selectedBlocks: Ref<Block[]>;
 	findBlock: (id: string) => Block | null;
+	removeNestedBlocks: (blocks: Block[]) => Block[];
 	setActiveBreakpoint: (breakpoint: string | null) => void;
 	setHoveredBreakpoint: (breakpoint: string | null) => void;
 };
@@ -33,7 +35,9 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		canvasProps,
 		activeBreakpoint,
 		selectedBlockIds,
+		selectedBlocks,
 		findBlock,
+		removeNestedBlocks,
 		setActiveBreakpoint,
 		setHoveredBreakpoint,
 	} = options;
@@ -43,7 +47,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	const suppressNextClick = ref(false);
 	const marqueeAdditiveSelection = ref(false);
 	const marqueeBreakpoint = ref<string | null>(null);
-	const marqueeInitialSelection = ref<Set<string>>(new Set());
+	let marqueeInitialBlocks: Block[] = [];
 	// Cached block rects — snapshotted once when drag starts; blocks don't move during a marquee
 	let blockRectCache: BlockRectSnapshot[] = [];
 	let rafId: number | null = null;
@@ -115,7 +119,7 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 		marquee.currentX = ev.clientX;
 		marquee.currentY = ev.clientY;
 		marqueeAdditiveSelection.value = ev.shiftKey || ev.metaKey || ev.ctrlKey;
-		marqueeInitialSelection.value = new Set(selectedBlockIds.value);
+		marqueeInitialBlocks = [...selectedBlocks.value];
 		marqueeBreakpoint.value = getBreakpointAtPoint(ev.clientX, ev.clientY);
 
 		window.addEventListener("mousemove", handleMarqueeMove);
@@ -338,12 +342,12 @@ export function useCanvasMarqueeSelection(options: UseCanvasMarqueeSelectionOpti
 	const applyMarqueeSelection = () => {
 		const targetBreakpoint = marqueeBreakpoint.value || activeBreakpoint.value;
 		const intersectingIds = getMarqueeIntersectingBlockIds();
-		const nextIds = new Set<string>();
-
-		if (marqueeAdditiveSelection.value) {
-			for (const id of marqueeInitialSelection.value) nextIds.add(id);
-		}
-		for (const id of intersectingIds) nextIds.add(id);
+		const intersectingBlocks = blockRectCache
+			.filter((entry) => intersectingIds.has(entry.blockId))
+			.map((entry) => entry.block);
+		const initialBlocks = marqueeAdditiveSelection.value ? marqueeInitialBlocks : [];
+		const blocks = removeNestedBlocks([...initialBlocks, ...intersectingBlocks]);
+		const nextIds = new Set(blocks.map((block) => block.blockId));
 
 		// Skip reactivity churn when the selection set hasn't actually changed
 		if (!setsEqual(selectedBlockIds.value, nextIds)) {

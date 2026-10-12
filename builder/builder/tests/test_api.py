@@ -6,7 +6,16 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
-from builder.api import duplicate_page, import_remote_assets, import_remote_fonts
+from builder.api import (
+	create_import_folder,
+	duplicate_page,
+	get_copy_script_name,
+	import_remote_assets,
+	import_remote_fonts,
+	import_template_group,
+	insert_folder,
+	save_client_script,
+)
 
 FONT = "https://cdn.example.com/inter.woff2"
 
@@ -186,3 +195,85 @@ class TestDuplicatePage(FrappeTestCase):
 
 		self.assertFalse(duplicate.is_standard)
 		self.assertFalse(duplicate.app)
+		self.assertEqual(duplicate.page_title, "Standard (Copy)")
+
+	def test_copies_of_copies_are_numbered(self):
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Numbered"}).insert()
+		first = duplicate_page(page.name)
+		second = duplicate_page(first.name)
+		third = duplicate_page(page.name)
+
+		self.assertEqual(first.page_title, "Numbered (Copy)")
+		self.assertEqual(second.page_title, "Numbered (Copy 2)")
+		self.assertEqual(third.page_title, "Numbered (Copy 3)")
+
+	def test_copied_script_names_swap_the_hash(self):
+		for name in ("fp sidebar", "fp sidebar-8120f", "fp sidebar-8120f-c8371-91f8e"):
+			self.assertRegex(get_copy_script_name(name), r"^fp sidebar-[0-9a-f]{5}$")
+
+
+class TestSaveClientScript(FrappeTestCase):
+	def test_stale_save_is_refused(self):
+		script = frappe.get_doc(
+			{"doctype": "Builder Client Script", "script_type": "CSS", "script": "a{}"}
+		).insert()
+		# inserting writes the script file and commits, so remove it the same way
+		self.addCleanup(lambda: (frappe.delete_doc("Builder Client Script", script.name), frappe.db.commit()))
+		loaded = str(script.modified)
+
+		saved = save_client_script(script.name, "b{}", loaded)
+
+		with self.assertRaises(frappe.TimestampMismatchError):
+			save_client_script(script.name, "c{}", loaded)
+		save_client_script(script.name, "d{}", saved)
+		self.assertEqual(frappe.db.get_value("Builder Client Script", script.name, "script"), "d{}")
+
+
+GROUP = {
+	"name": "zz-harbour",
+	"title": "Zz Harbour",
+	"pages": [{"name": "zz_harbour_home"}, {"name": "zz_harbour_rooms"}, {"name": "zz_harbour_guide"}],
+}
+ROUTES = {
+	"zz_harbour_home": "templates/zz-harbour/home",
+	"zz_harbour_rooms": "templates/zz-harbour/rooms",
+	"zz_harbour_guide": "templates/zz-harbour/guides/arrival",
+}
+
+
+def fake_hub_get(method, page=None):
+	return {"page": {"page_title": page, "route": ROUTES[page], "blocks": [{"element": "div"}]}}
+
+
+@patch("builder.api.hub_get", fake_hub_get)
+@patch("builder.api.get_template_groups", lambda: [GROUP])
+class TestImportTemplateGroup(FrappeTestCase):
+	# each test counts folders and prefixes from scratch
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def import_routes(self):
+		result = import_template_group("zz-harbour")
+		routes = frappe.get_all("Builder Page", {"name": ["in", result["pages"]]}, pluck="route")
+		return result["folder"], sorted(routes)
+
+	def test_imports_into_a_new_folder_under_one_route_prefix(self):
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour")
+		self.assertEqual(routes, ["zz-harbour/guides/arrival", "zz-harbour/home", "zz-harbour/rooms"])
+
+	def test_a_repeat_import_takes_the_next_folder_and_prefix(self):
+		self.import_routes()
+		folder, routes = self.import_routes()
+		self.assertEqual(folder, "Zz Harbour 2")
+		self.assertTrue(all(route.startswith("zz-harbour-2/") for route in routes))
+
+	def test_a_taken_folder_name_is_skipped_and_the_transaction_survives(self):
+		frappe.get_doc({"doctype": "Builder Project Folder", "folder_name": "Zz Harbour"}).insert()
+		self.assertFalse(insert_folder("Zz Harbour"))
+		self.assertEqual(create_import_folder("Zz Harbour", "zz-harbour"), ("Zz Harbour 2", "zz-harbour-2"))
+
+	def test_a_group_with_no_fetchable_pages_creates_no_folder(self):
+		with patch("builder.api.hub_get", lambda method, page=None: None):
+			self.assertRaises(frappe.ValidationError, import_template_group, "zz-harbour")
+		self.assertFalse(frappe.db.exists("Builder Project Folder", "Zz Harbour"))

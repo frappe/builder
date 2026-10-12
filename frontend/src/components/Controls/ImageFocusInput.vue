@@ -8,7 +8,7 @@
 			:style="boxSize || {}">
 			<div
 				ref="boxRef"
-				class="relative h-full w-full overflow-hidden rounded border border-outline-gray-2 bg-surface-gray-1"
+				class="relative h-full w-full overflow-hidden rounded-4 border border-outline-gray-2 bg-surface-gray-1"
 				:class="disabled ? '' : cursorClass"
 				@mousedown="onBoxMouseDown">
 				<img
@@ -32,7 +32,7 @@
 		<div v-if="!disabled && viewBox !== undefined && natural" class="flex items-center gap-1.5">
 			<Button
 				variant="ghost"
-				icon="zoom-out"
+				icon="lucide-zoom-out"
 				:title="__('Zoom out')"
 				:disabled="zoom <= 1"
 				@click="stepZoom(-1)" />
@@ -46,7 +46,7 @@
 				@update:modelValue="(v: string | number) => setZoom(Number(v))" />
 			<Button
 				variant="ghost"
-				icon="zoom-in"
+				icon="lucide-zoom-in"
 				:title="__('Zoom in')"
 				:disabled="zoom >= 4"
 				@click="stepZoom(1)" />
