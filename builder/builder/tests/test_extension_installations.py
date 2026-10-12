@@ -222,20 +222,31 @@ class TestUninstallSummary(FrappeTestCase):
 		drop_installations(EXTENSION)
 		frappe.db.delete("Builder Extension Resource", {"extension": EXTENSION})
 
-	def test_names_what_the_site_keeps(self):
-		make_installation(EXTENSION)
+	def record(self, doctype, created):
 		frappe.get_doc(
 			{
 				"doctype": "Builder Extension Resource",
 				"extension": EXTENSION,
 				"resource_type": "DocType",
-				"resource_name": "Kept Widget",
+				"resource_name": doctype,
+				"resource_created": created,
 			}
 		).insert()
+
+	def test_names_what_the_site_keeps(self):
+		make_installation(EXTENSION)
+		self.record("Contact", frappe.db.get_value("DocType", "Contact", "creation"))
 
 		summary = get_uninstall_summary(EXTENSION)
 
 		self.assertEqual(summary["resources"], [{"resource_type": "DocType", "count": 1}])
+
+	def test_leaves_out_a_doctype_deleted_since(self):
+		"""A row from a deleted record does not match the record that has the name now."""
+		make_installation(EXTENSION)
+		self.record("Contact", "2000-01-01 00:00:00")
+
+		self.assertEqual(get_uninstall_summary(EXTENSION)["resources"], [])
 
 	def test_refuses_an_extension_the_site_has_not_installed(self):
 		with self.assertRaises(frappe.PermissionError):

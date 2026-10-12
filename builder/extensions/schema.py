@@ -5,7 +5,7 @@
 
 Always `custom: 1`. Frappe refuses a non-custom doctype outside developer mode
 (`doctype.py:334`), and a custom one writes no files, so what an extension makes
-lives in the database and can be dropped again.
+lives in the database and can be removed again.
 
 The permission floor is Frappe's own and nothing here lifts it: inserting a
 `DocType` needs create permission on `DocType`, which is System Manager. An
@@ -161,7 +161,8 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 	existing = {row.fieldname: row for row in document.fields}
 
 	for row in read_fields(fields):
-		found = existing.get(row["fieldname"])
+		# a layout break may come without a fieldname, so it is always a new field
+		found = existing.get(row.get("fieldname"))
 		if found:
 			found.update(row)
 		else:
@@ -173,7 +174,7 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 
 @frappe.whitelist(methods=["POST"])
 def delete_doctype(extension: str, doctype: str) -> None:
-	"""Drops a doctype this extension made, and the table under it."""
+	"""Removes a doctype this extension made. Frappe keeps its table and records."""
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
 
@@ -187,7 +188,7 @@ def list_doctypes(extension: str) -> list[dict]:
 	assert_extension_access(extension, "schema.write")
 
 	names = list_resources(extension, "DocType")
-	return [{"doctype": name, "exists": bool(frappe.db.exists("DocType", name))} for name in names]
+	return [{"doctype": name, "exists": bool(find_resource(extension, "DocType", name))} for name in names]
 
 
 def read_doctype_name(doctype: str) -> str:

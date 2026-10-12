@@ -649,7 +649,7 @@ The user must be a System Manager. Frappe wants create permission on `DocType`, 
 | `schema.createDoctype(doctype, fields, options)` | Creates a doctype this extension owns |
 | `schema.getDoctype(doctype)` | Returns the field list |
 | `schema.updateDoctype(doctype, fields)` | Adds fields, and updates fields with a matching `fieldname` |
-| `schema.deleteDoctype(doctype)` | Drops the doctype and its table |
+| `schema.deleteDoctype(doctype)` | Removes the doctype. Its records stay in the database, but no form or list shows them. |
 | `schema.listDoctypes()` | Returns every doctype this extension made |
 
 `updateDoctype` never removes a field that the call leaves unmentioned. Removing a field drops a column and its data.

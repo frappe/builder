@@ -16,6 +16,7 @@ class BuilderExtensionResource(Document):
 		from frappe.types import DF
 
 		extension: DF.Data
+		resource_created: DF.Datetime
 		resource_name: DF.Data
 		resource_type: DF.Literal["DocType"]
 	# end: auto-generated types

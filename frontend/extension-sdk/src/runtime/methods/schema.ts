@@ -55,7 +55,10 @@ export const schema = {
 	updateDoctype: (doctype: string, fields: SchemaField[]) =>
 		call("schema.updateDoctype", { doctype, fields }) as Promise<Doctype>,
 
-	/** Removes a doctype that this extension made, and its table. Builder asks the user first. */
+	/**
+	 * Removes a doctype that this extension made. Builder asks the user first.
+	 * Its records stay in the database, but no form or list shows them.
+	 */
 	deleteDoctype: (doctype: string) => call("schema.deleteDoctype", { doctype }),
 
 	/** Each doctype that this extension made, and if it still exists. */

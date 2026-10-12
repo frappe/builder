@@ -11,8 +11,6 @@ Every method that changes an installation checks for an extension manager
 first, so the user gets a clear refusal before Frappe's own check runs.
 """
 
-from collections import Counter
-
 import frappe
 from frappe import _
 
@@ -23,7 +21,7 @@ from builder.extensions.access import (
 	is_extension_manager,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
-from builder.extensions.resources import RESOURCE_DOCTYPE
+from builder.extensions.resources import find_resource, list_resources
 from builder.utils import has_page_read
 
 NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
@@ -93,10 +91,11 @@ def get_uninstall_summary(extension: str) -> dict:
 	here lets a manager read that before they answer.
 	"""
 	get_installation(extension)
-	made = Counter(frappe.get_all(RESOURCE_DOCTYPE, filters={"extension": extension}, pluck="resource_type"))
-	return {
-		"resources": [{"resource_type": kind, "count": made[kind]} for kind in sorted(made)],
-	}
+	# a row whose doctype was deleted in Desk no longer matches, and the site keeps nothing for it
+	kept = [
+		name for name in list_resources(extension, "DocType") if find_resource(extension, "DocType", name)
+	]
+	return {"resources": [{"resource_type": "DocType", "count": len(kept)}] if kept else []}
 
 
 @frappe.whitelist(methods=["POST"])

@@ -14,6 +14,7 @@ from builder.extensions.schema import (
 )
 
 NAME = "Sample Widget"
+RENAMED = "Sample Gadget"
 
 
 def make_extension(name="acme/schema", **kwargs):
@@ -34,8 +35,11 @@ def clean_up():
 	record this file makes has to be removed by hand. A resource row outlives an
 	uninstall now, so it goes separately.
 	"""
-	if frappe.db.exists("DocType", NAME):
-		frappe.delete_doc("DocType", NAME, force=True)
+	for doctype in (NAME, RENAMED):
+		if frappe.db.exists("DocType", doctype):
+			frappe.delete_doc("DocType", doctype, force=True)
+		# deleting a custom DocType keeps its table, and a rename cannot reuse that name
+		frappe.db.sql_ddl(f"DROP TABLE IF EXISTS `tab{doctype}`")
 	for name in EXTENSIONS:
 		drop_installations(name)
 		frappe.db.delete("Builder Extension Resource", {"extension": name})
@@ -130,6 +134,13 @@ class TestExtensionSchema(FrappeTestCase):
 
 		self.assertIn("title", [field.fieldname for field in frappe.get_meta(NAME).fields])
 
+	def test_update_adds_a_layout_break_without_a_fieldname(self):
+		self.create()
+
+		update_doctype("acme/schema", NAME, [{"fieldtype": "Section Break"}, a_field(fieldname="note")])
+
+		self.assertIn("Section Break", [field.fieldtype for field in frappe.get_meta(NAME).fields])
+
 	def test_update_changes_a_field_already_there(self):
 		self.create()
 
@@ -164,6 +175,31 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("Builder Extension Resource", {"resource_name": NAME}))
 
 	def test_lists_what_this_extension_made(self):
+		self.create()
+
+		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])
+
+	def test_the_old_maker_does_not_own_a_new_doctype_with_the_same_name(self):
+		"""Frappe runs no hook when a DocType is deleted in Desk, so the old row stays."""
+		self.create()
+		frappe.delete_doc("DocType", NAME)
+		make_extension("acme/other")
+		create_doctype("acme/other", NAME, [a_field()])
+
+		self.assertRaises(
+			frappe.PermissionError, update_doctype, "acme/schema", NAME, [a_field(fieldname="note")]
+		)
+
+	def test_ownership_follows_a_rename(self):
+		self.create()
+
+		frappe.rename_doc("DocType", NAME, RENAMED, force=True)
+
+		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": RENAMED, "exists": True}])
+
+	def test_recreating_its_own_doctype_keeps_one_row(self):
+		self.create()
+		frappe.delete_doc("DocType", NAME)
 		self.create()
 
 		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])

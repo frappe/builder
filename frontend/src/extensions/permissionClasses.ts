@@ -40,7 +40,7 @@ export const permissionDetails: Record<Permission, PermissionDetail> = {
 	"schema.write": {
 		permissionClass: SHARED_STATE_CLASS,
 		label: "Create and drop doctypes",
-		warning: "Dropping a doctype drops its table and every record in it. Nothing undoes that.",
+		warning: "A doctype it removes takes its records out of every form and list.",
 	},
 };
 

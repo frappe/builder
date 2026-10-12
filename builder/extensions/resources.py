@@ -18,28 +18,50 @@ RESOURCE_DOCTYPE = "Builder Extension Resource"
 def record_resource(extension: str, resource_type: str, resource_name: str) -> None:
 	if find_resource(extension, resource_type, resource_name):
 		return
+	# a row left from a record deleted in Desk no longer matches, so it is stale
+	forget_resource(extension, resource_type, resource_name)
 	frappe.get_doc(
 		{
 			"doctype": RESOURCE_DOCTYPE,
 			"extension": extension,
 			"resource_type": resource_type,
 			"resource_name": resource_name,
+			"resource_created": get_resource_created(resource_type, resource_name),
 		}
 	).insert()
 
 
 def forget_resource(extension: str, resource_type: str, resource_name: str) -> None:
-	name = find_resource(extension, resource_type, resource_name)
-	if name:
-		frappe.delete_doc(RESOURCE_DOCTYPE, name)
+	frappe.db.delete(
+		RESOURCE_DOCTYPE,
+		{"extension": extension, "resource_type": resource_type, "resource_name": resource_name},
+	)
 
 
 def find_resource(extension: str, resource_type: str, resource_name: str) -> str | None:
+	"""The row only counts while the record it names is the one the extension made.
+
+	Frappe runs no hook when a DocType is deleted, so a row can outlive its
+	doctype. A new doctype with the same name has a new `creation`, so the old
+	row no longer matches it.
+	"""
+	created = get_resource_created(resource_type, resource_name)
+	if not created:
+		return None
 	return frappe.db.get_value(
 		RESOURCE_DOCTYPE,
-		{"extension": extension, "resource_type": resource_type, "resource_name": resource_name},
+		{
+			"extension": extension,
+			"resource_type": resource_type,
+			"resource_name": resource_name,
+			"resource_created": created,
+		},
 		"name",
 	)
+
+
+def get_resource_created(resource_type: str, resource_name: str):
+	return frappe.db.get_value(resource_type, resource_name, "creation")
 
 
 def list_resources(extension: str, resource_type: str) -> list[str]:
@@ -47,4 +69,14 @@ def list_resources(extension: str, resource_type: str) -> list[str]:
 		RESOURCE_DOCTYPE,
 		filters={"extension": extension, "resource_type": resource_type},
 		pluck="resource_name",
+	)
+
+
+def follow_renamed_doctype(document, method, old: str, new: str, merge: bool = False) -> None:
+	"""A rename keeps `creation`, so the row only needs the new name."""
+	frappe.db.set_value(
+		RESOURCE_DOCTYPE,
+		{"resource_type": "DocType", "resource_name": old},
+		"resource_name",
+		new,
 	)
