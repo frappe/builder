@@ -24,7 +24,8 @@
 
 				<div v-if="isDelete" class="mt-4 rounded-4 bg-surface-red-1 p-3">
 					<p class="text-p-sm text-ink-red-6">
-						Dropping a doctype drops its table and every record in it. Nothing here can undo that.
+						This removes the doctype from the site. Its records stay in the database, but no form or list
+						shows them.
 					</p>
 					<Checkbox
 						v-model="understood"

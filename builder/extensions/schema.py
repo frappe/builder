@@ -5,7 +5,7 @@
 
 Always `custom: 1`. Frappe refuses a non-custom doctype outside developer mode
 (`doctype.py:334`), and a custom one writes no files, so what an extension makes
-lives in the database and can be dropped again.
+lives in the database and can be removed again.
 
 The permission floor is Frappe's own and nothing here lifts it: inserting a
 `DocType` needs create permission on `DocType`, which is System Manager. An
@@ -174,7 +174,7 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 
 @frappe.whitelist(methods=["POST"])
 def delete_doctype(extension: str, doctype: str) -> None:
-	"""Drops a doctype this extension made, and the table under it."""
+	"""Removes a doctype this extension made. Frappe keeps its table and records."""
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
 
