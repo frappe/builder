@@ -113,6 +113,7 @@ function watchSignIn(ctx: BobContext, preset: AIPreset, menu: CommandMenu) {
 	let timer: number | undefined;
 	// leaving the level cancels the attempt, and anything that answers after that is ignored
 	let cancelled = false;
+	const level = menu.level.value;
 	const stop = () => {
 		cancelled = true;
 		window.clearInterval(timer);
@@ -130,7 +131,8 @@ function watchSignIn(ctx: BobContext, preset: AIPreset, menu: CommandMenu) {
 				if (poll?.status === "connected") {
 					stop();
 					await install(ctx, preset);
-					menu.close();
+					// the install takes a moment, and a menu opened meanwhile is not ours to close
+					if (menu.level.value === level) menu.close();
 				} else if (poll?.status === "failed" || poll?.status === "expired") {
 					stop();
 					menu.setNote(poll.message || "The sign-in didn't finish. Go back and try again.", true);
