@@ -102,6 +102,19 @@ class TestExtensionDocuments(FrappeTestCase):
 
 		self.assertFalse(frappe.db.exists("Contact", contact.name))
 
+	def test_cannot_change_its_own_grants(self):
+		installation = frappe.db.get_value("Builder Extension", {"extension": "acme/data"})
+
+		with self.assertRaises(frappe.PermissionError):
+			update_doc("acme/data", "Builder Extension", installation, {"granted_permissions": "[]"})
+
+	def test_cannot_change_extension_records(self):
+		for doctype in ("Builder Extension", "Builder Extension State", "Builder Extension Resource"):
+			with self.assertRaises(frappe.PermissionError):
+				insert_doc("acme/data", doctype, {})
+			with self.assertRaises(frappe.PermissionError):
+				delete_doc("acme/data", doctype, "any")
+
 	def test_refuses_a_page_of_every_row(self):
 		"""Frappe reads 0 as "no limit", which is the one answer no extension may ask for."""
 		self.assertRaises(frappe.ValidationError, get_list, "acme/data", "Contact", limit_page_length=0)

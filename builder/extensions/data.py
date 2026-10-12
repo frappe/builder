@@ -19,13 +19,19 @@ import frappe
 import frappe.client
 from frappe import _
 
-from builder.extensions.access import assert_extension_access
+from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access
+from builder.extensions.resources import RESOURCE_DOCTYPE
+from builder.extensions.state import STATE_DOCTYPE
 
 # a page of rows, and the ceiling one call can ask for. The server owns this
 # number: it is the side protecting the database, and a copy in the browser
 # would be a second owner of one rule
 DEFAULT_PAGE_LENGTH = 20
 MAX_PAGE_LENGTH = 500
+
+# these records hold the grants and the data of each extension. Only the host APIs
+# change them, so an extension cannot give itself a permission that a manager denied
+EXTENSION_DOCTYPES = {INSTALLATION_DOCTYPE, RESOURCE_DOCTYPE, STATE_DOCTYPE}
 
 
 @frappe.whitelist()
@@ -97,21 +103,27 @@ def get_doc(extension: str, doctype: str, name: str) -> dict:
 @frappe.whitelist(methods=["POST"])
 def insert_doc(extension: str, doctype: str, doc: dict | None = None) -> dict:
 	"""The doctype comes from the argument, never from the payload."""
-	assert_extension_access(extension, "data.access")
+	assert_writable(extension, doctype)
 	return frappe.client.insert({**(doc or {}), "doctype": doctype})
 
 
 @frappe.whitelist(methods=["POST"])
 def update_doc(extension: str, doctype: str, name: str, doc: dict | None = None) -> dict:
 	"""Only the fields `doc` names change. `set_value` refuses the framework's own fields."""
-	assert_extension_access(extension, "data.access")
+	assert_writable(extension, doctype)
 	return frappe.client.set_value(doctype, name, doc or {})
 
 
 @frappe.whitelist(methods=["POST"])
 def delete_doc(extension: str, doctype: str, name: str) -> None:
-	assert_extension_access(extension, "data.access")
+	assert_writable(extension, doctype)
 	frappe.client.delete(doctype, name)
+
+
+def assert_writable(extension: str, doctype: str) -> None:
+	assert_extension_access(extension, "data.access")
+	if doctype in EXTENSION_DOCTYPES:
+		frappe.throw(_("An extension cannot change {0} records.").format(doctype), frappe.PermissionError)
 
 
 def get_page_length(limit_page_length: int) -> int:
