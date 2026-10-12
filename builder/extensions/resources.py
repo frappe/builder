@@ -18,6 +18,8 @@ RESOURCE_DOCTYPE = "Builder Extension Resource"
 def record_resource(extension: str, resource_type: str, resource_name: str) -> None:
 	if find_resource(extension, resource_type, resource_name):
 		return
+	# a row left from a record deleted in Desk no longer matches, so it is stale
+	forget_resource(extension, resource_type, resource_name)
 	frappe.get_doc(
 		{
 			"doctype": RESOURCE_DOCTYPE,

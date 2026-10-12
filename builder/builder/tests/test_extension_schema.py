@@ -196,3 +196,10 @@ class TestExtensionSchema(FrappeTestCase):
 		frappe.rename_doc("DocType", NAME, RENAMED, force=True)
 
 		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": RENAMED, "exists": True}])
+
+	def test_recreating_its_own_doctype_keeps_one_row(self):
+		self.create()
+		frappe.delete_doc("DocType", NAME)
+		self.create()
+
+		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])
