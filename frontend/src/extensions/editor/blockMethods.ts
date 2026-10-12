@@ -17,13 +17,11 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { nextTick } from "vue";
 import type { MethodTable } from "../bridge/permissions";
-import { anyText, fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
+import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
+import { readAttributes, readElement, readHTML } from "./safeMarkup";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
-
-/** A tag name, with no markup in it. */
-const ELEMENT_NAME = /^[a-z][a-z0-9-]*$/;
 
 const findBlock = (blockId: string): Block => {
 	const block = useCanvasStore().activeCanvas?.findBlock(blockId);
@@ -43,7 +41,7 @@ const namedBlock = (params: unknown) => findBlock(text(fields(params).blockId, "
  */
 const get = (params: unknown) => getBlockObject(namedBlock(params));
 
-/** A record of strings. An attribute map and a style map both have this shape. */
+/** A record of values, such as a style map. */
 const readMap = (value: unknown, name: string) => {
 	if (value === undefined) return undefined;
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -60,11 +58,9 @@ const readClasses = (value: unknown) => {
 	return value as string[];
 };
 
-/** `null` removes an attribute, as `removeAttribute` does. */
-const writeAttributes = (block: Block, attributes: Record<string, unknown>) =>
-	Object.entries(attributes).forEach(([attribute, value]) =>
-		block.setAttribute(attribute, value === null ? undefined : anyText(value, attribute)),
-	);
+/** `readAttributes` has checked each value. */
+const writeAttributes = (block: Block, attributes: Record<string, string | undefined>) =>
+	Object.entries(attributes).forEach(([attribute, value]) => block.setAttribute(attribute, value));
 
 /** `null` and `""` remove a style. `setStyle` has the same rule. */
 const writeStyles = (block: Block, styles: Record<string, unknown>, breakpoint?: Breakpoint) =>
@@ -86,10 +82,10 @@ const update = (params: unknown) => {
 	const sent = fields(params);
 	const block = namedBlock(params);
 
-	const attributes = readMap(sent.attributes, "attributes");
+	const attributes = readAttributes(sent.attributes, block.getElement() || "div", "attributes");
 	const styles = readMap(sent.styles, "styles");
 	const classes = readClasses(sent.classes);
-	const innerHTML = sent.innerHTML === undefined ? undefined : anyText(sent.innerHTML, "innerHTML");
+	const innerHTML = readHTML(sent.innerHTML, "innerHTML");
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
 
@@ -122,7 +118,7 @@ type PlannedBlock = {
 	key?: string;
 	classes?: string[];
 	innerHTML?: string;
-	attributes?: Record<string, unknown>;
+	attributes?: Record<string, string | undefined>;
 	styles?: Record<string, unknown>;
 	children: PlannedBlock[];
 };
@@ -149,10 +145,7 @@ const planTree = (value: unknown): PlannedBlock => {
 		if (++count > MAX_NODES) throw refuse(`A tree can hold ${MAX_NODES} blocks.`, "invalid_params");
 
 		const wanted = fields(sent);
-		const element = text(wanted.element, "block.element");
-		if (!ELEMENT_NAME.test(element)) {
-			throw refuse(`"${element}" is not an element name.`, "invalid_params");
-		}
+		const element = readElement(wanted.element, "block.element");
 
 		const key = optionalText(wanted.key, "block.key");
 		if (key && keys.has(key)) throw refuse(`Two blocks share the key "${key}".`, "invalid_params");
@@ -162,8 +155,8 @@ const planTree = (value: unknown): PlannedBlock => {
 			element,
 			key,
 			classes: readClasses(wanted.classes),
-			innerHTML: wanted.innerHTML === undefined ? undefined : anyText(wanted.innerHTML, "block.innerHTML"),
-			attributes: readMap(wanted.attributes, "block.attributes"),
+			innerHTML: readHTML(wanted.innerHTML, "block.innerHTML"),
+			attributes: readAttributes(wanted.attributes, element, "block.attributes"),
 			styles: readMap(wanted.styles, "block.styles"),
 			children: readChildren(wanted.children).map((child) => plan(child, depth + 1)),
 		};

@@ -13,6 +13,13 @@ Two gates stand between an extension and a document:
 The first gate belongs to the site and the second to each user, so granting
 `data.access` never adds access. A user reaches only the documents that user can
 already reach.
+
+`data.access` is a trusted permission. A user who can write `Builder Page` or
+`Builder Client Script` can put script on a page, and so can an extension that
+calls as that user. That script runs on the site's origin, in the editor and on
+the published page. The block methods check markup (`safeMarkup.ts`), but these
+calls do not. Grant `data.access` only to an extension that you trust to run
+code as its users.
 """
 
 import frappe
