@@ -38,6 +38,8 @@ def clean_up():
 	for doctype in (NAME, RENAMED):
 		if frappe.db.exists("DocType", doctype):
 			frappe.delete_doc("DocType", doctype, force=True)
+		# deleting a custom DocType keeps its table, and a rename cannot reuse that name
+		frappe.db.sql_ddl(f"DROP TABLE IF EXISTS `tab{doctype}`")
 	for name in EXTENSIONS:
 		drop_installations(name)
 		frappe.db.delete("Builder Extension Resource", {"extension": name})
