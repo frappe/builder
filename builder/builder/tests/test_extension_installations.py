@@ -14,6 +14,7 @@ from builder.builder.tests.extension_fixtures import (
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
 	can_manage_extensions,
+	get_installation_details,
 	get_installations,
 	get_uninstall_summary,
 	set_extension_enabled,
@@ -266,3 +267,27 @@ class TestCanManageExtensions(FrappeTestCase):
 		become_a_user_who_cannot_manage(self)
 
 		self.assertFalse(can_manage_extensions())
+
+
+class TestInstallationDetails(FrappeTestCase):
+	"""What the details pane shows. A page reader cannot read the installation itself."""
+
+	def setUp(self):
+		drop_installations(EXTENSION)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+	def test_a_page_reader_gets_the_details(self):
+		make_installation(
+			EXTENSION, permissions=["page.edit", "data.access"], granted=["page.edit"], readme="# Hello"
+		)
+		become_a_user_who_cannot_manage(self)
+
+		details = get_installation_details(EXTENSION)
+
+		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
+		self.assertEqual(details["readme"], "# Hello")
+		self.assertEqual(details["requested_permissions"], ["page.edit", "data.access"])
+
+	def test_refuses_an_extension_the_site_has_not_installed(self):
+		with self.assertRaises(frappe.PermissionError):
+			get_installation_details(EXTENSION)

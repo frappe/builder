@@ -84,6 +84,14 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
+def get_installation_details(extension: str) -> dict:
+	"""What the details pane shows beyond the list row. A page reader may not read the installation itself."""
+	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, get_installation(extension))
+	return {"installed_on": row.installed_on, "readme": row.readme, "requested_permissions": row.requested}
+
+
+@frappe.whitelist()
+@has_page_read(NO_BUILDER_ACCESS)
 def get_uninstall_summary(extension: str) -> dict:
 	"""What the site keeps when a manager removes the extension.
 

@@ -1,6 +1,6 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { call, createDocumentResource, createResource, getCachedResource } from "frappe-ui";
+import { call, createResource, getCachedResource } from "frappe-ui";
 import { useStorage } from "@vueuse/core";
 import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
@@ -31,41 +31,12 @@ function ensureProtocol(url: string, defaultProtocol = "http") {
 	return result;
 }
 
-type InstallationDocument = {
-	extension: string;
-	label?: string;
-	description?: string;
-	enabled: boolean | number;
-	granted_permissions?: string;
-	/** Only the details panel reads the fields below. The mount list reads the rows. */
-	version?: string;
-	source_url?: string;
-	install_state?: "Installing" | "Ready" | "Failed";
-	install_error?: string;
+/** The fields that only the details pane reads. They change only with a new install. */
+type StoredDetails = {
 	installed_on?: string;
 	readme?: string;
-	requested_permissions?: string;
+	requested_permissions: Permission[];
 };
-
-const grantedPermissions = (value: string | undefined): Permission[] => {
-	if (!value) return [];
-	return JSON.parse(value) as Permission[];
-};
-
-/**
- * The document of one installation, for the details panel. Only a manager
- * opens the panel, and a manager can read the doctype.
- *
- * `frappe-ui` caches it by doctype and name. A second call for a loaded
- * installation gives the same resource. It does not make a second copy.
- */
-const installationDocument = (installationId: string) =>
-	createDocumentResource<InstallationDocument>({
-		doctype: INSTALLATION_DOCTYPE,
-		name: installationId,
-		auto: false,
-		onError: (error: Error) => console.error("Could not load extension", error),
-	});
 
 /**
  * All installations on this site, with the disabled and development installations.
@@ -223,32 +194,27 @@ const findInstallation = (extension: string) =>
  * permissions and the install date. The dev server gives the data that a user
  * sees, because the dev server runs the current copy.
  *
- * This uses the data that the mount list and the panel list already have. It
- * makes no request of its own. The document has the readme and the permission
- * lists. `findInstallation` has the icon and the install state.
+ * The server sends the readme and the requested permissions, because a page reader
+ * may not read the installation. `findInstallation` has the icon, the install state
+ * and the grants. Its list is realtime, so a grant from another tab shows here.
  */
 const useInstallationDetails = (extension: string) => {
-	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
+	const stored = shallowRef<StoredDetails | null>(null);
 
 	const reload = async () => {
-		const installationId = findInstallation(extension)?.installation_id;
-		if (!installationId) return;
-
-		document.value = installationDocument(installationId);
-		await document.value.reload();
+		if (!findInstallation(extension)) return;
+		stored.value = await call(`${METHOD}.get_installation_details`, { extension });
 	};
 
 	const details = computed<InstallationDetails | null>(() => {
 		const installation = findInstallation(extension);
-		const doc = document.value?.doc;
-		if (!installation || !doc) return null;
+		if (!installation || !stored.value) return null;
 
 		return applyDevelopmentDetails({
 			...installation,
-			installed_on: doc.installed_on ?? "",
-			readme: doc.readme,
-			requested_permissions: grantedPermissions(doc.requested_permissions),
-			granted_permissions: grantedPermissions(doc.granted_permissions),
+			...stored.value,
+			installed_on: stored.value.installed_on ?? "",
+			granted_permissions: installation.permissions,
 		});
 	});
 
