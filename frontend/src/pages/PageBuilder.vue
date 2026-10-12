@@ -91,7 +91,7 @@
 			:width="340"
 			:height="0"
 			v-if="builderStore.showSearchBlock">
-			<template #header>{{ __("Search Blocks") }}</template>
+			<template #header>{{ __("Search Block") }}</template>
 			<template #content>
 				<SearchBlock></SearchBlock>
 			</template>
@@ -331,6 +331,7 @@ onDeactivated(() => {
 	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
 	builderStore.realtime.off("doc_viewers", () => {});
 	builderStore.viewers = [];
+	builderStore.showSearchBlock = false;
 });
 
 onMounted(() => {
