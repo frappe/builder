@@ -17,7 +17,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { getBlockObject } from "@/utils/helpers";
 import { nextTick } from "vue";
 import type { MethodTable } from "../bridge/permissions";
-import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
+import { anyText, fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
@@ -60,10 +60,10 @@ const readClasses = (value: unknown) => {
 	return value as string[];
 };
 
-/** `undefined` removes an attribute, as `removeAttribute` does. */
+/** `null` removes an attribute, as `removeAttribute` does. */
 const writeAttributes = (block: Block, attributes: Record<string, unknown>) =>
 	Object.entries(attributes).forEach(([attribute, value]) =>
-		block.setAttribute(attribute, value === null ? undefined : optionalText(value, attribute)),
+		block.setAttribute(attribute, value === null ? undefined : anyText(value, attribute)),
 	);
 
 /** `null` and `""` remove a style. `setStyle` has the same rule. */
@@ -89,7 +89,7 @@ const update = (params: unknown) => {
 	const attributes = readMap(sent.attributes, "attributes");
 	const styles = readMap(sent.styles, "styles");
 	const classes = readClasses(sent.classes);
-	const innerHTML = optionalText(sent.innerHTML, "innerHTML");
+	const innerHTML = sent.innerHTML === undefined ? undefined : anyText(sent.innerHTML, "innerHTML");
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
 
@@ -162,7 +162,7 @@ const planTree = (value: unknown): PlannedBlock => {
 			element,
 			key,
 			classes: readClasses(wanted.classes),
-			innerHTML: optionalText(wanted.innerHTML, "block.innerHTML"),
+			innerHTML: wanted.innerHTML === undefined ? undefined : anyText(wanted.innerHTML, "block.innerHTML"),
 			attributes: readMap(wanted.attributes, "block.attributes"),
 			styles: readMap(wanted.styles, "block.styles"),
 			children: readChildren(wanted.children).map((child) => plan(child, depth + 1)),
