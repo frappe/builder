@@ -314,7 +314,6 @@ const refreshDetails = () => activeInstallation.value?.reload();
 const grant = async (permissions: Permission[]) => {
 	try {
 		await setGrantedPermissions(props.extension, permissions);
-		await refreshDetails();
 	} catch (thrown) {
 		toast.error((thrown as Error).message);
 	}

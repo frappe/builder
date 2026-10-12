@@ -48,7 +48,10 @@ const builderOrigin = (value) => {
 };
 
 const render = (source, values) =>
-	Object.entries(values).reduce((result, [name, value]) => result.replaceAll(`__${name}__`, value), source);
+	Object.entries(values).reduce(
+		(result, [name, value]) => result.replaceAll(`__${name}__`, () => value),
+		source,
+	);
 
 const outputName = (relative) => {
 	const parts = relative.split(path.sep);

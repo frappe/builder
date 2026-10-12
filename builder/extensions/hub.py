@@ -18,21 +18,21 @@ Builder re-validates what the Hub already validated. The Hub is trusted to point
 at a release, not to have vetted it, and the sha256 is the one fact Builder
 takes on faith before it checks the bytes for itself.
 
-The Hub URL itself is not checked yet. It is a development setting, so a
-plain-HTTP or localhost Hub is allowed. Milestone 7's "Hub URL safety" rules
-land in `resolve_hub_url` when the setting becomes user-facing.
+A bare Hub host gets HTTPS, because the release that the Hub sends holds the
+sha256. A local Hub can still be plain HTTP, but its URL must say so.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass
 
 import frappe
 import requests
 from frappe import _
-from frappe.utils import now_datetime, time_diff_in_seconds
+from frappe.utils.background_jobs import is_job_enqueued
 
 from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_manager, find_installation
 from builder.extensions.constants import (
@@ -52,9 +52,6 @@ HUB_API = "api/method/builder_hub.extensions.api"
 HUB_TIMEOUT = 20
 PACKAGE_TIMEOUT = 30
 PACKAGE_CHUNK_BYTES = 64 * 1024
-# An `Installing` row older than this has a job that died without marking it. Past
-# the job timeout of 300s with room for the queue wait.
-STALE_INSTALL_SECONDS = 600
 # The job's own RQ timeout. A hang past this is killed by RQ, not by the job.
 INSTALL_JOB_TIMEOUT = 300
 # A catalog or release response is small JSON. This is room for a long README
@@ -89,12 +86,8 @@ def resolve_hub_url() -> str:
 	return ensure_protocol(url)
 
 
-def ensure_protocol(url: str, default_scheme: str = "http") -> str:
-	"""A URL with a scheme and no trailing slash. Mirrors the editor's `ensureProtocol`.
-
-	A bare host gets `default_scheme`, which is HTTP because a Hub URL is still a
-	development setting.
-	"""
+def ensure_protocol(url: str, default_scheme: str = "https") -> str:
+	"""A URL with a scheme and no trailing slash. Mirrors the editor's `ensureProtocol`."""
 	if not url:
 		return url
 	if not HAS_SCHEME.match(url):
@@ -160,32 +153,39 @@ def read_release(name: str, release: dict) -> Release:
 
 def hub_get(hub_url: str, method: str, params: dict) -> dict:
 	"""One GET to a Builder Hub API method. Answers with its `message` payload."""
+	url = f"{hub_url}/{HUB_API}.{method}"
+	too_large = _("The Hub sent more than a release listing should need.")
 	try:
-		response = requests.get(f"{hub_url}/{HUB_API}.{method}", params=params, timeout=HUB_TIMEOUT)
+		with requests.get(url, params=params, timeout=HUB_TIMEOUT, stream=True) as response:
+			content = read_capped(response, MAX_METADATA_BYTES, too_large)
 	except requests.RequestException:
 		frappe.throw(_("Could not reach the Builder Hub at {0}.").format(hub_url))
 
 	if not response.ok:
-		frappe.throw(hub_error(response))
-	if len(response.content) > MAX_METADATA_BYTES:
-		frappe.throw(_("The Hub sent more than a release listing should need."))
-
-	body = response.json()
+		frappe.throw(hub_error(content, response.status_code))
+	body = parse_hub_json(content)
 	if not isinstance(body, dict) or not isinstance(body.get("message"), dict):
 		frappe.throw(_("The Hub response was not in the form Builder expects."))
 	return body["message"]
 
 
-def hub_error(response: requests.Response) -> str:
+def parse_hub_json(content: bytes) -> object:
+	try:
+		return json.loads(content)
+	except ValueError:
+		frappe.throw(_("The Hub response was not in the form Builder expects."))
+
+
+def hub_error(content: bytes, status_code: int) -> str:
 	"""The Hub's own message for a failed call. A Frappe Hub carries one; fall back
 	to the status line when it does not."""
 	try:
-		messages = frappe.parse_json(response.json().get("_server_messages") or "[]")
+		messages = frappe.parse_json(json.loads(content).get("_server_messages") or "[]")
 		if messages:
 			return frappe.parse_json(messages[0]).get("message") or str(messages[0])
 	except (ValueError, TypeError, AttributeError):
 		pass
-	return _("The Builder Hub returned an error ({0}).").format(response.status_code)
+	return _("The Builder Hub returned an error ({0}).").format(status_code)
 
 
 def download_package(release: Release) -> bytes:
@@ -193,13 +193,14 @@ def download_package(release: Release) -> bytes:
 
 	Stops the stream past the release `package_size`, and refuses a download
 	whose sha256 does not match `release.package_sha256`. `package_url` is not
-	address-checked yet, for the same reason `resolve_hub_url` is not.
+	address-checked, because the sha256 from the Hub proves the bytes.
 	"""
 	try:
 		with requests.get(release.package_url, timeout=PACKAGE_TIMEOUT, stream=True) as response:
 			if not response.ok:
 				frappe.throw(_("The package download failed ({0}).").format(response.status_code))
-			package_bytes = read_capped(response, release.package_size)
+			too_large = _("The extension package is larger than its release says.")
+			package_bytes = read_capped(response, release.package_size, too_large)
 	except requests.RequestException:
 		frappe.throw(_("Could not download the extension package."))
 
@@ -208,14 +209,14 @@ def download_package(release: Release) -> bytes:
 	return package_bytes
 
 
-def read_capped(response: requests.Response, limit: int) -> bytes:
+def read_capped(response: requests.Response, limit: int, too_large: str) -> bytes:
 	"""Every byte of the stream, or a refusal the moment it passes `limit`."""
-	package_bytes = bytearray()
+	content = bytearray()
 	for chunk in response.iter_content(PACKAGE_CHUNK_BYTES):
-		package_bytes.extend(chunk)
-		if len(package_bytes) > limit:
-			frappe.throw(_("The extension package is larger than its release says."))
-	return bytes(package_bytes)
+		content.extend(chunk)
+		if len(content) > limit:
+			frappe.throw(too_large)
+	return bytes(content)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -237,14 +238,12 @@ def install_from_hub(name: str, permissions: list[str], version: str | None = No
 	version = version or latest_version(listing, name)
 	installation = create_pending_installation(name, version, listing.get("extension") or {})
 
-	# No deduplicate: `assert_installable` already refuses a fresh install while one
-	# runs, and a crashed job can linger in the RQ registry long enough to block a
-	# legitimate retry.
 	frappe.enqueue(
 		run_hub_install,
 		queue="default",
 		timeout=INSTALL_JOB_TIMEOUT,
 		enqueue_after_commit=True,
+		job_id=install_job_id(installation),
 		installation=installation,
 		name=name,
 		version=version,
@@ -293,31 +292,32 @@ def run_hub_install(
 
 def assert_installable(name: str) -> None:
 	"""Refuse before the job is queued: a guest, a user who cannot manage
-	extensions, a site with extensions off, a bad name, or a name the site
-	already has installed or installing.
+	extensions, a bad name, or a name the site already has installed or
+	installing.
 
 	A `Failed` row is not a block, so the panel's Retry starts a fresh job on it.
-	Nor is an `Installing` row whose job stopped touching it: a crashed worker
-	cannot mark the row itself, so a stale one has to be retryable too.
+	Nor is an `Installing` row whose job is gone: a crashed worker cannot mark the
+	row itself. While the job is queued or running, a retry would start a second
+	job on the same row, and the one that ends last would win.
 	"""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to install extensions."), frappe.PermissionError)
 	assert_extension_manager()
-	if frappe.db.get_single_value("Builder Settings", "disable_extensions"):
-		frappe.throw(_("Extensions are turned off for this site."))
 	if not EXTENSION_NAME_PATTERN.match(name or ""):
 		frappe.throw(_("An extension name reads as publisher/name, in lowercase."))
 
 	existing = find_installation(name)
 	if not existing:
 		return
-	state, source, touched = frappe.db.get_value(
-		INSTALLATION_DOCTYPE, existing, ["install_state", "source_url", "modified"]
-	)
-	if state == "Installing" and time_diff_in_seconds(now_datetime(), touched) < STALE_INSTALL_SECONDS:
+	state, source = frappe.db.get_value(INSTALLATION_DOCTYPE, existing, ["install_state", "source_url"])
+	if state == "Installing" and is_job_enqueued(install_job_id(existing)):
 		frappe.throw(_('"{0}" is already installing.').format(name))
 	if state not in ("Failed", "Installing"):
 		frappe.throw(_('"{0}" is already installed from {1}.').format(name, source or _("a directory")))
+
+
+def install_job_id(installation: str) -> str:
+	return f"builder_extension_install_{installation}"
 
 
 def create_pending_installation(name: str, version: str, listing: dict) -> str:

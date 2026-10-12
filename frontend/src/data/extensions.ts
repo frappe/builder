@@ -1,6 +1,7 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { call, createDocumentResource, createResource, getCachedResource } from "frappe-ui";
+import { call, createResource, getCachedResource } from "frappe-ui";
+import { useStorage } from "@vueuse/core";
 import { computed, shallowRef } from "vue";
 import { builderSettings } from "@/data/builderSettings";
 
@@ -8,12 +9,19 @@ const METHOD = "builder.extensions.installations";
 const INSTALLATION_DOCTYPE = "Builder Extension";
 
 const HUB_API = "api/method/builder_hub.extensions.api";
+
+/** A choice of this user in this browser. It is not an access control, so the server does not read it. */
+const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
 const CATALOG_CACHE = "extensions-catalog";
 
-/** The Builder Hub that gives this site its catalog. */
-const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url ?? "") || "preview.frappe.cloud";
+/** It must match `DEFAULT_HUB_URL` on the server. */
+const DEFAULT_HUB_URL = "https://preview.frappe.cloud";
 
-function ensureProtocol(url: string, defaultProtocol = "http") {
+/** The Builder Hub that gives this site its catalog. */
+const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url || DEFAULT_HUB_URL);
+
+/** A bare host gets HTTPS. A local Hub must name `http://` itself. */
+function ensureProtocol(url: string, defaultProtocol = "https") {
 	if (!url) return url;
 
 	// remove a trailing "://" or ":" from the default protocol
@@ -27,41 +35,12 @@ function ensureProtocol(url: string, defaultProtocol = "http") {
 	return result;
 }
 
-type InstallationDocument = {
-	extension: string;
-	label?: string;
-	description?: string;
-	enabled: boolean | number;
-	granted_permissions?: string;
-	/** Only the details panel reads the fields below. The mount list reads the rows. */
-	version?: string;
-	source_url?: string;
-	install_state?: "Installing" | "Ready" | "Failed";
-	install_error?: string;
+/** The fields that only the details pane reads. They change only with a new install. */
+type StoredDetails = {
 	installed_on?: string;
 	readme?: string;
-	requested_permissions?: string;
+	requested_permissions: Permission[];
 };
-
-const grantedPermissions = (value: string | undefined): Permission[] => {
-	if (!value) return [];
-	return JSON.parse(value) as Permission[];
-};
-
-/**
- * The document of one installation, for the details panel. Only a manager
- * opens the panel, and a manager can read the doctype.
- *
- * `frappe-ui` caches it by doctype and name. A second call for a loaded
- * installation gives the same resource. It does not make a second copy.
- */
-const installationDocument = (installationId: string) =>
-	createDocumentResource<InstallationDocument>({
-		doctype: INSTALLATION_DOCTYPE,
-		name: installationId,
-		auto: false,
-		onError: (error: Error) => console.error("Could not load extension", error),
-	});
 
 /**
  * All installations on this site, with the disabled and development installations.
@@ -107,6 +86,7 @@ const toInstalledExtension = (row: Installation): InstalledExtension => ({
  * A development record never mounts. It has no files. The entry in the browser runs it.
  */
 const installedExtensions = computed<InstalledExtension[]>(() => {
+	if (extensionsDisabled.value) return [];
 	const installed = (installationsResource.data ?? [])
 		.filter((row) => row.enabled && row.entry_url && !row.is_development)
 		.map(toInstalledExtension);
@@ -218,32 +198,27 @@ const findInstallation = (extension: string) =>
  * permissions and the install date. The dev server gives the data that a user
  * sees, because the dev server runs the current copy.
  *
- * This uses the data that the mount list and the panel list already have. It
- * makes no request of its own. The document has the readme and the permission
- * lists. `findInstallation` has the icon and the install state.
+ * The server sends the readme and the requested permissions, because a page reader
+ * may not read the installation. `findInstallation` has the icon, the install state
+ * and the grants. Its list is realtime, so a grant from another tab shows here.
  */
 const useInstallationDetails = (extension: string) => {
-	const document = shallowRef<ReturnType<typeof installationDocument> | null>(null);
+	const stored = shallowRef<StoredDetails | null>(null);
 
 	const reload = async () => {
-		const installationId = findInstallation(extension)?.installation_id;
-		if (!installationId) return;
-
-		document.value = installationDocument(installationId);
-		await document.value.reload();
+		if (!findInstallation(extension)) return;
+		stored.value = await call(`${METHOD}.get_installation_details`, { extension });
 	};
 
 	const details = computed<InstallationDetails | null>(() => {
 		const installation = findInstallation(extension);
-		const doc = document.value?.doc;
-		if (!installation || !doc) return null;
+		if (!installation || !stored.value) return null;
 
 		return applyDevelopmentDetails({
 			...installation,
-			installed_on: doc.installed_on ?? "",
-			readme: doc.readme,
-			requested_permissions: grantedPermissions(doc.requested_permissions),
-			granted_permissions: grantedPermissions(doc.granted_permissions),
+			...stored.value,
+			installed_on: stored.value.installed_on ?? "",
+			granted_permissions: installation.permissions,
 		});
 	});
 
@@ -272,6 +247,8 @@ const setGrantedPermissions = async (extension: string, permissions: Permission[
 	// for a dev extension, the editor runs the entry in the browser, not the record.
 	// So the new permissions must also reach that entry
 	setDevPermissions(extension, granted);
+	// the switches and the running extension read the grants from the list
+	await loadExtensions();
 	return granted;
 };
 
@@ -360,6 +337,7 @@ const installFromHub = async (name: string, version: string, permissions: Permis
 
 export {
 	canManageExtensions,
+	extensionsDisabled,
 	getExtensionsCatalog,
 	getHubExtension,
 	getHubReleasePermissions,

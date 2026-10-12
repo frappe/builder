@@ -12,6 +12,13 @@ export const MAX_PACKAGE_BYTES = 10 * 1024 * 1024;
 /** The largest file a package may hold. It matches the Hub and the site. */
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
+/** The limits below match `builder/extensions/constants.py`. Builder refuses a package past any of them. */
+export const MAX_PACKAGE_FILES = 200;
+export const MAX_EXTRACTED_BYTES = 30 * 1024 * 1024;
+export const MAX_MANIFEST_BYTES = 128 * 1024;
+/** Each SVG in the package, not only the icon. Builder calls it `MAX_ICON_BYTES`. */
+export const MAX_SVG_BYTES = 64 * 1024;
+
 /** The types that Builder serves to a frame. Keep in step with `ASSET_TYPES` in `builder/extensions/constants.py`. */
 export const ALLOWED_SUFFIXES = new Set([
 	".js",
@@ -29,10 +36,6 @@ export const ALLOWED_SUFFIXES = new Set([
 
 /** The build output folders beside the root files. The entry imports them by relative path. */
 export const PACKAGE_FOLDERS = new Set(["chunks", "assets"]);
-
-const IMPORT_SPECIFIER =
-	/(?:\bimport\s*(?:[^'";]*?\sfrom\s*)?|\bexport\s+[^'";]*?\sfrom\s*|\bimport\s*\()['"]([^'"]+)['"]/g;
-const IMPORT_META_URL = /\bnew\s+URL\s*\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url/g;
 
 const fail = (message) => {
 	throw new Error(`[builder] ${message}`);
@@ -122,31 +125,28 @@ export const validatePackageFiles = (root, manifest) => {
 		if (!ALLOWED_SUFFIXES.has(path.posix.extname(file.name))) {
 			fail(`package entry "${file.name}" uses an unsupported suffix`);
 		}
-		if (file.data.length > MAX_FILE_BYTES)
-			fail(`package entry "${file.name}" is larger than ${MAX_FILE_BYTES} bytes`);
+		const limit = fileLimit(file.name);
+		if (file.data.length > limit) fail(`package entry "${file.name}" is larger than ${limit} bytes`);
 		if (file.name.endsWith(".svg")) validateSvg(file.data, file.name);
 	}
+	assertPackageTotals(files);
 
 	for (const required of ["manifest.json", "main.js"]) {
 		if (!names.has(required)) fail(`package has no root ${required}`);
 	}
 	if (manifest.icon && !names.has(manifest.icon)) fail(`package has no manifest icon "${manifest.icon}"`);
-	assertImportsResolve(files, names);
 	return files;
 };
 
-/** A relative import must name a file in the package. The frame cannot load any other. */
-const assertImportsResolve = (files, names) => {
-	for (const file of files.filter((entry) => entry.name.endsWith(".js"))) {
-		const source = file.data.toString("utf8");
-		const specifiers = [...source.matchAll(IMPORT_SPECIFIER), ...source.matchAll(IMPORT_META_URL)];
-		for (const [, specifier] of specifiers) {
-			const target = path.posix.normalize(path.posix.join(path.posix.dirname(file.name), specifier));
-			if (specifier.startsWith(".") && !names.has(target)) {
-				fail(`${file.name} imports "${specifier}", which the package does not hold`);
-			}
-		}
-	}
+const fileLimit = (name) => {
+	if (name === "manifest.json") return MAX_MANIFEST_BYTES;
+	return name.endsWith(".svg") ? MAX_SVG_BYTES : MAX_FILE_BYTES;
+};
+
+const assertPackageTotals = (files) => {
+	if (files.length > MAX_PACKAGE_FILES) fail(`package holds more than ${MAX_PACKAGE_FILES} files`);
+	const extracted = files.reduce((total, file) => total + file.data.length, 0);
+	if (extracted > MAX_EXTRACTED_BYTES) fail(`package files add up to more than ${MAX_EXTRACTED_BYTES} bytes`);
 };
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {

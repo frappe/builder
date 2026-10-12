@@ -4,6 +4,7 @@ import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
 import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
+import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -97,4 +98,5 @@ leftPanelTabs.registerBuiltIn({
 	label: "Extensions",
 	icon: "lucide-plug",
 	component: ExtensionsTab,
+	condition: () => !extensionsDisabled.value,
 });

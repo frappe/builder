@@ -21,7 +21,6 @@
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
   "extensions_settings_section",
-  "disable_extensions",
   "hub_url",
   "ai_section",
   "ai_api_key",
@@ -146,23 +145,17 @@
    "label": "Extensions Settings"
   },
   {
-   "default": "preview.frappe.cloud",
+   "default": "https://preview.frappe.cloud",
    "fieldname": "hub_url",
    "fieldtype": "Data",
    "label": "Hub URL"
-  },
-  {
-   "default": "0",
-   "fieldname": "disable_extensions",
-   "fieldtype": "Check",
-   "label": "Disable Extensions"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-07 12:00:00.000000",
+ "modified": "2026-10-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

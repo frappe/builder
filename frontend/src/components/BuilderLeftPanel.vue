@@ -97,6 +97,13 @@ watchEffect(() => {
 	});
 });
 
+// a tab can go away while open, as when the user turns extensions off
+watch(tabs, (visibleTabs) => {
+	if (!visibleTabs.some((tab) => tab.name === builderStore.leftPanelActiveTab)) {
+		builderStore.leftPanelActiveTab = "Layers";
+	}
+});
+
 watch(
 	() => route.fullPath,
 	() => {

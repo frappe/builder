@@ -131,7 +131,7 @@ npx builder-extension package
 
 The command validates the repository, manifest, built files, and package limits. A
 package holds `manifest.json`, `main.js` and the optional SVG icon at the root, and the
-build's `chunks/` and `assets/` folders. A relative import must name a file in the package.
+build's `chunks/` and `assets/` folders.
 The command writes `release/acme-icons-1.2.0.builderext` and prints its size and SHA-256.
 
 Create a GitHub release whose tag is the manifest version with a `v` prefix. For
@@ -142,17 +142,6 @@ supports both pushed tags and releases created on GitHub.
 The first release and repository need Builder Hub review. For a later release, update
 `manifest.json`, commit it, and push the exact version tag. Builder Hub detects and
 validates the new GitHub release without another listing submission.
-
-## Agent skill
-
-The package ships a skill for Claude Code and other agents. It holds the workflow, and
-the whole API as a reference file.
-
-```sh
-cp -R node_modules/frappe-builder-extension-sdk/skills/build-builder-extension ~/.claude/skills/
-```
-
-Then ask the agent for a Builder extension.
 
 ## Versions
 

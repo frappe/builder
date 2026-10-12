@@ -3,25 +3,17 @@
 		<Switch
 			size="sm"
 			:label="__('Disable Extensions')"
-			:description="
-				__('Turns off all installed extensions and removes the Extensions tab.')
-			"
-			:modelValue="Boolean(builderSettings.doc?.disable_extensions)"
-			@update:modelValue="
-				(val: Boolean) => {
-					builderStore.updateBuilderSettings('disable_extensions', val);
-				}
-			" />
+			:description="__('Stops all extensions and hides the Extensions tab, only for you.')"
+			v-model="extensionsDisabled" />
 
 		<hr class="w-full boder-outline-gray-2" />
 
 		<BuilderInput
 			type="text"
 			class="[&>p]:text-p-xs"
-			:disabled="builderSettings.doc?.disable_extensions"
 			:label="__('Hub URL')"
 			:description="__('Fetch the extensions catalog from this URL')"
-			placeholder="preview.frappe.cloud"
+			placeholder="https://preview.frappe.cloud"
 			:modelValue="builderSettings.doc?.hub_url"
 			:hideClearButton="true"
 			@update:modelValue="(val: string) => builderStore.updateBuilderSettings('hub_url', val)" />
@@ -30,6 +22,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { builderSettings } from "@/data/builderSettings";
+import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { Switch } from "frappe-ui";
 
