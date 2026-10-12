@@ -329,7 +329,7 @@
 			</div>
 			<!-- one box: the field on top, its controls along the bottom edge -->
 			<div
-				class="relative rounded-6 border border-outline-gray-2 bg-surface-base shadow-sm transition-colors focus-within:border-outline-gray-3"
+				class="relative rounded-6 border border-outline-gray-2 bg-surface-base transition-colors hover:border-outline-gray-3 hover:shadow-sm focus-within:border-outline-gray-4 focus-within:shadow-sm"
 				@paste.stop="handlePaste"
 				@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
 				@dragleave="isDragging = false"

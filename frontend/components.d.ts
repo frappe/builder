@@ -132,7 +132,6 @@ declare module 'vue' {
     PageListModal: typeof import('./src/components/Modals/PageListModal.vue')['default']
     PageMeta: typeof import('./src/components/Settings/PageMeta.vue')['default']
     PageOptions: typeof import('./src/components/PageOptions.vue')['default']
-    PageRobots: typeof import('./src/components/Settings/PageRobots.vue')['default']
     PageRow: typeof import('./src/components/LeftPanelTabs/PageRow.vue')['default']
     PageScript: typeof import('./src/components/PageScript.vue')['default']
     PagesSection: typeof import('./src/components/LeftPanelTabs/PagesSection.vue')['default']
