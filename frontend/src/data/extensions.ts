@@ -247,6 +247,8 @@ const setGrantedPermissions = async (extension: string, permissions: Permission[
 	// for a dev extension, the editor runs the entry in the browser, not the record.
 	// So the new permissions must also reach that entry
 	setDevPermissions(extension, granted);
+	// the switches and the running extension read the grants from the list
+	await loadExtensions();
 	return granted;
 };
 
