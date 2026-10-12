@@ -19,6 +19,9 @@
 		<!-- part of the editor, not of an extension. A user loads an extension with it -->
 		<DevExtensionDialog />
 
+		<!-- part of the editor too. It asks before an extension makes or removes a doctype -->
+		<ExtensionConfirmDialog />
+
 		<!-- one for each extension. It shows nothing until ui.openDialog -->
 		<ExtensionDialog
 			v-for="extension in installedExtensions"
@@ -35,6 +38,7 @@
 
 <script setup lang="ts">
 import DevExtensionDialog from "@/extensions/components/DevExtensionDialog.vue";
+import ExtensionConfirmDialog from "@/extensions/components/ExtensionConfirmDialog.vue";
 import ExtensionDialog from "@/extensions/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
