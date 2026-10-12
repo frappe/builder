@@ -18,9 +18,8 @@ Builder re-validates what the Hub already validated. The Hub is trusted to point
 at a release, not to have vetted it, and the sha256 is the one fact Builder
 takes on faith before it checks the bytes for itself.
 
-The Hub URL itself is not checked yet. It is a development setting, so a
-plain-HTTP or localhost Hub is allowed. Milestone 7's "Hub URL safety" rules
-land in `resolve_hub_url` when the setting becomes user-facing.
+A bare Hub host gets HTTPS, because the release that the Hub sends holds the
+sha256. A local Hub can still be plain HTTP, but its URL must say so.
 """
 
 from __future__ import annotations
@@ -89,12 +88,8 @@ def resolve_hub_url() -> str:
 	return ensure_protocol(url)
 
 
-def ensure_protocol(url: str, default_scheme: str = "http") -> str:
-	"""A URL with a scheme and no trailing slash. Mirrors the editor's `ensureProtocol`.
-
-	A bare host gets `default_scheme`, which is HTTP because a Hub URL is still a
-	development setting.
-	"""
+def ensure_protocol(url: str, default_scheme: str = "https") -> str:
+	"""A URL with a scheme and no trailing slash. Mirrors the editor's `ensureProtocol`."""
 	if not url:
 		return url
 	if not HAS_SCHEME.match(url):

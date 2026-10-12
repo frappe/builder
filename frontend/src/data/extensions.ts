@@ -14,10 +14,14 @@ const HUB_API = "api/method/builder_hub.extensions.api";
 const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
 const CATALOG_CACHE = "extensions-catalog";
 
-/** The Builder Hub that gives this site its catalog. */
-const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url ?? "") || "preview.frappe.cloud";
+/** It must match `DEFAULT_HUB_URL` on the server. */
+const DEFAULT_HUB_URL = "https://preview.frappe.cloud";
 
-function ensureProtocol(url: string, defaultProtocol = "http") {
+/** The Builder Hub that gives this site its catalog. */
+const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url || DEFAULT_HUB_URL);
+
+/** A bare host gets HTTPS. A local Hub must name `http://` itself. */
+function ensureProtocol(url: string, defaultProtocol = "https") {
 	if (!url) return url;
 
 	// remove a trailing "://" or ":" from the default protocol

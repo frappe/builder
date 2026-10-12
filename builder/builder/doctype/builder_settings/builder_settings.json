@@ -145,7 +145,7 @@
    "label": "Extensions Settings"
   },
   {
-   "default": "preview.frappe.cloud",
+   "default": "https://preview.frappe.cloud",
    "fieldname": "hub_url",
    "fieldtype": "Data",
    "label": "Hub URL"

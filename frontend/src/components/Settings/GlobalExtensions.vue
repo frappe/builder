@@ -13,7 +13,7 @@
 			class="[&>p]:text-p-xs"
 			:label="__('Hub URL')"
 			:description="__('Fetch the extensions catalog from this URL')"
-			placeholder="preview.frappe.cloud"
+			placeholder="https://preview.frappe.cloud"
 			:modelValue="builderSettings.doc?.hub_url"
 			:hideClearButton="true"
 			@update:modelValue="(val: string) => builderStore.updateBuilderSettings('hub_url', val)" />
