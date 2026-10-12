@@ -758,6 +758,8 @@ const bob: BobContext = {
 	},
 };
 onUnmounted(registerBobCommands(bob));
+// runs the open level's cleanup, like a sign-in still polling
+onUnmounted(menu.close);
 
 const composerPlaceholder = computed(() =>
 	menuLevel.value && !menuLevel.value.input

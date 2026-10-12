@@ -1,6 +1,6 @@
 import type { MenuItem, MenuLevel, MenuStep } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
-import { confirmLevel, creditsFor, creditsLabel, type BobContext } from "@/components/ai/commands/shared";
+import { confirmLevel, creditsLabel, withCredits, type BobContext } from "@/components/ai/commands/shared";
 import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import type { BuilderAIModel, BuilderAIProvider } from "@/types/doctypes";
 import { call, toast } from "frappe-ui";
@@ -8,13 +8,16 @@ import { call, toast } from "frappe-ui";
 export function providersLevel(ctx: BobContext): MenuLevel {
 	return {
 		title: "Providers",
-		items: async () => {
-			// picks up what the gateways added or retired since the picker last asked
-			await call("builder.ai.api.sync_ai_models").catch(() => null);
-			await reloadAIRegistry();
-			const providers: BuilderAIProvider[] = aiProviders.data || [];
-			const credits = await creditsFor(providers.filter((p) => p.api_base).map((p) => p.name));
-			return [
+		items: withCredits(
+			ctx,
+			async (): Promise<BuilderAIProvider[]> => {
+				// picks up what the gateways added or retired since the picker last asked
+				await call("builder.ai.api.sync_ai_models").catch(() => null);
+				await reloadAIRegistry();
+				return aiProviders.data || [];
+			},
+			(providers) => providers.filter((p) => p.api_base).map((p) => p.name),
+			(providers, credits) => [
 				...providers.map((p): MenuItem => ({
 					key: p.name,
 					label: p.provider_name,
@@ -32,8 +35,8 @@ export function providersLevel(ctx: BobContext): MenuLevel {
 					submenu: true,
 					run: () => connectLevel(ctx),
 				},
-			];
-		},
+			],
+		),
 	};
 }
 

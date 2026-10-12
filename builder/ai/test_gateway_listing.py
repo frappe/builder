@@ -139,3 +139,14 @@ class TestGatewayListing(FrappeTestCase):
 		delete_ai_provider(PROVIDER)
 		self.assertFalse(frappe.db.exists("Builder AI Provider", PROVIDER))
 		self.assertFalse(frappe.db.count("Builder AI Model", {"provider": PROVIDER}))
+
+	def test_the_picker_never_waits_on_a_gateway(self):
+		from builder.ai.api import get_ai_models
+
+		with (
+			patch("builder.ai.models.requests.get", side_effect=AssertionError("fetched inline")),
+			patch("builder.ai.models.frappe.enqueue") as enqueue,
+			patch("builder.ai.models.fetch_openrouter_catalog", return_value={}),
+		):
+			get_ai_models()
+		self.assertEqual(enqueue.call_args.kwargs["job_id"], "builder_ai_gateway_sync")

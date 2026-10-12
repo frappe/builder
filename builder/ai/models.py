@@ -161,6 +161,18 @@ class GatewayListing:
 		self.provider = provider
 
 	@classmethod
+	def refresh_in_background(cls) -> None:
+		"""Queue a sync when any gateway's listing is stale. A slow gateway never holds up the
+		picker this way: it shows what is stored, and what changed on its next load."""
+		names = frappe.get_all(
+			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "set"]}, pluck="name"
+		)
+		if any(frappe.cache.get_value(cls.cache_key(name)) is None for name in names):
+			frappe.enqueue(
+				sync_stale_gateways, queue="short", job_id="builder_ai_gateway_sync", deduplicate=True
+			)
+
+	@classmethod
 	def sync_all(cls, force: bool = False) -> None:
 		"""Sync every enabled gateway whose listing is stale (or all, when forced)."""
 		names = frappe.get_all(
@@ -210,11 +222,11 @@ class GatewayListing:
 		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
 
 	def credits(self) -> dict | None:
-		"""The balance the gateway reports at /credits, or None when it reports none."""
-		url, headers = self.request()
+		"""The balance the gateway reports at <api_base>/credits, or None when it reports none."""
+		_, headers = self.request()
 		try:
 			response = requests.get(
-				url.removesuffix("/models") + "/credits", headers=headers, timeout=FETCH_TIMEOUT
+				f"{self.provider.api_base.rstrip('/')}/credits", headers=headers, timeout=FETCH_TIMEOUT
 			)
 			response.raise_for_status()
 			reported = response.json()
@@ -255,6 +267,10 @@ class GatewayListing:
 		except frappe.DuplicateEntryError:
 			return False
 		return True
+
+
+def sync_stale_gateways() -> None:
+	GatewayListing.sync_all()
 
 
 def fetch_listing(request: tuple[str, dict]) -> list[str] | Exception:

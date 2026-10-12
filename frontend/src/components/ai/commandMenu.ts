@@ -64,7 +64,11 @@ export function useCommandMenu(prompt: Ref<string>) {
 		if (!level.value) dismissed.value = false;
 	});
 
+	// a level borrows the composer for its filter, so a draft typed before opening is set aside
+	let draft = "";
+
 	async function open(next: MenuLevel) {
+		if (!stack.value.length) draft = prompt.value.startsWith("/") ? "" : prompt.value;
 		stack.value = [...stack.value, next];
 		await enter();
 	}
@@ -75,16 +79,18 @@ export function useCommandMenu(prompt: Ref<string>) {
 	}
 
 	async function back(levels = 1) {
+		// close() needs the stack intact to know a level held the composer
+		if (stack.value.length <= levels) return close();
 		stopLevel?.();
 		stack.value = stack.value.slice(0, -levels);
-		if (!stack.value.length) return close();
 		await enter();
 	}
 
 	function close() {
 		stopLevel?.();
 		// inside a level the composer text was the menu's filter, never a prompt
-		if (stack.value.length || prompt.value.startsWith("/")) prompt.value = "";
+		if (stack.value.length || prompt.value.startsWith("/")) prompt.value = draft;
+		draft = "";
 		stack.value = [];
 		items.value = [];
 		note.value = "";

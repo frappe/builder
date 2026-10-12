@@ -372,7 +372,7 @@ def get_provider_credits(provider: str) -> dict | None:
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
-	GatewayListing.sync_all()
+	GatewayListing.refresh_in_background()
 	return ModelRegistry.available()
 
 

@@ -111,26 +111,36 @@ function signInLevel(ctx: BobContext, preset: AIPreset): MenuLevel {
 
 function watchSignIn(ctx: BobContext, preset: AIPreset, menu: CommandMenu) {
 	let timer: number | undefined;
+	// leaving the level cancels the attempt, and anything that answers after that is ignored
+	let cancelled = false;
+	const stop = () => {
+		cancelled = true;
+		window.clearInterval(timer);
+	};
 	api<SignInStart>("builder.ai.api.start_codex_login")
 		.then((login) => {
+			if (cancelled) return;
 			window.open(login.url, "_blank", "noopener");
 			menu.setNote("Finish signing in on the tab that opened. This carries on by itself.");
 			timer = window.setInterval(async () => {
 				const poll = await api<SignInStatus>("builder.ai.api.poll_codex_login", { state: login.state }).catch(
 					() => null,
 				);
+				if (cancelled) return;
 				if (poll?.status === "connected") {
-					window.clearInterval(timer);
+					stop();
 					await install(ctx, preset);
 					menu.close();
 				} else if (poll?.status === "failed" || poll?.status === "expired") {
-					window.clearInterval(timer);
+					stop();
 					menu.setNote(poll.message || "The sign-in didn't finish. Go back and try again.", true);
 				}
 			}, 2500);
 		})
-		.catch((error: unknown) => menu.setNote(getErrorMessage(error, "Could not start the sign-in"), true));
-	return () => window.clearInterval(timer);
+		.catch((error: unknown) => {
+			if (!cancelled) menu.setNote(getErrorMessage(error, "Could not start the sign-in"), true);
+		});
+	return stop;
 }
 
 /** Connects with the preset's recommended models; the rest can be switched on from /providers. */
