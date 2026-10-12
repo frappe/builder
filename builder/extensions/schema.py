@@ -115,7 +115,9 @@ def create_doctype(
 	istable: bool = False,
 ) -> dict:
 	"""A new custom doctype, owned by this extension."""
-	assert_extension_access(extension, "schema.write", writes=RESOURCE_DOCTYPE)
+	assert_extension_access(extension, "schema.write")
+	# the DDL commits, so a refusal on the ownership record must come first
+	frappe.has_permission(RESOURCE_DOCTYPE, ptype="create", throw=True)
 	rows = read_fields(fields)
 	if not rows:
 		frappe.throw(_("A doctype needs at least one field."))
@@ -149,9 +151,8 @@ def get_doctype(extension: str, doctype: str) -> dict:
 def update_doctype(extension: str, doctype: str, fields: list[dict] | None = None) -> dict:
 	"""Adds fields, and updates the ones already there by fieldname.
 
-	Never removes a field the call leaves unmentioned. That is the rule
-	`set_extension_tokens` follows, and it matters more here: a removed field
-	drops a column and the data in it.
+	Never removes a field the call leaves unmentioned. A removed field drops a
+	column and the data in it.
 	"""
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)

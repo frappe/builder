@@ -23,10 +23,8 @@ from builder.extensions.access import (
 	is_extension_manager,
 )
 from builder.extensions.constants import DEV_EXTENSION_VERSION
+from builder.extensions.resources import RESOURCE_DOCTYPE
 from builder.utils import has_page_read
-
-RESOURCE_DOCTYPE = "Builder Extension Resource"
-TOKEN_DOCTYPE = "Builder Token"
 
 NO_BUILDER_ACCESS = "You need access to Builder to use extensions."
 
@@ -91,15 +89,13 @@ def set_granted_permissions(extension: str, permissions: list[str]) -> list[str]
 def get_uninstall_summary(extension: str) -> dict:
 	"""What the site keeps when a manager removes the extension.
 
-	A doctype holds the site's data, a token styles every page, and a client script
-	runs for every visitor, so uninstalling takes none of the three. Naming them
-	here is what lets a manager read that before they answer.
+	A doctype holds the site's data, so uninstalling does not drop it. Naming it
+	here lets a manager read that before they answer.
 	"""
 	get_installation(extension)
 	made = Counter(frappe.get_all(RESOURCE_DOCTYPE, filters={"extension": extension}, pluck="resource_type"))
 	return {
 		"resources": [{"resource_type": kind, "count": made[kind]} for kind in sorted(made)],
-		"tokens": frappe.db.count(TOKEN_DOCTYPE, {"extension": extension}),
 	}
 
 

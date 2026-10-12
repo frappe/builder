@@ -1,8 +1,7 @@
 /**
- * The questions that Builder asks before an extension does an act that cannot be undone.
+ * The question that Builder asks before an extension makes or removes a doctype.
  *
- * Each question names one act: to make or remove a doctype, or to put a
- * script on a page. It records nothing, because there is no lasting
+ * Each question names one act. It records nothing, because there is no lasting
  * permission. The next act asks again. The Frappe permission still decides if
  * this user can do the act. No call here gives more access.
  */
@@ -11,16 +10,12 @@ import { ref } from "vue";
 import { bridge } from "../bridge/bridge";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
-export type PromptKind = "schema" | "script";
+export type SchemaAct = "create" | "delete";
 
 export type ExtensionPrompt = {
-	kind: PromptKind;
 	extension: InstalledExtension;
-	/** The doctype of a schema prompt, or the page route of a script prompt. */
-	subject: string;
-	sensitive: boolean;
-	/** For a schema prompt: the verb, as the dialog shows it. */
-	act?: "create" | "delete";
+	doctype: string;
+	act: SchemaAct;
 };
 
 /** `ExtensionConfirmDialog.vue` reads this. Only one prompt is open at a time, so this is one ref. */
@@ -76,35 +71,11 @@ const ask = (request: ExtensionPrompt) =>
 /**
  * Asks the user to allow one act on the schema. It remembers nothing.
  *
- * To make a table and to remove a table are the two most serious acts in this
- * API. The Frappe gate, create permission on `DocType`, only says that the user
+ * The Frappe gate, create permission on `DocType`, only says that the user
  * *can* do the act by hand. It does not say that the user wants this extension
  * to do it. So Builder names the act each time.
- *
- * `schemaMethods.ts` is the only caller.
  */
-export const confirmSchema = (extension: InstalledExtension, doctype: string, act: "create" | "delete") => {
+export const confirmSchema = (extension: InstalledExtension, doctype: string, act: SchemaAct) => {
 	hookTeardown(extension);
-	return enqueue(() =>
-		ask({ kind: "schema", extension, subject: doctype, act, sensitive: act === "delete" }),
-	);
-};
-
-/**
- * Asks the user to let this extension put a script on one page. It remembers nothing.
- *
- * A client script is JavaScript on a public page, on the origin of the site.
- * After it is added, nothing limits it. The Frappe gate, write permission on
- * `Builder Client Script`, only says that the user can add one by hand. It
- * does not say that the user wants this extension to do it.
- *
- * So Builder names the page each time that an extension makes a script. It
- * does not ask again when the extension changes its own script. The user
- * already let this extension run code on this page.
- *
- * `pageMethods.ts` is the only caller.
- */
-export const confirmPageScript = (extension: InstalledExtension, route: string) => {
-	hookTeardown(extension);
-	return enqueue(() => ask({ kind: "script", extension, subject: route, sensitive: true }));
+	return enqueue(() => ask({ extension, doctype, act }));
 };

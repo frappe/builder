@@ -1,9 +1,7 @@
 <template>
 	<!--
 		The consent prompt. Builder shows it, never the extension. An extension
-		frame cannot show, read or answer it.
-		
-		There is one prompt for the whole editor. `confirmations.ts` keeps a queue,
+		frame cannot show, read or answer it. `confirmations.ts` keeps a queue,
 		so it asks one question at a time.
 	-->
 	<Dialog v-if="prompt" :modelValue="true" size="sm" @update:modelValue="deny">
@@ -11,33 +9,27 @@
 			<div class="bg-surface-elevation-2 p-5">
 				<h3 class="text-md-semibold text-ink-gray-9">{{ prompt.extension.label }} wants access</h3>
 
-				<!-- the period is in the interpolation, not in a separate node. A newline
-					between a closing tag and a "." becomes a text node. Then the sentence
-					reads "Contact ." Prettier moves the markup, so the period cannot be
-					in the whitespace -->
+				<!-- the period is in the interpolation. A newline before a separate "."
+					becomes a text node, and Prettier moves the markup -->
 				<p class="pt-4 text-p-sm text-ink-gray-6">
 					It is asking to
-					<span class="font-semibold text-ink-gray-8">{{ verbs }}</span>
-					{{ object }}
-					<span class="font-semibold text-ink-gray-8">{{ subject }}</span>
+					<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
+					the doctype
+					<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
 				</p>
 
 				<p class="pt-2 text-p-sm text-ink-gray-5">
-					{{ floor }}
+					It can only do what you can do. Changing a doctype needs your own System Manager role.
 				</p>
 
-				<div v-if="prompt.sensitive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
-					<p v-if="prompt.kind === 'schema'" class="text-p-sm text-ink-red-6">
+				<div v-if="isDelete" class="mt-4 rounded-4 bg-surface-red-1 p-3">
+					<p class="text-p-sm text-ink-red-6">
 						Dropping a doctype drops its table and every record in it. Nothing here can undo that.
 					</p>
-					<p v-else class="text-p-sm text-ink-red-6">
-						The script runs on the published page, for every visitor, and it can do anything this site's own
-						pages can do. You can read it and remove it in the Code tab.
-					</p>
-					<label class="flex cursor-pointer items-start gap-2 pt-3 text-p-sm text-ink-red-6">
-						<input v-model="understood" type="checkbox" class="mt-0.5" />
-						<span>I understand, and I trust {{ prompt.extension.label }} with this.</span>
-					</label>
+					<Checkbox
+						v-model="understood"
+						class="pt-3"
+						:label="`I understand, and I trust ${prompt.extension.label} with this.`" />
 				</div>
 
 				<div class="flex justify-end gap-2 pt-4">
@@ -52,7 +44,7 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import { answerPrompt, pendingPrompt } from "@/extensions/data/confirmations";
-import { Button } from "frappe-ui";
+import { Button, Checkbox } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
 const prompt = computed(() => pendingPrompt.value);
@@ -62,33 +54,11 @@ const understood = ref(false);
 // would approve an act that the user never saw
 watch(prompt, () => (understood.value = false));
 
-const canAllow = computed(() => !prompt.value?.sensitive || understood.value);
-
-/** The subject and the period together. So a reflow cannot put a space between them. */
-const subject = computed(() => `${prompt.value?.subject}.`);
-
-/** The verb of a schema or script prompt. */
-const verbs = computed(() => (prompt.value?.kind === "schema" ? (prompt.value.act ?? "") : "run a script"));
-
-/** The sentence that is true for each prompt. The extension gets no more access than the user. */
-const floor = computed(
-	() =>
-		({
-			schema: "It can only do what you can do. Changing a doctype needs your own System Manager role.",
-			script: "It can only do what you can do. You can already add a script to this page by hand.",
-		})[prompt.value?.kind ?? "script"],
-);
-
-/** The object of the verb: the doctype or a page. */
-const object = computed(
-	() => ({ schema: "the doctype", script: "on the page" })[prompt.value?.kind ?? "script"],
-);
+const isDelete = computed(() => prompt.value?.act === "delete");
+const canAllow = computed(() => !isDelete.value || understood.value);
 
 const allow = () => answerPrompt(true);
 
-/**
- * The button, Escape and a click outside have the same result. A question
- * with no answer is a no. Browser permission prompts do the same.
- */
+/** The button, Escape and a click outside all count as no. */
 const deny = () => answerPrompt(false);
 </script>

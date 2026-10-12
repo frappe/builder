@@ -40,13 +40,8 @@ def find_installation(extension: str, enabled_only: bool = False) -> str | None:
 	return frappe.db.get_value(INSTALLATION_DOCTYPE, filters, "name")
 
 
-def assert_extension_access(extension: str, permission: str | None = None, writes: str | None = None) -> str:
-	"""Refuse unless this user may do this. Answers with the installation name.
-
-	`writes` names the doctype the caller is about to change, so Frappe applies
-	that doctype's own rule before anything is written. The permission is a
-	separate check, and neither replaces the other.
-	"""
+def assert_extension_access(extension: str, permission: str | None = None) -> str:
+	"""Refuse unless this user may do this. Answers with the installation name."""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to use extensions."), frappe.PermissionError)
 
@@ -57,9 +52,6 @@ def assert_extension_access(extension: str, permission: str | None = None, write
 		frappe.throw(_('"{0}" is not installed on this site.').format(extension), frappe.PermissionError)
 
 	assert_permission(installation, extension, permission)
-
-	if writes:
-		frappe.has_permission(writes, ptype="write", throw=True)
 
 	return installation
 

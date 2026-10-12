@@ -27,16 +27,10 @@ type PermissionDetail = {
 
 export const permissionDetails: Record<Permission, PermissionDetail> = {
 	"page.edit": { permissionClass: "Editor write", label: "Change and add blocks on the page" },
-	"page.write": { permissionClass: "Editor write", label: "Add client scripts to the page" },
 	"data.access": {
 		permissionClass: SITE_DATA_CLASS,
 		label: "Read and write documents on this site",
 		warning: "It never gets more than the permissions of the person using it.",
-	},
-	"token.write": {
-		permissionClass: SHARED_STATE_CLASS,
-		label: "Define design tokens",
-		warning: "A token it writes styles every page you already published.",
 	},
 	"method.call": {
 		permissionClass: SITE_DATA_CLASS,

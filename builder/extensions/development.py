@@ -78,7 +78,7 @@ def refresh_dev_permissions(installation: str, asked: str) -> list[str]:
 
 @frappe.whitelist(methods=["POST"])
 def remove_dev_extension(extension: str) -> None:
-	"""Remove a development installation and the tokens of its session.
+	"""Remove a development installation.
 
 	Quiet about an installation this method did not make. The name may belong to
 	an extension the site really installed.
@@ -94,9 +94,6 @@ def remove_dev_extension(extension: str) -> None:
 	if document.version != DEV_EXTENSION_VERSION:
 		return
 
-	from builder.extensions.tokens import delete_extension_tokens
-
-	delete_extension_tokens(extension)
 	document.delete()
 
 

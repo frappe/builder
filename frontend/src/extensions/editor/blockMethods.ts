@@ -19,11 +19,9 @@ import { nextTick } from "vue";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
+import { readAttributes, readElement, readHTML } from "./safeMarkup";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
-
-/** A tag name, with no markup in it. */
-const ELEMENT_NAME = /^[a-z][a-z0-9-]*$/;
 
 const findBlock = (blockId: string): Block => {
 	const block = useCanvasStore().activeCanvas?.findBlock(blockId);
@@ -43,37 +41,44 @@ const namedBlock = (params: unknown) => findBlock(text(fields(params).blockId, "
  */
 const get = (params: unknown) => getBlockObject(namedBlock(params));
 
-/** A record of strings. An attribute map and a style map both have this shape. */
-const readMap = (value: unknown, name: string) => {
+/** `null` and `""` remove a style. `setStyle` has the same rule. */
+const readStyles = (value: unknown, field: string) => {
 	if (value === undefined) return undefined;
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		throw refuse(`"${name}" must be an object.`, "invalid_params");
+		throw refuse(`"${field}" must be an object.`, "invalid_params");
 	}
-	return value as Record<string, unknown>;
+	Object.entries(value).forEach(([style, sent]) => {
+		if (sent !== null && typeof sent !== "string" && typeof sent !== "number") {
+			throw refuse(`"${field}.${style}" must be a string, a number or null.`, "invalid_params");
+		}
+	});
+	return value as Record<string, string | number | null>;
 };
 
-const readClasses = (value: unknown) => {
+const readClasses = (value: unknown, field: string) => {
 	if (value === undefined) return undefined;
 	if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
-		throw refuse(`"classes" must be a list of strings.`, "invalid_params");
+		throw refuse(`"${field}" must be a list of strings.`, "invalid_params");
 	}
 	return value as string[];
 };
 
-/** `undefined` removes an attribute, as `removeAttribute` does. */
-const writeAttributes = (block: Block, attributes: Record<string, unknown>) =>
-	Object.entries(attributes).forEach(([attribute, value]) =>
-		block.setAttribute(attribute, value === null ? undefined : optionalText(value, attribute)),
-	);
+/**
+ * Every value of one block, checked before anything is written. So a refused
+ * call leaves the page as it was. `update` and `insert` both read with this.
+ */
+const readChanges = (sent: Record<string, unknown>, element: string, prefix = "") => ({
+	attributes: readAttributes(sent.attributes, element, `${prefix}attributes`),
+	styles: readStyles(sent.styles, `${prefix}styles`),
+	classes: readClasses(sent.classes, `${prefix}classes`),
+	innerHTML: readHTML(sent.innerHTML, `${prefix}innerHTML`),
+});
 
-/** `null` and `""` remove a style. `setStyle` has the same rule. */
-const writeStyles = (block: Block, styles: Record<string, unknown>, breakpoint?: Breakpoint) =>
-	Object.entries(styles).forEach(([style, value]) => {
-		if (value !== null && typeof value !== "string" && typeof value !== "number") {
-			throw refuse(`"styles.${style}" must be a string, a number or null.`, "invalid_params");
-		}
-		block.setStyle(style, value, breakpoint);
-	});
+const writeAttributes = (block: Block, attributes: Record<string, string | undefined>) =>
+	Object.entries(attributes).forEach(([attribute, value]) => block.setAttribute(attribute, value));
+
+const writeStyles = (block: Block, styles: Record<string, string | number | null>, breakpoint?: Breakpoint) =>
+	Object.entries(styles).forEach(([style, value]) => block.setStyle(style, value, breakpoint));
 
 /**
  * Each key is optional. A patch with no keys is an error. It is better to
@@ -86,10 +91,7 @@ const update = (params: unknown) => {
 	const sent = fields(params);
 	const block = namedBlock(params);
 
-	const attributes = readMap(sent.attributes, "attributes");
-	const styles = readMap(sent.styles, "styles");
-	const classes = readClasses(sent.classes);
-	const innerHTML = optionalText(sent.innerHTML, "innerHTML");
+	const { attributes, styles, classes, innerHTML } = readChanges(sent, block.getElement() || "div");
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
 
@@ -117,13 +119,9 @@ const MAX_DEPTH = 20;
  * does not change the page. A bad node at depth four cannot leave the three
  * nodes above it half built.
  */
-type PlannedBlock = {
+type PlannedBlock = ReturnType<typeof readChanges> & {
 	element: string;
 	key?: string;
-	classes?: string[];
-	innerHTML?: string;
-	attributes?: Record<string, unknown>;
-	styles?: Record<string, unknown>;
 	children: PlannedBlock[];
 };
 
@@ -149,10 +147,7 @@ const planTree = (value: unknown): PlannedBlock => {
 		if (++count > MAX_NODES) throw refuse(`A tree can hold ${MAX_NODES} blocks.`, "invalid_params");
 
 		const wanted = fields(sent);
-		const element = text(wanted.element, "block.element");
-		if (!ELEMENT_NAME.test(element)) {
-			throw refuse(`"${element}" is not an element name.`, "invalid_params");
-		}
+		const element = readElement(wanted.element, "block.element");
 
 		const key = optionalText(wanted.key, "block.key");
 		if (key && keys.has(key)) throw refuse(`Two blocks share the key "${key}".`, "invalid_params");
@@ -161,10 +156,7 @@ const planTree = (value: unknown): PlannedBlock => {
 		return {
 			element,
 			key,
-			classes: readClasses(wanted.classes),
-			innerHTML: optionalText(wanted.innerHTML, "block.innerHTML"),
-			attributes: readMap(wanted.attributes, "block.attributes"),
-			styles: readMap(wanted.styles, "block.styles"),
+			...readChanges(wanted, element, "block."),
 			children: readChildren(wanted.children).map((child) => plan(child, depth + 1)),
 		};
 	};

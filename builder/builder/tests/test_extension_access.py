@@ -72,14 +72,6 @@ class TestAssertExtensionAccess(FrappeTestCase):
 
 		self.assertIsNotNone(assert_extension_access(EXTENSION))
 
-	def test_applies_frappes_own_permission_to_what_the_caller_writes(self):
-		"""The permission says the extension may try. Frappe says whether this user may."""
-		make_installation(EXTENSION)
-		frappe.set_user(make_user())
-
-		with self.assertRaises(frappe.PermissionError):
-			assert_extension_access(EXTENSION, writes="DocType")
-
 
 class TestExtensionManager(FrappeTestCase):
 	"""Who may change the site's extensions."""

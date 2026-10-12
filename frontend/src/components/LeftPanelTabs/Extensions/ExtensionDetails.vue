@@ -367,7 +367,6 @@ const uninstall = async () => {
 
 const uninstallMessage = (summary: Awaited<ReturnType<typeof uninstallSummary>>) => {
 	const kept = summary.resources.map((made) => `${made.count} ${made.resource_type}`);
-	if (summary.tokens) kept.push(`${summary.tokens} design token(s)`);
 
 	const lines = ["This removes it for every user, with what it remembered for each of them."];
 	if (kept.length) lines.push(`The site keeps ${kept.join(", ")}, because published pages use them.`);

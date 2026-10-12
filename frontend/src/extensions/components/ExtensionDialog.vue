@@ -13,6 +13,7 @@
 					<Button icon="lucide-x" variant="ghost" @click="dismiss" />
 				</div>
 				<ExtensionFrame
+					:key="dialog.id"
 					:extension="extension.name"
 					slot="dialog"
 					:initialProps="dialog.props"

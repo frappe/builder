@@ -12,7 +12,6 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.constants import PERMISSIONS
 from builder.extensions.development import install_dev_extension, remove_dev_extension
-from builder.extensions.tokens import set_extension_tokens
 
 
 class TestDevExtension(FrappeTestCase):
@@ -35,11 +34,11 @@ class TestDevExtension(FrappeTestCase):
 		)
 
 	def test_registers_an_installation_the_gate_accepts(self):
-		install_dev_extension(self.extension, ["page.edit", "token.write"])
+		install_dev_extension(self.extension, ["page.edit", "data.access"])
 
 		installed = self.installed()
 		self.assertEqual(installed.version, "0.0.0-dev")
-		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "token.write"])
+		self.assertEqual(frappe.parse_json(installed.granted_permissions), ["page.edit", "data.access"])
 
 	def test_grants_only_what_the_manifest_asks_for(self):
 		"""The gate reads this list, so a wider one would name what nobody allowed."""
@@ -58,16 +57,6 @@ class TestDevExtension(FrappeTestCase):
 		remove_dev_extension(self.extension)
 
 		self.assertIsNone(self.installed())
-
-	def test_removes_the_tokens_of_the_session(self):
-		install_dev_extension(self.extension, ["token.write"])
-		set_extension_tokens(
-			self.extension, [{"key": "a", "token_name": "A", "type": "Color", "value": "#fff"}]
-		)
-
-		remove_dev_extension(self.extension)
-
-		self.assertFalse(frappe.db.exists("Builder Token", {"extension": self.extension}))
 
 	def test_leaves_a_real_installation_alone(self):
 		"""The name may belong to an extension the site really installed."""

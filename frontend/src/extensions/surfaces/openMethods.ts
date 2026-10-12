@@ -16,7 +16,7 @@ import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import useBuilderStore from "@/stores/builderStore";
 import type { InstalledExtension, OpenTarget } from "frappe-builder-extension-sdk/types";
 import { reactive } from "vue";
-import { startDialog, startPopover } from "../editor/uiMethods";
+import { openDialog, openPopover } from "../editor/uiMethods";
 import { bridge } from "../bridge/bridge";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, oneOf, optionalText, optionalWholeNumber, refuse, text } from "../bridge/params";
@@ -77,9 +77,9 @@ export const openExtension = (extension: InstalledExtension) => {
 	if (!target) return;
 
 	if (target.kind === "popover") {
-		return void startPopover({ width: target.width, height: target.height }, extension);
+		return void openPopover({ width: target.width, height: target.height }, extension);
 	}
-	if (target.kind === "dialog") return void startDialog({ title: target.title }, extension);
+	if (target.kind === "dialog") return void openDialog({ title: target.title }, extension);
 
 	// the same two writes as `select` in `BuilderLeftPanel.vue`. So Open goes to
 	// the same place as a click on the tab

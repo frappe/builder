@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-08-21 10:00:00.000000",
- "description": "What an extension made. These rows outlive every uninstall. A doctype holds site data, a token styles pages, and a client script runs for visitors. They name the extension itself, not its installation, so a later installation owns what an earlier one made.",
+ "description": "What an extension made. These rows outlive every uninstall, because a doctype holds site data. They name the extension, not its installation, so a later installation owns what an earlier one made.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -27,12 +27,12 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Resource Type",
-   "options": "DocType\nWeb Form\nClient Script",
+   "options": "DocType",
    "read_only": 1,
    "reqd": 1
   },
   {
-   "description": "The doctype name, or the web form route.",
+   "description": "The doctype name.",
    "fieldname": "resource_name",
    "fieldtype": "Data",
    "in_list_view": 1,

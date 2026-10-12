@@ -253,7 +253,6 @@ const useInstallationDetails = (extension: string) => {
 /** The data that the site keeps when a manager removes an extension. */
 type UninstallSummary = {
 	resources: { resource_type: string; count: number }[];
-	tokens: number;
 };
 
 /**

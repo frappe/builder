@@ -123,15 +123,13 @@ Request only the permissions that the extension uses. Builder rejects a protecte
 | Permission | SDK methods or behavior |
 |---|---|
 | `page.edit` | `block.update`, `block.insert`, and bound property controls |
-| `page.write` | `page.attachScript`, `page.detachScript`, `page.listScripts` |
-| `token.write` | `tokens.set`, `tokens.unset` |
 | `data.access` | Every `data.*` method |
 | `schema.write` | Every `schema.*` method |
 | `method.call` | Reserved for the methods of installed apps. No method uses it yet. |
 
 Reads and windows need no permission. This covers `context.*`, `block.get`, `page.getBlocks`, and `ui.*`. Surface registration, actions, extension state, and `host.info` also need no permission.
 
-Builder rejects page writes in read-only mode. This rule covers `page.edit`, `page.write`, and `token.write`. It does not cover `data.*` or `schema.*`, which write to the site and not to the page.
+Builder rejects page writes in read-only mode. This rule covers `page.edit`. It does not cover `data.*` or `schema.*`, which write to the site and not to the page.
 
 A site manager grants permissions for the whole site. A permission never gives a user more access than that user already has. Read [Site data](#site-data).
 
@@ -574,33 +572,6 @@ A tree can hold 200 blocks and go 20 levels deep. Builder checks the whole tree 
 
 Builder does not select the new blocks. Each update or insert uses Builder's normal undo history.
 
-## Page client scripts
-
-A block change alone cannot make a published page do anything. Use `builder.page.attachScript` to put
-JavaScript or CSS on the page the user has open.
-
-```ts
-await builder.page.attachScript({ type: "CSS", script: "@keyframes fade-up { ... }" });
-await builder.page.attachScript({ type: "JavaScript", script: "document.querySelectorAll(...)" });
-```
-
-Read these rules before you use it:
-
-- The script runs on the published page. It does not run in the editor canvas. The editor shows what
-  a block is set to, and the page shows what it does.
-- One JavaScript script and one CSS script per extension per page. A second call of the same type
-  replaces the script, so send the whole file every time.
-- The first script of a type asks the user, and the prompt names the page. A later call to replace
-  the same script does not ask.
-- Builder rejects the call in read-only mode.
-
-Use `builder.page.listScripts()` to read the scripts this extension owns on the open page. Call it
-once at startup, and keep the answer, so a control that fires often does not attach on every change.
-
-Use `builder.page.detachScript(type)` to remove one. Uninstalling the extension removes them too.
-
-The user can read, edit, and delete every one of these scripts in the editor's Code tab.
-
 ## Extension state
 
 Use `builder.state` for data that belongs only to the extension.
@@ -611,9 +582,9 @@ const state = await builder.state.get();
 await builder.state.unset("page");
 ```
 
-State uses browser `localStorage`. Builder scopes it by extension name and limits it to 100 kB.
+Builder keeps state on the site, one store for each user and extension, and limits it to 100 kB. It follows the user to another browser. A dev extension keeps its state in the browser instead.
 
-`state.set` merges fields at the top level. State does not follow the user to another browser.
+`state.set` merges fields at the top level.
 
 ## Site data
 
@@ -687,28 +658,38 @@ Only the extension that created a doctype can update or delete it.
 
 The `naming` value can be `hash`, `autoincrement`, or `prompt`. Builder fixes the naming at creation.
 
-## Builder tokens
+## Design tokens and client scripts
 
-Use tokens when a value must reach the published site.
+Design tokens and page scripts are documents. Change them with `builder.data`, so they need the `data.access` permission. The user also needs write access to the doctype.
 
 ```ts
-await builder.tokens.set([
-  {
-    key: "brand-primary",
-    token_name: "Brand Primary",
-    type: "Color",
-    value: "#2563eb",
-    dark_value: "#60a5fa",
-    group: "Brand",
-  },
-]);
+await builder.data.insert("Builder Token", {
+  token_name: "Brand Primary",
+  type: "Color",
+  value: "#2563eb",
+  dark_value: "#60a5fa",
+  group: "Brand",
+});
 ```
 
-The token type must be `Color`, `Dimension`, or `Font`. The stable `key` identifies the token inside this extension.
+The token `type` must be `Color`, `Dimension`, or `Font`. A token styles every published page that uses it.
 
-`tokens.set` updates matching keys but does not remove missing keys. Use `tokens.unset(key)` for removal.
+A client script is a `Builder Client Script` document with `script_type` (`JavaScript` or `CSS`) and `script`. A page runs the scripts in its `client_scripts` table. Each row has a `builder_script` link.
 
-Token calls write server records. Await them before showing success.
+```ts
+const script = await builder.data.insert("Builder Client Script", {
+  script_type: "CSS",
+  script: "@keyframes fade-up { ... }",
+});
+const page = await builder.data.getDoc("Builder Page", pageName);
+await builder.data.update("Builder Page", pageName, {
+  client_scripts: [...page.client_scripts, { builder_script: script.name }],
+});
+```
+
+A script runs on the published page, for every visitor. Builder does not ask the user first. The user can read and remove it in the editor's Code tab.
+
+These calls write server records. Await them before you show success.
 
 ## Vue slots
 

@@ -15,9 +15,9 @@ class BuilderExtensionResource(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		extension: DF.Link
+		extension: DF.Data
 		resource_name: DF.Data
-		resource_type: DF.Literal["DocType", "Web Form", "Client Script"]
+		resource_type: DF.Literal["DocType"]
 	# end: auto-generated types
 
 	def autoname(self):

@@ -19,6 +19,12 @@ export const text = (value: unknown, field: string) => {
 export const optionalText = (value: unknown, field: string) =>
 	value === undefined ? undefined : text(value, field);
 
+/** A string that can be empty, such as text content or an attribute value. */
+export const anyText = (value: unknown, field: string) => {
+	if (typeof value !== "string") throw refuse(`"${field}" must be a string.`, "invalid_params");
+	return value;
+};
+
 /** Keeps the current value if the patch does not set this field. */
 export const flag = (value: unknown, current: boolean) => (typeof value === "boolean" ? value : current);
 

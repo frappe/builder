@@ -27,7 +27,8 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import blockController from "@/utils/blockController";
 import { editorContext } from "../context/editorContext";
 import { assertRule, matches, type ShowWhenRule } from "../context/showWhen";
-import { canWrite } from "../bridge/permissions";
+import { canEdit } from "../bridge/permissions";
+import { isSafeAttribute } from "../editor/safeMarkup";
 import { fields, oneOf, optionalText, refuse, text } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { invokeAction } from "./actionMethods";
@@ -86,6 +87,28 @@ const readBind = (value: unknown, name: string): Bind | undefined => {
 	return bind;
 };
 
+/** A select takes strings, and a toggle takes `{ label, value }`. */
+const optionValues = (options: unknown) =>
+	Array.isArray(options)
+		? options.map((option) => String(typeof option === "object" && option !== null ? option.value : option))
+		: [];
+
+/**
+ * The wrapper writes a bound attribute without the host. The user picks the
+ * value, but the extension names the attribute and gives the options. So both
+ * get the check of `block.update` here. A control applies to any block, and
+ * DOMPurify's attribute rules hardly depend on the element, so `div` stands in.
+ */
+const assertSafeBinding = (attribute: string, options: unknown, name: string) => {
+	if (!isSafeAttribute("div", attribute, "")) {
+		throw refuse(`"${name}" cannot bind to the attribute "${attribute}".`, "invalid_params");
+	}
+	const unsafe = optionValues(options).find((value) => !isSafeAttribute("div", attribute, value));
+	if (unsafe !== undefined) {
+		throw refuse(`"${name}" has an option that "${attribute}" cannot hold: "${unsafe}".`, "invalid_params");
+	}
+};
+
 const readControl = (params: unknown): Control => {
 	const sent = fields(params);
 	assertRule(sent.showWhen as ShowWhenRule | undefined);
@@ -110,6 +133,7 @@ const readControl = (params: unknown): Control => {
 	if (!control.bind && !control.action) {
 		throw refuse(`"${name}" has neither "bind" nor "action", so it does nothing.`, "invalid_params");
 	}
+	if (control.bind?.attribute) assertSafeBinding(control.bind.attribute, control.options, name);
 	return control;
 };
 
@@ -125,7 +149,7 @@ export const readControls = (params: unknown, extension: InstalledExtension): Co
 	if (!Array.isArray(params)) throw refuse(`"controls" must be a list.`, "invalid_params");
 
 	const controls = params.map(readControl);
-	if (controls.some((control) => control.bind) && !canWrite(extension)) {
+	if (controls.some((control) => control.bind) && !canEdit(extension)) {
 		throw refuse(
 			`"${extension.name}" was not granted page.edit, which a bound control needs.`,
 			"permission_required",

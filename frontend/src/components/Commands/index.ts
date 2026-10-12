@@ -1,5 +1,4 @@
 import router from "@/router";
-import { showDevExtensionDialog } from "@/extensions/devExtension";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -104,15 +103,6 @@ commands.registerBuiltIn({
 	group: "Navigate",
 	condition: isBuilderRoute,
 	action: () => router.push({ name: "home" }),
-});
-
-commands.registerBuiltIn({
-	name: "load-dev-extension",
-	title: __("Load Dev Extension"),
-	icon: "lucide-plug",
-	group: "General",
-	condition: () => isBuilderRoute() && Boolean(window.is_developer_mode),
-	action: () => (showDevExtensionDialog.value = true),
 });
 
 commands.registerBuiltIn({
@@ -292,6 +282,20 @@ commands.registerBuiltIn({
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		blockController.getSelectedBlocks()[0].duplicateBlock();
+	},
+});
+
+// without this the browser selects the editor's own panel text
+commands.registerBuiltIn({
+	name: "select-all",
+	title: __("Select All"),
+	icon: "lucide-square-dashed",
+	group: "Edit",
+	inPalette: false,
+	keys: { combo: "Mod+A", description: __("Select Entire Canvas") },
+	action: () => {
+		const rootBlock = canvasStore.getRootBlock();
+		if (rootBlock) canvasStore.selectBlock(rootBlock, null);
 	},
 });
 

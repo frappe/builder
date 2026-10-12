@@ -3,9 +3,8 @@
 
 """What an extension made, so no caller guesses ownership from a name.
 
-These rows name the extension, not its installation. That is what makes them
-survive an uninstall: a doctype holds the site's data, a token styles every
-page, and a client script runs for every visitor.
+These rows name the extension, not its installation. So they survive an
+uninstall, because a doctype holds the site's data.
 
 It also means a later installation owns what an earlier one made. An extension
 can edit the doctype it created after it is installed again.

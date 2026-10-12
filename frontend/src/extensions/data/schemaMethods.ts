@@ -15,29 +15,13 @@
  * is not the open page.
  */
 
-import { createResource } from "frappe-ui";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, flag, oneOf, refuse, text } from "../bridge/params";
 import { confirmSchema } from "./confirmations";
+import { invoke } from "./documentMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 const NAMING = ["hash", "autoincrement", "prompt"] as const;
-
-/** A plain copy, because `createResource` returns its reactive `data`. */
-const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
-
-const asRefusal = (thrown: unknown) => {
-	const sent = thrown as { messages?: string[]; message?: string };
-	return refuse(sent.messages?.[0] || sent.message || "The server refused that call.", "server_error");
-};
-
-const invoke = (url: string, params: Record<string, unknown>) =>
-	createResource({ url })
-		.submit(params)
-		.then(plain)
-		.catch((thrown: unknown) => {
-			throw asRefusal(thrown);
-		});
 
 /**
  * A field list. This code checks only its shape. The server decides which
@@ -45,7 +29,7 @@ const invoke = (url: string, params: Record<string, unknown>) =>
  */
 const readFields = (value: unknown) => {
 	if (!Array.isArray(value) || !value.length) {
-		throw refuse("\"fields\" must be a non-empty list.", "invalid_params");
+		throw refuse('"fields" must be a non-empty list.', "invalid_params");
 	}
 	return value.map((field) => {
 		if (!field || typeof field !== "object" || Array.isArray(field)) {

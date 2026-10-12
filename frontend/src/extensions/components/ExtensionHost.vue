@@ -20,7 +20,7 @@
 		<!-- part of the editor, not of an extension. A user loads an extension with it -->
 		<DevExtensionDialog />
 
-		<!-- one for the whole editor. confirmations.ts keeps a queue, so it asks one question at a time -->
+		<!-- part of the editor too. It asks before an extension makes or removes a doctype -->
 		<ExtensionConfirmDialog />
 
 		<!-- one for each extension. It shows nothing until ui.openDialog -->
