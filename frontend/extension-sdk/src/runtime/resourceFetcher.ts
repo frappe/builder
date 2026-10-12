@@ -48,8 +48,7 @@ const refuse = (message: string, code = "unsupported_request") =>
  * `postMessage` cannot clone a proxy. So this code makes plain copies before
  * the send. The host makes a plain copy of the answer for the same reason.
  */
-const asParams = (value: unknown): Params =>
-	value ? (JSON.parse(JSON.stringify(value)) as Params) : {};
+const asParams = (value: unknown): Params => (value ? (JSON.parse(JSON.stringify(value)) as Params) : {});
 
 const named = (params: Params, field: string, url: string) => {
 	const value = params[field];
@@ -68,7 +67,7 @@ const patchOf = (params: Params) => {
 	const sent = params.fieldname;
 	if (typeof sent === "string") return { [sent]: params.value };
 	if (!sent || typeof sent !== "object") {
-		throw refuse("frappe.client.set_value needs a \"fieldname\".", "invalid_params");
+		throw refuse('frappe.client.set_value needs a "fieldname".', "invalid_params");
 	}
 	return sent as Params;
 };
@@ -94,7 +93,7 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 	"frappe.client.get_list": (params) => {
 		// the permission of the parent controls a child table. So read the parent
 		if (params.parent) {
-			throw refuse("\"parent\" is not supported: read the parent document instead.");
+			throw refuse('"parent" is not supported: read the parent document instead.');
 		}
 		return data.getList(named(params, "doctype", "frappe.client.get_list"), listOptions(params));
 	},
@@ -106,10 +105,7 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
 		),
 
 	"frappe.client.get": (params) =>
-		data.getDoc(
-			named(params, "doctype", "frappe.client.get"),
-			named(params, "name", "frappe.client.get"),
-		),
+		data.getDoc(named(params, "doctype", "frappe.client.get"), named(params, "name", "frappe.client.get")),
 
 	// here, the doctype is inside the document, not next to it
 	"frappe.client.insert": (params) => {
@@ -140,13 +136,11 @@ const ROUTES: Record<string, (params: Params) => Promise<unknown>> = {
  */
 export const resourceFetcher = (options: ResourceRequest) => {
 	const url = options?.url ?? "";
-	const route = ROUTES[url];
+	// an own key only. Otherwise `constructor` and `toString` would be routes
+	const route = Object.hasOwn(ROUTES, url) ? ROUTES[url] : undefined;
 
 	if (!route) {
-		throw refuse(
-			`no route for "${url}". An extension reaches site data through a doctype it was ` +
-				`granted, so a resource may name only: ${Object.keys(ROUTES).join(", ")}.`,
-		);
+		throw refuse(`no route for "${url}". A resource can call only: ${Object.keys(ROUTES).join(", ")}.`);
 	}
 
 	return route(asParams(options.params));
