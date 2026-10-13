@@ -123,7 +123,7 @@
 			:style="{
 				top: dropIndicator.top + 'px',
 				left: dropIndicator.left + 'px',
-				width: 'calc(100% - ' + dropIndicator.left + 'px)',
+				right: dropIndicator.right + 'px',
 			}"></div>
 	</div>
 </template>
@@ -282,13 +282,14 @@ interface DropIndicator {
 	show: boolean;
 	top: number;
 	left: number;
+	right: number;
 	treeRoot: Ref<HTMLElement | null>;
 }
 
 // The top-level tree draws the line, so a selected group's overflow-hidden cannot clip it.
 const parentDropIndicator = inject<DropIndicator | null>("dropIndicator", null);
 const dropIndicator =
-	parentDropIndicator ?? shallowReactive({ show: false, top: 0, left: 0, treeRoot: rootContainer });
+	parentDropIndicator ?? shallowReactive({ show: false, top: 0, left: 0, right: 0, treeRoot: rootContainer });
 if (!parentDropIndicator) provide("dropIndicator", dropIndicator);
 const dragState: DragState = { draggedElement: null, hoverTarget: null, hoverPosition: null };
 
@@ -317,6 +318,7 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 
 	dropIndicator.top = (showAbove ? rect.top : rect.bottom) - containerRect.top;
 	dropIndicator.left = indent;
+	dropIndicator.right = containerRect.right - rect.right;
 	dragState.hoverPosition = showAbove ? "before" : "after";
 
 	dropIndicator.show = indent === 0 && showAbove ? false : true;
