@@ -91,9 +91,20 @@
 			:width="340"
 			:height="0"
 			v-if="builderStore.showSearchBlock">
-			<template #header>{{ __("Search Block") }}</template>
+			<template #header>
+				<!-- the header drags the popup, so a tab click mustn't start a drag; -ml-1 lines the tabs up with the inputs -->
+				<div v-if="!builderStore.readOnlyMode" class="-ml-1" @mousedown.stop>
+					<TabButtons
+						v-model="searchMode"
+						:options="[
+							{ label: __('Find'), value: 'search' },
+							{ label: __('Replace'), value: 'replace' },
+						]" />
+				</div>
+				<template v-else>{{ __("Search Block") }}</template>
+			</template>
 			<template #content>
-				<SearchBlock></SearchBlock>
+				<SearchBlock v-model:mode="searchMode"></SearchBlock>
 			</template>
 		</DraggablePopup>
 	</div>
@@ -151,7 +162,7 @@ import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useDebounceFn } from "@vueuse/core";
-import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
+import { createResource, KeyboardShortcutsDialog, TabButtons, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -168,6 +179,14 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
+// kept here for the popup header's tabs; reset on close so search always reopens on Find
+const searchMode = ref<"search" | "replace">("search");
+watch(
+	() => builderStore.showSearchBlock,
+	(open) => {
+		if (!open) searchMode.value = "search";
+	},
+);
 
 watch(
 	[

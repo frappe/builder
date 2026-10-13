@@ -1,63 +1,53 @@
 <template>
 	<div class="flex flex-col gap-2" @keydown="handleKeydown">
-		<div
-			class="grid items-center gap-1.5"
-			:class="
-				builderStore.readOnlyMode ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-[auto_minmax(0,1fr)_auto]'
-			">
-			<Button
-				v-if="!builderStore.readOnlyMode"
-				variant="ghost"
-				:icon="searchMode === 'replace' ? 'lucide-chevron-down' : 'lucide-chevron-right'"
-				:label="__('Toggle Replace')"
-				:tooltip="__('Toggle Replace')"
-				@click="toggleReplace" />
-			<BuilderInput ref="searchInput" type="text" :placeholder="__('Find')" v-model="query" @input="setQuery">
-				<template #prefix>
-					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
-				</template>
-			</BuilderInput>
-			<Popover bare>
-				<template #trigger>
-					<Button
-						icon="lucide-list-filter"
-						:label="__('Filters')"
-						:variant="selectedFiltersCount ? 'subtle' : 'ghost'" />
-				</template>
-				<template #default>
-					<div class="w-44 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
-						<label
-							v-for="filter in filters"
-							:key="filter.key"
-							class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
-							<Checkbox :modelValue="filter.selected" @update:modelValue="toggleFilter(filter)" />
-							{{ filter.name }}
-						</label>
-					</div>
-				</template>
-			</Popover>
-			<template v-if="searchMode === 'replace'">
-				<!-- BuilderInput passes class to its inner input, so the wrapper places it in the grid -->
-				<div class="col-start-2">
-					<BuilderInput
-						ref="replaceInput"
-						type="text"
-						:placeholder="__('Replace with')"
-						v-model="replaceQuery"
-						@input="(value: string) => (replaceQuery = value)">
-						<template #prefix>
-							<span class="lucide-corner-down-right size-4 text-ink-gray-5" aria-hidden="true" />
-						</template>
-					</BuilderInput>
-				</div>
-				<Button
-					variant="ghost"
-					icon="lucide-replace-all"
-					:label="__('Replace All')"
-					:tooltip="__('Replace All')"
-					:disabled="!matchCount.matches"
-					@click="replaceInBlocks(getScopeBlocks())" />
+		<!-- the clear button would share the suffix with the filter and run under the text; Escape clears instead -->
+		<BuilderInput
+			ref="searchInput"
+			type="text"
+			:placeholder="__('Find')"
+			v-model="query"
+			:hideClearButton="true"
+			@input="setQuery">
+			<template #suffix>
+				<Popover bare>
+					<template #trigger>
+						<button
+							class="flex cursor-pointer items-center"
+							:class="selectedFiltersCount ? 'text-ink-gray-8' : 'text-ink-gray-4 hover:text-ink-gray-6'"
+							:aria-label="__('Filters')"
+							:title="__('Filters')">
+							<span class="lucide-list-filter size-3.5" aria-hidden="true" />
+						</button>
+					</template>
+					<template #default>
+						<div class="w-44 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
+							<label
+								v-for="filter in filters"
+								:key="filter.key"
+								class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
+								<Checkbox :modelValue="filter.selected" @update:modelValue="toggleFilter(filter)" />
+								{{ filter.name }}
+							</label>
+						</div>
+					</template>
+				</Popover>
 			</template>
+		</BuilderInput>
+
+		<div v-if="searchMode === 'replace'" class="flex items-center gap-1.5">
+			<!-- BuilderInput passes class to its inner input, so the wrapper sizes it -->
+			<div class="min-w-0 flex-1">
+				<BuilderInput
+					ref="replaceInput"
+					type="text"
+					:placeholder="__('Replace with')"
+					v-model="replaceQuery"
+					@input="(value: string) => (replaceQuery = value)" />
+			</div>
+			<Button
+				:label="__('Replace All')"
+				:disabled="!matchCount.matches"
+				@click="replaceInBlocks(getScopeBlocks())" />
 		</div>
 
 		<div v-if="selectedFiltersCount" class="flex flex-wrap gap-1">
@@ -177,7 +167,8 @@ const { arrivedState, measure } = useScroll(resultList);
 const collapsedBlockIds = ref(new Set<string>());
 const query = ref("");
 const replaceQuery = ref("");
-const searchMode = ref<"search" | "replace">("search");
+// owned by PageBuilder, whose popup header holds the Find / Replace tabs
+const searchMode = defineModel<"search" | "replace">("mode", { default: "search" });
 const results = ref([]) as Ref<Block[]>;
 const blockMatches = shallowRef(new Map<string, SearchMatch[]>());
 // ids captured when scope is ticked, so clicking results doesn't move it and undo brings deleted blocks back
@@ -276,7 +267,8 @@ const searchFields: { key: string; name: string; locations: (block: Block) => Se
 				set: (value: string) =>
 					dataKey === block.dataKey
 						? block.setDataKey("key", value)
-						: dataKey?.type && block.setDynamicValue(dataKey.property, dataKey.type, value, dataKey.comesFrom),
+						: dataKey?.type &&
+							block.setDynamicValue(dataKey.property, dataKey.type, value, dataKey.comesFrom),
 			})),
 	},
 	{ key: "content", name: __("Content"), locations: textLocations },
@@ -343,11 +335,6 @@ const focusInput = (input: Ref<ComponentPublicInstance | null>) =>
 	input.value?.$el.querySelector("input")?.focus();
 
 const focusFind = () => focusInput(searchInput);
-
-const toggleReplace = () => {
-	searchMode.value = searchMode.value === "replace" ? "search" : "replace";
-	if (searchMode.value === "replace") nextTick(() => focusInput(replaceInput));
-};
 
 const isCollapsed = (block: Block) => collapsedBlockIds.value.has(block.blockId);
 
@@ -511,6 +498,10 @@ watchDebounced(
 	performSearch,
 	{ debounce: 300 },
 );
+
+watch(searchMode, (mode) => {
+	if (mode === "replace") nextTick(() => focusInput(replaceInput));
+});
 
 // arrivedState only updates on scroll, so the bottom fade needs a fresh measure when the list changes
 watch([results, () => collapsedBlockIds.value.size], () => measure(), { flush: "post" });
