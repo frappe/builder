@@ -22,9 +22,6 @@
 					:data-indent="indent"
 					:title="element.blockId"
 					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
-					:class="{
-						'!bg-blue-100 dark:!bg-blue-900': canvasStore.layerDraggingOverBlock === element.blockId,
-					}"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="
 						!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(element.blockId)
@@ -35,6 +32,7 @@
 						:style="{ paddingLeft: `${indent}px` }"
 						:class="{
 							'!opacity-50': !element.isVisible() || isParentHidden,
+							'rounded-4 !bg-surface-blue-4': canvasStore.layerDraggingOverBlock === element.blockId,
 						}">
 						<div>
 							<div class="scroll-into-view-anchor absolute ml-20"></div>
@@ -121,11 +119,11 @@
 		<!-- Drop indicator line -->
 		<div
 			v-if="showDropIndicator"
-			class="pointer-events-none absolute h-0.5 bg-blue-500 transition-none"
+			class="pointer-events-none fixed z-10 h-0.5 bg-blue-500 transition-none"
 			:style="{
 				top: dropIndicatorTop + 'px',
 				left: dropIndicatorLeft + 'px',
-				width: 'calc(100% - ' + dropIndicatorLeft + 'px)',
+				width: dropIndicatorWidth + 'px',
 			}"></div>
 	</div>
 </template>
@@ -283,6 +281,7 @@ interface DragState {
 const showDropIndicator = ref(false);
 const dropIndicatorTop = ref(0);
 const dropIndicatorLeft = ref(0);
+const dropIndicatorWidth = ref(0);
 const dragState: DragState = { draggedElement: null, hoverTarget: null, hoverPosition: null };
 
 const resetDropIndicators = () => {
@@ -307,8 +306,9 @@ const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, ele
 	const indent = parseInt(blockLayerItem.dataset.indent || "0", 10);
 	const showAbove = relativeY < elementHeight / 2;
 
-	dropIndicatorTop.value = showAbove ? rect.top - containerRect.top : rect.bottom - containerRect.top;
-	dropIndicatorLeft.value = indent;
+	dropIndicatorTop.value = showAbove ? rect.top : rect.bottom;
+	dropIndicatorLeft.value = containerRect.left + indent;
+	dropIndicatorWidth.value = containerRect.width - indent;
 	dragState.hoverPosition = showAbove ? "before" : "after";
 
 	showDropIndicator.value = indent === 0 && showAbove ? false : true;
