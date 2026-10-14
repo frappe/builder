@@ -9,6 +9,7 @@ import { nextTick } from "vue";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
+import { assertCanRepeat, readBindings, writeBindings } from "./blockBindings";
 import { readAttributes, readElement, readHTML } from "./safeMarkup";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
@@ -62,6 +63,7 @@ const readChanges = (sent: Record<string, unknown>, element: string, prefix = ""
 	styles: readStyles(sent.styles, `${prefix}styles`),
 	classes: readClasses(sent.classes, `${prefix}classes`),
 	innerHTML: readHTML(sent.innerHTML, `${prefix}innerHTML`),
+	bindings: readBindings(sent, prefix),
 });
 
 const writeAttributes = (block: Block, attributes: Record<string, string | undefined>) =>
@@ -81,11 +83,12 @@ const update = (params: unknown) => {
 	const sent = fields(params);
 	const block = namedBlock(params);
 
-	const { attributes, styles, classes, innerHTML } = readChanges(sent, block.getElement() || "div");
+	const { attributes, styles, classes, innerHTML, bindings } = readChanges(sent, block.getElement() || "div");
+	assertCanRepeat(bindings, block);
 	const breakpoint =
 		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
 
-	if (!attributes && !styles && !classes && innerHTML === undefined) {
+	if (!attributes && !styles && !classes && innerHTML === undefined && !Object.keys(bindings).length) {
 		throw refuse(`This patch changes nothing.`, "invalid_params");
 	}
 
@@ -93,6 +96,7 @@ const update = (params: unknown) => {
 	if (styles) writeStyles(block, styles, breakpoint);
 	if (classes) block.classes = classes;
 	if (innerHTML !== undefined) block.setInnerHTML(innerHTML);
+	writeBindings(block, bindings);
 };
 
 /**
@@ -152,7 +156,9 @@ const planTree = (value: unknown): PlannedBlock => {
 
 		const changes = readChanges(wanted, element, "block.");
 		const children = readChildren(wanted.children);
-		if (children.length) assertCanHaveChildren(new Block({ element, innerHTML: changes.innerHTML }));
+		const draft = new Block({ element, innerHTML: changes.innerHTML });
+		if (children.length) assertCanHaveChildren(draft);
+		assertCanRepeat(changes.bindings, draft);
 
 		return { element, key, ...changes, children: children.map((child) => plan(child, depth + 1)) };
 	};
@@ -176,6 +182,7 @@ const mount = (
 
 	if (planned.attributes) writeAttributes(block, planned.attributes);
 	if (planned.styles) writeStyles(block, planned.styles, breakpoint);
+	writeBindings(block, planned.bindings);
 	if (planned.key) keys[planned.key] = block.blockId;
 
 	planned.children.forEach((child) => mount(block, child, keys, breakpoint));

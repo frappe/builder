@@ -2,7 +2,34 @@
 
 import { call } from "./call";
 
-export type BlockPatch = {
+/**
+ * One binding of a block to page data. `key` names a value of the page data
+ * script, or a field of the item when the block is inside a repeater.
+ */
+export type BlockDataKey = {
+	key: string;
+	/** What the value sets: the text (`key` with `property: "innerHTML"`), an attribute, or a style. */
+	type?: "key" | "attribute" | "style";
+	property?: string;
+	/** Where the key is read. The default is "dataScript". */
+	comesFrom?: "dataScript" | "props" | "componentData";
+};
+
+/** The fields that connect a block to page data. `block.get` returns the same names. */
+export type BlockBindings = {
+	/** The name that the layers panel shows. */
+	blockName?: string;
+	/** Repeats the children for each item of the list that `dataKey.key` names. Needs `dataKey`. */
+	isRepeaterBlock?: boolean;
+	/** The list of a repeater. `null` clears it. */
+	dataKey?: BlockDataKey | null;
+	/** Replaces the whole list. Each entry needs `key`, `type`, and `property`. */
+	dynamicValues?: Array<Required<Pick<BlockDataKey, "key" | "type" | "property">> & Pick<BlockDataKey, "comesFrom">>;
+	/** The block shows only when this key has a truthy value. `null` clears it. */
+	visibilityCondition?: Pick<BlockDataKey, "key" | "comesFrom"> | null;
+};
+
+export type BlockPatch = BlockBindings & {
 	attributes?: Record<string, string | null>;
 	/** Writes to the breakpoint that the user sees, unless `breakpoint` names a different one. */
 	styles?: Record<string, string | number | null>;
@@ -32,7 +59,7 @@ export const block = {
 };
 
 /** What `block.insert` adds. `element` is required. All other fields are optional. */
-export type NewBlock = {
+export type NewBlock = BlockBindings & {
 	element: string;
 	attributes?: Record<string, string | null>;
 	styles?: Record<string, string | number | null>;

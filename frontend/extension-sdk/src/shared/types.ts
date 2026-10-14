@@ -106,7 +106,8 @@ export type EditorContext = {
 	readOnly: boolean;
 	isAIEnabled: boolean;
 	/** Null when no page is open. So no code reads an empty route as a real route. */
-	page: { route: string; isTemplate: boolean; isStandard: boolean; published: boolean } | null;
+	/** `name` is the `Builder Page` record. A live page and its staging copy share a route, not a name. */
+	page: { name: string; route: string; isTemplate: boolean; isStandard: boolean; published: boolean } | null;
 	site: { isDeveloperMode: boolean; isFCSite: boolean };
 };
 

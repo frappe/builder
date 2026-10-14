@@ -49,6 +49,7 @@ const getPage = () => {
 	if (!active) return null;
 
 	return {
+		name: active.name,
 		route: active.route ?? "",
 		isTemplate: Boolean(active.is_template),
 		isStandard: Boolean(active.is_standard),
