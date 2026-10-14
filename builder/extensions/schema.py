@@ -251,7 +251,10 @@ def describe_doctype(doctype: str) -> dict:
 		"doctype": meta.name,
 		"istable": bool(meta.istable),
 		"fields": [
-			{key: field.get(key) for key in ("fieldname", "label", "fieldtype", "options", "reqd", "read_only", "default")}
+			{
+				key: field.get(key)
+				for key in ("fieldname", "label", "fieldtype", "options", "reqd", "read_only", "default")
+			}
 			for field in meta.fields
 		],
 	}
