@@ -101,6 +101,18 @@ builder.popover.register({ component: () => import("./Popover.vue") });
 
 `vue` is an optional peer dependency. Install it only if you write slots in Vue.
 
+## Refresh page data
+
+After a document write, call `page.refreshData()` to update the data that the canvas shows.
+
+```js
+await builder.data.update("Blog Post", name, { title: "Updated title" });
+await builder.page.refreshData();
+```
+
+This reruns the open page's data script with its current preview route values.
+It keeps the canvas blocks, selection, and editing history. The call waits for the data fetch and requires an open page.
+
 ## Run it in Builder
 
 1. Turn on developer mode for the site.

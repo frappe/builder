@@ -80,9 +80,16 @@ const setRouteVariables = async (params: unknown) => {
 	await pageStore.setRouteVariables(readRouteVariables(fields(params).values));
 };
 
+const refreshData = async () => {
+	const pageStore = usePageStore();
+	if (!pageStore.activePage) throw refuse("No page is open.", "no_canvas");
+	await pageStore.setPageData(pageStore.activePage);
+};
+
 export const pageMethods: MethodTable = {
 	"page.getBlocks": { needs: null, run: getBlocks },
 	// these move the view and the preview only. Neither changes the page
 	"page.open": { needs: null, run: open },
 	"page.setRouteVariables": { needs: null, run: setRouteVariables },
+	"page.refreshData": { needs: null, run: refreshData },
 };

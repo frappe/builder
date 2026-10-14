@@ -123,6 +123,8 @@ export const page = {
 	 * editor state, not part of the page. Read them in `context.routeVariables`.
 	 */
 	setRouteVariables: (values: Record<string, string>) => call("page.setRouteVariables", { values }),
+	/** Reruns the open page's data script with its current preview values, without reloading the canvas. */
+	refreshData: () => call("page.refreshData") as Promise<void>,
 };
 
 export const state = {
