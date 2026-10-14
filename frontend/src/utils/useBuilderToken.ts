@@ -110,6 +110,7 @@ function builderTokenComposable() {
 			throw new Error("Variable name is required");
 		}
 		await builderTokenStore.delete.submit(name);
+		forgetTokenHistory([name]);
 	};
 
 	const fontTokens = computed(() =>
@@ -125,6 +126,24 @@ function builderTokenComposable() {
 
 	const clearTokenRedo = () => {
 		tokenRedoStack.length = 0;
+	};
+
+	const clearTokenHistory = () => {
+		tokenUndoStack.length = 0;
+		clearTokenRedo();
+	};
+
+	const forgetTokenHistory = (names: string[]) => {
+		const forgotten = new Set(names);
+		for (const stack of [tokenUndoStack, tokenRedoStack]) {
+			const kept = stack
+				.map((entry) => ({
+					...entry,
+					changes: entry.changes.filter((change) => !forgotten.has(change.name)),
+				}))
+				.filter((entry) => entry.changes.length);
+			stack.splice(0, stack.length, ...kept);
+		}
 	};
 
 	const recordTokenChange = (changes: TokenChange[]) => {
@@ -164,6 +183,8 @@ function builderTokenComposable() {
 		deleteVariable,
 		recordTokenChange,
 		clearTokenRedo,
+		clearTokenHistory,
+		forgetTokenHistory,
 		pendingEditFlushes,
 		flushPendingEdits,
 		undoTokenChange: () => moveTokenChange(tokenUndoStack, tokenRedoStack, "before"),

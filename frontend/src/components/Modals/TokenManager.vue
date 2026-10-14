@@ -450,6 +450,7 @@ const {
 	updateVariable,
 	deleteVariable,
 	recordTokenChange,
+	forgetTokenHistory,
 	pendingEditFlushes,
 	tokenHistoryVersion,
 	variables,
@@ -1143,6 +1144,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		}
 	}
 
+	forgetTokenHistory(updateVariables.map((variable) => variable.name!));
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 

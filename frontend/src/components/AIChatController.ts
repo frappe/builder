@@ -9,6 +9,7 @@ import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getErrorMessage } from "@/utils/helpers";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
@@ -556,6 +557,7 @@ export class AIChatController {
 		const resources = data.resources || [];
 		if (resources.includes("variables")) {
 			builderTokens.reload();
+			useBuilderToken().clearTokenHistory();
 		}
 		if (resources.includes("page_data") || resources.includes("page")) {
 			const pageId = this.pageId.value;
