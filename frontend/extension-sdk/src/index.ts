@@ -25,6 +25,7 @@ export type {
 	ShowWhen,
 	SlotLoader,
 	ToolbarRegistration,
+	UploadedFile,
 } from "./runtime/methods";
 export type { FrameOptions, ToastOptions, ToastType } from "./runtime/ui";
 export type { SlotEntry } from "./runtime/slots";

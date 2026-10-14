@@ -2,7 +2,7 @@
  * Reads, adds, changes and removes real documents.
  */
 
-import { createResource } from "frappe-ui";
+import { createResource, FileUploadHandler } from "frappe-ui";
 import { bridge } from "../bridge/bridge";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, optionalText, refuse, text, wholeNumber } from "../bridge/params";
@@ -152,6 +152,24 @@ const remove = async (params: unknown, extension: InstalledExtension) => {
 	notifyChange(extension, doctype, name, "delete");
 };
 
+/** A `File` crosses the port as a clone, so it is a real `File` here. */
+const readFile = (value: unknown) => {
+	if (!(value instanceof File)) throw refuse('"file" must be a File.', "invalid_params");
+	return value;
+};
+
+/** The frame has no session at its opaque origin, so the host posts the file. */
+const uploadFile = async (params: unknown, extension: InstalledExtension) => {
+	const file = readFile(fields(params).file);
+	const endpoint = `/api/method/builder.extensions.data.upload_file?extension=${encodeURIComponent(extension.name)}`;
+	const uploaded = await new FileUploadHandler()
+		.upload(file, { private: false, folder: "Home/Builder Uploads", upload_endpoint: endpoint })
+		.catch((thrown: unknown) => {
+			throw asRefusal(thrown);
+		});
+	return { fileUrl: uploaded.file_url, fileName: uploaded.file_name };
+};
+
 export const documentMethods: MethodTable = {
 	"data.getList": { needs: "data.access", run: getList },
 	"data.getCount": { needs: "data.access", run: getCount },
@@ -159,4 +177,5 @@ export const documentMethods: MethodTable = {
 	"data.insert": { needs: "data.access", run: insert },
 	"data.update": { needs: "data.access", run: update },
 	"data.delete": { needs: "data.access", run: remove },
+	"data.uploadFile": { needs: "data.access", run: uploadFile },
 };

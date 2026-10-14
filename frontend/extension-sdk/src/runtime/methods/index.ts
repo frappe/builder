@@ -5,7 +5,7 @@
 export { actions, type ActionRef } from "./actions";
 export { callFromEntryOnly } from "./call";
 export { context, type ContextField, type ContextHandler } from "./context";
-export { data, type Doc, type ListOptions, type DataChange } from "./data";
+export { data, type Doc, type ListOptions, type DataChange, type UploadedFile } from "./data";
 export {
 	block,
 	page,

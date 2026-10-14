@@ -10,6 +10,7 @@ from builder.extensions.data import (
 	get_list,
 	insert_doc,
 	update_doc,
+	upload_file,
 )
 
 
@@ -49,6 +50,7 @@ class TestExtensionDocuments(FrappeTestCase):
 		make_installation("acme/no-data", permissions=[])
 
 		self.assertRaises(frappe.PermissionError, get_list, "acme/no-data", "Contact")
+		self.assertRaises(frappe.PermissionError, upload_file, "acme/no-data")
 
 	def test_inserts_a_document(self):
 		inserted = insert_doc("acme/data", "Contact", {"first_name": "Hedy"})

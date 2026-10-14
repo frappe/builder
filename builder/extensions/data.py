@@ -19,6 +19,7 @@ import frappe
 import frappe.client
 from frappe import _
 
+from builder.api import upload_builder_asset
 from builder.extensions.access import INSTALLATION_DOCTYPE, assert_extension_access
 from builder.extensions.resources import RESOURCE_DOCTYPE
 from builder.extensions.state import STATE_DOCTYPE
@@ -116,6 +117,13 @@ def update_doc(extension: str, doctype: str, name: str, doc: dict | None = None)
 	"""Only the fields `doc` names change. `set_value` refuses the framework's own fields."""
 	assert_writable(extension, doctype)
 	return frappe.client.set_value(doctype, name, doc or {})
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_file(extension: str):
+	"""One public file, through the editor's own upload path, so it lands where Builder's uploads do."""
+	assert_extension_access(extension, "data.access")
+	return upload_builder_asset()
 
 
 @frappe.whitelist(methods=["POST"])

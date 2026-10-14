@@ -113,6 +113,17 @@ await builder.page.refreshData();
 This reruns the open page's data script with its current preview route values.
 It keeps the canvas blocks, selection, and editing history. The call waits for the data fetch and requires an open page.
 
+## Upload a file
+
+A frame cannot post to the site, so `data.uploadFile(file)` asks the host to upload it.
+The file is public and lands in Builder's upload folder, as the editor's own images do.
+It needs `data.access`.
+
+```js
+const { fileUrl } = await builder.data.uploadFile(input.files[0]);
+await builder.data.update("Blog Post", name, { cover_image: fileUrl });
+```
+
 ## Run it in Builder
 
 1. Turn on developer mode for the site.

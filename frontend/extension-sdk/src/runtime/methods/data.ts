@@ -61,4 +61,16 @@ export const data = {
 		call("data.update", { doctype, name, doc }) as Promise<Doc>,
 
 	delete: (doctype: string, name: string) => call("data.delete", { doctype, name }),
+
+	/**
+	 * Uploads one public file the way the editor uploads an image, and returns its
+	 * site URL. A frame cannot post to the site itself, so the host sends it.
+	 */
+	uploadFile: async (file: File) => {
+		// a picked file is readable only in this frame's process, so send its bytes, not the handle
+		const copy = new File([await file.arrayBuffer()], file.name, { type: file.type });
+		return call("data.uploadFile", { file: copy }) as Promise<UploadedFile>;
+	},
 };
+
+export type UploadedFile = { fileUrl: string; fileName: string };
