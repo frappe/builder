@@ -111,9 +111,18 @@ export const runSlot = async (props: Record<string, unknown> = {}) => {
 	if (!root) throw new Error(`The extension shell has no #${ROOT_ID} to mount into`);
 
 	const module = (await entry.component()) as SlotModule;
+	// the host keeps a dialog or popover frame between opens, and each open mounts again
+	closeSlot();
 	unmount = mount(module, slot as ExtensionSlot, root, props);
 
 	// the document closes with the frame. This cleanup is for what the document
-	// owns: the unmount hooks of a Vue app, a timer, or a subscription
-	window.addEventListener("pagehide", () => unmount?.(), { once: true });
+	// owns: the unmount hooks of a Vue app, a timer, or a subscription. The
+	// browser adds one listener, however many times this runs
+	window.addEventListener("pagehide", closeSlot);
+};
+
+/** Unmounts the slot. A hidden frame then keeps no state and runs no timer until the next open. */
+export const closeSlot = () => {
+	unmount?.();
+	unmount = undefined;
 };

@@ -41,12 +41,14 @@ const props = withDefaults(
 		extension: string;
 		slot: ExtensionSlot;
 		initialProps?: Record<string, unknown>;
+		/** False hides a kept dialog or popover frame. The slot unmounts until the next open. */
+		active?: boolean;
 		backgroundClass?: string;
 		/** Answers the calls of the frame. The name is not `onRequest`, because
 		 * Vue reads that name as a listener for a `request` event. */
 		requestHandler?: RequestHandler;
 	}>(),
-	{ backgroundClass: "bg-surface-base" },
+	{ backgroundClass: "bg-surface-base", active: true },
 );
 
 /**
@@ -120,8 +122,22 @@ const connect = () => {
 	// only "*" can reach an opaque origin. The port makes this safe. The port
 	// moves only one time, and this is the last message on the window
 	frame.value?.contentWindow?.postMessage(message, "*", [pair.port2]);
+	// closed while it loaded. The port keeps this event until the frame listens
+	if (!props.active) opening.emit("slot.close");
 	emit("connect", opening);
 };
+
+// a kept frame mounts its slot again for each open, with that open's props. A
+// new frame would load the whole extension again
+watch(
+	() => [props.active, props.initialProps] as const,
+	([active]) => {
+		if (!channel) return;
+		if (!active) return channel.emit("slot.close");
+		loading.value = true;
+		channel.emit("slot.open", props.initialProps ?? {});
+	},
+);
 
 // the handshake sends the theme one time. A later theme change needs its own message
 watch(

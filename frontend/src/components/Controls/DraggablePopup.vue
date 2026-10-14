@@ -2,7 +2,8 @@
 	<teleport to="#popovers">
 		<div class="relative" ref="popover">
 			<!-- above panel controls that set a z-index (Input's fade and suffix), below frappe-ui overlays (z-100) -->
-			<div class="fixed z-50" @mousedown.stop>
+			<!-- v-show: a caller can keep the popup, and what it holds, between opens -->
+			<div v-show="modelValue" class="fixed z-50" @mousedown.stop>
 				<div
 					ref="popoverContent"
 					class="fixed flex flex-col gap-1 overflow-hidden rounded-6 border border-outline-gray-2 bg-surface-base shadow-2xl"

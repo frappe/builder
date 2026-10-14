@@ -8,7 +8,7 @@
 import { createPortChannel, type PortChannel } from "../shared/transport/createPortChannel";
 import { PROTOCOL_VERSION, type ConnectMessage } from "../shared/types";
 import { handleRequest } from "./actions";
-import { runSlot, setActiveSlot } from "./slots";
+import { closeSlot, runSlot, setActiveSlot } from "./slots";
 
 /**
  * The frame checks the origin, not the host. Each extension frame sends
@@ -38,21 +38,38 @@ const isConnectMessage = (data: unknown): data is ConnectMessage =>
 
 const applyTheme = (theme: unknown) => document.documentElement.setAttribute("data-theme", String(theme));
 
+/**
+ * Mounts and unmounts run in order. The host keeps a dialog or popover frame
+ * after it closes, and a later open mounts the slot again with its new props.
+ * That open can come while the first mount still runs.
+ */
+let slotTasks: Promise<unknown> = Promise.resolve();
+
+const queueSlotTask = (task: () => unknown) => (slotTasks = slotTasks.then(task));
+
+const mountSlot = (open: PortChannel, props: unknown) =>
+	queueSlotTask(async () => {
+		slotProps = (props as Record<string, unknown>) ?? {};
+		// the props go to the slot document. So a dialog can open with call-time arguments
+		await runSlot(slotProps);
+		// A loaded iframe document is not sufficient. The entry and the slot can
+		// still import modules. The host removes its loader only after this event.
+		open.emit("slot.ready");
+	});
+
 const start = async (message: ConnectMessage, port: MessagePort) => {
-	channel = createPortChannel(port, handleRequest);
-	channel.listen("theme", applyTheme);
+	const open = createPortChannel(port, handleRequest);
+	channel = open;
+	open.listen("theme", applyTheme);
+	open.listen("slot.open", (props) => mountSlot(open, props));
+	open.listen("slot.close", () => queueSlotTask(closeSlot));
 	applyTheme(message.theme);
-	slotProps = message.props ?? {};
 	setActiveSlot(message.slot);
 
 	// the shell names no extension. The message tells what to run. A real URL
 	// lets the entry import its chunks and assets by relative path
-	await import(/* @vite-ignore */ message.entryUrl);
-	// the props go to the slot document. So a dialog can open with call-time arguments
-	await runSlot(slotProps);
-	// A loaded iframe document is not sufficient. The entry and the slot can
-	// still import modules. The host removes its loader only after this event.
-	channel.emit("slot.ready");
+	queueSlotTask(() => import(/* @vite-ignore */ message.entryUrl));
+	await mountSlot(open, message.props);
 };
 
 /**

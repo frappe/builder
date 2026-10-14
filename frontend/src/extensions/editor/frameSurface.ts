@@ -39,8 +39,8 @@ export const readDialogSize = (params: unknown): FrameSize => {
 
 export type OpenFrame = {
 	/**
-	 * New for each open call. The host component keys the frame by it. So a second
-	 * open loads a new frame, which gets the new props in its handshake.
+	 * New for each open call. The host keeps one frame for each extension, and
+	 * each open mounts its slot again with the new props.
 	 */
 	id: number;
 	title: string;
@@ -51,8 +51,7 @@ export type OpenFrame = {
 	 *
 	 * It is plain, never reactive. The handshake is a `postMessage`, which clones
 	 * the data. A Vue proxy cannot be cloned. These values are plain JSON from the
-	 * message, and they do not change while the frame is open. So nothing needs to
-	 * watch them.
+	 * message. Each open makes a new object, which tells the kept frame to mount again.
 	 */
 	props: Record<string, unknown>;
 };
