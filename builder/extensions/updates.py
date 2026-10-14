@@ -89,21 +89,33 @@ def run_hub_update(
 	try:
 		release = get_release(hub_url, name, version)
 		package = validate_package(download_package(release), name, release.version)
-		apply_release(
-			frappe.get_doc(INSTALLATION_DOCTYPE, installation), hub_url, release, package, permissions
-		)
+		doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
+		apply_release(doc, hub_url, release, package, keep_revocations(doc, permissions))
 	except Exception as failure:
 		frappe.db.rollback()
 		frappe.log_error(title="Hub extension update failed")
 		error = str(failure) or _("The update failed.")
 
-	# the worker commits when the job returns, and the message goes after that commit
+	# the worker commits when the job returns, and the message goes after that commit.
+	# Its own event: an install listener reads a Ready state as a new install
 	frappe.publish_realtime(
-		"builder_extension_install",
-		{"extension": name, "state": "Ready", "error": error},
+		"builder_extension_update",
+		{"extension": name, "error": error},
 		user=user,
 		after_commit=True,
 	)
+
+
+def keep_revocations(doc, permissions: list[str]) -> list[str]:
+	"""The queued grants, less any that a manager revoked while the job waited.
+
+	A permission the old release never asked for is a new approval, so it stays.
+	"""
+	return [
+		permission
+		for permission in permissions
+		if permission in doc.permissions or permission not in doc.requested
+	]
 
 
 def get_updatable(extension: str):
