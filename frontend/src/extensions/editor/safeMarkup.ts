@@ -47,13 +47,24 @@ const readAttribute = (element: string, name: string, value: unknown, field: str
 	return checked;
 };
 
-export const readHTML = (value: unknown, field: string) => {
-	if (value === undefined) return undefined;
+/**
+ * A bound attribute can have any name, such as `darkSrc`, so only the names that
+ * run code are refused. An attribute DOMPurify knows, such as `href`, needs a safe value.
+ */
+export const isSafeBoundAttribute = (element: string, name: string, value: string) =>
+	!/^on|^srcdoc$/i.test(name) && (isSafeAttribute(element, name, value) || !isSafeAttribute(element, name, ""));
+
+export const sanitizeHTML = (html: string) => {
 	// a string that starts with <script> puts it in <head>, where DOMPurify neither
 	// checks nor reports it. A template parses as `v-html` does, and loads nothing
 	const template = document.createElement("template");
-	template.innerHTML = anyText(value, field);
-	const clean = purifier.sanitize(template.content);
+	template.innerHTML = html;
+	return purifier.sanitize(template.content);
+};
+
+export const readHTML = (value: unknown, field: string) => {
+	if (value === undefined) return undefined;
+	const clean = sanitizeHTML(anyText(value, field));
 	const [removed] = purifier.removed;
 	if (removed) {
 		throw refuse(`"${field}" holds markup that is not allowed: ${describe(removed)}.`, "invalid_params");
