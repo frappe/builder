@@ -98,8 +98,9 @@ p:empty::before {
 }
 
 /* surface-base resolves to dark-gray-950 (#171717); pin it to the deeper
-   gray-950 (#0f0f0f) in dark mode for a darker base/page background. */
-[data-theme='dark'] .bg-surface-base {
+   gray-950 (#0f0f0f) in dark mode for a darker base/page background. Not a
+   checkbox: this rule would beat its checked fill and hide its dark tick. */
+[data-theme='dark'] .bg-surface-base:not([type='checkbox']) {
 	background-color: var(--gray-950);
 }
 
