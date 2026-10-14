@@ -93,6 +93,7 @@ declare module 'vue' {
     ExtensionPermissions: typeof import('./src/components/LeftPanelTabs/Extensions/ExtensionPermissions.vue')['default']
     ExtensionsTab: typeof import('./src/components/LeftPanelTabs/ExtensionsTab.vue')['default']
     ExtensionToolbarButton: typeof import('./src/components/ToolbarItems/ExtensionToolbarButton.vue')['default']
+    ExtensionUpdate: typeof import('./src/components/LeftPanelTabs/Extensions/ExtensionUpdate.vue')['default']
     EyeDropper: typeof import('./src/components/Icons/EyeDropper.vue')['default']
     Files: typeof import('./src/components/Icons/Files.vue')['default']
     FitScreen: typeof import('./src/components/Icons/FitScreen.vue')['default']

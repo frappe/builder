@@ -320,11 +320,29 @@ const installFromHub = async (name: string, version: string, permissions: Permis
 	await loadExtensions();
 };
 
+/** A newer Hub release of an installed extension, and the permissions that it adds. */
+type ExtensionUpdate = {
+	version: string;
+	requested_permissions: Permission[];
+	new_permissions: Permission[];
+};
+
+const getExtensionUpdate = (extension: string) =>
+	call("builder.extensions.updates.get_update", { extension }) as Promise<ExtensionUpdate | null>;
+
+/**
+ * Starts an update. The installed release runs until the background job ends.
+ * The job then sends `builder_extension_install`, with an `error` when it failed.
+ */
+const updateFromHub = (extension: string, version: string, permissions: Permission[]) =>
+	call("builder.extensions.updates.update_from_hub", { extension, version, permissions });
+
 export {
 	canManageExtensions,
 	extensionsDisabled,
 	getExtensionsCatalog,
 	getHubExtension,
+	getExtensionUpdate,
 	getHubReleasePermissions,
 	INSTALLATION_DOCTYPE,
 	installedExtensions,
@@ -334,8 +352,16 @@ export {
 	setGrantedPermissions,
 	uninstallExtension,
 	uninstallSummary,
+	updateFromHub,
 	useInstallationDetails,
 	installations,
 };
 
-export type { CatalogExtension, HubExtension, InstallationDetails, UninstallSummary, Installation };
+export type {
+	CatalogExtension,
+	ExtensionUpdate,
+	HubExtension,
+	InstallationDetails,
+	UninstallSummary,
+	Installation,
+};

@@ -109,6 +109,14 @@
 					@set-enabled="setEnabled"
 					@uninstall="uninstall" />
 
+				<ExtensionUpdate
+					v-if="
+						canManageExtensions && isInstalled && isReady && details.source_url && !details.is_development
+					"
+					:extension="details.name"
+					:label="details.label ?? details.name"
+					:granted="details.granted_permissions" />
+
 				<!-- eslint-disable-next-line vue/no-v-html -- renderMarkdown sanitizes through DOMPurify -->
 				<div
 					v-if="readme"
@@ -160,6 +168,7 @@
 import ExtensionActions from "@/components/LeftPanelTabs/Extensions/ExtensionActions.vue";
 import ExtensionPermissions from "@/components/LeftPanelTabs/Extensions/ExtensionPermissions.vue";
 import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
+import ExtensionUpdate from "@/components/LeftPanelTabs/Extensions/ExtensionUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import {
 	canManageExtensions,

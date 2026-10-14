@@ -1,12 +1,14 @@
 <template>
-	<!-- Gets the permissions to grant at install, and nothing else. -->
+	<!-- Gets the permissions to grant at install or update, and nothing else. -->
 	<Dialog
 		:modelValue="open"
 		size="sm"
 		bare
 		@update:modelValue="(value: boolean) => emit('update:open', value)">
 		<div class="bg-surface-elevation-2 p-5">
-			<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">Install {{ label }}?</DialogTitle>
+			<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">
+				{{ title ?? `Install ${label}?` }}
+			</DialogTitle>
 			<p class="pt-2 text-p-sm text-ink-gray-6">
 				<template v-if="requested.length">
 					Turn off what you do not want it to do. You can change this later in its details.
@@ -43,6 +45,8 @@ const props = defineProps<{
 	extension: string;
 	label: string;
 	requested: Permission[];
+	/** An update asks with its own title. */
+	title?: string;
 }>();
 
 const emit = defineEmits<{

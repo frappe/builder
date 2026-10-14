@@ -275,9 +275,9 @@ def run_hub_install(
 	try:
 		release = get_release(hub_url, name, version)
 		package = validate_package(download_package(release), name, release.version)
-		apply_release(
-			frappe.get_doc(INSTALLATION_DOCTYPE, installation), hub_url, release, package, permissions
-		)
+		doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
+		doc.enabled = 1
+		apply_release(doc, hub_url, release, package, permissions)
 		state = "Ready"
 	except Exception as error:
 		frappe.db.rollback()
@@ -380,7 +380,6 @@ def apply_release(
 			),
 			"install_state": "Ready",
 			"install_error": None,
-			"enabled": 1,
 		}
 	)
 	doc.save()
