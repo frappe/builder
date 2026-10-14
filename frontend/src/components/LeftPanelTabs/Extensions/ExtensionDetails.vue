@@ -31,18 +31,23 @@
 
 				<p v-if="details.description" class="text-p-sm text-ink-gray-7">{{ details.description }}</p>
 
-				<p v-if="!isInstalled && !canManageExtensions" class="text-p-sm text-ink-gray-6">
-					Only a System Manager or a Website Manager can install extensions.
-				</p>
-
-				<Button
-					v-else-if="!isInstalled"
-					variant="solid"
-					size="sm"
-					icon-left="lucide-download"
-					label="Install"
-					:loading="isAskingInstall"
-					@click="askInstall" />
+				<Tooltip
+					v-if="!isInstalled"
+					text="You don't have permission to install extensions."
+					:disabled="canManageExtensions">
+					<!-- a disabled button gets no hover events, so the tooltip listens on this box -->
+					<div>
+						<Button
+							class="w-full"
+							variant="solid"
+							size="sm"
+							icon-left="lucide-download"
+							label="Install"
+							:disabled="!canManageExtensions"
+							:loading="isAskingInstall"
+							@click="askInstall" />
+					</div>
+				</Tooltip>
 
 				<div v-else-if="isWaitingForEntryFrame" class="flex h-7 items-center">
 					<LoadingIndicator class="size-4 text-ink-gray-5" />
@@ -176,7 +181,7 @@ import { canOpen, openExtension } from "@/extensions/surfaces/openMethods";
 import useBuilderStore from "@/stores/builderStore";
 import { confirm } from "@/utils/helpers";
 import type { Permission } from "frappe-builder-extension-sdk/types";
-import { Badge, Button, LoadingIndicator, toast } from "frappe-ui";
+import { Badge, Button, LoadingIndicator, toast, Tooltip } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 
 const props = defineProps<{ extension: string }>();
