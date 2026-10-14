@@ -13,6 +13,7 @@ first, so the user gets a clear refusal before Frappe's own check runs.
 
 import frappe
 from frappe import _
+from frappe.utils.background_jobs import is_job_enqueued
 
 from builder.extensions.access import (
 	INSTALLATION_DOCTYPE,
@@ -42,7 +43,18 @@ def get_installations() -> list[dict]:
 	)
 	# a stable sort, so each group keeps the modified order
 	rows.sort(key=is_turned_off)
-	return [describe_installation(row.name) for row in rows]
+	return [describe_installation(row.name) | {"install_state": get_install_state(row)} for row in rows]
+
+
+def get_install_state(row: dict) -> str | None:
+	"""A crashed worker cannot mark its row. So an `Installing` row with no job reads as `Failed`."""
+	if row.install_state == "Installing" and not is_job_enqueued(install_job_id(row.name)):
+		return "Failed"
+	return row.install_state
+
+
+def install_job_id(installation: str) -> str:
+	return f"builder_extension_install_{installation}"
 
 
 def is_turned_off(row: dict) -> bool:

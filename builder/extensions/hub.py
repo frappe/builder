@@ -41,7 +41,7 @@ from builder.extensions.constants import (
 	MAX_PACKAGE_BYTES,
 	PROTOCOL_VERSION,
 )
-from builder.extensions.installations import describe_installation
+from builder.extensions.installations import describe_installation, install_job_id
 from builder.extensions.package import ValidatedPackage, validate_package
 from builder.utils import has_page_read
 
@@ -314,10 +314,6 @@ def assert_installable(name: str) -> None:
 		frappe.throw(_('"{0}" is already installing.').format(name))
 	if state not in ("Failed", "Installing"):
 		frappe.throw(_('"{0}" is already installed from {1}.').format(name, source or _("a directory")))
-
-
-def install_job_id(installation: str) -> str:
-	return f"builder_extension_install_{installation}"
 
 
 def create_pending_installation(name: str, version: str, listing: dict) -> str:

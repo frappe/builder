@@ -1,15 +1,19 @@
 <template>
-	<ExtensionDetails v-if="selectedExtension" :extension="selectedExtension" @back="selectedExtension = null" />
+	<ExtensionDetails
+		v-if="selectedExtension"
+		:extension="selectedExtension"
+		@back="selectedExtension = null" />
 	<ExtensionList v-else @select="(extension) => (selectedExtension = extension)" />
 </template>
 
 <script setup lang="ts">
 import ExtensionDetails from "@/components/LeftPanelTabs/Extensions/ExtensionDetails.vue";
 import ExtensionList from "@/components/LeftPanelTabs/Extensions/ExtensionList.vue";
-import { loadExtensions } from "@/data/extensions";
+import { installations, loadExtensions } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
+import { useIntervalFn } from "@vueuse/core";
 import { toast } from "frappe-ui";
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 /**
  * The list and the details of one extension use the same panel, one at a time.
@@ -26,6 +30,13 @@ const onInstallDone = (event: { extension: string; state: "Ready" | "Failed" }) 
 	if (event.state === "Failed") toast.error(`Could not install ${event.extension}`);
 	else toast.success(`Installed ${event.extension}`);
 };
+
+/** A crashed install job sends no event. So the list asks again while a row is installing. */
+const isInstalling = computed(() => installations.value.some((row) => row.install_state === "Installing"));
+const installPoll = useIntervalFn(loadExtensions, 5000, { immediate: false });
+watch(isInstalling, (installing) => (installing ? installPoll.resume() : installPoll.pause()), {
+	immediate: true,
+});
 
 onMounted(() => {
 	loadExtensions();

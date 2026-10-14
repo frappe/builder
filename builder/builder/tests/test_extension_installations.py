@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import set_request
@@ -210,6 +212,19 @@ class TestListedInstallation(FrappeTestCase):
 		make_installation("acme/light", source="export default {};", checksum=None)
 
 		self.assertIsNone(self.listed("acme/light")["entry_url"])
+
+	def test_an_install_whose_job_is_gone_reads_as_failed(self):
+		"""A crashed worker cannot mark its row. So the panel offers a retry, not a spinner."""
+		make_installation("acme/light", install_state="Installing", enabled=0)
+
+		with patch("builder.extensions.installations.is_job_enqueued", return_value=False):
+			self.assertEqual(self.listed("acme/light")["install_state"], "Failed")
+
+	def test_an_install_whose_job_runs_stays_installing(self):
+		make_installation("acme/light", install_state="Installing", enabled=0)
+
+		with patch("builder.extensions.installations.is_job_enqueued", return_value=True):
+			self.assertEqual(self.listed("acme/light")["install_state"], "Installing")
 
 
 class TestExtensionIcon(FrappeTestCase):
