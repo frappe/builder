@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
-import { nextTick, onMounted, Ref, ref } from "vue";
+import { nextTick, onMounted, Ref, ref, watch } from "vue";
 
 const popover = ref(null) as Ref<HTMLElement | null>;
 
@@ -103,6 +103,14 @@ const popupTop = ref(100);
 // The popup owns its size from here on: `width` and `height` only seed it.
 const popupWidth = ref(props.width);
 const popupHeight = ref(props.height);
+// a kept popup takes a new size when its caller asks for one. A size the user dragged to stays until then
+watch(
+	() => [props.width, props.height],
+	([width, height]) => {
+		popupWidth.value = width;
+		popupHeight.value = height;
+	},
+);
 const isDragging = ref(false);
 const resizingCorner = ref<"left" | "right" | null>(null);
 const isTransitioning = ref(false);
