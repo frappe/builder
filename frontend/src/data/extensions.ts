@@ -1,9 +1,8 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { call, createResource, getCachedResource } from "frappe-ui";
+import { call, createResource, frappeRequest, getCachedResource } from "frappe-ui";
 import { useStorage } from "@vueuse/core";
 import { computed, shallowRef } from "vue";
-import { builderSettings } from "@/data/builderSettings";
 
 const METHOD = "builder.extensions.installations";
 const INSTALLATION_DOCTYPE = "Builder Extension";
@@ -14,26 +13,9 @@ const HUB_API = "api/method/builder_hub.extensions.api";
 const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
 const CATALOG_CACHE = "extensions-catalog";
 
-/** It must match `DEFAULT_HUB_URL` on the server. */
-const DEFAULT_HUB_URL = "https://preview.frappe.cloud";
-
-/** The Builder Hub that gives this site its catalog. */
-const hubUrl = () => ensureProtocol(builderSettings.doc?.hub_url || DEFAULT_HUB_URL);
-
-/** A bare host gets HTTPS. A local Hub must name `http://` itself. */
-function ensureProtocol(url: string, defaultProtocol = "https") {
-	if (!url) return url;
-
-	// remove a trailing "://" or ":" from the default protocol
-	const protocol = defaultProtocol.replace(/:\/\/$|:$/, "");
-	// matches "http://", "https://", "ftp://", "mailto:" and "//" (a protocol-relative URL)
-	const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(url) || /^\/\//.test(url);
-
-	let result = hasProtocol ? url : `${protocol}://${url}`;
-	result = result.replace(/\/+$/, "");
-
-	return result;
-}
+/** The server names the Hub, because only a manager can read Builder Settings. */
+const getHubMethodUrl = async (method: string) =>
+	`${await call("builder.extensions.hub.get_hub_url")}/${HUB_API}.${method}`;
 
 /** The fields that only the details pane reads. They change only with a new install. */
 type StoredDetails = {
@@ -264,7 +246,10 @@ type CatalogExtension = Pick<Installation, "name" | "label" | "description" | "i
 
 const getExtensionsCatalog = (page: number = 1) =>
 	createResource({
-		url: `${hubUrl()}/${HUB_API}.get_catalog`,
+		url: "get_catalog",
+		// the Hub URL comes from the server, so it is known only when the fetch starts
+		resourceFetcher: async (options: { url: string }) =>
+			frappeRequest({ ...options, url: await getHubMethodUrl(options.url) }),
 		params: { page },
 		auto: true,
 		cache: [CATALOG_CACHE, page],
@@ -298,7 +283,7 @@ const latestVersion = (releases: HubExtensionResponse["releases"]) =>
  */
 const getHubExtension = async (name: string): Promise<HubExtension> => {
 	const { extension, releases }: HubExtensionResponse = await createResource({
-		url: `${hubUrl()}/${HUB_API}.get_extension`,
+		url: await getHubMethodUrl("get_extension"),
 		params: { name },
 		onError: (error: Error) => console.error("Could not load extension", error),
 	}).fetch();
@@ -317,7 +302,7 @@ const getHubExtension = async (name: string): Promise<HubExtension> => {
 /** The permissions that one release asks for. The list has no manifest, so this reads the release. */
 const getHubReleasePermissions = async (name: string, version: string): Promise<Permission[]> => {
 	const { release } = await createResource({
-		url: `${hubUrl()}/${HUB_API}.get_extension_release`,
+		url: await getHubMethodUrl("get_extension_release"),
 		params: { extension_name: name, version },
 	}).fetch();
 	return release.manifest?.permissions ?? [];

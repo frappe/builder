@@ -41,7 +41,7 @@ from builder.extensions.constants import (
 	MAX_PACKAGE_BYTES,
 	PROTOCOL_VERSION,
 )
-from builder.extensions.installations import describe_installation, install_job_id
+from builder.extensions.installations import NO_BUILDER_ACCESS, describe_installation, install_job_id
 from builder.extensions.package import ValidatedPackage, validate_package
 from builder.utils import has_page_read
 
@@ -84,6 +84,13 @@ def resolve_hub_url() -> str:
 	"""The Hub URL on Builder Settings, given a scheme and no trailing slash."""
 	url = frappe.db.get_single_value("Builder Settings", "hub_url") or DEFAULT_HUB_URL
 	return ensure_protocol(url)
+
+
+@frappe.whitelist()
+@has_page_read(NO_BUILDER_ACCESS)
+def get_hub_url() -> str:
+	"""The Hub the panel reads its catalog from. Only a manager can read Builder Settings."""
+	return resolve_hub_url()
 
 
 def ensure_protocol(url: str, default_scheme: str = "https") -> str:

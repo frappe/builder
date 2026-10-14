@@ -6,11 +6,12 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.tests.extension_fixtures import drop_installations, make_installation
+from builder.builder.tests.extension_fixtures import drop_installations, make_installation, make_page_reader
 from builder.extensions.hub import (
 	MAX_METADATA_BYTES,
 	assert_installable,
 	ensure_protocol,
+	get_hub_url,
 	hub_get,
 	resolve_hub_url,
 )
@@ -62,6 +63,17 @@ class TestHubUrl(FrappeTestCase):
 		frappe.db.set_single_value("Builder Settings", "hub_url", "hub.example.com")
 
 		self.assertEqual(resolve_hub_url(), "https://hub.example.com")
+
+	def test_a_page_reader_gets_the_site_hub(self):
+		"""Only a manager can read Builder Settings. So the panel asks the server for the Hub."""
+		settings = frappe.get_single("Builder Settings")
+		self.addCleanup(frappe.db.set_single_value, "Builder Settings", "hub_url", settings.hub_url)
+		frappe.db.set_single_value("Builder Settings", "hub_url", "hub.example.com")
+		frappe.set_user(make_page_reader(self))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertFalse(frappe.has_permission("Builder Settings", "read"))
+		self.assertEqual(get_hub_url(), "https://hub.example.com")
 
 
 class TestRetry(FrappeTestCase):
