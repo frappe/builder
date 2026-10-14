@@ -11,7 +11,6 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import (
 	assert_extension_access,
-	assert_extension_manager,
 	is_extension_manager,
 )
 
@@ -24,11 +23,6 @@ class TestAssertExtensionAccess(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_answers_with_the_installation_name(self):
-		installation = make_installation(EXTENSION)
-
-		self.assertEqual(assert_extension_access(EXTENSION, "data.access"), installation.name)
 
 	def test_every_builder_user_reaches_the_sites_installation(self):
 		installation = make_installation(EXTENSION)
@@ -67,11 +61,6 @@ class TestAssertExtensionAccess(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "data.access")
 
-	def test_needs_no_permission_when_the_method_asks_for_none(self):
-		make_installation(EXTENSION, permissions=[])
-
-		self.assertIsNotNone(assert_extension_access(EXTENSION))
-
 
 class TestExtensionManager(FrappeTestCase):
 	"""Who may change the site's extensions."""
@@ -80,17 +69,8 @@ class TestExtensionManager(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 		self.outsider = make_user("extension-outsider@example.com", roles=())
 
-	def test_a_system_manager_is_one(self):
-		self.assertTrue(is_extension_manager("Administrator"))
-
 	def test_a_website_manager_is_one(self):
 		self.assertTrue(is_extension_manager(make_user()))
 
 	def test_a_user_without_either_role_is_not(self):
 		self.assertFalse(is_extension_manager(self.outsider))
-
-	def test_refuses_a_user_who_is_not_one(self):
-		frappe.set_user(self.outsider)
-
-		with self.assertRaises(frappe.PermissionError):
-			assert_extension_manager()

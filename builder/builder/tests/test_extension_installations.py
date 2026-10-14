@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import set_request
 
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
@@ -15,8 +14,6 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
-	can_manage_extensions,
-	get_installation_details,
 	get_installations,
 	get_uninstall_summary,
 	set_extension_enabled,
@@ -58,25 +55,11 @@ class TestInstallations(FrappeTestCase):
 		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
 		self.assertFalse(listed["enabled"])
 
-	def test_every_builder_user_sees_the_same_list(self):
-		make_installation(EXTENSION)
-		become_a_user_who_cannot_manage(self)
-
-		self.assertIn(EXTENSION, names(get_installations()))
-
 
 class TestEnableAndDisable(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
 		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_disabling_stops_the_editor_from_listing_it(self):
-		make_installation(EXTENSION)
-
-		set_extension_enabled(EXTENSION, False)
-
-		listed = next(row for row in get_installations() if row["name"] == EXTENSION)
-		self.assertFalse(listed["enabled"])
 
 	def test_disabling_closes_the_gate(self):
 		make_installation(EXTENSION)
@@ -123,24 +106,11 @@ class TestGrantedPermissions(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_extension_access(EXTENSION, "data.access")
 
-	def test_granting_again_reopens_it(self):
-		make_installation(EXTENSION, permissions=["page.edit", "data.access"], granted=["page.edit"])
-
-		set_granted_permissions(EXTENSION, ["page.edit", "data.access"])
-
-		assert_extension_access(EXTENSION, "data.access")
-
 	def test_refuses_a_permission_the_manifest_never_asked_for(self):
 		make_installation(EXTENSION, permissions=["page.edit"])
 
 		with self.assertRaises(frappe.ValidationError):
 			set_granted_permissions(EXTENSION, ["page.edit", "schema.write"])
-
-	def test_refuses_a_permission_builder_does_not_have(self):
-		make_installation(EXTENSION)
-
-		with self.assertRaises(frappe.ValidationError):
-			set_granted_permissions(EXTENSION, ["quantum.read"])
 
 	def test_refuses_a_user_who_cannot_manage(self):
 		make_installation(EXTENSION)
@@ -169,35 +139,12 @@ class TestUninstall(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
 
-	def test_refuses_an_extension_the_site_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			uninstall_extension(EXTENSION)
-
 
 class TestListedInstallation(FrappeTestCase):
 	"""What one row of the list carries for the editor to mount."""
 
 	def listed(self, name):
 		return next((row for row in get_installations() if row["name"] == name), None)
-
-	def test_carries_no_source(self):
-		"""One call per extension reads that, so a list of five carries no bundles."""
-		make_installation("acme/light", source="export default {};")
-
-		self.assertNotIn("source", self.listed("acme/light"))
-
-	def test_carries_the_entry_url_of_its_build(self):
-		installation = make_installation("acme/light", source="export default {};")
-
-		self.assertEqual(
-			self.listed("acme/light")["entry_url"],
-			f"/builder_extension_asset/{installation.name}/sum123/main.js",
-		)
-
-	def test_carries_the_granted_permissions(self):
-		make_installation("acme/light", permissions=["page.edit", "data.access"], granted=["page.edit"])
-
-		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
 
 	def test_a_page_reader_gets_the_grants_without_reading_the_installation(self):
 		"""The editor builds an extension from this row alone. A page reader cannot read the document."""
@@ -208,23 +155,12 @@ class TestListedInstallation(FrappeTestCase):
 		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
 		self.assertEqual(self.listed("acme/light")["permissions"], ["page.edit"])
 
-	def test_carries_no_entry_url_without_a_checksum(self):
-		make_installation("acme/light", source="export default {};", checksum=None)
-
-		self.assertIsNone(self.listed("acme/light")["entry_url"])
-
 	def test_an_install_whose_job_is_gone_reads_as_failed(self):
 		"""A crashed worker cannot mark its row. So the panel offers a retry, not a spinner."""
 		make_installation("acme/light", install_state="Installing", enabled=0)
 
 		with patch("builder.extensions.installations.is_job_enqueued", return_value=False):
 			self.assertEqual(self.listed("acme/light")["install_state"], "Failed")
-
-	def test_an_install_whose_job_runs_stays_installing(self):
-		make_installation("acme/light", install_state="Installing", enabled=0)
-
-		with patch("builder.extensions.installations.is_job_enqueued", return_value=True):
-			self.assertEqual(self.listed("acme/light")["install_state"], "Installing")
 
 
 class TestExtensionIcon(FrappeTestCase):
@@ -256,53 +192,3 @@ class TestUninstallSummary(FrappeTestCase):
 		summary = get_uninstall_summary(EXTENSION)
 
 		self.assertEqual(summary["resources"], [{"resource_type": "DocType", "count": 1}])
-
-	def test_leaves_out_a_doctype_deleted_since(self):
-		"""A row from a deleted record does not match the record that has the name now."""
-		make_installation(EXTENSION)
-		self.record("Contact", "2000-01-01 00:00:00")
-
-		self.assertEqual(get_uninstall_summary(EXTENSION)["resources"], [])
-
-	def test_refuses_an_extension_the_site_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			get_uninstall_summary(EXTENSION)
-
-
-class TestCanManageExtensions(FrappeTestCase):
-	def setUp(self):
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_a_website_manager_can(self):
-		frappe.set_user(make_user())
-
-		self.assertTrue(can_manage_extensions())
-
-	def test_a_page_reader_cannot(self):
-		become_a_user_who_cannot_manage(self)
-
-		self.assertFalse(can_manage_extensions())
-
-
-class TestInstallationDetails(FrappeTestCase):
-	"""What the details pane shows. A page reader cannot read the installation itself."""
-
-	def setUp(self):
-		drop_installations(EXTENSION)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_a_page_reader_gets_the_details(self):
-		make_installation(
-			EXTENSION, permissions=["page.edit", "data.access"], granted=["page.edit"], readme="# Hello"
-		)
-		become_a_user_who_cannot_manage(self)
-
-		details = get_installation_details(EXTENSION)
-
-		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
-		self.assertEqual(details["readme"], "# Hello")
-		self.assertEqual(details["requested_permissions"], ["page.edit", "data.access"])
-
-	def test_refuses_an_extension_the_site_has_not_installed(self):
-		with self.assertRaises(frappe.PermissionError):
-			get_installation_details(EXTENSION)

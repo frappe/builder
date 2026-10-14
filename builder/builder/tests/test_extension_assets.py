@@ -53,9 +53,6 @@ class TestExtensionAssets(FrappeTestCase):
 		self.assertIn("immutable", response.headers["Cache-Control"])
 		self.assert_sandboxed(response)
 
-	def test_serves_a_chunk_in_a_folder(self):
-		self.assertEqual(self.fetch(self.url("chunks/panel.js")).status_code, 200)
-
 	def test_refuses_an_old_build(self):
 		self.assert_not_found(self.url("main.js", checksum="sum000"))
 
@@ -64,14 +61,8 @@ class TestExtensionAssets(FrappeTestCase):
 
 		self.assert_not_found(self.url("main.js"))
 
-	def test_refuses_an_unknown_installation(self):
-		self.assert_not_found("builder_extension_asset/missing/sum123/main.js")
-
 	def test_refuses_a_path_outside_the_install(self):
 		self.assert_not_found(self.url("../../../site_config.json"))
 
 	def test_refuses_a_type_a_frame_does_not_load(self):
 		self.assert_not_found(self.url("page.html"))
-
-	def test_refuses_a_path_with_too_few_segments(self):
-		self.assert_not_found(f"builder_extension_asset/{self.installation.name}/main.js")

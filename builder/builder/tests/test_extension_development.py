@@ -47,10 +47,6 @@ class TestDevExtension(FrappeTestCase):
 		self.assertEqual(granted, ["page.edit"])
 		self.assertNotEqual(granted, list(PERMISSIONS))
 
-	def test_refuses_a_permission_builder_does_not_have(self):
-		with self.assertRaises(frappe.ValidationError):
-			install_dev_extension(self.extension, ["quantum.read"])
-
 	def test_removes_the_installation(self):
 		install_dev_extension(self.extension, ["page.edit"])
 

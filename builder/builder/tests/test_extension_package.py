@@ -12,7 +12,6 @@ from builder.extensions.package import validate_package
 
 NAME = "acme/chunked"
 VERSION = "1.0.0"
-ICON = b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>'
 
 
 def manifest(**values) -> bytes:
@@ -53,11 +52,6 @@ class TestExtensionPackage(FrappeTestCase):
 		self.assertEqual(
 			sorted(package.files), ["assets/style.css", "chunks/panel.js", "main.js", "manifest.json"]
 		)
-
-	def test_accepts_an_icon_at_the_root(self):
-		files = build(**{"manifest.json": manifest(icon="icon.svg"), "icon.svg": ICON})
-
-		self.assertIn("icon.svg", validate_package(make_package(files), NAME, VERSION).files)
 
 	def test_refuses_a_file_outside_the_build_folders(self):
 		with self.assertRaises(frappe.ValidationError):

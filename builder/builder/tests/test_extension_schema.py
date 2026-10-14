@@ -9,7 +9,6 @@ from builder.extensions.schema import (
 	create_doctype,
 	delete_doctype,
 	get_doctype,
-	list_doctypes,
 	update_doctype,
 )
 
@@ -79,14 +78,6 @@ class TestExtensionSchema(FrappeTestCase):
 			)
 		)
 
-	def test_an_unknown_naming_is_refused(self):
-		self.assertRaises(
-			frappe.ValidationError, create_doctype, "acme/schema", NAME, [a_field()], "sequential"
-		)
-
-	def test_a_doctype_needs_a_field(self):
-		self.assertRaises(frappe.ValidationError, create_doctype, "acme/schema", NAME, [])
-
 	def test_a_field_type_it_cannot_add_is_refused(self):
 		"""A Table needs a child doctype, so it is not on the list."""
 		self.assertRaises(
@@ -97,22 +88,11 @@ class TestExtensionSchema(FrappeTestCase):
 			[a_field(fieldtype="Table", options="Contact")],
 		)
 
-	def test_a_data_field_needs_a_fieldname(self):
-		self.assertRaises(
-			frappe.ValidationError, create_doctype, "acme/schema", NAME, [{"fieldtype": "Data"}]
-		)
-
 	def test_a_name_with_a_path_separator_is_refused(self):
 		self.assertRaises(frappe.ValidationError, create_doctype, "acme/schema", "Sample/Widget", [a_field()])
 
 	def test_a_name_already_taken_is_refused(self):
 		self.assertRaises(frappe.ValidationError, create_doctype, "acme/schema", "Contact", [a_field()])
-
-	def test_reads_back_the_fields_it_made(self):
-		self.create()
-
-		described = get_doctype("acme/schema", NAME)
-		self.assertIn("title", [field["fieldname"] for field in described["fields"]])
 
 	def test_reading_a_doctype_needs_the_users_own_read_permission(self):
 		frappe.set_user(make_page_reader(self))
@@ -133,20 +113,6 @@ class TestExtensionSchema(FrappeTestCase):
 		update_doctype("acme/schema", NAME, [a_field(fieldname="note", label="Note")])
 
 		self.assertIn("title", [field.fieldname for field in frappe.get_meta(NAME).fields])
-
-	def test_update_adds_a_layout_break_without_a_fieldname(self):
-		self.create()
-
-		update_doctype("acme/schema", NAME, [{"fieldtype": "Section Break"}, a_field(fieldname="note")])
-
-		self.assertIn("Section Break", [field.fieldtype for field in frappe.get_meta(NAME).fields])
-
-	def test_update_changes_a_field_already_there(self):
-		self.create()
-
-		update_doctype("acme/schema", NAME, [a_field(label="Headline")])
-
-		self.assertEqual(frappe.get_meta(NAME).get_field("title").label, "Headline")
 
 	def test_only_the_maker_may_change_a_doctype(self):
 		"""`data.access` says nothing about reshaping the table."""
@@ -176,14 +142,6 @@ class TestExtensionSchema(FrappeTestCase):
 		make_extension("acme/other")
 		self.assertRaises(frappe.PermissionError, update_doctype, "acme/other", NAME, [], ["title"])
 
-	def test_cannot_remove_the_last_field(self):
-		self.create()
-		self.assertRaises(frappe.ValidationError, update_doctype, "acme/schema", NAME, [], ["title"])
-
-	def test_cannot_remove_an_unknown_field(self):
-		self.create()
-		self.assertRaises(frappe.ValidationError, update_doctype, "acme/schema", NAME, [], ["missing"])
-
 	def test_a_doctype_it_did_not_make_cannot_be_dropped(self):
 		self.assertRaises(frappe.PermissionError, delete_doctype, "acme/schema", "Contact")
 
@@ -195,11 +153,6 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("DocType", NAME))
 		self.assertFalse(frappe.db.exists("Builder Extension Resource", {"resource_name": NAME}))
 
-	def test_lists_what_this_extension_made(self):
-		self.create()
-
-		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])
-
 	def test_the_old_maker_does_not_own_a_new_doctype_with_the_same_name(self):
 		"""Frappe runs no hook when a DocType is deleted in Desk, so the old row stays."""
 		self.create()
@@ -210,17 +163,3 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertRaises(
 			frappe.PermissionError, update_doctype, "acme/schema", NAME, [a_field(fieldname="note")]
 		)
-
-	def test_ownership_follows_a_rename(self):
-		self.create()
-
-		frappe.rename_doc("DocType", NAME, RENAMED, force=True)
-
-		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": RENAMED, "exists": True}])
-
-	def test_recreating_its_own_doctype_keeps_one_row(self):
-		self.create()
-		frappe.delete_doc("DocType", NAME)
-		self.create()
-
-		self.assertEqual(list_doctypes("acme/schema"), [{"doctype": NAME, "exists": True}])

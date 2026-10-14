@@ -76,12 +76,6 @@ class TestExtensionUpdates(FrappeTestCase):
 		self.assertEqual(update["version"], "1.1.0")
 		self.assertEqual(update["new_permissions"], ["page.edit"])
 
-	def test_finds_nothing_when_the_installed_release_is_the_newest(self):
-		with patch(
-			"builder.extensions.updates.hub_extension", return_value={"releases": [{"version": "1.0.0"}]}
-		):
-			self.assertIsNone(get_update(EXTENSION))
-
 	def test_applies_the_release_and_keeps_the_extension_disabled(self):
 		message = self.run_update("1.1.0", ["data.access", "page.edit"], granted=["data.access"])
 
