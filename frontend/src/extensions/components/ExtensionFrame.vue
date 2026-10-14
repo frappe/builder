@@ -1,6 +1,6 @@
 <template>
 	<div class="relative h-full w-full">
-		<div v-if="loading" class="absolute inset-0 grid place-items-center bg-surface-base">
+		<div v-if="loading" class="absolute inset-0 grid place-items-center" :class="backgroundClass">
 			<LoadingIcon class="h-6 w-6 text-ink-gray-5" />
 		</div>
 		<!-- no allow-same-origin. The opaque origin is the only isolation -->
@@ -36,14 +36,18 @@ import { onBeforeUnmount, ref, watch } from "vue";
  * */
 const SHELL_URL = "/builder_extension";
 
-const props = defineProps<{
-	extension: string;
-	slot: ExtensionSlot;
-	initialProps?: Record<string, unknown>;
-	/** Answers the calls of the frame. The name is not `onRequest`, because
-	 * Vue reads that name as a listener for a `request` event. */
-	requestHandler?: RequestHandler;
-}>();
+const props = withDefaults(
+	defineProps<{
+		extension: string;
+		slot: ExtensionSlot;
+		initialProps?: Record<string, unknown>;
+		backgroundClass?: string;
+		/** Answers the calls of the frame. The name is not `onRequest`, because
+		 * Vue reads that name as a listener for a `request` event. */
+		requestHandler?: RequestHandler;
+	}>(),
+	{ backgroundClass: "bg-surface-base" },
+);
 
 /**
  * This component emits the channel, not the port. `createPortChannel` owns

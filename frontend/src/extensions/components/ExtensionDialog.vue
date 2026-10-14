@@ -21,6 +21,7 @@
 				:extension="extension.name"
 				slot="dialog"
 				:initialProps="dialog.props"
+				background-class="bg-surface-elevation-2"
 				:request-handler="requestHandler"
 				:style="{ height: `${frameHeight}px` }"
 				@connect="(channel) => connectExtension(extension.name, channel)"

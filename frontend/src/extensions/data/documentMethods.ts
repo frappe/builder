@@ -3,6 +3,7 @@
  */
 
 import { createResource } from "frappe-ui";
+import { bridge } from "../bridge/bridge";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import { refreshEditor } from "./editorRefresh";
@@ -36,6 +37,16 @@ export const invoke = (url: string, params: Record<string, unknown>) =>
 const readDoctype = (sent: Record<string, unknown>) => text(sent.doctype, "doctype");
 
 const readName = (sent: Record<string, unknown>) => text(sent.name, "name");
+
+const notifyChange = (
+	extension: InstalledExtension,
+	doctype: string,
+	name: string,
+	operation: "insert" | "update" | "delete",
+) =>
+	bridge
+		.getChannels(extension.name)
+		.forEach((channel) => channel.emit("data.changed", { doctype, name, operation }));
 
 /** A patch or a new document. Never a list, and never a single value. */
 const readDoc = (value: unknown) => {
@@ -113,6 +124,7 @@ const insert = async (params: unknown, extension: InstalledExtension) => {
 		doc: readDoc(sent.doc),
 	});
 	await refreshEditor(doctype, doc.name, "insert");
+	notifyChange(extension, doctype, doc.name, "insert");
 	return doc;
 };
 
@@ -127,6 +139,7 @@ const update = async (params: unknown, extension: InstalledExtension) => {
 		doc: readDoc(sent.doc),
 	});
 	await refreshEditor(doctype, name, "update");
+	notifyChange(extension, doctype, name, "update");
 	return doc;
 };
 
@@ -136,6 +149,7 @@ const remove = async (params: unknown, extension: InstalledExtension) => {
 	const name = readName(sent);
 	await invoke("builder.extensions.data.delete_doc", { extension: extension.name, doctype, name });
 	await refreshEditor(doctype, name, "delete");
+	notifyChange(extension, doctype, name, "delete");
 };
 
 export const documentMethods: MethodTable = {

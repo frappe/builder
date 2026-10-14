@@ -1,6 +1,9 @@
 /** `builder.data`: the documents of the site. */
 
 import { call } from "./call";
+import { getChannel } from "../connect";
+
+export type DataChange = { doctype: string; name: string; operation: "insert" | "update" | "delete" };
 
 /** One document, as Frappe keeps it. Its fields are the fields of the doctype. */
 export type Doc = Record<string, unknown>;
@@ -23,6 +26,13 @@ export type ListOptions = {
 };
 
 export const data = {
+	/** Watches this extension's writes across its frames. Returns a function that stops listening. */
+	subscribe: (doctype: string, handler: (change: DataChange) => void) =>
+		getChannel().listen("data.changed", (payload) => {
+			const change = payload as DataChange;
+			if (change.doctype === doctype) handler(change);
+		}),
+
 	/**
 	 * One page of documents.
 	 *

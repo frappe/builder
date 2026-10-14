@@ -13,6 +13,7 @@ export type {
 	ContextMenuRegistration,
 	Control,
 	ControlName,
+	DataChange,
 	Doctype,
 	ItemPatch,
 	LeftPanelRegistration,
