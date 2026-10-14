@@ -120,6 +120,8 @@ function builderTokenComposable() {
 	const tokenRedoStack: TokenHistoryEntry[] = [];
 	const tokenHistoryVersion = ref(0);
 	const tokenEditVersion = ref(0);
+	const pendingEditFlushes = new Set<() => void>();
+	const flushPendingEdits = () => pendingEditFlushes.forEach((flush) => flush());
 
 	const clearTokenRedo = () => {
 		tokenRedoStack.length = 0;
@@ -162,6 +164,8 @@ function builderTokenComposable() {
 		deleteVariable,
 		recordTokenChange,
 		clearTokenRedo,
+		pendingEditFlushes,
+		flushPendingEdits,
 		undoTokenChange: () => moveTokenChange(tokenUndoStack, tokenRedoStack, "before"),
 		redoTokenChange: () => moveTokenChange(tokenRedoStack, tokenUndoStack, "after"),
 		lastTokenUndoAt: () => tokenUndoStack[0]?.at ?? 0,

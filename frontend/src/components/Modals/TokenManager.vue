@@ -430,9 +430,8 @@ import FontInput from "@/components/Controls/FontInput.vue";
 import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
-import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
-import { computed, nextTick, reactive, ref, watch, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch, type ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
 	modelValue: boolean;
@@ -451,6 +450,7 @@ const {
 	updateVariable,
 	deleteVariable,
 	recordTokenChange,
+	pendingEditFlushes,
 	tokenHistoryVersion,
 	variables,
 } = useBuilderToken();
@@ -908,7 +908,19 @@ const updateRowValue = async (row: Row, value: string | null, mode: "light" | "d
 	}
 };
 
-const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
+let pendingSave: { row: Row; timer: ReturnType<typeof setTimeout> } | null = null;
+
+const debouncedSaveVariable = (row: Row) => {
+	if (pendingSave?.row === row) clearTimeout(pendingSave.timer);
+	else flushPendingSave();
+	pendingSave = { row, timer: setTimeout(flushPendingSave, 300) };
+};
+
+const flushPendingSave = async () => {
+	if (!pendingSave) return;
+	const { row, timer } = pendingSave;
+	clearTimeout(timer);
+	pendingSave = null;
 	const before = valuesBeforeSave.get(row.name!);
 	valuesBeforeSave.delete(row.name!);
 	if (before) recordTokenChange([{ name: row.name!, before, after: tokenSnapshot(row) }]);
@@ -917,7 +929,12 @@ const debouncedSaveVariable = useDebounceFn(async (row: Row) => {
 	} catch (error) {
 		console.error("Failed to update variable:", error);
 	}
-}, 300);
+};
+pendingEditFlushes.add(flushPendingSave);
+onBeforeUnmount(() => {
+	flushPendingSave();
+	pendingEditFlushes.delete(flushPendingSave);
+});
 
 const createVariable = async (row: Row) => {
 	if (!row.isNew || !row.token_name?.trim() || isCreating.value) return;

@@ -67,7 +67,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	});
 
 	const tokens = useBuilderToken();
-	const stopTokenEditWatcher = watch(tokens.tokenEditVersion, clearRedo);
+	const stopTokenEditWatcher = watch(tokens.tokenEditVersion, clearRedo, { flush: "sync" });
 
 	function commit() {
 		if (!enabled.value) return;
