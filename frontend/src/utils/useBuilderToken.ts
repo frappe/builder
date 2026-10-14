@@ -119,6 +119,11 @@ function builderTokenComposable() {
 	const tokenUndoStack: TokenHistoryEntry[] = [];
 	const tokenRedoStack: TokenHistoryEntry[] = [];
 	const tokenHistoryVersion = ref(0);
+	const tokenEditVersion = ref(0);
+
+	const clearTokenRedo = () => {
+		tokenRedoStack.length = 0;
+	};
 
 	const recordTokenChange = (changes: TokenChange[]) => {
 		const changed = changes.filter(({ before, after }) =>
@@ -126,7 +131,8 @@ function builderTokenComposable() {
 		);
 		if (!changed.length) return;
 		tokenUndoStack.unshift({ changes: changed, at: Date.now() });
-		tokenRedoStack.length = 0;
+		clearTokenRedo();
+		tokenEditVersion.value++;
 	};
 
 	const moveTokenChange = (from: TokenHistoryEntry[], to: TokenHistoryEntry[], side: "before" | "after") => {
@@ -155,11 +161,13 @@ function builderTokenComposable() {
 		updateVariable,
 		deleteVariable,
 		recordTokenChange,
+		clearTokenRedo,
 		undoTokenChange: () => moveTokenChange(tokenUndoStack, tokenRedoStack, "before"),
 		redoTokenChange: () => moveTokenChange(tokenRedoStack, tokenUndoStack, "after"),
 		lastTokenUndoAt: () => tokenUndoStack[0]?.at ?? 0,
 		lastTokenRedoAt: () => tokenRedoStack[0]?.at ?? 0,
 		tokenHistoryVersion,
+		tokenEditVersion,
 		variables: computed({
 			get: () => (builderTokenStore.data as BuilderToken[]) || [],
 			set: (value: BuilderToken[]) => {

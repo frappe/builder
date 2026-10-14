@@ -1,7 +1,8 @@
 import type Block from "@/block";
 import { generateId, getBlockInstance, getBlockString } from "@/utils/helpers";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { debounceFilter, pausableFilter, watchIgnorable } from "@vueuse/core";
-import { ref, Ref } from "vue";
+import { ref, Ref, watch } from "vue";
 
 type CanvasState = {
 	block: string;
@@ -65,6 +66,9 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		eventFilter: selectionWatherFilter,
 	});
 
+	const tokens = useBuilderToken();
+	const stopTokenEditWatcher = watch(tokens.tokenEditVersion, clearRedo);
+
 	function commit() {
 		if (!enabled.value) return;
 		const record = createHistoryRecord();
@@ -72,6 +76,11 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		undoStack.value.unshift(stamp(last.value));
 		last.value = record;
 		trim(undoStack.value);
+		clearRedo();
+		tokens.clearTokenRedo();
+	}
+
+	function clearRedo() {
 		if (redoStack.value.length) {
 			redoStack.value.splice(0, redoStack.value.length);
 		}
@@ -161,6 +170,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	function stop() {
 		stopBlockWatcher();
 		stopSelectedBlockUpdates();
+		stopTokenEditWatcher();
 	}
 
 	const clear = () => {
