@@ -1058,6 +1058,8 @@ class TestBuilderPage(FrappeTestCase):
 	def test_page_data_script_answers_404_outside_the_editor(self):
 		from unittest.mock import patch
 
+		body = Block(element="div", originalElement="body")
+		body.attach_children(Block(element="p", innerHTML="Entry body"))
 		page = frappe.get_doc(
 			{
 				"doctype": "Builder Page",
@@ -1065,7 +1067,7 @@ class TestBuilderPage(FrappeTestCase):
 				"published": 1,
 				"route": "/not-found-test",
 				"page_data_script": 'if not in_preview:\n\traise frappe.PageDoesNotExistError("No entry")\ndata.preview = in_preview',
-				"blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+				"blocks": body.as_json(wrap_in_array=True),
 			}
 		).insert()
 		try:
@@ -1077,6 +1079,8 @@ class TestBuilderPage(FrappeTestCase):
 				# the record can appear later, so the URL is not cached as missing
 				self.assertFalse(frappe.cache.hget("website_404", frappe.local.request.url))
 				self.assertEqual(page.get_page_data(), {"preview": True})
+				# the Preview and the thumbnails render too, and they show the page, not the 404
+				self.assertIn("Entry body", page.get_preview_html())
 		finally:
 			frappe.flags.force_website_cache = False
 			page.delete()

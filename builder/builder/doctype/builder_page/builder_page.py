@@ -571,7 +571,7 @@ class BuilderPage(WebsiteGenerator):
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 
-		page_data = self._get_page_data(for_render=True)
+		page_data = self._get_page_data(for_render=True, in_preview=bool(context.preview))
 		if page_data.get("title"):
 			context.title = page_data.get("page_title")
 
@@ -698,7 +698,9 @@ class BuilderPage(WebsiteGenerator):
 	def get_page_data(self, route_variables: dict | None = None) -> dict:
 		return self._get_page_data(route_variables=route_variables, for_render=False)
 
-	def _get_page_data(self, route_variables: dict | None = None, for_render: bool = False) -> dict:
+	def _get_page_data(
+		self, route_variables: dict | None = None, for_render: bool = False, in_preview: bool = False
+	) -> dict:
 		if route_variables:
 			frappe.form_dict.update({k: v for k, v in route_variables.items()})
 		page_data = frappe._dict()
@@ -709,8 +711,9 @@ class BuilderPage(WebsiteGenerator):
 					frappe.local.flags.redirect_location = location
 					raise frappe.Redirect(http_status_code)
 
-			# in_preview: the editor asks for the data, so a script can show drafts and skip a 404
-			_locals = dict(data=frappe._dict(), redirect=redirect, in_preview=not for_render)
+			# in_preview: the editor, its Preview, or a thumbnail asks for the data. So a
+			# script can show drafts there and skip a 404
+			_locals = dict(data=frappe._dict(), redirect=redirect, in_preview=in_preview or not for_render)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 
