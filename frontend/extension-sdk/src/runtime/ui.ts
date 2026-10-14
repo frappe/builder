@@ -4,10 +4,14 @@
 
 import { getChannel, getSlotProps } from "./connect";
 
-/** The start size, in pixels. If a field is not set, Builder uses its default. */
+/** In pixels. If a field is not set, Builder uses its default. */
 export type FrameSize = {
+	/** A popover only: the start width. The user can resize a popover. */
 	width?: number;
+	/** A popover's start height, or a dialog's frame height. Builder caps a dialog at 75% of the window. */
 	height?: number;
+	/** A dialog only: its width, as a frappe-ui dialog size. The default is "lg". */
+	size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
 };
 
 export type FrameOptions = FrameSize & {
@@ -37,6 +41,9 @@ export const openPopover = (options: FrameOptions = {}) => call("ui.openPopover"
 /** The frame of the popover calls this. Any other frame can also call it to close the popover. */
 export const closePopover = (result?: unknown) => call("ui.closePopover", { result });
 
+/** Opens a page of this site in a new tab, such as `/blog/hello-world`. Builder refuses another origin. */
+export const openUrl = (url: string) => call("ui.openUrl", { url });
+
 /** Shows a message in Builder, outside the extension frame. */
 export const toast = (message: string, options: ToastOptions = {}) => call("ui.toast", { message, ...options });
 
@@ -46,6 +53,7 @@ export const ui = {
 	openPopover,
 	closePopover,
 	toast,
+	openUrl,
 	/** The props of the open call. The document of the slot reads them. */
 	props: () => getSlotProps(),
 };

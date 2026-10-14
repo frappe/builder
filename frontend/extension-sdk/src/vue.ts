@@ -20,6 +20,7 @@ const emptyContext = (): EditorContext => ({
 	readOnly: false,
 	isAIEnabled: false,
 	page: null,
+	routeVariables: {},
 	site: { isDeveloperMode: false, isFCSite: false },
 });
 

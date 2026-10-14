@@ -9,8 +9,9 @@ import { nextTick } from "vue";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, oneOf, optionalText, refuse, text, wholeNumber } from "../bridge/params";
 import type { Breakpoint } from "frappe-builder-extension-sdk/types";
-import { assertCanRepeat, readBindings, writeBindings } from "./blockBindings";
-import { readAttributes, readElement, readHTML } from "./safeMarkup";
+import { assertCanRepeat } from "./blockBindings";
+import { readBlockFields, writeBlockFields, type BlockFields } from "./blockFields";
+import { readElement } from "./safeMarkup";
 
 const BREAKPOINTS = ["desktop", "tablet", "mobile"] as const;
 
@@ -32,46 +33,6 @@ const namedBlock = (params: unknown) => findBlock(text(fields(params).blockId, "
  */
 const get = (params: unknown) => getBlockObject(namedBlock(params));
 
-/** `null` and `""` remove a style. `setStyle` has the same rule. */
-const readStyles = (value: unknown, field: string) => {
-	if (value === undefined) return undefined;
-	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		throw refuse(`"${field}" must be an object.`, "invalid_params");
-	}
-	Object.entries(value).forEach(([style, sent]) => {
-		if (sent !== null && typeof sent !== "string" && typeof sent !== "number") {
-			throw refuse(`"${field}.${style}" must be a string, a number or null.`, "invalid_params");
-		}
-	});
-	return value as Record<string, string | number | null>;
-};
-
-const readClasses = (value: unknown, field: string) => {
-	if (value === undefined) return undefined;
-	if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
-		throw refuse(`"${field}" must be a list of strings.`, "invalid_params");
-	}
-	return value as string[];
-};
-
-/**
- * Every value of one block, checked before anything is written. So a refused
- * call leaves the page as it was. `update` and `insert` both read with this.
- */
-const readChanges = (sent: Record<string, unknown>, element: string, prefix = "") => ({
-	attributes: readAttributes(sent.attributes, element, `${prefix}attributes`),
-	styles: readStyles(sent.styles, `${prefix}styles`),
-	classes: readClasses(sent.classes, `${prefix}classes`),
-	innerHTML: readHTML(sent.innerHTML, `${prefix}innerHTML`),
-	bindings: readBindings(sent, prefix),
-});
-
-const writeAttributes = (block: Block, attributes: Record<string, string | undefined>) =>
-	Object.entries(attributes).forEach(([attribute, value]) => block.setAttribute(attribute, value));
-
-const writeStyles = (block: Block, styles: Record<string, string | number | null>, breakpoint?: Breakpoint) =>
-	Object.entries(styles).forEach(([style, value]) => block.setStyle(style, value, breakpoint));
-
 /**
  * Each key is optional. A patch with no keys is an error. It is better to
  * show the error than to do nothing.
@@ -79,24 +40,27 @@ const writeStyles = (block: Block, styles: Record<string, string | number | null
  * A style goes to the breakpoint that the user sees, unless the patch names a
  * breakpoint. An extension does not see the canvas.
  */
+const readBreakpoint = (sent: Record<string, unknown>) =>
+	sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
+
+/** A new tag must still hold the children the block has. The page root keeps its tag. */
+const assertCanRetag = (changes: BlockFields, block: Block) => {
+	if (changes.element === undefined) return;
+	if (block.isRoot()) throw refuse("The page root keeps its element.", "invalid_params");
+	const retagged = new Block({ element: changes.element as string });
+	if (block.children.length && !retagged.canHaveChildren()) {
+		throw refuse(`A <${changes.element}> block cannot hold the children this block has.`, "invalid_params");
+	}
+};
+
 const update = (params: unknown) => {
 	const sent = fields(params);
 	const block = namedBlock(params);
-
-	const { attributes, styles, classes, innerHTML, bindings } = readChanges(sent, block.getElement() || "div");
-	assertCanRepeat(bindings, block);
-	const breakpoint =
-		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
-
-	if (!attributes && !styles && !classes && innerHTML === undefined && !Object.keys(bindings).length) {
-		throw refuse(`This patch changes nothing.`, "invalid_params");
-	}
-
-	if (attributes) writeAttributes(block, attributes);
-	if (styles) writeStyles(block, styles, breakpoint);
-	if (classes) block.classes = classes;
-	if (innerHTML !== undefined) block.setInnerHTML(innerHTML);
-	writeBindings(block, bindings);
+	const changes = readBlockFields(sent, block.getElement() || "div", ["blockId", "breakpoint"]);
+	if (!Object.keys(changes).length) throw refuse(`This patch changes nothing.`, "invalid_params");
+	assertCanRetag(changes, block);
+	assertCanRepeat(changes, block);
+	writeBlockFields(block, changes, readBreakpoint(sent));
 };
 
 /**
@@ -113,9 +77,10 @@ const MAX_DEPTH = 20;
  * does not change the page. A bad node at depth four cannot leave the three
  * nodes above it half built.
  */
-type PlannedBlock = ReturnType<typeof readChanges> & {
+type PlannedBlock = {
 	element: string;
 	key?: string;
+	changes: BlockFields;
 	children: PlannedBlock[];
 };
 
@@ -154,13 +119,14 @@ const planTree = (value: unknown): PlannedBlock => {
 		if (key && keys.has(key)) throw refuse(`Two blocks share the key "${key}".`, "invalid_params");
 		if (key) keys.add(key);
 
-		const changes = readChanges(wanted, element, "block.");
+		// `addChild` sets the tag, so the other fields are the changes
+		const { element: _tag, ...changes } = readBlockFields(wanted, element, ["key", "children"], "block.");
 		const children = readChildren(wanted.children);
-		const draft = new Block({ element, innerHTML: changes.innerHTML });
+		const draft = new Block({ element, innerHTML: changes.innerHTML as string | undefined });
 		if (children.length) assertCanHaveChildren(draft);
-		assertCanRepeat(changes.bindings, draft);
+		assertCanRepeat(changes, draft);
 
-		return { element, key, ...changes, children: children.map((child) => plan(child, depth + 1)) };
+		return { element, key, changes, children: children.map((child) => plan(child, depth + 1)) };
 	};
 
 	return plan(value, 1);
@@ -174,15 +140,8 @@ const mount = (
 	breakpoint?: Breakpoint,
 	index?: number,
 ): Block => {
-	const block = parent.addChild(
-		{ element: planned.element, classes: planned.classes, innerHTML: planned.innerHTML },
-		index,
-		false,
-	);
-
-	if (planned.attributes) writeAttributes(block, planned.attributes);
-	if (planned.styles) writeStyles(block, planned.styles, breakpoint);
-	writeBindings(block, planned.bindings);
+	const block = parent.addChild({ element: planned.element }, index, false);
+	writeBlockFields(block, planned.changes, breakpoint);
 	if (planned.key) keys[planned.key] = block.blockId;
 
 	planned.children.forEach((child) => mount(block, child, keys, breakpoint));
@@ -244,8 +203,7 @@ const insert = (params: unknown) => {
 	const parent = findBlock(text(sent.parentId, "parentId"));
 	assertCanHaveChildren(parent);
 	const index = sent.index === undefined ? undefined : wholeNumber(sent.index, "index");
-	const breakpoint =
-		sent.breakpoint === undefined ? undefined : oneOf(sent.breakpoint, BREAKPOINTS, "breakpoint");
+	const breakpoint = readBreakpoint(sent);
 
 	const planned = planTree(sent.block);
 

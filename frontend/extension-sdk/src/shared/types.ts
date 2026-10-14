@@ -108,6 +108,8 @@ export type EditorContext = {
 	/** Null when no page is open. So no code reads an empty route as a real route. */
 	/** `name` is the `Builder Page` record. A live page and its staging copy share a route, not a name. */
 	page: { name: string; route: string; isTemplate: boolean; isStandard: boolean; published: boolean } | null;
+	/** The preview values of the open page, such as `{ slug: "hello-world" }`. Set them with `page.setRouteVariables`. */
+	routeVariables: Record<string, string>;
 	site: { isDeveloperMode: boolean; isFCSite: boolean };
 };
 

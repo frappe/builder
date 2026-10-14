@@ -68,6 +68,8 @@ export const editorContext = computed<EditorContext>(() => {
 		readOnly: builderStore.readOnlyMode,
 		isAIEnabled: builderStore.isAIEnabled,
 		page: getPage(),
+		// a copy, so the snapshot is plain data. The canvas previews the data of these values
+		routeVariables: { ...usePageStore().routeVariables },
 		site: {
 			isDeveloperMode: Boolean(window.is_developer_mode),
 			isFCSite: Boolean(window.is_fc_site),

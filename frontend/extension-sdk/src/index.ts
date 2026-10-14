@@ -4,7 +4,8 @@
 
 export { default, type HostInfo } from "./runtime/index";
 export type {
-	BlockBindings,
+	BlockFields,
+	BlockProp,
 	BlockDataKey,
 	BlockPatch,
 	ContextField,

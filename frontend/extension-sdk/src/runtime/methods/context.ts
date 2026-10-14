@@ -4,7 +4,7 @@ import { getChannel } from "../connect";
 import { call } from "./call";
 
 export type ContextField =
-	"selection" | "breakpoint" | "editingMode" | "readOnly" | "isAIEnabled" | "page" | "site";
+	"selection" | "breakpoint" | "editingMode" | "readOnly" | "isAIEnabled" | "page" | "routeVariables" | "site";
 
 export type ContextHandler = (context: Record<string, unknown>) => void;
 

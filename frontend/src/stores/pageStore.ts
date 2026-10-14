@@ -470,9 +470,14 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		setRouteVariable(variable: string, value: string) {
-			this.routeVariables[variable] = value;
+			return this.setRouteVariables({ [variable]: value });
+		},
+
+		/** Saves the preview values of the open page, then fetches its data once. */
+		setRouteVariables(values: Record<string, string>) {
+			Object.assign(this.routeVariables, values);
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
-			this.setPageData(this.activePage as BuilderPage);
+			return this.setPageData(this.activePage as BuilderPage);
 		},
 
 		detachPreview(pageId: string) {

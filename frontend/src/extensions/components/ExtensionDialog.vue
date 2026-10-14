@@ -5,7 +5,7 @@
 		uses `Controls/Dialog.vue`. The backdrop, Escape and the click outside come
 		from there.
 	-->
-	<Dialog v-if="dialog" :modelValue="true" size="lg" bare @update:modelValue="dismiss">
+	<Dialog v-if="dialog" :modelValue="true" :size="dialog.size?.size ?? 'lg'" bare @update:modelValue="dismiss">
 		<div class="bg-surface-elevation-2 p-5">
 			<div class="flex items-center justify-between pb-4">
 				<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">{{ dialog.title }}</DialogTitle>
@@ -17,7 +17,7 @@
 				slot="dialog"
 				:initialProps="dialog.props"
 				:request-handler="requestHandler"
-				:style="{ height: `${FRAME_HEIGHT}px` }"
+				:style="{ height: `${frameHeight}px` }"
 				@connect="(channel) => connectExtension(extension.name, channel)"
 				@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
 		</div>
@@ -33,12 +33,19 @@ import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 import { DialogTitle } from "reka-ui";
 import { computed } from "vue";
 
-/** A small area that the host owns. The dialog content scrolls in this frame. */
-const FRAME_HEIGHT = 192;
+/** The frame height when the extension asks for none. The dialog content scrolls in this frame. */
+const DEFAULT_FRAME_HEIGHT = 192;
+const MIN_FRAME_HEIGHT = 120;
+/** Of the window. The title, the padding and the backdrop around it stay in view. */
+const MAX_FRAME_SHARE = 0.75;
 
 const props = defineProps<{ extension: InstalledExtension }>();
 
 const dialog = computed(() => openDialogs.get(props.extension.name));
+const frameHeight = computed(() => {
+	const asked = dialog.value?.size?.height ?? DEFAULT_FRAME_HEIGHT;
+	return Math.min(Math.max(asked, MIN_FRAME_HEIGHT), Math.round(window.innerHeight * MAX_FRAME_SHARE));
+});
 const requestHandler = computed(() => requestHandlerFor(props.extension));
 
 /**

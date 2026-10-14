@@ -721,7 +721,8 @@ function getCollectionKeys(block: any, type: BlockDataKey["comesFrom"] = "dataSc
 	const keys: string[] = [];
 	if (repeaterBlock) {
 		const collectionKey = repeaterBlock.getDataKey("key");
-		const comesFrom = repeaterBlock.getDataKey("comesFrom");
+		// no source means the data script, as the server reads it (get_loop_info)
+		const comesFrom = repeaterBlock.getDataKey("comesFrom") || "dataScript";
 		if (collectionKey && comesFrom == type) {
 			keys.push(collectionKey);
 		}

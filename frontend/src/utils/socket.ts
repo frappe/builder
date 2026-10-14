@@ -11,7 +11,7 @@ declare global {
 // (RealTimeHandler) opens it here instead.
 export function createSocket(): Socket {
 	const host = window.location.hostname;
-	const port = window.location.port ? ":9000" : "";
+	const port = window.location.port ? ":9006" : "";
 	const protocol = port ? "http" : "https";
 	// in dev the jinja boot data is not rendered, so the host doubles as the site
 	const siteName = import.meta.env.DEV ? host : window.site_name;

@@ -4,27 +4,35 @@
 
 import { markRaw, reactive } from "vue";
 import { bridge } from "../bridge/bridge";
-import { fields, optionalText, optionalWholeNumber, refuse } from "../bridge/params";
+import { fields, oneOf, optionalText, optionalWholeNumber, refuse } from "../bridge/params";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
- * The size that the extension asks for. Both fields are optional. If a field is
- * not set, the host uses its own start size. The user can always change the
- * size. So this is a start value, not a fixed value.
+ * The size that the extension asks for. Every field is optional. If a field is
+ * not set, the host uses its own size. A popover takes `width` and `height` as
+ * a start size that the user can change. A dialog takes `size`, a width name,
+ * and `height`, the height of its frame.
  */
-export type FrameSize = { width?: number; height?: number };
+export type FrameSize = { width?: number; height?: number; size?: DialogSize };
 
-/**
- * Reads a size from the data of the open call.
- *
- * Only a surface with a size calls it. A dialog always has the size of the
- * host. So the host ignores a `width` in `ui.openDialog`, as it ignores any
- * other field that it does not use.
- */
-const frameSize = (params: unknown): FrameSize => {
+/** The widths of a frappe-ui dialog, from narrow to wide. */
+export const DIALOG_SIZES = ["sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl"] as const;
+export type DialogSize = (typeof DIALOG_SIZES)[number];
+
+/** A popover: a start width and height, in pixels. */
+export const readPopoverSize = (params: unknown): FrameSize => {
 	const sent = fields(params);
 	return {
 		width: optionalWholeNumber(sent.width, "width"),
+		height: optionalWholeNumber(sent.height, "height"),
+	};
+};
+
+/** A dialog: a width name and a frame height. The host caps the height, so a dialog never covers the editor. */
+export const readDialogSize = (params: unknown): FrameSize => {
+	const sent = fields(params);
+	return {
+		size: sent.size === undefined ? undefined : oneOf(sent.size, DIALOG_SIZES, "size"),
 		height: optionalWholeNumber(sent.height, "height"),
 	};
 };
@@ -36,7 +44,7 @@ export type OpenFrame = {
 	 */
 	id: number;
 	title: string;
-	/** Set only by a surface with a size. A dialog has none, because nothing reads it. */
+	/** Set only by a surface that reads a size. */
 	size?: FrameSize;
 	/**
 	 * Goes to the frame in its connect handshake.
@@ -49,8 +57,11 @@ export type OpenFrame = {
 	props: Record<string, unknown>;
 };
 
-/** `sized` lets the extension give the start size of the frame. Only the popover uses it. */
-export const createFrameSurface = (kind: string, { sized = false } = {}) => {
+/** `readSize` reads the size that this kind of frame takes from the open call. */
+export const createFrameSurface = (
+	kind: string,
+	{ readSize }: { readSize?: (params: unknown) => FrameSize } = {},
+) => {
 	/** The host component reads this. It is reactive, because an open call must show the frame. */
 	const openFrames = reactive(new Map<string, OpenFrame>());
 
@@ -96,7 +107,7 @@ export const createFrameSurface = (kind: string, { sized = false } = {}) => {
 		const frame: OpenFrame = {
 			id: ++opened,
 			title: optionalText(sent.title, "title") ?? extension.label,
-			...(sized && { size: frameSize(sent) }),
+			...(readSize && { size: readSize(sent) }),
 			props: markRaw(fields(sent.props)),
 		};
 

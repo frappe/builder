@@ -18,6 +18,7 @@ const CONTEXT_FIELDS = [
 	"readOnly",
 	"isAIEnabled",
 	"page",
+	"routeVariables",
 	"site",
 ] as const;
 
