@@ -647,6 +647,9 @@ def add_composite_index_to_web_page_view():
 	Add a composite index to the Web Page View table.
 	This is used to speed up queries that filter by creation, is_unique, and path.
 	"""
+	# newer Frappe keeps Web Page View in its SQLite log database, with no table here
+	if not frappe.db.table_exists("Web Page View"):
+		return
 	frappe.db.add_index("Web Page View", ["creation", "is_unique", "path"])
 
 
