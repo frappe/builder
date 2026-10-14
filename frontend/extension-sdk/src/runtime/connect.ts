@@ -45,7 +45,14 @@ const applyTheme = (theme: unknown) => document.documentElement.setAttribute("da
  */
 let slotTasks: Promise<unknown> = Promise.resolve();
 
-const queueSlotTask = (task: () => unknown) => (slotTasks = slotTasks.then(task));
+/** A failed task fails for its caller. The queue goes on, so a later open still works. */
+const queueSlotTask = (task: () => unknown) => {
+	const result = slotTasks.then(task);
+	slotTasks = result.catch(() => undefined);
+	return result;
+};
+
+const reportSlotError = (error: unknown) => console.error("[builder] the slot could not open or close", error);
 
 const mountSlot = (open: PortChannel, props: unknown) =>
 	queueSlotTask(async () => {
@@ -61,15 +68,16 @@ const start = async (message: ConnectMessage, port: MessagePort) => {
 	const open = createPortChannel(port, handleRequest);
 	channel = open;
 	open.listen("theme", applyTheme);
-	open.listen("slot.open", (props) => mountSlot(open, props));
-	open.listen("slot.close", () => queueSlotTask(closeSlot));
+	open.listen("slot.open", (props) => mountSlot(open, props).catch(reportSlotError));
+	open.listen("slot.close", () => queueSlotTask(closeSlot).catch(reportSlotError));
 	applyTheme(message.theme);
 	setActiveSlot(message.slot);
 
 	// the shell names no extension. The message tells what to run. A real URL
 	// lets the entry import its chunks and assets by relative path
-	queueSlotTask(() => import(/* @vite-ignore */ message.entryUrl));
-	await mountSlot(open, message.props);
+	const entry = queueSlotTask(() => import(/* @vite-ignore */ message.entryUrl));
+	// queued now, so a reopen during the import mounts after it. An entry that fails is the error to report
+	await Promise.all([entry, mountSlot(open, message.props)]);
 };
 
 /**
