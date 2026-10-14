@@ -291,7 +291,7 @@ def run_hub_install(
 			{"install_state": state, "install_error": str(error) or _("The install failed.")},
 		)
 
-	frappe.db.commit()
+	# the worker commits when the job returns, and the message goes after that commit
 	frappe.publish_realtime(
 		"builder_extension_install", {"extension": name, "state": state}, user=user, after_commit=True
 	)

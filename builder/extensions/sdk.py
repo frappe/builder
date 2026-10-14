@@ -38,8 +38,9 @@ class ExtensionSDKRenderer(BaseRenderer):
 		if frappe.local.request.headers.get("If-None-Match") == self.etag:
 			return Response(status=304, headers=self.response_headers)
 
-		# the file descriptor stays open, and the middleware closes it
-		stream = wrap_file(frappe.local.request.environ, open(self.file_path, "rb"))
+		# the file descriptor stays open, and the middleware closes it. The path is
+		# fixed in the app, and no request value reaches it
+		stream = wrap_file(frappe.local.request.environ, open(self.file_path, "rb"))  # nosemgrep
 		# a module script is MIME-strict: the wrong type stops the browser running it
 		return Response(
 			stream, direct_passthrough=True, headers=self.response_headers, mimetype="text/javascript"
