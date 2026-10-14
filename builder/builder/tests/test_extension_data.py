@@ -115,6 +115,15 @@ class TestExtensionDocuments(FrappeTestCase):
 			with self.assertRaises(frappe.PermissionError):
 				delete_doc("acme/data", doctype, "any")
 
+	def test_cannot_change_the_schema(self):
+		for doctype in ("DocType", "DocField", "Custom Field", "Property Setter"):
+			with self.assertRaises(frappe.PermissionError):
+				insert_doc("acme/data", doctype, {})
+			with self.assertRaises(frappe.PermissionError):
+				update_doc("acme/data", doctype, "any", {})
+			with self.assertRaises(frappe.PermissionError):
+				delete_doc("acme/data", doctype, "any")
+
 	def test_refuses_a_page_of_every_row(self):
 		"""Frappe reads 0 as "no limit", which is the one answer no extension may ask for."""
 		self.assertRaises(frappe.ValidationError, get_list, "acme/data", "Contact", limit_page_length=0)

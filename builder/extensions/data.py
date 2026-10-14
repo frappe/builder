@@ -33,6 +33,10 @@ MAX_PAGE_LENGTH = 500
 # change them, so an extension cannot give itself a permission that a manager denied
 EXTENSION_DOCTYPES = {INSTALLATION_DOCTYPE, RESOURCE_DOCTYPE, STATE_DOCTYPE}
 
+# a schema change goes through the schema API, which needs schema.write, asks the
+# user, and checks that the extension made the doctype
+SCHEMA_DOCTYPES = {"DocType", "DocField", "DocPerm", "Custom Field", "Custom DocPerm", "Property Setter"}
+
 
 @frappe.whitelist()
 def get_list(
@@ -124,6 +128,8 @@ def assert_writable(extension: str, doctype: str) -> None:
 	assert_extension_access(extension, "data.access")
 	if doctype in EXTENSION_DOCTYPES:
 		frappe.throw(_("An extension cannot change {0} records.").format(doctype), frappe.PermissionError)
+	if doctype in SCHEMA_DOCTYPES:
+		frappe.throw(_("Change {0} records through the schema API.").format(doctype), frappe.PermissionError)
 
 
 def get_page_length(limit_page_length: int) -> int:
