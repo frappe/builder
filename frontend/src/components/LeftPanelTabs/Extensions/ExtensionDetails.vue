@@ -115,7 +115,8 @@
 					"
 					:extension="details.name"
 					:label="details.label ?? details.name"
-					:granted="details.granted_permissions" />
+					:granted="details.granted_permissions"
+					@updated="load" />
 
 				<!-- eslint-disable-next-line vue/no-v-html -- renderMarkdown sanitizes through DOMPurify -->
 				<div

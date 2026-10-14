@@ -332,7 +332,7 @@ const getExtensionUpdate = (extension: string) =>
 
 /**
  * Starts an update. The installed release runs until the background job ends.
- * The job then sends `builder_extension_install`, with an `error` when it failed.
+ * The job then sends `builder_extension_update`, with an `error` when it failed.
  */
 const updateFromHub = (extension: string, version: string, permissions: Permission[]) =>
 	call("builder.extensions.updates.update_from_hub", { extension, version, permissions });

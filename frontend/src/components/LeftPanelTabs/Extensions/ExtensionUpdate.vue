@@ -26,6 +26,8 @@ import { Button, toast } from "frappe-ui";
 import { onMounted, onUnmounted, ref, shallowRef } from "vue";
 
 const props = defineProps<{ extension: string; label: string; granted: Permission[] }>();
+/** The details page reloads its README and requested permissions. */
+const emit = defineEmits<{ updated: [] }>();
 
 const builderStore = useBuilderStore();
 const update = shallowRef<ExtensionUpdate | null>(null);
@@ -67,11 +69,12 @@ const onUpdateDone = async (event: { extension: string; error?: string | null })
 	// a new build has a new entry URL, so the editor loads the new code
 	await loadExtensions();
 	await check();
+	emit("updated");
 };
 
 onMounted(() => {
 	check();
-	builderStore.realtime.on("builder_extension_install", onUpdateDone);
+	builderStore.realtime.on("builder_extension_update", onUpdateDone);
 });
-onUnmounted(() => builderStore.realtime.off("builder_extension_install", onUpdateDone));
+onUnmounted(() => builderStore.realtime.off("builder_extension_update", onUpdateDone));
 </script>
