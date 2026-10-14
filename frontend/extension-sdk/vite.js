@@ -146,6 +146,10 @@ export default function builderExtension({ builderUrl } = {}) {
 						},
 					},
 				},
+				// the dev server prebundles with esbuild, which runs no plugin. A
+				// prebundled `/vue` would carry its own SDK copy, which never connects.
+				// Vite merges this list with the one in the project config
+				optimizeDeps: { exclude: [`${SDK}/vue`] },
 				server: {
 					// an extension frame has an opaque origin. It sends `Origin: null`.
 					// Any site can send `null` from a sandboxed frame, so this list
