@@ -1055,6 +1055,32 @@ class TestBuilderPage(FrappeTestCase):
 			frappe.local.flags.redirect_location = None
 			page.delete()
 
+	def test_page_data_script_answers_404_outside_the_editor(self):
+		from unittest.mock import patch
+
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Not Found Test",
+				"published": 1,
+				"route": "/not-found-test",
+				"page_data_script": 'if not in_preview:\n\traise frappe.PageDoesNotExistError("No entry")\ndata.preview = in_preview',
+				"blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			# the safer runner is the one that lacked the exception
+			with patch("builder.utils.is_safe_exec_enabled", return_value=False):
+				set_request(method="GET", path="/not-found-test")
+				frappe.flags.force_website_cache = True
+				self.assertEqual(get_response("/not-found-test").status_code, 404)
+				# the record can appear later, so the URL is not cached as missing
+				self.assertFalse(frappe.cache.hget("website_404", frappe.local.request.url))
+				self.assertEqual(page.get_page_data(), {"preview": True})
+		finally:
+			frappe.flags.force_website_cache = False
+			page.delete()
+
 	def test_component_client_script(self):
 		component_root = Block(element="div", blockId="comp-root")
 		component_content = Block(element="h4", blockId="comp-content", innerHTML="Component Content")

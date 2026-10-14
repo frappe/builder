@@ -15,6 +15,7 @@ from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.telemetry import capture
 from frappe.website.page_renderers.document_page import DocumentPage
+from frappe.website.page_renderers.template_page import TemplatePage
 from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
@@ -86,6 +87,14 @@ class BuilderPageRenderer(DocumentPage):
 				continue
 
 		return False
+
+	def render(self):
+		try:
+			return super().render()
+		except frappe.PageDoesNotExistError:
+			# Frappe's NotFoundPage keeps the request's 200 status and caches the URL as
+			# missing. A record can appear later, so render the 404 template uncached
+			return TemplatePage("404", 404).render()
 
 	def validate_access(self):
 		if self.docname:
@@ -700,7 +709,8 @@ class BuilderPage(WebsiteGenerator):
 					frappe.local.flags.redirect_location = location
 					raise frappe.Redirect(http_status_code)
 
-			_locals = dict(data=frappe._dict(), redirect=redirect)
+			# in_preview: the editor asks for the data, so a script can show drafts and skip a 404
+			_locals = dict(data=frappe._dict(), redirect=redirect, in_preview=not for_render)
 			execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 
