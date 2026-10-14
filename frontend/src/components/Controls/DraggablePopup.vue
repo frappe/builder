@@ -103,13 +103,15 @@ const popupTop = ref(100);
 // The popup owns its size from here on: `width` and `height` only seed it.
 const popupWidth = ref(props.width);
 const popupHeight = ref(props.height);
-// a kept popup takes a new size when its caller asks for one. A size the user dragged to stays until then
+// a kept popup takes a new size when its caller asks for one. Each side has its own
+// watch, so a side the caller did not change keeps the size the user dragged to
 watch(
-	() => [props.width, props.height],
-	([width, height]) => {
-		popupWidth.value = width;
-		popupHeight.value = height;
-	},
+	() => props.width,
+	(width) => (popupWidth.value = width),
+);
+watch(
+	() => props.height,
+	(height) => (popupHeight.value = height),
 );
 const isDragging = ref(false);
 const resizingCorner = ref<"left" | "right" | null>(null);
