@@ -335,8 +335,14 @@ const getExtensionUpdate = (extension: string) =>
  * The job then sends `builder_extension_update`, with an `error` when it failed.
  */
 const updateFromHub = async (extension: string, version: string, permissions: Permission[]) => {
-	await call("builder.extensions.updates.update_from_hub", { extension, version, permissions });
+	// before the call: a fast job can send its end before the response arrives
 	updatingExtensions.add(extension);
+	try {
+		await call("builder.extensions.updates.update_from_hub", { extension, version, permissions });
+	} catch (error) {
+		updatingExtensions.delete(extension);
+		throw error;
+	}
 };
 
 /** The extensions with an update job running. It lives here, so it outlasts the details page. */
