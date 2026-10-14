@@ -44,7 +44,10 @@ const mergeRegistration = (current: Registration, patch: Record<string, unknown>
 	visible: flag(patch.visible, current.visible),
 });
 
-const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Registration>): LeftPanelTab => {
+const toRegistryItem = (
+	key: string,
+	{ extension, registration }: SurfaceItem<Registration>,
+): LeftPanelTab => {
 	const requestHandler = bridge.requestHandlerFor(extension);
 
 	return {
@@ -52,6 +55,7 @@ const toRegistryItem = (key: string, { extension, registration }: SurfaceItem<Re
 		label: registration.label,
 		icon: registration.icon,
 		usesRuntimeIcon: registration.icon.startsWith("lucide-"),
+		keepOpenOnSelection: true,
 		before: registration.before,
 		after: registration.after,
 		// mount on the first open. After that, v-show keeps the document alive

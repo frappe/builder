@@ -45,15 +45,9 @@ export const schema = {
 	/** The field list of a doctype that the user can read. */
 	getDoctype: (doctype: string) => call("schema.getDoctype", { doctype }) as Promise<Doctype>,
 
-	/**
-	 * Adds fields, and changes the existing fields by fieldname.
-	 *
-	 * It never removes a field that the call does not name. A removed field
-	 * removes a column and its data. Only the extension that made the doctype
-	 * can call this.
-	 */
-	updateDoctype: (doctype: string, fields: SchemaField[]) =>
-		call("schema.updateDoctype", { doctype, fields }) as Promise<Doctype>,
+	/** Adds or updates fields. Explicit removals ask the user first. Omitted fields stay. */
+	updateDoctype: (doctype: string, fields: SchemaField[], options: { removeFields?: string[] } = {}) =>
+		call("schema.updateDoctype", { doctype, fields, ...options }) as Promise<Doctype>,
 
 	/**
 	 * Removes a doctype that this extension made. Builder asks the user first.

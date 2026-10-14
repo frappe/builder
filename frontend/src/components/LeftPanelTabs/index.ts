@@ -15,6 +15,7 @@ export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
 	usesRuntimeIcon?: boolean;
+	keepOpenOnSelection?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
@@ -62,6 +63,7 @@ leftPanelTabs.registerBuiltIn({
 
 leftPanelTabs.registerBuiltIn({
 	name: "Code",
+	keepOpenOnSelection: true,
 	label: __("Code"),
 	icon: "lucide-code",
 	component: CodeTab,
@@ -87,6 +89,7 @@ leftPanelTabs.registerBuiltIn({
 
 leftPanelTabs.registerBuiltIn({
 	name: "Chat",
+	keepOpenOnSelection: true,
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened

@@ -5,11 +5,16 @@
 		uses `Controls/Dialog.vue`. The backdrop, Escape and the click outside come
 		from there.
 	-->
-	<Dialog v-if="dialog" :modelValue="true" :size="dialog.size?.size ?? 'lg'" bare @update:modelValue="dismiss">
+	<Dialog
+		v-if="dialog"
+		:modelValue="true"
+		:size="dialog.size?.size ?? 'lg'"
+		bare
+		@update:modelValue="dismiss">
 		<div class="bg-surface-elevation-2 p-5">
 			<div class="flex items-center justify-between pb-4">
 				<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">{{ dialog.title }}</DialogTitle>
-				<Button icon="lucide-x" variant="ghost" @click="dismiss" />
+				<Button icon="lucide-x" label="Close" variant="ghost" @click="dismiss" />
 			</div>
 			<ExtensionFrame
 				:key="dialog.id"

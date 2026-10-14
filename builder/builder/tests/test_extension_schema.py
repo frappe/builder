@@ -163,6 +163,27 @@ class TestExtensionSchema(FrappeTestCase):
 
 		self.assertRaises(frappe.PermissionError, delete_doctype, "acme/other", NAME)
 
+	def test_removes_one_field_and_keeps_the_other_fields_and_entries(self):
+		self.create()
+		update_doctype("acme/schema", NAME, [a_field(fieldname="note", label="Note")])
+		entry = frappe.get_doc({"doctype": NAME, "title": "Kept", "note": "Removed"}).insert()
+		update_doctype("acme/schema", NAME, [], ["note"])
+		self.assertIsNone(frappe.get_meta(NAME).get_field("note"))
+		self.assertEqual(frappe.db.get_value(NAME, entry.name, "title"), "Kept")
+
+	def test_only_the_maker_may_remove_a_field(self):
+		self.create()
+		make_extension("acme/other")
+		self.assertRaises(frappe.PermissionError, update_doctype, "acme/other", NAME, [], ["title"])
+
+	def test_cannot_remove_the_last_field(self):
+		self.create()
+		self.assertRaises(frappe.ValidationError, update_doctype, "acme/schema", NAME, [], ["title"])
+
+	def test_cannot_remove_an_unknown_field(self):
+		self.create()
+		self.assertRaises(frappe.ValidationError, update_doctype, "acme/schema", NAME, [], ["missing"])
+
 	def test_a_doctype_it_did_not_make_cannot_be_dropped(self):
 		self.assertRaises(frappe.PermissionError, delete_doctype, "acme/schema", "Contact")
 

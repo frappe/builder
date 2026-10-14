@@ -61,7 +61,9 @@ const waitForPage = (pageName: string) => {
  */
 const open = async (params: unknown) => {
 	const pageName = text(fields(params).name, "name");
-	if (pageName !== usePageStore().selectedPage) {
+	const pageStore = usePageStore();
+	if (pageName !== pageStore.selectedPage) {
+		if (pageStore.activePage && !pageStore.settingPage) await pageStore.waitTillPageIsSaved();
 		await router.push({ name: "builder", params: { pageId: pageName } });
 	}
 	await waitForPage(pageName);

@@ -14,8 +14,8 @@ const NAMING = ["hash", "autoincrement", "prompt"] as const;
  * A field list. This code checks only its shape. The server decides which
  * field types are allowed. So there is one list, not two lists that can differ.
  */
-const readFields = (value: unknown) => {
-	if (!Array.isArray(value) || !value.length) {
+const readFields = (value: unknown, allowEmpty = false) => {
+	if (!Array.isArray(value) || (!value.length && !allowEmpty)) {
 		throw refuse('"fields" must be a non-empty list.', "invalid_params");
 	}
 	return value.map((field) => {
@@ -55,14 +55,27 @@ const getDoctype = (params: unknown, extension: InstalledExtension) =>
 		doctype: text(fields(params).doctype, "doctype"),
 	});
 
-/** Adds fields and changes them by fieldname. It never removes a field, so no column is removed. */
-const updateDoctype = (params: unknown, extension: InstalledExtension) => {
+/** Omitted fields stay. Explicit removals require a host confirmation. */
+const updateDoctype = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
+	const doctype = text(sent.doctype, "doctype");
+	const removed = readRemovedFields(sent.removeFields);
+	const rows = readFields(sent.fields, removed.length > 0);
+	if (removed.length && !(await confirmSchema(extension, doctype, "remove field", removed.join(", ")))) {
+		throw refuse(`The user did not allow removing fields from ${doctype}.`, "refused");
+	}
 	return invoke("builder.extensions.schema.update_doctype", {
 		extension: extension.name,
-		doctype: text(sent.doctype, "doctype"),
-		fields: readFields(sent.fields),
+		doctype,
+		fields: rows,
+		remove_fields: removed,
 	});
+};
+
+const readRemovedFields = (value: unknown): string[] => {
+	if (value === undefined) return [];
+	if (!Array.isArray(value)) throw refuse('"removeFields" must be a list of field names.', "invalid_params");
+	return value.map((name) => text(name, "removeFields"));
 };
 
 const deleteDoctype = async (params: unknown, extension: InstalledExtension) => {

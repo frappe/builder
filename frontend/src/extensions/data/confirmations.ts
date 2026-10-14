@@ -6,12 +6,13 @@ import { ref } from "vue";
 import { bridge } from "../bridge/bridge";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
-export type SchemaAct = "create" | "delete";
+export type SchemaAct = "create" | "delete" | "remove field";
 
 export type ExtensionPrompt = {
 	extension: InstalledExtension;
 	doctype: string;
 	act: SchemaAct;
+	fieldname?: string;
 };
 
 /** `ExtensionConfirmDialog.vue` reads this. Only one prompt is open at a time, so this is one ref. */
@@ -81,10 +82,17 @@ const ask = (request: ExtensionPrompt) =>
  * *can* do the act by hand. It does not say that the user wants this extension
  * to do it. So Builder names the act each time.
  */
-export const confirmSchema = (extension: InstalledExtension, doctype: string, act: SchemaAct) => {
+export const confirmSchema = (
+	extension: InstalledExtension,
+	doctype: string,
+	act: SchemaAct,
+	fieldname?: string,
+) => {
 	hookTeardown(extension);
 	const asked = stopCount(extension.name);
 	return enqueue(() =>
-		stopCount(extension.name) === asked ? ask({ extension, doctype, act }) : Promise.resolve(false),
+		stopCount(extension.name) === asked
+			? ask({ extension, doctype, act, fieldname })
+			: Promise.resolve(false),
 	);
 };

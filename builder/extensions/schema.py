@@ -148,12 +148,10 @@ def get_doctype(extension: str, doctype: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def update_doctype(extension: str, doctype: str, fields: list[dict] | None = None) -> dict:
-	"""Adds fields, and updates the ones already there by fieldname.
-
-	Never removes a field the call leaves unmentioned. A removed field drops a
-	column and the data in it.
-	"""
+def update_doctype(
+	extension: str, doctype: str, fields: list[dict] | None = None, remove_fields: list[str] | None = None
+) -> dict:
+	"""Adds or updates fields by name, and removes only explicitly named fields."""
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
 
@@ -168,8 +166,22 @@ def update_doctype(extension: str, doctype: str, fields: list[dict] | None = Non
 		else:
 			document.append("fields", row)
 
+	remove_doctype_fields(document, remove_fields or [])
 	document.save()
 	return describe_doctype(doctype)
+
+
+def remove_doctype_fields(document, fieldnames: list[str]) -> None:
+	if not isinstance(fieldnames, list) or any(not isinstance(name, str) or not name for name in fieldnames):
+		frappe.throw(_("Fields to remove must be a list of field names."))
+	fields = {field.fieldname: field for field in document.fields}
+	for name in set(fieldnames):
+		if name not in fields:
+			frappe.throw(_("Field {0} does not exist in {1}.").format(name, document.name))
+	if fieldnames and len(set(fieldnames)) == len(document.fields):
+		frappe.throw(_("A doctype needs at least one field."))
+	for name in set(fieldnames):
+		document.remove(fields[name])
 
 
 @frappe.whitelist(methods=["POST"])
@@ -239,7 +251,7 @@ def describe_doctype(doctype: str) -> dict:
 		"doctype": meta.name,
 		"istable": bool(meta.istable),
 		"fields": [
-			{key: field.get(key) for key in ("fieldname", "label", "fieldtype", "options", "reqd")}
+			{key: field.get(key) for key in ("fieldname", "label", "fieldtype", "options", "reqd", "read_only", "default")}
 			for field in meta.fields
 		],
 	}

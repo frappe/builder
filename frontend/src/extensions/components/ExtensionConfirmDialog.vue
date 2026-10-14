@@ -15,12 +15,22 @@
 			<p class="pt-4 text-p-sm text-ink-gray-6">
 				It is asking to
 				<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
+				<template v-if="prompt.fieldname">
+					<strong>{{ prompt.fieldname }}</strong>
+					from
+				</template>
 				the doctype
 				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
 			</p>
 
-			<div v-if="isDelete" class="mt-4 rounded-4 bg-surface-red-1 p-3">
-				<p class="text-p-sm text-ink-red-6">This removes the doctype from your site.</p>
+			<div v-if="isDestructive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
+				<p class="text-p-sm text-ink-red-6">
+					{{
+						prompt.fieldname
+							? "This removes the field from forms and collection data. Existing page bindings may need to be updated."
+							: "This removes the doctype from your site."
+					}}
+				</p>
 				<Checkbox v-model="understood" class="pt-3" :label="`I trust ${prompt.extension.label} with this.`" />
 			</div>
 
@@ -46,8 +56,8 @@ const understood = ref(false);
 // would approve an act that the user never saw
 watch(prompt, () => (understood.value = false));
 
-const isDelete = computed(() => prompt.value?.act === "delete");
-const canAllow = computed(() => !isDelete.value || understood.value);
+const isDestructive = computed(() => prompt.value?.act === "delete" || prompt.value?.act === "remove field");
+const canAllow = computed(() => !isDestructive.value || understood.value);
 
 const allow = () => answerPrompt(true);
 
