@@ -13,7 +13,6 @@
 					<Switch
 						size="sm"
 						:disabled="readOnly"
-						:description="permissionDetails[permission].warning"
 						:model-value="granted.includes(permission)"
 						@update:model-value="(allow: boolean) => answer(permission, allow)">
 						<template #label>
@@ -52,7 +51,7 @@ const groups = computed(() => groupPermissions(props.requested));
 /**
  * To turn a permission off asks nothing. Fewer permissions can break only the
  * extension. To turn a sensitive permission on gives access to site data or to
- * each published page. So only that direction shows the warning.
+ * each published page. So only that direction asks first.
  *
  * The parent decides where the list goes. An installation writes it. The
  * install dialog keeps it until the user installs.
@@ -68,9 +67,7 @@ const answer = async (permission: Permission, allow: boolean) => {
 
 const confirmSensitive = (permission: Permission) =>
 	confirm(
-		`${permissionDetails[permission].warning} Allow ${props.label} to ${permissionDetails[
-			permission
-		].label.toLowerCase()}?`,
-		"This reaches the whole site",
+		`Allow ${props.label} to ${permissionDetails[permission].label.toLowerCase()}?`,
+		"This affects your whole site",
 	);
 </script>

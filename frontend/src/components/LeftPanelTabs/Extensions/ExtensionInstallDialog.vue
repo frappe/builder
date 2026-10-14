@@ -1,30 +1,32 @@
 <template>
 	<!-- Gets the permissions to grant at install, and nothing else. -->
-	<Dialog :modelValue="open" size="sm" @update:modelValue="(value: boolean) => emit('update:open', value)">
-		<template #body>
-			<div class="bg-surface-elevation-2 p-5">
-				<h3 class="text-md-semibold text-ink-gray-9">Install {{ label }}?</h3>
-				<p class="pt-2 text-p-sm text-ink-gray-6">
-					<template v-if="requested.length">
-						Turn off what you do not want it to do. You can change this later in its details.
-					</template>
-					<template v-else>It asks for no permissions.</template>
-				</p>
+	<Dialog
+		:modelValue="open"
+		size="sm"
+		bare
+		@update:modelValue="(value: boolean) => emit('update:open', value)">
+		<div class="bg-surface-elevation-2 p-5">
+			<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">Install {{ label }}?</DialogTitle>
+			<p class="pt-2 text-p-sm text-ink-gray-6">
+				<template v-if="requested.length">
+					Turn off what you do not want it to do. You can change this later in its details.
+				</template>
+				<template v-else>It needs no extra access.</template>
+			</p>
 
-				<div v-if="requested.length" class="pt-4">
-					<ExtensionPermissions
-						:extension="extension"
-						:label="label"
-						:requested="requested"
-						v-model:granted="granted" />
-				</div>
-
-				<div class="flex justify-end gap-2 pt-4">
-					<Button variant="subtle" label="Cancel" @click="emit('update:open', false)" />
-					<Button variant="solid" label="Confirm" @click="emit('install', granted)" />
-				</div>
+			<div v-if="requested.length" class="pt-4">
+				<ExtensionPermissions
+					:extension="extension"
+					:label="label"
+					:requested="requested"
+					v-model:granted="granted" />
 			</div>
-		</template>
+
+			<div class="flex justify-end gap-2 pt-4">
+				<Button variant="subtle" label="Cancel" @click="emit('update:open', false)" />
+				<Button variant="solid" label="Confirm" @click="emit('install', granted)" />
+			</div>
+		</div>
 	</Dialog>
 </template>
 
@@ -33,6 +35,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import ExtensionPermissions from "@/components/LeftPanelTabs/Extensions/ExtensionPermissions.vue";
 import type { Permission } from "frappe-builder-extension-sdk/types";
 import { Button } from "frappe-ui";
+import { DialogTitle } from "reka-ui";
 import { ref, watch } from "vue";
 
 const props = defineProps<{

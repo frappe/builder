@@ -4,41 +4,31 @@
 		frame cannot show, read or answer it. `confirmations.ts` keeps a queue,
 		so it asks one question at a time.
 	-->
-	<Dialog v-if="prompt" :modelValue="true" size="sm" @update:modelValue="deny">
-		<template #body>
-			<div class="bg-surface-elevation-2 p-5">
-				<h3 class="text-md-semibold text-ink-gray-9">{{ prompt.extension.label }} wants access</h3>
+	<Dialog v-if="prompt" :modelValue="true" size="sm" bare @update:modelValue="deny">
+		<div class="bg-surface-elevation-2 p-5">
+			<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">
+				{{ prompt.extension.label }} wants access
+			</DialogTitle>
 
-				<!-- the period is in the interpolation. A newline before a separate "."
+			<!-- the period is in the interpolation. A newline before a separate "."
 					becomes a text node, and Prettier moves the markup -->
-				<p class="pt-4 text-p-sm text-ink-gray-6">
-					It is asking to
-					<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
-					the doctype
-					<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
-				</p>
+			<p class="pt-4 text-p-sm text-ink-gray-6">
+				It is asking to
+				<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
+				the doctype
+				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
+			</p>
 
-				<p class="pt-2 text-p-sm text-ink-gray-5">
-					It can only do what you can do. Changing a doctype needs your own System Manager role.
-				</p>
-
-				<div v-if="isDelete" class="mt-4 rounded-4 bg-surface-red-1 p-3">
-					<p class="text-p-sm text-ink-red-6">
-						This removes the doctype from the site. Its records stay in the database, but no form or list
-						shows them.
-					</p>
-					<Checkbox
-						v-model="understood"
-						class="pt-3"
-						:label="`I understand, and I trust ${prompt.extension.label} with this.`" />
-				</div>
-
-				<div class="flex justify-end gap-2 pt-4">
-					<Button variant="subtle" @click="deny">Deny</Button>
-					<Button variant="solid" :disabled="!canAllow" @click="allow">Allow</Button>
-				</div>
+			<div v-if="isDelete" class="mt-4 rounded-4 bg-surface-red-1 p-3">
+				<p class="text-p-sm text-ink-red-6">This removes the doctype from your site.</p>
+				<Checkbox v-model="understood" class="pt-3" :label="`I trust ${prompt.extension.label} with this.`" />
 			</div>
-		</template>
+
+			<div class="flex justify-end gap-2 pt-4">
+				<Button variant="subtle" @click="deny">Deny</Button>
+				<Button variant="solid" :disabled="!canAllow" @click="allow">Allow</Button>
+			</div>
+		</div>
 	</Dialog>
 </template>
 
@@ -46,6 +36,7 @@
 import Dialog from "@/components/Controls/Dialog.vue";
 import { answerPrompt, pendingPrompt } from "@/extensions/data/confirmations";
 import { Button, Checkbox } from "frappe-ui";
+import { DialogTitle } from "reka-ui";
 import { computed, ref, watch } from "vue";
 
 const prompt = computed(() => pendingPrompt.value);

@@ -5,24 +5,22 @@
 		uses `Controls/Dialog.vue`. The backdrop, Escape and the click outside come
 		from there.
 	-->
-	<Dialog v-if="dialog" :modelValue="true" size="lg" @update:modelValue="dismiss">
-		<template #body>
-			<div class="bg-surface-elevation-2 p-5">
-				<div class="flex items-center justify-between pb-4">
-					<h3 class="text-md-semibold text-ink-gray-9">{{ dialog.title }}</h3>
-					<Button icon="lucide-x" variant="ghost" @click="dismiss" />
-				</div>
-				<ExtensionFrame
-					:key="dialog.id"
-					:extension="extension.name"
-					slot="dialog"
-					:initialProps="dialog.props"
-					:request-handler="requestHandler"
-					:style="{ height: `${FRAME_HEIGHT}px` }"
-					@connect="(channel) => connectExtension(extension.name, channel)"
-					@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
+	<Dialog v-if="dialog" :modelValue="true" size="lg" bare @update:modelValue="dismiss">
+		<div class="bg-surface-elevation-2 p-5">
+			<div class="flex items-center justify-between pb-4">
+				<DialogTitle as="h3" class="text-md-semibold text-ink-gray-9">{{ dialog.title }}</DialogTitle>
+				<Button icon="lucide-x" variant="ghost" @click="dismiss" />
 			</div>
-		</template>
+			<ExtensionFrame
+				:key="dialog.id"
+				:extension="extension.name"
+				slot="dialog"
+				:initialProps="dialog.props"
+				:request-handler="requestHandler"
+				:style="{ height: `${FRAME_HEIGHT}px` }"
+				@connect="(channel) => connectExtension(extension.name, channel)"
+				@disconnect="(channel) => disconnectExtension(extension.name, channel)" />
+		</div>
 	</Dialog>
 </template>
 
@@ -32,6 +30,7 @@ import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import { connectExtension, disconnectExtension, requestHandlerFor } from "@/extensions";
 import { dismissDialog, openDialogs } from "@/extensions/editor/uiMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
+import { DialogTitle } from "reka-ui";
 import { computed } from "vue";
 
 /** A small area that the host owns. The dialog content scrolls in this frame. */

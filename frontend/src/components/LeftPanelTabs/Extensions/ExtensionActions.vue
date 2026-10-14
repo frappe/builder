@@ -41,13 +41,12 @@
 			ref="moreAction"
 			class="ml-auto inline-flex shrink-0"
 			:class="{ 'absolute invisible': !overflowActionIds.length }">
-			<Dropdown :options="moreActions" placement="right">
-				<template #trigger="{ open }">
+			<Dropdown :options="moreActions" align="end">
+				<template #trigger>
 					<Button
 						variant="ghost"
 						size="sm"
 						icon="lucide-more-horizontal"
-						:active="open"
 						:disabled="working"
 						aria-label="More extension actions" />
 				</template>

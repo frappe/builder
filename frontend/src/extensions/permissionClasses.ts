@@ -4,46 +4,29 @@
 
 import type { Permission } from "frappe-builder-extension-sdk/types";
 
-export const SITE_DATA_CLASS = "Site data";
+export const SITE_DATA_CLASS = "Site Data";
 
-export const SHARED_STATE_CLASS = "Shared site state";
-
-const SENSITIVE_CLASSES = [SITE_DATA_CLASS, SHARED_STATE_CLASS];
+const SENSITIVE_CLASSES = [SITE_DATA_CLASS];
 
 type PermissionDetail = {
 	permissionClass: string;
 	/** What it lets the extension do, in one line that a user can answer. */
 	label: string;
-	/** Why its effect goes past this editor session. */
-	warning?: string;
 };
 
 export const permissionDetails: Record<Permission, PermissionDetail> = {
-	"page.edit": { permissionClass: "Editor write", label: "Change and add blocks on the page" },
-	"data.access": {
-		permissionClass: SITE_DATA_CLASS,
-		label: "Read and write documents on this site",
-		warning: "It never gets more than the permissions of the person using it.",
-	},
-	"method.call": {
-		permissionClass: SITE_DATA_CLASS,
-		label: "Run actions from installed apps",
-		warning: "It never gets more than the permissions of the person using it.",
-	},
-	"schema.write": {
-		permissionClass: SHARED_STATE_CLASS,
-		label: "Create and drop doctypes",
-		warning: "A doctype it removes takes its records out of every form and list.",
-	},
+	"page.edit": { permissionClass: "This page", label: "Add and change blocks on this page" },
+	"data.access": { permissionClass: SITE_DATA_CLASS, label: "Read and write documents on this site" },
+	"method.call": { permissionClass: SITE_DATA_CLASS, label: "Run actions on your behalf" },
+	"schema.write": { permissionClass: SITE_DATA_CLASS, label: "Add and remove doctypes" },
 };
 
 /** The order of the classes. The class with the widest effect is last. */
-const CLASS_ORDER = ["Editor write", SITE_DATA_CLASS, SHARED_STATE_CLASS];
+const CLASS_ORDER = ["This page", SITE_DATA_CLASS];
 
 const CLASS_SUMMARIES: Record<string, string> = {
-	"Editor write": "What it changes on the page you have open.",
-	[SITE_DATA_CLASS]: "Documents on this site, within each user's own permissions.",
-	[SHARED_STATE_CLASS]: "Changes that outlive this session and reach every visitor.",
+	"This page": "Changes to the page you are editing.",
+	[SITE_DATA_CLASS]: "Records saved on your site.",
 };
 
 export type PermissionGroup = {

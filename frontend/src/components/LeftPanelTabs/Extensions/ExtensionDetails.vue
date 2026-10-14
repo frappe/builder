@@ -115,12 +115,10 @@
 						<h2 class="text-sm font-medium text-ink-gray-8">Permissions</h2>
 						<p class="pt-2 text-xs text-ink-gray-5">
 							<template v-if="canManageExtensions">
-								Control what {{ details.label }} may do for every user of this site.
+								Choose what {{ details.label }} can do on this site.
 							</template>
 							<template v-else>Only a System Manager or a Website Manager can change these.</template>
-							<template v-if="details.is_development">
-								Loading it again restores what its manifest asks for.
-							</template>
+							<template v-if="details.is_development">Loading it again turns everything back on.</template>
 						</p>
 					</div>
 					<ExtensionPermissions
@@ -365,10 +363,12 @@ const uninstall = async () => {
 };
 
 const uninstallMessage = (summary: Awaited<ReturnType<typeof uninstallSummary>>) => {
-	const kept = summary.resources.map((made) => `${made.count} ${made.resource_type}`);
+	const kept = summary.resources.map(
+		({ count, resource_type }) => `${count} ${resource_type.toLowerCase()}${count === 1 ? "" : "s"}`,
+	);
 
-	const lines = ["This removes it for every user, with what it remembered for each of them."];
-	if (kept.length) lines.push(`The site keeps ${kept.join(", ")}, because published pages use them.`);
+	const lines = ["This removes it for everyone."];
+	if (kept.length) lines.push(`Your site keeps the ${kept.join(", ")} it made.`);
 	return lines.join(" ");
 };
 </script>
