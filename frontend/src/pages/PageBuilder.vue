@@ -88,7 +88,7 @@
 			:container="canvasStore.activeCanvas?.$el"
 			placement="top-right"
 			:placementOffset="20"
-			:width="340"
+			:width="290"
 			:height="0"
 			v-if="builderStore.showSearchBlock">
 			<template #header>

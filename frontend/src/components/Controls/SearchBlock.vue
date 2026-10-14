@@ -67,7 +67,7 @@
 			{{ __("Search inside selected block only") }}
 		</label>
 
-		<p v-if="!query" class="py-2 text-sm text-ink-gray-5">
+		<p v-if="!query" class="text-sm text-ink-gray-5">
 			{{ __("Find text, styles, attributes and classes") }}
 		</p>
 
