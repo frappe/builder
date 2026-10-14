@@ -160,14 +160,18 @@ class BuilderExtension(Document):
 
 		Keyed by path under the install root, so a file can sit in a folder.
 		Replaces the whole directory, so a rebuild leaves nothing of the
-		last one behind.
+		last one behind. The files go to a staged copy first, so a failed write
+		leaves the installed copy as it was.
 		"""
 		root = Path(self.install_path)
-		shutil.rmtree(root, ignore_errors=True)
-		for relative_path, content in files.items():
-			target = root / relative_path
-			target.parent.mkdir(parents=True, exist_ok=True)
-			target.write_bytes(content)
+		staged = root.with_name(f"{root.name}.staged")
+		previous = root.with_name(f"{root.name}.previous")
+		write_files(staged, files)
+		shutil.rmtree(previous, ignore_errors=True)
+		if root.exists():
+			root.rename(previous)
+		staged.rename(root)
+		shutil.rmtree(previous, ignore_errors=True)
 
 	def delete_extension_files(self):
 		shutil.rmtree(self.install_path, ignore_errors=True)
@@ -178,3 +182,12 @@ class BuilderExtension(Document):
 		One query for every user's row. A state row has no hooks, files or versions to clear.
 		"""
 		frappe.db.delete(STATE_DOCTYPE, {"installation": self.name})
+
+
+def write_files(directory: Path, files: dict[str, bytes]):
+	"""A fresh directory that holds exactly these files."""
+	shutil.rmtree(directory, ignore_errors=True)
+	for relative_path, content in files.items():
+		target = directory / relative_path
+		target.parent.mkdir(parents=True, exist_ok=True)
+		target.write_bytes(content)
