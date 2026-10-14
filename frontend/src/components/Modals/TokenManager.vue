@@ -1121,6 +1121,7 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 				group: variable.group,
 				type: variable.type || "Color",
 			});
+			forgetTokenHistory([variable.name!]);
 			updatedCount++;
 		} catch (error) {
 			console.error("Failed to update variable:", variable.token_name, error);
@@ -1144,7 +1145,6 @@ const parseCSVAndAddVariables = async (csvText: string) => {
 		}
 	}
 
-	forgetTokenHistory(updateVariables.map((variable) => variable.name!));
 	// CSV import mutates variables outside the table; rebuild rows from fresh store data
 	resetRowObjects();
 
