@@ -43,7 +43,7 @@ import ExtensionConfirmDialog from "@/extensions/components/ExtensionConfirmDial
 import ExtensionDialog from "@/extensions/components/ExtensionDialog.vue";
 import ExtensionFrame from "@/extensions/components/ExtensionFrame.vue";
 import ExtensionPopover from "@/extensions/components/ExtensionPopover.vue";
-import { INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
+import { finishUpdate, INSTALLATION_DOCTYPE, installedExtensions, loadExtensions } from "@/data/extensions";
 import { connectExtension, disconnectExtension, requestHandlerFor, teardownExtension } from "@/extensions";
 import { markEntryFrameReady, waitForEntryFrame } from "@/extensions/bridge/entryFrames";
 import useBuilderStore from "@/stores/builderStore";
@@ -60,11 +60,14 @@ const onInstallationListChanged = ({ doctype }: { doctype: string }) => {
 onMounted(() => {
 	builderStore.realtime.emit("doctype_subscribe", INSTALLATION_DOCTYPE);
 	builderStore.realtime.on("list_update", onInstallationListChanged);
+	// here, not in the details page, which can close while an update runs
+	builderStore.realtime.on("builder_extension_update", finishUpdate);
 	void loadExtensions();
 });
 
 onUnmounted(() => {
 	builderStore.realtime.off("list_update", onInstallationListChanged);
+	builderStore.realtime.off("builder_extension_update", finishUpdate);
 	builderStore.realtime.doctype_unsubscribe(INSTALLATION_DOCTYPE);
 });
 

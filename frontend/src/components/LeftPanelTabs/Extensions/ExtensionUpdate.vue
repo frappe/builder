@@ -19,19 +19,23 @@
 
 <script setup lang="ts">
 import ExtensionInstallDialog from "@/components/LeftPanelTabs/Extensions/ExtensionInstallDialog.vue";
-import { getExtensionUpdate, loadExtensions, updateFromHub, type ExtensionUpdate } from "@/data/extensions";
-import useBuilderStore from "@/stores/builderStore";
+import {
+	getExtensionUpdate,
+	updateFromHub,
+	updatingExtensions,
+	type ExtensionUpdate,
+} from "@/data/extensions";
 import type { Permission } from "frappe-builder-extension-sdk/types";
 import { Button, toast } from "frappe-ui";
-import { onMounted, onUnmounted, ref, shallowRef } from "vue";
+import { computed, onMounted, ref, shallowRef, watch } from "vue";
 
 const props = defineProps<{ extension: string; label: string; granted: Permission[] }>();
 /** The details page reloads its README and requested permissions. */
 const emit = defineEmits<{ updated: [] }>();
 
-const builderStore = useBuilderStore();
 const update = shallowRef<ExtensionUpdate | null>(null);
-const isUpdating = ref(false);
+/** Shared, so a return to this page while the job runs still shows it. */
+const isUpdating = computed(() => updatingExtensions.has(props.extension));
 const isDialogOpen = ref(false);
 
 /** A Hub that is down only hides the offer. The installed release still runs. */
@@ -55,26 +59,17 @@ const start = async (approved: Permission[]) => {
 	const kept = props.granted.filter((permission) => update.value!.requested_permissions.includes(permission));
 	try {
 		await updateFromHub(props.extension, update.value!.version, [...kept, ...approved]);
-		isUpdating.value = true;
 	} catch (error) {
 		toast.error((error as Error).message);
 	}
 };
 
-const onUpdateDone = async (event: { extension: string; error?: string | null }) => {
-	if (event.extension !== props.extension || !isUpdating.value) return;
-	isUpdating.value = false;
-	if (event.error) toast.error(event.error);
-	else toast.success(`${props.label} is up to date`);
-	// a new build has a new entry URL, so the editor loads the new code
-	await loadExtensions();
+// ExtensionHost shows how the job ended. This page only reads the new state
+watch(isUpdating, async (now, before) => {
+	if (!before || now) return;
 	await check();
 	emit("updated");
-};
-
-onMounted(() => {
-	check();
-	builderStore.realtime.on("builder_extension_update", onUpdateDone);
 });
-onUnmounted(() => builderStore.realtime.off("builder_extension_update", onUpdateDone));
+
+onMounted(check);
 </script>

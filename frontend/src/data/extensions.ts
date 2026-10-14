@@ -1,8 +1,8 @@
 import { devExtension, isDevExtension, setDevPermissions } from "@/extensions/devExtension";
 import type { Permission, InstalledExtension } from "frappe-builder-extension-sdk/types";
-import { call, createResource, frappeRequest, getCachedResource } from "frappe-ui";
+import { call, createResource, frappeRequest, getCachedResource, toast } from "frappe-ui";
 import { useStorage } from "@vueuse/core";
-import { computed, shallowRef } from "vue";
+import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.extensions.installations";
 const INSTALLATION_DOCTYPE = "Builder Extension";
@@ -334,12 +334,31 @@ const getExtensionUpdate = (extension: string) =>
  * Starts an update. The installed release runs until the background job ends.
  * The job then sends `builder_extension_update`, with an `error` when it failed.
  */
-const updateFromHub = (extension: string, version: string, permissions: Permission[]) =>
-	call("builder.extensions.updates.update_from_hub", { extension, version, permissions });
+const updateFromHub = async (extension: string, version: string, permissions: Permission[]) => {
+	await call("builder.extensions.updates.update_from_hub", { extension, version, permissions });
+	updatingExtensions.add(extension);
+};
+
+/** The extensions with an update job running. It lives here, so it outlasts the details page. */
+const updatingExtensions = reactive(new Set<string>());
+
+/**
+ * `ExtensionHost` calls this for `builder_extension_update`, because it stays
+ * mounted. A manager who left the details page still sees how the update ended.
+ */
+const finishUpdate = async ({ extension, error }: { extension: string; error?: string | null }) => {
+	updatingExtensions.delete(extension);
+	const label = installations.value.find((row) => row.name === extension)?.label ?? extension;
+	if (error) toast.error(`${label} could not update: ${error}`);
+	else toast.success(`${label} is up to date`);
+	// a new build has a new entry URL, so the editor loads the new code
+	await loadExtensions();
+};
 
 export {
 	canManageExtensions,
 	extensionsDisabled,
+	finishUpdate,
 	getExtensionsCatalog,
 	getHubExtension,
 	getExtensionUpdate,
@@ -353,6 +372,7 @@ export {
 	uninstallExtension,
 	uninstallSummary,
 	updateFromHub,
+	updatingExtensions,
 	useInstallationDetails,
 	installations,
 };
