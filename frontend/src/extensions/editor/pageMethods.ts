@@ -63,6 +63,10 @@ const open = async (params: unknown) => {
 	const pageName = text(fields(params).name, "name");
 	const pageStore = usePageStore();
 	if (pageName !== pageStore.selectedPage) {
+		// the user decides to save or discard a component or template, so an extension cannot leave it
+		if (useCanvasStore().editingMode !== "page") {
+			throw refuse("Close the open component or block template before you open another page.", "refused");
+		}
 		if (pageStore.activePage && !pageStore.settingPage) await pageStore.waitTillPageIsSaved();
 		await router.push({ name: "builder", params: { pageId: pageName } });
 	}

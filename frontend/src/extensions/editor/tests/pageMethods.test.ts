@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { pageMethods } from "../pageMethods";
 
-const { pageStore, push } = vi.hoisted(() => ({
+const { pageStore, canvasStore, push } = vi.hoisted(() => ({
+	canvasStore: { editingMode: "page" },
 	pageStore: {
 		selectedPage: "first",
 		activePage: { name: "first" },
@@ -12,15 +13,16 @@ const { pageStore, push } = vi.hoisted(() => ({
 }));
 vi.mock("@/router", () => ({ default: { push } }));
 vi.mock("@/stores/pageStore", () => ({ default: () => pageStore }));
-vi.mock("@/stores/canvasStore", () => ({ default: vi.fn() }));
+vi.mock("@/stores/canvasStore", () => ({ default: () => canvasStore }));
 vi.mock("@/utils/helpers", () => ({ getBlockObject: vi.fn() }));
 
-const extension = { name: "acme/cms", entryUrl: "/main.js", permissions: [] };
+const extension = { name: "acme/cms", label: "CMS", entryUrl: "/main.js", permissions: [] };
 
 describe("page.open", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		Object.assign(pageStore, { selectedPage: "first", activePage: { name: "first" }, settingPage: false });
+		canvasStore.editingMode = "page";
 		push.mockImplementation(async ({ params }) => {
 			pageStore.selectedPage = params.pageId;
 			pageStore.activePage = { name: params.pageId };
@@ -38,6 +40,15 @@ describe("page.open", () => {
 	it("does not navigate if saving fails", async () => {
 		pageStore.waitTillPageIsSaved.mockRejectedValue(new Error("Save failed"));
 		await expect(pageMethods["page.open"].run({ name: "next" }, extension)).rejects.toThrow("Save failed");
+		expect(push).not.toHaveBeenCalled();
+	});
+
+	it("refuses to leave a component or block template that is open for editing", async () => {
+		canvasStore.editingMode = "fragment";
+		await expect(pageMethods["page.open"].run({ name: "next" }, extension)).rejects.toThrow(
+			"Close the open component or block template",
+		);
+		expect(pageStore.waitTillPageIsSaved).not.toHaveBeenCalled();
 		expect(push).not.toHaveBeenCalled();
 	});
 
