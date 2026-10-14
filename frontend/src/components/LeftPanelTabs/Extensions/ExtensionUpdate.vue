@@ -1,6 +1,6 @@
 <template>
 	<!-- shows nothing until the Hub has a newer release -->
-	<div v-if="update" class="flex items-center justify-between gap-2 rounded bg-surface-gray-2 px-3 py-2">
+	<div v-if="update" class="flex items-center justify-between gap-2 rounded-6 bg-surface-gray-2 px-3 py-2">
 		<span class="text-p-sm text-ink-gray-7">
 			{{ isUpdating ? `Updating to ${update.version}…` : `Version ${update.version} is available.` }}
 		</span>
