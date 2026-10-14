@@ -5,6 +5,7 @@
 import { createResource } from "frappe-ui";
 import type { MethodTable } from "../bridge/permissions";
 import { fields, optionalText, refuse, text, wholeNumber } from "../bridge/params";
+import { refreshEditor } from "./editorRefresh";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
 /**
@@ -102,32 +103,39 @@ const getDoc = (params: unknown, extension: InstalledExtension) => {
 	});
 };
 
-const insert = (params: unknown, extension: InstalledExtension) => {
+/** The call answers after the editor reloads its copy. So the extension never reads a stale editor. */
+const insert = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
-	return invoke("builder.extensions.data.insert_doc", {
+	const doctype = readDoctype(sent);
+	const doc = await invoke("builder.extensions.data.insert_doc", {
 		extension: extension.name,
-		doctype: readDoctype(sent),
+		doctype,
 		doc: readDoc(sent.doc),
 	});
+	await refreshEditor(doctype, doc.name, "insert");
+	return doc;
 };
 
-const update = (params: unknown, extension: InstalledExtension) => {
+const update = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
-	return invoke("builder.extensions.data.update_doc", {
+	const doctype = readDoctype(sent);
+	const name = readName(sent);
+	const doc = await invoke("builder.extensions.data.update_doc", {
 		extension: extension.name,
-		doctype: readDoctype(sent),
-		name: readName(sent),
+		doctype,
+		name,
 		doc: readDoc(sent.doc),
 	});
+	await refreshEditor(doctype, name, "update");
+	return doc;
 };
 
-const remove = (params: unknown, extension: InstalledExtension) => {
+const remove = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
-	return invoke("builder.extensions.data.delete_doc", {
-		extension: extension.name,
-		doctype: readDoctype(sent),
-		name: readName(sent),
-	});
+	const doctype = readDoctype(sent);
+	const name = readName(sent);
+	await invoke("builder.extensions.data.delete_doc", { extension: extension.name, doctype, name });
+	await refreshEditor(doctype, name, "delete");
 };
 
 export const documentMethods: MethodTable = {

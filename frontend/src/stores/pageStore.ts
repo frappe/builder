@@ -115,20 +115,7 @@ const usePageStore = defineStore("pageStore", {
 			canvasStore.clearVersionPreview();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
-			if (page.client_scripts?.length) {
-				// Fetch full script documents for each script
-				const scriptsResource = createListResource({
-					doctype: "Builder Client Script",
-					fields: ["script_type", "name", "script"],
-					filters: [["name", "in", page.client_scripts.map((script) => script.builder_script)]],
-					auto: true,
-				});
-
-				await scriptsResource.list.promise;
-				this.activePageScripts = scriptsResource.data as BuilderClientScript[];
-			} else {
-				this.activePageScripts = [];
-			}
+			await this.loadPageScripts(page);
 
 			nextTick(() => {
 				const componentStore = useComponentStore();
@@ -159,6 +146,40 @@ const usePageStore = defineStore("pageStore", {
 			if (routeParams) {
 				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
 			}
+		},
+
+		async loadPageScripts(page: BuilderPage) {
+			if (!page.client_scripts?.length) {
+				this.activePageScripts = [];
+				return;
+			}
+			const scriptsResource = createListResource({
+				doctype: "Builder Client Script",
+				fields: ["script_type", "name", "script"],
+				filters: [["name", "in", page.client_scripts.map((script) => script.builder_script)]],
+				auto: true,
+			});
+			await scriptsResource.list.promise;
+			this.activePageScripts = scriptsResource.data as BuilderClientScript[];
+		},
+
+		/** Refetches the open page after a write from outside the editor. The canvas keeps its blocks. */
+		async reloadActivePage(pageId?: string | null) {
+			pageId ??= this.selectedPage;
+			const pageLoadToken = this.pageLoadToken;
+			const page = await this.fetchActivePage(pageId as string).catch(() => null);
+			// another page may have opened meanwhile, and its canvas autosaves to activePage
+			if (!page || pageLoadToken !== this.pageLoadToken || this.selectedPage !== pageId) return null;
+			this.activePage = page;
+			return page;
+		},
+
+		/** Reloads all that the editor derives from the open page: its record, data, and scripts. */
+		async refreshActivePage() {
+			const page = await this.reloadActivePage();
+			if (!page) return;
+			await Promise.all([this.setPageData(page), this.loadPageScripts(page)]);
+			this.scriptsVersion++;
 		},
 
 		async setActivePage(pageName: string) {
