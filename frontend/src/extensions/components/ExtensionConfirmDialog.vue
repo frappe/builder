@@ -15,18 +15,24 @@
 			<p class="pt-4 text-p-sm text-ink-gray-6">
 				It is asking to
 				<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
-				<template v-if="prompt.fieldname">
-					<strong>{{ prompt.fieldname }}</strong>
+				<template v-if="prompt.act === 'remove field'">
+					<strong>{{ prompt.detail }}</strong>
 					from
 				</template>
+				<template v-else-if="prompt.act === 'change access'">of</template>
 				the doctype
 				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
+			</p>
+			<p v-if="prompt.act === 'change access'" class="pt-2 text-p-sm text-ink-gray-6">
+				Roles with access:
+				<strong>{{ prompt.detail ? `${prompt.detail}, ` : "" }}System Manager, Website Manager.</strong>
+				They can read and change every document in it.
 			</p>
 
 			<div v-if="isDestructive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
 				<p class="text-p-sm text-ink-red-6">
 					{{
-						prompt.fieldname
+						prompt.detail
 							? "This removes the field from forms and collection data. Existing page bindings may need to be updated."
 							: "This removes the doctype from your site."
 					}}

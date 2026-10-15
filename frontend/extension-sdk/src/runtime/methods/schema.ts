@@ -22,6 +22,8 @@ export type Doctype = {
 	doctype: string;
 	istable: boolean;
 	fields: SchemaField[];
+	/** The roles that can read its documents. */
+	roles: string[];
 };
 
 /** How a new document gets its name. It is set at creation. A later change renames nothing. */
@@ -54,6 +56,18 @@ export const schema = {
 	 * Its records stay in the database, but no form or list shows them.
 	 */
 	deleteDoctype: (doctype: string) => call("schema.deleteDoctype", { doctype }),
+
+	/**
+	 * Sets the roles that can read and change the documents of a doctype that
+	 * this extension made. System Manager and Website Manager always keep access.
+	 * Builder first asks the user, with the roles. Frappe lets only the
+	 * Administrator grant an automatic role or a custom role.
+	 */
+	setAccess: (doctype: string, roles: string[]) =>
+		call("schema.setAccess", { doctype, roles }) as Promise<Doctype>,
+
+	/** The roles that the user can grant with `setAccess`. */
+	listRoles: () => call("schema.listRoles") as Promise<string[]>,
 
 	/** Each doctype that this extension made, and if it still exists. */
 	listDoctypes: () => call("schema.listDoctypes") as Promise<Array<{ doctype: string; exists: boolean }>>,

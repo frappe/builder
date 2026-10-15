@@ -6,13 +6,14 @@ import { ref } from "vue";
 import { bridge } from "../bridge/bridge";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
-export type SchemaAct = "create" | "delete" | "remove field";
+export type SchemaAct = "create" | "delete" | "remove field" | "change access";
 
 export type ExtensionPrompt = {
 	extension: InstalledExtension;
 	doctype: string;
 	act: SchemaAct;
-	fieldname?: string;
+	/** The field to remove, or the roles that get access. */
+	detail?: string;
 };
 
 /** `ExtensionConfirmDialog.vue` reads this. Only one prompt is open at a time, so this is one ref. */
@@ -86,13 +87,11 @@ export const confirmSchema = (
 	extension: InstalledExtension,
 	doctype: string,
 	act: SchemaAct,
-	fieldname?: string,
+	detail?: string,
 ) => {
 	hookTeardown(extension);
 	const asked = stopCount(extension.name);
 	return enqueue(() =>
-		stopCount(extension.name) === asked
-			? ask({ extension, doctype, act, fieldname })
-			: Promise.resolve(false),
+		stopCount(extension.name) === asked ? ask({ extension, doctype, act, detail }) : Promise.resolve(false),
 	);
 };

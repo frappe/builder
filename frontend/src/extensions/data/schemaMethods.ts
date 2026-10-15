@@ -91,6 +91,29 @@ const deleteDoctype = async (params: unknown, extension: InstalledExtension) => 
 	});
 };
 
+/** Asks first, with the roles, then sets who can use a doctype that this extension made. */
+const setAccess = async (params: unknown, extension: InstalledExtension) => {
+	const sent = fields(params);
+	const doctype = text(sent.doctype, "doctype");
+	const roles = readRoles(sent.roles);
+	if (!(await confirmSchema(extension, doctype, "change access", roles.join(", ")))) {
+		throw refuse(`The user did not allow changing who can use ${doctype}.`, "refused");
+	}
+	return invoke("builder.extensions.schema.set_doctype_access", {
+		extension: extension.name,
+		doctype,
+		roles,
+	});
+};
+
+const readRoles = (value: unknown): string[] => {
+	if (!Array.isArray(value)) throw refuse('"roles" must be a list of role names.', "invalid_params");
+	return value.map((role) => text(role, "roles"));
+};
+
+const listRoles = (_params: unknown, extension: InstalledExtension) =>
+	invoke("builder.extensions.schema.list_roles", { extension: extension.name });
+
 const listDoctypes = (_params: unknown, extension: InstalledExtension) =>
 	invoke("builder.extensions.schema.list_doctypes", { extension: extension.name });
 
@@ -100,4 +123,6 @@ export const schemaMethods: MethodTable = {
 	"schema.updateDoctype": { needs: "schema.write", run: updateDoctype },
 	"schema.deleteDoctype": { needs: "schema.write", run: deleteDoctype },
 	"schema.listDoctypes": { needs: "schema.write", run: listDoctypes },
+	"schema.setAccess": { needs: "schema.write", run: setAccess },
+	"schema.listRoles": { needs: "schema.write", run: listRoles },
 };
