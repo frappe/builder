@@ -24,13 +24,7 @@
 				the doctype
 				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
 			</p>
-			<template v-if="prompt.access">
-				<ExtensionRoleList
-					:roles="prompt.access.added"
-					label="Can read, edit, create and delete its documents"
-					theme="green" />
-				<ExtensionRoleList :roles="prompt.access.removed" label="Lose access" theme="red" />
-			</template>
+			<ExtensionAccessChange v-if="prompt.access" :access="prompt.access" />
 
 			<div v-if="isDestructive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
 				<p class="text-p-sm text-ink-red-6">
@@ -53,7 +47,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import ExtensionRoleList from "@/extensions/components/ExtensionRoleList.vue";
+import ExtensionAccessChange from "@/extensions/components/ExtensionAccessChange.vue";
 import { answerPrompt, pendingPrompt } from "@/extensions/data/confirmations";
 import { Button, Checkbox } from "frappe-ui";
 import { DialogTitle } from "reka-ui";
