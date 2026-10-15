@@ -56,6 +56,8 @@ const CONTAINER_ELEMENTS = new Set(["section", "div"]);
 
 const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
+const CHECKABLE_INPUT_TYPES = new Set(["checkbox", "radio"]);
+
 // editor of the currently editable text block; kept off Block instances to
 // avoid Vue reactivity and serialization. Owner tracked by blockId since
 // undo/redo swaps instances but keeps ids.
@@ -372,6 +374,8 @@ class Block implements BlockOptions {
 		let description = this.blockName || this.originalElement || this.getElement() || "";
 		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
+		} else if (this.isInput() && this.getEffectiveAttribute("type") && !this.blockName) {
+			description += " | " + this.getEffectiveAttribute("type");
 		}
 		return description;
 	}
@@ -423,8 +427,8 @@ class Block implements BlockOptions {
 	isSelect() {
 		return this.getElement() === "select";
 	}
-	isCheckbox() {
-		return this.isInput() && this.getEffectiveAttribute("type") === "checkbox";
+	isCheckable() {
+		return this.isInput() && CHECKABLE_INPUT_TYPES.has(this.getEffectiveAttribute("type") as string);
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();

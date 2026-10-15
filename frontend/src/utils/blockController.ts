@@ -101,8 +101,8 @@ const blockController = {
 	isSelect: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSelect();
 	},
-	isCheckbox: () => {
-		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isCheckbox();
+	isCheckable: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isCheckable();
 	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;

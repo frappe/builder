@@ -13,30 +13,18 @@ const inputOptionsSectionProperties = [
 			return {
 				label: __("Type"),
 				type: "select",
-				options: [
-					"text",
-					"number",
-					"email",
-					"password",
-					"date",
-					"time",
-					"search",
-					"tel",
-					"url",
-					"color",
-					"radio",
-				],
+				options: ["text", "number", "email", "password", "date", "time", "search", "tel", "url", "color"],
 				modelValue: blockController.getEffectiveAttribute("type") || "text",
 			};
 		},
 		searchKeyWords:
-			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, Radio, tag",
+			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, tag",
 		events: {
 			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("type", val),
 		},
-		// checkboxes come from the Checkbox template, with their label text
+		// checkboxes and radios come from the Checkbox and Radio Group templates, with their label text
 		condition: () =>
-			!blockController.isTextarea() && !blockController.isSelect() && !blockController.isCheckbox(),
+			!blockController.isTextarea() && !blockController.isSelect() && !blockController.isCheckable(),
 	},
 	{
 		component: InlineInput,
@@ -51,7 +39,7 @@ const inputOptionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("placeholder", val),
 		},
-		condition: () => !blockController.isSelect() && !blockController.isCheckbox(),
+		condition: () => !blockController.isSelect() && !blockController.isCheckable(),
 	},
 	{
 		component: InlineInput,
@@ -102,8 +90,7 @@ const inputOptionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("value", val || undefined),
 		},
-		condition: () =>
-			blockController.isCheckbox() || blockController.getEffectiveAttribute("type") === "radio",
+		condition: () => blockController.isCheckable(),
 	},
 	{
 		component: OptionToggle,
@@ -122,8 +109,7 @@ const inputOptionsSectionProperties = [
 			"update:modelValue": (val: boolean) =>
 				blockController.setEffectiveAttribute("checked", val ? "checked" : undefined),
 		},
-		condition: () =>
-			blockController.isCheckbox() || blockController.getEffectiveAttribute("type") === "radio",
+		condition: () => blockController.isCheckable(),
 	},
 ];
 

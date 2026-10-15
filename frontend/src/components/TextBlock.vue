@@ -134,7 +134,7 @@ const isEditable = computed(() => {
 });
 
 const showEditor = computed(() => {
-	// a label wrapping a checkbox holds its text in a child block, like a link or button with children
+	// a label wrapping a checkbox or radio holds its text in a child block, like a link or button with children
 	const wrapsChildren =
 		props.block.isLink() || props.block.isButton() || props.block.getElement() === "label";
 	return !(wrapsChildren && props.block.hasChildren());
