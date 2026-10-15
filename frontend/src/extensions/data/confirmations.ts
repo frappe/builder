@@ -12,9 +12,13 @@ export type ExtensionPrompt = {
 	extension: InstalledExtension;
 	doctype: string;
 	act: SchemaAct;
-	/** The field to remove, or the roles that get access. */
+	/** The field to remove. */
 	detail?: string;
+	/** The roles that gain and lose access. Builder shows them, because the extension's own picker is not trusted. */
+	access?: AccessChange;
 };
+
+export type AccessChange = { added: string[]; removed: string[] };
 
 /** `ExtensionConfirmDialog.vue` reads this. Only one prompt is open at a time, so this is one ref. */
 export const pendingPrompt = ref<ExtensionPrompt | null>(null);
@@ -87,11 +91,13 @@ export const confirmSchema = (
 	extension: InstalledExtension,
 	doctype: string,
 	act: SchemaAct,
-	detail?: string,
+	details: Pick<ExtensionPrompt, "detail" | "access"> = {},
 ) => {
 	hookTeardown(extension);
 	const asked = stopCount(extension.name);
 	return enqueue(() =>
-		stopCount(extension.name) === asked ? ask({ extension, doctype, act, detail }) : Promise.resolve(false),
+		stopCount(extension.name) === asked
+			? ask({ extension, doctype, act, ...details })
+			: Promise.resolve(false),
 	);
 };

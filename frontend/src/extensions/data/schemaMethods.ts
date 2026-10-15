@@ -61,7 +61,10 @@ const updateDoctype = async (params: unknown, extension: InstalledExtension) => 
 	const doctype = text(sent.doctype, "doctype");
 	const removed = readRemovedFields(sent.removeFields);
 	const rows = readFields(sent.fields, removed.length > 0);
-	if (removed.length && !(await confirmSchema(extension, doctype, "remove field", removed.join(", ")))) {
+	if (
+		removed.length &&
+		!(await confirmSchema(extension, doctype, "remove field", { detail: removed.join(", ") }))
+	) {
 		throw refuse(`The user did not allow removing fields from ${doctype}.`, "refused");
 	}
 	return invoke("builder.extensions.schema.update_doctype", {
@@ -96,7 +99,11 @@ const setAccess = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
 	const doctype = text(sent.doctype, "doctype");
 	const roles = readRoles(sent.roles);
-	if (!(await confirmSchema(extension, doctype, "change access", roles.join(", ")))) {
+	const current = (await getDoctype({ doctype }, extension)) as { roles: string[] };
+	const access = getAccessChange(current.roles, roles);
+	// the same roles: nothing to ask
+	if (!access.added.length && !access.removed.length) return current;
+	if (!(await confirmSchema(extension, doctype, "change access", { access }))) {
 		throw refuse(`The user did not allow changing who can use ${doctype}.`, "refused");
 	}
 	return invoke("builder.extensions.schema.set_doctype_access", {
@@ -105,6 +112,14 @@ const setAccess = async (params: unknown, extension: InstalledExtension) => {
 		roles,
 	});
 };
+
+/** `DEFAULT_ROLES` in `schema.py`. The server always keeps them, so none of them is ever removed. */
+const ALWAYS_KEPT = ["System Manager", "Website Manager"];
+
+const getAccessChange = (current: string[], wanted: string[]) => ({
+	added: wanted.filter((role) => !current.includes(role)),
+	removed: current.filter((role) => !wanted.includes(role) && !ALWAYS_KEPT.includes(role)),
+});
 
 const readRoles = (value: unknown): string[] => {
 	if (!Array.isArray(value)) throw refuse('"roles" must be a list of role names.', "invalid_params");
