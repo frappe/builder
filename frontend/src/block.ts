@@ -430,6 +430,24 @@ class Block implements BlockOptions {
 	isCheckable() {
 		return this.isInput() && CHECKABLE_INPUT_TYPES.has(this.getEffectiveAttribute("type") as string);
 	}
+	isRadio() {
+		return this.isInput() && this.getEffectiveAttribute("type") === "radio";
+	}
+	isRadioGroup() {
+		return this.getEffectiveAttribute("role") === "radiogroup";
+	}
+	getRadios(): Block[] {
+		return this.getChildren().flatMap((child) => (child.isRadio() ? [child] : child.getRadios()));
+	}
+	// a radio group is required as soon as any of its radios is, so the group's toggle sets them all
+	isGroupRequired() {
+		return this.getRadios().some((radio) => radio.getEffectiveAttribute("required") != null);
+	}
+	setGroupRequired(required: boolean) {
+		this.getRadios().forEach((radio) =>
+			radio.setEffectiveAttribute("required", required ? "required" : undefined),
+		);
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;

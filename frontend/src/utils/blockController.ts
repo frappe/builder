@@ -104,6 +104,12 @@ const blockController = {
 	isCheckable: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isCheckable();
 	},
+	isRadio: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRadio();
+	},
+	isRadioGroup: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isRadioGroup();
+	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {

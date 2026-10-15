@@ -75,6 +75,8 @@ const inputOptionsSectionProperties = [
 			"update:modelValue": (val: boolean) =>
 				blockController.setEffectiveAttribute("required", val ? "required" : undefined),
 		},
+		// a radio is required with its whole group, which has its own toggle
+		condition: () => !blockController.isRadio(),
 	},
 	// Radio button and checkbox specific properties
 	{
