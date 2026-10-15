@@ -423,6 +423,9 @@ class Block implements BlockOptions {
 	isSelect() {
 		return this.getElement() === "select";
 	}
+	isCheckbox() {
+		return this.isInput() && this.getEffectiveAttribute("type") === "checkbox";
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;

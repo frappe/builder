@@ -34,7 +34,9 @@ const inputOptionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("type", val),
 		},
-		condition: () => !blockController.isTextarea() && !blockController.isSelect(),
+		// checkboxes come from the Checkbox template, with their label text
+		condition: () =>
+			!blockController.isTextarea() && !blockController.isSelect() && !blockController.isCheckbox(),
 	},
 	{
 		component: InlineInput,
@@ -49,7 +51,7 @@ const inputOptionsSectionProperties = [
 		events: {
 			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("placeholder", val),
 		},
-		condition: () => !blockController.isSelect(),
+		condition: () => !blockController.isSelect() && !blockController.isCheckbox(),
 	},
 	{
 		component: InlineInput,
@@ -86,21 +88,22 @@ const inputOptionsSectionProperties = [
 				blockController.setEffectiveAttribute("required", val ? "required" : undefined),
 		},
 	},
-	// Radio button specific properties
+	// Radio button and checkbox specific properties
 	{
 		component: InlineInput,
 		getProps: () => {
 			return {
 				label: __("Value"),
-				modelValue: blockController.getAttribute("value") || "",
-				description: __("Value submitted with the form when this radio button is selected."),
+				modelValue: blockController.getEffectiveAttribute("value") || "",
+				description: __("Value submitted with the form when this field is checked."),
 			};
 		},
-		searchKeyWords: "Radio, Value, RadioValue, Radio Value, input, radio button",
+		searchKeyWords: "Radio, Checkbox, Value, RadioValue, Radio Value, input, radio button",
 		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("value", val),
+			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("value", val || undefined),
 		},
-		condition: () => blockController.getAttribute("type") === "radio",
+		condition: () =>
+			blockController.isCheckbox() || blockController.getEffectiveAttribute("type") === "radio",
 	},
 	{
 		component: OptionToggle,
@@ -111,22 +114,16 @@ const inputOptionsSectionProperties = [
 					{ label: __("Yes"), value: true },
 					{ label: __("No"), value: false },
 				],
-				modelValue:
-					blockController.getAttribute("checked") === "" ||
-					blockController.getAttribute("checked") === "checked",
+				modelValue: hasAttribute("checked"),
 			};
 		},
-		searchKeyWords: "Checked, Radio, DefaultValue, Default Value, Selected, Initially Checked",
+		searchKeyWords: "Checked, Radio, Checkbox, DefaultValue, Default Value, Selected, Initially Checked",
 		events: {
-			"update:modelValue": (val: boolean) => {
-				if (val) {
-					blockController.setAttribute("checked", "checked");
-				} else {
-					blockController.removeAttribute("checked");
-				}
-			},
+			"update:modelValue": (val: boolean) =>
+				blockController.setEffectiveAttribute("checked", val ? "checked" : undefined),
 		},
-		condition: () => blockController.getAttribute("type") === "radio",
+		condition: () =>
+			blockController.isCheckbox() || blockController.getEffectiveAttribute("type") === "radio",
 	},
 ];
 

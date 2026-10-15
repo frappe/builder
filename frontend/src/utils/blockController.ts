@@ -101,6 +101,9 @@ const blockController = {
 	isSelect: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSelect();
 	},
+	isCheckbox: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isCheckbox();
+	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
