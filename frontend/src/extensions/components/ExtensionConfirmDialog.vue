@@ -24,11 +24,6 @@
 				the doctype
 				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
 			</p>
-			<p v-if="prompt.act === 'change access'" class="pt-2 text-p-sm text-ink-gray-6">
-				Roles with access:
-				<strong>{{ prompt.detail ? `${prompt.detail}, ` : "" }}System Manager, Website Manager.</strong>
-				They can read and change every document in it.
-			</p>
 
 			<div v-if="isDestructive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
 				<p class="text-p-sm text-ink-red-6">
