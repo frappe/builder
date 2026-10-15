@@ -13,8 +13,8 @@
 			{{ count }} {{ count === 1 ? "role" : "roles" }} changed
 		</button>
 		<div v-if="isOpen" class="flex flex-col gap-1 pl-4.5 pt-1 text-p-sm text-ink-gray-6">
-			<p v-if="access.added.length">Gain read, edit, create and delete: {{ access.added.join(", ") }}</p>
-			<p v-if="access.removed.length">Lose access: {{ access.removed.join(", ") }}</p>
+			<p v-if="access.added.length">Added: {{ access.added.join(", ") }}</p>
+			<p v-if="access.removed.length">Removed: {{ access.removed.join(", ") }}</p>
 		</div>
 	</div>
 </template>
