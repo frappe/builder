@@ -4,7 +4,6 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.patches.give_page_editors_extension_doctypes import execute as give_page_editors_access
 from builder.builder.tests.extension_fixtures import (
 	drop_installations,
 	make_installation,
@@ -224,15 +223,6 @@ class TestExtensionDoctypeAccess(FrappeTestCase):
 		self.assertEqual(set(roles), {"System Manager", "Website Manager"})
 		with self.assertRaises(frappe.PermissionError):
 			set_doctype_access("acme/schema", NAME, ["Extension Custom Writer"])
-
-	def test_the_patch_gives_older_doctypes_the_page_editors(self):
-		create_doctype("acme/schema", NAME, [a_field()])
-		document = frappe.get_doc("DocType", NAME)
-		document.set("permissions", [{"role": "System Manager", "read": 1, "write": 1}])
-		document.save()
-		self.give_page_write(PAGE_WRITER)
-		give_page_editors_access()
-		self.assertIn(PAGE_WRITER, get_doctype("acme/schema", NAME)["roles"])
 
 
 def make_custom_role(name: str) -> str:

@@ -19,6 +19,5 @@ builder.builder.patches.move_ai_keys_to_providers
 builder.builder.patches.seed_new_ai_models
 builder.builder.patches.upgrade_ai_models
 builder.builder.patches.delete_empty_ai_sessions
-builder.builder.patches.give_page_editors_extension_doctypes
 execute:frappe.call("builder.builder_analytics.enqueue_web_page_view_ingesion")
 execute:frappe.call("builder.builder_analytics.setup_duckdb_table")
