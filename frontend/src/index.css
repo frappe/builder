@@ -55,6 +55,15 @@ p:empty::before {
 	background-color: transparent;
 }
 
+/* matches the published page (reset.css): a canvas select showing its placeholder option
+   uses the same gray as the input placeholders beside it */
+select.__builder_component__:has(> option[value=""]:checked) {
+	color: theme("colors.gray.500");
+}
+select.__builder_component__:has(> option[value=""]:checked) > option:not([value=""]) {
+	color: CanvasText;
+}
+
 @layer utilities {
 	/* Chrome, Safari and Opera */
 	.no-scrollbar::-webkit-scrollbar {

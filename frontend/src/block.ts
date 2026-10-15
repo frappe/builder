@@ -426,6 +426,24 @@ class Block implements BlockOptions {
 	isCheckbox() {
 		return this.isInput() && this.getEffectiveAttribute("type") === "checkbox";
 	}
+	getOptions() {
+		return this.getChildren().filter((child) => child.getElement() === "option");
+	}
+	getOptionLabels() {
+		return this.getOptions().map((option) => option.getTextContent());
+	}
+	// renaming keeps an option's attributes, so a placeholder (empty value) stays one; an option
+	// without a value attribute submits its label, so the two stay in step
+	renameOption(index: number, label: string) {
+		this.getOptions()[index]?.setInnerHTML(label);
+	}
+	removeOption(index: number) {
+		const option = this.getOptions()[index];
+		if (option) this.removeChild(option);
+	}
+	addOption(label: string) {
+		this.addChild({ element: "option", innerHTML: label }, null, false);
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;

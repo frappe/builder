@@ -1,0 +1,58 @@
+<template>
+	<div class="flex items-start justify-between gap-2">
+		<InputLabel class="h-7 w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
+		<div ref="list" class="flex w-full min-w-0 flex-col gap-1.5">
+			<BuilderInput
+				v-for="(option, index) in options"
+				:key="index"
+				:modelValue="option"
+				hideClearButton
+				@input="(value: string) => emit('rename', index, value)"
+				@keydown.stop>
+				<template #suffix>
+					<button
+						type="button"
+						class="text-ink-gray-4 hover:text-ink-gray-7"
+						tabindex="-1"
+						:title="__('Remove option')"
+						@click="emit('remove', index)">
+						<span class="lucide-x size-3.5" aria-hidden="true" />
+					</button>
+				</template>
+			</BuilderInput>
+			<Button
+				variant="subtle"
+				icon-left="lucide-plus"
+				:label="__('Add option')"
+				class="w-full"
+				@click="addOption" />
+		</div>
+	</div>
+</template>
+
+<script setup lang="ts">
+import InputLabel from "@/components/Controls/InputLabel.vue";
+import { __ } from "@/translation";
+import { nextTick, ref } from "vue";
+
+defineProps<{
+	label: string;
+	options: string[];
+}>();
+
+const emit = defineEmits<{
+	rename: [index: number, label: string];
+	remove: [index: number];
+	add: [label: string];
+}>();
+
+const list = ref<HTMLElement | null>(null);
+
+// focusing selects the new option's text, so typing replaces it
+const addOption = async () => {
+	emit("add", __("New option"));
+	await nextTick();
+	const inputs = list.value?.querySelectorAll("input");
+	inputs?.[inputs.length - 1]?.focus();
+};
+</script>
