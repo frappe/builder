@@ -14,6 +14,7 @@ from builder.builder.tests.extension_fixtures import (
 from builder.extensions.schema import (
 	create_doctype,
 	delete_doctype,
+	get_access_change,
 	get_doctype,
 	set_doctype_access,
 	update_doctype,
@@ -219,10 +220,38 @@ class TestExtensionDoctypeAccess(FrappeTestCase):
 		frappe.set_user(email)
 
 		self.assertNotIn("Extension Custom Writer", create_doctype("acme/schema", NAME, [a_field()])["roles"])
-		roles = set_doctype_access("acme/schema", NAME, [])["roles"]
+		roles = set_access([])["roles"]
 		self.assertEqual(set(roles), {"System Manager", "Website Manager"})
 		with self.assertRaises(frappe.PermissionError):
-			set_doctype_access("acme/schema", NAME, ["Extension Custom Writer"])
+			set_doctype_access("acme/schema", NAME, ["Extension Custom Writer"], {})
+
+	def test_a_role_that_can_only_read_counts_as_added(self):
+		create_doctype("acme/schema", NAME, [a_field()])
+		document = frappe.get_doc("DocType", NAME)
+		for row in document.permissions:
+			if row.role == "Website Manager":
+				row.update({"write": 0, "create": 0, "delete": 0})
+		document.save()
+
+		self.assertEqual(
+			get_access_change("acme/schema", NAME, []), {"added": ["Website Manager"], "removed": []}
+		)
+		set_access([])
+		self.assertEqual(get_access_change("acme/schema", NAME, []), {"added": [], "removed": []})
+
+	def test_access_that_changed_after_the_user_saw_it_is_refused(self):
+		make_role(PAGE_WRITER)
+		create_doctype("acme/schema", NAME, [a_field()])
+		seen = get_access_change("acme/schema", NAME, [PAGE_WRITER])
+		set_access([PAGE_WRITER])
+
+		with self.assertRaises(frappe.TimestampMismatchError):
+			set_doctype_access("acme/schema", NAME, [PAGE_WRITER], seen)
+
+
+def set_access(roles: list[str]) -> dict:
+	"""Sets the roles with the change that the user would see."""
+	return set_doctype_access("acme/schema", NAME, roles, get_access_change("acme/schema", NAME, roles))
 
 
 def make_custom_role(name: str) -> str:

@@ -251,8 +251,11 @@ def default_permissions() -> list[dict]:
 	return [full_access(role) for role in dict.fromkeys([*DEFAULT_ROLES, *page_writers]) if can_grant(role)]
 
 
+RIGHTS = ("read", "write", "create", "delete")
+
+
 def full_access(role: str) -> dict:
-	return {"role": role, "read": 1, "write": 1, "create": 1, "delete": 1}
+	return {"role": role, **dict.fromkeys(RIGHTS, 1)}
 
 
 def can_grant(role: str) -> bool:
@@ -262,22 +265,49 @@ def can_grant(role: str) -> bool:
 	return role not in AUTOMATIC_ROLES and not frappe.db.get_value("Role", role, "is_custom")
 
 
+@frappe.whitelist()
+def get_access_change(extension: str, doctype: str, roles: list[str]) -> dict:
+	"""What `set_doctype_access` would change. The user approves this before the write."""
+	assert_access_settable(extension, doctype)
+	return describe_access_change(doctype, read_roles(roles))
+
+
 @frappe.whitelist(methods=["POST"])
-def set_doctype_access(extension: str, doctype: str, roles: list[str]) -> dict:
+def set_doctype_access(extension: str, doctype: str, roles: list[str], access: dict) -> dict:
 	"""Which roles can read and change the documents of a doctype this extension made.
 
 	Each role gets full access. The default roles always stay, so a manager never
-	loses the doctype.
+	loses the doctype. `access` is the change that the user approved. If the
+	change is now different, nothing is written.
 	"""
+	assert_access_settable(extension, doctype)
+	wanted = read_roles(roles)
+	change = describe_access_change(doctype, wanted)
+	if change != {key: sorted(access.get(key) or []) for key in ("added", "removed")}:
+		frappe.throw(
+			_("The access of {0} changed after the user saw it. Ask again.").format(doctype),
+			frappe.TimestampMismatchError,
+		)
+	if any(change.values()):
+		document = frappe.get_doc("DocType", doctype)
+		document.set("permissions", [full_access(role) for role in dict.fromkeys([*DEFAULT_ROLES, *wanted])])
+		document.save()
+	return describe_doctype(doctype)
+
+
+def assert_access_settable(extension: str, doctype: str) -> None:
 	assert_extension_access(extension, "schema.write")
 	assert_owned(extension, doctype)
-	document = frappe.get_doc("DocType", doctype)
-	if document.istable:
+	if frappe.db.get_value("DocType", doctype, "istable"):
 		frappe.throw(_("A child table takes the access of its parent doctype."))
-	wanted = dict.fromkeys([*DEFAULT_ROLES, *read_roles(roles)])
-	document.set("permissions", [full_access(role) for role in wanted])
-	document.save()
-	return describe_doctype(doctype)
+
+
+def describe_access_change(doctype: str, roles: list[str]) -> dict:
+	"""Compares rights, not role names. A role that can only read still gains write, create and delete."""
+	permissions = frappe.get_meta(doctype).permissions
+	wanted = {*DEFAULT_ROLES, *roles}
+	full = {row.role for row in permissions if not row.permlevel and all(row.get(right) for right in RIGHTS)}
+	return {"added": sorted(wanted - full), "removed": sorted({row.role for row in permissions} - wanted)}
 
 
 def read_roles(roles: list[str]) -> list[str]:

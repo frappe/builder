@@ -4,7 +4,7 @@
 
 import type { MethodTable } from "../bridge/permissions";
 import { fields, flag, oneOf, refuse, text } from "../bridge/params";
-import { confirmSchema } from "./confirmations";
+import { confirmSchema, type AccessChange } from "./confirmations";
 import { invoke } from "./documentMethods";
 import type { InstalledExtension } from "frappe-builder-extension-sdk/types";
 
@@ -94,32 +94,24 @@ const deleteDoctype = async (params: unknown, extension: InstalledExtension) => 
 	});
 };
 
-/** Asks first, with the roles, then sets who can use a doctype that this extension made. */
+/**
+ * Asks first, with the change that the server computes, then sets who can use a
+ * doctype that this extension made. The server writes only that approved change.
+ */
 const setAccess = async (params: unknown, extension: InstalledExtension) => {
 	const sent = fields(params);
-	const doctype = text(sent.doctype, "doctype");
-	const roles = readRoles(sent.roles);
-	const current = (await getDoctype({ doctype }, extension)) as { roles: string[] };
-	const access = getAccessChange(current.roles, roles);
-	// the same roles: nothing to ask
-	if (!access.added.length && !access.removed.length) return current;
-	if (!(await confirmSchema(extension, doctype, "change access", { access }))) {
-		throw refuse(`The user did not allow changing who can use ${doctype}.`, "refused");
-	}
-	return invoke("builder.extensions.schema.set_doctype_access", {
+	const request = {
 		extension: extension.name,
-		doctype,
-		roles,
-	});
+		doctype: text(sent.doctype, "doctype"),
+		roles: readRoles(sent.roles),
+	};
+	const access = (await invoke("builder.extensions.schema.get_access_change", request)) as AccessChange;
+	const isChanged = access.added.length > 0 || access.removed.length > 0;
+	if (isChanged && !(await confirmSchema(extension, request.doctype, "change access", { access }))) {
+		throw refuse(`The user did not allow changing who can use ${request.doctype}.`, "refused");
+	}
+	return invoke("builder.extensions.schema.set_doctype_access", { ...request, access });
 };
-
-/** `DEFAULT_ROLES` in `schema.py`. The server always keeps them, so none of them is ever removed. */
-const ALWAYS_KEPT = ["System Manager", "Website Manager"];
-
-const getAccessChange = (current: string[], wanted: string[]) => ({
-	added: wanted.filter((role) => !current.includes(role)),
-	removed: current.filter((role) => !wanted.includes(role) && !ALWAYS_KEPT.includes(role)),
-});
 
 const readRoles = (value: unknown): string[] => {
 	if (!Array.isArray(value)) throw refuse('"roles" must be a list of role names.', "invalid_params");
