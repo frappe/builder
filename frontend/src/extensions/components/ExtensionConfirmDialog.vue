@@ -19,7 +19,8 @@
 					<strong>{{ prompt.detail }}</strong>
 					from
 				</template>
-				<template v-else-if="prompt.act === 'change access'">of</template>
+				<!-- the space in the interpolation: Vue drops a line break between elements -->
+				<template v-else-if="prompt.act === 'change access'">{{ " of" }}</template>
 				the doctype
 				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
 			</p>
