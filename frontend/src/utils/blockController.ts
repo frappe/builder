@@ -95,6 +95,12 @@ const blockController = {
 	isInput: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isInput();
 	},
+	isTextarea: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isTextarea();
+	},
+	isSelect: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSelect();
+	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -114,6 +120,22 @@ const blockController = {
 	removeAttribute: (attribute: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.removeAttribute(attribute);
+		});
+	},
+	getEffectiveAttribute: (attribute: string) => {
+		let attributeValue = "__initial__" as StyleValue;
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (attributeValue === "__initial__") {
+				attributeValue = block.getEffectiveAttribute(attribute);
+			} else if (attributeValue !== block.getEffectiveAttribute(attribute)) {
+				attributeValue = "Mixed";
+			}
+		});
+		return attributeValue;
+	},
+	setEffectiveAttribute: (attribute: string, value: string | undefined) => {
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			block.setEffectiveAttribute(attribute, value);
 		});
 	},
 	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {

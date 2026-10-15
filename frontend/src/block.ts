@@ -417,6 +417,12 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
+	isTextarea() {
+		return this.getElement() === "textarea";
+	}
+	isSelect() {
+		return this.getElement() === "select";
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
@@ -458,14 +464,20 @@ class Block implements BlockOptions {
 	}
 	setId(id: string | undefined) {
 		// a removed key falls back to the component's id, so an instance blanks it instead
-		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
-		if (value !== undefined && "id" in this.getCustomAttributes()) {
-			this.customAttributes.id = value;
+		this.setEffectiveAttribute("id", id || (this.referenceComponent?.getId() ? "" : undefined));
+	}
+	// what the published page renders, since customAttributes win over attributes there
+	getEffectiveAttribute(attribute: string) {
+		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute);
+	}
+	setEffectiveAttribute(attribute: string, value: string | undefined) {
+		if (value !== undefined && attribute in this.getCustomAttributes()) {
+			this.customAttributes[attribute] = value;
 		} else {
-			// clearing drops both copies, or the one left behind becomes the id again
-			delete this.customAttributes.id;
+			// clearing drops both copies, or the one left behind becomes the value again
+			delete this.customAttributes[attribute];
 		}
-		this.setAttribute("id", value);
+		this.setAttribute(attribute, value);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];

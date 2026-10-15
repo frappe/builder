@@ -3,6 +3,9 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { __ } from "@/translation";
 
+// boolean attributes are on whenever present, whatever their value ("", "true", "required")
+const hasAttribute = (attribute: string) => blockController.getEffectiveAttribute(attribute) != null;
+
 const inputOptionsSectionProperties = [
 	{
 		component: InlineInput,
@@ -23,45 +26,67 @@ const inputOptionsSectionProperties = [
 					"color",
 					"radio",
 				],
-				modelValue: blockController.getAttribute("type") || "text",
+				modelValue: blockController.getEffectiveAttribute("type") || "text",
 			};
 		},
 		searchKeyWords:
 			"Input, Type, InputType, Input Type, Text, Number, Email, Password, Date, Time, Search, Tel, Url, Color, Radio, tag",
 		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("type", val),
+			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("type", val),
 		},
+		condition: () => !blockController.isTextarea() && !blockController.isSelect(),
 	},
 	{
 		component: InlineInput,
 		getProps: () => {
 			return {
 				label: __("Placeholder"),
-				modelValue: blockController.getAttribute("placeholder"),
+				modelValue: blockController.getEffectiveAttribute("placeholder"),
 			};
 		},
 		searchKeyWords:
 			"Placeholder, Input, PlaceholderText, Placeholder Text, form, input, text, number, email, password, date, time, search, tel, url, color, tag",
 		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("placeholder", val),
+			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("placeholder", val),
 		},
+		condition: () => !blockController.isSelect(),
 	},
-	// Radio button specific properties
 	{
 		component: InlineInput,
 		getProps: () => {
 			return {
 				label: __("Name"),
-				modelValue: blockController.getAttribute("name") || "",
-				description: __("Group name for this radio button. Radio buttons with the same name are grouped together."),
+				modelValue: blockController.getEffectiveAttribute("name") || "",
+				description: __(
+					"Key this field's value is submitted under. Radio buttons with the same name are grouped together.",
+				),
 			};
 		},
-		searchKeyWords: "Radio, Name, Group, RadioName, Radio Name, Group Name, input, radio button",
+		searchKeyWords:
+			"Name, Field Name, FieldName, Submission, Key, Radio, Group, Group Name, form, input, textarea, select",
 		events: {
-			"update:modelValue": (val: string) => blockController.setAttribute("name", val),
+			"update:modelValue": (val: string) => blockController.setEffectiveAttribute("name", val || undefined),
 		},
-		condition: () => blockController.getAttribute("type") === "radio",
 	},
+	{
+		component: OptionToggle,
+		getProps: () => {
+			return {
+				label: __("Required"),
+				options: [
+					{ label: __("Yes"), value: true },
+					{ label: __("No"), value: false },
+				],
+				modelValue: hasAttribute("required"),
+			};
+		},
+		searchKeyWords: "Required, Mandatory, Validation, form, input, textarea, select",
+		events: {
+			"update:modelValue": (val: boolean) =>
+				blockController.setEffectiveAttribute("required", val ? "required" : undefined),
+		},
+	},
+	// Radio button specific properties
 	{
 		component: InlineInput,
 		getProps: () => {
@@ -108,5 +133,5 @@ const inputOptionsSectionProperties = [
 export default {
 	name: __("Input Options"),
 	properties: inputOptionsSectionProperties,
-	condition: () => blockController.isInput(),
+	condition: () => blockController.isInput() || blockController.isSelect(),
 };
