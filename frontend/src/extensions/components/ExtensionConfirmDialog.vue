@@ -10,32 +10,25 @@
 				{{ prompt.extension.label }} wants access
 			</DialogTitle>
 
-			<!-- the period is in the interpolation. A newline before a separate "."
-					becomes a text node, and Prettier moves the markup -->
+			<!-- spaces and the period are in interpolations. Vue drops a line break
+					between elements, and Prettier moves a separate "." -->
 			<p class="pt-4 text-p-sm text-ink-gray-6">
-				It is asking to
-				<span class="font-semibold text-ink-gray-8">{{ prompt.act }}</span>
-				<template v-if="prompt.act === 'remove field'">
-					<strong>{{ prompt.detail }}</strong>
-					from
+				It wants to {{ actPhrases[prompt.act] }}
+				<template v-if="prompt.detail">
+					<strong class="text-ink-gray-8">{{ prompt.detail }}</strong>
+					{{ " from " }}
 				</template>
-				<!-- the space in the interpolation: Vue drops a line break between elements -->
-				<template v-else-if="prompt.act === 'change access'">{{ " of" }}</template>
-				the doctype
-				<span class="font-semibold text-ink-gray-8">{{ `${prompt.doctype}.` }}</span>
+				<strong class="text-ink-gray-8">{{ `${prompt.doctype}.` }}</strong>
 			</p>
 			<ExtensionAccessChange v-if="prompt.access" :access="prompt.access" />
 
-			<div v-if="isDestructive" class="mt-4 rounded-4 bg-surface-red-1 p-3">
-				<p class="text-p-sm text-ink-red-6">
-					{{
-						prompt.detail
-							? "This removes the field from forms and collection data. Existing page bindings may need to be updated."
-							: "This removes the doctype from your site."
-					}}
-				</p>
-				<Checkbox v-model="understood" class="pt-3" :label="`I trust ${prompt.extension.label} with this.`" />
-			</div>
+			<Checkbox v-if="isDestructive" v-model="understood" class="pt-3">
+				<template #label>
+					<span class="text-ink-red-6">
+						{{ prompt.detail ? "Pages that use this field may break." : "This deletes the doctype." }}
+					</span>
+				</template>
+			</Checkbox>
 
 			<div class="flex justify-end gap-2 pt-4">
 				<Button variant="subtle" @click="deny">Deny</Button>
@@ -48,13 +41,20 @@
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
 import ExtensionAccessChange from "@/extensions/components/ExtensionAccessChange.vue";
-import { answerPrompt, pendingPrompt } from "@/extensions/data/confirmations";
+import { answerPrompt, pendingPrompt, type SchemaAct } from "@/extensions/data/confirmations";
 import { Button, Checkbox } from "frappe-ui";
 import { DialogTitle } from "reka-ui";
 import { computed, ref, watch } from "vue";
 
 const prompt = computed(() => pendingPrompt.value);
 const understood = ref(false);
+
+const actPhrases: Record<SchemaAct, string> = {
+	create: "create the doctype",
+	delete: "delete the doctype",
+	"remove field": "remove the field",
+	"change access": "change who can use",
+};
 
 // the user answers each question separately. If the tick stayed, one answer
 // would approve an act that the user never saw
