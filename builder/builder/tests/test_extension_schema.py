@@ -4,11 +4,19 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.tests.extension_fixtures import drop_installations, make_installation, make_page_reader
+from builder.builder.patches.give_page_editors_extension_doctypes import execute as give_page_editors_access
+from builder.builder.tests.extension_fixtures import (
+	drop_installations,
+	make_installation,
+	make_page_reader,
+	make_role,
+	make_user,
+)
 from builder.extensions.schema import (
 	create_doctype,
 	delete_doctype,
 	get_doctype,
+	set_doctype_access,
 	update_doctype,
 )
 
@@ -25,6 +33,7 @@ def a_field(**over):
 
 
 EXTENSIONS = ("acme/schema", "acme/other", "acme/idle")
+TEST_ROLES = ("Extension Page Writer", "Extension Custom Writer")
 
 
 def clean_up():
@@ -42,6 +51,9 @@ def clean_up():
 	for name in EXTENSIONS:
 		drop_installations(name)
 		frappe.db.delete("Builder Extension Resource", {"extension": name})
+	# a test's Builder Page row is committed by the DDL above, so its own cleanup cannot undo it
+	frappe.db.delete("Custom DocPerm", {"parent": "Builder Page", "role": ("in", TEST_ROLES)})
+	frappe.clear_cache(doctype="Builder Page")
 	frappe.db.commit()
 
 
@@ -163,3 +175,68 @@ class TestExtensionSchema(FrappeTestCase):
 		self.assertRaises(
 			frappe.PermissionError, update_doctype, "acme/schema", NAME, [a_field(fieldname="note")]
 		)
+
+
+PAGE_WRITER = "Extension Page Writer"
+
+
+class TestExtensionDoctypeAccess(FrappeTestCase):
+	"""Page editors use what an extension stores, so they get its doctypes too."""
+
+	def setUp(self):
+		clean_up()
+		make_extension()
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		clean_up()
+
+	def give_page_write(self, role: str):
+		make_role(role)
+		frappe.get_doc(
+			{
+				"doctype": "Custom DocPerm",
+				"parent": "Builder Page",
+				"role": role,
+				"permlevel": 0,
+				"read": 1,
+				"write": 1,
+			}
+		).insert(ignore_permissions=True)
+		frappe.clear_cache(doctype="Builder Page")
+
+	def test_a_new_doctype_gives_page_editors_access(self):
+		self.give_page_write(PAGE_WRITER)
+		roles = create_doctype("acme/schema", NAME, [a_field()])["roles"]
+		self.assertEqual(set(roles), {"System Manager", "Website Manager", PAGE_WRITER})
+
+	def test_access_keeps_the_default_roles_and_refuses_an_administrator_only_role(self):
+		# a Custom DocPerm on Builder Page replaces its standard rows, so the manager edits pages through this role
+		self.give_page_write(PAGE_WRITER)
+		self.give_page_write(make_custom_role("Extension Custom Writer"))
+		email = make_user("extension-manager@example.com", roles=("System Manager", PAGE_WRITER))
+		# the user can outlive a run, because DDL commits. So the roles are set each time
+		frappe.get_doc("User", email).add_roles("System Manager", PAGE_WRITER)
+		frappe.set_user(email)
+
+		self.assertNotIn("Extension Custom Writer", create_doctype("acme/schema", NAME, [a_field()])["roles"])
+		roles = set_doctype_access("acme/schema", NAME, [])["roles"]
+		self.assertEqual(set(roles), {"System Manager", "Website Manager"})
+		with self.assertRaises(frappe.PermissionError):
+			set_doctype_access("acme/schema", NAME, ["Extension Custom Writer"])
+
+	def test_the_patch_gives_older_doctypes_the_page_editors(self):
+		create_doctype("acme/schema", NAME, [a_field()])
+		document = frappe.get_doc("DocType", NAME)
+		document.set("permissions", [{"role": "System Manager", "read": 1, "write": 1}])
+		document.save()
+		self.give_page_write(PAGE_WRITER)
+		give_page_editors_access()
+		self.assertIn(PAGE_WRITER, get_doctype("acme/schema", NAME)["roles"])
+
+
+def make_custom_role(name: str) -> str:
+	"""A role marked custom, which Frappe lets only the Administrator add to a custom doctype."""
+	make_role(name)
+	frappe.db.set_value("Role", name, "is_custom", 1)
+	return name

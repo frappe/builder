@@ -23,6 +23,7 @@ one made.
 
 import frappe
 from frappe import _
+from frappe.permissions import AUTOMATIC_ROLES
 
 from builder.extensions.access import assert_extension_access
 from builder.extensions.resources import (
@@ -242,7 +243,64 @@ def read_field(field: dict) -> dict:
 
 
 def default_permissions() -> list[dict]:
-	return [{"role": role, "read": 1, "write": 1, "create": 1, "delete": 1} for role in DEFAULT_ROLES]
+	"""The default roles and every role that can write a Builder Page, so each page
+	editor can use what the extension stores. A role this user may not grant is left out."""
+	page_writers = [
+		row.role for row in frappe.get_meta("Builder Page").permissions if row.write and not row.permlevel
+	]
+	return [full_access(role) for role in dict.fromkeys([*DEFAULT_ROLES, *page_writers]) if can_grant(role)]
+
+
+def full_access(role: str) -> dict:
+	return {"role": role, "read": 1, "write": 1, "create": 1, "delete": 1}
+
+
+def can_grant(role: str) -> bool:
+	"""Frappe lets only the Administrator add an automatic or a custom role to a custom doctype."""
+	if frappe.session.user == "Administrator":
+		return True
+	return role not in AUTOMATIC_ROLES and not frappe.db.get_value("Role", role, "is_custom")
+
+
+@frappe.whitelist(methods=["POST"])
+def set_doctype_access(extension: str, doctype: str, roles: list[str]) -> dict:
+	"""Which roles can read and change the documents of a doctype this extension made.
+
+	Each role gets full access. The default roles always stay, so a manager never
+	loses the doctype.
+	"""
+	assert_extension_access(extension, "schema.write")
+	assert_owned(extension, doctype)
+	document = frappe.get_doc("DocType", doctype)
+	if document.istable:
+		frappe.throw(_("A child table takes the access of its parent doctype."))
+	wanted = dict.fromkeys([*DEFAULT_ROLES, *read_roles(roles)])
+	document.set("permissions", [full_access(role) for role in wanted])
+	document.save()
+	return describe_doctype(doctype)
+
+
+def read_roles(roles: list[str]) -> list[str]:
+	if not isinstance(roles, list) or any(not isinstance(role, str) or not role for role in roles):
+		frappe.throw(_("Roles must be a list of role names."))
+	missing = [role for role in roles if not frappe.db.exists("Role", role)]
+	if missing:
+		frappe.throw(_("These roles do not exist: {0}").format(", ".join(missing)))
+	refused = [role for role in roles if not can_grant(role)]
+	if refused:
+		frappe.throw(
+			_("Only the Administrator can give {0} access to a custom doctype.").format(", ".join(refused)),
+			frappe.PermissionError,
+		)
+	return roles
+
+
+@frappe.whitelist()
+def list_roles(extension: str) -> list[str]:
+	"""The roles that this user may give access to an extension's doctype."""
+	assert_extension_access(extension, "schema.write")
+	roles = frappe.get_all("Role", filters={"disabled": 0}, pluck="name", order_by="name asc")
+	return [role for role in roles if can_grant(role)]
 
 
 def describe_doctype(doctype: str) -> dict:
@@ -250,6 +308,7 @@ def describe_doctype(doctype: str) -> dict:
 	return {
 		"doctype": meta.name,
 		"istable": bool(meta.istable),
+		"roles": list(dict.fromkeys(row.role for row in meta.permissions if row.read and not row.permlevel)),
 		"fields": [
 			{
 				key: field.get(key)
