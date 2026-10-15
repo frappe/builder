@@ -22,6 +22,9 @@ import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import { markRaw, nextTick } from "vue";
 
+/** The latest page data request. An answer to an older one is dropped. */
+let pageDataRequest = 0;
+
 const { capture } = useTelemetry();
 
 // not the openPageInBrowser tab name, so a detach does not take over the live page tab
@@ -123,7 +126,8 @@ const usePageStore = defineStore("pageStore", {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
 						// the detached preview raises this tab by this name
-						if (!editorDemo && router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
+						if (!editorDemo && router.currentRoute.value.name === "builder")
+							window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
@@ -431,26 +435,32 @@ const usePageStore = defineStore("pageStore", {
 				});
 		},
 
+		/** Shows a failed fetch as a toast. `loadPageData` lets its caller handle it. */
 		setPageData(page?: BuilderPage) {
+			return this.loadPageData(page).catch((e: { exc: string | null }) => {
+				const error_message = e.exc?.split("\n").slice(-2)[0];
+				toast.error(__("There was an error while fetching page data"), {
+					description: error_message,
+				});
+			});
+		},
+
+		/**
+		 * Fetches the page data and shows it. Only the latest request writes, so a
+		 * slow answer for another page or older preview values cannot replace it.
+		 */
+		async loadPageData(page?: BuilderPage) {
+			const request = ++pageDataRequest;
 			if (!page || !page.page_data_script) {
 				this.pageData = {};
 				return;
 			}
-			return webPages.runDocMethod
-				.submit({
-					method: "get_page_data",
-					name: page.name,
-					route_variables: this.routeVariables,
-				})
-				.then((data: { message: { [key: string]: [] } }) => {
-					this.pageData = data.message;
-				})
-				.catch((e: { exc: string | null }) => {
-					const error_message = e.exc?.split("\n").slice(-2)[0];
-					toast.error(__("There was an error while fetching page data"), {
-						description: error_message,
-					});
-				});
+			const data: { message: { [key: string]: [] } } = await webPages.runDocMethod.submit({
+				method: "get_page_data",
+				name: page.name,
+				route_variables: this.routeVariables,
+			});
+			if (request === pageDataRequest) this.pageData = data.message;
 		},
 
 		/** Persist a generated page_data_script (the static-repeater data shim) and

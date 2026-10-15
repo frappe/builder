@@ -83,7 +83,8 @@ const setRouteVariables = async (params: unknown) => {
 const refreshData = async () => {
 	const pageStore = usePageStore();
 	if (!pageStore.activePage) throw refuse("No page is open.", "no_canvas");
-	await pageStore.setPageData(pageStore.activePage);
+	// rejects on a failed fetch, so the extension can tell and try again
+	await pageStore.loadPageData(pageStore.activePage);
 };
 
 export const pageMethods: MethodTable = {
