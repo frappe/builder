@@ -120,7 +120,9 @@ def duckdb_insert_placeholder(field: str) -> str:
 def setup_table(table_name: str, doctype: str, fields: list[str]):
 	"""(Re)build a DuckDB table as a full snapshot of `doctype`."""
 	with DuckDBConnection() as db:
-		df = pd.read_sql(f"SELECT {', '.join(fields)} FROM `tab{doctype}`", frappe.db.get_connection())  # type: ignore
+		# get_all rather than raw SQL: Web Page View may be a virtual doctype with no table
+		records = frappe.get_all(doctype, fields=fields, as_list=True, limit=0, order_by="creation asc")
+		df = pd.DataFrame(records, columns=fields)
 		db.register("df", df)
 		select_cols = ", ".join(duckdb_column_cast(f) for f in fields)
 		db.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT {select_cols} FROM df")
