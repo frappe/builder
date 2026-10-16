@@ -114,7 +114,7 @@
 						<span
 							class="mr-1 min-w-5 rounded-full bg-surface-gray-2 px-1.5 text-center text-xs text-ink-gray-6 group-hover:bg-surface-gray-3"
 							:class="{ 'group-hover:hidden': searchMode === 'replace' }">
-							{{ blockMatches.get(result.blockId)?.length }}
+							{{ countMatches(blockMatches.get(result.blockId)) }}
 						</span>
 						<Button
 							v-if="searchMode === 'replace'"
@@ -195,7 +195,7 @@ type SearchLocation = {
 	set?: (value: string) => unknown;
 };
 
-type SearchMatch = SearchLocation & { block: Block; value: string };
+type SearchMatch = SearchLocation & { block: Block; value: string; count: number };
 
 // keeps fontWeight: 600 a number when the replaced value is still numeric
 const restoreType = (original: unknown, value: string) =>
@@ -323,8 +323,11 @@ const selectedFilters = computed(() => filters.value.filter((f) => f.selected));
 
 const clearFilters = () => filters.value.forEach((filter) => (filter.selected = false));
 
+const countMatches = (matches: SearchMatch[] = []) =>
+	matches.reduce((total, match) => total + match.count, 0);
+
 const matchCount = computed(() => ({
-	matches: [...blockMatches.value.values()].flat().length,
+	matches: countMatches([...blockMatches.value.values()].flat()),
 	blocks: blockMatches.value.size,
 }));
 
@@ -395,10 +398,13 @@ const collectMatches = (block: Block, searchTerm: string): SearchMatch[] => {
 		field
 			.locations(block)
 			.filter(({ value }) => typeof value === "string" || typeof value === "number")
-			.map((location) => ({ ...location, block, value: String(location.value) }))
-			.filter(({ value, exact }) =>
-				exact ? value.toLowerCase() === term : value.toLowerCase().includes(term),
-			),
+			.map((location) => {
+				const value = String(location.value);
+				const lowerValue = value.toLowerCase();
+				const count = location.exact ? Number(lowerValue === term) : lowerValue.split(term).length - 1;
+				return { ...location, block, value, count };
+			})
+			.filter(({ count }) => count > 0),
 	);
 };
 
