@@ -22,6 +22,7 @@ def get_context(context):
 	frappe.db.commit()
 	context.csrf_token = csrf_token
 	context.site_name = frappe.local.site
+	context.socketio_port = frappe.conf.socketio_port or 9000
 	context.builder_version = get_app_version("builder")
 	# developer mode
 	context.is_developer_mode = frappe.conf.developer_mode
