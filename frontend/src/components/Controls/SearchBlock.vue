@@ -1,38 +1,40 @@
 <template>
 	<div class="flex flex-col gap-2" @keydown="handleKeydown">
-		<!-- the clear button would share the suffix with the filter and run under the text; Escape clears instead -->
-		<BuilderInput
-			ref="searchInput"
-			type="text"
-			:placeholder="__('Find')"
-			v-model="query"
-			:hideClearButton="true"
-			@input="(value: string) => (query = value)">
-			<template #suffix>
-				<Popover bare>
-					<template #trigger>
-						<button
-							class="flex cursor-pointer items-center"
-							:class="selectedFilters.length ? 'text-ink-gray-8' : 'text-ink-gray-4 hover:text-ink-gray-6'"
-							:aria-label="__('Filters')"
-							:title="__('Filters')">
-							<span class="lucide-list-filter size-3.5" aria-hidden="true" />
-						</button>
-					</template>
-					<template #default>
-						<div class="w-44 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
-							<label
-								v-for="filter in filters"
-								:key="filter.key"
-								class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
-								<Checkbox v-model="filter.selected" />
-								{{ filter.name }}
-							</label>
+		<div class="flex items-center gap-1.5">
+			<div class="min-w-0 flex-1">
+				<BuilderInput
+					ref="searchInput"
+					type="text"
+					:placeholder="__('Find')"
+					v-model="query"
+					@input="(value: string) => (query = value)" />
+			</div>
+			<Popover bare>
+				<template #trigger>
+					<Button icon="lucide-list-filter" :label="__('Filters')" :tooltip="__('Filters')" />
+				</template>
+				<template #default>
+					<div class="w-44 rounded-6 border border-outline-gray-2 bg-surface-base p-1 shadow-xl">
+						<div class="text-xs-medium px-2 py-1.5 text-ink-gray-5">{{ __("Filters") }}</div>
+						<label
+							v-for="filter in filters"
+							:key="filter.key"
+							class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
+							<Checkbox v-model="filter.selected" />
+							{{ filter.name }}
+						</label>
+						<div class="mt-1 border-t border-outline-gray-1 pt-1">
+							<Button
+								variant="ghost"
+								class="w-full"
+								:label="__('Clear all filters')"
+								:disabled="!selectedFilters.length"
+								@click="clearFilters" />
 						</div>
-					</template>
-				</Popover>
-			</template>
-		</BuilderInput>
+					</div>
+				</template>
+			</Popover>
+		</div>
 
 		<div v-if="searchMode === 'replace'" class="flex items-center gap-1.5">
 			<!-- BuilderInput passes class to its inner input, so the wrapper sizes it -->
@@ -314,6 +316,8 @@ const filters = ref(
 );
 
 const selectedFilters = computed(() => filters.value.filter((f) => f.selected));
+
+const clearFilters = () => filters.value.forEach((filter) => (filter.selected = false));
 
 const matchCount = computed(() => ({
 	matches: [...blockMatches.value.values()].flat().length,
