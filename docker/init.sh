@@ -12,7 +12,7 @@ if [ -d "$BENCH_DIR/apps/frappe" ]; then
 fi
 
 echo "Creating new bench..."
-bench init --skip-redis-config-generation frappe-bench --version version-15
+bench init --skip-redis-config-generation frappe-bench --version version-16
 cd frappe-bench
 
 # Point services at the compose containers instead of localhost.
