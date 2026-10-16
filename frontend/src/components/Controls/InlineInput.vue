@@ -22,7 +22,7 @@
 			v-if="type != 'autocomplete'"
 			@update:modelValue="handleChange"
 			:hideClearButton="hideClearButton"
-			@keydown.stop="handleKeyDown" />
+			@keydown="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
 			ref="autocompleteRef"
@@ -38,7 +38,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { extractNumberAndUnit } from "@/utils/helpers";
+import { extractNumberAndUnit, isCtrlOrCmd } from "@/utils/helpers";
 import { isNumber } from "@tiptap/vue-3";
 import { computed, ref } from "vue";
 import Autocomplete from "./Autocomplete.vue";
@@ -139,6 +139,7 @@ const handleMouseDown = (e: MouseEvent) => {
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
+	if (!isCtrlOrCmd(e)) e.stopPropagation();
 	// Only numeric inputs (those with unit options or a slider) step via arrow keys.
 	const supportsArrowStepping = props.unitOptions.length > 0 || props.enableSlider;
 	if (!supportsArrowStepping) return;
