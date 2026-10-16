@@ -297,13 +297,17 @@ const searchFields: { key: string; name: string; locations: (block: Block) => Se
 	{
 		key: "classes",
 		name: __("CSS Classes"),
-		locations: (block) =>
-			(block.classes || []).map((className) => ({
+		locations: (block) => {
+			const classes = [...(block.classes || [])];
+			return classes.map((className, index) => ({
 				label: __("Class"),
 				value: className,
-				set: (value: string) =>
-					(block.classes = block.classes.map((c) => (c === className ? value : c)).filter(Boolean)),
-			})),
+				set: (value: string) => {
+					classes[index] = value;
+					block.classes = classes.filter(Boolean);
+				},
+			}));
+		},
 	},
 ];
 
