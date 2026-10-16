@@ -7,13 +7,13 @@
 			:placeholder="__('Find')"
 			v-model="query"
 			:hideClearButton="true"
-			@input="setQuery">
+			@input="(value: string) => (query = value)">
 			<template #suffix>
 				<Popover bare>
 					<template #trigger>
 						<button
 							class="flex cursor-pointer items-center"
-							:class="selectedFiltersCount ? 'text-ink-gray-8' : 'text-ink-gray-4 hover:text-ink-gray-6'"
+							:class="selectedFilters.length ? 'text-ink-gray-8' : 'text-ink-gray-4 hover:text-ink-gray-6'"
 							:aria-label="__('Filters')"
 							:title="__('Filters')">
 							<span class="lucide-list-filter size-3.5" aria-hidden="true" />
@@ -25,7 +25,7 @@
 								v-for="filter in filters"
 								:key="filter.key"
 								class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-1.5 text-sm text-ink-gray-8 hover:bg-surface-gray-2">
-								<Checkbox :modelValue="filter.selected" @update:modelValue="toggleFilter(filter)" />
+								<Checkbox v-model="filter.selected" />
 								{{ filter.name }}
 							</label>
 						</div>
@@ -50,14 +50,14 @@
 				@click="replaceInBlocks(getScopeBlocks())" />
 		</div>
 
-		<div v-if="selectedFiltersCount" class="flex flex-wrap gap-1">
+		<div v-if="selectedFilters.length" class="flex flex-wrap gap-1">
 			<Button
-				v-for="filter in filters.filter((f) => f.selected)"
+				v-for="filter in selectedFilters"
 				:key="filter.key"
 				size="sm"
 				iconRight="lucide-x"
 				:label="filter.name"
-				@click="toggleFilter(filter)" />
+				@click="filter.selected = false" />
 		</div>
 
 		<label
@@ -169,8 +169,11 @@ const query = ref("");
 const replaceQuery = ref("");
 // owned by PageBuilder, whose popup header holds the Find / Replace tabs
 const searchMode = defineModel<"search" | "replace">("mode", { default: "search" });
-const results = ref([]) as Ref<Block[]>;
 const blockMatches = shallowRef(new Map<string, SearchMatch[]>());
+// every match is kept so the Replace All count covers blocks past the display limit
+const results = computed(() =>
+	[...blockMatches.value.values()].slice(0, 50).map((matches) => matches[0].block),
+);
 // ids captured when scope is ticked, so clicking results doesn't move it and undo brings deleted blocks back
 const scopeBlockIds = ref<string[]>([]);
 const searchInSelectedBlock = computed({
@@ -310,9 +313,7 @@ const filters = ref(
 	})),
 );
 
-const selectedFiltersCount = computed(() => {
-	return filters.value.filter((f) => f.selected).length;
-});
+const selectedFilters = computed(() => filters.value.filter((f) => f.selected));
 
 const matchCount = computed(() => ({
 	matches: [...blockMatches.value.values()].flat().length,
@@ -326,10 +327,6 @@ const matchSummary = computed(() => {
 	if (blocks === 1) return __("{0} matches in 1 block", [matches]);
 	return __("{0} matches in {1} blocks", [matches, blocks]);
 });
-
-const setQuery = (value: string) => {
-	query.value = value;
-};
 
 const focusInput = (input: Ref<ComponentPublicInstance | null>) =>
 	input.value?.$el.querySelector("input")?.focus();
@@ -361,10 +358,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 	}
 };
 
-const toggleFilter = (filter: any) => {
-	filter.selected = !filter.selected;
-};
-
 const getPreviews = (block: Block) =>
 	(blockMatches.value.get(block.blockId) || []).map((match) => {
 		const collapse = (text: string) => text.replace(/\s+/g, " ");
@@ -381,16 +374,16 @@ const getPreviews = (block: Block) =>
 		};
 	});
 
-const activeFields = () => {
-	const activeFilterKeys = filters.value.filter((f) => f.selected).map((f) => f.key);
+const activeFields = computed(() => {
+	const activeFilterKeys = selectedFilters.value.map((f) => f.key);
 	return activeFilterKeys.length
 		? searchFields.filter((f) => activeFilterKeys.includes(f.key))
 		: searchFields;
-};
+});
 
 const collectMatches = (block: Block, searchTerm: string): SearchMatch[] => {
 	const term = searchTerm.toLowerCase();
-	return activeFields().flatMap((field) =>
+	return activeFields.value.flatMap((field) =>
 		field
 			.locations(block)
 			.filter(({ value }) => typeof value === "string" || typeof value === "number")
@@ -424,8 +417,6 @@ const replaceInBlocks = (blocks: Block[]) => {
 			(match) => match.set?.(match.value.replace(regex, () => replaceQuery.value)) !== false,
 		);
 	} finally {
-		// the history watcher fires after this returns; resuming right away would record an extra empty step.
-		// forced, since a text block remounted by a tag change force-resumes on mount and drops this pause
 		nextTick(() => {
 			if (pauseId) history?.resume(pauseId, replaced.length > 0, true);
 		});
@@ -444,13 +435,7 @@ const replaceInBlocks = (blocks: Block[]) => {
 };
 
 const performSearch = () => {
-	results.value = [];
-	if (query.value) {
-		const filteredBlocks = searchWithFilters(query.value);
-		if (filteredBlocks?.length) {
-			results.value = filteredBlocks;
-		}
-	}
+	blockMatches.value = query.value ? searchWithFilters(query.value) : new Map();
 };
 
 const getScopeBlocks = (): Block[] => {
@@ -458,24 +443,16 @@ const getScopeBlocks = (): Block[] => {
 	return rootBlock ? getBlocksInScope(rootBlock, scopeBlockIds.value) : [];
 };
 
-const searchWithFilters = (searchTerm: string): Block[] => {
-	const searchResults: Block[] = [];
+const searchWithFilters = (searchTerm: string) => {
 	const matchesByBlock = new Map<string, SearchMatch[]>();
-	const limit = 50;
-
-	// every match is kept so the Replace All count covers blocks past the display limit
 	for (const block of getScopeBlocks()) {
 		// replace mode lists only what Replace can change
 		const matches = collectMatches(block, searchTerm).filter(
 			(match) => searchMode.value === "search" || match.set,
 		);
-		if (!matches.length) continue;
-		matchesByBlock.set(block.blockId, matches);
-		if (searchResults.length < limit) searchResults.push(block);
+		if (matches.length) matchesByBlock.set(block.blockId, matches);
 	}
-
-	blockMatches.value = matchesByBlock;
-	return searchResults;
+	return matchesByBlock;
 };
 
 // the native autofocus attribute only fires once per page, so it would miss every reopen
@@ -483,13 +460,10 @@ onMounted(() => nextTick(focusFind));
 
 onUnmounted(() => canvasStore.activeCanvas?.setHoveredBlock(null));
 
-// edits, deletions, replaces, undo and redo all move the undo stack's head (its length stops
-// changing once the stack is full); searching never edits blocks, so it can't retrigger itself.
-// history sits in a ref, so undoStack arrives unwrapped despite its Ref type
 watchDebounced(
 	[
 		query,
-		() => filters.value.map((f) => f.selected).join(","),
+		selectedFilters,
 		searchMode,
 		scopeBlockIds,
 		() => canvasStore.activeCanvas?.getRootBlock(),
