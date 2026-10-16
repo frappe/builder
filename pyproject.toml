@@ -28,7 +28,9 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.bench.frappe-dependencies]
-frappe = ">=15.0.0,<18.0.0"
+# 16.36.1 is the first release whose @framework/ui ships telemetry and TrialBanner,
+# which the frontend imports; older benches fail the build instead of the update check
+frappe = ">=16.36.1,<18.0.0"
 
 [tool.bench.assets]
 build_dir = "./frontend"
