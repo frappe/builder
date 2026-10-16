@@ -5,8 +5,8 @@ import Block from "@/block";
 
 const numericValuePattern = /^(-?(?:\d+(?:\.\d*)?|\.\d+))([a-z%]*)$/i;
 
-function getNumberFromPx(px: string | number | null | undefined): number {
-	if (!px) {
+function getNumberFromPx(px: StyleValue): number {
+	if (!px || typeof px === "boolean") {
 		return 0;
 	}
 	if (typeof px === "number") {

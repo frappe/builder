@@ -28,7 +28,7 @@ const dataKeySectionProperties = [
 		},
 		searchKeyWords: "Type, DataType, Data Type",
 		events: {
-			"update:modelValue": (val: string) => blockController.setDataKey("type", val),
+			"update:modelValue": (val: BlockDataKeyType) => blockController.setDataKey("type", val),
 		},
 	},
 	{
