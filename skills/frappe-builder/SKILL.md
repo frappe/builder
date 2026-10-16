@@ -11,7 +11,7 @@ With a shell, read `reference/cli.md` first: `scripts/builder.py` in this skill'
 
 ## 1. Edit loop
 
-- A page's tree is `draft_blocks`, or `blocks` while the draft is empty; a component's is `block`. Each is JSON stored as a string: write the whole tree back to `draft_blocks` (or `block`).
+- A page's tree is `draft_blocks`, or `blocks` while the draft is empty; a component's is `block`. Each is JSON stored as a string: write the whole tree back to `draft_blocks` (or `block`) together with the `modified` value you read. If someone saved in between, the write fails instead of overwriting them: read again and merge.
 - Before a page's first edit, call its `create_manual_snapshot` method with a `label`. To roll back, call `restore_snapshot` with that `Builder Snapshot`'s name: it puts the tree back into the draft.
 - Ask the human to close editor tabs on the page before you write and reload them after: an open tab saves its old tree over your draft on its next edit.
 - On a site that has pages, read one first and reuse its tokens, fonts, widths and components.
