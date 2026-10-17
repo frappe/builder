@@ -35,6 +35,15 @@ declare type BlockProps = Record<
 	}
 >;
 
+declare type ImageArrayItem = {
+	url: string;
+	fit?: string;
+	position?: string;
+	[field: string]: string | undefined;
+};
+
+declare type ArrayPropItem = string | ImageArrayItem;
+
 declare type BlockVisibilityCondition = {
 	key: string | undefined;
 	comesFrom: "props" | "dataScript" | "componentData" | undefined;
