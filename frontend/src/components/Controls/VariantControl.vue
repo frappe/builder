@@ -47,7 +47,7 @@
 				:defaultValue="defaultValue"
 				:placeholder="placeholder"
 				@update:modelValue="$emit('update:modelValue', $event)"
-				@keydown.stop="$emit('keydown', $event)"
+				@keydown="handleKeyDown"
 				class="w-full">
 				<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 					<slot :name="name" v-bind="slotData || {}" />
@@ -67,6 +67,7 @@
 
 <script lang="ts" setup>
 import InputLabel from "@/components/Controls/InputLabel.vue";
+import { isCtrlOrCmd } from "@/utils/helpers";
 import { useEventListener } from "@vueuse/core";
 import type { Component } from "vue";
 import { computed, onMounted, ref } from "vue";
@@ -94,6 +95,11 @@ const emit = defineEmits<{
 }>();
 
 const isTopLabel = computed(() => props.labelPlacement === "top");
+
+const handleKeyDown = (event: KeyboardEvent) => {
+	if (!isCtrlOrCmd(event)) event.stopPropagation();
+	emit("keydown", event);
+};
 
 const rowRef = ref<HTMLElement | null>(null);
 const panelSelector = "[data-slot='content']";
