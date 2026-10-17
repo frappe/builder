@@ -94,7 +94,7 @@ export function useBuilderEvents(
 			if (file) {
 				uploadBuilderAsset(file).then((res: { fileURL: string; fileName: string }) => {
 					const selectedBlocks = blockController.getSelectedBlocks();
-					let parentBlock = selectedBlocks.length
+					let parentBlock: Block | null = selectedBlocks.length
 						? selectedBlocks[0]
 						: (canvasStore.activeCanvas?.getRootBlock() as Block);
 

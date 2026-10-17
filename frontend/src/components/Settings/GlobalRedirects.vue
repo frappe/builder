@@ -45,7 +45,11 @@
 					<span
 						v-if="field === 'to' && (row.status !== '301' || row.forward)"
 						class="flex shrink-0 items-center gap-1 rounded-4 bg-surface-gray-3 px-1.5 py-0.5 text-xs text-ink-gray-5"
-						:title="row.forward ? __('HTTP {0} · forwards query parameters', [row.status]) : __('HTTP {0}', [row.status])">
+						:title="
+							row.forward
+								? __('HTTP {0} · forwards query parameters', [row.status])
+								: __('HTTP {0}', [row.status])
+						">
 						<span v-if="row.status !== '301'" class="tabular-nums">{{ row.status }}</span>
 						<span v-if="row.forward" class="lucide-arrow-right-left size-3" aria-hidden="true" />
 					</span>
@@ -73,7 +77,7 @@
 						v-for="field in fields"
 						:key="field"
 						required
-						:ref="(el) => field === 'from' && (fromRef = el)"
+						:ref="(el: unknown) => field === 'from' && (fromRef = el)"
 						:modelValue="draft[field]"
 						:label="field === 'from' ? __('Source') : __('Target')"
 						type="text"
@@ -261,7 +265,11 @@ const saveExisting = (id: string, d: Draft) => {
 		() => routeRedirects.setValue.submit({ name: id, ...docFields(d) }),
 		() => index !== -1 && Object.assign(routeRedirects.data![index], docFields(d)),
 		() => backup && Object.assign(routeRedirects.data![index], backup),
-		{ loading: __("Updating redirect..."), success: __("Redirect updated"), error: __("Error updating redirect") },
+		{
+			loading: __("Updating redirect..."),
+			success: __("Redirect updated"),
+			error: __("Error updating redirect"),
+		},
 	);
 };
 
@@ -278,7 +286,11 @@ const deleteRedirect = async (id: string) => {
 		() => routeRedirects.delete.submit(id),
 		() => index !== -1 && routeRedirects.data!.splice(index, 1),
 		() => backup && routeRedirects.data!.splice(index, 0, backup),
-		{ loading: __("Deleting redirect..."), success: __("Redirect deleted"), error: __("Error deleting redirect") },
+		{
+			loading: __("Deleting redirect..."),
+			success: __("Redirect deleted"),
+			error: __("Error deleting redirect"),
+		},
 	);
 };
 </script>

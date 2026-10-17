@@ -112,7 +112,9 @@ function isLocked(page: BuilderPage) {
 }
 
 const folderNames = (): string[] =>
-	(builderProjectFolder.data ?? []).map((folder: BuilderProjectFolder) => folder.folder_name);
+	(builderProjectFolder.data ?? [])
+		.map((folder: BuilderProjectFolder) => folder.folder_name)
+		.filter((name) => name !== undefined);
 
 export function pageMenu(page: BuilderPage) {
 	const pageStore = usePageStore();
