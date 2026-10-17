@@ -13,8 +13,8 @@ curl -sI "https://<site>/<route>" | grep -i x-from-cache       # True: served fr
 curl -s  "https://<site>/<route>?fresh=1" > fresh.html          # a query string skips the cache
 ```
 
-- The fresh render is right and the plain URL isn't: it's the page cache; it expires within 30 minutes, or publishing the page again clears it (ask first; `builder.py publish` refuses if the draft holds someone else's edits).
-- The fresh render is wrong too: the change never went live. Pages need publish; editor-dropped component instances need `sync`.
+- The fresh render is right and the plain URL isn't: it's the page cache; it expires within 30 minutes, or publishing the page again clears it (ask first: publishing also ships whatever else is in the draft, including someone else's edits).
+- The fresh render is wrong too: the change never went live. Pages need publish; editor-dropped component instances need `builder.api.sync_component`.
 
 ## A component save that never shows
 

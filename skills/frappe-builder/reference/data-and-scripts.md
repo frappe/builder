@@ -45,12 +45,7 @@ A route like `events/:event` matches every value; the script reads `frappe.form_
 
 ## Client scripts
 
-A `Builder Client Script` (`script_type` `JavaScript` or `CSS`) is a file pages link by name; one script can serve many pages.
-
-```sh
-frappectl -s <p> doc create "Builder Client Script" --input script.json   # {"name": "Events Filter", "script_type": "JavaScript", "script": "..."}
-frappectl -s <p> doc update "Builder Page" <page> --input links.json      # {"client_scripts": [{"builder_script": "Events Filter"}]}
-```
+A `Builder Client Script` (`script_type` `JavaScript` or `CSS`) is a file pages link by name; one script can serve many pages. Create one as `{"name": "Events Filter", "script_type": "JavaScript", "script": "..."}`, then link it from the page's `client_scripts` table: `{"client_scripts": [{"builder_script": "Events Filter"}]}`.
 
 - The `client_scripts` list you send replaces the page's list.
 - Order live: component scripts run inline as their blocks parse; then the Builder Settings script; then page JS in list order, with the whole DOM present. CSS: block styles, then the Builder Settings style, then page CSS, which wins at equal specificity.
