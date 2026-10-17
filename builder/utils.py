@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import inspect
 import os
 import re
@@ -309,6 +311,8 @@ def get_safer_globals():
 			get_cached_doc=get_cached_doc_as_dict,
 			_=frappe._,
 			session=safe_globals["frappe"]["session"],
+			# a script raises it for a missing record, and the site answers 404
+			PageDoesNotExistError=frappe.PageDoesNotExistError,
 		),
 	)
 
@@ -645,6 +649,9 @@ def add_composite_index_to_web_page_view():
 	Add a composite index to the Web Page View table.
 	This is used to speed up queries that filter by creation, is_unique, and path.
 	"""
+	# newer Frappe keeps Web Page View in its SQLite log database, with no table here
+	if not frappe.db.table_exists("Web Page View"):
+		return
 	frappe.db.add_index("Web Page View", ["creation", "is_unique", "path"])
 
 
@@ -840,6 +847,31 @@ def combine(a, b):
 
 def hash(s):
 	return f"{frappe.generate_hash(length=6)}-{s}"
+
+
+def csp_hash(content: str) -> str:
+	"""The script-src source expression that allows one inline script.
+
+	A hash suits content that never changes, where a nonce would make the page
+	uncacheable for nothing. The content must reach the page byte for byte, so
+	render it from the same variable the hash is taken from.
+	"""
+	digest = hashlib.sha256(content.encode()).digest()
+	return f"'sha256-{base64.b64encode(digest).decode()}'"
+
+
+def extension_dev_origins(*schemes: str) -> str:
+	"""CSP sources for an extension served from a dev server on this machine.
+
+	Empty unless the site runs in developer mode, so no production site widens
+	its policy. A dev server picks its own port and nothing can predict it, so a
+	source names the host and leaves the port open.
+	"""
+	if not frappe.conf.developer_mode:
+		return ""
+
+	hosts = ("localhost", "127.0.0.1")
+	return " ".join(f"{scheme}://{host}:*" for scheme in schemes for host in hosts)
 
 
 def to_safe_json(data):

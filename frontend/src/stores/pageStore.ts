@@ -22,6 +22,9 @@ import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
 import { markRaw, nextTick } from "vue";
 
+/** The latest page data request. An answer to an older one is dropped. */
+let pageDataRequest = 0;
+
 const { capture } = useTelemetry();
 
 // not the openPageInBrowser tab name, so a detach does not take over the live page tab
@@ -115,20 +118,7 @@ const usePageStore = defineStore("pageStore", {
 			canvasStore.clearVersionPreview();
 			canvasStore.activeCanvas?.setRootBlock(this.pageBlocks[0], resetCanvas, true, keepViewport);
 
-			if (page.client_scripts?.length) {
-				// Fetch full script documents for each script
-				const scriptsResource = createListResource({
-					doctype: "Builder Client Script",
-					fields: ["script_type", "name", "script"],
-					filters: [["name", "in", page.client_scripts.map((script) => script.builder_script)]],
-					auto: true,
-				});
-
-				await scriptsResource.list.promise;
-				this.activePageScripts = scriptsResource.data as BuilderClientScript[];
-			} else {
-				this.activePageScripts = [];
-			}
+			await this.loadPageScripts(page);
 
 			nextTick(() => {
 				const componentStore = useComponentStore();
@@ -136,7 +126,8 @@ const usePageStore = defineStore("pageStore", {
 					if (!componentStore.fetchingComponent.size) {
 						this.settingPage = false;
 						// the detached preview raises this tab by this name
-						if (!editorDemo && router.currentRoute.value.name === "builder") window.name = `editor-${pageName}`;
+						if (!editorDemo && router.currentRoute.value.name === "builder")
+							window.name = `editor-${pageName}`;
 						clearInterval(interval);
 						// detect pinned component instances whose live component drifted
 						componentStore.refreshComponentUpdates();
@@ -159,6 +150,40 @@ const usePageStore = defineStore("pageStore", {
 			if (routeParams) {
 				Object.assign(this.routeVariables, normalizeRouteVariables(routeParams));
 			}
+		},
+
+		async loadPageScripts(page: BuilderPage) {
+			if (!page.client_scripts?.length) {
+				this.activePageScripts = [];
+				return;
+			}
+			const scriptsResource = createListResource({
+				doctype: "Builder Client Script",
+				fields: ["script_type", "name", "script"],
+				filters: [["name", "in", page.client_scripts.map((script) => script.builder_script)]],
+				auto: true,
+			});
+			await scriptsResource.list.promise;
+			this.activePageScripts = scriptsResource.data as BuilderClientScript[];
+		},
+
+		/** Refetches the open page after a write from outside the editor. The canvas keeps its blocks. */
+		async reloadActivePage(pageId?: string | null) {
+			pageId ??= this.selectedPage;
+			const pageLoadToken = this.pageLoadToken;
+			const page = await this.fetchActivePage(pageId as string).catch(() => null);
+			// another page may have opened meanwhile, and its canvas autosaves to activePage
+			if (!page || pageLoadToken !== this.pageLoadToken || this.selectedPage !== pageId) return null;
+			this.activePage = page;
+			return page;
+		},
+
+		/** Reloads all that the editor derives from the open page: its record, data, and scripts. */
+		async refreshActivePage() {
+			const page = await this.reloadActivePage();
+			if (!page) return;
+			await Promise.all([this.setPageData(page), this.loadPageScripts(page)]);
+			this.scriptsVersion++;
 		},
 
 		async setActivePage(pageName: string) {
@@ -410,26 +435,32 @@ const usePageStore = defineStore("pageStore", {
 				});
 		},
 
+		/** Shows a failed fetch as a toast. `loadPageData` lets its caller handle it. */
 		setPageData(page?: BuilderPage) {
+			return this.loadPageData(page).catch((e: { exc: string | null }) => {
+				const error_message = e.exc?.split("\n").slice(-2)[0];
+				toast.error(__("There was an error while fetching page data"), {
+					description: error_message,
+				});
+			});
+		},
+
+		/**
+		 * Fetches the page data and shows it. Only the latest request writes, so a
+		 * slow answer for another page or older preview values cannot replace it.
+		 */
+		async loadPageData(page?: BuilderPage) {
+			const request = ++pageDataRequest;
 			if (!page || !page.page_data_script) {
 				this.pageData = {};
 				return;
 			}
-			return webPages.runDocMethod
-				.submit({
-					method: "get_page_data",
-					name: page.name,
-					route_variables: this.routeVariables,
-				})
-				.then((data: { message: { [key: string]: [] } }) => {
-					this.pageData = data.message;
-				})
-				.catch((e: { exc: string | null }) => {
-					const error_message = e.exc?.split("\n").slice(-2)[0];
-					toast.error(__("There was an error while fetching page data"), {
-						description: error_message,
-					});
-				});
+			const data: { message: { [key: string]: [] } } = await webPages.runDocMethod.submit({
+				method: "get_page_data",
+				name: page.name,
+				route_variables: this.routeVariables,
+			});
+			if (request === pageDataRequest) this.pageData = data.message;
 		},
 
 		/** Persist a generated page_data_script (the static-repeater data shim) and
@@ -449,9 +480,14 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		setRouteVariable(variable: string, value: string) {
-			this.routeVariables[variable] = value;
+			return this.setRouteVariables({ [variable]: value });
+		},
+
+		/** Saves the preview values of the open page, then fetches its data once. */
+		setRouteVariables(values: Record<string, string>) {
+			Object.assign(this.routeVariables, values);
 			localStorage.setItem(`${this.selectedPage}:routeVariables`, JSON.stringify(this.routeVariables));
-			this.setPageData(this.activePage as BuilderPage);
+			return this.setPageData(this.activePage as BuilderPage);
 		},
 
 		detachPreview(pageId: string) {

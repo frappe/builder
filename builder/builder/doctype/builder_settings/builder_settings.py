@@ -19,6 +19,7 @@ class BuilderSettings(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		ai_api_key: DF.Password | None
 		auto_convert_images_to_webp: DF.Check
 		body_html: DF.Code | None
 		default_language: DF.Data | None
@@ -27,6 +28,8 @@ class BuilderSettings(Document):
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		home_page: DF.Data | None
+		hub_url: DF.Data | None
+		persona_survey_done: DF.Check
 		restrict_click_handlers: DF.Check
 		script: DF.Code | None
 		script_public_url: DF.ReadOnly | None

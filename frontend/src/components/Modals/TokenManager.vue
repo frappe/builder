@@ -432,7 +432,7 @@ import { confirm } from "@/utils/helpers";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
 import { useDebounceFn } from "@vueuse/core";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
-import { computed, nextTick, reactive, ref, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, reactive, ref, watch, type ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
 	modelValue: boolean;
@@ -525,6 +525,7 @@ type RowGroup = { group: string | null; open: boolean; rows: Row[] };
 type EditableField = "token_name" | "group" | "value" | "dark_value";
 
 const UNGROUPED_LABEL = "Ungrouped";
+const editingCell = ref<{ rowId: string; field: EditableField } | null>(null);
 
 // row objects are reused across recomputes so that an open cell editor is never
 // rebuilt or stomped by a save round-trip
@@ -539,6 +540,13 @@ const getRowObject = (variable: BuilderToken) => {
 };
 // drop local row state so fresh store values flow in (used after bulk external changes like CSV import)
 const resetRowObjects = () => rowObjects.clear();
+
+watch(variables, (tokens) => {
+	for (const token of tokens) {
+		const row = rowObjects.get(token.name);
+		if (row && editingCell.value?.rowId !== row.id) Object.assign(row, token);
+	}
+});
 
 // group objects are reused across recomputes so that the open state survives edits
 const groupObjects = new Map<string, RowGroup>();
@@ -601,7 +609,6 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
 // --- cell editing: double-click to edit, Enter/blur commits, Esc cancels ---
 const EDIT_ORDER: EditableField[] = ["token_name", "group", "value", "dark_value"];
-const editingCell = ref<{ rowId: string; field: EditableField } | null>(null);
 
 const isEditing = (row: Row, field: EditableField) =>
 	editingCell.value?.rowId === row.id && editingCell.value?.field === field;

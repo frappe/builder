@@ -1,0 +1,121 @@
+# Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
+# See license.txt
+
+from unittest.mock import patch
+
+import frappe
+from frappe.tests.utils import FrappeTestCase
+
+from builder.builder.tests.extension_fixtures import (
+	drop_installations,
+	make_installation,
+	make_page_reader,
+	make_user,
+)
+from builder.extensions import state
+from builder.extensions.state import STATE_DOCTYPE, get_state, set_state, unset_state
+
+EXTENSION = "acme/remembers"
+real_write_row = state.write_row
+
+
+class TestExtensionState(FrappeTestCase):
+	"""One user's drawer for one extension.
+
+	It lived in `localStorage`, which is per browser, so two people sharing a
+	machine shared every extension's state.
+	"""
+
+	def setUp(self):
+		drop_installations(EXTENSION)
+		self.installation = make_installation(EXTENSION)
+
+	def rows(self):
+		return frappe.get_all(STATE_DOCTYPE, filters={"installation": self.installation.name}, pluck="name")
+
+	def test_stores_and_reads_a_value_back(self):
+		set_state(EXTENSION, {"theme": "dark"})
+
+		self.assertEqual(get_state(EXTENSION), {"theme": "dark"})
+
+	def test_merges_and_never_removes_what_a_call_leaves_unmentioned(self):
+		set_state(EXTENSION, {"theme": "dark"})
+		set_state(EXTENSION, {"page": 2})
+
+		self.assertEqual(get_state(EXTENSION), {"theme": "dark", "page": 2})
+
+	def test_a_first_write_that_loses_the_race_merges_into_the_winner(self):
+		"""Neither frame had a row to lock, so MariaDB ends one with a deadlock."""
+		attempts = []
+
+		def lose_the_first_attempt(*args):
+			attempts.append(args)
+			if len(attempts) == 1:
+				real_write_row(EXTENSION, self.installation.name, None, {"theme": "dark"})
+				raise frappe.QueryDeadlockError
+			real_write_row(*args)
+
+		with (
+			patch.object(state, "write_row", lose_the_first_attempt),
+			patch.object(frappe.db, "rollback") as rollback,
+			patch.object(frappe.db, "transaction_writes", 0),
+		):
+			set_state(EXTENSION, {"page": 2})
+
+		rollback.assert_called_once()
+		self.assertEqual(get_state(EXTENSION), {"theme": "dark", "page": 2})
+		self.assertEqual(len(self.rows()), 1)
+
+	def test_unset_drops_one_key_and_keeps_the_rest(self):
+		set_state(EXTENSION, {"theme": "dark", "page": 2})
+
+		unset_state(EXTENSION, "theme")
+
+		self.assertEqual(get_state(EXTENSION), {"page": 2})
+
+	def test_the_cap_is_on_the_whole_store_and_not_one_key(self):
+		"""A per-key cap would let an extension write a thousand small keys."""
+		# the store serializes as {"a": "xxx..."}: 24 characters for one entry,
+		# 48 for two and 72 for three
+		with patch("builder.extensions.state.MAX_STATE_BYTES", 50):
+			set_state(EXTENSION, {"a": "x" * 15})
+			set_state(EXTENSION, {"b": "x" * 15})
+
+			with self.assertRaises(frappe.ValidationError):
+				set_state(EXTENSION, {"c": "x" * 15})
+
+	def test_another_users_store_is_not_this_one(self):
+		"""The installation is the site's. What it stores is each user's."""
+		set_state(EXTENSION, {"theme": "dark"})
+
+		frappe.set_user(make_user())
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertEqual(get_state(EXTENSION), {})
+
+	def test_a_user_without_a_manager_role_stores_and_drops_keys(self):
+		"""Only a System Manager holds the doctype permission. The gate lets this user in."""
+		frappe.set_user(make_page_reader(self))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		set_state(EXTENSION, {"theme": "dark", "page": 2})
+		unset_state(EXTENSION, "theme")
+
+		self.assertEqual(get_state(EXTENSION), {"page": 2})
+
+	def test_only_a_system_manager_reaches_the_doctype_directly(self):
+		"""The generic REST routes skip the gate, the store cap and the session user."""
+		self.assertFalse(frappe.has_permission(STATE_DOCTYPE, "read", user=make_user()))
+
+	def test_refuses_an_extension_this_user_has_not_installed(self):
+		drop_installations("acme/absent")
+
+		with self.assertRaises(frappe.PermissionError):
+			get_state("acme/absent")
+
+	def test_uninstall_takes_the_store_with_it(self):
+		set_state(EXTENSION, {"theme": "dark"})
+
+		self.installation.delete()
+
+		self.assertEqual(self.rows(), [])

@@ -558,15 +558,8 @@ export class AIChatController {
 			builderTokens.reload();
 		}
 		if (resources.includes("page_data") || resources.includes("page")) {
-			const pageId = this.pageId.value;
-			const pageLoadToken = this.pageStore.pageLoadToken;
-			const page = await this.pageStore.fetchActivePage(pageId).catch(() => null);
-			// another page may have opened meanwhile, and its canvas autosaves to activePage
-			if (pageLoadToken !== this.pageStore.pageLoadToken || this.pageStore.selectedPage !== pageId) return;
-			if (page) {
-				this.pageStore.activePage = page;
-				if (resources.includes("page_data")) await this.pageStore.setPageData(page);
-			}
+			const page = await this.pageStore.reloadActivePage(this.pageId.value);
+			if (page && resources.includes("page_data")) await this.pageStore.setPageData(page);
 		}
 	};
 

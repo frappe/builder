@@ -13,36 +13,40 @@ interface DocType {
     idx?: number;
   }
   
-// Last updated: 2026-06-05 16:00:00.000000
+// Last updated: 2026-10-12 12:00:00.000000
 export interface BuilderSettings extends DocType {
-	/** Script: Code */
-	script?: string;
-	/** Style: Code */
-	style?: string;
-	/** Script Public URL: Read Only */
-	script_public_url?: string;
-	/** Style Public URL: Read Only */
-	style_public_url?: string;
-	/** Favicon: Attach Image */
-	favicon?: string;
-	/** Home Page: Data */
-	home_page?: string;
-	/** Auto convert images to WebP: Check */
-	auto_convert_images_to_webp: 0 | 1;
-	/** Disable Auto Dark Mode: Check */
-	disable_auto_dark_mode: 0 | 1;
-	/** Default Language: Data */
-	default_language?: string;
-	/** Head HTML: Code */
-	head_html?: string;
-	/** Body HTML: Code */
-	body_html?: string;
-	/** Execute Block Scripts in Editor: Select */
-	execute_block_scripts_in_editor?: "Don't Execute" | "Restricted" | "Unrestricted";
-	/** Restrict Click Handlers: Check */
-	restrict_click_handlers: 0 | 1;
-	/** AI API Key: Password */
-	ai_api_key?: string;
+  /** Script: Code */
+  script?: string;
+  /** Style: Code */
+  style?: string;
+  /** Script Public URL: Read Only */
+  script_public_url?: string;
+  /** Style Public URL: Read Only */
+  style_public_url?: string;
+  /** Favicon: Attach Image */
+  favicon?: string;
+  /** Home Page: Data */
+  home_page?: string;
+  /** Auto convert images to WebP: Check */
+  auto_convert_images_to_webp: 0 | 1;
+  /** Disable Auto Dark Mode: Check */
+  disable_auto_dark_mode: 0 | 1;
+  /** Default Language: Data */
+  default_language?: string;
+  /** Head HTML: Code */
+  head_html?: string;
+  /** Body HTML: Code */
+  body_html?: string;
+  /** Execute Block Scripts in Editor: Select */
+  execute_block_scripts_in_editor?: 'Don\'t Execute' | 'Restricted' | 'Unrestricted';
+  /** Restrict Click Handlers: Check */
+  restrict_click_handlers: 0 | 1;
+  /** AI API Key: Password */
+  ai_api_key?: string;
+  /** Persona Survey Done: Check */
+  persona_survey_done: 0 | 1;
+  /** Hub URL: Data */
+  hub_url?: string;
 }
 
 // Last updated: 2024-11-13 20:08:24.187664
@@ -101,7 +105,7 @@ export interface BuilderPageClientScript extends ChildDocType {
 	builder_script: string;
 }
 
-// Last updated: 2026-09-21 14:56:28.266708
+// Last updated: 2026-10-05 13:10:00.000000
 export interface BuilderClientScript extends DocType {
   /** Script: Code */
   script: string;

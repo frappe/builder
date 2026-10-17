@@ -14,7 +14,7 @@
 		</div>
 		<div class="mt-2 flex flex-col gap-3">
 			<CollapsibleSection
-				:sectionName="section.name"
+				:sectionName="section.label ?? section.name"
 				v-for="section in sections"
 				v-show="showSection(section)"
 				:key="section.name"

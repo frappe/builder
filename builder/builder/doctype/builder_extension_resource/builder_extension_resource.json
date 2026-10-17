@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "creation": "2026-08-21 10:00:00.000000",
+ "description": "Tracks resources an extension made. Records stay after uninstall.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "extension",
+  "resource_type",
+  "resource_name",
+  "resource_created"
+ ],
+ "fields": [
+  {
+   "description": "The extension's namespaced identity, in the form \"publisher/name\".",
+   "fieldname": "extension",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Extension",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "DocType",
+   "fieldname": "resource_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Resource Type",
+   "options": "DocType",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The doctype name.",
+   "fieldname": "resource_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Resource Name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The creation time of the record. A new record with the same name does not match it.",
+   "fieldname": "resource_created",
+   "fieldtype": "Datetime",
+   "label": "Resource Created",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Extension Resource",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "resource_name"
+}

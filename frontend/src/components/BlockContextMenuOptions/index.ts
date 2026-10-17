@@ -287,4 +287,4 @@ const options: ContextMenuOption[] = [
 	},
 ];
 
-options.forEach(blockContextMenuOptions.register);
+options.forEach(blockContextMenuOptions.registerBuiltIn);

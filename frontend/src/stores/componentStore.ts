@@ -204,6 +204,13 @@ const useComponentStore = defineStore("componentStore", {
 		setComponentDraft(name: string, componentDoc: ComponentDocDraft) {
 			this.componentDraftMap.set(name, componentDoc);
 		},
+		/** Reloads a component that changed outside the editor. An open draft keeps its own copy. */
+		async refreshComponent(componentName: string, removed = false) {
+			webComponent.reload();
+			if (removed) return void this.componentMap.delete(componentName);
+			if (this.componentDraftMap.has(componentName) || !this.componentMap.has(componentName)) return;
+			this.setComponentMap(await this.fetchComponent(componentName));
+		},
 		async fetchComponent(componentName: string) {
 			const webComponentDoc = await createDocumentResource({
 				doctype: "Builder Component",

@@ -1,0 +1,365 @@
+# Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
+# For license information, please see license.txt
+
+"""Doctypes an extension creates while the editor runs.
+
+Always `custom: 1`. Frappe refuses a non-custom doctype outside developer mode
+(`doctype.py:334`), and a custom one writes no files, so what an extension makes
+lives in the database and can be removed again.
+
+The permission floor is Frappe's own and nothing here lifts it: inserting a
+`DocType` needs create permission on `DocType`, which is System Manager. An
+extension asking a page editor to model a table simply fails, and that is the
+right answer rather than a bug.
+
+Ownership is a record, not a naming convention. `Builder Extension Resource`
+says which extension made which doctype, so only that extension changes or
+drops it.
+
+Ownership names the extension, not its installation. A doctype holds the site's
+data, so it outlives an uninstall, and the next installation owns what the first
+one made.
+"""
+
+import frappe
+from frappe import _
+from frappe.permissions import AUTOMATIC_ROLES
+
+from builder.extensions.access import assert_extension_access
+from builder.extensions.resources import (
+	RESOURCE_DOCTYPE,
+	find_resource,
+	forget_resource,
+	list_resources,
+	record_resource,
+)
+
+MODULE = "Builder"
+
+# The roles a new doctype is usable by. Both are what this app already grants on
+# its own records (`builder_token.json`). Neither is a custom role nor an
+# automatic one, so a System Manager may add them to a custom doctype
+# (`doctype.py:2037`); only the Administrator could add the rest.
+DEFAULT_ROLES = ("System Manager", "Website Manager")
+
+# What an extension may say instead of Frappe's own naming_rule vocabulary. A
+# short list, because a naming rule that goes wrong cannot be changed later
+# without renaming every document.
+NAMING_RULES = {
+	"hash": {"naming_rule": "Random"},
+	"autoincrement": {"naming_rule": "Autoincrement"},
+	"prompt": {"naming_rule": "Set by user"},
+}
+
+# Field types that need nothing but themselves. A Table needs a child doctype, a
+# Dynamic Link needs a companion field, and a Button needs client code, so none
+# of the three is here yet.
+ALLOWED_FIELDTYPES = {
+	"Data",
+	"Small Text",
+	"Text",
+	"Long Text",
+	"Text Editor",
+	"Markdown Editor",
+	"HTML Editor",
+	"Code",
+	"JSON",
+	"Int",
+	"Float",
+	"Currency",
+	"Percent",
+	"Rating",
+	"Duration",
+	"Check",
+	"Select",
+	"Link",
+	"Date",
+	"Datetime",
+	"Time",
+	"Attach",
+	"Attach Image",
+	"Color",
+	"Phone",
+	"Password",
+	"Read Only",
+	"Signature",
+	"Barcode",
+	"Geolocation",
+	"Section Break",
+	"Column Break",
+	"Tab Break",
+	"Heading",
+}
+
+FIELD_KEYS = (
+	"fieldname",
+	"label",
+	"fieldtype",
+	"options",
+	"reqd",
+	"unique",
+	"default",
+	"in_list_view",
+	"in_standard_filter",
+	"read_only",
+	"description",
+	"precision",
+)
+
+
+@frappe.whitelist(methods=["POST"])
+def create_doctype(
+	extension: str,
+	doctype: str,
+	fields: list[dict] | None = None,
+	naming: str = "hash",
+	istable: bool = False,
+) -> dict:
+	"""A new custom doctype, owned by this extension."""
+	assert_extension_access(extension, "schema.write")
+	# the DDL commits, so a refusal on the ownership record must come first
+	frappe.has_permission(RESOURCE_DOCTYPE, ptype="create", throw=True)
+	rows = read_fields(fields)
+	if not rows:
+		frappe.throw(_("A doctype needs at least one field."))
+
+	document = frappe.get_doc(
+		{
+			"doctype": "DocType",
+			"name": read_doctype_name(doctype),
+			"module": MODULE,
+			"custom": 1,
+			"istable": int(bool(istable)),
+			"fields": rows,
+			"permissions": [] if istable else default_permissions(),
+			**read_naming(naming),
+		}
+	).insert()
+
+	record_resource(extension, "DocType", document.name)
+	return describe_doctype(document.name)
+
+
+@frappe.whitelist()
+def get_doctype(extension: str, doctype: str) -> dict:
+	"""The field list of a doctype this user may read."""
+	assert_extension_access(extension, "schema.write")
+	frappe.has_permission(doctype, ptype="read", throw=True)
+	return describe_doctype(doctype)
+
+
+@frappe.whitelist(methods=["POST"])
+def update_doctype(
+	extension: str, doctype: str, fields: list[dict] | None = None, remove_fields: list[str] | None = None
+) -> dict:
+	"""Adds or updates fields by name, and removes only explicitly named fields."""
+	assert_extension_access(extension, "schema.write")
+	assert_owned(extension, doctype)
+
+	document = frappe.get_doc("DocType", doctype)
+	existing = {row.fieldname: row for row in document.fields}
+
+	for row in read_fields(fields):
+		# a layout break may come without a fieldname, so it is always a new field
+		found = existing.get(row.get("fieldname"))
+		if found:
+			found.update(row)
+		else:
+			document.append("fields", row)
+
+	remove_doctype_fields(document, remove_fields or [])
+	document.save()
+	return describe_doctype(doctype)
+
+
+def remove_doctype_fields(document, fieldnames: list[str]) -> None:
+	if not isinstance(fieldnames, list) or any(not isinstance(name, str) or not name for name in fieldnames):
+		frappe.throw(_("Fields to remove must be a list of field names."))
+	fields = {field.fieldname: field for field in document.fields}
+	for name in set(fieldnames):
+		if name not in fields:
+			frappe.throw(_("Field {0} does not exist in {1}.").format(name, document.name))
+	if fieldnames and len(set(fieldnames)) == len(document.fields):
+		frappe.throw(_("A doctype needs at least one field."))
+	for name in set(fieldnames):
+		document.remove(fields[name])
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_doctype(extension: str, doctype: str) -> None:
+	"""Removes a doctype this extension made. Frappe keeps its table and records."""
+	assert_extension_access(extension, "schema.write")
+	assert_owned(extension, doctype)
+
+	frappe.delete_doc("DocType", doctype)
+	forget_resource(extension, "DocType", doctype)
+
+
+@frappe.whitelist()
+def list_doctypes(extension: str) -> list[dict]:
+	"""Every doctype this extension made, whether or not it still exists."""
+	assert_extension_access(extension, "schema.write")
+
+	names = list_resources(extension, "DocType")
+	return [{"doctype": name, "exists": bool(find_resource(extension, "DocType", name))} for name in names]
+
+
+def read_doctype_name(doctype: str) -> str:
+	"""A title, not a path. The name becomes a table name, so it stays plain."""
+	name = (doctype or "").strip()
+	if not name or not all(part.isalnum() for part in name.replace("-", " ").split()):
+		frappe.throw(_("A doctype name holds letters, digits, spaces and hyphens."))
+	if frappe.db.exists("DocType", name):
+		frappe.throw(_("A doctype called {0} already exists.").format(name))
+	return name
+
+
+def read_naming(naming: str) -> dict:
+	if naming not in NAMING_RULES:
+		frappe.throw(_("Naming must be one of: {0}").format(", ".join(sorted(NAMING_RULES))))
+	return NAMING_RULES[naming]
+
+
+def read_fields(fields: list[dict] | None) -> list[dict]:
+	return [read_field(field) for field in (fields or [])]
+
+
+def read_field(field: dict) -> dict:
+	fieldtype = field.get("fieldtype")
+	if fieldtype not in ALLOWED_FIELDTYPES:
+		frappe.throw(
+			_("{0} is not a field type an extension can add. Allowed: {1}").format(
+				fieldtype, ", ".join(sorted(ALLOWED_FIELDTYPES))
+			)
+		)
+
+	row = {key: field[key] for key in FIELD_KEYS if field.get(key) is not None}
+	# a layout break carries no data, so it needs no fieldname of its own
+	if not row.get("fieldname") and "Break" not in fieldtype and fieldtype != "Heading":
+		frappe.throw(_("Every field needs a fieldname."))
+
+	row["fieldtype"] = fieldtype
+	return row
+
+
+def default_permissions() -> list[dict]:
+	"""The default roles and every role that can write a Builder Page, so each page
+	editor can use what the extension stores. A role this user may not grant is left out."""
+	page_writers = [
+		row.role for row in frappe.get_meta("Builder Page").permissions if row.write and not row.permlevel
+	]
+	return [full_access(role) for role in dict.fromkeys([*DEFAULT_ROLES, *page_writers]) if can_grant(role)]
+
+
+RIGHTS = ("read", "write", "create", "delete")
+
+
+def full_access(role: str) -> dict:
+	return {"role": role, **dict.fromkeys(RIGHTS, 1)}
+
+
+def can_grant(role: str) -> bool:
+	"""Frappe lets only the Administrator add an automatic or a custom role to a custom doctype."""
+	if frappe.session.user == "Administrator":
+		return True
+	return role not in AUTOMATIC_ROLES and not frappe.db.get_value("Role", role, "is_custom")
+
+
+@frappe.whitelist()
+def get_access_change(extension: str, doctype: str, roles: list[str]) -> dict:
+	"""What `set_doctype_access` would change. The user approves this before the write."""
+	assert_access_settable(extension, doctype)
+	return describe_access_change(doctype, read_roles(roles))
+
+
+@frappe.whitelist(methods=["POST"])
+def set_doctype_access(extension: str, doctype: str, roles: list[str], access: dict) -> dict:
+	"""Which roles can read and change the documents of a doctype this extension made.
+
+	Each role gets full access. The default roles always stay, so a manager never
+	loses the doctype. `access` is the change that the user approved. If the
+	change is now different, nothing is written.
+	"""
+	assert_access_settable(extension, doctype)
+	wanted = read_roles(roles)
+	change = describe_access_change(doctype, wanted)
+	if change != {key: sorted(access.get(key) or []) for key in ("added", "removed")}:
+		frappe.throw(
+			_("The access of {0} changed after the user saw it. Ask again.").format(doctype),
+			frappe.TimestampMismatchError,
+		)
+	if any(change.values()):
+		document = frappe.get_doc("DocType", doctype)
+		document.set("permissions", [full_access(role) for role in dict.fromkeys([*DEFAULT_ROLES, *wanted])])
+		document.save()
+	return describe_doctype(doctype)
+
+
+def assert_access_settable(extension: str, doctype: str) -> None:
+	assert_extension_access(extension, "schema.write")
+	assert_owned(extension, doctype)
+	if frappe.db.get_value("DocType", doctype, "istable"):
+		frappe.throw(_("A child table takes the access of its parent doctype."))
+
+
+def describe_access_change(doctype: str, roles: list[str]) -> dict:
+	"""Compares rights, not role names. A role that can only read still gains write, create and delete."""
+	permissions = frappe.get_meta(doctype).permissions
+	wanted = {*DEFAULT_ROLES, *roles}
+	full = {row.role for row in permissions if not row.permlevel and all(row.get(right) for right in RIGHTS)}
+	return {"added": sorted(wanted - full), "removed": sorted({row.role for row in permissions} - wanted)}
+
+
+def read_roles(roles: list[str]) -> list[str]:
+	if not isinstance(roles, list) or any(not isinstance(role, str) or not role for role in roles):
+		frappe.throw(_("Roles must be a list of role names."))
+	missing = [role for role in roles if not frappe.db.exists("Role", role)]
+	if missing:
+		frappe.throw(_("These roles do not exist: {0}").format(", ".join(missing)))
+	refused = [role for role in roles if not can_grant(role)]
+	if refused:
+		frappe.throw(
+			_("Only the Administrator can give {0} access to a custom doctype.").format(", ".join(refused)),
+			frappe.PermissionError,
+		)
+	return roles
+
+
+@frappe.whitelist()
+def list_roles(extension: str) -> list[str]:
+	"""The roles that this user may give access to an extension's doctype."""
+	assert_extension_access(extension, "schema.write")
+	roles = frappe.get_all("Role", filters={"disabled": 0}, pluck="name", order_by="name asc")
+	return [role for role in roles if can_grant(role)]
+
+
+def describe_doctype(doctype: str) -> dict:
+	meta = frappe.get_meta(doctype)
+	return {
+		"doctype": meta.name,
+		"istable": bool(meta.istable),
+		"roles": list(dict.fromkeys(row.role for row in meta.permissions if row.read and not row.permlevel)),
+		"fields": [
+			{
+				key: field.get(key)
+				for key in ("fieldname", "label", "fieldtype", "options", "reqd", "read_only", "default")
+			}
+			for field in meta.fields
+		],
+	}
+
+
+def assert_owned(extension: str, doctype: str) -> None:
+	"""Only the extension that made a doctype may change or drop it.
+
+	`data.access` is not enough. It lets the extension read and write
+	**documents**, which is not the same as changing the shape of the table or
+	dropping it.
+	"""
+	if find_resource(extension, "DocType", doctype):
+		return
+
+	frappe.throw(
+		_('"{0}" did not create {1}, so it cannot change it.').format(extension, doctype),
+		frappe.PermissionError,
+	)

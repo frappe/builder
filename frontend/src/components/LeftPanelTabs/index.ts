@@ -2,7 +2,9 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
+import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
+import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -12,6 +14,8 @@ import { __ } from "@/translation";
 export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
+	usesRuntimeIcon?: boolean;
+	keepOpenOnSelection?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
@@ -33,7 +37,7 @@ export const leftPanelTabs = createRegistry<LeftPanelTab>();
 // the route chunk imports this after pinia is installed, so the lookup resolves
 const builderStore = useBuilderStore();
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Blocks",
 	label: __("Insert"),
 	icon: "lucide-plus",
@@ -41,7 +45,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+I",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Layers",
 	label: __("Layers"),
 	icon: LayersIcon,
@@ -49,7 +53,7 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+L",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Assets",
 	label: __("Components"),
 	icon: "lucide-box",
@@ -57,8 +61,9 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+A",
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Code",
+	keepOpenOnSelection: true,
 	label: __("Code"),
 	icon: "lucide-code",
 	component: CodeTab,
@@ -73,7 +78,7 @@ leftPanelTabs.register({
 });
 
 // not a tab. It toggles a modal, so it declares an action and its own active state
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "tokens",
 	label: __("Design Tokens"),
 	icon: "lucide-aperture",
@@ -82,8 +87,9 @@ leftPanelTabs.register({
 	isActive: () => builderStore.showTokenManager,
 });
 
-leftPanelTabs.register({
+leftPanelTabs.registerBuiltIn({
 	name: "Chat",
+	keepOpenOnSelection: true,
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
@@ -91,4 +97,12 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+O",
 	// the composer's controls and the chat bubbles stop fitting below this
 	minWidth: 300,
+});
+
+leftPanelTabs.registerBuiltIn({
+	name: "Extensions",
+	label: "Extensions",
+	icon: "lucide-plug",
+	component: ExtensionsTab,
+	condition: () => !extensionsDisabled.value,
 });

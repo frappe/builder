@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import { getDataForKey, getParentProps, getPropValue } from "@/utils/helpers";
+import { isSafeBoundAttribute, sanitizeHTML } from "@/extensions/editor/safeMarkup";
 
 type ValueMap = Record<string, any>;
 
@@ -76,18 +77,24 @@ class BlockValueResolver {
 		if (!this.hasValues) return values;
 
 		const dataKey = this.getPrimaryDataKey();
-		if (dataKey.type === type && dataKey.property) {
-			values[dataKey.property] = this.resolve(dataKey) ?? values[dataKey.property];
-		}
+		if (dataKey.type === type && dataKey.property) this.applyValue(type, dataKey, values);
 
 		this.block
 			.getDynamicValues()
 			.filter((value) => value.type === type && value.property)
-			.forEach((value) => {
-				values[value.property!] = this.resolve(value) ?? values[value.property!];
-			});
+			.forEach((value) => this.applyValue(type, value, values));
 
 		return values;
+	}
+
+	/** Bound data comes from scripts, props and extensions, so the canvas never runs its markup. */
+	private applyValue(type: BlockDataKeyType, dataKey: BlockDataKey, values: ValueMap) {
+		const property = dataKey.property!;
+		const resolved = this.resolve(dataKey);
+		if (resolved == null) return;
+		if (type === "key" && property === "innerHTML") values[property] = sanitizeHTML(String(resolved));
+		else if (type !== "attribute" || isSafeBoundAttribute(this.block.getElement() || "div", property, String(resolved)))
+			values[property] = resolved;
 	}
 
 	isHiddenByVisibilityCondition() {
