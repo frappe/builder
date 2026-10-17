@@ -1,13 +1,24 @@
 import vue from "@vitejs/plugin-vue";
 import frameworkUI from "@framework/ui/vite";
 import frappeui from "frappe-ui/vite";
+import fs from "fs";
 import path from "path";
 import { defineConfig } from "vite";
+
+// the dev server renders no boot data, so the socket.io port reaches the page at build time
+function socketioPort() {
+	const config = path.resolve(import.meta.dirname, "../../../sites/common_site_config.json");
+	const port =
+		process.env.FRAPPE_SOCKETIO_PORT ||
+		(fs.existsSync(config) && JSON.parse(fs.readFileSync(config, "utf8")).socketio_port);
+	return String(port || "");
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
 	define: {
 		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+		"import.meta.env.VITE_SOCKETIO_PORT": JSON.stringify(socketioPort()),
 	},
 	plugins: [
 		frappeui({
