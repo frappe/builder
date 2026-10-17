@@ -4,6 +4,7 @@ import time
 import duckdb
 import frappe
 import pandas as pd
+from frappe.model.base_document import get_controller
 
 DUCKDB_TABLE = "web_page_views"
 CLICKS_TABLE = "web_page_clicks"
@@ -117,12 +118,19 @@ def duckdb_insert_placeholder(field: str) -> str:
 	return "?"
 
 
+def get_all_records(doctype: str, fields: list[str]) -> list:
+	"""Every row of `doctype`, unordered, for a full snapshot."""
+	if frappe.get_meta(doctype).is_virtual:
+		# get_all caps virtual doctypes at one page even with limit=0
+		return get_controller(doctype).get_list(doctype, fields=fields, as_list=True, limit=0)
+	table = frappe.qb.DocType(doctype)
+	return frappe.qb.from_(table).select(*fields).run()
+
+
 def setup_table(table_name: str, doctype: str, fields: list[str]):
 	"""(Re)build a DuckDB table as a full snapshot of `doctype`."""
 	with DuckDBConnection() as db:
-		# get_all rather than raw SQL: Web Page View may be a virtual doctype with no table
-		records = frappe.get_all(doctype, fields=fields, as_list=True, limit=0, order_by="creation asc")
-		df = pd.DataFrame(records, columns=fields)
+		df = pd.DataFrame(get_all_records(doctype, fields), columns=fields)
 		db.register("df", df)
 		select_cols = ", ".join(duckdb_column_cast(f) for f in fields)
 		db.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT {select_cols} FROM df")

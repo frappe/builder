@@ -24,12 +24,16 @@ class TestBuilderAnalytics(FrappeTestCase):
 			).fetchall()
 		self.assertEqual(rows, [("button", 1)])
 
-	def test_setup_table_reads_web_page_views(self):
+	def test_setup_table_snapshots_every_web_page_view(self):
+		# more than get_all's default page of 20
+		for _ in range(25):
+			view = frappe.get_doc({"doctype": "Web Page View", "path": "snapshot-test"}).insert(
+				ignore_permissions=True
+			)
+			self.addCleanup(view.delete, ignore_permissions=True)
+
 		setup_table(TEST_TABLE, "Web Page View", VIEW_FIELDS)
 
 		with DuckDBConnection(read_only=True) as db:
-			columns = db.execute(
-				f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{TEST_TABLE}'"
-			).fetchall()
-		self.assertEqual([name for name, _ in columns], VIEW_FIELDS)
-		self.assertEqual(dict(columns)["creation"], "TIMESTAMP")
+			rows = db.execute(f"SELECT COUNT(*) FROM {TEST_TABLE} WHERE path = 'snapshot-test'").fetchall()
+		self.assertEqual(rows, [(25,)])
