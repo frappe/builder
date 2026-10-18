@@ -1113,7 +1113,7 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			# Keep picture as an inline box for normal image flow and flex/grid sizing.
 			dark_source["style"] = "display: none;"
 			picture_tag.append(dark_source)
-			picture_tag.attrs["style"] = "display: inline-block;"
+			picture_tag.attrs["style"] = "display: inline-block; vertical-align: bottom;"
 			state["has_dual_mode_image"] = True
 
 			tag = soup.new_tag("img")
@@ -1160,10 +1160,17 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 				for styles in layout_block.values()
 				for name in styles
 			):
+				layout_dimensions = {
+					"width" if name.split(":")[-1] in {"width", "minWidth", "maxWidth"} else "height"
+					for styles in layout_block.values()
+					for name in styles
+					if name.split(":")[-1]
+					in {"width", "minWidth", "maxWidth", "height", "minHeight", "maxHeight"}
+				}
+				fill_dimensions = layout_dimensions if len(layout_dimensions) == 1 else {"width", "height"}
 				image_block["baseStyles"] = {
 					**image_block.get("baseStyles", {}),
-					"width": "100%",
-					"height": "100%",
+					**{dimension: "100%" for dimension in fill_dimensions},
 				}
 
 			tag.attrs["class"] = " ".join(build_tag_classes(image_block, state, ancestor_font=ancestor_font))

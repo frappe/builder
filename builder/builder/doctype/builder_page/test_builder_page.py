@@ -1767,7 +1767,16 @@ component.update({
 				"alt": "Test Image",
 			},
 		)
-		body.attach_children(image_block, image_block_only_dark_mode)
+		height_only_image_block = Block(
+			element="img",
+			baseStyles={"height": "120px"},
+			attributes={
+				"src": "/files/height-only-light-image.png",
+				"darkSrc": "/files/height-only-dark-image.png",
+				"alt": "Height-only test image",
+			},
+		)
+		body.attach_children(image_block, image_block_only_dark_mode, height_only_image_block)
 
 		page = frappe.get_doc(
 			{
@@ -1792,9 +1801,14 @@ component.update({
 				'style="display: none;"' in get_html_for(content, "tag", "source", only_content=False)
 			)
 			self.assertTrue(
-				'style="display: inline-block;"' in get_html_for(content, "tag", "picture", only_content=False)
+				'style="display: inline-block; vertical-align: bottom;"'
+				in get_html_for(content, "tag", "picture", only_content=False)
 			)
 			picture_html = get_html_for(content, "tag", "picture", only_content=False)
+			self.assertIn(
+				"vertical-align: bottom;",
+				get_html_for(picture_html, "attribute", "style"),
+			)
 			picture_class = get_html_for(picture_html, "attribute", "class")[0]
 			style_text = get_html_for(content, "tag", "style", only_content=True)
 			self.assertIn(f".{picture_class} {{", style_text)
@@ -1815,6 +1829,17 @@ component.update({
 			self.assertNotIn("width: 50%;", img_rule)
 			self.assertIn("border-radius: 8px;", img_rule)
 			self.assertNotIn("border-radius: 8px;", picture_rule)
+			height_only_picture_html = get_html_for(content, "tag", "picture", index=1, only_content=False)
+			height_only_picture_class = get_html_for(height_only_picture_html, "attribute", "class")[0]
+			height_only_picture_rule = style_text.split(
+				f".{height_only_picture_class} {{", 1
+			)[1].split("}", 1)[0]
+			self.assertIn("height: 120px;", height_only_picture_rule)
+			height_only_img_html = get_html_for(content, "tag", "img", index=2, only_content=False)
+			height_only_img_class = get_html_for(height_only_img_html, "attribute", "class")[0]
+			height_only_img_rule = style_text.split(f".{height_only_img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("height: 100%;", height_only_img_rule)
+			self.assertNotIn("width: 100%;", height_only_img_rule)
 			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
