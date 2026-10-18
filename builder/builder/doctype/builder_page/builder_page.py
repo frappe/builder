@@ -1160,6 +1160,11 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 				for styles in layout_block.values()
 				for name in styles
 			):
+				has_aspect_ratio = any(
+					name.split(":")[-1] == "aspectRatio"
+					for styles in layout_block.values()
+					for name in styles
+				)
 				layout_dimensions = {
 					"width" if name.split(":")[-1] in {"width", "minWidth", "maxWidth"} else "height"
 					for styles in layout_block.values()
@@ -1167,7 +1172,11 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 					if name.split(":")[-1]
 					in {"width", "minWidth", "maxWidth", "height", "minHeight", "maxHeight"}
 				}
-				fill_dimensions = layout_dimensions if len(layout_dimensions) == 1 else {"width", "height"}
+				fill_dimensions = (
+					layout_dimensions
+					if len(layout_dimensions) == 1 and not has_aspect_ratio
+					else {"width", "height"}
+				)
 				image_block["baseStyles"] = {
 					**image_block.get("baseStyles", {}),
 					**{dimension: "100%" for dimension in fill_dimensions},

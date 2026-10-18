@@ -1776,7 +1776,18 @@ component.update({
 				"alt": "Height-only test image",
 			},
 		)
-		body.attach_children(image_block, image_block_only_dark_mode, height_only_image_block)
+		aspect_ratio_image_block = Block(
+			element="img",
+			baseStyles={"width": "200px", "aspectRatio": "1 / 1", "objectFit": "cover"},
+			attributes={
+				"src": "/files/aspect-ratio-light-image.png",
+				"darkSrc": "/files/aspect-ratio-dark-image.png",
+				"alt": "Aspect-ratio test image",
+			},
+		)
+		body.attach_children(
+			image_block, image_block_only_dark_mode, height_only_image_block, aspect_ratio_image_block
+		)
 
 		page = frappe.get_doc(
 			{
@@ -1840,6 +1851,19 @@ component.update({
 			height_only_img_rule = style_text.split(f".{height_only_img_class} {{", 1)[1].split("}", 1)[0]
 			self.assertIn("height: 100%;", height_only_img_rule)
 			self.assertNotIn("width: 100%;", height_only_img_rule)
+			aspect_ratio_picture_html = get_html_for(content, "tag", "picture", index=2, only_content=False)
+			aspect_ratio_picture_class = get_html_for(aspect_ratio_picture_html, "attribute", "class")[0]
+			aspect_ratio_picture_rule = style_text.split(
+				f".{aspect_ratio_picture_class} {{", 1
+			)[1].split("}", 1)[0]
+			self.assertIn("width: 200px;", aspect_ratio_picture_rule)
+			self.assertIn("aspect-ratio:", aspect_ratio_picture_rule)
+			aspect_ratio_img_html = get_html_for(content, "tag", "img", index=3, only_content=False)
+			aspect_ratio_img_class = get_html_for(aspect_ratio_img_html, "attribute", "class")[0]
+			aspect_ratio_img_rule = style_text.split(f".{aspect_ratio_img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("width: 100%;", aspect_ratio_img_rule)
+			self.assertIn("height: 100%;", aspect_ratio_img_rule)
+			self.assertIn("object-fit: cover;", aspect_ratio_img_rule)
 			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
