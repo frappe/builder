@@ -502,8 +502,9 @@ class TestStandardPageSync(FrappeTestCase):
 
 	def test_variable_uncheck_is_standard_removes_module_export(self):
 		variable = self.make_variable()
-		variable.is_standard = 1
-		variable.save(ignore_permissions=True)
+		with self.without_developer_mode():
+			variable.is_standard = 1
+			variable.save(ignore_permissions=True)
 		try:
 			with mock.patch(
 				"builder.builder.doctype.builder_token.builder_token.delete_folder"

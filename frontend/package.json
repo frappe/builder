@@ -9,7 +9,7 @@
     "build:reset": "tailwindcss -c ./tailwind.reset.config.js -i ./src/reset.css -o ../builder/public/reset.css --minify && node ./scripts/strip-css-comments.js",
     "generate:css-metadata": "node ./scripts/generate-css-property-metadata.mjs",
     "preview": "vite preview",
-    "lint": "eslint src --ext .js,.ts,.vue",
+    "lint": "eslint src",
     "test:unit": "vitest --run",
     "test-local": "cypress open --e2e --browser chrome",
     "test": "npx cypress run --record --key fa50a4df-569e-41bc-8600-850331fd1630"
@@ -74,6 +74,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10",
+    "vue-eslint-parser": "^10.4.0",
     "web-features": "3.38.0"
   },
   "peerDependencies": {}
