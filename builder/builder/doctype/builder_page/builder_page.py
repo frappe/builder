@@ -1168,9 +1168,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 				layout_dimensions = {
 					"width" if name.split(":")[-1] in {"width", "minWidth", "maxWidth"} else "height"
 					for styles in layout_block.values()
-					for name in styles
+					for name, value in styles.items()
 					if name.split(":")[-1]
 					in {"width", "minWidth", "maxWidth", "height", "minHeight", "maxHeight"}
+					and str(value).strip().lower() != "auto"
 				}
 				fill_dimensions = (
 					layout_dimensions

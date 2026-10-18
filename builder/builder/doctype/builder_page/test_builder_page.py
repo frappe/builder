@@ -1769,7 +1769,7 @@ component.update({
 		)
 		height_only_image_block = Block(
 			element="img",
-			baseStyles={"height": "120px"},
+			baseStyles={"width": "auto", "height": "120px"},
 			attributes={
 				"src": "/files/height-only-light-image.png",
 				"darkSrc": "/files/height-only-dark-image.png",
@@ -1845,6 +1845,7 @@ component.update({
 			height_only_picture_rule = style_text.split(
 				f".{height_only_picture_class} {{", 1
 			)[1].split("}", 1)[0]
+			self.assertIn("width: auto;", height_only_picture_rule)
 			self.assertIn("height: 120px;", height_only_picture_rule)
 			height_only_img_html = get_html_for(content, "tag", "img", index=2, only_content=False)
 			height_only_img_class = get_html_for(height_only_img_html, "attribute", "class")[0]
