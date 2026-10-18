@@ -1899,10 +1899,11 @@ component.update({
 			mobile_ratio_img_rule = mobile_query.split(f".{mobile_ratio_img_class} {{", 1)[1].split("}", 1)[0]
 			self.assertIn("width: 100%;", mobile_ratio_img_rule)
 			self.assertIn("height: 100%;", mobile_ratio_img_rule)
-			self.assertNotIn(
-				f".{mobile_ratio_img_class} {{",
-				style_text.split("@media", 1)[0],
-			)
+			mobile_base_rule = style_text.split("@media", 1)[0].split(
+				f".{mobile_ratio_img_class} {{", 1
+			)[1].split("}", 1)[0]
+			self.assertIn("height: 100%;", mobile_base_rule)
+			self.assertNotIn("width: 100%;", mobile_base_rule)
 			auto_ratio_img_html = get_html_for(content, "tag", "img", index=5, only_content=False)
 			auto_ratio_img_class = get_html_for(auto_ratio_img_html, "attribute", "class")[0]
 			auto_ratio_img_rule = style_text.split(f".{auto_ratio_img_class} {{", 1)[1].split("}", 1)[0]
