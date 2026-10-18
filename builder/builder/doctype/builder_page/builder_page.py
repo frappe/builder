@@ -1155,19 +1155,17 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 			}
 
 		if any(layout_block.values()):
-			if any(
-				name.split(":")[-1] in PICTURE_FILL_STYLE_PROPERTIES
-				for styles in layout_block.values()
-				for name in styles
-			):
-				has_aspect_ratio = any(
-					name.split(":")[-1] == "aspectRatio"
-					for styles in layout_block.values()
-					for name in styles
+			for style_key, styles in layout_block.items():
+				if not any(name.split(":")[-1] in PICTURE_FILL_STYLE_PROPERTIES for name in styles):
+					continue
+
+				aspect_ratio = next(
+					(value for name, value in styles.items() if name.split(":")[-1] == "aspectRatio"),
+					None,
 				)
+				has_fixed_aspect_ratio = aspect_ratio is not None and str(aspect_ratio).strip().lower() != "auto"
 				layout_dimensions = {
 					"width" if name.split(":")[-1] in {"width", "minWidth", "maxWidth"} else "height"
-					for styles in layout_block.values()
 					for name, value in styles.items()
 					if name.split(":")[-1]
 					in {"width", "minWidth", "maxWidth", "height", "minHeight", "maxHeight"}
@@ -1175,11 +1173,11 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 				}
 				fill_dimensions = (
 					layout_dimensions
-					if len(layout_dimensions) == 1 and not has_aspect_ratio
+					if len(layout_dimensions) == 1 and not has_fixed_aspect_ratio
 					else {"width", "height"}
 				)
-				image_block["baseStyles"] = {
-					**image_block.get("baseStyles", {}),
+				image_block[style_key] = {
+					**image_block.get(style_key, {}),
 					**{dimension: "100%" for dimension in fill_dimensions},
 				}
 

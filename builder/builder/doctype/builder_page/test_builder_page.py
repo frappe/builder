@@ -1739,6 +1739,8 @@ component.update({
 			component.delete()
 
 	def test_dark_mode_img(self):
+		from builder.builder.doctype.builder_page.builder_page import MOBILE_BREAKPOINT
+
 		body = Block(
 			element="div",
 			originalElement="body",
@@ -1785,8 +1787,32 @@ component.update({
 				"alt": "Aspect-ratio test image",
 			},
 		)
+		mobile_aspect_ratio_image_block = Block(
+			element="img",
+			baseStyles={"height": "120px"},
+			mobileStyles={"aspectRatio": "1 / 1"},
+			attributes={
+				"src": "/files/mobile-ratio-light-image.png",
+				"darkSrc": "/files/mobile-ratio-dark-image.png",
+				"alt": "Mobile aspect-ratio test image",
+			},
+		)
+		auto_aspect_ratio_image_block = Block(
+			element="img",
+			baseStyles={"height": "120px", "aspectRatio": "auto"},
+			attributes={
+				"src": "/files/auto-ratio-light-image.png",
+				"darkSrc": "/files/auto-ratio-dark-image.png",
+				"alt": "Automatic aspect-ratio test image",
+			},
+		)
 		body.attach_children(
-			image_block, image_block_only_dark_mode, height_only_image_block, aspect_ratio_image_block
+			image_block,
+			image_block_only_dark_mode,
+			height_only_image_block,
+			aspect_ratio_image_block,
+			mobile_aspect_ratio_image_block,
+			auto_aspect_ratio_image_block,
 		)
 
 		page = frappe.get_doc(
@@ -1865,6 +1891,23 @@ component.update({
 			self.assertIn("width: 100%;", aspect_ratio_img_rule)
 			self.assertIn("height: 100%;", aspect_ratio_img_rule)
 			self.assertIn("object-fit: cover;", aspect_ratio_img_rule)
+			mobile_ratio_img_html = get_html_for(content, "tag", "img", index=4, only_content=False)
+			mobile_ratio_img_class = get_html_for(mobile_ratio_img_html, "attribute", "class")[0]
+			mobile_query = style_text.split(
+				f"@media only screen and (max-width: {MOBILE_BREAKPOINT}px)", 1
+			)[1]
+			mobile_ratio_img_rule = mobile_query.split(f".{mobile_ratio_img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("width: 100%;", mobile_ratio_img_rule)
+			self.assertIn("height: 100%;", mobile_ratio_img_rule)
+			self.assertNotIn(
+				f".{mobile_ratio_img_class} {{",
+				style_text.split("@media", 1)[0],
+			)
+			auto_ratio_img_html = get_html_for(content, "tag", "img", index=5, only_content=False)
+			auto_ratio_img_class = get_html_for(auto_ratio_img_html, "attribute", "class")[0]
+			auto_ratio_img_rule = style_text.split(f".{auto_ratio_img_class} {{", 1)[1].split("}", 1)[0]
+			self.assertIn("height: 100%;", auto_ratio_img_rule)
+			self.assertNotIn("width: 100%;", auto_ratio_img_rule)
 			self.assertTrue(
 				'src="/files/another-dark-mode-image.png"'
 				in get_html_for(content, "tag", "img", index=1, only_content=False)
